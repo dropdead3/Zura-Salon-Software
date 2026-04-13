@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+
 import { format } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -25,7 +26,8 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTillReconciliation } from '@/hooks/useTillReconciliation';
 import { useTerminalDeposit } from '@/hooks/useTerminalDeposit';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { AlertDialogAction } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
@@ -61,6 +63,10 @@ const COLLECTED_VIA_LABELS: Record<string, string> = {
 
 function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
   const [statusFilter, setStatusFilter] = useState<FeeStatusFilter>('pending');
+  const [waiveDialogOpen, setWaiveDialogOpen] = useState(false);
+  const [selectedCharge, setSelectedCharge] = useState<{ id: string; clientName: string; amount: number } | null>(null);
+  const [waiveReason, setWaiveReason] = useState('');
+  const queryClient = useQueryClient();
 
   const { data: feeCharges = [], isLoading } = useQuery({
     queryKey: ['fee-ledger', orgId, statusFilter],
@@ -105,106 +111,199 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
     enabled: !!orgId,
   });
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <Receipt className={tokens.card.icon} />
-          </div>
-          <div>
-            <CardTitle className={tokens.card.title}>
-              Fee Charges
-              <MetricInfoTooltip description="Unified ledger of all appointment-related fee charges including deposits, cancellation fees, no-show fees, and manual charges." />
-            </CardTitle>
-            <CardDescription>Audit trail for deposits, cancellations, and no-show fees</CardDescription>
-          </div>
-          {pendingCount > 0 && (
-            <Badge variant="secondary" className="ml-auto">{pendingCount} pending</Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Status filter tabs */}
-        <div className="flex gap-1 p-1 bg-muted/70 rounded-lg w-fit">
-          {FEE_STATUS_FILTERS.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-md transition-all capitalize',
-                statusFilter === s
-                  ? 'bg-background shadow-sm ring-1 ring-border/50 text-foreground'
-                  : 'text-muted-foreground hover:text-foreground/80'
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+  const waiveMutation = useMutation({
+    mutationFn: async ({ chargeId, reason }: { chargeId: string; reason: string }) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { error } = await supabase
+        .from('appointment_fee_charges')
+        .update({
+          status: 'waived',
+          waived_by: userId,
+          waived_reason: reason,
+        })
+        .eq('id', chargeId)
+        .eq('organization_id', orgId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger-pending-count'] });
+      toast.success('Fee charge waived');
+      setWaiveDialogOpen(false);
+      setSelectedCharge(null);
+      setWaiveReason('');
+    },
+    onError: (error) => {
+      toast.error('Failed to waive fee', { description: error.message });
+    },
+  });
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className={tokens.loading.spinner} />
+  const openWaiveDialog = useCallback((charge: { id: string; clientName: string; amount: number }) => {
+    setSelectedCharge(charge);
+    setWaiveReason('');
+    setWaiveDialogOpen(true);
+  }, []);
+
+  const isPending = statusFilter === 'pending';
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <Receipt className={tokens.card.icon} />
+            </div>
+            <div>
+              <CardTitle className={tokens.card.title}>
+                Fee Charges
+                <MetricInfoTooltip description="Unified ledger of all appointment-related fee charges including deposits, cancellation fees, no-show fees, and manual charges." />
+              </CardTitle>
+              <CardDescription>Audit trail for deposits, cancellations, and no-show fees</CardDescription>
+            </div>
+            {pendingCount > 0 && (
+              <Badge variant="secondary" className="ml-auto">{pendingCount} pending</Badge>
+            )}
           </div>
-        ) : feeCharges.length === 0 ? (
-          <div className={tokens.empty.container}>
-            <Receipt className={tokens.empty.icon} />
-            <h3 className={tokens.empty.heading}>No {statusFilter} fees</h3>
-            <p className={tokens.empty.description}>
-              {statusFilter === 'pending'
-                ? 'No fees are awaiting collection.'
-                : `No ${statusFilter} fee records found.`}
-            </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Status filter tabs */}
+          <div className="flex gap-1 p-1 bg-muted/70 rounded-lg w-fit">
+            {FEE_STATUS_FILTERS.map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={cn(
+                  'px-3 py-1.5 text-sm font-medium rounded-md transition-all capitalize',
+                  statusFilter === s
+                    ? 'bg-background shadow-sm ring-1 ring-border/50 text-foreground'
+                    : 'text-muted-foreground hover:text-foreground/80'
+                )}
+              >
+                {s}
+              </button>
+            ))}
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Collected Via</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Charged At</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {feeCharges.map((charge) => (
-                <TableRow key={charge.id}>
-                  <TableCell className="font-medium">
-                    {charge.appointment?.client_name || 'Unknown'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {charge.appointment?.appointment_date
-                      ? format(new Date(charge.appointment.appointment_date), 'MMM d, yyyy')
-                      : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {FEE_TYPE_LABELS[charge.fee_type] ?? charge.fee_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <BlurredAmount>{formatCurrency(charge.fee_amount)}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {charge.collected_via
-                      ? COLLECTED_VIA_LABELS[charge.collected_via] ?? charge.collected_via
-                      : '—'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {charge.charged_at
-                      ? format(new Date(charge.charged_at), 'MMM d, h:mm a')
-                      : '—'}
-                  </TableCell>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className={tokens.loading.spinner} />
+            </div>
+          ) : feeCharges.length === 0 ? (
+            <div className={tokens.empty.container}>
+              <Receipt className={tokens.empty.icon} />
+              <h3 className={tokens.empty.heading}>No {statusFilter} fees</h3>
+              <p className={tokens.empty.description}>
+                {statusFilter === 'pending'
+                  ? 'No fees are awaiting collection.'
+                  : `No ${statusFilter} fee records found.`}
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={tokens.table.columnHeader}>Client</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Date</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Collected Via</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Charged At</TableHead>
+                  {isPending && <TableHead className={tokens.table.columnHeader}>Actions</TableHead>}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {feeCharges.map((charge) => (
+                  <TableRow key={charge.id}>
+                    <TableCell className="font-medium">
+                      {charge.appointment?.client_name || 'Unknown'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {charge.appointment?.appointment_date
+                        ? format(new Date(charge.appointment.appointment_date), 'MMM d, yyyy')
+                        : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {FEE_TYPE_LABELS[charge.fee_type] ?? charge.fee_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <BlurredAmount>{formatCurrency(charge.fee_amount)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {charge.collected_via
+                        ? COLLECTED_VIA_LABELS[charge.collected_via] ?? charge.collected_via
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {charge.charged_at
+                        ? format(new Date(charge.charged_at), 'MMM d, h:mm a')
+                        : '—'}
+                    </TableCell>
+                    {isPending && (
+                      <TableCell>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className={tokens.button.inline}
+                          onClick={() => openWaiveDialog({
+                            id: charge.id,
+                            clientName: charge.appointment?.client_name || 'Unknown',
+                            amount: charge.fee_amount,
+                          })}
+                        >
+                          Waive
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Waive confirmation dialog */}
+      <AlertDialog open={waiveDialogOpen} onOpenChange={setWaiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Waive Fee Charge</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will waive the <strong>{formatCurrency(selectedCharge?.amount ?? 0)}</strong> fee for{' '}
+              <strong>{selectedCharge?.clientName}</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-6 pb-2">
+            <label className="text-sm font-medium text-foreground mb-1.5 block">
+              Reason for waiving <span className="text-destructive">*</span>
+            </label>
+            <Input
+              placeholder="e.g. Client called ahead, extenuating circumstances"
+              value={waiveReason}
+              onChange={(e) => setWaiveReason(e.target.value)}
+              autoCapitalize="off"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={waiveMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!waiveReason.trim() || waiveMutation.isPending}
+              onClick={() => {
+                if (selectedCharge && waiveReason.trim()) {
+                  waiveMutation.mutate({ chargeId: selectedCharge.id, reason: waiveReason.trim() });
+                }
+              }}
+              className={cn(waiveMutation.isPending && 'opacity-70')}
+            >
+              {waiveMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              Confirm Waive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
