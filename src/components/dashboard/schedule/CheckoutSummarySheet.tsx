@@ -100,7 +100,12 @@ export function CheckoutSummarySheet({
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
   const [declineReason, setDeclineReason] = useState<string>('');
   const [declineOtherText, setDeclineOtherText] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('cash');
 
+  // Terminal reader + checkout flow
+  const { activeReader, readers, selectedReaderId, selectReader, hasReaders, isLoading: readersLoading } =
+    useActiveTerminalReader(organizationId, locationId);
+  const terminalFlow = useTerminalCheckoutFlow();
   useEffect(() => {
     if (open) {
       setGatePhase('gate');
