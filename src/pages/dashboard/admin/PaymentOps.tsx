@@ -40,6 +40,7 @@ import {
   Calendar,
   HandCoins,
   UserX,
+  Receipt,
 } from 'lucide-react';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
@@ -681,8 +682,8 @@ export default function PaymentOps() {
             </CardContent>
           </Card>
 
-          {/* Cancellation Fee Queue */}
-          <CancellationFeeQueueCard orgId={orgId} formatCurrency={formatCurrency} />
+          {/* Fee Ledger */}
+          <FeeLedgerCard orgId={orgId} formatCurrency={formatCurrency} />
         </div>
 
         {/* E1: Confirmation dialog for destructive financial actions */}
