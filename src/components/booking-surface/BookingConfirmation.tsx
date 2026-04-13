@@ -2,6 +2,7 @@ import { Calendar, Clock, User, Scissors, MapPin, CheckCircle2, CalendarPlus } f
 import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 import type { BookingClientInfo } from './BookingClientForm';
+import { BookingPaymentForm } from './BookingPaymentForm';
 
 interface BookingConfirmationProps {
   theme: BookingSurfaceTheme;
@@ -20,12 +21,21 @@ interface BookingConfirmationProps {
   depositPolicyText?: string;
   cancellationPolicyText?: string;
   requiresCardOnFile?: boolean;
+  // Payment integration props
+  paymentClientSecret?: string | null;
+  paymentIntentType?: 'payment' | 'setup' | null;
+  stripePublishableKey?: string | null;
+  stripeConnectedAccountId?: string | null;
+  onPaymentComplete?: (intentId: string) => void;
+  showPaymentForm?: boolean;
 }
 
 export function BookingConfirmation({
   theme, serviceName, categoryName, stylistName, locationName,
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
   depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
+  paymentClientSecret, paymentIntentType, stripePublishableKey, stripeConnectedAccountId,
+  onPaymentComplete, showPaymentForm,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
     const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
@@ -164,30 +174,56 @@ export function BookingConfirmation({
         </div>
       )}
 
-      <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex-1 py-3 text-sm font-medium transition-colors active:scale-[0.98]"
-          style={{
-            color: theme.textColor,
-            borderRadius: 'var(--bk-btn-radius, 8px)',
-            border: `1px solid ${theme.borderColor}`,
-          }}
-        >
-          Back
-        </button>
-        <button
-          onClick={onConfirm}
-          disabled={isSubmitting}
-          className="flex-1 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.98]"
-          style={{
-            backgroundColor: theme.primaryColor,
-            borderRadius: 'var(--bk-btn-radius, 8px)',
-          }}
-        >
-          {isSubmitting ? 'Submitting...' : 'Confirm Booking'}
-        </button>
-      </div>
+      {/* Payment Form (shown after appointment creation) */}
+      {showPaymentForm && paymentClientSecret && paymentIntentType && stripePublishableKey && stripeConnectedAccountId && onPaymentComplete ? (
+        <div className="mb-4">
+          <h4 className="text-sm font-medium mb-3" style={{ color: theme.textColor }}>
+            {paymentIntentType === 'payment' ? 'Pay Deposit' : 'Save Card on File'}
+          </h4>
+          <BookingPaymentForm
+            publishableKey={stripePublishableKey}
+            clientSecret={paymentClientSecret}
+            connectedAccountId={stripeConnectedAccountId}
+            intentType={paymentIntentType}
+            theme={theme}
+            depositAmount={depositAmount}
+            onPaymentComplete={onPaymentComplete}
+            onError={() => {}}
+          />
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            onClick={onBack}
+            className="flex-1 py-3 text-sm font-medium transition-colors active:scale-[0.98]"
+            style={{
+              color: theme.textColor,
+              borderRadius: 'var(--bk-btn-radius, 8px)',
+              border: `1px solid ${theme.borderColor}`,
+            }}
+          >
+            Back
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isSubmitting}
+            className="flex-1 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.98]"
+            style={{
+              backgroundColor: theme.primaryColor,
+              borderRadius: 'var(--bk-btn-radius, 8px)',
+            }}
+          >
+            {isSubmitting
+              ? 'Submitting...'
+              : (depositAmount && depositAmount > 0)
+                ? `Confirm & Pay $${depositAmount.toFixed(2)} Deposit`
+                : requiresCardOnFile
+                  ? 'Confirm & Save Card'
+                  : 'Confirm Booking'
+            }
+          </button>
+        </div>
+      )}
     </div>
   );
 }

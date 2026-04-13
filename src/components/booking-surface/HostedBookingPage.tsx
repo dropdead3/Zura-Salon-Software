@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
@@ -134,9 +134,38 @@ export function HostedBookingPage() {
     : null;
   const requiresCardOnFile = selectedServiceData?.requireCardOnFile ?? false;
 
-  // ─── Confirm handler ──────────────────────────────────────────
+  // ─── Payment state ──────────────────────────────────────────
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [paymentIntentType, setPaymentIntentType] = useState<'payment' | 'setup' | null>(null);
+  const [stripeConfig, setStripeConfig] = useState<{ publishableKey: string; connectedAccountId: string } | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [createdAppointmentId, setCreatedAppointmentId] = useState<string | null>(null);
 
+  // Check if any eligible service needs payment (lazy Stripe config fetch)
+  const anyServiceNeedsPayment = useMemo(() => {
+    return eligibleServices?.some(s => s.requiresDeposit || s.requireCardOnFile) ?? false;
+  }, [eligibleServices]);
+
+  // Lazy fetch Stripe config when needed
+  useEffect(() => {
+    if (!anyServiceNeedsPayment || !org?.id || stripeConfig) return;
+
+    supabase.functions.invoke('get-booking-stripe-config', {
+      body: { organization_id: org.id },
+    }).then(({ data, error }) => {
+      if (!error && data?.publishable_key && data?.connected_account_id) {
+        setStripeConfig({
+          publishableKey: data.publishable_key,
+          connectedAccountId: data.connected_account_id,
+        });
+      }
+    });
+  }, [anyServiceNeedsPayment, org?.id, stripeConfig]);
+
+  const needsPayment = (depositAmount != null && depositAmount > 0) || requiresCardOnFile;
+
+  // ─── Confirm handler ──────────────────────────────────────────
   const handleConfirm = useCallback(async () => {
     if (!org?.id || !state.selectedService || !state.clientInfo) return;
     setIsSubmitting(true);
@@ -163,6 +192,34 @@ export function HostedBookingPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      const appointmentId = data.appointment_id;
+      setCreatedAppointmentId(appointmentId);
+
+      // If payment needed and Stripe is configured, create intent
+      if (needsPayment && stripeConfig) {
+        const { data: intentData, error: intentErr } = await supabase.functions.invoke(
+          'create-booking-payment-intent',
+          {
+            body: {
+              organization_id: org.id,
+              appointment_id: appointmentId,
+              amount: depositAmount && depositAmount > 0 ? depositAmount : 0,
+              client_email: state.clientInfo.email,
+            },
+          }
+        );
+
+        if (intentErr) throw intentErr;
+        if (intentData?.error) throw new Error(intentData.error);
+
+        setPaymentClientSecret(intentData.client_secret);
+        setPaymentIntentType(intentData.intent_type);
+        setShowPaymentForm(true);
+        setIsSubmitting(false);
+        return; // Don't mark confirmed yet — wait for payment
+      }
+
+      // No payment needed — confirm immediately
       update({ isConfirmed: true });
       if (isEmbedMode) {
         sendBookingComplete({
@@ -170,7 +227,7 @@ export function HostedBookingPage() {
           stylist: state.selectedStylist,
           date: state.selectedDate,
           time: state.selectedTime,
-          appointmentId: data.appointment_id,
+          appointmentId,
         });
       }
     } catch (err: any) {
@@ -179,7 +236,22 @@ export function HostedBookingPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [org?.id, state, isEmbedMode, update]);
+  }, [org?.id, state, isEmbedMode, update, needsPayment, stripeConfig, depositAmount]);
+
+  // ─── Payment complete handler ─────────────────────────────────
+  const handlePaymentComplete = useCallback((intentId: string) => {
+    setShowPaymentForm(false);
+    update({ isConfirmed: true });
+    if (isEmbedMode) {
+      sendBookingComplete({
+        service: state.selectedService || '',
+        stylist: state.selectedStylist,
+        date: state.selectedDate,
+        time: state.selectedTime,
+        appointmentId: createdAppointmentId || '',
+      });
+    }
+  }, [isEmbedMode, state, update, createdAppointmentId]);
 
   // ─── Loading / Error ──────────────────────────────────────────
   if (orgLoading || servicesLoading) {
@@ -276,6 +348,12 @@ export function HostedBookingPage() {
             requiresCardOnFile={requiresCardOnFile}
             depositPolicyText={(hosted as any).depositPolicyText || hosted.policyText || undefined}
             cancellationPolicyText={(hosted as any).cancellationPolicyText || hosted.policyText || undefined}
+            paymentClientSecret={paymentClientSecret}
+            paymentIntentType={paymentIntentType}
+            stripePublishableKey={stripeConfig?.publishableKey}
+            stripeConnectedAccountId={stripeConfig?.connectedAccountId}
+            onPaymentComplete={handlePaymentComplete}
+            showPaymentForm={showPaymentForm}
           />
         ) : null;
       default:
