@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle, Signal } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,11 +24,14 @@ import {
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
+import { useTerminalHardwareSkus, useCreateTerminalCheckout, useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { OfflinePaymentStatus } from './OfflinePaymentStatus';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
 
 // Fetch org locations that have Zura Pay (stripe_account_id)
 function useZuraPayLocations() {
