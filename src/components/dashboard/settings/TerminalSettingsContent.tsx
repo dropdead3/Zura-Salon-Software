@@ -36,7 +36,7 @@ function useZuraPayLocations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('id, name, stripe_account_id, address, city, state_province, postal_code')
+        .select('id, name, stripe_account_id, address, city, state_province')
         .eq('organization_id', orgId!)
         .not('stripe_account_id', 'is', null);
       if (error) throw error;
@@ -204,17 +204,58 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
 
 // ---- All Locations Summary ----
 
+interface LocationSummaryRowProps {
+  loc: { id: string; name: string };
+}
+
+function LocationSummaryRow({ loc }: LocationSummaryRowProps) {
+  const { data: tlData, isLoading: tlLoading } = useTerminalLocations(loc.id);
+  const { data: readerData, isLoading: readersLoading } = useTerminalReaders(loc.id);
+
+  if (tlLoading || readersLoading) {
+    return (
+      <div className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+        <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
+        <Skeleton className="h-4 w-8 mx-auto" />
+        <Skeleton className="h-4 w-8 mx-auto" />
+        <Skeleton className="h-4 w-16 mx-auto" />
+      </div>
+    );
+  }
+
+  const readerList = readerData || [];
+  const online = readerList.filter((r) => r.status === 'online').length;
+  const offline = readerList.length - online;
+
+  return (
+    <div className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+      <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
+      <span className="text-center text-sm text-muted-foreground">{tlData?.length || 0}</span>
+      <span className="text-center text-sm text-muted-foreground">{readerList.length}</span>
+      <div className="flex items-center justify-center gap-2">
+        {online > 0 && (
+          <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 text-xs">
+            {online} online
+          </Badge>
+        )}
+        {offline > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            {offline} offline
+          </Badge>
+        )}
+        {readerList.length === 0 && (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface AllLocationsSummaryProps {
   locations: { id: string; name: string; stripe_account_id: string | null }[];
 }
 
 function AllLocationsSummary({ locations }: AllLocationsSummaryProps) {
-  // Fetch terminal data for each location
-  const locationQueries = locations.map((loc) => {
-    const tl = useTerminalLocations(loc.id);
-    const readers = useTerminalReaders(loc.id);
-    return { loc, tl, readers };
-  });
 
   const isLoading = locationQueries.some((q) => q.tl.isLoading || q.readers.isLoading);
 
