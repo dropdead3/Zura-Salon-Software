@@ -424,9 +424,13 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
         {/* Pricing preview */}
         <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Smartphone className="w-6 h-6 text-primary" />
-            </div>
+            {readerImage ? (
+              <img src={readerImage} alt="S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+            )}
             <div>
               <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
               <p className="text-xs text-muted-foreground">Cellular + WiFi · Store-and-forward · Countertop &amp; handheld</p>
