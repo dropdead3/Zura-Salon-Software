@@ -444,9 +444,48 @@ export function CheckoutSummarySheet({
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const finalReason = declineReason === 'Other' ? declineOtherText.trim() : declineReason;
-    onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined);
+
+    // If card reader selected, run terminal checkout flow
+    if (paymentMethod === 'card_reader' && activeReader && organizationId && appointment) {
+      try {
+        const result = await terminalFlow.startCheckout({
+          organizationId,
+          readerId: activeReader.id,
+          amount: Math.round(checkoutTotal * 100), // convert to cents
+          tipAmount: Math.round(tipAmount * 100),
+          appointmentId: appointment.id,
+          lineItems: [
+            {
+              description: appointment.service_name || 'Service',
+              amount: Math.round((appointment.total_price || 0) * 100),
+              quantity: 1,
+            },
+            ...addonEvents.map((e) => ({
+              description: e.addon_name,
+              amount: Math.round(e.addon_price * 100),
+              quantity: 1,
+            })),
+          ],
+          tax: Math.round(tax * 100),
+        });
+
+        onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
+          method: 'card_reader',
+          stripe_payment_intent_id: result.paymentIntentId,
+        });
+      } catch {
+        // Error handled in hook — don't close sheet
+        return;
+      }
+    } else {
+      // Cash or Other — behave as before
+      onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
+        method: paymentMethod,
+      });
+    }
+
     // Reset state for next use
     setTipAmount(0);
     setCustomTip('');
@@ -455,6 +494,8 @@ export function CheckoutSummarySheet({
     setGatePhase('gate');
     setDeclineReason('');
     setDeclineOtherText('');
+    setPaymentMethod('cash');
+    terminalFlow.reset();
   };
 
   const handleDeclineConfirm = () => {
