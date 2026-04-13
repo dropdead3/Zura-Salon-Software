@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -331,21 +331,42 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
   const [reqLocationId, setReqLocationId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [selectedAccessories, setSelectedAccessories] = useState<Record<string, number>>({});
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-  // Auto-verify payment on return from checkout
+  // Fix #1: Ref-based pattern to avoid stale closures
+  const verifyRef = useRef(verifyPayment.mutate);
+  verifyRef.current = verifyPayment.mutate;
+  const setSearchParamsRef = useRef(setSearchParams);
+  setSearchParamsRef.current = setSearchParams;
+
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
     const sessionId = searchParams.get('session_id');
     if (checkoutStatus === 'success' && sessionId && orgId) {
-      verifyPayment.mutate({ sessionId, organizationId: orgId });
-      // Clean URL params
+      verifyRef.current({ sessionId, organizationId: orgId });
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('checkout');
       newParams.delete('session_id');
-      setSearchParams(newParams, { replace: true });
+      setSearchParamsRef.current(newParams, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, orgId]);
+
+  // Fix #2: Image error handler
+  const handleImageError = useCallback((url: string) => {
+    setFailedImages((prev) => {
+      const next = new Set(prev);
+      next.add(url);
+      return next;
+    });
+  }, []);
+
+  // Fix #3: Reset dialog state on close
+  const handleDialogClose = useCallback(() => {
+    setDialogOpen(false);
+    setQuantity(1);
+    setSelectedAccessories({});
+    setReqLocationId('');
+  }, []);
 
   const readerPrice = skuData?.skus?.[0]?.amount || 29900;
   const readerCurrency = skuData?.skus?.[0]?.currency || 'usd';
@@ -357,6 +378,8 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
   }, 0);
   const totalPrice = (readerPrice * quantity) + accessoriesTotalCents;
   const pricingSource = skuData?.source || 'fallback';
+
+  const readerImageFailed = readerImage ? failedImages.has(readerImage) : true;
 
   const toggleAccessory = (id: string) => {
     setSelectedAccessories((prev) => {
@@ -403,7 +426,6 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
       })),
     ];
 
-    // Create a hardware request record for platform admin visibility, then checkout
     createRequest.mutate(
       {
         organizationId: orgId,
@@ -421,7 +443,6 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
           });
         },
         onError: () => {
-          // Still allow checkout even if request creation fails
           createCheckout.mutate({
             organizationId: orgId,
             locationId: reqLocationId || undefined,
@@ -462,12 +483,13 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
         {/* Pricing preview */}
         <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
           <div className="flex items-center gap-4">
-            {readerImage ? (
-              <img src={readerImage} alt="S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }} />
-            ) : null}
-            <div className={cn("w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center", readerImage && "hidden")}>
-              <Smartphone className="w-6 h-6 text-primary" />
-            </div>
+            {readerImage && !readerImageFailed ? (
+              <img src={readerImage} alt="S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+            )}
             <div>
               <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
               <p className="text-xs text-muted-foreground">Cellular + WiFi · Store-and-forward · Countertop &amp; handheld</p>
@@ -543,7 +565,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
       </CardContent>
 
       {/* Purchase Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); else setDialogOpen(true); }}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle className="font-display text-lg tracking-wide">ORDER ZURA PAY READER S710</DialogTitle>
@@ -555,12 +577,13 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
             {/* Price display with product image */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
               <div className="flex items-center gap-3">
-                {readerImage ? (
-                  <img src={readerImage} alt="S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }} />
-                ) : null}
-                <div className={cn("w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center", readerImage && "hidden")}>
-                  <Smartphone className="w-7 h-7 text-primary" />
-                </div>
+                {readerImage && !readerImageFailed ? (
+                  <img src={readerImage} alt="S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
+                ) : (
+                  <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Smartphone className="w-7 h-7 text-primary" />
+                  </div>
+                )}
                 <div>
                   <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
                   <p className="text-xs text-muted-foreground">Cellular + WiFi connectivity</p>
@@ -583,6 +606,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
                 <div className="grid gap-2">
                   {accessories.map((acc) => {
                     const isSelected = !!selectedAccessories[acc.id];
+                    const accImageFailed = acc.image_url ? failedImages.has(acc.image_url) : true;
                     return (
                       <div key={acc.id} className={cn(
                         'flex items-center gap-3 p-3 rounded-lg border transition-colors',
@@ -593,12 +617,13 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
                           onClick={() => toggleAccessory(acc.id)}
                           className="flex items-center gap-3 flex-1 min-w-0 text-left"
                         >
-                          {acc.image_url ? (
-                            <img src={acc.image_url} alt={acc.product} className="w-10 h-10 rounded object-contain bg-white shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }} />
-                          ) : null}
-                          <div className={cn("w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0", acc.image_url && "hidden")}>
-                            <Package className="w-5 h-5 text-muted-foreground" />
-                          </div>
+                          {acc.image_url && !accImageFailed ? (
+                            <img src={acc.image_url} alt={acc.product} className="w-10 h-10 rounded object-contain bg-white shrink-0" onError={() => handleImageError(acc.image_url!)} />
+                          ) : (
+                            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                              <Package className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="font-sans text-sm font-medium truncate">{acc.product}</p>
                           </div>
@@ -685,7 +710,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={handleDialogClose}>Cancel</Button>
             <Button
               onClick={handlePurchase}
               disabled={createCheckout.isPending || skuLoading}
@@ -782,6 +807,11 @@ export function TerminalSettingsContent() {
 
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
+
+  // Fix #7: Compute affected reader count for delete location dialog
+  const affectedReaderCount = deleteLocationTarget
+    ? (readers?.filter((r) => r.location === deleteLocationTarget.id).length || 0)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -989,6 +1019,18 @@ export function TerminalSettingsContent() {
                               </>
                             )}
                           </div>
+                          {/* Fix #6: Show firmware and IP */}
+                          {(reader.device_sw_version || reader.ip_address) && (
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
+                              {reader.device_sw_version && (
+                                <span>FW {reader.device_sw_version}</span>
+                              )}
+                              {reader.device_sw_version && reader.ip_address && <span>·</span>}
+                              {reader.ip_address && (
+                                <span className="font-mono">{reader.ip_address}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1025,14 +1067,16 @@ export function TerminalSettingsContent() {
         </>
       )}
 
-      {/* Offline Payment Status */}
-      <OfflinePaymentStatus />
+      {/* Fix #5: Conditionally render OfflinePaymentStatus */}
+      {(readers && readers.length > 0) || showAllLocations ? (
+        <OfflinePaymentStatus />
+      ) : null}
 
       {/* Purchase Terminal Card */}
       <TerminalPurchaseCard locations={locations} />
 
-      {/* Checkout Display Concept */}
-      <CheckoutDisplayConcept businessName={locations?.[0]?.name || 'Your Salon'} />
+      {/* Fix #4: Use selectedLocation name for CheckoutDisplayConcept */}
+      <CheckoutDisplayConcept businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
 
       {/* Register Reader Wizard */}
       <RegisterReaderDialog
@@ -1056,8 +1100,10 @@ export function TerminalSettingsContent() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Terminal Location</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteLocationTarget?.name}"? Any readers assigned to this
-              location will need to be reassigned.
+              Are you sure you want to delete "{deleteLocationTarget?.name}"?
+              {affectedReaderCount > 0
+                ? ` This location has ${affectedReaderCount} reader${affectedReaderCount !== 1 ? 's' : ''} that will need to be reassigned.`
+                : ' Any readers assigned to this location will need to be reassigned.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
