@@ -148,6 +148,24 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
               </TooltipContent>
             </Tooltip>
           )}
+          {/* Retry button — only when failed + card on file */}
+          {appointment.payment_status === 'failed' && appointment.has_card_on_file && onRetryCharge && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRetryCharge(appointment);
+              }}
+              disabled={isRetrying}
+              className={cn(DOCK_BADGE.base, DOCK_BADGE.retryAction, 'inline-flex items-center gap-1 pointer-events-auto')}
+            >
+              {isRetrying ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3 h-3" />
+              )}
+              Retry
+            </button>
+          )}
           {/* Payment badge for completed appointments (non-failed) */}
           {appointment.status === 'completed' && appointment.payment_status !== 'failed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
             <span className={cn(DOCK_BADGE.base, PAYMENT_BADGE[appointment.payment_status || ''].variant)}>
