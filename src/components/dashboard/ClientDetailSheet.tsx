@@ -136,6 +136,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
   const { roles } = useAuth();
   const { selectedOrganization } = useOrganizationContext();
   const queryClient = useQueryClient();
+  const { data: disputeData } = useClientDisputes(client?.id, client?.email);
 
   const canMerge = roles.some(role => ['admin', 'manager', 'super_admin'].includes(role));
 
@@ -551,6 +552,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                 )}
                 <div className="flex flex-wrap gap-2 mt-1.5">
                   {client.is_banned && <BannedClientBadge size="md" />}
+                  {(disputeData?.totalCount ?? 0) > 0 && (
+                    <Badge variant="destructive" className="text-xs">
+                      <AlertTriangle className="w-3 h-3 mr-1" /> {disputeData!.totalCount} Dispute{disputeData!.totalCount > 1 ? 's' : ''}
+                    </Badge>
+                  )}
                   {client.is_archived && (
                     <Badge variant="secondary" className="text-xs">
                       <Archive className="w-3 h-3 mr-1" /> Archived
