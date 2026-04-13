@@ -269,7 +269,7 @@ export function TerminalRequestsTable() {
                 <PlatformTableCell>{req.location_name || '—'}</PlatformTableCell>
                 <PlatformTableCell>
                   <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30 text-[10px]">
-                    {((req as any).device_type || 's710').toUpperCase()}
+                    {(req.device_type || 's710').toUpperCase()}
                   </Badge>
                 </PlatformTableCell>
                 <PlatformTableCell>{REASON_LABELS[req.reason] || req.reason}</PlatformTableCell>
