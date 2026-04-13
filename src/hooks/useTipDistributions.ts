@@ -188,6 +188,7 @@ export function useProcessTipPayout() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tip-distributions'] });
+      queryClient.invalidateQueries({ queryKey: ['my-pending-tip-total'] });
       toast.success(`Tip payout of $${data.amount} processed successfully`);
     },
     onError: (error) => {

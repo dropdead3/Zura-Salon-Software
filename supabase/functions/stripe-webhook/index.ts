@@ -1028,6 +1028,20 @@ async function handleAccountUpdated(
         staffStatus = 'restricted';
       }
 
+      // Extract bank info from external_accounts in the webhook payload
+      let bankLast4: string | null = null;
+      let bankName: string | null = null;
+      const externalAccounts = (account as any).external_accounts;
+      if (externalAccounts?.data) {
+        const bankAccount = externalAccounts.data.find(
+          (a: any) => a.object === "bank_account"
+        );
+        if (bankAccount) {
+          bankLast4 = bankAccount.last4 || null;
+          bankName = bankAccount.bank_name || null;
+        }
+      }
+
       await supabase
         .from("staff_payout_accounts")
         .update({
@@ -1035,10 +1049,12 @@ async function handleAccountUpdated(
           charges_enabled: chargesEnabled,
           payouts_enabled: payoutsEnabled,
           details_submitted: detailsSubmitted,
+          bank_last4: bankLast4,
+          bank_name: bankName,
         })
         .eq("id", staffAccount.id);
 
-      console.log(`Staff payout account ${accountId} updated to ${staffStatus}`);
+      console.log(`Staff payout account ${accountId} updated to ${staffStatus}, bank: ${bankName || 'N/A'} ...${bankLast4 || 'N/A'}`);
       return;
     }
 
