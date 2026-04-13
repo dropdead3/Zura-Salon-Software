@@ -65,6 +65,7 @@ interface QuickLoginState {
 
 
 export default function Schedule() {
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const location = useLocation();
   const { preferences } = useCalendarPreferences();
