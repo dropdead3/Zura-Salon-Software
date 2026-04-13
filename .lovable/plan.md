@@ -1,47 +1,57 @@
 
 
-# Update `charge.refunded` Handler to Support Partial Refund Status
+# Update `payment_intent.payment_failed` Handler for Card-on-File Charges
 
 ## Problem
 
-The existing `handleChargeRefunded` handler already detects partial refunds (comparing `amount_refunded` vs `amount`) but only logs the result — it does not update the appointment's `payment_status`. Staff have no visibility into partially refunded appointments without checking the Stripe Dashboard.
+The existing `handleTerminalPaymentIntentFailed` handler fires for all `payment_intent.payment_failed` events on Connected Accounts — including card-on-file charges — but it doesn't extract `charge_type` from metadata. The handler works correctly (sets `payment_status: 'failed'`), but the function name and logging are misleading, and the error message from Stripe's `last_payment_error` could be stored for staff visibility.
 
 ## Changes
 
-### 1. Update partial refund branch in `handleChargeRefunded`
+### 1. Rename and enhance `handleTerminalPaymentIntentFailed` → `handlePaymentIntentFailed`
 **File:** `supabase/functions/stripe-webhook/index.ts`
 
-In the existing handler (around line 984), the `else` branch currently just logs. Update it to set `payment_status: 'partially_refunded'`:
+- Read `metadata.charge_type` to distinguish terminal vs card-on-file failures
+- Store the Stripe error reason in a new `payment_failure_reason` column so front desk staff can see *why* the charge failed (e.g., "Your card was declined", "Insufficient funds")
+- Update logging to reflect charge type
+- Keep existing idempotency guard (`neq('payment_status', 'paid')`)
 
 ```text
-Before (line 984-986):
-  } else {
-    console.log(`Partial refund on appointment ${appointment.id}: ...`);
-  }
+Before:
+  .update({ payment_status: 'failed' })
 
 After:
-  } else {
-    await supabase
-      .from("appointments")
-      .update({ payment_status: "partially_refunded" })
-      .eq("id", appointment.id);
-    console.log(`Appointment ${appointment.id} marked as partially refunded: ${refundAmount}/${chargeAmount} cents`);
-  }
+  .update({
+    payment_status: 'failed',
+    payment_failure_reason: errorMsg,
+  })
 ```
 
-### 2. Surface `partially_refunded` status in UI
+### 2. Migration: Add `payment_failure_reason` column to appointments
 
-Since no frontend code currently references this status, the relevant appointment status displays (dock, calendar, payment ops) should handle the new value gracefully. The status badge/color system in `design-tokens.ts` may need a new entry for `partially_refunded` if it renders appointment payment statuses visually.
+```sql
+ALTER TABLE appointments
+ADD COLUMN IF NOT EXISTS payment_failure_reason text;
+```
 
-- Add a `partially_refunded` entry to any payment status color/config maps
-- Ensure dock and calendar components render the badge correctly (they already fall through to default styling for unknown statuses, so this is cosmetic polish)
+This gives the Operations Hub and dock cards access to the decline reason without requiring a Stripe Dashboard lookup.
+
+### 3. Update switch case reference
+
+Rename the function call from `handleTerminalPaymentIntentFailed` to `handlePaymentIntentFailed` in the switch statement.
+
+## Technical Details
+
+- The `charge-card-on-file` edge function already sets `metadata: { charge_type: "card_on_file", appointment_id: "..." }` on PaymentIntents, so the failed event carries the same metadata
+- The handler already correctly guards against overwriting `paid` status
+- No UI changes in this step — the `payment_failure_reason` column is available for future Operations Hub display
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `supabase/functions/stripe-webhook/index.ts` | Update partial refund branch to write `partially_refunded` status |
-| UI status maps (if applicable) | Add `partially_refunded` badge styling |
+| **Migration** | Add `payment_failure_reason` column to `appointments` |
+| `supabase/functions/stripe-webhook/index.ts` | Rename handler, extract `charge_type`, store failure reason |
 
-0 migrations, 0 new edge functions, 0 new dependencies.
+1 migration, 0 new edge functions, 0 new dependencies.
 
