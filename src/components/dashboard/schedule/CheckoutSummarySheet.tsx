@@ -484,12 +484,21 @@ export function CheckoutSummarySheet({
         const result = await terminalFlow.startCheckout({
           organizationId,
           readerId: activeReader.id,
-          amount: Math.round(grandTotal * 100), // grandTotal includes tip
+          amount: Math.round(amountDueAfterDeposit * 100), // Charge only remaining after deposit
           tipAmount: Math.round(tipAmount * 100),
           appointmentId: appointment.id,
           lineItems,
           tax: Math.round(tax * 100),
         });
+
+        // E2: Auto-capture held deposit after successful card payment
+        if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
+          try {
+            await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
+          } catch (e) {
+            console.error('Failed to capture deposit (payment still succeeded):', e);
+          }
+        }
 
         onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
           method: 'card_reader',
