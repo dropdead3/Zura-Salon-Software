@@ -638,15 +638,43 @@ async function handleChargeRefunded(
 
   console.log(`charge.refunded for PI: ${piId}`);
 
-  // Find appointment by PI ID
-  const { data: appointment } = await supabase
+  // Find appointment by PI ID (standard service payment)
+  let { data: appointment } = await supabase
     .from("appointments")
-    .select("id, organization_id, payment_status")
+    .select("id, organization_id, payment_status, cancellation_fee_status, cancellation_fee_charged")
     .eq("stripe_payment_intent_id", piId)
     .single();
 
+  // Fallback: check if this PI belongs to a cancellation fee charge
+  let isCancellationFeeRefund = false;
+  if (!appointment) {
+    const { data: feeAppt } = await supabase
+      .from("appointments")
+      .select("id, organization_id, payment_status, cancellation_fee_status, cancellation_fee_charged")
+      .eq("cancellation_fee_stripe_payment_id", piId)
+      .single();
+
+    if (feeAppt) {
+      appointment = feeAppt;
+      isCancellationFeeRefund = true;
+    }
+  }
+
   if (!appointment) {
     console.log(`No appointment found for PI ${piId} — may be a non-terminal refund`);
+    return;
+  }
+
+  // Handle cancellation fee refund separately
+  if (isCancellationFeeRefund) {
+    await supabase
+      .from("appointments")
+      .update({
+        cancellation_fee_status: "refunded",
+        cancellation_fee_charged: 0,
+      })
+      .eq("id", appointment.id);
+    console.log(`Cancellation fee refunded for appointment ${appointment.id}`);
     return;
   }
 

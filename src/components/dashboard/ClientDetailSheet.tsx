@@ -70,6 +70,9 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useClientTransactionHistory } from '@/hooks/useClientTransactionHistory';
 import { TransactionHistoryTimeline } from './TransactionHistoryTimeline';
 import { ClientAffinityBadges } from './clients/ClientAffinityBadges';
+import { useClientCardsOnFile, useDeleteClientCard, useSetDefaultCard } from '@/hooks/useDepositData';
+import { CreditCard, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 interface Client {
