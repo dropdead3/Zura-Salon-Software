@@ -1,89 +1,81 @@
 
 
-# Stripe Terminal Configurator — Organization Settings
+# Stripe Terminal Configurator — Audit Report
 
-## Overview
+## Findings Summary
 
-Build a complete Stripe Terminal management experience inside the organization dashboard Settings, allowing org admins to register terminal locations, pair readers, and manage their hardware fleet. Designed for multi-location organizations with multiple readers per site.
+3 bugs, 2 security gaps, 6 enhancements identified.
 
-## Architecture
+---
 
-```text
-Settings Grid → "Terminals" card (NEW)
-└── SettingsCategoryDetail → "terminals" tab
-    ├── Location Selector (top bar)
-    │   └── Dropdown of org locations with Zura Pay status
-    ├── Terminal Locations Panel
-    │   ├── List Stripe Terminal Locations for selected location
-    │   ├── Create Terminal Location (maps address from org location)
-    │   └── Delete Terminal Location
-    └── Terminal Readers Panel
-        ├── List readers with status badges (online/offline)
-        ├── Register Reader wizard (pairing code + location assignment)
-        └── Deregister Reader (with confirmation)
+## Bugs
 
-Gate: Entire section hidden if org has zero locations with stripe_account_id
-```
+### B1. CORS headers missing modern Supabase client headers
+The edge function's `corsHeaders` omits `x-supabase-client-platform`, `x-supabase-client-platform-version`, `x-supabase-client-runtime`, `x-supabase-client-runtime-version`. Modern `supabase-js` sends these and some proxies/browsers may reject the preflight.
 
-## Changes
+**Fix**: Update `corsHeaders` in `manage-stripe-terminals/index.ts` to include all required headers per the SDK convention.
 
-### 1. Edge Function: `supabase/functions/manage-stripe-terminals/index.ts`
-Single edge function handling all terminal CRUD via `action` parameter:
-- `list_locations` — `GET /v1/terminal/locations` with `Stripe-Account` header
-- `create_location` — `POST /v1/terminal/locations` (display_name, address from org location)
-- `delete_location` — `DELETE /v1/terminal/locations/:id`
-- `list_readers` — `GET /v1/terminal/readers` (optionally filtered by location)
-- `register_reader` — `POST /v1/terminal/readers` (registration_code + location)
-- `delete_reader` — `DELETE /v1/terminal/readers/:id`
+### B2. Hardcoded postal code `"00000"` when creating terminal locations
+Line 141 of the edge function hardcodes `postal_code: "00000"`. The `locations` table likely has a `postal_code` or `zip_code` column that should be used instead.
 
-Auth: Verifies caller is org member, looks up `stripe_account_id` from the location record, uses `Stripe-Account` header for all calls.
+**Fix**: Query `postal_code` (or equivalent column) from the locations table and pass it through. Fall back to empty string only if truly missing.
 
-### 2. Hook: `src/hooks/useStripeTerminals.ts`
-React Query hooks wrapping the edge function:
-- `useTerminalLocations(locationId)` — list terminal locations for a given org location
-- `useTerminalReaders(locationId, terminalLocationId?)` — list readers
-- `useCreateTerminalLocation()` — mutation
-- `useRegisterReader()` — mutation
-- `useDeleteReader()` — mutation
-- All queries keyed by org location ID for proper cache isolation
+### B3. Delete actions close dialog before mutation completes
+`handleDeleteLocation` and `handleDeleteReader` call the mutation with `onSuccess: () => setDeleteTarget(null)`, but the `AlertDialogAction` also triggers the dialog's `onOpenChange` immediately on click, potentially closing the dialog before the mutation finishes and hiding the loading spinner.
 
-### 3. UI Component: `src/components/dashboard/settings/TerminalSettingsContent.tsx`
-Main settings content component following existing patterns:
-- **Location picker** at top — dropdown of org locations that have `stripe_account_id` (Zura Pay active)
-- **Terminal Locations card** — list with create button, each showing reader count
-- **Terminal Readers card** — list with status badges, register button
-- **Register Reader dialog** — wizard-style: Step 1: Select/create terminal location → Step 2: Enter pairing code → Step 3: Confirmation
-- **Empty state** when no Zura Pay locations exist — explains prerequisite with clear messaging
-- Follows design tokens: `font-display` for headers, `tokens.card.*`, `tokens.empty.*`
+**Fix**: Prevent default close on the `AlertDialogAction` and only close programmatically in `onSuccess`/`onError`.
 
-### 4. Settings Grid Integration
-- **`src/pages/dashboard/admin/Settings.tsx`**: Add `'terminals'` to `categoriesMap` with `CreditCard` icon (or `Smartphone` icon)
-- **`src/components/dashboard/settings/SettingsCategoryDetail.tsx`**:
-  - Add `'terminals'` to `SettingsCategory` union type
-  - Add lazy import for `TerminalSettingsContent`
-  - Render when `activeCategory === 'terminals'`
+---
 
-### Multi-Location UX Design
-For orgs with many locations and multiple terminals:
-- Location picker shows location name + reader count badge
-- Each terminal location shows its readers inline (expandable rows)
-- Bulk view: "All Locations" option shows summary table — location name, terminal location count, total readers, online/offline counts
-- Reader status uses `tokens.status` color coding (green = online, muted = offline)
+## Security Gaps
 
-### Gating
-- Settings card only visible when org has at least one location with `stripe_account_id`
-- Individual location sections only show for Zura Pay-connected locations
-- Non-connected locations show inline note: "Connect to Zura Pay to manage terminals"
+### S1. No role-based gating on destructive actions
+The edge function checks org membership but not role. Any org member (including stylists) can delete terminal locations and readers. Only admins/managers should perform these actions.
 
-## Files
+**Fix**: Query the user's role from `user_roles` or `organization_members` and restrict `create_location`, `delete_location`, `register_reader`, `delete_reader` to admin/manager roles. Read-only `list_*` actions can remain available to all members.
 
-| File | Action |
+### S2. No input validation (Zod) in edge function
+The `action` param and all `params` values are used without sanitization. The `terminal_location_id` and `reader_id` are interpolated directly into URL paths, risking path traversal if malformed.
+
+**Fix**: Add Zod validation for the request body. Validate that IDs match expected Stripe ID patterns (`tml_*`, `tmr_*`).
+
+---
+
+## Enhancements
+
+### E1. Missing postal code from locations query
+The `useZuraPayLocations` hook selects `address, city, state_province` but not `postal_code`. This data would be useful for display and is needed for the address fix in B2.
+
+### E2. No "All Locations" summary view
+The plan specified a bulk "All Locations" view showing a summary table with terminal/reader counts per location. This was not implemented.
+
+**Fix**: Add an "All Locations" option to the location picker that renders a summary table showing each location's terminal location count, total readers, and online/offline breakdown.
+
+### E3. Reader count badge missing from location picker
+The plan specified the location picker should show reader count badges next to each location name. Currently only a text label below the picker shows the count.
+
+**Fix**: Add inline badge with reader count inside each `SelectItem` in the location picker.
+
+### E4. No error recovery on registration wizard failure
+If `registerReader.mutate` fails in step 2, the user sees a toast but the wizard stays on step 2 with no indication of what went wrong inline. The pairing code field retains its value, which is good, but there's no inline error message.
+
+**Fix**: Display the error message inline below the pairing code field on failure.
+
+### E5. Missing `MetricInfoTooltip` on card titles
+Per UI Canon, every analytics/dashboard card must have a `MetricInfoTooltip` inline with the title. Both the Terminal Locations and Terminal Readers cards omit this.
+
+### E6. Buttons should use `tokens.button.*` sizing
+The "Create Location" and "Register Reader" buttons use raw `size="sm"` instead of `tokens.button.card` or `tokens.button.cardAction` per the design token system.
+
+---
+
+## Files Changed
+
+| File | Changes |
 |---|---|
-| `supabase/functions/manage-stripe-terminals/index.ts` | Create — Stripe Terminal CRUD edge function |
-| `src/hooks/useStripeTerminals.ts` | Create — React Query hooks |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Create — Terminal management UI |
-| `src/pages/dashboard/admin/Settings.tsx` | Add terminals to categories map |
-| `src/components/dashboard/settings/SettingsCategoryDetail.tsx` | Add terminals category + lazy import |
+| `supabase/functions/manage-stripe-terminals/index.ts` | B1 (CORS), B2 (postal code), S1 (role check), S2 (Zod validation) |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | B3 (dialog close), E2 (all-locations view), E3 (picker badges), E4 (inline errors), E5 (tooltips), E6 (button tokens) |
+| `src/hooks/useStripeTerminals.ts` | E1 (postal code in query) |
 
-5 files (3 new, 2 modified). No database changes needed — all state lives in Stripe API.
+3 files modified. No database changes. No new dependencies (Zod is available in Deno edge runtime).
 
