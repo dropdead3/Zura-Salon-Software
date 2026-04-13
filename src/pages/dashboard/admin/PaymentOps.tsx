@@ -53,6 +53,7 @@ import {
   ChevronDown,
   Wallet,
   ExternalLink,
+  Scale,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -762,6 +763,11 @@ export default function PaymentOps() {
               <Receipt className="w-4 h-4 mr-1.5" />
               Fee Charges
             </TabsTrigger>
+            <TabsTrigger value="disputes">
+              <Scale className="w-4 h-4 mr-1.5" />
+              Disputes
+              <DisputesBadge orgId={orgId} />
+            </TabsTrigger>
           </ResponsiveTabsList>
 
           {/* Payouts */}
@@ -1140,6 +1146,11 @@ export default function PaymentOps() {
           {/* Fee Charges */}
           <TabsContent value="fees">
             <FeeLedgerCard orgId={orgId} formatCurrency={formatCurrency} />
+          </TabsContent>
+
+          {/* Disputes */}
+          <TabsContent value="disputes">
+            <DisputesCard orgId={orgId} formatCurrency={formatCurrency} />
           </TabsContent>
         </Tabs>
 
