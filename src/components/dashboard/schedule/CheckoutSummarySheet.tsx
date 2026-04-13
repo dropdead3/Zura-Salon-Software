@@ -837,6 +837,85 @@ export function CheckoutSummarySheet({
 
       {gatePhase === 'checkout' && (
         <div className="p-5 pt-0 space-y-3 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          {/* Payment Method Selector */}
+          <div className="space-y-2 pt-2">
+            <Label className="text-xs text-muted-foreground">Payment Method</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 'card_reader' as const, label: 'Card', icon: CreditCard, disabled: !hasReaders },
+                { value: 'cash' as const, label: 'Cash', icon: Banknote, disabled: false },
+                { value: 'other' as const, label: 'Other', icon: Wallet, disabled: false },
+              ].map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  disabled={m.disabled}
+                  onClick={() => setPaymentMethod(m.value)}
+                  className={cn(
+                    'flex items-center gap-2 p-2.5 rounded-lg border text-sm font-medium transition-colors',
+                    paymentMethod === m.value
+                      ? 'border-primary bg-primary/5 text-foreground'
+                      : 'border-border text-muted-foreground hover:bg-muted/50',
+                    m.disabled && 'opacity-40 cursor-not-allowed'
+                  )}
+                >
+                  <m.icon className="h-4 w-4" />
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Reader selector (only when Card is selected and multiple readers) */}
+            {paymentMethod === 'card_reader' && hasReaders && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Wifi className="h-3 w-3 text-emerald-500" />
+                {readers.length > 1 ? (
+                  <Select value={selectedReaderId || ''} onValueChange={selectReader}>
+                    <SelectTrigger className="h-7 text-xs w-auto">
+                      <SelectValue placeholder="Select reader" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {readers.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.label || r.id.slice(-8)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span>{activeReader?.label || 'Reader connected'}</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Terminal flow status */}
+          {paymentMethod === 'card_reader' && terminalFlow.flowState !== 'idle' && (
+            <div className={cn(
+              'flex items-center gap-2 p-3 rounded-lg text-sm',
+              terminalFlow.flowState === 'succeeded' && 'bg-emerald-500/10 text-emerald-700',
+              terminalFlow.flowState === 'failed' && 'bg-destructive/10 text-destructive',
+              !['succeeded', 'failed'].includes(terminalFlow.flowState) && 'bg-primary/5 text-primary',
+            )}>
+              {!['succeeded', 'failed', 'cancelled'].includes(terminalFlow.flowState) && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+              {terminalFlow.flowState === 'succeeded' && <CheckCircle2 className="h-4 w-4" />}
+              {terminalFlow.flowState === 'failed' && <XCircle className="h-4 w-4" />}
+              <span>{terminalFlow.stateLabel}</span>
+              {terminalFlow.error && terminalFlow.flowState === 'failed' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-6 text-xs"
+                  onClick={() => terminalFlow.reset()}
+                >
+                  Retry
+                </Button>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-muted-foreground">Total Charge</span>
             <span className="text-xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
@@ -851,21 +930,41 @@ export function CheckoutSummarySheet({
               <Download className="w-4 h-4 mr-2" />
               Receipt
             </Button>
-            <Button 
-              onClick={handleConfirm} 
-              disabled={isUpdating}
-              className="w-full font-bold shadow-lg shadow-primary/20"
-              size="lg"
-            >
-              {isUpdating ? (
-                'Processing...' 
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Complete
-                </>
-              )}
-            </Button>
+            {paymentMethod === 'card_reader' && ['awaiting_tap', 'processing', 'displaying_cart'].includes(terminalFlow.flowState) ? (
+              <Button
+                variant="destructive"
+                onClick={() => activeReader && organizationId && terminalFlow.cancelCheckout(activeReader.id, organizationId)}
+                className="w-full"
+                size="lg"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleConfirm} 
+                disabled={isUpdating || (paymentMethod === 'card_reader' && !activeReader) || ['creating_intent', 'displaying_cart', 'awaiting_tap', 'processing'].includes(terminalFlow.flowState)}
+                className="w-full font-medium shadow-lg shadow-primary/20"
+                size="lg"
+              >
+                {isUpdating || ['creating_intent', 'displaying_cart', 'awaiting_tap', 'processing'].includes(terminalFlow.flowState) ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing…
+                  </>
+                ) : paymentMethod === 'card_reader' ? (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Charge {formatCurrency(grandTotal)}
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Complete
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       )}
