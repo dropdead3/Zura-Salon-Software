@@ -1305,36 +1305,49 @@ export default function PaymentOps() {
                           <TableCell>
                             <BlurredAmount>{formatCurrency(hold.deposit_amount ?? 0)}</BlurredAmount>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className={tokens.button.inline}
-                                onClick={() => setConfirmAction({
-                                  type: 'capture',
-                                  id: hold.deposit_stripe_payment_id!,
-                                  label: `Capture ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
-                                  amount: hold.deposit_amount ?? 0,
-                                })}
-                              >
-                                Capture
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className={tokens.button.inline}
-                                onClick={() => setConfirmAction({
-                                  type: 'release',
-                                  id: hold.deposit_stripe_payment_id!,
-                                  label: `Release ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
-                                  amount: hold.deposit_amount ?? 0,
-                                })}
-                              >
-                                Release
-                              </Button>
-                            </div>
-                          </TableCell>
+                          {holdStatus !== 'held' && (
+                            <TableCell>
+                              <Badge variant={hold.deposit_status === 'held' ? 'secondary' : 'outline'} className="capitalize">
+                                {hold.deposit_status}
+                              </Badge>
+                            </TableCell>
+                          )}
+                          {(holdStatus === 'held' || holdStatus === 'all') && (
+                            <TableCell>
+                              {hold.deposit_status === 'held' ? (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    className={tokens.button.inline}
+                                    onClick={() => setConfirmAction({
+                                      type: 'capture',
+                                      id: hold.deposit_stripe_payment_id!,
+                                      label: `Capture ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                      amount: hold.deposit_amount ?? 0,
+                                    })}
+                                  >
+                                    Capture
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className={tokens.button.inline}
+                                    onClick={() => setConfirmAction({
+                                      type: 'release',
+                                      id: hold.deposit_stripe_payment_id!,
+                                      label: `Release ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                      amount: hold.deposit_amount ?? 0,
+                                    })}
+                                  >
+                                    Release
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
