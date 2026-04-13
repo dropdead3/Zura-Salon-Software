@@ -1080,17 +1080,32 @@ async function handleDisputeCreated(
   let appointmentId: string | null = null;
   let clientName: string | null = null;
   let clientEmail: string | null = null;
+  let clientId: string | null = null;
 
   if (piId) {
     const { data: appt } = await supabase
       .from("appointments")
-      .select("id, client_name, client_email")
+      .select("id, client_name, client_email, client_id")
       .eq("stripe_payment_intent_id", piId)
       .maybeSingle();
     if (appt) {
       appointmentId = appt.id;
       clientName = appt.client_name;
       clientEmail = appt.client_email;
+      clientId = appt.client_id;
+    }
+  }
+
+  // Resolve client_id from email if not found via appointment
+  if (!clientId && clientEmail) {
+    const { data: matchedClient } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("organization_id", org.id)
+      .ilike("email", clientEmail)
+      .maybeSingle();
+    if (matchedClient) {
+      clientId = matchedClient.id;
     }
   }
 
@@ -1108,6 +1123,7 @@ async function handleDisputeCreated(
     appointment_id: appointmentId,
     client_name: clientName,
     client_email: clientEmail,
+    client_id: clientId,
     metadata: { connected_account: connectedAccountId },
   });
 
