@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { RecurrenceSelector, type RecurrenceRule } from './RecurrenceSelector';
+import { Badge } from '@/components/ui/badge';
 import { 
   User, 
   Scissors, 
@@ -15,7 +16,9 @@ import {
   DollarSign,
   Loader2,
   StickyNote,
-  Info
+  Info,
+  CreditCard,
+  ShieldCheck,
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -26,6 +29,10 @@ interface Service {
   name: string;
   duration_minutes: number;
   price: number | null;
+  requires_deposit?: boolean;
+  deposit_type?: string;
+  deposit_amount?: number | null;
+  require_card_on_file?: boolean;
 }
 
 interface ConfirmStepProps {
@@ -173,6 +180,29 @@ export function ConfirmStep({
               ))}
             </div>
           </div>
+
+          {/* Deposit & Card-on-File Badges */}
+          {services.some(s => s.requires_deposit || s.require_card_on_file) && (
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
+                {services.filter(s => s.requires_deposit).map(s => (
+                  <Badge key={s.id} variant="outline" className="text-xs text-amber-700 dark:text-amber-300 border-amber-300">
+                    <DollarSign className="h-3 w-3 mr-1" />
+                    Deposit: {s.deposit_type === 'flat' ? `$${s.deposit_amount}` : s.deposit_type === 'full_prepay' ? 'Full Prepay' : `${s.deposit_amount}%`}
+                  </Badge>
+                ))}
+                {services.some(s => s.require_card_on_file) && (
+                  <Badge variant="outline" className="text-xs text-blue-700 dark:text-blue-300 border-blue-300">
+                    <CreditCard className="h-3 w-3 mr-1" />
+                    Card On File Required
+                  </Badge>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground/70">
+                Deposits will be collected at time of service or via the terminal.
+              </p>
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-3">

@@ -49,6 +49,11 @@ export interface PhorestAppointment {
   deposit_status?: string | null;
   deposit_stripe_payment_id?: string | null;
   deposit_applied_to_total?: boolean;
+  // Cancellation fee fields
+  cancellation_fee_charged?: number | null;
+  cancellation_fee_status?: string | null;
+  cancellation_fee_stripe_payment_id?: string | null;
+  card_on_file_id?: string | null;
   // Payment metadata
   stripe_payment_intent_id?: string | null;
   payment_method?: string | null;

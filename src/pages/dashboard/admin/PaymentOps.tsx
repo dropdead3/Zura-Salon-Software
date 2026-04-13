@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -38,7 +39,106 @@ import {
   ArrowLeft,
   Calendar,
   HandCoins,
+  UserX,
 } from 'lucide-react';
+
+// ─── Cancellation Fee Queue Sub-component ─────────────────────
+function CancellationFeeQueueCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+  const { data: feeAppointments = [], isLoading } = useQuery({
+    queryKey: ['cancellation-fee-queue', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('id, client_name, appointment_date, status, total_price, cancellation_fee_status, cancellation_fee_charged, card_on_file_id, staff_name')
+        .eq('organization_id', orgId!)
+        .in('status', ['cancelled', 'no_show'])
+        .or('cancellation_fee_status.is.null,cancellation_fee_status.eq.pending')
+        .order('appointment_date', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <UserX className={tokens.card.icon} />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>
+              Cancellation & No-Show Fees
+              <MetricInfoTooltip description="Appointments marked as cancelled or no-show that may have fees pending collection." />
+            </CardTitle>
+            <CardDescription>Fee enforcement for cancelled and no-show appointments</CardDescription>
+          </div>
+          {feeAppointments.length > 0 && (
+            <Badge variant="secondary" className="ml-auto">{feeAppointments.length} pending</Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className={tokens.loading.spinner} />
+          </div>
+        ) : feeAppointments.length === 0 ? (
+          <div className={tokens.empty.container}>
+            <UserX className={tokens.empty.icon} />
+            <h3 className={tokens.empty.heading}>No pending fees</h3>
+            <p className={tokens.empty.description}>
+              Cancelled and no-show fees are managed from individual appointment detail panels.
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={tokens.table.columnHeader}>Client</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Date</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Service Total</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Card</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {feeAppointments.map((apt) => (
+                <TableRow key={apt.id}>
+                  <TableCell className="font-medium">{apt.client_name || 'Unknown'}</TableCell>
+                  <TableCell className="text-muted-foreground">{apt.staff_name || '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {format(new Date(apt.appointment_date), 'MMM d, yyyy')}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={apt.status === 'no_show' ? 'destructive' : 'secondary'}>
+                      {apt.status === 'no_show' ? 'No Show' : 'Cancelled'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <BlurredAmount>{formatCurrency(apt.total_price ?? 0)}</BlurredAmount>
+                  </TableCell>
+                  <TableCell>
+                    {apt.card_on_file_id ? (
+                      <Badge variant="outline" className="text-[10px] text-green-600 border-green-300">
+                        <CreditCard className="h-3 w-3 mr-0.5" /> On file
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">None</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function PaymentOps() {
   const { dashPath } = useOrgDashboardPath();
@@ -509,6 +609,9 @@ export default function PaymentOps() {
               )}
             </CardContent>
           </Card>
+
+          {/* Cancellation Fee Queue */}
+          <CancellationFeeQueueCard orgId={orgId} formatCurrency={formatCurrency} />
         </div>
 
         {/* E1: Confirmation dialog for destructive financial actions */}

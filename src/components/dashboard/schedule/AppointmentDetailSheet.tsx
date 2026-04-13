@@ -94,6 +94,280 @@ import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpda
 import { Pencil } from 'lucide-react';
 
 
+// ─── Cancellation Fee Section sub-component ─────────────────────
+function CancellationFeeSection({
+  appointment,
+  organizationId,
+  isManagerOrAdmin,
+  formatCurrency,
+}: {
+  appointment: PhorestAppointment;
+  organizationId: string;
+  isManagerOrAdmin: boolean;
+  formatCurrency: (n: number) => string;
+}) {
+  const [isCharging, setIsCharging] = useState(false);
+  const [isWaiving, setIsWaiving] = useState(false);
+  const [showChargeConfirm, setShowChargeConfirm] = useState(false);
+  const [showManualCharge, setShowManualCharge] = useState(false);
+  const [manualAmount, setManualAmount] = useState('');
+  const queryClient = useQueryClient();
+
+  const feeStatus = appointment.cancellation_fee_status;
+  const feeCharged = appointment.cancellation_fee_charged;
+
+  // Look up card on file for the client (use phorest_client_id)
+  const { data: clientCards = [] } = useQuery({
+    queryKey: ['client-cards-for-fee', organizationId, appointment.phorest_client_id],
+    queryFn: async () => {
+      if (!appointment.phorest_client_id) return [];
+      const { data, error } = await supabase
+        .from('client_cards_on_file')
+        .select('id, card_brand, card_last4, is_default')
+        .eq('organization_id', organizationId)
+        .eq('client_id', appointment.phorest_client_id)
+        .order('is_default', { ascending: false });
+      if (error) return [];
+      return data ?? [];
+    },
+    enabled: !!appointment.phorest_client_id,
+  });
+
+  // Look up cancellation fee policies
+  const { data: feePolicies = [] } = useQuery({
+    queryKey: ['cancel-fee-policies', organizationId],
+    queryFn: async () => {
+      const policyType = appointment.status === 'no_show' ? 'no_show' : 'cancellation';
+      const { data, error } = await supabase
+        .from('cancellation_fee_policies')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('policy_type', policyType)
+        .eq('is_active', true)
+        .limit(1);
+      if (error) return [];
+      return data ?? [];
+    },
+    enabled: !!organizationId,
+  });
+
+  const policy = feePolicies[0];
+  const defaultCard = clientCards[0];
+  const hasCard = clientCards.length > 0;
+
+  const calculatedFee = policy
+    ? policy.fee_type === 'flat'
+      ? policy.fee_amount
+      : policy.fee_type === 'percentage' && appointment.total_price
+        ? Math.round((appointment.total_price * policy.fee_amount / 100) * 100) / 100
+        : policy.fee_amount
+    : null;
+
+  const handleChargeFee = async () => {
+    if (!defaultCard || calculatedFee == null) return;
+    setIsCharging(true);
+    try {
+      const { error } = await supabase.functions.invoke('charge-card-on-file', {
+        body: {
+          organization_id: organizationId,
+          appointment_id: appointment.id,
+          card_on_file_id: defaultCard.id,
+          amount: calculatedFee,
+          description: `${appointment.status === 'no_show' ? 'No-show' : 'Cancellation'} fee for ${appointment.client_name || 'client'}`,
+          fee_type: appointment.status === 'no_show' ? 'no_show' : 'cancellation',
+        },
+      });
+      if (error) throw error;
+      toast.success('Fee charged successfully');
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+    } catch (e) {
+      toast.error('Failed to charge fee', { description: (e as Error).message });
+    } finally {
+      setIsCharging(false);
+      setShowChargeConfirm(false);
+    }
+  };
+
+  const handleWaiveFee = async () => {
+    setIsWaiving(true);
+    try {
+      const table = appointment._source === 'local' ? 'appointments' : 'phorest_appointments';
+      const { error } = await supabase
+        .from(table)
+        .update({ cancellation_fee_status: 'waived' } as any)
+        .eq('id', appointment.id);
+      if (error) throw error;
+      toast.success('Fee waived');
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+    } catch (e) {
+      toast.error('Failed to waive fee', { description: (e as Error).message });
+    } finally {
+      setIsWaiving(false);
+    }
+  };
+
+  const handleManualCharge = async () => {
+    const amt = parseFloat(manualAmount);
+    if (!defaultCard || isNaN(amt) || amt <= 0) return;
+    setIsCharging(true);
+    try {
+      const { error } = await supabase.functions.invoke('charge-card-on-file', {
+        body: {
+          organization_id: organizationId,
+          appointment_id: appointment.id,
+          card_on_file_id: defaultCard.id,
+          amount: amt,
+          description: `Manual charge for ${appointment.client_name || 'client'}`,
+          fee_type: 'manual',
+        },
+      });
+      if (error) throw error;
+      toast.success(`Charged $${amt.toFixed(2)} to card on file`);
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      setShowManualCharge(false);
+      setManualAmount('');
+    } catch (e) {
+      toast.error('Charge failed', { description: (e as Error).message });
+    } finally {
+      setIsCharging(false);
+    }
+  };
+
+  // Already charged or waived
+  if (feeStatus === 'charged' || feeStatus === 'waived') {
+    return (
+      <div className="flex items-center justify-between py-2">
+        <span className="text-sm text-muted-foreground">
+          {appointment.status === 'no_show' ? 'No-Show' : 'Cancellation'} Fee
+        </span>
+        <div className="flex items-center gap-2">
+          {feeCharged != null && (
+            <span className="text-xs">
+              <BlurredAmount>{formatCurrency(feeCharged)}</BlurredAmount>
+            </span>
+          )}
+          <Badge
+            variant="outline"
+            className={cn('text-[10px]', {
+              'text-green-600 border-green-300': feeStatus === 'charged',
+              'text-muted-foreground border-border': feeStatus === 'waived',
+            })}
+          >
+            {feeStatus === 'charged' ? 'Charged' : 'Waived'}
+          </Badge>
+        </div>
+      </div>
+    );
+  }
+
+  if (feeStatus === 'failed') {
+    return (
+      <div className="flex items-center justify-between py-2">
+        <span className="text-sm text-muted-foreground">Fee Charge</span>
+        <Badge variant="outline" className="text-[10px] text-red-600 border-red-300">Failed</Badge>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 py-2 border-t border-dashed">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">
+          {appointment.status === 'no_show' ? 'No-Show' : 'Cancellation'} Fee
+        </span>
+        {calculatedFee != null && (
+          <span className="text-sm font-medium">{formatCurrency(calculatedFee)}</span>
+        )}
+      </div>
+
+      {hasCard && calculatedFee != null && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            className="flex-1 text-xs"
+            onClick={() => setShowChargeConfirm(true)}
+            disabled={isCharging}
+          >
+            <CreditCard className="w-3.5 h-3.5 mr-1" />
+            Charge {defaultCard.card_brand} •••• {defaultCard.card_last4}
+          </Button>
+          {isManagerOrAdmin && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs"
+              onClick={handleWaiveFee}
+              disabled={isWaiving}
+            >
+              Waive
+            </Button>
+          )}
+        </div>
+      )}
+
+      {hasCard && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="w-full text-xs text-muted-foreground"
+          onClick={() => setShowManualCharge(!showManualCharge)}
+        >
+          Custom Amount
+        </Button>
+      )}
+
+      {showManualCharge && (
+        <div className="flex gap-2">
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Amount"
+            value={manualAmount}
+            onChange={e => setManualAmount(e.target.value)}
+            className="flex-1 h-8 px-2 text-sm border rounded-md bg-background"
+          />
+          <Button size="sm" onClick={handleManualCharge} disabled={isCharging || !manualAmount}>
+            Charge
+          </Button>
+        </div>
+      )}
+
+      {!hasCard && (
+        <p className="text-xs text-muted-foreground italic">
+          No card on file — fee must be collected manually.
+        </p>
+      )}
+
+      {/* Charge Confirmation Dialog */}
+      <AlertDialog open={showChargeConfirm} onOpenChange={setShowChargeConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Charge {appointment.status === 'no_show' ? 'No-Show' : 'Cancellation'} Fee?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will charge {formatCurrency(calculatedFee ?? 0)} to {defaultCard?.card_brand} •••• {defaultCard?.card_last4} for {appointment.client_name || 'this client'}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleChargeFee}
+              disabled={isCharging}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isCharging && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              Charge Fee
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
 // ─── Scheduled Coverage sub-component ───────────────────────────
 function ScheduledCoverageSection({
   appointmentDate,
@@ -1271,6 +1545,18 @@ export function AppointmentDetailSheet({
                         </div>
                       )}
                     </motion.div>
+
+                    {/* Cancellation / No-Show Fee Section */}
+                    {['cancelled', 'no_show'].includes(appointment.status) && effectiveOrganization?.id && (
+                      <motion.div variants={staggerItem}>
+                        <CancellationFeeSection
+                          appointment={appointment}
+                          organizationId={effectiveOrganization.id}
+                          isManagerOrAdmin={isManagerOrAdmin}
+                          formatCurrency={formatCurrency}
+                        />
+                      </motion.div>
+                    )}
 
                     {/* Checkout Clarity Panel — Product usage charges */}
                     {appointment.id && effectiveOrganization?.id && (
