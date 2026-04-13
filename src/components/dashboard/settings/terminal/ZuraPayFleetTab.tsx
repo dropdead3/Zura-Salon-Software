@@ -364,7 +364,7 @@ export function ZuraPayFleetTab({
                     Set up in-person payment processing for your organization. You'll be guided through a secure verification process to enable payments.
                   </p>
                   <Button
-                    onClick={onStartConnect}
+                    onClick={() => setShowConfirmConnect(true)}
                     disabled={isConnecting}
                     className="mt-2"
                   >
