@@ -10,6 +10,7 @@ import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
@@ -210,9 +211,11 @@ export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { favorites, isFavorited, toggleFavorite, isAtLimit } = useOpsHubFavorites();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
 
   const { data: stats } = useQuery({
-    queryKey: ['team-hub-stats'],
+    queryKey: ['team-hub-stats', orgId],
     queryFn: async () => {
       const assistantRequestsResult = await supabase
         .from('assistant_requests')
@@ -252,16 +255,18 @@ export default function TeamHub() {
         return thisYearBday >= today && thisYearBday <= nextWeek;
       }).length;
 
-      // E2: Payment ops badge — pending refunds + active deposit holds
+      // E2: Payment ops badge — pending refunds + active deposit holds (G5: org-scoped)
       const pendingRefundsResult = await supabase
         .from('refund_records')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .eq('organization_id', orgId);
 
       const activeHoldsResult = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
-        .eq('deposit_status', 'held');
+        .eq('deposit_status', 'held')
+        .eq('organization_id', orgId);
 
       const paymentOpsCount = (pendingRefundsResult.count || 0) + (activeHoldsResult.count || 0);
 

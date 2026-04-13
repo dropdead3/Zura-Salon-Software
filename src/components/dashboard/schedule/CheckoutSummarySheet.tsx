@@ -492,11 +492,15 @@ export function CheckoutSummarySheet({
         });
 
         // E2: Auto-capture held deposit after successful card payment
+        // G2: Wrap in try/catch with expired-hold fallback
         if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
           try {
             await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
           } catch (e) {
             console.error('Failed to capture deposit (payment still succeeded):', e);
+            toast.warning('Deposit hold may have expired', {
+              description: 'The pre-authorized deposit could not be captured. The full service amount was charged instead.',
+            });
           }
         }
 
@@ -511,11 +515,15 @@ export function CheckoutSummarySheet({
     } else {
       // Cash or Other — behave as before
       // E2: Auto-capture deposit for non-card payments too
+      // G2: Wrap in try/catch with expired-hold fallback
       if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
         try {
           await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
         } catch (e) {
           console.error('Failed to capture deposit:', e);
+          toast.warning('Deposit hold may have expired', {
+            description: 'The pre-authorized deposit could not be captured. Please collect the deposit separately if needed.',
+          });
         }
       }
       onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {

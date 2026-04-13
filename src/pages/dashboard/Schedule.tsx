@@ -571,6 +571,7 @@ export default function Schedule() {
           client_name: selectedAppointment.client_name || null,
           stylist_user_id: selectedAppointment.stylist_user_id || null,
           location_id: selectedAppointment.location_id || null,
+          organization_id: orgId, // E2: Include org_id for RLS
         };
         const { error: txError } = await supabase
           .from('phorest_sales_transactions')
