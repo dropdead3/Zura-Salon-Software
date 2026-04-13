@@ -7,7 +7,7 @@ import { CreditCard, Check, Wifi, Signal, Battery, ChevronRight } from 'lucide-r
 const SCREEN_W = 270;
 const SCREEN_H = 480;
 
-type ScreenState = 'splash' | 'idle' | 'cart' | 'tap' | 'processing' | 'success';
+type ScreenState = 'splash' | 'idle' | 'cart' | 'tip' | 'tap' | 'processing' | 'success';
 
 interface CartItem {
   label: string;
@@ -165,6 +165,74 @@ function CartScreen({ items, total }: { items: CartItem[]; total: number }) {
   );
 }
 
+// ---- Tip Selection Screen ----
+function TipScreen({ total, tipPercentages = [20, 25, 30] }: { total: number; tipPercentages?: number[] }) {
+  const [selected, setSelected] = useState<number | null>(null);
+
+  // Auto-select middle option after a beat
+  useEffect(() => {
+    const t = setTimeout(() => setSelected(1), 800);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <motion.div
+      key="tip"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="flex flex-col h-full px-5 pt-4"
+    >
+      <p className="text-white/40 text-[8px] tracking-[0.15em] uppercase mb-2">Add a Tip</p>
+
+      <div className="text-center mb-4">
+        <p className="text-white/50 text-[9px] tracking-wider uppercase">Subtotal</p>
+        <p className="text-white text-base font-medium font-mono mt-0.5">{fmt(total)}</p>
+      </div>
+
+      {/* Percentage buttons */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {tipPercentages.map((pct, i) => {
+          const tipAmount = Math.round(total * pct / 100);
+          const isSelected = selected === i;
+          return (
+            <motion.button
+              key={pct}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              onClick={() => setSelected(i)}
+              className={cn(
+                'rounded-xl py-3 flex flex-col items-center gap-0.5 transition-all border',
+                isSelected
+                  ? 'bg-emerald-500/20 border-emerald-500/50'
+                  : 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.06]'
+              )}
+            >
+              <span className={cn(
+                'text-[12px] font-medium',
+                isSelected ? 'text-emerald-400' : 'text-white/80'
+              )}>
+                {pct}%
+              </span>
+              <span className="text-[9px] text-white/40 font-mono">{fmt(tipAmount)}</span>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Custom + No Tip */}
+      <div className="space-y-2 mt-auto pb-4">
+        <button className="w-full rounded-xl py-2.5 bg-white/[0.04] border border-white/[0.08] text-white/60 text-[10px] tracking-wider uppercase hover:bg-white/[0.06] transition-colors">
+          Custom Amount
+        </button>
+        <button className="w-full rounded-xl py-2 text-white/30 text-[9px] tracking-wider uppercase hover:text-white/50 transition-colors">
+          No Tip
+        </button>
+      </div>
+    </motion.div>
+  );
+
 // ---- Tap / Insert Card Screen ----
 function TapScreen({ total }: { total: number }) {
   return (
@@ -277,7 +345,7 @@ export function S710CheckoutSimulator({
 }: S710SimulatorProps) {
   const total = cartItems.reduce((s, i) => s + i.amount, 0);
 
-  const screens: ScreenState[] = ['splash', 'idle', 'cart', 'tap', 'processing', 'success'];
+  const screens: ScreenState[] = ['splash', 'idle', 'cart', 'tip', 'tap', 'processing', 'success'];
   const [currentIndex, setCurrentIndex] = useState(0);
   const screen = screens[currentIndex];
 
@@ -292,6 +360,7 @@ export function S710CheckoutSimulator({
       splash: 2500,
       idle: 2000,
       cart: 3000,
+      tip: 3000,
       tap: 2500,
       processing: 1800,
       success: 2500,
@@ -323,6 +392,7 @@ export function S710CheckoutSimulator({
               {screen === 'splash' && <SplashScreen businessName={businessName} />}
               {screen === 'idle' && <IdleScreen businessName={businessName} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
+              {screen === 'tip' && <TipScreen total={total} />}
               {screen === 'tap' && <TapScreen total={total} />}
               {screen === 'processing' && <ProcessingScreen />}
               {screen === 'success' && <SuccessScreen total={total} />}
