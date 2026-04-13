@@ -28,6 +28,7 @@ import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges
 import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 import { useActiveTerminalReader } from '@/hooks/useActiveTerminalReader';
 import { useTerminalCheckoutFlow, type TerminalFlowState } from '@/hooks/useTerminalCheckoutFlow';
+import { useTerminalDeposit } from '@/hooks/useTerminalDeposit';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
@@ -106,6 +107,7 @@ export function CheckoutSummarySheet({
   const { activeReader, readers, selectedReaderId, selectReader, hasReaders, isLoading: readersLoading } =
     useActiveTerminalReader(organizationId, locationId);
   const terminalFlow = useTerminalCheckoutFlow();
+  const { captureDeposit } = useTerminalDeposit();
   useEffect(() => {
     if (open) {
       setGatePhase('gate');
