@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TerminalLocation {
@@ -127,6 +127,14 @@ export interface ZuraPayFleetTabProps {
   onRegisterReader: () => void;
   useTerminalLocationsHook: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReadersHook: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
+  // Stripe Connect self-serve props
+  orgConnectStatus?: string;
+  onStartConnect?: () => void;
+  isConnecting?: boolean;
+  onVerifyConnection?: () => void;
+  isVerifying?: boolean;
+  onConnectLocation?: (locationId: string) => void;
+  isConnectingLocation?: boolean;
 }
 
 export function ZuraPayFleetTab({
@@ -147,6 +155,13 @@ export function ZuraPayFleetTab({
   onRegisterReader,
   useTerminalLocationsHook,
   useTerminalReadersHook,
+  orgConnectStatus,
+  onStartConnect,
+  isConnecting,
+  onVerifyConnection,
+  isVerifying,
+  onConnectLocation,
+  isConnectingLocation,
 }: ZuraPayFleetTabProps) {
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
