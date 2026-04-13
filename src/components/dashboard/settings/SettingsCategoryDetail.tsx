@@ -70,7 +70,7 @@ import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSetti
 import { CheckoutAlertsSection } from '@/components/dashboard/settings/CheckoutAlertsSection';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 
-export type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | null;
+export type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | 'terminals' | null;
 
 interface UserWithRole {
   user_id: string;

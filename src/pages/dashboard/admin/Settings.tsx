@@ -81,6 +81,7 @@ const categoriesMap: Record<string, { id: string; label: string; description: st
   'account-billing': { id: 'account-billing', label: 'Account & Billing', description: 'View and manage your subscription plan, payment methods, invoices, and billing history.', icon: Wallet },
   'data-import': { id: 'data-import', label: 'Data Import', description: 'Migrate data from other salon software or import from CSV files.', icon: Upload },
   'zura-config': { id: 'zura-config', label: 'Zura Configuration', description: 'Customize AI personality, knowledge base, role rules, and behavioral guardrails.', icon: Sparkles },
+  'terminals': { id: 'terminals', label: 'Terminals', description: 'Manage Stripe Terminal readers, create terminal locations, and pair hardware for in-person payments.', icon: TabletSmartphone },
 };
 
 export default function Settings() {
