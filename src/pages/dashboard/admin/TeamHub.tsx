@@ -211,9 +211,11 @@ export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { favorites, isFavorited, toggleFavorite, isAtLimit } = useOpsHubFavorites();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
 
   const { data: stats } = useQuery({
-    queryKey: ['team-hub-stats'],
+    queryKey: ['team-hub-stats', orgId],
     queryFn: async () => {
       const assistantRequestsResult = await supabase
         .from('assistant_requests')
