@@ -652,33 +652,36 @@ Deno.serve(async (req) => {
     }
 
     const event = JSON.parse(payload);
-    console.log(`Stripe webhook received: ${event.type}`, event.id);
+    const isConnectEvent = !!event.account; // G3: Connect events have an `account` field
+    console.log(`Stripe webhook received: ${event.type}`, event.id, isConnectEvent ? `(Connect: ${event.account})` : '(Platform)');
 
     switch (event.type) {
+      // --- Platform subscription events (non-Connect) ---
       case "checkout.session.completed":
         await handleCheckoutCompleted(supabase, event.data.object);
         break;
 
       case "invoice.payment_failed":
-        await handlePaymentFailed(supabase, resend, event.data.object);
+        if (!isConnectEvent) await handlePaymentFailed(supabase, resend, event.data.object);
         break;
         
       case "invoice.payment_succeeded":
-        await handlePaymentSucceeded(supabase, event.data.object);
+        if (!isConnectEvent) await handlePaymentSucceeded(supabase, event.data.object);
         break;
         
       case "charge.failed":
-        await handleChargeFailed(supabase, event.data.object);
+        if (!isConnectEvent) await handleChargeFailed(supabase, event.data.object);
         break;
         
       case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(supabase, resend, event.data.object);
+        if (!isConnectEvent) await handleSubscriptionDeleted(supabase, resend, event.data.object);
         break;
         
       case "customer.subscription.updated":
-        await handleSubscriptionUpdated(supabase, event.data.object);
+        if (!isConnectEvent) await handleSubscriptionUpdated(supabase, event.data.object);
         break;
 
+      // --- Connect terminal events ---
       case "payment_intent.succeeded":
         await handleTerminalPaymentIntentSucceeded(supabase, event.data.object);
         break;

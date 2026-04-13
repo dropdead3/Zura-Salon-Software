@@ -6,6 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -42,6 +51,15 @@ export default function PaymentOps() {
   const initialDate = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState(initialDate);
 
+  // Confirmation dialog state
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'capture' | 'release' | 'refund';
+    id: string;
+    label: string;
+    amount?: number;
+  } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const { reconcile, result: reconciliation, isLoading: isReconciling } = useTillReconciliation(orgId);
   const { captureDeposit, cancelDeposit } = useTerminalDeposit();
 
@@ -68,7 +86,7 @@ export default function PaymentOps() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('refund_records')
-        .select('id, original_item_name, refund_amount, refund_type, reason, created_at')
+        .select('id, original_item_name, refund_amount, refund_type, reason, created_at, original_transaction_id')
         .eq('organization_id', orgId!)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
@@ -82,37 +100,36 @@ export default function PaymentOps() {
     reconcile(selectedDate);
   };
 
-  const handleCaptureDeposit = async (paymentIntentId: string) => {
-    if (!orgId) return;
+  const executeConfirmedAction = async () => {
+    if (!confirmAction || !orgId) return;
+    setIsProcessing(true);
     try {
-      await captureDeposit(orgId, paymentIntentId);
-      queryClient.invalidateQueries({ queryKey: ['active-deposit-holds', orgId] });
+      if (confirmAction.type === 'capture') {
+        await captureDeposit(orgId, confirmAction.id);
+        queryClient.invalidateQueries({ queryKey: ['active-deposit-holds', orgId] });
+      } else if (confirmAction.type === 'release') {
+        await cancelDeposit(orgId, confirmAction.id);
+        queryClient.invalidateQueries({ queryKey: ['active-deposit-holds', orgId] });
+      } else if (confirmAction.type === 'refund') {
+        // B3 fix: pass original_transaction_id and amount so edge function can look up PI
+        const refund = pendingRefunds.find((r) => r.id === confirmAction.id);
+        const body: Record<string, unknown> = {
+          refund_record_id: confirmAction.id,
+          organization_id: orgId,
+          original_transaction_id: refund?.original_transaction_id || null,
+          amount: refund?.refund_amount || 0,
+        };
+        const { error } = await supabase.functions.invoke('process-stripe-refund', { body });
+        if (error) throw error;
+        toast.success('Refund processed');
+        queryClient.invalidateQueries({ queryKey: ['pending-refunds', orgId] });
+      }
     } catch (err) {
-      toast.error('Failed to capture deposit', { description: (err as Error).message });
-    }
-  };
-
-  const handleReleaseDeposit = async (paymentIntentId: string) => {
-    if (!orgId) return;
-    try {
-      await cancelDeposit(orgId, paymentIntentId);
-      queryClient.invalidateQueries({ queryKey: ['active-deposit-holds', orgId] });
-    } catch (err) {
-      toast.error('Failed to release deposit', { description: (err as Error).message });
-    }
-  };
-
-  const handleProcessRefund = async (refundId: string) => {
-    if (!orgId) return;
-    try {
-      const { error } = await supabase.functions.invoke('process-stripe-refund', {
-        body: { refund_record_id: refundId, organization_id: orgId },
-      });
-      if (error) throw error;
-      toast.success('Refund processed');
-      queryClient.invalidateQueries({ queryKey: ['pending-refunds', orgId] });
-    } catch (err) {
-      toast.error('Refund failed', { description: (err as Error).message });
+      const verb = confirmAction.type === 'capture' ? 'capture deposit' : confirmAction.type === 'release' ? 'release deposit' : 'process refund';
+      toast.error(`Failed to ${verb}`, { description: (err as Error).message });
+    } finally {
+      setIsProcessing(false);
+      setConfirmAction(null);
     }
   };
 
@@ -367,7 +384,12 @@ export default function PaymentOps() {
                               size="sm"
                               variant="default"
                               className={tokens.button.inline}
-                              onClick={() => handleCaptureDeposit(hold.deposit_stripe_payment_id!)}
+                              onClick={() => setConfirmAction({
+                                type: 'capture',
+                                id: hold.deposit_stripe_payment_id!,
+                                label: `Capture ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                amount: hold.deposit_amount ?? 0,
+                              })}
                             >
                               Capture
                             </Button>
@@ -375,7 +397,12 @@ export default function PaymentOps() {
                               size="sm"
                               variant="outline"
                               className={tokens.button.inline}
-                              onClick={() => handleReleaseDeposit(hold.deposit_stripe_payment_id!)}
+                              onClick={() => setConfirmAction({
+                                type: 'release',
+                                id: hold.deposit_stripe_payment_id!,
+                                label: `Release ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                amount: hold.deposit_amount ?? 0,
+                              })}
                             >
                               Release
                             </Button>
@@ -455,7 +482,12 @@ export default function PaymentOps() {
                           <Button
                             size="sm"
                             className={tokens.button.inline}
-                            onClick={() => handleProcessRefund(refund.id)}
+                            onClick={() => setConfirmAction({
+                              type: 'refund',
+                              id: refund.id,
+                              label: `Process ${formatCurrency(refund.refund_amount)} refund for ${refund.original_item_name || 'Unknown item'}`,
+                              amount: refund.refund_amount,
+                            })}
                           >
                             Process
                           </Button>
@@ -468,6 +500,41 @@ export default function PaymentOps() {
             </CardContent>
           </Card>
         </div>
+
+        {/* E1: Confirmation dialog for destructive financial actions */}
+        <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
+          <AlertDialogContent style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}>
+            <AlertDialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                </div>
+                <AlertDialogTitle className={tokens.drawer.title}>
+                  Confirm {confirmAction?.type === 'capture' ? 'Capture' : confirmAction?.type === 'release' ? 'Release' : 'Refund'}
+                </AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className={tokens.body.muted}>
+                {confirmAction?.label}. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-full" disabled={isProcessing}>Cancel</AlertDialogCancel>
+              <Button
+                onClick={executeConfirmedAction}
+                disabled={isProcessing}
+                className={cn(
+                  'rounded-full',
+                  confirmAction?.type === 'release' || confirmAction?.type === 'refund'
+                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                    : ''
+                )}
+              >
+                {isProcessing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {confirmAction?.type === 'capture' ? 'Capture Deposit' : confirmAction?.type === 'release' ? 'Release Deposit' : 'Process Refund'}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
