@@ -95,7 +95,7 @@ export function useVerifyZuraPayConnection() {
       if (data.status === 'active') {
         toast.success('Zura Pay is active! You can now enable locations.');
       } else if (data.status === 'pending') {
-        toast.info('Verification is still in progress. Stripe may need additional information.');
+        toast.info('Verification is still in progress. Additional information may be required to complete verification.');
       }
     },
     onError: (error) => {

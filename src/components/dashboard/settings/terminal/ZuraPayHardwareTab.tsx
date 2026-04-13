@@ -55,10 +55,13 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const setSearchParamsRef = useRef(setSearchParams);
   setSearchParamsRef.current = setSearchParams;
 
+  const hasVerifiedCheckout = useRef(false);
+
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
     const sessionId = searchParams.get('session_id');
-    if (checkoutStatus === 'success' && sessionId && orgId) {
+    if (checkoutStatus === 'success' && sessionId && orgId && !hasVerifiedCheckout.current) {
+      hasVerifiedCheckout.current = true;
       verifyRef.current({ sessionId, organizationId: orgId });
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('checkout');
@@ -132,7 +135,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
       },
       {
         onSuccess: () => { createCheckout.mutate({ organizationId: orgId, locationId: reqLocationId || undefined, items }); },
-        onError: () => { createCheckout.mutate({ organizationId: orgId, locationId: reqLocationId || undefined, items }); },
+        onError: () => { console.warn('[ZuraPay] Hardware request record failed — proceeding with checkout anyway'); createCheckout.mutate({ organizationId: orgId, locationId: reqLocationId || undefined, items }); },
       }
     );
   };

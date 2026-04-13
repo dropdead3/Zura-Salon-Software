@@ -43,9 +43,10 @@ interface LocationSummaryRowProps {
   loc: LocationWithPayment;
   useTerminalLocations: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReaders: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
+  onSelect?: (locationId: string) => void;
 }
 
-function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: LocationSummaryRowProps) {
+function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders, onSelect }: LocationSummaryRowProps) {
   const isConnected = !!loc.stripe_account_id;
   const { data: tlData, isLoading: tlLoading } = useTerminalLocations(isConnected ? loc.id : null);
   const { data: readerData, isLoading: readersLoading } = useTerminalReaders(isConnected ? loc.id : null);
@@ -73,7 +74,13 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: L
   const offline = readerList.length - online;
 
   return (
-    <div className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+    <div
+      className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={() => onSelect?.(loc.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(loc.id); }}
+    >
       <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
       <div className="flex justify-center">
         <Badge variant={status.variant} className={cn(
@@ -126,7 +133,7 @@ export interface ZuraPayFleetTabProps {
   onRegisterReader: () => void;
   useTerminalLocationsHook: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReadersHook: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
-  // Stripe Connect self-serve props
+  // Payment connect self-serve props
   orgConnectStatus?: string;
   onStartConnect?: () => void;
   isConnecting?: boolean;
@@ -269,6 +276,10 @@ export function ZuraPayFleetTab({
                   loc={loc}
                   useTerminalLocations={useTerminalLocationsHook}
                   useTerminalReaders={useTerminalReadersHook}
+                  onSelect={(id) => {
+                    setShowAllLocations(false);
+                    setSelectedLocationId(id);
+                  }}
                 />
               ))}
             </div>
@@ -279,7 +290,7 @@ export function ZuraPayFleetTab({
         <Card>
           <CardContent className="py-10">
             <div className="text-center space-y-4">
-              {/* Org-level: no Stripe Connect account at all */}
+              {/* Org-level: no payment account connected */}
               {(!orgConnectStatus || orgConnectStatus === 'not_connected') ? (
                 <>
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/20 bg-primary/5">
@@ -287,7 +298,7 @@ export function ZuraPayFleetTab({
                   </div>
                   <h3 className="font-display text-sm tracking-[0.14em]">CONNECT TO ZURA PAY</h3>
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                    Set up in-person payment processing for your organization. You'll be guided through a secure verification process powered by Stripe.
+                    Set up in-person payment processing for your organization. You'll be guided through a secure verification process to enable payments.
                   </p>
                   <Button
                     onClick={onStartConnect}
