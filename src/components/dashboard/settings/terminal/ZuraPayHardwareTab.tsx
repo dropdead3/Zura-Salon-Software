@@ -87,6 +87,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const handlePurchase = () => {
     if (!orgId || (!reqLocationId && !locations[0]?.id)) return;
     handleDialogClose();
+    toast.info('Redirecting to secure checkout…');
     const selectedAccList = accessories
       .filter((acc) => selectedAccessories[acc.id])
       .map((acc) => ({
