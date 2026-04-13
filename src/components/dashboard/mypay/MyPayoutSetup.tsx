@@ -5,12 +5,15 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   useMyPayoutAccount,
   useStartPayoutOnboarding,
   useCreatePayoutLoginLink,
   useRefreshPayoutStatus,
 } from '@/hooks/useStaffPayoutAccount';
+import { useMyPendingTipTotal } from '@/hooks/useTipDistributions';
 import {
   Loader2,
   Building2,
@@ -32,17 +35,19 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; 
 export function MyPayoutSetup() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const { formatCurrency } = useFormatCurrency();
 
   const { data: account, isLoading } = useMyPayoutAccount();
   const startOnboarding = useStartPayoutOnboarding();
   const createLoginLink = useCreatePayoutLoginLink();
   const refreshStatus = useRefreshPayoutStatus();
+  const { data: pendingTotal = 0 } = useMyPendingTipTotal();
 
   const handleConnect = async () => {
     if (!orgId) return;
     const result = await startOnboarding.mutateAsync({ organization_id: orgId });
     if (result?.onboarding_url) {
-      window.open(result.onboarding_url, '_blank');
+      window.location.href = result.onboarding_url;
     }
   };
 
@@ -96,9 +101,15 @@ export function MyPayoutSetup() {
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">No bank account connected</p>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                Connect your bank account to receive daily tip payouts directly. You'll need to verify your identity to comply with financial regulations.
-              </p>
+              {pendingTotal > 0 ? (
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  You have <span className="font-medium text-foreground"><BlurredAmount>{formatCurrency(pendingTotal)}</BlurredAmount></span> in pending tips. Connect your bank account to receive them via direct deposit.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Connect your bank account to receive daily tip payouts directly. You'll need to verify your identity to comply with financial regulations.
+                </p>
+              )}
             </div>
             <Button
               onClick={handleConnect}
@@ -137,6 +148,14 @@ export function MyPayoutSetup() {
                 )}
               </div>
             </div>
+
+            {/* Pending tips callout */}
+            {pendingTotal > 0 && account.payouts_enabled && (
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-sm">
+                <span className="text-muted-foreground">Pending tips: </span>
+                <span className="font-medium text-foreground"><BlurredAmount>{formatCurrency(pendingTotal)}</BlurredAmount></span>
+              </div>
+            )}
 
             {/* Verification details */}
             <div className="grid grid-cols-3 gap-4 text-sm">
