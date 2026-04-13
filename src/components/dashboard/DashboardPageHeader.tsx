@@ -10,6 +10,8 @@ export interface DashboardPageHeaderProps {
   description?: ReactNode;
   /** Path to navigate when back is clicked (e.g. hub or list). */
   backTo?: string;
+  /** Callback for back button when navigation is state-driven instead of URL-driven. */
+  onBackClick?: () => void;
   /** Accessible label for back button; e.g. "Back to Analytics Hub". */
   backLabel?: string;
   actions?: ReactNode;
