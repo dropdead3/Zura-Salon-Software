@@ -26,6 +26,7 @@ import {
 } from '@/hooks/useStripeTerminals';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
 import { useTerminalHardwareSkus, useCreateTerminalCheckout, useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
+import { useCreateTerminalRequest as useCreateTerminalRequestMutation } from '@/hooks/useTerminalRequests';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { OfflinePaymentStatus } from './OfflinePaymentStatus';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
