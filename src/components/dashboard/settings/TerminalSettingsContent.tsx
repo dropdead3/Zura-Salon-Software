@@ -321,6 +321,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
   const { data: requests, isLoading: requestsLoading } = useTerminalRequests(orgId);
   const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus();
   const createCheckout = useCreateTerminalCheckout();
+  const createRequest = useCreateTerminalRequest();
   const verifyPayment = useVerifyTerminalPayment();
   const { formatCurrency } = useFormatCurrency();
   const [searchParams, setSearchParams] = useSearchParams();
