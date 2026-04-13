@@ -337,7 +337,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
                   onClick={handleConfirmAction}
                   disabled={isSubmitting}
                   className={confirmAction.action === 'retry_charge'
-                    ? 'w-full h-12 rounded-full border-0 bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 font-display tracking-wide transition-colors'
+                    ? DOCK_DIALOG.retryAction
                     : confirmAction.action === 'cancel' ? DOCK_DIALOG.destructiveAction : DOCK_DIALOG.warningAction}
                 >
                   {isSubmitting ? 'Processing…' : confirmAction.action === 'retry_charge' ? 'Retry Charge' : confirmAction.action === 'cancel' ? 'Yes, Cancel' : 'Mark No-Show'}
