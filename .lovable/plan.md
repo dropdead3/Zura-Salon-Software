@@ -1,26 +1,37 @@
 
 
-# Fix Zura Pay "Continue Onboarding" and Return URL Routing
+# Fix Zura Pay Initial State and Add Onboarding Confirmation
 
-## Problems Identified
+## Problem
+1. The `organizations.stripe_connect_status` is `'pending'` in the DB, causing the UI to show "Verification in Progress" even though you never intentionally activated anything.
+2. The "Start Setup" button immediately creates a Stripe Express account with no confirmation — if the user abandons the onboarding form, they're stuck in a `pending` state with no way to reset.
+3. The "Continue Onboarding" button constructs `return_url` and `refresh_url` but isn't passing them when calling `create_account_and_link` (which reuses the existing account and generates a new Account Link). The Zod schema requires valid URLs for this action, so the call may fail silently.
 
-1. **Return URLs use wrong query param**: All Stripe onboarding return/refresh URLs use `?tab=terminals` but the Settings page reads `?category=terminals` to determine which settings page to render. When Stripe redirects back, the user lands on the settings hub — `TerminalSettingsContent` never mounts, so the return-handler `useEffect` never fires.
+## Changes
 
-2. **Hardware checkout URLs have the same bug**: `ZuraPayHardwareTab.tsx` also uses `?tab=terminals&subtab=hardware`.
-
-3. **No functional issue with the button itself**: The `onStartConnect` handler correctly calls `create_account_and_link`, which reuses an existing account and generates a new Account Link. The redirect to Stripe onboarding should work — but if the edge function returns an error (e.g., expired account link), the toast may be missed. We should add better error visibility.
-
-## File Changes
-
-| # | File | Change |
+| # | File / Action | Change |
 |---|---|---|
-| 1 | `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Replace all `?tab=terminals` with `?category=terminals` in return/refresh URLs (lines 305-306 and 418-419). This ensures Stripe redirects land on the correct settings page. |
-| 2 | `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` | Replace `?tab=terminals&subtab=hardware` with `?category=terminals&subtab=hardware` in checkout success/cancel URLs. |
-| 3 | `src/pages/dashboard/admin/Settings.tsx` | Add logic to read `subtab` from search params and pass it through, and ensure `zura_pay_return`/`zura_pay_refresh` params also trigger `activeCategory = 'terminals'` on initial load. Add a check: if `searchParams` contains `zura_pay_return`, `zura_pay_refresh`, or `tab=terminals`, auto-set category to `'terminals'`. |
+| 1 | **Database migration** | Reset `stripe_connect_status` to `'not_connected'` and clear `stripe_connect_account_id` for your org so you start fresh. This is a one-time data fix. |
+| 2 | `ZuraPayFleetTab.tsx` — "CONNECT TO ZURA PAY" section | Add a confirmation dialog before "Start Setup" so users understand they're creating a payment account. Prevents accidental activation. |
+| 3 | `ZuraPayFleetTab.tsx` — "VERIFICATION IN PROGRESS" section | Add a "Reset / Start Over" option (visible to admins) that calls a new edge function to delete the Stripe Express account and reset the org status to `not_connected`. This handles abandoned onboarding gracefully. |
+| 4 | `connect-zura-pay/index.ts` | Add a new action `reset_account` that deletes the Stripe Express account (if no charges have been processed) and resets the org's `stripe_connect_account_id` and `stripe_connect_status` to `null` / `not_connected`. |
+| 5 | `useZuraPayConnect.ts` | Add a `useResetZuraPayAccount` mutation hook for the reset action. |
+
+## Technical Details
+
+**Reset Account action** (edge function):
+- Validates the caller is an org admin
+- Checks no charges have been processed on the account (`stripe.accounts.retrieve`)
+- Calls `stripe.accounts.del(accountId)` to remove the Express account
+- Updates org: `stripe_connect_account_id = null`, `stripe_connect_status = 'not_connected'`
+- Also clears any location-level `stripe_account_id` references
+
+**Confirmation dialog** (before Start Setup):
+- Simple AlertDialog: "This will create a Zura Pay payment account for your organization. You'll be redirected to complete identity verification. Continue?"
+- Only proceeds to call the edge function on confirm
 
 ## Result
-- "Continue Onboarding" correctly redirects to Stripe Express onboarding form.
-- After completing onboarding, Stripe redirects back to the Zura Pay settings page (not the hub).
-- The return-handler auto-verifies connection status on landing.
-- Hardware checkout returns also land on the correct tab.
+- You'll see a clean "Connect to Zura Pay" state instead of the false "Verification in Progress"
+- Future users can't accidentally get stuck in pending state
+- Admins can reset abandoned onboarding attempts
 
