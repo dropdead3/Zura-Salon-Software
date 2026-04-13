@@ -59,6 +59,7 @@ const KioskSettingsContent = lazy(() => import('@/components/dashboard/settings/
 const ServiceEmailFlowsManager = lazy(() => import('@/components/dashboard/settings/ServiceEmailFlowsManager').then(m => ({ default: m.ServiceEmailFlowsManager })));
 const ServicesSettingsContent = lazy(() => import('@/components/dashboard/settings/ServicesSettingsContent').then(m => ({ default: m.ServicesSettingsContent })));
 const RetailProductsSettingsContent = lazy(() => import('@/components/dashboard/settings/RetailProductsSettingsContent').then(m => ({ default: m.RetailProductsSettingsContent })));
+const TerminalSettingsContent = lazy(() => import('@/components/dashboard/settings/TerminalSettingsContent').then(m => ({ default: m.TerminalSettingsContent })));
 
 // Eagerly imported (small, used inline)
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -70,7 +71,7 @@ import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSetti
 import { CheckoutAlertsSection } from '@/components/dashboard/settings/CheckoutAlertsSection';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 
-export type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | null;
+export type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | 'terminals' | null;
 
 interface UserWithRole {
   user_id: string;
@@ -677,6 +678,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, onBack }
           {activeCategory === 'kiosk' && <KioskSettingsContent />}
           {activeCategory === 'retail-products' && <RetailProductsSettingsContent />}
           {activeCategory === 'account-billing' && <AccountBillingContent />}
+          {activeCategory === 'terminals' && <TerminalSettingsContent />}
         </Suspense>
 
         <AddUserSeatsDialog open={isAddUserSeatsOpen} onOpenChange={setIsAddUserSeatsOpen} capacity={capacity} />
