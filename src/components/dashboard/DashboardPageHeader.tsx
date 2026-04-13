@@ -10,6 +10,8 @@ export interface DashboardPageHeaderProps {
   description?: ReactNode;
   /** Path to navigate when back is clicked (e.g. hub or list). */
   backTo?: string;
+  /** Callback for back button when navigation is state-driven instead of URL-driven. */
+  onBackClick?: () => void;
   /** Accessible label for back button; e.g. "Back to Analytics Hub". */
   backLabel?: string;
   actions?: ReactNode;
@@ -24,19 +26,28 @@ export function DashboardPageHeader({
   title,
   description,
   backTo,
+  onBackClick,
   backLabel = 'Back',
   actions,
   className,
 }: DashboardPageHeaderProps) {
+  const showBack = backTo || onBackClick;
+
   return (
     <div className={cn('flex flex-col md:flex-row md:items-start md:justify-between gap-4', className)}>
       <div className="flex items-center gap-3 min-w-0">
-        {backTo && (
-          <Button variant="ghost" size="icon" asChild className="shrink-0">
-            <Link to={backTo} aria-label={backLabel} title={backLabel}>
+        {showBack && (
+          onBackClick ? (
+            <Button variant="ghost" size="icon" className="shrink-0" onClick={onBackClick} aria-label={backLabel} title={backLabel}>
               <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" asChild className="shrink-0">
+              <Link to={backTo!} aria-label={backLabel} title={backLabel}>
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+          )
         )}
 
         <div className="min-w-0">
