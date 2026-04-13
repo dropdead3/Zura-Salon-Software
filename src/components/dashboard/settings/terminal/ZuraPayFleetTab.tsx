@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TerminalLocation {
@@ -127,6 +127,14 @@ export interface ZuraPayFleetTabProps {
   onRegisterReader: () => void;
   useTerminalLocationsHook: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReadersHook: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
+  // Stripe Connect self-serve props
+  orgConnectStatus?: string;
+  onStartConnect?: () => void;
+  isConnecting?: boolean;
+  onVerifyConnection?: () => void;
+  isVerifying?: boolean;
+  onConnectLocation?: (locationId: string) => void;
+  isConnectingLocation?: boolean;
 }
 
 export function ZuraPayFleetTab({
@@ -147,6 +155,13 @@ export function ZuraPayFleetTab({
   onRegisterReader,
   useTerminalLocationsHook,
   useTerminalReadersHook,
+  orgConnectStatus,
+  onStartConnect,
+  isConnecting,
+  onVerifyConnection,
+  isVerifying,
+  onConnectLocation,
+  isConnectingLocation,
 }: ZuraPayFleetTabProps) {
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
@@ -248,17 +263,104 @@ export function ZuraPayFleetTab({
           </CardContent>
         </Card>
       ) : !isLocationConnected ? (
-        /* Unconnected location guidance */
+        /* Unconnected location — show self-serve connect flow */
         <Card>
           <CardContent className="py-10">
-            <div className="text-center space-y-3">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
-                <Info className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="font-display text-sm tracking-[0.14em]">LOCATION NOT CONNECTED</h3>
-              <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                This location is not yet connected to Zura Pay. Contact your account manager to enable payment processing for this site.
-              </p>
+            <div className="text-center space-y-4">
+              {/* Org-level: no Stripe Connect account at all */}
+              {(!orgConnectStatus || orgConnectStatus === 'not_connected') ? (
+                <>
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/20 bg-primary/5">
+                    <Zap className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="font-display text-sm tracking-[0.14em]">CONNECT TO ZURA PAY</h3>
+                  <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                    Set up in-person payment processing for your organization. You'll be guided through a secure verification process powered by Stripe.
+                  </p>
+                  <Button
+                    onClick={onStartConnect}
+                    disabled={isConnecting}
+                    className="mt-2"
+                  >
+                    {isConnecting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                    )}
+                    Start Setup
+                  </Button>
+                </>
+              ) : orgConnectStatus === 'pending' ? (
+                /* Org account exists but not yet verified */
+                <>
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10">
+                    <RefreshCw className="h-7 w-7 text-amber-500" />
+                  </div>
+                  <h3 className="font-display text-sm tracking-[0.14em]">VERIFICATION IN PROGRESS</h3>
+                  <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                    Your account is being verified by Stripe. This usually takes a few minutes. If you haven't completed the onboarding form, click below to continue.
+                  </p>
+                  <div className="flex items-center justify-center gap-3 mt-2">
+                    <Button
+                      variant="outline"
+                      onClick={onVerifyConnection}
+                      disabled={isVerifying}
+                    >
+                      {isVerifying ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                      )}
+                      Check Status
+                    </Button>
+                    <Button
+                      onClick={onStartConnect}
+                      disabled={isConnecting}
+                    >
+                      {isConnecting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                      )}
+                      Continue Onboarding
+                    </Button>
+                  </div>
+                </>
+              ) : orgConnectStatus === 'active' ? (
+                /* Org is verified but this specific location isn't connected */
+                <>
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
+                    <CheckCircle2 className="h-7 w-7 text-emerald-500" />
+                  </div>
+                  <h3 className="font-display text-sm tracking-[0.14em]">ENABLE ZURA PAY FOR THIS LOCATION</h3>
+                  <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                    Your organization is verified and ready to accept payments. Enable Zura Pay for this location to start managing terminals.
+                  </p>
+                  <Button
+                    onClick={() => activeLocationId && onConnectLocation?.(activeLocationId)}
+                    disabled={isConnectingLocation || !activeLocationId}
+                    className="mt-2"
+                  >
+                    {isConnectingLocation ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Zap className="h-4 w-4 mr-2" />
+                    )}
+                    Enable Zura Pay
+                  </Button>
+                </>
+              ) : (
+                /* Fallback */
+                <>
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+                    <Info className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-display text-sm tracking-[0.14em]">LOCATION NOT CONNECTED</h3>
+                  <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                    This location is not yet connected to Zura Pay.
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

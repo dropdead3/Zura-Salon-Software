@@ -13886,6 +13886,8 @@ export type Database = {
           slug: string
           source_software: string | null
           status: string | null
+          stripe_connect_account_id: string | null
+          stripe_connect_status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string | null
@@ -13938,6 +13940,8 @@ export type Database = {
           slug: string
           source_software?: string | null
           status?: string | null
+          stripe_connect_account_id?: string | null
+          stripe_connect_status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
@@ -13990,6 +13994,8 @@ export type Database = {
           slug?: string
           source_software?: string | null
           status?: string | null
+          stripe_connect_account_id?: string | null
+          stripe_connect_status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
