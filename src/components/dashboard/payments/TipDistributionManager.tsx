@@ -285,7 +285,7 @@ export function TipDistributionManager() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{dist.stylist_name || 'Unknown'}</span>
                         {bulkMethod === 'direct_deposit' && isPending && !hasPayoutAccount && (
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-500" title="No verified payout account" />
+                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
                         )}
                       </div>
                     </TableCell>
