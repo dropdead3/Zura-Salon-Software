@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,8 @@ interface ZuraPayHardwareTabProps {
 export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const { data: connectStatus } = useOrgConnectStatus(orgId);
+  const isOrgConnected = connectStatus?.stripe_connect_status === 'active';
   const { data: requests, isLoading: requestsLoading } = useTerminalRequests(orgId);
   const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus();
   const createCheckout = useCreateTerminalCheckout();
@@ -133,6 +136,26 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
       }
     );
   };
+
+  if (!isOrgConnected) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="py-10">
+            <div className="text-center space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+                <CreditCard className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="font-display text-sm tracking-[0.14em]">PAYMENT SETUP REQUIRED</h3>
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                Complete your Zura Pay setup in the Fleet tab before ordering hardware.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

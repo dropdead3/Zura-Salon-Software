@@ -63,9 +63,10 @@ export function useConnectZuraPay() {
     },
     onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
-      // Redirect to Stripe onboarding
       if (data.onboarding_url) {
         window.location.href = data.onboarding_url;
+      } else {
+        toast.info('Your account is already set up. Check the connection status.');
       }
     },
     onError: (error) => {

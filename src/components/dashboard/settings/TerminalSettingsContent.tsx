@@ -220,23 +220,25 @@ export function TerminalSettingsContent() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const verifyMutateRef = useRef(verifyMutation.mutate);
+  verifyMutateRef.current = verifyMutation.mutate;
+
   // Handle return from Stripe onboarding
   useEffect(() => {
     const isReturn = searchParams.get('zura_pay_return') === 'true';
     const isRefresh = searchParams.get('zura_pay_refresh') === 'true';
-    if ((isReturn || isRefresh) && orgId) {
-      // Clean up URL params
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('zura_pay_return');
-      newParams.delete('zura_pay_refresh');
-      setSearchParams(newParams, { replace: true });
+    if (!orgId || (!isReturn && !isRefresh)) return;
 
-      if (isReturn) {
-        // Auto-verify on return
-        verifyMutation.mutate({ organizationId: orgId });
-      }
+    // Clean up URL params
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('zura_pay_return');
+    newParams.delete('zura_pay_refresh');
+    setSearchParams(newParams, { replace: true });
+
+    if (isReturn) {
+      verifyMutateRef.current({ organizationId: orgId });
     }
-  }, [orgId]); // Only run once on mount with orgId
+  }, [orgId, searchParams, setSearchParams]);
 
   const activeLocationId = showAllLocations ? null : (selectedLocationId || locations?.[0]?.id || null);
 
@@ -325,7 +327,6 @@ export function TerminalSettingsContent() {
           <ZuraPayFleetTab
             locations={locations}
             activeLocationId={activeLocationId}
-            selectedLocationId={selectedLocationId}
             showAllLocations={showAllLocations}
             isLocationConnected={isLocationConnected}
             setShowAllLocations={setShowAllLocations}
