@@ -599,8 +599,8 @@ async function handlePaymentIntentSucceeded(
   }
 }
 
-// Handler for terminal payment_intent.payment_failed
-async function handleTerminalPaymentIntentFailed(
+// Handler for payment_intent.payment_failed (terminal + card-on-file)
+async function handlePaymentIntentFailed(
   supabase: SupabaseClientAny,
   paymentIntent: Record<string, unknown>
 ) {
@@ -612,14 +612,17 @@ async function handleTerminalPaymentIntentFailed(
   }
 
   const piId = paymentIntent.id as string;
-  const errorMsg = (paymentIntent.last_payment_error as Record<string, unknown>)?.message || 'Unknown';
-  console.log(`Terminal PI failed: ${piId} for appointment ${appointmentId} — ${errorMsg}`);
+  const chargeType = metadata?.charge_type || 'terminal';
+  const lastError = paymentIntent.last_payment_error as Record<string, unknown> | null;
+  const errorMsg = (lastError?.message as string) || 'Unknown error';
+  console.log(`PI failed (${chargeType}): ${piId} for appointment ${appointmentId} — ${errorMsg}`);
 
-  // Update appointment to reflect failed payment
+  // Update appointment to reflect failed payment with reason
   const { error } = await supabase
     .from('appointments')
     .update({
       payment_status: 'failed',
+      payment_failure_reason: errorMsg,
     })
     .eq('id', appointmentId)
     .neq('payment_status', 'paid'); // Don't overwrite a paid status
@@ -1052,7 +1055,7 @@ Deno.serve(async (req) => {
         break;
 
       case "payment_intent.payment_failed":
-        await handleTerminalPaymentIntentFailed(supabase, event.data.object);
+        await handlePaymentIntentFailed(supabase, event.data.object);
         break;
 
       // G3: Refunds initiated outside Zura
