@@ -388,7 +388,7 @@ export function TerminalSettingsContent() {
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
-          <TabErrorBoundary tabName="Fleet">
+          <TabErrorBoundary tabName="Fleet" key={activeTab === 'fleet' ? 'fleet-active' : 'fleet'}>
             <ZuraPayFleetTab
               locations={locations}
               activeLocationId={activeLocationId}
@@ -423,19 +423,19 @@ export function TerminalSettingsContent() {
         </TabsContent>
 
         <TabsContent value="hardware" className="mt-6">
-          <TabErrorBoundary tabName="Hardware">
+          <TabErrorBoundary tabName="Hardware" key={activeTab === 'hardware' ? 'hardware-active' : 'hardware'}>
             <ZuraPayHardwareTab locations={locations} />
           </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="connectivity" className="mt-6">
-          <TabErrorBoundary tabName="Connectivity">
+          <TabErrorBoundary tabName="Connectivity" key={activeTab === 'connectivity' ? 'connectivity-active' : 'connectivity'}>
             <ZuraPayConnectivityTab />
           </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="display" className="mt-6">
-          <TabErrorBoundary tabName="Display">
+          <TabErrorBoundary tabName="Display" key={activeTab === 'display' ? 'display-active' : 'display'}>
             <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
           </TabErrorBoundary>
         </TabsContent>
