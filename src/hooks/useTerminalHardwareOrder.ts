@@ -54,23 +54,31 @@ interface CheckoutItem {
   sku_id?: string;
 }
 
+interface CheckoutParams {
+  organizationId: string;
+  locationId?: string;
+  items: CheckoutItem[];
+  successUrl?: string;
+  cancelUrl?: string;
+}
+
 export function useCreateTerminalCheckout() {
   return useMutation({
     mutationFn: async ({
       organizationId,
       locationId,
       items,
-    }: {
-      organizationId: string;
-      locationId?: string;
-      items: CheckoutItem[];
-    }) => {
+      successUrl,
+      cancelUrl,
+    }: CheckoutParams) => {
       const { data, error } = await supabase.functions.invoke('terminal-hardware-order', {
         body: {
           action: 'create_checkout',
           organization_id: organizationId,
           location_id: locationId,
           items,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
         },
       });
       if (error) throw error;
