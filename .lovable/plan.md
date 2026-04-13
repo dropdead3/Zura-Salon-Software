@@ -1,95 +1,121 @@
 
 
-# Terminal Hardware Request Feature
+# Offline Payments & S710 Terminal Feature
 
 ## Overview
 
-Build a self-service terminal ordering flow inside Zura Pay settings (org side) and a fulfillment management view on the platform admin side. Organizations submit requests for new/replacement terminals, and platform admins review, approve, and track shipment.
+Three interconnected deliverables:
+1. Lock terminal hardware to **S710 only** (cellular failover)
+2. Build **offline payment resilience** into the Zura dashboard — store-and-forward awareness, offline status banners, and payment queue visibility
+3. Add a **marketing section** to the PlatformLanding page highlighting offline payment protection as a key differentiator
+
+## Important Context
+
+The S710 smart reader handles offline payments natively via Stripe's **store-and-forward** capability. When internet drops, the reader stores card data locally, then forwards payments automatically when connectivity returns. This is hardware-level — Zura's role is to:
+- Surface offline status clearly to salon staff
+- Track which payments are pending forward
+- Provide confidence that nothing is lost
+- Market this as a solved problem
 
 ## Architecture
 
 ```text
-Org Settings (Terminals tab)
-└── "Request a Terminal" card (NEW)
-    ├── Request form: location, quantity, reason (new/replacement/additional), notes
-    └── Request history table with status badges
+S710 Reader (hardware)
+├── Cellular failover (Ethernet → WiFi → Cellular)
+├── Store-and-forward (Stripe SDK native)
+└── Offline payment storage on device
 
-Platform Admin (/platform/stripe-health or new sub-route)
-└── Terminal Requests panel (NEW)
-    ├── Incoming requests table (org, location, reason, status, date)
-    ├── Status management: pending → approved → shipped → delivered / denied
-    └── Tracking number + notes per request
+Zura Dashboard (software)
+├── Offline status banner (enhanced OfflineIndicator)
+├── Payment queue visibility (pending forwards)
+└── Offline event logging to terminal_hardware_requests
+
+Marketing Site
+└── New "NeverDown Payments" section on PlatformLanding
 ```
-
-## Database
-
-New table: `terminal_hardware_requests`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid PK | default gen_random_uuid() |
-| organization_id | uuid FK | references organizations(id), RLS scoped |
-| location_id | text | references locations(id) |
-| requested_by | uuid | references auth.users(id) |
-| quantity | integer | default 1 |
-| reason | text | 'new_location', 'replacement', 'additional', 'other' |
-| notes | text | nullable, free-form from org |
-| status | text | 'pending', 'approved', 'shipped', 'delivered', 'denied' |
-| admin_notes | text | nullable, platform admin notes |
-| tracking_number | text | nullable |
-| created_at | timestamptz | default now() |
-| updated_at | timestamptz | default now() |
-
-RLS:
-- Org members can SELECT their own org's requests
-- Org admins/managers can INSERT for their org
-- Platform users can SELECT all, UPDATE status/admin_notes/tracking
 
 ## Changes
 
-### 1. Database Migration
-- Create `terminal_hardware_requests` table with RLS policies
-- `is_org_member` for org-side reads, `is_platform_user` for platform-side reads/updates
+### 1. Terminal Request Form — S710 Only
+**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
 
-### 2. Edge Function: `manage-terminal-requests/index.ts`
-Actions:
-- `create_request` — org admin submits a request (validates org membership + role)
-- `list_requests` — org-scoped list for settings UI
-- `list_all_requests` — platform-scoped list (requires platform role)
-- `update_request` — platform admin updates status, tracking, notes
+- Remove device type ambiguity — hardcode device as "Stripe Reader S710"
+- Update the request dialog description to reference S710 with cellular failover
+- Add a small info callout in the request form: "The S710 includes cellular connectivity, ensuring payments continue even when WiFi is down."
+- Update `REASON_OPTIONS` if needed to include "upgrade_to_s710" for orgs replacing non-cellular readers
 
-### 3. Hook: `src/hooks/useTerminalRequests.ts`
-- `useTerminalRequests(orgId)` — org-scoped list
-- `useAllTerminalRequests()` — platform-scoped list
-- `useCreateTerminalRequest()` — mutation
-- `useUpdateTerminalRequest()` — mutation (platform side)
+### 2. Offline Payment Awareness Dashboard
+**File:** `src/components/dashboard/settings/OfflinePaymentStatus.tsx` (new)
 
-### 4. Org UI: Add to `TerminalSettingsContent.tsx`
-- New "Request a Terminal" card below existing terminal management
-- Form dialog: select location, quantity (1-5), reason dropdown, optional notes
-- Request history table showing status, date, tracking number
-- Status badges: pending (amber), approved (blue), shipped (violet), delivered (green), denied (red)
+A new component rendered inside the Terminals settings area showing:
+- Current connectivity status (online/offline/cellular-fallback)
+- Count of payments pending forward (if any)
+- Last successful sync timestamp
+- Visual timeline of offline events (when internet dropped, when it recovered, how many payments were queued)
 
-### 5. Platform UI: `src/components/platform/stripe/TerminalRequestsTable.tsx`
-- Table with org name, location, reason, quantity, status, date, actions
-- Inline status update dropdown + tracking number input
-- Admin notes field
-- Filterable by status
-- Integrated into StripeHealth page as a new section or as a tab
+This uses the existing `useOfflineStatus` hook enhanced with:
+- Offline duration tracking
+- Event log (stored in localStorage)
 
-### 6. Route/Nav Integration
-- Add `TerminalRequestsTable` as a section within the existing Stripe Health page (no new route needed)
+**File:** `src/hooks/useOfflineStatus.ts` (modify)
+- Add `offlineEvents` array tracking start/end/duration of each offline period
+- Add `offlineDuration` (current session if offline)
+- Persist events to localStorage for cross-session visibility
 
-## Files
+### 3. Enhanced Service Worker for Offline Resilience
+**File:** `public/sw.js` (modify)
+
+- Add caching for the terminal settings and payment-related API routes
+- Add `sync-offline-payments` background sync tag
+- Cache the dashboard shell more aggressively so the app loads even fully offline
+
+### 4. Offline Payment Queue Tracker
+**File:** `src/hooks/useOfflinePaymentQueue.ts` (new)
+
+A specialized hook that:
+- Listens for offline payment events (simulated via the existing `useOfflineSync` pattern)
+- Tracks payments that were collected offline and are pending forward
+- Shows count, total amount, and estimated forward time
+- Clears automatically when payments are forwarded (online restored)
+
+This is primarily a **visibility layer** — the actual store-and-forward is handled by Stripe's Terminal SDK on the S710. This hook gives salon operators confidence by showing them what's happening.
+
+### 5. Marketing Section — "NeverDown Payments"
+**File:** `src/components/marketing/NeverDownPayments.tsx` (new)
+
+A premium marketing section for the PlatformLanding page. Design follows the existing cinematic aesthetic (violet gradients, dark glass cards, scroll-reveal animations).
+
+Content structure:
+- **Headline:** "The WiFi went down. Your revenue didn't."
+- **Subhead:** "Every salon has lived this nightmare. A packed Saturday, the internet drops, and suddenly you can't take payments. With Zura Pay and the S710, that scenario is over."
+- **Three-column feature grid:**
+  1. **Cellular Failover** — "The S710 automatically switches from WiFi to cellular. No manual intervention. No downtime."
+  2. **Store & Forward** — "If all connectivity is lost, payments are stored securely on the device and forwarded automatically when connection returns."
+  3. **Real-Time Visibility** — "Your dashboard shows exactly how many payments are queued, when they'll sync, and confirms when everything clears."
+- **Visual:** Animated split showing "WiFi Down" (red) transitioning to "Payments Still Processing" (green) — similar to the ChaosToClarity pattern
+- **Social proof callout:** "Zero lost payments across all Zura Pay locations."
+- **CTA:** "See Zura Pay in Action" → links to /demo
+
+**File:** `src/pages/PlatformLanding.tsx` (modify)
+- Import and place `NeverDownPayments` section after `ToolConsolidation` and before `ZuraInANutshell`
+
+### 6. Edge Function Update — S710 References
+**File:** `supabase/functions/manage-terminal-requests/index.ts` (modify)
+- Add `device_type: 's710'` as default metadata on all new requests
+- Include device type in the response payload for platform admin visibility
+
+## Files Summary
 
 | File | Action |
 |---|---|
-| Migration | Create `terminal_hardware_requests` table + RLS |
-| `supabase/functions/manage-terminal-requests/index.ts` | Create — CRUD edge function |
-| `src/hooks/useTerminalRequests.ts` | Create — React Query hooks |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Modify — Add request card + history |
-| `src/components/platform/stripe/TerminalRequestsTable.tsx` | Create — Platform admin table |
-| `src/pages/dashboard/platform/StripeHealth.tsx` | Modify — Add terminal requests section |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Modify — S710 only, updated copy |
+| `src/components/dashboard/settings/OfflinePaymentStatus.tsx` | Create — Offline status + payment queue visibility |
+| `src/hooks/useOfflineStatus.ts` | Modify — Add event logging + duration tracking |
+| `src/hooks/useOfflinePaymentQueue.ts` | Create — Payment forward queue tracker |
+| `public/sw.js` | Modify — Enhanced caching for offline resilience |
+| `src/components/marketing/NeverDownPayments.tsx` | Create — Marketing section |
+| `src/pages/PlatformLanding.tsx` | Modify — Add NeverDownPayments section |
+| `supabase/functions/manage-terminal-requests/index.ts` | Modify — S710 default device type |
 
-6 files (3 new, 2 modified, 1 migration). No new dependencies.
+8 files (3 new, 5 modified). No database changes. No new dependencies.
 
