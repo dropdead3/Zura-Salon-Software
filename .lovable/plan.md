@@ -1,105 +1,112 @@
 
 
-# Daily Tip Distribution System
+# Fix Build Error + Staff Tip Bank Account Connection
 
-## What This Builds
+## Part 1: Fix Build Error (TS2589)
 
-A "Tip Distribution" workflow that calculates each stylist's earned tips daily, presents them to a manager for review/confirmation, and records the payout for compliance tracking. This mirrors the Phorest model without requiring individual stylist bank account onboarding.
+The `useOrganizationIntegrations.ts` error is caused by the Supabase client inferring deeply nested types from the relation query (`phorest_staff_mapping` joined through `locations`). The new `tip_distributions` table addition likely pushed the type complexity over TypeScript's recursion limit.
 
-## Architecture
+**Fix**: Cast the query result or split the relation query into two separate queries to avoid deep type inference.
+
+| File | Change |
+|---|---|
+| `src/hooks/useOrganizationIntegrations.ts` | Add explicit type cast to the Phorest query result to break the deep type chain |
+
+## Part 2: Staff Bank Account Connection for Tip Payouts
+
+### Considerations
+
+Before building, here's what matters:
+
+1. **Stripe Connect Express vs Custom** — Each stylist needs their own Stripe Connected Account to receive transfers. Express is simplest (Stripe-hosted onboarding).
+2. **KYC/Identity Verification** — Stripe handles this during onboarding, but staff must provide SSN, DOB, address. This is a regulatory requirement.
+3. **Tax Implications** — Tips paid via bank transfer may require 1099 reporting. Organizations should be aware.
+4. **Security** — Bank details are never stored in our database. Stripe holds everything. We only store the Stripe account ID and verification status.
+5. **Payout Timing** — Stripe transfers take 1-2 business days. "Daily" means initiated daily, arrives next business day.
+6. **Minimum Payout** — Consider a minimum threshold (e.g., $1) to avoid micro-transfers.
+7. **Org Authorization** — The org's Connected Account must have sufficient balance to fund transfers. Tips collected via card go through the org's Stripe account first.
+
+### Architecture
 
 ```text
-Completed Appointments (tip_amount)
+Staff clicks "Connect Bank" in My Pay
         │
         ▼
-  Aggregation Query (per stylist, per day)
+Edge function creates Stripe Express Account for staff
         │
         ▼
-  Tip Distribution Screen (manager reviews)
+Staff completes Stripe-hosted onboarding (KYC, bank info)
         │
         ▼
-  Confirm & Record (tip_distributions table)
+Webhook confirms account verified → update staff_payout_accounts
         │
         ▼
-  Payroll Reporting (feeds into payroll runs)
+When tip distribution is confirmed with method='direct_deposit':
+  Edge function creates Stripe Transfer from org's Connected Account
+  to staff's Connected Account
 ```
 
-## Implementation
+### Implementation
 
-### 1. Database: `tip_distributions` table
+#### 1. Migration: `staff_payout_accounts` table
 
-New table tracking individual tip payouts:
-- `id`, `organization_id`, `location_id`, `stylist_user_id`
-- `distribution_date` (the business day)
-- `total_tips` (calculated sum), `cash_tips`, `card_tips`
-- `method`: `cash` | `manual_transfer` | `payroll`
-- `status`: `pending` | `confirmed` | `paid`
-- `confirmed_by` (manager user_id), `confirmed_at`
-- `notes`
-- RLS: org-scoped via `is_org_member` for read, `is_org_admin` for write
-- Stylists can view their own distributions
+New table storing the link between staff and their Stripe accounts:
+- `id`, `organization_id`, `user_id` (unique per org)
+- `stripe_account_id` — the staff member's Express account ID
+- `stripe_status` — `pending` | `active` | `restricted` | `disabled`
+- `charges_enabled`, `payouts_enabled`, `details_submitted` — booleans from Stripe
+- `bank_last4`, `bank_name` — masked display info (no sensitive data)
+- `created_at`, `updated_at`
+- RLS: staff can read their own row; admins can read all in org
 
-### 2. Org Setting: `tip_distribution_policy`
+#### 2. Edge Function: `staff-payout-onboarding`
 
-Stored in `backroom_settings` with key `tip_distribution_policy`:
-```json
-{
-  "enabled": true,
-  "frequency": "daily",
-  "default_method": "cash",
-  "require_manager_confirmation": true,
-  "auto_generate_time": "18:00"
-}
-```
+Actions:
+- `create_account` — Creates a Stripe Express Connected Account for the staff member, returns an onboarding link
+- `create_login_link` — Generates a Stripe Express dashboard login link for the staff member
+- `verify_status` — Checks current verification state and syncs to DB
 
-### 3. Edge Function: `generate-tip-distributions`
+This uses the org's platform account as the "platform" in Stripe's Connect hierarchy (org → staff).
 
-Aggregates tips from completed appointments for a given date + location:
-- Groups by `stylist_user_id` (from appointment assignments)
-- Separates cash vs card tips (based on payment method on the transaction)
-- Inserts `pending` rows into `tip_distributions`
-- Can be triggered manually or via scheduled cron
+#### 3. Edge Function: `process-tip-payout`
 
-### 4. UI: Tip Distribution Manager
+When a manager confirms a tip distribution with method `direct_deposit`:
+- Looks up the staff member's `staff_payout_accounts.stripe_account_id`
+- Creates a Stripe Transfer from the org's Connected Account balance to the staff's account
+- Updates `tip_distributions.status` to `paid` and records `paid_at`
 
-New page or tab in Payment Operations (`/dashboard/admin/payment-ops`):
-- **Daily view**: Date picker showing each stylist's tip total for the day
-- **Status badges**: Pending → Confirmed → Paid
-- **Bulk confirm**: Manager selects all and confirms distribution
-- **Per-stylist detail**: Expandable row showing individual appointment tips
-- **Method selector**: Cash / Manual Transfer / Include in Payroll
+#### 4. UI: Bank Account Setup in My Pay
 
-### 5. Stylist View: "My Tips"
+New component `MyPayoutSetup.tsx` in the My Pay page:
+- Shows current bank connection status
+- "Connect Bank Account" button → triggers onboarding link
+- Once connected: shows bank name + last4, verification status
+- "Manage Account" link → Stripe Express dashboard
 
-In the stylist's "My Pay" section:
-- Daily tip history with status (pending/confirmed/paid)
-- Running total for current pay period
-- Matches what appears on their payroll stub
+#### 5. UI: Direct Deposit option in Tip Distribution Manager
 
-### 6. Settings UI: Tip Distribution Policy
+Add `direct_deposit` as a method option in the manager's method selector. When confirming with this method:
+- Validate the stylist has a verified payout account
+- Show warning if account not yet verified
+- On confirm, invoke `process-tip-payout` edge function
 
-New card in Terminal Settings or Payroll Settings:
-- Enable/disable daily tip distributions
-- Default payout method
-- Require manager confirmation toggle
+#### 6. Webhook Handler Update
 
-## Files
+Add handling for `account.updated` events scoped to staff accounts:
+- Sync `charges_enabled`, `payouts_enabled`, `details_submitted` to `staff_payout_accounts`
+- Update status based on Stripe account state
+
+### Files
 
 | File | Action |
 |---|---|
-| Migration | Create `tip_distributions` table with RLS |
-| `supabase/functions/generate-tip-distributions/index.ts` | **New** — aggregation + insert logic |
-| `src/hooks/useTipDistributions.ts` | **New** — query/mutation hooks |
-| `src/components/dashboard/payments/TipDistributionManager.tsx` | **New** — manager review UI |
-| `src/components/dashboard/settings/TipDistributionPolicySettings.tsx` | **New** — org policy toggle |
-| Payment Ops page or Payroll Hub | Add Tip Distribution section/tab |
-| My Pay section | Add tip history for individual stylists |
-
-## What This Does NOT Do (Yet)
-
-- **No automatic money movement** — no Stripe transfers to individual stylists
-- **No individual stylist bank onboarding** — that's Phase 2 if orgs want automated transfers
-- **No Gusto API integration for tips** — tips are recorded for payroll reporting, but not auto-pushed to Gusto (future enhancement)
-
-These can be layered on once the tracking foundation is solid.
+| `src/hooks/useOrganizationIntegrations.ts` | Fix TS2589 build error |
+| Migration | Create `staff_payout_accounts` table with RLS |
+| `supabase/functions/staff-payout-onboarding/index.ts` | **New** — account creation + onboarding links |
+| `supabase/functions/process-tip-payout/index.ts` | **New** — Stripe Transfer execution |
+| `src/hooks/useStaffPayoutAccount.ts` | **New** — query/mutation hooks for payout accounts |
+| `src/components/dashboard/mypay/MyPayoutSetup.tsx` | **New** — bank connection UI for staff |
+| `src/pages/dashboard/MyPay.tsx` | Add payout setup section |
+| `src/components/dashboard/payments/TipDistributionManager.tsx` | Add `direct_deposit` method + payout trigger |
+| `supabase/functions/stripe-webhook/index.ts` | Handle `account.updated` for staff accounts |
 
