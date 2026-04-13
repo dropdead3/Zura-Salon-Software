@@ -78,15 +78,6 @@ export function IntegrationsTab() {
       available: false,
     },
     {
-      id: 'stripe',
-      name: 'Stripe',
-      description: 'Process payments and manage transactions.',
-      icon: DollarSign,
-      status: 'not_connected',
-      features: ['Payment Processing', 'Invoicing', 'Subscriptions'],
-      available: false,
-    },
-    {
       id: 'mailchimp',
       name: 'Mailchimp',
       description: 'Email marketing and client communication.',

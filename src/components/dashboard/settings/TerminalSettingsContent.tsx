@@ -424,7 +424,7 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle className="font-display text-lg tracking-wide">REQUEST STRIPE READER S710</DialogTitle>
+            <DialogTitle className="font-display text-lg tracking-wide">REQUEST ZURA PAY READER S710</DialogTitle>
             <DialogDescription>
               Request S710 terminal readers with built-in cellular connectivity. Payments continue even when WiFi is down.
             </DialogDescription>
@@ -647,9 +647,9 @@ export function TerminalSettingsContent() {
                   <div>
                     <div className="flex items-center gap-2">
                       <CardTitle className={tokens.card.title}>TERMINAL LOCATIONS</CardTitle>
-                      <MetricInfoTooltip description="Stripe Terminal locations represent physical sites where your readers accept payments. Each reader must be assigned to a terminal location." />
+                      <MetricInfoTooltip description="Terminal locations represent physical sites where your readers accept payments. Each reader must be assigned to a terminal location." />
                     </div>
-                    <CardDescription>Stripe Terminal locations for accepting in-person payments at this site.</CardDescription>
+                    <CardDescription>Payment terminal locations for accepting in-person payments at this site.</CardDescription>
                   </div>
                 </div>
                 <Button
