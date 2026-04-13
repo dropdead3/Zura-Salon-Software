@@ -36,9 +36,11 @@ export const DOCK_BADGE = {
   base: 'text-[11px] font-sans whitespace-nowrap px-2.5 py-0.5 rounded-full border',
 
   /** Payment variants */
-  paid:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  unpaid:    'bg-red-500/15 text-red-400 border-red-500/25',
-  comp:      'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]',
+  paid:               'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  unpaid:             'bg-red-500/15 text-red-400 border-red-500/25',
+  refunded:           'bg-slate-500/15 text-slate-400 border-slate-500/25',
+  partiallyRefunded:  'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  comp:               'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]',
 
   /** Status variants */
   noShow:    'bg-amber-500/15 text-amber-400 border-amber-500/25',
