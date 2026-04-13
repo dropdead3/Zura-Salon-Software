@@ -1,49 +1,54 @@
 
 
-# Gaps & Bugs: Staff Tip Payout Feature
+# Remaining Gaps and Bugs
 
-## Critical Gaps
+The major issues from the previous plan have been fixed. Here are the remaining items:
 
-### 1. No feature gating — MyPayoutSetup and My Tips always render
-`MyPayoutSetup` and `MyTipsHistory` render unconditionally on the "My Tips" tab. There is **no check** for whether the org admin has enabled tip distributions or selected `direct_deposit` as the default method. A stylist sees "Connect Bank Account" even if the org has tip distributions disabled or uses cash-only payouts.
+## Bug: Webhook doesn't sync bank info for staff accounts
 
-**Fix**: Read the `tip_distribution_policy` setting. Hide the entire "My Tips" tab when `enabled === false`. Show `MyPayoutSetup` only when the policy's `default_method` is `direct_deposit` (or offer it as opt-in regardless, with contextual copy explaining the org supports direct deposit).
+The `handleAccountUpdated` webhook handler (line 1031-1038) updates `stripe_status`, `charges_enabled`, `payouts_enabled`, and `details_submitted` for staff accounts — but does **not** fetch or update `bank_last4` and `bank_name`. The `verify_status` edge function action does this (lines 200-213), but the webhook path skips it. After onboarding, the staff member's bank details will show as blank until they manually click "Refresh."
 
-### 2. Onboarding opens in new tab — return URL broken
-`handleConnect` calls `window.open(url, '_blank')`. The return URL from Stripe includes `?onboarding=complete`, but it returns to the **new tab**, not the original. The `useEffect` on the original tab never fires. The user lands on a fresh page load in the new tab with the query param, but if they navigate away before the effect runs, the status never refreshes.
+**Fix**: In the webhook handler's staff account branch, retrieve the Stripe account's `external_accounts` and update `bank_last4`/`bank_name`.
 
-**Fix**: Use `window.location.href` instead of `window.open` to keep the user in the same tab, or add the onboarding detection to `MyPayoutSetup` itself (not just the parent page).
+## Bug: `onboarding=refresh` URL not handled
 
-### 3. No admin visibility into staff payout account statuses
-Admins have no UI to see which stylists have connected bank accounts, who is verified, and who hasn't started. When confirming direct deposit distributions, they get a warning icon but no centralized view.
+The edge function sets `refresh_url` to `?onboarding=refresh` (Stripe redirects here when the onboarding link expires or needs regeneration). `MyPay.tsx` only checks for `onboarding=complete` — the `refresh` case is silently ignored. The user lands on the page with a stale query param and no feedback.
 
-**Fix**: Add a "Staff Payout Accounts" section to Payment Ops or the Tip Distribution Manager showing each stylist's connection status, with the ability to nudge incomplete onboarding.
+**Fix**: In `MyPay.tsx`, detect `onboarding=refresh` and show a toast prompting the user to restart onboarding ("Your verification link expired. Please try connecting again."), then clear the param.
 
-### 4. Onboarding return `useEffect` can double-fire
-The effect depends on `searchParams` and `effectiveOrganization?.id` but mutates `searchParams` synchronously. React 18 strict mode or fast re-renders could trigger the mutation twice. The `refreshStatus.mutate` call doesn't guard against being already in-flight.
+## Bug: Bulk direct deposit fires mutations in a loop without awaiting
 
-**Fix**: Add a `useRef` guard to ensure the effect runs exactly once.
+In `TipDistributionManager.tsx` (lines 108-120), bulk direct deposit processes each payout by calling `payoutMutation.mutate()` in a `for` loop. This fires all requests simultaneously without `await`, and the `completed` counter uses closure state that may not increment correctly across async callbacks. If one fails, others still proceed — no rollback.
 
-### 5. Stylist doesn't know *why* they should connect
-The `MyPayoutSetup` empty state says "Connect your bank account to receive daily tip payouts directly" but doesn't show how much they've earned in pending tips. There's no motivation — a stylist with $0 tips sees the same prompt as one with $200 pending.
+**Fix**: Use `Promise.allSettled` with `mutateAsync` instead. Report successes and failures separately. Clear selection only for successful items.
 
-**Fix**: Show pending tip total above the connect CTA: "You have $X in pending tips. Connect your bank to receive them via direct deposit."
+## Gap: Single confirm dialog uses `bulkMethod` instead of per-row method
 
-## Moderate Issues
+The single-row "Confirm" button opens a dialog whose method is determined by `bulkMethod` (the bulk action selector). If the admin has the bulk selector set to "Direct Deposit" but clicks "Confirm" on a single row intending cash, it will attempt a direct deposit. The method should be selectable within the dialog, or default to the org's policy method.
 
-### 6. `MyPayoutSetup` uses `useColorBarOrgId` inconsistency
-The settings component uses `useColorBarOrgId` but the payout setup uses `useOrganizationContext` directly. These should use the same org resolution path to avoid mismatches.
+**Fix**: Add a method selector inside the single-confirm dialog so the admin explicitly chooses the method per distribution.
 
-### 7. No loading/error state for onboarding link generation
-If the edge function is slow or fails, the button shows a spinner but there's no timeout or error recovery UX beyond the toast. The user might click multiple times.
+## Gap: `APP_URL` env var may not be set
+
+The `staff-payout-onboarding` function uses `Deno.env.get("APP_URL")` with a fallback to `https://getzura.com`. For multi-org deployments or white-label scenarios, the return URL will always point to `getzura.com` regardless of how the user accessed the app. This could break onboarding returns for custom domains.
+
+**Fix**: Accept the current app origin from the request body or derive it from the `Origin`/`Referer` header (with allowlist validation).
+
+## Minor: `useMyPendingTipTotal` query may return stale data
+
+The pending tip total shown in `MyPayoutSetup` doesn't invalidate when tips are confirmed or paid. A stylist might see "$200 pending" after their tips have already been paid.
+
+**Fix**: Ensure the query key for `my-pending-tip-total` is invalidated alongside `tip-distributions` in the payout mutation's `onSuccess`.
+
+---
 
 ## Proposed Fix Plan
 
 | # | File | Change |
 |---|---|---|
-| 1 | `src/pages/dashboard/MyPay.tsx` | Gate "My Tips" tab visibility on `tip_distribution_policy.enabled`; fix onboarding `useEffect` with ref guard |
-| 2 | `src/components/dashboard/mypay/MyPayoutSetup.tsx` | Gate rendering on policy `default_method === 'direct_deposit'`; use `window.location.href` for onboarding; show pending tip total as motivation |
-| 3 | `src/components/dashboard/mypay/MyTipsHistory.tsx` | No changes needed (gated by parent) |
-| 4 | `src/components/dashboard/payments/TipDistributionManager.tsx` | Add a "Staff Accounts" summary showing connected vs unconnected stylists |
-| 5 | `src/hooks/useStaffPayoutAccount.ts` | No changes needed |
+| 1 | `supabase/functions/stripe-webhook/index.ts` | Fetch `external_accounts` and sync `bank_last4`/`bank_name` in staff account branch |
+| 2 | `src/pages/dashboard/MyPay.tsx` | Handle `?onboarding=refresh` with user-facing toast and param cleanup |
+| 3 | `src/components/dashboard/payments/TipDistributionManager.tsx` | Use `Promise.allSettled` + `mutateAsync` for bulk direct deposit; add per-row method selector in single confirm dialog |
+| 4 | `supabase/functions/staff-payout-onboarding/index.ts` | Derive return URL from request origin with allowlist validation instead of static `APP_URL` |
+| 5 | `src/hooks/useTipDistributions.ts` | Invalidate `my-pending-tip-total` in payout mutation `onSuccess` |
 
