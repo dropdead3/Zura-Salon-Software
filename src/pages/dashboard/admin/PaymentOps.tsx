@@ -98,11 +98,11 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
         .select('id, client_name, appointment_date')
         .eq('organization_id', orgId!)
         .gte('appointment_date', cutoff)
-        .ilike('client_name', `%${debouncedSearch}%`)
+        .ilike('client_name' as any, `%${debouncedSearch}%`)
         .order('appointment_date', { ascending: false })
         .limit(10);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Array<{ id: string; client_name: string | null; appointment_date: string }>;
     },
     enabled: !!orgId && debouncedSearch.length >= 2,
   });
