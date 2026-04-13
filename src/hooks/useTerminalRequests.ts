@@ -16,6 +16,9 @@ export interface TerminalHardwareRequest {
   tracking_number: string | null;
   created_at: string;
   updated_at: string;
+  device_type?: string;
+  accessories?: { id: string; name: string; quantity: number; unit_price_cents: number }[];
+  estimated_total_cents?: number;
   // Joined fields (platform side)
   organization_name?: string;
   location_name?: string;
