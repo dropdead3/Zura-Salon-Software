@@ -10,7 +10,7 @@
  */
 
 import { useRef, useState } from 'react';
-import { Users, CheckCircle2, Play, XCircle, UserX, AlertCircle } from 'lucide-react';
+import { Users, CheckCircle2, Play, XCircle, UserX, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { differenceInMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -30,12 +30,14 @@ interface DockAppointmentCardProps {
   appointment: DockAppointment;
   accentColor: 'violet' | 'blue' | 'slate' | 'amber' | 'red';
   isChemical?: boolean;
+  isRetrying?: boolean;
   onTap?: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
   onCancel?: (appointment: DockAppointment) => void;
   onNoShow?: (appointment: DockAppointment) => void;
   onViewClient?: (appointment: DockAppointment) => void;
+  onRetryCharge?: (appointment: DockAppointment) => void;
 }
 
 const BORDER_COLORS: Record<string, string> = {
@@ -66,7 +68,7 @@ const ACTIVE_OPEN_OFFSET = -160;
 const SCHEDULED_OPEN_OFFSET = -400;
 const SNAP_THRESHOLD = 50;
 
-export function DockAppointmentCard({ appointment, accentColor, isChemical = true, onTap, onComplete, onStart, onCancel, onNoShow, onViewClient }: DockAppointmentCardProps) {
+export function DockAppointmentCard({ appointment, accentColor, isChemical = true, isRetrying = false, onTap, onComplete, onStart, onCancel, onNoShow, onViewClient, onRetryCharge }: DockAppointmentCardProps) {
   const borderClass = isChemical ? BORDER_COLORS[accentColor] : 'border-l-[hsl(var(--platform-foreground-muted)/0.3)]';
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
   const isActive = ACTIVE_STATUSES.includes(appointment.status || '');
@@ -145,6 +147,24 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 {appointment.payment_failure_reason || 'Payment failed — no details available'}
               </TooltipContent>
             </Tooltip>
+          )}
+          {/* Retry button — only when failed + card on file */}
+          {appointment.payment_status === 'failed' && appointment.has_card_on_file && onRetryCharge && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRetryCharge(appointment);
+              }}
+              disabled={isRetrying}
+              className={cn(DOCK_BADGE.base, DOCK_BADGE.retryAction, 'inline-flex items-center gap-1 pointer-events-auto')}
+            >
+              {isRetrying ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3 h-3" />
+              )}
+              Retry
+            </button>
           )}
           {/* Payment badge for completed appointments (non-failed) */}
           {appointment.status === 'completed' && appointment.payment_status !== 'failed' && PAYMENT_BADGE[appointment.payment_status || ''] && (

@@ -43,6 +43,9 @@ export const DOCK_BADGE = {
   failed:             'bg-red-500/15 text-red-400 border-red-500/25',
   comp:               'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]',
 
+  /** Retry action pill — inline with Failed badge */
+  retryAction:        'bg-violet-500/15 text-violet-400 border-violet-500/25 hover:bg-violet-500/25 active:scale-[0.96] cursor-pointer transition-all',
+
   /** Status variants */
   noShow:    'bg-amber-500/15 text-amber-400 border-amber-500/25',
   cancelled: 'bg-red-500/15 text-red-400 border-red-500/25',
@@ -140,5 +143,6 @@ export const DOCK_DIALOG = {
   cancelButton: 'w-full h-12 rounded-full border border-[hsl(var(--platform-border)/0.3)] bg-transparent text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-foreground-muted)/0.1)] font-medium transition-colors',
   destructiveAction: 'w-full h-12 rounded-full border-0 bg-red-500/20 text-red-400 hover:bg-red-500/30 font-display tracking-wide transition-colors',
   warningAction: 'w-full h-12 rounded-full border-0 bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 font-display tracking-wide transition-colors',
+  retryAction: 'w-full h-12 rounded-full border-0 bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 font-display tracking-wide transition-colors',
   buttonRow: 'flex gap-3 pt-2',
 } as const;

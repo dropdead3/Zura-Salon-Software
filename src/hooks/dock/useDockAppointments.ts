@@ -29,6 +29,8 @@ export interface DockAppointment {
   client_id?: string | null;
   notes?: string | null;
   mix_bowl_count?: number;
+  total_price?: number | null;
+  has_card_on_file?: boolean;
 }
 
 export function useDockAppointments(staffUserId: string | null, locationId?: string, staffFilter?: string) {
@@ -68,7 +70,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         // Fetch today's phorest appointments for this specific location
         let query = supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id, total_price')
           .eq('location_id', locationId)
           .eq('appointment_date', today)
           .is('deleted_at', null)
@@ -146,6 +148,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           phorest_client_id: a.phorest_client_id,
           notes: a.notes,
           mix_bowl_count: 0,
+          total_price: (a as any).total_price ?? null,
         }));
 
         // Fetch bowl counts for these appointments via mix_sessions + mix_bowls
@@ -188,7 +191,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             if (missingIds.length > 0) {
               const { data: extraAppts } = await supabase
                 .from('phorest_appointments')
-                .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id')
+                .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id, total_price')
                 .in('id', missingIds)
                 .eq('location_id', locationId)
                 .eq('appointment_date', today)
@@ -213,9 +216,27 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
                   phorest_client_id: a.phorest_client_id,
                   notes: a.notes,
                   mix_bowl_count: 0,
+                  total_price: (a as any).total_price ?? null,
                 });
               }
               appointments.sort((a, b) => a.start_time.localeCompare(b.start_time));
+            }
+          }
+        }
+
+        // Batch-check card on file for failed payment appointments
+        const failedAppts = appointments.filter(a => a.payment_status === 'failed' && a.phorest_client_id);
+        if (failedAppts.length > 0) {
+          const clientIds = [...new Set(failedAppts.map(a => a.phorest_client_id!))];
+          const { data: cards } = await supabase
+            .from('client_cards_on_file')
+            .select('client_id')
+            .in('client_id', clientIds)
+            .eq('is_default', true);
+          const clientsWithCards = new Set((cards || []).map(c => c.client_id));
+          for (const a of appointments) {
+            if (a.payment_status === 'failed' && a.phorest_client_id) {
+              a.has_card_on_file = clientsWithCards.has(a.phorest_client_id);
             }
           }
         }
@@ -227,14 +248,14 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
       const [phorestResult, localResult] = await Promise.all([
         supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id, total_price')
           .eq('stylist_user_id', staffUserId!)
           .eq('appointment_date', today)
           .is('deleted_at', null)
           .order('start_time', { ascending: true }),
         supabase
           .from('appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, client_id, notes')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, client_id, notes, total_price')
           .eq('staff_user_id', staffUserId!)
           .eq('appointment_date', today)
           .is('deleted_at', null)
@@ -261,6 +282,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         location_id: a.location_id,
         phorest_client_id: a.phorest_client_id,
         notes: a.notes,
+        total_price: (a as any).total_price ?? null,
       }));
 
       const local: DockAppointment[] = (localResult.data || []).map((a) => ({
@@ -278,6 +300,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         location_id: a.location_id,
         client_id: a.client_id,
         notes: a.notes,
+        total_price: (a as any).total_price ?? null,
       }));
 
       // Fetch bowl counts for appointments
@@ -302,11 +325,33 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             const apptId = sessionToAppt[b.mix_session_id];
             if (apptId) bowlCounts[apptId] = (bowlCounts[apptId] || 0) + 1;
           }
-          return all.map((a) => ({ ...a, mix_bowl_count: bowlCounts[a.id] || 0 }));
+          for (const a of all) {
+            (a as any).mix_bowl_count = bowlCounts[a.id] || 0;
+          }
         }
       }
 
-      return all.map((a) => ({ ...a, mix_bowl_count: 0 }));
+      // Batch-check card on file for failed payment appointments
+      const failedNormal = all.filter(a => a.payment_status === 'failed');
+      if (failedNormal.length > 0) {
+        const clientIds = [...new Set(failedNormal.map(a => a.phorest_client_id || a.client_id).filter(Boolean))] as string[];
+        if (clientIds.length > 0) {
+          const { data: cards } = await supabase
+            .from('client_cards_on_file')
+            .select('client_id')
+            .in('client_id', clientIds)
+            .eq('is_default', true);
+          const clientsWithCards = new Set((cards || []).map(c => c.client_id));
+          for (const a of all) {
+            if (a.payment_status === 'failed') {
+              const cid = a.phorest_client_id || a.client_id;
+              a.has_card_on_file = cid ? clientsWithCards.has(cid) : false;
+            }
+          }
+        }
+      }
+
+      return all.map((a) => ({ ...a, mix_bowl_count: (a as any).mix_bowl_count ?? 0 }));
     },
     enabled: !!staffUserId || (isDemoMode && usesRealData),
     staleTime: 30_000,

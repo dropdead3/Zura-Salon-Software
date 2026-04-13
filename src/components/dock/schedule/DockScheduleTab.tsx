@@ -84,7 +84,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   });
 
   // Confirmation dialog state
-  const [confirmAction, setConfirmAction] = useState<{ appointment: DockAppointment; action: 'cancel' | 'no_show' } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ appointment: DockAppointment; action: 'cancel' | 'no_show' | 'retry_charge' } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleToggleChange = (checked: boolean) => {
@@ -147,34 +147,59 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     setConfirmAction({ appointment, action: 'no_show' });
   }, []);
 
+  const handleRetryCharge = useCallback((appointment: DockAppointment) => {
+    setConfirmAction({ appointment, action: 'retry_charge' });
+  }, []);
+
   const handleConfirmAction = useCallback(async () => {
     if (!confirmAction) return;
     const { appointment, action } = confirmAction;
 
     if (appointment.id.startsWith('demo-')) {
-      toast.success(`Demo: Appointment ${action === 'cancel' ? 'cancelled' : 'marked as no-show'}`);
+      toast.success(`Demo: ${action === 'retry_charge' ? 'Charge retried' : action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show'}`);
       setConfirmAction(null);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const status = action === 'cancel' ? 'CANCELLED' : 'NO_SHOW';
-      const { error } = await supabase.functions.invoke('update-phorest-appointment', {
-        body: { appointment_id: appointment.id, status },
-      });
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
-      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      toast.success(action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show');
+      if (action === 'retry_charge') {
+        const clientId = appointment.phorest_client_id || appointment.client_id;
+        const amount = appointment.total_price;
+        if (!clientId || !amount) throw new Error('Missing client or amount');
+
+        const { error } = await supabase.functions.invoke('charge-card-on-file', {
+          body: {
+            organization_id: staff.organizationId,
+            client_id: clientId,
+            amount,
+            appointment_id: appointment.id,
+            description: `Retry charge for ${appointment.client_name || 'appointment'}`,
+          },
+        });
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        toast.success('Charge retried successfully');
+      } else {
+        const status = action === 'cancel' ? 'CANCELLED' : 'NO_SHOW';
+        const { error } = await supabase.functions.invoke('update-phorest-appointment', {
+          body: { appointment_id: appointment.id, status },
+        });
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        toast.success(action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show');
+      }
     } catch (err) {
       toast.error(`Failed: ${(err as Error).message}`);
     } finally {
       setIsSubmitting(false);
       setConfirmAction(null);
     }
-  }, [confirmAction, queryClient]);
+  }, [confirmAction, queryClient, staff.organizationId]);
 
   const filteredAppointments = useMemo(() => {
     const all = appointments || [];
@@ -240,19 +265,19 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           ) : (
             <>
               {active.length > 0 && (
-                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
               )}
               {scheduled.length > 0 && (
-                <AppointmentGroup label="Upcoming" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Upcoming" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
               )}
               {completed.length > 0 && (
-                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
               )}
               {noShow.length > 0 && (
-                <AppointmentGroup label="No Show" count={noShow.length} appointments={noShow} accentColor="amber" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="No Show" count={noShow.length} appointments={noShow} accentColor="amber" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
               )}
               {cancelled.length > 0 && (
-                <AppointmentGroup label="Cancelled" count={cancelled.length} appointments={cancelled} accentColor="red" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} />
+                <AppointmentGroup label="Cancelled" count={cancelled.length} appointments={cancelled} accentColor="red" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
               )}
             </>
           )}
@@ -290,12 +315,14 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
               transition={DOCK_SHEET.spring}
             >
               <h2 className={DOCK_DIALOG.title}>
-                {confirmAction.action === 'cancel' ? 'Cancel Appointment' : 'Mark as No-Show'}
+                {confirmAction.action === 'retry_charge' ? 'Retry Charge' : confirmAction.action === 'cancel' ? 'Cancel Appointment' : 'Mark as No-Show'}
               </h2>
               <p className={DOCK_DIALOG.description}>
-                {confirmAction.action === 'cancel'
-                  ? `Are you sure you want to cancel ${confirmAction.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
-                  : `Mark ${confirmAction.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
+                {confirmAction.action === 'retry_charge'
+                  ? `Retry charge of $${((confirmAction.appointment.total_price || 0)).toFixed(2)} for ${confirmAction.appointment.client_name || 'this client'}?`
+                  : confirmAction.action === 'cancel'
+                    ? `Are you sure you want to cancel ${confirmAction.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
+                    : `Mark ${confirmAction.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
                 }
               </p>
               <div className={DOCK_DIALOG.buttonRow}>
@@ -304,14 +331,16 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
                   onClick={() => setConfirmAction(null)}
                   className={DOCK_DIALOG.cancelButton}
                 >
-                  {confirmAction.action === 'cancel' ? 'Keep Appointment' : 'Go Back'}
+                  {confirmAction.action === 'retry_charge' ? 'Cancel' : confirmAction.action === 'cancel' ? 'Keep Appointment' : 'Go Back'}
                 </button>
                 <button
                   onClick={handleConfirmAction}
                   disabled={isSubmitting}
-                  className={confirmAction.action === 'cancel' ? DOCK_DIALOG.destructiveAction : DOCK_DIALOG.warningAction}
+                  className={confirmAction.action === 'retry_charge'
+                    ? DOCK_DIALOG.retryAction
+                    : confirmAction.action === 'cancel' ? DOCK_DIALOG.destructiveAction : DOCK_DIALOG.warningAction}
                 >
-                  {isSubmitting ? 'Processing…' : confirmAction.action === 'cancel' ? 'Yes, Cancel' : 'Mark No-Show'}
+                  {isSubmitting ? 'Processing…' : confirmAction.action === 'retry_charge' ? 'Retry Charge' : confirmAction.action === 'cancel' ? 'Yes, Cancel' : 'Mark No-Show'}
                 </button>
               </div>
             </motion.div>
@@ -333,6 +362,8 @@ function AppointmentGroup({
   onCancel,
   onNoShow,
   onViewClient,
+  onRetryCharge,
+  retryingId,
 }: {
   label: string;
   count: number;
@@ -344,6 +375,8 @@ function AppointmentGroup({
   onCancel?: (appointment: DockAppointment) => void;
   onNoShow?: (appointment: DockAppointment) => void;
   onViewClient?: (appointment: DockAppointment) => void;
+  onRetryCharge?: (appointment: DockAppointment) => void;
+  retryingId?: string | null;
 }) {
   const dotColor = {
     violet: 'bg-violet-500',
@@ -366,7 +399,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-4">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} onTap={onTap} onComplete={onComplete} onStart={onStart} onCancel={onCancel} onNoShow={onNoShow} onViewClient={onViewClient} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} isRetrying={retryingId === a.id} onTap={onTap} onComplete={onComplete} onStart={onStart} onCancel={onCancel} onNoShow={onNoShow} onViewClient={onViewClient} onRetryCharge={onRetryCharge} />
         ))}
       </div>
     </div>
