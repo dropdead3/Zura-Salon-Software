@@ -1174,6 +1174,10 @@ export type Database = {
       appointments: {
         Row: {
           appointment_date: string
+          cancellation_fee_charged: number | null
+          cancellation_fee_status: string | null
+          cancellation_fee_stripe_payment_id: string | null
+          card_on_file_id: string | null
           client_email: string | null
           client_id: string | null
           client_name: string | null
@@ -1234,6 +1238,10 @@ export type Database = {
         }
         Insert: {
           appointment_date: string
+          cancellation_fee_charged?: number | null
+          cancellation_fee_status?: string | null
+          cancellation_fee_stripe_payment_id?: string | null
+          card_on_file_id?: string | null
           client_email?: string | null
           client_id?: string | null
           client_name?: string | null
@@ -1294,6 +1302,10 @@ export type Database = {
         }
         Update: {
           appointment_date?: string
+          cancellation_fee_charged?: number | null
+          cancellation_fee_status?: string | null
+          cancellation_fee_stripe_payment_id?: string | null
+          card_on_file_id?: string | null
           client_email?: string | null
           client_id?: string | null
           client_name?: string | null
@@ -1353,6 +1365,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_card_on_file_id_fkey"
+            columns: ["card_on_file_id"]
+            isOneToOne: false
+            referencedRelation: "client_cards_on_file"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_client_id_fkey"
             columns: ["client_id"]
@@ -22499,6 +22518,7 @@ export type Database = {
           predictive_backroom_enabled: boolean
           price: number | null
           processing_time_minutes: number
+          require_card_on_file: boolean
           requires_deposit: boolean
           requires_new_client_consultation: boolean
           requires_qualification: boolean | null
@@ -22544,6 +22564,7 @@ export type Database = {
           predictive_backroom_enabled?: boolean
           price?: number | null
           processing_time_minutes?: number
+          require_card_on_file?: boolean
           requires_deposit?: boolean
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
@@ -22589,6 +22610,7 @@ export type Database = {
           predictive_backroom_enabled?: boolean
           price?: number | null
           processing_time_minutes?: number
+          require_card_on_file?: boolean
           requires_deposit?: boolean
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
