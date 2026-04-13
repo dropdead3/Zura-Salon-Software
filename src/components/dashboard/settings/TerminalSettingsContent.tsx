@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle, Signal } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,11 +24,14 @@ import {
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
+import { useTerminalHardwareSkus, useCreateTerminalCheckout, useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { OfflinePaymentStatus } from './OfflinePaymentStatus';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useSearchParams } from 'react-router-dom';
 
 // Fetch org locations that have Zura Pay (stripe_account_id)
 function useZuraPayLocations() {
@@ -308,40 +311,55 @@ const REASON_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
-// ---- Terminal Request Card ----
+// ---- Terminal Purchase Card ----
 
-function TerminalRequestCard({ locations }: { locations: { id: string; name: string }[] }) {
+function TerminalPurchaseCard({ locations }: { locations: { id: string; name: string }[] }) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: requests, isLoading } = useTerminalRequests(orgId);
-  const createRequest = useCreateTerminalRequest();
+  const { data: requests, isLoading: requestsLoading } = useTerminalRequests(orgId);
+  const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus();
+  const createCheckout = useCreateTerminalCheckout();
+  const verifyPayment = useVerifyTerminalPayment();
+  const { formatCurrency } = useFormatCurrency();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reqLocationId, setReqLocationId] = useState('');
-  const [reqQuantity, setReqQuantity] = useState('1');
-  const [reqReason, setReqReason] = useState('');
-  const [reqNotes, setReqNotes] = useState('');
+  const [quantity, setQuantity] = useState(1);
 
-  const handleSubmit = () => {
-    if (!orgId || !reqLocationId || !reqReason) return;
-    createRequest.mutate(
-      {
-        organizationId: orgId,
-        locationId: reqLocationId,
-        quantity: parseInt(reqQuantity, 10) || 1,
-        reason: reqReason,
-        notes: reqNotes || undefined,
-      },
-      {
-        onSuccess: () => {
-          setDialogOpen(false);
-          setReqLocationId('');
-          setReqQuantity('1');
-          setReqReason('');
-          setReqNotes('');
-        },
-      }
-    );
+  // Auto-verify payment on return from checkout
+  useEffect(() => {
+    const checkoutStatus = searchParams.get('checkout');
+    const sessionId = searchParams.get('session_id');
+    if (checkoutStatus === 'success' && sessionId && orgId) {
+      verifyPayment.mutate({ sessionId, organizationId: orgId });
+      // Clean URL params
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('checkout');
+      newParams.delete('session_id');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, orgId]);
+
+  const readerPrice = skuData?.skus?.[0]?.amount || 29900;
+  const readerCurrency = skuData?.skus?.[0]?.currency || 'usd';
+  const totalPrice = readerPrice * quantity;
+  const pricingSource = skuData?.source || 'fallback';
+
+  const handlePurchase = () => {
+    if (!orgId) return;
+    createCheckout.mutate({
+      organizationId: orgId,
+      locationId: reqLocationId || undefined,
+      items: [{
+        name: 'Zura Pay Reader S710',
+        amount: readerPrice,
+        quantity,
+        currency: readerCurrency,
+        description: 'Terminal reader with cellular + WiFi connectivity',
+        sku_id: skuData?.skus?.[0]?.id || 's710_reader',
+      }],
+    });
   };
 
   return (
@@ -350,14 +368,14 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={tokens.card.iconBox}>
-              <Package className={tokens.card.icon} />
+              <ShoppingCart className={tokens.card.icon} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className={tokens.card.title}>REQUEST A TERMINAL</CardTitle>
-                <MetricInfoTooltip description="Submit a request for new or replacement terminal hardware. Our team will process your order and ship the device to your location." />
+                <CardTitle className={tokens.card.title}>ORDER TERMINAL</CardTitle>
+                <MetricInfoTooltip description="Purchase Zura Pay Reader S710 terminals at cost. Pricing comes directly from the payment processor — Zura applies zero markup." />
               </div>
-              <CardDescription>Order new or replacement terminal hardware for your locations.</CardDescription>
+              <CardDescription>Purchase S710 readers at cost — zero markup, direct processor pricing.</CardDescription>
             </div>
           </div>
           <Button
@@ -366,26 +384,54 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
             onClick={() => setDialogOpen(true)}
           >
             <Plus className="h-4 w-4" />
-            New Request
+            Order Reader
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
+      <CardContent className="space-y-4">
+        {/* Pricing preview */}
+        <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Smartphone className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
+              <p className="text-xs text-muted-foreground">Cellular + WiFi · Store-and-forward · Countertop &amp; handheld</p>
+            </div>
+          </div>
+          <div className="text-right">
+            {skuLoading ? (
+              <Skeleton className="h-6 w-20" />
+            ) : (
+              <>
+                <p className="font-display text-lg tracking-wide">{formatCurrency(readerPrice / 100)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {pricingSource === 'stripe_api' ? 'Live pricing' : 'Published rate'} · No markup
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Zero markup callout */}
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
+          <DollarSign className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+          <p className="font-sans text-xs text-muted-foreground">
+            Terminal pricing is passed through at cost from the payment processor. Zura earns nothing on hardware — we only succeed when your business succeeds.
+          </p>
+        </div>
+
+        {/* Order history */}
+        {requestsLoading ? (
+          <div className="space-y-2">
             {[1, 2].map((i) => (
               <Skeleton key={i} className={tokens.loading.skeleton} />
             ))}
           </div>
-        ) : !requests || requests.length === 0 ? (
-          <div className="text-center py-8">
-            <Package className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">
-              No terminal requests yet. Submit a request to get started.
-            </p>
-          </div>
-        ) : (
+        ) : requests && requests.length > 0 ? (
           <div className="space-y-2">
+            <p className="text-xs text-muted-foreground font-sans font-medium">Order History</p>
             {requests.map((req) => {
               const statusConfig = REQUEST_STATUS_CONFIG[req.status] || REQUEST_STATUS_CONFIG.pending;
               const StatusIcon = statusConfig.icon;
@@ -397,8 +443,7 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
                 >
                   <div>
                     <p className="font-sans font-medium text-sm">
-                      {REASON_OPTIONS.find((r) => r.value === req.reason)?.label || req.reason}
-                      {req.quantity > 1 && ` × ${req.quantity}`}
+                      S710 Reader{req.quantity > 1 ? ` × ${req.quantity}` : ''}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {locName} · {format(new Date(req.created_at), 'MMM d, yyyy')}
@@ -417,21 +462,37 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
               );
             })}
           </div>
-        )}
+        ) : null}
       </CardContent>
 
-      {/* Request Form Dialog */}
+      {/* Purchase Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle className="font-display text-lg tracking-wide">REQUEST ZURA PAY READER S710</DialogTitle>
+            <DialogTitle className="font-display text-lg tracking-wide">ORDER ZURA PAY READER S710</DialogTitle>
             <DialogDescription>
-              Request S710 terminal readers with built-in cellular connectivity. Payments continue even when WiFi is down.
+              Purchase at direct processor cost — zero markup. Shipping address collected at checkout.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* Price display */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
+              <div>
+                <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
+                <p className="text-xs text-muted-foreground">Cellular + WiFi connectivity</p>
+              </div>
+              <div className="text-right">
+                {skuLoading ? (
+                  <Skeleton className="h-6 w-20" />
+                ) : (
+                  <p className="font-display text-lg tracking-wide">{formatCurrency(readerPrice / 100)}</p>
+                )}
+                <p className="text-xs text-muted-foreground">per unit</p>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label>Location</Label>
+              <Label>Ship to Location (optional)</Label>
               <Select value={reqLocationId} onValueChange={setReqLocationId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select location" />
@@ -443,22 +504,10 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Reason</Label>
-              <Select value={reqReason} onValueChange={setReqReason}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select reason" />
-                </SelectTrigger>
-                <SelectContent>
-                  {REASON_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
             <div className="space-y-2">
               <Label>Quantity</Label>
-              <Select value={reqQuantity} onValueChange={setReqQuantity}>
+              <Select value={String(quantity)} onValueChange={(v) => setQuantity(parseInt(v, 10))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -469,15 +518,19 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Notes (optional)</Label>
-              <Textarea
-                placeholder="Any additional details about your request..."
-                value={reqNotes}
-                onChange={(e) => setReqNotes(e.target.value)}
-                rows={3}
-              />
+
+            {/* Order summary */}
+            <div className="border-t pt-3 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground font-sans">S710 × {quantity}</span>
+                <span className="font-sans font-medium">{formatCurrency(totalPrice / 100)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Shipping &amp; tax</span>
+                <span>Calculated at checkout</span>
+              </div>
             </div>
+
             {/* S710 info callout */}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
               <Signal className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
@@ -489,11 +542,12 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button
-              onClick={handleSubmit}
-              disabled={!reqLocationId || !reqReason || createRequest.isPending}
+              onClick={handlePurchase}
+              disabled={createCheckout.isPending || skuLoading}
             >
-              {createRequest.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Submit Request
+              {createCheckout.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <CreditCard className="h-4 w-4 mr-2" />
+              Proceed to Checkout · {formatCurrency(totalPrice / 100)}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -829,8 +883,8 @@ export function TerminalSettingsContent() {
       {/* Offline Payment Status */}
       <OfflinePaymentStatus />
 
-      {/* Request a Terminal Card */}
-      <TerminalRequestCard locations={locations} />
+      {/* Purchase Terminal Card */}
+      <TerminalPurchaseCard locations={locations} />
 
       {/* Register Reader Wizard */}
       <RegisterReaderDialog
