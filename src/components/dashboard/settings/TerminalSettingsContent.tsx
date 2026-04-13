@@ -251,6 +251,7 @@ export function TerminalSettingsContent() {
   const verifyMutation = useVerifyZuraPayConnection();
   const verifyPayment = useVerifyTerminalPayment();
   const connectLocationMutation = useConnectLocation();
+  const resetAccountMutation = useResetZuraPayAccount();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('subtab') || 'fleet');
@@ -423,6 +424,8 @@ export function TerminalSettingsContent() {
               isVerifying={verifyMutation.isPending}
               onConnectLocation={(locationId) => orgId && connectLocationMutation.mutate({ organizationId: orgId, locationId })}
               isConnectingLocation={connectLocationMutation.isPending}
+              onResetAccount={() => orgId && resetAccountMutation.mutate({ organizationId: orgId })}
+              isResetting={resetAccountMutation.isPending}
             />
           </TabErrorBoundary>
         </TabsContent>
