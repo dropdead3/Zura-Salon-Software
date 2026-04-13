@@ -13,6 +13,7 @@ interface ChecklistStep {
 interface ZuraPayActivationChecklistProps {
   connectStatus: string | undefined;
   detailsSubmitted: boolean;
+  isLocationConnected: boolean;
   hasTerminalLocations: boolean;
   hasReaders: boolean;
   hasFirstTransaction: boolean;
@@ -21,6 +22,7 @@ interface ZuraPayActivationChecklistProps {
 export function ZuraPayActivationChecklist({
   connectStatus,
   detailsSubmitted,
+  isLocationConnected,
   hasTerminalLocations,
   hasReaders,
   hasFirstTransaction,
@@ -38,7 +40,12 @@ export function ZuraPayActivationChecklist({
     },
     {
       label: 'Connect Location',
-      description: 'Link at least one salon location for terminal payments',
+      description: 'Link at least one salon location to Zura Pay',
+      complete: isLocationConnected,
+    },
+    {
+      label: 'Create Terminal Location',
+      description: 'Create a terminal location and pair a reader to accept card-present payments',
       complete: hasTerminalLocations,
     },
     {
