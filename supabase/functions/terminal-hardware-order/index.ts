@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,12 +15,50 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
+// ---- Zod Schemas ----
+
+const GetSkusSchema = z.object({
+  action: z.literal("get_skus"),
+  country: z.string().length(2).default("US"),
+});
+
+const CheckoutItemSchema = z.object({
+  name: z.string().min(1).max(255),
+  amount: z.number().int().min(100).max(100000),
+  quantity: z.number().int().min(1).max(10),
+  currency: z.string().length(3).default("usd"),
+  description: z.string().max(500).optional(),
+  sku_id: z.string().max(100).optional(),
+});
+
+const CreateCheckoutSchema = z.object({
+  action: z.literal("create_checkout"),
+  organization_id: z.string().uuid(),
+  location_id: z.string().uuid().optional(),
+  items: z.array(CheckoutItemSchema).min(1).max(20).optional(),
+  quantity: z.number().int().min(1).max(10).optional(),
+  success_url: z.string().url().optional(),
+  cancel_url: z.string().url().optional(),
+});
+
+const VerifyPaymentSchema = z.object({
+  action: z.literal("verify_payment"),
+  session_id: z.string().min(1),
+  organization_id: z.string().uuid(),
+});
+
+const ActionSchema = z.discriminatedUnion("action", [
+  GetSkusSchema,
+  CreateCheckoutSchema,
+  VerifyPaymentSchema,
+]);
+
 /**
  * Terminal Hardware Order Edge Function
  *
  * Actions:
- *   - get_skus: Fetch live S710 hardware SKU pricing from Stripe
- *   - create_checkout: Create a Stripe Checkout session for terminal purchase
+ *   - get_skus: Fetch live S710 hardware SKU pricing
+ *   - create_checkout: Create a Checkout session for terminal purchase
  *   - verify_payment: Verify a checkout session and record the order
  */
 Deno.serve(async (req) => {
@@ -48,14 +87,20 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const body = await req.json();
-    const { action } = body;
+    const rawBody = await req.json();
+
+    // Validate input with Zod
+    const parsed = ActionSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return jsonResponse({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, 400);
+    }
+    const body = parsed.data;
 
     // ---- get_skus: Fetch live terminal hardware pricing ----
-    if (action === "get_skus") {
-      const country = body.country || "US";
+    if (body.action === "get_skus") {
+      const country = body.country;
 
-      // Stable Stripe-hosted CDN images for S710 product line
+      // Stable CDN images for S710 product line
       const FALLBACK_IMAGES: Record<string, string> = {
         s710_reader: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s710.png",
         s710_hub: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700_hub.png",
@@ -64,7 +109,6 @@ Deno.serve(async (req) => {
       };
 
       try {
-        // Try the Hardware SKUs API (preview/beta)
         const skuResponse = await fetch(
           `https://api.stripe.com/v1/terminal/hardware_skus?country=${country}&limit=100`,
           {
@@ -79,7 +123,6 @@ Deno.serve(async (req) => {
           const skuData = await skuResponse.json();
           const allSkus = skuData.data || [];
 
-          // Classify SKUs into readers vs accessories
           const ACCESSORY_KEYWORDS = ["hub", "dock", "case", "cover", "cable", "mount"];
           const isAccessory = (name: string) =>
             ACCESSORY_KEYWORDS.some((kw) => name.toLowerCase().includes(kw));
@@ -101,12 +144,10 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Extract image_url from hardware_product.images when available
           const enrichSku = (sku: Record<string, unknown>) => {
             const hp = sku.hardware_product as Record<string, unknown> | undefined;
             const images = (hp?.images as string[]) || [];
             const skuId = String(sku.id || "");
-            // Guess fallback key from product name
             const productName = String(hp?.name || sku.product || "").toLowerCase();
             let fallbackKey = "s710_reader";
             if (productName.includes("hub")) fallbackKey = "s710_hub";
@@ -118,7 +159,6 @@ Deno.serve(async (req) => {
             };
           };
 
-          // Also fetch shipping methods
           const shippingResponse = await fetch(
             `https://api.stripe.com/v1/terminal/hardware_shipping_methods?country=${country}&limit=20`,
             {
@@ -130,7 +170,6 @@ Deno.serve(async (req) => {
           );
           const shippingData = shippingResponse.ok ? await shippingResponse.json() : { data: [] };
 
-          // Build accessories from API data, or use fallbacks if none found
           const apiAccessories = accessorySkus.map(enrichSku).map((a) => ({
             id: a.id,
             product: (a.hardware_product as Record<string, unknown>)?.name || a.product || "Accessory",
@@ -154,20 +193,18 @@ Deno.serve(async (req) => {
           });
         }
 
-        // If API returns 400/403 (no preview access), fall back to known pricing
         console.log(`Hardware SKUs API returned ${skuResponse.status}, using fallback pricing`);
       } catch (e) {
         console.warn("Hardware SKUs API call failed, using fallback:", e);
       }
 
-      // Fallback: Return known Stripe pricing for S710
-      // These are Stripe's published prices as of April 2025
+      // Fallback: Return known pricing for S710
       return jsonResponse({
         source: "fallback",
         skus: [
           {
             id: "s710_reader",
-            product: "Stripe Reader S710",
+            product: "Zura Pay Reader S710",
             amount: 29900,
             currency: "usd",
             status: "available",
@@ -181,17 +218,13 @@ Deno.serve(async (req) => {
           { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd", image_url: FALLBACK_IMAGES.s710_case },
         ],
         shipping_methods: [],
-        pricing_note: "Prices shown are Stripe's published rates. Zura applies zero markup.",
+        pricing_note: "Prices shown are published rates. Zura applies zero markup.",
       });
     }
 
     // ---- create_checkout: Create Checkout for terminal purchase ----
-    if (action === "create_checkout") {
-      const { organization_id, location_id, quantity, items } = body;
-
-      if (!organization_id) {
-        return jsonResponse({ error: "organization_id is required" }, 400);
-      }
+    if (body.action === "create_checkout") {
+      const { organization_id, location_id, quantity: bodyQuantity, items, success_url, cancel_url } = body;
 
       // Verify org membership
       const { data: membership } = await supabase
@@ -246,46 +279,37 @@ Deno.serve(async (req) => {
 
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
-      // Build line items - support multiple items (reader + accessories)
+      // Build line items
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
-      const parsedItems = items || [{ name: "Stripe Reader S710", amount: 29900, quantity: quantity || 1 }];
+      const parsedItems = items || [{ name: "Zura Pay Reader S710", amount: 29900, quantity: bodyQuantity || 1, currency: "usd" }];
 
       for (const item of parsedItems) {
-        const qty = Math.min(Math.max(Math.round(item.quantity || 1), 1), 10);
-        const unitAmount = Math.round(item.amount || 29900);
-
-        if (unitAmount < 100 || unitAmount > 100000) {
-          return jsonResponse({ error: `Invalid price for ${item.name}` }, 400);
-        }
-
         lineItems.push({
           price_data: {
-            currency: item.currency || "usd",
+            currency: item.currency,
             product_data: {
-              name: item.name || "Zura Pay Reader S710",
+              name: item.name,
               description: item.description || "Terminal reader with cellular connectivity",
               metadata: {
                 hardware_type: "terminal_reader",
                 sku_id: item.sku_id || "s710_reader",
               },
             },
-            unit_amount: unitAmount,
+            unit_amount: item.amount,
           },
-          quantity: qty,
+          quantity: item.quantity,
         });
       }
 
       const origin = req.headers.get("origin") || "https://getzura.com";
 
       // Accept success/cancel URLs from the client (which knows the correct org-scoped path)
-      const clientSuccessUrl = body.success_url;
-      const clientCancelUrl = body.cancel_url;
       const fallbackPath = `/dashboard/admin/settings`;
-      const successUrl = clientSuccessUrl
-        ? `${clientSuccessUrl}${clientSuccessUrl.includes('?') ? '&' : '?'}checkout=success&session_id={CHECKOUT_SESSION_ID}`
+      const successUrl = success_url
+        ? `${success_url}${success_url.includes('?') ? '&' : '?'}checkout=success&session_id={CHECKOUT_SESSION_ID}`
         : `${origin}${fallbackPath}?tab=terminals&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = clientCancelUrl || `${origin}${fallbackPath}?tab=terminals&checkout=canceled`;
+      const cancelUrl = cancel_url || `${origin}${fallbackPath}?tab=terminals&checkout=canceled`;
 
       // Create Checkout Session
       const session = await stripe.checkout.sessions.create({
@@ -312,12 +336,8 @@ Deno.serve(async (req) => {
     }
 
     // ---- verify_payment: Verify completed checkout and record order ----
-    if (action === "verify_payment") {
+    if (body.action === "verify_payment") {
       const { session_id, organization_id } = body;
-
-      if (!session_id || !organization_id) {
-        return jsonResponse({ error: "session_id and organization_id are required" }, 400);
-      }
 
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
@@ -387,7 +407,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ data: order });
     }
 
-    return jsonResponse({ error: `Unknown action: ${action}` }, 400);
+    return jsonResponse({ error: `Unknown action: ${body.action}` }, 400);
   } catch (error) {
     console.error("Error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
