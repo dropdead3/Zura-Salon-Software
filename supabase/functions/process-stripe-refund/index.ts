@@ -17,12 +17,14 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 /**
  * Process Stripe Refund — issues a refund via Stripe for card-present payments
  *
- * Expects:
- *   - payment_intent_id: The Stripe PaymentIntent ID to refund
- *   - amount: Refund amount in cents
- *   - organization_id: The org (to resolve Connected Account)
- *   - refund_record_id: The local refund_records row to update on success
- *   - reason?: 'requested_by_customer' | 'duplicate' | 'fraudulent'
+ * Accepts EITHER:
+ *   - payment_intent_id directly, OR
+ *   - original_transaction_id (resolves PI ID from phorest_sales_transactions or appointments)
+ *
+ * - amount: Refund amount in DOLLARS (converted to cents internally)
+ * - organization_id: The org (to resolve Connected Account)
+ * - refund_record_id: The local refund_records row to update on success
+ * - reason?: 'requested_by_customer' | 'duplicate' | 'fraudulent'
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -63,10 +65,43 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { payment_intent_id, amount, organization_id, refund_record_id, reason } = body;
+    const { payment_intent_id, original_transaction_id, amount, organization_id, refund_record_id, reason } = body;
 
-    if (!payment_intent_id || !amount || !organization_id || !refund_record_id) {
-      return jsonResponse({ error: "Missing required fields: payment_intent_id, amount, organization_id, refund_record_id" }, 400);
+    if (!amount || !organization_id || !refund_record_id) {
+      return jsonResponse({ error: "Missing required fields: amount, organization_id, refund_record_id" }, 400);
+    }
+
+    // B1: Resolve payment_intent_id from original_transaction_id if not provided directly
+    let resolvedPiId = payment_intent_id;
+
+    if (!resolvedPiId && original_transaction_id) {
+      // Try phorest_sales_transactions first
+      const { data: txn } = await supabase
+        .from("phorest_sales_transactions")
+        .select("phorest_transaction_id")
+        .eq("id", original_transaction_id)
+        .single();
+
+      if (txn?.phorest_transaction_id?.startsWith("pi_")) {
+        resolvedPiId = txn.phorest_transaction_id;
+      } else {
+        // Fallback: look up from appointments table
+        const { data: apt } = await supabase
+          .from("appointments")
+          .select("stripe_payment_intent_id")
+          .eq("id", original_transaction_id)
+          .single();
+
+        if (apt?.stripe_payment_intent_id) {
+          resolvedPiId = apt.stripe_payment_intent_id;
+        }
+      }
+    }
+
+    if (!resolvedPiId) {
+      return jsonResponse({
+        error: "Could not resolve payment_intent_id. Provide payment_intent_id or a valid original_transaction_id."
+      }, 400);
     }
 
     // Resolve Connected Account
@@ -82,11 +117,14 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
 
+    // B2: Convert amount from dollars to cents
+    const amountCents = Math.round(amount * 100);
+
     // Issue refund on the Connected Account
     const refund = await stripe.refunds.create(
       {
-        payment_intent: payment_intent_id,
-        amount, // in cents
+        payment_intent: resolvedPiId,
+        amount: amountCents,
         reason: reason || "requested_by_customer",
       },
       { stripeAccount: orgData.stripe_connect_account_id }
@@ -107,7 +145,7 @@ Deno.serve(async (req) => {
       console.error("Refund issued but failed to update local record:", updateError);
     }
 
-    console.log(`Stripe refund ${refund.id} issued for PI ${payment_intent_id} (${amount} cents)`);
+    console.log(`Stripe refund ${refund.id} issued for PI ${resolvedPiId} (${amountCents} cents)`);
 
     return jsonResponse({
       success: true,

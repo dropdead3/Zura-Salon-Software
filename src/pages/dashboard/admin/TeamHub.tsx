@@ -252,16 +252,18 @@ export default function TeamHub() {
         return thisYearBday >= today && thisYearBday <= nextWeek;
       }).length;
 
-      // E2: Payment ops badge — pending refunds + active deposit holds
+      // E2: Payment ops badge — pending refunds + active deposit holds (G5: org-scoped)
       const pendingRefundsResult = await supabase
         .from('refund_records')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .eq('organization_id', orgId);
 
       const activeHoldsResult = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
-        .eq('deposit_status', 'held');
+        .eq('deposit_status', 'held')
+        .eq('organization_id', orgId);
 
       const paymentOpsCount = (pendingRefundsResult.count || 0) + (activeHoldsResult.count || 0);
 
