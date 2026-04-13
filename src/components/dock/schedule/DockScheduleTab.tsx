@@ -147,34 +147,59 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     setConfirmAction({ appointment, action: 'no_show' });
   }, []);
 
+  const handleRetryCharge = useCallback((appointment: DockAppointment) => {
+    setConfirmAction({ appointment, action: 'retry_charge' });
+  }, []);
+
   const handleConfirmAction = useCallback(async () => {
     if (!confirmAction) return;
     const { appointment, action } = confirmAction;
 
     if (appointment.id.startsWith('demo-')) {
-      toast.success(`Demo: Appointment ${action === 'cancel' ? 'cancelled' : 'marked as no-show'}`);
+      toast.success(`Demo: ${action === 'retry_charge' ? 'Charge retried' : action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show'}`);
       setConfirmAction(null);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const status = action === 'cancel' ? 'CANCELLED' : 'NO_SHOW';
-      const { error } = await supabase.functions.invoke('update-phorest-appointment', {
-        body: { appointment_id: appointment.id, status },
-      });
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
-      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      toast.success(action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show');
+      if (action === 'retry_charge') {
+        const clientId = appointment.phorest_client_id || appointment.client_id;
+        const amount = appointment.total_price;
+        if (!clientId || !amount) throw new Error('Missing client or amount');
+
+        const { error } = await supabase.functions.invoke('charge-card-on-file', {
+          body: {
+            organization_id: staff.organizationId,
+            client_id: clientId,
+            amount,
+            appointment_id: appointment.id,
+            description: `Retry charge for ${appointment.client_name || 'appointment'}`,
+          },
+        });
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        toast.success('Charge retried successfully');
+      } else {
+        const status = action === 'cancel' ? 'CANCELLED' : 'NO_SHOW';
+        const { error } = await supabase.functions.invoke('update-phorest-appointment', {
+          body: { appointment_id: appointment.id, status },
+        });
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ['dock-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        toast.success(action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show');
+      }
     } catch (err) {
       toast.error(`Failed: ${(err as Error).message}`);
     } finally {
       setIsSubmitting(false);
       setConfirmAction(null);
     }
-  }, [confirmAction, queryClient]);
+  }, [confirmAction, queryClient, staff.organizationId]);
 
   const filteredAppointments = useMemo(() => {
     const all = appointments || [];
