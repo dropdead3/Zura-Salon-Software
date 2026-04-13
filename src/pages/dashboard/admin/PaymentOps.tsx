@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -38,6 +39,7 @@ import {
   ArrowLeft,
   Calendar,
   HandCoins,
+  UserX,
 } from 'lucide-react';
 
 export default function PaymentOps() {
@@ -509,6 +511,9 @@ export default function PaymentOps() {
               )}
             </CardContent>
           </Card>
+
+          {/* Cancellation Fee Queue */}
+          <CancellationFeeQueueCard orgId={orgId} formatCurrency={formatCurrency} />
         </div>
 
         {/* E1: Confirmation dialog for destructive financial actions */}
