@@ -224,6 +224,23 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           }
         }
 
+        // Batch-check card on file for failed payment appointments
+        const failedAppts = appointments.filter(a => a.payment_status === 'failed' && a.phorest_client_id);
+        if (failedAppts.length > 0) {
+          const clientIds = [...new Set(failedAppts.map(a => a.phorest_client_id!))];
+          const { data: cards } = await supabase
+            .from('client_cards_on_file')
+            .select('client_id')
+            .in('client_id', clientIds)
+            .eq('is_default', true);
+          const clientsWithCards = new Set((cards || []).map(c => c.client_id));
+          for (const a of appointments) {
+            if (a.payment_status === 'failed' && a.phorest_client_id) {
+              a.has_card_on_file = clientsWithCards.has(a.phorest_client_id);
+            }
+          }
+        }
+
         return appointments.length > 0 ? appointments : DEMO_APPOINTMENTS;
       }
 
