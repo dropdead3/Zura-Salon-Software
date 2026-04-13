@@ -625,6 +625,51 @@ async function handleTerminalPaymentIntentFailed(
   }
 }
 
+// Handler for payment_method.detached — auto-remove cards on file
+async function handlePaymentMethodDetached(
+  supabase: SupabaseClientAny,
+  paymentMethod: any,
+  connectedAccountId: string
+) {
+  const paymentMethodId = paymentMethod.id as string;
+  if (!paymentMethodId) {
+    console.log("payment_method.detached has no id — skipping");
+    return;
+  }
+
+  console.log(`payment_method.detached: PM ${paymentMethodId}, account ${connectedAccountId}`);
+
+  // Look up organization_id from the connected account
+  const { data: orgAccount, error: orgError } = await supabase
+    .from("organization_stripe_accounts")
+    .select("organization_id")
+    .eq("stripe_account_id", connectedAccountId)
+    .maybeSingle();
+
+  if (orgError || !orgAccount) {
+    console.log(`No org found for connected account ${connectedAccountId} — skipping`);
+    return;
+  }
+
+  const organizationId = orgAccount.organization_id;
+
+  // Hard-delete the matching card on file
+  const { data: deleted, error: deleteError } = await supabase
+    .from("client_cards_on_file")
+    .delete()
+    .eq("stripe_payment_method_id", paymentMethodId)
+    .eq("organization_id", organizationId)
+    .select("id");
+
+  if (deleteError) {
+    console.error("Error deleting card on file:", deleteError);
+    return;
+  }
+
+  const count = deleted?.length ?? 0;
+  console.log(`payment_method.detached: deleted ${count} card(s) for PM ${paymentMethodId} in org ${organizationId}`);
+}
+
 // Handler for setup_intent.succeeded — auto-insert cards on file
 async function handleSetupIntentSucceeded(
   supabase: SupabaseClientAny,
@@ -912,7 +957,14 @@ Deno.serve(async (req) => {
           await handleSetupIntentSucceeded(supabase, event.data.object, event.account);
         }
         break;
-        
+
+      // Auto-remove cards on file when payment method is detached
+      case "payment_method.detached":
+        if (isConnectEvent) {
+          await handlePaymentMethodDetached(supabase, event.data.object, event.account);
+        }
+        break;
+         
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
