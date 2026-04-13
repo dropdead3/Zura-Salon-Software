@@ -223,11 +223,14 @@ export function TerminalSettingsContent() {
   const verifyMutateRef = useRef(verifyMutation.mutate);
   verifyMutateRef.current = verifyMutation.mutate;
 
-  // Handle return from Stripe onboarding
+  // Handle return from payment onboarding — idempotency guard prevents double-fire
+  const hasVerifiedReturn = useRef(false);
   useEffect(() => {
     const isReturn = searchParams.get('zura_pay_return') === 'true';
     const isRefresh = searchParams.get('zura_pay_refresh') === 'true';
     if (!orgId || (!isReturn && !isRefresh)) return;
+    if (hasVerifiedReturn.current) return;
+    hasVerifiedReturn.current = true;
 
     // Clean up URL params
     const newParams = new URLSearchParams(searchParams);
@@ -237,6 +240,13 @@ export function TerminalSettingsContent() {
 
     if (isReturn) {
       verifyMutateRef.current({ organizationId: orgId });
+    } else if (isRefresh) {
+      // Session expired — re-initiate onboarding automatically
+      connectMutation.mutate({
+        organizationId: orgId,
+        returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
+        refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
+      });
     }
   }, [orgId, searchParams, setSearchParams]);
 
@@ -345,8 +355,8 @@ export function TerminalSettingsContent() {
             orgConnectStatus={connectStatus?.stripe_connect_status}
             onStartConnect={() => orgId && connectMutation.mutate({
               organizationId: orgId,
-              returnUrl: `${window.location.origin}/dashboard/admin/settings?tab=terminals&zura_pay_return=true`,
-              refreshUrl: `${window.location.origin}/dashboard/admin/settings?tab=terminals&zura_pay_refresh=true`,
+              returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
+              refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
             })}
             isConnecting={connectMutation.isPending}
             onVerifyConnection={() => orgId && verifyMutation.mutate({ organizationId: orgId })}

@@ -36,8 +36,8 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const orgId = effectiveOrganization?.id;
   const { data: connectStatus } = useOrgConnectStatus(orgId);
   const isOrgConnected = connectStatus?.stripe_connect_status === 'active';
-  const { data: requests, isLoading: requestsLoading } = useTerminalRequests(orgId);
-  const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus();
+  const { data: requests, isLoading: requestsLoading } = useTerminalRequests(isOrgConnected ? orgId : undefined);
+  const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus('US', isOrgConnected);
   const createCheckout = useCreateTerminalCheckout();
   const createRequest = useCreateTerminalRequest();
   const verifyPayment = useVerifyTerminalPayment();

@@ -29,7 +29,7 @@ interface SkuResponse {
   pricing_note?: string;
 }
 
-export function useTerminalHardwareSkus(country = 'US') {
+export function useTerminalHardwareSkus(country = 'US', enabled = true) {
   return useQuery({
     queryKey: ['terminal-hardware-skus', country],
     queryFn: async (): Promise<SkuResponse> => {
@@ -40,6 +40,7 @@ export function useTerminalHardwareSkus(country = 'US') {
       if (data?.error) throw new Error(data.error);
       return data as SkuResponse;
     },
+    enabled,
     staleTime: 10 * 60 * 1000, // 10 min — prices rarely change
   });
 }

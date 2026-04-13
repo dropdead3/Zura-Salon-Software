@@ -278,6 +278,15 @@ Deno.serve(async (req) => {
 
       const origin = req.headers.get("origin") || "https://getzura.com";
 
+      // Accept success/cancel URLs from the client (which knows the correct org-scoped path)
+      const clientSuccessUrl = body.success_url;
+      const clientCancelUrl = body.cancel_url;
+      const fallbackPath = `/dashboard/admin/settings`;
+      const successUrl = clientSuccessUrl
+        ? `${clientSuccessUrl}${clientSuccessUrl.includes('?') ? '&' : '?'}checkout=success&session_id={CHECKOUT_SESSION_ID}`
+        : `${origin}${fallbackPath}?tab=terminals&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = clientCancelUrl || `${origin}${fallbackPath}?tab=terminals&checkout=canceled`;
+
       // Create Checkout Session
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -292,8 +301,8 @@ Deno.serve(async (req) => {
         shipping_address_collection: {
           allowed_countries: ["US", "CA", "GB", "IE", "AU", "NZ"],
         },
-        success_url: `${origin}/org/${org?.name ? encodeURIComponent(org.name.toLowerCase().replace(/\s+/g, '-')) : 'dashboard'}/settings?tab=terminals&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/org/${org?.name ? encodeURIComponent(org.name.toLowerCase().replace(/\s+/g, '-')) : 'dashboard'}/settings?tab=terminals&checkout=canceled`,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
       });
 
       return jsonResponse({
