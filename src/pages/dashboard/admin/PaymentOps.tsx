@@ -1422,20 +1422,33 @@ export default function PaymentOps() {
                           <TableCell className="text-muted-foreground">
                             {refund.created_at ? format(new Date(refund.created_at), 'MMM d') : '—'}
                           </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              className={tokens.button.inline}
-                              onClick={() => setConfirmAction({
-                                type: 'refund',
-                                id: refund.id,
-                                label: `Process ${formatCurrency(refund.refund_amount)} refund for ${refund.original_item_name || 'Unknown item'}`,
-                                amount: refund.refund_amount,
-                              })}
-                            >
-                              Process
-                            </Button>
-                          </TableCell>
+                          {refundStatus !== 'pending' && (
+                            <TableCell>
+                              <Badge variant={refund.status === 'pending' ? 'secondary' : 'outline'} className="capitalize">
+                                {refund.status}
+                              </Badge>
+                            </TableCell>
+                          )}
+                          {(refundStatus === 'pending' || refundStatus === 'all') && (
+                            <TableCell>
+                              {refund.status === 'pending' ? (
+                                <Button
+                                  size="sm"
+                                  className={tokens.button.inline}
+                                  onClick={() => setConfirmAction({
+                                    type: 'refund',
+                                    id: refund.id,
+                                    label: `Process ${formatCurrency(refund.refund_amount)} refund for ${refund.original_item_name || 'Unknown item'}`,
+                                    amount: refund.refund_amount,
+                                  })}
+                                >
+                                  Process
+                                </Button>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
