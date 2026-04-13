@@ -25518,6 +25518,75 @@ export type Database = {
           },
         ]
       }
+      tip_distributions: {
+        Row: {
+          card_tips: number
+          cash_tips: number
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          distribution_date: string
+          id: string
+          location_id: string | null
+          method: string
+          notes: string | null
+          organization_id: string
+          status: string
+          stylist_user_id: string
+          total_tips: number
+          updated_at: string
+        }
+        Insert: {
+          card_tips?: number
+          cash_tips?: number
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          distribution_date: string
+          id?: string
+          location_id?: string | null
+          method?: string
+          notes?: string | null
+          organization_id: string
+          status?: string
+          stylist_user_id: string
+          total_tips?: number
+          updated_at?: string
+        }
+        Update: {
+          card_tips?: number
+          cash_tips?: number
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          distribution_date?: string
+          id?: string
+          location_id?: string | null
+          method?: string
+          notes?: string | null
+          organization_id?: string
+          status?: string
+          stylist_user_id?: string
+          total_tips?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tip_distributions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tip_distributions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_assignments: {
         Row: {
           assigned_by: string

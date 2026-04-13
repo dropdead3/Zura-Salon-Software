@@ -60,6 +60,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
 import { ZuraPayPayoutsTab } from '@/components/dashboard/settings/terminal/ZuraPayPayoutsTab';
+import { TipDistributionManager } from '@/components/dashboard/payments/TipDistributionManager';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LocationGroupSelect } from '@/components/ui/LocationGroupSelect';
 import { useLocations } from '@/hooks/useLocations';
@@ -975,6 +976,10 @@ export default function PaymentOps() {
               Disputes
               <DisputesBadge orgId={orgId} />
             </TabsTrigger>
+            <TabsTrigger value="tips">
+              <Banknote className="w-4 h-4 mr-1.5" />
+              Tip Distributions
+            </TabsTrigger>
           </ResponsiveTabsList>
 
           {/* ─── Shared Filter Bar ─────────────────────── */}
@@ -1466,6 +1471,11 @@ export default function PaymentOps() {
           {/* Disputes */}
           <TabsContent value="disputes">
             <DisputesCard orgId={orgId} formatCurrency={formatCurrency} dateFrom={dateFrom} dateTo={dateTo} disputeStatus={disputeStatus} clientSearch={debouncedClientSearch} />
+          </TabsContent>
+
+          {/* Tip Distributions */}
+          <TabsContent value="tips">
+            <TipDistributionManager />
           </TabsContent>
         </Tabs>
 

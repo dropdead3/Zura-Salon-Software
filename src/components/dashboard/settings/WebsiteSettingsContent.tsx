@@ -47,6 +47,7 @@ import { cn } from '@/lib/utils';
 import { DomainConfigCard } from './DomainConfigCard';
 import { CancellationFeePoliciesSettings } from './CancellationFeePoliciesSettings';
 import { DisputePolicySettings } from './DisputePolicySettings';
+import { TipDistributionPolicySettings } from './TipDistributionPolicySettings';
 import { ActiveThemeCard } from './ActiveThemeCard';
 import { ThemeLibraryGrid } from './ThemeLibraryGrid';
 import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
@@ -726,6 +727,11 @@ function BookingTab() {
       {/* Dispute Policy */}
       <div className="lg:col-span-2">
         <DisputePolicySettings />
+      </div>
+
+      {/* Tip Distribution Policy */}
+      <div className="lg:col-span-2">
+        <TipDistributionPolicySettings />
       </div>
     </div>
   );

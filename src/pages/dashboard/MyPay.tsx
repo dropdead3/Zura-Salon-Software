@@ -6,6 +6,7 @@ import { useMyPayData } from '@/hooks/useMyPayData';
 import { CurrentPeriodCard } from '@/components/dashboard/mypay/CurrentPeriodCard';
 import { EarningsBreakdownCard } from '@/components/dashboard/mypay/EarningsBreakdownCard';
 import { MyPayStubHistory } from '@/components/dashboard/mypay/MyPayStubHistory';
+import { MyTipsHistory } from '@/components/dashboard/mypay/MyTipsHistory';
 import { Loader2, Wallet } from 'lucide-react';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
@@ -64,6 +65,7 @@ export default function MyPay() {
         <Tabs defaultValue="current" className="space-y-6">
           <TabsList>
             <TabsTrigger value="current">Current Period</TabsTrigger>
+            <TabsTrigger value="tips">My Tips</TabsTrigger>
             <TabsTrigger value="history">Pay History</TabsTrigger>
           </TabsList>
 
@@ -80,6 +82,10 @@ export default function MyPay() {
                 settings={settings}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="tips">
+            <MyTipsHistory />
           </TabsContent>
 
           <TabsContent value="history">
