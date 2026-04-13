@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       }
 
       // Update the location with the org's stripe account
-      const { error: locErr } = await supabase
+      const { error: locErr, count } = await supabase
         .from("locations")
         .update({
           stripe_account_id: org.stripe_connect_account_id,
@@ -137,6 +137,10 @@ Deno.serve(async (req) => {
       if (locErr) {
         console.error("Failed to update location:", locErr);
         return jsonResponse({ error: "Failed to connect location" }, 500);
+      }
+
+      if (count === 0) {
+        return jsonResponse({ error: "Location not found or does not belong to this organization" }, 404);
       }
 
       return jsonResponse({ success: true });

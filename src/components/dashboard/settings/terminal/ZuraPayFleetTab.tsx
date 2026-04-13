@@ -170,8 +170,21 @@ export function ZuraPayFleetTab({
 
   return (
     <div className="space-y-6">
-      {/* Location Picker */}
-      {locations.length > 1 && (
+      {/* Location Picker / Label */}
+      {locations.length === 1 ? (
+        <div className="flex items-center gap-3">
+          <MapPin className="w-4 h-4 text-muted-foreground" />
+          <span className="font-sans font-medium text-sm">{locations[0].name}</span>
+          {selectedStatus && (
+            <Badge variant={selectedStatus.variant} className={cn(
+              'text-xs',
+              selectedStatus.variant === 'default' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10'
+            )}>
+              {selectedStatus.label}
+            </Badge>
+          )}
+        </div>
+      ) : locations.length > 1 && (
         <div className="flex items-center gap-3">
           <MapPin className="w-4 h-4 text-muted-foreground" />
           <Select
@@ -295,9 +308,9 @@ export function ZuraPayFleetTab({
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10">
                     <RefreshCw className="h-7 w-7 text-amber-500" />
                   </div>
-                  <h3 className="font-display text-sm tracking-[0.14em]">VERIFICATION IN PROGRESS</h3>
-                  <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                    Your account is being verified by Stripe. This usually takes a few minutes. If you haven't completed the onboarding form, click below to continue.
+                   <h3 className="font-display text-sm tracking-[0.14em]">VERIFICATION IN PROGRESS</h3>
+                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                     Your account is being verified. This usually takes a few minutes. If you haven't completed the onboarding form, click below to continue.
                   </p>
                   <div className="flex items-center justify-center gap-3 mt-2">
                     <Button
