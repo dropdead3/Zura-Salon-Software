@@ -308,18 +308,35 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
                     </TableCell>
                     {isPending && (
                       <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className={tokens.button.inline}
-                          onClick={() => openWaiveDialog({
-                            id: charge.id,
-                            clientName: charge.appointment?.client_name || 'Unknown',
-                            amount: charge.fee_amount,
-                          })}
-                        >
-                          Waive
-                        </Button>
+                        <div className="flex gap-1.5">
+                          <Button
+                            size="sm"
+                            className={tokens.button.inline}
+                            disabled={collectMutation.isPending}
+                            onClick={() => openCollectDialog({
+                              id: charge.id,
+                              clientName: charge.appointment?.client_name || 'Unknown',
+                              amount: charge.fee_amount,
+                              feeType: charge.fee_type,
+                              appointmentId: charge.appointment_id,
+                              clientId: charge.appointment?.client_id ?? charge.appointment?.phorest_client_id ?? null,
+                            })}
+                          >
+                            Collect
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className={tokens.button.inline}
+                            onClick={() => openWaiveDialog({
+                              id: charge.id,
+                              clientName: charge.appointment?.client_name || 'Unknown',
+                              amount: charge.fee_amount,
+                            })}
+                          >
+                            Waive
+                          </Button>
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -364,6 +381,60 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
             >
               {waiveMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
               Confirm Waive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Collect confirmation dialog */}
+      <AlertDialog open={collectDialogOpen} onOpenChange={(open) => { if (!open) { setCollectDialogOpen(false); setCollectingCharge(null); setClientCard(null); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Collect Fee Charge</AlertDialogTitle>
+            <AlertDialogDescription>
+              Charge <strong>{formatCurrency(collectingCharge?.amount ?? 0)}</strong>{' '}
+              ({FEE_TYPE_LABELS[collectingCharge?.feeType ?? ''] ?? collectingCharge?.feeType}) to{' '}
+              <strong>{collectingCharge?.clientName}</strong>'s card on file.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-6 pb-2">
+            {cardLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Looking up card…
+              </div>
+            ) : clientCard ? (
+              <div className="text-sm">
+                <span className="font-medium">{clientCard.brand || 'Card'}</span> ending in{' '}
+                <span className="font-medium">{clientCard.last4}</span>
+                {cardExpired && (
+                  <Badge variant="destructive" className="ml-2 text-xs">Expired</Badge>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertTriangle className="w-4 h-4" /> No card on file found for this client.
+              </div>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={collectMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!clientCard || cardExpired || collectMutation.isPending || cardLoading}
+              onClick={() => {
+                if (collectingCharge && clientCard && !cardExpired) {
+                  collectMutation.mutate({
+                    id: collectingCharge.id,
+                    appointmentId: collectingCharge.appointmentId,
+                    clientId: collectingCharge.clientId,
+                    amount: collectingCharge.amount,
+                    feeType: collectingCharge.feeType,
+                  });
+                }
+              }}
+              className={cn(collectMutation.isPending && 'opacity-70')}
+            >
+              {collectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              Confirm Charge
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
