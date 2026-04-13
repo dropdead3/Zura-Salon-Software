@@ -22,7 +22,7 @@ import {
   useCreateTerminalLocation, useDeleteTerminalLocation,
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
-import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation } from '@/hooks/useZuraPayConnect';
+import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
