@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ArrowLeft, HeartPulse, CalendarX, AlertTriangle, UserX, UserPlus, Cake, TrendingDown, Loader2 } from 'lucide-react';
+import { ArrowLeft, HeartPulse, CalendarX, AlertTriangle, UserX, UserPlus, Cake, TrendingDown, Loader2, ShieldAlert } from 'lucide-react';
 import { useClientHealthSegments, SEGMENTS, type SegmentKey } from '@/hooks/useClientHealthSegments';
 import { ClientSegmentTable } from '@/components/dashboard/client-health/ClientSegmentTable';
 import { BulkOutreachBar } from '@/components/dashboard/client-health/BulkOutreachBar';
@@ -19,6 +19,7 @@ const SEGMENT_ICONS: Record<SegmentKey, React.ComponentType<{ className?: string
   'new-no-return': UserPlus,
   'birthday': Cake,
   'high-value-quiet': TrendingDown,
+  'dispute-risk': ShieldAlert,
 };
 
 const SEGMENT_COLORS: Record<SegmentKey, string> = {
@@ -28,6 +29,7 @@ const SEGMENT_COLORS: Record<SegmentKey, string> = {
   'new-no-return': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   'birthday': 'bg-pink-500/10 text-pink-600 dark:text-pink-400',
   'high-value-quiet': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  'dispute-risk': 'bg-red-500/10 text-red-600 dark:text-red-400',
 };
 
 export default function ClientHealthHub() {
