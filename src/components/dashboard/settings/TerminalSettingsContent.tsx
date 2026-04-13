@@ -371,6 +371,18 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
 
   const handlePurchase = () => {
     if (!orgId) return;
+
+    const selectedAccList = accessories
+      .filter((acc) => selectedAccessories[acc.id])
+      .map((acc) => ({
+        id: acc.id,
+        name: acc.product,
+        quantity: selectedAccessories[acc.id],
+        unit_price_cents: acc.amount,
+      }));
+
+    const estimatedTotalCents = (readerPrice * quantity) + selectedAccList.reduce((s, a) => s + a.unit_price_cents * a.quantity, 0);
+
     const items = [
       {
         name: 'Zura Pay Reader S710',
@@ -380,22 +392,43 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
         description: 'Terminal reader with cellular + WiFi connectivity',
         sku_id: skuData?.skus?.[0]?.id || 's710_reader',
       },
-      ...accessories
-        .filter((acc) => selectedAccessories[acc.id])
-        .map((acc) => ({
-          name: acc.product,
-          amount: acc.amount,
-          quantity: selectedAccessories[acc.id],
-          currency: acc.currency || 'usd',
-          description: acc.product,
-          sku_id: acc.id,
-        })),
+      ...selectedAccList.map((acc) => ({
+        name: acc.name,
+        amount: acc.unit_price_cents,
+        quantity: acc.quantity,
+        currency: readerCurrency,
+        description: acc.name,
+        sku_id: acc.id,
+      })),
     ];
-    createCheckout.mutate({
-      organizationId: orgId,
-      locationId: reqLocationId || undefined,
-      items,
-    });
+
+    // Create a hardware request record for platform admin visibility, then checkout
+    createRequest.mutate(
+      {
+        organizationId: orgId,
+        locationId: reqLocationId || locations[0]?.id || '',
+        quantity,
+        reason: 'additional',
+        notes: `Purchase checkout — ${selectedAccList.length} accessor${selectedAccList.length === 1 ? 'y' : 'ies'} selected`,
+      },
+      {
+        onSuccess: () => {
+          createCheckout.mutate({
+            organizationId: orgId,
+            locationId: reqLocationId || undefined,
+            items,
+          });
+        },
+        onError: () => {
+          // Still allow checkout even if request creation fails
+          createCheckout.mutate({
+            organizationId: orgId,
+            locationId: reqLocationId || undefined,
+            items,
+          });
+        },
+      }
+    );
   };
 
   return (
