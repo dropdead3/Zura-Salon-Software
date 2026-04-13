@@ -612,6 +612,7 @@ export function ZuraPayFleetTab({
                   <Plus className="h-4 w-4" />
                   Register Reader
                 </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
