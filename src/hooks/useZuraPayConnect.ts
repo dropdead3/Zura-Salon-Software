@@ -106,7 +106,68 @@ export function useVerifyZuraPayConnection() {
   });
 }
 
+export function useResetZuraPayAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ organizationId }: { organizationId: string }) => {
+      const { data, error } = await supabase.functions.invoke('connect-zura-pay', {
+        body: {
+          action: 'reset_account',
+          organization_id: organizationId,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
+      toast.success('Zura Pay account has been reset. You can start fresh.');
+    },
+    onError: (error) => {
+      toast.error('Failed to reset account', {
+        description: (error as Error).message,
+      });
+    },
+  });
+}
+
 export function useConnectLocation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      organizationId,
+      locationId,
+    }: {
+      organizationId: string;
+      locationId: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('connect-zura-pay', {
+        body: {
+          action: 'connect_location',
+          organization_id: organizationId,
+          location_id: locationId,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
+      queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
+      toast.success('Location connected to Zura Pay');
+    },
+    onError: (error) => {
+      toast.error('Failed to connect location', {
+        description: (error as Error).message,
+      });
+    },
+  });
+}
   const queryClient = useQueryClient();
 
   return useMutation({

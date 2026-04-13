@@ -32,9 +32,16 @@ const ConnectLocationSchema = BaseSchema.extend({
   refresh_url: z.string().url().optional(),
 });
 
+const ResetAccountSchema = BaseSchema.extend({
+  action: z.literal("reset_account"),
+  return_url: z.string().url().optional(),
+  refresh_url: z.string().url().optional(),
+});
+
 const RequestSchema = z.discriminatedUnion("action", [
   OnboardingSchema,
   ConnectLocationSchema,
+  ResetAccountSchema,
 ]);
 
 Deno.serve(async (req) => {
@@ -190,6 +197,71 @@ Deno.serve(async (req) => {
         onboarding_url: accountLink.url,
         account_id: org.stripe_connect_account_id,
       });
+    }
+
+    if (action === "reset_account") {
+      const accountId = org.stripe_connect_account_id;
+
+      if (!accountId) {
+        // No account to reset, just ensure status is clean
+        await supabase
+          .from("organizations")
+          .update({ stripe_connect_status: "not_connected" })
+          .eq("id", organization_id);
+
+        return jsonResponse({ success: true, message: "No account to reset. Status cleared." });
+      }
+
+      // Check if the account has processed any charges
+      try {
+        const charges = await stripe.charges.list(
+          { limit: 1 },
+          { stripeAccount: accountId }
+        );
+
+        if (charges.data.length > 0) {
+          return jsonResponse({
+            error: "Cannot reset this account because it has already processed payments. Please contact support.",
+          }, 400);
+        }
+      } catch (stripeErr) {
+        // Account may already be deleted or invalid — proceed with cleanup
+        console.warn("Could not check charges on account, proceeding with reset:", (stripeErr as Error).message);
+      }
+
+      // Attempt to delete the Stripe Express account
+      try {
+        await stripe.accounts.del(accountId);
+      } catch (delErr) {
+        console.warn("Could not delete Stripe account (may already be removed):", (delErr as Error).message);
+      }
+
+      // Clear org-level connect fields
+      const { error: orgUpdateErr } = await supabase
+        .from("organizations")
+        .update({
+          stripe_connect_account_id: null,
+          stripe_connect_status: "not_connected",
+        })
+        .eq("id", organization_id);
+
+      if (orgUpdateErr) {
+        console.error("Failed to reset org:", orgUpdateErr);
+        return jsonResponse({ error: "Failed to reset organization status" }, 500);
+      }
+
+      // Clear any location-level references to this account
+      await supabase
+        .from("locations")
+        .update({
+          stripe_account_id: null,
+          stripe_status: null,
+          stripe_payments_enabled: false,
+        })
+        .eq("organization_id", organization_id)
+        .eq("stripe_account_id", accountId);
+
+      return jsonResponse({ success: true, message: "Account reset successfully." });
     }
 
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
