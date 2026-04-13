@@ -28,6 +28,7 @@ import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges
 import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 import { useActiveTerminalReader } from '@/hooks/useActiveTerminalReader';
 import { useTerminalCheckoutFlow, type TerminalFlowState } from '@/hooks/useTerminalCheckoutFlow';
+import { useTerminalDeposit } from '@/hooks/useTerminalDeposit';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
@@ -106,6 +107,7 @@ export function CheckoutSummarySheet({
   const { activeReader, readers, selectedReaderId, selectReader, hasReaders, isLoading: readersLoading } =
     useActiveTerminalReader(organizationId, locationId);
   const terminalFlow = useTerminalCheckoutFlow();
+  const { captureDeposit } = useTerminalDeposit();
   useEffect(() => {
     if (open) {
       setGatePhase('gate');
@@ -169,6 +171,12 @@ export function CheckoutSummarySheet({
   const taxableBase = discountedSubtotal + addonTotal + (productChargeTaxable ? allUsageChargeTotal : 0);
   const tax = taxableBase * taxRate;
   const checkoutTotal = discountedSubtotal + addonTotal + allUsageChargeTotal + tax;
+  
+  // E2: Deposit deduction — if a deposit was collected and held, deduct from amount due
+  const depositHeld = appointment.deposit_status === 'held' && appointment.deposit_amount
+    ? appointment.deposit_amount
+    : 0;
+  const amountDueAfterDeposit = Math.max(0, checkoutTotal + tipAmount - depositHeld);
   const grandTotal = checkoutTotal + tipAmount;
 
   const getDuration = () => {
@@ -476,12 +484,21 @@ export function CheckoutSummarySheet({
         const result = await terminalFlow.startCheckout({
           organizationId,
           readerId: activeReader.id,
-          amount: Math.round(grandTotal * 100), // grandTotal includes tip
+          amount: Math.round(amountDueAfterDeposit * 100), // Charge only remaining after deposit
           tipAmount: Math.round(tipAmount * 100),
           appointmentId: appointment.id,
           lineItems,
           tax: Math.round(tax * 100),
         });
+
+        // E2: Auto-capture held deposit after successful card payment
+        if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
+          try {
+            await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
+          } catch (e) {
+            console.error('Failed to capture deposit (payment still succeeded):', e);
+          }
+        }
 
         onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
           method: 'card_reader',
@@ -493,6 +510,14 @@ export function CheckoutSummarySheet({
       }
     } else {
       // Cash or Other — behave as before
+      // E2: Auto-capture deposit for non-card payments too
+      if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
+        try {
+          await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
+        } catch (e) {
+          console.error('Failed to capture deposit:', e);
+        }
+      }
       onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
         method: paymentMethod,
       });

@@ -43,6 +43,16 @@ export interface PhorestAppointment {
   created_by?: string | null;
   deleted_at?: string | null;
   deleted_by?: string | null;
+  // Deposit fields
+  deposit_required?: boolean;
+  deposit_amount?: number | null;
+  deposit_status?: string | null;
+  deposit_stripe_payment_id?: string | null;
+  deposit_applied_to_total?: boolean;
+  // Payment metadata
+  stripe_payment_intent_id?: string | null;
+  payment_method?: string | null;
+  payment_status?: string | null;
   // Source tag (set client-side when merging tables)
   _source?: 'phorest' | 'local';
   // Joined data
