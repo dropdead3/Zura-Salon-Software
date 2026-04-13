@@ -100,7 +100,7 @@ export function CancellationFeePoliciesSettings() {
   };
 
   return (
-    <Card>
+    <>
       <CardHeader className="flex flex-row items-start justify-between">
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
