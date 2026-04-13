@@ -51,6 +51,7 @@ import {
   UserCheck,
   GitMerge,
   UserPlus,
+  Banknote,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
