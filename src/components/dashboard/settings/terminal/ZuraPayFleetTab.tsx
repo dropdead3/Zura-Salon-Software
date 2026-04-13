@@ -154,6 +154,9 @@ export interface ZuraPayFleetTabProps {
   isConnectingLocation?: boolean;
   onResetAccount?: () => void;
   isResetting?: boolean;
+  onDisconnectLocation?: (locationId: string) => void;
+  isDisconnectingLocation?: boolean;
+  onRefreshReaders?: () => void;
 }
 
 export function ZuraPayFleetTab({
@@ -183,9 +186,13 @@ export function ZuraPayFleetTab({
   isConnectingLocation,
   onResetAccount,
   isResetting,
+  onDisconnectLocation,
+  isDisconnectingLocation,
+  onRefreshReaders,
 }: ZuraPayFleetTabProps) {
   const [showConfirmConnect, setShowConfirmConnect] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
 
