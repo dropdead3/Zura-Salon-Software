@@ -40,23 +40,67 @@ import {
   Calendar,
   HandCoins,
   UserX,
+  Receipt,
 } from 'lucide-react';
 
-// ─── Cancellation Fee Queue Sub-component ─────────────────────
-function CancellationFeeQueueCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
-  const { data: feeAppointments = [], isLoading } = useQuery({
-    queryKey: ['cancellation-fee-queue', orgId],
+// ─── Fee Ledger Sub-component ─────────────────────────────────
+const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
+type FeeStatusFilter = typeof FEE_STATUS_FILTERS[number];
+
+const FEE_TYPE_LABELS: Record<string, string> = {
+  deposit: 'Deposit',
+  no_show: 'No Show',
+  cancellation: 'Cancellation',
+  manual: 'Manual',
+};
+
+const COLLECTED_VIA_LABELS: Record<string, string> = {
+  online_booking: 'Online',
+  card_on_file: 'Card on File',
+};
+
+function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+  const [statusFilter, setStatusFilter] = useState<FeeStatusFilter>('pending');
+
+  const { data: feeCharges = [], isLoading } = useQuery({
+    queryKey: ['fee-ledger', orgId, statusFilter],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('appointments')
-        .select('id, client_name, appointment_date, status, total_price, cancellation_fee_status, cancellation_fee_charged, card_on_file_id, staff_name')
+        .from('appointment_fee_charges')
+        .select(`
+          id, fee_type, fee_amount, status, collected_via, charged_at, created_at,
+          appointment:appointment_id (client_name, appointment_date, status)
+        `)
         .eq('organization_id', orgId!)
-        .in('status', ['cancelled', 'no_show'])
-        .or('cancellation_fee_status.is.null,cancellation_fee_status.eq.pending')
-        .order('appointment_date', { ascending: false })
-        .limit(50);
+        .eq('status', statusFilter)
+        .order('created_at', { ascending: false })
+        .limit(100);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as unknown as Array<{
+        id: string;
+        fee_type: string;
+        fee_amount: number;
+        status: string;
+        collected_via: string | null;
+        charged_at: string | null;
+        created_at: string;
+        appointment: { client_name: string | null; appointment_date: string; status: string | null } | null;
+      }>;
+    },
+    enabled: !!orgId,
+  });
+
+  // Separate count query for pending badge
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ['fee-ledger-pending-count', orgId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('appointment_fee_charges')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId!)
+        .eq('status', 'pending');
+      if (error) throw error;
+      return count ?? 0;
     },
     enabled: !!orgId,
   });
@@ -66,31 +110,51 @@ function CancellationFeeQueueCard({ orgId, formatCurrency }: { orgId?: string; f
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
-            <UserX className={tokens.card.icon} />
+            <Receipt className={tokens.card.icon} />
           </div>
           <div>
             <CardTitle className={tokens.card.title}>
-              Cancellation & No-Show Fees
-              <MetricInfoTooltip description="Appointments marked as cancelled or no-show that may have fees pending collection." />
+              Fee Charges
+              <MetricInfoTooltip description="Unified ledger of all appointment-related fee charges including deposits, cancellation fees, no-show fees, and manual charges." />
             </CardTitle>
-            <CardDescription>Fee enforcement for cancelled and no-show appointments</CardDescription>
+            <CardDescription>Audit trail for deposits, cancellations, and no-show fees</CardDescription>
           </div>
-          {feeAppointments.length > 0 && (
-            <Badge variant="secondary" className="ml-auto">{feeAppointments.length} pending</Badge>
+          {pendingCount > 0 && (
+            <Badge variant="secondary" className="ml-auto">{pendingCount} pending</Badge>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Status filter tabs */}
+        <div className="flex gap-1 p-1 bg-muted/70 rounded-lg w-fit">
+          {FEE_STATUS_FILTERS.map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={cn(
+                'px-3 py-1.5 text-sm font-medium rounded-md transition-all capitalize',
+                statusFilter === s
+                  ? 'bg-background shadow-sm ring-1 ring-border/50 text-foreground'
+                  : 'text-muted-foreground hover:text-foreground/80'
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
             <Loader2 className={tokens.loading.spinner} />
           </div>
-        ) : feeAppointments.length === 0 ? (
+        ) : feeCharges.length === 0 ? (
           <div className={tokens.empty.container}>
-            <UserX className={tokens.empty.icon} />
-            <h3 className={tokens.empty.heading}>No pending fees</h3>
+            <Receipt className={tokens.empty.icon} />
+            <h3 className={tokens.empty.heading}>No {statusFilter} fees</h3>
             <p className={tokens.empty.description}>
-              Cancelled and no-show fees are managed from individual appointment detail panels.
+              {statusFilter === 'pending'
+                ? 'No fees are awaiting collection.'
+                : `No ${statusFilter} fee records found.`}
             </p>
           </div>
         ) : (
@@ -98,37 +162,41 @@ function CancellationFeeQueueCard({ orgId, formatCurrency }: { orgId?: string; f
             <TableHeader>
               <TableRow>
                 <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
                 <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Service Total</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Card</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Collected Via</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Charged At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {feeAppointments.map((apt) => (
-                <TableRow key={apt.id}>
-                  <TableCell className="font-medium">{apt.client_name || 'Unknown'}</TableCell>
-                  <TableCell className="text-muted-foreground">{apt.staff_name || '—'}</TableCell>
+              {feeCharges.map((charge) => (
+                <TableRow key={charge.id}>
+                  <TableCell className="font-medium">
+                    {charge.appointment?.client_name || 'Unknown'}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {format(new Date(apt.appointment_date), 'MMM d, yyyy')}
+                    {charge.appointment?.appointment_date
+                      ? format(new Date(charge.appointment.appointment_date), 'MMM d, yyyy')
+                      : '—'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={apt.status === 'no_show' ? 'destructive' : 'secondary'}>
-                      {apt.status === 'no_show' ? 'No Show' : 'Cancelled'}
+                    <Badge variant="outline">
+                      {FEE_TYPE_LABELS[charge.fee_type] ?? charge.fee_type}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <BlurredAmount>{formatCurrency(apt.total_price ?? 0)}</BlurredAmount>
+                    <BlurredAmount>{formatCurrency(charge.fee_amount)}</BlurredAmount>
                   </TableCell>
-                  <TableCell>
-                    {apt.card_on_file_id ? (
-                      <Badge variant="outline" className="text-[10px] text-green-600 border-green-300">
-                        <CreditCard className="h-3 w-3 mr-0.5" /> On file
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">None</span>
-                    )}
+                  <TableCell className="text-muted-foreground text-xs">
+                    {charge.collected_via
+                      ? COLLECTED_VIA_LABELS[charge.collected_via] ?? charge.collected_via
+                      : '—'}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {charge.charged_at
+                      ? format(new Date(charge.charged_at), 'MMM d, h:mm a')
+                      : '—'}
                   </TableCell>
                 </TableRow>
               ))}
@@ -610,8 +678,8 @@ export default function PaymentOps() {
             </CardContent>
           </Card>
 
-          {/* Cancellation Fee Queue */}
-          <CancellationFeeQueueCard orgId={orgId} formatCurrency={formatCurrency} />
+          {/* Fee Ledger */}
+          <FeeLedgerCard orgId={orgId} formatCurrency={formatCurrency} />
         </div>
 
         {/* E1: Confirmation dialog for destructive financial actions */}
