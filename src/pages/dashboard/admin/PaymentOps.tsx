@@ -919,6 +919,19 @@ export default function PaymentOps() {
     ? reconciliation.stripe.net_amount_cents / 100
     : null;
 
+  // Client-side search filtering for holds and refunds
+  const filteredHolds = useMemo(() => {
+    if (!debouncedClientSearch) return depositHolds;
+    const s = debouncedClientSearch.toLowerCase();
+    return depositHolds.filter(h => (h.client_name || '').toLowerCase().includes(s));
+  }, [depositHolds, debouncedClientSearch]);
+
+  const filteredRefunds = useMemo(() => {
+    if (!debouncedClientSearch) return pendingRefunds;
+    const s = debouncedClientSearch.toLowerCase();
+    return pendingRefunds.filter(r => (r.original_item_name || '').toLowerCase().includes(s));
+  }, [pendingRefunds, debouncedClientSearch]);
+
   return (
     <DashboardLayout>
       <div className={cn(tokens.layout.pageContainer, 'max-w-[1600px] mx-auto')}>
