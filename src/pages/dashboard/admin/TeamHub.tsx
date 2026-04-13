@@ -101,26 +101,19 @@ const ManagementCard = React.forwardRef<HTMLAnchorElement, ManagementCardProps>(
               <StarIcon className="w-3.5 h-3.5" fill={isFavorited ? "currentColor" : "none"} />
             </button>
           )}
-          <CardContent className="p-5 min-h-[88px]">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                <div className={cn(tokens.card.iconBox, "shrink-0")}>
-                  <Icon className={tokens.card.icon} />
-                </div>
-                <div className="flex-1">
-                  <h3 className={tokens.card.title}>{title}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {stat !== null && stat !== undefined && (
-                  <Badge variant="secondary" className="text-xs">
-                    {stat} {statLabel}
-                  </Badge>
-                )}
-                <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
+          <CardContent className="p-5 min-h-[140px] flex flex-col items-center justify-center text-center gap-2">
+            <div className={cn(tokens.card.iconBox, "shrink-0")}>
+              <Icon className={tokens.card.icon} />
             </div>
+            <div>
+              <h3 className={tokens.card.title}>{title}</h3>
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
+            </div>
+            {stat !== null && stat !== undefined && (
+              <Badge variant="secondary" className="text-xs">
+                {stat} {statLabel}
+              </Badge>
+            )}
           </CardContent>
         </Card>
       </Link>
@@ -154,18 +147,13 @@ function HubGatewayCard({ href, icon: Icon, title, description, isFavorited, onT
             <StarIcon className="w-3.5 h-3.5" fill={isFavorited ? "currentColor" : "none"} />
           </button>
         )}
-        <CardContent className="p-5 min-h-[108px]">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              <div className={cn(tokens.card.iconBox, "shrink-0")}>
-                <Icon className={tokens.card.icon} />
-              </div>
-              <div className="flex-1">
-                <h3 className={tokens.card.title}>{title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <CardContent className="p-5 min-h-[140px] flex flex-col items-center justify-center text-center gap-2">
+          <div className={cn(tokens.card.iconBox, "shrink-0")}>
+            <Icon className={tokens.card.icon} />
+          </div>
+          <div>
+            <h3 className={tokens.card.title}>{title}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
           </div>
         </CardContent>
       </Card>
@@ -309,14 +297,11 @@ export default function TeamHub() {
           >
             <StarIcon className="w-3.5 h-3.5" fill="currentColor" />
           </button>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={cn(tokens.card.iconBox, "shrink-0 bg-amber-500/15 text-amber-500")}>
-                <IconComp className="w-5 h-5" />
-              </div>
-              <h3 className={tokens.card.title}>{fav.label}</h3>
-              <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
+          <CardContent className="p-5 min-h-[140px] flex flex-col items-center justify-center text-center gap-2">
+            <div className={cn(tokens.card.iconBox, "shrink-0 bg-amber-500/15 text-amber-500")}>
+              <IconComp className="w-5 h-5" />
             </div>
+            <h3 className={tokens.card.title}>{fav.label}</h3>
           </CardContent>
         </Card>
       </Link>
