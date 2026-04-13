@@ -1,10 +1,50 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Input validation schemas
+const ActionSchema = z.enum([
+  "list_locations",
+  "create_location",
+  "delete_location",
+  "list_readers",
+  "register_reader",
+  "delete_reader",
+]);
+
+const StripeTerminalLocationIdSchema = z
+  .string()
+  .regex(/^tml_[a-zA-Z0-9]+$/, "Invalid terminal location ID format");
+
+const StripeReaderIdSchema = z
+  .string()
+  .regex(/^tmr_[a-zA-Z0-9]+$/, "Invalid reader ID format");
+
+const RequestBodySchema = z
+  .object({
+    action: ActionSchema,
+    location_id: z.string().uuid("Invalid location ID"),
+    terminal_location_id: StripeTerminalLocationIdSchema.optional(),
+    reader_id: StripeReaderIdSchema.optional(),
+    registration_code: z.string().min(1).max(100).optional(),
+    label: z.string().max(255).optional(),
+    display_name: z.string().max(255).optional(),
+    metadata_location_id: z.boolean().optional(),
+  })
+  .strict();
+
+// Actions that require admin/manager role
+const WRITE_ACTIONS = new Set([
+  "create_location",
+  "delete_location",
+  "register_reader",
+  "delete_reader",
+]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -37,12 +77,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = await req.json();
-    const { action, location_id, ...params } = body;
-
-    if (!location_id) {
+    // Validate input
+    const rawBody = await req.json();
+    const parsed = RequestBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: "location_id is required" }),
+        JSON.stringify({
+          error: "Invalid request",
+          details: parsed.error.flatten().fieldErrors,
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -50,21 +93,22 @@ Deno.serve(async (req) => {
       );
     }
 
+    const { action, location_id, ...params } = parsed.data;
+
     // Look up stripe_account_id from the location
     const { data: locationData, error: locError } = await supabase
       .from("locations")
-      .select("stripe_account_id, name, address, city, state_province, country, organization_id")
+      .select(
+        "stripe_account_id, name, address, city, state_province, country, postal_code, organization_id"
+      )
       .eq("id", location_id)
       .single();
 
     if (locError || !locationData) {
-      return new Response(
-        JSON.stringify({ error: "Location not found" }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Location not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (!locationData.stripe_account_id) {
@@ -77,10 +121,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify user is org member
+    // Verify user is org member and check role for write actions
     const { data: membership } = await supabase
       .from("organization_members")
-      .select("id")
+      .select("id, role")
       .eq("user_id", user.id)
       .eq("organization_id", locationData.organization_id)
       .maybeSingle();
@@ -90,6 +134,23 @@ Deno.serve(async (req) => {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // S1: Role-based gating — write actions require admin or manager
+    if (WRITE_ACTIONS.has(action)) {
+      const allowedRoles = ["admin", "manager", "owner"];
+      if (!allowedRoles.includes(membership.role)) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Insufficient permissions. Only admins and managers can modify terminal configuration.",
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     const stripeAccountId = locationData.stripe_account_id;
@@ -138,7 +199,7 @@ Deno.serve(async (req) => {
           "address[line1]": locationData.address || "N/A",
           "address[city]": locationData.city || "N/A",
           "address[state]": locationData.state_province || "",
-          "address[postal_code]": "00000",
+          "address[postal_code]": locationData.postal_code || "",
           "address[country]": locationData.country || "US",
         };
         if (params.metadata_location_id) {
