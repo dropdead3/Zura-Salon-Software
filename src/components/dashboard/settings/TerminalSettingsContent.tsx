@@ -256,9 +256,6 @@ interface AllLocationsSummaryProps {
 }
 
 function AllLocationsSummary({ locations }: AllLocationsSummaryProps) {
-
-  const isLoading = locationQueries.some((q) => q.tl.isLoading || q.readers.isLoading);
-
   return (
     <Card>
       <CardHeader>
@@ -273,57 +270,17 @@ function AllLocationsSummary({ locations }: AllLocationsSummaryProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className={tokens.loading.skeleton} />
-            ))}
+        <div className="space-y-2">
+          <div className="grid grid-cols-4 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
+            <span>Location</span>
+            <span className="text-center">Terminal Locations</span>
+            <span className="text-center">Readers</span>
+            <span className="text-center">Status</span>
           </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="grid grid-cols-4 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
-              <span>Location</span>
-              <span className="text-center">Terminal Locations</span>
-              <span className="text-center">Readers</span>
-              <span className="text-center">Status</span>
-            </div>
-            {locationQueries.map(({ loc, tl, readers }) => {
-              const readerList = readers.data || [];
-              const online = readerList.filter((r) => r.status === 'online').length;
-              const offline = readerList.length - online;
-
-              return (
-                <div
-                  key={loc.id}
-                  className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border"
-                >
-                  <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
-                  <span className="text-center text-sm text-muted-foreground">
-                    {tl.data?.length || 0}
-                  </span>
-                  <span className="text-center text-sm text-muted-foreground">
-                    {readerList.length}
-                  </span>
-                  <div className="flex items-center justify-center gap-2">
-                    {online > 0 && (
-                      <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 text-xs">
-                        {online} online
-                      </Badge>
-                    )}
-                    {offline > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {offline} offline
-                      </Badge>
-                    )}
-                    {readerList.length === 0 && (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+          {locations.map((loc) => (
+            <LocationSummaryRow key={loc.id} loc={loc} />
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
