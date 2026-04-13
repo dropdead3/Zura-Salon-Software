@@ -123,7 +123,7 @@ function CancellationFeeSection({
       if (!appointment.phorest_client_id) return [];
       const { data, error } = await supabase
         .from('client_cards_on_file')
-        .select('id, card_brand, card_last4, is_default')
+        .select('id, card_brand, card_last4, is_default, card_exp_month, card_exp_year')
         .eq('organization_id', organizationId)
         .eq('client_id', appointment.phorest_client_id)
         .order('is_default', { ascending: false });
