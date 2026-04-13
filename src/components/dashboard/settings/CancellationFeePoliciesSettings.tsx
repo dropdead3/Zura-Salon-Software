@@ -49,7 +49,7 @@ export function CancellationFeePoliciesSettings() {
   });
 
   // Policy text settings
-  interface BookingPolicies {
+  interface BookingPolicies extends Record<string, unknown> {
     deposit_policy_text: string;
     cancellation_policy_text: string;
   }
