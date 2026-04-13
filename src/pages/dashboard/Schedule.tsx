@@ -504,7 +504,13 @@ export default function Schedule() {
       setCheckoutOpen(true);
     }
   };
-  const handleCheckoutConfirm = async (tipAmount: number, rebooked: boolean, promoResult?: any, declineReason?: string) => {
+  const handleCheckoutConfirm = async (
+    tipAmount: number,
+    rebooked: boolean,
+    promoResult?: any,
+    declineReason?: string,
+    paymentMetadata?: { method: string; stripe_payment_intent_id?: string }
+  ) => {
     // Persist applied promo if present
     if (promoResult?.valid && promoResult?.promotion && selectedAppointment) {
       try {
@@ -526,6 +532,22 @@ export default function Schedule() {
       tip_amount: tipAmount,
       rebook_declined_reason: declineReason || null,
     });
+
+    // Store payment method on the appointment if available
+    if (selectedAppointment && paymentMetadata) {
+      try {
+        await supabase
+          .from('appointments')
+          .update({
+            payment_method: paymentMetadata.method,
+            payment_status: paymentMetadata.stripe_payment_intent_id ? 'paid' : 'completed',
+          })
+          .eq('id', selectedAppointment.id);
+      } catch (e) {
+        console.error('Failed to persist payment metadata:', e);
+      }
+    }
+
     setCheckoutOpen(false);
     setCheckoutRebookCompleted(false);
     setSelectedAppointment(null);
@@ -855,6 +877,7 @@ export default function Schedule() {
         locationAddress={selectedLocationData?.address}
         locationPhone={selectedLocationData?.phone}
         organizationId={orgId}
+        locationId={selectedLocation}
         onScheduleNext={handleCheckoutScheduleNext}
         rebookCompleted={checkoutRebookCompleted}
       />

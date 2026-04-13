@@ -172,6 +172,24 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, reader: readerAction });
     }
 
+    // ---- check_reader_status: Poll reader state for payment completion ----
+    if (action === "check_reader_status") {
+      const reader = await stripe.terminal.readers.retrieve(
+        reader_id,
+        stripeOpts
+      );
+      return jsonResponse({
+        success: true,
+        reader: {
+          id: reader.id,
+          status: reader.status,
+          action: reader.action,
+          device_type: reader.device_type,
+          label: reader.label,
+        },
+      });
+    }
+
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
   } catch (error) {
     console.error("Terminal reader display error:", error);
