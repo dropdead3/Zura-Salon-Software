@@ -17,7 +17,7 @@ import { useTerminalHardwareSkus, useCreateTerminalCheckout } from '@/hooks/useT
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useSearchParams } from 'react-router-dom';
+
 
 const REQUEST_STATUS_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', className: 'bg-amber-500/10 text-amber-600 border-amber-500/30', icon: Clock },
