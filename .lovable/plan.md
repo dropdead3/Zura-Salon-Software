@@ -1,61 +1,92 @@
 
 
-# Zura Pay → Scheduler Checkout Integration
+# Zura Pay POS — Eighth-Pass Audit
 
-## Current State
+## Critical Bugs
 
-The checkout flow today is **payment-blind**: clicking "Complete" in the `CheckoutSummarySheet` just marks the appointment as completed in the database. No money actually moves through Stripe. The `terminal-reader-display` edge function exists with all four Stripe Terminal actions (`set_reader_display`, `process_payment`, `clear_reader_display`, `cancel_action`), but nothing in the frontend calls it. There is also no edge function to create a `PaymentIntent` for in-person terminal collection.
+### B1: `create-terminal-payment-intent` queries non-existent column — all card payments will fail
+**Severity: Critical — blocks the entire card-reader checkout flow.**
+**File:** `supabase/functions/create-terminal-payment-intent/index.ts` (line 101-105)
 
-## What Needs to Be Built
+The function queries `organizations.stripe_account_id`, but the actual column is `stripe_connect_account_id`. The query returns `null`, hitting the "Zura Pay is not connected" error on line 108 for every organization — even those fully onboarded.
 
-### Layer 1: Edge Function — `create-terminal-payment-intent`
-Creates a Stripe `PaymentIntent` with `payment_method_types: ['card_present']` and `capture_method: 'automatic'` scoped to the org's Connected Account. Accepts the checkout total (in cents), currency, appointment metadata, and optional tip. Returns the `payment_intent_id` and `client_secret`.
+**Fix:** Change the select to `.select('stripe_connect_account_id')` and reference `orgData.stripe_connect_account_id`.
 
-### Layer 2: Frontend Hook — `useTerminalCheckoutFlow`
-Orchestrates the full terminal payment lifecycle:
-1. **Create PaymentIntent** → calls `create-terminal-payment-intent`
-2. **Push cart to reader** → calls `terminal-reader-display` with `set_reader_display` action (line items, tax, total)
-3. **Process payment** → calls `terminal-reader-display` with `process_payment` action
-4. **Poll for completion** → polls reader status until payment succeeds, fails, or times out
-5. **Clear display** → calls `terminal-reader-display` with `clear_reader_display` on success or cancel
-6. **Cancel** → calls `cancel_action` if the user aborts mid-tap
+### B2: `terminal-reader-display` queries `locations.stripe_account_id` — inconsistent with PI creation
+**Severity: Critical — reader commands may target the wrong Stripe account or fail silently.**
+**File:** `supabase/functions/terminal-reader-display/index.ts` (lines 91-99)
 
-Exposes state: `idle | creating_intent | displaying_cart | awaiting_tap | processing | succeeded | failed | cancelled`.
+The PI is created on the org's Connected Account (`organizations.stripe_connect_account_id`), but the reader display/process commands resolve the Stripe account from `locations.stripe_account_id`. If `locations.stripe_account_id` is null or differs, the `process_payment` call will fail with "PaymentIntent not found" because the PI lives on a different account.
 
-### Layer 3: Reader Selection
-Add a small hook `useActiveTerminalReader` that queries the org's registered readers (from `terminal_readers` or via Stripe list) and lets the front desk pick which reader to use. Default to the reader assigned to the current location. Persist selection in localStorage per location.
+**Fix:** Query `organizations.stripe_connect_account_id` (same source as the PI creation function) instead of `locations.stripe_account_id`. Use locations as a fallback only if org-level is null.
 
-### Layer 4: CheckoutSummarySheet Integration
-- Add a **payment method selector** above the "Complete" button: `Card (Reader)` | `Cash` | `Other` (manual/external)
-- When `Card (Reader)` is selected and a reader is available:
-  - "Complete" button becomes **"Charge [amount]"**
-  - On click: run `useTerminalCheckoutFlow` → show inline status (Sending to reader → Waiting for tap → Processing → Done)
-  - On success: auto-call `onConfirm` with payment metadata
-  - On failure: show error, allow retry or switch to Cash/Other
-- When `Cash` or `Other` is selected: behave exactly as today (just mark completed)
-- Show a small reader indicator (reader name + connection status) when Card is selected
+### B3: `stripe_payment_intent_id` never persisted on appointment
+**Severity: High — no audit trail linking payments to appointments.**
+**File:** `src/pages/dashboard/Schedule.tsx` (lines 537-548)
 
-### Layer 5: Schedule.tsx Updates
-- Pass `organizationId` and `locationId` to `CheckoutSummarySheet` (already partially done)
-- Store payment method and `stripe_payment_intent_id` in the appointment completion call
-- Update `handleCheckoutConfirm` to accept and persist payment metadata
+The `handleCheckoutConfirm` receives `paymentMetadata.stripe_payment_intent_id` but only writes `payment_method` and `payment_status` to the `appointments` table. The PI ID is silently discarded. The `appointments` table doesn't have a `stripe_payment_intent_id` column.
 
-## Files
+**Fix:** Add a `stripe_payment_intent_id` column to `appointments` via migration. Update the `.update()` call to include `stripe_payment_intent_id: paymentMetadata.stripe_payment_intent_id`.
 
-| File | Action |
+### B4: `pollReaderStatus` assumes "no action" means success — false positive
+**Severity: High — could mark failed payments as succeeded.**
+**File:** `src/hooks/useTerminalCheckoutFlow.ts` (lines 102-106)
+
+When the reader has no active action (`!reader?.action || reader?.action?.type === undefined`), the poll returns `'succeeded'`. But the reader clears its action on both success AND failure. A genuine decline could return "succeeded" if the reader clears quickly between polls.
+
+**Fix:** After polling completes with "no action," verify the PaymentIntent status directly by adding a `check_payment_intent` action to the edge function, or by calling `create-terminal-payment-intent` with a `verify` flag. Only return `'succeeded'` if the PI status is `succeeded`.
+
+## Gaps
+
+### G1: `useActiveTerminalReader` filter is a no-op
+**File:** `src/hooks/useActiveTerminalReader.ts` (line 47)
+
+```typescript
+readers.filter((r) => r.location === locationId || true)
+```
+
+The `|| true` makes the filter always pass — every reader matches regardless of location. This was likely a placeholder.
+
+**Fix:** Remove `|| true`. Filter readers by `r.location === locationId` when `locationId` is provided.
+
+### G2: `useTerminalReaders` passes `organizationId` but `useStripeTerminals` expects `locationId`
+**File:** `src/hooks/useActiveTerminalReader.ts` (line 17)
+
+`useTerminalReaders(organizationId ?? null)` — but looking at `useStripeTerminals.ts`, the first parameter is named `locationId` and passed as `location_id` to the edge function. The hook is passing the org ID where a location ID is expected, which means the edge function receives the wrong value for reader lookup.
+
+**Fix:** Pass `locationId` to `useTerminalReaders` instead of `organizationId`. Update the `useActiveTerminalReader` signature if needed.
+
+### G3: `create-terminal-payment-intent` allows `stylist` role but `terminal-reader-display` does not
+**File:** `create-terminal-payment-intent/index.ts` (line 93) vs `terminal-reader-display/index.ts` (line 82)
+
+The PI creation allows `["admin", "manager", "super_admin", "stylist"]`, but the reader display function only allows `["admin", "manager", "super_admin"]`. A stylist who creates the PI successfully will get a 403 when trying to push the cart to the reader.
+
+**Fix:** Align the role lists. Either add `stylist` to `terminal-reader-display` or remove it from `create-terminal-payment-intent`.
+
+### G4: No `?target=deno` on Stripe imports in `create-terminal-payment-intent`
+**File:** `supabase/functions/create-terminal-payment-intent/index.ts` (line 2)
+
+Uses `https://esm.sh/stripe@18.5.0` without `?target=deno`. Pass 7 fixed this in `terminal-hardware-order` but the new function was created without it.
+
+**Fix:** Add `?target=deno` to the Stripe import.
+
+## Enhancements
+
+### E1: Confirm payment succeeded before completing appointment
+Currently, `handleConfirm` in `CheckoutSummarySheet` calls `onConfirm` immediately after `startCheckout` returns. If the PI was created but the reader interaction is ambiguous (see B4), the appointment could be marked completed without confirmed payment. Consider verifying PI status server-side before confirming.
+
+---
+
+## Immediate Changes
+
+| File | Change |
 |------|--------|
-| `supabase/functions/create-terminal-payment-intent/index.ts` | **New** — Create PI for card_present collection on Connected Account |
-| `src/hooks/useTerminalCheckoutFlow.ts` | **New** — Orchestrates create PI → display → process → poll → clear |
-| `src/hooks/useActiveTerminalReader.ts` | **New** — Query and select active reader for current location |
-| `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | **Modify** — Add payment method selector, reader status, charge flow |
-| `src/pages/dashboard/Schedule.tsx` | **Modify** — Pass location context, persist payment metadata |
-| `supabase/functions/terminal-reader-display/index.ts` | **Modify** — Add `check_reader_status` action for polling |
+| `supabase/functions/create-terminal-payment-intent/index.ts` | Fix column name to `stripe_connect_account_id` (B1); add `?target=deno` to Stripe import (G4) |
+| `supabase/functions/terminal-reader-display/index.ts` | Query `organizations.stripe_connect_account_id` instead of `locations.stripe_account_id` (B2); add `stylist` to allowed roles (G3); add `check_payment_intent` action for PI verification (B4) |
+| `src/hooks/useTerminalCheckoutFlow.ts` | After poll returns "no action," verify PI status via new `check_payment_intent` action (B4) |
+| `src/hooks/useActiveTerminalReader.ts` | Remove `|| true` filter no-op (G1); pass `locationId` to `useTerminalReaders` (G2) |
+| `src/pages/dashboard/Schedule.tsx` | Store `stripe_payment_intent_id` in the update call (B3) |
+| **Migration** | Add `stripe_payment_intent_id TEXT` column to `appointments` table (B3) |
 
-## Not in Scope (Future)
-- Split payments (partial card + partial cash)
-- Tipping on the reader screen (tip stays in the app for now)
-- Refund flow from the scheduler
-- Offline/fallback payment collection
-
-1 new edge function, 2 new hooks, 0 migrations, 0 new dependencies.
+1 migration, 0 new edge functions, 0 new dependencies.
 
