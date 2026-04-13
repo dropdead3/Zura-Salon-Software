@@ -511,8 +511,10 @@ export default function Schedule() {
     declineReason?: string,
     paymentMetadata?: { method: string; stripe_payment_intent_id?: string }
   ) => {
+    if (!selectedAppointment) return;
+
     // Persist applied promo if present
-    if (promoResult?.valid && promoResult?.promotion && selectedAppointment) {
+    if (promoResult?.valid && promoResult?.promotion) {
       try {
         await supabase.from('applied_promotions' as any).insert({
           organization_id: orgId,
@@ -527,26 +529,39 @@ export default function Schedule() {
       }
     }
 
-    handleStatusChange('completed', { 
-      rebooked_at_checkout: rebooked, 
+    // G4 fix: Merge status change + payment metadata into a single atomic update
+    const updatePayload: Record<string, unknown> = {
+      status: 'completed',
+      rebooked_at_checkout: rebooked,
       tip_amount: tipAmount,
       rebook_declined_reason: declineReason || null,
-    });
+    };
 
-    // Store payment method on the appointment if available
-    if (selectedAppointment && paymentMetadata) {
-      try {
-        await supabase
-          .from('appointments')
-          .update({
-            payment_method: paymentMetadata.method,
-            payment_status: paymentMetadata.stripe_payment_intent_id ? 'paid' : 'completed',
-            stripe_payment_intent_id: paymentMetadata.stripe_payment_intent_id || null,
-          } as any)
-          .eq('id', selectedAppointment.id);
-      } catch (e) {
-        console.error('Failed to persist payment metadata:', e);
+    if (paymentMetadata) {
+      updatePayload.payment_method = paymentMetadata.method;
+      updatePayload.payment_status = paymentMetadata.stripe_payment_intent_id ? 'paid' : 'completed';
+      updatePayload.stripe_payment_intent_id = paymentMetadata.stripe_payment_intent_id || null;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update(updatePayload)
+        .eq('id', selectedAppointment.id);
+
+      if (error) {
+        console.error('Failed to complete appointment:', error);
+        toast.error('Failed to complete checkout');
+        return;
       }
+
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success('Appointment completed');
+    } catch (e) {
+      console.error('Failed to complete appointment:', e);
+      toast.error('Failed to complete checkout');
+      return;
     }
 
     setCheckoutOpen(false);

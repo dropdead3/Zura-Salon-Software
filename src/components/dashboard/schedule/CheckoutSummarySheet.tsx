@@ -450,24 +450,36 @@ export function CheckoutSummarySheet({
     // If card reader selected, run terminal checkout flow
     if (paymentMethod === 'card_reader' && activeReader && organizationId && appointment) {
       try {
+        // G5: Include tip as a line item so reader display total matches grandTotal
+        const lineItems = [
+          {
+            description: appointment.service_name || 'Service',
+            amount: Math.round((appointment.total_price || 0) * 100),
+            quantity: 1,
+          },
+          ...addonEvents.map((e) => ({
+            description: e.addon_name,
+            amount: Math.round(e.addon_price * 100),
+            quantity: 1,
+          })),
+        ];
+
+        // Add tip as a visible line item on the reader if present
+        if (tipAmount > 0) {
+          lineItems.push({
+            description: 'Tip',
+            amount: Math.round(tipAmount * 100),
+            quantity: 1,
+          });
+        }
+
         const result = await terminalFlow.startCheckout({
           organizationId,
           readerId: activeReader.id,
-          amount: Math.round(checkoutTotal * 100), // convert to cents
+          amount: Math.round(grandTotal * 100), // grandTotal includes tip
           tipAmount: Math.round(tipAmount * 100),
           appointmentId: appointment.id,
-          lineItems: [
-            {
-              description: appointment.service_name || 'Service',
-              amount: Math.round((appointment.total_price || 0) * 100),
-              quantity: 1,
-            },
-            ...addonEvents.map((e) => ({
-              description: e.addon_name,
-              amount: Math.round(e.addon_price * 100),
-              quantity: 1,
-            })),
-          ],
+          lineItems,
           tax: Math.round(tax * 100),
         });
 
