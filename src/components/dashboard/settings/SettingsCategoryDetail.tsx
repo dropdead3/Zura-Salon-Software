@@ -63,6 +63,7 @@ const ServiceEmailFlowsManager = lazy(() => import('@/components/dashboard/setti
 const ServicesSettingsContent = lazy(() => import('@/components/dashboard/settings/ServicesSettingsContent').then(m => ({ default: m.ServicesSettingsContent })));
 const RetailProductsSettingsContent = lazy(() => import('@/components/dashboard/settings/RetailProductsSettingsContent').then(m => ({ default: m.RetailProductsSettingsContent })));
 const TerminalSettingsContent = lazy(() => import('@/components/dashboard/settings/TerminalSettingsContent').then(m => ({ default: m.TerminalSettingsContent })));
+const BusinessSettingsContent = lazy(() => import('@/components/dashboard/settings/BusinessSettingsContent').then(m => ({ default: m.BusinessSettingsContent })));
 
 // Eagerly imported (small, used inline)
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -461,6 +462,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
         </div>
 
         <Suspense fallback={<DashboardLoader size="md" className="h-64" />}>
+          {activeCategory === 'business' && <BusinessSettingsContent />}
           {activeCategory === 'email' && (
             <Tabs defaultValue="branding" className="w-full">
               <TabsList>
