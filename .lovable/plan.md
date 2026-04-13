@@ -1,73 +1,77 @@
 
 
-# Zura Pay POS — Ninth-Pass Audit
+# Move POS Operations into the Operations Hub
 
-Good instinct asking this. There are several important gaps remaining that would prevent this from being a truly production-ready POS system.
+## Principle
 
-## Critical Gaps
+Settings = **configuration** (connect Zura Pay, register readers, order hardware, display settings).
+Operations Hub = **daily operational functions** (till reconciliation, end-of-day close, refund queue, deposit holds).
 
-### G1: No webhook handler for terminal `payment_intent.succeeded` events
-**Impact: High — payment state can become permanently stale.**
+The current state mixes these concerns. Till reconciliation is embedded inline in the Transactions tab of the Appointments Hub. Refund processing is scattered. There is no dedicated "end of day" workflow. This plan separates configuration from operations cleanly.
 
-The `stripe-webhook` function handles `checkout.session.completed`, `invoice.*`, and `charge.failed` — but has zero handlers for `payment_intent.succeeded` or `payment_intent.payment_failed`. Terminal card-present payments generate these events on the Connected Account.
+## What Moves
 
-Right now, the *only* way a terminal payment gets recorded is through the client-side poll → PI verify → `onConfirm` flow. If the front desk closes the browser tab mid-payment, or the poll times out but the payment actually succeeds seconds later, the appointment stays incomplete and the PI ID is never stored. A webhook would act as the safety net.
+| Feature | Current Location | New Location |
+|---------|-----------------|--------------|
+| Till Reconciliation | Inline in `TillBalanceSummary` (Transactions tab) | New "Payment Operations" page in Operations Hub |
+| Refund Queue | Only accessible per-transaction | Surfaced as a card in Operations Hub → links to dedicated refund management |
+| Deposit Holds | No UI — hooks exist but no visibility | Card in Operations Hub showing active holds with capture/release actions |
 
-**Fix:** Add `payment_intent.succeeded` and `payment_intent.payment_failed` handlers to the webhook (or create a dedicated Connect webhook endpoint). On `succeeded`, look up the appointment via `metadata.appointment_id`, update `payment_status = 'paid'` and store the PI ID. This makes the system eventually consistent regardless of client-side behavior.
+## What Stays in Settings
 
-### G2: Refunds don't touch Stripe — only local records
-**Impact: High — "Refund to Original Payment" is a lie for card-reader payments.**
+- Zura Pay Connect onboarding (Stripe Express account setup)
+- Fleet management (terminal locations, reader registration)
+- Hardware ordering (S710 purchases)
+- S710 display simulator
+- Location-level payment enablement
 
-`useProcessRefund` creates a `refund_records` row and sets status to `pending` for `original_payment` type. But it never calls `stripe.refunds.create()`. For cash payments this is fine (manual), but for card-reader payments with a `stripe_payment_intent_id`, the refund should actually be issued through Stripe.
+## Changes
 
-**Fix:** Create a `process-stripe-refund` edge function that accepts a PI ID and amount, calls `stripe.refunds.create()` on the Connected Account, then updates `refund_records.status` to `completed`. Wire `useProcessRefund` to call this when `refund_type === 'original_payment'` and a `stripe_payment_intent_id` exists on the source transaction.
+### 1. New page: Payment Operations (`/dashboard/admin/payment-ops`)
 
-### G3: No transaction record created for terminal payments
-**Impact: High — terminal payments don't appear in the Transactions hub.**
+A dedicated page accessible from the Operations Hub with three sections:
 
-The checkout flow updates the `appointments` table with `payment_method` and `stripe_payment_intent_id`, but it never inserts a row into the `transactions` table. The Transactions hub, daily till reconciliation, and sales reports all query `transactions` — so card-reader payments are invisible to reporting.
+- **Till Reconciliation**: Date picker, reconcile button, Stripe vs. local comparison, discrepancy details. Extracted from `TillBalanceSummary` into its own full-page component with richer detail (expandable discrepancy rows, resolution actions).
+- **Active Deposit Holds**: Table of appointments with `deposit_status = 'held'`, showing client name, amount, appointment date, and capture/release buttons. Uses existing `useTerminalDeposit` hook.
+- **Pending Refunds**: Table of `refund_records` with status `pending`, showing source transaction, amount, type, and a "Process" action that triggers the `process-stripe-refund` edge function.
 
-**Fix:** After a successful terminal payment, insert a `transactions` row with type `service`, linking the appointment ID, client ID, amount, payment method (`card_present`), and PI ID. This can be done client-side in `handleCheckoutConfirm` or server-side via the webhook (preferred).
+### 2. Operations Hub card
 
-### G4: `handleStatusChange('completed')` runs *before* the payment metadata update
-**Impact: Medium — race condition.**
+Add a new section **"Financial Operations"** to `TeamHub.tsx` (between "Daily Operations" and "Scheduling & Time Off") with:
 
-In `Schedule.tsx` line 530, `handleStatusChange('completed', ...)` fires first, then lines 537-549 run a *separate* `.update()` for payment metadata. If `handleStatusChange` triggers a query invalidation, the UI may briefly show the appointment as "completed" with no payment info. Worse, if the second update fails silently (the `catch` just logs), the payment metadata is lost.
+- **Payment Operations** card → links to `/dashboard/admin/payment-ops`
+- Icon: `Banknote` or `CreditCard`
+- Description: "Till reconciliation, deposit holds, and refund processing"
+- Stat badge: count of pending refunds + active holds (optional, fetched via lightweight query)
 
-**Fix:** Merge both updates into a single `.update()` call, or ensure `handleStatusChange` accepts and persists payment metadata atomically.
+### 3. Simplify TillBalanceSummary
 
-## Moderate Gaps
+The inline `TillBalanceSummary` in the Transactions tab keeps its role as a **summary bar** (cash/card/tips totals) but the "Reconcile" button changes behavior:
 
-### G5: Tip not included in reader display cart
-The `set_reader_display` call pushes line items and tax to the reader screen, but tip is added *after* the cart display. The customer sees a total that doesn't include the tip they just agreed to in the app. This is confusing on the S710 display.
+- Instead of running reconciliation inline, it navigates to `/dashboard/admin/payment-ops` with the selected date as a query param
+- The detailed reconciliation results, discrepancy drilldown, and Stripe verification move to the dedicated page
 
-**Fix:** Add the tip as a line item (description: "Tip") in the `set_reader_display` payload so the reader screen total matches `grandTotal`.
+### 4. Route and nav wiring
 
-### G6: No receipt for card payments
-The receipt PDF doesn't include payment method or PI reference. For card payments, receipts should show "Paid by Card" and the last 4 digits (available from the PI's `charges.data[0].payment_method_details.card_present.last4`). Currently all receipts look the same regardless of payment method.
+- Add route in `App.tsx`: `/dashboard/admin/payment-ops` → lazy-loaded `PaymentOps` page
+- Add card in `TeamHub.tsx` under new "Financial Operations" section
+- Add `Banknote` to the icon map in TeamHub
+- `TillBalanceSummary` reconcile button becomes a navigation link
 
-### G7: `as any` type assertion on payment update
-`Schedule.tsx` line 545 uses `as any` to bypass TypeScript. Since the migration already added `stripe_payment_intent_id` and the types file includes it, this cast should be removable now.
+### 5. Sidebar sub-link
 
-## Enhancement Opportunities
-
-### E1: Daily till reconciliation for card payments
-The Transactions hub has a till balance feature, but it only tracks cash. Card-reader payments should be reconciled against Stripe's actual payout data to give owners a complete end-of-day picture.
-
-### E2: Deposit collection via terminal
-The booking surface already has `require_deposit` settings, but deposits are not collected through the terminal. Wiring the terminal checkout flow to deposit collection (pre-auth with capture later) would close this loop.
+Per the Operations Hub architecture, if a user favorites "Payment Operations," it appears as an indented sub-link under Operations Hub in the sidebar.
 
 ---
 
-## Immediate Changes
+## Files
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `supabase/functions/stripe-webhook/index.ts` | Add `payment_intent.succeeded` and `payment_intent.payment_failed` handlers that update `appointments` (G1) |
-| `supabase/functions/process-stripe-refund/index.ts` | **New** — calls `stripe.refunds.create()` on Connected Account for card payments (G2) |
-| `src/hooks/useRefunds.ts` | When `refund_type === 'original_payment'` and source has a PI ID, call `process-stripe-refund` instead of just inserting a pending record (G2) |
-| `src/pages/dashboard/Schedule.tsx` | Merge payment metadata into the `handleStatusChange` update call (G4); remove `as any` (G7); insert transaction record for card payments (G3) |
-| `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Include tip as a line item in `set_reader_display` payload (G5) |
+| `src/pages/dashboard/admin/PaymentOps.tsx` | **New** — Full payment operations page with till reconciliation, deposit holds, and refund queue |
+| `src/pages/dashboard/admin/TeamHub.tsx` | **Modify** — Add "Financial Operations" section with Payment Operations card |
+| `src/components/dashboard/transactions/TillBalanceSummary.tsx` | **Modify** — Replace inline reconciliation with navigation link to payment-ops page |
+| `App.tsx` | **Modify** — Add route for `/dashboard/admin/payment-ops` |
 
-1 new edge function, 0 migrations, 0 new dependencies.
+0 migrations, 0 new edge functions, 0 new dependencies.
 
