@@ -33,6 +33,7 @@ const REASON_LABELS: Record<string, string> = {
   new_location: 'New Location',
   replacement: 'Replacement',
   additional: 'Additional',
+  upgrade_to_s710: 'Upgrade to S710',
   other: 'Other',
 };
 
@@ -227,7 +228,9 @@ export function TerminalRequestsTable() {
           <PlatformTableHeader>
             <PlatformTableRow>
               <PlatformTableHead>Organization</PlatformTableHead>
+              <PlatformTableHead>Requested By</PlatformTableHead>
               <PlatformTableHead>Location</PlatformTableHead>
+              <PlatformTableHead>Device</PlatformTableHead>
               <PlatformTableHead>Reason</PlatformTableHead>
               <PlatformTableHead className="text-center">Qty</PlatformTableHead>
               <PlatformTableHead>Status</PlatformTableHead>
@@ -242,7 +245,13 @@ export function TerminalRequestsTable() {
                 <PlatformTableCell className="font-medium text-[hsl(var(--platform-foreground))]">
                   {req.organization_name || '—'}
                 </PlatformTableCell>
+                <PlatformTableCell>{req.requester_name || '—'}</PlatformTableCell>
                 <PlatformTableCell>{req.location_name || '—'}</PlatformTableCell>
+                <PlatformTableCell>
+                  <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30 text-[10px]">
+                    {((req as any).device_type || 's710').toUpperCase()}
+                  </Badge>
+                </PlatformTableCell>
                 <PlatformTableCell>{REASON_LABELS[req.reason] || req.reason}</PlatformTableCell>
                 <PlatformTableCell className="text-center">{req.quantity}</PlatformTableCell>
                 <PlatformTableCell><StatusBadge status={req.status} /></PlatformTableCell>

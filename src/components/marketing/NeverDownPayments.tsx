@@ -43,17 +43,17 @@ export function NeverDownPayments() {
   const redDim = useTransform(splitProgress, [0.5, 1], [1, 0.35]);
 
   return (
-    <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
+    <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28 bg-[hsl(var(--mkt-bg-deep,222_47%_5%))]">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-14">
           <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-dusky))] uppercase tracking-[0.15em] mb-4">
             Offline Protection
           </p>
-          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
+          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight text-white mb-4">
             The WiFi went down. Your revenue didn't.
           </h2>
-          <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
+          <p className="font-sans text-base sm:text-lg text-white/50 max-w-2xl mx-auto">
             Every salon has lived this nightmare. A packed Saturday, the internet drops, and suddenly you can't take payments. With {PLATFORM_NAME} Pay and the S710, that scenario is over.
           </p>
         </div>
@@ -79,11 +79,11 @@ export function NeverDownPayments() {
               <div className="flex items-center gap-3 p-3 rounded-lg border border-white/[0.08] bg-white/[0.03]">
                 <span className="font-display text-2xl text-red-400">$0</span>
                 <div>
-                  <p className="font-sans text-xs text-slate-400">Revenue during outage</p>
+                  <p className="font-sans text-xs text-white/40">Revenue during outage</p>
                   <p className="font-sans text-[11px] text-red-300/60">Clients walking out, cash scramble</p>
                 </div>
               </div>
-              <p className="font-sans text-xs text-slate-500 text-center italic">
+              <p className="font-sans text-xs text-white/30 text-center italic">
                 "Sorry, our system is down right now..."
               </p>
             </div>
@@ -108,7 +108,7 @@ export function NeverDownPayments() {
               <div className="flex items-center gap-3 p-3 rounded-lg border border-white/[0.08] bg-white/[0.03]">
                 <span className="font-display text-2xl text-emerald-400">100%</span>
                 <div>
-                  <p className="font-sans text-xs text-slate-400">Revenue captured</p>
+                  <p className="font-sans text-xs text-white/40">Revenue captured</p>
                   <p className="font-sans text-[11px] text-emerald-300/60">Zero interruption to service</p>
                 </div>
               </div>
@@ -130,8 +130,8 @@ export function NeverDownPayments() {
               <div className={`w-10 h-10 rounded-lg ${feature.bg} flex items-center justify-center mb-4`}>
                 <feature.icon className={`w-5 h-5 ${feature.color}`} />
               </div>
-              <h3 className="font-display text-sm tracking-wide uppercase mb-2">{feature.title}</h3>
-              <p className="font-sans text-sm text-slate-400 leading-relaxed">{feature.description}</p>
+              <h3 className="font-display text-sm tracking-wide uppercase text-white mb-2">{feature.title}</h3>
+              <p className="font-sans text-sm text-white/50 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

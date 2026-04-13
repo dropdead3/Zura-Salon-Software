@@ -10,7 +10,8 @@ import { format, formatDistanceToNow } from 'date-fns';
 
 export function OfflinePaymentStatus() {
   const { isOnline, isOffline, offlineEvents, currentOfflineDuration } = useOfflineStatus();
-  const { pendingCount, pendingTotal, forwardedCount, lastForwardedAt } = useOfflinePaymentQueue();
+  const { pendingCount, pendingTotalFormatted, forwardedCount, lastForwardedAt, isForwarding } = useOfflinePaymentQueue();
+  const { clearOfflineEvents } = useOfflineStatus();
 
   const recentEvents = offlineEvents.slice(-5).reverse();
 
@@ -77,7 +78,7 @@ export function OfflinePaymentStatus() {
             </p>
             {pendingCount > 0 && (
               <p className="font-sans text-xs text-amber-500 mt-1">
-                ${(pendingTotal / 100).toFixed(2)} queued
+                {pendingTotalFormatted} queued{isForwarding ? ' — syncing…' : ''}
               </p>
             )}
             {pendingCount === 0 && (
@@ -116,7 +117,15 @@ export function OfflinePaymentStatus() {
         {/* Offline Event Timeline */}
         {recentEvents.length > 0 && (
           <div>
-            <p className="font-sans text-xs text-muted-foreground mb-3">Recent connectivity events</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-sans text-xs text-muted-foreground">Recent connectivity events</p>
+              <button
+                onClick={clearOfflineEvents}
+                className="font-sans text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+              >
+                Clear history
+              </button>
+            </div>
             <div className="space-y-2">
               {recentEvents.map((event, i) => (
                 <div key={i} className="flex items-center gap-3 text-xs">
