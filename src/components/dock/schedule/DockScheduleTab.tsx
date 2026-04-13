@@ -84,7 +84,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
   });
 
   // Confirmation dialog state
-  const [confirmAction, setConfirmAction] = useState<{ appointment: DockAppointment; action: 'cancel' | 'no_show' } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ appointment: DockAppointment; action: 'cancel' | 'no_show' | 'retry_charge' } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleToggleChange = (checked: boolean) => {
