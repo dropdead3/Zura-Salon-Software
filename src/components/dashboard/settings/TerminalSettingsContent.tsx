@@ -883,8 +883,8 @@ export function TerminalSettingsContent() {
       {/* Offline Payment Status */}
       <OfflinePaymentStatus />
 
-      {/* Request a Terminal Card */}
-      <TerminalRequestCard locations={locations} />
+      {/* Purchase Terminal Card */}
+      <TerminalPurchaseCard locations={locations} />
 
       {/* Register Reader Wizard */}
       <RegisterReaderDialog
