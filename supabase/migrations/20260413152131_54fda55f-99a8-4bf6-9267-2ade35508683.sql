@@ -1,0 +1,3 @@
+ALTER TABLE public.client_cards_on_file
+ADD CONSTRAINT client_cards_on_file_pm_org_unique
+UNIQUE (stripe_payment_method_id, organization_id);
