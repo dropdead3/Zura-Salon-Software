@@ -410,8 +410,24 @@ export function ZuraPayFleetTab({
                       )}
                       Continue Onboarding
                     </Button>
-                  </div>
-                </>
+                   </div>
+                   <div className="mt-3">
+                     <Button
+                       variant="ghost"
+                       size="sm"
+                       onClick={() => setShowConfirmReset(true)}
+                       disabled={isResetting}
+                       className="text-xs text-muted-foreground hover:text-destructive"
+                     >
+                       {isResetting ? (
+                         <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                       ) : (
+                         <RotateCcw className="h-3 w-3 mr-1.5" />
+                       )}
+                       Reset &amp; Start Over
+                     </Button>
+                   </div>
+                 </>
               ) : orgConnectStatus === 'active' ? (
                 /* Org is verified but this specific location isn't connected */
                 <>
