@@ -169,7 +169,6 @@ export interface BookingPolicies {
   cancellation_policy_text: string;
   [key: string]: unknown;
 }
-}
 
 const DEFAULT_BOOKING_POLICIES: BookingPolicies = {
   deposit_policy_text: '',
