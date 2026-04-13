@@ -21,6 +21,7 @@ import {
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
 import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation } from '@/hooks/useZuraPayConnect';
+import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'react-router-dom';
