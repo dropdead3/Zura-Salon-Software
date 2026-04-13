@@ -1208,6 +1208,7 @@ export type Database = {
           original_appointment_id: string | null
           original_price: number | null
           paid_at: string | null
+          payment_failure_reason: string | null
           payment_method: string | null
           payment_status: string
           phorest_client_id: string | null
@@ -1273,6 +1274,7 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           paid_at?: string | null
+          payment_failure_reason?: string | null
           payment_method?: string | null
           payment_status?: string
           phorest_client_id?: string | null
@@ -1338,6 +1340,7 @@ export type Database = {
           original_appointment_id?: string | null
           original_price?: number | null
           paid_at?: string | null
+          payment_failure_reason?: string | null
           payment_method?: string | null
           payment_status?: string
           phorest_client_id?: string | null
