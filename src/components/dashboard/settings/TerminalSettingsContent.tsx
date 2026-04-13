@@ -34,6 +34,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useSearchParams } from 'react-router-dom';
+import { CheckoutDisplayConcept } from './terminal/CheckoutDisplayConcept';
 
 // Fetch org locations that have Zura Pay (stripe_account_id)
 function useZuraPayLocations() {
@@ -1031,7 +1032,7 @@ export function TerminalSettingsContent() {
       <TerminalPurchaseCard locations={locations} />
 
       {/* Checkout Display Concept */}
-      <CheckoutDisplayConcept businessName={effectiveOrganization?.name || 'Your Salon'} />
+      <CheckoutDisplayConcept businessName={locations?.[0]?.name || 'Your Salon'} />
 
       {/* Register Reader Wizard */}
       <RegisterReaderDialog
