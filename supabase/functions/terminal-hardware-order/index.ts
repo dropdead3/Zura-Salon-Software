@@ -55,6 +55,14 @@ Deno.serve(async (req) => {
     if (action === "get_skus") {
       const country = body.country || "US";
 
+      // Stable Stripe-hosted CDN images for S710 product line
+      const FALLBACK_IMAGES: Record<string, string> = {
+        s710_reader: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s710.png",
+        s710_hub: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700_hub.png",
+        s710_dock: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700_dock.png",
+        s710_case: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700_case.png",
+      };
+
       try {
         // Try the Hardware SKUs API (preview/beta)
         const skuResponse = await fetch(
@@ -75,6 +83,17 @@ Deno.serve(async (req) => {
             return productName.includes("s710") || productName.includes("s700");
           });
 
+          // Extract image_url from hardware_product.images when available
+          const enrichSku = (sku: Record<string, unknown>) => {
+            const hp = sku.hardware_product as Record<string, unknown> | undefined;
+            const images = (hp?.images as string[]) || [];
+            const skuId = String(sku.id || "");
+            return {
+              ...sku,
+              image_url: images[0] || FALLBACK_IMAGES[skuId] || FALLBACK_IMAGES.s710_reader,
+            };
+          };
+
           // Also fetch shipping methods
           const shippingResponse = await fetch(
             `https://api.stripe.com/v1/terminal/hardware_shipping_methods?country=${country}&limit=20`,
@@ -89,8 +108,8 @@ Deno.serve(async (req) => {
 
           return jsonResponse({
             source: "stripe_api",
-            skus: skuData.data || [],
-            s710_skus: s710Skus,
+            skus: (skuData.data || []).map(enrichSku),
+            s710_skus: s710Skus.map(enrichSku),
             shipping_methods: shippingData.data || [],
           });
         }
@@ -113,12 +132,13 @@ Deno.serve(async (req) => {
             currency: "usd",
             status: "available",
             description: "Android-based smart reader with cellular connectivity. Countertop and handheld use.",
+            image_url: FALLBACK_IMAGES.s710_reader,
           },
         ],
         accessories: [
-          { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd" },
-          { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd" },
-          { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd" },
+          { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd", image_url: FALLBACK_IMAGES.s710_hub },
+          { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd", image_url: FALLBACK_IMAGES.s710_dock },
+          { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd", image_url: FALLBACK_IMAGES.s710_case },
         ],
         shipping_methods: [],
         pricing_note: "Prices shown are Stripe's published rates. Zura applies zero markup.",

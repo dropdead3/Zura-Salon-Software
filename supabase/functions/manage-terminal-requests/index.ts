@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
     // ---- create_request ----
     if (action === "create_request") {
-      const { organization_id, location_id, quantity, reason, notes } = body;
+      const { organization_id, location_id, quantity, reason, notes, accessories, estimated_total_cents } = body;
 
       if (!organization_id || !location_id || !reason) {
         return jsonResponse({ error: "Missing required fields: organization_id, location_id, reason" }, 400);
@@ -104,6 +104,16 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: `Invalid reason. Must be one of: ${validReasons.join(", ")}` }, 400);
       }
 
+      // Sanitize accessories array
+      const sanitizedAccessories = Array.isArray(accessories)
+        ? accessories.slice(0, 10).map((a: Record<string, unknown>) => ({
+            id: String(a.id || "").slice(0, 100),
+            name: String(a.name || "").slice(0, 200),
+            quantity: Math.min(Math.max(Math.round(Number(a.quantity) || 1), 1), 10),
+            unit_price_cents: Math.round(Number(a.unit_price_cents) || 0),
+          }))
+        : [];
+
       const { data: inserted, error: insertError } = await supabase
         .from("terminal_hardware_requests")
         .insert({
@@ -115,6 +125,8 @@ Deno.serve(async (req) => {
           notes: notes?.slice(0, 1000) || null,
           status: "pending",
           device_type: "s710",
+          accessories: sanitizedAccessories,
+          estimated_total_cents: Math.round(Number(estimated_total_cents) || 0),
         })
         .select()
         .single();

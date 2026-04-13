@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatCurrency } from '@/lib/format';
 import { Package, Truck, CheckCircle2, XCircle, Clock, ChevronDown, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -111,6 +112,24 @@ function ManageRequestDialog({ request, open, onOpenChange }: ManageDialogProps)
               <span className="text-[hsl(var(--platform-foreground-muted))]">Quantity</span>
               <p className="text-[hsl(var(--platform-foreground))]">{request.quantity}</p>
             </div>
+            {request.estimated_total_cents ? (
+              <div>
+                <span className="text-[hsl(var(--platform-foreground-muted))]">Est. Total</span>
+                <p className="text-[hsl(var(--platform-foreground))]">{formatCurrency(request.estimated_total_cents / 100)}</p>
+              </div>
+            ) : null}
+            {request.accessories && request.accessories.length > 0 && (
+              <div className="col-span-2">
+                <span className="text-[hsl(var(--platform-foreground-muted))]">Accessories</span>
+                <div className="mt-1 space-y-1">
+                  {request.accessories.map((acc, i) => (
+                    <p key={i} className="text-[hsl(var(--platform-foreground))] text-sm">
+                      {acc.name} × {acc.quantity} — {formatCurrency(acc.unit_price_cents / 100)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
             {request.notes && (
               <div className="col-span-2">
                 <span className="text-[hsl(var(--platform-foreground-muted))]">Org Notes</span>
@@ -233,6 +252,7 @@ export function TerminalRequestsTable() {
               <PlatformTableHead>Device</PlatformTableHead>
               <PlatformTableHead>Reason</PlatformTableHead>
               <PlatformTableHead className="text-center">Qty</PlatformTableHead>
+              <PlatformTableHead className="text-right">Est. Total</PlatformTableHead>
               <PlatformTableHead>Status</PlatformTableHead>
               <PlatformTableHead>Tracking</PlatformTableHead>
               <PlatformTableHead>Requested</PlatformTableHead>
@@ -249,11 +269,14 @@ export function TerminalRequestsTable() {
                 <PlatformTableCell>{req.location_name || '—'}</PlatformTableCell>
                 <PlatformTableCell>
                   <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30 text-[10px]">
-                    {((req as any).device_type || 's710').toUpperCase()}
+                    {(req.device_type || 's710').toUpperCase()}
                   </Badge>
                 </PlatformTableCell>
                 <PlatformTableCell>{REASON_LABELS[req.reason] || req.reason}</PlatformTableCell>
                 <PlatformTableCell className="text-center">{req.quantity}</PlatformTableCell>
+                <PlatformTableCell className="text-right font-mono text-xs">
+                  {req.estimated_total_cents ? formatCurrency(req.estimated_total_cents / 100) : '—'}
+                </PlatformTableCell>
                 <PlatformTableCell><StatusBadge status={req.status} /></PlatformTableCell>
                 <PlatformTableCell>
                   {req.tracking_number ? (

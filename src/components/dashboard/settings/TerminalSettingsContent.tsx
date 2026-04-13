@@ -14,6 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery } from '@tanstack/react-query';
@@ -326,6 +327,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reqLocationId, setReqLocationId] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedAccessories, setSelectedAccessories] = useState<Record<string, number>>({});
 
   // Auto-verify payment on return from checkout
   useEffect(() => {
@@ -343,22 +345,53 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
 
   const readerPrice = skuData?.skus?.[0]?.amount || 29900;
   const readerCurrency = skuData?.skus?.[0]?.currency || 'usd';
-  const totalPrice = readerPrice * quantity;
+  const readerImage = skuData?.skus?.[0]?.image_url;
+  const accessories = skuData?.accessories || [];
+  const accessoriesTotalCents = accessories.reduce((sum, acc) => {
+    const qty = selectedAccessories[acc.id] || 0;
+    return sum + (acc.amount * qty);
+  }, 0);
+  const totalPrice = (readerPrice * quantity) + accessoriesTotalCents;
   const pricingSource = skuData?.source || 'fallback';
+
+  const toggleAccessory = (id: string) => {
+    setSelectedAccessories((prev) => {
+      const next = { ...prev };
+      if (next[id]) {
+        delete next[id];
+      } else {
+        next[id] = 1;
+      }
+      return next;
+    });
+  };
 
   const handlePurchase = () => {
     if (!orgId) return;
-    createCheckout.mutate({
-      organizationId: orgId,
-      locationId: reqLocationId || undefined,
-      items: [{
+    const items = [
+      {
         name: 'Zura Pay Reader S710',
         amount: readerPrice,
         quantity,
         currency: readerCurrency,
         description: 'Terminal reader with cellular + WiFi connectivity',
         sku_id: skuData?.skus?.[0]?.id || 's710_reader',
-      }],
+      },
+      ...accessories
+        .filter((acc) => selectedAccessories[acc.id])
+        .map((acc) => ({
+          name: acc.product,
+          amount: acc.amount,
+          quantity: selectedAccessories[acc.id],
+          currency: acc.currency || 'usd',
+          description: acc.product,
+          sku_id: acc.id,
+        })),
+    ];
+    createCheckout.mutate({
+      organizationId: orgId,
+      locationId: reqLocationId || undefined,
+      items,
     });
   };
 
@@ -392,9 +425,13 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
         {/* Pricing preview */}
         <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Smartphone className="w-6 h-6 text-primary" />
-            </div>
+            {readerImage ? (
+              <img src={readerImage} alt="S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+            )}
             <div>
               <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
               <p className="text-xs text-muted-foreground">Cellular + WiFi · Store-and-forward · Countertop &amp; handheld</p>
@@ -475,11 +512,20 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            {/* Price display */}
+            {/* Price display with product image */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
-              <div>
-                <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
-                <p className="text-xs text-muted-foreground">Cellular + WiFi connectivity</p>
+              <div className="flex items-center gap-3">
+                {readerImage ? (
+                  <img src={readerImage} alt="S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" />
+                ) : (
+                  <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Smartphone className="w-7 h-7 text-primary" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
+                  <p className="text-xs text-muted-foreground">Cellular + WiFi connectivity</p>
+                </div>
               </div>
               <div className="text-right">
                 {skuLoading ? (
@@ -490,6 +536,44 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
                 <p className="text-xs text-muted-foreground">per unit</p>
               </div>
             </div>
+
+            {/* Accessories */}
+            {accessories.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Accessories (optional)</Label>
+                <div className="grid gap-2">
+                  {accessories.map((acc) => {
+                    const isSelected = !!selectedAccessories[acc.id];
+                    return (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onClick={() => toggleAccessory(acc.id)}
+                        className={cn(
+                          'flex items-center gap-3 p-3 rounded-lg border text-left transition-colors',
+                          isSelected ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 border-border hover:border-primary/20'
+                        )}
+                      >
+                        {acc.image_url ? (
+                          <img src={acc.image_url} alt={acc.product} className="w-10 h-10 rounded object-contain bg-white shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                            <Package className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-sans text-sm font-medium truncate">{acc.product}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-display text-sm tracking-wide">{formatCurrency(acc.amount / 100)}</p>
+                        </div>
+                        <Checkbox checked={isSelected} className="shrink-0 pointer-events-none" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Ship to Location (optional)</Label>
@@ -523,7 +607,17 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
             <div className="border-t pt-3 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground font-sans">S710 × {quantity}</span>
-                <span className="font-sans font-medium">{formatCurrency(totalPrice / 100)}</span>
+                <span className="font-sans font-medium">{formatCurrency((readerPrice * quantity) / 100)}</span>
+              </div>
+              {accessories.filter((acc) => selectedAccessories[acc.id]).map((acc) => (
+                <div key={acc.id} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground font-sans">{acc.product} × {selectedAccessories[acc.id]}</span>
+                  <span className="font-sans font-medium">{formatCurrency((acc.amount * selectedAccessories[acc.id]) / 100)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm font-medium pt-1 border-t">
+                <span className="font-sans">Subtotal</span>
+                <span className="font-display tracking-wide">{formatCurrency(totalPrice / 100)}</span>
               </div>
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Shipping &amp; tax</span>

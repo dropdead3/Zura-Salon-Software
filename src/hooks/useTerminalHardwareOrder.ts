@@ -9,6 +9,7 @@ export interface HardwareSku {
   currency: string;
   status?: string;
   description?: string;
+  image_url?: string;
 }
 
 export interface HardwareAccessory {
@@ -16,6 +17,7 @@ export interface HardwareAccessory {
   product: string;
   amount: number;
   currency: string;
+  image_url?: string;
 }
 
 interface SkuResponse {

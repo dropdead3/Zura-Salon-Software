@@ -24974,8 +24974,11 @@ export type Database = {
       }
       terminal_hardware_requests: {
         Row: {
+          accessories: Json | null
           admin_notes: string | null
           created_at: string
+          device_type: string
+          estimated_total_cents: number | null
           id: string
           location_id: string | null
           notes: string | null
@@ -24988,8 +24991,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accessories?: Json | null
           admin_notes?: string | null
           created_at?: string
+          device_type?: string
+          estimated_total_cents?: number | null
           id?: string
           location_id?: string | null
           notes?: string | null
@@ -25002,8 +25008,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accessories?: Json | null
           admin_notes?: string | null
           created_at?: string
+          device_type?: string
+          estimated_total_cents?: number | null
           id?: string
           location_id?: string | null
           notes?: string | null
