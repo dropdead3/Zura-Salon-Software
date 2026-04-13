@@ -453,6 +453,12 @@ export function TerminalSettingsContent() {
           </TabErrorBoundary>
         </TabsContent>
 
+        <TabsContent value="receipts" className="mt-6">
+          <TabErrorBoundary tabName="Receipts" key={activeTab === 'receipts' ? 'receipts-active' : 'receipts'}>
+            <ZuraPayReceiptsTab />
+          </TabErrorBoundary>
+        </TabsContent>
+
       </Tabs>
 
       {/* Register Reader Wizard — guarded against empty locationId */}
