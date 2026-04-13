@@ -67,6 +67,30 @@ export function useTipDistributions(date: string, locationId?: string | null) {
   });
 }
 
+export function useMyPendingTipTotal() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  return useQuery({
+    queryKey: ['my-pending-tip-total', orgId],
+    queryFn: async (): Promise<number> => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('tip_distributions')
+        .select('total_tips')
+        .eq('organization_id', orgId!)
+        .eq('stylist_user_id', userId)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      return (data || []).reduce((sum, d) => sum + Number(d.total_tips), 0);
+    },
+    enabled: !!orgId,
+  });
+}
+
 export function useMyTipDistributions(dateFrom: string, dateTo: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;

@@ -36,7 +36,7 @@ export default function MyPay() {
 
   // Load tip distribution policy to gate the My Tips tab
   const { data: tipPolicySetting } = useColorBarSetting('tip_distribution_policy');
-  const tipPolicy = tipPolicySetting?.value as TipDistributionPolicy | null;
+  const tipPolicy = tipPolicySetting?.value as unknown as TipDistributionPolicy | null;
   const tipsEnabled = tipPolicy?.enabled === true;
   const showDirectDeposit = tipsEnabled && tipPolicy?.default_method === 'direct_deposit';
 
