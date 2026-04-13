@@ -905,6 +905,13 @@ Deno.serve(async (req) => {
       case "charge.refunded":
         await handleChargeRefunded(supabase, event.data.object);
         break;
+
+      // Auto-insert cards on file when SetupIntent completes
+      case "setup_intent.succeeded":
+        if (isConnectEvent) {
+          await handleSetupIntentSucceeded(supabase, event.data.object, event.account);
+        }
+        break;
         
       default:
         console.log(`Unhandled event type: ${event.type}`);
