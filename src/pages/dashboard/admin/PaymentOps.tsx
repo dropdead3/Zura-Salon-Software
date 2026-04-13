@@ -751,7 +751,7 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {disputes.map((dispute) => (
+              {filteredDisputes.map((dispute) => (
                 <TableRow key={dispute.id}>
                   <TableCell className="font-medium">
                     {dispute.client_name || 'Unknown'}
