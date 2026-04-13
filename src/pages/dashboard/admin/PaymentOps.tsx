@@ -4,7 +4,7 @@ import { format, subDays } from 'date-fns';
 import { useDebounce } from '@/hooks/use-debounce';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsTrigger, TabsContent, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
