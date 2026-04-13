@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -5,7 +6,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TerminalLocation {
@@ -141,6 +152,8 @@ export interface ZuraPayFleetTabProps {
   isVerifying?: boolean;
   onConnectLocation?: (locationId: string) => void;
   isConnectingLocation?: boolean;
+  onResetAccount?: () => void;
+  isResetting?: boolean;
 }
 
 export function ZuraPayFleetTab({
@@ -168,7 +181,11 @@ export function ZuraPayFleetTab({
   isVerifying,
   onConnectLocation,
   isConnectingLocation,
+  onResetAccount,
+  isResetting,
 }: ZuraPayFleetTabProps) {
+  const [showConfirmConnect, setShowConfirmConnect] = useState(false);
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
 
@@ -177,6 +194,52 @@ export function ZuraPayFleetTab({
 
   return (
     <div className="space-y-6">
+      {/* Confirmation Dialog — Start Setup */}
+      <AlertDialog open={showConfirmConnect} onOpenChange={setShowConfirmConnect}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set up Zura Pay</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a payment account for your organization. You'll be redirected to a secure form to complete identity verification. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirmConnect(false);
+                onStartConnect?.();
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation Dialog — Reset Account */}
+      <AlertDialog open={showConfirmReset} onOpenChange={setShowConfirmReset}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Zura Pay account</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the current payment account and allow you to start the setup process over. This can only be done if no payments have been processed. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirmReset(false);
+                onResetAccount?.();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Reset Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Location Picker / Label */}
       {locations.length === 1 ? (
         <div className="flex items-center gap-3">
@@ -301,7 +364,7 @@ export function ZuraPayFleetTab({
                     Set up in-person payment processing for your organization. You'll be guided through a secure verification process to enable payments.
                   </p>
                   <Button
-                    onClick={onStartConnect}
+                    onClick={() => setShowConfirmConnect(true)}
                     disabled={isConnecting}
                     className="mt-2"
                   >
@@ -347,8 +410,24 @@ export function ZuraPayFleetTab({
                       )}
                       Continue Onboarding
                     </Button>
-                  </div>
-                </>
+                   </div>
+                   <div className="mt-3">
+                     <Button
+                       variant="ghost"
+                       size="sm"
+                       onClick={() => setShowConfirmReset(true)}
+                       disabled={isResetting}
+                       className="text-xs text-muted-foreground hover:text-destructive"
+                     >
+                       {isResetting ? (
+                         <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                       ) : (
+                         <RotateCcw className="h-3 w-3 mr-1.5" />
+                       )}
+                       Reset &amp; Start Over
+                     </Button>
+                   </div>
+                 </>
               ) : orgConnectStatus === 'active' ? (
                 /* Org is verified but this specific location isn't connected */
                 <>

@@ -106,6 +106,34 @@ export function useVerifyZuraPayConnection() {
   });
 }
 
+export function useResetZuraPayAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ organizationId }: { organizationId: string }) => {
+      const { data, error } = await supabase.functions.invoke('connect-zura-pay', {
+        body: {
+          action: 'reset_account',
+          organization_id: organizationId,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
+      toast.success('Zura Pay account has been reset. You can start fresh.');
+    },
+    onError: (error) => {
+      toast.error('Failed to reset account', {
+        description: (error as Error).message,
+      });
+    },
+  });
+}
+
 export function useConnectLocation() {
   const queryClient = useQueryClient();
 
