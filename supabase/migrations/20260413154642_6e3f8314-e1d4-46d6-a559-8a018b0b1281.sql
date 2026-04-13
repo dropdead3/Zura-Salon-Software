@@ -1,0 +1,1 @@
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS paid_at timestamptz;
