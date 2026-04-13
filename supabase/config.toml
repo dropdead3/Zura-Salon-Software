@@ -236,3 +236,9 @@ verify_jwt = false
 
 [functions.bulk-catalog-import]
 verify_jwt = false
+
+[functions.connect-zura-pay]
+verify_jwt = false
+
+[functions.verify-zura-pay-connection]
+verify_jwt = false
