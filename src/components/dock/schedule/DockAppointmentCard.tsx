@@ -31,6 +31,7 @@ interface DockAppointmentCardProps {
   accentColor: 'violet' | 'blue' | 'slate' | 'amber' | 'red';
   isChemical?: boolean;
   isRetrying?: boolean;
+  retryDisabled?: boolean;
   onTap?: (appointment: DockAppointment) => void;
   onComplete?: (appointment: DockAppointment) => void;
   onStart?: (appointment: DockAppointment) => void;
@@ -68,7 +69,7 @@ const ACTIVE_OPEN_OFFSET = -160;
 const SCHEDULED_OPEN_OFFSET = -400;
 const SNAP_THRESHOLD = 50;
 
-export function DockAppointmentCard({ appointment, accentColor, isChemical = true, isRetrying = false, onTap, onComplete, onStart, onCancel, onNoShow, onViewClient, onRetryCharge }: DockAppointmentCardProps) {
+export function DockAppointmentCard({ appointment, accentColor, isChemical = true, isRetrying = false, retryDisabled = false, onTap, onComplete, onStart, onCancel, onNoShow, onViewClient, onRetryCharge }: DockAppointmentCardProps) {
   const borderClass = isChemical ? BORDER_COLORS[accentColor] : 'border-l-[hsl(var(--platform-foreground-muted)/0.3)]';
   const isTerminal = TERMINAL_STATUSES.includes(appointment.status || '');
   const isActive = ACTIVE_STATUSES.includes(appointment.status || '');
@@ -155,7 +156,7 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
                 e.stopPropagation();
                 onRetryCharge(appointment);
               }}
-              disabled={isRetrying}
+              disabled={isRetrying || retryDisabled}
               className={cn(DOCK_BADGE.base, DOCK_BADGE.retryAction, 'inline-flex items-center gap-1 pointer-events-auto')}
             >
               {isRetrying ? (
