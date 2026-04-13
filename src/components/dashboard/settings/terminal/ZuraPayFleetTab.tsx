@@ -111,7 +111,6 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: L
 export interface ZuraPayFleetTabProps {
   locations: LocationWithPayment[];
   activeLocationId: string | null;
-  selectedLocationId: string | null;
   showAllLocations: boolean;
   isLocationConnected: boolean;
   setShowAllLocations: (v: boolean) => void;
