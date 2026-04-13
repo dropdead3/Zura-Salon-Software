@@ -28,7 +28,7 @@ import { ZuraPayHardwareTab } from './terminal/ZuraPayHardwareTab';
 import { ZuraPayConnectivityTab } from './terminal/ZuraPayConnectivityTab';
 import { ZuraPayDisplayTab } from './terminal/ZuraPayDisplayTab';
 
-// Fetch org locations that have Zura Pay (stripe_account_id)
+// Fetch ALL org locations — connection status shown inline
 function useZuraPayLocations() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
@@ -38,9 +38,8 @@ function useZuraPayLocations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('id, name, stripe_account_id, address, city, state_province')
-        .eq('organization_id', orgId!)
-        .not('stripe_account_id', 'is', null);
+        .select('id, name, stripe_account_id, stripe_status, stripe_payments_enabled, address, city, state_province')
+        .eq('organization_id', orgId!);
       if (error) throw error;
       return data || [];
     },
@@ -226,16 +225,17 @@ export function TerminalSettingsContent() {
     return (
       <EmptyState
         icon={CreditCard}
-        title="No Zura Pay Locations"
-        description="Terminal management requires at least one location connected to Zura Pay. Connect a location to Zura Pay from Integrations to get started."
+        title="No Locations"
+        description="Create at least one location in Location settings before configuring Zura Pay."
       />
     );
   }
 
   const selectedLocation = locations.find((l) => l.id === activeLocationId);
+  const isLocationConnected = !!selectedLocation?.stripe_account_id;
 
   const handleCreateTerminalLocation = () => {
-    if (!activeLocationId) return;
+    if (!activeLocationId || !isLocationConnected) return;
     createTerminalLocation.mutate({
       locationId: activeLocationId,
       displayName: selectedLocation?.name,
@@ -298,6 +298,7 @@ export function TerminalSettingsContent() {
             activeLocationId={activeLocationId}
             selectedLocationId={selectedLocationId}
             showAllLocations={showAllLocations}
+            isLocationConnected={isLocationConnected}
             setShowAllLocations={setShowAllLocations}
             setSelectedLocationId={setSelectedLocationId}
             terminalLocations={terminalLocations}
