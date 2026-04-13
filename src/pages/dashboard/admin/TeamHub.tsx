@@ -29,7 +29,7 @@ import {
   CreditCard,
   Camera,
   Bell,
-  ChevronRight,
+  
   Video,
   Trophy,
   ArrowLeftRight,
