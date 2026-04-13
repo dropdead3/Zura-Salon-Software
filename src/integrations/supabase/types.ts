@@ -11510,6 +11510,7 @@ export type Database = {
           organization_id: string | null
           phone: string
           phorest_branch_id: string | null
+          postal_code: string | null
           rental_model: string
           show_on_website: boolean
           state_province: string | null
@@ -11549,6 +11550,7 @@ export type Database = {
           organization_id?: string | null
           phone: string
           phorest_branch_id?: string | null
+          postal_code?: string | null
           rental_model?: string
           show_on_website?: boolean
           state_province?: string | null
@@ -11588,6 +11590,7 @@ export type Database = {
           organization_id?: string | null
           phone?: string
           phorest_branch_id?: string | null
+          postal_code?: string | null
           rental_model?: string
           show_on_website?: boolean
           state_province?: string | null
