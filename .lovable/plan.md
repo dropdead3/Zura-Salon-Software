@@ -1,40 +1,68 @@
 
 
-# Zura Pay Ship-Readiness — COMPLETE
+# Receipt Configurator
 
-## Status: Ship Ready ✅
+## Current State
+`ReceiptPrintView.tsx` renders a hardcoded receipt with:
+- Org name as plain text (no logo)
+- Fixed footer: "Thank you for your visit!"
+- No branding, no custom colors, no configurable fields
 
-All 6 critical/moderate issues from the audit have been resolved, plus 4 enhancements implemented.
+No receipt settings exist in `site_settings` or any other table.
 
-### Completed Items
+## Design
 
-| # | Issue | Resolution |
-|---|---|---|
-| 1 | Missing `config.toml` entries | Added 11 function blocks (prior session) |
-| 2 | CORS header gaps | Standardized across all payment functions (prior session) |
-| 3 | `zura-pay-payouts` auth/security | Replaced getClaims → getUser + org membership check (prior session) |
-| 4 | No `account.updated` webhook | ✅ Handler added — syncs `stripe_connect_status` + fires platform alert on degradation |
-| 5 | No dispute handling | ✅ `payment_disputes` table + `charge.dispute.created/closed` webhook handlers + Disputes tab in Payment Ops |
-| 6 | No client receipts | ✅ `receipt_email` passed in `create-terminal-payment-intent` and `charge-card-on-file` |
-| 7 | Brand isolation on Platform Health | ✅ Route renamed `payments-health`, component rebranded to "Zura Pay Health" |
-| 8 | No payout schedule config | ✅ `zura-pay-payouts` now reads and updates payout schedule via Stripe API |
-| 9 | No activation checklist | ✅ `ZuraPayActivationChecklist` added to Configurator with 5-step progress |
-| 10 | Missing pageExplainer key | ✅ Updated from `platform-stripe-health` to `platform-payments-health` |
+### Data Layer
+Store receipt configuration in `site_settings` with `id = 'receipt_config'`, org-scoped. Schema:
 
-### Files Modified
+```text
+{
+  show_logo: boolean           // Show org logo at top
+  logo_position: 'center'|'left'
+  show_address: boolean        // Show salon address
+  show_phone: boolean          // Show salon phone
+  custom_message: string       // "We can't wait to see you again!"
+  show_stylist: boolean        // Show stylist name on receipt
+  show_payment_method: boolean
+  accent_color: string         // Optional brand accent (hex)
+  footer_text: string          // Optional secondary footer line
+}
+```
 
-| File | Change |
+### Hook
+New `useReceiptConfig.ts` — follows existing `useSiteSettings` pattern. Reads/writes `receipt_config` from `site_settings`, org-scoped. Provides defaults so receipts work without configuration.
+
+### Configurator UI
+New tab or card inside the Zura Pay Configurator (`TerminalSettingsContent.tsx`) — a "Receipts" sub-tab alongside Fleet, Hardware, Display, Connectivity. Contains:
+
+- **Logo toggle** + position selector (pulls from `business_settings.logo_dark_url`)
+- **Show address / phone toggles** (pulls from `business_settings`)
+- **Custom message input** (text field, 120 char limit)
+- **Footer text input** (secondary line, e.g. salon slogan)
+- **Show stylist / payment method toggles**
+- **Live preview panel** — renders a mock receipt side-by-side using the current settings, updating in real-time as the operator adjusts toggles
+
+### Receipt Rendering
+Update `ReceiptPrintView.tsx` to accept a `ReceiptConfig` parameter and render accordingly:
+- Logo image at top (from `business_settings.logo_dark_url`)
+- Address block if enabled
+- Custom message replaces hardcoded "Thank you for your visit!"
+- Footer text below
+- Accent color on dividers
+
+The same config will be usable by future email/SMS receipt sending.
+
+### Navigation
+Add "Receipts" as a sub-tab in the Zura Pay Configurator (alongside Fleet, Hardware, Connectivity, Display, Activation Checklist). No new top-level nav entry needed.
+
+## Files
+
+| File | Action |
 |---|---|
-| `supabase/functions/stripe-webhook/index.ts` | +3 handlers: `account.updated`, `charge.dispute.created`, `charge.dispute.closed/funds_withdrawn/funds_reinstated` |
-| `supabase/functions/create-terminal-payment-intent/index.ts` | Added `receipt_email` lookup from appointment |
-| `supabase/functions/charge-card-on-file/index.ts` | Added `receipt_email` lookup from appointment |
-| `supabase/functions/zura-pay-payouts/index.ts` | Added payout schedule read + update action |
-| `src/pages/dashboard/platform/StripeHealth.tsx` | Rebranded to `PaymentsHealthPage`, updated copy |
-| `src/pages/dashboard/admin/PaymentOps.tsx` | Added Disputes tab with `DisputesCard` + `DisputesBadge` |
-| `src/components/dashboard/settings/terminal/ZuraPayActivationChecklist.tsx` | New guided activation component |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Integrated checklist |
-| `src/hooks/useZuraPayPayouts.ts` | Added `PayoutSchedule` type + `payout_schedule` field |
-| `src/App.tsx` | Route `stripe-health` → `payments-health` |
-| `src/config/platformNav.ts` | Nav href updated |
-| `src/config/pageExplainers.ts` | Key updated |
-| New migration | `payment_disputes` table with RLS + realtime |
+| `src/hooks/useReceiptConfig.ts` | **New** — CRUD hook for receipt settings via `site_settings` |
+| `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx` | **New** — Configurator UI with toggles, inputs, and live preview |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | **Modify** — Add "Receipts" sub-tab |
+| `src/components/dashboard/transactions/ReceiptPrintView.tsx` | **Modify** — Accept config, render logo/address/custom message |
+
+No migrations needed — uses existing `site_settings` table. No edge function changes.
+
