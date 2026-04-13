@@ -181,7 +181,11 @@ export function ZuraPayFleetTab({
   isVerifying,
   onConnectLocation,
   isConnectingLocation,
+  onResetAccount,
+  isResetting,
 }: ZuraPayFleetTabProps) {
+  const [showConfirmConnect, setShowConfirmConnect] = useState(false);
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
 
@@ -190,6 +194,52 @@ export function ZuraPayFleetTab({
 
   return (
     <div className="space-y-6">
+      {/* Confirmation Dialog — Start Setup */}
+      <AlertDialog open={showConfirmConnect} onOpenChange={setShowConfirmConnect}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set up Zura Pay</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a payment account for your organization. You'll be redirected to a secure form to complete identity verification. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirmConnect(false);
+                onStartConnect?.();
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation Dialog — Reset Account */}
+      <AlertDialog open={showConfirmReset} onOpenChange={setShowConfirmReset}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Zura Pay account</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the current payment account and allow you to start the setup process over. This can only be done if no payments have been processed. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirmReset(false);
+                onResetAccount?.();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Reset Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Location Picker / Label */}
       {locations.length === 1 ? (
         <div className="flex items-center gap-3">
