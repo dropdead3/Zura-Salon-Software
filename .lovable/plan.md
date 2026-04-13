@@ -1,39 +1,19 @@
 
 
-# Clean Up Operations Hub Cards: Equal Size + Center-Center Layout
+# Equalize All Operations Hub Cards
 
 ## Problem
-The current `ManagementCard` layout uses a left-aligned horizontal flex (icon left, text right, chevron far right). Cards vary in height based on content length, and the layout feels inconsistent — especially when sections have 1-2 cards that stretch unevenly across the grid.
+Cards vary in height because some have stat badges and others don't. The `min-h-[140px]` helps but doesn't fully equalize when badges add extra content. Additionally, favorite cards lack the description line, making them shorter.
 
-## Design Change
-Convert all Operations Hub cards to a **center-center stacked layout**: icon centered on top, title centered below, description centered beneath that. Remove the inline chevron (it adds visual noise and breaks centering). Enforce a fixed minimum height so all cards in a row are equal.
-
-## File Changes
+## Changes
 
 | # | File | Change |
 |---|---|---|
-| 1 | `src/pages/dashboard/admin/TeamHub.tsx` — `ManagementCard` (lines 86-128) | Restructure card content from horizontal flex to vertical centered stack: icon box centered → title centered → description centered. Remove `ChevronRight`. Remove `items-center justify-between` flex row. Add uniform `min-h-[140px]` and `flex flex-col items-center justify-center text-center`. Move the stat badge below description. Keep the star/favorite button absolutely positioned top-right. |
-| 2 | `src/pages/dashboard/admin/TeamHub.tsx` — `HubGatewayCard` (lines 140-174) | Apply the same center-center stacked layout for consistency. Remove `ChevronRight`. |
-| 3 | `src/pages/dashboard/admin/TeamHub.tsx` — `renderFavoriteCard` (lines 301-323) | Apply the same center-center layout to favorite cards. Keep the amber styling. |
-
-## Card Structure (After)
-
-```text
-┌──────────────────────────┐
-│                    ★     │  ← star top-right (abs positioned)
-│                          │
-│       ┌──────────┐       │
-│       │   Icon   │       │  ← icon box centered
-│       └──────────┘       │
-│     CARD TITLE HERE      │  ← font-display, centered
-│  Description text here   │  ← text-xs muted, centered
-│       [2 pending]        │  ← badge if present
-│                          │
-└──────────────────────────┘
-```
+| 1 | `src/pages/dashboard/admin/TeamHub.tsx` — `ManagementCard` | Change `min-h-[140px]` to a fixed `h-[160px]` so all cards are identical height regardless of badge presence. Ensure the content uses `justify-center` with a fixed structure (icon → title → description always rendered, badge overlaid or placed in reserved space). |
+| 2 | `src/pages/dashboard/admin/TeamHub.tsx` — `HubGatewayCard` | Apply same fixed `h-[160px]` for parity with ManagementCard. |
+| 3 | `src/pages/dashboard/admin/TeamHub.tsx` — `renderFavoriteCard` | Apply same fixed `h-[160px]`. Add an empty description placeholder so the visual weight matches other cards. |
+| 4 | `src/pages/dashboard/admin/TeamHub.tsx` — `CategorySection` | Standardize all sections to `lg:grid-cols-3` (remove the `columns` prop variation) so every row has the same column width. Keep `items-stretch` on the grid. |
 
 ## Result
-- All cards render at equal height within each row via `min-h-[140px]` + grid `items-stretch`
-- Content is vertically and horizontally centered — clean, cohesive, scannable
-- Consistent across regular cards, hub gateway cards, and favorited cards
+Every card across every section — management, hub gateway, and favorites — renders at exactly the same width (1/3 of grid) and height (160px), creating a clean, uniform, scannable grid.
 
