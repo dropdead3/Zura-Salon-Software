@@ -1,88 +1,57 @@
 
 
-# Zura Pay Organization Isolation Audit
+# Payment Operations — Location, Date Range & Status Filtering
 
-## Verdict: Mostly Solid — 2 Cross-Contamination Risks Found
+## Current State
+The Payment Ops page has 6 tabs (Payouts, Reconciliation, Deposit Holds, Refunds, Fee Charges, Disputes). None of the tabs support location filtering or date range filtering (except Reconciliation which has a single-date picker). Refunds show only `status = 'pending'`, Disputes show all with no status toggle, and Deposit Holds show only `deposit_status = 'held'`.
 
-The vast majority of Zura Pay is correctly org-scoped. Every financial edge function authenticates the caller, most verify org membership, and all Stripe API calls route through the org's own Connected Account ID (`stripeAccount: org.stripe_connect_account_id`). Webhook handlers resolve org via `stripe_connect_account_id` lookups, preventing cross-org writes.
+## Design
 
-However, two edge functions have membership check gaps that could allow an authenticated user from Org A to trigger actions on Org B.
+### Shared Filter Bar
+Add a persistent filter bar below the page header (above the tabs) containing:
+- **LocationMultiSelect** — uses the existing `LocationMultiSelect` component, filters all tabs by `location_id`
+- **Date Range** — two date inputs (From / To), defaults to last 30 days; applies to Holds (by `appointment_date`), Refunds (by `created_at`), Fee Charges (by `created_at`), Disputes (by `created_at`)
+- Reconciliation keeps its own single-date picker (unchanged)
+- Payouts tab is Stripe-sourced (no location/date filter applies) — filters are visually hidden when Payouts is active
 
----
+### Per-Tab Status Filters
+- **Refunds**: Add status toggle pills (Pending / Processed / All) — currently hardcoded to `pending`
+- **Disputes**: Add status toggle pills (Active / Resolved / All) — currently shows all with no filter
+- **Deposit Holds**: Add status toggle (Held / Captured / Released / All) — currently hardcoded to `held`
+- **Fee Charges**: Already has status toggle — no change needed
 
-## Issue 1: `create-terminal-payment-intent` — No Org Membership Verification (Critical)
+### Client Search
+Add a search input in the filter bar that filters by client name across the active tab's data (client-side `.filter()` on the already-fetched rows).
 
-**Lines 89-108** check `organization_admins` and then fall back to `user_roles`, but the `user_roles` query **does not filter by `organization_id`**. A stylist in Org A who passes `organization_id: <Org B's ID>` would pass the role check because their role exists globally, not scoped to Org B.
+## Implementation
 
-```typescript
-// CURRENT (lines 97-107) — BROKEN
-const { data: roles } = await supabase
-  .from("user_roles")
-  .select("role")
-  .eq("user_id", user.id);  // ← No org filter!
-const hasRole = roles?.some(r => ["admin","manager","super_admin","stylist"].includes(r.role));
+### Filter State (in `PaymentOps` component)
+```text
+locationIds: string[]        // from LocationMultiSelect
+dateFrom: string             // yyyy-MM-dd, default 30 days ago
+dateTo: string               // yyyy-MM-dd, default today
+clientSearch: string          // debounced, client-side filter
+holdStatus: 'held' | 'captured' | 'released' | 'all'
+refundStatus: 'pending' | 'processed' | 'all'
+disputeStatus: 'active' | 'resolved' | 'all'
 ```
 
-**Fix**: Replace with `employee_profiles` membership check (same pattern used in `charge-card-on-file`, `collect-booking-deposit`, `zura-pay-payouts`):
-```typescript
-const { data: membership } = await supabase
-  .from("employee_profiles")
-  .select("user_id")
-  .eq("user_id", user.id)
-  .eq("organization_id", organization_id)
-  .eq("is_active", true)
-  .maybeSingle();
-if (!membership) return jsonResponse({ error: "Forbidden" }, 403);
-```
+### Query Changes
+Each tab's `useQuery` call gets updated to accept location + date range filters:
 
----
+- **Deposit Holds**: Add `.in('location_id', ids)` (if not all), `.gte/.lte('appointment_date', ...)`, change `.eq('deposit_status', ...)` to use `holdStatus`
+- **Refunds**: Add date range on `created_at`, change status filter to use `refundStatus` (or remove for 'all')
+- **Fee Charges**: Add `.in('location_id', ids)` via a join on `appointment_id → appointments.location_id`, add date range on `created_at`
+- **Disputes**: Add date range on `created_at`, add status grouping (`active` = `needs_response`/`under_review`/`warning_needs_response`, `resolved` = `won`/`lost`/`charge_refunded`)
 
-## Issue 2: `terminal-reader-display` — Same Broken Pattern (Critical)
+### Client Search
+Applied client-side via `useMemo` filtering on the rendered list for each tab (`client_name.toLowerCase().includes(search)`).
 
-**Lines 64-82** use the identical `organization_admins` → global `user_roles` fallback. Same vulnerability — any authenticated user with a stylist role in *any* org could push display content or initiate payment collection on *another org's* reader.
+## Files
 
-**Fix**: Same `employee_profiles` membership check as above.
-
----
-
-## What's Already Correct
-
-| Function | Auth | Membership Check | Org-Scoped Stripe Calls |
-|---|---|---|---|
-| `charge-card-on-file` | JWT + getUser | `employee_profiles` ✅ | `stripeAccount` ✅ |
-| `collect-booking-deposit` | JWT + getUser | `employee_profiles` ✅ | `stripeAccount` ✅ |
-| `zura-pay-payouts` | JWT + getUser | `employee_profiles` ✅ | `stripeAccount` ✅ |
-| `connect-zura-pay` | JWT + getUser | `is_org_admin` RPC ✅ | `stripeAccount` ✅ |
-| `verify-zura-pay-connection` | JWT + getUser | `is_org_member` RPC ✅ | `stripeAccount` ✅ |
-| `manage-stripe-terminals` | JWT + getUser | `organization_members` ✅ | `stripeAccount` via location ✅ |
-| `create-terminal-payment-intent` | JWT + getUser | ❌ Global role check | `stripeAccount` ✅ |
-| `terminal-reader-display` | JWT + getUser | ❌ Global role check | `stripeAccount` ✅ |
-| `stripe-webhook` | Signature verification | N/A (server-to-server) | Resolves org from `stripe_connect_account_id` ✅ |
-
-### Webhook Isolation
-- Platform events (invoice, subscription) resolve org via `stripe_customer_id` — no cross-contamination possible
-- Connect events (card sync, disputes, refunds) resolve org via `stripe_connect_account_id` — isolated by design
-- Card operations (`setup_intent.succeeded`, `payment_method.detached/updated`, `customer.deleted`) all double-filter on both `stripe_payment_method_id` AND `organization_id`
-
-### Frontend Isolation
-- `useOrgConnectStatus` — filters by `orgId` ✅
-- `useZuraPayPayouts` — passes `orgId` to edge function ✅
-- `PaymentOps.tsx` — all queries filter by `orgId!` ✅
-- `useConnectZuraPay`, `useVerifyZuraPayConnection`, `useConnectLocation` — all pass `organizationId` ✅
-
-### Database Isolation
-- `payment_disputes` table has `organization_id` + RLS ✅
-- `client_cards_on_file` queries always include `.eq("organization_id", ...)` ✅
-- `appointment_fee_charges` inserts always include `organization_id` ✅
-
----
-
-## Implementation Plan
-
-| File | Change |
+| File | Action |
 |---|---|
-| `supabase/functions/create-terminal-payment-intent/index.ts` | Replace `organization_admins` + global `user_roles` check with `employee_profiles` membership check |
-| `supabase/functions/terminal-reader-display/index.ts` | Replace `organization_admins` + global `user_roles` check with `employee_profiles` membership check |
+| `src/pages/dashboard/admin/PaymentOps.tsx` | Add filter bar with LocationMultiSelect, date range, search input. Add status toggles to Refunds/Disputes/Holds tabs. Pass filters into all queries. |
 
-Two files, ~15 lines each. No migrations. No UI changes.
+Single file change. No migrations. No edge function changes. No new dependencies — uses existing `LocationMultiSelect`, `useLocations`, `useDebounce`, and `date-fns`.
 
