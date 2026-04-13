@@ -348,6 +348,12 @@ export function HostedBookingPage() {
             requiresCardOnFile={requiresCardOnFile}
             depositPolicyText={(hosted as any).depositPolicyText || hosted.policyText || undefined}
             cancellationPolicyText={(hosted as any).cancellationPolicyText || hosted.policyText || undefined}
+            paymentClientSecret={paymentClientSecret}
+            paymentIntentType={paymentIntentType}
+            stripePublishableKey={stripeConfig?.publishableKey}
+            stripeConnectedAccountId={stripeConfig?.connectedAccountId}
+            onPaymentComplete={handlePaymentComplete}
+            showPaymentForm={showPaymentForm}
           />
         ) : null;
       default:

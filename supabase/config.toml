@@ -251,3 +251,9 @@ verify_jwt = false
 
 [functions.detach-card-on-file]
 verify_jwt = false
+
+[functions.create-booking-payment-intent]
+verify_jwt = false
+
+[functions.get-booking-stripe-config]
+verify_jwt = false
