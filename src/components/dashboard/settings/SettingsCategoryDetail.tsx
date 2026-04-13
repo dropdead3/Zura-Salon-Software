@@ -7,6 +7,9 @@ import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Switch } from '@/components/ui/switch';
@@ -392,6 +395,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
   const [isAddUserSeatsOpen, setIsAddUserSeatsOpen] = useState(false);
   const [categoryActions, setCategoryActions] = useState<React.ReactNode>(null);
   const [mounted, setMounted] = useState(false);
+  const [deactivateUserId, setDeactivateUserId] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -434,7 +438,13 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
 
   const removeUser = async (userId: string) => {
     if (userId === user?.id) { toast({ variant: 'destructive', title: 'Error', description: "You can't remove yourself." }); return; }
-    if (!confirm('Are you sure you want to deactivate this user?')) return;
+    setDeactivateUserId(userId);
+  };
+
+  const confirmDeactivateUser = async () => {
+    const userId = deactivateUserId;
+    if (!userId) return;
+    setDeactivateUserId(null);
     const { error } = await supabase.from('employee_profiles').update({ is_active: false }).eq('user_id', userId);
     if (!error) {
       setUsers(prev => prev.filter(u => u.user_id !== userId));
@@ -683,6 +693,21 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
         </Suspense>
 
         <AddUserSeatsDialog open={isAddUserSeatsOpen} onOpenChange={setIsAddUserSeatsOpen} capacity={capacity} />
+
+        <AlertDialog open={!!deactivateUserId} onOpenChange={(open) => !open && setDeactivateUserId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deactivate User?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This user will be removed from active staff. They will no longer appear in schedules, assignments, or team views. This action can be reversed by reactivating them later.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeactivateUser}>Deactivate</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

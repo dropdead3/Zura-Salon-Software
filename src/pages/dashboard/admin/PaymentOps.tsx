@@ -814,7 +814,7 @@ export default function PaymentOps() {
   const [disputeStatus, setDisputeStatus] = useState<'active' | 'resolved' | 'all'>('active');
 
   const activeTab = searchParams.get('section') || 'payouts';
-  const showFilters = !['payouts', 'reconciliation'].includes(activeTab);
+  const showFilters = !['payouts', 'reconciliation', 'tips'].includes(activeTab);
 
   // Confirmation dialog state
   const [confirmAction, setConfirmAction] = useState<{
@@ -938,7 +938,7 @@ export default function PaymentOps() {
       <div className={cn(tokens.layout.pageContainer, 'max-w-[1600px] mx-auto')}>
         <DashboardPageHeader
           title="Payment Operations"
-          description="Till reconciliation, deposit holds, and refund processing"
+          description="Payouts, reconciliation, deposits, refunds, disputes, and tip distributions"
           backTo={dashPath('/admin/team-hub')}
           backLabel="Operations Hub"
         />
@@ -1076,7 +1076,7 @@ export default function PaymentOps() {
                     action={
                       <Button
                         variant="outline"
-                        onClick={() => window.location.href = `${dashPath}/admin/settings?tab=terminals`}
+                        onClick={() => navigate(dashPath('/admin/settings?category=terminals'))}
                       >
                         Activate Zura Pay
                       </Button>

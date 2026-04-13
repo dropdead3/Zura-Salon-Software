@@ -159,7 +159,12 @@ export default function Settings() {
           activeCategory={activeCategory}
           categoryLabel={categoriesMap[activeCategory]?.label ?? ''}
           categoryDescription={categoriesMap[activeCategory]?.description ?? ''}
-          onBack={() => setActiveCategory(null)}
+          onBack={() => {
+            setActiveCategory(null);
+            const url = new URL(window.location.href);
+            url.searchParams.delete('category');
+            window.history.replaceState({}, '', url.pathname + url.search);
+          }}
         />
       </Suspense>
     );
