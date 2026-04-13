@@ -193,6 +193,7 @@ Deno.serve(async (req) => {
         deposit_required: requiresDeposit,
         deposit_amount: requiresDeposit ? service.deposit_amount : null,
         deposit_status: requiresDeposit ? "pending" : null,
+        card_on_file_id: null,
       })
       .select("id")
       .single();

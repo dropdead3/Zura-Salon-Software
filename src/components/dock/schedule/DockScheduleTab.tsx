@@ -14,6 +14,7 @@ import { DockAppointmentCard } from './DockAppointmentCard';
 import { useDockTrackedServices } from '@/hooks/dock/useDockTrackedServices';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { cn } from '@/lib/utils';
+import { isCardExpired } from '@/lib/card-utils';
 import { DOCK_DIALOG, DOCK_SHEET } from '@/components/dock/dock-ui-tokens';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
@@ -172,6 +173,16 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
         const clientId = appointment.phorest_client_id || appointment.client_id;
         const amount = appointment.total_price;
         if (!clientId || !amount) throw new Error('Missing client or amount');
+
+        // Pre-flight expired card check
+        if (isCardExpired(appointment.card_exp_month, appointment.card_exp_year)) {
+          toast.error('Card expired', {
+            description: `The ${appointment.card_brand || 'card'} ending in ${appointment.card_last4} has expired. Please update the card on file before retrying.`,
+          });
+          setIsSubmitting(false);
+          setConfirmAction(null);
+          return;
+        }
 
         const { error } = await supabase.functions.invoke('charge-card-on-file', {
           body: {

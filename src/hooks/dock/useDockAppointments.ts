@@ -33,6 +33,8 @@ export interface DockAppointment {
   has_card_on_file?: boolean;
   card_last4?: string | null;
   card_brand?: string | null;
+  card_exp_month?: number | null;
+  card_exp_year?: number | null;
 }
 
 export function useDockAppointments(staffUserId: string | null, locationId?: string, staffFilter?: string) {
@@ -232,16 +234,18 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           const clientIds = [...new Set(failedAppts.map(a => a.phorest_client_id!))];
           const { data: cards } = await supabase
             .from('client_cards_on_file')
-            .select('client_id, card_last4, card_brand')
+            .select('client_id, card_last4, card_brand, card_exp_month, card_exp_year')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand }]));
+          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand, exp_month: c.card_exp_month, exp_year: c.card_exp_year }]));
           for (const a of appointments) {
             if (a.payment_status === 'failed' && a.phorest_client_id) {
               const card = cardMap.get(a.phorest_client_id);
               a.has_card_on_file = !!card;
               a.card_last4 = card?.last4 || null;
               a.card_brand = card?.brand || null;
+              a.card_exp_month = card?.exp_month ?? null;
+              a.card_exp_year = card?.exp_year ?? null;
             }
           }
         }
@@ -343,10 +347,10 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         if (clientIds.length > 0) {
           const { data: cards } = await supabase
             .from('client_cards_on_file')
-            .select('client_id, card_last4, card_brand')
+            .select('client_id, card_last4, card_brand, card_exp_month, card_exp_year')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand }]));
+          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand, exp_month: c.card_exp_month, exp_year: c.card_exp_year }]));
           for (const a of all) {
             if (a.payment_status === 'failed') {
               const cid = a.phorest_client_id || a.client_id;
@@ -354,6 +358,8 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
               a.has_card_on_file = !!card;
               a.card_last4 = card?.last4 || null;
               a.card_brand = card?.brand || null;
+              a.card_exp_month = card?.exp_month ?? null;
+              a.card_exp_year = card?.exp_year ?? null;
             }
           }
         }

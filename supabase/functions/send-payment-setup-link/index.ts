@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
 import { sendEmail } from "../_shared/email-sender.ts";
 import { PLATFORM_NAME } from "../_shared/brand.ts";
 
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     const ownerEmail = ownerAuth.user.email;
 
     // Initialize Stripe
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Get or create Stripe customer
     let customerId = org.stripe_customer_id;
