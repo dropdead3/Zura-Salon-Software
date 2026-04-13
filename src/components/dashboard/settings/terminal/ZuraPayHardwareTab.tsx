@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Plus, CreditCard, Smartphone, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
-import { useTerminalHardwareSkus, useCreateTerminalCheckout, useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
+import { useTerminalHardwareSkus, useCreateTerminalCheckout } from '@/hooks/useTerminalHardwareOrder';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -40,35 +40,13 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus('US', isOrgConnected);
   const createCheckout = useCreateTerminalCheckout();
   const createRequest = useCreateTerminalRequest();
-  const verifyPayment = useVerifyTerminalPayment();
   const { formatCurrency } = useFormatCurrency();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reqLocationId, setReqLocationId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [selectedAccessories, setSelectedAccessories] = useState<Record<string, number>>({});
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-
-  const verifyRef = useRef(verifyPayment.mutate);
-  verifyRef.current = verifyPayment.mutate;
-  const setSearchParamsRef = useRef(setSearchParams);
-  setSearchParamsRef.current = setSearchParams;
-
-  const hasVerifiedCheckout = useRef(false);
-
-  useEffect(() => {
-    const checkoutStatus = searchParams.get('checkout');
-    const sessionId = searchParams.get('session_id');
-    if (checkoutStatus === 'success' && sessionId && orgId && !hasVerifiedCheckout.current) {
-      hasVerifiedCheckout.current = true;
-      verifyRef.current({ sessionId, organizationId: orgId });
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('checkout');
-      newParams.delete('session_id');
-      setSearchParamsRef.current(newParams, { replace: true });
-    }
-  }, [searchParams, orgId]);
 
   const handleImageError = useCallback((url: string) => {
     setFailedImages((prev) => {
