@@ -23,7 +23,8 @@ export type SegmentKey =
   | 'win-back' 
   | 'new-no-return' 
   | 'birthday' 
-  | 'high-value-quiet';
+  | 'high-value-quiet'
+  | 'dispute-risk';
 
 export interface SegmentConfig {
   key: SegmentKey;
@@ -39,6 +40,7 @@ export const SEGMENTS: SegmentConfig[] = [
   { key: 'new-no-return', label: 'New Clients (No Return)', description: 'First-time visitors who never rebooked', icon: 'UserPlus' },
   { key: 'birthday', label: 'Birthday Outreach', description: 'Upcoming birthdays in next 30 days', icon: 'Cake' },
   { key: 'high-value-quiet', label: 'High-Value Quiet', description: 'Top spenders who have gone quiet', icon: 'TrendingDown' },
+  { key: 'dispute-risk', label: 'Dispute Risk', description: 'Clients with open or multiple payment disputes', icon: 'AlertTriangle' },
 ];
 
 export function useClientHealthSegments() {
