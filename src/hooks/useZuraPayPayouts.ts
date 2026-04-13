@@ -19,12 +19,20 @@ interface PayoutItem {
   description: string | null;
 }
 
+export interface PayoutSchedule {
+  interval: 'daily' | 'weekly' | 'monthly' | 'manual';
+  weekly_anchor?: string;
+  monthly_anchor?: number;
+  delay_days?: number;
+}
+
 export interface ZuraPayPayoutsData {
   balance: {
     available: BalanceAmount[];
     pending: BalanceAmount[];
   };
   payouts: PayoutItem[];
+  payout_schedule: PayoutSchedule | null;
 }
 
 export function useZuraPayPayouts(orgId: string | undefined) {

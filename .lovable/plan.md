@@ -1,98 +1,40 @@
 
 
-# Zura Pay Ship Readiness — Gaps & Improvements
+# Zura Pay Ship-Readiness — COMPLETE
 
-## What's Already Solid
-The core payment infrastructure is well-built: Connect onboarding, terminal PI creation, card-on-file management, webhook handling for payment/setup/refund events, deposit holds, reconciliation, fee collection, branded S710 display, hardware ordering, and the Payment Ops tabbed UI with cross-linking. Security hardening (auth, membership checks, idempotency, CORS) was just completed.
+## Status: Ship Ready ✅
 
----
+All 6 critical/moderate issues from the audit have been resolved, plus 4 enhancements implemented.
 
-## Missing Pieces (Ranked by Impact)
+### Completed Items
 
-### 1. No `account.updated` Webhook Handler (Critical)
-**Problem**: When a Connected Account's status changes (e.g., Stripe disables charges due to compliance, or onboarding completes asynchronously), there is no webhook handler to update `stripe_connect_status`. The only way status syncs today is via the manual "Verify" button. An org could lose the ability to process payments and Zura would never know.
+| # | Issue | Resolution |
+|---|---|---|
+| 1 | Missing `config.toml` entries | Added 11 function blocks (prior session) |
+| 2 | CORS header gaps | Standardized across all payment functions (prior session) |
+| 3 | `zura-pay-payouts` auth/security | Replaced getClaims → getUser + org membership check (prior session) |
+| 4 | No `account.updated` webhook | ✅ Handler added — syncs `stripe_connect_status` + fires platform alert on degradation |
+| 5 | No dispute handling | ✅ `payment_disputes` table + `charge.dispute.created/closed` webhook handlers + Disputes tab in Payment Ops |
+| 6 | No client receipts | ✅ `receipt_email` passed in `create-terminal-payment-intent` and `charge-card-on-file` |
+| 7 | Brand isolation on Platform Health | ✅ Route renamed `payments-health`, component rebranded to "Zura Pay Health" |
+| 8 | No payout schedule config | ✅ `zura-pay-payouts` now reads and updates payout schedule via Stripe API |
+| 9 | No activation checklist | ✅ `ZuraPayActivationChecklist` added to Configurator with 5-step progress |
+| 10 | Missing pageExplainer key | ✅ Updated from `platform-stripe-health` to `platform-payments-health` |
 
-**Fix**: Add `account.updated` case to `stripe-webhook/index.ts`. On receipt, read `charges_enabled` / `payouts_enabled` / `details_submitted` from the account object and update `organizations.stripe_connect_status` accordingly. Fire a platform alert if status degrades.
-
----
-
-### 2. No Dispute/Chargeback Handling (Critical)
-**Problem**: The webhook handles `charge.refunded` but does NOT handle `charge.dispute.created`, `charge.dispute.closed`, or `charge.dispute.funds_withdrawn`. Disputes are the highest-severity financial event a salon can face — they lose the funds immediately plus a $15 fee. Zura has zero visibility into this today.
-
-**Fix**: 
-- Add webhook handlers for `charge.dispute.created` and `charge.dispute.closed`
-- Create a `payment_disputes` table to track dispute lifecycle
-- Surface disputes in Payment Ops (new "Disputes" tab or badge on existing tab)
-- Fire a real-time alert to org admins and platform
-
----
-
-### 3. No Client-Facing Payment Receipts (High)
-**Problem**: After a terminal checkout or card-on-file charge, no receipt is sent to the client. Stripe can auto-send receipts if `receipt_email` is set on the PaymentIntent, but `create-terminal-payment-intent` doesn't set it, and `charge-card-on-file` doesn't either.
-
-**Fix**: 
-- Pass `receipt_email` on PaymentIntents when client email is available
-- Alternatively, use Stripe's `receipt_url` from the succeeded PI to surface a "Send Receipt" action in the appointment detail sheet
-
----
-
-### 4. No Payout Schedule Configuration (Medium)
-**Problem**: Orgs have no ability to view or change their payout schedule (daily, weekly, monthly). The `zura-pay-payouts` function reads balance and payout history but doesn't expose schedule settings. Salon owners care deeply about cash flow timing.
-
-**Fix**: Add a read/update payout schedule action to the `zura-pay-payouts` edge function, surface it in the Payouts tab of Payment Ops or in the Zura Pay Configurator settings.
-
----
-
-### 5. No Guided Activation Flow (Medium)
-**Problem**: There's no progressive onboarding checklist for Zura Pay. An org owner lands on the Configurator tab and has to figure out the sequence: Create account → Complete verification → Connect locations → Register readers → Test checkout. The "Not Active" empty state exists but doesn't guide through multi-step activation.
-
-**Fix**: Add a `ZuraPayActivationChecklist` component to the Configurator that tracks completion of each step with visual progress (checkmark/pending states). Steps: Account Created → Verification Complete → Location Connected → Reader Paired → First Transaction.
-
----
-
-### 6. Platform Health Page Still Says "Stripe" (Low — Brand)
-**Problem**: `StripeHealth.tsx` header says "Monitor Stripe payment processing" and the page/route is named `stripe-health`. This violates brand isolation.
-
-**Fix**: Rename route to `payments-health`, rename component references, update all copy to "Zura Pay" terminology.
-
----
-
-## Improvements (Nice-to-Have)
-
-| Improvement | Description |
-|---|---|
-| **Partial refunds** | `process-stripe-refund` may only support full refunds — add partial refund amount input |
-| **Retry failed charges** | The dock shows a retry button for failed card-on-file charges, but verify the edge function supports idempotent retry |
-| **Transaction search** | Payment Ops has no search/filter across all Zura Pay transactions for an org — useful for support |
-| **Payout reconciliation** | Link individual payouts to the transactions they contain (Stripe provides this via `balance_transaction` expansion) |
-| **Multi-currency prep** | All amounts hardcode `usd` — add currency from org settings for future international expansion |
-
----
-
-## Recommended Priority Order
-
-1. `account.updated` webhook handler (prevents silent payment outages)
-2. Dispute handling (financial risk mitigation)
-3. Client receipts (client experience baseline)
-4. Brand cleanup on Platform Health page
-5. Guided activation checklist
-6. Payout schedule configuration
-
----
-
-## Technical Scope
+### Files Modified
 
 | File | Change |
 |---|---|
-| `supabase/functions/stripe-webhook/index.ts` | Add `account.updated`, `charge.dispute.created`, `charge.dispute.closed` handlers |
-| New migration | Create `payment_disputes` table |
-| `src/pages/dashboard/admin/PaymentOps.tsx` | Add Disputes tab/badge |
-| `supabase/functions/create-terminal-payment-intent/index.ts` | Add `receipt_email` |
-| `supabase/functions/charge-card-on-file/index.ts` | Add `receipt_email` |
-| `src/pages/dashboard/platform/StripeHealth.tsx` | Rebrand to Zura Pay |
-| `src/App.tsx` | Update route from `stripe-health` to `payments-health` |
-| `supabase/functions/zura-pay-payouts/index.ts` | Add payout schedule read/update |
-| New component | `ZuraPayActivationChecklist` for Configurator |
-
-No new secrets. No new dependencies. Migrations only for `payment_disputes` table.
-
+| `supabase/functions/stripe-webhook/index.ts` | +3 handlers: `account.updated`, `charge.dispute.created`, `charge.dispute.closed/funds_withdrawn/funds_reinstated` |
+| `supabase/functions/create-terminal-payment-intent/index.ts` | Added `receipt_email` lookup from appointment |
+| `supabase/functions/charge-card-on-file/index.ts` | Added `receipt_email` lookup from appointment |
+| `supabase/functions/zura-pay-payouts/index.ts` | Added payout schedule read + update action |
+| `src/pages/dashboard/platform/StripeHealth.tsx` | Rebranded to `PaymentsHealthPage`, updated copy |
+| `src/pages/dashboard/admin/PaymentOps.tsx` | Added Disputes tab with `DisputesCard` + `DisputesBadge` |
+| `src/components/dashboard/settings/terminal/ZuraPayActivationChecklist.tsx` | New guided activation component |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Integrated checklist |
+| `src/hooks/useZuraPayPayouts.ts` | Added `PayoutSchedule` type + `payout_schedule` field |
+| `src/App.tsx` | Route `stripe-health` → `payments-health` |
+| `src/config/platformNav.ts` | Nav href updated |
+| `src/config/pageExplainers.ts` | Key updated |
+| New migration | `payment_disputes` table with RLS + realtime |

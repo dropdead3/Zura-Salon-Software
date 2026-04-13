@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id } = await req.json();
+    const { organization_id, action, schedule } = await req.json();
     if (!organization_id) {
       return new Response(JSON.stringify({ error: "organization_id is required" }), {
         status: 400,
@@ -90,11 +90,31 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const connectAccountId = org.stripe_connect_account_id;
 
-    // Fetch balance and payouts in parallel
-    const [balance, payouts] = await Promise.all([
+    // Handle payout schedule update
+    if (action === 'update_schedule' && schedule) {
+      const updateParams: Record<string, unknown> = {};
+      if (schedule.interval) updateParams.interval = schedule.interval;
+      if (schedule.weekly_anchor) updateParams.weekly_anchor = schedule.weekly_anchor;
+      if (schedule.monthly_anchor) updateParams.monthly_anchor = schedule.monthly_anchor;
+
+      await stripe.accounts.update(connectAccountId, {
+        settings: { payouts: { schedule: updateParams as any } },
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Payout schedule updated" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fetch balance, payouts, and account settings in parallel
+    const [balance, payouts, account] = await Promise.all([
       stripe.balance.retrieve({}, { stripeAccount: connectAccountId }),
       stripe.payouts.list({ limit: 25 }, { stripeAccount: connectAccountId }),
+      stripe.accounts.retrieve(connectAccountId),
     ]);
+
+    const payoutSchedule = (account.settings as any)?.payouts?.schedule || null;
 
     return new Response(
       JSON.stringify({
@@ -113,6 +133,7 @@ Deno.serve(async (req) => {
           type: p.type,
           description: p.description,
         })),
+        payout_schedule: payoutSchedule,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

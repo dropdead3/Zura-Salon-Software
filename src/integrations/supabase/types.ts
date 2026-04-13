@@ -14145,6 +14145,81 @@ export type Database = {
           },
         ]
       }
+      payment_disputes: {
+        Row: {
+          amount: number
+          appointment_id: string | null
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          currency: string
+          evidence_due_by: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          reason: string | null
+          resolved_at: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_dispute_id: string
+          stripe_payment_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          appointment_id?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          currency?: string
+          evidence_due_by?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          reason?: string | null
+          resolved_at?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_dispute_id: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          currency?: string
+          evidence_due_by?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          reason?: string | null
+          resolved_at?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_dispute_id?: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_disputes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_disputes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_analytics_snapshots: {
         Row: {
           created_at: string | null

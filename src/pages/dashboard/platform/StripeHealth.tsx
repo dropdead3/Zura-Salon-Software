@@ -11,7 +11,7 @@ import { useStripePaymentsHealth } from '@/hooks/useStripePaymentsHealth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-export default function StripeHealthPage() {
+export default function PaymentsHealthPage() {
   const { data, isLoading, isFetching, refetch } = useStripePaymentsHealth();
 
   const handleRefresh = async () => {
@@ -30,8 +30,8 @@ export default function StripeHealthPage() {
   return (
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
-        title="Payments Health"
-        description="Monitor Stripe payment processing across all organizations"
+        title="Zura Pay Health"
+        description="Monitor payment processing across all organizations"
         actions={
           <div className="flex items-center gap-3">
             {/* Real-time indicator */}

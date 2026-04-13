@@ -225,7 +225,7 @@ const PlatformAnalytics = lazyWithRetry(() => import("./pages/dashboard/platform
 const AuditLogPage = lazyWithRetry(() => import("./pages/dashboard/platform/AuditLog"));
 const JobsPage = lazyWithRetry(() => import("./pages/dashboard/platform/Jobs"));
 const SystemHealthPage = lazyWithRetry(() => import("./pages/dashboard/platform/SystemHealth"));
-const StripeHealthPage = lazyWithRetry(() => import("./pages/dashboard/platform/StripeHealth"));
+const PaymentsHealthPage = lazyWithRetry(() => import("./pages/dashboard/platform/StripeHealth"));
 const NotificationsPage = lazyWithRetry(() => import("./pages/dashboard/platform/Notifications"));
 const DemoFeatures = lazyWithRetry(() => import("./pages/dashboard/platform/DemoFeatures"));
 const HealthScoresPage = lazyWithRetry(() => import("./pages/dashboard/platform/HealthScores"));
@@ -525,7 +525,7 @@ const App = () => (
                         <Route path="audit-log" element={<AuditLogPage />} />
                         <Route path="jobs" element={<JobsPage />} />
                         <Route path="health" element={<SystemHealthPage />} />
-                        <Route path="stripe-health" element={<StripeHealthPage />} />
+                        <Route path="payments-health" element={<PaymentsHealthPage />} />
                         <Route path="notifications" element={<ProtectedRoute requirePlatformRole="platform_admin"><NotificationsPage /></ProtectedRoute>} />
                         <Route path="analytics" element={<ProtectedRoute requirePlatformRole="platform_owner"><PlatformAnalytics /></ProtectedRoute>} />
                         <Route path="network" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformNetwork /></ProtectedRoute>} />

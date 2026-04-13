@@ -647,8 +647,8 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     description: 'Monitor platform infrastructure — API response times, error rates, queue depths, and service status across all subsystems.',
     icon: Activity,
   },
-  'platform-stripe-health': {
-    title: 'Payments Health',
+  'platform-payments-health': {
+    title: 'Zura Pay Health',
     description: 'Monitor payment processing health. Track failed charges, subscription status, and billing issues across all accounts.',
     icon: CreditCard,
   },

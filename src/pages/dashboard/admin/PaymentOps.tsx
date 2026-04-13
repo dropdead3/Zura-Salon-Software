@@ -53,6 +53,7 @@ import {
   ChevronDown,
   Wallet,
   ExternalLink,
+  Scale,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -624,6 +625,137 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
   );
 }
 
+// ─── Disputes Badge ─────────────────────────────────
+function DisputesBadge({ orgId }: { orgId?: string }) {
+  const { data: count = 0 } = useQuery({
+    queryKey: ['dispute-active-count', orgId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('payment_disputes')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId!)
+        .in('status', ['needs_response', 'under_review', 'warning_needs_response']);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+
+  if (count === 0) return null;
+  return <Badge variant="destructive" className="ml-1.5 px-1.5 py-0 text-[10px]">{count}</Badge>;
+}
+
+// ─── Disputes Card ─────────────────────────────────
+const DISPUTE_STATUS_LABELS: Record<string, string> = {
+  needs_response: 'Needs Response',
+  under_review: 'Under Review',
+  won: 'Won',
+  lost: 'Lost',
+  warning_needs_response: 'Warning',
+  charge_refunded: 'Refunded',
+};
+
+const DISPUTE_STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  needs_response: 'destructive',
+  under_review: 'secondary',
+  won: 'outline',
+  lost: 'destructive',
+  warning_needs_response: 'destructive',
+  charge_refunded: 'outline',
+};
+
+function DisputesCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+  const { data: disputes = [], isLoading } = useQuery({
+    queryKey: ['payment-disputes', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payment_disputes')
+        .select('*')
+        .eq('organization_id', orgId!)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <Scale className={tokens.card.icon} />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>
+              Disputes
+              <MetricInfoTooltip description="Track chargebacks and disputes filed against your organization. Respond to disputes promptly to protect revenue." />
+            </CardTitle>
+            <CardDescription>Payment disputes and chargebacks from card networks</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className={tokens.loading.spinner} />
+          </div>
+        ) : disputes.length === 0 ? (
+          <div className={tokens.empty.container}>
+            <Scale className={tokens.empty.icon} />
+            <h3 className={tokens.empty.heading}>No disputes</h3>
+            <p className={tokens.empty.description}>
+              No chargebacks or disputes have been filed. Keep up the good work.
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={tokens.table.columnHeader}>Client</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Evidence Due</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Filed</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {disputes.map((dispute) => (
+                <TableRow key={dispute.id}>
+                  <TableCell className="font-medium">
+                    {dispute.client_name || 'Unknown'}
+                  </TableCell>
+                  <TableCell>
+                    <BlurredAmount>{formatCurrency(dispute.amount / 100)}</BlurredAmount>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground capitalize">
+                    {(dispute.reason || 'unknown').replace(/_/g, ' ')}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={DISPUTE_STATUS_VARIANT[dispute.status] || 'secondary'}>
+                      {DISPUTE_STATUS_LABELS[dispute.status] || dispute.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {dispute.evidence_due_by
+                      ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy')
+                      : '—'}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {format(new Date(dispute.created_at), 'MMM d, yyyy')}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function PaymentOps() {
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
@@ -761,6 +893,11 @@ export default function PaymentOps() {
             <TabsTrigger value="fees">
               <Receipt className="w-4 h-4 mr-1.5" />
               Fee Charges
+            </TabsTrigger>
+            <TabsTrigger value="disputes">
+              <Scale className="w-4 h-4 mr-1.5" />
+              Disputes
+              <DisputesBadge orgId={orgId} />
             </TabsTrigger>
           </ResponsiveTabsList>
 
@@ -1140,6 +1277,11 @@ export default function PaymentOps() {
           {/* Fee Charges */}
           <TabsContent value="fees">
             <FeeLedgerCard orgId={orgId} formatCurrency={formatCurrency} />
+          </TabsContent>
+
+          {/* Disputes */}
+          <TabsContent value="disputes">
+            <DisputesCard orgId={orgId} formatCurrency={formatCurrency} />
           </TabsContent>
         </Tabs>
 

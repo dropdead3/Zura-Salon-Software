@@ -97,7 +97,20 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // 4. Create and confirm PaymentIntent on Connected Account
+    // 4. Look up client email for receipt
+    let receiptEmail: string | null = null;
+    if (appointment_id) {
+      const { data: appt } = await supabase
+        .from("appointments")
+        .select("client_email")
+        .eq("id", appointment_id)
+        .maybeSingle();
+      if (appt?.client_email) {
+        receiptEmail = appt.client_email;
+      }
+    }
+
+    // 5. Create and confirm PaymentIntent on Connected Account
     const resolvedFeeType = fee_type || "manual";
     const amountCents = Math.round(amount * 100);
 
@@ -114,6 +127,7 @@ Deno.serve(async (req) => {
       off_session: true,
       confirm: true,
       description: description || `${resolvedFeeType} fee charge`,
+      ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
       metadata: {
         organization_id,
         appointment_id: appointment_id || "",

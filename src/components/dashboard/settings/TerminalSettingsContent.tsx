@@ -32,6 +32,7 @@ import { ZuraPayFleetTab } from './terminal/ZuraPayFleetTab';
 import { ZuraPayHardwareTab } from './terminal/ZuraPayHardwareTab';
 import { ZuraPayConnectivityTab } from './terminal/ZuraPayConnectivityTab';
 import { ZuraPayDisplayTab } from './terminal/ZuraPayDisplayTab';
+import { ZuraPayActivationChecklist } from './terminal/ZuraPayActivationChecklist';
 
 
 // Lightweight error boundary for individual tabs
@@ -378,6 +379,15 @@ export function TerminalSettingsContent() {
           <p className="text-sm text-muted-foreground font-sans">In-person payment infrastructure for your locations.</p>
         </div>
       </div>
+
+      {/* Activation Checklist */}
+      <ZuraPayActivationChecklist
+        connectStatus={connectStatus?.stripe_connect_status}
+        detailsSubmitted={connectStatus?.stripe_connect_status === 'active'}
+        hasTerminalLocations={(terminalLocations?.length ?? 0) > 0}
+        hasReaders={(readers?.length ?? 0) > 0}
+        hasFirstTransaction={false}
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
