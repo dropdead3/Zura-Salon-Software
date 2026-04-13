@@ -1277,9 +1277,9 @@ export default function PaymentOps() {
                 ) : filteredHolds.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <HandCoins className={tokens.empty.icon} />
-                    <h3 className={tokens.empty.heading}>No active deposit holds</h3>
+                    <h3 className={tokens.empty.heading}>No {holdStatus === 'all' ? '' : holdStatus} deposit holds</h3>
                     <p className={tokens.empty.description}>
-                      Deposit holds will appear here when clients pre-authorize payments for appointments.
+                      {debouncedClientSearch ? 'No matching results for your search.' : 'No deposit holds found for this date range.'}
                     </p>
                   </div>
                 ) : (
@@ -1290,7 +1290,8 @@ export default function PaymentOps() {
                         <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Date</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                        <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
+                        {holdStatus !== 'held' && <TableHead className={tokens.table.columnHeader}>Status</TableHead>}
+                        {(holdStatus === 'held' || holdStatus === 'all') && <TableHead className={tokens.table.columnHeader}>Actions</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
