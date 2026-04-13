@@ -1,112 +1,69 @@
 
 
-# Fix Build Error + Staff Tip Bank Account Connection
+# Build Analysis: Gaps, Bugs & Enhancements
 
-## Part 1: Fix Build Error (TS2589)
+## Bugs / Critical Gaps
 
-The `useOrganizationIntegrations.ts` error is caused by the Supabase client inferring deeply nested types from the relation query (`phorest_staff_mapping` joined through `locations`). The new `tip_distributions` table addition likely pushed the type complexity over TypeScript's recursion limit.
+### 1. Webhook handler missing `account.updated` for staff accounts
+The plan called for handling `account.updated` in `stripe-webhook/index.ts` to sync staff payout account verification status. **This was never implemented.** The webhook has zero references to `staff_payout_accounts`. This means after a staff member completes Stripe onboarding, their status will remain "pending" in the database until they manually click "Refresh" — a poor experience and a reliability gap.
 
-**Fix**: Cast the query result or split the relation query into two separate queries to avoid deep type inference.
+### 2. `staff-payout-onboarding` RLS conflict on `create_account`
+The edge function uses a **service-role client** to upsert into `staff_payout_accounts`, but the RLS INSERT policy only allows **org admins**. When a regular staff member triggers onboarding, the service-role client bypasses RLS — this works, but if any future code path uses the anon/user client to insert, it will silently fail. The migration should also have a policy allowing staff to insert their own row (`auth.uid() = user_id`), or the architecture should be explicitly documented as service-role-only writes.
 
-| File | Change |
-|---|---|
-| `src/hooks/useOrganizationIntegrations.ts` | Add explicit type cast to the Phorest query result to break the deep type chain |
+### 3. `generate-tip-distributions` CORS headers incomplete
+Line 6 of `generate-tip-distributions/index.ts` has a minimal CORS header set missing the modern Supabase client headers (`x-supabase-client-platform`, etc.). The other two edge functions include them. This could cause CORS failures on newer SDK versions.
 
-## Part 2: Staff Bank Account Connection for Tip Payouts
+### 4. `generate-tip-distributions` overwrites confirmed distributions
+When re-generating for a date, the edge function updates `total_tips`, `cash_tips`, `card_tips` on existing rows regardless of status. If a manager has already **confirmed** a distribution, re-generating will silently overwrite the amounts without resetting the confirmation. This should skip rows with `status != 'pending'`.
 
-### Considerations
+### 5. `TipDistributionManager` — direct deposit confirms without invoking payout
+Selecting "Direct Deposit" as the method and clicking "Confirm" just updates the `status` to `confirmed` with `method = 'direct_deposit'` via a regular DB update. It does **not** invoke `process-tip-payout`. The edge function exists but is never called from the UI. Direct deposit confirmations should trigger the payout edge function.
 
-Before building, here's what matters:
+### 6. Bulk confirm with direct deposit has no account validation
+Bulk confirming with method `direct_deposit` does not check whether each stylist has a verified payout account. Could confirm distributions that can never actually be paid.
 
-1. **Stripe Connect Express vs Custom** — Each stylist needs their own Stripe Connected Account to receive transfers. Express is simplest (Stripe-hosted onboarding).
-2. **KYC/Identity Verification** — Stripe handles this during onboarding, but staff must provide SSN, DOB, address. This is a regulatory requirement.
-3. **Tax Implications** — Tips paid via bank transfer may require 1099 reporting. Organizations should be aware.
-4. **Security** — Bank details are never stored in our database. Stripe holds everything. We only store the Stripe account ID and verification status.
-5. **Payout Timing** — Stripe transfers take 1-2 business days. "Daily" means initiated daily, arrives next business day.
-6. **Minimum Payout** — Consider a minimum threshold (e.g., $1) to avoid micro-transfers.
-7. **Org Authorization** — The org's Connected Account must have sufficient balance to fund transfers. Tips collected via card go through the org's Stripe account first.
+## Moderate Issues
 
-### Architecture
+### 7. `MyTipsHistory` date range is fixed to current month
+The `dateFrom` and `dateTo` states are initialized once and never updated (no date picker). Staff can only ever see the current calendar month's tips. A period selector or "Previous Period" navigation is needed.
 
-```text
-Staff clicks "Connect Bank" in My Pay
-        │
-        ▼
-Edge function creates Stripe Express Account for staff
-        │
-        ▼
-Staff completes Stripe-hosted onboarding (KYC, bank info)
-        │
-        ▼
-Webhook confirms account verified → update staff_payout_accounts
-        │
-        ▼
-When tip distribution is confirmed with method='direct_deposit':
-  Edge function creates Stripe Transfer from org's Connected Account
-  to staff's Connected Account
-```
+### 8. `TipDistributionPolicySettings` missing `direct_deposit` as default method
+The policy settings dropdown offers Cash, Manual Transfer, and Payroll — but not Direct Deposit, even though it's an option in the distribution manager.
 
-### Implementation
+### 9. No `onboarding=complete` return URL handling
+`staff-payout-onboarding` sets return URL to `?onboarding=complete`, but `MyPay.tsx` doesn't check query params. After completing Stripe onboarding, the page just loads normally without auto-refreshing the account status.
 
-#### 1. Migration: `staff_payout_accounts` table
+### 10. `process-tip-payout` Stripe transfer architecture concern
+The function creates a transfer with `stripeAccount: org.stripe_connect_account_id`, meaning it transfers funds **from the org's Connected Account balance**. This is correct for a platform model, but requires the org's Connected Account to have sufficient balance from collected card tips. There's no balance check before attempting the transfer — Stripe will return an error, but the user gets a generic failure message.
 
-New table storing the link between staff and their Stripe accounts:
-- `id`, `organization_id`, `user_id` (unique per org)
-- `stripe_account_id` — the staff member's Express account ID
-- `stripe_status` — `pending` | `active` | `restricted` | `disabled`
-- `charges_enabled`, `payouts_enabled`, `details_submitted` — booleans from Stripe
-- `bank_last4`, `bank_name` — masked display info (no sensitive data)
-- `created_at`, `updated_at`
-- RLS: staff can read their own row; admins can read all in org
+## Enhancements
 
-#### 2. Edge Function: `staff-payout-onboarding`
+### 11. Add Stripe balance pre-check before direct deposit payout
+Before creating a Stripe Transfer, retrieve the org's Connected Account balance and compare against the payout amount. Surface a clear "Insufficient balance" message rather than a generic Stripe error.
 
-Actions:
-- `create_account` — Creates a Stripe Express Connected Account for the staff member, returns an onboarding link
-- `create_login_link` — Generates a Stripe Express dashboard login link for the staff member
-- `verify_status` — Checks current verification state and syncs to DB
+### 12. Add `direct_deposit` method to `TipDistributionPolicySettings`
+Include it as an option in the default method selector so orgs preferring direct deposit don't have to change it every time.
 
-This uses the org's platform account as the "platform" in Stripe's Connect hierarchy (org → staff).
+### 13. Add onboarding return handler in `MyPay`
+Detect `?onboarding=complete` query param, auto-trigger `refreshStatus`, and show a success toast.
 
-#### 3. Edge Function: `process-tip-payout`
+### 14. Add date range picker to `MyTipsHistory`
+Allow staff to navigate between months or custom date ranges.
 
-When a manager confirms a tip distribution with method `direct_deposit`:
-- Looks up the staff member's `staff_payout_accounts.stripe_account_id`
-- Creates a Stripe Transfer from the org's Connected Account balance to the staff's account
-- Updates `tip_distributions.status` to `paid` and records `paid_at`
+### 15. Wire `process-tip-payout` to the UI
+When confirming (single or bulk) with method `direct_deposit`, invoke the edge function instead of doing a plain DB update.
 
-#### 4. UI: Bank Account Setup in My Pay
+---
 
-New component `MyPayoutSetup.tsx` in the My Pay page:
-- Shows current bank connection status
-- "Connect Bank Account" button → triggers onboarding link
-- Once connected: shows bank name + last4, verification status
-- "Manage Account" link → Stripe Express dashboard
+## Proposed Fix Plan
 
-#### 5. UI: Direct Deposit option in Tip Distribution Manager
-
-Add `direct_deposit` as a method option in the manager's method selector. When confirming with this method:
-- Validate the stylist has a verified payout account
-- Show warning if account not yet verified
-- On confirm, invoke `process-tip-payout` edge function
-
-#### 6. Webhook Handler Update
-
-Add handling for `account.updated` events scoped to staff accounts:
-- Sync `charges_enabled`, `payouts_enabled`, `details_submitted` to `staff_payout_accounts`
-- Update status based on Stripe account state
-
-### Files
-
-| File | Action |
-|---|---|
-| `src/hooks/useOrganizationIntegrations.ts` | Fix TS2589 build error |
-| Migration | Create `staff_payout_accounts` table with RLS |
-| `supabase/functions/staff-payout-onboarding/index.ts` | **New** — account creation + onboarding links |
-| `supabase/functions/process-tip-payout/index.ts` | **New** — Stripe Transfer execution |
-| `src/hooks/useStaffPayoutAccount.ts` | **New** — query/mutation hooks for payout accounts |
-| `src/components/dashboard/mypay/MyPayoutSetup.tsx` | **New** — bank connection UI for staff |
-| `src/pages/dashboard/MyPay.tsx` | Add payout setup section |
-| `src/components/dashboard/payments/TipDistributionManager.tsx` | Add `direct_deposit` method + payout trigger |
-| `supabase/functions/stripe-webhook/index.ts` | Handle `account.updated` for staff accounts |
+| # | File | Change |
+|---|---|---|
+| 1 | `supabase/functions/stripe-webhook/index.ts` | Add `account.updated` handler that syncs `staff_payout_accounts` |
+| 2 | `supabase/functions/generate-tip-distributions/index.ts` | Fix CORS headers; skip updating confirmed/paid rows |
+| 3 | `src/components/dashboard/payments/TipDistributionManager.tsx` | Wire direct deposit confirms to `process-tip-payout` edge function; add payout account validation |
+| 4 | `src/hooks/useTipDistributions.ts` | Add `useProcessTipPayout` mutation hook |
+| 5 | `src/components/dashboard/mypay/MyTipsHistory.tsx` | Add month navigation |
+| 6 | `src/components/dashboard/settings/TipDistributionPolicySettings.tsx` | Add `direct_deposit` to method options |
+| 7 | `src/pages/dashboard/MyPay.tsx` | Handle `?onboarding=complete` return URL with auto-refresh |
 
