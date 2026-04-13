@@ -47,6 +47,8 @@ import {
   HandCoins,
   UserX,
   Receipt,
+  Plus,
+  Search,
 } from 'lucide-react';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
