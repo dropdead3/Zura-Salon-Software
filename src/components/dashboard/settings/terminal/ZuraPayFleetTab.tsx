@@ -593,12 +593,22 @@ export function ZuraPayFleetTab({
                     <CardDescription>Physical card readers paired to this location.</CardDescription>
                   </div>
                 </div>
-                <Button
-                  size={tokens.button.card}
-                  className={tokens.button.cardAction}
-                  onClick={onRegisterReader}
-                  disabled={!terminalLocations || terminalLocations.length === 0}
-                >
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={onRefreshReaders}
+                    title="Refresh reader status"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size={tokens.button.card}
+                    className={tokens.button.cardAction}
+                    onClick={onRegisterReader}
+                    disabled={!terminalLocations || terminalLocations.length === 0}
+                  >
                   <Plus className="h-4 w-4" />
                   Register Reader
                 </Button>
