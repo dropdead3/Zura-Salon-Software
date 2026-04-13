@@ -10,10 +10,11 @@
  */
 
 import { useRef, useState } from 'react';
-import { Users, CheckCircle2, Play, XCircle, UserX } from 'lucide-react';
+import { Users, CheckCircle2, Play, XCircle, UserX, AlertCircle } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { differenceInMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
 import { formatMinutesToDuration } from '@/lib/formatDuration';
@@ -53,6 +54,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: string }> = {
 const PAYMENT_BADGE: Record<string, { label: string; variant: string }> = {
   paid: { label: 'Paid', variant: DOCK_BADGE.paid },
   unpaid: { label: 'Unpaid', variant: DOCK_BADGE.unpaid },
+  failed: { label: 'Failed', variant: DOCK_BADGE.failed },
   refunded: { label: 'Refunded', variant: DOCK_BADGE.refunded },
   partially_refunded: { label: 'Partial Refund', variant: DOCK_BADGE.partiallyRefunded },
   comp: { label: 'Waived', variant: DOCK_BADGE.comp },
@@ -130,7 +132,22 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
               {STATUS_BADGE[appointment.status || ''].label}
             </span>
           )}
-          {appointment.status === 'completed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
+          {/* Payment failed badge — shown for ALL statuses so staff see it early */}
+          {appointment.payment_status === 'failed' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={cn(DOCK_BADGE.base, DOCK_BADGE.failed, 'inline-flex items-center gap-1 cursor-help')}>
+                  Failed
+                  <AlertCircle className="w-3 h-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                {appointment.payment_failure_reason || 'Payment failed — no details available'}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {/* Payment badge for completed appointments (non-failed) */}
+          {appointment.status === 'completed' && appointment.payment_status !== 'failed' && PAYMENT_BADGE[appointment.payment_status || ''] && (
             <span className={cn(DOCK_BADGE.base, PAYMENT_BADGE[appointment.payment_status || ''].variant)}>
               {PAYMENT_BADGE[appointment.payment_status || ''].label}
             </span>
