@@ -282,6 +282,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         location_id: a.location_id,
         phorest_client_id: a.phorest_client_id,
         notes: a.notes,
+        total_price: (a as any).total_price ?? null,
       }));
 
       const local: DockAppointment[] = (localResult.data || []).map((a) => ({
@@ -299,6 +300,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         location_id: a.location_id,
         client_id: a.client_id,
         notes: a.notes,
+        total_price: (a as any).total_price ?? null,
       }));
 
       // Fetch bowl counts for appointments
