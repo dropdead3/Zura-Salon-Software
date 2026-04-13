@@ -113,24 +113,24 @@ function CancellationFeeSection({
   const [manualAmount, setManualAmount] = useState('');
   const queryClient = useQueryClient();
 
-  const feeStatus = appointment.cancellation_fee_status as string | null;
-  const feeCharged = appointment.cancellation_fee_charged as number | null;
+  const feeStatus = appointment.cancellation_fee_status;
+  const feeCharged = appointment.cancellation_fee_charged;
 
-  // Look up card on file for the client
+  // Look up card on file for the client (use phorest_client_id)
   const { data: clientCards = [] } = useQuery({
-    queryKey: ['client-cards-for-fee', organizationId, appointment.client_id],
+    queryKey: ['client-cards-for-fee', organizationId, appointment.phorest_client_id],
     queryFn: async () => {
-      if (!appointment.client_id) return [];
+      if (!appointment.phorest_client_id) return [];
       const { data, error } = await supabase
         .from('client_cards_on_file')
         .select('id, card_brand, card_last4, is_default')
         .eq('organization_id', organizationId)
-        .eq('client_id', appointment.client_id)
+        .eq('client_id', appointment.phorest_client_id)
         .order('is_default', { ascending: false });
       if (error) return [];
       return data ?? [];
     },
-    enabled: !!appointment.client_id,
+    enabled: !!appointment.phorest_client_id,
   });
 
   // Look up cancellation fee policies
