@@ -1209,27 +1209,58 @@ export function AppointmentDetailSheet({
                         </div>
                       )}
                       {/* Deposit Status */}
-                      {(appointment as any).deposit_required && (
+                      {appointment.deposit_required && (
                         <div className="flex items-center justify-between pt-2 border-t border-dashed">
                           <span className="text-sm text-muted-foreground">Deposit</span>
                           <div className="flex items-center gap-2">
-                            {(appointment as any).deposit_amount != null && (
+                            {appointment.deposit_amount != null && (
                               <span className="text-xs">
-                                <BlurredAmount>{formatCurrency((appointment as any).deposit_amount)}</BlurredAmount>
+                                <BlurredAmount>{formatCurrency(appointment.deposit_amount)}</BlurredAmount>
                               </span>
                             )}
                             <Badge
                               variant="outline"
                               className={cn('text-[10px]', {
-                                'text-amber-600 border-amber-300': (appointment as any).deposit_status === 'pending',
-                                'text-green-600 border-green-300': (appointment as any).deposit_status === 'collected',
-                                'text-blue-600 border-blue-300': (appointment as any).deposit_status === 'applied',
-                                'text-red-600 border-red-300': (appointment as any).deposit_status === 'refunded' || (appointment as any).deposit_status === 'forfeited',
+                                'text-amber-600 border-amber-300': appointment.deposit_status === 'pending',
+                                'text-green-600 border-green-300': appointment.deposit_status === 'collected' || appointment.deposit_status === 'held',
+                                'text-blue-600 border-blue-300': appointment.deposit_status === 'applied',
+                                'text-red-600 border-red-300': appointment.deposit_status === 'refunded' || appointment.deposit_status === 'forfeited',
                               })}
                             >
-                              {((appointment as any).deposit_status || 'pending').replace('_', ' ')}
+                              {(appointment.deposit_status || 'pending').replace('_', ' ')}
                             </Badge>
                           </div>
+                        </div>
+                      )}
+                      {/* G1: Collect Deposit button — shown when deposit required but not yet held */}
+                      {appointment.deposit_required && (!appointment.deposit_status || appointment.deposit_status === 'pending') && effectiveOrganization?.id && (
+                        <div className="pt-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-xs"
+                            onClick={async () => {
+                              if (!effectiveOrganization?.id) return;
+                              try {
+                                const { useTerminalDeposit } = await import('@/hooks/useTerminalDeposit');
+                                const { collectDeposit } = useTerminalDeposit();
+                                await collectDeposit({
+                                  organizationId: effectiveOrganization.id,
+                                  appointmentId: appointment.id,
+                                  amount: Math.round((appointment.deposit_amount || 0) * 100),
+                                  description: `Deposit for ${appointment.client_name || 'appointment'}`,
+                                });
+                              } catch (e) {
+                                console.error('Failed to collect deposit:', e);
+                                toast.error('Failed to collect deposit', {
+                                  description: (e as Error).message,
+                                });
+                              }
+                            }}
+                          >
+                            <CreditCard className="w-3.5 h-3.5 mr-1.5" />
+                            Collect Deposit via Terminal
+                          </Button>
                         </div>
                       )}
                     </motion.div>
