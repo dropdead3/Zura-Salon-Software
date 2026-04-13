@@ -23228,6 +23228,59 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_payout_accounts: {
+        Row: {
+          bank_last4: string | null
+          bank_name: string | null
+          charges_enabled: boolean
+          created_at: string
+          details_submitted: boolean
+          id: string
+          organization_id: string
+          payouts_enabled: boolean
+          stripe_account_id: string
+          stripe_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_last4?: string | null
+          bank_name?: string | null
+          charges_enabled?: boolean
+          created_at?: string
+          details_submitted?: boolean
+          id?: string
+          organization_id: string
+          payouts_enabled?: boolean
+          stripe_account_id: string
+          stripe_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_last4?: string | null
+          bank_name?: string | null
+          charges_enabled?: boolean
+          created_at?: string
+          details_submitted?: boolean
+          id?: string
+          organization_id?: string
+          payouts_enabled?: boolean
+          stripe_account_id?: string
+          stripe_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_payout_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_pinned_products: {
         Row: {
           created_at: string
@@ -25531,7 +25584,9 @@ export type Database = {
           method: string
           notes: string | null
           organization_id: string
+          paid_at: string | null
           status: string
+          stripe_transfer_id: string | null
           stylist_user_id: string
           total_tips: number
           updated_at: string
@@ -25548,7 +25603,9 @@ export type Database = {
           method?: string
           notes?: string | null
           organization_id: string
+          paid_at?: string | null
           status?: string
+          stripe_transfer_id?: string | null
           stylist_user_id: string
           total_tips?: number
           updated_at?: string
@@ -25565,7 +25622,9 @@ export type Database = {
           method?: string
           notes?: string | null
           organization_id?: string
+          paid_at?: string | null
           status?: string
+          stripe_transfer_id?: string | null
           stylist_user_id?: string
           total_tips?: number
           updated_at?: string
