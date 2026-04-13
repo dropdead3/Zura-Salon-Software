@@ -1,4 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { toast } from 'sonner';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { usePublicBookingSurfaceConfig, DEFAULT_BOOKING_SURFACE_CONFIG } from '@/hooks/useBookingSurfaceConfig';
@@ -124,18 +125,61 @@ export function HostedBookingPage() {
     }
   }, [isEmbedMode, currentStep, currentStepIdx]);
 
+  // ─── Selected service payment info ─────────────────────────────
+  const selectedServiceData = eligibleServices?.find(
+    (s) => s.name === state.selectedService
+  );
+  const depositAmount = selectedServiceData?.requiresDeposit
+    ? selectedServiceData.depositAmount
+    : null;
+  const requiresCardOnFile = selectedServiceData?.requireCardOnFile ?? false;
+
   // ─── Confirm handler ──────────────────────────────────────────
-  const handleConfirm = useCallback(() => {
-    update({ isConfirmed: true });
-    if (isEmbedMode) {
-      sendBookingComplete({
-        service: state.selectedService,
-        stylist: state.selectedStylist,
-        date: state.selectedDate,
-        time: state.selectedTime,
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleConfirm = useCallback(async () => {
+    if (!org?.id || !state.selectedService || !state.clientInfo) return;
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-public-booking', {
+        body: {
+          organization_id: org.id,
+          service_name: state.selectedService,
+          stylist_id: state.selectedStylist,
+          location_id: state.selectedLocation,
+          date: state.selectedDate,
+          time: state.selectedTime,
+          client: {
+            first_name: state.clientInfo.firstName,
+            last_name: state.clientInfo.lastName,
+            email: state.clientInfo.email,
+            phone: state.clientInfo.phone,
+            notes: state.clientInfo.notes,
+          },
+        },
       });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      update({ isConfirmed: true });
+      if (isEmbedMode) {
+        sendBookingComplete({
+          service: state.selectedService,
+          stylist: state.selectedStylist,
+          date: state.selectedDate,
+          time: state.selectedTime,
+          appointmentId: data.appointment_id,
+        });
+      }
+    } catch (err: any) {
+      console.error('Booking failed:', err);
+      toast.error(err.message || 'Failed to submit booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [isEmbedMode, state, update]);
+  }, [org?.id, state, isEmbedMode, update]);
 
   // ─── Loading / Error ──────────────────────────────────────────
   if (orgLoading || servicesLoading) {
@@ -226,7 +270,12 @@ export function HostedBookingPage() {
             clientInfo={state.clientInfo}
             onConfirm={handleConfirm}
             onBack={goBack}
+            isSubmitting={isSubmitting}
             isConfirmed={state.isConfirmed}
+            depositAmount={depositAmount}
+            requiresCardOnFile={requiresCardOnFile}
+            depositPolicyText={hosted.policyText || undefined}
+            cancellationPolicyText={hosted.policyText || undefined}
           />
         ) : null;
       default:

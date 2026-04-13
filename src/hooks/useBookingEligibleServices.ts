@@ -12,6 +12,10 @@ export interface EligibleService {
   isPopular: boolean;
   requiresConsultation: boolean;
   requiresQualification: boolean;
+  requiresDeposit: boolean;
+  depositType: string | null;
+  depositAmount: number | null;
+  requireCardOnFile: boolean;
 }
 
 export function useBookingEligibleServices(
@@ -25,7 +29,7 @@ export function useBookingEligibleServices(
       // 1. Get all online-bookable active services
       let q = supabase
         .from('services')
-        .select('id, name, description, category, price, duration_minutes, is_popular, requires_new_client_consultation, requires_qualification, lead_time_days, allow_same_day_booking, bookable_online, location_id')
+        .select('id, name, description, category, price, duration_minutes, is_popular, requires_new_client_consultation, requires_qualification, lead_time_days, allow_same_day_booking, bookable_online, location_id, requires_deposit, deposit_type, deposit_amount, require_card_on_file')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .eq('bookable_online', true)
@@ -125,6 +129,10 @@ export function useBookingEligibleServices(
         isPopular: s.is_popular ?? false,
         requiresConsultation: s.requires_new_client_consultation ?? false,
         requiresQualification: s.requires_qualification ?? false,
+        requiresDeposit: s.requires_deposit ?? false,
+        depositType: s.deposit_type ?? null,
+        depositAmount: s.deposit_amount ?? null,
+        requireCardOnFile: s.require_card_on_file ?? false,
       }));
     },
     enabled: !!orgId,
