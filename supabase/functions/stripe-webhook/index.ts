@@ -670,6 +670,51 @@ async function handlePaymentMethodDetached(
   console.log(`payment_method.detached: deleted ${count} card(s) for PM ${paymentMethodId} in org ${organizationId}`);
 }
 
+// Handler for customer.deleted — bulk-remove all cards on file for that customer
+async function handleCustomerDeleted(
+  supabase: SupabaseClientAny,
+  customer: any,
+  connectedAccountId: string
+) {
+  const customerId = customer.id as string;
+  if (!customerId) {
+    console.log("customer.deleted has no id — skipping");
+    return;
+  }
+
+  console.log(`customer.deleted: Customer ${customerId}, account ${connectedAccountId}`);
+
+  // Look up organization_id from the connected account
+  const { data: orgAccount, error: orgError } = await supabase
+    .from("organization_stripe_accounts")
+    .select("organization_id")
+    .eq("stripe_account_id", connectedAccountId)
+    .maybeSingle();
+
+  if (orgError || !orgAccount) {
+    console.log(`No org found for connected account ${connectedAccountId} — skipping`);
+    return;
+  }
+
+  const organizationId = orgAccount.organization_id;
+
+  // Bulk-delete all cards on file for this customer
+  const { data: deleted, error: deleteError } = await supabase
+    .from("client_cards_on_file")
+    .delete()
+    .eq("stripe_customer_id", customerId)
+    .eq("organization_id", organizationId)
+    .select("id");
+
+  if (deleteError) {
+    console.error("Error bulk-deleting cards on file for customer:", deleteError);
+    return;
+  }
+
+  const count = deleted?.length ?? 0;
+  console.log(`customer.deleted: deleted ${count} card(s) for customer ${customerId} in org ${organizationId}`);
+}
+
 // Handler for setup_intent.succeeded — auto-insert cards on file
 async function handleSetupIntentSucceeded(
   supabase: SupabaseClientAny,
@@ -962,6 +1007,13 @@ Deno.serve(async (req) => {
       case "payment_method.detached":
         if (isConnectEvent) {
           await handlePaymentMethodDetached(supabase, event.data.object, event.account);
+        }
+        break;
+
+      // Bulk-remove all cards on file when a Stripe Customer is deleted
+      case "customer.deleted":
+        if (isConnectEvent) {
+          await handleCustomerDeleted(supabase, event.data.object, event.account);
         }
         break;
          
