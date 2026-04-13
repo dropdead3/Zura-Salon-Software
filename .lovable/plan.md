@@ -1,86 +1,81 @@
 
 
-# Zura Pay Configurator — Second-Pass Audit
+# Zura Pay — Third-Pass Audit
+
+## Critical Bug
+
+### B1: Return URLs use hardcoded `/dashboard/admin/settings` — breaks org-scoped routing
+**Severity: Critical — onboarding flow is broken for all org-scoped users.**
+
+The user is on `/org/drop-dead-salons/dashboard/admin/settings`. When they click "Start Setup," the return/refresh URLs are built as:
+```
+${window.location.origin}/dashboard/admin/settings?tab=terminals&zura_pay_return=true
+```
+This is a non-org-scoped path. When Stripe redirects back, the user hits a route that either 404s or loses org context — the `useEffect` handler in `TerminalSettingsContent` never fires correctly because `orgId` resolves to undefined.
+
+The edge function fallback URLs have the same problem (hardcoded `/dashboard/admin/settings`).
+
+**Fix:** Use `window.location.pathname` (which already contains the full org-scoped path) instead of hardcoding. The simplest correct approach:
+- Frontend: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`
+- Edge function fallback: Keep as-is (it's already a fallback behind the frontend-provided URL, so the fix at the call site is sufficient).
+
+**Files:** `TerminalSettingsContent.tsx` (lines 348-349)
+
+### B2: Hardware checkout `success_url` also uses wrong routing pattern
+**File:** `supabase/functions/terminal-hardware-order/index.ts` (line 295)
+
+The checkout success URL constructs the path as `/org/${slug}/settings?tab=terminals` but the actual route is `/org/${slug}/dashboard/admin/settings`. This means hardware checkout returns also break.
+
+**Fix:** The edge function should accept `success_url` and `cancel_url` from the client (which knows the correct current path) rather than constructing them server-side. Alternatively, fix the path construction.
+
+**File:** `supabase/functions/terminal-hardware-order/index.ts`
 
 ## Bugs
 
-### B1: Brand leakage — "powered by Stripe" in Connect setup copy
-**File:** `ZuraPayFleetTab.tsx:290`
-The "Not Connected" state says *"You'll be guided through a secure verification process powered by Stripe."* This leaks the processor name to org users. Per brand standards, all Stripe references must be removed from org-facing surfaces.
-**Fix:** Change to *"You'll be guided through a secure verification process to enable payments."*
+### B3: `useEffect` return handler can double-fire on `searchParams` update race
+**File:** `TerminalSettingsContent.tsx` (line 227-241)
 
-### B2: Brand leakage — code comment says "Stripe Connect" in org-facing component
-**File:** `ZuraPayFleetTab.tsx:129, 282`
-Comments say `// Stripe Connect self-serve props` and `// Org-level: no Stripe Connect account at all`. While not user-visible, these violate the brand abstraction layer doctrine and risk leaking into error messages or debugging output if copy-pasted.
-**Fix:** Replace with `// Payment connect self-serve props` and `// Org-level: no payment account connected`.
+The effect reads `searchParams`, cleans them, then calls verify. But `setSearchParams` triggers a re-render with new `searchParams`, and the effect re-runs. The old params may still be in flight during React's batching window. Unlike the Hardware tab (which has `hasVerifiedCheckout` ref guard), this handler has no idempotency guard.
 
-### B3: Brand leakage — "Stripe" in verify pending toast
-**File:** `useZuraPayConnect.ts:98`
-The pending toast says *"Stripe may need additional information."* Org users should not see this.
-**Fix:** Change to *"Additional information may be required to complete verification."*
+**Fix:** Add a `useRef` flag (`hasVerifiedReturn`) similar to the Hardware tab pattern.
 
-### B4: `handlePurchase` fires checkout even when `createRequest` fails
-**File:** `ZuraPayHardwareTab.tsx:134-135`
-The `onError` callback for `createRequest.mutate` still fires `createCheckout.mutate`. This means if the request logging fails (e.g., RLS denial, network error), the checkout proceeds anyway. If request tracking is advisory, this is acceptable — but the user gets no feedback that the request record was lost.
-**Fix:** Add a `console.warn` in the `onError` path noting the request record failed, so the checkout still proceeds but the gap is logged. Alternatively, if request tracking is mandatory, block checkout on failure.
+### B4: `useTerminalHardwareSkus()` hook called unconditionally
+**File:** `ZuraPayHardwareTab.tsx` (line 40)
 
-### B5: `useEffect` in HardwareTab cleans URL params but doesn't guard against double-fire
-**File:** `ZuraPayHardwareTab.tsx:58-68`
-The checkout return handler reads `searchParams` and fires `verifyRef.current`, then cleans params. But since `searchParams` is in the dependency array, the state update from `setSearchParamsRef` can cause a re-render with the old params still in flight (React batching). The `verifyRef` pattern prevents stale closures, but there's no guard preventing the effect from running twice if the component remounts before params are cleaned.
-**Fix:** Add a `useRef` flag (`hasVerified`) that gates the verify call, similar to the pattern in `useAutoJoinLocationChannels`.
+The SKU fetch fires even when `isOrgConnected` is false (the gate is on line 143, after all hooks). React hooks can't be called conditionally, but `useTerminalHardwareSkus` should accept an `enabled` parameter.
 
-### B6: `connect_location` update doesn't use `count` option
-**File:** `connect-zura-pay/index.ts:127`
-The Supabase JS client doesn't return `count` by default — you need `.update(..., { count: 'exact' })` for the `count` property to be populated. Without this option, `count` is always `null`, and the `if (count === 0)` check on line 142 never triggers.
-**Fix:** Add `{ count: 'exact' }` as the second argument to the `.update()` call.
+**Fix:** Pass `enabled` option: `useTerminalHardwareSkus('US', isOrgConnected)` — update the hook to accept and forward the enabled flag.
+
+### B5: `useTerminalRequests` query fires without org connection check
+Same issue as B4 — `useTerminalRequests(orgId)` on line 39 fires regardless of connection status.
+
+**Fix:** Pass `enabled: isOrgConnected` or conditionally disable via the hook.
 
 ## Gaps
 
-### G1: No input validation (Zod) on edge function request bodies
-Both `connect-zura-pay` and `verify-zura-pay-connection` parse `req.json()` without schema validation. Malformed payloads could cause unhandled exceptions rather than clean 400 responses. Per edge function guidelines, Zod validation is required.
-**Fix:** Add Zod schemas for both edge functions' request bodies.
+### G1: No loading/error state shown during connect mutation
+When the user clicks "Start Setup," `isConnecting` shows a spinner on the button, but there's no visual feedback if the redirect takes time (e.g., slow Stripe API). If the edge function takes 3-5 seconds, the user may click away.
 
-### G2: `is_org_admin` RPC may not exist
-**File:** `connect-zura-pay/index.ts:49`
-The edge function calls `supabase.rpc("is_org_admin", ...)`. If this RPC function doesn't exist in the database, every connect attempt will fail silently (the `.data` will be falsy, returning 403). Similarly, `verify-zura-pay-connection` calls `is_org_member`. Need to verify these RPCs exist.
-**Fix:** Verify `is_org_admin` and `is_org_member` RPCs exist in the database. If not, create them or use an alternative authorization check.
+**Fix:** Consider disabling tab navigation while `isConnecting` is true, or showing a brief "Redirecting to secure setup…" overlay.
 
-### G3: No disconnect/revoke flow for connected locations
-There's no way to disconnect a location from Zura Pay once connected. If a location closes or an org wants to reassign, they're stuck. This was flagged in the previous audit as E2 but not implemented.
-**Status:** Phase 2 — document for future implementation.
+### G2: Refresh URL handler doesn't re-initiate onboarding
+When Stripe redirects to the refresh URL (Account Link expired), the `useEffect` on line 229 detects `zura_pay_refresh=true` but does nothing with it — it only cleans the param. The user is left on the settings page with no guidance.
 
-### G4: Fleet overview table lacks a click-to-select interaction
-The "All Locations" fleet overview table shows location rows but they're not clickable. Users must use the dropdown to switch to a specific location. Clicking a row should select that location.
-**Fix:** Add `onClick` to `LocationSummaryRow` that calls `setShowAllLocations(false)` and `setSelectedLocationId(loc.id)`.
+**Fix:** When `isRefresh` is true, automatically call `connectMutation.mutate` to generate a fresh Account Link and redirect again. Or show a toast: "Your setup session expired. Click 'Continue Onboarding' to resume."
 
-### G5: Hardware tab SKU query fires even when org is not connected
-**File:** `ZuraPayHardwareTab.tsx:40`
-`useTerminalHardwareSkus()` runs unconditionally. When `isOrgConnected` is false, the component renders the "setup required" gate, but the SKU fetch still fires. Wastes an edge function call.
-**Fix:** Pass `enabled: isOrgConnected` or conditionally call the hook after the gate check using early return pattern (already done on line 140, but the hook runs before the return).
+### G3: `orgConnectStatus` query can return stale data after location connect
+After `connectLocationMutation` succeeds, the hook invalidates `org-connect-status` and `zura-pay-locations`. But `isLocationConnected` is derived from the `locations` query data, not `orgConnectStatus`. If the `zura-pay-locations` query hasn't refetched yet, the Fleet tab still shows the "Enable Zura Pay" empty state momentarily.
 
-## Enhancements
+**Fix:** Add optimistic update to `useConnectLocation` that patches the `zura-pay-locations` query cache inline.
 
-### E1: Add a "Refresh Status" button to the Fleet Overview for multi-location orgs
-In "All Locations" view, there's no way to refresh the connection status for all locations at once. A single button to re-fetch `zura-pay-locations` query would be useful.
-
-### E2: Show onboarding completion percentage in pending state
-When `orgConnectStatus === 'pending'`, the UI shows a generic "Verification in progress" message. If the Stripe account has `details_submitted === false`, the user likely abandoned onboarding midway. The "Continue Onboarding" button is there, but the copy should differentiate between "you didn't finish" vs "we're reviewing your info."
-**Fix:** Pass `details_submitted` from the verify response and show different copy: "You haven't completed the onboarding form yet" vs "Your information is under review."
-
-### E3: Hardware tab should show which location a reader will be assigned to
-The order dialog asks for a location but doesn't explain that the reader will be shipped — it's not assigned to a terminal location until registered. The UX could clarify this distinction.
-
----
-
-## Immediate Changes
+## Changes
 
 | File | Change |
 |------|--------|
-| `ZuraPayFleetTab.tsx` | Remove "powered by Stripe" from line 290 (B1); clean up Stripe comments (B2); add click-to-select on fleet rows (G4) |
-| `useZuraPayConnect.ts` | Remove "Stripe" from pending toast (B3) |
-| `ZuraPayHardwareTab.tsx` | Add double-fire guard to checkout return handler (B5) |
-| `connect-zura-pay/index.ts` | Add `{ count: 'exact' }` to update call (B6); add Zod input validation (G1) |
-| `verify-zura-pay-connection/index.ts` | Add Zod input validation (G1) |
+| `TerminalSettingsContent.tsx` | Fix return URLs to use `window.location.pathname` (B1); add `hasVerifiedReturn` ref guard (B3); handle refresh URL by showing toast or re-initiating (G2) |
+| `ZuraPayHardwareTab.tsx` | No changes needed this pass |
+| `useTerminalHardwareOrder.ts` | Add `enabled` param to `useTerminalHardwareSkus` (B4) |
+| `supabase/functions/terminal-hardware-order/index.ts` | Fix checkout success/cancel URL path (B2) |
 
-0 migrations, 0 new edge functions, 0 new dependencies. Zod is available in Deno runtime.
+0 migrations, 0 new edge functions, 0 new dependencies.
 
