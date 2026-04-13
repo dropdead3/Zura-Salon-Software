@@ -1227,6 +1227,7 @@ export type Database = {
           staff_user_id: string | null
           start_time: string
           status: string | null
+          stripe_payment_intent_id: string | null
           tip_amount: number | null
           total_price: number | null
           updated_at: string | null
@@ -1286,6 +1287,7 @@ export type Database = {
           staff_user_id?: string | null
           start_time: string
           status?: string | null
+          stripe_payment_intent_id?: string | null
           tip_amount?: number | null
           total_price?: number | null
           updated_at?: string | null
@@ -1345,6 +1347,7 @@ export type Database = {
           staff_user_id?: string | null
           start_time?: string
           status?: string | null
+          stripe_payment_intent_id?: string | null
           tip_amount?: number | null
           total_price?: number | null
           updated_at?: string | null
