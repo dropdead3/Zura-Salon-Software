@@ -183,6 +183,35 @@ export function useUpdateBookingPolicies(explicitOrgId?: string) {
   return useUpdateSiteSetting<BookingPolicies>(explicitOrgId);
 }
 
+// ─── Set Default Card ─────────────────────────────────
+
+export function useSetDefaultCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ cardId, clientId, orgId }: { cardId: string; clientId: string; orgId: string }) => {
+      // Clear default on all other cards for this client
+      const { error: clearError } = await supabase
+        .from('client_cards_on_file')
+        .update({ is_default: false } as any)
+        .eq('organization_id', orgId)
+        .eq('client_id', clientId);
+      if (clearError) throw clearError;
+
+      // Set the selected card as default
+      const { error } = await supabase
+        .from('client_cards_on_file')
+        .update({ is_default: true } as any)
+        .eq('id', cardId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['client-cards'] });
+      toast.success('Default card updated');
+    },
+    onError: () => toast.error('Failed to set default card'),
+  });
+}
+
 // ─── Charge Card on File (mutation) ───────────────────
 
 export function useChargeCardOnFile() {

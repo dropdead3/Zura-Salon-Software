@@ -70,6 +70,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useClientTransactionHistory } from '@/hooks/useClientTransactionHistory';
 import { TransactionHistoryTimeline } from './TransactionHistoryTimeline';
 import { ClientAffinityBadges } from './clients/ClientAffinityBadges';
+import { PaymentMethodsCard } from './clients/PaymentMethodsCard';
 import { toast } from 'sonner';
 
 interface Client {
@@ -837,7 +838,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           </Card>
           </motion.div>
 
-          {/* Source */}
+          {/* Payment Methods (Cards on File) */}
+          <PaymentMethodsCard clientId={client.id} orgId={selectedOrganization?.id} />
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
