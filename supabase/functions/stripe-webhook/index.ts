@@ -751,6 +751,11 @@ Deno.serve(async (req) => {
       case "payment_intent.payment_failed":
         await handleTerminalPaymentIntentFailed(supabase, event.data.object);
         break;
+
+      // G3: Refunds initiated outside Zura
+      case "charge.refunded":
+        await handleChargeRefunded(supabase, event.data.object);
+        break;
         
       default:
         console.log(`Unhandled event type: ${event.type}`);
