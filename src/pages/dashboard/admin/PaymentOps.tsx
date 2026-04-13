@@ -35,7 +35,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { AlertDialogAction } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -624,6 +624,7 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
 
 export default function PaymentOps() {
   const { dashPath } = useOrgDashboardPath();
+  const navigate = useNavigate();
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { formatCurrency } = useFormatCurrency();
@@ -884,6 +885,15 @@ export default function PaymentOps() {
                           </div>
                         )}
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs gap-1.5 mt-3"
+                        onClick={() => navigate(dashPath(`/appointments-hub?tab=transactions&date=${selectedDate}`))}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        View transactions for this date
+                      </Button>
                     </div>
 
                     {!reconciliation.is_reconciled && (
@@ -1070,7 +1080,25 @@ export default function PaymentOps() {
                       {pendingRefunds.map((refund) => (
                         <TableRow key={refund.id}>
                           <TableCell className="font-medium">
-                            {refund.original_item_name || 'Unknown item'}
+                            <div className="flex items-center gap-1.5">
+                              {refund.original_item_name || 'Unknown item'}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => {
+                                      const txnDate = refund.created_at ? format(new Date(refund.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+                                      navigate(dashPath(`/appointments-hub?tab=transactions&date=${txnDate}`));
+                                    }}
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>View original transaction</TooltipContent>
+                              </Tooltip>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <BlurredAmount>{formatCurrency(refund.refund_amount)}</BlurredAmount>
