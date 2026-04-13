@@ -441,11 +441,18 @@ export function TerminalSettingsContent() {
         </TabsContent>
       </Tabs>
 
-      {/* Register Reader Wizard */}
-      <RegisterReaderDialog
-        open={registerOpen}
-        onOpenChange={setRegisterOpen}
-        locationId={activeLocationId || ''}
+      {/* Register Reader Wizard — guarded against empty locationId */}
+      {activeLocationId && (
+        <RegisterReaderDialog
+          open={registerOpen}
+          onOpenChange={setRegisterOpen}
+          locationId={activeLocationId}
+          terminalLocations={(terminalLocations || []).map((tl) => ({
+            id: tl.id,
+            display_name: tl.display_name,
+          }))}
+        />
+      )}
         terminalLocations={(terminalLocations || []).map((tl) => ({
           id: tl.id,
           display_name: tl.display_name,
