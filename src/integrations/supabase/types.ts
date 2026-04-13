@@ -24972,6 +24972,59 @@ export type Database = {
           },
         ]
       }
+      terminal_hardware_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          organization_id: string
+          quantity: number
+          reason: string
+          requested_by: string
+          status: string
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id: string
+          quantity?: number
+          reason?: string
+          requested_by: string
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          quantity?: number
+          reason?: string
+          requested_by?: string
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terminal_hardware_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testimonials: {
         Row: {
           author: string
