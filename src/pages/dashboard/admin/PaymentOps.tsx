@@ -162,7 +162,6 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
             <TableHeader>
               <TableRow>
                 <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
                 <TableHead className={tokens.table.columnHeader}>Date</TableHead>
                 <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
                 <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
@@ -175,9 +174,6 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
                 <TableRow key={charge.id}>
                   <TableCell className="font-medium">
                     {charge.appointment?.client_name || 'Unknown'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {charge.appointment?.staff_name || '—'}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {charge.appointment?.appointment_date
