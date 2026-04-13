@@ -562,8 +562,8 @@ async function handleSubscriptionUpdated(
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }
 
-// Handler for terminal payment_intent.succeeded (G1 — eventual consistency for card-present payments)
-async function handleTerminalPaymentIntentSucceeded(
+// Handler for payment_intent.succeeded (covers both terminal and card-on-file charges)
+async function handlePaymentIntentSucceeded(
   supabase: SupabaseClientAny,
   paymentIntent: Record<string, unknown>
 ) {
@@ -575,15 +575,19 @@ async function handleTerminalPaymentIntentSucceeded(
   }
 
   const piId = paymentIntent.id as string;
-  console.log(`Terminal PI succeeded: ${piId} for appointment ${appointmentId}`);
+  const chargeType = metadata?.charge_type || 'terminal';
+  const paymentMethod = chargeType === 'card_on_file' ? 'card_on_file' : 'card_reader';
+
+  console.log(`PI succeeded: ${piId} for appointment ${appointmentId} (charge_type: ${chargeType}, payment_method: ${paymentMethod})`);
 
   // Idempotent update — only update if not already paid
   const { error } = await supabase
     .from('appointments')
     .update({
       payment_status: 'paid',
-      payment_method: 'card_reader',
+      payment_method: paymentMethod,
       stripe_payment_intent_id: piId,
+      paid_at: new Date().toISOString(),
     })
     .eq('id', appointmentId)
     .neq('payment_status', 'paid');
@@ -591,7 +595,7 @@ async function handleTerminalPaymentIntentSucceeded(
   if (error) {
     console.error("Failed to update appointment from PI webhook:", error);
   } else {
-    console.log(`Appointment ${appointmentId} marked paid via webhook`);
+    console.log(`Appointment ${appointmentId} marked paid via webhook (${paymentMethod})`);
   }
 }
 
@@ -1040,7 +1044,7 @@ Deno.serve(async (req) => {
 
       // --- Connect terminal events ---
       case "payment_intent.succeeded":
-        await handleTerminalPaymentIntentSucceeded(supabase, event.data.object);
+        await handlePaymentIntentSucceeded(supabase, event.data.object);
         break;
 
       case "payment_intent.payment_failed":
