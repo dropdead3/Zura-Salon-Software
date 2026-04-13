@@ -452,12 +452,7 @@ export function TerminalSettingsContent() {
             display_name: tl.display_name,
           }))}
         />
-      )}
-        terminalLocations={(terminalLocations || []).map((tl) => ({
-          id: tl.id,
-          display_name: tl.display_name,
-        }))}
-      />
+      )
 
       {/* Delete Terminal Location Confirmation */}
       <AlertDialog
