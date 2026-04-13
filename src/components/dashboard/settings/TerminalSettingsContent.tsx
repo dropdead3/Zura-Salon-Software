@@ -232,9 +232,10 @@ export function TerminalSettingsContent() {
   }
 
   const selectedLocation = locations.find((l) => l.id === activeLocationId);
+  const isLocationConnected = !!selectedLocation?.stripe_account_id;
 
   const handleCreateTerminalLocation = () => {
-    if (!activeLocationId) return;
+    if (!activeLocationId || !isLocationConnected) return;
     createTerminalLocation.mutate({
       locationId: activeLocationId,
       displayName: selectedLocation?.name,
