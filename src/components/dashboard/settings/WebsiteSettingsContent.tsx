@@ -46,6 +46,7 @@ import {
 import { cn } from '@/lib/utils';
 import { DomainConfigCard } from './DomainConfigCard';
 import { CancellationFeePoliciesSettings } from './CancellationFeePoliciesSettings';
+import { DisputePolicySettings } from './DisputePolicySettings';
 import { ActiveThemeCard } from './ActiveThemeCard';
 import { ThemeLibraryGrid } from './ThemeLibraryGrid';
 import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';

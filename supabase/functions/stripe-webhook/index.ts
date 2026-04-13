@@ -1141,6 +1141,46 @@ async function handleDisputeCreated(
     }
   });
 
+  // Auto-ban client if org has dispute_policy.auto_ban_on_dispute enabled
+  if (clientId) {
+    const { data: policySetting } = await supabase
+      .from("backroom_settings")
+      .select("setting_value")
+      .eq("organization_id", org.id)
+      .is("location_id", null)
+      .eq("setting_key", "dispute_policy")
+      .maybeSingle();
+
+    const autoBan = policySetting?.setting_value?.auto_ban_on_dispute === true;
+
+    if (autoBan) {
+      const banReason = `Auto-banned: payment dispute filed (dispute #${disputeId})`;
+      await supabase
+        .from("clients")
+        .update({
+          is_banned: true,
+          ban_reason: banReason,
+          banned_at: new Date().toISOString(),
+          banned_by: null,
+        })
+        .eq("id", clientId);
+
+      // Audit log
+      await supabase.rpc("log_platform_action", {
+        _org_id: org.id,
+        _action: "client_auto_banned_dispute",
+        _entity_type: "clients",
+        _details: {
+          client_id: clientId,
+          dispute_id: disputeId,
+          reason: banReason,
+        },
+      });
+
+      console.log(`Auto-banned client ${clientId} due to dispute ${disputeId}`);
+    }
+  }
+
   console.log(`Dispute ${disputeId} recorded for org ${org.name}`);
 }
 
