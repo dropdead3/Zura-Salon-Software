@@ -1,49 +1,51 @@
 
 
-# Cancellation Fee Refund Sync + Client Cards on File Management
+# Webhook Handler: `setup_intent.succeeded` → Auto-Insert Cards on File
 
 ## Analysis
 
-**1. `charge.refunded` and cancellation fees:**
-The existing `handleChargeRefunded` handler only looks up appointments by `stripe_payment_intent_id` — the standard service-payment PI. Cancellation fee charges use a *different* PI stored in `cancellation_fee_stripe_payment_id`, so refunds of cancellation fees issued via the Stripe Dashboard will be silently ignored. The handler needs a second lookup path.
+The public booking flow will use Stripe Elements to create a `SetupIntent` on the Connected Account. When the customer completes card setup, Stripe fires `setup_intent.succeeded` — but the current webhook has no handler for this event. Cards saved during booking are only persisted if the client-side code manually inserts into `client_cards_on_file` after Stripe confirms. This is fragile: if the browser closes, the card is saved in Stripe but never recorded locally.
 
-**2. Client "Cards on File" section:**
-The `ClientDetailSheet` has tabs for Visit History, Transformations, Transactions, Formulas, Notes, and Redos — but no card management. The `client_cards_on_file` table and `useClientCardsOnFile` hook already exist. The gap is purely UI: a section to list, add, and remove saved cards.
-
----
+Adding a webhook handler creates a reliable server-side sync path that guarantees every successfully saved card appears in the management surface.
 
 ## Changes
 
-### 1. Webhook — Handle cancellation fee refunds
+### 1. Add `setup_intent.succeeded` handler to webhook
 **File:** `supabase/functions/stripe-webhook/index.ts`
 
-Extend `handleChargeRefunded`: after the existing `stripe_payment_intent_id` lookup fails to find an appointment, add a fallback lookup on `cancellation_fee_stripe_payment_id`. If matched, update `cancellation_fee_status` to `'refunded'` and `cancellation_fee_charged` to reflect the refunded amount.
+New handler function `handleSetupIntentSucceeded`:
+1. Extract `payment_method` (ID string) from the SetupIntent object
+2. Expand payment method details by calling Stripe API: `GET /v1/payment_methods/{pm_id}` using the Connected Account's credentials
+3. Extract `customer` ID from the SetupIntent
+4. Look up the `organization_id` from `organization_stripe_accounts` using `event.account` (the Connected Account ID)
+5. Look up the `client_id` from `client_cards_on_file` or `phorest_clients` by matching `stripe_customer_id`
+6. If client found: upsert into `client_cards_on_file` with `stripe_payment_method_id`, `stripe_customer_id`, `card_brand`, `card_last4`, `card_exp_month`, `card_exp_year`, `organization_id`, `client_id`
+7. Use upsert (ON CONFLICT on `stripe_payment_method_id` + `organization_id`) to avoid duplicates if the client-side also inserts
 
-### 2. Client Detail — Cards on File section
-**File:** `src/components/dashboard/ClientDetailSheet.tsx`
+Add the case to the switch statement under the Connect terminal events section (since SetupIntents are created on Connected Accounts).
 
-Add a "Payment Methods" card in the client info area (above the tabs, near contact info). Contents:
-- List saved cards from `useClientCardsOnFile(orgId, client.id)` — show brand icon, last4, expiry, default badge
-- "Remove" button per card (calls `useRemoveCardOnFile` mutation)
-- "Set Default" action for non-default cards
-- Empty state: "No cards on file"
+### 2. Handle metadata for client resolution
+The SetupIntent should carry `client_id` in its metadata (set during the booking flow). The handler will:
+- First check `setup_intent.metadata.client_id`
+- Fallback: look up by `stripe_customer_id` in `phorest_clients` or `client_cards_on_file`
 
-Card addition is handled during the booking flow (Stripe Elements SetupIntent), so no "Add Card" button is needed here — this is a management/view surface only.
+This ensures the handler works even if the booking surface hasn't been updated to pass metadata yet.
 
-### 3. Hook — Add "Set Default" mutation
-**File:** `src/hooks/useDepositData.ts`
+## Migration
 
-Add a `useSetDefaultCard` mutation that sets `is_default = false` on all other cards for the client, then `is_default = true` on the selected card.
-
----
+Add a unique constraint on `client_cards_on_file` for upsert support:
+```sql
+ALTER TABLE client_cards_on_file
+ADD CONSTRAINT client_cards_on_file_pm_org_unique
+UNIQUE (stripe_payment_method_id, organization_id);
+```
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `supabase/functions/stripe-webhook/index.ts` | Extend `handleChargeRefunded` with cancellation-fee PI fallback |
-| `src/components/dashboard/ClientDetailSheet.tsx` | Add "Payment Methods" card section with card list, remove, and set-default actions |
-| `src/hooks/useDepositData.ts` | Add `useSetDefaultCard` mutation |
+| **Migration** | Add unique constraint on `(stripe_payment_method_id, organization_id)` for upsert |
+| `supabase/functions/stripe-webhook/index.ts` | Add `setup_intent.succeeded` case + `handleSetupIntentSucceeded` handler |
 
-0 migrations, 0 new edge functions, 0 new dependencies.
+1 migration, 0 new edge functions, 0 new dependencies.
 
