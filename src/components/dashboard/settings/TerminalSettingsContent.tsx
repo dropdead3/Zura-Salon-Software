@@ -341,6 +341,17 @@ export function TerminalSettingsContent() {
             onRegisterReader={() => setRegisterOpen(true)}
             useTerminalLocationsHook={useTerminalLocations}
             useTerminalReadersHook={useTerminalReaders}
+            orgConnectStatus={connectStatus?.stripe_connect_status}
+            onStartConnect={() => orgId && connectMutation.mutate({
+              organizationId: orgId,
+              returnUrl: `${window.location.origin}/dashboard/admin/settings?tab=terminals&zura_pay_return=true`,
+              refreshUrl: `${window.location.origin}/dashboard/admin/settings?tab=terminals&zura_pay_refresh=true`,
+            })}
+            isConnecting={connectMutation.isPending}
+            onVerifyConnection={() => orgId && verifyMutation.mutate({ organizationId: orgId })}
+            isVerifying={verifyMutation.isPending}
+            onConnectLocation={(locationId) => orgId && connectLocationMutation.mutate({ organizationId: orgId, locationId })}
+            isConnectingLocation={connectLocationMutation.isPending}
           />
         </TabsContent>
 
