@@ -257,3 +257,33 @@ verify_jwt = false
 
 [functions.get-booking-stripe-config]
 verify_jwt = false
+
+[functions.zura-pay-payouts]
+verify_jwt = false
+
+[functions.create-terminal-payment-intent]
+verify_jwt = false
+
+[functions.terminal-reader-display]
+verify_jwt = false
+
+[functions.terminal-hardware-order]
+verify_jwt = false
+
+[functions.manage-stripe-terminals]
+verify_jwt = false
+
+[functions.charge-card-on-file]
+verify_jwt = false
+
+[functions.collect-booking-deposit]
+verify_jwt = false
+
+[functions.org-billing-portal]
+verify_jwt = false
+
+[functions.org-payment-info]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false

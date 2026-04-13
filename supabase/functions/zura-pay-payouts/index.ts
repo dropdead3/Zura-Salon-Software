@@ -23,14 +23,12 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -45,13 +43,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get the org's connected Stripe account ID
-    const serviceClient = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Verify caller belongs to this organization
+    const { data: membership } = await supabase
+      .from("employee_profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
 
-    const { data: org, error: orgError } = await serviceClient
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden: not a member of this organization" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: org, error: orgError } = await supabase
       .from("organizations")
       .select("stripe_connect_account_id, stripe_connect_status")
       .eq("id", organization_id)
