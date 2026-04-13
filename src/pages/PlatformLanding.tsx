@@ -19,6 +19,7 @@ import { GrowthEstimator } from '@/components/marketing/GrowthEstimator';
 import { ZuraInANutshell } from '@/components/marketing/ZuraInANutshell';
 import { FounderQuote } from '@/components/marketing/FounderQuote';
 import { InsightToExecution } from '@/components/marketing/InsightToExecution';
+import { NeverDownPayments } from '@/components/marketing/NeverDownPayments';
 
 export default function PlatformLanding() {
   return (
@@ -41,6 +42,7 @@ export default function PlatformLanding() {
       <SectionDivider />
       <BeforeAfterShowcase />
       <ToolConsolidation />
+      <NeverDownPayments />
       <ZuraInANutshell />
       <FounderQuote />
       <InsightToExecution />

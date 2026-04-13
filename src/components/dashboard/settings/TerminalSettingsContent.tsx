@@ -14,7 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle, Signal } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,7 @@ import {
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
+import { OfflinePaymentStatus } from './OfflinePaymentStatus';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -303,6 +304,7 @@ const REASON_OPTIONS = [
   { value: 'new_location', label: 'New Location' },
   { value: 'replacement', label: 'Replacement' },
   { value: 'additional', label: 'Additional Unit' },
+  { value: 'upgrade_to_s710', label: 'Upgrade to S710' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -422,9 +424,9 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle className="font-display text-lg tracking-wide">REQUEST TERMINAL HARDWARE</DialogTitle>
+            <DialogTitle className="font-display text-lg tracking-wide">REQUEST STRIPE READER S710</DialogTitle>
             <DialogDescription>
-              Submit a request for new or replacement terminal devices. Our team will review and process your order.
+              Request S710 terminal readers with built-in cellular connectivity. Payments continue even when WiFi is down.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -475,6 +477,13 @@ function TerminalRequestCard({ locations }: { locations: { id: string; name: str
                 onChange={(e) => setReqNotes(e.target.value)}
                 rows={3}
               />
+            </div>
+            {/* S710 info callout */}
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
+              <Signal className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+              <p className="font-sans text-xs text-muted-foreground">
+                The S710 includes cellular connectivity, ensuring payments continue even when WiFi is down. Store-and-forward technology securely stores payments on-device during total outages.
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -816,6 +825,9 @@ export function TerminalSettingsContent() {
           </Card>
         </>
       )}
+
+      {/* Offline Payment Status */}
+      <OfflinePaymentStatus />
 
       {/* Request a Terminal Card */}
       <TerminalRequestCard locations={locations} />

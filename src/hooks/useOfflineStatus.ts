@@ -1,10 +1,48 @@
 import { useState, useEffect, useCallback } from 'react';
 
+export interface OfflineEvent {
+  type: 'offline' | 'online';
+  timestamp: number;
+  duration?: string;
+}
+
 interface OfflineStatusState {
   isOnline: boolean;
   isOffline: boolean;
   wasOffline: boolean;
   lastOnline: Date | null;
+  offlineEvents: OfflineEvent[];
+  currentOfflineDuration: string | null;
+}
+
+const OFFLINE_EVENTS_KEY = 'zura-offline-events';
+const MAX_EVENTS = 50;
+
+function formatDuration(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainMinutes = minutes % 60;
+  return `${hours}h ${remainMinutes}m`;
+}
+
+function loadEvents(): OfflineEvent[] {
+  try {
+    const stored = localStorage.getItem(OFFLINE_EVENTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveEvents(events: OfflineEvent[]) {
+  try {
+    localStorage.setItem(OFFLINE_EVENTS_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
+  } catch (e) {
+    console.error('[OfflineStatus] Save error:', e);
+  }
 }
 
 export function useOfflineStatus(): OfflineStatusState {
@@ -13,20 +51,40 @@ export function useOfflineStatus(): OfflineStatusState {
   const [lastOnline, setLastOnline] = useState<Date | null>(
     navigator.onLine ? new Date() : null
   );
+  const [offlineEvents, setOfflineEvents] = useState<OfflineEvent[]>(loadEvents);
+  const [offlineSince, setOfflineSince] = useState<number | null>(
+    navigator.onLine ? null : Date.now()
+  );
+  const [currentOfflineDuration, setCurrentOfflineDuration] = useState<string | null>(null);
 
   useEffect(() => {
     const handleOnline = () => {
+      const now = Date.now();
+      const duration = offlineSince ? formatDuration(now - offlineSince) : undefined;
+
       setIsOnline(true);
       setLastOnline(new Date());
-      
-      // If we were offline, mark it
-      if (!navigator.onLine) {
-        setWasOffline(true);
-      }
+      setWasOffline(true);
+      setOfflineSince(null);
+      setCurrentOfflineDuration(null);
+
+      setOfflineEvents(prev => {
+        const updated = [...prev, { type: 'online' as const, timestamp: now, duration }];
+        saveEvents(updated);
+        return updated;
+      });
     };
 
     const handleOffline = () => {
+      const now = Date.now();
       setIsOnline(false);
+      setOfflineSince(now);
+
+      setOfflineEvents(prev => {
+        const updated = [...prev, { type: 'offline' as const, timestamp: now }];
+        saveEvents(updated);
+        return updated;
+      });
     };
 
     window.addEventListener('online', handleOnline);
@@ -36,13 +94,24 @@ export function useOfflineStatus(): OfflineStatusState {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [offlineSince]);
+
+  // Update duration ticker while offline
+  useEffect(() => {
+    if (!offlineSince) return;
+    const interval = setInterval(() => {
+      setCurrentOfflineDuration(formatDuration(Date.now() - offlineSince));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [offlineSince]);
 
   return {
     isOnline,
     isOffline: !isOnline,
     wasOffline,
     lastOnline,
+    offlineEvents,
+    currentOfflineDuration,
   };
 }
 
