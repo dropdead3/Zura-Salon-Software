@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,14 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+const RequestSchema = z.object({
+  action: z.enum(["create_account_and_link", "connect_location", "get_onboarding_link"]),
+  organization_id: z.string().uuid("organization_id must be a valid UUID"),
+  location_id: z.string().uuid().optional(),
+  return_url: z.string().url().optional(),
+  refresh_url: z.string().url().optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,12 +47,13 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const body = await req.json();
-    const { action, organization_id, location_id, return_url, refresh_url } = body;
-
-    if (!organization_id) {
-      return jsonResponse({ error: "organization_id is required" }, 400);
+    // Validate input
+    const rawBody = await req.json();
+    const parsed = RequestSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return jsonResponse({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, 400);
     }
+    const { action, organization_id, location_id, return_url, refresh_url } = parsed.data;
 
     // Verify caller is org admin
     const isAdmin = await supabase.rpc("is_org_admin", {
@@ -115,22 +125,25 @@ Deno.serve(async (req) => {
 
     if (action === "connect_location") {
       if (!location_id) {
-        return jsonResponse({ error: "location_id is required" }, 400);
+        return jsonResponse({ error: "location_id is required for connect_location" }, 400);
       }
 
       // Org must have active connect account
       if (org.stripe_connect_status !== "active" || !org.stripe_connect_account_id) {
-        return jsonResponse({ error: "Organization Stripe account is not yet active. Complete onboarding first." }, 400);
+        return jsonResponse({ error: "Organization payment account is not yet active. Complete onboarding first." }, 400);
       }
 
-      // Update the location with the org's stripe account
+      // Update the location with the org's payment account
       const { error: locErr, count } = await supabase
         .from("locations")
-        .update({
-          stripe_account_id: org.stripe_connect_account_id,
-          stripe_status: "active",
-          stripe_payments_enabled: true,
-        })
+        .update(
+          {
+            stripe_account_id: org.stripe_connect_account_id,
+            stripe_status: "active",
+            stripe_payments_enabled: true,
+          },
+          { count: "exact" }
+        )
         .eq("id", location_id)
         .eq("organization_id", organization_id);
 
@@ -149,7 +162,7 @@ Deno.serve(async (req) => {
     if (action === "get_onboarding_link") {
       // Re-generate an Account Link for an existing account
       if (!org.stripe_connect_account_id) {
-        return jsonResponse({ error: "No Stripe account exists for this organization. Use create_account_and_link first." }, 400);
+        return jsonResponse({ error: "No payment account exists for this organization. Use create_account_and_link first." }, 400);
       }
 
       const accountLink = await stripe.accountLinks.create({

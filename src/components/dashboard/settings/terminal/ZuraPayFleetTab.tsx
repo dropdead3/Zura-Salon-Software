@@ -43,9 +43,10 @@ interface LocationSummaryRowProps {
   loc: LocationWithPayment;
   useTerminalLocations: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReaders: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
+  onSelect?: (locationId: string) => void;
 }
 
-function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: LocationSummaryRowProps) {
+function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders, onSelect }: LocationSummaryRowProps) {
   const isConnected = !!loc.stripe_account_id;
   const { data: tlData, isLoading: tlLoading } = useTerminalLocations(isConnected ? loc.id : null);
   const { data: readerData, isLoading: readersLoading } = useTerminalReaders(isConnected ? loc.id : null);
@@ -73,7 +74,13 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: L
   const offline = readerList.length - online;
 
   return (
-    <div className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+    <div
+      className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={() => onSelect?.(loc.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(loc.id); }}
+    >
       <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
       <div className="flex justify-center">
         <Badge variant={status.variant} className={cn(
@@ -269,6 +276,10 @@ export function ZuraPayFleetTab({
                   loc={loc}
                   useTerminalLocations={useTerminalLocationsHook}
                   useTerminalReaders={useTerminalReadersHook}
+                  onSelect={(id) => {
+                    setShowAllLocations(false);
+                    setSelectedLocationId(id);
+                  }}
                 />
               ))}
             </div>

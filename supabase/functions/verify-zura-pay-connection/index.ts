@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,10 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+const RequestSchema = z.object({
+  organization_id: z.string().uuid("organization_id must be a valid UUID"),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -38,12 +43,13 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const body = await req.json();
-    const { organization_id } = body;
-
-    if (!organization_id) {
-      return jsonResponse({ error: "organization_id is required" }, 400);
+    // Validate input
+    const rawBody = await req.json();
+    const parsed = RequestSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return jsonResponse({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, 400);
     }
+    const { organization_id } = parsed.data;
 
     // Verify caller is org member
     const isMember = await supabase.rpc("is_org_member", {
@@ -54,7 +60,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Not a member of this organization" }, 403);
     }
 
-    // Get org's stripe connect account
+    // Get org's payment connect account
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
       .select("id, stripe_connect_account_id, stripe_connect_status")
@@ -74,7 +80,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Retrieve the Stripe account
+    // Retrieve the account from payment processor
     const account = await stripe.accounts.retrieve(org.stripe_connect_account_id);
 
     const newStatus = account.charges_enabled ? "active" : "pending";
