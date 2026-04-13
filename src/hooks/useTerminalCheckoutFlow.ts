@@ -76,6 +76,26 @@ export function useTerminalCheckoutFlow() {
     return data;
   };
 
+  // B4 fix: Verify PaymentIntent status directly after reader clears
+  const verifyPaymentIntent = async (
+    readerId: string,
+    organizationId: string,
+    paymentIntentId: string
+  ): Promise<'succeeded' | 'failed'> => {
+    const { data, error } = await supabase.functions.invoke('terminal-reader-display', {
+      body: {
+        action: 'check_payment_intent',
+        reader_id: readerId,
+        organization_id: organizationId,
+        payment_intent_id: paymentIntentId,
+      },
+    });
+    if (error) throw error;
+    const piStatus = data?.payment_intent?.status;
+    if (piStatus === 'succeeded') return 'succeeded';
+    return 'failed';
+  };
+
   const pollReaderStatus = async (
     readerId: string,
     organizationId: string
@@ -99,10 +119,14 @@ export function useTerminalCheckoutFlow() {
 
       if (actionStatus === 'succeeded') return 'succeeded';
       if (actionStatus === 'failed') return 'failed';
-      // If no action is in progress, check PI status directly
+
+      // B4 fix: If reader has no active action, verify PI status directly
+      // instead of assuming success (reader clears action on both success AND failure)
       if (!reader?.action || reader?.action?.type === undefined) {
-        // Reader cleared — payment likely completed
-        return 'succeeded';
+        if (paymentIntentIdRef.current) {
+          return await verifyPaymentIntent(readerId, organizationId, paymentIntentIdRef.current);
+        }
+        return 'failed'; // No PI to verify — treat as failed
       }
 
       await new Promise((r) => setTimeout(r, POLL_INTERVAL));

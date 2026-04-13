@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,19 +18,14 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
  * Terminal Reader Display — Server-Driven Integration
  *
  * Controls the S710 reader display via the Stripe Terminal API.
- * This is the server-driven approach: your POS backend sends commands
- * to the reader through Stripe's API, and the reader renders the UI.
- *
- * For full custom branding (splash screens, animations), use the
- * "Apps on Devices" approach with an Android APK deployed to the reader.
  *
  * Actions:
  *   - set_reader_display: Show cart/line items on the reader screen
  *   - clear_reader_display: Clear the reader screen
  *   - process_payment: Initiate payment collection on the reader
  *   - cancel_action: Cancel in-progress reader action
- *
- * Docs: https://docs.stripe.com/terminal/payments/collect-payment?terminal-sdk-platform=server-driven
+ *   - check_reader_status: Poll reader state for payment completion
+ *   - check_payment_intent: Verify PaymentIntent status directly (B4 fix)
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -65,7 +60,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "reader_id and organization_id are required" }, 400);
     }
 
-    // Verify org access — must be admin/manager
+    // Verify org access — G3 fix: add stylist to allowed roles
     const { data: membership } = await supabase
       .from("organization_admins")
       .select("id")
@@ -79,24 +74,21 @@ Deno.serve(async (req) => {
         .select("role")
         .eq("user_id", user.id);
       const hasRole = roles?.some((r: { role: string }) =>
-        ["admin", "manager", "super_admin"].includes(r.role)
+        ["admin", "manager", "super_admin", "stylist"].includes(r.role)
       );
       if (!hasRole) {
-        return jsonResponse({ error: "Admin or manager role required" }, 403);
+        return jsonResponse({ error: "Insufficient permissions" }, 403);
       }
     }
 
-    // Get the connected account's stripe_account_id for the reader's location
-    // Readers are always scoped to a location → org
-    const { data: locData } = await supabase
-      .from("locations")
-      .select("stripe_account_id")
-      .eq("organization_id", organization_id)
-      .not("stripe_account_id", "is", null)
-      .limit(1)
+    // B2 fix: Query organizations.stripe_connect_account_id (same source as PI creation)
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("stripe_connect_account_id")
+      .eq("id", organization_id)
       .maybeSingle();
 
-    const stripeAccountId = locData?.stripe_account_id;
+    const stripeAccountId = orgData?.stripe_connect_account_id;
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
     const stripeOpts = stripeAccountId ? { stripeAccount: stripeAccountId } : {};
@@ -109,8 +101,6 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "line_items array is required" }, 400);
       }
 
-      // Build the cart object for the reader display
-      // Stripe expects: { type: 'cart', cart: { line_items: [...], tax, total, currency } }
       const total = line_items.reduce(
         (sum: number, item: { amount: number; quantity?: number }) =>
           sum + item.amount * (item.quantity || 1),
@@ -186,6 +176,29 @@ Deno.serve(async (req) => {
           action: reader.action,
           device_type: reader.device_type,
           label: reader.label,
+        },
+      });
+    }
+
+    // ---- check_payment_intent: Verify PI status directly (B4 fix) ----
+    if (action === "check_payment_intent") {
+      const { payment_intent_id } = body;
+      if (!payment_intent_id) {
+        return jsonResponse({ error: "payment_intent_id is required" }, 400);
+      }
+
+      const pi = await stripe.paymentIntents.retrieve(
+        payment_intent_id,
+        stripeOpts
+      );
+
+      return jsonResponse({
+        success: true,
+        payment_intent: {
+          id: pi.id,
+          status: pi.status,
+          amount: pi.amount,
+          amount_received: pi.amount_received,
         },
       });
     }

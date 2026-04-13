@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
 import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const corsHeaders = {
@@ -30,9 +30,6 @@ const CreatePaymentIntentSchema = z.object({
  *
  * Creates a Stripe PaymentIntent with `card_present` payment method type
  * for in-person terminal collection, scoped to the org's Connected Account.
- *
- * Used by the scheduler checkout flow when a front-desk operator selects
- * "Card (Reader)" as the payment method.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -97,21 +94,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get connected account stripe_account_id
+    // B1 fix: use correct column name stripe_connect_account_id
     const { data: orgData } = await supabase
       .from("organizations")
-      .select("stripe_account_id")
+      .select("stripe_connect_account_id")
       .eq("id", organization_id)
       .maybeSingle();
 
-    if (!orgData?.stripe_account_id) {
+    if (!orgData?.stripe_connect_account_id) {
       return jsonResponse(
         { error: "Zura Pay is not connected for this organization" },
         400
       );
     }
 
-    const stripeAccountId = orgData.stripe_account_id;
+    const stripeAccountId = orgData.stripe_connect_account_id;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
     const totalAmount = amount + tip_amount;
