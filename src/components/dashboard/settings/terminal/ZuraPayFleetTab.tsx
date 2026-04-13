@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2 } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TerminalLocation {
@@ -25,20 +25,42 @@ interface Reader {
   ip_address?: string;
 }
 
+type LocationWithStripe = {
+  id: string;
+  name: string;
+  stripe_account_id: string | null;
+  stripe_status: string | null;
+  stripe_payments_enabled: boolean | null;
+};
+
+function getConnectionStatus(loc: LocationWithStripe) {
+  if (!loc.stripe_account_id) return { label: 'Not Connected', variant: 'outline' as const, dotClass: 'bg-muted-foreground/40' };
+  if (loc.stripe_status === 'active' && loc.stripe_payments_enabled) return { label: 'Active', variant: 'default' as const, dotClass: 'bg-emerald-500' };
+  return { label: 'Pending', variant: 'secondary' as const, dotClass: 'bg-amber-500' };
+}
+
 interface LocationSummaryRowProps {
-  loc: { id: string; name: string };
+  loc: LocationWithStripe;
   useTerminalLocations: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReaders: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
 }
 
 function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: LocationSummaryRowProps) {
-  const { data: tlData, isLoading: tlLoading } = useTerminalLocations(loc.id);
-  const { data: readerData, isLoading: readersLoading } = useTerminalReaders(loc.id);
+  const isConnected = !!loc.stripe_account_id;
+  const { data: tlData, isLoading: tlLoading } = useTerminalLocations(isConnected ? loc.id : null);
+  const { data: readerData, isLoading: readersLoading } = useTerminalReaders(isConnected ? loc.id : null);
+  const status = getConnectionStatus(loc);
 
-  if (tlLoading || readersLoading) {
+  if (isConnected && (tlLoading || readersLoading)) {
     return (
-      <div className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+      <div className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
         <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
+        <div className="flex justify-center">
+          <Badge variant={status.variant} className={cn(
+            'text-[10px]',
+            status.variant === 'default' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10'
+          )}>{status.label}</Badge>
+        </div>
         <Skeleton className="h-4 w-8 mx-auto" />
         <Skeleton className="h-4 w-8 mx-auto" />
         <Skeleton className="h-4 w-16 mx-auto" />
@@ -51,23 +73,35 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: L
   const offline = readerList.length - online;
 
   return (
-    <div className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+    <div className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
       <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
-      <span className="text-center text-sm text-muted-foreground">{tlData?.length || 0}</span>
-      <span className="text-center text-sm text-muted-foreground">{readerList.length}</span>
+      <div className="flex justify-center">
+        <Badge variant={status.variant} className={cn(
+          'text-[10px]',
+          status.variant === 'default' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10'
+        )}>{status.label}</Badge>
+      </div>
+      <span className="text-center text-sm text-muted-foreground">{isConnected ? (tlData?.length || 0) : '—'}</span>
+      <span className="text-center text-sm text-muted-foreground">{isConnected ? readerList.length : '—'}</span>
       <div className="flex items-center justify-center gap-2">
-        {online > 0 && (
-          <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 text-xs">
-            {online} online
-          </Badge>
-        )}
-        {offline > 0 && (
-          <Badge variant="secondary" className="text-xs">
-            {offline} offline
-          </Badge>
-        )}
-        {readerList.length === 0 && (
+        {!isConnected ? (
           <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <>
+            {online > 0 && (
+              <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 text-xs">
+                {online} online
+              </Badge>
+            )}
+            {offline > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {offline} offline
+              </Badge>
+            )}
+            {readerList.length === 0 && (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -75,10 +109,11 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: L
 }
 
 export interface ZuraPayFleetTabProps {
-  locations: { id: string; name: string; stripe_account_id: string | null }[];
+  locations: LocationWithStripe[];
   activeLocationId: string | null;
   selectedLocationId: string | null;
   showAllLocations: boolean;
+  isLocationConnected: boolean;
   setShowAllLocations: (v: boolean) => void;
   setSelectedLocationId: (v: string | null) => void;
   terminalLocations: TerminalLocation[] | undefined;
@@ -98,6 +133,7 @@ export function ZuraPayFleetTab({
   locations,
   activeLocationId,
   showAllLocations,
+  isLocationConnected,
   setShowAllLocations,
   setSelectedLocationId,
   terminalLocations,
@@ -114,6 +150,9 @@ export function ZuraPayFleetTab({
 }: ZuraPayFleetTabProps) {
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
+
+  const selectedLoc = locations.find((l) => l.id === activeLocationId);
+  const selectedStatus = selectedLoc ? getConnectionStatus(selectedLoc) : null;
 
   return (
     <div className="space-y-6">
@@ -145,14 +184,28 @@ export function ZuraPayFleetTab({
                   </Badge>
                 </span>
               </SelectItem>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  <span className="flex items-center gap-2">{loc.name}</span>
-                </SelectItem>
-              ))}
+              {locations.map((loc) => {
+                const status = getConnectionStatus(loc);
+                return (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    <span className="flex items-center gap-2">
+                      <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', status.dotClass)} />
+                      {loc.name}
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
-          {!showAllLocations && (
+          {!showAllLocations && selectedStatus && (
+            <Badge variant={selectedStatus.variant} className={cn(
+              'text-xs',
+              selectedStatus.variant === 'default' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10'
+            )}>
+              {selectedStatus.label}
+            </Badge>
+          )}
+          {!showAllLocations && isLocationConnected && (
             <span className="text-xs text-muted-foreground">
               {readers?.length || 0} reader{(readers?.length || 0) !== 1 ? 's' : ''} at this location
             </span>
@@ -170,14 +223,15 @@ export function ZuraPayFleetTab({
               </div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>FLEET OVERVIEW</CardTitle>
-                <MetricInfoTooltip description="Summary of all terminal locations and readers across your organization's Zura Pay-connected sites." />
+                <MetricInfoTooltip description="Summary of all terminal locations and readers across your organization. Locations must be connected to Zura Pay before they can manage terminals." />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="grid grid-cols-4 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
+              <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
                 <span>Location</span>
+                <span className="text-center">Connection</span>
                 <span className="text-center">Terminal Locations</span>
                 <span className="text-center">Readers</span>
                 <span className="text-center">Status</span>
@@ -190,6 +244,21 @@ export function ZuraPayFleetTab({
                   useTerminalReaders={useTerminalReadersHook}
                 />
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : !isLocationConnected ? (
+        /* Unconnected location guidance */
+        <Card>
+          <CardContent className="py-10">
+            <div className="text-center space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+                <Info className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="font-display text-sm tracking-[0.14em]">LOCATION NOT CONNECTED</h3>
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                This location is not yet connected to Zura Pay. Contact your account manager to enable payment processing for this site.
+              </p>
             </div>
           </CardContent>
         </Card>
