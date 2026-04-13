@@ -669,21 +669,45 @@ const DISPUTE_STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destruct
   charge_refunded: 'outline',
 };
 
-function DisputesCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, clientSearch }: {
+  orgId?: string;
+  formatCurrency: (n: number) => string;
+  dateFrom: string;
+  dateTo: string;
+  disputeStatus: 'active' | 'resolved' | 'all';
+  clientSearch: string;
+}) {
+  const activeStatuses = ['needs_response', 'under_review', 'warning_needs_response'];
+  const resolvedStatuses = ['won', 'lost', 'charge_refunded'];
+
   const { data: disputes = [], isLoading } = useQuery({
-    queryKey: ['payment-disputes', orgId],
+    queryKey: ['payment-disputes', orgId, dateFrom, dateTo, disputeStatus],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('payment_disputes')
         .select('*')
         .eq('organization_id', orgId!)
+        .gte('created_at', `${dateFrom}T00:00:00`)
+        .lte('created_at', `${dateTo}T23:59:59`)
         .order('created_at', { ascending: false })
         .limit(50);
+      if (disputeStatus === 'active') {
+        q = q.in('status', activeStatuses);
+      } else if (disputeStatus === 'resolved') {
+        q = q.in('status', resolvedStatuses);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
     enabled: !!orgId,
   });
+
+  const filteredDisputes = useMemo(() => {
+    if (!clientSearch) return disputes;
+    const s = clientSearch.toLowerCase();
+    return disputes.filter(d => (d.client_name || '').toLowerCase().includes(s));
+  }, [disputes, clientSearch]);
 
   return (
     <Card>
