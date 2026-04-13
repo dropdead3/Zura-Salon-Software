@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { motion } from 'framer-motion';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -71,6 +72,8 @@ export default function ShiftSwapMarketplace() {
         <DashboardPageHeader
           title="Shift Swap Marketplace"
           description="Trade, cover, or give away shifts with your team"
+          backTo={dashPath('/schedule')}
+          backLabel="Back to Schedule"
           className="mb-6"
           actions={
             <Button onClick={() => setPostDialogOpen(true)}>

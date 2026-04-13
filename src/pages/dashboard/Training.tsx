@@ -171,6 +171,8 @@ export default function Training() {
         <DashboardPageHeader
           title="Training"
           description="Complete assigned training videos and track your progress across all categories."
+          backTo={dashPath('/')}
+          backLabel="Back to Dashboard"
           className="mb-8"
         />
         <PageExplainer pageId="training" />

@@ -973,6 +973,7 @@ function OrgPromotionHistoryTab({ promotions, allLevels }: { promotions: Promoti
 /* ─── Main Page ─────────────────────────────────────────── */
 
 export default function GraduationTracker() {
+  const { dashPath } = useOrgDashboardPath();
   const { teamProgress, counts, isLoading } = useTeamLevelProgress();
   const { data: allLevels = [] } = useStylistLevels();
   const { data: assistants, isLoading: loadingAssistants } = useAllAssistantProgress();
@@ -1004,6 +1005,8 @@ export default function GraduationTracker() {
       <DashboardPageHeader
         title="Team Level Progress"
         description="Track team progression, retention standards, and promotion readiness"
+        backTo={dashPath('/admin/team-hub')}
+        backLabel="Back to Operations Hub"
         actions={
           <div className="flex items-center gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>

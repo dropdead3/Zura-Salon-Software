@@ -7,6 +7,9 @@ import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Switch } from '@/components/ui/switch';
@@ -392,6 +395,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
   const [isAddUserSeatsOpen, setIsAddUserSeatsOpen] = useState(false);
   const [categoryActions, setCategoryActions] = useState<React.ReactNode>(null);
   const [mounted, setMounted] = useState(false);
+  const [deactivateUserId, setDeactivateUserId] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -689,6 +693,21 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
         </Suspense>
 
         <AddUserSeatsDialog open={isAddUserSeatsOpen} onOpenChange={setIsAddUserSeatsOpen} capacity={capacity} />
+
+        <AlertDialog open={!!deactivateUserId} onOpenChange={(open) => !open && setDeactivateUserId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deactivate User?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This user will be removed from active staff. They will no longer appear in schedules, assignments, or team views. This action can be reversed by reactivating them later.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeactivateUser}>Deactivate</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
