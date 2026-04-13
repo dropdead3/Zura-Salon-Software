@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 // Switch removed - rebook toggle replaced by rebooking gate
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { toast } from 'sonner';
@@ -25,6 +26,10 @@ import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVis
 import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
 import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
+import { useActiveTerminalReader } from '@/hooks/useActiveTerminalReader';
+import { useTerminalCheckoutFlow, type TerminalFlowState } from '@/hooks/useTerminalCheckoutFlow';
+
+type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
 // Constants
 const RECEIPT_WIDTH = 80; // mm
