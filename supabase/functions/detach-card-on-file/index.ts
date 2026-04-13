@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,11 +56,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get the org's Stripe connected account
-    const { data: orgSettings } = await supabase
-      .from("organization_stripe_accounts")
-      .select("stripe_account_id")
-      .eq("organization_id", organization_id)
+    // Get the org's Stripe connected account (canonical source)
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("stripe_connect_account_id")
+      .eq("id", organization_id)
       .single();
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -71,19 +71,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Detach the payment method from Stripe
     if (card.stripe_payment_method_id) {
       try {
-        const detachOptions: Record<string, string> = {};
-        if (orgSettings?.stripe_account_id) {
-          detachOptions.stripeAccount = orgSettings.stripe_account_id;
-        }
         await stripe.paymentMethods.detach(
           card.stripe_payment_method_id,
           undefined,
-          detachOptions.stripeAccount ? { stripeAccount: detachOptions.stripeAccount } : undefined
+          org?.stripe_connect_account_id ? { stripeAccount: org.stripe_connect_account_id } : undefined
         );
       } catch (stripeError: any) {
         // If the PM is already detached or doesn't exist, proceed with DB deletion

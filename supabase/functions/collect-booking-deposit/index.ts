@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,11 +16,41 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // --- Authentication ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { organization_id, client_id, card_on_file_id, amount, currency, appointment_id, capture_method } = await req.json();
 
     if (!organization_id || !amount || !appointment_id) {
       return new Response(JSON.stringify({ error: "organization_id, amount, and appointment_id are required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Org membership check ---
+    const { data: membership } = await supabase
+      .from("employee_profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden: not a member of this organization" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -43,15 +73,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2. Look up org's Stripe connected account
-    const { data: stripeAccount, error: saError } = await supabase
-      .from("organization_stripe_accounts")
-      .select("stripe_account_id")
-      .eq("organization_id", organization_id)
-      .limit(1)
+    // 2. Look up org's Stripe connected account (canonical source)
+    const { data: org, error: orgError } = await supabase
+      .from("organizations")
+      .select("stripe_connect_account_id")
+      .eq("id", organization_id)
       .single();
 
-    if (saError || !stripeAccount?.stripe_account_id) {
+    if (orgError || !org?.stripe_connect_account_id) {
       return new Response(JSON.stringify({ error: "No Stripe account connected for this organization" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -65,7 +94,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // 4. Create PaymentIntent with manual capture (pre-auth hold)
     const amountCents = Math.round(amount * 100);
@@ -82,9 +111,10 @@ Deno.serve(async (req) => {
         organization_id,
         appointment_id,
         charge_type: "booking_deposit",
+        collected_by: user.id,
       },
     }, {
-      stripeAccount: stripeAccount.stripe_account_id,
+      stripeAccount: org.stripe_connect_account_id,
     });
 
     // 5. Update appointment with deposit status
@@ -112,7 +142,7 @@ Deno.serve(async (req) => {
     }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("collect-booking-deposit error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
