@@ -218,5 +218,51 @@ export function CancellationFeePoliciesSettings() {
         )}
       </CardContent>
     </Card>
+
+    {/* Customer-Facing Policy Text */}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <FileText className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>Customer-Facing Policy Text</CardTitle>
+            <CardDescription>These policy statements are shown to customers during the booking flow when a service requires a deposit or card on file.</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm">Deposit Policy</Label>
+          <Textarea
+            value={depositPolicyText}
+            onChange={(e) => { setDepositPolicyText(e.target.value); setPolicyTextsDirty(true); }}
+            rows={3}
+            placeholder="e.g. A deposit is required to secure your appointment. Deposits are applied to your service total at checkout..."
+            className="text-sm"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-sm">Cancellation & No-Show Policy</Label>
+          <Textarea
+            value={cancellationPolicyText}
+            onChange={(e) => { setCancellationPolicyText(e.target.value); setPolicyTextsDirty(true); }}
+            rows={3}
+            placeholder="e.g. Cancellations made less than 24 hours before your appointment are subject to a fee. No-shows will be charged the full service amount..."
+            className="text-sm"
+          />
+        </div>
+        {policyTextsDirty && (
+          <div className="flex justify-end">
+            <Button size="sm" onClick={handleSavePolicyTexts} disabled={updatePolicySetting.isPending}>
+              {updatePolicySetting.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+              Save Policy Text
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+    </>
   );
 }
