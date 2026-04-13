@@ -150,7 +150,55 @@ export function useConfirmTipDistribution() {
   });
 }
 
+export function useProcessTipPayout() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { distribution_id: string; organization_id: string }) => {
+      const { data, error } = await supabase.functions.invoke('process-tip-payout', {
+        body: params,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tip-distributions'] });
+      toast.success(`Tip payout of $${data.amount} processed successfully`);
+    },
+    onError: (error) => {
+      toast.error('Payout failed: ' + error.message);
+    },
+  });
+}
+
 export function useBulkConfirmTipDistributions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { ids: string[]; method?: string }) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { error } = await supabase
+        .from('tip_distributions')
+        .update({
+          status: 'confirmed',
+          method: params.method || 'cash',
+          confirmed_by: userId,
+          confirmed_at: new Date().toISOString(),
+        })
+        .in('id', params.ids);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tip-distributions'] });
+      toast.success('All tip distributions confirmed');
+    },
+    onError: (error) => {
+      toast.error('Failed to confirm: ' + error.message);
+    },
+  });
+}
   const queryClient = useQueryClient();
 
   return useMutation({
