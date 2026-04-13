@@ -26,33 +26,38 @@ export function useOrganizationIntegrations(organizationId: string | undefined) 
       }
 
       // Fetch Phorest and Payroll data in parallel
-      const [phorestResult, payrollResult] = await Promise.all([
-        // Phorest: Get locations with phorest_branch_id and count active staff mappings
-        supabase
-          .from('locations')
-          .select(`
-            id,
-            phorest_branch_id,
-            phorest_staff_mapping(id, is_active)
-          `)
-          .eq('organization_id', organizationId)
-          .not('phorest_branch_id', 'is', null),
-        
-        // Payroll: Get connection status
-        supabase
-          .from('payroll_connections')
-          .select('provider, connection_status, connected_at')
-          .eq('organization_id', organizationId)
-          .maybeSingle(),
+      // Split into separate queries to avoid deep type inference (TS2589)
+      const phorestLocationsPromise = supabase
+        .from('locations')
+        .select('id, phorest_branch_id')
+        .eq('organization_id', organizationId)
+        .not('phorest_branch_id', 'is', null);
+
+      const staffMappingPromise = supabase
+        .from('phorest_staff_mapping')
+        .select('id, is_active, location_id')
+        .eq('is_active', true);
+
+      const payrollPromise = supabase
+        .from('payroll_connections')
+        .select('provider, connection_status, connected_at')
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      const [phorestResult, staffResult, payrollResult] = await Promise.all([
+        phorestLocationsPromise,
+        staffMappingPromise,
+        payrollPromise,
       ]);
 
       // Process Phorest data
       const phorestData = phorestResult.data || [];
       const branchIds = new Set(phorestData.map(l => l.phorest_branch_id).filter(Boolean));
       const branchCount = branchIds.size;
-      const staffMappingCount = phorestData.flatMap(l => 
-        Array.isArray(l.phorest_staff_mapping) ? l.phorest_staff_mapping : []
-      ).filter(m => m.is_active).length;
+      const locationIds = new Set(phorestData.map(l => l.id));
+      const staffMappingCount = (staffResult.data || []).filter(
+        m => m.is_active && m.location_id && locationIds.has(m.location_id)
+      ).length;
 
       // Process Payroll data
       const payrollData = payrollResult.data;
