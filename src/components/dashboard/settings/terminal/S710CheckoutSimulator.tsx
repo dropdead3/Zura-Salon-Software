@@ -232,6 +232,7 @@ function TipScreen({ total, tipPercentages = [20, 25, 30] }: { total: number; ti
       </div>
     </motion.div>
   );
+}
 
 // ---- Tap / Insert Card Screen ----
 function TapScreen({ total }: { total: number }) {
