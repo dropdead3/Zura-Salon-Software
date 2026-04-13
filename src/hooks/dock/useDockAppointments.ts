@@ -148,6 +148,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           phorest_client_id: a.phorest_client_id,
           notes: a.notes,
           mix_bowl_count: 0,
+          total_price: (a as any).total_price ?? null,
         }));
 
         // Fetch bowl counts for these appointments via mix_sessions + mix_bowls
