@@ -19,7 +19,7 @@ import { useBillingAccess } from '@/hooks/useBillingAccess';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
+
 import { useToast } from '@/hooks/use-toast';
 import type { SettingsCategory } from '@/components/dashboard/settings/SettingsCategoryDetail';
 
@@ -101,7 +101,7 @@ export default function Settings() {
   })();
 
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>(initialCategory);
-  const [businessDialogOpen, setBusinessDialogOpen] = useState(false);
+  
   const [isEditMode, setIsEditMode] = useState(false);
   const { data: layoutPrefs } = useSettingsLayout();
   const updateLayout = useUpdateSettingsLayout();
@@ -121,7 +121,7 @@ export default function Settings() {
 
   const handleCategoryClick = (id: string) => {
     if (id === 'my-profile') navigate(dashPath('/profile'));
-    else if (id === 'business') setBusinessDialogOpen(true);
+    else if (id === 'business') setActiveCategory('business' as SettingsCategory);
     else if (id === 'access-hub') navigate(dashPath('/admin/access-hub'));
     else if (id === 'data-import') navigate(dashPath('/admin/data-import'));
     else if (id === 'zura-config') navigate(dashPath('/admin/zura-config'));
@@ -252,7 +252,7 @@ export default function Settings() {
           </div>
         )}
 
-        <BusinessSettingsDialog open={businessDialogOpen} onOpenChange={setBusinessDialogOpen} />
+        
       </div>
     </DashboardLayout>
   );
