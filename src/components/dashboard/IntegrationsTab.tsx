@@ -26,7 +26,6 @@ import {
   CheckCircle2, 
   XCircle,
   Calendar,
-  DollarSign,
   Users,
 } from 'lucide-react';
 import { usePhorestConnection } from '@/hooks/usePhorestSync';
