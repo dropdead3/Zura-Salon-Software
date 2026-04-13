@@ -1372,7 +1372,7 @@ export default function PaymentOps() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pendingRefunds.map((refund) => (
+                      {filteredRefunds.map((refund) => (
                         <TableRow key={refund.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-1.5">
