@@ -49,6 +49,8 @@ export function GroupedTransactionTable({
   onSelectTransaction,
 }: GroupedTransactionTableProps) {
   const { formatCurrency } = useFormatCurrency();
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const [sortField, setSortField] = useState<SortField>('clientName');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -128,13 +130,25 @@ export function GroupedTransactionTable({
     }
     if (txn.refundStatus === 'completed') {
       return (
-        <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:text-amber-400">
+        <Badge
+          variant="outline"
+          className="text-amber-700 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); navigate(dashPath('/admin/payment-ops?section=refunds')); }}
+        >
           Refunded
         </Badge>
       );
     }
     if (txn.refundStatus === 'pending') {
-      return <Badge variant="secondary">Pending</Badge>;
+      return (
+        <Badge
+          variant="secondary"
+          className="cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); navigate(dashPath('/admin/payment-ops?section=refunds')); }}
+        >
+          Refund Pending
+        </Badge>
+      );
     }
     return (
       <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50 dark:bg-green-950 dark:text-green-400">
