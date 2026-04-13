@@ -625,6 +625,127 @@ async function handleTerminalPaymentIntentFailed(
   }
 }
 
+// Handler for setup_intent.succeeded — auto-insert cards on file
+async function handleSetupIntentSucceeded(
+  supabase: SupabaseClientAny,
+  setupIntent: Record<string, unknown>,
+  connectedAccountId: string
+) {
+  const paymentMethodId = setupIntent.payment_method as string;
+  const stripeCustomerId = setupIntent.customer as string;
+  const metadata = setupIntent.metadata as Record<string, string> | null;
+
+  if (!paymentMethodId) {
+    console.log("setup_intent.succeeded has no payment_method — skipping");
+    return;
+  }
+
+  console.log(`setup_intent.succeeded: PM ${paymentMethodId}, customer ${stripeCustomerId}, account ${connectedAccountId}`);
+
+  // 1. Look up organization by Connected Account ID
+  const { data: orgAccount } = await supabase
+    .from("organization_stripe_accounts")
+    .select("organization_id")
+    .eq("stripe_account_id", connectedAccountId)
+    .single();
+
+  if (!orgAccount) {
+    console.warn(`No organization found for Connected Account ${connectedAccountId}`);
+    return;
+  }
+
+  const organizationId = orgAccount.organization_id;
+
+  // 2. Fetch payment method details from Stripe
+  const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!stripeSecretKey) {
+    console.error("STRIPE_SECRET_KEY not configured — cannot fetch PM details");
+    return;
+  }
+
+  let pmDetails: Record<string, unknown> | null = null;
+  try {
+    const pmResponse = await fetch(`https://api.stripe.com/v1/payment_methods/${paymentMethodId}`, {
+      headers: {
+        "Authorization": `Bearer ${stripeSecretKey}`,
+        "Stripe-Account": connectedAccountId,
+      },
+    });
+    if (pmResponse.ok) {
+      pmDetails = await pmResponse.json();
+    } else {
+      console.error(`Failed to fetch PM ${paymentMethodId}: ${pmResponse.status}`);
+      return;
+    }
+  } catch (err) {
+    console.error("Error fetching payment method from Stripe:", err);
+    return;
+  }
+
+  const card = pmDetails?.card as Record<string, unknown> | null;
+  if (!card) {
+    console.log("Payment method has no card details — skipping");
+    return;
+  }
+
+  // 3. Resolve client_id
+  let clientId = metadata?.client_id || null;
+
+  if (!clientId && stripeCustomerId) {
+    // Fallback: look up by stripe_customer_id in clients table
+    const { data: client } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("stripe_customer_id", stripeCustomerId)
+      .eq("organization_id", organizationId)
+      .single();
+
+    if (client) {
+      clientId = client.id;
+    } else {
+      // Try phorest_clients as another fallback
+      const { data: phorestClient } = await supabase
+        .from("phorest_clients")
+        .select("id")
+        .eq("stripe_customer_id", stripeCustomerId)
+        .eq("organization_id", organizationId)
+        .single();
+
+      if (phorestClient) {
+        clientId = phorestClient.id;
+      }
+    }
+  }
+
+  if (!clientId) {
+    console.warn(`Could not resolve client_id for customer ${stripeCustomerId} in org ${organizationId}`);
+    return;
+  }
+
+  // 4. Upsert into client_cards_on_file
+  const { error: upsertError } = await supabase
+    .from("client_cards_on_file")
+    .upsert({
+      client_id: clientId,
+      organization_id: organizationId,
+      stripe_payment_method_id: paymentMethodId,
+      stripe_customer_id: stripeCustomerId,
+      card_brand: (card.brand as string) || "unknown",
+      card_last4: (card.last4 as string) || "****",
+      card_exp_month: (card.exp_month as number) || 0,
+      card_exp_year: (card.exp_year as number) || 0,
+      is_default: false,
+    }, {
+      onConflict: "stripe_payment_method_id,organization_id",
+    });
+
+  if (upsertError) {
+    console.error("Failed to upsert card on file:", upsertError);
+  } else {
+    console.log(`Card on file saved: ${card.brand} ****${card.last4} for client ${clientId}`);
+  }
+}
+
 // G3: Handler for charge.refunded — sync refunds initiated outside Zura (e.g. Stripe Dashboard)
 async function handleChargeRefunded(
   supabase: SupabaseClientAny,
