@@ -1,96 +1,84 @@
 
 
-# G1: Wire Public Booking Surface to Create Appointments + Enforce Payment Policies
+# Zura Pay Build Audit — Round 4
 
-## E1 Status: Already Handled
-`payment_intent.payment_failed` on line 1079 runs for **all events** (no `isConnectEvent` guard). Connect-scoped card-on-file charge failures already update `appointments.payment_status = 'failed'`. No changes needed.
+## Bugs
 
-## Problem (G1)
-The public booking surface (`HostedBookingPage`) is a UI shell. When a client clicks "Confirm Booking":
-- No appointment is created in the database
-- No deposit is collected even when the service requires one
-- No card-on-file is captured even when required
-- `BookingConfirmation` never receives `depositAmount`, `requiresCardOnFile`, or policy text props
+### B1: Pre-flight expired card check was never implemented (P1 — Regression)
+The shared `src/lib/card-utils.ts` utility was approved and "created" in a prior round but **does not exist on disk**. Consequently:
+- `AppointmentDetailSheet` `handleChargeFee` and `handleManualCharge` have **no expiration guard** — charges proceed to Stripe and fail with a generic error
+- `DockScheduleTab` retry flow has **no expiration guard** — same issue
+- `useDockAppointments.ts` never fetches `card_exp_month`/`card_exp_year`
+- `PaymentMethodsCard` still uses a local `isCardExpired` function instead of the shared one
 
-## Approach
+The prior plan's entire deliverable was lost. Must re-implement from scratch.
 
-Break G1 into two deliverables:
+### B2: `send-payment-setup-link` uses outdated Stripe SDK (P2)
+Uses `stripe@14.21.0` with `apiVersion: "2023-10-16"`. All other Zura Pay payment functions were upgraded to `v18.5.0` / `2025-08-27.basil` in the last round. This function creates Checkout Sessions for platform billing setup — SDK mismatch can cause subtle API behavior differences.
 
-**Deliverable A (this plan):** Wire the confirm handler to create an appointment and pass deposit/card-on-file info to the confirmation screen. This makes the booking surface functional for services that don't require payment capture.
+### B3: Webhook `organization_stripe_accounts` lookup inconsistency (P2 — carried forward)
+Four webhook handlers (`handlePaymentMethodDetached`, `handlePaymentMethodUpdated`, `handleSetupIntentSucceeded`, `handleCustomerDeleted`) look up the org via `organization_stripe_accounts.stripe_account_id`. All edge functions were standardized to `organizations.stripe_connect_account_id` in the last round, but the webhook was not updated. If these tables drift, card sync events silently fail.
 
-**Deliverable B (future):** Add Stripe Elements to the booking surface to collect card details for services that require deposits or card-on-file. This requires `@stripe/react-stripe-js` and a new `create-booking-setup-intent` edge function — a larger effort best planned separately.
+### B4: `create-public-booking` doesn't persist `card_on_file_required` (P2)
+The edge function returns `requires_card_on_file: true` but never writes it to the appointment row. The insert payload (line 170-196) includes `deposit_required` but omits `card_on_file_required`. Staff reviewing the appointment later have no visibility into whether a card was expected.
 
-For Deliverable A, services requiring payment capture will show policy text and a clear message that payment will be collected, but booking will still proceed (the salon can follow up). This matches common salon booking flows where the deposit is collected post-confirmation.
+### B5: `depositPolicyText` and `cancellationPolicyText` use same source (P3 — UX)
+`HostedBookingPage` passes `hosted.policyText` to **both** `depositPolicyText` and `cancellationPolicyText` (lines 277-278). These should be separate configurable values from `booking_policies` settings (`deposit_policy_text` and `cancellation_policy_text`), which already exist in `useBookingPolicies`. The generic `policyText` is a fallback, not a substitute.
 
-## Changes
+## Gaps
 
-### 1. Add deposit/card-on-file fields to `EligibleService`
-**File:** `src/hooks/useBookingEligibleServices.ts`
-- Add `requires_deposit`, `deposit_type`, `deposit_amount`, `require_card_on_file` to the `EligibleService` interface
-- Add these columns to the `.select()` query (line 28)
-- Map them in the return (line 118-128)
+### G1: No Stripe Elements on booking surface (Deliverable B — carried forward)
+Public booking creates appointments but cannot collect deposits or cards. Services marked `requires_deposit` or `require_card_on_file` create appointments without enforcement. The confirmation page shows policy text but the button always says "Confirm Booking" — never "Confirm & Pay Deposit".
 
-### 2. Create `create-public-booking` edge function
-**File:** `supabase/functions/create-public-booking/index.ts`
-- **No auth required** — this is a public endpoint for unauthenticated clients
-- Accepts: `organization_id`, `service_name`, `stylist_id` (nullable), `location_id` (nullable), `date`, `time`, `client_info` (name, email, phone, notes)
-- Input validation via Zod
-- Rate limiting: check recent bookings by email (max 5 per hour per org) to prevent abuse
-- Finds or creates a client record in `clients` table by email + org
-- Inserts into `appointments` with status `pending`, source `online_booking`
-- If service has `requires_deposit` or `require_card_on_file`, sets `deposit_required: true` or `card_on_file_required: true` on the appointment
-- Returns the appointment ID and payment requirements
+This is acknowledged as Phase 2 and not addressed in this plan.
 
-### 3. Wire `HostedBookingPage` confirm handler
-**File:** `src/components/booking-surface/HostedBookingPage.tsx`
-- Look up selected service's deposit/card-on-file settings from `eligibleServices`
-- Pass `depositAmount`, `requiresCardOnFile`, `depositPolicyText`, `cancellationPolicyText` to `BookingConfirmation`
-- Replace the shell `handleConfirm` with an async handler that:
-  1. Sets `isSubmitting: true`
-  2. Calls `create-public-booking` edge function
-  3. On success, sets `isConfirmed: true` and sends embed message
-  4. On error, shows toast and re-enables the button
-- Pass `isSubmitting` to `BookingConfirmation`
+## Recommended Fixes
 
-### 4. Fetch booking policies from org config
-**File:** `src/components/booking-surface/HostedBookingPage.tsx`
-- Add a query for the org's `booking_surface_config` to extract `depositPolicyText` and `cancellationPolicyText` from the hosted config (these are already in the `BookingSurfaceConfig` type via `hosted.policyText` — we'll use that, plus add dedicated deposit/cancellation policy fields if they exist)
+### Changes
 
-### 5. Update `BookingConfirmation` button text
-**File:** `src/components/booking-surface/BookingConfirmation.tsx`
-- When `depositAmount > 0`: button says "Confirm & Pay Deposit"
-- When `requiresCardOnFile`: button says "Confirm & Save Card"
-- Otherwise: "Confirm Booking"
-- For Deliverable A (no Stripe Elements yet): if deposit/card is required, show an info message that the salon will contact them to collect payment. The button stays "Confirm Booking".
+**New file:** `src/lib/card-utils.ts`
+- Create `isCardExpired(expMonth, expYear)` utility
 
-## Technical Details
+**Modified:** `src/components/dashboard/clients/PaymentMethodsCard.tsx`
+- Remove local `isCardExpired`, import from `@/lib/card-utils`
+- Adapt call site (pass `card.card_exp_month, card.card_exp_year` instead of full card object)
 
-**Edge function structure:**
-```
-POST /create-public-booking
-Body: {
-  organization_id, service_name, stylist_id?,
-  location_id?, date, time, 
-  client: { first_name, last_name, email, phone?, notes? }
-}
-Response: {
-  success: true, appointment_id, 
-  requires_deposit: bool, requires_card_on_file: bool
-}
-```
+**Modified:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+- Import `isCardExpired` from `@/lib/card-utils`
+- Add pre-flight check in `handleChargeFee` and `handleManualCharge`: if `defaultCard` is expired, `toast.error(...)` and return early
 
-**Rate limiting:** Query `appointments` where `client_email = X` and `created_at > now() - 1h` and `organization_id = Y`. If count >= 5, return 429.
+**Modified:** `src/hooks/dock/useDockAppointments.ts`
+- Add `card_exp_month`, `card_exp_year` to interface and card batch query
 
-**Client upsert:** Match by `email + organization_id`. If exists, update name/phone. If not, insert new client row.
+**Modified:** `src/components/dock/schedule/DockScheduleTab.tsx`
+- Import `isCardExpired` from `@/lib/card-utils`
+- Add pre-flight check before retry charge
+
+**Modified:** `supabase/functions/send-payment-setup-link/index.ts`
+- Upgrade `stripe@14.21.0` to `stripe@18.5.0` and `apiVersion` to `2025-08-27.basil`
+
+**Modified:** `supabase/functions/stripe-webhook/index.ts`
+- In `handlePaymentMethodDetached`, `handlePaymentMethodUpdated`, `handleSetupIntentSucceeded`, `handleCustomerDeleted`: change `organization_stripe_accounts` lookup to `organizations` table using `stripe_connect_account_id`
+
+**Modified:** `supabase/functions/create-public-booking/index.ts`
+- Add `card_on_file_required: requireCardOnFile` to the appointment insert payload
+
+**Modified:** `src/components/booking-surface/HostedBookingPage.tsx`
+- Fetch `booking_policies` settings and pass `deposit_policy_text` / `cancellation_policy_text` as separate props instead of using `hosted.policyText` for both
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/hooks/useBookingEligibleServices.ts` | Add deposit/card fields to interface + query |
-| `supabase/functions/create-public-booking/index.ts` | New edge function — appointment creation |
-| `src/components/booking-surface/HostedBookingPage.tsx` | Wire confirm handler + pass payment props |
-| `src/components/booking-surface/BookingConfirmation.tsx` | Dynamic button text + payment info messaging |
+| `src/lib/card-utils.ts` | New — shared expiration utility |
+| `src/components/dashboard/clients/PaymentMethodsCard.tsx` | Import shared utility |
+| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Add pre-flight expired card check |
+| `src/hooks/dock/useDockAppointments.ts` | Add exp fields to query |
+| `src/components/dock/schedule/DockScheduleTab.tsx` | Add pre-flight expired card check |
+| `supabase/functions/send-payment-setup-link/index.ts` | Upgrade Stripe SDK |
+| `supabase/functions/stripe-webhook/index.ts` | Standardize org lookup in 4 handlers |
+| `supabase/functions/create-public-booking/index.ts` | Persist `card_on_file_required` |
+| `src/components/booking-surface/HostedBookingPage.tsx` | Use dedicated policy text fields |
 
-1 new edge function, 0 migrations, 0 new dependencies.
+0 migrations, 0 new edge functions, 0 new dependencies.
 
