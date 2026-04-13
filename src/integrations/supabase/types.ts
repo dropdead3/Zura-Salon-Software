@@ -14150,6 +14150,7 @@ export type Database = {
           amount: number
           appointment_id: string | null
           client_email: string | null
+          client_id: string | null
           client_name: string | null
           created_at: string
           currency: string
@@ -14169,6 +14170,7 @@ export type Database = {
           amount?: number
           appointment_id?: string | null
           client_email?: string | null
+          client_id?: string | null
           client_name?: string | null
           created_at?: string
           currency?: string
@@ -14188,6 +14190,7 @@ export type Database = {
           amount?: number
           appointment_id?: string | null
           client_email?: string | null
+          client_id?: string | null
           client_name?: string | null
           created_at?: string
           currency?: string
@@ -14209,6 +14212,13 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_disputes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {

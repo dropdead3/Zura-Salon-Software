@@ -23,7 +23,8 @@ export type SegmentKey =
   | 'win-back' 
   | 'new-no-return' 
   | 'birthday' 
-  | 'high-value-quiet';
+  | 'high-value-quiet'
+  | 'dispute-risk';
 
 export interface SegmentConfig {
   key: SegmentKey;
@@ -39,6 +40,7 @@ export const SEGMENTS: SegmentConfig[] = [
   { key: 'new-no-return', label: 'New Clients (No Return)', description: 'First-time visitors who never rebooked', icon: 'UserPlus' },
   { key: 'birthday', label: 'Birthday Outreach', description: 'Upcoming birthdays in next 30 days', icon: 'Cake' },
   { key: 'high-value-quiet', label: 'High-Value Quiet', description: 'Top spenders who have gone quiet', icon: 'TrendingDown' },
+  { key: 'dispute-risk', label: 'Dispute Risk', description: 'Clients with open or multiple payment disputes', icon: 'AlertTriangle' },
 ];
 
 export function useClientHealthSegments() {
@@ -185,6 +187,36 @@ export function useClientHealthSegments() {
         !clientsWithFutureBooking.has(c.id)
       );
 
+      // Segment: Dispute Risk — clients with open or multiple disputes
+      const disputeRisk: HealthClient[] = [];
+      {
+        // Fetch disputes with client_id set
+        const { data: disputes } = await supabase
+          .from('payment_disputes')
+          .select('client_id, status')
+          .not('client_id', 'is', null);
+        
+        if (disputes?.length) {
+          const clientDisputeMap = new Map<string, { total: number; open: number }>();
+          const openStatuses = ['needs_response', 'under_review', 'warning_needs_response'];
+          for (const d of disputes) {
+            const cid = d.client_id as string;
+            const existing = clientDisputeMap.get(cid) || { total: 0, open: 0 };
+            existing.total++;
+            if (openStatuses.includes(d.status)) existing.open++;
+            clientDisputeMap.set(cid, existing);
+          }
+          // Flag clients with any open dispute OR 2+ total disputes
+          const flaggedIds = new Set<string>();
+          for (const [cid, counts] of clientDisputeMap) {
+            if (counts.open > 0 || counts.total >= 2) flaggedIds.add(cid);
+          }
+          for (const c of enriched) {
+            if (flaggedIds.has(c.id)) disputeRisk.push(c);
+          }
+        }
+      }
+
       return {
         'needs-rebooking': needsRebooking,
         'at-risk': atRisk,
@@ -192,6 +224,7 @@ export function useClientHealthSegments() {
         'new-no-return': newNoReturn,
         'birthday': birthday,
         'high-value-quiet': highValueQuiet,
+        'dispute-risk': disputeRisk,
       };
     },
     staleTime: 1000 * 60 * 5,
@@ -206,5 +239,6 @@ function emptyResult(): Record<SegmentKey, HealthClient[]> {
     'new-no-return': [],
     'birthday': [],
     'high-value-quiet': [],
+    'dispute-risk': [],
   };
 }

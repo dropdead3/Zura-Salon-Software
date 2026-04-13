@@ -12,6 +12,7 @@ import {
   UserCheck,
   GitMerge,
   ChevronRight,
+  ShieldAlert,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
@@ -89,6 +90,12 @@ export default function ClientHub() {
               icon={GitMerge}
               title="Merge Clients"
               description="Deduplicate and consolidate client profiles safely"
+            />
+            <HubCard
+              href={dashPath('/admin/client-health?segment=dispute-risk')}
+              icon={ShieldAlert}
+              title="Flagged Clients"
+              description="Clients with payment disputes or bans requiring review"
             />
           </div>
         </div>
