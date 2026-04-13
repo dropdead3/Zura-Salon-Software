@@ -105,7 +105,7 @@ export function TipDistributionManager() {
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>Tip Distributions</CardTitle>
-                <MetricInfoTooltip content="Generate and confirm daily tip payouts for each service provider. Tips are aggregated from completed appointments." />
+                <MetricInfoTooltip description="Generate and confirm daily tip payouts for each service provider. Tips are aggregated from completed appointments." />
               </div>
               <CardDescription>Daily tip payout management</CardDescription>
             </div>

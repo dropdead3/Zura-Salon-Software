@@ -49,7 +49,7 @@ export function MyTipsHistory() {
           <div>
             <div className="flex items-center gap-2">
               <CardTitle className={tokens.card.title}>My Tips</CardTitle>
-              <MetricInfoTooltip content="Your daily tip distributions for the current pay period." />
+              <MetricInfoTooltip description="Your daily tip distributions for the current pay period." />
             </div>
             <CardDescription>Current period tip history</CardDescription>
           </div>

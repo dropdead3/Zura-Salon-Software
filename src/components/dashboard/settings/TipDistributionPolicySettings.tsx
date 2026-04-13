@@ -67,7 +67,7 @@ export function TipDistributionPolicySettings() {
           <div>
             <div className="flex items-center gap-2">
               <CardTitle className={tokens.card.title}>Tip Distribution Policy</CardTitle>
-              <MetricInfoTooltip content="Controls how daily tip distributions are generated and confirmed for your service providers." />
+              <MetricInfoTooltip description="Controls how daily tip distributions are generated and confirmed for your service providers." />
             </div>
             <CardDescription>Configure tip payout workflows</CardDescription>
           </div>
