@@ -388,7 +388,7 @@ export function TerminalSettingsContent() {
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
-          <TabErrorBoundary tabName="Fleet">
+          <TabErrorBoundary tabName="Fleet" key={activeTab === 'fleet' ? 'fleet-active' : 'fleet'}>
             <ZuraPayFleetTab
               locations={locations}
               activeLocationId={activeLocationId}

@@ -15,13 +15,27 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
-const RequestSchema = z.object({
-  action: z.enum(["create_account_and_link", "connect_location", "get_onboarding_link"]),
+const BaseSchema = z.object({
   organization_id: z.string().uuid("organization_id must be a valid UUID"),
   location_id: z.string().uuid().optional(),
+});
+
+const OnboardingSchema = BaseSchema.extend({
+  action: z.enum(["create_account_and_link", "get_onboarding_link"]),
+  return_url: z.string().url("return_url must be a valid URL"),
+  refresh_url: z.string().url("refresh_url must be a valid URL"),
+});
+
+const ConnectLocationSchema = BaseSchema.extend({
+  action: z.literal("connect_location"),
   return_url: z.string().url().optional(),
   refresh_url: z.string().url().optional(),
 });
+
+const RequestSchema = z.discriminatedUnion("action", [
+  OnboardingSchema,
+  ConnectLocationSchema,
+]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -111,8 +125,8 @@ Deno.serve(async (req) => {
       // Create Account Link for onboarding
       const accountLink = await stripe.accountLinks.create({
         account: accountId,
-        refresh_url: refresh_url || `${req.headers.get("origin") || "https://app.getzura.com"}/dashboard/admin/settings?tab=terminals&zura_pay_refresh=true`,
-        return_url: return_url || `${req.headers.get("origin") || "https://app.getzura.com"}/dashboard/admin/settings?tab=terminals&zura_pay_return=true`,
+        refresh_url: refresh_url,
+        return_url: return_url,
         type: "account_onboarding",
       });
 
@@ -167,8 +181,8 @@ Deno.serve(async (req) => {
 
       const accountLink = await stripe.accountLinks.create({
         account: org.stripe_connect_account_id,
-        refresh_url: refresh_url || `${req.headers.get("origin") || "https://app.getzura.com"}/dashboard/admin/settings?tab=terminals&zura_pay_refresh=true`,
-        return_url: return_url || `${req.headers.get("origin") || "https://app.getzura.com"}/dashboard/admin/settings?tab=terminals&zura_pay_return=true`,
+        refresh_url: refresh_url!,
+        return_url: return_url!,
         type: "account_onboarding",
       });
 

@@ -119,18 +119,13 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
           const currentPath = window.location.pathname;
           createCheckout.mutate({
             organizationId: orgId, locationId: reqLocationId || undefined, items,
-            successUrl: `${window.location.origin}${currentPath}?tab=terminals`,
-            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+            successUrl: `${window.location.origin}${currentPath}?tab=terminals&subtab=hardware`,
+            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals&subtab=hardware`,
           });
         },
-        onError: () => {
-          console.warn('[ZuraPay] Hardware request record failed — proceeding with checkout anyway');
-          const currentPath = window.location.pathname;
-          createCheckout.mutate({
-            organizationId: orgId, locationId: reqLocationId || undefined, items,
-            successUrl: `${window.location.origin}${currentPath}?tab=terminals`,
-            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals`,
-          });
+        onError: (err) => {
+          console.error('[ZuraPay] Hardware request record failed — aborting checkout', err);
+          toast.error('Failed to create hardware request. Please try again.');
         },
       }
     );

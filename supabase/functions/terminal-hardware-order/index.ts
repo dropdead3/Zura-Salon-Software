@@ -311,6 +311,10 @@ Deno.serve(async (req) => {
         : `${origin}${fallbackPath}?tab=terminals&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = cancel_url || `${origin}${fallbackPath}?tab=terminals&checkout=canceled`;
 
+      // Generate idempotency key from org + user + 5-min time bucket
+      const timeBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+      const idempotencyKey = `hw_checkout_${organization_id}_${user.id}_${timeBucket}`;
+
       // Create Checkout Session
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -327,7 +331,7 @@ Deno.serve(async (req) => {
         },
         success_url: successUrl,
         cancel_url: cancelUrl,
-      });
+      }, { idempotencyKey });
 
       return jsonResponse({
         url: session.url,
@@ -402,6 +406,21 @@ Deno.serve(async (req) => {
       if (insertError) {
         console.error("Failed to record order:", insertError);
         return jsonResponse({ error: "Payment succeeded but order recording failed. Contact support." }, 500);
+      }
+
+      // Sync: update the most recent pending terminal_hardware_requests row to "approved"
+      const { error: syncErr, count: syncCount } = await supabase
+        .from("terminal_hardware_requests")
+        .update({ status: "approved", updated_at: new Date().toISOString() }, { count: "exact" })
+        .eq("organization_id", organization_id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (syncErr) {
+        console.warn("Failed to sync terminal_hardware_requests status:", syncErr);
+      } else if (syncCount === 0) {
+        console.warn("No pending terminal_hardware_requests found to sync for org:", organization_id);
       }
 
       return jsonResponse({ data: order });
