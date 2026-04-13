@@ -29,6 +29,8 @@ export interface DockAppointment {
   client_id?: string | null;
   notes?: string | null;
   mix_bowl_count?: number;
+  total_price?: number | null;
+  has_card_on_file?: boolean;
 }
 
 export function useDockAppointments(staffUserId: string | null, locationId?: string, staffFilter?: string) {
