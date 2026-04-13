@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
         skus: [
           {
             id: "s710_reader",
-            product: "Zura Pay Reader S710",
+            product: "Zura Pay Reader S700/S710",
             amount: 29900,
             currency: "usd",
             status: "available",
@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
       // Build line items
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
-      const parsedItems = items || [{ name: "Zura Pay Reader S710", amount: 29900, quantity: bodyQuantity || 1, currency: "usd" }];
+      const parsedItems = items || [{ name: "Zura Pay Reader S700/S710", amount: 29900, quantity: bodyQuantity || 1, currency: "usd" }];
 
       for (const item of parsedItems) {
         lineItems.push({

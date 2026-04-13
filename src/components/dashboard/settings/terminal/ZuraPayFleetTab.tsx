@@ -527,7 +527,7 @@ export function ZuraPayFleetTab({
                             {reader.label || reader.serial_number || reader.id}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{reader.device_type}</span>
+                            <span>{reader.device_type === 'stripe_s700' ? 'S700' : reader.device_type === 'stripe_s710' ? 'S710' : reader.device_type}</span>
                             {reader.serial_number && (
                               <>
                                 <span>·</span>

@@ -34,7 +34,7 @@ const REASON_LABELS: Record<string, string> = {
   new_location: 'New Location',
   replacement: 'Replacement',
   additional: 'Additional',
-  upgrade_to_s710: 'Upgrade to S710',
+  upgrade_to_s710: 'Upgrade to S700/S710',
   other: 'Other',
 };
 

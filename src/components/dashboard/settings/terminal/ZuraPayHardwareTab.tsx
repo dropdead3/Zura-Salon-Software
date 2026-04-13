@@ -96,7 +96,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
 
     const items = [
       {
-        name: 'Zura Pay Reader S710', amount: readerPrice, quantity,
+        name: 'Zura Pay Reader S700/S710', amount: readerPrice, quantity,
         currency: readerCurrency, description: 'Terminal reader with cellular + WiFi connectivity',
         sku_id: skuData?.skus?.[0]?.id || 's710_reader',
       },
@@ -163,9 +163,9 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className={tokens.card.title}>ORDER TERMINAL</CardTitle>
-                  <MetricInfoTooltip description="Purchase Zura Pay Reader S710 terminals at cost. Pricing comes directly from the payment processor — Zura applies zero markup." />
+                  <MetricInfoTooltip description="Purchase Zura Pay Reader S700/S710 terminals at cost. Pricing comes directly from the payment processor — Zura applies zero markup." />
                 </div>
-                <CardDescription>Purchase S710 readers at cost — zero markup, direct processor pricing.</CardDescription>
+                <CardDescription>Purchase S700/S710 readers at cost — zero markup, direct processor pricing.</CardDescription>
               </div>
             </div>
             <Button size={tokens.button.card} className={tokens.button.cardAction} onClick={() => setDialogOpen(true)}>
@@ -179,14 +179,14 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
             <div className="flex items-center gap-4">
               {readerImage && !readerImageFailed ? (
-                <img src={readerImage} alt="S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
+                <img src={readerImage} alt="S700/S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
               ) : (
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Smartphone className="w-6 h-6 text-primary" />
                 </div>
               )}
               <div>
-                <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
+                <p className="font-sans font-medium text-sm">Zura Pay Reader S700/S710</p>
                 <p className="text-xs text-muted-foreground">Cellular + WiFi · Store-and-forward · Countertop &amp; handheld</p>
               </div>
             </div>
@@ -228,7 +228,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                   <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
                     <div>
                       <p className="font-sans font-medium text-sm">
-                        S710 Reader{req.quantity > 1 ? ` × ${req.quantity}` : ''}
+                        S700/S710 Reader{req.quantity > 1 ? ` × ${req.quantity}` : ''}
                         {req.accessories && req.accessories.length > 0 && (
                           <span className="text-muted-foreground font-normal"> + {req.accessories.length} accessor{req.accessories.length === 1 ? 'y' : 'ies'}</span>
                         )}
@@ -258,7 +258,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); else setDialogOpen(true); }}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle className="font-display text-lg tracking-wide">ORDER ZURA PAY READER S710</DialogTitle>
+              <DialogTitle className="font-display text-lg tracking-wide">ORDER ZURA PAY READER</DialogTitle>
               <DialogDescription>Purchase at direct processor cost — zero markup. Shipping address collected at checkout.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
@@ -266,14 +266,14 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
                 <div className="flex items-center gap-3">
                   {readerImage && !readerImageFailed ? (
-                    <img src={readerImage} alt="S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
+                    <img src={readerImage} alt="S700/S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
                   ) : (
                     <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Smartphone className="w-7 h-7 text-primary" />
                     </div>
                   )}
                   <div>
-                    <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
+                    <p className="font-sans font-medium text-sm">Zura Pay Reader S700/S710</p>
                     <p className="text-xs text-muted-foreground">Cellular + WiFi connectivity</p>
                   </div>
                 </div>
@@ -352,7 +352,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               {/* Order summary */}
               <div className="border-t pt-3 space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-sans">S710 × {quantity}</span>
+                  <span className="text-muted-foreground font-sans">S700/S710 × {quantity}</span>
                   <span className="font-sans font-medium">{formatCurrency((readerPrice * quantity) / 100)}</span>
                 </div>
                 {accessories.filter((acc) => selectedAccessories[acc.id]).map((acc) => (
@@ -375,7 +375,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
                 <Signal className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
                 <p className="font-sans text-xs text-muted-foreground">
-                  The S710 includes cellular connectivity, ensuring payments continue even when WiFi is down. Store-and-forward technology securely stores payments on-device during total outages.
+                  The S700/S710 includes cellular connectivity, ensuring payments continue even when WiFi is down. Store-and-forward technology securely stores payments on-device during total outages.
                 </p>
               </div>
             </div>

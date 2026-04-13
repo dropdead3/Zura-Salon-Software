@@ -26,9 +26,9 @@ export function OfflinePaymentStatus() {
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>CONNECTIVITY & OFFLINE PAYMENTS</CardTitle>
-                <MetricInfoTooltip description="Real-time connectivity status and offline payment queue visibility. The S710 reader stores payments securely when offline and forwards them automatically when connection returns." />
+                <MetricInfoTooltip description="Real-time connectivity status and offline payment queue visibility. The S700/S710 reader stores payments securely when offline and forwards them automatically when connection returns." />
               </div>
-              <CardDescription>S710 store-and-forward payment protection status.</CardDescription>
+              <CardDescription>S700/S710 store-and-forward payment protection status.</CardDescription>
             </div>
           </div>
           <Badge
@@ -41,7 +41,7 @@ export function OfflinePaymentStatus() {
             )}
           >
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-            {isOnline ? 'Connected' : 'Offline — S710 Active'}
+            {isOnline ? 'Connected' : 'Offline — S700/S710 Active'}
           </Badge>
         </div>
       </CardHeader>
@@ -107,7 +107,7 @@ export function OfflinePaymentStatus() {
         <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20 mb-4">
           <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
           <div>
-            <p className="font-sans text-sm text-foreground">S710 Store & Forward Active</p>
+            <p className="font-sans text-sm text-foreground">S700/S710 Store & Forward Active</p>
             <p className="font-sans text-xs text-muted-foreground">
               If connectivity is lost, payments are stored securely on the device and forwarded automatically when connection returns. Cellular failover engages automatically.
             </p>
