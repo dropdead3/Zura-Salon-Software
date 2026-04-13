@@ -294,9 +294,14 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
               </CardTitle>
               <CardDescription>Audit trail for deposits, cancellations, and no-show fees</CardDescription>
             </div>
-            {pendingCount > 0 && (
-              <Badge variant="secondary" className="ml-auto">{pendingCount} pending</Badge>
-            )}
+            <div className="flex items-center gap-2 ml-auto">
+              {pendingCount > 0 && (
+                <Badge variant="secondary">{pendingCount} pending</Badge>
+              )}
+              <Button className={tokens.button.cardAction} onClick={() => setAddFeeDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Add Fee
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
