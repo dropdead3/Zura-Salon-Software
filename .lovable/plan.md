@@ -1,42 +1,37 @@
 
 
-# Webhook Handler: `customer.deleted` → Bulk-Remove Cards on File
+# Webhook Handler: `payment_method.updated` → Sync Card Details
 
-## Analysis
+## Why
 
-When a Stripe Customer object is deleted from a Connected Account (via Dashboard or API), all attached PaymentMethods are implicitly detached by Stripe — but Stripe does **not** fire individual `payment_method.detached` events for each one. This means the existing detach handler won't cover this case, and all `client_cards_on_file` rows referencing that customer's `stripe_customer_id` become orphaned.
-
-A dedicated `customer.deleted` handler that bulk-deletes by `stripe_customer_id` + `organization_id` closes this gap.
+Stripe card networks periodically auto-update card details (new expiration date, updated last4 after reissue). When this happens, Stripe fires `payment_method.updated` — but without a handler, the local `client_cards_on_file` row displays stale card metadata in the UI.
 
 ## Changes
 
-### 1. Add `customer.deleted` handler to webhook
+### 1. Add `handlePaymentMethodUpdated` to webhook
 **File:** `supabase/functions/stripe-webhook/index.ts`
 
-New handler function `handleCustomerDeleted`:
-1. Extract `id` (the Stripe Customer ID, `cus_...`) from `event.data.object`
+New handler following the same org-lookup pattern as `handlePaymentMethodDetached`:
+1. Extract `id`, `card.brand`, `card.last4`, `card.exp_month`, `card.exp_year` from `event.data.object`
 2. Look up `organization_id` from `organization_stripe_accounts` using `event.account`
-3. Delete all rows from `client_cards_on_file` where `stripe_customer_id = id` and `organization_id` matches
-4. Log the count of deleted rows
+3. Update `client_cards_on_file` where `stripe_payment_method_id` and `organization_id` match, setting the four card detail columns
 
-Add the case to the switch statement in the Connect events section:
+Add the case to the switch statement alongside the other card-lifecycle handlers:
 ```
-case "customer.deleted":
+case "payment_method.updated":
   if (isConnectEvent) {
-    await handleCustomerDeleted(supabase, event.data.object, event.account);
+    await handlePaymentMethodUpdated(supabase, event.data.object, event.account);
   }
   break;
 ```
 
-The handler mirrors the existing `handlePaymentMethodDetached` pattern — same org lookup, same hard-delete approach, just keyed on `stripe_customer_id` instead of `stripe_payment_method_id`.
-
-No migration needed — `stripe_customer_id` column already exists on `client_cards_on_file`.
+No migration needed — all four columns (`card_brand`, `card_last4`, `card_exp_month`, `card_exp_year`) already exist on `client_cards_on_file`.
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `supabase/functions/stripe-webhook/index.ts` | Add `customer.deleted` case + `handleCustomerDeleted` handler |
+| `supabase/functions/stripe-webhook/index.ts` | Add `payment_method.updated` case + `handlePaymentMethodUpdated` handler |
 
 0 migrations, 0 new edge functions, 0 new dependencies.
 
