@@ -1,73 +1,80 @@
 
 
-# Surface `payment_failure_reason` in Dock Card and Schedule UI
+# Add "Retry Charge" Button to Dock Appointment Card
 
 ## Problem
 
-The `payment_failure_reason` is stored on the `appointments` table by the webhook but never surfaced in the UI. Staff have no way to see *why* a charge failed without checking externally. Additionally, the `phorest_appointments` table lacks this column entirely, so failures on phorest-sourced appointments can't be tracked.
+When a card-on-file charge fails, staff see a "Failed" badge with the decline reason but have no way to retry the charge from the Dock. They must navigate to the Operations Hub or Scheduler — breaking their workflow.
+
+## Approach
+
+Add a "Retry" button inline with the "Failed" badge on the Dock card. Tapping it opens a confirmation dialog, then invokes the existing `charge-card-on-file` edge function. The button only appears when the appointment has both `payment_status: 'failed'` and a saved card on file for the client.
 
 ## Changes
 
-### 1. Migration: Add `payment_failure_reason` to `phorest_appointments`
-Ensures parity with the `appointments` table so both appointment sources can store decline reasons.
-
-```sql
-ALTER TABLE public.phorest_appointments
-ADD COLUMN IF NOT EXISTS payment_failure_reason text;
-```
-
-### 2. Update webhook to write failure reason to both tables
-**File:** `supabase/functions/stripe-webhook/index.ts`
-
-In `handlePaymentIntentFailed`, after updating `appointments`, add a fallback update to `phorest_appointments` using the same `appointmentId`. This is safe — one will match, the other won't (no-op). Same pattern for the `handlePaymentIntentSucceeded` handler to clear the failure reason when a retry succeeds.
-
-### 3. Add `payment_failure_reason` to `DockAppointment` interface
+### 1. Extend `DockAppointment` interface and queries
 **File:** `src/hooks/dock/useDockAppointments.ts`
 
-- Add `payment_failure_reason?: string | null` to the interface
-- Include `payment_failure_reason` in both the `phorest_appointments` and `appointments` select queries
-- Map the field through in all data transforms
+- Add `phorest_client_id` is already there — also add `total_price?: number | null` to the interface
+- Include `total_price` in both phorest and local appointment select queries
+- After fetching appointments, batch-query `client_cards_on_file` for any appointments with `payment_status: 'failed'` to check if a default card exists — store as `has_card_on_file?: boolean` on the interface
 
-### 4. Add `failed` badge with tooltip to `DockAppointmentCard`
+### 2. Add `onRetryCharge` callback to `DockAppointmentCard`
 **File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+
+- Accept new optional prop `onRetryCharge?: (appointment: DockAppointment) => void`
+- When `payment_status === 'failed'` and `has_card_on_file` is true, render a small "Retry" button next to the "Failed" badge
+- Style: subtle pill button using `DOCK_BADGE`-like styling in blue/primary tones, with a `RefreshCw` icon
+- Button calls `onRetryCharge` — the parent handles the actual charge logic
+
+### 3. Add retry charge handler in the Dock schedule parent
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx` (or whichever component renders `DockAppointmentCard`)
+
+- Import `useOrganizationContext` for org ID
+- Create `handleRetryCharge` that:
+  1. Shows an `AlertDialog` confirmation (mandatory for financial actions per governance rules)
+  2. Invokes `charge-card-on-file` with `organization_id`, `appointment_id`, `client_id` (from `phorest_client_id`), and `amount` (from `total_price`)
+  3. On success: toast + invalidate dock appointments query
+  4. On failure: toast with error message
+- Pass `onRetryCharge={handleRetryCharge}` to each card
+
+### 4. Design token entry
 **File:** `src/components/dock/dock-ui-tokens.ts`
 
-- Add `failed` variant to `DOCK_BADGE` (red-themed, matching existing `unpaid` styling)
-- Add `failed` entry to `PAYMENT_BADGE` map with label "Failed"
-- Show the failed badge for any appointment (not just `completed`) when `payment_status === 'failed'`
-- When `payment_failure_reason` exists, wrap the badge in a Tooltip showing the decline reason (e.g., "Insufficient funds", "Incorrect billing address")
-- Show badge for non-terminal appointments too (so staff see it before/during the visit)
-
-### 5. Handle AVS-related failure reasons
-The user specifically asked about billing address and zip code errors. Stripe's `last_payment_error.message` already includes these natively (e.g., "Your card's zip code is incorrect", "Your card was declined due to billing address mismatch"). No special handling needed — the stored message will surface as-is in the tooltip.
-
-The `decline_code` field from Stripe's error object provides more granular codes like `incorrect_zip`, `incorrect_address`. We'll store the human-readable `message` (already implemented) which covers these cases.
+- Add `retryAction` token for the inline retry button styling (small pill, primary color scheme)
 
 ## UI Behavior
 
 ```text
 ┌─────────────────────────────────────────────┐
-│  Jane D. · Balayage + Toner       Failed ⓘ  │
+│  Jane D. · Balayage + Toner   Failed ⓘ  ↻  │
 │  10:30 AM – 12:30 PM · 2h                   │
 └─────────────────────────────────────────────┘
-                                    ↑ tooltip:
-                          "Your card's zip code
-                           is incorrect"
+                                          ↑
+                                    Retry button
+                                 (only if card on file)
 ```
 
-- Badge appears in the top-right corner alongside existing status/payment badges
-- Tooltip on hover/tap shows the specific Stripe decline reason
-- Badge shown regardless of appointment status (scheduled, in_progress, completed)
+- "Retry" button is a small icon-pill next to the Failed badge
+- Tapping opens an `AlertDialog`: "Retry charge of $X.XX to card ending in ••••?"
+- Confirm triggers the charge; cancel dismisses
+- During charge, button shows a loading spinner
+- On success, the webhook will update `payment_status` to `paid` and clear `payment_failure_reason` — the query invalidation will refresh the card
+
+## Governance Compliance
+
+- Financial action protected by `AlertDialog` confirmation
+- Uses existing `charge-card-on-file` edge function (no new backend)
+- Organization-scoped via `useOrganizationContext`
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| **Migration** | Add `payment_failure_reason` to `phorest_appointments` |
-| `supabase/functions/stripe-webhook/index.ts` | Write failure reason to both tables; clear on success |
-| `src/hooks/dock/useDockAppointments.ts` | Add field to interface + queries |
-| `src/components/dock/dock-ui-tokens.ts` | Add `failed` badge variant |
-| `src/components/dock/schedule/DockAppointmentCard.tsx` | Add failed badge with tooltip |
+| `src/hooks/dock/useDockAppointments.ts` | Add `total_price`, `has_card_on_file` to interface + queries |
+| `src/components/dock/dock-ui-tokens.ts` | Add `retryAction` token |
+| `src/components/dock/schedule/DockAppointmentCard.tsx` | Add retry button next to Failed badge |
+| `src/components/dock/schedule/DockScheduleTab.tsx` | Add `handleRetryCharge` with AlertDialog + edge function call |
 
-1 migration, 0 new edge functions, 0 new dependencies.
+0 migrations, 0 new edge functions, 0 new dependencies.
 
