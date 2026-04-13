@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       }
 
       const qty = Math.min(Math.max(Math.round(quantity || 1), 1), 10);
-      const validReasons = ["new_location", "replacement", "additional", "other"];
+      const validReasons = ["new_location", "replacement", "additional", "upgrade_to_s710", "other"];
       if (!validReasons.includes(reason)) {
         return jsonResponse({ error: `Invalid reason. Must be one of: ${validReasons.join(", ")}` }, 400);
       }
@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
           reason,
           notes: notes?.slice(0, 1000) || null,
           status: "pending",
+          device_type: "s710",
         })
         .select()
         .single();

@@ -16,6 +16,8 @@ const API_CACHE_PATTERNS = [
   /\/rest\/v1\/phorest_appointments/,
   /\/rest\/v1\/employee_profiles/,
   /\/rest\/v1\/locations/,
+  /\/rest\/v1\/terminal_hardware_requests/,
+  /\/rest\/v1\/organizations/,
 ];
 
 self.addEventListener('install', (event) => {
@@ -205,10 +207,19 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-offline-actions') {
     event.waitUntil(syncOfflineActions());
   }
+  if (event.tag === 'sync-offline-payments') {
+    event.waitUntil(syncOfflinePayments());
+  }
 });
 
 async function syncOfflineActions() {
   // Get pending actions from IndexedDB and sync them
   console.log('[SW] Syncing offline actions...');
   // Implementation will be handled by useOfflineSync hook
+}
+
+async function syncOfflinePayments() {
+  console.log('[SW] Syncing offline payments...');
+  // S710 handles store-and-forward natively via Stripe Terminal SDK
+  // This sync tag is a signal for the dashboard to refresh payment queue visibility
 }
