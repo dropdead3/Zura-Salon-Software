@@ -1351,7 +1351,7 @@ export default function PaymentOps() {
                   <div className="flex items-center justify-center h-32">
                     <Loader2 className={tokens.loading.spinner} />
                   </div>
-                ) : pendingRefunds.length === 0 ? (
+                ) : filteredRefunds.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <Banknote className={tokens.empty.icon} />
                     <h3 className={tokens.empty.heading}>No pending refunds</h3>
