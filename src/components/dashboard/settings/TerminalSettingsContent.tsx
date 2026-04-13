@@ -452,7 +452,7 @@ export function TerminalSettingsContent() {
             display_name: tl.display_name,
           }))}
         />
-      )
+      )}
 
       {/* Delete Terminal Location Confirmation */}
       <AlertDialog
