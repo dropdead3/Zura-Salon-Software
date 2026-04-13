@@ -982,7 +982,11 @@ async function handleChargeRefunded(
       .eq("id", appointment.id);
     console.log(`Appointment ${appointment.id} marked as fully refunded`);
   } else {
-    console.log(`Partial refund on appointment ${appointment.id}: ${refundAmount}/${chargeAmount} cents`);
+    await supabase
+      .from("appointments")
+      .update({ payment_status: "partially_refunded" })
+      .eq("id", appointment.id);
+    console.log(`Appointment ${appointment.id} marked as partially refunded: ${refundAmount}/${chargeAmount} cents`);
   }
 }
 

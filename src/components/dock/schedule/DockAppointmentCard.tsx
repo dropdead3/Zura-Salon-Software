@@ -53,6 +53,8 @@ const STATUS_BADGE: Record<string, { label: string; variant: string }> = {
 const PAYMENT_BADGE: Record<string, { label: string; variant: string }> = {
   paid: { label: 'Paid', variant: DOCK_BADGE.paid },
   unpaid: { label: 'Unpaid', variant: DOCK_BADGE.unpaid },
+  refunded: { label: 'Refunded', variant: DOCK_BADGE.refunded },
+  partially_refunded: { label: 'Partial Refund', variant: DOCK_BADGE.partiallyRefunded },
   comp: { label: 'Waived', variant: DOCK_BADGE.comp },
 };
 
