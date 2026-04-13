@@ -191,6 +191,28 @@ export function TipDistributionManager() {
         </div>
       </CardHeader>
       <CardContent>
+        {/* Staff Payout Accounts Summary (Admin visibility) */}
+        {payoutAccounts.length > 0 && (
+          <div className="mb-4 p-3 rounded-lg border border-border/60">
+            <p className="text-xs font-display uppercase tracking-wide text-muted-foreground mb-2">Staff Payout Accounts</p>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{payoutAccounts.filter(a => a.payouts_enabled).length} verified</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span>{payoutAccounts.filter(a => !a.payouts_enabled && a.details_submitted).length} pending</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>{payoutAccounts.filter(a => !a.details_submitted).length} not started</span>
+              </div>
+              <span className="text-muted-foreground">/ {payoutAccounts.length} total</span>
+            </div>
+          </div>
+        )}
+
         {/* Summary bar */}
         {distributions.length > 0 && (
           <div className="flex items-center gap-6 mb-4 p-3 rounded-lg bg-muted/50">

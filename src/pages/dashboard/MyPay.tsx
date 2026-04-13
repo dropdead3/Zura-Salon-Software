@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -17,7 +17,13 @@ import { Navigate } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useRefreshPayoutStatus } from '@/hooks/useStaffPayoutAccount';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { toast } from 'sonner';
+
+interface TipDistributionPolicy {
+  enabled: boolean;
+  default_method: string;
+}
 
 export default function MyPay() {
   const { dashPath } = useOrgDashboardPath();
@@ -26,22 +32,34 @@ export default function MyPay() {
   const { isLoading, settings, currentPeriod, salesData, estimatedCompensation, payStubs, error } = useMyPayData();
   const refreshStatus = useRefreshPayoutStatus();
   const [searchParams, setSearchParams] = useSearchParams();
+  const onboardingHandled = useRef(false);
+
+  // Load tip distribution policy to gate the My Tips tab
+  const { data: tipPolicySetting } = useColorBarSetting('tip_distribution_policy');
+  const tipPolicy = tipPolicySetting?.value as unknown as TipDistributionPolicy | null;
+  const tipsEnabled = tipPolicy?.enabled === true;
+  const showDirectDeposit = tipsEnabled && tipPolicy?.default_method === 'direct_deposit';
 
   // Handle Stripe onboarding return
   useEffect(() => {
-    if (searchParams.get('onboarding') === 'complete' && effectiveOrganization?.id) {
-      refreshStatus.mutate(
-        { organization_id: effectiveOrganization.id },
-        {
-          onSuccess: () => {
-            toast.success('Bank account connected! Your payout status has been updated.');
-          },
-        }
-      );
-      // Clear the query param
-      searchParams.delete('onboarding');
-      setSearchParams(searchParams, { replace: true });
-    }
+    if (
+      onboardingHandled.current ||
+      searchParams.get('onboarding') !== 'complete' ||
+      !effectiveOrganization?.id
+    ) return;
+
+    onboardingHandled.current = true;
+    refreshStatus.mutate(
+      { organization_id: effectiveOrganization.id },
+      {
+        onSuccess: () => {
+          toast.success('Bank account connected! Your payout status has been updated.');
+        },
+      }
+    );
+    // Clear the query param
+    searchParams.delete('onboarding');
+    setSearchParams(searchParams, { replace: true });
   }, [searchParams, effectiveOrganization?.id]);
 
   // Redirect if org doesn't have payroll enabled
@@ -91,7 +109,7 @@ export default function MyPay() {
         <Tabs defaultValue="current" className="space-y-6">
           <TabsList>
             <TabsTrigger value="current">Current Period</TabsTrigger>
-            <TabsTrigger value="tips">My Tips</TabsTrigger>
+            {tipsEnabled && <TabsTrigger value="tips">My Tips</TabsTrigger>}
             <TabsTrigger value="history">Pay History</TabsTrigger>
           </TabsList>
 
@@ -110,10 +128,12 @@ export default function MyPay() {
             </div>
           </TabsContent>
 
-          <TabsContent value="tips" className="space-y-6">
-            <MyPayoutSetup />
-            <MyTipsHistory />
-          </TabsContent>
+          {tipsEnabled && (
+            <TabsContent value="tips" className="space-y-6">
+              {showDirectDeposit && <MyPayoutSetup />}
+              <MyTipsHistory />
+            </TabsContent>
+          )}
 
           <TabsContent value="history">
             <MyPayStubHistory payStubs={payStubs} />
