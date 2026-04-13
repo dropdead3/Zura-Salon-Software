@@ -80,6 +80,68 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
   const [cardLoading, setCardLoading] = useState(false);
   const queryClient = useQueryClient();
 
+  // Add Fee state
+  const [addFeeDialogOpen, setAddFeeDialogOpen] = useState(false);
+  const [addFeeSearch, setAddFeeSearch] = useState('');
+  const [addFeeType, setAddFeeType] = useState('manual');
+  const [addFeeAmount, setAddFeeAmount] = useState('');
+  const [selectedAppointment, setSelectedAppointment] = useState<{ id: string; client_name: string; appointment_date: string } | null>(null);
+
+  const debouncedSearch = useDebounce(addFeeSearch, 300);
+
+  const { data: appointmentSearchResults = [] } = useQuery({
+    queryKey: ['add-fee-appointment-search', orgId, debouncedSearch],
+    queryFn: async () => {
+      const cutoff = format(subDays(new Date(), 90), 'yyyy-MM-dd');
+      const { data, error } = await supabase
+        .from('phorest_appointments')
+        .select('id, client_name, appointment_date')
+        .eq('organization_id', orgId!)
+        .gte('appointment_date', cutoff)
+        .ilike('client_name', `%${debouncedSearch}%`)
+        .order('appointment_date', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId && debouncedSearch.length >= 2,
+  });
+
+  const addFeeMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedAppointment || !addFeeAmount) throw new Error('Missing fields');
+      const amount = parseFloat(addFeeAmount);
+      if (isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
+      const { error } = await supabase
+        .from('appointment_fee_charges')
+        .insert({
+          organization_id: orgId!,
+          appointment_id: selectedAppointment.id,
+          fee_type: addFeeType,
+          fee_amount: amount,
+          status: 'pending',
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger-pending-count'] });
+      toast.success('Fee charge added');
+      resetAddFeeForm();
+    },
+    onError: (error) => {
+      toast.error('Failed to add fee', { description: error.message });
+    },
+  });
+
+  const resetAddFeeForm = useCallback(() => {
+    setAddFeeDialogOpen(false);
+    setAddFeeSearch('');
+    setAddFeeType('manual');
+    setAddFeeAmount('');
+    setSelectedAppointment(null);
+  }, []);
+
   const { data: feeCharges = [], isLoading } = useQuery({
     queryKey: ['fee-ledger', orgId, statusFilter],
     queryFn: async () => {
