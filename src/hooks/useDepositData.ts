@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
 import { toast } from 'sonner';
 
 // ─── Client Cards on File ─────────────────────────────
@@ -159,4 +160,53 @@ export function calculateDepositAmount(
     return depositAmountFlat;
   }
   return calculated;
+}
+
+// ─── Booking Policies (customer-facing text) ─────────
+
+export interface BookingPolicies {
+  deposit_policy_text: string;
+  cancellation_policy_text: string;
+}
+
+const DEFAULT_BOOKING_POLICIES: BookingPolicies = {
+  deposit_policy_text: '',
+  cancellation_policy_text: '',
+};
+
+export function useBookingPolicies(explicitOrgId?: string) {
+  return useSiteSettings<BookingPolicies>('booking_policies', explicitOrgId);
+}
+
+export function useUpdateBookingPolicies(explicitOrgId?: string) {
+  return useUpdateSiteSetting<BookingPolicies>(explicitOrgId);
+}
+
+// ─── Charge Card on File (mutation) ───────────────────
+
+export function useChargeCardOnFile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      organization_id: string;
+      appointment_id: string;
+      card_on_file_id?: string;
+      client_id?: string;
+      amount: number;
+      description?: string;
+      fee_type?: 'cancellation' | 'no_show' | 'manual';
+    }) => {
+      const { data, error } = await supabase.functions.invoke('charge-card-on-file', {
+        body: params,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments-hub'] });
+    },
+  });
 }
