@@ -93,15 +93,14 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
     queryKey: ['add-fee-appointment-search', orgId, debouncedSearch],
     queryFn: async () => {
       const cutoff = format(subDays(new Date(), 90), 'yyyy-MM-dd');
-      let query = supabase
+      const { data, error } = await (supabase
         .from('phorest_appointments')
         .select('id, client_name, appointment_date')
         .eq('organization_id', orgId!)
-        .gte('appointment_date', cutoff);
-      query = query.ilike('client_name', `%${debouncedSearch}%`) as typeof query;
-      const { data, error } = await query
+        .gte('appointment_date', cutoff)
+        .ilike('client_name', `%${debouncedSearch}%`)
         .order('appointment_date', { ascending: false })
-        .limit(10);
+        .limit(10) as any);
       if (error) throw error;
       return (data ?? []) as Array<{ id: string; client_name: string | null; appointment_date: string }>;
     },
