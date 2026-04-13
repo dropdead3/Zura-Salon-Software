@@ -69,14 +69,14 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
         .from('appointment_fee_charges')
         .select(`
           id, fee_type, fee_amount, status, collected_via, charged_at, created_at,
-          appointment:appointment_id (client_name, staff_name, appointment_date, status)
+          appointment:appointment_id (client_name, appointment_date, status)
         `)
         .eq('organization_id', orgId!)
         .eq('status', statusFilter)
         .order('created_at', { ascending: false })
         .limit(100);
       if (error) throw error;
-      return (data ?? []) as Array<{
+      return (data ?? []) as unknown as Array<{
         id: string;
         fee_type: string;
         fee_amount: number;
@@ -84,7 +84,7 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
         collected_via: string | null;
         charged_at: string | null;
         created_at: string;
-        appointment: { client_name: string | null; staff_name: string | null; appointment_date: string; status: string | null } | null;
+        appointment: { client_name: string | null; appointment_date: string; status: string | null } | null;
       }>;
     },
     enabled: !!orgId,
