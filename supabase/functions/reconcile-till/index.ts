@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
         const { data: localAppointments } = await supabase
           .from("appointments")
           .select("id, stripe_payment_intent_id, payment_status, payment_method, total_price, tip_amount")
+          .eq("organization_id", organization_id)
           .eq("appointment_date", date)
           .not("stripe_payment_intent_id", "is", null);
 

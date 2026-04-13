@@ -252,12 +252,26 @@ export default function TeamHub() {
         return thisYearBday >= today && thisYearBday <= nextWeek;
       }).length;
 
+      // E2: Payment ops badge — pending refunds + active deposit holds
+      const pendingRefundsResult = await supabase
+        .from('refund_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      const activeHoldsResult = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('deposit_status', 'held');
+
+      const paymentOpsCount = (pendingRefundsResult.count || 0) + (activeHoldsResult.count || 0);
+
       return {
         pendingAssistantRequests: assistantRequestsResult.count || 0,
         pendingBusinessCards: businessCardsResult.count || 0,
         pendingHeadshots: headshotsResult.count || 0,
         inProgressGraduations: graduationsResult.count || 0,
         birthdaysThisWeek,
+        paymentOpsCount,
       };
     },
     staleTime: 1000 * 60 * 5,
@@ -368,6 +382,8 @@ export default function TeamHub() {
               icon={Banknote}
               title="Payment Operations"
               description="Till reconciliation, deposit holds, and refund processing"
+              stat={getStat('paymentOpsCount')}
+              statLabel="action(s)"
               {...favProps('/admin/payment-ops', 'Payment Operations', Banknote)}
             />
           )}
