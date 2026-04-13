@@ -1,81 +1,95 @@
 
 
-# Stripe Terminal Configurator — Audit Report
+# Terminal Hardware Request Feature
 
-## Findings Summary
+## Overview
 
-3 bugs, 2 security gaps, 6 enhancements identified.
+Build a self-service terminal ordering flow inside Zura Pay settings (org side) and a fulfillment management view on the platform admin side. Organizations submit requests for new/replacement terminals, and platform admins review, approve, and track shipment.
 
----
+## Architecture
 
-## Bugs
+```text
+Org Settings (Terminals tab)
+└── "Request a Terminal" card (NEW)
+    ├── Request form: location, quantity, reason (new/replacement/additional), notes
+    └── Request history table with status badges
 
-### B1. CORS headers missing modern Supabase client headers
-The edge function's `corsHeaders` omits `x-supabase-client-platform`, `x-supabase-client-platform-version`, `x-supabase-client-runtime`, `x-supabase-client-runtime-version`. Modern `supabase-js` sends these and some proxies/browsers may reject the preflight.
+Platform Admin (/platform/stripe-health or new sub-route)
+└── Terminal Requests panel (NEW)
+    ├── Incoming requests table (org, location, reason, status, date)
+    ├── Status management: pending → approved → shipped → delivered / denied
+    └── Tracking number + notes per request
+```
 
-**Fix**: Update `corsHeaders` in `manage-stripe-terminals/index.ts` to include all required headers per the SDK convention.
+## Database
 
-### B2. Hardcoded postal code `"00000"` when creating terminal locations
-Line 141 of the edge function hardcodes `postal_code: "00000"`. The `locations` table likely has a `postal_code` or `zip_code` column that should be used instead.
+New table: `terminal_hardware_requests`
 
-**Fix**: Query `postal_code` (or equivalent column) from the locations table and pass it through. Fall back to empty string only if truly missing.
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | default gen_random_uuid() |
+| organization_id | uuid FK | references organizations(id), RLS scoped |
+| location_id | text | references locations(id) |
+| requested_by | uuid | references auth.users(id) |
+| quantity | integer | default 1 |
+| reason | text | 'new_location', 'replacement', 'additional', 'other' |
+| notes | text | nullable, free-form from org |
+| status | text | 'pending', 'approved', 'shipped', 'delivered', 'denied' |
+| admin_notes | text | nullable, platform admin notes |
+| tracking_number | text | nullable |
+| created_at | timestamptz | default now() |
+| updated_at | timestamptz | default now() |
 
-### B3. Delete actions close dialog before mutation completes
-`handleDeleteLocation` and `handleDeleteReader` call the mutation with `onSuccess: () => setDeleteTarget(null)`, but the `AlertDialogAction` also triggers the dialog's `onOpenChange` immediately on click, potentially closing the dialog before the mutation finishes and hiding the loading spinner.
+RLS:
+- Org members can SELECT their own org's requests
+- Org admins/managers can INSERT for their org
+- Platform users can SELECT all, UPDATE status/admin_notes/tracking
 
-**Fix**: Prevent default close on the `AlertDialogAction` and only close programmatically in `onSuccess`/`onError`.
+## Changes
 
----
+### 1. Database Migration
+- Create `terminal_hardware_requests` table with RLS policies
+- `is_org_member` for org-side reads, `is_platform_user` for platform-side reads/updates
 
-## Security Gaps
+### 2. Edge Function: `manage-terminal-requests/index.ts`
+Actions:
+- `create_request` — org admin submits a request (validates org membership + role)
+- `list_requests` — org-scoped list for settings UI
+- `list_all_requests` — platform-scoped list (requires platform role)
+- `update_request` — platform admin updates status, tracking, notes
 
-### S1. No role-based gating on destructive actions
-The edge function checks org membership but not role. Any org member (including stylists) can delete terminal locations and readers. Only admins/managers should perform these actions.
+### 3. Hook: `src/hooks/useTerminalRequests.ts`
+- `useTerminalRequests(orgId)` — org-scoped list
+- `useAllTerminalRequests()` — platform-scoped list
+- `useCreateTerminalRequest()` — mutation
+- `useUpdateTerminalRequest()` — mutation (platform side)
 
-**Fix**: Query the user's role from `user_roles` or `organization_members` and restrict `create_location`, `delete_location`, `register_reader`, `delete_reader` to admin/manager roles. Read-only `list_*` actions can remain available to all members.
+### 4. Org UI: Add to `TerminalSettingsContent.tsx`
+- New "Request a Terminal" card below existing terminal management
+- Form dialog: select location, quantity (1-5), reason dropdown, optional notes
+- Request history table showing status, date, tracking number
+- Status badges: pending (amber), approved (blue), shipped (violet), delivered (green), denied (red)
 
-### S2. No input validation (Zod) in edge function
-The `action` param and all `params` values are used without sanitization. The `terminal_location_id` and `reader_id` are interpolated directly into URL paths, risking path traversal if malformed.
+### 5. Platform UI: `src/components/platform/stripe/TerminalRequestsTable.tsx`
+- Table with org name, location, reason, quantity, status, date, actions
+- Inline status update dropdown + tracking number input
+- Admin notes field
+- Filterable by status
+- Integrated into StripeHealth page as a new section or as a tab
 
-**Fix**: Add Zod validation for the request body. Validate that IDs match expected Stripe ID patterns (`tml_*`, `tmr_*`).
+### 6. Route/Nav Integration
+- Add `TerminalRequestsTable` as a section within the existing Stripe Health page (no new route needed)
 
----
+## Files
 
-## Enhancements
-
-### E1. Missing postal code from locations query
-The `useZuraPayLocations` hook selects `address, city, state_province` but not `postal_code`. This data would be useful for display and is needed for the address fix in B2.
-
-### E2. No "All Locations" summary view
-The plan specified a bulk "All Locations" view showing a summary table with terminal/reader counts per location. This was not implemented.
-
-**Fix**: Add an "All Locations" option to the location picker that renders a summary table showing each location's terminal location count, total readers, and online/offline breakdown.
-
-### E3. Reader count badge missing from location picker
-The plan specified the location picker should show reader count badges next to each location name. Currently only a text label below the picker shows the count.
-
-**Fix**: Add inline badge with reader count inside each `SelectItem` in the location picker.
-
-### E4. No error recovery on registration wizard failure
-If `registerReader.mutate` fails in step 2, the user sees a toast but the wizard stays on step 2 with no indication of what went wrong inline. The pairing code field retains its value, which is good, but there's no inline error message.
-
-**Fix**: Display the error message inline below the pairing code field on failure.
-
-### E5. Missing `MetricInfoTooltip` on card titles
-Per UI Canon, every analytics/dashboard card must have a `MetricInfoTooltip` inline with the title. Both the Terminal Locations and Terminal Readers cards omit this.
-
-### E6. Buttons should use `tokens.button.*` sizing
-The "Create Location" and "Register Reader" buttons use raw `size="sm"` instead of `tokens.button.card` or `tokens.button.cardAction` per the design token system.
-
----
-
-## Files Changed
-
-| File | Changes |
+| File | Action |
 |---|---|
-| `supabase/functions/manage-stripe-terminals/index.ts` | B1 (CORS), B2 (postal code), S1 (role check), S2 (Zod validation) |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | B3 (dialog close), E2 (all-locations view), E3 (picker badges), E4 (inline errors), E5 (tooltips), E6 (button tokens) |
-| `src/hooks/useStripeTerminals.ts` | E1 (postal code in query) |
+| Migration | Create `terminal_hardware_requests` table + RLS |
+| `supabase/functions/manage-terminal-requests/index.ts` | Create — CRUD edge function |
+| `src/hooks/useTerminalRequests.ts` | Create — React Query hooks |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Modify — Add request card + history |
+| `src/components/platform/stripe/TerminalRequestsTable.tsx` | Create — Platform admin table |
+| `src/pages/dashboard/platform/StripeHealth.tsx` | Modify — Add terminal requests section |
 
-3 files modified. No database changes. No new dependencies (Zod is available in Deno edge runtime).
+6 files (3 new, 2 modified, 1 migration). No new dependencies.
 
