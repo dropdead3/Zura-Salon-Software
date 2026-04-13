@@ -362,6 +362,8 @@ function AppointmentGroup({
   onCancel,
   onNoShow,
   onViewClient,
+  onRetryCharge,
+  retryingId,
 }: {
   label: string;
   count: number;
@@ -373,6 +375,8 @@ function AppointmentGroup({
   onCancel?: (appointment: DockAppointment) => void;
   onNoShow?: (appointment: DockAppointment) => void;
   onViewClient?: (appointment: DockAppointment) => void;
+  onRetryCharge?: (appointment: DockAppointment) => void;
+  retryingId?: string | null;
 }) {
   const dotColor = {
     violet: 'bg-violet-500',
@@ -395,7 +399,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-4">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} onTap={onTap} onComplete={onComplete} onStart={onStart} onCancel={onCancel} onNoShow={onNoShow} onViewClient={onViewClient} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} isRetrying={retryingId === a.id} onTap={onTap} onComplete={onComplete} onStart={onStart} onCancel={onCancel} onNoShow={onNoShow} onViewClient={onViewClient} onRetryCharge={onRetryCharge} />
         ))}
       </div>
     </div>
