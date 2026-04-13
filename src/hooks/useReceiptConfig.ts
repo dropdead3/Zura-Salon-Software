@@ -1,6 +1,6 @@
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 
-export interface ReceiptConfig {
+export interface ReceiptConfig extends Record<string, unknown> {
   show_logo: boolean;
   logo_position: 'center' | 'left';
   show_address: boolean;
