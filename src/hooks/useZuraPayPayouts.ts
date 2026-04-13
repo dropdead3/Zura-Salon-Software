@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface BalanceAmount {
   amount: number;
@@ -26,6 +27,14 @@ export interface PayoutSchedule {
   delay_days?: number;
 }
 
+export interface BankAccountInfo {
+  bank_name: string | null;
+  last4: string | null;
+  routing_last4: string | null;
+  currency: string | null;
+  status: 'new' | 'verified' | 'errored';
+}
+
 export interface ZuraPayPayoutsData {
   balance: {
     available: BalanceAmount[];
@@ -33,6 +42,7 @@ export interface ZuraPayPayoutsData {
   };
   payouts: PayoutItem[];
   payout_schedule: PayoutSchedule | null;
+  bank_account: BankAccountInfo | null;
 }
 
 export function useZuraPayPayouts(orgId: string | undefined) {
@@ -48,5 +58,31 @@ export function useZuraPayPayouts(orgId: string | undefined) {
     },
     enabled: !!orgId,
     staleTime: 60000,
+  });
+}
+
+export function useUpdatePayoutSchedule(orgId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (schedule: Partial<PayoutSchedule>) => {
+      const { data, error } = await supabase.functions.invoke('zura-pay-payouts', {
+        body: {
+          organization_id: orgId,
+          action: 'update_schedule',
+          schedule,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Payout schedule updated');
+      queryClient.invalidateQueries({ queryKey: ['zura-pay-payouts', orgId] });
+    },
+    onError: (err: Error) => {
+      toast.error('Failed to update schedule', { description: err.message });
+    },
   });
 }

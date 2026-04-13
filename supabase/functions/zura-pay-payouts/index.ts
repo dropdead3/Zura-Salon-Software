@@ -116,6 +116,22 @@ Deno.serve(async (req) => {
 
     const payoutSchedule = (account.settings as any)?.payouts?.schedule || null;
 
+    // Extract default bank account info
+    const externalAccounts = (account as any).external_accounts?.data || [];
+    const defaultBank = externalAccounts.find(
+      (ea: any) => ea.object === 'bank_account' && ea.default_for_currency
+    ) || externalAccounts.find((ea: any) => ea.object === 'bank_account');
+
+    const bankAccount = defaultBank
+      ? {
+          bank_name: defaultBank.bank_name || null,
+          last4: defaultBank.last4 || null,
+          routing_last4: defaultBank.routing_number ? defaultBank.routing_number.slice(-4) : null,
+          currency: defaultBank.currency?.toUpperCase() || null,
+          status: defaultBank.status || 'new',
+        }
+      : null;
+
     return new Response(
       JSON.stringify({
         balance: {
@@ -134,6 +150,7 @@ Deno.serve(async (req) => {
           description: p.description,
         })),
         payout_schedule: payoutSchedule,
+        bank_account: bankAccount,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
