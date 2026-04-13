@@ -1272,6 +1272,18 @@ export function AppointmentDetailSheet({
                       )}
                     </motion.div>
 
+                    {/* Cancellation / No-Show Fee Section */}
+                    {['cancelled', 'no_show'].includes(appointment.status) && effectiveOrganization?.id && (
+                      <motion.div variants={staggerItem}>
+                        <CancellationFeeSection
+                          appointment={appointment}
+                          organizationId={effectiveOrganization.id}
+                          isManagerOrAdmin={isManagerOrAdmin}
+                          formatCurrency={formatCurrency}
+                        />
+                      </motion.div>
+                    )}
+
                     {/* Checkout Clarity Panel — Product usage charges */}
                     {appointment.id && effectiveOrganization?.id && (
                       <motion.div variants={staggerItem}>
