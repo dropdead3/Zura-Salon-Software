@@ -60,25 +60,17 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "reader_id and organization_id are required" }, 400);
     }
 
-    // Verify org access — G3 fix: add stylist to allowed roles
+    // Verify org membership via employee_profiles (org-scoped, prevents cross-tenant access)
     const { data: membership } = await supabase
-      .from("organization_admins")
-      .select("id")
-      .eq("organization_id", organization_id)
+      .from("employee_profiles")
+      .select("user_id")
       .eq("user_id", user.id)
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
       .maybeSingle();
 
     if (!membership) {
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-      const hasRole = roles?.some((r: { role: string }) =>
-        ["admin", "manager", "super_admin", "stylist"].includes(r.role)
-      );
-      if (!hasRole) {
-        return jsonResponse({ error: "Insufficient permissions" }, 403);
-      }
+      return jsonResponse({ error: "Forbidden" }, 403);
     }
 
     // B2 fix: Query organizations.stripe_connect_account_id (same source as PI creation)
