@@ -456,6 +456,7 @@ export function ServiceEditorDialog({
                     </div>
                   </div>
                 </div>
+              </form>
             </TabsContent>
 
             <TabsContent value="levels" className="mt-0">
