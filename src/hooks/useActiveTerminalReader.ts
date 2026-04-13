@@ -14,7 +14,8 @@ export function useActiveTerminalReader(
   organizationId: string | null | undefined,
   locationId: string | null | undefined
 ) {
-  const { data: readers = [], isLoading } = useTerminalReaders(organizationId ?? null);
+  // G2 fix: pass locationId (not organizationId) to useTerminalReaders
+  const { data: readers = [], isLoading } = useTerminalReaders(locationId ?? null);
 
   const storageKey = locationId ? `${STORAGE_KEY_PREFIX}${locationId}` : null;
 
@@ -43,11 +44,13 @@ export function useActiveTerminalReader(
   // Auto-select first reader if none persisted
   useEffect(() => {
     if (!isLoading && readers.length > 0 && !selectedReaderId) {
+      // G1 fix: actually filter by location when locationId is provided
       const locationReaders = locationId
-        ? readers.filter((r) => r.location === locationId || true) // Readers are org-scoped
+        ? readers.filter((r) => r.location === locationId)
         : readers;
-      if (locationReaders.length > 0) {
-        selectReader(locationReaders[0].id);
+      const target = locationReaders.length > 0 ? locationReaders[0] : readers[0];
+      if (target) {
+        selectReader(target.id);
       }
     }
   }, [readers, isLoading, selectedReaderId, locationId]);

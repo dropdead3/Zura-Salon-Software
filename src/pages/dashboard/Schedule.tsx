@@ -541,7 +541,8 @@ export default function Schedule() {
           .update({
             payment_method: paymentMetadata.method,
             payment_status: paymentMetadata.stripe_payment_intent_id ? 'paid' : 'completed',
-          })
+            stripe_payment_intent_id: paymentMetadata.stripe_payment_intent_id || null,
+          } as any)
           .eq('id', selectedAppointment.id);
       } catch (e) {
         console.error('Failed to persist payment metadata:', e);
