@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id, client_id, card_on_file_id, amount, currency, description, appointment_id, fee_type } = await req.json();
+    const { organization_id, client_id, card_on_file_id, amount, currency, description, appointment_id, fee_type, fee_charge_id } = await req.json();
 
     if (!organization_id || !amount) {
       return new Response(JSON.stringify({ error: "organization_id and amount are required" }), {
@@ -148,18 +148,32 @@ Deno.serve(async (req) => {
           .eq("id", appointment_id);
       }
 
-      // Insert fee ledger record
-      const { error: feeError } = await supabase.from("appointment_fee_charges").insert({
-        organization_id,
-        appointment_id,
-        fee_type: resolvedFeeType,
-        fee_amount: amount,
-        status: "collected",
-        collected_via: "card_on_file",
-        charged_at: new Date().toISOString(),
-      });
-      if (feeError) {
-        console.error(`Failed to insert fee ledger record: ${feeError.message}`);
+      // Fee ledger: update existing pending record or insert new one
+      if (fee_charge_id) {
+        const { error: feeError } = await supabase
+          .from("appointment_fee_charges")
+          .update({
+            status: "collected",
+            collected_via: "card_on_file",
+            charged_at: new Date().toISOString(),
+          })
+          .eq("id", fee_charge_id);
+        if (feeError) {
+          console.error(`Failed to update fee ledger record: ${feeError.message}`);
+        }
+      } else {
+        const { error: feeError } = await supabase.from("appointment_fee_charges").insert({
+          organization_id,
+          appointment_id,
+          fee_type: resolvedFeeType,
+          fee_amount: amount,
+          status: "collected",
+          collected_via: "card_on_file",
+          charged_at: new Date().toISOString(),
+        });
+        if (feeError) {
+          console.error(`Failed to insert fee ledger record: ${feeError.message}`);
+        }
       }
     }
 

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-
+import { isCardExpired } from '@/lib/card-utils';
 import { format } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -66,6 +66,12 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
   const [waiveDialogOpen, setWaiveDialogOpen] = useState(false);
   const [selectedCharge, setSelectedCharge] = useState<{ id: string; clientName: string; amount: number } | null>(null);
   const [waiveReason, setWaiveReason] = useState('');
+  const [collectDialogOpen, setCollectDialogOpen] = useState(false);
+  const [collectingCharge, setCollectingCharge] = useState<{
+    id: string; clientName: string; amount: number; feeType: string; appointmentId: string; clientId: string | null;
+  } | null>(null);
+  const [clientCard, setClientCard] = useState<{ brand: string; last4: string; exp_month: number; exp_year: number } | null>(null);
+  const [cardLoading, setCardLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: feeCharges = [], isLoading } = useQuery({
@@ -74,8 +80,8 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
       const { data, error } = await supabase
         .from('appointment_fee_charges')
         .select(`
-          id, fee_type, fee_amount, status, collected_via, charged_at, created_at,
-          appointment:appointment_id (client_name, appointment_date, status)
+          id, fee_type, fee_amount, status, collected_via, charged_at, created_at, appointment_id,
+          appointment:appointment_id (client_name, client_id, phorest_client_id, appointment_date, status)
         `)
         .eq('organization_id', orgId!)
         .eq('status', statusFilter)
@@ -90,7 +96,8 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
         collected_via: string | null;
         charged_at: string | null;
         created_at: string;
-        appointment: { client_name: string | null; appointment_date: string; status: string | null } | null;
+        appointment_id: string;
+        appointment: { client_name: string | null; client_id: string | null; phorest_client_id: string | null; appointment_date: string; status: string | null } | null;
       }>;
     },
     enabled: !!orgId,
@@ -138,11 +145,69 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
     },
   });
 
+  const collectMutation = useMutation({
+    mutationFn: async (charge: { id: string; appointmentId: string; clientId: string | null; amount: number; feeType: string }) => {
+      const { error } = await supabase.functions.invoke('charge-card-on-file', {
+        body: {
+          organization_id: orgId,
+          appointment_id: charge.appointmentId,
+          client_id: charge.clientId,
+          amount: charge.amount,
+          fee_type: charge.feeType,
+          fee_charge_id: charge.id,
+          description: `${FEE_TYPE_LABELS[charge.feeType] ?? charge.feeType} fee collection`,
+        },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger-pending-count'] });
+      toast.success('Fee charge collected');
+      setCollectDialogOpen(false);
+      setCollectingCharge(null);
+      setClientCard(null);
+    },
+    onError: (error) => {
+      toast.error('Failed to collect fee', { description: error.message });
+    },
+  });
+
+  const openCollectDialog = useCallback(async (charge: {
+    id: string; clientName: string; amount: number; feeType: string; appointmentId: string; clientId: string | null;
+  }) => {
+    if (!charge.clientId) {
+      toast.error('No client linked to this appointment');
+      return;
+    }
+    setCardLoading(true);
+    setCollectingCharge(charge);
+    setCollectDialogOpen(true);
+
+    const { data: card } = await supabase
+      .from('client_cards_on_file')
+      .select('card_brand, card_last4, card_exp_month, card_exp_year')
+      .eq('organization_id', orgId!)
+      .eq('client_id', charge.clientId)
+      .eq('is_default', true)
+      .limit(1)
+      .maybeSingle();
+
+    if (card) {
+      setClientCard({ brand: card.card_brand ?? '', last4: card.card_last4 ?? '', exp_month: card.card_exp_month ?? 0, exp_year: card.card_exp_year ?? 0 });
+    } else {
+      setClientCard(null);
+    }
+    setCardLoading(false);
+  }, [orgId]);
+
   const openWaiveDialog = useCallback((charge: { id: string; clientName: string; amount: number }) => {
     setSelectedCharge(charge);
     setWaiveReason('');
     setWaiveDialogOpen(true);
   }, []);
+
+  const cardExpired = clientCard ? isCardExpired(clientCard.exp_month, clientCard.exp_year) : false;
 
   const isPending = statusFilter === 'pending';
 
@@ -243,18 +308,35 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
                     </TableCell>
                     {isPending && (
                       <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className={tokens.button.inline}
-                          onClick={() => openWaiveDialog({
-                            id: charge.id,
-                            clientName: charge.appointment?.client_name || 'Unknown',
-                            amount: charge.fee_amount,
-                          })}
-                        >
-                          Waive
-                        </Button>
+                        <div className="flex gap-1.5">
+                          <Button
+                            size="sm"
+                            className={tokens.button.inline}
+                            disabled={collectMutation.isPending}
+                            onClick={() => openCollectDialog({
+                              id: charge.id,
+                              clientName: charge.appointment?.client_name || 'Unknown',
+                              amount: charge.fee_amount,
+                              feeType: charge.fee_type,
+                              appointmentId: charge.appointment_id,
+                              clientId: charge.appointment?.client_id ?? charge.appointment?.phorest_client_id ?? null,
+                            })}
+                          >
+                            Collect
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className={tokens.button.inline}
+                            onClick={() => openWaiveDialog({
+                              id: charge.id,
+                              clientName: charge.appointment?.client_name || 'Unknown',
+                              amount: charge.fee_amount,
+                            })}
+                          >
+                            Waive
+                          </Button>
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -299,6 +381,60 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
             >
               {waiveMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
               Confirm Waive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Collect confirmation dialog */}
+      <AlertDialog open={collectDialogOpen} onOpenChange={(open) => { if (!open) { setCollectDialogOpen(false); setCollectingCharge(null); setClientCard(null); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Collect Fee Charge</AlertDialogTitle>
+            <AlertDialogDescription>
+              Charge <strong>{formatCurrency(collectingCharge?.amount ?? 0)}</strong>{' '}
+              ({FEE_TYPE_LABELS[collectingCharge?.feeType ?? ''] ?? collectingCharge?.feeType}) to{' '}
+              <strong>{collectingCharge?.clientName}</strong>'s card on file.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-6 pb-2">
+            {cardLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Looking up card…
+              </div>
+            ) : clientCard ? (
+              <div className="text-sm">
+                <span className="font-medium">{clientCard.brand || 'Card'}</span> ending in{' '}
+                <span className="font-medium">{clientCard.last4}</span>
+                {cardExpired && (
+                  <Badge variant="destructive" className="ml-2 text-xs">Expired</Badge>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertTriangle className="w-4 h-4" /> No card on file found for this client.
+              </div>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={collectMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!clientCard || cardExpired || collectMutation.isPending || cardLoading}
+              onClick={() => {
+                if (collectingCharge && clientCard && !cardExpired) {
+                  collectMutation.mutate({
+                    id: collectingCharge.id,
+                    appointmentId: collectingCharge.appointmentId,
+                    clientId: collectingCharge.clientId,
+                    amount: collectingCharge.amount,
+                    feeType: collectingCharge.feeType,
+                  });
+                }
+              }}
+              className={cn(collectMutation.isPending && 'opacity-70')}
+            >
+              {collectMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              Confirm Charge
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
