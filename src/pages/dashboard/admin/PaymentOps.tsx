@@ -1,0 +1,473 @@
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useTillReconciliation } from '@/hooks/useTillReconciliation';
+import { useTerminalDeposit } from '@/hooks/useTerminalDeposit';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
+import {
+  ShieldCheck,
+  AlertTriangle,
+  Loader2,
+  Banknote,
+  CreditCard,
+  RefreshCw,
+  ArrowLeft,
+  Calendar,
+  HandCoins,
+} from 'lucide-react';
+
+export default function PaymentOps() {
+  const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { formatCurrency } = useFormatCurrency();
+  const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+
+  const initialDate = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+
+  const { reconcile, result: reconciliation, isLoading: isReconciling } = useTillReconciliation(orgId);
+  const { captureDeposit, cancelDeposit } = useTerminalDeposit();
+
+  // Active deposit holds
+  const { data: depositHolds = [], isLoading: holdsLoading } = useQuery({
+    queryKey: ['active-deposit-holds', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('id, client_name, appointment_date, deposit_amount, deposit_status, deposit_stripe_payment_id, staff_name')
+        .eq('organization_id', orgId!)
+        .eq('deposit_status', 'held')
+        .not('deposit_stripe_payment_id', 'is', null)
+        .order('appointment_date', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+
+  // Pending refunds
+  const { data: pendingRefunds = [], isLoading: refundsLoading } = useQuery({
+    queryKey: ['pending-refunds', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('refund_records')
+        .select('id, original_item_name, refund_amount, refund_type, reason, created_at')
+        .eq('organization_id', orgId!)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+
+  const handleReconcile = () => {
+    reconcile(selectedDate);
+  };
+
+  const handleCaptureDeposit = async (paymentIntentId: string) => {
+    if (!orgId) return;
+    try {
+      await captureDeposit(orgId, paymentIntentId);
+      queryClient.invalidateQueries({ queryKey: ['active-deposit-holds', orgId] });
+    } catch (err) {
+      toast.error('Failed to capture deposit', { description: (err as Error).message });
+    }
+  };
+
+  const handleReleaseDeposit = async (paymentIntentId: string) => {
+    if (!orgId) return;
+    try {
+      await cancelDeposit(orgId, paymentIntentId);
+      queryClient.invalidateQueries({ queryKey: ['active-deposit-holds', orgId] });
+    } catch (err) {
+      toast.error('Failed to release deposit', { description: (err as Error).message });
+    }
+  };
+
+  const handleProcessRefund = async (refundId: string) => {
+    if (!orgId) return;
+    try {
+      const { error } = await supabase.functions.invoke('process-stripe-refund', {
+        body: { refund_record_id: refundId, organization_id: orgId },
+      });
+      if (error) throw error;
+      toast.success('Refund processed');
+      queryClient.invalidateQueries({ queryKey: ['pending-refunds', orgId] });
+    } catch (err) {
+      toast.error('Refund failed', { description: (err as Error).message });
+    }
+  };
+
+  const stripeCardTotal = reconciliation
+    ? reconciliation.stripe.net_amount_cents / 100
+    : null;
+
+  return (
+    <DashboardLayout>
+      <div className={cn(tokens.layout.pageContainer, 'max-w-[1600px] mx-auto')}>
+        <DashboardPageHeader
+          title="Payment Operations"
+          description="Till reconciliation, deposit holds, and refund processing"
+          backTo={{ label: 'Operations Hub', path: dashPath('/admin/team-hub') }}
+        />
+
+        <div className="space-y-6">
+          {/* Till Reconciliation */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={tokens.card.iconBox}>
+                    <ShieldCheck className={tokens.card.icon} />
+                  </div>
+                  <div>
+                    <CardTitle className={tokens.card.title}>
+                      Till Reconciliation
+                      <MetricInfoTooltip description="Cross-references local card payment records against Stripe's actual PaymentIntent data to identify discrepancies." />
+                    </CardTitle>
+                    <CardDescription>Verify card payments against Stripe records</CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="h-9 pl-9 pr-3 rounded-full border border-input bg-background text-sm"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleReconcile}
+                    disabled={isReconciling}
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    {isReconciling ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Reconcile
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!reconciliation ? (
+                <div className={tokens.empty.container}>
+                  <ShieldCheck className={tokens.empty.icon} />
+                  <h3 className={tokens.empty.heading}>No reconciliation run yet</h3>
+                  <p className={tokens.empty.description}>
+                    Select a date and click Reconcile to verify card payments against Stripe.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div
+                    className={cn(
+                      'rounded-xl border px-5 py-4',
+                      reconciliation.is_reconciled
+                        ? 'border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20'
+                        : 'border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20'
+                    )}
+                  >
+                    <div className="flex items-center gap-4">
+                      {reconciliation.is_reconciled ? (
+                        <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                          <ShieldCheck className="w-5 h-5" />
+                          <span className="font-medium text-sm">All payments reconciled</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                          <AlertTriangle className="w-5 h-5" />
+                          <span className="font-medium text-sm">Discrepancies found</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-6 mt-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Stripe total:</span>{' '}
+                        <span className="font-medium">
+                          <BlurredAmount>{formatCurrency(stripeCardTotal ?? 0)}</BlurredAmount>
+                        </span>
+                        <span className="text-muted-foreground ml-1">
+                          ({reconciliation.stripe.total_payments} payments)
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Local matched:</span>{' '}
+                        <span className="font-medium">{reconciliation.local.matched_count} records</span>
+                      </div>
+                      {reconciliation.stripe.total_tips_cents > 0 && (
+                        <div>
+                          <span className="text-muted-foreground">Tips:</span>{' '}
+                          <span className="font-medium">
+                            <BlurredAmount>
+                              {formatCurrency(reconciliation.stripe.total_tips_cents / 100)}
+                            </BlurredAmount>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Discrepancy tables */}
+                  {!reconciliation.is_reconciled && (
+                    <div className="space-y-4">
+                      {reconciliation.discrepancies.unmatched_stripe.length > 0 && (
+                        <div>
+                          <h4 className="font-display text-xs tracking-wide text-amber-700 dark:text-amber-400 mb-2">
+                            IN STRIPE BUT NOT LOCAL
+                          </h4>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className={tokens.table.columnHeader}>Payment Intent</TableHead>
+                                <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                                <TableHead className={tokens.table.columnHeader}>Created</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {reconciliation.discrepancies.unmatched_stripe.map((pi) => (
+                                <TableRow key={pi.id}>
+                                  <TableCell className="font-mono text-xs">{pi.id}</TableCell>
+                                  <TableCell>
+                                    <BlurredAmount>{formatCurrency(pi.amount / 100)}</BlurredAmount>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="secondary">{pi.status}</Badge>
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground">
+                                    {format(new Date(pi.created * 1000), 'MMM d, h:mm a')}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+
+                      {reconciliation.discrepancies.orphaned_local.length > 0 && (
+                        <div>
+                          <h4 className="font-display text-xs tracking-wide text-amber-700 dark:text-amber-400 mb-2">
+                            IN LOCAL BUT NOT STRIPE
+                          </h4>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className={tokens.table.columnHeader}>Appointment</TableHead>
+                                <TableHead className={tokens.table.columnHeader}>Payment Intent</TableHead>
+                                <TableHead className={tokens.table.columnHeader}>Local Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {reconciliation.discrepancies.orphaned_local.map((item) => (
+                                <TableRow key={item.appointment_id}>
+                                  <TableCell className="font-mono text-xs">
+                                    {item.appointment_id.slice(0, 8)}…
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs">
+                                    {item.stripe_payment_intent_id}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="secondary">{item.local_status}</Badge>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Active Deposit Holds */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className={tokens.card.iconBox}>
+                  <HandCoins className={tokens.card.icon} />
+                </div>
+                <div>
+                  <CardTitle className={tokens.card.title}>
+                    Active Deposit Holds
+                    <MetricInfoTooltip description="Pre-authorized card holds for upcoming appointments. Capture to charge or release to cancel the hold." />
+                  </CardTitle>
+                  <CardDescription>Pre-authorized deposits awaiting capture or release</CardDescription>
+                </div>
+                {depositHolds.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto">{depositHolds.length} active</Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {holdsLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className={tokens.loading.spinner} />
+                </div>
+              ) : depositHolds.length === 0 ? (
+                <div className={tokens.empty.container}>
+                  <HandCoins className={tokens.empty.icon} />
+                  <h3 className={tokens.empty.heading}>No active deposit holds</h3>
+                  <p className={tokens.empty.description}>
+                    Deposit holds will appear here when clients pre-authorize payments for appointments.
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className={tokens.table.columnHeader}>Client</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Date</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {depositHolds.map((hold) => (
+                      <TableRow key={hold.id}>
+                        <TableCell className="font-medium">{hold.client_name || 'Walk-in'}</TableCell>
+                        <TableCell className="text-muted-foreground">{hold.staff_name || '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {format(new Date(hold.appointment_date), 'MMM d, yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          <BlurredAmount>{formatCurrency(hold.deposit_amount ?? 0)}</BlurredAmount>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className={tokens.button.inline}
+                              onClick={() => handleCaptureDeposit(hold.deposit_stripe_payment_id!)}
+                            >
+                              Capture
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={tokens.button.inline}
+                              onClick={() => handleReleaseDeposit(hold.deposit_stripe_payment_id!)}
+                            >
+                              Release
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Pending Refunds */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className={tokens.card.iconBox}>
+                  <Banknote className={tokens.card.icon} />
+                </div>
+                <div>
+                  <CardTitle className={tokens.card.title}>
+                    Pending Refunds
+                    <MetricInfoTooltip description="Refund requests awaiting processing. Click Process to submit the refund to Stripe." />
+                  </CardTitle>
+                  <CardDescription>Refund requests ready for processing</CardDescription>
+                </div>
+                {pendingRefunds.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto">{pendingRefunds.length} pending</Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {refundsLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className={tokens.loading.spinner} />
+                </div>
+              ) : pendingRefunds.length === 0 ? (
+                <div className={tokens.empty.container}>
+                  <Banknote className={tokens.empty.icon} />
+                  <h3 className={tokens.empty.heading}>No pending refunds</h3>
+                  <p className={tokens.empty.description}>
+                    All refund requests have been processed.
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className={tokens.table.columnHeader}>Item</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Type</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Requested</TableHead>
+                      <TableHead className={tokens.table.columnHeader}>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingRefunds.map((refund) => (
+                      <TableRow key={refund.id}>
+                        <TableCell className="font-medium">
+                          {refund.original_item_name || 'Unknown item'}
+                        </TableCell>
+                        <TableCell>
+                          <BlurredAmount>{formatCurrency(refund.refund_amount)}</BlurredAmount>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{refund.refund_type}</Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                          {refund.reason || '—'}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {refund.created_at ? format(new Date(refund.created_at), 'MMM d') : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            className={tokens.button.inline}
+                            onClick={() => handleProcessRefund(refund.id)}
+                          >
+                            Process
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
