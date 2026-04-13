@@ -319,7 +319,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
               </h2>
               <p className={DOCK_DIALOG.description}>
                 {confirmAction.action === 'retry_charge'
-                  ? `Retry charge of $${((confirmAction.appointment.total_price || 0)).toFixed(2)} for ${confirmAction.appointment.client_name || 'this client'}?`
+                  ? `Retry charge of $${((confirmAction.appointment.total_price || 0)).toFixed(2)}${confirmAction.appointment.card_last4 ? ` to card ending in ${confirmAction.appointment.card_last4}` : ''} for ${confirmAction.appointment.client_name || 'this client'}?`
                   : confirmAction.action === 'cancel'
                     ? `Are you sure you want to cancel ${confirmAction.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
                     : `Mark ${confirmAction.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
