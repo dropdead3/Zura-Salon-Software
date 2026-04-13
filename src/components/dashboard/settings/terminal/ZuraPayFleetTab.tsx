@@ -152,6 +152,8 @@ export interface ZuraPayFleetTabProps {
   isVerifying?: boolean;
   onConnectLocation?: (locationId: string) => void;
   isConnectingLocation?: boolean;
+  onResetAccount?: () => void;
+  isResetting?: boolean;
 }
 
 export function ZuraPayFleetTab({
