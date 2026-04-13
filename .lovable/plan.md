@@ -1,86 +1,89 @@
 
 
-# Zura Pay Configurator — Platform vs Organization Audit
+# Zura Pay Self-Serve Onboarding via Stripe Connect Express
 
-## Findings
+## Problem
+Currently, `stripe_account_id` on locations is manually provisioned by platform admins. Org admins see "Contact your account manager" — a dead end. There's no edge function for creating Stripe Connect accounts or generating onboarding links.
 
-### Issue 1: "Apps on Devices" and "Integration Paths" are platform-internal (REMOVE)
-**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
+## Architecture
 
-The "Integration Paths" section (lines 108-135) and the "Apps on Devices deployment info" callout (lines 139-147) expose platform engineering details to organization users:
-- "Server-Driven Display" vs "Apps on Devices (Full Custom)" — orgs don't choose integration paths; Zura controls the reader experience
-- "Android APK via Stripe app review" — leaks Stripe's name and internal deployment process
-- "Phase 2" badge — orgs shouldn't see internal roadmap phases
-- Links to Stripe docs — orgs shouldn't be directed to Stripe documentation
-- "Apps require Stripe review before deployment" — internal process detail
+```text
+Org Admin clicks "Connect to Zura Pay" on a location
+  → Frontend calls edge function `connect-zura-pay`
+  → Edge function creates a Stripe Express connected account (if org doesn't have one yet)
+  → Edge function creates an Account Link (onboarding URL)
+  → Writes stripe_account_id + status='pending' to locations table
+  → Returns onboarding URL
+  → Frontend redirects org admin to Stripe-hosted onboarding
+  → On return, frontend calls `verify-zura-pay-connection` to check account status
+  → Edge function polls Stripe for charges_enabled / payouts_enabled
+  → Updates locations table with stripe_status='active', stripe_payments_enabled=true
+```
 
-**Decision needed from you:** Can organizations customize their own terminal branding (splash screens, colors, logo), or does Zura control the display for all terminals uniformly? Based on the memory context ("Server-Driven Integration strategy" and "Zura Pay branded on-screen experience"), it appears Zura controls the display — orgs get the Zura-branded checkout experience, not custom branding.
-
-**Fix:** Remove the entire "Integration Paths" section and "Apps on Devices" callout. Replace with a simpler "Your Checkout Experience" description that explains what the org's customers will see (branded checkout with their business name, cart items, tap-to-pay). Keep the S710 simulator and device specs (orgs need to know what they're buying).
-
-### Issue 2: S710 Device Specifications may be too technical
-**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` (lines 36-42)
-
-Specs like "Snapdragon 665 · 4GB", "Android 10 (AOSP)", "1080×1920 · 420dpi" are engineering details. Orgs care about: screen size, connectivity, and payment methods.
-
-**Fix:** Simplify specs to org-relevant details: Display size, Connectivity (WiFi + Cellular), Payment methods (Tap, Chip, Swipe), and Offline capability.
-
-### Issue 3: Stripe brand leakage in Hardware tab
-**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` (line 183)
-
-`'stripe_api' ? 'Live pricing' : 'Published rate'` — The `stripe_api` source string is internal but only used as a conditional; the user-facing text says "Live pricing" which is fine. However, the tooltip (line 149) says "Pricing comes directly from the payment processor" — this is acceptable (doesn't name Stripe).
-
-**Status:** Acceptable — no visible Stripe branding.
-
-### Issue 4: Stripe docs links in INTEGRATION_PATHS data
-**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` (lines 21, 32)
-
-Direct links to `docs.stripe.com` are present in the data. These aren't currently rendered as clickable links, but they exist in the code and could leak. Removing the Integration Paths section (Issue 1) resolves this.
-
-### Issue 5: Internal type name `LocationWithStripe`
-**File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` (line 28)
-
-Minor code hygiene — the type is named `LocationWithStripe`. Not user-facing, but should be renamed for brand consistency (e.g., `LocationWithPayment`).
-
----
+**Key design decisions:**
+- One Stripe Connect Express account per **organization** (not per location) — the account is shared across locations
+- `stripe_account_id` stored on the `organizations` table (new column) AND referenced per-location
+- Stripe handles all identity verification, bank account collection, compliance
+- Zura branding appears on the Stripe-hosted onboarding via Connect Settings
 
 ## Changes
 
-### 1. Strip platform-internal content from Display tab
-**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
+### 1. Database migration
+- Add `stripe_connect_account_id` and `stripe_connect_status` columns to `organizations` table
+- The per-location `stripe_account_id` continues to be populated from the org-level account
+- Add RLS policies for org admins to read their own connect status
 
-- Remove `INTEGRATION_PATHS` array entirely
-- Remove "Integration Paths" section (lines 108-135)
-- Remove "Apps on Devices deployment info" callout (lines 139-147)
-- Remove unused imports (`Code2`, `Layers`, `Server`, `ArrowRight`)
-- Simplify `S710_SPECS` to org-relevant specs only (display size, connectivity, payments, offline)
-- Keep the S710 simulator and auto-play controls — these show the org what their customers will see
+### 2. New edge function: `connect-zura-pay`
+**Actions:**
+- `create_account` — Creates a Stripe Express account for the org (if none exists), stores `stripe_connect_account_id` on the org
+- `create_onboarding_link` — Generates an Account Link for the org's connected account, returns URL
+- `connect_location` — Once the account is verified, writes `stripe_account_id` to the location, sets status to `active`
 
-### 2. Rename internal Stripe types
+**Flow:**
+1. Validates user is org admin/owner
+2. Checks if org already has a `stripe_connect_account_id`
+3. If not, calls `stripe.accounts.create({ type: 'express', capabilities: { card_payments: { requested: true }, transfers: { requested: true } } })`
+4. Creates Account Link with `return_url` and `refresh_url` pointing back to Zura Pay settings
+5. Returns `{ onboarding_url, account_id }`
+
+### 3. New edge function: `verify-zura-pay-connection`
+- Called when org admin returns from Stripe onboarding
+- Retrieves the Stripe account, checks `charges_enabled` and `details_submitted`
+- Updates org `stripe_connect_status` to 'active' or 'pending'
+- When active, populates `stripe_account_id` on the selected location(s)
+
+### 4. Updated Fleet Tab UI
 **File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
 
-- Rename `LocationWithStripe` → `LocationWithPayment`
-- Update all references
+Replace the "Contact your account manager" empty state with a self-serve flow:
 
-### 3. Clean up Stripe references in CheckoutDisplayConcept tooltip
-**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
+- **Not connected, no org account**: Show "Connect to Zura Pay" button → calls edge function → redirects to Stripe
+- **Pending (returned from onboarding, not yet verified)**: Show "Verification in Progress" with a "Check Status" button
+- **Active org account, location not connected**: Show "Enable Zura Pay for this location" button → calls `connect_location`
+- **Active**: Show existing fleet management UI (as-is)
 
-- Update `MetricInfoTooltip` description to remove "server-driven integration" and "Phase 2" language
-- New: "Preview the branded Zura Pay checkout experience that appears on your S710 readers during transactions."
+### 5. Return URL handler
+**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
 
-## Files Modified
+Detect `?zura_pay_return=true` query param when returning from Stripe onboarding. Automatically call `verify-zura-pay-connection` and show status feedback.
+
+### 6. Fix build error (stale `LocationWithStripe` reference)
+The build error from `LocationWithStripe` appears to be resolved in the current code — the file uses `LocationWithPayment`. If a rebuild still fails, this will be verified and fixed.
+
+## Files Modified/Created
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` | Remove Integration Paths, Apps on Devices, simplify specs, clean tooltip |
-| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Rename `LocationWithStripe` → `LocationWithPayment` |
+| `supabase/functions/connect-zura-pay/index.ts` | New — Create Express account + Account Link |
+| `supabase/functions/verify-zura-pay-connection/index.ts` | New — Check onboarding status, update DB |
+| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Replace "contact manager" with self-serve connect flow |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Handle return URL, call verify on return |
+| `src/hooks/useZuraPayConnect.ts` | New — Hook for connect + verify mutations |
+| Migration | Add `stripe_connect_account_id`, `stripe_connect_status` to `organizations` |
 
-## What stays
-- S710 simulator (org-facing — shows what customers see)
-- Device specs (simplified to what matters for purchasing decisions)
-- Fleet tab connection status badges
-- Hardware purchasing flow
-- Connectivity/NeverDown section
-- All operational functionality
-
-0 migrations, 0 edge function changes, 0 new dependencies.
+## Technical Details
+- Stripe Connect Express: Stripe hosts the entire onboarding UX (identity verification, bank account, tax info). Zura's brand appears via Connect Settings.
+- The `STRIPE_SECRET_KEY` is already available in edge functions (used by 17+ existing functions).
+- Account Links expire after a short time — the refresh URL generates a new one.
+- Per-location `stripe_account_id` is populated from the org-level connect account, enabling multi-location orgs to connect once and enable locations individually.
+- All terminal operations (create location, register reader) continue to require `stripe_account_id` on the location — the server-side guard in `manage-stripe-terminals` remains unchanged.
 
