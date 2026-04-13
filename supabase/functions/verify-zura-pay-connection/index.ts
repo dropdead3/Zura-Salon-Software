@@ -87,10 +87,16 @@ Deno.serve(async (req) => {
 
     // Update org status if changed
     if (org.stripe_connect_status !== newStatus) {
-      await supabase
+      const { count, error: updateError } = await supabase
         .from("organizations")
         .update({ stripe_connect_status: newStatus })
-        .eq("id", organization_id);
+        .eq("id", organization_id)
+        .select('id', { count: 'exact', head: true });
+      if (updateError) {
+        console.error("Failed to update org connect status:", updateError);
+      } else if (count === 0) {
+        console.warn(`verify-zura-pay: update matched 0 rows for org ${organization_id}`);
+      }
     }
 
     return jsonResponse({

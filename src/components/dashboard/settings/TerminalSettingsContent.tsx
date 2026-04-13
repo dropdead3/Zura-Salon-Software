@@ -1,4 +1,6 @@
+import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -221,7 +223,15 @@ export function TerminalSettingsContent() {
   const connectLocationMutation = useConnectLocation();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('fleet');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('subtab') || 'fleet');
+
+  // Sync activeTab to URL for bookmark/refresh persistence
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === 'fleet') { newParams.delete('subtab'); } else { newParams.set('subtab', tab); }
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const verifyMutateRef = useRef(verifyMutation.mutate);
   verifyMutateRef.current = verifyMutation.mutate;
