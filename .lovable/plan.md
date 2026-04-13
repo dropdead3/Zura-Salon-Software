@@ -1,56 +1,70 @@
 
 
-# Zura Pay — Fourth-Pass Audit
+# Zura Pay — Fifth-Pass Audit
+
+## Critical Bug
+
+### B1: Hardware checkout opens in a new tab — success redirect never reaches the original tab
+**Severity: Critical — checkout verification is broken.**
+
+`useCreateTerminalCheckout` (line 80 of `useTerminalHardwareOrder.ts`) calls `window.open(data.url, '_blank')` on success. This opens Stripe Checkout in a **new tab**. When the user completes payment, the `success_url` redirect (`?tab=terminals&checkout=success&session_id=...`) loads in that **new tab** — which is a fresh page load of the settings page. Meanwhile, the **original tab** still has the purchase dialog open with no indication that checkout completed.
+
+The lifted `useEffect` in `TerminalSettingsContent` only fires on mount with matching search params. The original tab never gets these params. The new tab loads the full app, but the `hasVerifiedReturn` ref starts as `false` — so it **does** fire the verify in the new tab. However, the UX is confusing: the user has two tabs open, the dialog is still showing in the original, and verification happens in the wrong tab.
+
+**Fix:** Change `window.open(data.url, '_blank')` to `window.location.href = data.url` so checkout happens in the same tab. This matches the Connect onboarding flow (which already uses `window.location.href`). Close the dialog before redirecting.
+
+**File:** `src/hooks/useTerminalHardwareOrder.ts` (line 80)
+
+### B2: Purchase dialog stays open after checkout redirect initiated
+Even with the B1 fix, the dialog should close before navigation. Currently `handlePurchase` fires the mutation but never calls `handleDialogClose()`.
+
+**Fix:** Call `handleDialogClose()` in the `onSuccess` of `createCheckout.mutate` (before redirect), or better — close it before mutating since the redirect will navigate away.
+
+**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` (inside `handlePurchase`)
 
 ## Bugs
 
-### B1: Brand leakage — "Stripe Reader S710" in edge function fallback
-**File:** `supabase/functions/terminal-hardware-order/index.ts` (lines 170, 252)
-The fallback SKU data returns `product: "Stripe Reader S710"` and the checkout default item uses `name: "Stripe Reader S710"`. This leaks the processor name into checkout line items visible to org users.
-**Fix:** Change to `"Zura Pay Reader S710"` in both places.
+### B3: Stripe SDK version mismatch across edge functions
+`connect-zura-pay` and `verify-zura-pay-connection` use `stripe@17.7.0` with API version `2024-12-18.acacia`. `terminal-hardware-order` uses `stripe@18.5.0` with `2025-04-30.basil`. Mixed SDK versions risk type/behavior inconsistencies and complicate maintenance.
 
-### B2: `connectMutation.mutate` called inside `useEffect` without stable reference
-**File:** `TerminalSettingsContent.tsx` (line 245)
-The refresh handler calls `connectMutation.mutate(...)` directly. Unlike `verifyMutateRef`, this is not wrapped in a ref. Since `connectMutation` is recreated each render, this is a stale closure risk. More critically, `connectMutation` is missing from the `useEffect` dependency array (line 251), so ESLint would flag this.
-**Fix:** Add a `connectMutateRef` similar to `verifyMutateRef`, and use it inside the effect.
+**Fix:** Align all three to `stripe@18.5.0` and `2025-04-30.basil`.
 
-### B3: `useTerminalRequests` realtime subscription runs even when org is not connected
-**File:** `ZuraPayHardwareTab.tsx` (line 39)
-The hook receives `isOrgConnected ? orgId : undefined`, which correctly disables the query. However, `useTerminalRequests` also sets up a Supabase Realtime channel inside a `useEffect` keyed on `orgId`. When `orgId` is passed as `undefined`, the channel is skipped (line 33 guard). But if `orgId` resolves before `connectStatus` does, the channel will be created prematurely and the query will fire before connection status is known.
-**Status:** Low risk — the query returns empty data. No fix needed, but worth noting.
+**Files:** `supabase/functions/connect-zura-pay/index.ts`, `supabase/functions/verify-zura-pay-connection/index.ts`
 
-### B4: Hardware checkout `success_url` missing `checkout` and `session_id` params from client
-**File:** `ZuraPayHardwareTab.tsx` (lines 141-142)
-The `successUrl` sent to the edge function is `${origin}${currentPath}?tab=terminals` — but the edge function appends `checkout=success&session_id={CHECKOUT_SESSION_ID}` to it. The `tab=terminals` param is present, so the return handler in the Hardware tab should fire. However, the `useEffect` on line 60-71 reads `searchParams.get('checkout')` — this requires the Tabs component to default to the `hardware` tab on return. Currently `defaultValue="fleet"` (line 328 of TerminalSettingsContent). So after checkout, the user lands on the Fleet tab, not Hardware, and the verify effect never fires because the Hardware tab isn't mounted.
-**Fix:** Either change the `successUrl` to include `&subtab=hardware` and read it to set the active tab, or move the checkout verification logic up to `TerminalSettingsContent` where it always mounts.
+### B4: `activeLocationId` can be empty string passed to hooks
+`TerminalSettingsContent` line 271: `activeLocationId` falls through to `locations?.[0]?.id || null`. But `RegisterReaderDialog` receives `locationId={activeLocationId || ''}` (line 404). If `activeLocationId` is null, an empty string is passed to `invokeTerminalAction`, which sends `location_id: ""` to the edge function — causing a failed lookup.
 
-### B5: `terminal-hardware-order` edge function has no Zod input validation
-**File:** `supabase/functions/terminal-hardware-order/index.ts`
-Unlike `connect-zura-pay` and `verify-zura-pay-connection` which now use Zod, this function parses `body.action` directly without schema validation. Malformed payloads cause unhandled exceptions.
-**Fix:** Add Zod schemas per action.
+**Fix:** Disable the Register Reader dialog button when `activeLocationId` is null (it's already indirectly gated, but the prop should also guard).
+
+### B5: `createRequest` sends `locations[0]?.id || ''` as fallback locationId
+`ZuraPayHardwareTab.tsx` line 109: `locationId: reqLocationId || locations[0]?.id || ''`. If no location is selected and `locations` is empty (shouldn't happen given the gate in parent), an empty string is sent. Even with locations available, the user might intend no location — but the field is labeled "optional" while the mutation requires it.
+
+**Fix:** Minor — validate that `reqLocationId` or a default exists before enabling the purchase button.
 
 ## Gaps
 
-### G1: Checkout return lands on Fleet tab — Hardware tab verify effect never mounts
-This is the UX consequence of B4. After a successful hardware checkout, the user returns to the Terminals settings page on the Fleet tab. The `ZuraPayHardwareTab` component is not mounted, so the `useEffect` that reads `checkout=success` never runs. The payment is recorded on the next manual visit to the Hardware tab — if the params are still in the URL.
-**Fix:** Lift the checkout return handler to `TerminalSettingsContent` and auto-switch to the Hardware tab when `checkout` param is detected.
+### G1: No `hardware_orders` INSERT policy for org users — relies entirely on service_role
+The edge function inserts into `hardware_orders` using service_role, bypassing RLS. This works, but means there's no defense-in-depth. If the function ever changes to use the user's JWT, inserts would silently fail.
 
-### G2: No Zod validation on `terminal-hardware-order` `create_checkout` body
-The `create_checkout` action accepts `items` as an array but doesn't validate item structure. Malformed items (missing `amount`, negative quantities) could create invalid Stripe checkout sessions.
-**Fix:** Add Zod schema for checkout items.
+**Status:** Acceptable — document the dependency on service_role.
 
-### G3: Edge function fallback URLs still hardcode `/dashboard/admin/settings`
-**File:** `connect-zura-pay/index.ts` (lines 114-115, 170-171)
-The fallback URLs (when client doesn't provide `return_url`/`refresh_url`) still use the hardcoded non-org-scoped path. While the client now always passes the correct URLs, if a direct API call is made without them, the fallback breaks.
-**Fix:** Accept but this is a defense-in-depth issue. The client always sends the URLs now.
+### G2: `details_submitted` not surfaced in Fleet tab pending state (E2 from previous pass)
+The `verify-zura-pay-connection` edge function returns `details_submitted` in its response. The Fleet tab pending copy (line 324) uses generic text. Differentiating "You haven't completed the onboarding form yet" from "Your information is under review" would improve abandoned-onboarding UX.
+
+**Fix:** Store `details_submitted` from the verify response and conditionally render different copy in the pending state.
+
+### G3: No error boundary around Connectivity and Display tabs
+If `ZuraPayConnectivityTab` or `ZuraPayDisplayTab` throw during render, the entire settings page crashes. These tabs contain complex visualization (S710 simulator) that could fail on edge cases.
+
+**Fix:** Wrap each `TabsContent` child in an error boundary, or add a shared `TabErrorBoundary` wrapper.
 
 ## Enhancements
 
-### E1: Controlled tab state for post-redirect tab switching
-Convert the `Tabs` from `defaultValue` to controlled `value` state. This enables programmatic tab switching (e.g., auto-switch to Hardware after checkout return, or to Fleet after connect return).
+### E1: Show a "Redirecting to checkout…" state after purchase button click
+After clicking "Proceed to Checkout," the mutation fires but the user sees only a spinner on the button. If redirect takes 2-3 seconds, add a brief overlay or toast: "Redirecting to secure checkout…"
 
-### E2: Verify `details_submitted` to differentiate pending states
-The `verify-zura-pay-connection` edge function already returns `details_submitted` in its response. The Fleet tab pending state could use this to show "You haven't completed the onboarding form yet" vs "Your information is under review" — improving the user experience for abandoned onboarding flows.
+### E2: Persist `activeTab` in URL search params
+Currently `activeTab` defaults to `fleet` on every mount. If a user bookmarks or shares a link to the Hardware tab, it resets. Syncing `activeTab` with a `subtab` URL param would preserve tab state across navigation.
 
 ---
 
@@ -58,9 +72,10 @@ The `verify-zura-pay-connection` edge function already returns `details_submitte
 
 | File | Change |
 |------|--------|
-| `supabase/functions/terminal-hardware-order/index.ts` | Fix "Stripe Reader S710" to "Zura Pay Reader S710" (B1); add Zod validation for all actions (B5/G2) |
-| `TerminalSettingsContent.tsx` | Add `connectMutateRef` for stable reference in useEffect (B2); lift checkout return handler from HardwareTab and auto-switch to hardware tab (B4/G1/E1); convert Tabs to controlled state |
-| `ZuraPayHardwareTab.tsx` | Remove checkout return handler (moved to parent) |
+| `src/hooks/useTerminalHardwareOrder.ts` | Change `window.open(url, '_blank')` to `window.location.href = url` (B1) |
+| `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` | Close dialog before checkout redirect (B2); validate location selection (B5) |
+| `supabase/functions/connect-zura-pay/index.ts` | Upgrade to `stripe@18.5.0` and API version `2025-04-30.basil` (B3) |
+| `supabase/functions/verify-zura-pay-connection/index.ts` | Same Stripe upgrade (B3) |
 
 0 migrations, 0 new edge functions, 0 new dependencies.
 
