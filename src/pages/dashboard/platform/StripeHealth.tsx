@@ -6,10 +6,10 @@ import { StripeHealthSummary } from '@/components/platform/stripe/StripeHealthSu
 import { AtRiskOrgTable } from '@/components/platform/stripe/AtRiskOrgTable';
 import { LocationIssuesTable } from '@/components/platform/stripe/LocationIssuesTable';
 import { PaymentEventFeed } from '@/components/platform/stripe/PaymentEventFeed';
+import { TerminalRequestsTable } from '@/components/platform/stripe/TerminalRequestsTable';
 import { useStripePaymentsHealth } from '@/hooks/useStripePaymentsHealth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function StripeHealthPage() {
   const { data, isLoading, isFetching, refetch } = useStripePaymentsHealth();
@@ -50,7 +50,6 @@ export default function StripeHealthPage() {
               disabled={isFetching}
             >
               <RefreshCw className={cn("h-4 w-4 mr-1", isFetching && "animate-spin")} />
-        <PageExplainer pageId="platform-stripe-health" />
               Refresh
             </PlatformButton>
           </div>
@@ -115,6 +114,9 @@ export default function StripeHealthPage() {
           isLoading={isLoading} 
         />
       </div>
+
+      {/* Terminal Hardware Requests */}
+      <TerminalRequestsTable />
 
       {/* Event Feed */}
       <PaymentEventFeed 

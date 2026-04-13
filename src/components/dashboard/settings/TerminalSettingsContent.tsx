@@ -13,7 +13,8 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, CreditCard, Smartphone, Building2, Package, Clock, CheckCircle2, Truck, XCircle } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,9 +23,11 @@ import {
   useCreateTerminalLocation, useDeleteTerminalLocation,
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
+import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 // Fetch org locations that have Zura Pay (stripe_account_id)
 function useZuraPayLocations() {
@@ -282,6 +285,210 @@ function AllLocationsSummary({ locations }: AllLocationsSummaryProps) {
           ))}
         </div>
       </CardContent>
+    </Card>
+  );
+}
+
+// ---- Status Config for Request History ----
+
+const REQUEST_STATUS_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+  pending: { label: 'Pending', className: 'bg-amber-500/10 text-amber-600 border-amber-500/30', icon: Clock },
+  approved: { label: 'Approved', className: 'bg-blue-500/10 text-blue-600 border-blue-500/30', icon: CheckCircle2 },
+  shipped: { label: 'Shipped', className: 'bg-violet-500/10 text-violet-600 border-violet-500/30', icon: Truck },
+  delivered: { label: 'Delivered', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30', icon: CheckCircle2 },
+  denied: { label: 'Denied', className: 'bg-red-500/10 text-red-600 border-red-500/30', icon: XCircle },
+};
+
+const REASON_OPTIONS = [
+  { value: 'new_location', label: 'New Location' },
+  { value: 'replacement', label: 'Replacement' },
+  { value: 'additional', label: 'Additional Unit' },
+  { value: 'other', label: 'Other' },
+];
+
+// ---- Terminal Request Card ----
+
+function TerminalRequestCard({ locations }: { locations: { id: string; name: string }[] }) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { data: requests, isLoading } = useTerminalRequests(orgId);
+  const createRequest = useCreateTerminalRequest();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [reqLocationId, setReqLocationId] = useState('');
+  const [reqQuantity, setReqQuantity] = useState('1');
+  const [reqReason, setReqReason] = useState('');
+  const [reqNotes, setReqNotes] = useState('');
+
+  const handleSubmit = () => {
+    if (!orgId || !reqLocationId || !reqReason) return;
+    createRequest.mutate(
+      {
+        organizationId: orgId,
+        locationId: reqLocationId,
+        quantity: parseInt(reqQuantity, 10) || 1,
+        reason: reqReason,
+        notes: reqNotes || undefined,
+      },
+      {
+        onSuccess: () => {
+          setDialogOpen(false);
+          setReqLocationId('');
+          setReqQuantity('1');
+          setReqReason('');
+          setReqNotes('');
+        },
+      }
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <Package className={tokens.card.icon} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className={tokens.card.title}>REQUEST A TERMINAL</CardTitle>
+                <MetricInfoTooltip description="Submit a request for new or replacement terminal hardware. Our team will process your order and ship the device to your location." />
+              </div>
+              <CardDescription>Order new or replacement terminal hardware for your locations.</CardDescription>
+            </div>
+          </div>
+          <Button
+            size={tokens.button.card}
+            className={tokens.button.cardAction}
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            New Request
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <Skeleton key={i} className={tokens.loading.skeleton} />
+            ))}
+          </div>
+        ) : !requests || requests.length === 0 ? (
+          <div className="text-center py-8">
+            <Package className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
+              No terminal requests yet. Submit a request to get started.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {requests.map((req) => {
+              const statusConfig = REQUEST_STATUS_CONFIG[req.status] || REQUEST_STATUS_CONFIG.pending;
+              const StatusIcon = statusConfig.icon;
+              const locName = locations.find((l) => l.id === req.location_id)?.name || req.location_id;
+              return (
+                <div
+                  key={req.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border"
+                >
+                  <div>
+                    <p className="font-sans font-medium text-sm">
+                      {REASON_OPTIONS.find((r) => r.value === req.reason)?.label || req.reason}
+                      {req.quantity > 1 && ` × ${req.quantity}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {locName} · {format(new Date(req.created_at), 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {req.tracking_number && (
+                      <span className="text-xs font-mono text-muted-foreground">{req.tracking_number}</span>
+                    )}
+                    <Badge variant="outline" className={cn(statusConfig.className, 'gap-1')}>
+                      <StatusIcon className="h-3 w-3" />
+                      {statusConfig.label}
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+
+      {/* Request Form Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg tracking-wide">REQUEST TERMINAL HARDWARE</DialogTitle>
+            <DialogDescription>
+              Submit a request for new or replacement terminal devices. Our team will review and process your order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select value={reqLocationId} onValueChange={setReqLocationId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Select value={reqReason} onValueChange={setReqReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REASON_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Quantity</Label>
+              <Select value={reqQuantity} onValueChange={setReqQuantity}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Notes (optional)</Label>
+              <Textarea
+                placeholder="Any additional details about your request..."
+                value={reqNotes}
+                onChange={(e) => setReqNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!reqLocationId || !reqReason || createRequest.isPending}
+            >
+              {createRequest.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -609,6 +816,9 @@ export function TerminalSettingsContent() {
           </Card>
         </>
       )}
+
+      {/* Request a Terminal Card */}
+      <TerminalRequestCard locations={locations} />
 
       {/* Register Reader Wizard */}
       <RegisterReaderDialog
