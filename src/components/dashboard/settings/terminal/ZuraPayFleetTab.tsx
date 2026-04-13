@@ -1,0 +1,386 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { tokens } from '@/lib/design-tokens';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface TerminalLocation {
+  id: string;
+  display_name: string;
+  address: { line1: string; city: string; state: string; postal_code: string };
+}
+
+interface Reader {
+  id: string;
+  label: string;
+  device_type: string;
+  status: string;
+  location: string;
+  serial_number: string;
+  device_sw_version?: string;
+  ip_address?: string;
+}
+
+interface LocationSummaryRowProps {
+  loc: { id: string; name: string };
+  useTerminalLocations: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
+  useTerminalReaders: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
+}
+
+function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: LocationSummaryRowProps) {
+  const { data: tlData, isLoading: tlLoading } = useTerminalLocations(loc.id);
+  const { data: readerData, isLoading: readersLoading } = useTerminalReaders(loc.id);
+
+  if (tlLoading || readersLoading) {
+    return (
+      <div className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+        <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
+        <Skeleton className="h-4 w-8 mx-auto" />
+        <Skeleton className="h-4 w-8 mx-auto" />
+        <Skeleton className="h-4 w-16 mx-auto" />
+      </div>
+    );
+  }
+
+  const readerList = readerData || [];
+  const online = readerList.filter((r) => r.status === 'online').length;
+  const offline = readerList.length - online;
+
+  return (
+    <div className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+      <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
+      <span className="text-center text-sm text-muted-foreground">{tlData?.length || 0}</span>
+      <span className="text-center text-sm text-muted-foreground">{readerList.length}</span>
+      <div className="flex items-center justify-center gap-2">
+        {online > 0 && (
+          <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 text-xs">
+            {online} online
+          </Badge>
+        )}
+        {offline > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            {offline} offline
+          </Badge>
+        )}
+        {readerList.length === 0 && (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export interface ZuraPayFleetTabProps {
+  locations: { id: string; name: string; stripe_account_id: string | null }[];
+  activeLocationId: string | null;
+  selectedLocationId: string | null;
+  showAllLocations: boolean;
+  setShowAllLocations: (v: boolean) => void;
+  setSelectedLocationId: (v: string | null) => void;
+  terminalLocations: TerminalLocation[] | undefined;
+  tlLoading: boolean;
+  readers: Reader[] | undefined;
+  readersLoading: boolean;
+  onCreateTerminalLocation: () => void;
+  createTerminalLocationPending: boolean;
+  onDeleteLocation: (target: { id: string; name: string }) => void;
+  onDeleteReader: (target: { id: string; label: string }) => void;
+  onRegisterReader: () => void;
+  useTerminalLocationsHook: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
+  useTerminalReadersHook: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
+}
+
+export function ZuraPayFleetTab({
+  locations,
+  activeLocationId,
+  showAllLocations,
+  setShowAllLocations,
+  setSelectedLocationId,
+  terminalLocations,
+  tlLoading,
+  readers,
+  readersLoading,
+  onCreateTerminalLocation,
+  createTerminalLocationPending,
+  onDeleteLocation,
+  onDeleteReader,
+  onRegisterReader,
+  useTerminalLocationsHook,
+  useTerminalReadersHook,
+}: ZuraPayFleetTabProps) {
+  const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
+  const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
+
+  return (
+    <div className="space-y-6">
+      {/* Location Picker */}
+      {locations.length > 1 && (
+        <div className="flex items-center gap-3">
+          <MapPin className="w-4 h-4 text-muted-foreground" />
+          <Select
+            value={showAllLocations ? 'all' : (activeLocationId || '')}
+            onValueChange={(v) => {
+              if (v === 'all') {
+                setShowAllLocations(true);
+                setSelectedLocationId(null);
+              } else {
+                setShowAllLocations(false);
+                setSelectedLocationId(v);
+              }
+            }}
+          >
+            <SelectTrigger className="w-[320px]">
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                <span className="flex items-center gap-2">
+                  All Locations
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {locations.length}
+                  </Badge>
+                </span>
+              </SelectItem>
+              {locations.map((loc) => (
+                <SelectItem key={loc.id} value={loc.id}>
+                  <span className="flex items-center gap-2">{loc.name}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {!showAllLocations && (
+            <span className="text-xs text-muted-foreground">
+              {readers?.length || 0} reader{(readers?.length || 0) !== 1 ? 's' : ''} at this location
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* All Locations Summary */}
+      {showAllLocations ? (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <Building2 className={tokens.card.icon} />
+              </div>
+              <div className="flex items-center gap-2">
+                <CardTitle className={tokens.card.title}>FLEET OVERVIEW</CardTitle>
+                <MetricInfoTooltip description="Summary of all terminal locations and readers across your organization's Zura Pay-connected sites." />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
+                <span>Location</span>
+                <span className="text-center">Terminal Locations</span>
+                <span className="text-center">Readers</span>
+                <span className="text-center">Status</span>
+              </div>
+              {locations.map((loc) => (
+                <LocationSummaryRow
+                  key={loc.id}
+                  loc={loc}
+                  useTerminalLocations={useTerminalLocationsHook}
+                  useTerminalReaders={useTerminalReadersHook}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Terminal Locations */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={tokens.card.iconBox}>
+                    <MapPin className={tokens.card.icon} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>TERMINAL LOCATIONS</CardTitle>
+                      <MetricInfoTooltip description="Terminal locations represent physical sites where your readers accept payments. Each reader must be assigned to a terminal location." />
+                    </div>
+                    <CardDescription>Payment terminal locations for accepting in-person payments at this site.</CardDescription>
+                  </div>
+                </div>
+                <Button
+                  size={tokens.button.card}
+                  className={tokens.button.cardAction}
+                  onClick={onCreateTerminalLocation}
+                  disabled={createTerminalLocationPending}
+                >
+                  {createTerminalLocationPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Create Location
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {tlLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <Skeleton key={i} className={tokens.loading.skeleton} />
+                  ))}
+                </div>
+              ) : !terminalLocations || terminalLocations.length === 0 ? (
+                <div className="text-center py-8">
+                  <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    No terminal locations yet. Create one to start pairing readers.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {terminalLocations.map((tl) => {
+                    const locationReaders = readers?.filter((r) => r.location === tl.id) || [];
+                    return (
+                      <div key={tl.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+                        <div>
+                          <p className="font-sans font-medium text-sm">{tl.display_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {tl.address.line1}, {tl.address.city}, {tl.address.state} {tl.address.postal_code}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="text-xs">
+                            {locationReaders.length} reader{locationReaders.length !== 1 ? 's' : ''}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onDeleteLocation({ id: tl.id, name: tl.display_name })}
+                            className="text-muted-foreground hover:text-destructive h-8 w-8"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Terminal Readers */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={tokens.card.iconBox}>
+                    <Smartphone className={tokens.card.icon} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>TERMINAL READERS</CardTitle>
+                      <MetricInfoTooltip description="Physical card readers paired to this location. Online readers are connected and ready to accept payments." />
+                    </div>
+                    <CardDescription>Physical card readers paired to this location.</CardDescription>
+                  </div>
+                </div>
+                <Button
+                  size={tokens.button.card}
+                  className={tokens.button.cardAction}
+                  onClick={onRegisterReader}
+                  disabled={!terminalLocations || terminalLocations.length === 0}
+                >
+                  <Plus className="h-4 w-4" />
+                  Register Reader
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {readersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className={tokens.loading.skeleton} />
+                  ))}
+                </div>
+              ) : !readers || readers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Smartphone className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    {terminalLocations && terminalLocations.length > 0
+                      ? 'No readers paired yet. Register a reader using its pairing code.'
+                      : 'Create a terminal location first, then register readers.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {[...onlineReaders, ...offlineReaders].map((reader) => (
+                    <div key={reader.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {reader.status === 'online' ? (
+                            <Wifi className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <WifiOff className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-sans font-medium text-sm">
+                            {reader.label || reader.serial_number || reader.id}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{reader.device_type}</span>
+                            {reader.serial_number && (
+                              <>
+                                <span>·</span>
+                                <span className="font-mono">{reader.serial_number}</span>
+                              </>
+                            )}
+                          </div>
+                          {(reader.device_sw_version || reader.ip_address) && (
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
+                              {reader.device_sw_version && <span>FW {reader.device_sw_version}</span>}
+                              {reader.device_sw_version && reader.ip_address && <span>·</span>}
+                              {reader.ip_address && <span className="font-mono">{reader.ip_address}</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          variant={reader.status === 'online' ? 'default' : 'secondary'}
+                          className={
+                            reader.status === 'online'
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10'
+                              : ''
+                          }
+                        >
+                          {reader.status === 'online' ? 'Online' : 'Offline'}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDeleteReader({
+                            id: reader.id,
+                            label: reader.label || reader.serial_number || reader.id,
+                          })}
+                          className="text-muted-foreground hover:text-destructive h-8 w-8"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}
