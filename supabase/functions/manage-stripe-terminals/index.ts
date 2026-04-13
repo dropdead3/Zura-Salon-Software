@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     const { data: locationData, error: locError } = await supabase
       .from("locations")
       .select(
-        "stripe_account_id, name, address, city, state_province, country, postal_code, organization_id"
+        "stripe_account_id, name, address, city, state_province, country, organization_id"
       )
       .eq("id", location_id)
       .single();
@@ -194,12 +194,19 @@ Deno.serve(async (req) => {
       case "create_location": {
         const displayName =
           params.display_name || locationData.name || "Terminal Location";
+        // Parse postal code from city field (format: "City, State ZIP")
+        const cityParts = (locationData.city || "").split(",");
+        const cityName = cityParts[0]?.trim() || "N/A";
+        const stateZipPart = cityParts[1]?.trim() || "";
+        const stateZipParts = stateZipPart.split(" ");
+        const postalCode = stateZipParts.length > 1 ? stateZipParts.slice(1).join(" ") : "";
+
         const formParams: Record<string, string> = {
           display_name: displayName,
           "address[line1]": locationData.address || "N/A",
-          "address[city]": locationData.city || "N/A",
+          "address[city]": cityName,
           "address[state]": locationData.state_province || "",
-          "address[postal_code]": locationData.postal_code || "",
+          "address[postal_code]": postalCode,
           "address[country]": locationData.country || "US",
         };
         if (params.metadata_location_id) {
