@@ -324,7 +324,7 @@ export default function TeamHub() {
 
         {/* Favorites */}
         {favorites.length > 0 && (
-          <CategorySection title="Favorites" columns={3}>
+          <CategorySection title="Favorites">
             {favorites.map(renderFavoriteCard)}
           </CategorySection>
         )}
