@@ -25,7 +25,7 @@ interface Reader {
   ip_address?: string;
 }
 
-type LocationWithStripe = {
+type LocationWithPayment = {
   id: string;
   name: string;
   stripe_account_id: string | null;
@@ -33,14 +33,14 @@ type LocationWithStripe = {
   stripe_payments_enabled: boolean | null;
 };
 
-function getConnectionStatus(loc: LocationWithStripe) {
+function getConnectionStatus(loc: LocationWithPayment) {
   if (!loc.stripe_account_id) return { label: 'Not Connected', variant: 'outline' as const, dotClass: 'bg-muted-foreground/40' };
   if (loc.stripe_status === 'active' && loc.stripe_payments_enabled) return { label: 'Active', variant: 'default' as const, dotClass: 'bg-emerald-500' };
   return { label: 'Pending', variant: 'secondary' as const, dotClass: 'bg-amber-500' };
 }
 
 interface LocationSummaryRowProps {
-  loc: LocationWithStripe;
+  loc: LocationWithPayment;
   useTerminalLocations: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReaders: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
 }
@@ -109,7 +109,7 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders }: L
 }
 
 export interface ZuraPayFleetTabProps {
-  locations: LocationWithStripe[];
+  locations: LocationWithPayment[];
   activeLocationId: string | null;
   selectedLocationId: string | null;
   showAllLocations: boolean;
