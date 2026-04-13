@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { isCardExpired } from '@/lib/card-utils';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
+import { useDebounce } from '@/hooks/use-debounce';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
