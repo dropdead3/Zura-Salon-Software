@@ -771,9 +771,25 @@ export default function PaymentOps() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: connectStatus } = useOrgConnectStatus(orgId);
   const isZuraPayActive = connectStatus?.stripe_connect_status === 'active';
+  const { data: locations = [] } = useLocations(orgId);
 
   const initialDate = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState(initialDate);
+
+  // ─── Shared filter state ───────────────────────────────
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [clientSearch, setClientSearch] = useState('');
+  const debouncedClientSearch = useDebounce(clientSearch, 300);
+
+  // Per-tab status filters
+  const [holdStatus, setHoldStatus] = useState<'held' | 'captured' | 'released' | 'all'>('held');
+  const [refundStatus, setRefundStatus] = useState<'pending' | 'processed' | 'all'>('pending');
+  const [disputeStatus, setDisputeStatus] = useState<'active' | 'resolved' | 'all'>('active');
+
+  const activeTab = searchParams.get('section') || 'payouts';
+  const showFilters = !['payouts', 'reconciliation'].includes(activeTab);
 
   // Confirmation dialog state
   const [confirmAction, setConfirmAction] = useState<{
@@ -787,17 +803,30 @@ export default function PaymentOps() {
   const { reconcile, result: reconciliation, isLoading: isReconciling } = useTillReconciliation(orgId);
   const { captureDeposit, cancelDeposit } = useTerminalDeposit();
 
+  // Location IDs for query filtering
+  const allLocs = selectedLocationIds.length === 0 || selectedLocationIds.length === locations.length;
+
   // Active deposit holds
   const { data: depositHolds = [], isLoading: holdsLoading } = useQuery({
-    queryKey: ['active-deposit-holds', orgId],
+    queryKey: ['active-deposit-holds', orgId, holdStatus, selectedLocationIds, dateFrom, dateTo],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('appointments')
-        .select('id, client_name, appointment_date, deposit_amount, deposit_status, deposit_stripe_payment_id, staff_name')
+        .select('id, client_name, appointment_date, deposit_amount, deposit_status, deposit_stripe_payment_id, staff_name, location_id')
         .eq('organization_id', orgId!)
-        .eq('deposit_status', 'held')
         .not('deposit_stripe_payment_id', 'is', null)
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo)
         .order('appointment_date', { ascending: true });
+      if (holdStatus !== 'all') {
+        q = q.eq('deposit_status', holdStatus);
+      } else {
+        q = q.in('deposit_status', ['held', 'captured', 'released']);
+      }
+      if (!allLocs) {
+        q = q.in('location_id', selectedLocationIds);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -806,14 +835,19 @@ export default function PaymentOps() {
 
   // Pending refunds
   const { data: pendingRefunds = [], isLoading: refundsLoading } = useQuery({
-    queryKey: ['pending-refunds', orgId],
+    queryKey: ['pending-refunds', orgId, refundStatus, dateFrom, dateTo],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('refund_records')
-        .select('id, original_item_name, refund_amount, refund_type, reason, created_at, original_transaction_id')
+        .select('id, original_item_name, refund_amount, refund_type, reason, created_at, original_transaction_id, status')
         .eq('organization_id', orgId!)
-        .eq('status', 'pending')
+        .gte('created_at', `${dateFrom}T00:00:00`)
+        .lte('created_at', `${dateTo}T23:59:59`)
         .order('created_at', { ascending: false });
+      if (refundStatus !== 'all') {
+        q = q.eq('status', refundStatus);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
