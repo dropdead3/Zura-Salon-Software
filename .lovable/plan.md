@@ -1,46 +1,48 @@
 
 
-# Auto-Ban on Dispute — Org Setting + Webhook Automation
+# Terminal Tip Settings
 
-## What This Does
-Adds a toggle in settings that lets an organization automatically ban clients when they file a payment dispute. When enabled, the Stripe webhook that processes `charge.dispute.created` will immediately set the client's `is_banned` flag, record the ban reason, and log an audit trail — no manual intervention needed.
+## What This Builds
 
-This follows the autonomy model: the org explicitly opts in (approval), and the system executes within that guardrail.
+A new "Tipping" tab in the Zura Pay Configurator that lets organizations control how tip prompts appear on their S710 terminals. Inspired by the reference screenshots, the settings include:
 
-## Design Decisions
+1. **Master toggle** — Enable/disable tip prompts on the card terminal
+2. **Tip percentages** — Three customizable percentage values (default: 20%, 25%, 30%)
+3. **Fixed tip threshold** — Toggle + threshold amount: below this subtotal, show fixed dollar amounts instead of percentages
+4. **Include retail sales in tips** — Whether retail product amounts are included in the tip calculation base
+5. **Tip prompt with saved cards** — Whether to show tip options when charging saved/on-file cards
 
-- **Setting storage**: Uses the existing `backroom_settings` key-value table (org-scoped, already has hooks and RLS). Setting key: `dispute_policy` with value `{ auto_ban_on_dispute: boolean }`.
-- **Webhook-side execution**: The `handleDisputeCreated` function already resolves `client_id`. After inserting the dispute, it checks the org's `dispute_policy` setting and bans the client if enabled.
-- **UI placement**: A new "Dispute Policy" card placed alongside the existing Cancellation Fee Policies in the Website/Booking settings area — both are client protection policies that logically group together.
-- **Ban reason**: Auto-set to `"Auto-banned: payment dispute filed (dispute #{stripe_dispute_id})"` so it's clear in the client profile why the ban occurred.
+All settings stored in `backroom_settings` under key `tip_config` using the existing `useColorBarSetting` / `useUpsertColorBarSetting` hooks. No migrations needed.
+
+The S710 simulator on the Display tab will also be updated to include a tip selection screen in its flow, reflecting the configured percentages.
 
 ## Implementation
 
-### 1. Webhook Enhancement (`stripe-webhook/index.ts`)
-After the dispute insert (line ~1128), add:
-- Query `backroom_settings` for key `dispute_policy` where `organization_id = org.id` and `location_id IS NULL`
-- If `setting_value.auto_ban_on_dispute === true` and `clientId` is resolved:
-  - Update `phorest_clients` set `is_banned = true`, `ban_reason`, `banned_at`, `banned_by = null` (system action)
-  - Insert audit log via `log_platform_action` RPC
+### 1. New Component: `ZuraPayTippingTab.tsx`
 
-### 2. UI Toggle Component (new: `DisputePolicySettings.tsx`)
-A small card with:
-- Title: "Dispute Policy"
-- Description explaining the auto-ban behavior
-- Single Switch toggle for auto-ban
-- Uses `useColorBarSetting('dispute_policy')` to read and `useUpsertColorBarSetting` to write
-- Warning text when enabled: "Clients who file a payment dispute will be automatically banned from booking."
+A settings card containing:
+- Enable/Disable toggle (styled like the reference — pill-style segmented control or Switch)
+- Three percentage input fields with "%" suffix badges (editable number inputs)
+- Fixed Tip Threshold: toggle + dollar amount input (shown when enabled)
+- Include Retail Sales in Tips: toggle with description
+- Tip Prompt with Saved Cards: toggle with description
+- All changes auto-save via `useUpsertColorBarSetting` with key `tip_config`
 
-### 3. Surface in Settings Page
-Import and render `DisputePolicySettings` in `WebsiteSettingsContent.tsx` next to the Cancellation Fee Policies section.
+### 2. Add "Tipping" tab to `TerminalSettingsContent.tsx`
+
+Insert a new `TabsTrigger` for "Tipping" between Display and Receipts. Wire it to the new `ZuraPayTippingTab` component.
+
+### 3. Update S710 Simulator with tip screen
+
+Add a `TipScreen` state to `S710CheckoutSimulator.tsx` that appears between `cart` and `tap` in the auto-play flow. Shows subtotal, three percentage buttons (with calculated dollar amounts), a "Custom" button, and a "No Tip" option — matching the reference screenshot aesthetic.
 
 ## Files
 
 | File | Action |
 |---|---|
-| `supabase/functions/stripe-webhook/index.ts` | Add auto-ban logic after dispute insert |
-| `src/components/dashboard/settings/DisputePolicySettings.tsx` | **New** — toggle card for auto-ban setting |
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Import and render `DisputePolicySettings` |
+| `src/components/dashboard/settings/terminal/ZuraPayTippingTab.tsx` | **New** — full tip configuration UI |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Add "Tipping" tab trigger + content |
+| `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx` | Add tip selection screen to simulator flow |
 
-No migrations. No new tables. Reuses existing `backroom_settings` infrastructure and `phorest_clients.is_banned` columns.
+No migrations. No edge function changes. Uses existing `backroom_settings` storage.
 
