@@ -239,6 +239,7 @@ export function TerminalSettingsContent() {
   const orgId = effectiveOrganization?.id;
   const { data: locations, isLoading: locationsLoading } = useZuraPayLocations();
   const { data: connectStatus } = useOrgConnectStatus(orgId);
+  const queryClient = useQueryClient();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -449,8 +450,7 @@ export function TerminalSettingsContent() {
               onDisconnectLocation={(locationId) => orgId && disconnectLocationMutation.mutate({ organizationId: orgId, locationId })}
               isDisconnectingLocation={disconnectLocationMutation.isPending}
               onRefreshReaders={() => {
-                // Invalidate readers to force refetch
-                import('@tanstack/react-query').then(({ useQueryClient }) => {});
+                queryClient.invalidateQueries({ queryKey: ['terminal-readers'] });
               }}
             />
           </TabErrorBoundary>
