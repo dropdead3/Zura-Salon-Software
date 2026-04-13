@@ -101,7 +101,7 @@ const ManagementCard = React.forwardRef<HTMLAnchorElement, ManagementCardProps>(
               <StarIcon className="w-3.5 h-3.5" fill={isFavorited ? "currentColor" : "none"} />
             </button>
           )}
-          <CardContent className="p-5 min-h-[140px] flex flex-col items-center justify-center text-center gap-2">
+          <CardContent className="p-5 h-[160px] flex flex-col items-center justify-center text-center gap-2">
             <div className={cn(tokens.card.iconBox, "shrink-0")}>
               <Icon className={tokens.card.icon} />
             </div>
@@ -147,7 +147,7 @@ function HubGatewayCard({ href, icon: Icon, title, description, isFavorited, onT
             <StarIcon className="w-3.5 h-3.5" fill={isFavorited ? "currentColor" : "none"} />
           </button>
         )}
-        <CardContent className="p-5 min-h-[140px] flex flex-col items-center justify-center text-center gap-2">
+        <CardContent className="p-5 h-[160px] flex flex-col items-center justify-center text-center gap-2">
           <div className={cn(tokens.card.iconBox, "shrink-0")}>
             <Icon className={tokens.card.icon} />
           </div>
@@ -164,19 +164,15 @@ function HubGatewayCard({ href, icon: Icon, title, description, isFavorited, onT
 interface CategorySectionProps {
   title: string;
   children: React.ReactNode;
-  columns?: 2 | 3;
 }
 
-function CategorySection({ title, children, columns = 3 }: CategorySectionProps) {
+function CategorySection({ title, children }: CategorySectionProps) {
   const validChildren = React.Children.toArray(children).filter(Boolean);
   if (validChildren.length === 0) return null;
   return (
     <div className="space-y-3">
       <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">{title}</h2>
-      <div className={cn(
-        "grid gap-3 items-stretch",
-        columns === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"
-      )}>
+      <div className="grid gap-3 items-stretch sm:grid-cols-2 lg:grid-cols-3">
         {validChildren}
       </div>
     </div>
@@ -297,11 +293,14 @@ export default function TeamHub() {
           >
             <StarIcon className="w-3.5 h-3.5" fill="currentColor" />
           </button>
-          <CardContent className="p-5 min-h-[140px] flex flex-col items-center justify-center text-center gap-2">
+          <CardContent className="p-5 h-[160px] flex flex-col items-center justify-center text-center gap-2">
             <div className={cn(tokens.card.iconBox, "shrink-0 bg-amber-500/15 text-amber-500")}>
               <IconComp className="w-5 h-5" />
             </div>
-            <h3 className={tokens.card.title}>{fav.label}</h3>
+            <div>
+              <h3 className={tokens.card.title}>{fav.label}</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">&nbsp;</p>
+            </div>
           </CardContent>
         </Card>
       </Link>
@@ -325,7 +324,7 @@ export default function TeamHub() {
 
         {/* Favorites */}
         {favorites.length > 0 && (
-          <CategorySection title="Favorites" columns={3}>
+          <CategorySection title="Favorites">
             {favorites.map(renderFavoriteCard)}
           </CategorySection>
         )}
