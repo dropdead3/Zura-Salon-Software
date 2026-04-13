@@ -1030,6 +1030,9 @@ export function TerminalSettingsContent() {
       {/* Purchase Terminal Card */}
       <TerminalPurchaseCard locations={locations} />
 
+      {/* Checkout Display Concept */}
+      <CheckoutDisplayConcept businessName={effectiveOrganization?.name || 'Your Salon'} />
+
       {/* Register Reader Wizard */}
       <RegisterReaderDialog
         open={registerOpen}
