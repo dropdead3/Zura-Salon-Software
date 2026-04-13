@@ -63,7 +63,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
     items: [
       { href: '/platform/audit-log', label: 'Activity Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
       { href: '/platform/health', label: 'System Health', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-      { href: '/platform/stripe-health', label: 'Payments Health', icon: CreditCard, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/platform/payments-health', label: 'Payments Health', icon: CreditCard, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
       { href: '/platform/notifications', label: 'Notifications', icon: Bell, platformRoles: ['platform_owner', 'platform_admin'] },
     ],
   },

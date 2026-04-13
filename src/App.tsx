@@ -525,7 +525,7 @@ const App = () => (
                         <Route path="audit-log" element={<AuditLogPage />} />
                         <Route path="jobs" element={<JobsPage />} />
                         <Route path="health" element={<SystemHealthPage />} />
-                        <Route path="stripe-health" element={<StripeHealthPage />} />
+                        <Route path="payments-health" element={<PaymentsHealthPage />} />
                         <Route path="notifications" element={<ProtectedRoute requirePlatformRole="platform_admin"><NotificationsPage /></ProtectedRoute>} />
                         <Route path="analytics" element={<ProtectedRoute requirePlatformRole="platform_owner"><PlatformAnalytics /></ProtectedRoute>} />
                         <Route path="network" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformNetwork /></ProtectedRoute>} />
