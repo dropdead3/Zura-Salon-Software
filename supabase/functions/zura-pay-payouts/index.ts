@@ -59,13 +59,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get the org's connected Stripe account ID
-    const serviceClient = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const { data: org, error: orgError } = await serviceClient
+    const { data: org, error: orgError } = await supabase
       .from("organizations")
       .select("stripe_connect_account_id, stripe_connect_status")
       .eq("id", organization_id)
