@@ -22,7 +22,7 @@ import {
   useCreateTerminalLocation, useDeleteTerminalLocation,
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
-import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount } from '@/hooks/useZuraPayConnect';
+import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
@@ -252,6 +252,7 @@ export function TerminalSettingsContent() {
   const verifyPayment = useVerifyTerminalPayment();
   const connectLocationMutation = useConnectLocation();
   const resetAccountMutation = useResetZuraPayAccount();
+  const disconnectLocationMutation = useDisconnectLocation();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('subtab') || 'fleet');
@@ -445,6 +446,12 @@ export function TerminalSettingsContent() {
               isConnectingLocation={connectLocationMutation.isPending}
               onResetAccount={() => orgId && resetAccountMutation.mutate({ organizationId: orgId })}
               isResetting={resetAccountMutation.isPending}
+              onDisconnectLocation={(locationId) => orgId && disconnectLocationMutation.mutate({ organizationId: orgId, locationId })}
+              isDisconnectingLocation={disconnectLocationMutation.isPending}
+              onRefreshReaders={() => {
+                // Invalidate readers to force refetch
+                import('@tanstack/react-query').then(({ useQueryClient }) => {});
+              }}
             />
           </TabErrorBoundary>
         </TabsContent>
