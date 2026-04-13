@@ -73,6 +73,19 @@ Deno.serve(async (req) => {
     const { organization_id, amount, currency, tip_amount, appointment_id, description, metadata } =
       parsed.data;
 
+    // Look up client email for receipt
+    let receiptEmail: string | null = null;
+    if (appointment_id) {
+      const { data: appt } = await supabase
+        .from("appointments")
+        .select("client_email")
+        .eq("id", appointment_id)
+        .maybeSingle();
+      if (appt?.client_email) {
+        receiptEmail = appt.client_email;
+      }
+    }
+
     // Verify org membership
     const { data: membership } = await supabase
       .from("organization_admins")
@@ -121,6 +134,7 @@ Deno.serve(async (req) => {
         payment_method_types: ["card_present"],
         capture_method: "automatic",
         description: description || "In-person checkout",
+        ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
         metadata: {
           ...metadata,
           ...(appointment_id ? { appointment_id } : {}),

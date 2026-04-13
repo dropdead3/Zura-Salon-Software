@@ -984,6 +984,175 @@ async function handleSetupIntentSucceeded(
   }
 }
 
+// Handler for account.updated — sync Connect account status
+async function handleAccountUpdated(
+  supabase: SupabaseClientAny,
+  account: Record<string, unknown>
+) {
+  const accountId = account.id as string;
+  console.log(`account.updated: ${accountId}`);
+
+  const chargesEnabled = account.charges_enabled as boolean;
+  const payoutsEnabled = account.payouts_enabled as boolean;
+  const detailsSubmitted = account.details_submitted as boolean;
+
+  // Determine status
+  let newStatus = 'pending';
+  if (chargesEnabled && payoutsEnabled && detailsSubmitted) {
+    newStatus = 'active';
+  } else if (detailsSubmitted && !chargesEnabled) {
+    newStatus = 'restricted';
+  }
+
+  // Find org by connect account ID
+  const { data: org, error: orgError } = await supabase
+    .from("organizations")
+    .select("id, name, stripe_connect_status")
+    .eq("stripe_connect_account_id", accountId)
+    .maybeSingle();
+
+  if (orgError || !org) {
+    console.log(`No org found for Connect account ${accountId} — skipping`);
+    return;
+  }
+
+  const previousStatus = org.stripe_connect_status;
+
+  // Update status
+  await supabase
+    .from("organizations")
+    .update({ stripe_connect_status: newStatus })
+    .eq("id", org.id);
+
+  console.log(`Connect status updated: ${previousStatus} → ${newStatus} for ${org.name}`);
+
+  // Fire platform alert if status degraded
+  if (previousStatus === 'active' && newStatus !== 'active') {
+    await supabase.from('platform_notifications').insert({
+      type: 'connect_status_degraded',
+      severity: 'critical',
+      title: `Payment Processing Disabled: ${org.name}`,
+      message: `Zura Pay status changed from active to ${newStatus}. Charges enabled: ${chargesEnabled}, Payouts enabled: ${payoutsEnabled}.`,
+      metadata: {
+        organization_id: org.id,
+        stripe_account_id: accountId,
+        previous_status: previousStatus,
+        new_status: newStatus,
+        charges_enabled: chargesEnabled,
+        payouts_enabled: payoutsEnabled,
+      }
+    });
+  }
+}
+
+// Handler for charge.dispute.created
+async function handleDisputeCreated(
+  supabase: SupabaseClientAny,
+  dispute: Record<string, unknown>,
+  connectedAccountId: string
+) {
+  const disputeId = dispute.id as string;
+  const chargeId = dispute.charge as string;
+  const piId = (dispute.payment_intent as string) || null;
+  const amount = dispute.amount as number;
+  const currency = (dispute.currency as string) || 'usd';
+  const reason = (dispute.reason as string) || 'unknown';
+  const status = (dispute.status as string) || 'needs_response';
+  const evidenceDueBy = dispute.evidence_details
+    ? (dispute.evidence_details as Record<string, unknown>).due_by as number | null
+    : null;
+
+  console.log(`charge.dispute.created: ${disputeId}, amount ${amount}, account ${connectedAccountId}`);
+
+  // Find org
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("id, name")
+    .eq("stripe_connect_account_id", connectedAccountId)
+    .maybeSingle();
+
+  if (!org) {
+    console.warn(`No org found for Connect account ${connectedAccountId} — skipping dispute`);
+    return;
+  }
+
+  // Try to find associated appointment
+  let appointmentId: string | null = null;
+  let clientName: string | null = null;
+  let clientEmail: string | null = null;
+
+  if (piId) {
+    const { data: appt } = await supabase
+      .from("appointments")
+      .select("id, client_name, client_email")
+      .eq("stripe_payment_intent_id", piId)
+      .maybeSingle();
+    if (appt) {
+      appointmentId = appt.id;
+      clientName = appt.client_name;
+      clientEmail = appt.client_email;
+    }
+  }
+
+  // Insert dispute record
+  await supabase.from("payment_disputes").insert({
+    organization_id: org.id,
+    stripe_dispute_id: disputeId,
+    stripe_charge_id: chargeId,
+    stripe_payment_intent_id: piId,
+    amount,
+    currency,
+    reason,
+    status,
+    evidence_due_by: evidenceDueBy ? new Date(evidenceDueBy * 1000).toISOString() : null,
+    appointment_id: appointmentId,
+    client_name: clientName,
+    client_email: clientEmail,
+    metadata: { connected_account: connectedAccountId },
+  });
+
+  // Fire platform alert
+  await supabase.from('platform_notifications').insert({
+    type: 'dispute_created',
+    severity: 'critical',
+    title: `Dispute Filed: ${org.name}`,
+    message: `A $${(amount / 100).toFixed(2)} ${reason} dispute has been filed. Evidence due by ${evidenceDueBy ? new Date(evidenceDueBy * 1000).toLocaleDateString() : 'unknown'}.`,
+    metadata: {
+      organization_id: org.id,
+      stripe_dispute_id: disputeId,
+      amount,
+      reason,
+    }
+  });
+
+  console.log(`Dispute ${disputeId} recorded for org ${org.name}`);
+}
+
+// Handler for charge.dispute.closed
+async function handleDisputeClosed(
+  supabase: SupabaseClientAny,
+  dispute: Record<string, unknown>
+) {
+  const disputeId = dispute.id as string;
+  const status = (dispute.status as string) || 'lost';
+
+  console.log(`charge.dispute.closed: ${disputeId}, status ${status}`);
+
+  const { error } = await supabase
+    .from("payment_disputes")
+    .update({
+      status,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq("stripe_dispute_id", disputeId);
+
+  if (error) {
+    console.error(`Failed to update dispute ${disputeId}:`, error);
+  } else {
+    console.log(`Dispute ${disputeId} closed with status: ${status}`);
+  }
+}
+
 // G3: Handler for charge.refunded — sync refunds initiated outside Zura (e.g. Stripe Dashboard)
 async function handleChargeRefunded(
   supabase: SupabaseClientAny,
@@ -1174,6 +1343,24 @@ Deno.serve(async (req) => {
         if (isConnectEvent) {
           await handleCustomerDeleted(supabase, event.data.object, event.account);
         }
+        break;
+
+      // Connect account status changes
+      case "account.updated":
+        await handleAccountUpdated(supabase, event.data.object);
+        break;
+
+      // Dispute lifecycle
+      case "charge.dispute.created":
+        if (isConnectEvent) {
+          await handleDisputeCreated(supabase, event.data.object, event.account);
+        }
+        break;
+
+      case "charge.dispute.closed":
+      case "charge.dispute.funds_withdrawn":
+      case "charge.dispute.funds_reinstated":
+        await handleDisputeClosed(supabase, event.data.object);
         break;
          
       default:
