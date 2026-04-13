@@ -191,7 +191,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             if (missingIds.length > 0) {
               const { data: extraAppts } = await supabase
                 .from('phorest_appointments')
-                .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id')
+                .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id, total_price')
                 .in('id', missingIds)
                 .eq('location_id', locationId)
                 .eq('appointment_date', today)
@@ -216,6 +216,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
                   phorest_client_id: a.phorest_client_id,
                   notes: a.notes,
                   mix_bowl_count: 0,
+                  total_price: (a as any).total_price ?? null,
                 });
               }
               appointments.sort((a, b) => a.start_time.localeCompare(b.start_time));
