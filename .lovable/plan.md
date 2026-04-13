@@ -1,92 +1,163 @@
 
 
-# Zura Pay POS — Ship-Readiness Audit
+# Deposit Collection, Card-On-File & Policy Enforcement
 
-## What's Working
+## Current State
 
-The core terminal checkout flow is solid: PI creation on Connected Accounts, server-driven reader display, payment polling with PI verification fallback, webhook handlers for `payment_intent.succeeded/failed`, till reconciliation against Stripe, deposit hold/capture/release, refund processing, and the Operations Hub consolidation. Good structural progress.
+**Already built:**
+- `services` table has `requires_deposit`, `deposit_type`, `deposit_amount`, `deposit_amount_flat`
+- `ServiceEditorDialog` already has the full deposit toggle UI (percentage/flat/full prepay)
+- `appointments` table has `deposit_required`, `deposit_amount`, `deposit_status`, `deposit_stripe_payment_id`, `deposit_collected_at`, `deposit_applied_to_total`
+- `client_cards_on_file` table exists with Stripe customer/payment method references
+- `cancellation_fee_policies` table exists with `policy_type` (cancellation/no_show), `fee_type`, `fee_amount`, `min_notice_hours`
+- `CancellationFeePoliciesSettings` UI exists in Website Settings
+- `useTerminalDeposit` hook exists (collect/capture/cancel)
+- `useDepositData` hook has `useClientCardsOnFile`, `calculateDepositAmount`
+- Booking surface (`HostedBookingPage`) and internal `BookingWizard` exist but don't collect deposits or cards
 
-## Remaining Bugs
+**Not built:**
+- No deposit collection in booking flows (internal or public)
+- No card-on-file collection during booking
+- No "Require Card On File To Book" service setting
+- No automatic charge on no-show/cancellation
+- No manual "Charge Card On File" action in appointment detail
+- No deposit policy text visible to customers
+- No edge function to charge a card on file
+- Cancellation policies not surfaced to customers in booking flow
 
-### B1: Refund "Process" still broken — `payment_intent_id` never reaches the edge function
-**Severity: High — refunds will fail 100% of the time.**
+## Schema Changes (1 migration)
 
-`PaymentOps.tsx` passes `original_transaction_id` and `amount` to `process-stripe-refund`, but that edge function requires `payment_intent_id` (line 68). Nobody resolves the transaction ID into a PI ID. The edge function doesn't look it up, and the client doesn't fetch it.
+### Add to `services` table:
+- `require_card_on_file` BOOLEAN DEFAULT false — service-level toggle
 
-**Fix:** Modify `process-stripe-refund` to accept `original_transaction_id` as an alternative, look up the `stripe_payment_intent_id` from `phorest_sales_transactions` (or `appointments`), and use that for the Stripe refund call. This is more reliable than having the client fetch and pass it.
+### Add to `organizations` table (site_settings or new column):
+- `deposit_policy_text` TEXT — customer-facing policy copy
+- `cancellation_policy_text` TEXT — customer-facing cancellation/no-show policy copy
 
-### B2: `refund_amount` sent in dollars but edge function expects cents
-**Severity: High — refunds will be 100x smaller than intended.**
+### Add to `appointments` table:
+- `card_on_file_id` UUID REFERENCES `client_cards_on_file(id)` — which card was captured at booking
+- `cancellation_fee_charged` NUMERIC — amount charged for no-show/cancellation
+- `cancellation_fee_status` TEXT — 'pending' | 'charged' | 'waived' | 'failed'
+- `cancellation_fee_stripe_payment_id` TEXT — PI for the fee charge
 
-`refund_records.refund_amount` is stored in dollars (matching display values). The edge function passes `amount` directly to `stripe.refunds.create()`, which expects cents. The conversion (`* 100`) is missing.
+## New Edge Function: `charge-card-on-file`
 
-**Fix:** Add `Math.round(amount * 100)` conversion in the edge function before calling Stripe, or document and enforce cent storage in `refund_records`.
+Accepts: `organization_id`, `client_id`, `card_on_file_id` (or resolve from client), `amount`, `currency`, `description`, `appointment_id`
 
-### B3: `as any` casts for deposit fields in `AppointmentDetailSheet`
-**Severity: Low — type safety gap, no runtime impact.**
+Logic:
+1. Look up card → get `stripe_payment_method_id` and `stripe_customer_id`
+2. Look up org's `stripe_account_id` from `organization_stripe_accounts`
+3. Create a PaymentIntent with `off_session: true`, `confirm: true`, `payment_method`, `customer` on the Connected Account
+4. Update appointment with `cancellation_fee_charged`, `cancellation_fee_status = 'charged'`, `cancellation_fee_stripe_payment_id`
+5. Return result
 
-Lines 1212-1230 use `(appointment as any).deposit_status` and `deposit_amount`. These fields exist on the `appointments` table but the component's local type doesn't include them.
+## New Edge Function: `collect-booking-deposit`
 
-**Fix:** Extend the appointment type/interface used in `AppointmentDetailSheet` to include `deposit_required`, `deposit_amount`, `deposit_status`, and `deposit_stripe_payment_id`.
+Accepts: `organization_id`, `client_id`, `card_on_file_id`, `amount`, `currency`, `appointment_id`
 
-## Gaps
+Logic:
+1. Look up card → `stripe_payment_method_id` + `stripe_customer_id`
+2. Create PaymentIntent with `capture_method: 'manual'` (pre-auth hold) or `automatic` based on org preference
+3. Update appointment `deposit_status = 'held'`, `deposit_stripe_payment_id`, `deposit_amount`, `deposit_collected_at`
+4. Return PI ID + status
 
-### G1: No UI to collect deposits via terminal
-**Impact: High — the deposit flow is dead-ended.**
+## UI Changes
 
-`useTerminalDeposit.collectDeposit` exists, the edge function handles `collect_deposit`, but there is zero UI to trigger it. The `AppointmentDetailSheet` shows deposit status but has no "Collect Deposit" button.
+### 1. Service Editor — Add "Require Card On File" toggle
+**File:** `src/components/dashboard/settings/ServiceEditorDialog.tsx`
 
-**Fix:** Add a "Collect Deposit" button in `AppointmentDetailSheet` when `deposit_required === true` and `deposit_status` is null/undefined. Wire it to `collectDeposit` using the active reader from `useActiveTerminalReader`.
+Add a new toggle below "Requires Deposit":
+- "Require Card On File To Book" with tooltip: "Clients must save a payment method before this service can be booked. Enables automatic no-show and cancellation fee collection."
+- When enabled alongside deposit, card on file is used for deposit collection too
 
-### G2: Auto-capture at checkout doesn't verify PI status before capturing
-**Impact: Medium — capturing an expired hold will throw an unhandled Stripe error.**
+### 2. Policies Configurator — Add policy text fields
+**File:** `src/components/dashboard/settings/CancellationFeePoliciesSettings.tsx`
 
-`CheckoutSummarySheet` calls `captureDeposit` during checkout, but doesn't check whether the hold is still valid. Card-present pre-auth holds expire after ~7 days. If the appointment is more than 7 days out, the capture will fail with a Stripe error and the checkout will break.
+Add two text areas:
+- "Deposit Policy" — displayed to customers during booking when a service requires a deposit
+- "Cancellation & No-Show Policy" — displayed to customers during booking when card on file is required
 
-**Fix:** Wrap the `captureDeposit` call in a try/catch with a graceful fallback (toast warning that deposit expired, proceed with full charge). Optionally add `payment_intent.canceled` to the webhook handler to auto-update `deposit_status = 'expired'`.
+These are saved to `site_settings` as a JSON value under a `booking_policies` key.
 
-### G3: Webhook doesn't handle `charge.refunded` events
-**Impact: Medium — refunds initiated outside Zura (e.g. Stripe Dashboard) won't update local records.**
+### 3. Booking Surface — Deposit & Card Collection
+**File:** `src/components/booking-surface/BookingClientForm.tsx` (or new step)
 
-If someone issues a refund directly in Stripe, the local `refund_records` and appointment status won't reflect it. This creates reconciliation discrepancies.
+When selected service has `requires_deposit` or `require_card_on_file`:
+- Show policy text from `cancellation_fee_policies` + org policy text
+- Show Stripe Elements card input (using org's Connected Account)
+- On submit: save card via Stripe `SetupIntent` → insert into `client_cards_on_file`
+- If deposit required: call `collect-booking-deposit` to pre-auth
+- Display deposit amount in confirmation step
 
-**Fix:** Add a `charge.refunded` handler in `stripe-webhook` that looks up the appointment by PI ID and updates the refund status.
+### 4. Internal Booking Wizard — Deposit awareness
+**File:** `src/components/dashboard/schedule/booking/ConfirmStep.tsx`
 
-### G4: No Stripe Connect webhook endpoint registration
-**Impact: Critical for production — none of the terminal webhook handlers will fire.**
+- Show deposit requirement badge when service requires deposit
+- Show "Card on file required" badge
+- On confirm: if client has card on file → auto-collect deposit via edge function
+- If no card on file → show warning that deposit collection is pending
 
-The `stripe-webhook` edge function handles Connect events (checking `event.account`), but there's no documented or automated step to register this endpoint URL in the Stripe Dashboard as a Connect webhook listener. Without this, Stripe never sends events to the endpoint.
+### 5. Appointment Detail — Charge Card On File action
+**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-**Fix:** This is a deployment/ops task, not a code change. Document the webhook URL (`https://<project-ref>.supabase.co/functions/v1/stripe-webhook`) and the required events (`payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`) in a setup guide. Consider adding a "Webhook Status" indicator in Zura Pay Configurator settings.
+When appointment is marked **no_show** or **cancelled**:
+- Look up active `cancellation_fee_policies` matching the `policy_type`
+- Calculate applicable fee
+- If client has a card on file → show "Charge Cancellation Fee" button with amount + AlertDialog confirmation
+- On confirm → call `charge-card-on-file` edge function
+- Show fee status badge (Pending / Charged / Waived / Failed)
+- Add "Waive Fee" option for managers
 
-### G5: `TeamHub` badge query missing `organization_id` filter
-**Impact: Medium — badge count includes data from all organizations.**
+### 6. Appointment Detail — Manual "Charge Card On File"
+Add a general-purpose "Charge Card" action in the payment section:
+- Only visible when client has card on file
+- Opens amount input dialog
+- Calls `charge-card-on-file` with custom amount
+- Records transaction in `phorest_sales_transactions`
 
-The pending refunds and active holds queries in `TeamHub.tsx` (lines 256-264) don't filter by `organization_id`, so the badge count is cross-tenant.
+### 7. Client Profile — Cards on File section
+**File:** New section in client detail
 
-**Fix:** Add `.eq('organization_id', orgId)` to both queries.
+- List saved cards (brand, last4, exp)
+- Add card button (Stripe Elements SetupIntent)
+- Remove card button
+- Default card indicator
 
-## Enhancements
+### 8. Booking Surface — Policy display
+In the confirmation/review step of `HostedBookingPage`:
+- If service has deposit → show deposit amount + deposit policy text
+- If service has card on file requirement → show cancellation policy text
+- Both displayed in a styled info box before final confirmation
 
-### E1: Reconciliation should show local totals alongside Stripe totals
-Currently the reconciliation result shows Stripe totals and "matched count" but not the local dollar total. Operators can't compare amounts without doing mental math.
+## Reporting Integration
 
-### E2: Transaction record should include `organization_id`
-The B1 fix in `Schedule.tsx` inserts into `phorest_sales_transactions` but doesn't include `organization_id`, which will cause RLS issues if the table has org-scoped policies.
+### Appointments Hub / Transactions
+- Show deposit status column in appointment lists
+- Show cancellation fee status where applicable
+- Include deposit amounts in revenue summaries
 
----
+### Client History
+- Show deposit collection events
+- Show cancellation fee charges
+- Show card-on-file additions/removals
 
-## Changes
+## Files Summary
 
-| Priority | File | Change |
-|----------|------|--------|
-| **Critical** | `supabase/functions/process-stripe-refund/index.ts` | Accept `original_transaction_id` as alternative; look up PI ID from transactions/appointments; convert amount to cents (B1, B2) |
-| **Critical** | `src/pages/dashboard/admin/TeamHub.tsx` | Add `organization_id` filter to badge queries (G5) |
-| **High** | `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Add "Collect Deposit" button for appointments with `deposit_required` and no held deposit (G1); fix `as any` casts (B3) |
-| **High** | `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Wrap `captureDeposit` in try/catch with expired-hold fallback (G2) |
-| **High** | `src/pages/dashboard/Schedule.tsx` | Add `organization_id` to transaction insert (E2) |
-| **Medium** | `supabase/functions/stripe-webhook/index.ts` | Add `charge.refunded` handler (G3) |
-| **Low** | `src/pages/dashboard/admin/PaymentOps.tsx` | Add local totals to reconciliation results display (E1) |
+| File | Action |
+|------|--------|
+| **Migration** | Add `require_card_on_file` to `services`; add `card_on_file_id`, `cancellation_fee_charged`, `cancellation_fee_status`, `cancellation_fee_stripe_payment_id` to `appointments` |
+| `supabase/functions/charge-card-on-file/index.ts` | **New** — charge saved card via Connected Account |
+| `supabase/functions/collect-booking-deposit/index.ts` | **New** — pre-auth deposit on saved card |
+| `src/components/dashboard/settings/ServiceEditorDialog.tsx` | Add "Require Card On File" toggle |
+| `src/hooks/useServicesData.ts` | Add `require_card_on_file` to Service interface |
+| `src/components/dashboard/settings/CancellationFeePoliciesSettings.tsx` | Add deposit + cancellation policy text fields |
+| `src/hooks/useDepositData.ts` | Add `useBookingPolicies` hook for policy text CRUD |
+| `src/components/booking-surface/BookingClientForm.tsx` | Add card collection + deposit pre-auth for public booking |
+| `src/components/booking-surface/BookingConfirmation.tsx` | Show deposit amount + policy text |
+| `src/components/dashboard/schedule/booking/ConfirmStep.tsx` | Show deposit/card-on-file badges and warnings |
+| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Add "Charge Cancellation Fee" + "Charge Card" actions on no-show/cancel; fee status display |
+| `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Apply deposit to final total at checkout |
+| `src/pages/dashboard/admin/PaymentOps.tsx` | Add cancellation fee queue alongside existing refund/deposit sections |
 
-1 edge function update, 0 migrations, 0 new dependencies.
+1 migration, 2 new edge functions, 0 new dependencies.
 
