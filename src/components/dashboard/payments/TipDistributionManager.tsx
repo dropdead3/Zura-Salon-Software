@@ -336,6 +336,7 @@ export function TipDistributionManager() {
                             id: dist.id,
                             name: dist.stylist_name || 'Unknown',
                             amount: Number(dist.total_tips),
+                            method: bulkMethod,
                           })}
                         >
                           Confirm
@@ -355,18 +356,39 @@ export function TipDistributionManager() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Tip Distribution</AlertDialogTitle>
-            <AlertDialogDescription>
-              {bulkMethod === 'direct_deposit'
-                ? `Process ${formatCurrency(confirmTarget?.amount || 0)} direct deposit payout to ${confirmTarget?.name}? This will initiate a bank transfer.`
-                : `Confirm ${formatCurrency(confirmTarget?.amount || 0)} tip payout to ${confirmTarget?.name} via ${bulkMethod.replace('_', ' ')}?`
-              }
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  {confirmTarget?.method === 'direct_deposit'
+                    ? `Process ${formatCurrency(confirmTarget?.amount || 0)} direct deposit payout to ${confirmTarget?.name}? This will initiate a bank transfer.`
+                    : `Confirm ${formatCurrency(confirmTarget?.amount || 0)} tip payout to ${confirmTarget?.name}?`
+                  }
+                </p>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Payout Method</label>
+                  <Select
+                    value={confirmTarget?.method || 'cash'}
+                    onValueChange={(v) => setConfirmTarget(prev => prev ? { ...prev, method: v } : null)}
+                  >
+                    <SelectTrigger className="w-full h-9 rounded-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="manual_transfer">Manual Transfer</SelectItem>
+                      <SelectItem value="direct_deposit">Direct Deposit</SelectItem>
+                      <SelectItem value="payroll">Include in Payroll</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
             <Button onClick={handleConfirmSingle} disabled={isProcessing}>
               {isProcessing && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-              {bulkMethod === 'direct_deposit' ? 'Process Payout' : 'Confirm'}
+              {confirmTarget?.method === 'direct_deposit' ? 'Process Payout' : 'Confirm'}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
