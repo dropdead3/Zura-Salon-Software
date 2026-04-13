@@ -7,19 +7,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useClientCardsOnFile, useDeleteClientCard, useSetDefaultCard, type ClientCard } from '@/hooks/useDepositData';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { isCardExpired } from '@/lib/card-utils';
 
 interface PaymentMethodsCardProps {
   clientId?: string;
   orgId?: string;
-}
-
-function isCardExpired(card: ClientCard): boolean {
-  if (!card.card_exp_month || !card.card_exp_year) return false;
-  const now = new Date();
-  const expYear = card.card_exp_year < 100 ? 2000 + card.card_exp_year : card.card_exp_year;
-  // Card expires at the end of the exp month
-  const expDate = new Date(expYear, card.card_exp_month, 0); // last day of exp month
-  return now > expDate;
 }
 
 export function PaymentMethodsCard({ clientId, orgId }: PaymentMethodsCardProps) {
@@ -44,7 +36,7 @@ export function PaymentMethodsCard({ clientId, orgId }: PaymentMethodsCardProps)
         </CardHeader>
         <CardContent className="space-y-2">
           {cards.map((card) => {
-            const expired = isCardExpired(card);
+            const expired = isCardExpired(card.card_exp_month, card.card_exp_year);
             return (
               <div key={card.id} className="flex items-center justify-between gap-2 text-sm">
                 <div className="flex items-center gap-2 min-w-0">

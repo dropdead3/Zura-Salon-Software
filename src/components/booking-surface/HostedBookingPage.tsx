@@ -274,8 +274,8 @@ export function HostedBookingPage() {
             isConfirmed={state.isConfirmed}
             depositAmount={depositAmount}
             requiresCardOnFile={requiresCardOnFile}
-            depositPolicyText={hosted.policyText || undefined}
-            cancellationPolicyText={hosted.policyText || undefined}
+            depositPolicyText={(hosted as any).depositPolicyText || hosted.policyText || undefined}
+            cancellationPolicyText={(hosted as any).cancellationPolicyText || hosted.policyText || undefined}
           />
         ) : null;
       default:

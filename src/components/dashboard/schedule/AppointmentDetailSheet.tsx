@@ -79,6 +79,7 @@ import {
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
+import { isCardExpired } from '@/lib/card-utils';
 import { tokens } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
@@ -165,6 +166,10 @@ function CancellationFeeSection({
 
   const handleChargeFee = async () => {
     if (!defaultCard || calculatedFee == null) return;
+    if (isCardExpired(defaultCard.card_exp_month, defaultCard.card_exp_year)) {
+      toast.error('Card expired', { description: `The ${defaultCard.card_brand || 'card'} ending in ${defaultCard.card_last4} has expired. Please update the card on file before charging.` });
+      return;
+    }
     setIsCharging(true);
     try {
       const { error } = await supabase.functions.invoke('charge-card-on-file', {
@@ -209,6 +214,10 @@ function CancellationFeeSection({
   const handleManualCharge = async () => {
     const amt = parseFloat(manualAmount);
     if (!defaultCard || isNaN(amt) || amt <= 0) return;
+    if (isCardExpired(defaultCard.card_exp_month, defaultCard.card_exp_year)) {
+      toast.error('Card expired', { description: `The ${defaultCard.card_brand || 'card'} ending in ${defaultCard.card_last4} has expired. Please update the card on file before charging.` });
+      return;
+    }
     setIsCharging(true);
     try {
       const { error } = await supabase.functions.invoke('charge-card-on-file', {
