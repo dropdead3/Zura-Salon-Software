@@ -171,6 +171,12 @@ export function CheckoutSummarySheet({
   const taxableBase = discountedSubtotal + addonTotal + (productChargeTaxable ? allUsageChargeTotal : 0);
   const tax = taxableBase * taxRate;
   const checkoutTotal = discountedSubtotal + addonTotal + allUsageChargeTotal + tax;
+  
+  // E2: Deposit deduction — if a deposit was collected and held, deduct from amount due
+  const depositHeld = appointment.deposit_status === 'held' && appointment.deposit_amount
+    ? appointment.deposit_amount
+    : 0;
+  const amountDueAfterDeposit = Math.max(0, checkoutTotal + tipAmount - depositHeld);
   const grandTotal = checkoutTotal + tipAmount;
 
   const getDuration = () => {
