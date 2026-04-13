@@ -10,6 +10,7 @@ import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
