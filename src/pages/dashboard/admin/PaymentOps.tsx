@@ -512,6 +512,105 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Fee dialog */}
+      <Dialog open={addFeeDialogOpen} onOpenChange={(open) => { if (!open) resetAddFeeForm(); }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add Fee Charge</DialogTitle>
+            <DialogDescription>Create a new pending fee tied to an appointment.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Appointment search */}
+            <div className="space-y-1.5">
+              <Label>Appointment</Label>
+              {selectedAppointment ? (
+                <div className="flex items-center justify-between p-2.5 border rounded-lg bg-muted/40">
+                  <div>
+                    <span className="font-medium text-sm">{selectedAppointment.client_name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {format(new Date(selectedAppointment.appointment_date), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => { setSelectedAppointment(null); setAddFeeSearch(''); }}>
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by client name…"
+                      value={addFeeSearch}
+                      onChange={(e) => setAddFeeSearch(e.target.value)}
+                      className="pl-9"
+                      autoCapitalize="off"
+                    />
+                  </div>
+                  {appointmentSearchResults.length > 0 && (
+                    <div className="border rounded-lg max-h-40 overflow-y-auto">
+                      {appointmentSearchResults.map((appt) => (
+                        <button
+                          key={appt.id}
+                          type="button"
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted/60 transition-colors flex justify-between"
+                          onClick={() => setSelectedAppointment({ id: appt.id, client_name: appt.client_name ?? 'Unknown', appointment_date: appt.appointment_date })}
+                        >
+                          <span className="font-medium">{appt.client_name ?? 'Unknown'}</span>
+                          <span className="text-muted-foreground text-xs">{format(new Date(appt.appointment_date), 'MMM d, yyyy')}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {debouncedSearch.length >= 2 && appointmentSearchResults.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-1">No appointments found.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Fee type */}
+            <div className="space-y-1.5">
+              <Label>Fee Type</Label>
+              <Select value={addFeeType} onValueChange={setAddFeeType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="cancellation">Cancellation</SelectItem>
+                  <SelectItem value="no_show">No Show</SelectItem>
+                  <SelectItem value="deposit">Deposit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Amount */}
+            <div className="space-y-1.5">
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                value={addFeeAmount}
+                onChange={(e) => setAddFeeAmount(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={resetAddFeeForm} disabled={addFeeMutation.isPending}>Cancel</Button>
+            <Button
+              disabled={!selectedAppointment || !addFeeAmount || parseFloat(addFeeAmount) <= 0 || addFeeMutation.isPending}
+              onClick={() => addFeeMutation.mutate()}
+            >
+              {addFeeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+              Add Fee
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
