@@ -1,51 +1,49 @@
 
 
-# Payout Schedule Configurator & Bank Account Card
+# Surface Client Disputes + Ban Management in Client Hub
 
 ## Current State
-- The `zura-pay-payouts` edge function **already supports** `action: 'update_schedule'` and returns `payout_schedule` from Stripe
-- The `useZuraPayPayouts` hook **already types** `PayoutSchedule` with `interval`, `weekly_anchor`, `monthly_anchor`, `delay_days`
-- The `ZuraPayPayoutsTab` UI shows balance + payout history but **does not render** the schedule or offer a way to change it
-- No bank account information is surfaced anywhere
+
+**Already built:**
+- `clients` table has `is_banned`, `banned_at`, `banned_by`, `ban_reason` columns
+- `BanClientToggle` component with ban/unban dialogs exists
+- `BannedClientBadge` and `BannedClientWarningDialog` exist and are used in booking flows
+- `ClientDetailSheet` shows ban status and the toggle
+- `payment_disputes` table exists with `client_name`, `client_email`, `amount`, `status`, `reason` — but **no `client_id` foreign key**
+
+**Missing:**
+- No dispute history on client profiles (`ClientDetailSheet`)
+- No "Dispute Risk" segment in the Client Health Hub
+- Client Hub has no dedicated view for flagged/banned clients or dispute-prone clients
 
 ## Plan
 
-### 1. Extend Edge Function to Return Bank Account Info
-Add the connected bank account details from Stripe's `external_accounts` to the response. The `account` object is already fetched (line 114), so extract the default bank account:
+### 1. Add `client_id` column to `payment_disputes`
+Add an optional `client_id UUID REFERENCES clients(id)` column. Update the dispute webhook handler to resolve `client_id` from the charge's client email when inserting disputes. This enables direct joins.
 
-```typescript
-const defaultBank = (account.external_accounts?.data || []).find(
-  (ea: any) => ea.object === 'bank_account' && ea.default_for_currency
-);
-```
+### 2. Create `useClientDisputes` hook
+Query `payment_disputes` by `client_id` (primary) or fallback to `client_email` match. Returns dispute count, total disputed amount, and list of disputes for a given client.
 
-Return: `{ bank_name, last4, routing_number (last 4), currency, status }` — no full account numbers.
+### 3. Add Dispute History section to `ClientDetailSheet`
+In the client profile's existing tabbed layout, add a "Disputes" indicator. Show:
+- Count badge on the profile header if disputes exist (red alert style)
+- List of disputes with date, amount, reason, and status
+- Auto-suggest ban action if client has 2+ disputes
 
-### 2. Update Hook Types
-Add `bank_account` to `ZuraPayPayoutsData` interface. Add `useUpdatePayoutSchedule` mutation that calls the existing `update_schedule` action.
+### 4. Add "Dispute Risk" segment to Client Health Hub
+Add a new segment to `useClientHealthSegments` that queries clients who have open disputes or multiple past disputes. Surface this alongside existing segments (at-risk, lapsed, etc.) with an `AlertTriangle` icon.
 
-### 3. Add Payout Schedule Card to UI
-Insert a card between the summary KPIs and the payouts table showing:
-- Current schedule (Daily / Weekly / Monthly) as radio group
-- Weekly anchor day picker (Mon–Fri, shown only when Weekly is selected)
-- Monthly anchor date picker (1–28, shown only when Monthly is selected)
-- Save button that calls `update_schedule`
-- Current `delay_days` displayed as read-only info ("Payouts arrive T+2 days")
-
-### 4. Add Bank Account Card to UI
-Insert a card alongside the schedule card showing:
-- Bank name + last 4 digits
-- Status badge (verified / new / errored)
-- Note: "To update your bank account, contact support" (Stripe Express doesn't allow self-service bank changes via API without a dashboard link)
-- If no bank account: empty state prompting to complete onboarding
+### 5. Add "Flagged Clients" card to Client Hub
+Add a new `HubCard` on the Client Hub page linking to a filtered view showing banned clients and clients with disputes — giving managers a single surface to review problematic clients.
 
 ## Files
 
 | File | Action |
 |---|---|
-| `supabase/functions/zura-pay-payouts/index.ts` | Add `bank_account` to response from `account.external_accounts` |
-| `src/hooks/useZuraPayPayouts.ts` | Add `BankAccountInfo` type, add `useUpdatePayoutSchedule` mutation |
-| `src/components/dashboard/settings/terminal/ZuraPayPayoutsTab.tsx` | Add Payout Schedule card (radio group + anchor pickers) and Bank Account card |
-
-No migrations. No new edge functions — reuses the existing `update_schedule` action.
+| Migration | Add `client_id` column to `payment_disputes` |
+| `supabase/functions/zura-pay-webhooks/index.ts` | Resolve `client_id` from email when inserting disputes |
+| `src/hooks/useClientDisputes.ts` | **New** — fetch disputes for a client |
+| `src/components/dashboard/ClientDetailSheet.tsx` | Add dispute history section + dispute count badge |
+| `src/hooks/useClientHealthSegments.ts` | Add "Dispute Risk" segment |
+| `src/pages/dashboard/admin/ClientHub.tsx` | Add "Flagged Clients" hub card |
 
