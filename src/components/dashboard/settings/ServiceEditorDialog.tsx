@@ -56,6 +56,7 @@ export function ServiceEditorDialog({
   const [isChemicalService, setIsChemicalService] = useState(false);
   const [containerTypes, setContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
   const [billingMode, setBillingMode] = useState<'allowance' | 'parts_and_labor'>('allowance');
+  const [requireCardOnFile, setRequireCardOnFile] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -79,6 +80,7 @@ export function ServiceEditorDialog({
         setIsChemicalService((initialData as any).is_chemical_service ?? hasContainers);
         setContainerTypes((initialData as any).container_types || ['bowl']);
         setBillingMode((initialData as any).billing_mode || 'allowance');
+        setRequireCardOnFile((initialData as any).require_card_on_file ?? false);
         setRequiresDeposit(initialData.requires_deposit ?? false);
         setDepositType(initialData.deposit_type ?? 'percentage');
         setDepositAmount(initialData.deposit_amount != null ? String(initialData.deposit_amount) : '');
@@ -105,6 +107,7 @@ export function ServiceEditorDialog({
         setDepositType('percentage');
         setDepositAmount('');
         setDepositAmountFlat('');
+        setRequireCardOnFile(false);
       }
     }
   }, [open, initialData, categories, presetCategory]);
@@ -135,6 +138,7 @@ export function ServiceEditorDialog({
       is_backroom_tracked: isChemicalService ? true : false,
       container_types: isChemicalService ? containerTypes : [],
       billing_mode: isChemicalService ? billingMode : 'allowance',
+      require_card_on_file: requireCardOnFile,
     } as Partial<Service>);
   };
 
