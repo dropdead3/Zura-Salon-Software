@@ -1380,6 +1380,51 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
             <TabsContent value="redos" className="mt-4">
               <ClientRedoHistory clientId={client.id} />
             </TabsContent>
+
+            {(disputeData?.totalCount ?? 0) > 0 && (
+              <TabsContent value="disputes" className="mt-4">
+                <div className="space-y-3">
+                  {(disputeData?.openCount ?? 0) >= 2 && !client.is_banned && (
+                    <Card className="border-destructive/40 bg-destructive/5 p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium">Multiple disputes detected</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            This client has {disputeData!.totalCount} dispute{disputeData!.totalCount > 1 ? 's' : ''}. Consider banning this client to prevent future bookings.
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
+                  {disputeData?.disputes.map((d) => (
+                    <Card key={d.id} className="bg-card/80 backdrop-blur-xl border-border/60 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={
+                              ['needs_response', 'warning_needs_response'].includes(d.status) ? 'destructive' :
+                              d.status === 'won' ? 'secondary' :
+                              d.status === 'lost' ? 'outline' : 'secondary'
+                            } className="text-[10px]">
+                              {d.status.replace(/_/g, ' ')}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground capitalize">{d.reason.replace(/_/g, ' ')}</span>
+                          </div>
+                          <p className="text-sm font-medium">${(d.amount / 100).toFixed(2)} {d.currency.toUpperCase()}</p>
+                          {d.evidence_due_by && (
+                            <p className="text-xs text-muted-foreground">Evidence due: {new Date(d.evidence_due_by).toLocaleDateString()}</p>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {new Date(d.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
 
           {/* Merge + Archive & Ban Actions */}
