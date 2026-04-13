@@ -4,8 +4,9 @@ import { format, subDays } from 'date-fns';
 import { useDebounce } from '@/hooks/use-debounce';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsTrigger, TabsContent, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -52,7 +53,7 @@ import {
   ChevronDown,
   Wallet,
 } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
 import { ZuraPayPayoutsTab } from '@/components/dashboard/settings/terminal/ZuraPayPayoutsTab';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -627,7 +628,7 @@ export default function PaymentOps() {
   const orgId = effectiveOrganization?.id;
   const { formatCurrency } = useFormatCurrency();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: connectStatus } = useOrgConnectStatus(orgId);
   const isZuraPayActive = connectStatus?.stripe_connect_status === 'active';
 
@@ -730,418 +731,387 @@ export default function PaymentOps() {
           backLabel="Operations Hub"
         />
 
-        <div className="space-y-6">
-          {/* Payouts & Balance */}
-          <Collapsible defaultOpen>
+        <Tabs defaultValue={searchParams.get('section') || 'payouts'} onValueChange={(v) => setSearchParams({ section: v }, { replace: true })}>
+          <ResponsiveTabsList onTabChange={(v) => setSearchParams({ section: v }, { replace: true })}>
+            <TabsTrigger value="payouts">
+              <Banknote className="w-4 h-4 mr-1.5" />
+              Payouts
+            </TabsTrigger>
+            <TabsTrigger value="reconciliation">
+              <ShieldCheck className="w-4 h-4 mr-1.5" />
+              Reconciliation
+            </TabsTrigger>
+            <TabsTrigger value="holds">
+              <HandCoins className="w-4 h-4 mr-1.5" />
+              Deposit Holds
+              {depositHolds.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">{depositHolds.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="refunds">
+              <Banknote className="w-4 h-4 mr-1.5" />
+              Refunds
+              {pendingRefunds.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">{pendingRefunds.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="fees">
+              <Receipt className="w-4 h-4 mr-1.5" />
+              Fee Charges
+            </TabsTrigger>
+          </ResponsiveTabsList>
+
+          {/* Payouts */}
+          <TabsContent value="payouts">
             <Card>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer select-none group">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={tokens.card.iconBox}>
-                        <Banknote className={tokens.card.icon} />
-                      </div>
-                      <div>
-                        <CardTitle className={tokens.card.title}>
-                          Payouts & Balance
-                          <MetricInfoTooltip description="Real-time balance and recent payout activity from your connected Zura Pay account." />
-                        </CardTitle>
-                        <CardDescription>View available balance and payout history</CardDescription>
-                      </div>
-                    </div>
-                    <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-                  </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent>
-                  {isZuraPayActive ? (
-                    <ZuraPayPayoutsTab />
-                  ) : (
-                    <EmptyState
-                      icon={Wallet}
-                      title="Zura Pay Not Active"
-                      description="Payout and balance data will appear here once Zura Pay is activated. Set up your payment account in Settings → Zura Pay to start processing transactions and receiving payouts."
-                      action={
-                        <Button
-                          variant="outline"
-                          onClick={() => window.location.href = `${dashPath}/admin/settings?tab=terminals`}
-                        >
-                          Activate Zura Pay
-                        </Button>
-                      }
-                    />
-                  )}
-                </CardContent>
-              </CollapsibleContent>
+              <CardContent className="pt-6">
+                {isZuraPayActive ? (
+                  <ZuraPayPayoutsTab />
+                ) : (
+                  <EmptyState
+                    icon={Wallet}
+                    title="Zura Pay Not Active"
+                    description="Payout and balance data will appear here once Zura Pay is activated. Set up your payment account in Settings → Zura Pay to start processing transactions and receiving payouts."
+                    action={
+                      <Button
+                        variant="outline"
+                        onClick={() => window.location.href = `${dashPath}/admin/settings?tab=terminals`}
+                      >
+                        Activate Zura Pay
+                      </Button>
+                    }
+                  />
+                )}
+              </CardContent>
             </Card>
-          </Collapsible>
+          </TabsContent>
 
           {/* Till Reconciliation */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={tokens.card.iconBox}>
-                    <ShieldCheck className={tokens.card.icon} />
-                  </div>
-                  <div>
-                    <CardTitle className={tokens.card.title}>
-                      Till Reconciliation
-                      <MetricInfoTooltip description="Cross-references local card payment records against Stripe's actual PaymentIntent data to identify discrepancies." />
-                    </CardTitle>
-                    <CardDescription>Verify card payments against Stripe records</CardDescription>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="h-9 pl-9 pr-3 rounded-full border border-input bg-background text-sm"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleReconcile}
-                    disabled={isReconciling}
-                    size="sm"
-                    className="rounded-full"
-                  >
-                    {isReconciling ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
-                    Reconcile
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {!reconciliation ? (
-                <div className={tokens.empty.container}>
-                  <ShieldCheck className={tokens.empty.icon} />
-                  <h3 className={tokens.empty.heading}>No reconciliation run yet</h3>
-                  <p className={tokens.empty.description}>
-                    Select a date and click Reconcile to verify card payments against Stripe.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div
-                    className={cn(
-                      'rounded-xl border px-5 py-4',
-                      reconciliation.is_reconciled
-                        ? 'border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20'
-                        : 'border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20'
-                    )}
-                  >
-                    <div className="flex items-center gap-4">
-                      {reconciliation.is_reconciled ? (
-                        <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-                          <ShieldCheck className="w-5 h-5" />
-                          <span className="font-medium text-sm">All payments reconciled</span>
-                        </div>
+          <TabsContent value="reconciliation">
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">Cross-reference local card payment records against Stripe to identify discrepancies.</p>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="h-9 pl-9 pr-3 rounded-full border border-input bg-background text-sm"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleReconcile}
+                      disabled={isReconciling}
+                      size="sm"
+                      className="rounded-full"
+                    >
+                      {isReconciling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
-                          <AlertTriangle className="w-5 h-5" />
-                          <span className="font-medium text-sm">Discrepancies found</span>
-                        </div>
+                        <RefreshCw className="w-4 h-4" />
                       )}
-                    </div>
-                    <div className="flex items-center gap-6 mt-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Stripe total:</span>{' '}
-                        <span className="font-medium">
-                          <BlurredAmount>{formatCurrency(stripeCardTotal ?? 0)}</BlurredAmount>
-                        </span>
-                        <span className="text-muted-foreground ml-1">
-                          ({reconciliation.stripe.total_payments} payments)
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Local matched:</span>{' '}
-                        <span className="font-medium">{reconciliation.local.matched_count} records</span>
-                      </div>
-                      {(reconciliation.local as any).matched_amount_cents != null && (
-                        <div>
-                          <span className="text-muted-foreground">Local total:</span>{' '}
-                          <span className="font-medium">
-                            <BlurredAmount>
-                              {formatCurrency((reconciliation.local as any).matched_amount_cents / 100)}
-                            </BlurredAmount>
-                          </span>
-                        </div>
-                      )}
-                      {reconciliation.stripe.total_tips_cents > 0 && (
-                        <div>
-                          <span className="text-muted-foreground">Tips:</span>{' '}
-                          <span className="font-medium">
-                            <BlurredAmount>
-                              {formatCurrency(reconciliation.stripe.total_tips_cents / 100)}
-                            </BlurredAmount>
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                      Reconcile
+                    </Button>
                   </div>
-
-                  {/* Discrepancy tables */}
-                  {!reconciliation.is_reconciled && (
-                    <div className="space-y-4">
-                      {reconciliation.discrepancies.unmatched_stripe.length > 0 && (
-                        <div>
-                          <h4 className="font-display text-xs tracking-wide text-amber-700 dark:text-amber-400 mb-2">
-                            IN STRIPE BUT NOT LOCAL
-                          </h4>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className={tokens.table.columnHeader}>Payment Intent</TableHead>
-                                <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                                <TableHead className={tokens.table.columnHeader}>Created</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {reconciliation.discrepancies.unmatched_stripe.map((pi) => (
-                                <TableRow key={pi.id}>
-                                  <TableCell className="font-mono text-xs">{pi.id}</TableCell>
-                                  <TableCell>
-                                    <BlurredAmount>{formatCurrency(pi.amount / 100)}</BlurredAmount>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant="secondary">{pi.status}</Badge>
-                                  </TableCell>
-                                  <TableCell className="text-muted-foreground">
-                                    {format(new Date(pi.created * 1000), 'MMM d, h:mm a')}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      )}
-
-                      {reconciliation.discrepancies.orphaned_local.length > 0 && (
-                        <div>
-                          <h4 className="font-display text-xs tracking-wide text-amber-700 dark:text-amber-400 mb-2">
-                            IN LOCAL BUT NOT STRIPE
-                          </h4>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className={tokens.table.columnHeader}>Appointment</TableHead>
-                                <TableHead className={tokens.table.columnHeader}>Payment Intent</TableHead>
-                                <TableHead className={tokens.table.columnHeader}>Local Status</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {reconciliation.discrepancies.orphaned_local.map((item) => (
-                                <TableRow key={item.appointment_id}>
-                                  <TableCell className="font-mono text-xs">
-                                    {item.appointment_id.slice(0, 8)}…
-                                  </TableCell>
-                                  <TableCell className="font-mono text-xs">
-                                    {item.stripe_payment_intent_id}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant="secondary">{item.local_status}</Badge>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                {!reconciliation ? (
+                  <div className={tokens.empty.container}>
+                    <ShieldCheck className={tokens.empty.icon} />
+                    <h3 className={tokens.empty.heading}>No reconciliation run yet</h3>
+                    <p className={tokens.empty.description}>
+                      Select a date and click Reconcile to verify card payments against Stripe.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div
+                      className={cn(
+                        'rounded-xl border px-5 py-4',
+                        reconciliation.is_reconciled
+                          ? 'border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20'
+                          : 'border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20'
+                      )}
+                    >
+                      <div className="flex items-center gap-4">
+                        {reconciliation.is_reconciled ? (
+                          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                            <ShieldCheck className="w-5 h-5" />
+                            <span className="font-medium text-sm">All payments reconciled</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                            <AlertTriangle className="w-5 h-5" />
+                            <span className="font-medium text-sm">Discrepancies found</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-6 mt-3 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Stripe total:</span>{' '}
+                          <span className="font-medium">
+                            <BlurredAmount>{formatCurrency(stripeCardTotal ?? 0)}</BlurredAmount>
+                          </span>
+                          <span className="text-muted-foreground ml-1">
+                            ({reconciliation.stripe.total_payments} payments)
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Local matched:</span>{' '}
+                          <span className="font-medium">{reconciliation.local.matched_count} records</span>
+                        </div>
+                        {(reconciliation.local as any).matched_amount_cents != null && (
+                          <div>
+                            <span className="text-muted-foreground">Local total:</span>{' '}
+                            <span className="font-medium">
+                              <BlurredAmount>
+                                {formatCurrency((reconciliation.local as any).matched_amount_cents / 100)}
+                              </BlurredAmount>
+                            </span>
+                          </div>
+                        )}
+                        {reconciliation.stripe.total_tips_cents > 0 && (
+                          <div>
+                            <span className="text-muted-foreground">Tips:</span>{' '}
+                            <span className="font-medium">
+                              <BlurredAmount>
+                                {formatCurrency(reconciliation.stripe.total_tips_cents / 100)}
+                              </BlurredAmount>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {!reconciliation.is_reconciled && (
+                      <div className="space-y-4">
+                        {reconciliation.discrepancies.unmatched_stripe.length > 0 && (
+                          <div>
+                            <h4 className="font-display text-xs tracking-wide text-amber-700 dark:text-amber-400 mb-2">
+                              IN STRIPE BUT NOT LOCAL
+                            </h4>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className={tokens.table.columnHeader}>Payment Intent</TableHead>
+                                  <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                                  <TableHead className={tokens.table.columnHeader}>Created</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {reconciliation.discrepancies.unmatched_stripe.map((pi) => (
+                                  <TableRow key={pi.id}>
+                                    <TableCell className="font-mono text-xs">{pi.id}</TableCell>
+                                    <TableCell>
+                                      <BlurredAmount>{formatCurrency(pi.amount / 100)}</BlurredAmount>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant="secondary">{pi.status}</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground">
+                                      {format(new Date(pi.created * 1000), 'MMM d, h:mm a')}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+
+                        {reconciliation.discrepancies.orphaned_local.length > 0 && (
+                          <div>
+                            <h4 className="font-display text-xs tracking-wide text-amber-700 dark:text-amber-400 mb-2">
+                              IN LOCAL BUT NOT STRIPE
+                            </h4>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className={tokens.table.columnHeader}>Appointment</TableHead>
+                                  <TableHead className={tokens.table.columnHeader}>Payment Intent</TableHead>
+                                  <TableHead className={tokens.table.columnHeader}>Local Status</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {reconciliation.discrepancies.orphaned_local.map((item) => (
+                                  <TableRow key={item.appointment_id}>
+                                    <TableCell className="font-mono text-xs">
+                                      {item.appointment_id.slice(0, 8)}…
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs">
+                                      {item.stripe_payment_intent_id}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant="secondary">{item.local_status}</Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Active Deposit Holds */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className={tokens.card.iconBox}>
-                  <HandCoins className={tokens.card.icon} />
-                </div>
-                <div>
-                  <CardTitle className={tokens.card.title}>
-                    Active Deposit Holds
-                    <MetricInfoTooltip description="Pre-authorized card holds for upcoming appointments. Capture to charge or release to cancel the hold." />
-                  </CardTitle>
-                  <CardDescription>Pre-authorized deposits awaiting capture or release</CardDescription>
-                </div>
-                {depositHolds.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto">{depositHolds.length} active</Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {holdsLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <Loader2 className={tokens.loading.spinner} />
-                </div>
-              ) : depositHolds.length === 0 ? (
-                <div className={tokens.empty.container}>
-                  <HandCoins className={tokens.empty.icon} />
-                  <h3 className={tokens.empty.heading}>No active deposit holds</h3>
-                  <p className={tokens.empty.description}>
-                    Deposit holds will appear here when clients pre-authorize payments for appointments.
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {depositHolds.map((hold) => (
-                      <TableRow key={hold.id}>
-                        <TableCell className="font-medium">{hold.client_name || 'Walk-in'}</TableCell>
-                        <TableCell className="text-muted-foreground">{hold.staff_name || '—'}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {format(new Date(hold.appointment_date), 'MMM d, yyyy')}
-                        </TableCell>
-                        <TableCell>
-                          <BlurredAmount>{formatCurrency(hold.deposit_amount ?? 0)}</BlurredAmount>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              className={tokens.button.inline}
-                              onClick={() => setConfirmAction({
-                                type: 'capture',
-                                id: hold.deposit_stripe_payment_id!,
-                                label: `Capture ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
-                                amount: hold.deposit_amount ?? 0,
-                              })}
-                            >
-                              Capture
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className={tokens.button.inline}
-                              onClick={() => setConfirmAction({
-                                type: 'release',
-                                id: hold.deposit_stripe_payment_id!,
-                                label: `Release ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
-                                amount: hold.deposit_amount ?? 0,
-                              })}
-                            >
-                              Release
-                            </Button>
-                          </div>
-                        </TableCell>
+          <TabsContent value="holds">
+            <Card>
+              <CardContent className="pt-6">
+                {holdsLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <Loader2 className={tokens.loading.spinner} />
+                  </div>
+                ) : depositHolds.length === 0 ? (
+                  <div className={tokens.empty.container}>
+                    <HandCoins className={tokens.empty.icon} />
+                    <h3 className={tokens.empty.heading}>No active deposit holds</h3>
+                    <p className={tokens.empty.description}>
+                      Deposit holds will appear here when clients pre-authorize payments for appointments.
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className={tokens.table.columnHeader}>Client</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Date</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {depositHolds.map((hold) => (
+                        <TableRow key={hold.id}>
+                          <TableCell className="font-medium">{hold.client_name || 'Walk-in'}</TableCell>
+                          <TableCell className="text-muted-foreground">{hold.staff_name || '—'}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {format(new Date(hold.appointment_date), 'MMM d, yyyy')}
+                          </TableCell>
+                          <TableCell>
+                            <BlurredAmount>{formatCurrency(hold.deposit_amount ?? 0)}</BlurredAmount>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className={tokens.button.inline}
+                                onClick={() => setConfirmAction({
+                                  type: 'capture',
+                                  id: hold.deposit_stripe_payment_id!,
+                                  label: `Capture ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                  amount: hold.deposit_amount ?? 0,
+                                })}
+                              >
+                                Capture
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={tokens.button.inline}
+                                onClick={() => setConfirmAction({
+                                  type: 'release',
+                                  id: hold.deposit_stripe_payment_id!,
+                                  label: `Release ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                  amount: hold.deposit_amount ?? 0,
+                                })}
+                              >
+                                Release
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Pending Refunds */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className={tokens.card.iconBox}>
-                  <Banknote className={tokens.card.icon} />
-                </div>
-                <div>
-                  <CardTitle className={tokens.card.title}>
-                    Pending Refunds
-                    <MetricInfoTooltip description="Refund requests awaiting processing. Click Process to submit the refund to Stripe." />
-                  </CardTitle>
-                  <CardDescription>Refund requests ready for processing</CardDescription>
-                </div>
-                {pendingRefunds.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto">{pendingRefunds.length} pending</Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {refundsLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <Loader2 className={tokens.loading.spinner} />
-                </div>
-              ) : pendingRefunds.length === 0 ? (
-                <div className={tokens.empty.container}>
-                  <Banknote className={tokens.empty.icon} />
-                  <h3 className={tokens.empty.heading}>No pending refunds</h3>
-                  <p className={tokens.empty.description}>
-                    All refund requests have been processed.
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className={tokens.table.columnHeader}>Item</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Type</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Requested</TableHead>
-                      <TableHead className={tokens.table.columnHeader}>Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingRefunds.map((refund) => (
-                      <TableRow key={refund.id}>
-                        <TableCell className="font-medium">
-                          {refund.original_item_name || 'Unknown item'}
-                        </TableCell>
-                        <TableCell>
-                          <BlurredAmount>{formatCurrency(refund.refund_amount)}</BlurredAmount>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{refund.refund_type}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                          {refund.reason || '—'}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {refund.created_at ? format(new Date(refund.created_at), 'MMM d') : '—'}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            className={tokens.button.inline}
-                            onClick={() => setConfirmAction({
-                              type: 'refund',
-                              id: refund.id,
-                              label: `Process ${formatCurrency(refund.refund_amount)} refund for ${refund.original_item_name || 'Unknown item'}`,
-                              amount: refund.refund_amount,
-                            })}
-                          >
-                            Process
-                          </Button>
-                        </TableCell>
+          <TabsContent value="refunds">
+            <Card>
+              <CardContent className="pt-6">
+                {refundsLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <Loader2 className={tokens.loading.spinner} />
+                  </div>
+                ) : pendingRefunds.length === 0 ? (
+                  <div className={tokens.empty.container}>
+                    <Banknote className={tokens.empty.icon} />
+                    <h3 className={tokens.empty.heading}>No pending refunds</h3>
+                    <p className={tokens.empty.description}>
+                      All refund requests have been processed.
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className={tokens.table.columnHeader}>Item</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Type</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Requested</TableHead>
+                        <TableHead className={tokens.table.columnHeader}>Action</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingRefunds.map((refund) => (
+                        <TableRow key={refund.id}>
+                          <TableCell className="font-medium">
+                            {refund.original_item_name || 'Unknown item'}
+                          </TableCell>
+                          <TableCell>
+                            <BlurredAmount>{formatCurrency(refund.refund_amount)}</BlurredAmount>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{refund.refund_type}</Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                            {refund.reason || '—'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {refund.created_at ? format(new Date(refund.created_at), 'MMM d') : '—'}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              className={tokens.button.inline}
+                              onClick={() => setConfirmAction({
+                                type: 'refund',
+                                id: refund.id,
+                                label: `Process ${formatCurrency(refund.refund_amount)} refund for ${refund.original_item_name || 'Unknown item'}`,
+                                amount: refund.refund_amount,
+                              })}
+                            >
+                              Process
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          {/* Fee Ledger */}
-          <FeeLedgerCard orgId={orgId} formatCurrency={formatCurrency} />
-        </div>
+          {/* Fee Charges */}
+          <TabsContent value="fees">
+            <FeeLedgerCard orgId={orgId} formatCurrency={formatCurrency} />
+          </TabsContent>
+        </Tabs>
 
         {/* E1: Confirmation dialog for destructive financial actions */}
         <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
