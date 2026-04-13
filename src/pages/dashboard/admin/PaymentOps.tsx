@@ -730,7 +730,7 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
           <div className="flex items-center justify-center h-32">
             <Loader2 className={tokens.loading.spinner} />
           </div>
-        ) : disputes.length === 0 ? (
+        ) : filteredDisputes.length === 0 ? (
           <div className={tokens.empty.container}>
             <Scale className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No disputes</h3>
