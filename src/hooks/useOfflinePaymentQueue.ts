@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { formatCurrency } from '@/lib/format';
 
 interface OfflinePayment {
   id: string;
+  /** Amount in the smallest currency unit (e.g. cents for USD). */
   amount: number;
   currency: string;
   timestamp: number;
@@ -14,6 +16,7 @@ interface OfflinePaymentQueueState {
   pendingPayments: OfflinePayment[];
   pendingCount: number;
   pendingTotal: number;
+  pendingTotalFormatted: string;
   forwardedCount: number;
   lastForwardedAt: Date | null;
   isForwarding: boolean;
@@ -73,8 +76,12 @@ export function useOfflinePaymentQueue(): OfflinePaymentQueueState & {
     setPendingPayments(prev => [...prev, entry]);
   }, []);
 
-  const markForwarded = useCallback((ids: string[]) => {
+  const markForwarded = useCallback(async (ids: string[]) => {
     setIsForwarding(true);
+
+    // Yield to let React render the isForwarding=true state
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     setPendingPayments(prev => prev.filter(p => !ids.includes(p.id)));
     const now = new Date();
     setForwardedCount(prev => {
@@ -94,10 +101,16 @@ export function useOfflinePaymentQueue(): OfflinePaymentQueueState & {
 
   const pendingTotal = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
 
+  // Format using the first payment's currency, defaulting to USD.
+  // Amounts are in smallest currency unit (cents).
+  const currency = pendingPayments[0]?.currency || 'USD';
+  const pendingTotalFormatted = formatCurrency(pendingTotal / 100, { currency });
+
   return {
     pendingPayments,
     pendingCount: pendingPayments.length,
     pendingTotal,
+    pendingTotalFormatted,
     forwardedCount,
     lastForwardedAt,
     isForwarding,

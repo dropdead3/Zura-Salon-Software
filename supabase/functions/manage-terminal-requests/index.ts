@@ -13,6 +13,15 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
+// S1: Valid status transition map
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending: ["approved", "denied"],
+  approved: ["shipped", "denied"],
+  shipped: ["delivered"],
+  delivered: [],
+  denied: [],
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -45,6 +54,18 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing required fields: organization_id, location_id, reason" }, 400);
       }
 
+      // S2: Validate location_id belongs to organization_id
+      const { data: locationCheck, error: locError } = await supabase
+        .from("locations")
+        .select("id")
+        .eq("id", location_id)
+        .eq("organization_id", organization_id)
+        .maybeSingle();
+
+      if (locError || !locationCheck) {
+        return jsonResponse({ error: "Location does not belong to this organization" }, 400);
+      }
+
       // Verify org admin role
       const { data: membership } = await supabase
         .from("organization_admins")
@@ -56,7 +77,6 @@ Deno.serve(async (req) => {
       const isAdmin = !!membership;
 
       if (!isAdmin) {
-        // Check if user has admin/manager role via employee_profiles
         const { data: ep } = await supabase
           .from("employee_profiles")
           .select("is_super_admin")
@@ -145,9 +165,10 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: fbError.message }, 500);
         }
 
-        // Enrich with org names
+        // Enrich with org names + requester names
         const orgIds = [...new Set((fallback || []).map((r: Record<string, unknown>) => r.organization_id))];
         const locIds = [...new Set((fallback || []).filter((r: Record<string, unknown>) => r.location_id).map((r: Record<string, unknown>) => r.location_id))];
+        const userIds = [...new Set((fallback || []).filter((r: Record<string, unknown>) => r.requested_by).map((r: Record<string, unknown>) => r.requested_by))];
 
         const { data: orgs } = await supabase
           .from("organizations")
@@ -159,13 +180,20 @@ Deno.serve(async (req) => {
           .select("id, name")
           .in("id", locIds as string[]);
 
+        const { data: profiles } = await supabase
+          .from("employee_profiles")
+          .select("user_id, display_name")
+          .in("user_id", userIds as string[]);
+
         const orgMap = Object.fromEntries((orgs || []).map((o: { id: string; name: string }) => [o.id, o.name]));
         const locMap = Object.fromEntries((locs || []).map((l: { id: string; name: string }) => [l.id, l.name]));
+        const profileMap = Object.fromEntries((profiles || []).map((p: { user_id: string; display_name: string }) => [p.user_id, p.display_name]));
 
         const enriched = (fallback || []).map((r: Record<string, unknown>) => ({
           ...r,
           organization_name: orgMap[r.organization_id as string] || "Unknown",
           location_name: locMap[r.location_id as string] || "Unknown",
+          requester_name: profileMap[r.requested_by as string] || null,
         }));
 
         if (body.status_filter && body.status_filter !== "all") {
@@ -174,10 +202,19 @@ Deno.serve(async (req) => {
         return jsonResponse({ data: enriched });
       }
 
+      // E2: Also fetch requester names for the joined path
+      const requestedByIds = [...new Set((data || []).filter((r: Record<string, unknown>) => r.requested_by).map((r: Record<string, unknown>) => r.requested_by))];
+      const { data: profiles } = await supabase
+        .from("employee_profiles")
+        .select("user_id, display_name")
+        .in("user_id", requestedByIds as string[]);
+      const profileMap = Object.fromEntries((profiles || []).map((p: { user_id: string; display_name: string }) => [p.user_id, p.display_name]));
+
       const enriched = (data || []).map((r: Record<string, unknown>) => ({
         ...r,
         organization_name: (r as Record<string, { name?: string }>).organizations?.name || "Unknown",
         location_name: (r as Record<string, { name?: string }>).locations?.name || "Unknown",
+        requester_name: profileMap[r.requested_by as string] || null,
         organizations: undefined,
         locations: undefined,
       }));
@@ -207,6 +244,26 @@ Deno.serve(async (req) => {
       const validStatuses = ["pending", "approved", "shipped", "delivered", "denied"];
       if (status && !validStatuses.includes(status)) {
         return jsonResponse({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` }, 400);
+      }
+
+      // S1: Enforce valid status transitions
+      if (status) {
+        const { data: current, error: fetchErr } = await supabase
+          .from("terminal_hardware_requests")
+          .select("status")
+          .eq("id", request_id)
+          .single();
+
+        if (fetchErr || !current) {
+          return jsonResponse({ error: "Request not found" }, 404);
+        }
+
+        const allowed = VALID_TRANSITIONS[current.status] || [];
+        if (!allowed.includes(status)) {
+          return jsonResponse({
+            error: `Invalid transition: cannot move from '${current.status}' to '${status}'. Allowed: ${allowed.join(", ") || "none (terminal state)"}`,
+          }, 400);
+        }
       }
 
       const updates: Record<string, unknown> = {};

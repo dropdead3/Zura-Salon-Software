@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,6 +23,30 @@ export interface TerminalHardwareRequest {
 }
 
 export function useTerminalRequests(orgId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  // E5: Realtime subscription for live status updates
+  useEffect(() => {
+    if (!orgId) return;
+    const channel = supabase
+      .channel(`terminal-requests-${orgId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'terminal_hardware_requests',
+          filter: `organization_id=eq.${orgId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['terminal-hardware-requests', orgId] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [orgId, queryClient]);
+
   return useQuery({
     queryKey: ['terminal-hardware-requests', orgId],
     queryFn: async () => {

@@ -6,7 +6,7 @@ const OFFLINE_URL = '/offline.html';
 // Assets to cache immediately on install
 const PRECACHE_ASSETS = [
   '/',
-  '/dashboard',
+  '/index.html',
   '/offline.html',
   '/favicon.ico',
 ];
@@ -91,11 +91,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle navigation requests
+  // Handle navigation requests — SPA fallback to index.html
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(() => {
-        return caches.match(OFFLINE_URL);
+        return caches.match('/index.html') || caches.match(OFFLINE_URL);
       })
     );
     return;

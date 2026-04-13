@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface OfflineEvent {
   type: 'offline' | 'online';
@@ -13,6 +13,7 @@ interface OfflineStatusState {
   lastOnline: Date | null;
   offlineEvents: OfflineEvent[];
   currentOfflineDuration: string | null;
+  clearOfflineEvents: () => void;
 }
 
 const OFFLINE_EVENTS_KEY = 'zura-offline-events';
@@ -57,10 +58,14 @@ export function useOfflineStatus(): OfflineStatusState {
   );
   const [currentOfflineDuration, setCurrentOfflineDuration] = useState<string | null>(null);
 
+  // Use a ref so event listeners don't need offlineSince in their dep array (E6)
+  const offlineSinceRef = useRef(offlineSince);
+  offlineSinceRef.current = offlineSince;
+
   useEffect(() => {
     const handleOnline = () => {
       const now = Date.now();
-      const duration = offlineSince ? formatDuration(now - offlineSince) : undefined;
+      const duration = offlineSinceRef.current ? formatDuration(now - offlineSinceRef.current) : undefined;
 
       setIsOnline(true);
       setLastOnline(new Date());
@@ -94,7 +99,7 @@ export function useOfflineStatus(): OfflineStatusState {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [offlineSince]);
+  }, []); // Stable — no more [offlineSince] dependency
 
   // Update duration ticker while offline
   useEffect(() => {
@@ -105,6 +110,11 @@ export function useOfflineStatus(): OfflineStatusState {
     return () => clearInterval(interval);
   }, [offlineSince]);
 
+  const clearOfflineEvents = useCallback(() => {
+    setOfflineEvents([]);
+    localStorage.removeItem(OFFLINE_EVENTS_KEY);
+  }, []);
+
   return {
     isOnline,
     isOffline: !isOnline,
@@ -112,6 +122,7 @@ export function useOfflineStatus(): OfflineStatusState {
     lastOnline,
     offlineEvents,
     currentOfflineDuration,
+    clearOfflineEvents,
   };
 }
 
@@ -131,7 +142,6 @@ export function useOfflineSync() {
   const [pendingActions, setPendingActions] = useState<OfflineAction[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Load pending actions from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -143,7 +153,6 @@ export function useOfflineSync() {
     }
   }, []);
 
-  // Save pending actions to localStorage when they change
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingActions));
@@ -152,7 +161,6 @@ export function useOfflineSync() {
     }
   }, [pendingActions]);
 
-  // Queue an action for later sync
   const queueAction = useCallback((type: string, payload: any): string => {
     const action: OfflineAction = {
       id: crypto.randomUUID(),
@@ -161,30 +169,23 @@ export function useOfflineSync() {
       timestamp: Date.now(),
       retries: 0,
     };
-
     setPendingActions(prev => [...prev, action]);
     console.log('[OfflineSync] Action queued:', action.id);
-    
     return action.id;
   }, []);
 
-  // Remove a specific action
   const removeAction = useCallback((id: string) => {
     setPendingActions(prev => prev.filter(a => a.id !== id));
   }, []);
 
-  // Clear all pending actions
   const clearActions = useCallback(() => {
     setPendingActions([]);
   }, []);
 
-  // Sync all pending actions when online
   const syncActions = useCallback(async (
     processor: (action: OfflineAction) => Promise<boolean>
   ) => {
-    if (!isOnline || pendingActions.length === 0 || isSyncing) {
-      return;
-    }
+    if (!isOnline || pendingActions.length === 0 || isSyncing) return;
 
     setIsSyncing(true);
     console.log('[OfflineSync] Starting sync of', pendingActions.length, 'actions');
@@ -195,7 +196,6 @@ export function useOfflineSync() {
       try {
         const success = await processor(action);
         results.push({ id: action.id, success });
-        
         if (success) {
           console.log('[OfflineSync] Action synced:', action.id);
         } else {
@@ -207,18 +207,14 @@ export function useOfflineSync() {
       }
     }
 
-    // Remove successful actions
     const successIds = results.filter(r => r.success).map(r => r.id);
     setPendingActions(prev => prev.filter(a => !successIds.includes(a.id)));
-
     setIsSyncing(false);
     console.log('[OfflineSync] Sync complete:', successIds.length, 'succeeded');
   }, [isOnline, pendingActions, isSyncing]);
 
-  // Auto-sync when coming back online
   useEffect(() => {
     if (isOnline && pendingActions.length > 0) {
-      // Request background sync if available
       if ('serviceWorker' in navigator && 'SyncManager' in window) {
         navigator.serviceWorker.ready.then((registration) => {
           if ('sync' in registration) {
