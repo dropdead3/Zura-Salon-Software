@@ -1012,7 +1012,37 @@ async function handleAccountUpdated(
     .maybeSingle();
 
   if (orgError || !org) {
-    console.log(`No org found for Connect account ${accountId} — skipping`);
+    // Check if this is a staff payout account instead
+    const { data: staffAccount } = await supabase
+      .from("staff_payout_accounts")
+      .select("id, organization_id, user_id")
+      .eq("stripe_account_id", accountId)
+      .maybeSingle();
+
+    if (staffAccount) {
+      // Sync staff payout account status
+      let staffStatus = 'pending';
+      if (chargesEnabled && payoutsEnabled && detailsSubmitted) {
+        staffStatus = 'active';
+      } else if (detailsSubmitted && !chargesEnabled) {
+        staffStatus = 'restricted';
+      }
+
+      await supabase
+        .from("staff_payout_accounts")
+        .update({
+          stripe_status: staffStatus,
+          charges_enabled: chargesEnabled,
+          payouts_enabled: payoutsEnabled,
+          details_submitted: detailsSubmitted,
+        })
+        .eq("id", staffAccount.id);
+
+      console.log(`Staff payout account ${accountId} updated to ${staffStatus}`);
+      return;
+    }
+
+    console.log(`No org or staff account found for Connect account ${accountId} — skipping`);
     return;
   }
 

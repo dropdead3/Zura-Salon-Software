@@ -7,6 +7,7 @@ import { CurrentPeriodCard } from '@/components/dashboard/mypay/CurrentPeriodCar
 import { EarningsBreakdownCard } from '@/components/dashboard/mypay/EarningsBreakdownCard';
 import { MyPayStubHistory } from '@/components/dashboard/mypay/MyPayStubHistory';
 import { MyTipsHistory } from '@/components/dashboard/mypay/MyTipsHistory';
+import { MyPayoutSetup } from '@/components/dashboard/mypay/MyPayoutSetup';
 import { Loader2, Wallet } from 'lucide-react';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
@@ -84,7 +85,8 @@ export default function MyPay() {
             </div>
           </TabsContent>
 
-          <TabsContent value="tips">
+          <TabsContent value="tips" className="space-y-6">
+            <MyPayoutSetup />
             <MyTipsHistory />
           </TabsContent>
 

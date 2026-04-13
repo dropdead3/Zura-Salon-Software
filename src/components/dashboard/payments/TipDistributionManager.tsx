@@ -165,6 +165,7 @@ export function TipDistributionManager() {
               <SelectContent>
                 <SelectItem value="cash">Cash</SelectItem>
                 <SelectItem value="manual_transfer">Manual Transfer</SelectItem>
+                <SelectItem value="direct_deposit">Direct Deposit</SelectItem>
                 <SelectItem value="payroll">Include in Payroll</SelectItem>
               </SelectContent>
             </Select>
