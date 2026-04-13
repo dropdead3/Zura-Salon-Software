@@ -1,62 +1,47 @@
 
 
-# Fix `payment_intent.succeeded` Handler for Card-on-File Charges
+# Update `charge.refunded` Handler to Support Partial Refund Status
 
 ## Problem
 
-The `charge-card-on-file` edge function creates PaymentIntents on Connected Accounts with metadata `{ charge_type: "card_on_file", appointment_id: "..." }`. When these succeed, the existing `handleTerminalPaymentIntentSucceeded` handler fires — but it unconditionally sets `payment_method: 'card_reader'`, incorrectly labeling card-on-file charges as terminal payments.
-
-A separate `charge.succeeded` handler is unnecessary because `payment_intent.succeeded` already covers this event. The fix is to make the existing handler metadata-aware.
+The existing `handleChargeRefunded` handler already detects partial refunds (comparing `amount_refunded` vs `amount`) but only logs the result — it does not update the appointment's `payment_status`. Staff have no visibility into partially refunded appointments without checking the Stripe Dashboard.
 
 ## Changes
 
-### 1. Update `handleTerminalPaymentIntentSucceeded` → rename to `handlePaymentIntentSucceeded`
+### 1. Update partial refund branch in `handleChargeRefunded`
 **File:** `supabase/functions/stripe-webhook/index.ts`
 
-- Read `metadata.charge_type` from the PaymentIntent
-- Set `payment_method` based on `charge_type`:
-  - `"card_on_file"` → `payment_method: "card_on_file"`
-  - Default (terminal) → `payment_method: "card_reader"` (preserves existing behavior)
-- Add `paid_at: new Date().toISOString()` to the update to record the transaction timestamp
-- Keep the existing idempotency guard (`neq('payment_status', 'paid')`)
+In the existing handler (around line 984), the `else` branch currently just logs. Update it to set `payment_status: 'partially_refunded'`:
 
 ```text
-Before:
-  .update({
-    payment_status: 'paid',
-    payment_method: 'card_reader',        ← always card_reader
-    stripe_payment_intent_id: piId,
-  })
+Before (line 984-986):
+  } else {
+    console.log(`Partial refund on appointment ${appointment.id}: ...`);
+  }
 
 After:
-  .update({
-    payment_status: 'paid',
-    payment_method: chargeType === 'card_on_file' ? 'card_on_file' : 'card_reader',
-    stripe_payment_intent_id: piId,
-    paid_at: new Date().toISOString(),
-  })
+  } else {
+    await supabase
+      .from("appointments")
+      .update({ payment_status: "partially_refunded" })
+      .eq("id", appointment.id);
+    console.log(`Appointment ${appointment.id} marked as partially refunded: ${refundAmount}/${chargeAmount} cents`);
+  }
 ```
 
-### 2. Migration: Add `paid_at` column to appointments
-New column to record when payment was actually confirmed (vs. when the appointment was created):
+### 2. Surface `partially_refunded` status in UI
 
-```sql
-ALTER TABLE appointments
-ADD COLUMN IF NOT EXISTS paid_at timestamptz;
-```
+Since no frontend code currently references this status, the relevant appointment status displays (dock, calendar, payment ops) should handle the new value gracefully. The status badge/color system in `design-tokens.ts` may need a new entry for `partially_refunded` if it renders appointment payment statuses visually.
 
-## Why Not `charge.succeeded`?
-
-- `payment_intent.succeeded` already fires for both terminal and card-on-file charges on Connected Accounts
-- The metadata (`charge_type`, `appointment_id`) is already set by the `charge-card-on-file` edge function
-- Adding `charge.succeeded` would create duplicate handling for the same payment event
+- Add a `partially_refunded` entry to any payment status color/config maps
+- Ensure dock and calendar components render the badge correctly (they already fall through to default styling for unknown statuses, so this is cosmetic polish)
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| **Migration** | Add `paid_at` column to `appointments` |
-| `supabase/functions/stripe-webhook/index.ts` | Update handler to read `charge_type` metadata and set correct `payment_method` + `paid_at` |
+| `supabase/functions/stripe-webhook/index.ts` | Update partial refund branch to write `partially_refunded` status |
+| UI status maps (if applicable) | Add `partially_refunded` badge styling |
 
-1 migration, 0 new edge functions, 0 new dependencies.
+0 migrations, 0 new edge functions, 0 new dependencies.
 
