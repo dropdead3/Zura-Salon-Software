@@ -371,16 +371,6 @@ export function TerminalSettingsContent() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <div className={tokens.card.iconBox}>
-          <CreditCard className={tokens.card.icon} />
-        </div>
-        <div>
-          <h2 className="font-display text-xl tracking-wide">ZURA PAY</h2>
-          <p className="text-sm text-muted-foreground font-sans">In-person payment infrastructure for your locations.</p>
-        </div>
-      </div>
 
       {/* Activation Checklist */}
       <ZuraPayActivationChecklist
