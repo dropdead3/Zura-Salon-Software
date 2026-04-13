@@ -1,0 +1,1 @@
+ALTER TABLE public.phorest_appointments ADD COLUMN IF NOT EXISTS payment_failure_reason text;

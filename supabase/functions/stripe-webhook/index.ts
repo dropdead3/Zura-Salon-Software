@@ -581,13 +581,26 @@ async function handlePaymentIntentSucceeded(
   console.log(`PI succeeded: ${piId} for appointment ${appointmentId} (charge_type: ${chargeType}, payment_method: ${paymentMethod})`);
 
   // Idempotent update — only update if not already paid
+  const updatePayload = {
+    payment_status: 'paid',
+    payment_method: paymentMethod,
+    stripe_payment_intent_id: piId,
+    paid_at: new Date().toISOString(),
+    payment_failure_reason: null, // Clear any previous failure reason on success
+  };
+
   const { error } = await supabase
     .from('appointments')
+    .update(updatePayload)
+    .eq('id', appointmentId)
+    .neq('payment_status', 'paid');
+
+  // Fallback: also try phorest_appointments (one will match, other is a no-op)
+  await supabase
+    .from('phorest_appointments')
     .update({
       payment_status: 'paid',
-      payment_method: paymentMethod,
-      stripe_payment_intent_id: piId,
-      paid_at: new Date().toISOString(),
+      payment_failure_reason: null,
     })
     .eq('id', appointmentId)
     .neq('payment_status', 'paid');
@@ -618,14 +631,23 @@ async function handlePaymentIntentFailed(
   console.log(`PI failed (${chargeType}): ${piId} for appointment ${appointmentId} — ${errorMsg}`);
 
   // Update appointment to reflect failed payment with reason
+  const failPayload = {
+    payment_status: 'failed',
+    payment_failure_reason: errorMsg,
+  };
+
   const { error } = await supabase
     .from('appointments')
-    .update({
-      payment_status: 'failed',
-      payment_failure_reason: errorMsg,
-    })
+    .update(failPayload)
     .eq('id', appointmentId)
     .neq('payment_status', 'paid'); // Don't overwrite a paid status
+
+  // Fallback: also try phorest_appointments (one will match, other is a no-op)
+  await supabase
+    .from('phorest_appointments')
+    .update(failPayload)
+    .eq('id', appointmentId)
+    .neq('payment_status', 'paid');
 
   if (error) {
     console.error("Failed to update appointment from PI failure webhook:", error);

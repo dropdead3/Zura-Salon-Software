@@ -23,6 +23,7 @@ export interface DockAppointment {
   end_time: string;
   status: string | null;
   payment_status?: string | null;
+  payment_failure_reason?: string | null;
   location_id: string | null;
   phorest_client_id?: string | null;
   client_id?: string | null;
@@ -67,7 +68,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         // Fetch today's phorest appointments for this specific location
         let query = supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, location_id, phorest_client_id, notes, stylist_user_id')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id')
           .eq('location_id', locationId)
           .eq('appointment_date', today)
           .is('deleted_at', null)
@@ -140,6 +141,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           end_time: a.end_time,
           status: a.status,
           payment_status: (a as any).payment_status || 'pending',
+          payment_failure_reason: (a as any).payment_failure_reason || null,
           location_id: a.location_id,
           phorest_client_id: a.phorest_client_id,
           notes: a.notes,
@@ -186,7 +188,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             if (missingIds.length > 0) {
               const { data: extraAppts } = await supabase
                 .from('phorest_appointments')
-                .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, location_id, phorest_client_id, notes, stylist_user_id')
+                .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id')
                 .in('id', missingIds)
                 .eq('location_id', locationId)
                 .eq('appointment_date', today)
@@ -205,8 +207,9 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
                   start_time: a.start_time,
                   end_time: a.end_time,
                   status: a.status,
-                  payment_status: (a as any).payment_status || 'pending',
-                  location_id: a.location_id,
+                   payment_status: (a as any).payment_status || 'pending',
+                   payment_failure_reason: (a as any).payment_failure_reason || null,
+                   location_id: a.location_id,
                   phorest_client_id: a.phorest_client_id,
                   notes: a.notes,
                   mix_bowl_count: 0,
@@ -224,14 +227,14 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
       const [phorestResult, localResult] = await Promise.all([
         supabase
           .from('phorest_appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, location_id, phorest_client_id, notes, stylist_user_id')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, phorest_client_id, notes, stylist_user_id')
           .eq('stylist_user_id', staffUserId!)
           .eq('appointment_date', today)
           .is('deleted_at', null)
           .order('start_time', { ascending: true }),
         supabase
           .from('appointments')
-          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, location_id, client_id, notes')
+          .select('id, client_name, service_name, appointment_date, start_time, end_time, status, payment_status, payment_failure_reason, location_id, client_id, notes')
           .eq('staff_user_id', staffUserId!)
           .eq('appointment_date', today)
           .is('deleted_at', null)
@@ -254,6 +257,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         end_time: a.end_time,
         status: a.status,
         payment_status: (a as any).payment_status || 'pending',
+        payment_failure_reason: (a as any).payment_failure_reason || null,
         location_id: a.location_id,
         phorest_client_id: a.phorest_client_id,
         notes: a.notes,
@@ -270,6 +274,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         end_time: a.end_time,
         status: a.status,
         payment_status: (a as any).payment_status || 'pending',
+        payment_failure_reason: (a as any).payment_failure_reason || null,
         location_id: a.location_id,
         client_id: a.client_id,
         notes: a.notes,
