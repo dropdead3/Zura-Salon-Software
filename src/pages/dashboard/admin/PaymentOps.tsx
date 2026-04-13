@@ -1294,7 +1294,7 @@ export default function PaymentOps() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {depositHolds.map((hold) => (
+                      {filteredHolds.map((hold) => (
                         <TableRow key={hold.id}>
                           <TableCell className="font-medium">{hold.client_name || 'Walk-in'}</TableCell>
                           <TableCell className="text-muted-foreground">{hold.staff_name || '—'}</TableCell>
