@@ -1,103 +1,98 @@
 
 
-# Zura Pay Ship-Readiness Audit
+# Zura Pay Ship Readiness — Gaps & Improvements
 
-## Status: Nearly Ready — 6 Issues to Resolve
+## What's Already Solid
+The core payment infrastructure is well-built: Connect onboarding, terminal PI creation, card-on-file management, webhook handling for payment/setup/refund events, deposit holds, reconciliation, fee collection, branded S710 display, hardware ordering, and the Payment Ops tabbed UI with cross-linking. Security hardening (auth, membership checks, idempotency, CORS) was just completed.
 
-### Critical Issues
+---
 
-**1. Missing `config.toml` entries (7 edge functions)**
-These Zura Pay edge functions exist but have no `[functions.xxx]` block in `supabase/config.toml`. Without the `verify_jwt = false` entry, they default to JWT verification at the gateway level, which can cause silent 401s depending on how they're invoked:
+## Missing Pieces (Ranked by Impact)
 
-| Function | Purpose |
+### 1. No `account.updated` Webhook Handler (Critical)
+**Problem**: When a Connected Account's status changes (e.g., Stripe disables charges due to compliance, or onboarding completes asynchronously), there is no webhook handler to update `stripe_connect_status`. The only way status syncs today is via the manual "Verify" button. An org could lose the ability to process payments and Zura would never know.
+
+**Fix**: Add `account.updated` case to `stripe-webhook/index.ts`. On receipt, read `charges_enabled` / `payouts_enabled` / `details_submitted` from the account object and update `organizations.stripe_connect_status` accordingly. Fire a platform alert if status degrades.
+
+---
+
+### 2. No Dispute/Chargeback Handling (Critical)
+**Problem**: The webhook handles `charge.refunded` but does NOT handle `charge.dispute.created`, `charge.dispute.closed`, or `charge.dispute.funds_withdrawn`. Disputes are the highest-severity financial event a salon can face — they lose the funds immediately plus a $15 fee. Zura has zero visibility into this today.
+
+**Fix**: 
+- Add webhook handlers for `charge.dispute.created` and `charge.dispute.closed`
+- Create a `payment_disputes` table to track dispute lifecycle
+- Surface disputes in Payment Ops (new "Disputes" tab or badge on existing tab)
+- Fire a real-time alert to org admins and platform
+
+---
+
+### 3. No Client-Facing Payment Receipts (High)
+**Problem**: After a terminal checkout or card-on-file charge, no receipt is sent to the client. Stripe can auto-send receipts if `receipt_email` is set on the PaymentIntent, but `create-terminal-payment-intent` doesn't set it, and `charge-card-on-file` doesn't either.
+
+**Fix**: 
+- Pass `receipt_email` on PaymentIntents when client email is available
+- Alternatively, use Stripe's `receipt_url` from the succeeded PI to surface a "Send Receipt" action in the appointment detail sheet
+
+---
+
+### 4. No Payout Schedule Configuration (Medium)
+**Problem**: Orgs have no ability to view or change their payout schedule (daily, weekly, monthly). The `zura-pay-payouts` function reads balance and payout history but doesn't expose schedule settings. Salon owners care deeply about cash flow timing.
+
+**Fix**: Add a read/update payout schedule action to the `zura-pay-payouts` edge function, surface it in the Payouts tab of Payment Ops or in the Zura Pay Configurator settings.
+
+---
+
+### 5. No Guided Activation Flow (Medium)
+**Problem**: There's no progressive onboarding checklist for Zura Pay. An org owner lands on the Configurator tab and has to figure out the sequence: Create account → Complete verification → Connect locations → Register readers → Test checkout. The "Not Active" empty state exists but doesn't guide through multi-step activation.
+
+**Fix**: Add a `ZuraPayActivationChecklist` component to the Configurator that tracks completion of each step with visual progress (checkmark/pending states). Steps: Account Created → Verification Complete → Location Connected → Reader Paired → First Transaction.
+
+---
+
+### 6. Platform Health Page Still Says "Stripe" (Low — Brand)
+**Problem**: `StripeHealth.tsx` header says "Monitor Stripe payment processing" and the page/route is named `stripe-health`. This violates brand isolation.
+
+**Fix**: Rename route to `payments-health`, rename component references, update all copy to "Zura Pay" terminology.
+
+---
+
+## Improvements (Nice-to-Have)
+
+| Improvement | Description |
 |---|---|
-| `zura-pay-payouts` | Balance + payout history |
-| `create-terminal-payment-intent` | POS checkout PI creation |
-| `terminal-reader-display` | S710 display push |
-| `terminal-hardware-order` | Hardware purchase checkout |
-| `manage-stripe-terminals` | Fleet CRUD |
-| `charge-card-on-file` | Fee collection on saved cards |
-| `collect-booking-deposit` | Deposit capture |
-
-**Fix**: Add 7 `[functions.xxx] verify_jwt = false` blocks to `config.toml`.
+| **Partial refunds** | `process-stripe-refund` may only support full refunds — add partial refund amount input |
+| **Retry failed charges** | The dock shows a retry button for failed card-on-file charges, but verify the edge function supports idempotent retry |
+| **Transaction search** | Payment Ops has no search/filter across all Zura Pay transactions for an org — useful for support |
+| **Payout reconciliation** | Link individual payouts to the transactions they contain (Stripe provides this via `balance_transaction` expansion) |
+| **Multi-currency prep** | All amounts hardcode `usd` — add currency from org settings for future international expansion |
 
 ---
 
-**2. Incomplete CORS headers on `charge-card-on-file`**
-The function's `Access-Control-Allow-Headers` only lists `authorization, x-client-info, apikey, content-type` — missing the `x-supabase-client-platform*` and `x-supabase-client-runtime*` headers that modern Supabase JS clients send. This will cause CORS preflight failures in some browsers/versions.
+## Recommended Priority Order
 
-**Fix**: Update to the full CORS header set matching the standard used in other functions.
-
----
-
-**3. `zura-pay-payouts` uses deprecated `getClaims()` for auth**
-This function calls `supabase.auth.getClaims(token)` which is not a standard Supabase JS method. It should use `supabase.auth.getUser()` like the other hardened payment functions (`charge-card-on-file`, `collect-booking-deposit`). This could fail silently in newer Supabase versions.
-
-**Fix**: Replace `getClaims` with `getUser` pattern.
+1. `account.updated` webhook handler (prevents silent payment outages)
+2. Dispute handling (financial risk mitigation)
+3. Client receipts (client experience baseline)
+4. Brand cleanup on Platform Health page
+5. Guided activation checklist
+6. Payout schedule configuration
 
 ---
 
-### Moderate Issues
+## Technical Scope
 
-**4. `zura-pay-payouts` has no org-membership verification**
-The function authenticates the user but never verifies they belong to the requested `organization_id`. Any authenticated user could request payouts for any org by passing an arbitrary ID. Other payment functions (`charge-card-on-file`) check `employee_profiles` membership.
-
-**Fix**: Add org-membership check via `employee_profiles` lookup.
-
----
-
-**5. Several more edge functions may have short CORS headers**
-`collect-booking-deposit`, `create-terminal-payment-intent`, `terminal-reader-display`, `manage-stripe-terminals`, and `terminal-hardware-order` should be audited for the same CORS header gap.
-
-**Fix**: Audit and standardize CORS headers across all Zura Pay edge functions.
-
----
-
-**6. Missing `config.toml` for supporting billing functions**
-`org-billing-portal`, `org-payment-info`, and `customer-portal` are also missing entries. These support the subscription/billing side but are invoked alongside Zura Pay.
-
-**Fix**: Add entries to `config.toml`.
-
----
-
-### Already Passing
-
-| Area | Status |
+| File | Change |
 |---|---|
-| Secrets (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`) | Configured |
-| Stripe SDK version consistency (`v18.5.0` / `2025-08-27.basil`) | Consistent |
-| Stripe webhook signature verification | Implemented |
-| Idempotency keys on charges | Implemented |
-| Brand isolation (no "Stripe" in UI) | Clean |
-| Multi-tenant scoping (org-level Connect accounts) | Correct |
-| Payment Ops UI (tabs, cross-links, empty states) | Complete |
-| Configurator (onboarding, fleet, hardware, display) | Complete |
-| Service worker offline caching | Active |
+| `supabase/functions/stripe-webhook/index.ts` | Add `account.updated`, `charge.dispute.created`, `charge.dispute.closed` handlers |
+| New migration | Create `payment_disputes` table |
+| `src/pages/dashboard/admin/PaymentOps.tsx` | Add Disputes tab/badge |
+| `supabase/functions/create-terminal-payment-intent/index.ts` | Add `receipt_email` |
+| `supabase/functions/charge-card-on-file/index.ts` | Add `receipt_email` |
+| `src/pages/dashboard/platform/StripeHealth.tsx` | Rebrand to Zura Pay |
+| `src/App.tsx` | Update route from `stripe-health` to `payments-health` |
+| `supabase/functions/zura-pay-payouts/index.ts` | Add payout schedule read/update |
+| New component | `ZuraPayActivationChecklist` for Configurator |
 
----
-
-## Implementation Plan
-
-### Step 1: Add missing `config.toml` entries
-Add 10 function blocks to `supabase/config.toml`.
-
-### Step 2: Fix `zura-pay-payouts` auth + security
-- Replace `getClaims` with `getUser`
-- Add org-membership check
-
-### Step 3: Standardize CORS headers
-Audit and update CORS headers in `charge-card-on-file`, `collect-booking-deposit`, `create-terminal-payment-intent`, `terminal-reader-display`, `manage-stripe-terminals`, `terminal-hardware-order` to include the full `x-supabase-client-*` header set.
-
-| File | Action |
-|---|---|
-| `supabase/config.toml` | Add 10 missing function entries |
-| `supabase/functions/zura-pay-payouts/index.ts` | Fix auth + add membership check |
-| `supabase/functions/charge-card-on-file/index.ts` | Fix CORS headers |
-| `supabase/functions/collect-booking-deposit/index.ts` | Audit + fix CORS |
-| `supabase/functions/create-terminal-payment-intent/index.ts` | Audit + fix CORS |
-| `supabase/functions/terminal-reader-display/index.ts` | Audit + fix CORS |
-| `supabase/functions/manage-stripe-terminals/index.ts` | Audit + fix CORS |
-| `supabase/functions/terminal-hardware-order/index.ts` | Audit + fix CORS |
-
-No migrations. No UI changes. No new dependencies.
+No new secrets. No new dependencies. Migrations only for `payment_disputes` table.
 
