@@ -1,22 +1,17 @@
 
 
-# Fix Settings Detail Pages: Back Button + Remove Redundant Header
+# Add Description to All Settings Detail Pages
 
 ## Problem
-
-1. **No back button** — `SettingsCategoryDetail` renders `DashboardPageHeader` without `backTo`, so there's no way to navigate back to the Settings hub from any settings detail page (Zura Pay, Email, Users, etc.).
-
-2. **Redundant header on Zura Pay** — `TerminalSettingsContent` renders its own "ZURA PAY" icon + title + description (lines 373-383), duplicating the parent `DashboardPageHeader` which already shows "ZURA PAY" as the page title. The screenshot confirms "ZURA PAY" appears twice.
+Settings detail pages show the page title via `DashboardPageHeader` but have no description underneath. The back button was already added. The descriptions already exist in the `categoriesMap` in `Settings.tsx` but are not passed through to `SettingsCategoryDetail`.
 
 ## Fix Plan
 
 | # | File | Change |
 |---|---|---|
-| 1 | `src/components/dashboard/settings/SettingsCategoryDetail.tsx` (line 448) | Add `backTo={dashPath('/admin/settings')}` and `backLabel="Back to Settings"` to the `DashboardPageHeader`. This applies to **all** settings detail pages uniformly. |
-| 2 | `src/components/dashboard/settings/TerminalSettingsContent.tsx` (lines 373-383) | Remove the redundant icon + title + description block ("ZURA PAY" / "In-person payment infrastructure..."). The parent `DashboardPageHeader` already provides the page title. |
+| 1 | `src/components/dashboard/settings/SettingsCategoryDetail.tsx` | Add `categoryDescription` prop to `SettingsCategoryDetailProps`. Pass it as `description` to `DashboardPageHeader`. |
+| 2 | `src/pages/dashboard/admin/Settings.tsx` (line 160) | Pass `categoryDescription={categoriesMap[activeCategory]?.description ?? ''}` to `SettingsCategoryDetail`. |
 
 ## Result
-
-- Every settings detail page gets a consistent back arrow to return to the Settings hub.
-- Zura Pay no longer shows a duplicate header. The page title comes from `DashboardPageHeader` like all other settings pages.
+Every settings detail page displays the category description (e.g. "Configure your Zura Pay hardware fleet, purchase readers, monitor connectivity, and preview checkout display") directly under the page title, consistent with other hub pages like Website Hub, Day Rate Settings, etc.
 
