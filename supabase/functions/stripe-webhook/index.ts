@@ -581,13 +581,20 @@ async function handlePaymentIntentSucceeded(
   console.log(`PI succeeded: ${piId} for appointment ${appointmentId} (charge_type: ${chargeType}, payment_method: ${paymentMethod})`);
 
   // Idempotent update — only update if not already paid
-  const updatePayload = {
+  const updatePayload: Record<string, unknown> = {
     payment_status: 'paid',
     payment_method: paymentMethod,
     stripe_payment_intent_id: piId,
     paid_at: new Date().toISOString(),
     payment_failure_reason: null, // Clear any previous failure reason on success
   };
+
+  // Online booking deposit reconciliation
+  if (metadata?.source === 'online_booking' && metadata?.fee_type === 'deposit') {
+    updatePayload.deposit_status = 'collected';
+    updatePayload.deposit_collected_at = new Date().toISOString();
+    console.log(`Deposit reconciliation: marking deposit collected for appointment ${appointmentId}`);
+  }
 
   const { error } = await supabase
     .from('appointments')
@@ -669,18 +676,18 @@ async function handlePaymentMethodDetached(
   console.log(`payment_method.detached: PM ${paymentMethodId}, account ${connectedAccountId}`);
 
   // Look up organization_id from the connected account
-  const { data: orgAccount, error: orgError } = await supabase
-    .from("organization_stripe_accounts")
-    .select("organization_id")
-    .eq("stripe_account_id", connectedAccountId)
+  const { data: org, error: orgError } = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("stripe_connect_account_id", connectedAccountId)
     .maybeSingle();
 
-  if (orgError || !orgAccount) {
+  if (orgError || !org) {
     console.log(`No org found for connected account ${connectedAccountId} — skipping`);
     return;
   }
 
-  const organizationId = orgAccount.organization_id;
+  const organizationId = org.id;
 
   // Hard-delete the matching card on file
   const { data: deleted, error: deleteError } = await supabase
@@ -714,18 +721,18 @@ async function handleCustomerDeleted(
   console.log(`customer.deleted: Customer ${customerId}, account ${connectedAccountId}`);
 
   // Look up organization_id from the connected account
-  const { data: orgAccount, error: orgError } = await supabase
-    .from("organization_stripe_accounts")
-    .select("organization_id")
-    .eq("stripe_account_id", connectedAccountId)
+  const { data: org, error: orgError } = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("stripe_connect_account_id", connectedAccountId)
     .maybeSingle();
 
-  if (orgError || !orgAccount) {
+  if (orgError || !org) {
     console.log(`No org found for connected account ${connectedAccountId} — skipping`);
     return;
   }
 
-  const organizationId = orgAccount.organization_id;
+  const organizationId = org.id;
 
   // Bulk-delete all cards on file for this customer
   const { data: deleted, error: deleteError } = await supabase
@@ -765,18 +772,18 @@ async function handlePaymentMethodUpdated(
   console.log(`payment_method.updated: PM ${paymentMethodId}, account ${connectedAccountId}`);
 
   // Look up organization_id from the connected account
-  const { data: orgAccount, error: orgError } = await supabase
-    .from("organization_stripe_accounts")
-    .select("organization_id")
-    .eq("stripe_account_id", connectedAccountId)
+  const { data: org, error: orgError } = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("stripe_connect_account_id", connectedAccountId)
     .maybeSingle();
 
-  if (orgError || !orgAccount) {
+  if (orgError || !org) {
     console.log(`No org found for connected account ${connectedAccountId} — skipping`);
     return;
   }
 
-  const organizationId = orgAccount.organization_id;
+  const organizationId = org.id;
 
   // Update card details on the matching row
   const { data: updated, error: updateError } = await supabase
@@ -818,18 +825,18 @@ async function handleSetupIntentSucceeded(
   console.log(`setup_intent.succeeded: PM ${paymentMethodId}, customer ${stripeCustomerId}, account ${connectedAccountId}`);
 
   // 1. Look up organization by Connected Account ID
-  const { data: orgAccount } = await supabase
-    .from("organization_stripe_accounts")
-    .select("organization_id")
-    .eq("stripe_account_id", connectedAccountId)
-    .single();
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("stripe_connect_account_id", connectedAccountId)
+    .maybeSingle();
 
-  if (!orgAccount) {
+  if (!org) {
     console.warn(`No organization found for Connected Account ${connectedAccountId}`);
     return;
   }
 
-  const organizationId = orgAccount.organization_id;
+  const organizationId = org.id;
 
   // 2. Fetch payment method details from Stripe
   const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
