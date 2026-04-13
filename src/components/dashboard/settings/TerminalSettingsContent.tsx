@@ -613,6 +613,9 @@ export function TerminalSettingsContent() {
         </>
       )}
 
+      {/* Request a Terminal Card */}
+      <TerminalRequestCard locations={locations} />
+
       {/* Register Reader Wizard */}
       <RegisterReaderDialog
         open={registerOpen}
