@@ -168,3 +168,40 @@ export function useConnectLocation() {
     },
   });
 }
+
+export function useDisconnectLocation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      organizationId,
+      locationId,
+    }: {
+      organizationId: string;
+      locationId: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('connect-zura-pay', {
+        body: {
+          action: 'disconnect_location',
+          organization_id: organizationId,
+          location_id: locationId,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
+      queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['terminal-locations'] });
+      queryClient.invalidateQueries({ queryKey: ['terminal-readers'] });
+      toast.success('Location disconnected from Zura Pay');
+    },
+    onError: (error) => {
+      toast.error('Failed to disconnect location', {
+        description: (error as Error).message,
+      });
+    },
+  });
+}
