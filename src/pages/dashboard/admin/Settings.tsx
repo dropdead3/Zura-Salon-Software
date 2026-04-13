@@ -158,6 +158,7 @@ export default function Settings() {
         <SettingsCategoryDetail
           activeCategory={activeCategory}
           categoryLabel={categoriesMap[activeCategory]?.label ?? ''}
+          categoryDescription={categoriesMap[activeCategory]?.description ?? ''}
           onBack={() => setActiveCategory(null)}
         />
       </Suspense>
