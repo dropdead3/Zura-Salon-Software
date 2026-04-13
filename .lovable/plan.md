@@ -1,70 +1,50 @@
 
 
-# Terminal Hardware Order — Bug, Gap & Enhancement Audit
+# Terminal Settings — Remaining Fixes
 
-## Bugs Found
+## Summary
+8 remaining issues across `TerminalSettingsContent.tsx` — all in a single file. No migrations, no edge function changes, no new dependencies.
 
-### 1. Accessories missing on live Stripe API path (Critical)
-**File:** `supabase/functions/terminal-hardware-order/index.ts`, lines 109-114
+## Changes
 
-When the Stripe Hardware SKUs API succeeds, the response returns `skus` and `s710_skus` but **never returns `accessories`**. Only the fallback path (line 138-142) includes accessories. The UI reads `skuData?.accessories` which will be `undefined` on the live API path, meaning organizations with API access see no accessory options.
+### 1. Fix useEffect stale closure (Bug #2)
+Line 336-348: Replace the payment verification `useEffect` with a ref-based pattern. Store `verifyPayment.mutate` in a `useRef` so the effect can safely depend on `[searchParams, orgId]` without re-triggering on every render.
 
-**Fix:** After filtering S710 SKUs from the API response, also filter non-reader products (hub, dock, case) into a separate `accessories` array. Use product name matching to classify.
+### 2. Image fallback via React state (Bug #6 / Gap #6)
+Replace the DOM-manipulation `onError` handlers with a `useState<Record<string, boolean>>` map of failed image URLs. When an image fails, set its key to `true` and conditionally render the icon fallback instead. Applies to all three image locations (pricing preview, dialog product image, accessory images).
 
-### 2. React `useEffect` missing dependencies
-**File:** `TerminalSettingsContent.tsx`, line 344
+### 3. Reset dialog state on close
+When `setDialogOpen(false)` is called (cancel button + dialog dismiss), also reset `quantity` to `1`, `selectedAccessories` to `{}`, and `reqLocationId` to `''`.
 
-The payment verification `useEffect` references `verifyPayment` and `setSearchParams` but they're not in the dependency array. This can cause stale closures.
+### 4. Use selectedLocation for CheckoutDisplayConcept
+Line 1035: Change `locations?.[0]?.name` to `selectedLocation?.name || locations?.[0]?.name` so the concept preview reflects the actively selected location.
 
-**Fix:** Add proper deps or wrap in refs.
+### 5. Conditionally render OfflinePaymentStatus
+Line 1029: Only render `<OfflinePaymentStatus />` when there are readers (`readers && readers.length > 0`), or when showing all locations.
 
-### 3. Manage Dialog allows invalid status transitions
-**File:** `TerminalRequestsTable.tsx`, lines 143-152
+### 6. Show reader firmware and IP
+In the reader list (lines 966-1020), add `device_sw_version` and `ip_address` from the reader object as additional metadata below the serial number line.
 
-The status dropdown shows all 5 statuses regardless of the current status. The backend enforces valid transitions (`pending → approved/denied`, `approved → shipped/denied`, etc.) and will reject invalid ones, but the UI gives no indication of what's allowed.
+### 7. Show affected reader count in delete location dialog
+Line 1059: Calculate `readers?.filter(r => r.location === deleteLocationTarget?.id).length` and display it in the confirmation description (e.g., "This location has 2 readers that will need to be reassigned.").
 
-**Fix:** Filter the status `<Select>` options to only show valid next states based on `request.status`, using the same transition map the backend uses.
-
-## Gaps Found
-
-### 4. Order history rows don't show accessories or pricing
-**File:** `TerminalSettingsContent.tsx`, lines 472-501
-
-Each order history row shows "S710 Reader × qty" but never displays accessories or the estimated total, even though the data is now stored.
-
-**Fix:** Show accessories count and `estimated_total_cents` formatted as currency in the order history rows.
-
-### 5. Purchase flow doesn't create a `terminal_hardware_request` record
-The `TerminalPurchaseCard` goes directly to Stripe Checkout but never calls `create_request` on `manage-terminal-requests`. This means the platform admin `TerminalRequestsTable` has no visibility into checkout-based orders — only manually submitted requests appear there.
-
-**Fix:** Before redirecting to checkout, create a `terminal_hardware_request` with status `pending` and persist `device_type`, `accessories`, and `estimated_total_cents`. After successful payment verification, update the request status to `approved`/`shipped`.
-
-### 6. Fallback CDN image URLs may not be publicly accessible
-The `b.stripecdn.com/terminal-ui-resources/...` URLs are Stripe's internal CDN. These may return 403 for unauthenticated requests.
-
-**Fix:** Add `onError` handlers on all `<img>` tags to fall back to the `<Smartphone>` / `<Package>` icon if the image fails to load. Already partially done but should be explicit with an error state.
-
-## Enhancements
-
-### 7. Accessories quantity selector
-Currently accessories toggle on/off with quantity locked at 1. For hub/dock/case, quantity should match reader quantity or be independently selectable (e.g., 3 readers + 3 docks).
-
-**Fix:** Add a small quantity stepper (1-5) for each selected accessory in the purchase dialog.
-
-### 8. Platform admin revenue summary
-The `TerminalRequestsTable` shows individual request totals but has no aggregate view.
-
-**Fix:** Add a summary row or header stat showing total estimated revenue across filtered requests.
+### 8. Add reader count badges to location picker
+Lines 816-822: For each location in the picker dropdown, show a small badge with the reader count (requires a lightweight lookup or inline query). Since we already fetch readers for the active location, we'll show the badge only for the currently selected location's count in the trigger text, keeping it simple.
 
 ---
 
-## Files Modified
+## Technical Details
 
-| File | Changes |
-|------|---------|
-| `supabase/functions/terminal-hardware-order/index.ts` | Extract accessories from API response; fix live path |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Fix useEffect deps; add img onError; show accessories in history; create request before checkout; accessory qty stepper |
-| `src/components/platform/stripe/TerminalRequestsTable.tsx` | Filter status dropdown to valid transitions; add revenue summary |
+**File modified:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
 
-3 files, 0 migrations, 0 new dependencies.
+- Add `useRef` import
+- Add `failedImages` state (`useState<Set<string>>`)
+- Wrap `verifyPayment.mutate` in a ref, update effect deps
+- Create `handleDialogClose` helper that resets all dialog state
+- Guard `OfflinePaymentStatus` with reader count check
+- Add firmware/IP metadata spans in reader rows
+- Compute affected reader count for delete confirmation
+- Pass `selectedLocation?.name` to `CheckoutDisplayConcept`
+
+1 file, 0 migrations, 0 new dependencies.
 
