@@ -54,12 +54,17 @@ import {
   Wallet,
   ExternalLink,
   Scale,
+  MapPin,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
 import { ZuraPayPayoutsTab } from '@/components/dashboard/settings/terminal/ZuraPayPayoutsTab';
 import { EmptyState } from '@/components/ui/empty-state';
+import { LocationGroupSelect } from '@/components/ui/LocationGroupSelect';
+import { useLocations } from '@/hooks/useLocations';
+import { TogglePill } from '@/components/ui/toggle-pill';
+import { parseLocationIds, encodeLocationIds, isAllLocations } from '@/lib/locationFilter';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
 const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
