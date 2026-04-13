@@ -1274,7 +1274,7 @@ export default function PaymentOps() {
                   <div className="flex items-center justify-center h-32">
                     <Loader2 className={tokens.loading.spinner} />
                   </div>
-                ) : depositHolds.length === 0 ? (
+                ) : filteredHolds.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <HandCoins className={tokens.empty.icon} />
                     <h3 className={tokens.empty.heading}>No active deposit holds</h3>
