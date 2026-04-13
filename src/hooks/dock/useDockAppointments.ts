@@ -31,6 +31,7 @@ export interface DockAppointment {
   mix_bowl_count?: number;
   total_price?: number | null;
   has_card_on_file?: boolean;
+  card_last4?: string | null;
 }
 
 export function useDockAppointments(staffUserId: string | null, locationId?: string, staffFilter?: string) {
@@ -230,13 +231,14 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           const clientIds = [...new Set(failedAppts.map(a => a.phorest_client_id!))];
           const { data: cards } = await supabase
             .from('client_cards_on_file')
-            .select('client_id')
+            .select('client_id, card_last4')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const clientsWithCards = new Set((cards || []).map(c => c.client_id));
+          const cardMap = new Map((cards || []).map(c => [c.client_id, c.card_last4]));
           for (const a of appointments) {
             if (a.payment_status === 'failed' && a.phorest_client_id) {
-              a.has_card_on_file = clientsWithCards.has(a.phorest_client_id);
+              a.has_card_on_file = cardMap.has(a.phorest_client_id);
+              a.card_last4 = cardMap.get(a.phorest_client_id) || null;
             }
           }
         }
@@ -338,14 +340,15 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         if (clientIds.length > 0) {
           const { data: cards } = await supabase
             .from('client_cards_on_file')
-            .select('client_id')
+            .select('client_id, card_last4')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const clientsWithCards = new Set((cards || []).map(c => c.client_id));
+          const cardMap = new Map((cards || []).map(c => [c.client_id, c.card_last4]));
           for (const a of all) {
             if (a.payment_status === 'failed') {
               const cid = a.phorest_client_id || a.client_id;
-              a.has_card_on_file = cid ? clientsWithCards.has(cid) : false;
+              a.has_card_on_file = cid ? cardMap.has(cid) : false;
+              a.card_last4 = cid ? (cardMap.get(cid) || null) : null;
             }
           }
         }
