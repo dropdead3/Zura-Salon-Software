@@ -43,18 +43,18 @@ export function useClientCardsOnFile(clientId?: string) {
 export function useDeleteClientCard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (cardId: string) => {
-      const { error } = await supabase
-        .from('client_cards_on_file')
-        .delete()
-        .eq('id', cardId);
+    mutationFn: async ({ cardId, organizationId }: { cardId: string; organizationId: string }) => {
+      const { data, error } = await supabase.functions.invoke('detach-card-on-file', {
+        body: { card_id: cardId, organization_id: organizationId },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['client-cards'] });
       toast.success('Card removed');
     },
-    onError: () => toast.error('Failed to remove card'),
+    onError: (err: Error) => toast.error(err.message || 'Failed to remove card'),
   });
 }
 
@@ -201,7 +201,8 @@ export function useSetDefaultCard() {
       const { error } = await supabase
         .from('client_cards_on_file')
         .update({ is_default: true } as any)
-        .eq('id', cardId);
+        .eq('id', cardId)
+        .eq('organization_id', orgId);
       if (error) throw error;
     },
     onSuccess: () => {
