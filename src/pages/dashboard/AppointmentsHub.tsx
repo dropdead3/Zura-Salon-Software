@@ -42,8 +42,10 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export default function AppointmentsHub() {
+  const { effectiveOrganization } = useOrganizationContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'appointments';
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -275,7 +277,11 @@ export default function AppointmentsHub() {
                 />
 
                 {transactions.length > 0 && (
-                  <TillBalanceSummary transactions={transactions} />
+                  <TillBalanceSummary
+                    transactions={transactions}
+                    organizationId={effectiveOrganization?.id}
+                    selectedDate={parseISO(selectedDate)}
+                  />
                 )}
               </TabsContent>
 
