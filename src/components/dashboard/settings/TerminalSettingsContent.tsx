@@ -298,6 +298,7 @@ export function TerminalSettingsContent() {
             activeLocationId={activeLocationId}
             selectedLocationId={selectedLocationId}
             showAllLocations={showAllLocations}
+            isLocationConnected={isLocationConnected}
             setShowAllLocations={setShowAllLocations}
             setSelectedLocationId={setSelectedLocationId}
             terminalLocations={terminalLocations}
