@@ -32,6 +32,7 @@ import { ZuraPayFleetTab } from './terminal/ZuraPayFleetTab';
 import { ZuraPayHardwareTab } from './terminal/ZuraPayHardwareTab';
 import { ZuraPayConnectivityTab } from './terminal/ZuraPayConnectivityTab';
 import { ZuraPayDisplayTab } from './terminal/ZuraPayDisplayTab';
+import { ZuraPayPayoutsTab } from './terminal/ZuraPayPayoutsTab';
 
 // Lightweight error boundary for individual tabs
 class TabErrorBoundary extends React.Component<
@@ -385,6 +386,9 @@ export function TerminalSettingsContent() {
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
           <TabsTrigger value="connectivity" className="font-sans">Connectivity</TabsTrigger>
           <TabsTrigger value="display" className="font-sans">Display</TabsTrigger>
+          {connectStatus?.stripe_connect_status === 'active' && (
+            <TabsTrigger value="payouts" className="font-sans">Payouts</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
@@ -439,6 +443,14 @@ export function TerminalSettingsContent() {
             <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
           </TabErrorBoundary>
         </TabsContent>
+
+        {connectStatus?.stripe_connect_status === 'active' && (
+          <TabsContent value="payouts" className="mt-6">
+            <TabErrorBoundary tabName="Payouts" key={activeTab === 'payouts' ? 'payouts-active' : 'payouts'}>
+              <ZuraPayPayoutsTab />
+            </TabErrorBoundary>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Register Reader Wizard — guarded against empty locationId */}
