@@ -26,6 +26,7 @@ import {
 } from '@/hooks/useStripeTerminals';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
 import { useTerminalHardwareSkus, useCreateTerminalCheckout, useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
+
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { OfflinePaymentStatus } from './OfflinePaymentStatus';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -320,6 +321,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
   const { data: requests, isLoading: requestsLoading } = useTerminalRequests(orgId);
   const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus();
   const createCheckout = useCreateTerminalCheckout();
+  const createRequest = useCreateTerminalRequest();
   const verifyPayment = useVerifyTerminalPayment();
   const { formatCurrency } = useFormatCurrency();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -341,6 +343,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
       newParams.delete('session_id');
       setSearchParams(newParams, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, orgId]);
 
   const readerPrice = skuData?.skus?.[0]?.amount || 29900;
@@ -368,6 +371,18 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
 
   const handlePurchase = () => {
     if (!orgId) return;
+
+    const selectedAccList = accessories
+      .filter((acc) => selectedAccessories[acc.id])
+      .map((acc) => ({
+        id: acc.id,
+        name: acc.product,
+        quantity: selectedAccessories[acc.id],
+        unit_price_cents: acc.amount,
+      }));
+
+    const estimatedTotalCents = (readerPrice * quantity) + selectedAccList.reduce((s, a) => s + a.unit_price_cents * a.quantity, 0);
+
     const items = [
       {
         name: 'Zura Pay Reader S710',
@@ -377,22 +392,43 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
         description: 'Terminal reader with cellular + WiFi connectivity',
         sku_id: skuData?.skus?.[0]?.id || 's710_reader',
       },
-      ...accessories
-        .filter((acc) => selectedAccessories[acc.id])
-        .map((acc) => ({
-          name: acc.product,
-          amount: acc.amount,
-          quantity: selectedAccessories[acc.id],
-          currency: acc.currency || 'usd',
-          description: acc.product,
-          sku_id: acc.id,
-        })),
+      ...selectedAccList.map((acc) => ({
+        name: acc.name,
+        amount: acc.unit_price_cents,
+        quantity: acc.quantity,
+        currency: readerCurrency,
+        description: acc.name,
+        sku_id: acc.id,
+      })),
     ];
-    createCheckout.mutate({
-      organizationId: orgId,
-      locationId: reqLocationId || undefined,
-      items,
-    });
+
+    // Create a hardware request record for platform admin visibility, then checkout
+    createRequest.mutate(
+      {
+        organizationId: orgId,
+        locationId: reqLocationId || locations[0]?.id || '',
+        quantity,
+        reason: 'additional',
+        notes: `Purchase checkout — ${selectedAccList.length} accessor${selectedAccList.length === 1 ? 'y' : 'ies'} selected`,
+      },
+      {
+        onSuccess: () => {
+          createCheckout.mutate({
+            organizationId: orgId,
+            locationId: reqLocationId || undefined,
+            items,
+          });
+        },
+        onError: () => {
+          // Still allow checkout even if request creation fails
+          createCheckout.mutate({
+            organizationId: orgId,
+            locationId: reqLocationId || undefined,
+            items,
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -426,12 +462,11 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
         <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
           <div className="flex items-center gap-4">
             {readerImage ? (
-              <img src={readerImage} alt="S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" />
-            ) : (
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Smartphone className="w-6 h-6 text-primary" />
-              </div>
-            )}
+              <img src={readerImage} alt="S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }} />
+            ) : null}
+            <div className={cn("w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center", readerImage && "hidden")}>
+              <Smartphone className="w-6 h-6 text-primary" />
+            </div>
             <div>
               <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
               <p className="text-xs text-muted-foreground">Cellular + WiFi · Store-and-forward · Countertop &amp; handheld</p>
@@ -481,9 +516,13 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
                   <div>
                     <p className="font-sans font-medium text-sm">
                       S710 Reader{req.quantity > 1 ? ` × ${req.quantity}` : ''}
+                      {req.accessories && req.accessories.length > 0 && (
+                        <span className="text-muted-foreground font-normal"> + {req.accessories.length} accessor{req.accessories.length === 1 ? 'y' : 'ies'}</span>
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {locName} · {format(new Date(req.created_at), 'MMM d, yyyy')}
+                      {req.estimated_total_cents ? ` · ${formatCurrency(req.estimated_total_cents / 100)}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -516,12 +555,11 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
             <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
               <div className="flex items-center gap-3">
                 {readerImage ? (
-                  <img src={readerImage} alt="S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Smartphone className="w-7 h-7 text-primary" />
-                  </div>
-                )}
+                  <img src={readerImage} alt="S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }} />
+                ) : null}
+                <div className={cn("w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center", readerImage && "hidden")}>
+                  <Smartphone className="w-7 h-7 text-primary" />
+                </div>
                 <div>
                   <p className="font-sans font-medium text-sm">Zura Pay Reader S710</p>
                   <p className="text-xs text-muted-foreground">Cellular + WiFi connectivity</p>
@@ -545,30 +583,42 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
                   {accessories.map((acc) => {
                     const isSelected = !!selectedAccessories[acc.id];
                     return (
-                      <button
-                        key={acc.id}
-                        type="button"
-                        onClick={() => toggleAccessory(acc.id)}
-                        className={cn(
-                          'flex items-center gap-3 p-3 rounded-lg border text-left transition-colors',
-                          isSelected ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 border-border hover:border-primary/20'
-                        )}
-                      >
-                        {acc.image_url ? (
-                          <img src={acc.image_url} alt={acc.product} className="w-10 h-10 rounded object-contain bg-white shrink-0" />
-                        ) : (
-                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                      <div key={acc.id} className={cn(
+                        'flex items-center gap-3 p-3 rounded-lg border transition-colors',
+                        isSelected ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 border-border hover:border-primary/20'
+                      )}>
+                        <button
+                          type="button"
+                          onClick={() => toggleAccessory(acc.id)}
+                          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                        >
+                          {acc.image_url ? (
+                            <img src={acc.image_url} alt={acc.product} className="w-10 h-10 rounded object-contain bg-white shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }} />
+                          ) : null}
+                          <div className={cn("w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0", acc.image_url && "hidden")}>
                             <Package className="w-5 h-5 text-muted-foreground" />
                           </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-sans text-sm font-medium truncate">{acc.product}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-display text-sm tracking-wide">{formatCurrency(acc.amount / 100)}</p>
+                          </div>
+                          <Checkbox checked={isSelected} className="shrink-0 pointer-events-none" />
+                        </button>
+                        {isSelected && (
+                          <Select value={String(selectedAccessories[acc.id] || 1)} onValueChange={(v) => setSelectedAccessories((prev) => ({ ...prev, [acc.id]: parseInt(v, 10) }))}>
+                            <SelectTrigger className="w-16 h-8 shrink-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1, 2, 3, 4, 5].map((n) => (
+                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-sans text-sm font-medium truncate">{acc.product}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-display text-sm tracking-wide">{formatCurrency(acc.amount / 100)}</p>
-                        </div>
-                        <Checkbox checked={isSelected} className="shrink-0 pointer-events-none" />
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

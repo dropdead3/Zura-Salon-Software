@@ -77,20 +77,44 @@ Deno.serve(async (req) => {
 
         if (skuResponse.ok) {
           const skuData = await skuResponse.json();
-          // Filter to S710 products only
-          const s710Skus = (skuData.data || []).filter((sku: Record<string, unknown>) => {
-            const productName = String((sku as Record<string, { name?: string }>).hardware_product?.name || sku.product || "").toLowerCase();
-            return productName.includes("s710") || productName.includes("s700");
-          });
+          const allSkus = skuData.data || [];
+
+          // Classify SKUs into readers vs accessories
+          const ACCESSORY_KEYWORDS = ["hub", "dock", "case", "cover", "cable", "mount"];
+          const isAccessory = (name: string) =>
+            ACCESSORY_KEYWORDS.some((kw) => name.toLowerCase().includes(kw));
+
+          const s710Skus: Record<string, unknown>[] = [];
+          const accessorySkus: Record<string, unknown>[] = [];
+
+          for (const sku of allSkus) {
+            const productName = String(
+              (sku as Record<string, { name?: string }>).hardware_product?.name || sku.product || ""
+            );
+            const isS7xx = productName.toLowerCase().includes("s710") || productName.toLowerCase().includes("s700");
+            if (!isS7xx) continue;
+
+            if (isAccessory(productName)) {
+              accessorySkus.push(sku);
+            } else {
+              s710Skus.push(sku);
+            }
+          }
 
           // Extract image_url from hardware_product.images when available
           const enrichSku = (sku: Record<string, unknown>) => {
             const hp = sku.hardware_product as Record<string, unknown> | undefined;
             const images = (hp?.images as string[]) || [];
             const skuId = String(sku.id || "");
+            // Guess fallback key from product name
+            const productName = String(hp?.name || sku.product || "").toLowerCase();
+            let fallbackKey = "s710_reader";
+            if (productName.includes("hub")) fallbackKey = "s710_hub";
+            else if (productName.includes("dock")) fallbackKey = "s710_dock";
+            else if (productName.includes("case") || productName.includes("cover")) fallbackKey = "s710_case";
             return {
               ...sku,
-              image_url: images[0] || FALLBACK_IMAGES[skuId] || FALLBACK_IMAGES.s710_reader,
+              image_url: images[0] || FALLBACK_IMAGES[skuId] || FALLBACK_IMAGES[fallbackKey],
             };
           };
 
@@ -106,10 +130,26 @@ Deno.serve(async (req) => {
           );
           const shippingData = shippingResponse.ok ? await shippingResponse.json() : { data: [] };
 
+          // Build accessories from API data, or use fallbacks if none found
+          const apiAccessories = accessorySkus.map(enrichSku).map((a) => ({
+            id: a.id,
+            product: (a.hardware_product as Record<string, unknown>)?.name || a.product || "Accessory",
+            amount: a.amount || 0,
+            currency: a.currency || "usd",
+            image_url: a.image_url,
+          }));
+
+          const finalAccessories = apiAccessories.length > 0 ? apiAccessories : [
+            { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd", image_url: FALLBACK_IMAGES.s710_hub },
+            { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd", image_url: FALLBACK_IMAGES.s710_dock },
+            { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd", image_url: FALLBACK_IMAGES.s710_case },
+          ];
+
           return jsonResponse({
             source: "stripe_api",
-            skus: (skuData.data || []).map(enrichSku),
+            skus: allSkus.map(enrichSku),
             s710_skus: s710Skus.map(enrichSku),
+            accessories: finalAccessories,
             shipping_methods: shippingData.data || [],
           });
         }
