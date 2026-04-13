@@ -317,6 +317,24 @@ export function TerminalSettingsContent() {
   const deleteTerminalLocation = useDeleteTerminalLocation();
   const deleteReader = useDeleteReader();
 
+  // Check if org has processed at least one terminal payment
+  const { data: hasFirstTransaction } = useQuery({
+    queryKey: ['zura-pay-first-transaction', orgId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('appointments')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', orgId!)
+        .not('paid_at', 'is', null)
+        .eq('payment_method', 'terminal')
+        .limit(1);
+      if (error) throw error;
+      return (count ?? 0) > 0;
+    },
+    enabled: !!orgId,
+    staleTime: 60000,
+  });
+
   if (locationsLoading) {
     return <DashboardLoader size="md" className="h-64" />;
   }
