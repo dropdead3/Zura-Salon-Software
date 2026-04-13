@@ -120,6 +120,50 @@ export function BookingConfirmation({
         )}
       </div>
 
+      {/* Deposit & Policy Info */}
+      {(depositAmount != null && depositAmount > 0) && (
+        <div
+          className="p-4 mb-4"
+          style={{
+            backgroundColor: `${theme.primaryColor}08`,
+            borderRadius: 'var(--bk-card-radius, 8px)',
+            border: `1px solid ${theme.primaryColor}30`,
+          }}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-medium" style={{ color: theme.textColor }}>
+              Deposit Required
+            </span>
+            <span className="text-sm font-medium" style={{ color: theme.primaryColor }}>
+              ${depositAmount.toFixed(2)}
+            </span>
+          </div>
+          {depositPolicyText && (
+            <p className="text-xs mt-1.5 leading-relaxed" style={{ color: theme.mutedTextColor }}>
+              {depositPolicyText}
+            </p>
+          )}
+        </div>
+      )}
+
+      {requiresCardOnFile && cancellationPolicyText && (
+        <div
+          className="p-4 mb-4"
+          style={{
+            backgroundColor: theme.surfaceColor,
+            borderRadius: 'var(--bk-card-radius, 8px)',
+            border: `1px solid ${theme.borderColor}`,
+          }}
+        >
+          <span className="text-xs font-medium" style={{ color: theme.textColor }}>
+            Cancellation & No-Show Policy
+          </span>
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: theme.mutedTextColor }}>
+            {cancellationPolicyText}
+          </p>
+        </div>
+      )}
+
       <div className="flex gap-3">
         <button
           onClick={onBack}
