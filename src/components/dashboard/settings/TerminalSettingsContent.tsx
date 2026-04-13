@@ -343,7 +343,7 @@ export function TerminalSettingsContent() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="fleet" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="fleet" className="font-sans">Fleet</TabsTrigger>
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
