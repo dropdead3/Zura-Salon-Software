@@ -1,38 +1,42 @@
 
 
-# Webhook Handler: `payment_method.detached` → Auto-Remove Cards on File
+# Webhook Handler: `customer.deleted` → Bulk-Remove Cards on File
 
 ## Analysis
 
-When a card is detached from a Stripe Customer (via Stripe Dashboard, customer portal, or API call), no local sync currently occurs. The `client_cards_on_file` row remains, creating a stale entry that would fail if charged. Since the table already uses hard deletes (both RLS policy and UI confirm this pattern), the webhook handler should hard-delete the matching row.
+When a Stripe Customer object is deleted from a Connected Account (via Dashboard or API), all attached PaymentMethods are implicitly detached by Stripe — but Stripe does **not** fire individual `payment_method.detached` events for each one. This means the existing detach handler won't cover this case, and all `client_cards_on_file` rows referencing that customer's `stripe_customer_id` become orphaned.
+
+A dedicated `customer.deleted` handler that bulk-deletes by `stripe_customer_id` + `organization_id` closes this gap.
 
 ## Changes
 
-### 1. Add `payment_method.detached` handler to webhook
+### 1. Add `customer.deleted` handler to webhook
 **File:** `supabase/functions/stripe-webhook/index.ts`
 
-New handler function `handlePaymentMethodDetached`:
-1. Extract `id` (the payment method ID) from `event.data.object`
-2. Look up `organization_id` from `organization_stripe_accounts` using `event.account` (Connected Account ID)
-3. Delete from `client_cards_on_file` where `stripe_payment_method_id = id` and `organization_id` matches
-4. Log outcome (deleted count or "not found" — both are fine since the card may never have been saved locally)
+New handler function `handleCustomerDeleted`:
+1. Extract `id` (the Stripe Customer ID, `cus_...`) from `event.data.object`
+2. Look up `organization_id` from `organization_stripe_accounts` using `event.account`
+3. Delete all rows from `client_cards_on_file` where `stripe_customer_id = id` and `organization_id` matches
+4. Log the count of deleted rows
 
-Add the case to the switch statement alongside `setup_intent.succeeded` in the Connect events section:
+Add the case to the switch statement in the Connect events section:
 ```
-case "payment_method.detached":
+case "customer.deleted":
   if (isConnectEvent) {
-    await handlePaymentMethodDetached(supabase, event.data.object, event.account);
+    await handleCustomerDeleted(supabase, event.data.object, event.account);
   }
   break;
 ```
 
-No migration needed — the table already supports deletes via existing RLS policy.
+The handler mirrors the existing `handlePaymentMethodDetached` pattern — same org lookup, same hard-delete approach, just keyed on `stripe_customer_id` instead of `stripe_payment_method_id`.
+
+No migration needed — `stripe_customer_id` column already exists on `client_cards_on_file`.
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `supabase/functions/stripe-webhook/index.ts` | Add `payment_method.detached` case + handler |
+| `supabase/functions/stripe-webhook/index.ts` | Add `customer.deleted` case + `handleCustomerDeleted` handler |
 
 0 migrations, 0 new edge functions, 0 new dependencies.
 
