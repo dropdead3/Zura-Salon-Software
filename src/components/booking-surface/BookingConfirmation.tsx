@@ -2,6 +2,7 @@ import { Calendar, Clock, User, Scissors, MapPin, CheckCircle2, CalendarPlus } f
 import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 import type { BookingClientInfo } from './BookingClientForm';
+import { BookingPaymentForm } from './BookingPaymentForm';
 
 interface BookingConfirmationProps {
   theme: BookingSurfaceTheme;
@@ -20,12 +21,21 @@ interface BookingConfirmationProps {
   depositPolicyText?: string;
   cancellationPolicyText?: string;
   requiresCardOnFile?: boolean;
+  // Payment integration props
+  paymentClientSecret?: string | null;
+  paymentIntentType?: 'payment' | 'setup' | null;
+  stripePublishableKey?: string | null;
+  stripeConnectedAccountId?: string | null;
+  onPaymentComplete?: (intentId: string) => void;
+  showPaymentForm?: boolean;
 }
 
 export function BookingConfirmation({
   theme, serviceName, categoryName, stylistName, locationName,
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
   depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
+  paymentClientSecret, paymentIntentType, stripePublishableKey, stripeConnectedAccountId,
+  onPaymentComplete, showPaymentForm,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
     const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
