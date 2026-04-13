@@ -326,6 +326,7 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reqLocationId, setReqLocationId] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedAccessories, setSelectedAccessories] = useState<Record<string, number>>({});
 
   // Auto-verify payment on return from checkout
   useEffect(() => {
@@ -343,22 +344,53 @@ function TerminalPurchaseCard({ locations }: { locations: { id: string; name: st
 
   const readerPrice = skuData?.skus?.[0]?.amount || 29900;
   const readerCurrency = skuData?.skus?.[0]?.currency || 'usd';
-  const totalPrice = readerPrice * quantity;
+  const readerImage = skuData?.skus?.[0]?.image_url;
+  const accessories = skuData?.accessories || [];
+  const accessoriesTotalCents = accessories.reduce((sum, acc) => {
+    const qty = selectedAccessories[acc.id] || 0;
+    return sum + (acc.amount * qty);
+  }, 0);
+  const totalPrice = (readerPrice * quantity) + accessoriesTotalCents;
   const pricingSource = skuData?.source || 'fallback';
+
+  const toggleAccessory = (id: string) => {
+    setSelectedAccessories((prev) => {
+      const next = { ...prev };
+      if (next[id]) {
+        delete next[id];
+      } else {
+        next[id] = 1;
+      }
+      return next;
+    });
+  };
 
   const handlePurchase = () => {
     if (!orgId) return;
-    createCheckout.mutate({
-      organizationId: orgId,
-      locationId: reqLocationId || undefined,
-      items: [{
+    const items = [
+      {
         name: 'Zura Pay Reader S710',
         amount: readerPrice,
         quantity,
         currency: readerCurrency,
         description: 'Terminal reader with cellular + WiFi connectivity',
         sku_id: skuData?.skus?.[0]?.id || 's710_reader',
-      }],
+      },
+      ...accessories
+        .filter((acc) => selectedAccessories[acc.id])
+        .map((acc) => ({
+          name: acc.product,
+          amount: acc.amount,
+          quantity: selectedAccessories[acc.id],
+          currency: acc.currency || 'usd',
+          description: acc.product,
+          sku_id: acc.id,
+        })),
+    ];
+    createCheckout.mutate({
+      organizationId: orgId,
+      locationId: reqLocationId || undefined,
+      items,
     });
   };
 
