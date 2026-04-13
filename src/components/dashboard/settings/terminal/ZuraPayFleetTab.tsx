@@ -126,7 +126,7 @@ export interface ZuraPayFleetTabProps {
   onRegisterReader: () => void;
   useTerminalLocationsHook: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReadersHook: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
-  // Stripe Connect self-serve props
+  // Payment connect self-serve props
   orgConnectStatus?: string;
   onStartConnect?: () => void;
   isConnecting?: boolean;
@@ -279,7 +279,7 @@ export function ZuraPayFleetTab({
         <Card>
           <CardContent className="py-10">
             <div className="text-center space-y-4">
-              {/* Org-level: no Stripe Connect account at all */}
+              {/* Org-level: no payment account connected */}
               {(!orgConnectStatus || orgConnectStatus === 'not_connected') ? (
                 <>
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/20 bg-primary/5">
@@ -287,7 +287,7 @@ export function ZuraPayFleetTab({
                   </div>
                   <h3 className="font-display text-sm tracking-[0.14em]">CONNECT TO ZURA PAY</h3>
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                    Set up in-person payment processing for your organization. You'll be guided through a secure verification process powered by Stripe.
+                    Set up in-person payment processing for your organization. You'll be guided through a secure verification process to enable payments.
                   </p>
                   <Button
                     onClick={onStartConnect}
