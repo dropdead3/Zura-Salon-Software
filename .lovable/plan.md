@@ -1,32 +1,26 @@
 
 
-# Support S700 Reader Model Alongside S710
+# Fix Zura Pay "Continue Onboarding" and Return URL Routing
 
-## Context
-The codebase hardcodes "S710" across UI copy, marketing text, hardware ordering, and the simulator. Your S700 is fully compatible with the same Stripe Terminal API — the registration wizard, payment intents, and reader display commands all work identically. The only gap is **copy and labeling**.
+## Problems Identified
 
-## Approach
-Generalize references from "S710" to "S700/S710" or the generic "Zura Pay Reader" where appropriate, so the experience is accurate regardless of which model is connected. The simulator and technical specs remain S710-focused (since that's the production target), but registration, fleet management, and hardware ordering should acknowledge both models.
+1. **Return URLs use wrong query param**: All Stripe onboarding return/refresh URLs use `?tab=terminals` but the Settings page reads `?category=terminals` to determine which settings page to render. When Stripe redirects back, the user lands on the settings hub — `TerminalSettingsContent` never mounts, so the return-handler `useEffect` never fires.
+
+2. **Hardware checkout URLs have the same bug**: `ZuraPayHardwareTab.tsx` also uses `?tab=terminals&subtab=hardware`.
+
+3. **No functional issue with the button itself**: The `onStartConnect` handler correctly calls `create_account_and_link`, which reuses an existing account and generates a new Account Link. The redirect to Stripe onboarding should work — but if the edge function returns an error (e.g., expired account link), the toast may be missed. We should add better error visibility.
 
 ## File Changes
 
 | # | File | Change |
 |---|---|---|
-| 1 | `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` | Update product name strings from "S710" to "S700/S710" in order dialog, line items, and info callouts. Keep SKU IDs unchanged. |
-| 2 | `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Update any reader-type display labels to show actual `device_type` from Stripe (e.g. "verifone_P400", "stripe_s700") instead of hardcoded "S710". |
-| 3 | `src/components/dashboard/settings/terminal/ZuraPayConnectivityTab.tsx` | Change "S710" references to "S700/S710" in connectivity/offline copy. |
-| 4 | `src/components/dashboard/settings/terminal/ZuraPayTippingTab.tsx` | Change "S710" to "S700/S710" in the tipping description. |
-| 5 | `src/components/dashboard/settings/OfflinePaymentStatus.tsx` | Update "S710" references to "S700/S710" in banner and badge text. |
-| 6 | `src/components/marketing/NeverDownPayments.tsx` | Update marketing copy from "S710" to "S700/S710". |
-| 7 | `src/components/platform/stripe/TerminalRequestsTable.tsx` | Update reason label from "Upgrade to S710" to "Upgrade to S700/S710". |
-| 8 | `supabase/functions/terminal-hardware-order/index.ts` | Update fallback product name from "Zura Pay Reader S710" to "Zura Pay Reader S700/S710". |
-| 9 | `supabase/functions/manage-terminal-requests/index.ts` | Update `device_type` default and valid reasons to include "s700". |
-
-## What stays unchanged
-- **S710CheckoutSimulator** — the simulator is specifically for the S710's 1080×1920 display and stays S710-branded (the S700 shares the same screen specs).
-- **Registration wizard** — already model-agnostic (uses Stripe's pairing code API which works for any reader model).
-- **Payment intent / reader display edge functions** — already model-agnostic.
+| 1 | `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Replace all `?tab=terminals` with `?category=terminals` in return/refresh URLs (lines 305-306 and 418-419). This ensures Stripe redirects land on the correct settings page. |
+| 2 | `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` | Replace `?tab=terminals&subtab=hardware` with `?category=terminals&subtab=hardware` in checkout success/cancel URLs. |
+| 3 | `src/pages/dashboard/admin/Settings.tsx` | Add logic to read `subtab` from search params and pass it through, and ensure `zura_pay_return`/`zura_pay_refresh` params also trigger `activeCategory = 'terminals'` on initial load. Add a check: if `searchParams` contains `zura_pay_return`, `zura_pay_refresh`, or `tab=terminals`, auto-set category to `'terminals'`. |
 
 ## Result
-Your S700 will register, pair, and process payments using the existing infrastructure. UI copy will accurately reflect that both S700 and S710 models are supported.
+- "Continue Onboarding" correctly redirects to Stripe Express onboarding form.
+- After completing onboarding, Stripe redirects back to the Zura Pay settings page (not the hub).
+- The return-handler auto-verifies connection status on landing.
+- Hardware checkout returns also land on the correct tab.
 
