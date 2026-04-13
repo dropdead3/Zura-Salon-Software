@@ -383,7 +383,7 @@ export function TerminalSettingsContent() {
       {/* Activation Checklist */}
       <ZuraPayActivationChecklist
         connectStatus={connectStatus?.stripe_connect_status}
-        detailsSubmitted={connectStatus?.details_submitted ?? false}
+        detailsSubmitted={connectStatus?.stripe_connect_status === 'active'}
         hasTerminalLocations={(terminalLocations?.length ?? 0) > 0}
         hasReaders={(readers?.length ?? 0) > 0}
         hasFirstTransaction={false}
