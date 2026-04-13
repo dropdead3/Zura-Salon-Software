@@ -510,6 +510,14 @@ export function CheckoutSummarySheet({
       }
     } else {
       // Cash or Other — behave as before
+      // E2: Auto-capture deposit for non-card payments too
+      if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
+        try {
+          await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
+        } catch (e) {
+          console.error('Failed to capture deposit:', e);
+        }
+      }
       onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
         method: paymentMethod,
       });
