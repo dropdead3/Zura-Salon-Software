@@ -1338,6 +1338,13 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
               </TabsTrigger>
               <TabsTrigger value="notes" className="flex-1">Notes</TabsTrigger>
               <TabsTrigger value="redos" className="flex-1">Redos</TabsTrigger>
+              {(disputeData?.totalCount ?? 0) > 0 && (
+                <TabsTrigger value="disputes" className="flex-1 gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Disputes
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0 ml-0.5">{disputeData!.totalCount}</Badge>
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="history" className="mt-4">
