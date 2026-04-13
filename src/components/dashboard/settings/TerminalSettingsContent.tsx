@@ -1,4 +1,6 @@
+import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +32,32 @@ import { ZuraPayFleetTab } from './terminal/ZuraPayFleetTab';
 import { ZuraPayHardwareTab } from './terminal/ZuraPayHardwareTab';
 import { ZuraPayConnectivityTab } from './terminal/ZuraPayConnectivityTab';
 import { ZuraPayDisplayTab } from './terminal/ZuraPayDisplayTab';
+
+// Lightweight error boundary for individual tabs
+class TabErrorBoundary extends React.Component<
+  { tabName: string; children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  state = { hasError: false, error: undefined as Error | undefined };
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error, info: React.ErrorInfo) { console.error(`[ZuraPay ${this.props.tabName}] render error`, error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rounded-xl border border-border bg-card/60 p-8 text-center space-y-3">
+          <p className="font-display text-sm tracking-wide text-muted-foreground">
+            {this.props.tabName} tab encountered an error
+          </p>
+          <p className="text-xs text-muted-foreground">{this.state.error?.message}</p>
+          <Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false, error: undefined })}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Fetch ALL org locations — connection status shown inline
 function useZuraPayLocations() {
@@ -221,7 +249,15 @@ export function TerminalSettingsContent() {
   const connectLocationMutation = useConnectLocation();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('fleet');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('subtab') || 'fleet');
+
+  // Sync activeTab to URL for bookmark/refresh persistence
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === 'fleet') { newParams.delete('subtab'); } else { newParams.set('subtab', tab); }
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const verifyMutateRef = useRef(verifyMutation.mutate);
   verifyMutateRef.current = verifyMutation.mutate;
@@ -343,7 +379,7 @@ export function TerminalSettingsContent() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList>
           <TabsTrigger value="fleet" className="font-sans">Fleet</TabsTrigger>
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
@@ -352,61 +388,71 @@ export function TerminalSettingsContent() {
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
-          <ZuraPayFleetTab
-            locations={locations}
-            activeLocationId={activeLocationId}
-            showAllLocations={showAllLocations}
-            isLocationConnected={isLocationConnected}
-            setShowAllLocations={setShowAllLocations}
-            setSelectedLocationId={setSelectedLocationId}
-            terminalLocations={terminalLocations}
-            tlLoading={tlLoading}
-            readers={readers}
-            readersLoading={readersLoading}
-            onCreateTerminalLocation={handleCreateTerminalLocation}
-            createTerminalLocationPending={createTerminalLocation.isPending}
-            onDeleteLocation={setDeleteLocationTarget}
-            onDeleteReader={setDeleteReaderTarget}
-            onRegisterReader={() => setRegisterOpen(true)}
-            useTerminalLocationsHook={useTerminalLocations}
-            useTerminalReadersHook={useTerminalReaders}
-            orgConnectStatus={connectStatus?.stripe_connect_status}
-            onStartConnect={() => orgId && connectMutation.mutate({
-              organizationId: orgId,
-              returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
-              refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
-            })}
-            isConnecting={connectMutation.isPending}
-            onVerifyConnection={() => orgId && verifyMutation.mutate({ organizationId: orgId })}
-            isVerifying={verifyMutation.isPending}
-            onConnectLocation={(locationId) => orgId && connectLocationMutation.mutate({ organizationId: orgId, locationId })}
-            isConnectingLocation={connectLocationMutation.isPending}
-          />
+          <TabErrorBoundary tabName="Fleet">
+            <ZuraPayFleetTab
+              locations={locations}
+              activeLocationId={activeLocationId}
+              showAllLocations={showAllLocations}
+              isLocationConnected={isLocationConnected}
+              setShowAllLocations={setShowAllLocations}
+              setSelectedLocationId={setSelectedLocationId}
+              terminalLocations={terminalLocations}
+              tlLoading={tlLoading}
+              readers={readers}
+              readersLoading={readersLoading}
+              onCreateTerminalLocation={handleCreateTerminalLocation}
+              createTerminalLocationPending={createTerminalLocation.isPending}
+              onDeleteLocation={setDeleteLocationTarget}
+              onDeleteReader={setDeleteReaderTarget}
+              onRegisterReader={() => setRegisterOpen(true)}
+              useTerminalLocationsHook={useTerminalLocations}
+              useTerminalReadersHook={useTerminalReaders}
+              orgConnectStatus={connectStatus?.stripe_connect_status}
+              onStartConnect={() => orgId && connectMutation.mutate({
+                organizationId: orgId,
+                returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
+                refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
+              })}
+              isConnecting={connectMutation.isPending}
+              onVerifyConnection={() => orgId && verifyMutation.mutate({ organizationId: orgId })}
+              isVerifying={verifyMutation.isPending}
+              onConnectLocation={(locationId) => orgId && connectLocationMutation.mutate({ organizationId: orgId, locationId })}
+              isConnectingLocation={connectLocationMutation.isPending}
+            />
+          </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="hardware" className="mt-6">
-          <ZuraPayHardwareTab locations={locations} />
+          <TabErrorBoundary tabName="Hardware">
+            <ZuraPayHardwareTab locations={locations} />
+          </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="connectivity" className="mt-6">
-          <ZuraPayConnectivityTab />
+          <TabErrorBoundary tabName="Connectivity">
+            <ZuraPayConnectivityTab />
+          </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="display" className="mt-6">
-          <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
+          <TabErrorBoundary tabName="Display">
+            <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
+          </TabErrorBoundary>
         </TabsContent>
       </Tabs>
 
-      {/* Register Reader Wizard */}
-      <RegisterReaderDialog
-        open={registerOpen}
-        onOpenChange={setRegisterOpen}
-        locationId={activeLocationId || ''}
-        terminalLocations={(terminalLocations || []).map((tl) => ({
-          id: tl.id,
-          display_name: tl.display_name,
-        }))}
-      />
+      {/* Register Reader Wizard — guarded against empty locationId */}
+      {activeLocationId && (
+        <RegisterReaderDialog
+          open={registerOpen}
+          onOpenChange={setRegisterOpen}
+          locationId={activeLocationId}
+          terminalLocations={(terminalLocations || []).map((tl) => ({
+            id: tl.id,
+            display_name: tl.display_name,
+          }))}
+        />
+      )}
 
       {/* Delete Terminal Location Confirmation */}
       <AlertDialog
