@@ -89,7 +89,7 @@ export function ZuraPayTippingTab() {
             <div className="flex-1">
               <CardTitle className={tokens.card.title}>Tipping</CardTitle>
               <CardDescription>
-                Configure how tip prompts appear on your S710 terminals during checkout.
+                Configure how tip prompts appear on your S700/S710 terminals during checkout.
               </CardDescription>
             </div>
             <Switch

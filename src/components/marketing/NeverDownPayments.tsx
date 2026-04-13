@@ -7,7 +7,7 @@ const features = [
   {
     icon: Signal,
     title: 'Cellular Failover',
-    description: 'The S710 automatically switches from WiFi to cellular. No manual intervention. No downtime.',
+    description: 'The S700/S710 automatically switches from WiFi to cellular. No manual intervention. No downtime.',
     color: 'text-violet-400',
     bg: 'bg-violet-500/10',
     border: 'border-violet-500/20',
@@ -54,7 +54,7 @@ export function NeverDownPayments() {
             The WiFi went down. Your revenue didn't.
           </h2>
           <p className="font-sans text-base sm:text-lg text-white/50 max-w-2xl mx-auto">
-            Every salon has lived this nightmare. A packed Saturday, the internet drops, and suddenly you can't take payments. With {PLATFORM_NAME} Pay and the S710, that scenario is over.
+            Every salon has lived this nightmare. A packed Saturday, the internet drops, and suddenly you can't take payments. With {PLATFORM_NAME} Pay and the S700/S710, that scenario is over.
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export function NeverDownPayments() {
             style={{ opacity: greenOpacity, x: greenX }}
           >
             <p className="font-display text-xs tracking-[0.15em] text-emerald-400 uppercase mb-5">
-              With {PLATFORM_NAME} Pay + S710
+              With {PLATFORM_NAME} Pay + S700/S710
             </p>
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06]">

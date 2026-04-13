@@ -20,7 +20,7 @@ export function ZuraPayConnectivityTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="font-sans text-sm text-muted-foreground">
-            Your Zura Pay Reader S710 is equipped with cellular failover and store-and-forward technology, ensuring your business never misses a payment — even during internet outages.
+            Your Zura Pay Reader S700/S710 is equipped with cellular failover and store-and-forward technology, ensuring your business never misses a payment — even during internet outages.
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border">
