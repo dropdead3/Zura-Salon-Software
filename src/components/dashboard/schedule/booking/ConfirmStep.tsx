@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { RecurrenceSelector, type RecurrenceRule } from './RecurrenceSelector';
+import { Badge } from '@/components/ui/badge';
 import { 
   User, 
   Scissors, 
@@ -15,7 +16,9 @@ import {
   DollarSign,
   Loader2,
   StickyNote,
-  Info
+  Info,
+  CreditCard,
+  ShieldCheck,
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -26,6 +29,10 @@ interface Service {
   name: string;
   duration_minutes: number;
   price: number | null;
+  requires_deposit?: boolean;
+  deposit_type?: string;
+  deposit_amount?: number | null;
+  require_card_on_file?: boolean;
 }
 
 interface ConfirmStepProps {

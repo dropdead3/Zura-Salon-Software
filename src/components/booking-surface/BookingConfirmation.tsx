@@ -16,11 +16,16 @@ interface BookingConfirmationProps {
   onBack: () => void;
   isSubmitting?: boolean;
   isConfirmed?: boolean;
+  depositAmount?: number | null;
+  depositPolicyText?: string;
+  cancellationPolicyText?: string;
+  requiresCardOnFile?: boolean;
 }
 
 export function BookingConfirmation({
   theme, serviceName, categoryName, stylistName, locationName,
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
+  depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
     const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
