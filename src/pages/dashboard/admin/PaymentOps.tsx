@@ -49,7 +49,11 @@ import {
   Receipt,
   Plus,
   Search,
+  ChevronDown,
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
+import { ZuraPayPayoutsTab } from '@/components/dashboard/settings/terminal/ZuraPayPayoutsTab';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
 const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
@@ -723,6 +727,42 @@ export default function PaymentOps() {
         />
 
         <div className="space-y-6">
+          {/* Payouts & Balance */}
+          {(() => {
+            const { data: connectStatus } = useOrgConnectStatus(orgId);
+            if (connectStatus?.stripe_connect_status !== 'active') return null;
+            return (
+              <Collapsible defaultOpen>
+                <Card>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer select-none group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={tokens.card.iconBox}>
+                            <Banknote className={tokens.card.icon} />
+                          </div>
+                          <div>
+                            <CardTitle className={tokens.card.title}>
+                              Payouts & Balance
+                              <MetricInfoTooltip description="Real-time balance and recent payout activity from your connected Zura Pay account." />
+                            </CardTitle>
+                            <CardDescription>View available balance and payout history</CardDescription>
+                          </div>
+                        </div>
+                        <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent>
+                      <ZuraPayPayoutsTab />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+            );
+          })()}
+
           {/* Till Reconciliation */}
           <Card>
             <CardHeader>
