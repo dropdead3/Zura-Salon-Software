@@ -1,49 +1,46 @@
 
 
-# Surface Client Disputes + Ban Management in Client Hub
+# Auto-Ban on Dispute — Org Setting + Webhook Automation
 
-## Current State
+## What This Does
+Adds a toggle in settings that lets an organization automatically ban clients when they file a payment dispute. When enabled, the Stripe webhook that processes `charge.dispute.created` will immediately set the client's `is_banned` flag, record the ban reason, and log an audit trail — no manual intervention needed.
 
-**Already built:**
-- `clients` table has `is_banned`, `banned_at`, `banned_by`, `ban_reason` columns
-- `BanClientToggle` component with ban/unban dialogs exists
-- `BannedClientBadge` and `BannedClientWarningDialog` exist and are used in booking flows
-- `ClientDetailSheet` shows ban status and the toggle
-- `payment_disputes` table exists with `client_name`, `client_email`, `amount`, `status`, `reason` — but **no `client_id` foreign key**
+This follows the autonomy model: the org explicitly opts in (approval), and the system executes within that guardrail.
 
-**Missing:**
-- No dispute history on client profiles (`ClientDetailSheet`)
-- No "Dispute Risk" segment in the Client Health Hub
-- Client Hub has no dedicated view for flagged/banned clients or dispute-prone clients
+## Design Decisions
 
-## Plan
+- **Setting storage**: Uses the existing `backroom_settings` key-value table (org-scoped, already has hooks and RLS). Setting key: `dispute_policy` with value `{ auto_ban_on_dispute: boolean }`.
+- **Webhook-side execution**: The `handleDisputeCreated` function already resolves `client_id`. After inserting the dispute, it checks the org's `dispute_policy` setting and bans the client if enabled.
+- **UI placement**: A new "Dispute Policy" card placed alongside the existing Cancellation Fee Policies in the Website/Booking settings area — both are client protection policies that logically group together.
+- **Ban reason**: Auto-set to `"Auto-banned: payment dispute filed (dispute #{stripe_dispute_id})"` so it's clear in the client profile why the ban occurred.
 
-### 1. Add `client_id` column to `payment_disputes`
-Add an optional `client_id UUID REFERENCES clients(id)` column. Update the dispute webhook handler to resolve `client_id` from the charge's client email when inserting disputes. This enables direct joins.
+## Implementation
 
-### 2. Create `useClientDisputes` hook
-Query `payment_disputes` by `client_id` (primary) or fallback to `client_email` match. Returns dispute count, total disputed amount, and list of disputes for a given client.
+### 1. Webhook Enhancement (`stripe-webhook/index.ts`)
+After the dispute insert (line ~1128), add:
+- Query `backroom_settings` for key `dispute_policy` where `organization_id = org.id` and `location_id IS NULL`
+- If `setting_value.auto_ban_on_dispute === true` and `clientId` is resolved:
+  - Update `phorest_clients` set `is_banned = true`, `ban_reason`, `banned_at`, `banned_by = null` (system action)
+  - Insert audit log via `log_platform_action` RPC
 
-### 3. Add Dispute History section to `ClientDetailSheet`
-In the client profile's existing tabbed layout, add a "Disputes" indicator. Show:
-- Count badge on the profile header if disputes exist (red alert style)
-- List of disputes with date, amount, reason, and status
-- Auto-suggest ban action if client has 2+ disputes
+### 2. UI Toggle Component (new: `DisputePolicySettings.tsx`)
+A small card with:
+- Title: "Dispute Policy"
+- Description explaining the auto-ban behavior
+- Single Switch toggle for auto-ban
+- Uses `useColorBarSetting('dispute_policy')` to read and `useUpsertColorBarSetting` to write
+- Warning text when enabled: "Clients who file a payment dispute will be automatically banned from booking."
 
-### 4. Add "Dispute Risk" segment to Client Health Hub
-Add a new segment to `useClientHealthSegments` that queries clients who have open disputes or multiple past disputes. Surface this alongside existing segments (at-risk, lapsed, etc.) with an `AlertTriangle` icon.
-
-### 5. Add "Flagged Clients" card to Client Hub
-Add a new `HubCard` on the Client Hub page linking to a filtered view showing banned clients and clients with disputes — giving managers a single surface to review problematic clients.
+### 3. Surface in Settings Page
+Import and render `DisputePolicySettings` in `WebsiteSettingsContent.tsx` next to the Cancellation Fee Policies section.
 
 ## Files
 
 | File | Action |
 |---|---|
-| Migration | Add `client_id` column to `payment_disputes` |
-| `supabase/functions/zura-pay-webhooks/index.ts` | Resolve `client_id` from email when inserting disputes |
-| `src/hooks/useClientDisputes.ts` | **New** — fetch disputes for a client |
-| `src/components/dashboard/ClientDetailSheet.tsx` | Add dispute history section + dispute count badge |
-| `src/hooks/useClientHealthSegments.ts` | Add "Dispute Risk" segment |
-| `src/pages/dashboard/admin/ClientHub.tsx` | Add "Flagged Clients" hub card |
+| `supabase/functions/stripe-webhook/index.ts` | Add auto-ban logic after dispute insert |
+| `src/components/dashboard/settings/DisputePolicySettings.tsx` | **New** — toggle card for auto-ban setting |
+| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Import and render `DisputePolicySettings` |
+
+No migrations. No new tables. Reuses existing `backroom_settings` infrastructure and `phorest_clients.is_banned` columns.
 
