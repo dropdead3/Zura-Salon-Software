@@ -1,68 +1,88 @@
 
 
-# Receipt Configurator
+# Zura Pay Organization Isolation Audit
 
-## Current State
-`ReceiptPrintView.tsx` renders a hardcoded receipt with:
-- Org name as plain text (no logo)
-- Fixed footer: "Thank you for your visit!"
-- No branding, no custom colors, no configurable fields
+## Verdict: Mostly Solid — 2 Cross-Contamination Risks Found
 
-No receipt settings exist in `site_settings` or any other table.
+The vast majority of Zura Pay is correctly org-scoped. Every financial edge function authenticates the caller, most verify org membership, and all Stripe API calls route through the org's own Connected Account ID (`stripeAccount: org.stripe_connect_account_id`). Webhook handlers resolve org via `stripe_connect_account_id` lookups, preventing cross-org writes.
 
-## Design
+However, two edge functions have membership check gaps that could allow an authenticated user from Org A to trigger actions on Org B.
 
-### Data Layer
-Store receipt configuration in `site_settings` with `id = 'receipt_config'`, org-scoped. Schema:
+---
 
-```text
-{
-  show_logo: boolean           // Show org logo at top
-  logo_position: 'center'|'left'
-  show_address: boolean        // Show salon address
-  show_phone: boolean          // Show salon phone
-  custom_message: string       // "We can't wait to see you again!"
-  show_stylist: boolean        // Show stylist name on receipt
-  show_payment_method: boolean
-  accent_color: string         // Optional brand accent (hex)
-  footer_text: string          // Optional secondary footer line
-}
+## Issue 1: `create-terminal-payment-intent` — No Org Membership Verification (Critical)
+
+**Lines 89-108** check `organization_admins` and then fall back to `user_roles`, but the `user_roles` query **does not filter by `organization_id`**. A stylist in Org A who passes `organization_id: <Org B's ID>` would pass the role check because their role exists globally, not scoped to Org B.
+
+```typescript
+// CURRENT (lines 97-107) — BROKEN
+const { data: roles } = await supabase
+  .from("user_roles")
+  .select("role")
+  .eq("user_id", user.id);  // ← No org filter!
+const hasRole = roles?.some(r => ["admin","manager","super_admin","stylist"].includes(r.role));
 ```
 
-### Hook
-New `useReceiptConfig.ts` — follows existing `useSiteSettings` pattern. Reads/writes `receipt_config` from `site_settings`, org-scoped. Provides defaults so receipts work without configuration.
+**Fix**: Replace with `employee_profiles` membership check (same pattern used in `charge-card-on-file`, `collect-booking-deposit`, `zura-pay-payouts`):
+```typescript
+const { data: membership } = await supabase
+  .from("employee_profiles")
+  .select("user_id")
+  .eq("user_id", user.id)
+  .eq("organization_id", organization_id)
+  .eq("is_active", true)
+  .maybeSingle();
+if (!membership) return jsonResponse({ error: "Forbidden" }, 403);
+```
 
-### Configurator UI
-New tab or card inside the Zura Pay Configurator (`TerminalSettingsContent.tsx`) — a "Receipts" sub-tab alongside Fleet, Hardware, Display, Connectivity. Contains:
+---
 
-- **Logo toggle** + position selector (pulls from `business_settings.logo_dark_url`)
-- **Show address / phone toggles** (pulls from `business_settings`)
-- **Custom message input** (text field, 120 char limit)
-- **Footer text input** (secondary line, e.g. salon slogan)
-- **Show stylist / payment method toggles**
-- **Live preview panel** — renders a mock receipt side-by-side using the current settings, updating in real-time as the operator adjusts toggles
+## Issue 2: `terminal-reader-display` — Same Broken Pattern (Critical)
 
-### Receipt Rendering
-Update `ReceiptPrintView.tsx` to accept a `ReceiptConfig` parameter and render accordingly:
-- Logo image at top (from `business_settings.logo_dark_url`)
-- Address block if enabled
-- Custom message replaces hardcoded "Thank you for your visit!"
-- Footer text below
-- Accent color on dividers
+**Lines 64-82** use the identical `organization_admins` → global `user_roles` fallback. Same vulnerability — any authenticated user with a stylist role in *any* org could push display content or initiate payment collection on *another org's* reader.
 
-The same config will be usable by future email/SMS receipt sending.
+**Fix**: Same `employee_profiles` membership check as above.
 
-### Navigation
-Add "Receipts" as a sub-tab in the Zura Pay Configurator (alongside Fleet, Hardware, Connectivity, Display, Activation Checklist). No new top-level nav entry needed.
+---
 
-## Files
+## What's Already Correct
 
-| File | Action |
+| Function | Auth | Membership Check | Org-Scoped Stripe Calls |
+|---|---|---|---|
+| `charge-card-on-file` | JWT + getUser | `employee_profiles` ✅ | `stripeAccount` ✅ |
+| `collect-booking-deposit` | JWT + getUser | `employee_profiles` ✅ | `stripeAccount` ✅ |
+| `zura-pay-payouts` | JWT + getUser | `employee_profiles` ✅ | `stripeAccount` ✅ |
+| `connect-zura-pay` | JWT + getUser | `is_org_admin` RPC ✅ | `stripeAccount` ✅ |
+| `verify-zura-pay-connection` | JWT + getUser | `is_org_member` RPC ✅ | `stripeAccount` ✅ |
+| `manage-stripe-terminals` | JWT + getUser | `organization_members` ✅ | `stripeAccount` via location ✅ |
+| `create-terminal-payment-intent` | JWT + getUser | ❌ Global role check | `stripeAccount` ✅ |
+| `terminal-reader-display` | JWT + getUser | ❌ Global role check | `stripeAccount` ✅ |
+| `stripe-webhook` | Signature verification | N/A (server-to-server) | Resolves org from `stripe_connect_account_id` ✅ |
+
+### Webhook Isolation
+- Platform events (invoice, subscription) resolve org via `stripe_customer_id` — no cross-contamination possible
+- Connect events (card sync, disputes, refunds) resolve org via `stripe_connect_account_id` — isolated by design
+- Card operations (`setup_intent.succeeded`, `payment_method.detached/updated`, `customer.deleted`) all double-filter on both `stripe_payment_method_id` AND `organization_id`
+
+### Frontend Isolation
+- `useOrgConnectStatus` — filters by `orgId` ✅
+- `useZuraPayPayouts` — passes `orgId` to edge function ✅
+- `PaymentOps.tsx` — all queries filter by `orgId!` ✅
+- `useConnectZuraPay`, `useVerifyZuraPayConnection`, `useConnectLocation` — all pass `organizationId` ✅
+
+### Database Isolation
+- `payment_disputes` table has `organization_id` + RLS ✅
+- `client_cards_on_file` queries always include `.eq("organization_id", ...)` ✅
+- `appointment_fee_charges` inserts always include `organization_id` ✅
+
+---
+
+## Implementation Plan
+
+| File | Change |
 |---|---|
-| `src/hooks/useReceiptConfig.ts` | **New** — CRUD hook for receipt settings via `site_settings` |
-| `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx` | **New** — Configurator UI with toggles, inputs, and live preview |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | **Modify** — Add "Receipts" sub-tab |
-| `src/components/dashboard/transactions/ReceiptPrintView.tsx` | **Modify** — Accept config, render logo/address/custom message |
+| `supabase/functions/create-terminal-payment-intent/index.ts` | Replace `organization_admins` + global `user_roles` check with `employee_profiles` membership check |
+| `supabase/functions/terminal-reader-display/index.ts` | Replace `organization_admins` + global `user_roles` check with `employee_profiles` membership check |
 
-No migrations needed — uses existing `site_settings` table. No edge function changes.
+Two files, ~15 lines each. No migrations. No UI changes.
 
