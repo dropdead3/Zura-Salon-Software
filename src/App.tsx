@@ -130,6 +130,7 @@ const AnalyticsHub = lazyWithRetry(() => import("./pages/dashboard/admin/Analyti
 const ManagementHub = lazyWithRetry(() => import("./pages/dashboard/admin/ManagementHub"));
 const TrainingHub = lazyWithRetry(() => import("./pages/dashboard/admin/TrainingHub"));
 const TeamHub = lazyWithRetry(() => import("./pages/dashboard/admin/TeamHub"));
+const PaymentOps = lazyWithRetry(() => import("./pages/dashboard/admin/PaymentOps"));
 const ClientHub = lazyWithRetry(() => import("./pages/dashboard/admin/ClientHub"));
 const GrowthHub = lazyWithRetry(() => import("./pages/dashboard/admin/GrowthHub"));
 const WebsiteHub = lazyWithRetry(() => import("./pages/dashboard/admin/WebsiteHub"));
@@ -361,6 +362,7 @@ function DashboardRoutes() {
       <Route path="admin/management" element={<Navigate to="admin/team-hub" replace />} />
       <Route path="admin/training-hub" element={<ProtectedRoute requiredPermission="manage_handbooks"><TrainingHub /></ProtectedRoute>} />
       <Route path="admin/team-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamHub /></ProtectedRoute>} />
+      <Route path="admin/payment-ops" element={<ProtectedRoute requiredPermission="view_team_overview"><PaymentOps /></ProtectedRoute>} />
       <Route path="admin/client-hub" element={<ProtectedRoute requiredPermission="view_clients"><ClientHub /></ProtectedRoute>} />
       <Route path="admin/growth-hub" element={<ProtectedRoute requiredPermission="view_team_overview"><GrowthHub /></ProtectedRoute>} />
       <Route path="admin/sales" element={<Navigate to="admin/analytics?tab=sales" replace />} />

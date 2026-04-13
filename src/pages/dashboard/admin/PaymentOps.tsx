@@ -126,7 +126,8 @@ export default function PaymentOps() {
         <DashboardPageHeader
           title="Payment Operations"
           description="Till reconciliation, deposit holds, and refund processing"
-          backTo={{ label: 'Operations Hub', path: dashPath('/admin/team-hub') }}
+          backTo={dashPath('/admin/team-hub')}
+          backLabel="Operations Hub"
         />
 
         <div className="space-y-6">

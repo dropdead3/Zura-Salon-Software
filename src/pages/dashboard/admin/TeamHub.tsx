@@ -60,7 +60,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Armchair, CalendarDays, Bell, CalendarClock, ArrowLeftRight, HandHelping,
   Users, GraduationCap, Target, Trophy, StarIcon, AlertTriangle, FileText,
   ShieldAlert, BookOpen, CreditCard, Camera, Cake, Globe, Search, Brain,
-  MessageSquarePlus, UserCheck, GitMerge, UserPlus, Briefcase, Coins,
+  MessageSquarePlus, UserCheck, GitMerge, UserPlus, Briefcase, Coins, Banknote,
 };
 
 function getIconName(icon: React.ComponentType<{ className?: string }>): string {
@@ -355,6 +355,19 @@ export default function TeamHub() {
               title="Announcements"
               description="Send team-wide communications"
               {...favProps('/admin/announcements', 'Announcements', Bell)}
+            />
+          )}
+        </CategorySection>
+
+        {/* Financial Operations */}
+        <CategorySection title="Financial Operations">
+          {!isFavorited(dashPath('/admin/payment-ops')) && (
+            <ManagementCard
+              href={dashPath('/admin/payment-ops')}
+              icon={Banknote}
+              title="Payment Operations"
+              description="Till reconciliation, deposit holds, and refund processing"
+              {...favProps('/admin/payment-ops', 'Payment Operations', Banknote)}
             />
           )}
         </CategorySection>
