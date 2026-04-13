@@ -247,6 +247,30 @@ export function ZuraPayFleetTab({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Confirmation Dialog — Disconnect Location */}
+      <AlertDialog open={showConfirmDisconnect} onOpenChange={setShowConfirmDisconnect}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect location from Zura Pay</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the Zura Pay connection for this location. Terminal locations and readers will need to be reconfigured if you reconnect later. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirmDisconnect(false);
+                if (activeLocationId) onDisconnectLocation?.(activeLocationId);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDisconnectingLocation ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Location Picker / Label */}
       {locations.length === 1 ? (
         <div className="flex items-center gap-3">
