@@ -87,7 +87,7 @@ export function useCreateTerminalCheckout() {
     },
     onSuccess: (data) => {
       if (data.url) {
-        window.open(data.url, '_blank');
+        window.location.href = data.url;
       }
     },
     onError: (error) => {

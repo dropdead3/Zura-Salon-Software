@@ -84,7 +84,8 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   };
 
   const handlePurchase = () => {
-    if (!orgId) return;
+    if (!orgId || (!reqLocationId && !locations[0]?.id)) return;
+    handleDialogClose();
     const selectedAccList = accessories
       .filter((acc) => selectedAccessories[acc.id])
       .map((acc) => ({
