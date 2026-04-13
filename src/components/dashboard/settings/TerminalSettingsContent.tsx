@@ -21,6 +21,7 @@ import {
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
 import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation } from '@/hooks/useZuraPayConnect';
+import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'react-router-dom';
@@ -216,19 +217,30 @@ export function TerminalSettingsContent() {
 
   const connectMutation = useConnectZuraPay();
   const verifyMutation = useVerifyZuraPayConnection();
+  const verifyPayment = useVerifyTerminalPayment();
   const connectLocationMutation = useConnectLocation();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState('fleet');
 
   const verifyMutateRef = useRef(verifyMutation.mutate);
   verifyMutateRef.current = verifyMutation.mutate;
 
-  // Handle return from payment onboarding — idempotency guard prevents double-fire
+  const connectMutateRef = useRef(connectMutation.mutate);
+  connectMutateRef.current = connectMutation.mutate;
+
+  const verifyPaymentRef = useRef(verifyPayment.mutate);
+  verifyPaymentRef.current = verifyPayment.mutate;
+
+  // Handle return from payment onboarding AND hardware checkout — idempotency guard prevents double-fire
   const hasVerifiedReturn = useRef(false);
   useEffect(() => {
     const isReturn = searchParams.get('zura_pay_return') === 'true';
     const isRefresh = searchParams.get('zura_pay_refresh') === 'true';
-    if (!orgId || (!isReturn && !isRefresh)) return;
+    const checkoutStatus = searchParams.get('checkout');
+    const sessionId = searchParams.get('session_id');
+    if (!orgId) return;
+    if (!isReturn && !isRefresh && checkoutStatus !== 'success') return;
     if (hasVerifiedReturn.current) return;
     hasVerifiedReturn.current = true;
 
@@ -236,13 +248,19 @@ export function TerminalSettingsContent() {
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('zura_pay_return');
     newParams.delete('zura_pay_refresh');
+    newParams.delete('checkout');
+    newParams.delete('session_id');
     setSearchParams(newParams, { replace: true });
 
-    if (isReturn) {
+    if (checkoutStatus === 'success' && sessionId) {
+      // Hardware checkout return — switch to Hardware tab and verify
+      setActiveTab('hardware');
+      verifyPaymentRef.current({ sessionId, organizationId: orgId });
+    } else if (isReturn) {
       verifyMutateRef.current({ organizationId: orgId });
     } else if (isRefresh) {
       // Session expired — re-initiate onboarding automatically
-      connectMutation.mutate({
+      connectMutateRef.current({
         organizationId: orgId,
         returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
         refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
@@ -325,7 +343,7 @@ export function TerminalSettingsContent() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="fleet" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="fleet" className="font-sans">Fleet</TabsTrigger>
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
