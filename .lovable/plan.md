@@ -1,79 +1,61 @@
 
 
-# Zura Pay POS — Eighth-Pass Audit
+# Zura Pay POS — Ninth-Pass Audit
 
-## Critical Bugs
+Good instinct asking this. There are several important gaps remaining that would prevent this from being a truly production-ready POS system.
 
-### B1: `create-terminal-payment-intent` queries non-existent column — all card payments will fail
-**Severity: Critical — blocks the entire card-reader checkout flow.**
-**File:** `supabase/functions/create-terminal-payment-intent/index.ts` (line 101-105)
+## Critical Gaps
 
-The function queries `organizations.stripe_account_id`, but the actual column is `stripe_connect_account_id`. The query returns `null`, hitting the "Zura Pay is not connected" error on line 108 for every organization — even those fully onboarded.
+### G1: No webhook handler for terminal `payment_intent.succeeded` events
+**Impact: High — payment state can become permanently stale.**
 
-**Fix:** Change the select to `.select('stripe_connect_account_id')` and reference `orgData.stripe_connect_account_id`.
+The `stripe-webhook` function handles `checkout.session.completed`, `invoice.*`, and `charge.failed` — but has zero handlers for `payment_intent.succeeded` or `payment_intent.payment_failed`. Terminal card-present payments generate these events on the Connected Account.
 
-### B2: `terminal-reader-display` queries `locations.stripe_account_id` — inconsistent with PI creation
-**Severity: Critical — reader commands may target the wrong Stripe account or fail silently.**
-**File:** `supabase/functions/terminal-reader-display/index.ts` (lines 91-99)
+Right now, the *only* way a terminal payment gets recorded is through the client-side poll → PI verify → `onConfirm` flow. If the front desk closes the browser tab mid-payment, or the poll times out but the payment actually succeeds seconds later, the appointment stays incomplete and the PI ID is never stored. A webhook would act as the safety net.
 
-The PI is created on the org's Connected Account (`organizations.stripe_connect_account_id`), but the reader display/process commands resolve the Stripe account from `locations.stripe_account_id`. If `locations.stripe_account_id` is null or differs, the `process_payment` call will fail with "PaymentIntent not found" because the PI lives on a different account.
+**Fix:** Add `payment_intent.succeeded` and `payment_intent.payment_failed` handlers to the webhook (or create a dedicated Connect webhook endpoint). On `succeeded`, look up the appointment via `metadata.appointment_id`, update `payment_status = 'paid'` and store the PI ID. This makes the system eventually consistent regardless of client-side behavior.
 
-**Fix:** Query `organizations.stripe_connect_account_id` (same source as the PI creation function) instead of `locations.stripe_account_id`. Use locations as a fallback only if org-level is null.
+### G2: Refunds don't touch Stripe — only local records
+**Impact: High — "Refund to Original Payment" is a lie for card-reader payments.**
 
-### B3: `stripe_payment_intent_id` never persisted on appointment
-**Severity: High — no audit trail linking payments to appointments.**
-**File:** `src/pages/dashboard/Schedule.tsx` (lines 537-548)
+`useProcessRefund` creates a `refund_records` row and sets status to `pending` for `original_payment` type. But it never calls `stripe.refunds.create()`. For cash payments this is fine (manual), but for card-reader payments with a `stripe_payment_intent_id`, the refund should actually be issued through Stripe.
 
-The `handleCheckoutConfirm` receives `paymentMetadata.stripe_payment_intent_id` but only writes `payment_method` and `payment_status` to the `appointments` table. The PI ID is silently discarded. The `appointments` table doesn't have a `stripe_payment_intent_id` column.
+**Fix:** Create a `process-stripe-refund` edge function that accepts a PI ID and amount, calls `stripe.refunds.create()` on the Connected Account, then updates `refund_records.status` to `completed`. Wire `useProcessRefund` to call this when `refund_type === 'original_payment'` and a `stripe_payment_intent_id` exists on the source transaction.
 
-**Fix:** Add a `stripe_payment_intent_id` column to `appointments` via migration. Update the `.update()` call to include `stripe_payment_intent_id: paymentMetadata.stripe_payment_intent_id`.
+### G3: No transaction record created for terminal payments
+**Impact: High — terminal payments don't appear in the Transactions hub.**
 
-### B4: `pollReaderStatus` assumes "no action" means success — false positive
-**Severity: High — could mark failed payments as succeeded.**
-**File:** `src/hooks/useTerminalCheckoutFlow.ts` (lines 102-106)
+The checkout flow updates the `appointments` table with `payment_method` and `stripe_payment_intent_id`, but it never inserts a row into the `transactions` table. The Transactions hub, daily till reconciliation, and sales reports all query `transactions` — so card-reader payments are invisible to reporting.
 
-When the reader has no active action (`!reader?.action || reader?.action?.type === undefined`), the poll returns `'succeeded'`. But the reader clears its action on both success AND failure. A genuine decline could return "succeeded" if the reader clears quickly between polls.
+**Fix:** After a successful terminal payment, insert a `transactions` row with type `service`, linking the appointment ID, client ID, amount, payment method (`card_present`), and PI ID. This can be done client-side in `handleCheckoutConfirm` or server-side via the webhook (preferred).
 
-**Fix:** After polling completes with "no action," verify the PaymentIntent status directly by adding a `check_payment_intent` action to the edge function, or by calling `create-terminal-payment-intent` with a `verify` flag. Only return `'succeeded'` if the PI status is `succeeded`.
+### G4: `handleStatusChange('completed')` runs *before* the payment metadata update
+**Impact: Medium — race condition.**
 
-## Gaps
+In `Schedule.tsx` line 530, `handleStatusChange('completed', ...)` fires first, then lines 537-549 run a *separate* `.update()` for payment metadata. If `handleStatusChange` triggers a query invalidation, the UI may briefly show the appointment as "completed" with no payment info. Worse, if the second update fails silently (the `catch` just logs), the payment metadata is lost.
 
-### G1: `useActiveTerminalReader` filter is a no-op
-**File:** `src/hooks/useActiveTerminalReader.ts` (line 47)
+**Fix:** Merge both updates into a single `.update()` call, or ensure `handleStatusChange` accepts and persists payment metadata atomically.
 
-```typescript
-readers.filter((r) => r.location === locationId || true)
-```
+## Moderate Gaps
 
-The `|| true` makes the filter always pass — every reader matches regardless of location. This was likely a placeholder.
+### G5: Tip not included in reader display cart
+The `set_reader_display` call pushes line items and tax to the reader screen, but tip is added *after* the cart display. The customer sees a total that doesn't include the tip they just agreed to in the app. This is confusing on the S710 display.
 
-**Fix:** Remove `|| true`. Filter readers by `r.location === locationId` when `locationId` is provided.
+**Fix:** Add the tip as a line item (description: "Tip") in the `set_reader_display` payload so the reader screen total matches `grandTotal`.
 
-### G2: `useTerminalReaders` passes `organizationId` but `useStripeTerminals` expects `locationId`
-**File:** `src/hooks/useActiveTerminalReader.ts` (line 17)
+### G6: No receipt for card payments
+The receipt PDF doesn't include payment method or PI reference. For card payments, receipts should show "Paid by Card" and the last 4 digits (available from the PI's `charges.data[0].payment_method_details.card_present.last4`). Currently all receipts look the same regardless of payment method.
 
-`useTerminalReaders(organizationId ?? null)` — but looking at `useStripeTerminals.ts`, the first parameter is named `locationId` and passed as `location_id` to the edge function. The hook is passing the org ID where a location ID is expected, which means the edge function receives the wrong value for reader lookup.
+### G7: `as any` type assertion on payment update
+`Schedule.tsx` line 545 uses `as any` to bypass TypeScript. Since the migration already added `stripe_payment_intent_id` and the types file includes it, this cast should be removable now.
 
-**Fix:** Pass `locationId` to `useTerminalReaders` instead of `organizationId`. Update the `useActiveTerminalReader` signature if needed.
+## Enhancement Opportunities
 
-### G3: `create-terminal-payment-intent` allows `stylist` role but `terminal-reader-display` does not
-**File:** `create-terminal-payment-intent/index.ts` (line 93) vs `terminal-reader-display/index.ts` (line 82)
+### E1: Daily till reconciliation for card payments
+The Transactions hub has a till balance feature, but it only tracks cash. Card-reader payments should be reconciled against Stripe's actual payout data to give owners a complete end-of-day picture.
 
-The PI creation allows `["admin", "manager", "super_admin", "stylist"]`, but the reader display function only allows `["admin", "manager", "super_admin"]`. A stylist who creates the PI successfully will get a 403 when trying to push the cart to the reader.
-
-**Fix:** Align the role lists. Either add `stylist` to `terminal-reader-display` or remove it from `create-terminal-payment-intent`.
-
-### G4: No `?target=deno` on Stripe imports in `create-terminal-payment-intent`
-**File:** `supabase/functions/create-terminal-payment-intent/index.ts` (line 2)
-
-Uses `https://esm.sh/stripe@18.5.0` without `?target=deno`. Pass 7 fixed this in `terminal-hardware-order` but the new function was created without it.
-
-**Fix:** Add `?target=deno` to the Stripe import.
-
-## Enhancements
-
-### E1: Confirm payment succeeded before completing appointment
-Currently, `handleConfirm` in `CheckoutSummarySheet` calls `onConfirm` immediately after `startCheckout` returns. If the PI was created but the reader interaction is ambiguous (see B4), the appointment could be marked completed without confirmed payment. Consider verifying PI status server-side before confirming.
+### E2: Deposit collection via terminal
+The booking surface already has `require_deposit` settings, but deposits are not collected through the terminal. Wiring the terminal checkout flow to deposit collection (pre-auth with capture later) would close this loop.
 
 ---
 
@@ -81,12 +63,11 @@ Currently, `handleConfirm` in `CheckoutSummarySheet` calls `onConfirm` immediate
 
 | File | Change |
 |------|--------|
-| `supabase/functions/create-terminal-payment-intent/index.ts` | Fix column name to `stripe_connect_account_id` (B1); add `?target=deno` to Stripe import (G4) |
-| `supabase/functions/terminal-reader-display/index.ts` | Query `organizations.stripe_connect_account_id` instead of `locations.stripe_account_id` (B2); add `stylist` to allowed roles (G3); add `check_payment_intent` action for PI verification (B4) |
-| `src/hooks/useTerminalCheckoutFlow.ts` | After poll returns "no action," verify PI status via new `check_payment_intent` action (B4) |
-| `src/hooks/useActiveTerminalReader.ts` | Remove `|| true` filter no-op (G1); pass `locationId` to `useTerminalReaders` (G2) |
-| `src/pages/dashboard/Schedule.tsx` | Store `stripe_payment_intent_id` in the update call (B3) |
-| **Migration** | Add `stripe_payment_intent_id TEXT` column to `appointments` table (B3) |
+| `supabase/functions/stripe-webhook/index.ts` | Add `payment_intent.succeeded` and `payment_intent.payment_failed` handlers that update `appointments` (G1) |
+| `supabase/functions/process-stripe-refund/index.ts` | **New** — calls `stripe.refunds.create()` on Connected Account for card payments (G2) |
+| `src/hooks/useRefunds.ts` | When `refund_type === 'original_payment'` and source has a PI ID, call `process-stripe-refund` instead of just inserting a pending record (G2) |
+| `src/pages/dashboard/Schedule.tsx` | Merge payment metadata into the `handleStatusChange` update call (G4); remove `as any` (G7); insert transaction record for card payments (G3) |
+| `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Include tip as a line item in `set_reader_display` payload (G5) |
 
-1 migration, 0 new edge functions, 0 new dependencies.
+1 new edge function, 0 migrations, 0 new dependencies.
 
