@@ -302,8 +302,8 @@ export function TerminalSettingsContent() {
       // Session expired — re-initiate onboarding automatically
       connectMutateRef.current({
         organizationId: orgId,
-        returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
-        refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
+        returnUrl: `${window.location.origin}${window.location.pathname}?category=terminals&zura_pay_return=true`,
+        refreshUrl: `${window.location.origin}${window.location.pathname}?category=terminals&zura_pay_refresh=true`,
       });
     }
   }, [orgId, searchParams, setSearchParams]);
@@ -415,8 +415,8 @@ export function TerminalSettingsContent() {
               orgConnectStatus={connectStatus?.stripe_connect_status}
               onStartConnect={() => orgId && connectMutation.mutate({
                 organizationId: orgId,
-                returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
-                refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
+                returnUrl: `${window.location.origin}${window.location.pathname}?category=terminals&zura_pay_return=true`,
+                refreshUrl: `${window.location.origin}${window.location.pathname}?category=terminals&zura_pay_refresh=true`,
               })}
               isConnecting={connectMutation.isPending}
               onVerifyConnection={() => orgId && verifyMutation.mutate({ organizationId: orgId })}

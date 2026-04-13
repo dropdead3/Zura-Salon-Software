@@ -119,8 +119,8 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
           const currentPath = window.location.pathname;
           createCheckout.mutate({
             organizationId: orgId, locationId: reqLocationId || undefined, items,
-            successUrl: `${window.location.origin}${currentPath}?tab=terminals&subtab=hardware`,
-            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals&subtab=hardware`,
+            successUrl: `${window.location.origin}${currentPath}?category=terminals&subtab=hardware`,
+            cancelUrl: `${window.location.origin}${currentPath}?category=terminals&subtab=hardware`,
           });
         },
         onError: (err) => {
