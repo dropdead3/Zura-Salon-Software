@@ -925,6 +925,39 @@ async function handleSetupIntentSucceeded(
     console.error("Failed to upsert card on file:", upsertError);
   } else {
     console.log(`Card on file saved: ${card.brand} ****${card.last4} for client ${clientId}`);
+
+    // 5. Online booking: link saved card to the specific appointment
+    if (metadata?.source === 'online_booking' && metadata?.appointment_id) {
+      const { data: savedCard } = await supabase
+        .from("client_cards_on_file")
+        .select("id")
+        .eq("stripe_payment_method_id", paymentMethodId)
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+
+      if (savedCard) {
+        const { error: linkError } = await supabase
+          .from("appointments")
+          .update({ card_on_file_id: savedCard.id })
+          .eq("id", metadata.appointment_id)
+          .eq("organization_id", organizationId);
+
+        if (linkError) {
+          console.error(`Failed to link card to appointment ${metadata.appointment_id}:`, linkError);
+        } else {
+          console.log(`Linked card ${savedCard.id} to appointment ${metadata.appointment_id}`);
+        }
+      }
+
+      // Also backfill stripe_customer_id on the client if not set
+      if (stripeCustomerId && clientId) {
+        await supabase
+          .from("clients")
+          .update({ stripe_customer_id: stripeCustomerId })
+          .eq("id", clientId)
+          .is("stripe_customer_id", null);
+      }
+    }
   }
 }
 
