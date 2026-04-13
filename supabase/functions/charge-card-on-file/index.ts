@@ -147,6 +147,20 @@ Deno.serve(async (req) => {
           })
           .eq("id", appointment_id);
       }
+
+      // Insert fee ledger record
+      const { error: feeError } = await supabase.from("appointment_fee_charges").insert({
+        organization_id,
+        appointment_id,
+        fee_type: resolvedFeeType,
+        fee_amount: amount,
+        status: "collected",
+        collected_via: "card_on_file",
+        charged_at: new Date().toISOString(),
+      });
+      if (feeError) {
+        console.error(`Failed to insert fee ledger record: ${feeError.message}`);
+      }
     }
 
     return new Response(JSON.stringify({

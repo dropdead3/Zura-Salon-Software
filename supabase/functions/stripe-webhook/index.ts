@@ -595,6 +595,28 @@ async function handlePaymentIntentSucceeded(
     updatePayload.deposit_collected_at = new Date().toISOString();
     updatePayload.deposit_stripe_payment_id = piId;
     console.log(`Deposit reconciliation: marking deposit collected for appointment ${appointmentId}`);
+
+    // Insert fee ledger record for deposit
+    const depositAmount = (paymentIntent.amount as number) / 100;
+    const orgId = metadata?.organization_id;
+    if (orgId) {
+      const { error: feeError } = await supabase.from('appointment_fee_charges').insert({
+        organization_id: orgId,
+        appointment_id: appointmentId,
+        fee_type: 'deposit',
+        fee_amount: depositAmount,
+        status: 'collected',
+        collected_via: 'online_booking',
+        charged_at: new Date().toISOString(),
+      });
+      if (feeError) {
+        console.error(`Failed to insert deposit fee ledger record: ${feeError.message}`);
+      } else {
+        console.log(`Fee ledger: deposit of ${depositAmount} recorded for appointment ${appointmentId}`);
+      }
+    } else {
+      console.warn(`No organization_id in metadata — skipping fee ledger insert for appointment ${appointmentId}`);
+    }
   }
 
   const { error } = await supabase
