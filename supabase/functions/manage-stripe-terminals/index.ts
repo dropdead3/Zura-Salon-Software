@@ -135,15 +135,12 @@ Deno.serve(async (req) => {
           params.display_name || locationData.name || "Terminal Location";
         const formParams: Record<string, string> = {
           display_name: displayName,
-          "address[line1]": locationData.address_line1 || "N/A",
+          "address[line1]": locationData.address || "N/A",
           "address[city]": locationData.city || "N/A",
-          "address[state]": locationData.state || "",
-          "address[postal_code]": locationData.zip_code || "00000",
+          "address[state]": locationData.state_province || "",
+          "address[postal_code]": "00000",
           "address[country]": locationData.country || "US",
         };
-        if (locationData.address_line2) {
-          formParams["address[line2]"] = locationData.address_line2;
-        }
         if (params.metadata_location_id) {
           formParams["metadata[zura_location_id]"] = location_id;
         }
