@@ -97,6 +97,10 @@ export default function Settings() {
     if (param === 'schedule') return 'services' as SettingsCategory;
     if (param === 'website') return null;
     if (param && param in categoriesMap) return param as SettingsCategory;
+    // Legacy compat: ?tab=terminals or zura_pay return/refresh params
+    if (searchParams.get('tab') === 'terminals' || searchParams.has('zura_pay_return') || searchParams.has('zura_pay_refresh')) {
+      return 'terminals' as SettingsCategory;
+    }
     return null;
   })();
 
