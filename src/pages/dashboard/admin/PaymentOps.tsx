@@ -626,6 +626,8 @@ export default function PaymentOps() {
   const { formatCurrency } = useFormatCurrency();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const { data: connectStatus } = useOrgConnectStatus(orgId);
+  const isZuraPayActive = connectStatus?.stripe_connect_status === 'active';
 
   const initialDate = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState(initialDate);
