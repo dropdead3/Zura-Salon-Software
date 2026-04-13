@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Look up stripe_account_id from the location
     const { data: locationData, error: locError } = await supabase
       .from("locations")
-      .select("stripe_account_id, name, address_line1, address_line2, city, state, zip_code, country, organization_id")
+      .select("stripe_account_id, name, address, city, state_province, country, organization_id")
       .eq("id", location_id)
       .single();
 

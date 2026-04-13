@@ -34,7 +34,7 @@ function useZuraPayLocations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('id, name, stripe_account_id, address_line1, city, state')
+        .select('id, name, stripe_account_id, address, city, state_province')
         .eq('organization_id', orgId!)
         .not('stripe_account_id', 'is', null);
       if (error) throw error;
