@@ -34,6 +34,7 @@ export interface Service {
   container_types: ('bowl' | 'bottle')[];
   is_chemical_service: boolean;
   is_backroom_tracked: boolean;
+  require_card_on_file: boolean;
 }
 
 /**

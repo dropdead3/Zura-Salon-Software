@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Trash2, ShieldAlert } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, Plus, Trash2, ShieldAlert, FileText } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import {
@@ -16,6 +18,8 @@ import {
   type CancellationFeePolicy,
 } from '@/hooks/useDepositData';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
+import { toast } from 'sonner';
 
 const POLICY_TYPES = [
   { value: 'cancellation', label: 'Cancellation' },
@@ -44,6 +48,34 @@ export function CancellationFeePoliciesSettings() {
     applies_to_new_clients_only: false,
   });
 
+  // Policy text settings
+  interface BookingPolicies extends Record<string, unknown> {
+    deposit_policy_text: string;
+    cancellation_policy_text: string;
+  }
+  const { data: policyTexts, isLoading: policyTextsLoading } = useSiteSettings<BookingPolicies>('booking_policies');
+  const updatePolicySetting = useUpdateSiteSetting<BookingPolicies>();
+  const [depositPolicyText, setDepositPolicyText] = useState('');
+  const [cancellationPolicyText, setCancellationPolicyText] = useState('');
+  const [policyTextsDirty, setPolicyTextsDirty] = useState(false);
+
+  useEffect(() => {
+    if (policyTexts) {
+      setDepositPolicyText(policyTexts.deposit_policy_text || '');
+      setCancellationPolicyText(policyTexts.cancellation_policy_text || '');
+    }
+  }, [policyTexts]);
+
+  const handleSavePolicyTexts = () => {
+    updatePolicySetting.mutate(
+      { key: 'booking_policies', value: { deposit_policy_text: depositPolicyText, cancellation_policy_text: cancellationPolicyText } },
+      {
+        onSuccess: () => { toast.success('Policy texts saved'); setPolicyTextsDirty(false); },
+        onError: () => toast.error('Failed to save policy texts'),
+      },
+    );
+  };
+
   const handleAdd = () => {
     upsert.mutate(
       {
@@ -68,6 +100,7 @@ export function CancellationFeePoliciesSettings() {
   };
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-start justify-between">
         <div className="flex items-center gap-3">
@@ -186,5 +219,51 @@ export function CancellationFeePoliciesSettings() {
         )}
       </CardContent>
     </Card>
+
+    {/* Customer-Facing Policy Text */}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <FileText className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>Customer-Facing Policy Text</CardTitle>
+            <CardDescription>These policy statements are shown to customers during the booking flow when a service requires a deposit or card on file.</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm">Deposit Policy</Label>
+          <Textarea
+            value={depositPolicyText}
+            onChange={(e) => { setDepositPolicyText(e.target.value); setPolicyTextsDirty(true); }}
+            rows={3}
+            placeholder="e.g. A deposit is required to secure your appointment. Deposits are applied to your service total at checkout..."
+            className="text-sm"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-sm">Cancellation & No-Show Policy</Label>
+          <Textarea
+            value={cancellationPolicyText}
+            onChange={(e) => { setCancellationPolicyText(e.target.value); setPolicyTextsDirty(true); }}
+            rows={3}
+            placeholder="e.g. Cancellations made less than 24 hours before your appointment are subject to a fee. No-shows will be charged the full service amount..."
+            className="text-sm"
+          />
+        </div>
+        {policyTextsDirty && (
+          <div className="flex justify-end">
+            <Button size="sm" onClick={handleSavePolicyTexts} disabled={updatePolicySetting.isPending}>
+              {updatePolicySetting.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+              Save Policy Text
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+    </>
   );
 }
