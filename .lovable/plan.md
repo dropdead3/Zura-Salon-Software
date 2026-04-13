@@ -1,36 +1,52 @@
 
 
-# Add Card Last 4 Digits to Retry Charge Confirmation
+# Fix Bugs & Gaps (Phorest-Free Scope)
 
-## Problem
+Per your direction — no phorest table updates. Once Phorest is disconnected, only `appointments` matters.
 
-The retry charge confirmation dialog says "Retry charge of $150.00 for Jane D.?" but doesn't show which card will be charged. Staff need visual confirmation they're charging the right card.
+## Confirmed Non-Issue
 
-## Changes
+**B3 (amount unit):** `charge-card-on-file` already converts dollars → cents via `Math.round(amount * 100)` on line 71. No fix needed.
 
-### 1. Add `card_last4` to `DockAppointment` interface and card-on-file queries
-**File:** `src/hooks/dock/useDockAppointments.ts`
+## Remaining Fixes
 
-- Add `card_last4?: string | null` to the `DockAppointment` interface
-- In both card-on-file batch queries (demo mode ~line 232 and normal mode ~line 340), change `.select('client_id')` to `.select('client_id, card_last4')`
-- Instead of storing just a Set of client IDs, store a Map of `client_id → card_last4`
-- Set `a.card_last4` alongside `a.has_card_on_file`
-
-### 2. Update confirmation dialog text
+### 1. Guard retry button while dialog is open (B2 — race condition)
 **File:** `src/components/dock/schedule/DockScheduleTab.tsx`
 
-- Update the retry charge description (line ~322) from:
-  `Retry charge of $X.XX for {client}?`
-  to:
-  `Retry charge of $X.XX to card ending in {last4} for {client}?`
-- Fallback to current text if `card_last4` is not available
+Pass `retryDisabled={!!confirmAction}` to each `DockAppointmentCard`. When truthy, the Retry button is disabled — prevents the user from switching targets mid-dialog.
+
+**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+
+Accept optional `retryDisabled?: boolean` prop. Apply it to the retry button's `disabled` attribute alongside existing `isRetrying`.
+
+### 2. Guard demo-mode retry for null `total_price` (G3)
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx`
+
+In the demo shortcircuit path (~line 158), add a check: if `action === 'retry_charge'` and `!appointment.total_price`, toast a warning instead of a false success.
+
+### 3. Add `card_brand` to retry confirmation (E1)
+**File:** `src/hooks/dock/useDockAppointments.ts`
+
+- Add `card_brand?: string | null` to `DockAppointment` interface
+- In the card-on-file batch query, select `card_brand` alongside `card_last4`
+- Store in the Map and set on the appointment object
+
+**File:** `src/components/dock/schedule/DockScheduleTab.tsx`
+
+Update the retry confirmation description from:
+`"Retry charge of $X.XX to card ending in 4242 for Jane D.?"`
+to:
+`"Retry charge of $X.XX to Visa ending in 4242 for Jane D.?"`
+
+Fallback gracefully if `card_brand` is null.
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/hooks/dock/useDockAppointments.ts` | Add `card_last4` to interface + queries |
-| `src/components/dock/schedule/DockScheduleTab.tsx` | Include last 4 in confirmation text |
+| `src/hooks/dock/useDockAppointments.ts` | Add `card_brand` to interface + card query |
+| `src/components/dock/schedule/DockScheduleTab.tsx` | Add retryDisabled prop pass-through, demo guard, card brand in dialog |
+| `src/components/dock/schedule/DockAppointmentCard.tsx` | Accept `retryDisabled` prop |
 
 0 migrations, 0 new edge functions, 0 new dependencies.
 
