@@ -1,78 +1,59 @@
 
 
-# Insert `appointment_fee_charges` Records for Deposit & Fee Charges
+# Surface Fee Ledger on Payment Operations Page
 
 ## Problem
 
-The `appointment_fee_charges` table exists in the schema with all the right columns (`fee_type`, `fee_amount`, `status`, `collected_via`, `charged_at`, etc.) but is **never written to** — not by the webhook on online booking deposits, and not by the `charge-card-on-file` edge function on manual/no-show/cancellation charges. The fee ledger is completely dormant.
+The `CancellationFeeQueueCard` (lines 46-141 in PaymentOps.tsx) queries the `appointments` table directly — filtering by `status IN ('cancelled','no_show')` and `cancellation_fee_status IS NULL OR 'pending'`. This infers fee status from scattered appointment columns rather than using the `appointment_fee_charges` ledger that now serves as the single authoritative source for all fee activity (deposits, no-shows, cancellations, manual charges).
 
-This means there is no unified audit trail for fees charged against appointments. The Payment Operations page and any future reporting surface cannot query a single table to answer "what fees were charged, when, and how?"
+The current card also only shows "pending" fees. It cannot show collected or waived fees, making it impossible to audit fee history from this page.
 
 ## Approach
 
-Write a fee ledger record in **both** collection paths:
-
-1. **Webhook path** — when `payment_intent.succeeded` reconciles an online booking deposit
-2. **Manual charge path** — when `charge-card-on-file` successfully creates a Stripe charge for no-show, cancellation, or manual fees
+Replace the appointments-table query with a ledger-first approach: query `appointment_fee_charges` joined to `appointments` for context (client name, date, staff). Add a tab or filter toggle to switch between Pending and Collected/Waived views.
 
 ## Changes
 
-### 1. `supabase/functions/stripe-webhook/index.ts` — `handlePaymentIntentSucceeded`
+### 1. Replace `CancellationFeeQueueCard` with `FeeLedgerCard`
 
-After the deposit reconciliation block (line 593-598), insert a fee ledger record:
+**Rename and restructure** the sub-component (lines 46-141):
 
-```typescript
-if (metadata?.source === 'online_booking' && metadata?.fee_type === 'deposit') {
-  // existing: updatePayload.deposit_status, deposit_collected_at, deposit_stripe_payment_id
-  
-  // NEW: insert fee ledger record
-  const depositAmount = paymentIntent.amount / 100; // cents → dollars
-  await supabase.from('appointment_fee_charges').insert({
-    organization_id: organizationId,
-    appointment_id: appointmentId,
-    fee_type: 'deposit',
-    fee_amount: depositAmount,
-    status: 'collected',
-    collected_via: 'online_booking',
-    charged_at: new Date().toISOString(),
-  });
-}
+- **Query source**: `appointment_fee_charges` joined to `appointments` via `appointment_id`
+  ```
+  SELECT afc.*, a.client_name, a.staff_name, a.appointment_date, a.status
+  FROM appointment_fee_charges afc
+  JOIN appointments a ON afc.appointment_id = a.id
+  WHERE afc.organization_id = orgId
+  ORDER BY afc.created_at DESC
+  LIMIT 100
+  ```
+- **Filter tabs**: "Pending" (status = 'pending') | "Collected" (status = 'collected') | "Waived" (status = 'waived') — default to Pending
+- **Table columns**: Client, Stylist, Date, Fee Type (deposit/no_show/cancellation/manual), Amount, Collected Via (online_booking/card_on_file), Status badge, Charged At
+- **Card title**: "Fee Charges" (broader than just cancellation/no-show)
+- **Card icon**: Keep `UserX` or switch to `Receipt` for broader scope
+- **Badge count**: Show pending count in header badge
+
+### 2. Update TeamHub stat badge
+
+The `paymentOpsCount` stat (TeamHub.tsx line 271) currently counts pending refunds + active holds. Add pending fee charges count:
+
+```sql
+SELECT count(*) FROM appointment_fee_charges
+WHERE organization_id = orgId AND status = 'pending'
 ```
 
-Requires resolving `organizationId` — already available from the appointment lookup or metadata.
+Add this to the combined `paymentOpsCount`.
 
-### 2. `supabase/functions/charge-card-on-file/index.ts`
+### 3. Query key
 
-After the Stripe PaymentIntent is created successfully, insert a fee ledger record:
-
-```typescript
-await supabase.from('appointment_fee_charges').insert({
-  organization_id,
-  appointment_id,
-  fee_type: fee_type || 'manual',
-  fee_amount: amount,
-  status: 'collected',
-  collected_via: 'card_on_file',
-  charged_at: new Date().toISOString(),
-});
-```
-
-This captures no-show fees, cancellation fees, and manual charges in the same ledger.
-
-## Technical Details
-
-- `fee_type` values: `'deposit'` (online), `'no_show'`, `'cancellation'`, `'manual'` (from charge-card-on-file)
-- `collected_via` values: `'online_booking'`, `'card_on_file'`
-- `status` defaults to `'pending'` in the schema, so we explicitly set `'collected'` since both paths only write after successful Stripe confirmation
-- `policy_id` is left null for online deposits (no policy association); for manual charges it could be passed through if available (future enhancement)
-- No migration needed — table already exists with all required columns
+New query key: `['fee-ledger', orgId, statusFilter]`
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `supabase/functions/stripe-webhook/index.ts` | Insert fee ledger record on deposit reconciliation |
-| `supabase/functions/charge-card-on-file/index.ts` | Insert fee ledger record after successful charge |
+| `src/pages/dashboard/admin/PaymentOps.tsx` | Replace `CancellationFeeQueueCard` with ledger-backed `FeeLedgerCard` |
+| `src/pages/dashboard/admin/TeamHub.tsx` | Add pending fee charges to `paymentOpsCount` |
 
 0 migrations, 0 new edge functions, 0 new dependencies.
 
