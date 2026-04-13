@@ -54,12 +54,17 @@ import {
   Wallet,
   ExternalLink,
   Scale,
+  MapPin,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
 import { ZuraPayPayoutsTab } from '@/components/dashboard/settings/terminal/ZuraPayPayoutsTab';
 import { EmptyState } from '@/components/ui/empty-state';
+import { LocationGroupSelect } from '@/components/ui/LocationGroupSelect';
+import { useLocations } from '@/hooks/useLocations';
+import { TogglePill } from '@/components/ui/toggle-pill';
+import { parseLocationIds, encodeLocationIds, isAllLocations } from '@/lib/locationFilter';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
 const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
@@ -664,21 +669,45 @@ const DISPUTE_STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destruct
   charge_refunded: 'outline',
 };
 
-function DisputesCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, clientSearch }: {
+  orgId?: string;
+  formatCurrency: (n: number) => string;
+  dateFrom: string;
+  dateTo: string;
+  disputeStatus: 'active' | 'resolved' | 'all';
+  clientSearch: string;
+}) {
+  const activeStatuses = ['needs_response', 'under_review', 'warning_needs_response'];
+  const resolvedStatuses = ['won', 'lost', 'charge_refunded'];
+
   const { data: disputes = [], isLoading } = useQuery({
-    queryKey: ['payment-disputes', orgId],
+    queryKey: ['payment-disputes', orgId, dateFrom, dateTo, disputeStatus],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('payment_disputes')
         .select('*')
         .eq('organization_id', orgId!)
+        .gte('created_at', `${dateFrom}T00:00:00`)
+        .lte('created_at', `${dateTo}T23:59:59`)
         .order('created_at', { ascending: false })
         .limit(50);
+      if (disputeStatus === 'active') {
+        q = q.in('status', activeStatuses);
+      } else if (disputeStatus === 'resolved') {
+        q = q.in('status', resolvedStatuses);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
     enabled: !!orgId,
   });
+
+  const filteredDisputes = useMemo(() => {
+    if (!clientSearch) return disputes;
+    const s = clientSearch.toLowerCase();
+    return disputes.filter(d => (d.client_name || '').toLowerCase().includes(s));
+  }, [disputes, clientSearch]);
 
   return (
     <Card>
@@ -701,7 +730,7 @@ function DisputesCard({ orgId, formatCurrency }: { orgId?: string; formatCurrenc
           <div className="flex items-center justify-center h-32">
             <Loader2 className={tokens.loading.spinner} />
           </div>
-        ) : disputes.length === 0 ? (
+        ) : filteredDisputes.length === 0 ? (
           <div className={tokens.empty.container}>
             <Scale className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No disputes</h3>
@@ -722,7 +751,7 @@ function DisputesCard({ orgId, formatCurrency }: { orgId?: string; formatCurrenc
               </TableRow>
             </TableHeader>
             <TableBody>
-              {disputes.map((dispute) => (
+              {filteredDisputes.map((dispute) => (
                 <TableRow key={dispute.id}>
                   <TableCell className="font-medium">
                     {dispute.client_name || 'Unknown'}
@@ -766,9 +795,25 @@ export default function PaymentOps() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: connectStatus } = useOrgConnectStatus(orgId);
   const isZuraPayActive = connectStatus?.stripe_connect_status === 'active';
+  const { data: locations = [] } = useLocations(orgId);
 
   const initialDate = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState(initialDate);
+
+  // ─── Shared filter state ───────────────────────────────
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [clientSearch, setClientSearch] = useState('');
+  const debouncedClientSearch = useDebounce(clientSearch, 300);
+
+  // Per-tab status filters
+  const [holdStatus, setHoldStatus] = useState<'held' | 'captured' | 'released' | 'all'>('held');
+  const [refundStatus, setRefundStatus] = useState<'pending' | 'processed' | 'all'>('pending');
+  const [disputeStatus, setDisputeStatus] = useState<'active' | 'resolved' | 'all'>('active');
+
+  const activeTab = searchParams.get('section') || 'payouts';
+  const showFilters = !['payouts', 'reconciliation'].includes(activeTab);
 
   // Confirmation dialog state
   const [confirmAction, setConfirmAction] = useState<{
@@ -782,17 +827,30 @@ export default function PaymentOps() {
   const { reconcile, result: reconciliation, isLoading: isReconciling } = useTillReconciliation(orgId);
   const { captureDeposit, cancelDeposit } = useTerminalDeposit();
 
+  // Location IDs for query filtering
+  const allLocs = selectedLocationIds.length === 0 || selectedLocationIds.length === locations.length;
+
   // Active deposit holds
   const { data: depositHolds = [], isLoading: holdsLoading } = useQuery({
-    queryKey: ['active-deposit-holds', orgId],
+    queryKey: ['active-deposit-holds', orgId, holdStatus, selectedLocationIds, dateFrom, dateTo],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('appointments')
-        .select('id, client_name, appointment_date, deposit_amount, deposit_status, deposit_stripe_payment_id, staff_name')
+        .select('id, client_name, appointment_date, deposit_amount, deposit_status, deposit_stripe_payment_id, staff_name, location_id')
         .eq('organization_id', orgId!)
-        .eq('deposit_status', 'held')
         .not('deposit_stripe_payment_id', 'is', null)
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo)
         .order('appointment_date', { ascending: true });
+      if (holdStatus !== 'all') {
+        q = q.eq('deposit_status', holdStatus);
+      } else {
+        q = q.in('deposit_status', ['held', 'captured', 'released']);
+      }
+      if (!allLocs) {
+        q = q.in('location_id', selectedLocationIds);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -801,14 +859,19 @@ export default function PaymentOps() {
 
   // Pending refunds
   const { data: pendingRefunds = [], isLoading: refundsLoading } = useQuery({
-    queryKey: ['pending-refunds', orgId],
+    queryKey: ['pending-refunds', orgId, refundStatus, dateFrom, dateTo],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('refund_records')
-        .select('id, original_item_name, refund_amount, refund_type, reason, created_at, original_transaction_id')
+        .select('id, original_item_name, refund_amount, refund_type, reason, created_at, original_transaction_id, status')
         .eq('organization_id', orgId!)
-        .eq('status', 'pending')
+        .gte('created_at', `${dateFrom}T00:00:00`)
+        .lte('created_at', `${dateTo}T23:59:59`)
         .order('created_at', { ascending: false });
+      if (refundStatus !== 'all') {
+        q = q.eq('status', refundStatus);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -856,6 +919,19 @@ export default function PaymentOps() {
     ? reconciliation.stripe.net_amount_cents / 100
     : null;
 
+  // Client-side search filtering for holds and refunds
+  const filteredHolds = useMemo(() => {
+    if (!debouncedClientSearch) return depositHolds;
+    const s = debouncedClientSearch.toLowerCase();
+    return depositHolds.filter(h => (h.client_name || '').toLowerCase().includes(s));
+  }, [depositHolds, debouncedClientSearch]);
+
+  const filteredRefunds = useMemo(() => {
+    if (!debouncedClientSearch) return pendingRefunds;
+    const s = debouncedClientSearch.toLowerCase();
+    return pendingRefunds.filter(r => (r.original_item_name || '').toLowerCase().includes(s));
+  }, [pendingRefunds, debouncedClientSearch]);
+
   return (
     <DashboardLayout>
       <div className={cn(tokens.layout.pageContainer, 'max-w-[1600px] mx-auto')}>
@@ -900,6 +976,86 @@ export default function PaymentOps() {
               <DisputesBadge orgId={orgId} />
             </TabsTrigger>
           </ResponsiveTabsList>
+
+          {/* ─── Shared Filter Bar ─────────────────────── */}
+          {showFilters && (
+            <div className="flex flex-wrap items-center gap-3 mt-4 mb-2">
+              {locations.length > 1 && (
+                <LocationGroupSelect
+                  locations={locations}
+                  selectedIds={selectedLocationIds}
+                  onSelectionChange={setSelectedLocationIds}
+                />
+              )}
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="h-9 pl-9 pr-3 rounded-full border border-input bg-background text-sm"
+                  />
+                </div>
+                <span className="text-muted-foreground text-xs">to</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-9 px-3 rounded-full border border-input bg-background text-sm"
+                />
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search client…"
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  className="h-9 pl-9 pr-3 w-[180px] rounded-full border border-input bg-background text-sm placeholder:text-muted-foreground"
+                />
+              </div>
+
+              {/* Per-tab status toggles */}
+              {activeTab === 'holds' && (
+                <TogglePill
+                  size="sm"
+                  options={[
+                    { value: 'held', label: 'Held' },
+                    { value: 'captured', label: 'Captured' },
+                    { value: 'released', label: 'Released' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                  value={holdStatus}
+                  onChange={(v) => setHoldStatus(v as any)}
+                />
+              )}
+              {activeTab === 'refunds' && (
+                <TogglePill
+                  size="sm"
+                  options={[
+                    { value: 'pending', label: 'Pending' },
+                    { value: 'processed', label: 'Processed' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                  value={refundStatus}
+                  onChange={(v) => setRefundStatus(v as any)}
+                />
+              )}
+              {activeTab === 'disputes' && (
+                <TogglePill
+                  size="sm"
+                  options={[
+                    { value: 'active', label: 'Active' },
+                    { value: 'resolved', label: 'Resolved' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                  value={disputeStatus}
+                  onChange={(v) => setDisputeStatus(v as any)}
+                />
+              )}
+            </div>
+          )}
 
           {/* Payouts */}
           <TabsContent value="payouts">
@@ -1118,12 +1274,12 @@ export default function PaymentOps() {
                   <div className="flex items-center justify-center h-32">
                     <Loader2 className={tokens.loading.spinner} />
                   </div>
-                ) : depositHolds.length === 0 ? (
+                ) : filteredHolds.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <HandCoins className={tokens.empty.icon} />
-                    <h3 className={tokens.empty.heading}>No active deposit holds</h3>
+                    <h3 className={tokens.empty.heading}>No {holdStatus === 'all' ? '' : holdStatus} deposit holds</h3>
                     <p className={tokens.empty.description}>
-                      Deposit holds will appear here when clients pre-authorize payments for appointments.
+                      {debouncedClientSearch ? 'No matching results for your search.' : 'No deposit holds found for this date range.'}
                     </p>
                   </div>
                 ) : (
@@ -1134,11 +1290,12 @@ export default function PaymentOps() {
                         <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Date</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                        <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
+                        {holdStatus !== 'held' && <TableHead className={tokens.table.columnHeader}>Status</TableHead>}
+                        {(holdStatus === 'held' || holdStatus === 'all') && <TableHead className={tokens.table.columnHeader}>Actions</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {depositHolds.map((hold) => (
+                      {filteredHolds.map((hold) => (
                         <TableRow key={hold.id}>
                           <TableCell className="font-medium">{hold.client_name || 'Walk-in'}</TableCell>
                           <TableCell className="text-muted-foreground">{hold.staff_name || '—'}</TableCell>
@@ -1148,36 +1305,49 @@ export default function PaymentOps() {
                           <TableCell>
                             <BlurredAmount>{formatCurrency(hold.deposit_amount ?? 0)}</BlurredAmount>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className={tokens.button.inline}
-                                onClick={() => setConfirmAction({
-                                  type: 'capture',
-                                  id: hold.deposit_stripe_payment_id!,
-                                  label: `Capture ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
-                                  amount: hold.deposit_amount ?? 0,
-                                })}
-                              >
-                                Capture
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className={tokens.button.inline}
-                                onClick={() => setConfirmAction({
-                                  type: 'release',
-                                  id: hold.deposit_stripe_payment_id!,
-                                  label: `Release ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
-                                  amount: hold.deposit_amount ?? 0,
-                                })}
-                              >
-                                Release
-                              </Button>
-                            </div>
-                          </TableCell>
+                          {holdStatus !== 'held' && (
+                            <TableCell>
+                              <Badge variant={hold.deposit_status === 'held' ? 'secondary' : 'outline'} className="capitalize">
+                                {hold.deposit_status}
+                              </Badge>
+                            </TableCell>
+                          )}
+                          {(holdStatus === 'held' || holdStatus === 'all') && (
+                            <TableCell>
+                              {hold.deposit_status === 'held' ? (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    className={tokens.button.inline}
+                                    onClick={() => setConfirmAction({
+                                      type: 'capture',
+                                      id: hold.deposit_stripe_payment_id!,
+                                      label: `Capture ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                      amount: hold.deposit_amount ?? 0,
+                                    })}
+                                  >
+                                    Capture
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className={tokens.button.inline}
+                                    onClick={() => setConfirmAction({
+                                      type: 'release',
+                                      id: hold.deposit_stripe_payment_id!,
+                                      label: `Release ${formatCurrency(hold.deposit_amount ?? 0)} deposit for ${hold.client_name || 'Walk-in'}`,
+                                      amount: hold.deposit_amount ?? 0,
+                                    })}
+                                  >
+                                    Release
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -1195,12 +1365,12 @@ export default function PaymentOps() {
                   <div className="flex items-center justify-center h-32">
                     <Loader2 className={tokens.loading.spinner} />
                   </div>
-                ) : pendingRefunds.length === 0 ? (
+                ) : filteredRefunds.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <Banknote className={tokens.empty.icon} />
-                    <h3 className={tokens.empty.heading}>No pending refunds</h3>
+                    <h3 className={tokens.empty.heading}>No {refundStatus === 'all' ? '' : refundStatus} refunds</h3>
                     <p className={tokens.empty.description}>
-                      All refund requests have been processed.
+                      {debouncedClientSearch ? 'No matching results for your search.' : 'No refund records found for this date range.'}
                     </p>
                   </div>
                 ) : (
@@ -1212,11 +1382,12 @@ export default function PaymentOps() {
                         <TableHead className={tokens.table.columnHeader}>Type</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Requested</TableHead>
-                        <TableHead className={tokens.table.columnHeader}>Action</TableHead>
+                        {refundStatus !== 'pending' && <TableHead className={tokens.table.columnHeader}>Status</TableHead>}
+                        {(refundStatus === 'pending' || refundStatus === 'all') && <TableHead className={tokens.table.columnHeader}>Action</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pendingRefunds.map((refund) => (
+                      {filteredRefunds.map((refund) => (
                         <TableRow key={refund.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-1.5">
@@ -1251,20 +1422,33 @@ export default function PaymentOps() {
                           <TableCell className="text-muted-foreground">
                             {refund.created_at ? format(new Date(refund.created_at), 'MMM d') : '—'}
                           </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              className={tokens.button.inline}
-                              onClick={() => setConfirmAction({
-                                type: 'refund',
-                                id: refund.id,
-                                label: `Process ${formatCurrency(refund.refund_amount)} refund for ${refund.original_item_name || 'Unknown item'}`,
-                                amount: refund.refund_amount,
-                              })}
-                            >
-                              Process
-                            </Button>
-                          </TableCell>
+                          {refundStatus !== 'pending' && (
+                            <TableCell>
+                              <Badge variant={refund.status === 'pending' ? 'secondary' : 'outline'} className="capitalize">
+                                {refund.status}
+                              </Badge>
+                            </TableCell>
+                          )}
+                          {(refundStatus === 'pending' || refundStatus === 'all') && (
+                            <TableCell>
+                              {refund.status === 'pending' ? (
+                                <Button
+                                  size="sm"
+                                  className={tokens.button.inline}
+                                  onClick={() => setConfirmAction({
+                                    type: 'refund',
+                                    id: refund.id,
+                                    label: `Process ${formatCurrency(refund.refund_amount)} refund for ${refund.original_item_name || 'Unknown item'}`,
+                                    amount: refund.refund_amount,
+                                  })}
+                                >
+                                  Process
+                                </Button>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -1281,7 +1465,7 @@ export default function PaymentOps() {
 
           {/* Disputes */}
           <TabsContent value="disputes">
-            <DisputesCard orgId={orgId} formatCurrency={formatCurrency} />
+            <DisputesCard orgId={orgId} formatCurrency={formatCurrency} dateFrom={dateFrom} dateTo={dateTo} disputeStatus={disputeStatus} clientSearch={debouncedClientSearch} />
           </TabsContent>
         </Tabs>
 
