@@ -52,7 +52,9 @@ import {
   Search,
   ChevronDown,
   Wallet,
+  ExternalLink,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
 import { ZuraPayPayoutsTab } from '@/components/dashboard/settings/terminal/ZuraPayPayoutsTab';
