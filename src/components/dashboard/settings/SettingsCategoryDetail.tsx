@@ -445,7 +445,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, onBack }
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="mb-6">
-          <DashboardPageHeader title={categoryLabel.toUpperCase()} actions={categoryActions} />
+          <DashboardPageHeader title={categoryLabel.toUpperCase()} actions={categoryActions} backTo={dashPath('/admin/settings')} backLabel="Back to Settings" />
           <div className="mt-4"><PageExplainer pageId="settings" /></div>
         </div>
 
