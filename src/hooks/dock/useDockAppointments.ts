@@ -325,11 +325,33 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             const apptId = sessionToAppt[b.mix_session_id];
             if (apptId) bowlCounts[apptId] = (bowlCounts[apptId] || 0) + 1;
           }
-          return all.map((a) => ({ ...a, mix_bowl_count: bowlCounts[a.id] || 0 }));
+          for (const a of all) {
+            (a as any).mix_bowl_count = bowlCounts[a.id] || 0;
+          }
         }
       }
 
-      return all.map((a) => ({ ...a, mix_bowl_count: 0 }));
+      // Batch-check card on file for failed payment appointments
+      const failedNormal = all.filter(a => a.payment_status === 'failed');
+      if (failedNormal.length > 0) {
+        const clientIds = [...new Set(failedNormal.map(a => a.phorest_client_id || a.client_id).filter(Boolean))] as string[];
+        if (clientIds.length > 0) {
+          const { data: cards } = await supabase
+            .from('client_cards_on_file')
+            .select('client_id')
+            .in('client_id', clientIds)
+            .eq('is_default', true);
+          const clientsWithCards = new Set((cards || []).map(c => c.client_id));
+          for (const a of all) {
+            if (a.payment_status === 'failed') {
+              const cid = a.phorest_client_id || a.client_id;
+              a.has_card_on_file = cid ? clientsWithCards.has(cid) : false;
+            }
+          }
+        }
+      }
+
+      return all.map((a) => ({ ...a, mix_bowl_count: (a as any).mix_bowl_count ?? 0 }));
     },
     enabled: !!staffUserId || (isDemoMode && usesRealData),
     staleTime: 30_000,
