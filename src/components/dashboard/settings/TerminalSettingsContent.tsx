@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, CreditCard, Smartphone, Wifi } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   useTerminalLocations, useTerminalReaders,
