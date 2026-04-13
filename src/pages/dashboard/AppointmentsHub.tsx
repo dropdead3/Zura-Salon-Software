@@ -51,7 +51,8 @@ export default function AppointmentsHub() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
 
   // ── Transactions state ──
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const inboundDate = searchParams.get('date');
+  const [selectedDate, setSelectedDate] = useState(inboundDate || format(new Date(), 'yyyy-MM-dd'));
   const [locationId, setLocationId] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
