@@ -32,6 +32,7 @@ export interface DockAppointment {
   total_price?: number | null;
   has_card_on_file?: boolean;
   card_last4?: string | null;
+  card_brand?: string | null;
 }
 
 export function useDockAppointments(staffUserId: string | null, locationId?: string, staffFilter?: string) {
@@ -231,14 +232,16 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           const clientIds = [...new Set(failedAppts.map(a => a.phorest_client_id!))];
           const { data: cards } = await supabase
             .from('client_cards_on_file')
-            .select('client_id, card_last4')
+            .select('client_id, card_last4, card_brand')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const cardMap = new Map((cards || []).map(c => [c.client_id, c.card_last4]));
+          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand }]));
           for (const a of appointments) {
             if (a.payment_status === 'failed' && a.phorest_client_id) {
-              a.has_card_on_file = cardMap.has(a.phorest_client_id);
-              a.card_last4 = cardMap.get(a.phorest_client_id) || null;
+              const card = cardMap.get(a.phorest_client_id);
+              a.has_card_on_file = !!card;
+              a.card_last4 = card?.last4 || null;
+              a.card_brand = card?.brand || null;
             }
           }
         }
@@ -340,15 +343,17 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         if (clientIds.length > 0) {
           const { data: cards } = await supabase
             .from('client_cards_on_file')
-            .select('client_id, card_last4')
+            .select('client_id, card_last4, card_brand')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const cardMap = new Map((cards || []).map(c => [c.client_id, c.card_last4]));
+          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand }]));
           for (const a of all) {
             if (a.payment_status === 'failed') {
               const cid = a.phorest_client_id || a.client_id;
-              a.has_card_on_file = cid ? cardMap.has(cid) : false;
-              a.card_last4 = cid ? (cardMap.get(cid) || null) : null;
+              const card = cid ? cardMap.get(cid) : undefined;
+              a.has_card_on_file = !!card;
+              a.card_last4 = card?.last4 || null;
+              a.card_brand = card?.brand || null;
             }
           }
         }

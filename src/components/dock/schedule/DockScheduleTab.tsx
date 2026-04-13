@@ -156,6 +156,11 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
     const { appointment, action } = confirmAction;
 
     if (appointment.id.startsWith('demo-')) {
+      if (action === 'retry_charge' && !appointment.total_price) {
+        toast.warning('Demo: Cannot retry — no price set on this appointment');
+        setConfirmAction(null);
+        return;
+      }
       toast.success(`Demo: ${action === 'retry_charge' ? 'Charge retried' : action === 'cancel' ? 'Appointment cancelled' : 'Marked as no-show'}`);
       setConfirmAction(null);
       return;
@@ -265,19 +270,19 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
           ) : (
             <>
               {active.length > 0 && (
-                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
+                <AppointmentGroup label="Active" count={active.length} appointments={active} accentColor="violet" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} retryDisabled={!!confirmAction} />
               )}
               {scheduled.length > 0 && (
-                <AppointmentGroup label="Upcoming" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
+                <AppointmentGroup label="Upcoming" count={scheduled.length} appointments={scheduled} accentColor="blue" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} retryDisabled={!!confirmAction} />
               )}
               {completed.length > 0 && (
-                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
+                <AppointmentGroup label="Completed" count={completed.length} appointments={completed} accentColor="slate" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} retryDisabled={!!confirmAction} />
               )}
               {noShow.length > 0 && (
-                <AppointmentGroup label="No Show" count={noShow.length} appointments={noShow} accentColor="amber" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
+                <AppointmentGroup label="No Show" count={noShow.length} appointments={noShow} accentColor="amber" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} retryDisabled={!!confirmAction} />
               )}
               {cancelled.length > 0 && (
-                <AppointmentGroup label="Cancelled" count={cancelled.length} appointments={cancelled} accentColor="red" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} />
+                <AppointmentGroup label="Cancelled" count={cancelled.length} appointments={cancelled} accentColor="red" onTap={onOpenAppointment} onComplete={onCompleteAppointment} onStart={handleStartAppointment} onCancel={handleCancelAppointment} onNoShow={handleNoShowAppointment} onViewClient={onViewClient} onRetryCharge={handleRetryCharge} retryingId={confirmAction?.action === 'retry_charge' && isSubmitting ? confirmAction.appointment.id : null} retryDisabled={!!confirmAction} />
               )}
             </>
           )}
@@ -319,7 +324,7 @@ export function DockScheduleTab({ staff, onOpenAppointment, onCompleteAppointmen
               </h2>
               <p className={DOCK_DIALOG.description}>
                 {confirmAction.action === 'retry_charge'
-                  ? `Retry charge of $${((confirmAction.appointment.total_price || 0)).toFixed(2)}${confirmAction.appointment.card_last4 ? ` to card ending in ${confirmAction.appointment.card_last4}` : ''} for ${confirmAction.appointment.client_name || 'this client'}?`
+                  ? `Retry charge of $${((confirmAction.appointment.total_price || 0)).toFixed(2)}${confirmAction.appointment.card_last4 ? ` to ${confirmAction.appointment.card_brand || 'card'} ending in ${confirmAction.appointment.card_last4}` : ''} for ${confirmAction.appointment.client_name || 'this client'}?`
                   : confirmAction.action === 'cancel'
                     ? `Are you sure you want to cancel ${confirmAction.appointment.client_name || 'this client'}'s appointment? This action will update the schedule and POS.`
                     : `Mark ${confirmAction.appointment.client_name || 'this client'} as a no-show? This will be reflected in the schedule and client history.`
@@ -364,6 +369,7 @@ function AppointmentGroup({
   onViewClient,
   onRetryCharge,
   retryingId,
+  retryDisabled,
 }: {
   label: string;
   count: number;
@@ -377,6 +383,7 @@ function AppointmentGroup({
   onViewClient?: (appointment: DockAppointment) => void;
   onRetryCharge?: (appointment: DockAppointment) => void;
   retryingId?: string | null;
+  retryDisabled?: boolean;
 }) {
   const dotColor = {
     violet: 'bg-violet-500',
@@ -399,7 +406,7 @@ function AppointmentGroup({
       </div>
       <div className="space-y-4">
         {appointments.map((a) => (
-          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} isRetrying={retryingId === a.id} onTap={onTap} onComplete={onComplete} onStart={onStart} onCancel={onCancel} onNoShow={onNoShow} onViewClient={onViewClient} onRetryCharge={onRetryCharge} />
+          <DockAppointmentCard key={a.id} appointment={a} accentColor={accentColor} isChemical={isColorOrChemicalService(a.service_name)} isRetrying={retryingId === a.id} retryDisabled={retryDisabled} onTap={onTap} onComplete={onComplete} onStart={onStart} onCancel={onCancel} onNoShow={onNoShow} onViewClient={onViewClient} onRetryCharge={onRetryCharge} />
         ))}
       </div>
     </div>
