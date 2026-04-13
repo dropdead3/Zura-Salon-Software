@@ -593,6 +593,7 @@ async function handlePaymentIntentSucceeded(
   if (metadata?.source === 'online_booking' && metadata?.fee_type === 'deposit') {
     updatePayload.deposit_status = 'collected';
     updatePayload.deposit_collected_at = new Date().toISOString();
+    updatePayload.deposit_stripe_payment_id = piId;
     console.log(`Deposit reconciliation: marking deposit collected for appointment ${appointmentId}`);
   }
 
