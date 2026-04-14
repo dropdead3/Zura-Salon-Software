@@ -8,10 +8,19 @@ import { Wifi, WifiOff, Signal, ShieldCheck, Clock, CheckCircle2 } from 'lucide-
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 
-export function OfflinePaymentStatus() {
+interface OfflinePaymentStatusProps {
+  readers?: { device_type: string }[];
+}
+
+export function OfflinePaymentStatus({ readers }: OfflinePaymentStatusProps) {
   const { isOnline, isOffline, offlineEvents, currentOfflineDuration } = useOfflineStatus();
   const { pendingCount, pendingTotalFormatted, forwardedCount, lastForwardedAt, isForwarding } = useOfflinePaymentQueue();
   const { clearOfflineEvents } = useOfflineStatus();
+
+  const hasS710 = readers?.some((r) => r.device_type === 'stripe_s710') ?? false;
+  const hasS700 = readers?.some((r) => r.device_type === 'stripe_s700') ?? false;
+  const readerCount = readers?.length ?? 0;
+  const modelLabel = hasS710 && hasS700 ? 'S700/S710' : hasS710 ? 'S710' : hasS700 ? 'S700' : 'S700/S710';
 
   const recentEvents = offlineEvents.slice(-5).reverse();
 
@@ -26,9 +35,9 @@ export function OfflinePaymentStatus() {
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>CONNECTIVITY & OFFLINE PAYMENTS</CardTitle>
-                <MetricInfoTooltip description="Real-time connectivity status and offline payment queue visibility. The S700/S710 reader stores payments securely when offline and forwards them automatically when connection returns." />
+                <MetricInfoTooltip description={`Real-time connectivity status and offline payment queue visibility. The ${modelLabel} reader stores payments securely when offline and forwards them automatically when connection returns.`} />
               </div>
-              <CardDescription>S700/S710 store-and-forward payment protection status.</CardDescription>
+              <CardDescription>{modelLabel} store-and-forward payment protection status.</CardDescription>
             </div>
           </div>
           <Badge
@@ -41,7 +50,7 @@ export function OfflinePaymentStatus() {
             )}
           >
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-            {isOnline ? 'Connected' : 'Offline — S700/S710 Active'}
+            {isOnline ? 'Connected' : `Offline — ${modelLabel} Active`}
           </Badge>
         </div>
       </CardHeader>
@@ -49,7 +58,7 @@ export function OfflinePaymentStatus() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {/* Connection Status */}
           <div className="p-4 rounded-xl bg-muted/30 border relative">
-            <MetricInfoTooltip description="Shows your current network status. When WiFi drops, S710 readers automatically switch to cellular. S700 readers rely on store-and-forward." className="absolute top-3 right-3" />
+            <MetricInfoTooltip description={hasS710 ? "Shows your current network status. When WiFi drops, your S710 automatically switches to cellular for real-time authorization." : "Shows your current network status. Your S700 uses store-and-forward to accept payments during outages."} className="absolute top-3 right-3" />
             <div className="flex items-center gap-2 mb-2">
               {isOnline ? (
                 <Wifi className="w-4 h-4 text-emerald-500" />
@@ -59,7 +68,7 @@ export function OfflinePaymentStatus() {
               <span className="font-sans text-xs text-muted-foreground">Connection</span>
             </div>
             <p className="font-display text-lg tracking-wide">
-              {isOnline ? 'ONLINE' : 'CELLULAR FALLBACK'}
+              {isOnline ? 'ONLINE' : hasS710 ? 'CELLULAR FAILOVER' : 'STORE & FORWARD'}
             </p>
             {isOffline && currentOfflineDuration && (
               <p className="font-sans text-xs text-amber-500 mt-1">
@@ -110,9 +119,11 @@ export function OfflinePaymentStatus() {
         <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20 mb-4">
           <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
           <div>
-            <p className="font-sans text-sm text-foreground">S700/S710 Store & Forward Active</p>
+            <p className="font-sans text-sm text-foreground">{modelLabel} Store & Forward Active</p>
             <p className="font-sans text-xs text-muted-foreground">
-              If connectivity is lost, payments are stored securely on the device and forwarded automatically when connection returns. Cellular failover engages automatically.
+              {hasS710
+                ? 'If connectivity is lost, your S710 continues authorizing payments over cellular. Store-and-forward activates as a last resort during total outages.'
+                : 'If connectivity is lost, payments are stored securely on the device and forwarded automatically when connection returns.'}
             </p>
           </div>
         </div>
