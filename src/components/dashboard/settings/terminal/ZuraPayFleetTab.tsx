@@ -43,6 +43,7 @@ type LocationWithPayment = {
   stripe_status: string | null;
   stripe_payments_enabled: boolean | null;
   stripe_connect_status?: string | null;
+  legal_name?: string | null;
 };
 
 function getConnectionStatus(loc: LocationWithPayment) {
@@ -98,7 +99,12 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders, onS
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(loc.id); }}
     >
-      <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
+      <div className="flex flex-col">
+        <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
+        {hasOwnAccount(loc, null) && loc.legal_name && (
+          <span className="text-[10px] text-muted-foreground truncate">{loc.legal_name}</span>
+        )}
+      </div>
       <div className="flex justify-center">
         <Badge variant={status.variant} className={cn(
           'text-[10px]',
