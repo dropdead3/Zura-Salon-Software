@@ -2,17 +2,17 @@
 
 ## Problem
 
-The tip percentage buttons (15%, 20%, 30%) in the S710 simulator are laid out in a horizontal row (`grid-cols-3`). The user wants them stacked vertically, spanning the full width of the screen with appropriate padding.
+The auto-play progress bar sits inside the phone screen (`absolute bottom-4 inset-x-4`), overlapping content like the "THANK YOU FOR YOUR VISIT!" text and the "NOT BRANDABLE" badge on the success screen.
 
 ## Solution
 
-Update the `TipScreen` component in `S710CheckoutSimulator.tsx`:
+Move the progress bar outside the phone bezel, positioning it between the phone frame and the stage dots.
 
-**File:** `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx` (lines 197–229)
+### Changes
 
-1. **Change grid layout** — Replace `grid grid-cols-3 gap-2 mb-3` with `flex flex-col gap-2 mb-3` so buttons stack vertically and span full width.
-2. **Adjust button styling** — Change from `py-3 flex flex-col items-center` to a horizontal layout: `py-3 px-4 flex flex-row items-center justify-between` so the percentage label is on the left and the calculated amount is on the right.
-3. **Keep all existing selection logic, colors, and animations unchanged.**
+**File:** `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx`
 
-The result will be three full-width rounded buttons stacked vertically, each showing the percentage on the left and the dollar amount on the right, matching the reference screenshot's vertical layout.
+1. **Move the progress bar block** (lines 451–459) from inside the phone container (`absolute bottom-4`) to after the phone container closes (after line 468), placing it between the phone frame and the stage dots.
+2. **Change styling** from `absolute bottom-4 inset-x-4` to a normal-flow element: `w-full mt-3 h-[2px] rounded-full bg-muted/40 overflow-hidden` — matching the muted aesthetic outside the dark phone screen.
+3. **Update the fill color** from `p.accentRgba(0.5)` to `p.accentColor` at reduced opacity for better visibility against the card background.
 
