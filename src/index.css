@@ -721,6 +721,252 @@ html, body, #root {
     --card-inner: 230 15% 7%;
     --card-inner-deep: 230 20% 4%;
   }
+
+  /* ===== THEME: EMBER (Warm Amber / Burnt Orange) ===== */
+  .theme-ember {
+    --background: 25 30% 94%;
+    --foreground: 20 25% 8%;
+
+    --card: 25 25% 96%;
+    --card-foreground: 20 25% 8%;
+
+    --popover: 25 25% 96%;
+    --popover-foreground: 20 25% 8%;
+
+    --primary: 25 80% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 25 18% 88%;
+    --secondary-foreground: 20 25% 8%;
+
+    --muted: 25 14% 88%;
+    --muted-strong: 25 14% 82%;
+    --muted-foreground: 20 12% 45%;
+
+    --accent: 25 22% 85%;
+    --accent-foreground: 20 25% 8%;
+
+    --oat: 25 20% 82%;
+    --oat-foreground: 20 28% 25%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 90% 15%;
+
+    --chart-1: 25 70% 50%;
+    --chart-2: 145 55% 45%;
+    --chart-3: 217 85% 55%;
+    --chart-4: 43 95% 50%;
+    --chart-5: 0 65% 55%;
+
+    --success: 145 55% 92%;
+    --success-foreground: 145 55% 30%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 90% 20%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 25 14% 83%;
+    --input: 25 18% 90%;
+    --ring: 25 80% 50%;
+
+    --sidebar-background: 25 20% 91%;
+    --sidebar-foreground: 20 25% 8%;
+    --sidebar-primary: 25 80% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 18% 86%;
+    --sidebar-accent-foreground: 20 25% 8%;
+    --sidebar-border: 25 14% 83%;
+    --sidebar-ring: 25 80% 50%;
+
+    --card-inner: 25 18% 90%;
+    --card-inner-deep: 25 20% 86%;
+  }
+
+  .dark.theme-ember {
+    --background: 20 20% 5%;
+    --foreground: 25 18% 92%;
+
+    --card: 20 18% 10%;
+    --card-foreground: 25 18% 92%;
+
+    --popover: 20 18% 10%;
+    --popover-foreground: 25 18% 92%;
+
+    --primary: 25 75% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 20 14% 15%;
+    --secondary-foreground: 25 18% 92%;
+
+    --muted: 20 14% 18%;
+    --muted-strong: 20 14% 12%;
+    --muted-foreground: 20 10% 55%;
+
+    --accent: 25 25% 20%;
+    --accent-foreground: 25 18% 92%;
+
+    --oat: 25 20% 22%;
+    --oat-foreground: 25 16% 78%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 25 65% 60%;
+    --chart-2: 145 55% 55%;
+    --chart-3: 217 85% 65%;
+    --chart-4: 43 95% 60%;
+    --chart-5: 0 65% 60%;
+
+    --success: 145 35% 25%;
+    --success-foreground: 145 45% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 20 14% 20%;
+    --input: 20 14% 13%;
+    --ring: 25 75% 55%;
+
+    --sidebar-background: 20 18% 8%;
+    --sidebar-foreground: 25 18% 92%;
+    --sidebar-primary: 25 75% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 18% 18%;
+    --sidebar-accent-foreground: 25 18% 92%;
+    --sidebar-border: 20 14% 20%;
+    --sidebar-ring: 25 75% 55%;
+
+    --card-inner: 20 14% 7%;
+    --card-inner-deep: 20 18% 4%;
+  }
+
+  /* ===== THEME: NOIR (Pure Monochrome) ===== */
+  .theme-noir {
+    --background: 0 0% 96%;
+    --foreground: 0 0% 8%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 98%;
+    --popover-foreground: 0 0% 8%;
+
+    --primary: 0 0% 8%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 90%;
+    --secondary-foreground: 0 0% 8%;
+
+    --muted: 0 0% 90%;
+    --muted-strong: 0 0% 84%;
+    --muted-foreground: 0 0% 42%;
+
+    --accent: 0 0% 88%;
+    --accent-foreground: 0 0% 8%;
+
+    --oat: 0 0% 84%;
+    --oat-foreground: 0 0% 25%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 90% 15%;
+
+    --chart-1: 0 0% 20%;
+    --chart-2: 0 0% 40%;
+    --chart-3: 0 0% 55%;
+    --chart-4: 0 0% 70%;
+    --chart-5: 0 0% 85%;
+
+    --success: 145 55% 92%;
+    --success-foreground: 145 55% 30%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 90% 20%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 92%;
+    --ring: 0 0% 8%;
+
+    --sidebar-background: 0 0% 94%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 0 0% 8%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 88%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 0 0% 8%;
+
+    --card-inner: 0 0% 92%;
+    --card-inner-deep: 0 0% 88%;
+  }
+
+  .dark.theme-noir {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 15%;
+    --muted-strong: 0 0% 10%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 95%;
+
+    --oat: 0 0% 20%;
+    --oat-foreground: 0 0% 78%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 0 0% 90%;
+    --chart-2: 0 0% 70%;
+    --chart-3: 0 0% 55%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 25%;
+
+    --success: 145 35% 25%;
+    --success-foreground: 145 45% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 10%;
+    --ring: 0 0% 95%;
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 0% 95%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 95%;
+
+    --card-inner: 0 0% 6%;
+    --card-inner-deep: 0 0% 3%;
+  }
 }
 
 @layer utilities {
