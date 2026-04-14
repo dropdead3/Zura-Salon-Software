@@ -20,7 +20,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
+import { colorThemes, COLOR_THEME_TO_CATEGORY_MAP, type ColorTheme } from '@/hooks/useColorTheme';
+import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import {
   useWebsiteBookingSettings,
   useUpdateWebsiteBookingSettings,

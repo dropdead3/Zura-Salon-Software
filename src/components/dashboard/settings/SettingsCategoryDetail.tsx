@@ -24,7 +24,8 @@ import {
 import { MessageSquareHeart } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
+import { useColorTheme, colorThemes, COLOR_THEME_TO_CATEGORY_MAP } from '@/hooks/useColorTheme';
+import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
