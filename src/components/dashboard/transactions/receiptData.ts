@@ -34,7 +34,7 @@ export interface ReceiptData {
 /**
  * Map a GroupedTransaction (Transactions page) → ReceiptData
  */
-export function groupedTransactionToReceiptData(txn: GroupedTransaction): ReceiptData {
+export function groupedTransactionToReceiptData(txn: GroupedTransaction, afterpaySurchargeAmount?: number | null): ReceiptData {
   const usageCharges = (txn.usageCharges || []).map((c) => ({
     name: c.serviceName || (c.chargeType === 'product_cost' ? 'Product Cost' : 'Overage'),
     quantity: c.overageQty,
@@ -43,17 +43,29 @@ export function groupedTransactionToReceiptData(txn: GroupedTransaction): Receip
   }));
   const usageChargeTotal = usageCharges.reduce((s, c) => s + c.amount, 0);
 
+  const items: ReceiptLineItem[] = txn.items.map((item) => ({
+    name: item.itemName,
+    amount: item.totalAmount,
+    quantity: item.quantity,
+    category: 'service' as const,
+  }));
+
+  // Add surcharge line item if present
+  if (afterpaySurchargeAmount && afterpaySurchargeAmount > 0) {
+    items.push({
+      name: 'Afterpay Processing Fee',
+      amount: afterpaySurchargeAmount / 100,
+      quantity: 1,
+      category: 'surcharge',
+    });
+  }
+
   return {
     clientName: txn.clientName || 'Walk-in',
     stylistName: txn.stylistName,
     date: txn.transactionDate,
     receiptNumber: txn.transactionId,
-    items: txn.items.map((item) => ({
-      name: item.itemName,
-      amount: item.totalAmount,
-      quantity: item.quantity,
-      category: 'service' as const,
-    })),
+    items,
     usageCharges,
     subtotal: txn.subtotal,
     discount: txn.discountAmount,

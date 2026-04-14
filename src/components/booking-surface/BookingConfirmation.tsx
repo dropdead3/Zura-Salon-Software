@@ -178,9 +178,9 @@ export function BookingConfirmation({
       )}
 
       {/* Afterpay Promo Badge */}
-      {afterpayEnabled && depositAmount != null && depositAmount > 0 && depositAmount <= 4000 && (
+      {afterpayEnabled && !(afterpaySurchargeRate != null && afterpaySurchargeRate > 0) && depositAmount != null && depositAmount > 0 && depositAmount <= 4000 && (
         <div className="mb-4">
-          <AfterpayPromoBadge theme={theme} amount={depositAmount} surchargeRate={afterpaySurchargeRate} />
+          <AfterpayPromoBadge theme={theme} amount={depositAmount} />
         </div>
       )}
 

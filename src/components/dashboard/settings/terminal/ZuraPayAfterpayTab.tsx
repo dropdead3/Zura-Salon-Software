@@ -66,6 +66,8 @@ export function ZuraPayAfterpayTab() {
   const handleRateChange = (value: string) => {
     const num = parseFloat(value);
     if (isNaN(num) || num < 1 || num > 10) return;
+    // Skip mutation if value hasn't changed
+    if (num === ratePercent) return;
     const rate = num / 100;
     updateMutation.mutate({ afterpay_surcharge_rate: rate });
     toast.success(`Surcharge rate updated to ${num}%`);
