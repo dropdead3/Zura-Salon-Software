@@ -1,66 +1,77 @@
 
 
-# Fleet Tab Audit: Bugs, Gaps, and Enhancements
+# Fleet Tab Audit — Pass 2
+
+After reviewing the current state of all files post-fix, here are the remaining findings.
+
+---
 
 ## Bugs
 
-### B1: `hasOwnAccount` always receives `null` for `orgAccountId`
-**Location:** Line 104 — `hasOwnAccount(loc, null)` is hardcoded to `null` instead of passing the actual `orgConnectAccountId`. This means the "own account" indicator (legal name display) never works correctly in the Fleet Overview grid, because every location with *any* Stripe account will be treated as having its own account.
+### B1: Activation checklist doesn't receive `locationHasOwnAccount`
+**Location:** `TerminalSettingsContent.tsx` line 405 — `ZuraPayActivationChecklist` accepts a `locationHasOwnAccount` prop but it's never passed. The checklist always evaluates as if no location has its own account, so steps 1–2 ("Create Account" / "Complete Verification") won't auto-complete for locations with separate accounts.
 
-**Fix:** `LocationSummaryRow` needs `orgConnectAccountId` passed as a prop so `hasOwnAccount` can correctly compare.
+**Fix:** Pass `locationHasOwnAccount={hasOwnAccount(activeLocation, connectStatus?.stripe_connect_account_id)}` from `TerminalSettingsContent`. Import the `hasOwnAccount` helper or inline the check.
 
-### B2: `useOrgBankLast4` query not invalidated after verify mutation
-When the user clicks "Check Status" and the verify mutation succeeds, the `org-bank-last4` query cache isn't invalidated. If the bank account changed, the stale query value persists until the 5-minute stale time expires.
+### B2: `hasFirstTransaction` query scoped to org, not location
+**Location:** `TerminalSettingsContent.tsx` line 328 — The query checks if the org has *any* terminal payment, but the checklist renders per-location. When viewing the "All Locations" overview, the checklist shows against a null location, which is misleading. Also, a single-location org that processed a payment at location A would incorrectly show step 6 complete when viewing location B.
 
-**Fix:** Add `queryClient.invalidateQueries({ queryKey: ['org-bank-last4'] })` inside `useVerifyZuraPayConnection`'s `onSuccess`.
+**Severity:** Low — minor UX inaccuracy. Could scope the query by `activeLocationId` when not in "all" mode, or accept the org-level scope as intentional.
 
-### B3: No loading state for bank last4 on the "Use Account" button
-When `useOrgBankLast4` is still fetching, the button shows "Use Organization Account" (the fallback), which flickers to the last4 text once loaded. This creates a jarring flash.
+### B3: `orgBankLast4Error` prop accepted but never surfaced
+**Location:** `ZuraPayFleetTab.tsx` — The component accepts `orgBankLast4Error` (line 165) but never renders an error state. If the bank last4 fetch fails, the button silently falls back to "Use Organization Account" with no indication of a problem.
 
-**Fix:** Disable the button or show a skeleton while `bankLast4Query.isLoading` is true.
+**Fix:** When `orgBankLast4Error` is true, show a small inline warning beneath the button (e.g., "Unable to load account details") using `text-destructive` styling.
+
+---
 
 ## Gaps
 
-### G1: No error handling for `useOrgBankLast4` failure
-If the edge function call fails (network error, Stripe outage), the error is silently swallowed. The user sees "Use Organization Account" with no indication anything went wrong.
+### G1: No Payouts tab in terminal tabs
+**Location:** `TerminalSettingsContent.tsx` line 415 — The Tabs list includes Fleet, Hardware, Connectivity, Display, Tipping, Receipts — but Payouts is mentioned in the configurator doctrine as the 6th subtab. The `useZuraPayPayouts` hook exists but has no corresponding tab component.
 
-**Fix:** Surface a subtle inline error or fall back gracefully with a toast on failure.
+**Fix:** This may be intentional for the current phase. Flag for awareness.
 
-### G2: Fleet Overview grid not responsive
-The 5-column grid at line 380 will compress poorly on narrower viewports (tablet). No responsive breakpoint or horizontal scroll is defined.
+### G2: Keyboard accessibility on Fleet Overview rows incomplete
+**Location:** `ZuraPayFleetTab.tsx` line 101 — The `onKeyDown` handler only checks Enter/Space but doesn't call `e.preventDefault()` for Space, which will scroll the page. Also missing `aria-label`.
 
-**Fix:** Add `overflow-x-auto` wrapper or reduce columns on smaller breakpoints.
+**Fix:** Add `e.preventDefault()` in the Space branch; add `aria-label={`Select ${loc.name}`}`.
 
-### G3: Missing `orgConnectAccountId` context in Fleet Overview rows
-Fleet Overview rows can't distinguish "uses org account" vs "has own separate account" because the org account ID isn't passed down (related to B1). The legal name hint and potential "Own Account" badge are broken.
+### G3: Location picker doesn't auto-select after return from onboarding
+**Location:** `TerminalSettingsContent.tsx` line 283 — After returning from Stripe onboarding, `verifyMutation` fires and may auto-connect a location, but `selectedLocationId` stays null. The user sees "All Locations" and must manually select the connected location to see their terminal setup.
+
+**Fix:** In the verify `onSuccess`, if `auto_connected_location_id` is returned, call `setSelectedLocationId(data.auto_connected_location_id)` and `setShowAllLocations(false)`.
+
+---
 
 ## Enhancements
 
-### E1: Show payout destination context on connected locations
-Once a location is connected, there's no visible indicator of *which* bank account its payouts go to (org account vs its own). Adding a subtle "Payouts → ••1234" label on connected location rows would give operators instant clarity.
+### E1: Collapse "Connect Separate Account" behind a disclosure
+The payout destination selection shows both options immediately, which adds visual weight. Collapsing "Connect Separate Account" behind a "Need a different bank account?" link would reduce cognitive load for the common case (org account).
 
-### E2: Preload bank last4 in org connect status query
-Instead of a separate edge function call for bank last4, the org connect status could be extended to include it from the database (cache the last4 when verify runs). This eliminates the extra network round-trip on every page load.
+### E2: Show payout destination indicator on connected location rows
+Fleet Overview rows show connection status but not *which* account they're using. A subtle "••1234" or "Own Account" label on connected rows would give instant clarity without clicking in.
+
+---
 
 ## Summary
 
 | # | Type | Severity | File(s) |
 |---|------|----------|---------|
-| B1 | Bug | Medium | `ZuraPayFleetTab.tsx` |
-| B2 | Bug | Low | `useZuraPayConnect.ts` |
-| B3 | Bug | Low | `TerminalSettingsContent.tsx`, `ZuraPayFleetTab.tsx` |
-| G1 | Gap | Low | `useZuraPayConnect.ts` or `TerminalSettingsContent.tsx` |
+| B1 | Bug | Medium | `TerminalSettingsContent.tsx` |
+| B2 | Bug | Low | `TerminalSettingsContent.tsx` |
+| B3 | Bug | Low | `ZuraPayFleetTab.tsx` |
+| G1 | Gap | Info | `TerminalSettingsContent.tsx` |
 | G2 | Gap | Low | `ZuraPayFleetTab.tsx` |
-| G3 | Gap | Medium | `ZuraPayFleetTab.tsx` (same root cause as B1) |
+| G3 | Gap | Medium | `TerminalSettingsContent.tsx` |
 | E1 | Enhancement | Low | `ZuraPayFleetTab.tsx` |
-| E2 | Enhancement | Low | Edge function + `useZuraPayConnect.ts` |
+| E2 | Enhancement | Low | `ZuraPayFleetTab.tsx` |
 
 ## Recommended Fix Order
 
-1. **B1 + G3** — Pass `orgConnectAccountId` to `LocationSummaryRow` (single prop addition)
-2. **B2** — Add query invalidation in verify mutation `onSuccess`
-3. **B3** — Add loading guard on the "Use Account" button
-4. **G1** — Add error fallback for bank last4 query
-5. **G2** — Responsive wrapper on fleet grid
-6. **E1, E2** — Optional polish passes
+1. **B1** — Pass `locationHasOwnAccount` to checklist (one prop)
+2. **G3** — Auto-select location after onboarding return
+3. **B3** — Surface `orgBankLast4Error` inline
+4. **G2** — Keyboard accessibility fix (prevent default + aria-label)
+5. **B2, G1, E1, E2** — Lower priority polish
 
