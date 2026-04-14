@@ -48,9 +48,13 @@ export function useColorTheme() {
   useEffect(() => {
     if (dbLoaded && dbTheme && ALL_THEMES.includes(dbTheme)) {
       localStorage.setItem(THEME_STORAGE_KEY, dbTheme);
-      applyTheme(dbTheme);
     }
   }, [dbLoaded, dbTheme]);
+
+  // Always apply the resolved theme to DOM
+  useEffect(() => {
+    applyTheme(colorTheme);
+  }, [colorTheme]);
 
   const setColorTheme = useCallback((theme: ColorTheme) => {
     // 1. Instant DOM + localStorage update

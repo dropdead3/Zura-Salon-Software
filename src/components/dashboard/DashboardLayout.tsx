@@ -233,6 +233,9 @@ function NavHistoryArrows() {
 }
 
 function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }: DashboardLayoutProps) {
+  // Global color theme sync — ensures saved theme is applied on every dashboard route
+  useColorTheme();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [headerHovered, setHeaderHovered] = useState(false);
