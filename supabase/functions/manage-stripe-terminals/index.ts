@@ -16,6 +16,9 @@ const ActionSchema = z.enum([
   "register_reader",
   "delete_reader",
   "enable_cellular",
+  "upload_splash_screen",
+  "get_splash_screen",
+  "remove_splash_screen",
 ]);
 
 const StripeTerminalLocationIdSchema = z
@@ -36,8 +39,9 @@ const RequestBodySchema = z
     label: z.string().max(255).optional(),
     display_name: z.string().max(255).optional(),
     metadata_location_id: z.boolean().optional(),
-  })
-  .strict();
+    image_base64: z.string().max(6_000_000).optional(), // ~4MB base64
+    image_mime_type: z.enum(["image/jpeg", "image/png", "image/gif"]).optional(),
+  });
 
 // Actions that require admin/manager role
 const WRITE_ACTIONS = new Set([
@@ -46,6 +50,8 @@ const WRITE_ACTIONS = new Set([
   "register_reader",
   "delete_reader",
   "enable_cellular",
+  "upload_splash_screen",
+  "remove_splash_screen",
 ]);
 
 Deno.serve(async (req) => {
