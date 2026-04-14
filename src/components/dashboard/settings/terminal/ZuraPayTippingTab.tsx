@@ -12,10 +12,14 @@ export function ZuraPayTippingTab() {
   const updateTip = useUpdateTipConfig();
 
   const [localConfig, setLocalConfig] = useState<TipConfig>(DEFAULT_TIP_CONFIG);
+  const [localPercentages, setLocalPercentages] = useState<string[]>(
+    DEFAULT_TIP_CONFIG.percentages.map(String)
+  );
 
   useEffect(() => {
     if (config) {
       setLocalConfig(config);
+      setLocalPercentages(config.percentages.map(String));
     }
   }, [config]);
 
@@ -25,12 +29,21 @@ export function ZuraPayTippingTab() {
     updateTip.mutate({ key: 'tip_config', value: next });
   };
 
-  const updatePercentage = (index: number, value: string) => {
-    const num = parseInt(value, 10);
-    if (isNaN(num) || num < 0 || num > 100) return;
-    const next = [...localConfig.percentages] as [number, number, number];
-    next[index] = num;
-    save({ percentages: next });
+  const handlePercentageChange = (index: number, value: string) => {
+    const next = [...localPercentages];
+    next[index] = value.replace(/[^0-9]/g, '');
+    setLocalPercentages(next);
+  };
+
+  const handlePercentageBlur = (index: number) => {
+    const raw = parseInt(localPercentages[index], 10);
+    const clamped = isNaN(raw) ? 0 : Math.min(100, Math.max(0, raw));
+    const nextLocal = [...localPercentages];
+    nextLocal[index] = String(clamped);
+    setLocalPercentages(nextLocal);
+    const nextPcts = [...localConfig.percentages] as [number, number, number];
+    nextPcts[index] = clamped;
+    save({ percentages: nextPcts });
   };
 
   if (isLoading) {
@@ -84,11 +97,12 @@ export function ZuraPayTippingTab() {
                     </Label>
                     <div className="relative">
                       <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={pct}
-                        onChange={(e) => updatePercentage(i, e.target.value)}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={localPercentages[i]}
+                        onChange={(e) => handlePercentageChange(i, e.target.value)}
+                        onBlur={() => handlePercentageBlur(i)}
                         className="pr-8 text-center font-mono"
                         autoCapitalize="off"
                       />
