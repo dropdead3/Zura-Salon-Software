@@ -183,9 +183,14 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
               <p className={cn(tokens.body.muted, 'text-[10px] leading-relaxed pt-1')}>
                 Payment, processing, and success screens are controlled by the reader's firmware and cannot be customized. Splash, cart, and tip screens reflect your brand settings.
               </p>
-              <p className={cn(tokens.body.muted, 'text-[10px] leading-relaxed')}>
-                <span className="text-foreground/70">Sleep timeout:</span> The screen dim and sleep timer is a device-level setting. On the physical reader, go to <span className="font-mono text-foreground/70">Settings → Display → Sleep</span> to adjust the inactivity timeout.
-              </p>
+              <div className="space-y-1.5 pt-1">
+                <p className={cn(tokens.body.muted, 'text-[10px] leading-relaxed')}>
+                  <span className="text-foreground/70">Sleep timeout:</span> The screen dim and sleep timer is a device-level setting. On the physical reader, go to <span className="font-mono text-foreground/70">Settings → Display → Sleep</span> to adjust the inactivity timeout.
+                </p>
+                <p className={cn(tokens.body.muted, 'text-[10px] leading-relaxed')}>
+                  <span className="text-foreground/70">Admin passcode:</span> The default reader admin PIN is <span className="font-mono text-foreground/70">07139</span>. This reader is registered under your organization's payment account — device settings and reader details are managed through that account, not the Zura platform.
+                </p>
+              </div>
             </div>
           </div>
         </div>
