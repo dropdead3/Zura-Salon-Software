@@ -1578,6 +1578,7 @@ export default function PaymentOps() {
                     showingTo={refundsShowingTo}
                     onPageChange={setRefundsPage}
                   />
+                  </>
                 )}
               </CardContent>
             </Card>
