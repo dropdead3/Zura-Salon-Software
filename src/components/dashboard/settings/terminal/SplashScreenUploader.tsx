@@ -17,6 +17,8 @@ import {
   Layers,
   Clock,
   Monitor,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   useUploadSplashScreen,
@@ -37,6 +39,7 @@ const TARGET_W = 1080;
 const TARGET_H = 1920;
 const MAX_FILE_SIZE_JPG_PNG = 2 * 1024 * 1024;
 const MAX_FILE_SIZE_GIF = 4 * 1024 * 1024;
+const LOCATIONS_PER_PAGE = 10;
 
 interface SplashScreenUploaderProps {
   businessName: string;
@@ -50,19 +53,40 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const { data: locations = [] } = useLocations();
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const sortedLocations = useMemo(
+    () => [...locations].sort((a, b) => a.name.localeCompare(b.name)),
+    [locations],
+  );
+
+  const totalPages = Math.max(1, Math.ceil(sortedLocations.length / LOCATIONS_PER_PAGE));
+  const paginatedLocations = useMemo(
+    () => sortedLocations.slice((currentPage - 1) * LOCATIONS_PER_PAGE, currentPage * LOCATIONS_PER_PAGE),
+    [sortedLocations, currentPage],
+  );
+
   const locationIds = useMemo(() => locations.map(l => l.id), [locations]);
 
   // Bulk status for all locations
   const { data: allStatus = {}, isLoading: loadingAllStatus } = useAllLocationTerminalStatus(locationIds, orgId);
 
-  // B3: Auto-select first location with a terminal once status loads
+  // Auto-select first location with a terminal once status loads
   useEffect(() => {
     if (loadingAllStatus || selectedLocationId || Object.keys(allStatus).length === 0) return;
-    const firstWithTerminal = locations.find(l => allStatus[l.id]?.terminalLocationId);
+    const firstWithTerminal = sortedLocations.find(l => allStatus[l.id]?.terminalLocationId);
     if (firstWithTerminal) {
       setSelectedLocationId(firstWithTerminal.id);
+      // Navigate to the page containing this location
+      const idx = sortedLocations.findIndex(l => l.id === firstWithTerminal.id);
+      setCurrentPage(Math.floor(idx / LOCATIONS_PER_PAGE) + 1);
     }
-  }, [loadingAllStatus, allStatus, locations, selectedLocationId]);
+  }, [loadingAllStatus, allStatus, sortedLocations, selectedLocationId]);
+
+  // Reset to page 1 when location list changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [locations.length]);
 
   const selectedStatus = selectedLocationId ? allStatus[selectedLocationId] : null;
   const terminalLocationId = selectedStatus?.terminalLocationId ?? undefined;
@@ -258,6 +282,11 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     setPendingFile(null);
   };
 
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -288,8 +317,9 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : (
+          <>
           <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
-            {locations.map((loc) => {
+            {paginatedLocations.map((loc) => {
               const status = allStatus[loc.id];
               const hasTerminal = !!status?.terminalLocationId;
               const isSelected = selectedLocationId === loc.id;
@@ -347,8 +377,44 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
               );
             })}
           </div>
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[10px] text-muted-foreground font-sans">
+                {sortedLocations.length} locations · Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={cn(
+                    'p-1 rounded-md transition-colors',
+                    currentPage === 1
+                      ? 'text-muted-foreground/30 cursor-not-allowed'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={cn(
+                    'p-1 rounded-md transition-colors',
+                    currentPage === totalPages
+                      ? 'text-muted-foreground/30 cursor-not-allowed'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+          </>
         )}
-
         {/* Selected location editor */}
         {selectedLocationId && hasTerminalLocation && (
           <>
