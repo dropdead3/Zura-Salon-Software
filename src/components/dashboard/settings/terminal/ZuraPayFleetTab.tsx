@@ -161,6 +161,8 @@ export interface ZuraPayFleetTabProps {
   orgConnectStatus?: string;
   orgConnectAccountId?: string | null;
   orgBankLast4?: string | null;
+  orgBankLast4Loading?: boolean;
+  orgBankLast4Error?: boolean;
   onStartConnect?: () => void;
   isConnecting?: boolean;
   onVerifyConnection?: () => void;
@@ -197,6 +199,8 @@ export function ZuraPayFleetTab({
   orgConnectStatus,
   orgConnectAccountId,
   orgBankLast4,
+  orgBankLast4Loading,
+  orgBankLast4Error,
   onStartConnect,
   isConnecting,
   onVerifyConnection,
