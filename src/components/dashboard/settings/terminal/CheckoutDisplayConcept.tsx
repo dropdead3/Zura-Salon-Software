@@ -9,6 +9,9 @@ import { cn } from '@/lib/utils';
 import { useTipConfig } from '@/hooks/useTipConfig';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
 import { useColorTheme } from '@/hooks/useColorTheme';
+import { useTerminalSplashScreen } from '@/hooks/useTerminalSplashScreen';
+import { useTerminalLocations } from '@/hooks/useStripeTerminals';
+import { useLocations } from '@/hooks/useLocations';
 
 const S710_SPECS = [
   { label: 'Display', value: '5.5" touchscreen · 1080×1920' },
@@ -35,6 +38,14 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
   // Pull live config from database
   const { data: tipConfig } = useTipConfig();
   const { data: receiptConfig } = useReceiptConfig();
+
+  // Fetch splash screen for first available location
+  const { data: locations = [] } = useLocations();
+  const firstLocationId = locations[0]?.id || null;
+  const { data: terminalLocations = [] } = useTerminalLocations(firstLocationId);
+  const terminalLocationId = terminalLocations[0]?.id;
+  const { data: splashStatus } = useTerminalSplashScreen(firstLocationId, terminalLocationId);
+  const splashImageUrl = splashStatus?.splash_url || null;
 
   const tipEnabled = tipConfig?.enabled ?? true;
   const tipPercentages = tipConfig?.percentages ?? [20, 25, 30];
@@ -71,6 +82,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
               autoPlay={autoPlay}
               cartItems={SAMPLE_CART}
               orgLogoUrl={orgLogoUrl}
+              splashImageUrl={splashImageUrl}
               tipPercentages={tipPercentages}
               tipEnabled={tipEnabled}
               receiptSlogan={receiptSlogan}
