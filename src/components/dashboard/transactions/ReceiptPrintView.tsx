@@ -228,7 +228,8 @@ export function printReceipt(
   receiptConfig?: ReceiptConfig,
   businessInfo?: ReceiptBusinessInfo,
   redoPolicyFallback?: string,
+  afterpaySurchargeAmount?: number | null,
 ) {
-  const data = groupedTransactionToReceiptData(transaction);
+  const data = groupedTransactionToReceiptData(transaction, afterpaySurchargeAmount);
   printReceiptFromData(data, formatCurrency, orgName, receiptConfig, businessInfo, redoPolicyFallback);
 }

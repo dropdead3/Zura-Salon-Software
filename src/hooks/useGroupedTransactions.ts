@@ -53,6 +53,7 @@ export interface GroupedTransaction {
   refundAmount: number | null;
   isVoided: boolean;
   voidReason: string | null;
+  afterpaySurchargeAmount?: number | null;
 }
 
 export interface GroupedTransactionFilters {
@@ -193,6 +194,24 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
         .filter((id): id is string => !!id);
 
       if (appointmentIds.length > 0) {
+        // Fetch surcharge amounts from appointments
+        const { data: apptSurcharges } = await supabase
+          .from('appointments')
+          .select('id, afterpay_surcharge_amount')
+          .in('id', appointmentIds);
+
+        if (apptSurcharges && apptSurcharges.length > 0) {
+          const surchargeMap = new Map<string, number | null>();
+          apptSurcharges.forEach(a => {
+            surchargeMap.set(a.id, a.afterpay_surcharge_amount);
+          });
+          result.forEach(txn => {
+            if (txn.appointmentId && surchargeMap.has(txn.appointmentId)) {
+              txn.afterpaySurchargeAmount = surchargeMap.get(txn.appointmentId) ?? null;
+            }
+          });
+        }
+
         const { data: charges } = await supabase
           .from('checkout_usage_charges')
           .select('id, appointment_id, service_name, charge_type, overage_qty, charge_amount, status')
