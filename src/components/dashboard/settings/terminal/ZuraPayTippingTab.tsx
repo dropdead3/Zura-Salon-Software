@@ -5,28 +5,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { HandCoins, Loader2, AlertTriangle } from 'lucide-react';
-import { useColorBarSetting, useUpsertColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useTipConfig, useUpdateTipConfig, DEFAULT_TIP_CONFIG, type TipConfig } from '@/hooks/useTipConfig';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-
-const SETTING_KEY = 'tip_config';
-
-interface TipConfig {
-  enabled: boolean;
-  percentages: [number, number, number];
-  fixed_threshold_enabled: boolean;
-  fixed_threshold_amount: number;
-  include_retail: boolean;
-  prompt_on_saved_cards: boolean;
-}
-
-const DEFAULT_CONFIG: TipConfig = {
-  enabled: true,
-  percentages: [20, 25, 30],
-  fixed_threshold_enabled: false,
-  fixed_threshold_amount: 2500, // $25.00 in cents
-  include_retail: false,
-  prompt_on_saved_cards: true,
-};
 
 export function ZuraPayTippingTab() {
   const { effectiveOrganization } = useOrganizationContext();

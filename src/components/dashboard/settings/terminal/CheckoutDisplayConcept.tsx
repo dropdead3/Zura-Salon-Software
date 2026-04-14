@@ -6,7 +6,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Monitor, Palette, Play, Pause, Settings2, ToggleLeft, ToggleRight, Receipt } from 'lucide-react';
 import { S710CheckoutSimulator, SimCartItem } from './S710CheckoutSimulator';
 import { cn } from '@/lib/utils';
-import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useTipConfig } from '@/hooks/useTipConfig';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
 
 const S710_SPECS = [
