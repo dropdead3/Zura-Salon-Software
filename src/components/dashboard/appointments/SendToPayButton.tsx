@@ -15,6 +15,8 @@ interface SendToPayButtonProps {
   clientEmail?: string | null;
   clientPhone?: string | null;
   afterpayEnabled: boolean;
+  afterpaySurchargeEnabled?: boolean;
+  afterpaySurchargeRate?: number;
   onPaymentLinkSent?: () => void;
   disabled?: boolean;
 }

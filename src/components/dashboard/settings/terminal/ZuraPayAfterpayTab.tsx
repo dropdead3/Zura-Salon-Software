@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { CreditCard, Info, Loader2 } from 'lucide-react';
+import { CreditCard, Info, Loader2, Percent } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { tokens } from '@/lib/design-tokens';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,36 +15,65 @@ export function ZuraPayAfterpayTab() {
   const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();
 
-  const { data: afterpayEnabled, isLoading } = useQuery({
-    queryKey: ['afterpay-enabled', orgId],
+  const { data: orgSettings, isLoading } = useQuery({
+    queryKey: ['afterpay-settings', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organizations')
-        .select('afterpay_enabled')
+        .select('afterpay_enabled, afterpay_surcharge_enabled, afterpay_surcharge_rate')
         .eq('id', orgId!)
         .maybeSingle();
       if (error) throw error;
-      return data?.afterpay_enabled ?? false;
+      return {
+        afterpay_enabled: data?.afterpay_enabled ?? false,
+        afterpay_surcharge_enabled: data?.afterpay_surcharge_enabled ?? false,
+        afterpay_surcharge_rate: data?.afterpay_surcharge_rate ?? 0.06,
+      };
     },
     enabled: !!orgId,
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: async (enabled: boolean) => {
+  const afterpayEnabled = orgSettings?.afterpay_enabled ?? false;
+  const surchargeEnabled = orgSettings?.afterpay_surcharge_enabled ?? false;
+  const surchargeRate = orgSettings?.afterpay_surcharge_rate ?? 0.06;
+
+  const updateMutation = useMutation({
+    mutationFn: async (updates: Record<string, unknown>) => {
       const { error } = await supabase
         .from('organizations')
-        .update({ afterpay_enabled: enabled })
+        .update(updates)
         .eq('id', orgId!);
       if (error) throw error;
     },
-    onSuccess: (_data, enabled) => {
-      queryClient.invalidateQueries({ queryKey: ['afterpay-enabled', orgId] });
-      toast.success(enabled ? 'Afterpay enabled' : 'Afterpay disabled');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['afterpay-settings', orgId] });
     },
     onError: (err: any) => {
       toast.error(err.message || 'Failed to update setting');
     },
   });
+
+  const handleToggleAfterpay = (enabled: boolean) => {
+    updateMutation.mutate({ afterpay_enabled: enabled });
+    toast.success(enabled ? 'Afterpay enabled' : 'Afterpay disabled');
+  };
+
+  const handleToggleSurcharge = (enabled: boolean) => {
+    updateMutation.mutate({ afterpay_surcharge_enabled: enabled });
+    toast.success(enabled ? 'Surcharge enabled — clients will be charged the processing fee' : 'Surcharge disabled');
+  };
+
+  const handleRateChange = (value: string) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 1 || num > 10) return;
+    const rate = num / 100;
+    updateMutation.mutate({ afterpay_surcharge_rate: rate });
+    toast.success(`Surcharge rate updated to ${num}%`);
+  };
+
+  const ratePercent = Math.round(surchargeRate * 100);
+  const sampleAmount = 1000;
+  const sampleSurcharge = sampleAmount * surchargeRate;
 
   return (
     <div className="space-y-6">
@@ -71,11 +101,70 @@ export function ZuraPayAfterpayTab() {
               </p>
             </div>
             <Switch
-              checked={afterpayEnabled ?? false}
-              onCheckedChange={(checked) => toggleMutation.mutate(checked)}
-              disabled={isLoading || toggleMutation.isPending}
+              checked={afterpayEnabled}
+              onCheckedChange={handleToggleAfterpay}
+              disabled={isLoading || updateMutation.isPending}
             />
           </div>
+
+          {/* Surcharge section — only visible when Afterpay is enabled */}
+          {afterpayEnabled && (
+            <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Pass Processing Fee to Client</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Add the Afterpay processing fee as a separate line item on the client's checkout
+                  </p>
+                </div>
+                <Switch
+                  checked={surchargeEnabled}
+                  onCheckedChange={handleToggleSurcharge}
+                  disabled={isLoading || updateMutation.isPending}
+                />
+              </div>
+
+              {surchargeEnabled && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <Label className="text-sm font-medium whitespace-nowrap">Surcharge Rate</Label>
+                    <div className="relative w-24">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        step={0.5}
+                        defaultValue={ratePercent}
+                        onBlur={(e) => handleRateChange(e.target.value)}
+                        className="pr-8 text-sm"
+                      />
+                      <Percent className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                  </div>
+
+                  {/* Preview calculation */}
+                  <div className="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+                    <p>
+                      On a <strong className="text-foreground">${sampleAmount.toLocaleString()}</strong> Afterpay payment, the client pays{' '}
+                      <strong className="text-foreground">${(sampleAmount + sampleSurcharge).toLocaleString()}</strong>{' '}
+                      (${sampleSurcharge.toFixed(2)} fee)
+                    </p>
+                  </div>
+
+                  {/* Legal disclosure */}
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                    <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Surcharging buy-now-pay-later payments is legal in most US jurisdictions, but some
+                      states have restrictions. Verify your local regulations before enabling this feature.
+                      The surcharge will appear as a separate "Processing Fee" line item on the client's
+                      checkout for full transparency.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Info section */}
           <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
