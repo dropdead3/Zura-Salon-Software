@@ -229,6 +229,12 @@ export function TerminalSettingsContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('subtab') || 'fleet');
 
+  // Sync activeTab when URL params change externally (e.g. from Fleet tab's "Order Hardware" button)
+  useEffect(() => {
+    const urlTab = searchParams.get('subtab') || 'fleet';
+    if (urlTab !== activeTab) setActiveTab(urlTab);
+  }, [searchParams]);
+
   // Sync activeTab to URL for bookmark/refresh persistence
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
