@@ -9,6 +9,9 @@ import { cn } from '@/lib/utils';
 import { useTipConfig } from '@/hooks/useTipConfig';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
 import { useColorTheme } from '@/hooks/useColorTheme';
+import { useTerminalSplashScreen } from '@/hooks/useTerminalSplashScreen';
+import { useTerminalLocations } from '@/hooks/useStripeTerminals';
+import { useLocations } from '@/hooks/useLocations';
 
 const S710_SPECS = [
   { label: 'Display', value: '5.5" touchscreen · 1080×1920' },
