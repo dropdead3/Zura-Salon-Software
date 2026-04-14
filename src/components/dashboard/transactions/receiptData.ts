@@ -4,7 +4,7 @@ export interface ReceiptLineItem {
   name: string;
   amount: number;
   quantity: number;
-  category?: 'service' | 'addon' | 'retail' | 'overage' | 'product_cost';
+  category?: 'service' | 'addon' | 'retail' | 'overage' | 'product_cost' | 'surcharge';
 }
 
 export interface ReceiptUsageCharge {

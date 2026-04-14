@@ -4,15 +4,17 @@ import { AfterpayLogo } from '@/components/icons/AfterpayLogo';
 interface AfterpayPromoBadgeProps {
   theme: BookingSurfaceTheme;
   amount?: number | null;
+  surchargeRate?: number | null;
 }
 
 const AFTERPAY_MIN = 1;
 const AFTERPAY_MAX = 4000;
 
-export function AfterpayPromoBadge({ theme, amount }: AfterpayPromoBadgeProps) {
+export function AfterpayPromoBadge({ theme, amount, surchargeRate }: AfterpayPromoBadgeProps) {
   if (amount != null && (amount < AFTERPAY_MIN || amount > AFTERPAY_MAX)) return null;
 
   const installment = amount ? `$${(amount / 4).toFixed(2)}` : null;
+  const hasSurcharge = surchargeRate != null && surchargeRate > 0;
 
   return (
     <div
@@ -26,6 +28,9 @@ export function AfterpayPromoBadge({ theme, amount }: AfterpayPromoBadgeProps) {
       <span style={{ color: theme.textColor }}>
         Pay in 4 interest-free installments with Afterpay
         {installment && <span style={{ color: theme.mutedTextColor }}> — {installment}/ea</span>}
+        {hasSurcharge && (
+          <span style={{ color: theme.mutedTextColor }}> ({Math.round(surchargeRate * 100)}% processing fee applies)</span>
+        )}
       </span>
     </div>
   );

@@ -13922,6 +13922,8 @@ export type Database = {
           account_number: number | null
           activated_at: string | null
           afterpay_enabled: boolean
+          afterpay_surcharge_enabled: boolean
+          afterpay_surcharge_rate: number
           billing_email: string | null
           billing_status: Database["public"]["Enums"]["billing_status"] | null
           business_type: string | null
@@ -13977,6 +13979,8 @@ export type Database = {
           account_number?: number | null
           activated_at?: string | null
           afterpay_enabled?: boolean
+          afterpay_surcharge_enabled?: boolean
+          afterpay_surcharge_rate?: number
           billing_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null
@@ -14032,6 +14036,8 @@ export type Database = {
           account_number?: number | null
           activated_at?: string | null
           afterpay_enabled?: boolean
+          afterpay_surcharge_enabled?: boolean
+          afterpay_surcharge_rate?: number
           billing_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null
