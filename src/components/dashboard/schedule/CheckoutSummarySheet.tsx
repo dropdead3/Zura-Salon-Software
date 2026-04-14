@@ -840,6 +840,9 @@ export function CheckoutSummarySheet({
                         <span className="text-foreground">Client pays:</span>
                         <span className="text-right text-foreground">{formatCurrency(clientPaysCents / 100)}</span>
                       </div>
+                      <p className="text-[11px] text-muted-foreground/70 italic mt-1">
+                        ⓘ Client will only see Afterpay as a payment option
+                      </p>
                     </div>
                   );
                 })()}
