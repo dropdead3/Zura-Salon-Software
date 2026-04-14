@@ -15,6 +15,7 @@ const ActionSchema = z.enum([
   "list_readers",
   "register_reader",
   "delete_reader",
+  "enable_cellular",
 ]);
 
 const StripeTerminalLocationIdSchema = z
@@ -44,6 +45,7 @@ const WRITE_ACTIONS = new Set([
   "delete_location",
   "register_reader",
   "delete_reader",
+  "enable_cellular",
 ]);
 
 Deno.serve(async (req) => {
