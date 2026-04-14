@@ -1,41 +1,75 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
+import { useSettingsOrgId } from './useSettingsOrgId';
 
 export type ColorTheme = 'zura' | 'cream' | 'rose' | 'sage' | 'ocean' | 'ember' | 'noir';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
+const SITE_SETTINGS_KEY = 'org_color_theme';
 
 const ALL_THEMES: ColorTheme[] = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
+interface ColorThemeSettings {
+  theme: ColorTheme;
+}
+
+function applyTheme(theme: ColorTheme) {
+  const html = document.documentElement;
+  html.classList.remove(...THEME_CLASSES);
+  html.classList.add(`theme-${theme}`);
+}
+
+function getLocalTheme(): ColorTheme {
+  const saved = localStorage.getItem(THEME_STORAGE_KEY) as ColorTheme | null;
+  if (saved && ALL_THEMES.includes(saved)) return saved;
+  return 'zura';
+}
+
+// Apply localStorage theme immediately on module load (prevents flash)
+applyTheme(getLocalTheme());
+
 export function useColorTheme() {
-  const [colorTheme, setColorThemeState] = useState<ColorTheme>('zura');
-  const [mounted, setMounted] = useState(false);
+  const orgId = useSettingsOrgId();
+  const queryClient = useQueryClient();
+  const queryKey = ['site-settings', orgId, SITE_SETTINGS_KEY];
 
+  // DB-backed query (source of truth when available)
+  const { data: dbSettings, isSuccess: dbLoaded } = useSiteSettings<ColorThemeSettings>(SITE_SETTINGS_KEY);
+
+  const updateSetting = useUpdateSiteSetting<ColorThemeSettings>();
+
+  // Derive current theme: DB > localStorage fallback
+  const dbTheme = dbSettings?.theme;
+  const colorTheme: ColorTheme = dbTheme && ALL_THEMES.includes(dbTheme) ? dbTheme : getLocalTheme();
+
+  // Sync from DB to localStorage + DOM when DB data arrives
   useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as ColorTheme | null;
-    if (savedTheme && ALL_THEMES.includes(savedTheme)) {
-      setColorThemeState(savedTheme);
-      applyTheme(savedTheme);
+    if (dbLoaded && dbTheme && ALL_THEMES.includes(dbTheme)) {
+      localStorage.setItem(THEME_STORAGE_KEY, dbTheme);
+      applyTheme(dbTheme);
     }
-  }, []);
+  }, [dbLoaded, dbTheme]);
 
-  const applyTheme = (theme: ColorTheme) => {
-    const html = document.documentElement;
-    html.classList.remove(...THEME_CLASSES);
-    html.classList.add(`theme-${theme}`);
-  };
-
-  const setColorTheme = (theme: ColorTheme) => {
-    setColorThemeState(theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  const setColorTheme = useCallback((theme: ColorTheme) => {
+    // 1. Instant DOM + localStorage update
     applyTheme(theme);
-  };
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+
+    // 2. Optimistic query cache update (all consumers reactively get new value)
+    queryClient.setQueryData(queryKey, { theme });
+
+    // 3. Persist to DB
+    if (orgId) {
+      updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme } });
+    }
+  }, [orgId, queryClient, queryKey, updateSetting]);
 
   return {
-    colorTheme: mounted ? colorTheme : 'zura',
+    colorTheme,
     setColorTheme,
-    mounted,
+    mounted: true, // Always true — localStorage applies synchronously on module load
   };
 }
 
