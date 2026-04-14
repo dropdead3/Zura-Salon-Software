@@ -67,7 +67,8 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const pushAllMutation = usePushSplashToAllLocations();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<{ base64: string; mime: 'image/jpeg' | 'image/png' | 'image/gif' } | null>(null);
+  const [pendingFile, setPendingFile] = useState<{ base64: string; mime: 'image/jpeg' | 'image/png' | 'image/gif'; fromDefault?: boolean } | null>(null);
+  const [isDefaultLuxury, setIsDefaultLuxury] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [generatingFromLogo, setGeneratingFromLogo] = useState(false);
   const [pushProgress, setPushProgress] = useState<string | null>(null);
@@ -147,6 +148,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
 
   const handleUpload = () => {
     if (!pendingFile || !selectedLocationId || !terminalLocationId) return;
+    const wasDefault = pendingFile.fromDefault ?? false;
     uploadMutation.mutate({
       locationId: selectedLocationId,
       terminalLocationId,
@@ -156,13 +158,16 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       onSuccess: () => {
         setPreviewUrl(null);
         setPendingFile(null);
+        setIsDefaultLuxury(wasDefault);
       },
     });
   };
 
   const handleRemove = () => {
     if (!selectedLocationId || !terminalLocationId) return;
-    removeMutation.mutate({ locationId: selectedLocationId, terminalLocationId });
+    removeMutation.mutate({ locationId: selectedLocationId, terminalLocationId }, {
+      onSuccess: () => setIsDefaultLuxury(false),
+    });
   };
 
   const handlePushToAll = useCallback(async () => {
@@ -201,7 +206,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     try {
       const { base64, dataUrl } = await generateDefaultSplash(orgLogoUrl, businessName, colorTheme);
       setPreviewUrl(dataUrl);
-      setPendingFile({ base64, mime: 'image/jpeg' });
+      setPendingFile({ base64, mime: 'image/jpeg', fromDefault: true });
     } catch (err) {
       console.error('Failed to generate splash from logo:', err);
       toast.error('Failed to generate splash screen', { description: 'Could not process logo image.' });
@@ -367,20 +372,32 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   )}
 
                   {orgLogoUrl && !pendingFile && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleGenerateFromLogo}
-                      disabled={generatingFromLogo}
-                      className="text-xs"
-                    >
-                      {generatingFromLogo ? (
-                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                      )}
-                      Use Default Luxury Splash
-                    </Button>
+                    hasSplash && isDefaultLuxury ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        className="text-xs opacity-60"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-500" />
+                        Currently using Default Luxury Splash
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateFromLogo}
+                        disabled={generatingFromLogo}
+                        className="text-xs"
+                      >
+                        {generatingFromLogo ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        Use Default Luxury Splash
+                      </Button>
+                    )
                   )}
 
                   {hasSplash && !pendingFile && (
