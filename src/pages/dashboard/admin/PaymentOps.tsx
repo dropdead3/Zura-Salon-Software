@@ -1014,6 +1014,26 @@ export default function PaymentOps() {
     return pendingRefunds.filter(r => (r.original_item_name || '').toLowerCase().includes(s));
   }, [pendingRefunds, debouncedClientSearch]);
 
+  const {
+    paginatedData: paginatedHolds,
+    currentPage: holdsPage,
+    setCurrentPage: setHoldsPage,
+    totalPages: holdsTotalPages,
+    totalItems: holdsTotalItems,
+    showingFrom: holdsShowingFrom,
+    showingTo: holdsShowingTo,
+  } = usePaginatedSort({ data: filteredHolds, defaultPageSize: 25 });
+
+  const {
+    paginatedData: paginatedRefunds,
+    currentPage: refundsPage,
+    setCurrentPage: setRefundsPage,
+    totalPages: refundsTotalPages,
+    totalItems: refundsTotalItems,
+    showingFrom: refundsShowingFrom,
+    showingTo: refundsShowingTo,
+  } = usePaginatedSort({ data: filteredRefunds, defaultPageSize: 25 });
+
   return (
     <DashboardLayout>
       <div className={cn(tokens.layout.pageContainer, 'max-w-[1600px] mx-auto')}>
