@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { tokens } from '@/lib/design-tokens';
-import { Loader2, Receipt, Eye } from 'lucide-react';
+import { Loader2, Receipt, Eye, Mail, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useReceiptConfig, useUpdateReceiptConfig, DEFAULT_RECEIPT_CONFIG } from '@/hooks/useReceiptConfig';
 import type { ReceiptConfig } from '@/hooks/useReceiptConfig';
@@ -15,6 +15,9 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
 import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
 import { useRedoPolicySettings } from '@/hooks/useRedoPolicySettings';
+import { supabase } from '@/integrations/supabase/client';
+import { buildReceiptHtml } from '@/components/dashboard/transactions/ReceiptPrintView';
+import type { ReceiptData } from '@/components/dashboard/transactions/receiptData';
 
 interface ReceiptPreviewProps {
   config: ReceiptConfig;
