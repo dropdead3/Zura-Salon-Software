@@ -764,6 +764,23 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
     return disputes.filter(d => (d.client_name || '').toLowerCase().includes(s));
   }, [disputes, clientSearch]);
 
+  const {
+    paginatedData: paginatedDisputes,
+    currentPage: disputePage,
+    setCurrentPage: setDisputePage,
+    totalPages: disputeTotalPages,
+    totalItems: disputeTotalItems,
+    showingFrom: disputeShowingFrom,
+    showingTo: disputeShowingTo,
+    sortField: disputeSortField,
+    toggleSort: toggleDisputeSort,
+  } = usePaginatedSort({
+    data: filteredDisputes,
+    defaultPageSize: 25,
+    defaultSortField: 'created_at' as any,
+    defaultSortDirection: 'desc',
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -794,46 +811,56 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Evidence Due</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Filed</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDisputes.map((dispute) => (
-                <TableRow key={dispute.id}>
-                  <TableCell className="font-medium">
-                    {dispute.client_name || 'Unknown'}
-                  </TableCell>
-                  <TableCell>
-                    <BlurredAmount>{formatCurrency(dispute.amount / 100)}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground capitalize">
-                    {(dispute.reason || 'unknown').replace(/_/g, ' ')}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={DISPUTE_STATUS_VARIANT[dispute.status] || 'secondary'}>
-                      {DISPUTE_STATUS_LABELS[dispute.status] || dispute.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {dispute.evidence_due_by
-                      ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy')
-                      : '—'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {format(new Date(dispute.created_at), 'MMM d, yyyy')}
-                  </TableCell>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableColumnHeader label="Client" sortKey="client_name" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <SortableColumnHeader label="Amount" sortKey="amount" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
+                  <SortableColumnHeader label="Status" sortKey="status" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <SortableColumnHeader label="Evidence Due" sortKey="evidence_due_by" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <SortableColumnHeader label="Filed" sortKey="created_at" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedDisputes.map((dispute) => (
+                  <TableRow key={dispute.id}>
+                    <TableCell className="font-medium">
+                      {dispute.client_name || 'Unknown'}
+                    </TableCell>
+                    <TableCell>
+                      <BlurredAmount>{formatCurrency(dispute.amount / 100)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground capitalize">
+                      {(dispute.reason || 'unknown').replace(/_/g, ' ')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={DISPUTE_STATUS_VARIANT[dispute.status] || 'secondary'}>
+                        {DISPUTE_STATUS_LABELS[dispute.status] || dispute.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {dispute.evidence_due_by
+                        ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy')
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(dispute.created_at), 'MMM d, yyyy')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <TablePagination
+              currentPage={disputePage}
+              totalPages={disputeTotalPages}
+              totalItems={disputeTotalItems}
+              showingFrom={disputeShowingFrom}
+              showingTo={disputeShowingTo}
+              onPageChange={setDisputePage}
+            />
+          </>
         )}
       </CardContent>
     </Card>
