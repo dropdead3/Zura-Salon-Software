@@ -771,42 +771,41 @@ export function ZuraPayFleetTab({
                         >
                           {reader.status === 'online' ? 'Online' : 'Offline'}
                         </Badge>
-                        {reader.status === 'online' && (
-                          {testingReaderId === reader.id ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 px-2.5 gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleClearDisplay(reader.id)}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                  Clear
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
-                                Clear the test display now (auto-clears in 10s)
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 px-2.5 gap-1.5 text-xs"
-                                  onClick={() => handleTestDisplay(reader.id)}
-                                >
-                                  <MonitorSmartphone className="h-3.5 w-3.5" />
-                                  Test
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
-                                Push sample cart data to verify display connectivity
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
+                        {reader.status === 'online' && testingReaderId === reader.id && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2.5 gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleClearDisplay(reader.id)}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                                Clear
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              Clear the test display now (auto-clears in 10s)
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {reader.status === 'online' && testingReaderId !== reader.id && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2.5 gap-1.5 text-xs"
+                                onClick={() => handleTestDisplay(reader.id)}
+                              >
+                                <MonitorSmartphone className="h-3.5 w-3.5" />
+                                Test
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              Push sample cart data to verify display connectivity
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                         <Button
                           variant="ghost"
