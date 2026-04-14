@@ -408,7 +408,7 @@ export function ZuraPayPayoutsTab() {
               <EmptyState
                 icon={Building2}
                 title="No Bank Account Connected"
-                description="Complete your Zura Pay onboarding to connect a bank account for payouts."
+                description="Complete your Point Of Sale onboarding to connect a bank account for payouts."
               />
             )}
           </CardContent>

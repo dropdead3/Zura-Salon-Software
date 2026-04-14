@@ -61,23 +61,11 @@ export function useAllLocationTerminalStatus(
         }
       }
 
-      // 3. Also check splash screen status for terminals (to know if splash is active)
-      const splashResults = await Promise.allSettled(
-        locIdsWithTerminals.map(async (locId) => {
-          const tid = terminalMap[locId].id;
-          const { data, error } = await supabase.functions.invoke('manage-stripe-terminals', {
-            body: { action: 'get_splash_screen', location_id: locId, terminal_location_id: tid },
-          });
-          if (error || data?.error) return { locId, active: false };
-          return { locId, active: data?.data?.splash_screen_active === true };
-        }),
-      );
-
+      // 3. Derive splash active from metadata presence (avoids N+1 Stripe calls)
       const splashActiveMap: Record<string, boolean> = {};
-      for (const r of splashResults) {
-        if (r.status === 'fulfilled') {
-          splashActiveMap[r.value.locId] = r.value.active;
-        }
+      for (const locId of locIdsWithTerminals) {
+        const tid = terminalMap[locId].id;
+        splashActiveMap[locId] = !!metadataMap[tid];
       }
 
       // 4. Build results

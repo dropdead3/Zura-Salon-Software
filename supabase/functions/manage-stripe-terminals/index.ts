@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
         );
       }
       return new Response(
-        JSON.stringify({ error: "Location is not connected to Zura Pay" }),
+        JSON.stringify({ error: "Location is not connected to Point Of Sale" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

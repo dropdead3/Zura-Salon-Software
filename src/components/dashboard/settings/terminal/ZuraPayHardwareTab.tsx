@@ -31,14 +31,14 @@ const READER_MODELS: Record<ReaderModel, {
   recommended?: boolean;
 }> = {
   s700: {
-    name: 'Zura Pay Reader S700',
+    name: 'Point Of Sale Reader S700',
     subtitle: 'Countertop & handheld',
     label: 'Standard connectivity',
     features: ['WiFi connectivity', 'Store-and-forward offline payments', '4" touchscreen display'],
     icon: Smartphone,
   },
   s710: {
-    name: 'Zura Pay Reader S710',
+    name: 'Point Of Sale Reader S710',
     subtitle: 'Countertop & handheld',
     label: 'Full NeverDown protection',
     features: ['WiFi + Cellular failover (built-in eSIM)', 'Real-time auth during WiFi outages', 'Store-and-forward offline payments', '4" touchscreen display'],
@@ -184,7 +184,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               </div>
               <h3 className="font-display text-sm tracking-[0.14em]">PAYMENT SETUP REQUIRED</h3>
               <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                Complete your Zura Pay setup in the Location Set Up tab before ordering hardware.
+                Complete your Point Of Sale setup in the Location Set Up tab before ordering hardware.
               </p>
             </div>
           </CardContent>
@@ -205,7 +205,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className={tokens.card.title}>ORDER TERMINAL</CardTitle>
-                  <MetricInfoTooltip description="Purchase Zura Pay Reader terminals at cost. Pricing comes directly from the payment processor — Zura applies zero markup." />
+                  <MetricInfoTooltip description="Purchase Point Of Sale Reader terminals at cost. Pricing comes directly from the payment processor — Zura applies zero markup." />
                 </div>
                 <CardDescription>Choose your reader model — zero markup, direct processor pricing.</CardDescription>
               </div>
@@ -541,7 +541,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-sans font-medium text-sm">
-                          Zura Pay {deviceLabel}
+                          Point Of Sale {deviceLabel}
                           {req.quantity > 1 && <span className="text-muted-foreground"> × {req.quantity}</span>}
                         </p>
                         {req.accessories && req.accessories.length > 0 && (

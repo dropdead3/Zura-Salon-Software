@@ -82,7 +82,7 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
 
       const flagEnabled = flagData?.is_enabled ?? false;
 
-      // 1b. Check Zura Pay (Stripe Connect) status + Phorest connections
+      // 1b. Check Point Of Sale (Stripe Connect) status + Phorest connections
       const { data: allLocations } = await supabase
         .from('locations')
         .select('id, stripe_account_id, stripe_status, phorest_branch_id')

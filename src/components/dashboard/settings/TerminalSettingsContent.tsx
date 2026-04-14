@@ -396,7 +396,7 @@ export function TerminalSettingsContent() {
       <EmptyState
         icon={CreditCard}
         title="No Locations"
-        description="Create at least one location in Location settings before configuring Zura Pay."
+        description="Create at least one location in Location settings before configuring Point Of Sale."
       />
     );
   }

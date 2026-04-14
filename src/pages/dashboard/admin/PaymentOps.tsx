@@ -1071,14 +1071,14 @@ export default function PaymentOps() {
                 ) : (
                   <EmptyState
                     icon={Wallet}
-                    title="Zura Pay Not Active"
-                    description="Payout and balance data will appear here once Zura Pay is activated. Set up your payment account in Settings → Zura Pay to start processing transactions and receiving payouts."
+                    title="Point Of Sale Not Active"
+                    description="Payout and balance data will appear here once Point Of Sale is activated. Set up your payment account in Settings → Point Of Sale to start processing transactions and receiving payouts."
                     action={
                       <Button
                         variant="outline"
                         onClick={() => navigate(dashPath('/admin/settings?category=terminals'))}
                       >
-                        Activate Zura Pay
+                        Activate Point Of Sale
                       </Button>
                     }
                   />
