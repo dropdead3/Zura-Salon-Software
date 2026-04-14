@@ -285,10 +285,10 @@ export function ZuraPayActivationChecklist({
   }
 
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.04]">
+    <div className="rounded-xl border border-amber-400/50 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.04]">
       <div className="flex flex-col space-y-1.5 p-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">
             <ArrowRight className="w-5 h-5 text-amber-500" />
           </div>
           <div>
@@ -304,7 +304,7 @@ export function ZuraPayActivationChecklist({
       </div>
       <div className="p-6 pt-0">
         {/* Progress bar */}
-        <div className="w-full h-2 bg-amber-500/15 rounded-full overflow-hidden mb-6">
+        <div className="w-full h-2 bg-amber-100 dark:bg-amber-500/15 rounded-full overflow-hidden mb-6">
           <div
             className="h-full bg-amber-500 rounded-full transition-all duration-500"
             style={{ width: `${(completedCount / steps.length) * 100}%` }}
@@ -318,7 +318,7 @@ export function ZuraPayActivationChecklist({
             return (
               <div key={idx} className={cn(
                 'flex items-start gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-colors',
-                isCurrent && 'bg-amber-500/[0.06]',
+                isCurrent && 'bg-amber-50 dark:bg-amber-500/[0.06]',
               )}>
                 {step.loading ? (
                   <Loader2 className="w-5 h-5 text-muted-foreground/40 mt-0.5 shrink-0 animate-spin" />
