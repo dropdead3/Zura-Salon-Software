@@ -2,30 +2,19 @@
 
 ## Problem
 
-"Add a Tip" is top-left aligned and sits above the subtotal. The user wants it centered, below the subtotal, with added context that the tip is in addition to the subtotal.
+The "No terminal registered" label uses `text-muted-foreground/50` (50% opacity on an already muted color), making it nearly invisible in both dark and light mode.
 
 ## Solution
 
-Reorder and restyle the TipScreen header in `S710CheckoutSimulator.tsx`.
+Increase the visibility of the "No terminal registered" text and its associated icon/location name while keeping it visually distinct from active locations.
 
 ### Changes
 
-**File:** `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx` (lines 192–196)
+**File:** `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`
 
-1. **Move subtotal block above "Add a Tip"** — swap the order so subtotal comes first.
-2. **Center "Add a Tip"** — change from left-aligned (`text-white/40 text-[8px]`) to centered.
-3. **Add context line** — insert a small muted line below "Add a Tip": `"Tip is added to the subtotal above"`.
+1. **Line 352** — Change `text-muted-foreground/50` to `text-muted-foreground` on the "No terminal registered" span. This uses the standard muted color without extra opacity reduction, ensuring readability in both themes.
+2. **Line 345** — Change the icon opacity for no-terminal locations from `text-muted-foreground/40` to `text-muted-foreground/70`.
+3. **Line 346** — Change the location name opacity from `text-muted-foreground/60` to `text-muted-foreground/80`.
 
-Replace lines 192–196 with:
-
-```tsx
-<div className="text-center mb-2">
-  <p className="text-white/50 text-[9px] tracking-wider uppercase">Subtotal</p>
-  <p className="text-white text-base font-medium font-mono mt-0.5">{fmt(total)}</p>
-</div>
-<div className="text-center mb-4">
-  <p className="text-white/40 text-[9px] tracking-[0.15em] uppercase">Add a Tip</p>
-  <p className="text-white/25 text-[7px] mt-0.5">In addition to the subtotal above</p>
-</div>
-```
+These changes keep non-terminal locations visually secondary to active ones while ensuring all text remains legible.
 
