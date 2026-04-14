@@ -166,7 +166,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
                   ))}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] tracking-wider uppercase text-muted-foreground/60 font-display">Reader Firmware</p>
+                  <p className="text-[10px] tracking-wider uppercase text-muted-foreground/60 font-display">Not Brandable</p>
                   {[
                     'Tap / insert screen',
                     'Processing screen',
