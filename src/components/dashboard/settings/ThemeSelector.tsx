@@ -173,14 +173,7 @@ export function ThemeSelector({ currentColors }: ThemeSelectorProps) {
                   {isActive && (
                     <Check className="w-3.5 h-3.5 text-primary" />
                   )}
-                  
-                  {/* Default badge */}
-                  {theme.is_default && (
-                    <span className="text-[10px] font-display uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                      Default
-                    </span>
-                  )}
-                  
+                   
                   {/* Delete button for custom themes */}
                   {theme.is_custom && (
                     <button
