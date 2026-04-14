@@ -583,9 +583,32 @@ export function ZuraPayFleetTab({
               ) : !readers || readers.length === 0 ? (
                 <div className="text-center py-8">
                   <Smartphone className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    No readers paired yet. Register a reader using its pairing code.
+                  <h3 className="font-display text-sm tracking-[0.14em] uppercase text-foreground">No readers paired to this location</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Need a reader? Order one from the Hardware tab, then register it here using its pairing code.
                   </p>
+                  <div className="mt-5 flex justify-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const params = new URLSearchParams(searchParams);
+                        params.set('subtab', 'hardware');
+                        setSearchParams(params);
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      Order Hardware
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setIsRegistering(true)}
+                      disabled={!isConnected}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Register Reader
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">
