@@ -254,6 +254,7 @@ export function TerminalSettingsContent() {
   const connectLocationMutation = useConnectLocation();
   const resetAccountMutation = useResetZuraPayAccount();
   const disconnectLocationMutation = useDisconnectLocation();
+  const createLocationAccountMutation = useCreateLocationAccount();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('subtab') || 'fleet');
@@ -449,6 +450,14 @@ export function TerminalSettingsContent() {
               isResetting={resetAccountMutation.isPending}
               onDisconnectLocation={(locationId) => orgId && disconnectLocationMutation.mutate({ organizationId: orgId, locationId })}
               isDisconnectingLocation={disconnectLocationMutation.isPending}
+              orgConnectAccountId={connectStatus?.stripe_connect_account_id}
+              onCreateLocationAccount={(locationId) => orgId && createLocationAccountMutation.mutate({
+                organizationId: orgId,
+                locationId,
+                returnUrl: `${window.location.origin}${window.location.pathname}?category=terminals&zura_pay_return=true`,
+                refreshUrl: `${window.location.origin}${window.location.pathname}?category=terminals&zura_pay_refresh=true`,
+              })}
+              isCreatingLocationAccount={createLocationAccountMutation.isPending}
               onRefreshReaders={() => {
                 queryClient.invalidateQueries({ queryKey: ['terminal-readers'] });
               }}
