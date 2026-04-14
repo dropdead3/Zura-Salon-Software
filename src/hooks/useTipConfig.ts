@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 
 export interface TipConfig extends Record<string, unknown> {
@@ -21,9 +22,14 @@ export const DEFAULT_TIP_CONFIG: TipConfig = {
 export function useTipConfig(explicitOrgId?: string) {
   const query = useSiteSettings<TipConfig>('tip_config', explicitOrgId);
 
+  const data = useMemo(
+    () => (query.data ? { ...DEFAULT_TIP_CONFIG, ...query.data } : DEFAULT_TIP_CONFIG),
+    [query.data]
+  );
+
   return {
     ...query,
-    data: query.data ? { ...DEFAULT_TIP_CONFIG, ...query.data } : DEFAULT_TIP_CONFIG,
+    data,
   };
 }
 
