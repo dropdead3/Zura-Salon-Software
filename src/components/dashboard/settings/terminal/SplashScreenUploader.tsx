@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,28 +16,23 @@ import {
   AlertCircle,
   Layers,
   Clock,
+  Monitor,
 } from 'lucide-react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useTerminalLocations } from '@/hooks/useStripeTerminals';
-import {
-  useTerminalSplashScreen,
   useUploadSplashScreen,
   useRemoveSplashScreen,
   usePushSplashToAllLocations,
   resolveAllTerminalLocations,
 } from '@/hooks/useTerminalSplashScreen';
+import { useTerminalSplashScreen } from '@/hooks/useTerminalSplashScreen';
 import { useLocations } from '@/hooks/useLocations';
 import { useColorTheme } from '@/hooks/useColorTheme';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useTerminalSplashOrigin, upsertSplashOrigin, deleteSplashOrigin } from '@/hooks/useTerminalSplashMetadata';
+import { upsertSplashOrigin, deleteSplashOrigin } from '@/hooks/useTerminalSplashMetadata';
+import { useAllLocationTerminalStatus } from '@/hooks/useAllLocationTerminalStatus';
 import { toast } from 'sonner';
 import { generateDefaultSplash } from '@/lib/generate-terminal-splash';
+
 const TARGET_W = 1080;
 const TARGET_H = 1920;
 const MAX_FILE_SIZE_JPG_PNG = 2 * 1024 * 1024;
@@ -55,23 +50,27 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const { data: locations = [] } = useLocations();
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
-  // Get terminal locations for the selected Zura location
-  const { data: terminalLocations = [] } = useTerminalLocations(selectedLocationId || null);
-  const firstTerminalLocation = terminalLocations[0];
-  const terminalLocationId = firstTerminalLocation?.id;
+  const locationIds = useMemo(() => locations.map(l => l.id), [locations]);
 
-  // Splash screen state
+  // Bulk status for all locations
+  const { data: allStatus = {}, isLoading: loadingAllStatus } = useAllLocationTerminalStatus(locationIds, orgId);
+
+  const selectedStatus = selectedLocationId ? allStatus[selectedLocationId] : null;
+  const terminalLocationId = selectedStatus?.terminalLocationId ?? undefined;
+  const hasTerminalLocation = !!terminalLocationId;
+
+  // Splash screen for the selected location (for preview URL)
   const { data: splashStatus, isLoading: loadingSplash } = useTerminalSplashScreen(
     selectedLocationId || null,
-    terminalLocationId
+    terminalLocationId,
   );
+
   const uploadMutation = useUploadSplashScreen();
   const removeMutation = useRemoveSplashScreen();
   const pushAllMutation = usePushSplashToAllLocations();
 
-  // Durable splash origin tracking
-  const { data: splashOrigin } = useTerminalSplashOrigin(orgId, selectedLocationId || null, terminalLocationId);
-  const isDefaultLuxury = splashOrigin === 'default_luxury';
+  const isDefaultLuxury = selectedStatus?.splashOrigin === 'default_luxury';
+  const hasSplash = selectedStatus?.hasSplash ?? false;
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<{ base64: string; mime: 'image/jpeg' | 'image/png' | 'image/gif'; fromDefault?: boolean } | null>(null);
@@ -81,13 +80,11 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback(async (file: File) => {
-    // Validate type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       toast.error('Unsupported file type', { description: 'Only JPG, PNG, and GIF are supported.' });
       return;
     }
-    // Validate size
     const maxSize = file.type === 'image/gif' ? MAX_FILE_SIZE_GIF : MAX_FILE_SIZE_JPG_PNG;
     if (file.size > maxSize) {
       const limitMB = Math.round(maxSize / (1024 * 1024));
@@ -95,7 +92,6 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       return;
     }
 
-    // GIF: pass through raw base64 (canvas destroys animation)
     if (file.type === 'image/gif') {
       const reader = new FileReader();
       reader.onload = () => {
@@ -108,10 +104,8 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       return;
     }
 
-    // Resize/crop to 1080x1920 using canvas
     const img = new window.Image();
     const url = URL.createObjectURL(file);
-
     img.onload = () => {
       URL.revokeObjectURL(url);
       const canvas = document.createElement('canvas');
@@ -120,19 +114,15 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       const ctx = canvas.getContext('2d')!;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-
-      // Cover-fit: scale to fill, then center-crop
       const scale = Math.max(TARGET_W / img.width, TARGET_H / img.height);
       const sw = TARGET_W / scale;
       const sh = TARGET_H / scale;
       const sx = (img.width - sw) / 2;
       const sy = (img.height - sh) / 2;
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, TARGET_W, TARGET_H);
-
       const mimeOut = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
       const dataUrl = canvas.toDataURL(mimeOut as string, 0.9);
       const base64 = dataUrl.split(',')[1];
-
       setPreviewUrl(dataUrl);
       setPendingFile({ base64, mime: mimeOut as 'image/jpeg' | 'image/png' });
     };
@@ -168,6 +158,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
           try {
             await upsertSplashOrigin(orgId, selectedLocationId, terminalLocationId, wasDefault ? 'default_luxury' : 'custom');
             queryClient.invalidateQueries({ queryKey: ['terminal-splash-metadata'] });
+            queryClient.invalidateQueries({ queryKey: ['all-location-terminal-status'] });
           } catch { /* non-critical */ }
         }
       },
@@ -182,6 +173,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
           try {
             await deleteSplashOrigin(orgId, selectedLocationId, terminalLocationId);
             queryClient.invalidateQueries({ queryKey: ['terminal-splash-metadata'] });
+            queryClient.invalidateQueries({ queryKey: ['all-location-terminal-status'] });
           } catch { /* non-critical */ }
         }
       },
@@ -208,19 +200,19 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       });
       setPreviewUrl(null);
       setPendingFile(null);
+      queryClient.invalidateQueries({ queryKey: ['all-location-terminal-status'] });
     } catch {
       // error handled by mutation
     } finally {
       setPushProgress(null);
     }
-  }, [pendingFile, locations, pushAllMutation]);
+  }, [pendingFile, locations, pushAllMutation, queryClient]);
 
   const { colorTheme } = useColorTheme();
 
   const handleGenerateFromLogo = useCallback(async () => {
     if (!orgLogoUrl) return;
     setGeneratingFromLogo(true);
-
     try {
       const { base64, dataUrl } = await generateDefaultSplash(orgLogoUrl, businessName, colorTheme);
       setPreviewUrl(dataUrl);
@@ -235,8 +227,17 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
 
   const isUploading = uploadMutation.isPending;
   const isRemoving = removeMutation.isPending;
-  const hasTerminalLocation = !!terminalLocationId;
-  const hasSplash = splashStatus?.splash_screen_active === true;
+
+  // Count locations with active splash
+  const activeCount = Object.values(allStatus).filter(s => s.hasSplash).length;
+  const terminalCount = Object.values(allStatus).filter(s => !!s.terminalLocationId).length;
+
+  const handleSelectLocation = (locId: string) => {
+    if (locId === selectedLocationId) return;
+    setSelectedLocationId(locId);
+    setPreviewUrl(null);
+    setPendingFile(null);
+  };
 
   return (
     <Card>
@@ -254,49 +255,91 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
               <CardDescription>Customize the idle screen on your physical readers.</CardDescription>
             </div>
           </div>
-          {hasSplash && (
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30 text-[10px]">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              ACTIVE
+          {terminalCount > 0 && (
+            <Badge variant="outline" className="text-[10px]">
+              {activeCount}/{terminalCount} Active
             </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Location selector */}
-        <div>
-          <label className={cn(tokens.label.default, 'mb-1.5 block')}>Location</label>
-          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a location" />
-            </SelectTrigger>
-            <SelectContent>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Location status list */}
+        {loadingAllStatus ? (
+          <div className="flex items-center justify-center h-20">
+            <Loader2 className={tokens.loading.spinner} />
+          </div>
+        ) : (
+          <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
+            {locations.map((loc) => {
+              const status = allStatus[loc.id];
+              const hasTerminal = !!status?.terminalLocationId;
+              const isSelected = selectedLocationId === loc.id;
+              const splashActive = status?.hasSplash ?? false;
+              const origin = status?.splashOrigin;
 
-        {selectedLocationId && !hasTerminalLocation && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground p-3 rounded-lg bg-muted/30 border">
-            <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-            <span>No terminal location mapped for this location. Create one in the Fleet tab first.</span>
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  disabled={!hasTerminal}
+                  onClick={() => handleSelectLocation(loc.id)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors text-sm',
+                    hasTerminal
+                      ? isSelected
+                        ? 'bg-primary/5 border-l-2 border-l-primary'
+                        : 'hover:bg-muted/40 border-l-2 border-l-transparent'
+                      : 'opacity-50 cursor-not-allowed border-l-2 border-l-transparent',
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Monitor className={cn('w-3.5 h-3.5 shrink-0', hasTerminal ? 'text-muted-foreground' : 'text-muted-foreground/40')} />
+                    <span className={cn('font-sans text-sm truncate', !hasTerminal && 'text-muted-foreground/60')}>
+                      {loc.name}
+                    </span>
+                  </div>
+                  <div className="shrink-0 ml-2">
+                    {!hasTerminal ? (
+                      <span className="text-[10px] text-muted-foreground/50 font-sans whitespace-nowrap">
+                        No terminal registered
+                      </span>
+                    ) : splashActive && origin === 'default_luxury' ? (
+                      <span className="flex items-center gap-1 text-[10px] text-emerald-500 whitespace-nowrap">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Default Luxury
+                      </span>
+                    ) : splashActive && origin === 'custom' ? (
+                      <span className="flex items-center gap-1 text-[10px] text-blue-500 whitespace-nowrap">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Custom Splash
+                      </span>
+                    ) : splashActive ? (
+                      <span className="flex items-center gap-1 text-[10px] text-emerald-500 whitespace-nowrap">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
+                        No Splash
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
 
-        {hasTerminalLocation && (
+        {/* Selected location editor */}
+        {selectedLocationId && hasTerminalLocation && (
           <>
-            {/* Status */}
             {loadingSplash ? (
               <div className="flex items-center justify-center h-32">
                 <Loader2 className={tokens.loading.spinner} />
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4">
-                {/* Dropzone / Preview — centered */}
+                {/* Dropzone / Preview */}
                 <div
                   className={cn(
                     'relative w-[280px] h-[498px] rounded-xl border-2 border-dashed transition-colors shrink-0 overflow-hidden cursor-pointer',
@@ -346,7 +389,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   />
                 </div>
 
-                {/* Action buttons — centered stack */}
+                {/* Action buttons */}
                 <div className="flex flex-col items-center gap-1.5">
                   {pendingFile && (
                     <>
@@ -441,14 +484,21 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   <p className="text-[10px] text-muted-foreground">
                     Recommended: 1080×1920px portrait JPG or PNG under 2MB.
                   </p>
-                   <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs rounded-md px-2.5 py-1 w-fit">
-                     <Clock className="w-3.5 h-3.5 shrink-0" />
-                     <span>Readers auto-update within ~10 minutes of upload.</span>
-                   </div>
+                  <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs rounded-md px-2.5 py-1 w-fit">
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    <span>Readers auto-update within ~10 minutes of upload.</span>
+                  </div>
                 </div>
               </div>
             )}
           </>
+        )}
+
+        {selectedLocationId && !hasTerminalLocation && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground p-3 rounded-lg bg-muted/30 border">
+            <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+            <span>No terminal location mapped for this location. Create one in the Fleet tab first.</span>
+          </div>
         )}
       </CardContent>
     </Card>
