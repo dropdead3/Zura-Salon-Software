@@ -482,7 +482,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                       ) : (
                         <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                       )}
-                      Generate from Logo
+                      Use Default Luxury Splash
                     </Button>
                   )}
 
