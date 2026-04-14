@@ -195,6 +195,7 @@ export function ZuraPayFleetTab({
   onCreateLocationAccount,
   isCreatingLocationAccount,
 }: ZuraPayFleetTabProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showConfirmConnect, setShowConfirmConnect] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
