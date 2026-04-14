@@ -243,7 +243,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       }
 
       // "Powered by Zura" text — bolder presence
-      ctx.fillStyle = p.mutedColor;
+      ctx.fillStyle = p.accentRgba(0.7);
       ctx.font = '500 28px "Termina", sans-serif';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '3px';
