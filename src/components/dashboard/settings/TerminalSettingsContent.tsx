@@ -449,6 +449,7 @@ export function TerminalSettingsContent() {
           <TabsTrigger value="tipping" className="font-sans">Tipping</TabsTrigger>
           <TabsTrigger value="receipts" className="font-sans">Receipts</TabsTrigger>
           <TabsTrigger value="display" className="font-sans">Display</TabsTrigger>
+          <TabsTrigger value="afterpay" className="font-sans">Afterpay</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
@@ -525,6 +526,12 @@ export function TerminalSettingsContent() {
         <TabsContent value="display" className="mt-6">
           <TabErrorBoundary tabName="Display" key={activeTab === 'display' ? 'display-active' : 'display'}>
             <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
+          </TabErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="afterpay" className="mt-6">
+          <TabErrorBoundary tabName="Afterpay" key={activeTab === 'afterpay' ? 'afterpay-active' : 'afterpay'}>
+            <ZuraPayAfterpayTab />
           </TabErrorBoundary>
         </TabsContent>
 
