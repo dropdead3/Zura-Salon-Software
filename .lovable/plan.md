@@ -1,29 +1,23 @@
 
 
-# Fix Receipt Preview — White Background with Black Text
+# Fix Tip Percentage Inputs — Allow Clearing and Quick Editing
 
 ## Problem
-The receipt preview in the Receipts tab inherits the dark dashboard theme (`bg-background`, `text-foreground`, `text-muted-foreground`). Real receipts are always printed on white paper or sent as white-background emails/texts. The preview should reflect reality.
+The `updatePercentage` function rejects empty or NaN values immediately, so you cannot delete digits from the input. It also saves to the database on every keystroke, making editing sluggish.
 
 ## Changes
 
-### `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx` — `ReceiptPreview` component
+### `src/components/dashboard/settings/terminal/ZuraPayTippingTab.tsx`
 
-**Line 25** — Replace theme-aware classes with explicit white/black styling:
-- `bg-background` → `bg-white`
-- Remove `style={{ color: '#1a1a1a' }}` inline and set `text-black` directly
+1. **Add local string state for the three inputs** — `localPercentages` as `string[]` initialized from `localConfig.percentages`. This decouples typing from validation.
 
-**Lines 34, 37, 39, 43-46** — Replace `text-muted-foreground` with explicit gray:
-- `text-muted-foreground` → `text-gray-500` (for secondary text like address, phone, date, labels)
-- `text-foreground` → `text-black` (for emphasis labels like "Client:", "Stylist:")
+2. **Replace `updatePercentage`** with two handlers:
+   - `handlePercentageChange(index, value)` — updates `localPercentages[index]` freely (allows empty string, any digits)
+   - `handlePercentageBlur(index)` — on blur, parse the value, clamp 0-100, default to 0 if empty, then call `save()` and normalize the string state
 
-**Lines 53-55** — Table headers: `text-muted-foreground` → `text-gray-500`
+3. **Wire inputs** — `value={localPercentages[i]}`, `onChange` calls `handlePercentageChange`, `onBlur` calls `handlePercentageBlur`. Change `type="number"` to `type="text" inputMode="numeric" pattern="[0-9]*"` for better mobile UX and to avoid browser number-input quirks.
 
-**Lines 66-69** — Totals section: ensure black text
+4. **Sync effect** — when `config` changes (from server), update `localPercentages` from `config.percentages`.
 
-**Line 74** — Footer: `text-muted-foreground` → `text-gray-400`
-
-**Border** — `border-border` → `border-gray-200` so the card outline also reads as a light paper edge
-
-This is purely cosmetic — the actual `ReceiptPrintView.tsx` (the print/email output) already uses hardcoded white/black styles (`color: #1a1a1a`, no background set = white default), so it's correct. Only the in-app preview needs fixing.
+This lets users freely type, clear, and re-enter values. Validation and save only happen on blur.
 
