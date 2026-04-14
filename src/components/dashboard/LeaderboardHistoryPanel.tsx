@@ -147,7 +147,7 @@ export function LeaderboardHistoryPanel({
         </div>
       ) : (
         <div className="space-y-2">
-          {weekHistory.map((entry) => (
+          {paginatedData.map((entry) => (
             <div
               key={entry.id}
               className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
@@ -169,6 +169,14 @@ export function LeaderboardHistoryPanel({
             </div>
           ))}
         </div>
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          showingFrom={showingFrom}
+          showingTo={showingTo}
+          onPageChange={setCurrentPage}
+        />
       )}
     </Card>
   );
