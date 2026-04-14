@@ -170,17 +170,23 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Subtle corner glow — top-left
-      const tlGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 500);
-      tlGlow.addColorStop(0, p.accentRgba(0.10));
-      tlGlow.addColorStop(1, 'transparent');
+      // Corner glow constants
+      const glowInset = 180;
+      const glowRadius = 760;
+
+      // Corner glow — top-left
+      const tlGlow = ctx.createRadialGradient(glowInset, glowInset, 0, glowInset, glowInset, glowRadius);
+      tlGlow.addColorStop(0, p.accentRgba(0.18));
+      tlGlow.addColorStop(0.55, p.accentRgba(0.06));
+      tlGlow.addColorStop(1, p.accentRgba(0));
       ctx.fillStyle = tlGlow;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Subtle corner glow — bottom-right
-      const brGlow = ctx.createRadialGradient(TARGET_W, TARGET_H, 0, TARGET_W, TARGET_H, 500);
-      brGlow.addColorStop(0, p.accentRgba(0.10));
-      brGlow.addColorStop(1, 'transparent');
+      // Corner glow — bottom-right
+      const brGlow = ctx.createRadialGradient(TARGET_W - glowInset, TARGET_H - glowInset, 0, TARGET_W - glowInset, TARGET_H - glowInset, glowRadius);
+      brGlow.addColorStop(0, p.accentRgba(0.18));
+      brGlow.addColorStop(0.55, p.accentRgba(0.06));
+      brGlow.addColorStop(1, p.accentRgba(0));
       ctx.fillStyle = brGlow;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
