@@ -43,11 +43,19 @@ const DisconnectLocationSchema = BaseSchema.extend({
   location_id: z.string().uuid("location_id is required"),
 });
 
+const CreateLocationAccountSchema = BaseSchema.extend({
+  action: z.literal("create_location_account"),
+  location_id: z.string().uuid("location_id is required for create_location_account"),
+  return_url: z.string().url("return_url must be a valid URL"),
+  refresh_url: z.string().url("refresh_url must be a valid URL"),
+});
+
 const RequestSchema = z.discriminatedUnion("action", [
   OnboardingSchema,
   ConnectLocationSchema,
   ResetAccountSchema,
   DisconnectLocationSchema,
+  CreateLocationAccountSchema,
 ]);
 
 Deno.serve(async (req) => {
@@ -80,7 +88,11 @@ Deno.serve(async (req) => {
     if (!parsed.success) {
       return jsonResponse({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, 400);
     }
-    const { action, organization_id, location_id, return_url, refresh_url } = parsed.data;
+    const body = parsed.data;
+    const { action, organization_id } = body;
+    const location_id = "location_id" in body ? body.location_id : undefined;
+    const return_url = "return_url" in body ? body.return_url : undefined;
+    const refresh_url = "refresh_url" in body ? body.refresh_url : undefined;
 
     // Verify caller is org admin
     const isAdmin = await supabase.rpc("is_org_admin", {
@@ -138,8 +150,8 @@ Deno.serve(async (req) => {
       // Create Account Link for onboarding
       const accountLink = await stripe.accountLinks.create({
         account: accountId,
-        refresh_url: refresh_url,
-        return_url: return_url,
+        refresh_url: refresh_url!,
+        return_url: return_url!,
         type: "account_onboarding",
       });
 
@@ -150,12 +162,98 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "create_location_account") {
+      if (!location_id) {
+        return jsonResponse({ error: "location_id is required" }, 400);
+      }
+
+      // Get location details for the Express account
+      const { data: loc, error: locErr } = await supabase
+        .from("locations")
+        .select("id, name, address, city, state_province, country, stripe_account_id, stripe_connect_status")
+        .eq("id", location_id)
+        .eq("organization_id", organization_id)
+        .single();
+
+      if (locErr || !loc) {
+        return jsonResponse({ error: "Location not found or does not belong to this organization" }, 404);
+      }
+
+      // If location already has an account, just generate a new onboarding link
+      let accountId = loc.stripe_account_id;
+
+      if (!accountId) {
+        // Create a new Express account scoped to this location
+        const account = await stripe.accounts.create({
+          type: "express",
+          business_type: "company",
+          metadata: {
+            organization_id: organization_id,
+            location_id: location_id,
+            location_name: loc.name || "",
+            platform: "zura",
+            account_scope: "location",
+          },
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+        });
+        accountId = account.id;
+
+        // Store on the location
+        const { error: updateErr } = await supabase
+          .from("locations")
+          .update({
+            stripe_account_id: accountId,
+            stripe_connect_status: "pending",
+            stripe_status: "pending",
+            stripe_payments_enabled: false,
+          })
+          .eq("id", location_id)
+          .eq("organization_id", organization_id);
+
+        if (updateErr) {
+          console.error("Failed to update location:", updateErr);
+          return jsonResponse({ error: "Failed to save location account" }, 500);
+        }
+      }
+
+      // Create Account Link for onboarding
+      const accountLink = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: refresh_url!,
+        return_url: return_url!,
+        type: "account_onboarding",
+      });
+
+      return jsonResponse({
+        onboarding_url: accountLink.url,
+        account_id: accountId,
+        location_id: location_id,
+        status: "pending",
+      });
+    }
+
     if (action === "connect_location") {
       if (!location_id) {
         return jsonResponse({ error: "location_id is required for connect_location" }, 400);
       }
 
-      // Org must have active connect account
+      // Check if location already has its own Connect account — skip org copy
+      const { data: loc } = await supabase
+        .from("locations")
+        .select("stripe_account_id, stripe_connect_status")
+        .eq("id", location_id)
+        .eq("organization_id", organization_id)
+        .single();
+
+      if (loc?.stripe_account_id && loc?.stripe_connect_status === "active") {
+        // Location already has its own active account — nothing to do
+        return jsonResponse({ success: true, message: "Location already has its own payment account." });
+      }
+
+      // Org must have active connect account to copy from
       if (org.stripe_connect_status !== "active" || !org.stripe_connect_account_id) {
         return jsonResponse({ error: "Organization payment account is not yet active. Complete onboarding first." }, 400);
       }
@@ -168,6 +266,7 @@ Deno.serve(async (req) => {
             stripe_account_id: org.stripe_connect_account_id,
             stripe_status: "active",
             stripe_payments_enabled: true,
+            stripe_connect_status: "active",
           },
           { count: "exact" }
         )
@@ -263,6 +362,7 @@ Deno.serve(async (req) => {
           stripe_account_id: null,
           stripe_status: null,
           stripe_payments_enabled: false,
+          stripe_connect_status: "not_connected",
         })
         .eq("organization_id", organization_id)
         .eq("stripe_account_id", accountId);
@@ -271,7 +371,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "disconnect_location") {
-      if (!body.location_id) {
+      if (!location_id) {
         return jsonResponse({ error: "location_id is required" }, 400);
       }
 
@@ -281,8 +381,9 @@ Deno.serve(async (req) => {
           stripe_account_id: null,
           stripe_status: null,
           stripe_payments_enabled: false,
+          stripe_connect_status: "not_connected",
         })
-        .eq("id", body.location_id)
+        .eq("id", location_id)
         .eq("organization_id", organization_id);
 
       if (disconnectErr) {

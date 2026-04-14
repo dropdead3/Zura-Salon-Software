@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { resolveConnectAccount } from "../_shared/resolve-connect-account.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +36,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id, action, schedule } = await req.json();
+    const { organization_id, location_id, action, schedule } = await req.json();
     if (!organization_id) {
       return new Response(JSON.stringify({ error: "organization_id is required" }), {
         status: 400,
@@ -59,20 +60,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: org, error: orgError } = await supabase
-      .from("organizations")
-      .select("stripe_connect_account_id, stripe_connect_status")
-      .eq("id", organization_id)
-      .single();
-
-    if (orgError || !org) {
-      return new Response(JSON.stringify({ error: "Organization not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!org.stripe_connect_account_id || org.stripe_connect_status !== "active") {
+    // Resolve Connect account: location-first when location_id provided, then org fallback
+    let connectAccountId: string;
+    try {
+      connectAccountId = await resolveConnectAccount(supabase, organization_id, location_id || null);
+    } catch (resolveErr) {
       return new Response(
         JSON.stringify({ error: "Zura Pay is not active for this organization" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -88,7 +80,6 @@ Deno.serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const connectAccountId = org.stripe_connect_account_id;
 
     // Handle payout schedule update
     if (action === 'update_schedule' && schedule) {
@@ -151,6 +142,7 @@ Deno.serve(async (req) => {
         })),
         payout_schedule: payoutSchedule,
         bank_account: bankAccount,
+        connect_account_id: connectAccountId,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

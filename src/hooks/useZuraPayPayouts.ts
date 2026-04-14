@@ -45,12 +45,14 @@ export interface ZuraPayPayoutsData {
   bank_account: BankAccountInfo | null;
 }
 
-export function useZuraPayPayouts(orgId: string | undefined) {
+export function useZuraPayPayouts(orgId: string | undefined, locationId?: string | null) {
   return useQuery<ZuraPayPayoutsData>({
-    queryKey: ['zura-pay-payouts', orgId],
+    queryKey: ['zura-pay-payouts', orgId, locationId],
     queryFn: async () => {
+      const body: Record<string, unknown> = { organization_id: orgId };
+      if (locationId) body.location_id = locationId;
       const { data, error } = await supabase.functions.invoke('zura-pay-payouts', {
-        body: { organization_id: orgId },
+        body,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

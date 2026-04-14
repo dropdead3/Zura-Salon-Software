@@ -16,6 +16,7 @@ interface ZuraPayActivationChecklistProps {
   hasTerminalLocations: boolean;
   hasReaders: boolean;
   hasFirstTransaction: boolean;
+  locationHasOwnAccount?: boolean;
 }
 
 export function ZuraPayActivationChecklist({
@@ -25,17 +26,22 @@ export function ZuraPayActivationChecklist({
   hasTerminalLocations,
   hasReaders,
   hasFirstTransaction,
+  locationHasOwnAccount,
 }: ZuraPayActivationChecklistProps) {
   const steps: ChecklistStep[] = [
     {
       label: 'Create Account',
       description: 'Set up your Zura Pay account to start processing payments',
-      complete: !!connectStatus && connectStatus !== 'not_connected',
+      complete: locationHasOwnAccount
+        ? true // location has its own account, org-level step is N/A
+        : !!connectStatus && connectStatus !== 'not_connected',
     },
     {
       label: 'Complete Verification',
       description: 'Submit business details and verify your identity',
-      complete: connectStatus === 'active',
+      complete: locationHasOwnAccount
+        ? true // location has its own account, org-level verification is N/A
+        : connectStatus === 'active',
     },
     {
       label: 'Connect Location',
