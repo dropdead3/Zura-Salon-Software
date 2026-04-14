@@ -409,7 +409,7 @@ Deno.serve(async (req) => {
         fileFormData.append("purpose", "terminal_reader_splashscreen");
         fileFormData.append("file", fileBlob, `splash.${ext}`);
 
-        const fileResp = await fetch("https://api.stripe.com/v1/files", {
+        const fileResp = await fetch("https://files.stripe.com/v1/files", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${stripeSecretKey}`,
