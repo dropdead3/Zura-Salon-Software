@@ -16,6 +16,9 @@ const ActionSchema = z.enum([
   "register_reader",
   "delete_reader",
   "enable_cellular",
+  "upload_splash_screen",
+  "get_splash_screen",
+  "remove_splash_screen",
 ]);
 
 const StripeTerminalLocationIdSchema = z
@@ -36,8 +39,9 @@ const RequestBodySchema = z
     label: z.string().max(255).optional(),
     display_name: z.string().max(255).optional(),
     metadata_location_id: z.boolean().optional(),
-  })
-  .strict();
+    image_base64: z.string().max(6_000_000).optional(), // ~4MB base64
+    image_mime_type: z.enum(["image/jpeg", "image/png", "image/gif"]).optional(),
+  });
 
 // Actions that require admin/manager role
 const WRITE_ACTIONS = new Set([
@@ -46,6 +50,8 @@ const WRITE_ACTIONS = new Set([
   "register_reader",
   "delete_reader",
   "enable_cellular",
+  "upload_splash_screen",
+  "remove_splash_screen",
 ]);
 
 Deno.serve(async (req) => {
@@ -372,6 +378,122 @@ Deno.serve(async (req) => {
           { configuration_overrides: cellularConfig.id }
         );
         result = { cellular_enabled: true, configuration_id: cellularConfig.id };
+        break;
+      }
+
+      case "upload_splash_screen": {
+        if (!params.terminal_location_id) {
+          throw new Error("terminal_location_id is required");
+        }
+        if (!params.image_base64 || !params.image_mime_type) {
+          throw new Error("image_base64 and image_mime_type are required");
+        }
+
+        // Decode base64 to binary
+        const binaryStr = atob(params.image_base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        // Validate size: 2MB for JPG/PNG, 4MB for GIF
+        const maxSize = params.image_mime_type === "image/gif" ? 4 * 1024 * 1024 : 2 * 1024 * 1024;
+        if (bytes.length > maxSize) {
+          throw new Error(`Image too large. Max ${maxSize / 1024 / 1024}MB for ${params.image_mime_type}`);
+        }
+
+        // Step 1: Upload file to Stripe Files API
+        const ext = params.image_mime_type === "image/png" ? "png" : params.image_mime_type === "image/gif" ? "gif" : "jpg";
+        const fileBlob = new Blob([bytes], { type: params.image_mime_type });
+        const fileFormData = new FormData();
+        fileFormData.append("purpose", "terminal_reader_splashscreen");
+        fileFormData.append("file", fileBlob, `splash.${ext}`);
+
+        const fileResp = await fetch("https://api.stripe.com/v1/files", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${stripeSecretKey}`,
+            "Stripe-Account": stripeAccountId,
+          },
+          body: fileFormData,
+        });
+        const fileData = await fileResp.json();
+        if (!fileResp.ok) {
+          throw new Error(fileData.error?.message || "Failed to upload file to Stripe");
+        }
+
+        // Step 2: Create a terminal configuration with the splashscreen + cellular
+        const configResult = await stripeRequest("POST", "/v1/terminal/configurations", {
+          "splashscreen": fileData.id,
+          "cellular[enabled]": "true",
+        });
+
+        // Step 3: Assign configuration to the terminal location
+        await stripeRequest("POST", `/v1/terminal/locations/${params.terminal_location_id}`, {
+          configuration_overrides: configResult.id,
+        });
+
+        result = {
+          configuration_id: configResult.id,
+          file_id: fileData.id,
+          splash_screen_active: true,
+        };
+        break;
+      }
+
+      case "get_splash_screen": {
+        if (!params.terminal_location_id) {
+          throw new Error("terminal_location_id is required");
+        }
+        // Get the terminal location to find its configuration_overrides
+        const loc = await stripeRequest("GET", `/v1/terminal/locations/${params.terminal_location_id}`);
+        const configId = loc.configuration_overrides;
+
+        if (!configId) {
+          result = { splash_screen_active: false, configuration_id: null };
+          break;
+        }
+
+        // Fetch the configuration to check for splashscreen
+        const config = await stripeRequest("GET", `/v1/terminal/configurations/${configId}`);
+        const splashFileId = config.splashscreen;
+
+        if (!splashFileId) {
+          result = { splash_screen_active: false, configuration_id: configId };
+          break;
+        }
+
+        // Get file URL for preview
+        let splashUrl: string | null = null;
+        try {
+          const fileInfo = await stripeRequest("GET", `/v1/files/${splashFileId}`);
+          splashUrl = fileInfo.url || null;
+        } catch {
+          // File URL may not always be available
+        }
+
+        result = {
+          splash_screen_active: true,
+          configuration_id: configId,
+          file_id: splashFileId,
+          splash_url: splashUrl,
+        };
+        break;
+      }
+
+      case "remove_splash_screen": {
+        if (!params.terminal_location_id) {
+          throw new Error("terminal_location_id is required");
+        }
+        // Create a new configuration without splashscreen (keep cellular)
+        const newConfig = await stripeRequest("POST", "/v1/terminal/configurations", {
+          "cellular[enabled]": "true",
+        });
+        // Assign to the location, replacing the old config
+        await stripeRequest("POST", `/v1/terminal/locations/${params.terminal_location_id}`, {
+          configuration_overrides: newConfig.id,
+        });
+        result = { splash_screen_active: false, configuration_id: newConfig.id };
         break;
       }
 
