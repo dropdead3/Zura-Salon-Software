@@ -569,7 +569,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   <p className="text-[10px] text-muted-foreground">
                     Recommended: 1080×1920px portrait · JPG/PNG under 2MB · Animated GIF under 4MB
                   </p>
-                  <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs rounded-md px-2.5 py-1 w-fit">
+                  <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs rounded-md px-2.5 py-1 mx-auto w-fit">
                     <Clock className="w-3.5 h-3.5 shrink-0" />
                     <span>Readers auto-update within ~10 minutes of upload.</span>
                   </div>
