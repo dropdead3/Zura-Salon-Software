@@ -16,6 +16,7 @@ interface ZuraPayActivationChecklistProps {
   hasTerminalLocations: boolean;
   hasReaders: boolean;
   hasFirstTransaction: boolean;
+  locationHasOwnAccount?: boolean;
 }
 
 export function ZuraPayActivationChecklist({
