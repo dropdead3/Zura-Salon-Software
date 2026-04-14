@@ -189,23 +189,23 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
       // Calculate center-center layout for logo + business name group
-      const maxLogo = 380;
+      const maxLogo = 440;
       const logoScale = Math.min(maxLogo / img.width, maxLogo / img.height);
       const lw = img.width * logoScale;
       const lh = img.height * logoScale;
-      const textBlockHeight = 60; // approximate height for business name
-      const groupGap = 70; // space between logo and text
+      const textBlockHeight = 40; // smaller location name
+      const groupGap = 50; // tighter gap
       const totalGroupHeight = lh + groupGap + textBlockHeight;
-      const groupTop = (TARGET_H * 0.45) - totalGroupHeight / 2;
+      const groupTop = (TARGET_H / 2) - totalGroupHeight / 2;
 
       // Draw logo centered in group
       const lx = (TARGET_W - lw) / 2;
       const ly = groupTop;
       ctx.drawImage(img, lx, ly, lw, lh);
 
-      // Business name below logo
+      // Location name below logo — smaller
       ctx.fillStyle = p.textColor;
-      ctx.font = '500 52px "Termina", sans-serif';
+      ctx.font = '500 36px "Termina", sans-serif';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '8px';
       const nameY = ly + lh + groupGap;
