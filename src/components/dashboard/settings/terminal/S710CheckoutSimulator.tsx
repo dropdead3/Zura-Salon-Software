@@ -194,7 +194,7 @@ function TipScreen({ total, tipPercentages = [20, 25, 30], colorTheme = 'cream' 
         <p className="text-white/50 text-[9px] tracking-wider uppercase">Subtotal</p>
         <p className="text-white text-base font-medium font-mono mt-0.5">{fmt(total)}</p>
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="flex flex-col gap-2 mb-3">
         {tipPercentages.map((pct, i) => {
           const tipAmount = Math.round(total * pct / 100);
           const isSelected = selected === i;
@@ -206,7 +206,7 @@ function TipScreen({ total, tipPercentages = [20, 25, 30], colorTheme = 'cream' 
               transition={{ delay: i * 0.08 }}
               onClick={() => setSelected(i)}
               className={cn(
-                'rounded-xl py-3 flex flex-col items-center gap-0.5 transition-all border',
+                'rounded-xl py-3 px-4 flex flex-row items-center justify-between transition-all border',
                 isSelected
                   ? 'border-white/30'
                   : 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.06]'
