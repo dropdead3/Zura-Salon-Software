@@ -17,7 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw, CircleCheck, CircleAlert } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface Reader {
@@ -40,6 +41,29 @@ type LocationWithPayment = {
   stripe_connect_status?: string | null;
   legal_name?: string | null;
 };
+
+// Known latest firmware versions per device type (update periodically)
+const LATEST_FIRMWARE: Record<string, string> = {
+  stripe_s700: '2.40.1.0',
+  stripe_s710: '2.40.1.0',
+  bbpos_wisepos_e: '2.40.1.0',
+};
+
+function compareFirmware(current: string | undefined, deviceType: string): 'current' | 'outdated' | 'unknown' {
+  if (!current) return 'unknown';
+  const latest = LATEST_FIRMWARE[deviceType];
+  if (!latest) return 'unknown';
+  const cur = current.split('.').map(Number);
+  const lat = latest.split('.').map(Number);
+  const len = Math.max(cur.length, lat.length);
+  for (let i = 0; i < len; i++) {
+    const c = cur[i] ?? 0;
+    const l = lat[i] ?? 0;
+    if (c < l) return 'outdated';
+    if (c > l) return 'current'; // newer than known
+  }
+  return 'current';
+}
 
 function getConnectionStatus(loc: LocationWithPayment) {
   if (!loc.stripe_account_id) return { label: 'Not Connected', variant: 'outline' as const, dotClass: 'bg-muted-foreground/40' };
@@ -638,7 +662,33 @@ export function ZuraPayFleetTab({
                           </div>
                           {(reader.device_sw_version || reader.ip_address) && (
                             <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
-                              {reader.device_sw_version && <span>FW {reader.device_sw_version}</span>}
+                              {reader.device_sw_version && (
+                                <span className="flex items-center gap-1">
+                                  FW {reader.device_sw_version}
+                                  {(() => {
+                                    const fwStatus = compareFirmware(reader.device_sw_version, reader.device_type);
+                                    if (fwStatus === 'current') {
+                                      return <CircleCheck className="w-3 h-3 text-emerald-500" />;
+                                    }
+                                    if (fwStatus === 'outdated') {
+                                      return (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="inline-flex items-center gap-0.5 text-amber-500 cursor-help">
+                                              <CircleAlert className="w-3 h-3" />
+                                              <span className="text-[10px]">Update Available</span>
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                            Leave the reader powered on and connected overnight. Firmware updates are applied automatically around midnight.
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                </span>
+                              )}
                               {reader.device_sw_version && reader.ip_address && <span>·</span>}
                               {reader.ip_address && <span className="font-mono">{reader.ip_address}</span>}
                             </div>
