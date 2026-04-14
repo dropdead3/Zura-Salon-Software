@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 import type { BookingClientInfo } from './BookingClientForm';
 import { BookingPaymentForm } from './BookingPaymentForm';
+import { AfterpayPromoBadge } from './AfterpayPromoBadge';
 
 interface BookingConfirmationProps {
   theme: BookingSurfaceTheme;
@@ -28,6 +29,7 @@ interface BookingConfirmationProps {
   stripeConnectedAccountId?: string | null;
   onPaymentComplete?: (intentId: string) => void;
   showPaymentForm?: boolean;
+  afterpayEnabled?: boolean;
 }
 
 export function BookingConfirmation({
@@ -35,7 +37,7 @@ export function BookingConfirmation({
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
   depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
   paymentClientSecret, paymentIntentType, stripePublishableKey, stripeConnectedAccountId,
-  onPaymentComplete, showPaymentForm,
+  onPaymentComplete, showPaymentForm, afterpayEnabled,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
     const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
@@ -171,6 +173,13 @@ export function BookingConfirmation({
           <p className="text-xs mt-1 leading-relaxed" style={{ color: theme.mutedTextColor }}>
             {cancellationPolicyText}
           </p>
+        </div>
+      )}
+
+      {/* Afterpay Promo Badge */}
+      {afterpayEnabled && depositAmount != null && depositAmount > 0 && depositAmount <= 4000 && (
+        <div className="mb-4">
+          <AfterpayPromoBadge theme={theme} amount={depositAmount} />
         </div>
       )}
 

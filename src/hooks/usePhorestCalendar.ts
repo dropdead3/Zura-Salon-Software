@@ -58,6 +58,14 @@ export interface PhorestAppointment {
   stripe_payment_intent_id?: string | null;
   payment_method?: string | null;
   payment_status?: string | null;
+  paid_at?: string | null;
+  // Payment link fields
+  payment_link_sent_at?: string | null;
+  payment_link_url?: string | null;
+  split_payment_terminal_intent_id?: string | null;
+  split_payment_link_intent_id?: string | null;
+  // Client contact
+  client_email?: string | null;
   // Source tag (set client-side when merging tables)
   _source?: 'phorest' | 'local';
   // Joined data
