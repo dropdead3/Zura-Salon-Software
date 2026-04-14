@@ -100,20 +100,27 @@ export function CheckoutSummarySheet({
   const { formatDate: formatDateLocale } = useFormatDate();
   const queryClient = useQueryClient();
 
-  // B3: Query org's real afterpay_enabled setting
-  const { data: orgAfterpayEnabled = false } = useQuery({
+  // B3: Query org's real afterpay + surcharge settings
+  const { data: orgAfterpaySettings } = useQuery({
     queryKey: ['org-afterpay-enabled', organizationId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organizations')
-        .select('afterpay_enabled')
+        .select('afterpay_enabled, afterpay_surcharge_enabled, afterpay_surcharge_rate')
         .eq('id', organizationId!)
         .maybeSingle();
       if (error) throw error;
-      return data?.afterpay_enabled ?? false;
+      return {
+        enabled: data?.afterpay_enabled ?? false,
+        surchargeEnabled: data?.afterpay_surcharge_enabled ?? false,
+        surchargeRate: Number(data?.afterpay_surcharge_rate ?? 0.06),
+      };
     },
     enabled: !!organizationId,
   });
+  const orgAfterpayEnabled = orgAfterpaySettings?.enabled ?? false;
+  const orgSurchargeEnabled = orgAfterpaySettings?.surchargeEnabled ?? false;
+  const orgSurchargeRate = orgAfterpaySettings?.surchargeRate ?? 0.06;
 
   // Receipt branding hooks
   const { data: receiptConfig } = useReceiptConfig();
