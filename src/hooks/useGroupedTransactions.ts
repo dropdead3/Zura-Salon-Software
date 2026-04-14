@@ -20,6 +20,15 @@ export interface TransactionLineItem {
   saleClassification: string | null;
 }
 
+export interface UsageChargeLineItem {
+  id: string;
+  serviceName: string | null;
+  chargeType: string;
+  overageQty: number;
+  chargeAmount: number;
+  status: string;
+}
+
 export interface GroupedTransaction {
   transactionId: string;
   transactionDate: string;
@@ -29,12 +38,16 @@ export interface GroupedTransaction {
   paymentMethod: string | null;
   locationId: string | null;
   branchName: string | null;
+  appointmentId: string | null;
   items: TransactionLineItem[];
+  usageCharges: UsageChargeLineItem[];
   subtotal: number;
   taxAmount: number;
   tipAmount: number;
   discountAmount: number;
   totalAmount: number;
+  usageChargeTotal: number;
+  grandTotal: number;
   refundStatus: string | null;
   refundType: string | null;
   refundAmount: number | null;
