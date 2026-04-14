@@ -1,7 +1,9 @@
 import { toast } from 'sonner';
-import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 import type { ReceiptConfig } from '@/hooks/useReceiptConfig';
 import { DEFAULT_RECEIPT_CONFIG } from '@/hooks/useReceiptConfig';
+import type { ReceiptData } from './receiptData';
+import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
+import { groupedTransactionToReceiptData } from './receiptData';
 
 function escapeHtml(str: string): string {
   return str
@@ -12,7 +14,7 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;');
 }
 
-interface ReceiptBusinessInfo {
+export interface ReceiptBusinessInfo {
   logoUrl?: string | null;
   iconUrl?: string | null;
   address?: string;
@@ -34,24 +36,22 @@ function getIconHeight(size?: string): string {
   return '16px';
 }
 
-export function printReceipt(
-  transaction: GroupedTransaction,
+/**
+ * Build the full receipt HTML string from ReceiptData + branding config.
+ * Used by both printReceipt (browser popup) and email receipt (edge function).
+ */
+export function buildReceiptHtml(
+  data: ReceiptData,
   formatCurrency: (n: number) => string,
-  orgName = 'Salon',
+  orgName: string,
   receiptConfig?: ReceiptConfig,
   businessInfo?: ReceiptBusinessInfo,
   redoPolicyFallback?: string,
-) {
-  const win = window.open('', '_blank', 'width=400,height=600');
-  if (!win) {
-    toast.error('Popup blocked — please allow popups for this site to print receipts.');
-    return;
-  }
-
+): string {
   const cfg = receiptConfig ?? DEFAULT_RECEIPT_CONFIG;
   const borderColor = '#e5e5e5';
 
-  const dateStr = new Date(transaction.transactionDate + 'T12:00:00').toLocaleDateString('en-US', {
+  const dateStr = new Date(data.date + 'T12:00:00').toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -70,42 +70,39 @@ export function printReceipt(
     ? `<p style="font-size:11px;color:#888;margin:2px 0;">${escapeHtml(businessInfo.phone)}</p>`
     : '';
 
-  const itemsHtml = transaction.items
+  const itemsHtml = data.items
     .map(
       (item) => `
       <tr>
-        <td style="padding:4px 0;font-size:13px;">${escapeHtml(item.itemName)}</td>
+        <td style="padding:4px 0;font-size:13px;">${escapeHtml(item.name)}</td>
         <td style="padding:4px 0;font-size:13px;text-align:center;">${item.quantity}</td>
-        <td style="padding:4px 0;font-size:13px;text-align:right;">${formatCurrency(item.totalAmount)}</td>
+        <td style="padding:4px 0;font-size:13px;text-align:right;">${formatCurrency(item.amount)}</td>
       </tr>`
     )
     .join('');
 
-  const usageCharges = transaction.usageCharges || [];
-  const usageChargeTotal = usageCharges.reduce((s, c) => s + c.chargeAmount, 0);
+  const usageCharges = data.usageCharges || [];
   const usageChargesHtml = usageCharges.length > 0
     ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid ${borderColor};">
         <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#888;margin:0 0 6px;">Color Room Charges</p>
         <table style="width:100%;border-collapse:collapse;">
           <tbody>
             ${usageCharges.map(c => `<tr>
-              <td style="padding:3px 0;font-size:12px;">${escapeHtml(c.serviceName || (c.chargeType === 'product_cost' ? 'Product Cost' : 'Overage'))}</td>
-              <td style="padding:3px 0;font-size:12px;text-align:center;">${c.overageQty}</td>
-              <td style="padding:3px 0;font-size:12px;text-align:right;">${formatCurrency(c.chargeAmount)}</td>
+              <td style="padding:3px 0;font-size:12px;">${escapeHtml(c.name)}</td>
+              <td style="padding:3px 0;font-size:12px;text-align:center;">${c.quantity}</td>
+              <td style="padding:3px 0;font-size:12px;text-align:right;">${formatCurrency(c.amount)}</td>
             </tr>`).join('')}
           </tbody>
         </table>
       </div>`
     : '';
 
-  const grandTotal = transaction.totalAmount + transaction.tipAmount + usageChargeTotal;
-
   const iconHeight = getIconHeight(cfg.footer_icon_size as string);
 
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
-  <title>Receipt - ${transaction.transactionId}</title>
+  <title>Receipt - ${data.receiptNumber}</title>
   <style>
     body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 24px; max-width: 360px; margin: 0 auto; color: #1a1a1a; }
     .header { text-align: ${cfg.logo_position === 'center' ? 'center' : 'left'}; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid ${borderColor}; }
@@ -133,10 +130,10 @@ export function printReceipt(
     <p>${dateStr}</p>
   </div>
   <div class="meta">
-    <div><strong>Client:</strong> ${escapeHtml(transaction.clientName || 'Walk-in')}</div>
-    ${cfg.show_stylist && transaction.stylistName ? `<div><strong>Stylist:</strong> ${escapeHtml(transaction.stylistName)}</div>` : ''}
-    ${cfg.show_payment_method && transaction.paymentMethod ? `<div><strong>Payment:</strong> ${escapeHtml(transaction.paymentMethod)}</div>` : ''}
-    <div><strong>Transaction:</strong> ${escapeHtml(transaction.transactionId.slice(0, 12))}…</div>
+    <div><strong>Client:</strong> ${escapeHtml(data.clientName)}</div>
+    ${cfg.show_stylist && data.stylistName ? `<div><strong>Stylist:</strong> ${escapeHtml(data.stylistName)}</div>` : ''}
+    ${cfg.show_payment_method && data.paymentMethod ? `<div><strong>Payment:</strong> ${escapeHtml(data.paymentMethod)}</div>` : ''}
+    <div><strong>Transaction:</strong> ${escapeHtml(data.receiptNumber.slice(0, 12))}…</div>
   </div>
    <table>
     <thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
@@ -144,12 +141,12 @@ export function printReceipt(
   </table>
   ${usageChargesHtml}
   <div class="totals">
-    <div><span>Subtotal</span><span>${formatCurrency(transaction.subtotal)}</span></div>
-    ${transaction.discountAmount > 0 ? `<div><span>Discount</span><span>-${formatCurrency(transaction.discountAmount)}</span></div>` : ''}
-    <div><span>Tax</span><span>${formatCurrency(transaction.taxAmount)}</span></div>
-    ${transaction.tipAmount > 0 ? `<div><span>Tip</span><span>${formatCurrency(transaction.tipAmount)}</span></div>` : ''}
-    ${usageChargeTotal > 0 ? `<div><span>Color Room</span><span>${formatCurrency(usageChargeTotal)}</span></div>` : ''}
-    <div class="grand"><span>Total</span><span>${formatCurrency(grandTotal)}</span></div>
+    <div><span>Subtotal</span><span>${formatCurrency(data.subtotal)}</span></div>
+    ${data.discount > 0 ? `<div><span>${data.discountLabel ? escapeHtml(data.discountLabel) : 'Discount'}</span><span>-${formatCurrency(data.discount)}</span></div>` : ''}
+    <div><span>Tax</span><span>${formatCurrency(data.taxAmount)}</span></div>
+    ${data.tipAmount > 0 ? `<div><span>Tip</span><span>${formatCurrency(data.tipAmount)}</span></div>` : ''}
+    ${data.usageChargeTotal > 0 ? `<div><span>Color Room</span><span>${formatCurrency(data.usageChargeTotal)}</span></div>` : ''}
+    <div class="grand"><span>Total</span><span>${formatCurrency(data.grandTotal)}</span></div>
   </div>
   <div class="footer">
     ${cfg.custom_message ? `<p>${escapeHtml(cfg.custom_message)}</p>` : ''}
@@ -191,10 +188,47 @@ export function printReceipt(
     </div>`;
   })()}
   ${cfg.show_footer_icon && businessInfo?.iconUrl ? `<div style="text-align:center;margin-top:12px;"><img src="${escapeHtml(businessInfo.iconUrl)}" alt="" style="height:${iconHeight};object-fit:contain;opacity:0.4;" /></div>` : ''}
-  <script>window.onload = function() { window.print(); }</script>
 </body>
 </html>`;
+}
 
-  win.document.write(html);
+/**
+ * Print a receipt in a new browser window.
+ * Accepts ReceiptData directly.
+ */
+export function printReceiptFromData(
+  data: ReceiptData,
+  formatCurrency: (n: number) => string,
+  orgName = 'Salon',
+  receiptConfig?: ReceiptConfig,
+  businessInfo?: ReceiptBusinessInfo,
+  redoPolicyFallback?: string,
+) {
+  const win = window.open('', '_blank', 'width=400,height=600');
+  if (!win) {
+    toast.error('Popup blocked — please allow popups for this site to print receipts.');
+    return;
+  }
+
+  const html = buildReceiptHtml(data, formatCurrency, orgName, receiptConfig, businessInfo, redoPolicyFallback);
+  const printHtml = html.replace('</body>', '<script>window.onload = function() { window.print(); }</script>\n</body>');
+
+  win.document.write(printHtml);
   win.document.close();
+}
+
+/**
+ * Legacy API: print receipt from GroupedTransaction.
+ * Adapts to the new ReceiptData interface internally.
+ */
+export function printReceipt(
+  transaction: GroupedTransaction,
+  formatCurrency: (n: number) => string,
+  orgName = 'Salon',
+  receiptConfig?: ReceiptConfig,
+  businessInfo?: ReceiptBusinessInfo,
+  redoPolicyFallback?: string,
+) {
+  const data = groupedTransactionToReceiptData(transaction);
+  printReceiptFromData(data, formatCurrency, orgName, receiptConfig, businessInfo, redoPolicyFallback);
 }

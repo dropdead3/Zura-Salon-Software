@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 // Switch removed - rebook toggle replaced by rebooking gate
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { toast } from 'sonner';
-import { jsPDF } from 'jspdf';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { BusinessSettings } from '@/hooks/useBusinessSettings';
 import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
@@ -29,14 +28,16 @@ import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSe
 import { useActiveTerminalReader } from '@/hooks/useActiveTerminalReader';
 import { useTerminalCheckoutFlow, type TerminalFlowState } from '@/hooks/useTerminalCheckoutFlow';
 import { useTerminalDeposit } from '@/hooks/useTerminalDeposit';
+import { useReceiptConfig } from '@/hooks/useReceiptConfig';
+import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
+import { useBusinessName } from '@/hooks/useBusinessSettings';
+import { printReceiptFromData, buildReceiptHtml } from '@/components/dashboard/transactions/ReceiptPrintView';
+import type { ReceiptBusinessInfo } from '@/components/dashboard/transactions/ReceiptPrintView';
+import { checkoutToReceiptData } from '@/components/dashboard/transactions/receiptData';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
-// Constants
-const RECEIPT_WIDTH = 80; // mm
-const RECEIPT_MARGIN = 5; // mm
-
-// Helpers
 const formatAddress = (address: any) => {
   if (!address) return '';
   return `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
@@ -96,6 +97,12 @@ export function CheckoutSummarySheet({
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
+
+  // Receipt branding hooks
+  const { data: receiptConfig } = useReceiptConfig();
+  const { data: socialLinks } = useWebsiteSocialLinksSettings();
+  const { data: reviewSettings } = useReviewThresholdSettings();
+  const orgName = useBusinessName();
 
   type GatePhase = 'gate' | 'declining' | 'checkout';
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
@@ -241,216 +248,76 @@ export function CheckoutSummarySheet({
     }
   };
 
-  const generateReceiptPDF = (preview: boolean = false) => {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: [80, 200], // Receipt paper width
+  const buildBusinessInfo = (): ReceiptBusinessInfo => {
+    const logoUrl = businessSettings?.logo_light_url || businessSettings?.logo_dark_url || null;
+    const iconUrl = businessSettings?.icon_light_url || businessSettings?.icon_dark_url || null;
+    const addressParts = [businessSettings?.mailing_address, businessSettings?.city, businessSettings?.state, businessSettings?.zip].filter(Boolean);
+    return {
+      logoUrl,
+      iconUrl,
+      address: addressParts.join(', '),
+      phone: businessSettings?.phone || null,
+      website: businessSettings?.website || null,
+      socials: {
+        instagram: socialLinks?.instagram || '',
+        facebook: socialLinks?.facebook || '',
+        tiktok: socialLinks?.tiktok || '',
+      },
+      reviewUrls: {
+        google: reviewSettings?.googleReviewUrl || '',
+        yelp: reviewSettings?.yelpReviewUrl || '',
+        facebook: reviewSettings?.facebookReviewUrl || '',
+      },
+    };
+  };
+
+  const buildCheckoutReceiptData = () => {
+    return checkoutToReceiptData({
+      appointment,
+      stylistName,
+      addonEvents,
+      productCostCharges,
+      overageCharges,
+      subtotal,
+      discount,
+      discountLabel: appliedPromo?.promotion?.name,
+      taxAmount: tax,
+      tipAmount,
+      grandTotal,
+      paymentMethod,
     });
+  };
 
-    const pageWidth = 80;
-    const margin = 5;
-    let y = 10;
+  const handlePrintReceipt = () => {
+    const data = buildCheckoutReceiptData();
+    printReceiptFromData(data, formatCurrency, orgName, receiptConfig, buildBusinessInfo());
+  };
 
-    // Business name
-    const businessName = businessSettings?.business_name || 'Salon';
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(businessName, pageWidth / 2, y, { align: 'center' });
-    y += 6;
-
-    // Location info
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    if (locationName) {
-      doc.text(locationName, pageWidth / 2, y, { align: 'center' });
-      y += 4;
+  const handleEmailReceipt = async () => {
+    const clientEmail = (appointment as any).client_email;
+    if (!clientEmail) {
+      toast.error('No email on file for this client');
+      return;
     }
-    if (locationAddress) {
-      doc.text(locationAddress, pageWidth / 2, y, { align: 'center' });
-      y += 4;
-    }
-    if (locationPhone) {
-      doc.text(locationPhone, pageWidth / 2, y, { align: 'center' });
-      y += 4;
-    }
-    y += 2;
-
-    // Dashed line using small dots
-    doc.setDrawColor(150);
-    for (let x = margin; x < pageWidth - margin; x += 2) {
-      doc.line(x, y, x + 1, y);
-    }
-    doc.setDrawColor(0);
-    y += 6;
-
-    // Date and time
-    doc.setFontSize(8);
-    doc.text(`Date: ${formatDate()}`, margin, y);
-    y += 4;
-    doc.text(`Time: ${formatTime()}`, margin, y);
-    y += 4;
-    doc.text(`Receipt #: ${appointment.id.slice(-8).toUpperCase()}`, margin, y);
-    y += 6;
-
-    // Dashed line
-    doc.setDrawColor(150);
-    for (let x = margin; x < pageWidth - margin; x += 2) {
-      doc.line(x, y, x + 1, y);
-    }
-    doc.setDrawColor(0);
-    y += 6;
-
-    // Client and stylist
-    doc.text(`Client: ${appointment.client_name || 'Walk-in'}`, margin, y);
-    y += 4;
-    doc.text(`Stylist: ${stylistName}`, margin, y);
-    y += 6;
-
-    // Dashed line
-    doc.setDrawColor(150);
-    for (let x = margin; x < pageWidth - margin; x += 2) {
-      doc.line(x, y, x + 1, y);
-    }
-    doc.setDrawColor(0);
-    y += 6;
-
-    // Service
-    doc.setFont('helvetica', 'bold');
-    doc.text('Service', margin, y);
-    y += 4;
-    doc.setFont('helvetica', 'normal');
-    
-    const serviceName = appointment.service_name || 'Service';
-    const serviceLines = doc.splitTextToSize(serviceName, pageWidth - margin * 2 - 20);
-    doc.text(serviceLines, margin, y);
-    doc.text(formatCurrency(subtotal), pageWidth - margin, y, { align: 'right' });
-    y += 4 * serviceLines.length + 4;
-
-    // Dashed line
-    doc.setDrawColor(150);
-    for (let x = margin; x < pageWidth - margin; x += 2) {
-      doc.line(x, y, x + 1, y);
-    }
-    doc.setDrawColor(0);
-    y += 6;
-
-    // Add-ons
-    if (addonEvents.length > 0) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Add-Ons', margin, y);
-      y += 4;
-      doc.setFont('helvetica', 'normal');
-      for (const addon of addonEvents) {
-        doc.text(addon.addon_name, margin, y);
-        doc.text(formatCurrency(addon.addon_price), pageWidth - margin, y, { align: 'right' });
-        y += 4;
-      }
-      y += 2;
-    }
-
-    // Product charges
-    if (productChargeTotal > 0) {
-      doc.setFont('helvetica', 'bold');
-      doc.text(productChargeLabel, margin, y);
-      y += 4;
-      doc.setFont('helvetica', 'normal');
-      for (const pc of productCostCharges) {
-        doc.text(pc.service_name ?? 'Product', margin, y);
-        doc.text(formatCurrency(pc.charge_amount), pageWidth - margin, y, { align: 'right' });
-        y += 4;
-      }
-      y += 2;
-    }
-
-    // Totals
-    doc.text('Subtotal', margin, y);
-    doc.text(formatCurrency(subtotal), pageWidth - margin, y, { align: 'right' });
-    y += 4;
-
-    if (addonTotal > 0) {
-      doc.text('Add-Ons', margin, y);
-      doc.text(formatCurrency(addonTotal), pageWidth - margin, y, { align: 'right' });
-      y += 4;
-    }
-
-    // Discount / promo line
-    if (discount > 0) {
-      doc.text(`Discount${appliedPromo?.promotion?.name ? ` (${appliedPromo.promotion.name})` : ''}`, margin, y);
-      doc.text(`-${formatCurrency(discount)}`, pageWidth - margin, y, { align: 'right' });
-      y += 4;
-    }
-
-    if (productChargeTotal > 0) {
-      doc.text(productChargeLabel, margin, y);
-      doc.text(formatCurrency(productChargeTotal), pageWidth - margin, y, { align: 'right' });
-      y += 4;
-    }
-
-    if (overageChargeTotal > 0) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Additional Product Usage', margin, y);
-      y += 4;
-      doc.setFont('helvetica', 'normal');
-      for (const oc of overageCharges) {
-        doc.text(oc.service_name ?? 'Overage', margin, y);
-        doc.text(formatCurrency(oc.charge_amount), pageWidth - margin, y, { align: 'right' });
-        y += 4;
-      }
-      y += 2;
-    }
-
-    doc.text(`Tax (${(taxRate * 100).toFixed(1)}%)`, margin, y);
-    doc.text(formatCurrency(tax), pageWidth - margin, y, { align: 'right' });
-    y += 4;
-
-    // Solid line before total
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 4;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Checkout Total', margin, y);
-    doc.text(formatCurrency(checkoutTotal), pageWidth - margin, y, { align: 'right' });
-    y += 5;
-
-    if (tipAmount > 0) {
-      doc.setFont('helvetica', 'normal');
-      doc.text('Tip', margin, y);
-      doc.text(formatCurrency(tipAmount), pageWidth - margin, y, { align: 'right' });
-      y += 4;
-
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 4;
-
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('GRAND TOTAL', margin, y);
-      doc.text(formatCurrency(grandTotal), pageWidth - margin, y, { align: 'right' });
-      y += 6;
-    }
-
-    // Footer
-    y += 6;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Thank you for visiting!', pageWidth / 2, y, { align: 'center' });
-    y += 4;
-    if (businessSettings?.website) {
-      doc.text(businessSettings.website, pageWidth / 2, y, { align: 'center' });
-    }
-
-    if (preview) {
-      const pdfBlob = doc.output('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      const win = window.open(url, '_blank');
-      if (!win) {
-        toast.error('Pop-up blocked — please allow pop-ups or use the download button instead.');
-      }
-    } else {
-      doc.save(`receipt-${appointment.id.slice(-8)}.pdf`);
-      toast.success('Receipt downloaded');
+    try {
+      const data = buildCheckoutReceiptData();
+      const html = buildReceiptHtml(data, formatCurrency, orgName, receiptConfig, buildBusinessInfo());
+      const { error } = await supabase.functions.invoke('send-receipt', {
+        body: {
+          method: 'email',
+          recipient: clientEmail,
+          receiptHtml: html,
+          orgName,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Receipt emailed to ${clientEmail}`);
+    } catch (err) {
+      console.error('Failed to email receipt:', err);
+      toast.error('Failed to send receipt email');
     }
   };
+
 
   const handleConfirm = async () => {
     const finalReason = declineReason === 'Other' ? declineOtherText.trim() : declineReason;
@@ -966,14 +833,22 @@ export function CheckoutSummarySheet({
             <span className="text-xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Button
               variant="outline"
-              onClick={() => generateReceiptPDF(false)}
+              onClick={handlePrintReceipt}
               className="w-full"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Receipt
+              <Receipt className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleEmailReceipt}
+              className="w-full"
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Email
             </Button>
             {paymentMethod === 'card_reader' && ['awaiting_tap', 'processing', 'displaying_cart'].includes(terminalFlow.flowState) ? (
               <Button
