@@ -42,12 +42,12 @@ export function useUpdateSiteSetting<T extends SiteSettingValue = SiteSettingVal
       
       const { error } = await supabase
         .from('site_settings')
-        .update({ 
+        .upsert({
+          id: key,
+          organization_id: orgId,
           value: value as never,
-          updated_by: user?.id 
-        })
-        .eq('id', key)
-        .eq('organization_id', orgId);
+          updated_by: user?.id,
+        }, { onConflict: 'id,organization_id' });
 
       if (error) throw error;
     },
