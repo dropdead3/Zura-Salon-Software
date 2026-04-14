@@ -20,8 +20,11 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   useTerminalLocations, useTerminalReaders,
   useCreateTerminalLocation, useDeleteTerminalLocation,
-  useRegisterReader, useDeleteReader,
+  useRegisterReader, useDeleteReader, invokeTerminalAction,
 } from '@/hooks/useStripeTerminals';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useColorTheme } from '@/hooks/useColorTheme';
+import { generateDefaultSplash } from '@/lib/generate-terminal-splash';
 import { useOrgConnectStatus, useOrgBankLast4, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation, useCreateLocationAccount } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
