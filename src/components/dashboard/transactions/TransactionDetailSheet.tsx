@@ -77,6 +77,7 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
   const { isLeadership } = useLeadershipCheck();
   const [voidOpen, setVoidOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Receipt branding data
   const { data: receiptConfig } = useReceiptConfig();
