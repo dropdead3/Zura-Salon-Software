@@ -120,6 +120,17 @@ Deno.serve(async (req) => {
     }
 
     if (!locationData.stripe_account_id) {
+      // For read-only actions, return empty data instead of an error
+      const readOnlyActions = ["list_locations", "list_readers", "get_splash_screen"];
+      if (readOnlyActions.includes(parsed.data.action)) {
+        return new Response(
+          JSON.stringify({ data: { data: [] } }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
       return new Response(
         JSON.stringify({ error: "Location is not connected to Zura Pay" }),
         {
