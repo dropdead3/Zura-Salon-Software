@@ -470,6 +470,8 @@ function ThemeTab() {
   const activateTheme = useActivateTheme();
   const { setColorTheme } = useColorTheme();
   const { toast } = useToast();
+  const { data: categoryThemes } = useServiceCategoryThemes();
+  const applyCategoryTheme = useApplyCategoryTheme();
   const isMobile = useIsMobile();
 
   // Editor state
@@ -488,9 +490,13 @@ function ThemeTab() {
     try {
       await activateTheme.mutateAsync(themeId);
       // Apply color scheme
-      const validSchemes = ['cream', 'rose', 'sage', 'ocean'];
+      const validSchemes = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir'];
       if (validSchemes.includes(theme.color_scheme)) {
-        setColorTheme(theme.color_scheme as ColorTheme);
+        const colorThemeId = theme.color_scheme as ColorTheme;
+        setColorTheme(colorThemeId);
+        const mappedName = COLOR_THEME_TO_CATEGORY_MAP[colorThemeId];
+        const matched = categoryThemes?.find(t => t.name === mappedName);
+        if (matched) applyCategoryTheme.mutate(matched);
       }
       toast({ title: 'Theme activated', description: `"${theme.name}" is now your active theme.` });
     } catch {
