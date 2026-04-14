@@ -1389,6 +1389,7 @@ export default function PaymentOps() {
                     </p>
                   </div>
                 ) : (
+                  <>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1401,7 +1402,7 @@ export default function PaymentOps() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredHolds.map((hold) => (
+                      {paginatedHolds.map((hold) => (
                         <TableRow key={hold.id}>
                           <TableCell className="font-medium">{hold.client_name || 'Walk-in'}</TableCell>
                           <TableCell className="text-muted-foreground">{hold.staff_name || '—'}</TableCell>
@@ -1458,6 +1459,15 @@ export default function PaymentOps() {
                       ))}
                     </TableBody>
                   </Table>
+                  <TablePagination
+                    currentPage={holdsPage}
+                    totalPages={holdsTotalPages}
+                    totalItems={holdsTotalItems}
+                    showingFrom={holdsShowingFrom}
+                    showingTo={holdsShowingTo}
+                    onPageChange={setHoldsPage}
+                  />
+                  </>
                 )}
               </CardContent>
             </Card>
