@@ -92,7 +92,9 @@ import { Users as UsersIcon, Home } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
-import { Pencil } from 'lucide-react';
+import { Pencil, Send } from 'lucide-react';
+import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
+import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 
 
 // ─── Cancellation Fee Section sub-component ─────────────────────
@@ -2120,6 +2122,20 @@ export function AppointmentDetailSheet({
                   </TabsContent>
                 </ScrollArea>
               </Tabs>
+
+              {/* ─── Payment Link Status ────────────────────── */}
+              {appointment.payment_link_sent_at && (
+                <div className="px-4 py-2.5 border-t border-border/60 bg-card/40 shrink-0">
+                  <PaymentLinkStatusBadge
+                    paymentLinkSentAt={appointment.payment_link_sent_at}
+                    paymentLinkUrl={appointment.payment_link_url}
+                    splitPaymentTerminalIntentId={appointment.split_payment_terminal_intent_id}
+                    splitPaymentLinkIntentId={appointment.split_payment_link_intent_id}
+                    paidAt={appointment.paid_at}
+                    paymentStatus={appointment.payment_status}
+                  />
+                </div>
+              )}
 
               {/* ─── Footer Action Bar (Lifecycle Only) ────────── */}
               {(availableTransitions.includes('confirmed') || availableTransitions.includes('checked_in') || availableTransitions.includes('completed')) && (

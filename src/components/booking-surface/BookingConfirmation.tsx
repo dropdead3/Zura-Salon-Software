@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 import type { BookingClientInfo } from './BookingClientForm';
 import { BookingPaymentForm } from './BookingPaymentForm';
+import { AfterpayPromoBadge } from './AfterpayPromoBadge';
 
 interface BookingConfirmationProps {
   theme: BookingSurfaceTheme;

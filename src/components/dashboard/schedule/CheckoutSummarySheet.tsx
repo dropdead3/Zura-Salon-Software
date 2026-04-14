@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send } from 'lucide-react';
+import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -776,6 +777,22 @@ export function CheckoutSummarySheet({
                 </button>
               ))}
             </div>
+
+            {/* Send Payment Link (Afterpay) */}
+            {organizationId && appointment && (
+              <div className="pt-1">
+                <SendToPayButton
+                  appointmentId={appointment.id}
+                  organizationId={organizationId}
+                  totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                  clientName={appointment.client_name}
+                  clientEmail={appointment.client_email}
+                  clientPhone={appointment.client_phone}
+                  afterpayEnabled={true}
+                  disabled={isUpdating}
+                />
+              </div>
+            )}
 
             {/* Reader selector (only when Card is selected and multiple readers) */}
             {paymentMethod === 'card_reader' && hasReaders && (
