@@ -56,7 +56,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
               <CardDescription>What your clients see on the S710 touchscreen at checkout.</CardDescription>
             </div>
           </div>
-          <Badge variant="outline" className="bg-violet-500/10 text-violet-500 border-violet-500/30 text-[10px]">
+          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[10px] font-display tracking-wider">
             S710 · 5.5" DISPLAY
           </Badge>
         </div>
