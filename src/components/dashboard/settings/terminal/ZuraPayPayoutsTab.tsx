@@ -3,7 +3,6 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,8 +18,10 @@ import {
   CalendarClock, Save, Loader2, Info, ShieldCheck, AlertCircle,
 } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useZuraPayPayouts, useUpdatePayoutSchedule, type PayoutSchedule } from '@/hooks/useZuraPayPayouts';
+import { useZuraPayPayouts, useUpdatePayoutSchedule, useLoadMorePayouts, type PayoutSchedule } from '@/hooks/useZuraPayPayouts';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useLocations } from '@/hooks/useLocations';
+import { LocationSelect } from '@/components/ui/location-select';
 
 function formatUnixDate(unix: number): string {
   return new Date(unix * 1000).toLocaleDateString('en-US', {
@@ -55,8 +56,14 @@ const BANK_STATUS_MAP: Record<string, { label: string; icon: typeof ShieldCheck;
 export function ZuraPayPayoutsTab() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data, isLoading, error } = useZuraPayPayouts(orgId);
-  const updateSchedule = useUpdatePayoutSchedule(orgId);
+  const { data: locations = [] } = useLocations();
+
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
+  const locationId = selectedLocationId === 'all' ? null : selectedLocationId;
+
+  const { data, isLoading, error } = useZuraPayPayouts(orgId, locationId);
+  const updateSchedule = useUpdatePayoutSchedule(orgId, locationId);
+  const loadMore = useLoadMorePayouts(orgId, locationId);
   const { formatCurrency } = useFormatCurrency();
 
   const [scheduleInterval, setScheduleInterval] = useState<PayoutSchedule['interval']>('daily');
@@ -74,11 +81,24 @@ export function ZuraPayPayoutsTab() {
     }
   }, [data?.payout_schedule]);
 
+  // Auto-select first location for single-location orgs
+  useEffect(() => {
+    if (locations.length === 1 && selectedLocationId === 'all') {
+      setSelectedLocationId(locations[0].id);
+    }
+  }, [locations, selectedLocationId]);
+
   const handleSaveSchedule = () => {
     const payload: Partial<PayoutSchedule> = { interval: scheduleInterval };
     if (scheduleInterval === 'weekly') payload.weekly_anchor = weeklyAnchor;
     if (scheduleInterval === 'monthly') payload.monthly_anchor = monthlyAnchor;
     updateSchedule.mutate(payload);
+  };
+
+  const handleLoadMore = () => {
+    if (!data?.payouts.length) return;
+    const lastPayout = data.payouts[data.payouts.length - 1];
+    loadMore.mutate(lastPayout.id);
   };
 
   if (isLoading) {
@@ -130,6 +150,19 @@ export function ZuraPayPayoutsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Location Selector */}
+      {locations.length > 1 && (
+        <div className="flex items-center gap-3">
+          <LocationSelect
+            value={selectedLocationId}
+            onValueChange={setSelectedLocationId}
+            includeAll
+            allLabel="Organization Default"
+            triggerClassName="w-auto min-w-[220px]"
+          />
+        </div>
+      )}
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
@@ -401,42 +434,60 @@ export function ZuraPayPayoutsTab() {
               />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Total Payout</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Date Sent</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Date Expected</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.payouts.map((payout) => {
-                  const statusConfig = PAYOUT_STATUS_MAP[payout.status] || PAYOUT_STATUS_MAP.pending;
-                  return (
-                    <TableRow key={payout.id}>
-                      <TableCell className="font-sans font-medium">
-                        <BlurredAmount>{formatCurrency(payout.amount / 100)}</BlurredAmount>
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border',
-                          statusConfig.classes,
-                        )}>
-                          {statusConfig.label}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {formatUnixDate(payout.created)}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {formatUnixDate(payout.arrival_date)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className={tokens.table.columnHeader}>Total Payout</TableHead>
+                    <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                    <TableHead className={tokens.table.columnHeader}>Date Sent</TableHead>
+                    <TableHead className={tokens.table.columnHeader}>Date Expected</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.payouts.map((payout) => {
+                    const statusConfig = PAYOUT_STATUS_MAP[payout.status] || PAYOUT_STATUS_MAP.pending;
+                    return (
+                      <TableRow key={payout.id}>
+                        <TableCell className="font-sans font-medium">
+                          <BlurredAmount>{formatCurrency(payout.amount / 100)}</BlurredAmount>
+                        </TableCell>
+                        <TableCell>
+                          <span className={cn(
+                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border',
+                            statusConfig.classes,
+                          )}>
+                            {statusConfig.label}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {formatUnixDate(payout.created)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {formatUnixDate(payout.arrival_date)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              {data.has_more && (
+                <div className="px-5 py-3 border-t border-border/30">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLoadMore}
+                    disabled={loadMore.isPending}
+                    className="w-full text-muted-foreground hover:text-foreground"
+                  >
+                    {loadMore.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    Load More Payouts
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

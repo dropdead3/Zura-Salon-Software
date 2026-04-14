@@ -41,6 +41,7 @@ export interface ZuraPayPayoutsData {
     pending: BalanceAmount[];
   };
   payouts: PayoutItem[];
+  has_more?: boolean;
   payout_schedule: PayoutSchedule | null;
   bank_account: BankAccountInfo | null;
 }
@@ -63,17 +64,55 @@ export function useZuraPayPayouts(orgId: string | undefined, locationId?: string
   });
 }
 
-export function useUpdatePayoutSchedule(orgId: string | undefined) {
+export function useLoadMorePayouts(orgId: string | undefined, locationId?: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (startingAfter: string) => {
+      const body: Record<string, unknown> = {
+        organization_id: orgId,
+        starting_after: startingAfter,
+      };
+      if (locationId) body.location_id = locationId;
+      const { data, error } = await supabase.functions.invoke('zura-pay-payouts', {
+        body,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as ZuraPayPayoutsData;
+    },
+    onSuccess: (newData) => {
+      queryClient.setQueryData<ZuraPayPayoutsData>(
+        ['zura-pay-payouts', orgId, locationId],
+        (old) => {
+          if (!old) return newData;
+          return {
+            ...old,
+            payouts: [...old.payouts, ...newData.payouts],
+            has_more: newData.has_more,
+          };
+        }
+      );
+    },
+    onError: (err: Error) => {
+      toast.error('Failed to load more payouts', { description: err.message });
+    },
+  });
+}
+
+export function useUpdatePayoutSchedule(orgId: string | undefined, locationId?: string | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (schedule: Partial<PayoutSchedule>) => {
+      const body: Record<string, unknown> = {
+        organization_id: orgId,
+        action: 'update_schedule',
+        schedule,
+      };
+      if (locationId) body.location_id = locationId;
       const { data, error } = await supabase.functions.invoke('zura-pay-payouts', {
-        body: {
-          organization_id: orgId,
-          action: 'update_schedule',
-          schedule,
-        },
+        body,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -81,7 +120,7 @@ export function useUpdatePayoutSchedule(orgId: string | undefined) {
     },
     onSuccess: () => {
       toast.success('Payout schedule updated');
-      queryClient.invalidateQueries({ queryKey: ['zura-pay-payouts', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['zura-pay-payouts', orgId, locationId] });
     },
     onError: (err: Error) => {
       toast.error('Failed to update schedule', { description: err.message });
