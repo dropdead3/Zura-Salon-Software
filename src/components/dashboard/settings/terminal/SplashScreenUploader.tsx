@@ -47,6 +47,7 @@ interface SplashScreenUploaderProps {
 }
 
 export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenUploaderProps) {
+  const queryClient = useQueryClient();
   const { data: locations = [] } = useLocations();
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
