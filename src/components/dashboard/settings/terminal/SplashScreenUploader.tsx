@@ -74,11 +74,14 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     // Validate type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!validTypes.includes(file.type)) {
+      toast.error('Unsupported file type', { description: 'Only JPG, PNG, and GIF are supported.' });
       return;
     }
     // Validate size
     const maxSize = file.type === 'image/gif' ? MAX_FILE_SIZE_GIF : MAX_FILE_SIZE_JPG_PNG;
     if (file.size > maxSize) {
+      const limitMB = Math.round(maxSize / (1024 * 1024));
+      toast.error('File too large', { description: `Image must be under ${limitMB}MB.` });
       return;
     }
 
@@ -288,6 +291,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       setPendingFile({ base64, mime: 'image/jpeg' });
     } catch (err) {
       console.error('Failed to generate splash from logo:', err);
+      toast.error('Failed to generate splash screen', { description: 'Could not process logo image.' });
     } finally {
       setGeneratingFromLogo(false);
     }
@@ -372,7 +376,14 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                     <img src={previewUrl} alt="Splash preview" className="w-full h-full object-cover" />
                   ) : hasSplash ? (
                     splashStatus?.splash_url ? (
-                      <img src={splashStatus.splash_url} alt="Active splash screen" className="w-full h-full object-cover" />
+                      <img
+                        src={splashStatus.splash_url}
+                        alt="Active splash screen"
+                        className="w-full h-full object-cover"
+                        onError={() => {
+                          queryClient.invalidateQueries({ queryKey: ['terminal-splash-screen'] });
+                        }}
+                      />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/20">
                         <CheckCircle2 className="w-6 h-6 text-emerald-500" />
