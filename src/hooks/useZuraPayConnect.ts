@@ -15,6 +15,7 @@ interface VerifyResult {
   details_submitted: boolean;
   payouts_enabled: boolean;
   account_id?: string;
+  auto_connected_location_id?: string | null;
 }
 
 export function useOrgConnectStatus(orgId: string | undefined) {
