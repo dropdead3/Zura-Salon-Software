@@ -1569,6 +1569,14 @@ export default function PaymentOps() {
                       ))}
                     </TableBody>
                   </Table>
+                  <TablePagination
+                    currentPage={refundsPage}
+                    totalPages={refundsTotalPages}
+                    totalItems={refundsTotalItems}
+                    showingFrom={refundsShowingFrom}
+                    showingTo={refundsShowingTo}
+                    onPageChange={setRefundsPage}
+                  />
                 )}
               </CardContent>
             </Card>
