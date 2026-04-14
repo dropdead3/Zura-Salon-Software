@@ -1,57 +1,41 @@
 
 
-# Auto-Connect Location When Org Account Becomes Active
-
-## Problem
-After completing Stripe Connect onboarding, the org account becomes "active" but locations still show "Not Connected." For single-location organizations, this extra manual step is unnecessary friction.
-
-## Solution
-When `verify-zura-pay-connection` detects the org status transitioning to `active`, automatically connect any locations that don't already have their own Stripe account — but only if the org has a single location (preserving multi-LLC control).
+# Add Location Name, Bank Account Last4, and Label Clarity to Fleet Tab
 
 ## Changes
 
 ### 1. Edge Function: `supabase/functions/verify-zura-pay-connection/index.ts`
 
-After the status update block (line ~100), add auto-connect logic:
+After retrieving the Stripe account (line 84), extract the bank account last4 from `account.external_accounts.data[0].last4` (available on Connect Express accounts). Return it as `bank_last4` in the response alongside the existing fields.
 
-- When `newStatus === "active"` and the status actually changed (was not already active):
-  - Query all locations for the org that have no `stripe_account_id`
-  - If there is exactly 1 unconnected location (single-location setup), auto-update it with the org's Stripe account credentials (`stripe_account_id`, `stripe_status: "active"`, `stripe_payments_enabled: true`, `stripe_connect_status: "active"`)
-  - Include an `auto_connected_location_id` field in the response so the frontend can show feedback
-  - If multiple unconnected locations exist, skip auto-connect (multi-LLC operator should choose manually)
+### 2. Frontend Hook: `src/hooks/useZuraPayConnect.ts`
 
-### 2. Frontend: `src/hooks/useZuraPayConnect.ts`
+- Add `bank_last4` to the `VerifyResult` interface
+- Store it in the org connect status query or pass it through to the Fleet tab
+- Add `bank_last4` to `useOrgConnectStatus` by storing it after verification (or add a new piece of state)
 
-Update `useVerifyZuraPayConnection` `onSuccess`:
-- If `data.auto_connected_location_id` is present, show a toast like "Your location has been automatically connected to Zura Pay"
-- Invalidate location queries to refresh the Fleet tab
+### 3. Fleet Tab UI: `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
 
-### Technical Details
+Three changes on the "org active, location not connected" screen (lines 480-523):
 
-**Edge function addition** (after line 99 in verify function):
-```typescript
-if (newStatus === "active" && org.stripe_connect_status !== "active") {
-  // Auto-connect single-location orgs
-  const { data: unconnectedLocs } = await supabase
-    .from("locations")
-    .select("id")
-    .eq("organization_id", organization_id)
-    .is("stripe_account_id", null)
-    .eq("is_active", true);
+- **Heading**: Change `ENABLE ZURA PAY FOR THIS LOCATION` to `ENABLE ZURA PAY FOR {selectedLoc.name}` (already available via `selectedLoc` on line 217)
+- **"Use Organization Account" button area**: Add a subtitle showing the org's bank account ending, e.g. "Payouts to account ending in ••1234". This requires passing `bank_last4` as a new prop.
+- **Label clarity**: Add helper text like "Select preferred payout destination" above the two buttons to clarify users are choosing which bank account receives payouts.
 
-  if (unconnectedLocs?.length === 1) {
-    await supabase.from("locations").update({
-      stripe_account_id: org.stripe_connect_account_id,
-      stripe_status: "active",
-      stripe_payments_enabled: true,
-      stripe_connect_status: "active",
-    }).eq("id", unconnectedLocs[0].id);
-  }
-}
-```
+### 4. Props: `ZuraPayFleetTabProps`
+
+Add `orgBankLast4?: string | null` prop to pass the bank last4 from the parent (`TerminalSettingsContent`) down to the Fleet tab.
+
+### 5. Parent Component
+
+Pass the `bank_last4` from the verify response through to the Fleet tab. This likely lives in `TerminalSettingsContent.tsx` — will need to store the last4 from the verify mutation result and pass it as a prop.
+
+---
 
 | File | Change |
 |------|--------|
-| `supabase/functions/verify-zura-pay-connection/index.ts` | Add auto-connect logic when status transitions to active |
-| `src/hooks/useZuraPayConnect.ts` | Handle `auto_connected_location_id` in verify success callback |
+| `supabase/functions/verify-zura-pay-connection/index.ts` | Extract and return `bank_last4` from Stripe account |
+| `src/hooks/useZuraPayConnect.ts` | Add `bank_last4` to `VerifyResult` interface |
+| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Use location name in heading, show bank last4, add payout destination label |
+| `src/components/dashboard/settings/terminal/TerminalSettingsContent.tsx` | Pass `orgBankLast4` prop through to FleetTab |
 
