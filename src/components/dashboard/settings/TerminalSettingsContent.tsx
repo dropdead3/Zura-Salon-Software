@@ -353,6 +353,7 @@ export function TerminalSettingsContent() {
     },
     enabled: !!orgId,
     staleTime: 60000,
+    refetchOnWindowFocus: true,
   });
 
   if (locationsLoading) {
