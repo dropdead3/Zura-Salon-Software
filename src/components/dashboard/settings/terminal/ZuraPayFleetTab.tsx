@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -273,7 +273,7 @@ export function ZuraPayFleetTab({
       // Match the Display tab sample cart: Balayage + Olaplex + Blowout
       const subtotal = 18500 + 4500 + 6500; // $295.00
       const tax = Math.round(subtotal * 0.08); // 8% = $23.60
-      const { error: setError } = await supabase.functions.invoke('terminal-reader-display', {
+      const { data, error: setError } = await supabase.functions.invoke('terminal-reader-display', {
         body: {
           action: 'set_reader_display',
           reader_id: readerId,
@@ -287,6 +287,7 @@ export function ZuraPayFleetTab({
         },
       });
       if (setError) throw setError;
+      if (data?.error) throw new Error(data.error);
       toast.success('Test display sent', { description: 'Auto-clearing in 10s — or tap Clear' });
       // Non-blocking 10s auto-clear
       testTimerRef.current = window.setTimeout(() => {
@@ -297,6 +298,15 @@ export function ZuraPayFleetTab({
       setTestingReaderId(null);
     }
   }, [effectiveOrganization?.id, handleClearDisplay]);
+
+  // Cleanup auto-clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (testTimerRef.current) {
+        clearTimeout(testTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
