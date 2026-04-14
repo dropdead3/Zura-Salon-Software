@@ -142,7 +142,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
       {
         name: modelConfig.name, amount: readerPrice, quantity,
         currency: readerCurrency, description: `Terminal reader — ${modelConfig.label}`,
-        sku_id: skuData?.skus?.[0]?.id || (selectedModel === 's710' ? 's710_reader' : 's700_reader'),
+        sku_id: activeSku?.id || (selectedModel === 's710' ? 's710_reader' : 's700_reader'),
       },
       ...selectedAccList.map((acc) => ({
         name: acc.name, amount: acc.unit_price_cents, quantity: acc.quantity,
