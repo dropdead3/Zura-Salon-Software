@@ -1,39 +1,24 @@
 
 
-# Add Accessory Descriptions and Images
+# Fix: S710 Fallback Price Showing $349 Instead of $299
 
-## Problem
-The accessory cards (Hub, Dock, Case) show only a name, price, and a generic Package icon. Users don't know what each accessory does or what it looks like.
+## Root Cause
 
-## Changes
+The edge function has two code paths:
 
-### 1. Add `description` field to `HardwareAccessory` interface
-**File:** `src/hooks/useTerminalHardwareOrder.ts`
+1. **Stripe API success** — returns real prices from Stripe (both readers at $299)
+2. **Fallback** — hardcoded prices used when the API call fails
 
-Add an optional `description` field to the `HardwareAccessory` interface.
+The fallback data has S710 at **$349** (`34900` cents) while Stripe's actual catalog lists it at **$299**. Your page is hitting the fallback path (likely the hardware SKUs API is returning a non-200 status), so it displays the incorrect $349.
 
-### 2. Add descriptions to fallback accessory data
+## Fix
+
+### 1. Correct the S710 fallback price
 **File:** `supabase/functions/terminal-hardware-order/index.ts`
 
-Add a `description` field to each fallback accessory entry (both the API fallback and the full fallback block):
+Change the S710 fallback `amount` from `34900` to `29900` to match Stripe's published pricing.
 
-- **Hub** — "Ethernet connectivity adapter. Provides a hardwired network connection for maximum reliability."
-- **Dock** — "Countertop charging stand. Keeps your reader powered and upright at the checkout station."
-- **Case** — "Protective silicone sleeve for handheld use. Adds grip and drop protection for tableside payments."
+### 2. Deploy the updated edge function
 
-Also pull `description` from the Stripe API response for `apiAccessories` when available.
-
-### 3. Update accessory card UI with description text and better image handling
-**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx`
-
-- Below the accessory product name, add a `<p className="text-xs text-muted-foreground">` line showing the description (when present)
-- The image is already handled (`acc.image_url` with fallback to Package icon) — the CDN URLs in the edge function should resolve to Stripe's official accessory photos. No frontend image changes needed.
-
-### 4. Verify fallback image URLs
-The current CDN URLs (`b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700_hub.png`, etc.) should serve the official Stripe accessory images. If these fail, the existing Package icon fallback handles it gracefully.
-
-## Summary
-- Each accessory gets a one-line description explaining its purpose
-- Images already flow from `image_url` — they should render once the CDN URLs are valid
-- Minimal changes: interface tweak, edge function data enrichment, one extra `<p>` tag in the UI
+One-line change. Both cards will show $299.00 after this.
 
