@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Plus, CreditCard, Smartphone, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign } from 'lucide-react';
+import { Loader2, Plus, CreditCard, Smartphone, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign, Check, Wifi } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
 import { useTerminalHardwareSkus, useCreateTerminalCheckout } from '@/hooks/useTerminalHardwareOrder';
@@ -19,6 +19,32 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
+type ReaderModel = 's700' | 's710';
+
+const READER_MODELS: Record<ReaderModel, {
+  name: string;
+  subtitle: string;
+  label: string;
+  features: string[];
+  icon: React.ElementType;
+  recommended?: boolean;
+}> = {
+  s700: {
+    name: 'Zura Pay Reader S700',
+    subtitle: 'Countertop & handheld',
+    label: 'Entry-level terminal',
+    features: ['WiFi connectivity', 'Store-and-forward offline payments', '4" touchscreen display'],
+    icon: Smartphone,
+  },
+  s710: {
+    name: 'Zura Pay Reader S710',
+    subtitle: 'Countertop & handheld',
+    label: 'Full NeverDown protection',
+    features: ['WiFi + Cellular failover (built-in eSIM)', 'Real-time auth during WiFi outages', 'Store-and-forward offline payments', '4" touchscreen display'],
+    icon: Signal,
+    recommended: true,
+  },
+};
 
 const REQUEST_STATUS_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', className: 'bg-amber-500/10 text-amber-600 border-amber-500/30', icon: Clock },
@@ -46,6 +72,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reqLocationId, setReqLocationId] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedModel, setSelectedModel] = useState<ReaderModel>('s710');
   const [selectedAccessories, setSelectedAccessories] = useState<Record<string, number>>({});
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
@@ -64,6 +91,11 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
     setReqLocationId('');
   }, []);
 
+  const handleOrderModel = useCallback((model: ReaderModel) => {
+    setSelectedModel(model);
+    setDialogOpen(true);
+  }, []);
+
   const readerPrice = skuData?.skus?.[0]?.amount || 29900;
   const readerCurrency = skuData?.skus?.[0]?.currency || 'usd';
   const readerImage = skuData?.skus?.[0]?.image_url;
@@ -75,6 +107,8 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const totalPrice = (readerPrice * quantity) + accessoriesTotalCents;
   const pricingSource = skuData?.source || 'fallback';
   const readerImageFailed = readerImage ? failedImages.has(readerImage) : true;
+
+  const modelConfig = READER_MODELS[selectedModel];
 
   const toggleAccessory = (id: string) => {
     setSelectedAccessories((prev) => {
@@ -96,9 +130,9 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
 
     const items = [
       {
-        name: 'Zura Pay Reader S700/S710', amount: readerPrice, quantity,
-        currency: readerCurrency, description: 'Terminal reader with cellular + WiFi connectivity',
-        sku_id: skuData?.skus?.[0]?.id || 's710_reader',
+        name: modelConfig.name, amount: readerPrice, quantity,
+        currency: readerCurrency, description: `Terminal reader — ${modelConfig.label}`,
+        sku_id: skuData?.skus?.[0]?.id || (selectedModel === 's710' ? 's710_reader' : 's700_reader'),
       },
       ...selectedAccList.map((acc) => ({
         name: acc.name, amount: acc.unit_price_cents, quantity: acc.quantity,
@@ -112,7 +146,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
         locationId: reqLocationId || locations[0]?.id || '',
         quantity,
         reason: 'additional',
-        notes: `Purchase checkout — ${selectedAccList.length} accessor${selectedAccList.length === 1 ? 'y' : 'ies'} selected`,
+        notes: `${modelConfig.name} — ${selectedAccList.length} accessor${selectedAccList.length === 1 ? 'y' : 'ies'} selected`,
       },
       {
         onSuccess: () => {
@@ -163,45 +197,84 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className={tokens.card.title}>ORDER TERMINAL</CardTitle>
-                  <MetricInfoTooltip description="Purchase Zura Pay Reader S700/S710 terminals at cost. Pricing comes directly from the payment processor — Zura applies zero markup." />
+                  <MetricInfoTooltip description="Purchase Zura Pay Reader terminals at cost. Pricing comes directly from the payment processor — Zura applies zero markup." />
                 </div>
-                <CardDescription>Purchase S700/S710 readers at cost — zero markup, direct processor pricing.</CardDescription>
+                <CardDescription>Choose your reader model — zero markup, direct processor pricing.</CardDescription>
               </div>
             </div>
-            <Button size={tokens.button.card} className={tokens.button.cardAction} onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Order Reader
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Pricing preview */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
-            <div className="flex items-center gap-4">
-              {readerImage && !readerImageFailed ? (
-                <img src={readerImage} alt="S700/S710 Reader" className="w-12 h-12 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
-              ) : (
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Smartphone className="w-6 h-6 text-primary" />
+          {/* Model cards */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            {(Object.entries(READER_MODELS) as [ReaderModel, typeof READER_MODELS[ReaderModel]][]).map(([model, config]) => {
+              const ModelIcon = config.icon;
+              return (
+                <div
+                  key={model}
+                  className={cn(
+                    'relative flex flex-col rounded-xl border p-5 bg-muted/30 transition-all',
+                    config.recommended ? 'border-emerald-500/30 ring-1 ring-emerald-500/10' : 'border-border/60'
+                  )}
+                >
+                  {config.recommended && (
+                    <Badge variant="secondary" className="absolute -top-2.5 right-4 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                      Recommended
+                    </Badge>
+                  )}
+
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={cn(
+                      'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
+                      config.recommended ? 'bg-emerald-500/10' : 'bg-primary/10'
+                    )}>
+                      <ModelIcon className={cn('w-5 h-5', config.recommended ? 'text-emerald-600' : 'text-primary')} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-sans font-medium text-sm">{config.name}</p>
+                      <p className="text-xs text-muted-foreground">{config.subtitle}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] font-display tracking-[0.12em] text-muted-foreground mb-2">{config.label.toUpperCase()}</p>
+
+                  <ul className="space-y-1.5 mb-4 flex-1">
+                    {config.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <Check className={cn('w-3.5 h-3.5 mt-0.5 shrink-0', config.recommended ? 'text-emerald-500' : 'text-primary/60')} />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                    <div>
+                      {skuLoading ? (
+                        <Skeleton className="h-6 w-20" />
+                      ) : (
+                        <>
+                          <p className="font-display text-lg tracking-wide">{formatCurrency(readerPrice / 100)}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {pricingSource === 'stripe_api' ? 'Live pricing' : 'Published rate'} · No markup
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <Button
+                      size={tokens.button.card}
+                      className={cn(
+                        tokens.button.cardAction,
+                        config.recommended && 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      )}
+                      onClick={() => handleOrderModel(model)}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Order
+                    </Button>
+                  </div>
                 </div>
-              )}
-              <div>
-                <p className="font-sans font-medium text-sm">Zura Pay Reader S700/S710</p>
-                <p className="text-xs text-muted-foreground">Cellular + WiFi · Store-and-forward · Countertop &amp; handheld</p>
-              </div>
-            </div>
-            <div className="text-right">
-              {skuLoading ? (
-                <Skeleton className="h-6 w-20" />
-              ) : (
-                <>
-                  <p className="font-display text-lg tracking-wide">{formatCurrency(readerPrice / 100)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {pricingSource === 'stripe_api' ? 'Live pricing' : 'Published rate'} · No markup
-                  </p>
-                </>
-              )}
-            </div>
+              );
+            })}
           </div>
 
           {/* Zero markup callout */}
@@ -228,7 +301,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                   <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
                     <div>
                       <p className="font-sans font-medium text-sm">
-                        S700/S710 Reader{req.quantity > 1 ? ` × ${req.quantity}` : ''}
+                        Reader{req.quantity > 1 ? ` × ${req.quantity}` : ''}
                         {req.accessories && req.accessories.length > 0 && (
                           <span className="text-muted-foreground font-normal"> + {req.accessories.length} accessor{req.accessories.length === 1 ? 'y' : 'ies'}</span>
                         )}
@@ -258,23 +331,51 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); else setDialogOpen(true); }}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle className="font-display text-lg tracking-wide">ORDER ZURA PAY READER</DialogTitle>
+              <DialogTitle className="font-display text-lg tracking-wide">ORDER {modelConfig.name.toUpperCase()}</DialogTitle>
               <DialogDescription>Purchase at direct processor cost — zero markup. Shipping address collected at checkout.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {/* Model selector */}
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.entries(READER_MODELS) as [ReaderModel, typeof READER_MODELS[ReaderModel]][]).map(([model, config]) => (
+                  <button
+                    key={model}
+                    type="button"
+                    onClick={() => setSelectedModel(model)}
+                    className={cn(
+                      'flex items-center gap-2 p-3 rounded-lg border text-left transition-all',
+                      selectedModel === model
+                        ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/10'
+                        : 'bg-muted/30 border-border hover:border-primary/20'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                      selectedModel === model ? 'bg-primary/10' : 'bg-muted'
+                    )}>
+                      {model === 's710' ? <Signal className="w-4 h-4 text-primary" /> : <Wifi className="w-4 h-4 text-muted-foreground" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-sans text-xs font-medium">{model === 's700' ? 'S700' : 'S710'}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{model === 's710' ? 'WiFi + Cellular' : 'WiFi only'}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
               {/* Price display */}
               <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
                 <div className="flex items-center gap-3">
                   {readerImage && !readerImageFailed ? (
-                    <img src={readerImage} alt="S700/S710 Reader" className="w-14 h-14 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
+                    <img src={readerImage} alt={modelConfig.name} className="w-14 h-14 rounded-lg object-contain bg-white" onError={() => handleImageError(readerImage)} />
                   ) : (
                     <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Smartphone className="w-7 h-7 text-primary" />
+                      <modelConfig.icon className="w-7 h-7 text-primary" />
                     </div>
                   )}
                   <div>
-                    <p className="font-sans font-medium text-sm">Zura Pay Reader S700/S710</p>
-                    <p className="text-xs text-muted-foreground">Cellular + WiFi connectivity</p>
+                    <p className="font-sans font-medium text-sm">{modelConfig.name}</p>
+                    <p className="text-xs text-muted-foreground">{modelConfig.label}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -352,7 +453,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               {/* Order summary */}
               <div className="border-t pt-3 space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-sans">S700/S710 × {quantity}</span>
+                  <span className="text-muted-foreground font-sans">{selectedModel === 's710' ? 'S710' : 'S700'} × {quantity}</span>
                   <span className="font-sans font-medium">{formatCurrency((readerPrice * quantity) / 100)}</span>
                 </div>
                 {accessories.filter((acc) => selectedAccessories[acc.id]).map((acc) => (
@@ -372,12 +473,14 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               </div>
 
               {/* S710 info callout */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
-                <Signal className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                <p className="font-sans text-xs text-muted-foreground">
-                  The S700/S710 includes cellular connectivity, ensuring payments continue even when WiFi is down. Store-and-forward technology securely stores payments on-device during total outages.
-                </p>
-              </div>
+              {selectedModel === 's710' && (
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20">
+                  <Signal className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <p className="font-sans text-xs text-muted-foreground">
+                    The S710 includes a built-in eSIM with cellular data bundled — no carrier contract or SIM card required. Cellular failover is enabled automatically.
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={handleDialogClose}>Cancel</Button>
