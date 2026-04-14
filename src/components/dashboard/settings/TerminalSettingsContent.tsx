@@ -460,7 +460,7 @@ export function TerminalSettingsContent() {
 
         <TabsContent value="connectivity" className="mt-6">
           <TabErrorBoundary tabName="Connectivity" key={activeTab === 'connectivity' ? 'connectivity-active' : 'connectivity'}>
-            <ZuraPayConnectivityTab />
+            <ZuraPayConnectivityTab readers={readers} />
           </TabErrorBoundary>
         </TabsContent>
 
