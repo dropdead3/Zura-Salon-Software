@@ -3135,18 +3135,24 @@ export type Database = {
           default_tax_rate: number | null
           ein: string | null
           email: string | null
+          facebook_url: string | null
           icon_dark_url: string | null
           icon_light_url: string | null
           id: string
+          instagram_url: string | null
           legal_name: string | null
+          linkedin_url: string | null
           logo_dark_url: string | null
           logo_light_url: string | null
           mailing_address: string | null
           phone: string | null
           sidebar_layout: Json | null
           state: string | null
+          tiktok_url: string | null
+          twitter_url: string | null
           updated_at: string
           website: string | null
+          youtube_url: string | null
           zip: string | null
         }
         Insert: {
@@ -3156,18 +3162,24 @@ export type Database = {
           default_tax_rate?: number | null
           ein?: string | null
           email?: string | null
+          facebook_url?: string | null
           icon_dark_url?: string | null
           icon_light_url?: string | null
           id?: string
+          instagram_url?: string | null
           legal_name?: string | null
+          linkedin_url?: string | null
           logo_dark_url?: string | null
           logo_light_url?: string | null
           mailing_address?: string | null
           phone?: string | null
           sidebar_layout?: Json | null
           state?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
           updated_at?: string
           website?: string | null
+          youtube_url?: string | null
           zip?: string | null
         }
         Update: {
@@ -3177,18 +3189,24 @@ export type Database = {
           default_tax_rate?: number | null
           ein?: string | null
           email?: string | null
+          facebook_url?: string | null
           icon_dark_url?: string | null
           icon_light_url?: string | null
           id?: string
+          instagram_url?: string | null
           legal_name?: string | null
+          linkedin_url?: string | null
           logo_dark_url?: string | null
           logo_light_url?: string | null
           mailing_address?: string | null
           phone?: string | null
           sidebar_layout?: Json | null
           state?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
           updated_at?: string
           website?: string | null
+          youtube_url?: string | null
           zip?: string | null
         }
         Relationships: []
@@ -11515,6 +11533,7 @@ export type Database = {
           postal_code: string | null
           rental_model: string
           show_on_website: boolean
+          social_links: Json | null
           state_province: string | null
           store_number: string | null
           stripe_account_id: string | null
@@ -11558,6 +11577,7 @@ export type Database = {
           postal_code?: string | null
           rental_model?: string
           show_on_website?: boolean
+          social_links?: Json | null
           state_province?: string | null
           store_number?: string | null
           stripe_account_id?: string | null
@@ -11601,6 +11621,7 @@ export type Database = {
           postal_code?: string | null
           rental_model?: string
           show_on_website?: boolean
+          social_links?: Json | null
           state_province?: string | null
           store_number?: string | null
           stripe_account_id?: string | null

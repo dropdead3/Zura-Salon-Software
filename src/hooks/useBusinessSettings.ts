@@ -23,6 +23,12 @@ export interface BusinessSettings {
   phone: string | null;
   email: string | null;
   website: string | null;
+  instagram_url: string | null;
+  facebook_url: string | null;
+  tiktok_url: string | null;
+  twitter_url: string | null;
+  youtube_url: string | null;
+  linkedin_url: string | null;
   sidebar_layout: SidebarLayoutConfig | null;
   default_tax_rate: number | null;
   created_at: string;

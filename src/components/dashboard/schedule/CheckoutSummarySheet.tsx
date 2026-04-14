@@ -29,7 +29,7 @@ import { useActiveTerminalReader } from '@/hooks/useActiveTerminalReader';
 import { useTerminalCheckoutFlow, type TerminalFlowState } from '@/hooks/useTerminalCheckoutFlow';
 import { useTerminalDeposit } from '@/hooks/useTerminalDeposit';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
-import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useSocialLinks } from '@/hooks/useSocialLinks';
 import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
 import { useBusinessName } from '@/hooks/useBusinessSettings';
 import { printReceiptFromData, buildReceiptHtml } from '@/components/dashboard/transactions/ReceiptPrintView';
@@ -100,7 +100,7 @@ export function CheckoutSummarySheet({
 
   // Receipt branding hooks
   const { data: receiptConfig } = useReceiptConfig();
-  const { data: socialLinks } = useWebsiteSocialLinksSettings();
+  const socialLinks = useSocialLinks();
   const { data: reviewSettings } = useReviewThresholdSettings();
   const orgName = useBusinessName();
 
