@@ -28,7 +28,7 @@ const StripeReaderIdSchema = z
 const RequestBodySchema = z
   .object({
     action: ActionSchema,
-    location_id: z.string().uuid("Invalid location ID"),
+    location_id: z.string().min(1, "Location ID is required").max(255, "Location ID too long"),
     terminal_location_id: StripeTerminalLocationIdSchema.optional(),
     reader_id: StripeReaderIdSchema.optional(),
     registration_code: z.string().min(1).max(100).optional(),
