@@ -5,6 +5,9 @@ import { Loader2, Package } from 'lucide-react';
 import { useGiftCardOrders, GiftCardOrder } from '@/hooks/useGiftCardOrders';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 
 interface PhysicalCardOrderHistoryProps {
   organizationId?: string;
@@ -23,6 +26,23 @@ export function PhysicalCardOrderHistory({ organizationId }: PhysicalCardOrderHi
   const { formatDate } = useFormatDate();
   const { formatCurrency } = useFormatCurrency();
   const { data: orders = [], isLoading } = useGiftCardOrders(organizationId);
+
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+    sortField,
+    toggleSort,
+  } = usePaginatedSort({
+    data: orders,
+    defaultPageSize: 20,
+    defaultSortField: 'ordered_at' as any,
+    defaultSortDirection: 'desc',
+  });
 
   if (isLoading) {
     return (
@@ -56,17 +76,17 @@ export function PhysicalCardOrderHistory({ organizationId }: PhysicalCardOrderHi
           <TableHeader>
             <TableRow>
               <TableHead>Order #</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Quantity</TableHead>
+              <SortableColumnHeader label="Date" sortKey="ordered_at" currentSortField={sortField} onToggleSort={toggleSort} />
+              <SortableColumnHeader label="Quantity" sortKey="quantity" currentSortField={sortField} onToggleSort={toggleSort} />
               <TableHead>Design</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
+              <SortableColumnHeader label="Total" sortKey="total_price" currentSortField={sortField} onToggleSort={toggleSort} />
+              <SortableColumnHeader label="Status" sortKey="status" currentSortField={sortField} onToggleSort={toggleSort} />
               <TableHead>Tracking</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
+            {paginatedData.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-mono text-sm">
                   {order.id.slice(0, 8).toUpperCase()}
@@ -101,6 +121,14 @@ export function PhysicalCardOrderHistory({ organizationId }: PhysicalCardOrderHi
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          showingFrom={showingFrom}
+          showingTo={showingTo}
+          onPageChange={setCurrentPage}
+        />
       </CardContent>
     </Card>
   );

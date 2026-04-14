@@ -5,6 +5,8 @@ import { Star, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useFeedbackResponses, type FeedbackResponse } from '@/hooks/useFeedbackSurveys';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface FeedbackResponseListProps {
   organizationId?: string;
@@ -95,6 +97,21 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
 export function FeedbackResponseList({ organizationId, limit = 50 }: FeedbackResponseListProps) {
   const { data: responses, isLoading } = useFeedbackResponses(organizationId, limit);
 
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+  } = usePaginatedSort({
+    data: responses || [],
+    defaultPageSize: 20,
+    defaultSortField: 'responded_at' as any,
+    defaultSortDirection: 'desc',
+  });
+
   if (isLoading) {
     return (
       <Card>
@@ -129,17 +146,23 @@ export function FeedbackResponseList({ organizationId, limit = 50 }: FeedbackRes
     <Card>
       <CardHeader>
         <CardTitle className="text-sm font-medium">
-          Recent Feedback ({responses.length})
+          Recent Feedback ({totalItems})
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-3">
-            {responses.map((response) => (
-              <FeedbackCard key={response.id} response={response} />
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="space-y-3">
+          {paginatedData.map((response) => (
+            <FeedbackCard key={response.id} response={response} />
+          ))}
+        </div>
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          showingFrom={showingFrom}
+          showingTo={showingTo}
+          onPageChange={setCurrentPage}
+        />
       </CardContent>
     </Card>
   );
