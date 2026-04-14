@@ -501,6 +501,7 @@ function ThemeTab() {
         const mappedName = COLOR_THEME_TO_CATEGORY_MAP[colorThemeId];
         const matched = categoryThemes?.find(t => t.name === mappedName);
         if (matched) applyCategoryTheme.mutate(matched);
+        syncSplashToTheme(colorThemeId);
       }
       toast({ title: 'Theme activated', description: `"${theme.name}" is now your active theme.` });
     } catch {
