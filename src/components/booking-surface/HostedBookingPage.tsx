@@ -133,6 +133,7 @@ export function HostedBookingPage() {
     ? selectedServiceData.depositAmount
     : null;
   const requiresCardOnFile = selectedServiceData?.requireCardOnFile ?? false;
+  const afterpayEnabled = (org as any)?.afterpay_enabled ?? false;
 
   // ─── Payment state ──────────────────────────────────────────
   const [isSubmitting, setIsSubmitting] = useState(false);
