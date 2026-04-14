@@ -158,6 +158,15 @@ export function ZuraPayActivationChecklist({
                   <p className="text-xs text-muted-foreground">
                     {step.description}
                   </p>
+                  {isCurrent && step.action && (
+                    <button
+                      onClick={step.action.onClick}
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-500 transition-colors"
+                    >
+                      {step.action.label}
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               </div>
             );
