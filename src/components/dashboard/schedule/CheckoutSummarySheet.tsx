@@ -294,7 +294,7 @@ export function CheckoutSummarySheet({
   };
 
   const handleEmailReceipt = async () => {
-    const clientEmail = appointment.client_email;
+    const clientEmail = (appointment as any).client_email;
     if (!clientEmail) {
       toast.error('No email on file for this client');
       return;
@@ -833,14 +833,22 @@ export function CheckoutSummarySheet({
             <span className="text-xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Button
               variant="outline"
-              onClick={() => generateReceiptPDF(false)}
+              onClick={handlePrintReceipt}
               className="w-full"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Receipt
+              <Receipt className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleEmailReceipt}
+              className="w-full"
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Email
             </Button>
             {paymentMethod === 'card_reader' && ['awaiting_tap', 'processing', 'displaying_cart'].includes(terminalFlow.flowState) ? (
               <Button
