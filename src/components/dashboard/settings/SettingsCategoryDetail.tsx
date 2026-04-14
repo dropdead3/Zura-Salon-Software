@@ -392,7 +392,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: business } = useBusinessSettings();
-  const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '');
+  const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '', business?.id);
 
   const capacity = useBusinessCapacity();
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');

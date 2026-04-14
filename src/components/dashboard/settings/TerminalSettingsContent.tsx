@@ -25,6 +25,7 @@ import {
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useColorTheme } from '@/hooks/useColorTheme';
 import { generateDefaultSplash } from '@/lib/generate-terminal-splash';
+import { upsertSplashOrigin } from '@/hooks/useTerminalSplashMetadata';
 import { useOrgConnectStatus, useOrgBankLast4, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation, useCreateLocationAccount } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -107,6 +108,9 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
   // Auto-select the single terminal location (infrastructure detail, hidden from user)
   const targetTerminalLocationId = terminalLocations.length > 0 ? terminalLocations[0].id : '';
 
+  const { effectiveOrganization } = useOrganizationContext();
+  const regOrgId = effectiveOrganization?.id;
+
   // Fire-and-forget: apply default luxury splash after registration
   const applyDefaultSplash = useCallback(async (locId: string, termLocId: string) => {
     const orgLogoUrl = business?.logo_dark_url;
@@ -122,11 +126,17 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
         image_base64: base64,
         image_mime_type: 'image/jpeg',
       });
+      // Mark as default_luxury in metadata
+      if (regOrgId) {
+        try {
+          await upsertSplashOrigin(regOrgId, locId, termLocId, 'default_luxury');
+        } catch { /* non-critical */ }
+      }
       toast.success('Splash screen applied to reader');
     } catch (err) {
       console.error('Auto-apply splash failed:', err);
     }
-  }, [business, colorTheme]);
+  }, [business, colorTheme, regOrgId]);
 
   const handleClose = () => {
     setRegistrationCode('');

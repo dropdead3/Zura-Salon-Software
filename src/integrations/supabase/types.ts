@@ -25245,6 +25245,44 @@ export type Database = {
           },
         ]
       }
+      terminal_splash_metadata: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          organization_id: string
+          splash_origin: string
+          terminal_location_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          organization_id: string
+          splash_origin?: string
+          terminal_location_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          organization_id?: string
+          splash_origin?: string
+          terminal_location_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terminal_splash_metadata_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testimonials: {
         Row: {
           author: string

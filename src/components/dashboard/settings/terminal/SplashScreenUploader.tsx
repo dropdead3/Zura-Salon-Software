@@ -34,9 +34,10 @@ import {
 } from '@/hooks/useTerminalSplashScreen';
 import { useLocations } from '@/hooks/useLocations';
 import { useColorTheme } from '@/hooks/useColorTheme';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useTerminalSplashOrigin, upsertSplashOrigin, deleteSplashOrigin } from '@/hooks/useTerminalSplashMetadata';
 import { toast } from 'sonner';
 import { generateDefaultSplash } from '@/lib/generate-terminal-splash';
-
 const TARGET_W = 1080;
 const TARGET_H = 1920;
 const MAX_FILE_SIZE_JPG_PNG = 2 * 1024 * 1024;
@@ -49,6 +50,8 @@ interface SplashScreenUploaderProps {
 
 export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenUploaderProps) {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const { data: locations = [] } = useLocations();
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
@@ -66,9 +69,12 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const removeMutation = useRemoveSplashScreen();
   const pushAllMutation = usePushSplashToAllLocations();
 
+  // Durable splash origin tracking
+  const { data: splashOrigin } = useTerminalSplashOrigin(orgId, selectedLocationId || null, terminalLocationId);
+  const isDefaultLuxury = splashOrigin === 'default_luxury';
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<{ base64: string; mime: 'image/jpeg' | 'image/png' | 'image/gif'; fromDefault?: boolean } | null>(null);
-  const [isDefaultLuxury, setIsDefaultLuxury] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [generatingFromLogo, setGeneratingFromLogo] = useState(false);
   const [pushProgress, setPushProgress] = useState<string | null>(null);
@@ -155,10 +161,15 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       imageBase64: pendingFile.base64,
       imageMimeType: pendingFile.mime,
     }, {
-      onSuccess: () => {
+      onSuccess: async () => {
         setPreviewUrl(null);
         setPendingFile(null);
-        setIsDefaultLuxury(wasDefault);
+        if (orgId) {
+          try {
+            await upsertSplashOrigin(orgId, selectedLocationId, terminalLocationId, wasDefault ? 'default_luxury' : 'custom');
+            queryClient.invalidateQueries({ queryKey: ['terminal-splash-metadata'] });
+          } catch { /* non-critical */ }
+        }
       },
     });
   };
@@ -166,7 +177,14 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const handleRemove = () => {
     if (!selectedLocationId || !terminalLocationId) return;
     removeMutation.mutate({ locationId: selectedLocationId, terminalLocationId }, {
-      onSuccess: () => setIsDefaultLuxury(false),
+      onSuccess: async () => {
+        if (orgId) {
+          try {
+            await deleteSplashOrigin(orgId, selectedLocationId, terminalLocationId);
+            queryClient.invalidateQueries({ queryKey: ['terminal-splash-metadata'] });
+          } catch { /* non-critical */ }
+        }
+      },
     });
   };
 
