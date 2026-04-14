@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 // Switch removed - rebook toggle replaced by rebooking gate
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { toast } from 'sonner';
-import { jsPDF } from 'jspdf';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { BusinessSettings } from '@/hooks/useBusinessSettings';
 import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
@@ -29,6 +28,13 @@ import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSe
 import { useActiveTerminalReader } from '@/hooks/useActiveTerminalReader';
 import { useTerminalCheckoutFlow, type TerminalFlowState } from '@/hooks/useTerminalCheckoutFlow';
 import { useTerminalDeposit } from '@/hooks/useTerminalDeposit';
+import { useReceiptConfig } from '@/hooks/useReceiptConfig';
+import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
+import { useBusinessName } from '@/hooks/useBusinessSettings';
+import { printReceiptFromData, buildReceiptHtml } from '@/components/dashboard/transactions/ReceiptPrintView';
+import type { ReceiptBusinessInfo } from '@/components/dashboard/transactions/ReceiptPrintView';
+import { checkoutToReceiptData } from '@/components/dashboard/transactions/receiptData';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
