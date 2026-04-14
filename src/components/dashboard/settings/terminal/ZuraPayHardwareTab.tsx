@@ -481,6 +481,111 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
           </DialogContent>
         </Dialog>
       </Card>
+
+      {/* Order History */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <Package className={tokens.card.icon} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className={tokens.card.title}>ORDER HISTORY</CardTitle>
+                <MetricInfoTooltip description="Track terminal hardware orders, delivery status, and shipping details for your locations." />
+              </div>
+              <CardDescription>Track your terminal orders and deliveries.</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {requestsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-4 p-4 rounded-lg border border-border/60">
+                  <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-56" />
+                  </div>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : !requests || requests.length === 0 ? (
+            <EmptyState
+              icon={Package}
+              title="No terminal orders yet"
+              description="Once you order a terminal from above, your order history and delivery tracking will appear here."
+            />
+          ) : (
+            <div className="space-y-3">
+              {requests.map((req) => {
+                const statusConfig = REQUEST_STATUS_CONFIG[req.status] || REQUEST_STATUS_CONFIG.pending;
+                const StatusIcon = statusConfig.icon;
+                const locName = locations.find((l) => l.id === req.location_id)?.name;
+                const deviceLabel = req.device_type === 's700' ? 'S700' : req.device_type === 's710' ? 'S710' : 'Reader';
+                const DeviceIcon = req.device_type === 's700' ? Wifi : req.device_type === 's710' ? Signal : Smartphone;
+
+                return (
+                  <div key={req.id} className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border border-border/60">
+                    {/* Device icon */}
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <DeviceIcon className="w-5 h-5 text-primary" />
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-sans font-medium text-sm">
+                          Zura Pay {deviceLabel}
+                          {req.quantity > 1 && <span className="text-muted-foreground"> × {req.quantity}</span>}
+                        </p>
+                        {req.accessories && req.accessories.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            + {req.accessories.map((a) => a.name).join(', ')}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
+                        <span>{format(new Date(req.created_at), 'MMM d, yyyy')}</span>
+                        {req.estimated_total_cents && (
+                          <>
+                            <span className="text-border">·</span>
+                            <span className="font-display tracking-wide">{formatCurrency(req.estimated_total_cents / 100)}</span>
+                          </>
+                        )}
+                        {locName && (
+                          <>
+                            <span className="text-border">·</span>
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {locName}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {req.tracking_number && (
+                        <p className="text-xs text-muted-foreground">
+                          Tracking: <span className="font-mono text-foreground">{req.tracking_number}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Status badge */}
+                    <Badge variant="outline" className={cn(statusConfig.className, 'gap-1 shrink-0 mt-1')}>
+                      <StatusIcon className="h-3 w-3" />
+                      {statusConfig.label}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
