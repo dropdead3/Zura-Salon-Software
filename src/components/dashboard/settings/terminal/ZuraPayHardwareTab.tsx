@@ -96,9 +96,19 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
     setDialogOpen(true);
   }, []);
 
-  const readerPrice = skuData?.skus?.[0]?.amount || 29900;
-  const readerCurrency = skuData?.skus?.[0]?.currency || 'usd';
-  const readerImage = skuData?.skus?.[0]?.image_url;
+  // Derive per-model SKU data
+  const s700Sku = skuData?.skus?.find((s) => s.product.toLowerCase().includes('s700'))
+    || skuData?.skus?.[0];
+  const s710Sku = skuData?.s710_skus?.[0]
+    || skuData?.skus?.find((s) => s.product.toLowerCase().includes('s710'))
+    || s700Sku; // fallback: share price if only one SKU exists
+
+  const getModelSku = (model: ReaderModel) => model === 's710' ? s710Sku : s700Sku;
+  const activeSku = getModelSku(selectedModel);
+
+  const readerPrice = activeSku?.amount || 29900;
+  const readerCurrency = activeSku?.currency || 'usd';
+  const readerImage = activeSku?.image_url;
   const accessories = skuData?.accessories || [];
   const accessoriesTotalCents = accessories.reduce((sum, acc) => {
     const qty = selectedAccessories[acc.id] || 0;
@@ -132,7 +142,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
       {
         name: modelConfig.name, amount: readerPrice, quantity,
         currency: readerCurrency, description: `Terminal reader — ${modelConfig.label}`,
-        sku_id: skuData?.skus?.[0]?.id || (selectedModel === 's710' ? 's710_reader' : 's700_reader'),
+        sku_id: activeSku?.id || (selectedModel === 's710' ? 's710_reader' : 's700_reader'),
       },
       ...selectedAccList.map((acc) => ({
         name: acc.name, amount: acc.unit_price_cents, quantity: acc.quantity,
@@ -209,6 +219,10 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
           <div className="grid sm:grid-cols-2 gap-4">
             {(Object.entries(READER_MODELS) as [ReaderModel, typeof READER_MODELS[ReaderModel]][]).map(([model, config]) => {
               const ModelIcon = config.icon;
+              const sku = getModelSku(model);
+              const cardPrice = sku?.amount || 29900;
+              const cardImage = sku?.image_url;
+              const cardImageFailed = cardImage ? failedImages.has(cardImage) : true;
               return (
                 <div
                   key={model}
@@ -224,12 +238,21 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                   )}
 
                   <div className="flex items-center gap-3 mb-3">
-                    <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-                      config.recommended ? 'bg-emerald-500/10' : 'bg-primary/10'
-                    )}>
-                      <ModelIcon className={cn('w-5 h-5', config.recommended ? 'text-emerald-600' : 'text-primary')} />
-                    </div>
+                    {cardImage && !cardImageFailed ? (
+                      <img
+                        src={cardImage}
+                        alt={config.name}
+                        className="w-10 h-10 rounded-lg object-contain bg-white shrink-0"
+                        onError={() => handleImageError(cardImage)}
+                      />
+                    ) : (
+                      <div className={cn(
+                        'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
+                        config.recommended ? 'bg-emerald-500/10' : 'bg-primary/10'
+                      )}>
+                        <ModelIcon className={cn('w-5 h-5', config.recommended ? 'text-emerald-600' : 'text-primary')} />
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="font-sans font-medium text-sm">{config.name}</p>
                       <p className="text-xs text-muted-foreground">{config.subtitle}</p>
@@ -253,7 +276,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                         <Skeleton className="h-6 w-20" />
                       ) : (
                         <>
-                          <p className="font-display text-lg tracking-wide">{formatCurrency(readerPrice / 100)}</p>
+                          <p className="font-display text-lg tracking-wide">{formatCurrency(cardPrice / 100)}</p>
                           <p className="text-[10px] text-muted-foreground">
                             {pricingSource === 'stripe_api' ? 'Live pricing' : 'Published rate'} · No markup
                           </p>
