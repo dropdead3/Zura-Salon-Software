@@ -267,7 +267,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                     ))}
                   </ul>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/40">
                     <div>
                       {skuLoading ? (
                         <Skeleton className="h-6 w-20" />
@@ -284,6 +284,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                       size={tokens.button.card}
                       className={cn(
                         tokens.button.cardAction,
+                        'flex-grow sm:flex-grow-0',
                         config.recommended && 'bg-emerald-600 text-white hover:bg-emerald-700'
                       )}
                       onClick={() => handleOrderModel(model)}
