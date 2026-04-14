@@ -30,7 +30,7 @@ interface ReceiptPreviewProps {
 }
 
 function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone, website, socials, reviewUrls, redoPolicyFallback }: ReceiptPreviewProps) {
-  const logoHeightClass = config.logo_size === 'sm' ? 'h-6' : config.logo_size === 'lg' ? 'h-14' : 'h-10';
+  const logoSizeClass = config.logo_size === 'sm' ? 'max-h-8 max-w-[50%]' : config.logo_size === 'lg' ? 'max-h-16 max-w-[90%]' : 'max-h-12 max-w-[70%]';
   const iconHeightClass = config.footer_icon_size === 'lg' ? 'h-8' : config.footer_icon_size === 'md' ? 'h-6' : 'h-4';
 
   const activeReviewPlatforms = [
@@ -50,7 +50,7 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
       {/* Header */}
       <div className="pb-4 mb-4" style={{ borderBottom: '1px solid #e5e5e5', textAlign: config.logo_position === 'center' ? 'center' : 'left' }}>
         {config.show_logo && logoUrl ? (
-          <img src={logoUrl} alt={businessName} className={`${logoHeightClass} object-contain mb-2`} style={{ margin: config.logo_position === 'center' ? '0 auto 8px' : '0 0 8px' }} />
+          <img src={logoUrl} alt={businessName} className={`${logoSizeClass} w-auto h-auto object-contain mb-2`} style={{ margin: config.logo_position === 'center' ? '0 auto 8px' : '0 0 8px' }} />
         ) : (
           <p className="font-display text-base tracking-wide" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>{businessName}</p>
         )}

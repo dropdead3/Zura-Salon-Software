@@ -22,9 +22,9 @@ interface ReceiptBusinessInfo {
   reviewUrls?: { google?: string; yelp?: string; facebook?: string };
 }
 
-function getLogoHeight(size?: string): string {
-  if (size === 'sm') return '24px';
-  if (size === 'lg') return '56px';
+function getLogoStyle(size?: string): string {
+  if (size === 'sm') return 'max-height:32px;max-width:50%';
+  if (size === 'lg') return 'max-height:64px;max-width:90%';
   return '40px';
 }
 
