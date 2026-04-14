@@ -30,6 +30,7 @@ interface BookingConfirmationProps {
   onPaymentComplete?: (intentId: string) => void;
   showPaymentForm?: boolean;
   afterpayEnabled?: boolean;
+  afterpaySurchargeRate?: number | null;
 }
 
 export function BookingConfirmation({
@@ -37,7 +38,7 @@ export function BookingConfirmation({
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
   depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
   paymentClientSecret, paymentIntentType, stripePublishableKey, stripeConnectedAccountId,
-  onPaymentComplete, showPaymentForm, afterpayEnabled,
+  onPaymentComplete, showPaymentForm, afterpayEnabled, afterpaySurchargeRate,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
     const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
@@ -179,7 +180,7 @@ export function BookingConfirmation({
       {/* Afterpay Promo Badge */}
       {afterpayEnabled && depositAmount != null && depositAmount > 0 && depositAmount <= 4000 && (
         <div className="mb-4">
-          <AfterpayPromoBadge theme={theme} amount={depositAmount} />
+          <AfterpayPromoBadge theme={theme} amount={depositAmount} surchargeRate={afterpaySurchargeRate} />
         </div>
       )}
 

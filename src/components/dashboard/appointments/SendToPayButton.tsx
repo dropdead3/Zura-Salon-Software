@@ -67,6 +67,11 @@ export function SendToPayButton({
       if (linkError) throw new Error(linkError.message);
       if (!linkData?.checkout_url) throw new Error('Failed to create payment link');
 
+      // Calculate surcharge for display
+      const surchargeAmountCents = afterpaySurchargeEnabled && afterpaySurchargeRate
+        ? Math.round(sendAmount * afterpaySurchargeRate)
+        : 0;
+
       // Step 2: Send the link via SMS/email
       const { error: sendError } = await supabase.functions.invoke(
         'send-payment-link',
@@ -79,6 +84,9 @@ export function SendToPayButton({
             client_email: clientEmail,
             client_phone: clientPhone,
             amount_display: `$${(sendAmount / 100).toFixed(2)}`,
+            surcharge_display: surchargeAmountCents > 0
+              ? `$${(surchargeAmountCents / 100).toFixed(2)}`
+              : undefined,
           },
         }
       );
@@ -141,6 +149,8 @@ export function SendToPayButton({
           clientEmail={clientEmail}
           clientPhone={clientPhone}
           onPaymentLinkSent={onPaymentLinkSent}
+          afterpaySurchargeEnabled={afterpaySurchargeEnabled}
+          afterpaySurchargeRate={afterpaySurchargeRate}
         />
       )}
     </>

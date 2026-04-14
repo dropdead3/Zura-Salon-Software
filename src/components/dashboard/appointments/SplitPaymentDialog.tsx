@@ -24,6 +24,8 @@ interface SplitPaymentDialogProps {
   clientEmail?: string | null;
   clientPhone?: string | null;
   onPaymentLinkSent?: () => void;
+  afterpaySurchargeEnabled?: boolean;
+  afterpaySurchargeRate?: number;
 }
 
 export function SplitPaymentDialog({
@@ -36,6 +38,8 @@ export function SplitPaymentDialog({
   clientEmail,
   clientPhone,
   onPaymentLinkSent,
+  afterpaySurchargeEnabled,
+  afterpaySurchargeRate,
 }: SplitPaymentDialogProps) {
   const { formatCurrency } = useFormatCurrency();
   const minImmediate = totalAmountCents - AFTERPAY_MAX_CENTS;
@@ -44,6 +48,11 @@ export function SplitPaymentDialog({
   const [step, setStep] = useState<'configure' | 'terminal_pending' | 'link_sent'>('configure');
 
   const afterpayAmountCents = totalAmountCents - immediateAmountCents;
+  const surchargeAmountCents = afterpaySurchargeEnabled && afterpaySurchargeRate
+    ? Math.round(afterpayAmountCents * afterpaySurchargeRate)
+    : 0;
+  const afterpayTotalCents = afterpayAmountCents + surchargeAmountCents;
+
   const isValidSplit =
     immediateAmountCents >= minImmediate &&
     afterpayAmountCents >= 100 &&
@@ -82,7 +91,11 @@ export function SplitPaymentDialog({
       if (linkError) throw new Error(linkError.message);
       if (!linkData?.checkout_url) throw new Error('Failed to create payment link');
 
-      // Step 2: Send the link
+      // Step 2: Send the link with surcharge disclosure
+      const surchargeDisplay = surchargeAmountCents > 0
+        ? ` + ${formatCurrency(surchargeAmountCents / 100)} processing fee`
+        : '';
+
       await supabase.functions.invoke('send-payment-link', {
         body: {
           organization_id: organizationId,
@@ -92,14 +105,15 @@ export function SplitPaymentDialog({
           client_email: clientEmail,
           client_phone: clientPhone,
           amount_display: `$${(afterpayAmountCents / 100).toFixed(2)}`,
+          surcharge_display: surchargeAmountCents > 0
+            ? `$${(surchargeAmountCents / 100).toFixed(2)}`
+            : undefined,
         },
       });
 
-      // B5/E4: Removed redundant client-side appointment update — edge function already writes these fields
-
       setStep('link_sent');
       toast.success(
-        `Afterpay link for ${formatCurrency(afterpayAmountCents / 100)} sent. Process ${formatCurrency(immediateAmountCents / 100)} on the terminal now.`
+        `Afterpay link for ${formatCurrency(afterpayTotalCents / 100)} sent. Process ${formatCurrency(immediateAmountCents / 100)} on the terminal now.`
       );
       onPaymentLinkSent?.();
     } catch (err: any) {
@@ -171,6 +185,11 @@ export function SplitPaymentDialog({
                 </Label>
                 <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 font-mono text-sm">
                   {formatCurrency(afterpayAmountCents / 100)}
+                  {surchargeAmountCents > 0 && (
+                    <span className="text-muted-foreground ml-2 text-xs font-sans">
+                      + {formatCurrency(surchargeAmountCents / 100)} fee = {formatCurrency(afterpayTotalCents / 100)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -179,9 +198,9 @@ export function SplitPaymentDialog({
             <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
               <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground">
-                The client will receive a payment link with Afterpay as an option.
-                They can pay in 4 interest-free installments. The appointment will be
-                marked as fully paid once both payments are completed.
+                {afterpaySurchargeEnabled
+                  ? 'The client will receive a payment link with Afterpay as the only payment option. A processing fee will be added as a separate line item. The appointment will be marked as fully paid once both payments are completed.'
+                  : 'The client will receive a payment link with Afterpay as an option. They can pay in 4 interest-free installments. The appointment will be marked as fully paid once both payments are completed.'}
               </p>
             </div>
 
@@ -205,7 +224,7 @@ export function SplitPaymentDialog({
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium">
-                Afterpay link sent for {formatCurrency(afterpayAmountCents / 100)}
+                Afterpay link sent for {formatCurrency(afterpayTotalCents / 100)}
               </p>
               <p className="text-xs text-muted-foreground">
                 Now process {formatCurrency(immediateAmountCents / 100)} on the terminal to complete checkout.
