@@ -529,7 +529,7 @@ export function ZuraPayFleetTab({
                       Connect Separate Account
                     </Button>
                     <p className="text-xs text-muted-foreground max-w-sm">
-                      Use a separate account if this location operates under a different LLC or needs its own bank account for payouts.
+                      Connect a different bank account if this location operates under a different LLC or needs its own bank account for payouts.
                     </p>
                   </div>
                 </>
