@@ -584,7 +584,7 @@ export function ZuraPayFleetTab({
               ) : !readers || readers.length === 0 ? (
                 <div className="text-center py-8">
                   <Smartphone className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                  <h3 className="font-display text-sm tracking-[0.14em] uppercase text-foreground">No readers paired to this location</h3>
+                  <h3 className="font-display text-sm tracking-[0.14em] uppercase text-foreground">No readers paired to {selectedLoc?.name || 'this location'}</h3>
                   <p className="text-sm text-muted-foreground mt-2">
                     Need a reader? Order one from the Hardware tab, then register it here using its pairing code.
                   </p>
