@@ -8,6 +8,8 @@ import { History, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Sa
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useLeaderboardHistory, LeaderboardHistoryEntry } from '@/hooks/useLeaderboardHistory';
 import { toast } from 'sonner';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface LeaderboardHistoryPanelProps {
   currentRankings?: {
@@ -40,6 +42,19 @@ export function LeaderboardHistoryPanel({
   const weekHistory = allHistory
     .filter(h => h.week_start === selectedWeek)
     .sort((a, b) => a.overall_rank - b.overall_rank);
+
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+  } = usePaginatedSort({
+    data: weekHistory,
+    defaultPageSize: 20,
+  });
 
   const handleSaveSnapshot = async () => {
     if (currentRankings.length === 0) {
