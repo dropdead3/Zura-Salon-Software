@@ -3,6 +3,7 @@ import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 export interface ReceiptConfig extends Record<string, unknown> {
   show_logo: boolean;
   logo_position: 'center' | 'left';
+  logo_size: 'sm' | 'md' | 'lg';
   show_address: boolean;
   show_phone: boolean;
   custom_message: string;
@@ -11,6 +12,7 @@ export interface ReceiptConfig extends Record<string, unknown> {
   accent_color: string;
   footer_text: string;
   show_footer_icon: boolean;
+  footer_icon_size: 'sm' | 'md' | 'lg';
   show_socials: boolean;
   show_website: boolean;
   show_redo_policy: boolean;
@@ -26,6 +28,7 @@ export interface ReceiptConfig extends Record<string, unknown> {
 export const DEFAULT_RECEIPT_CONFIG: ReceiptConfig = {
   show_logo: true,
   logo_position: 'center',
+  logo_size: 'md',
   show_address: true,
   show_phone: true,
   custom_message: 'Thank you for your visit!',
@@ -34,6 +37,7 @@ export const DEFAULT_RECEIPT_CONFIG: ReceiptConfig = {
   accent_color: '',
   footer_text: '',
   show_footer_icon: false,
+  footer_icon_size: 'sm',
   show_socials: true,
   show_website: true,
   show_redo_policy: false,
