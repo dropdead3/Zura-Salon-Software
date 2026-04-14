@@ -11,9 +11,9 @@ const SITE_SETTINGS_KEY = 'org_color_theme';
 const ALL_THEMES: ColorTheme[] = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
-interface ColorThemeSettings {
+type ColorThemeSettings = Record<string, unknown> & {
   theme: ColorTheme;
-}
+};
 
 function applyTheme(theme: ColorTheme) {
   const html = document.documentElement;
