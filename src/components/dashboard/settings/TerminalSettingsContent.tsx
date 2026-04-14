@@ -107,6 +107,9 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
   // Auto-select the single terminal location (infrastructure detail, hidden from user)
   const targetTerminalLocationId = terminalLocations.length > 0 ? terminalLocations[0].id : '';
 
+  const { effectiveOrganization } = useOrganizationContext();
+  const regOrgId = effectiveOrganization?.id;
+
   // Fire-and-forget: apply default luxury splash after registration
   const applyDefaultSplash = useCallback(async (locId: string, termLocId: string) => {
     const orgLogoUrl = business?.logo_dark_url;
@@ -123,17 +126,16 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
         image_mime_type: 'image/jpeg',
       });
       // Mark as default_luxury in metadata
-      const orgId = business?.organization_id;
-      if (orgId) {
+      if (regOrgId) {
         try {
-          await upsertSplashOrigin(orgId, locId, termLocId, 'default_luxury');
+          await upsertSplashOrigin(regOrgId, locId, termLocId, 'default_luxury');
         } catch { /* non-critical */ }
       }
       toast.success('Splash screen applied to reader');
     } catch (err) {
       console.error('Auto-apply splash failed:', err);
     }
-  }, [business, colorTheme]);
+  }, [business, colorTheme, regOrgId]);
 
   const handleClose = () => {
     setRegistrationCode('');
