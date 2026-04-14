@@ -85,3 +85,73 @@ export function useRemoveSplashScreen() {
     },
   });
 }
+
+interface LocationTerminalPair {
+  locationId: string;
+  terminalLocationId: string;
+}
+
+export async function resolveAllTerminalLocations(locationIds: string[]): Promise<LocationTerminalPair[]> {
+  const results: LocationTerminalPair[] = [];
+  for (const locId of locationIds) {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-stripe-terminals', {
+        body: { action: 'list_locations', location_id: locId },
+      });
+      if (error || data?.error) continue;
+      const terminals = data?.data?.data || [];
+      if (terminals.length > 0) {
+        results.push({ locationId: locId, terminalLocationId: terminals[0].id });
+      }
+    } catch {
+      // skip locations that fail
+    }
+  }
+  return results;
+}
+
+export function usePushSplashToAllLocations() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      pairs,
+      imageBase64,
+      imageMimeType,
+      onProgress,
+    }: {
+      pairs: LocationTerminalPair[];
+      imageBase64: string;
+      imageMimeType: 'image/jpeg' | 'image/png' | 'image/gif';
+      onProgress?: (done: number, total: number) => void;
+    }) => {
+      let done = 0;
+      const results = await Promise.allSettled(
+        pairs.map(async ({ locationId, terminalLocationId }) => {
+          const res = await invokeSplashAction('upload_splash_screen', locationId, {
+            terminal_location_id: terminalLocationId,
+            image_base64: imageBase64,
+            image_mime_type: imageMimeType,
+          });
+          done++;
+          onProgress?.(done, pairs.length);
+          return res;
+        })
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      return { succeeded, total: pairs.length };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['terminal-splash-screen'] });
+      if (result.succeeded === result.total) {
+        toast.success(`Pushed to all ${result.total} locations`);
+      } else {
+        toast.success(`Pushed to ${result.succeeded}/${result.total} locations`, {
+          description: `${result.total - result.succeeded} location(s) failed`,
+        });
+      }
+    },
+    onError: (error) => {
+      toast.error('Batch push failed', { description: (error as Error).message });
+    },
+  });
+}
