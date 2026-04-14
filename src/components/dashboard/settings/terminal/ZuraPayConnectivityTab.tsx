@@ -3,14 +3,8 @@ import { tokens } from '@/lib/design-tokens';
 import { AlertTriangle, ArrowUpCircle, ShieldCheck, Signal, Wifi } from 'lucide-react';
 import { OfflinePaymentStatus } from '../OfflinePaymentStatus';
 
-interface StripeReader {
-  id: string;
-  device_type: string;
-  [key: string]: unknown;
-}
-
 interface ZuraPayConnectivityTabProps {
-  readers?: StripeReader[];
+  readers?: { device_type: string }[];
 }
 
 export function ZuraPayConnectivityTab({ readers }: ZuraPayConnectivityTabProps) {
