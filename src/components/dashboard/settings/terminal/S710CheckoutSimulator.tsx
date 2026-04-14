@@ -253,88 +253,88 @@ function TipScreen({ total, tipPercentages = [20, 25, 30], colorTheme = 'cream' 
   );
 }
 
-function TapScreen({ total, colorTheme = 'cream' }: { total: number; colorTheme?: ColorTheme }) {
-  const p = getTerminalPalette(colorTheme);
-
+function TapScreen({ total }: { total: number; colorTheme?: ColorTheme }) {
+  // This screen mirrors the real S710 firmware UI (white bg, blue concentric rings).
+  // Stripe controls this screen entirely — it is NOT customizable via the API.
   return (
     <motion.div
       key="tap"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center h-full px-6"
+      className="absolute inset-0 flex flex-col items-center justify-center"
+      style={{ background: '#FFFFFF' }}
     >
-      <motion.div
-        animate={{ scale: [1, 1.06, 1] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-        style={{ border: `2px solid ${p.accentRgba(0.4)}` }}
-      >
-        <CreditCard className="w-8 h-8" style={{ color: p.accentColor }} />
-      </motion.div>
-      <p className="text-white text-sm font-medium mb-1">{fmt(total)}</p>
-      <p className="text-white/50 text-[10px] tracking-wider">Tap, insert, or swipe</p>
-      <div className="mt-6 flex flex-col items-center gap-1">
-        {[0, 1, 2].map((i) => (
+      {/* Concentric blue rings matching real S710 firmware */}
+      <div className="relative w-28 h-28 flex items-center justify-center mb-5">
+        {[0, 1, 2, 3].map((i) => (
           <motion.div
             key={i}
-            animate={{ opacity: [0.1, 0.5, 0.1] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
-            className="rounded-full"
+            animate={{ scale: [1, 1.08, 1], opacity: [0.15 + i * 0.08, 0.35 + i * 0.05, 0.15 + i * 0.08] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.15 }}
+            className="absolute rounded-full"
             style={{
-              width: 20 + i * 12,
-              height: 10 + i * 6,
-              border: `1px solid ${p.accentRgba(0.3)}`,
+              width: 110 - i * 22,
+              height: 110 - i * 22,
+              border: `2px solid rgba(76, 111, 255, ${0.2 + i * 0.1})`,
             }}
           />
         ))}
+        <CreditCard className="w-7 h-7 text-[#4C6FFF]" />
+      </div>
+      <p className="text-[#1a1a2e] text-sm font-medium mb-0.5">{fmt(total)}</p>
+      <p className="text-[#6b7280] text-[10px] tracking-wider">Tap, insert, or swipe</p>
+
+      {/* Firmware badge */}
+      <div className="absolute bottom-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f3f4f6] border border-[#e5e7eb]">
+        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Reader Firmware</span>
       </div>
     </motion.div>
   );
 }
 
-function ProcessingScreen({ colorTheme = 'cream' }: { colorTheme?: ColorTheme }) {
-  const p = getTerminalPalette(colorTheme);
-
+function ProcessingScreen() {
+  // Processing screen is also firmware-controlled on the real reader
   return (
     <motion.div
       key="processing"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center h-full"
+      className="absolute inset-0 flex flex-col items-center justify-center"
+      style={{ background: '#FFFFFF' }}
     >
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-        className="w-12 h-12 rounded-full border-2 border-white/10 mb-5"
-        style={{ borderTopColor: p.accentColor }}
+        className="w-12 h-12 rounded-full border-2 border-[#e5e7eb] mb-5"
+        style={{ borderTopColor: '#4C6FFF' }}
       />
-      <p className="text-white/60 text-[10px] tracking-[0.15em] uppercase">Processing</p>
+      <p className="text-[#6b7280] text-[10px] tracking-[0.15em] uppercase">Processing</p>
+      <div className="absolute bottom-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f3f4f6] border border-[#e5e7eb]">
+        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Reader Firmware</span>
+      </div>
     </motion.div>
   );
 }
 
-function SuccessScreen({ total, receiptSlogan, colorTheme = 'cream' }: { total: number; receiptSlogan?: string; colorTheme?: ColorTheme }) {
-  const p = getTerminalPalette(colorTheme);
-
+function SuccessScreen({ total, receiptSlogan }: { total: number; receiptSlogan?: string; colorTheme?: ColorTheme }) {
+  // Success screen is firmware-controlled on the real reader
   return (
     <motion.div
       key="success"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center h-full"
+      className="absolute inset-0 flex flex-col items-center justify-center"
+      style={{ background: '#FFFFFF' }}
     >
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="w-16 h-16 rounded-full flex items-center justify-center mb-5 shadow-lg"
-        style={{
-          background: p.accentColor,
-          boxShadow: `0 8px 24px ${p.accentRgba(0.4)}`,
-        }}
+        className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
+        style={{ background: '#22c55e' }}
       >
         <Check className="w-8 h-8 text-white" strokeWidth={3} />
       </motion.div>
@@ -344,17 +344,20 @@ function SuccessScreen({ total, receiptSlogan, colorTheme = 'cream' }: { total: 
         transition={{ delay: 0.2 }}
         className="text-center"
       >
-        <p className="text-white text-sm font-medium mb-1">Approved</p>
-        <p className="text-white/50 text-[10px] font-mono">{fmt(total)}</p>
+        <p className="text-[#1a1a2e] text-sm font-medium mb-1">Approved</p>
+        <p className="text-[#6b7280] text-[10px] font-mono">{fmt(total)}</p>
       </motion.div>
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="text-white/30 text-[8px] tracking-wider uppercase mt-6"
+        className="text-[#9ca3af] text-[8px] tracking-wider uppercase mt-6"
       >
         {receiptSlogan || 'Thank you'}
       </motion.p>
+      <div className="absolute bottom-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f3f4f6] border border-[#e5e7eb]">
+        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Reader Firmware</span>
+      </div>
     </motion.div>
   );
 }
@@ -458,9 +461,9 @@ export function S710CheckoutSimulator({
               {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} colorTheme={colorTheme} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
               {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} colorTheme={colorTheme} />}
-              {screen === 'tap' && <TapScreen total={total} colorTheme={colorTheme} />}
-              {screen === 'processing' && <ProcessingScreen colorTheme={colorTheme} />}
-              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} colorTheme={colorTheme} />}
+              {screen === 'tap' && <TapScreen total={total} />}
+              {screen === 'processing' && <ProcessingScreen />}
+              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} />}
             </AnimatePresence>
           </div>
 
