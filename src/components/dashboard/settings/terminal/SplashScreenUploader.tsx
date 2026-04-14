@@ -60,11 +60,13 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   );
   const uploadMutation = useUploadSplashScreen();
   const removeMutation = useRemoveSplashScreen();
+  const pushAllMutation = usePushSplashToAllLocations();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<{ base64: string; mime: 'image/jpeg' | 'image/png' | 'image/gif' } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [generatingFromLogo, setGeneratingFromLogo] = useState(false);
+  const [pushProgress, setPushProgress] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback(async (file: File) => {
