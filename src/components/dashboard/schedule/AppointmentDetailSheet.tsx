@@ -589,7 +589,7 @@ export function AppointmentDetailSheet({
 
   // Realtime subscription for payment link status auto-updates
   useEffect(() => {
-    if (!appointment?.id || !isOpen) return;
+    if (!appointment?.id || !open) return;
     const channel = supabase
       .channel(`appt-pay-${appointment.id}`)
       .on('postgres_changes', {
@@ -602,7 +602,7 @@ export function AppointmentDetailSheet({
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [appointment?.id, isOpen, queryClient]);
+  }, [appointment?.id, open, queryClient]);
 
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
