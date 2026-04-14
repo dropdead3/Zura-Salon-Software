@@ -333,6 +333,22 @@ export function TerminalSettingsContent() {
   const deleteTerminalLocation = useDeleteTerminalLocation();
   const deleteReader = useDeleteReader();
 
+  // Auto-create terminal location when a connected location has none
+  const autoCreateFiredRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!connectedLocationId) return;
+    if (tlLoading) return;
+    if (terminalLocations && terminalLocations.length > 0) return;
+    if (createTerminalLocation.isPending) return;
+    // Only fire once per location to prevent loops
+    if (autoCreateFiredRef.current === connectedLocationId) return;
+    autoCreateFiredRef.current = connectedLocationId;
+    createTerminalLocation.mutate({
+      locationId: connectedLocationId,
+      displayName: activeLocation?.name,
+    });
+  }, [connectedLocationId, tlLoading, terminalLocations, createTerminalLocation, activeLocation?.name]);
+
   // Check if org has processed at least one terminal payment
   const { data: hasFirstTransaction } = useQuery({
     queryKey: ['zura-pay-first-transaction', orgId, activeLocationId],

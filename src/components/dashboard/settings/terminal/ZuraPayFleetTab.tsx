@@ -575,19 +575,13 @@ export function ZuraPayFleetTab({
                     <CardDescription>Payment terminal locations for accepting in-person payments at this site.</CardDescription>
                   </div>
                 </div>
-                <Button
-                  size={tokens.button.card}
-                  className={tokens.button.cardAction}
-                  onClick={onCreateTerminalLocation}
-                  disabled={createTerminalLocationPending}
-                >
-                  {createTerminalLocationPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                  Create Location
-                </Button>
+                {/* Terminal location is auto-created when Zura Pay connects */}
+                {createTerminalLocationPending && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Setting up...</span>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent>
