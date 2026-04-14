@@ -73,7 +73,7 @@ function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalLocations, us
 
   if (isConnected && (tlLoading || readersLoading)) {
     return (
-      <div className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border">
+      <div className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border min-w-[500px]">
         <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
         <div className="flex justify-center">
           <Badge variant={status.variant} className={cn(
