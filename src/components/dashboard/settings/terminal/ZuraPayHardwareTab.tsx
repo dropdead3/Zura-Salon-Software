@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Plus, CreditCard, Smartphone, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign, Check, Wifi } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Loader2, Plus, CreditCard, Smartphone, Package, Clock, CheckCircle2, Truck, XCircle, Signal, ShoppingCart, DollarSign, Check, Wifi, MapPin } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTerminalRequests, useCreateTerminalRequest } from '@/hooks/useTerminalRequests';
 import { useTerminalHardwareSkus, useCreateTerminalCheckout } from '@/hooks/useTerminalHardwareOrder';
