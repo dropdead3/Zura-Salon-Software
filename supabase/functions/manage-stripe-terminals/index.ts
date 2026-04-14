@@ -121,15 +121,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify user is org member and check role for write actions
-    const { data: membership } = await supabase
-      .from("organization_members")
-      .select("id, role")
+    // Verify user is org member — check organization_admins first, fall back to employee_profiles
+    let memberRole: string | null = null;
+
+    const { data: adminRow } = await supabase
+      .from("organization_admins")
+      .select("role")
       .eq("user_id", user.id)
       .eq("organization_id", locationData.organization_id)
       .maybeSingle();
 
-    if (!membership) {
+    if (adminRow) {
+      memberRole = adminRow.role;
+    } else {
+      // Fall back to employee_profiles for non-admin staff
+      const { data: empRow } = await supabase
+        .from("employee_profiles")
+        .select("stylist_type, is_super_admin, is_primary_owner")
+        .eq("user_id", user.id)
+        .eq("organization_id", locationData.organization_id)
+        .maybeSingle();
+
+      if (empRow) {
+        memberRole = empRow.is_primary_owner
+          ? "owner"
+          : empRow.is_super_admin
+            ? "admin"
+            : "member";
+      }
+    }
+
+    if (!memberRole) {
       return new Response(JSON.stringify({ error: "Not an org member" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
