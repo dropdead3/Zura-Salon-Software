@@ -587,6 +587,23 @@ export function AppointmentDetailSheet({
   const navigate = useNavigate();
   const logAuditEvent = useLogAuditEvent();
 
+  // Realtime subscription for payment link status auto-updates
+  useEffect(() => {
+    if (!appointment?.id || !open) return;
+    const channel = supabase
+      .channel(`appt-pay-${appointment.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'phorest_appointments',
+        filter: `id=eq.${appointment.id}`,
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [appointment?.id, open, queryClient]);
+
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
   const [confirmAction, setConfirmAction] = useState<AppointmentStatus | null>(null);
