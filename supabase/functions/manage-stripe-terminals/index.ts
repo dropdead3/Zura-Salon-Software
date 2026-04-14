@@ -455,9 +455,9 @@ Deno.serve(async (req) => {
           break;
         }
 
-        // Fetch the configuration to check for splashscreen
+        // Fetch the configuration to check for splashscreen (nested under device types)
         const config = await stripeRequest("GET", `/v1/terminal/configurations/${configId}`);
-        const splashFileId = config.splashscreen;
+        const splashFileId = config.stripe_s700?.splashscreen || config.stripe_s710?.splashscreen || null;
 
         if (!splashFileId) {
           result = { splash_screen_active: false, configuration_id: configId };
