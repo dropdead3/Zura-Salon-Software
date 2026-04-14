@@ -97,11 +97,12 @@ export function ZuraPayTippingTab() {
                     </Label>
                     <div className="relative">
                       <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={pct}
-                        onChange={(e) => updatePercentage(i, e.target.value)}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={localPercentages[i]}
+                        onChange={(e) => handlePercentageChange(i, e.target.value)}
+                        onBlur={() => handlePercentageBlur(i)}
                         className="pr-8 text-center font-mono"
                         autoCapitalize="off"
                       />
