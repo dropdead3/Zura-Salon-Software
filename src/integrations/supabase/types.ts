@@ -1173,6 +1173,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          afterpay_surcharge_amount: number | null
           appointment_date: string
           cancellation_fee_charged: number | null
           cancellation_fee_status: string | null
@@ -1243,6 +1244,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          afterpay_surcharge_amount?: number | null
           appointment_date: string
           cancellation_fee_charged?: number | null
           cancellation_fee_status?: string | null
@@ -1313,6 +1315,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          afterpay_surcharge_amount?: number | null
           appointment_date?: string
           cancellation_fee_charged?: number | null
           cancellation_fee_status?: string | null
