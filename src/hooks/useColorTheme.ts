@@ -44,7 +44,7 @@ export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   zura: 'Lavender Fields',
   cream: 'Neutral Elegance',
   rose: 'Rose Garden',
-  sage: 'Coastal Breeze',
+  sage: 'Herb Garden',
   ocean: 'Ocean Avenue',
   ember: 'Sunset Bloom',
   noir: 'Neutral Elegance',
