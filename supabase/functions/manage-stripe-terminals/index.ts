@@ -279,6 +279,27 @@ Deno.serve(async (req) => {
           "/v1/terminal/locations",
           formParams
         );
+
+        // Auto-enable cellular on the new location (harmless on S700, required for S710)
+        try {
+          const configResult = await stripeRequest(
+            "POST",
+            "/v1/terminal/configurations",
+            { "cellular[enabled]": "true" }
+          );
+          if (configResult?.id) {
+            // Assign the configuration to the new location
+            await stripeRequest(
+              "POST",
+              `/v1/terminal/locations/${(result as { id: string }).id}`,
+              { configuration_overrides: configResult.id }
+            );
+            console.log(`[manage-stripe-terminals] Cellular enabled for location ${(result as { id: string }).id}`);
+          }
+        } catch (cellularErr) {
+          // Non-fatal — log but don't block location creation
+          console.warn(`[manage-stripe-terminals] Failed to enable cellular:`, cellularErr);
+        }
         break;
       }
 
