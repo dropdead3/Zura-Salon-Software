@@ -1,67 +1,72 @@
 
 
-# Add Splash Screen Upload to Zura Pay Display Tab
+# Default Theme-Aware Splash Screen for Terminal Display
 
 ## What This Does
-Lets operators upload a branded splash screen image (the idle/default screen) to their physical S710/S700 readers directly from the Display tab. Supports per-location overrides matching the multi-location architecture.
+Organizations that haven't uploaded a custom splash screen will get a beautiful auto-generated default that uses their selected color theme palette (cream/rose/sage/ocean), their org logo centered, and the Zura "Z" icon anchored at the bottom. The simulator preview also becomes theme-aware with matching animated gradients.
 
-## How Stripe Splash Screens Work
-- Upload a 1080x1920 JPG/PNG (< 2MB) or GIF (< 4MB) via the Configuration API
-- Configurations can be account-default or per-location (location overrides account)
-- Readers auto-update within ~10 minutes of a new configuration being applied
+## Current State
+- `SplashScreen` and `IdleScreen` in `S710CheckoutSimulator.tsx` use hardcoded emerald-500 gradients
+- `handleGenerateFromLogo` in `SplashScreenUploader.tsx` uses a hardcoded `#0f0f0f → #1a1a2e → #0f0f0f` gradient
+- `colorThemes` in `useColorTheme.ts` already has dark-mode HSL values per theme (bg, accent, primary) — perfect gradient source
+- No connection exists between the org's selected theme and the terminal display
 
 ## Plan
 
-### 1. Extend edge function with splash screen actions
+### 1. Create theme gradient palette map
+**New utility: `src/lib/terminal-splash-palettes.ts`**
 
-**File: `supabase/functions/manage-stripe-terminals/index.ts`**
+Maps each `ColorTheme` to concrete hex/HSL colors for canvas rendering and CSS:
+```text
+cream  → #0a0a08 → #2d2820 → #0a0a08, accent: #b8a77a
+rose   → #140a0c → #3d1a24 → #140a0c, accent: #d4728a  
+sage   → #0a100c → #1a3d26 → #0a100c, accent: #5cb87a
+ocean  → #0a0c14 → #1a2640 → #0a0c14, accent: #4a8ad4
+```
+Each entry includes: `gradientStops` (3-stop vertical), `accentColor`, `accentGlow` (for subtle radial), `textColor`, `mutedColor`.
 
-Add three new actions to the existing function:
+### 2. Update `S710CheckoutSimulator.tsx` — theme-aware screens
+**Add `colorTheme` prop** to the simulator, passed from `CheckoutDisplayConcept`.
 
-- **`upload_splash_screen`**: Accepts a base64-encoded image + location_id. Creates a new Terminal Configuration with the splashscreen file via `POST /v1/terminal/configurations` (multipart/form-data), then assigns it to the terminal location via `configuration_overrides`. Validates image size (< 2MB for JPG/PNG, < 4MB for GIF) and dimensions server-side.
+Update `SplashScreen`:
+- Replace hardcoded `emerald-500/8` radial with theme accent glow
+- Replace emerald gradient icon-box with theme accent gradient
+- Replace `emerald-500/20` pulse ring with theme accent
+- Org logo fades in with spring animation (existing), add a subtle continuous shimmer on the accent divider
 
-- **`get_splash_screen`**: Fetches the current configuration for a terminal location to check if a splash screen is set. Returns the current splash screen URL if available.
+Update `IdleScreen`:
+- Replace `emerald-500/40` divider with theme accent
+- Replace `emerald-500/20` pulse ring with theme accent
+- Add a slow-moving gradient animation (CSS background-size animation) on the screen background
 
-- **`remove_splash_screen`**: Creates a new configuration without a splash screen and assigns it, effectively clearing the custom splash.
+### 3. Update `SplashScreenUploader.tsx` — theme-aware generation
+**Modify `handleGenerateFromLogo`** to:
+- Import `useColorTheme` to get the current org theme
+- Pull gradient stops from the palette map
+- Paint the 1080×1920 canvas with the themed 3-stop gradient
+- Add a subtle radial accent glow at center (behind logo)
+- Draw org logo centered
+- Draw business name below in theme text color
+- Draw Zura "Z" icon at the bottom (load from SVG path data, render on canvas)
+- Add "Powered by Zura" tiny text below the Z icon
 
-The Stripe Configuration API requires `multipart/form-data` for the splashscreen file upload — the edge function will convert the base64 payload to a Blob and use FormData.
+### 4. Update `CheckoutDisplayConcept.tsx`
+- Import `useColorTheme` and pass `colorTheme` to the simulator component
+- Theme changes instantly reflect in the preview
 
-### 2. Add splash screen upload UI to Display tab
+### 5. Animations in the simulator (framer-motion, already available)
+- **Splash**: Slow pulsing radial glow behind logo (scale 1→1.1→1 on the accent radial, 4s infinite)
+- **Idle**: Breathing pulse ring uses theme accent instead of emerald
+- **Transition**: Existing AnimatePresence crossfade between screens (already works)
 
-**File: `src/components/dashboard/settings/terminal/ZuraPayDisplayTab.tsx`**
-
-Add a "Splash Screen" card below the existing simulator with:
-- Image dropzone (drag-and-drop or click to upload) constrained to 1080x1920
-- Canvas-based cropper/resizer that ensures the uploaded image meets the 1080x1920 requirement
-- Per-location selector (dropdown of terminal locations) so multi-location orgs can set different splash screens per location
-- "Upload to Reader" button that base64-encodes the image and calls the edge function
-- Current splash screen preview (fetched from the configuration) with a "Remove" action
-- Status indicator showing "Splash screen active" or "Using default" per location
-
-### 3. Create hook for splash screen management
-
-**New file: `src/hooks/useTerminalSplashScreen.ts`**
-
-- `useTerminalSplashScreen(locationId)` — queries current configuration
-- `useUploadSplashScreen()` — mutation to upload + assign
-- `useRemoveSplashScreen()` — mutation to clear
-
-### 4. Auto-generate splash screen from branding (stretch)
-
-Add a "Generate from Logo" button that takes the org's `logo_dark_url`, places it centered on a 1080x1920 dark background with the business name below, and offers it as a one-click upload. This uses client-side canvas rendering — no external service needed.
+Note: The actual physical S710 splash screen is a static image (Stripe limitation) — animations only appear in the dashboard simulator preview. The generated canvas image for upload will be a high-quality static frame.
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `supabase/functions/manage-stripe-terminals/index.ts` | Add `upload_splash_screen`, `get_splash_screen`, `remove_splash_screen` actions |
-| `src/hooks/useTerminalSplashScreen.ts` | New — query + mutation hooks |
-| `src/components/dashboard/settings/terminal/ZuraPayDisplayTab.tsx` | Add splash screen upload card with per-location support |
-| `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` | New — dropzone, preview, crop, generate-from-logo UI |
-
-## Technical Notes
-
-- Stripe's `/v1/terminal/configurations` splash screen parameter requires `multipart/form-data` with a file field, not URL-encoded form params. The edge function will construct a `FormData` object with the image Blob.
-- The cellular configuration created during `create_location` will be preserved — the new splash screen config will include `cellular[enabled]=true` to avoid overwriting it.
-- Image validation happens both client-side (preview + dimension check) and server-side (size limit enforcement in the edge function).
+| `src/lib/terminal-splash-palettes.ts` | New — theme-to-color palette map |
+| `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx` | Add `colorTheme` prop, replace all hardcoded emerald with palette-resolved colors |
+| `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` | Use theme palette in `handleGenerateFromLogo`, add Zura Z icon to canvas |
+| `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` | Pass `colorTheme` to simulator |
 
