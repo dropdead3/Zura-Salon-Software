@@ -314,6 +314,15 @@ export function TerminalSettingsContent() {
     }
   }, [orgId, searchParams, setSearchParams]);
 
+  // G3: Auto-select location after onboarding return
+  useEffect(() => {
+    const autoId = verifyMutation.data?.auto_connected_location_id;
+    if (autoId) {
+      setSelectedLocationId(autoId);
+      setShowAllLocations(false);
+    }
+  }, [verifyMutation.data?.auto_connected_location_id]);
+
   const activeLocationId = showAllLocations ? null : (selectedLocationId || locations?.[0]?.id || null);
   const activeLocation = locations?.find((l) => l.id === activeLocationId);
   const connectedLocationId = activeLocation?.stripe_account_id ? activeLocationId : null;
