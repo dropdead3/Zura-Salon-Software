@@ -28,6 +28,8 @@ import { useColorTheme, colorThemes, COLOR_THEME_TO_CATEGORY_MAP } from '@/hooks
 import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+import { useAutoSyncTerminalSplash } from '@/hooks/useAutoSyncTerminalSplash';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
 import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
@@ -389,6 +391,8 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
   const { roleOptions: dynamicRoleOptions } = useRoleUtils();
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
+  const { data: business } = useBusinessSettings();
+  const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '');
 
   const capacity = useBusinessCapacity();
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
@@ -598,6 +602,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                                 applyCategoryTheme.mutate(matched);
                                 toast({ title: 'Theme updated', description: `Service colors synced to "${mappedName}"` });
                               }
+                              syncSplashToTheme(themeOption.id);
                             }}
                               className={cn("relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
                                 isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50")}>
