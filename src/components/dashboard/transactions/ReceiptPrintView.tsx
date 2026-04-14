@@ -14,8 +14,12 @@ function escapeHtml(str: string): string {
 
 interface ReceiptBusinessInfo {
   logoUrl?: string | null;
+  iconUrl?: string | null;
   address?: string;
   phone?: string | null;
+  website?: string | null;
+  socials?: { instagram?: string; facebook?: string; tiktok?: string };
+  reviewUrls?: { google?: string; yelp?: string; facebook?: string };
 }
 
 export function printReceipt(
@@ -113,6 +117,38 @@ export function printReceipt(
     ${cfg.custom_message ? `<p>${escapeHtml(cfg.custom_message)}</p>` : ''}
     ${cfg.footer_text ? `<p>${escapeHtml(cfg.footer_text)}</p>` : ''}
   </div>
+  ${cfg.show_satisfaction_note && cfg.satisfaction_text ? `<p style="text-align:center;font-size:10px;color:#aaa;margin-top:12px;">${escapeHtml(cfg.satisfaction_text)}</p>` : ''}
+  ${(cfg.show_redo_policy && cfg.redo_policy_text) || (cfg.show_refund_policy && cfg.refund_policy_text) ? `
+  <div style="margin-top:12px;padding-top:8px;border-top:1px solid ${accentColor};font-size:10px;color:#aaa;text-align:center;">
+    ${cfg.show_redo_policy && cfg.redo_policy_text ? `<p style="margin:2px 0;">${escapeHtml(cfg.redo_policy_text)}</p>` : ''}
+    ${cfg.show_refund_policy && cfg.refund_policy_text ? `<p style="margin:2px 0;">${escapeHtml(cfg.refund_policy_text)}</p>` : ''}
+  </div>` : ''}
+  ${cfg.show_review_prompt && cfg.review_prompt_text ? (() => {
+    const platforms = [
+      businessInfo?.reviewUrls?.google ? `<a href="${escapeHtml(businessInfo.reviewUrls.google)}" style="color:#3b82f6;text-decoration:none;">Google</a>` : '',
+      businessInfo?.reviewUrls?.yelp ? `<a href="${escapeHtml(businessInfo.reviewUrls.yelp)}" style="color:#3b82f6;text-decoration:none;">Yelp</a>` : '',
+      businessInfo?.reviewUrls?.facebook ? `<a href="${escapeHtml(businessInfo.reviewUrls.facebook)}" style="color:#3b82f6;text-decoration:none;">Facebook</a>` : '',
+    ].filter(Boolean).join(' &middot; ');
+    return `<div style="margin-top:12px;padding-top:8px;border-top:1px solid ${accentColor};text-align:center;">
+      <p style="font-size:10px;color:#666;font-weight:500;margin:0 0 2px;">${escapeHtml(cfg.review_prompt_text)}</p>
+      ${platforms ? `<p style="font-size:10px;margin:0;">${platforms}</p>` : ''}
+    </div>`;
+  })() : ''}
+  ${(() => {
+    const socialParts: string[] = [];
+    if (cfg.show_socials && businessInfo?.socials) {
+      if (businessInfo.socials.instagram) socialParts.push('@' + escapeHtml(businessInfo.socials.instagram.replace(/^@/, '')));
+      if (businessInfo.socials.facebook) socialParts.push('fb/' + escapeHtml(businessInfo.socials.facebook));
+      if (businessInfo.socials.tiktok) socialParts.push('@' + escapeHtml(businessInfo.socials.tiktok.replace(/^@/, '')));
+    }
+    const websiteLine = cfg.show_website && businessInfo?.website ? escapeHtml(businessInfo.website) : '';
+    if (!socialParts.length && !websiteLine) return '';
+    return `<div style="margin-top:12px;padding-top:8px;border-top:1px solid ${accentColor};text-align:center;font-size:10px;color:#aaa;">
+      ${socialParts.length ? `<p style="margin:2px 0;">${socialParts.join(' &middot; ')}</p>` : ''}
+      ${websiteLine ? `<p style="margin:2px 0;">${websiteLine}</p>` : ''}
+    </div>`;
+  })()}
+  ${cfg.show_footer_icon && businessInfo?.iconUrl ? `<div style="text-align:center;margin-top:12px;"><img src="${escapeHtml(businessInfo.iconUrl)}" alt="" style="height:24px;object-fit:contain;opacity:0.4;" /></div>` : ''}
   <script>window.onload = function() { window.print(); }</script>
 </body>
 </html>`;
