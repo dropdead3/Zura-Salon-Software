@@ -42,12 +42,18 @@ type LocationWithPayment = {
   stripe_account_id: string | null;
   stripe_status: string | null;
   stripe_payments_enabled: boolean | null;
+  stripe_connect_status?: string | null;
 };
 
 function getConnectionStatus(loc: LocationWithPayment) {
   if (!loc.stripe_account_id) return { label: 'Not Connected', variant: 'outline' as const, dotClass: 'bg-muted-foreground/40' };
+  if (loc.stripe_connect_status === 'pending') return { label: 'Pending', variant: 'secondary' as const, dotClass: 'bg-amber-500' };
   if (loc.stripe_status === 'active' && loc.stripe_payments_enabled) return { label: 'Active', variant: 'default' as const, dotClass: 'bg-emerald-500' };
   return { label: 'Pending', variant: 'secondary' as const, dotClass: 'bg-amber-500' };
+}
+
+function hasOwnAccount(loc: LocationWithPayment, orgAccountId: string | null): boolean {
+  return !!loc.stripe_account_id && loc.stripe_account_id !== orgAccountId;
 }
 
 interface LocationSummaryRowProps {
@@ -146,6 +152,7 @@ export interface ZuraPayFleetTabProps {
   useTerminalReadersHook: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
   // Payment connect self-serve props
   orgConnectStatus?: string;
+  orgConnectAccountId?: string | null;
   onStartConnect?: () => void;
   isConnecting?: boolean;
   onVerifyConnection?: () => void;
@@ -157,6 +164,8 @@ export interface ZuraPayFleetTabProps {
   onDisconnectLocation?: (locationId: string) => void;
   isDisconnectingLocation?: boolean;
   onRefreshReaders?: () => void;
+  onCreateLocationAccount?: (locationId: string) => void;
+  isCreatingLocationAccount?: boolean;
 }
 
 export function ZuraPayFleetTab({
