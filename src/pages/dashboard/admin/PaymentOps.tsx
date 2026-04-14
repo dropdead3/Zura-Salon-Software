@@ -357,7 +357,7 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
               </p>
             </div>
           ) : (
-            <FeeLedgerTable
+            <FeeLedgerTableInner
               feeCharges={feeCharges}
               isPending={isPending}
               formatCurrency={formatCurrency}
