@@ -34,9 +34,10 @@ import {
 } from '@/hooks/useTerminalSplashScreen';
 import { useLocations } from '@/hooks/useLocations';
 import { useColorTheme } from '@/hooks/useColorTheme';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useTerminalSplashOrigin, upsertSplashOrigin, deleteSplashOrigin } from '@/hooks/useTerminalSplashMetadata';
 import { toast } from 'sonner';
 import { generateDefaultSplash } from '@/lib/generate-terminal-splash';
-
 const TARGET_W = 1080;
 const TARGET_H = 1920;
 const MAX_FILE_SIZE_JPG_PNG = 2 * 1024 * 1024;
