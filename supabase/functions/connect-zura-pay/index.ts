@@ -17,7 +17,7 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 
 const BaseSchema = z.object({
   organization_id: z.string().uuid("organization_id must be a valid UUID"),
-  location_id: z.string().uuid().optional(),
+  location_id: z.string().min(1).optional(),
 });
 
 const OnboardingSchema = BaseSchema.extend({
@@ -40,12 +40,12 @@ const ResetAccountSchema = BaseSchema.extend({
 
 const DisconnectLocationSchema = BaseSchema.extend({
   action: z.literal("disconnect_location"),
-  location_id: z.string().uuid("location_id is required"),
+  location_id: z.string().min(1, "location_id is required"),
 });
 
 const CreateLocationAccountSchema = BaseSchema.extend({
   action: z.literal("create_location_account"),
-  location_id: z.string().uuid("location_id is required for create_location_account"),
+  location_id: z.string().min(1, "location_id is required for create_location_account"),
   return_url: z.string().url("return_url must be a valid URL"),
   refresh_url: z.string().url("refresh_url must be a valid URL"),
 });
