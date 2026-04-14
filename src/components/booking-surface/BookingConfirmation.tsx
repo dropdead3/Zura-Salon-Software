@@ -176,6 +176,13 @@ export function BookingConfirmation({
         </div>
       )}
 
+      {/* Afterpay Promo Badge */}
+      {afterpayEnabled && depositAmount != null && depositAmount > 0 && depositAmount <= 4000 && (
+        <div className="mb-4">
+          <AfterpayPromoBadge theme={theme} amount={depositAmount} />
+        </div>
+      )}
+
       {/* Payment Form (shown after appointment creation) */}
       {showPaymentForm && paymentClientSecret && paymentIntentType && stripePublishableKey && stripeConnectedAccountId && onPaymentComplete ? (
         <div className="mb-4">
