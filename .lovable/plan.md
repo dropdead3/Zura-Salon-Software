@@ -1,46 +1,52 @@
 
 
-# Fix: Auto-Create Terminal Location & Remove Manual Button
+# Simplify Fleet Tab: Remove Terminal Locations, Add Point-of-Sale Reader Management
 
-## The Problem
+## Problem
 
-You're absolutely right — this is a redundant and confusing UX. The flow currently is:
+The "Terminal Locations" card exposes Stripe's internal `tml_` object concept to operators, who have no reason to know about it. The operator is already toggled into "North Mesa" — showing them another card called "Terminal Locations" with "North Mesa" listed again is confusing and redundant.
 
-1. Select "North Mesa" from the location picker ✅
-2. Zura Pay connects to that location ✅
-3. Then you're asked to manually "Create Location" **again** — but this time it's creating a **Stripe Terminal Location** (`tml_` object) inside Stripe's API
-4. There's **no deduplication** — every click creates another identical entry (hence the two "North Mesa" rows in your screenshot)
+What operators actually need: **How many readers does this location need?** One reader per point of sale. That's it.
 
-The operator shouldn't need to know about or manage Stripe's internal terminal location objects. One Zura location = one terminal location. Period.
+## Changes
 
-## Fix Plan
+### 1. Remove the Terminal Locations card entirely
+**File:** `ZuraPayFleetTab.tsx` (lines 562-632)
 
-### 1. Auto-create Terminal Location on Zura Pay connection
-**File:** `TerminalSettingsContent.tsx`
+Delete the entire "Terminal Locations" card. The Stripe terminal location is an infrastructure detail — it's already auto-created behind the scenes. Operators never need to see, create, or delete `tml_` objects.
 
-When a location first connects to Zura Pay (or when the Fleet tab loads and detects a connected location with zero terminal locations), automatically call `createTerminalLocation` once. This eliminates the manual step entirely.
+### 2. Remove the delete-location button and trash icons for terminal locations
+Since terminal locations are invisible infrastructure, operators can't delete them. The delete action on `tml_` objects is removed from the UI.
 
-### 2. Remove the "Create Location" button
-**File:** `ZuraPayFleetTab.tsx`
+### 3. Simplify the Readers card
+**File:** `ZuraPayFleetTab.tsx` (lines 646-762)
 
-Remove the `+ Create Location` button from the Terminal Locations card header. Since one Zura location maps to exactly one Stripe terminal location, there's no reason for the operator to create additional ones.
+- Remove the guard that disables "Register Reader" when no terminal locations exist (since one always exists after connection)
+- Update the empty state text from "Create a terminal location first, then register readers" to "No readers paired yet. Register a reader using its pairing code."
+- The reader registration flow already works — it just needs to auto-target the single terminal location
 
-### 3. Add deduplication guard in the edge function
-**File:** `supabase/functions/manage-stripe-terminals/index.ts`
+### 4. Remove Terminal Locations column from Fleet Overview
+**File:** `ZuraPayFleetTab.tsx` (lines 386-392, 116)
 
-Before creating a new Stripe terminal location, check `list_locations` first. If a terminal location already exists with matching metadata (our `location_id`), return the existing one instead of creating a duplicate. This prevents duplicates even if the auto-create fires twice.
+In the "All Locations" summary grid, remove the "Terminal Locations" column (currently column 3 of 5). Change to a 4-column grid: Location | Connection | Readers | Status.
 
-### 4. Clean up the duplicate from the screenshot
-Use the Stripe API tools to list and delete the duplicate `tml_` entry for North Mesa, leaving only one.
+### 5. Clean up props
+**File:** `ZuraPayFleetTab.tsx` props interface + `TerminalSettingsContent.tsx`
 
----
+Remove `onDeleteLocation` prop since it's no longer needed from the UI. Keep the underlying `useDeleteTerminalLocation` hook for programmatic cleanup if needed.
+
+## What stays the same
+- Auto-creation of the Stripe terminal location on connect (already implemented)
+- Deduplication guard in the edge function (already implemented)
+- Reader registration, refresh, and deletion
+- The "Disconnect location" link at the bottom
 
 ## Summary
 
-| Change | File | Impact |
-|--------|------|--------|
-| Auto-create terminal location on connect | `TerminalSettingsContent.tsx` | Eliminates manual step |
-| Remove "Create Location" button | `ZuraPayFleetTab.tsx` | Cleaner UX |
-| Deduplication guard in edge function | `manage-stripe-terminals/index.ts` | Prevents duplicates |
-| Delete existing duplicate | Stripe API | Cleans current state |
+| Action | File |
+|--------|------|
+| Remove Terminal Locations card | `ZuraPayFleetTab.tsx` |
+| Remove "Terminal Locations" column from Fleet Overview | `ZuraPayFleetTab.tsx` |
+| Simplify Readers card empty state and button guard | `ZuraPayFleetTab.tsx` |
+| Clean up unused props | `ZuraPayFleetTab.tsx`, `TerminalSettingsContent.tsx` |
 
