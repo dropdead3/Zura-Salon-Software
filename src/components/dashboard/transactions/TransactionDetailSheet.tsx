@@ -393,10 +393,56 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                   <Printer className="w-4 h-4 mr-2" />
                   Print Receipt
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <Mail className="w-4 h-4 mr-2" />
+                <DropdownMenuItem
+                  disabled={sendingEmail}
+                  onClick={async () => {
+                    setSendingEmail(true);
+                    try {
+                      // Prompt for email address
+                      const email = window.prompt('Enter client email address:');
+                      if (!email) { setSendingEmail(false); return; }
+                      const logoUrl = business?.logo_light_url || business?.logo_dark_url || null;
+                      const iconUrl = business?.icon_light_url || business?.icon_dark_url || null;
+                      const addressParts = [business?.mailing_address, business?.city, business?.state, business?.zip].filter(Boolean);
+                      const bInfo: ReceiptBusinessInfo = {
+                        logoUrl,
+                        iconUrl,
+                        address: addressParts.join(', '),
+                        phone: business?.phone || null,
+                        website: business?.website || null,
+                        socials: {
+                          instagram: socialLinks?.instagram || '',
+                          facebook: socialLinks?.facebook || '',
+                          tiktok: socialLinks?.tiktok || '',
+                        },
+                        reviewUrls: {
+                          google: reviewSettings?.googleReviewUrl || '',
+                          yelp: reviewSettings?.yelpReviewUrl || '',
+                          facebook: reviewSettings?.facebookReviewUrl || '',
+                        },
+                      };
+                      const data = groupedTransactionToReceiptData(transaction);
+                      const html = buildReceiptHtml(data, formatCurrency, orgName, receiptConfig, bInfo);
+                      const { error } = await supabase.functions.invoke('send-receipt', {
+                        body: {
+                          method: 'email',
+                          recipient: email,
+                          receiptHtml: html,
+                          orgName,
+                        },
+                      });
+                      if (error) throw error;
+                      toast.success(`Receipt emailed to ${email}`);
+                    } catch (err) {
+                      console.error('Failed to email receipt:', err);
+                      toast.error('Failed to send receipt email');
+                    } finally {
+                      setSendingEmail(false);
+                    }
+                  }}
+                >
+                  {sendingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
                   Email Receipt
-                  <Badge variant="outline" className="ml-2 text-[9px] px-1">Soon</Badge>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
