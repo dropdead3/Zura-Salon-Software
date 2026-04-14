@@ -142,7 +142,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
               </div>
               <h3 className="font-display text-sm tracking-[0.14em]">PAYMENT SETUP REQUIRED</h3>
               <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                Complete your Zura Pay setup in the Fleet tab before ordering hardware.
+                Complete your Zura Pay setup in the Location Set Up tab before ordering hardware.
               </p>
             </div>
           </CardContent>
