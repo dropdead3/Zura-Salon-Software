@@ -130,6 +130,7 @@ export function useCreateLocationAccount() {
     },
     onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['org-bank-last4', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
       if (data.onboarding_url) {
         window.location.href = data.onboarding_url;

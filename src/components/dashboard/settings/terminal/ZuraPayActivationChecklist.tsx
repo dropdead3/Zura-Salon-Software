@@ -1,12 +1,14 @@
-import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { FormSuccess } from '@/components/ui/form-success';
 
 interface ChecklistStep {
   label: string;
   description: string;
   complete: boolean;
+  loading?: boolean;
 }
 
 interface ZuraPayActivationChecklistProps {
@@ -15,7 +17,7 @@ interface ZuraPayActivationChecklistProps {
   isLocationConnected: boolean;
   hasTerminalLocations: boolean;
   hasReaders: boolean;
-  hasFirstTransaction: boolean;
+  hasFirstTransaction: boolean | undefined;
   locationHasOwnAccount?: boolean;
 }
 
@@ -61,14 +63,29 @@ export function ZuraPayActivationChecklist({
     {
       label: 'First Transaction',
       description: 'Process your first payment to confirm everything works',
-      complete: hasFirstTransaction,
+      complete: !!hasFirstTransaction,
+      loading: hasFirstTransaction === undefined,
     },
   ];
 
   const completedCount = steps.filter((s) => s.complete).length;
   const allComplete = completedCount === steps.length;
 
-  if (allComplete) return null;
+  // Find the first incomplete step index for "current step" highlight
+  const currentStepIndex = steps.findIndex((s) => !s.complete);
+
+  if (allComplete) {
+    return (
+      <div className="rounded-xl border border-primary/30 bg-primary/[0.04]">
+        <div className="p-6">
+          <FormSuccess
+            title="Activation Complete"
+            description="All steps are finished — Zura Pay is fully active for this location."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.04]">
@@ -98,26 +115,40 @@ export function ZuraPayActivationChecklist({
         </div>
 
         <div className="space-y-4">
-          {steps.map((step, idx) => (
-            <div key={idx} className="flex items-start gap-3">
-              {step.complete ? (
-                <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-              ) : (
-                <Circle className="w-5 h-5 text-muted-foreground/40 mt-0.5 shrink-0" />
-              )}
-              <div>
-                <p className={cn(
-                  'text-sm font-medium',
-                  step.complete ? 'text-foreground' : 'text-muted-foreground'
-                )}>
-                  {step.label}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {step.description}
-                </p>
+          {steps.map((step, idx) => {
+            const isCurrent = idx === currentStepIndex;
+
+            return (
+              <div key={idx} className={cn(
+                'flex items-start gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-colors',
+                isCurrent && 'bg-amber-500/[0.06]',
+              )}>
+                {step.loading ? (
+                  <Loader2 className="w-5 h-5 text-muted-foreground/40 mt-0.5 shrink-0 animate-spin" />
+                ) : step.complete ? (
+                  <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                ) : isCurrent ? (
+                  <Circle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                ) : (
+                  <Circle className="w-5 h-5 text-muted-foreground/40 mt-0.5 shrink-0" />
+                )}
+                <div>
+                  <p className={cn(
+                    'text-sm font-medium',
+                    step.complete ? 'text-foreground' : isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                  )}>
+                    {step.label}
+                    {isCurrent && (
+                      <span className="ml-2 text-xs font-normal text-amber-500">— Next</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {step.description}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
