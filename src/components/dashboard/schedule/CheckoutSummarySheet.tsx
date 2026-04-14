@@ -778,7 +778,7 @@ export function CheckoutSummarySheet({
               ))}
             </div>
 
-            {/* Send Payment Link (Afterpay) */}
+            {/* Send Payment Link (Afterpay) — B3: use org's real afterpay_enabled, G3: wire onPaymentLinkSent */}
             {organizationId && appointment && (
               <div className="pt-1">
                 <SendToPayButton
@@ -788,8 +788,12 @@ export function CheckoutSummarySheet({
                   clientName={appointment.client_name}
                   clientEmail={appointment.client_email}
                   clientPhone={appointment.client_phone}
-                  afterpayEnabled={true}
+                  afterpayEnabled={orgAfterpayEnabled}
                   disabled={isUpdating}
+                  onPaymentLinkSent={() => {
+                    // Invalidate appointment queries so the badge / status updates
+                    queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+                  }}
                 />
               </div>
             )}
