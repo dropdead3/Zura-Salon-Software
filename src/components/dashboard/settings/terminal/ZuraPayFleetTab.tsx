@@ -227,12 +227,36 @@ export function ZuraPayFleetTab({
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
   const [testingReaderId, setTestingReaderId] = useState<string | null>(null);
+  const testTimerRef = useRef<number | null>(null);
   const { effectiveOrganization } = useOrganizationContext();
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
 
   const selectedLoc = locations.find((l) => l.id === activeLocationId);
   const selectedStatus = selectedLoc ? getConnectionStatus(selectedLoc) : null;
+
+  const handleClearDisplay = useCallback(async (readerId: string) => {
+    const orgId = effectiveOrganization?.id;
+    if (!orgId) return;
+    if (testTimerRef.current) {
+      window.clearTimeout(testTimerRef.current);
+      testTimerRef.current = null;
+    }
+    try {
+      await supabase.functions.invoke('terminal-reader-display', {
+        body: {
+          action: 'clear_reader_display',
+          reader_id: readerId,
+          organization_id: orgId,
+        },
+      });
+      toast.success('Reader display cleared');
+    } catch (err) {
+      toast.error('Failed to clear display', { description: (err as Error).message });
+    } finally {
+      setTestingReaderId(null);
+    }
+  }, [effectiveOrganization?.id]);
 
   const handleTestDisplay = useCallback(async (readerId: string) => {
     const orgId = effectiveOrganization?.id;
@@ -242,34 +266,33 @@ export function ZuraPayFleetTab({
     }
     setTestingReaderId(readerId);
     try {
+      // Match the Display tab sample cart: Balayage + Olaplex + Blowout
+      const subtotal = 18500 + 4500 + 6500; // $295.00
+      const tax = Math.round(subtotal * 0.08); // 8% = $23.60
       const { error: setError } = await supabase.functions.invoke('terminal-reader-display', {
         body: {
           action: 'set_reader_display',
           reader_id: readerId,
           organization_id: orgId,
           line_items: [
-            { description: 'Sample Haircut', amount: 4500, quantity: 1 },
-            { description: 'Styling Product', amount: 2250, quantity: 2 },
+            { description: 'Balayage Full Head', amount: 18500, quantity: 1 },
+            { description: 'Olaplex Treatment', amount: 4500, quantity: 1 },
+            { description: 'Blowout & Style', amount: 6500, quantity: 1 },
           ],
-          tax: 382,
+          tax,
         },
       });
       if (setError) throw setError;
-      toast.success('Test display sent', { description: 'Cart data pushed to reader. Clearing in 8 seconds…' });
-      await new Promise((r) => setTimeout(r, 8000));
-      await supabase.functions.invoke('terminal-reader-display', {
-        body: {
-          action: 'clear_reader_display',
-          reader_id: readerId,
-          organization_id: orgId,
-        },
-      });
+      toast.success('Test display sent', { description: 'Auto-clearing in 10s — or tap Clear' });
+      // Non-blocking 10s auto-clear
+      testTimerRef.current = window.setTimeout(() => {
+        handleClearDisplay(readerId);
+      }, 10000);
     } catch (err) {
       toast.error('Test display failed', { description: (err as Error).message });
-    } finally {
       setTestingReaderId(null);
     }
-  }, [effectiveOrganization?.id]);
+  }, [effectiveOrganization?.id, handleClearDisplay]);
 
   return (
     <div className="space-y-6">
