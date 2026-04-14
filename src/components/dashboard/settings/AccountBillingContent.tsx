@@ -7,6 +7,7 @@ import { BillingAlertsBanner } from './BillingAlertsBanner';
 import { BillingAccessBanner, BillingOwnerToggleCard, BillingAccessDenied } from './BillingAccessGate';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export function AccountBillingContent() {
   const { canViewBilling, isLoading } = useBillingAccess();
@@ -29,6 +30,9 @@ export function AccountBillingContent() {
 
       {/* Billing Alerts */}
       <BillingAlertsBanner />
+
+      {/* Page Explainer */}
+      <PageExplainer pageId="account-management" />
 
       {/* Row 1: Overview + Payment */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
