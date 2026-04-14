@@ -11516,6 +11516,7 @@ export type Database = {
           state_province: string | null
           store_number: string | null
           stripe_account_id: string | null
+          stripe_connect_status: string
           stripe_payments_enabled: boolean | null
           stripe_status: string | null
           stylist_capacity: number | null
@@ -11556,6 +11557,7 @@ export type Database = {
           state_province?: string | null
           store_number?: string | null
           stripe_account_id?: string | null
+          stripe_connect_status?: string
           stripe_payments_enabled?: boolean | null
           stripe_status?: string | null
           stylist_capacity?: number | null
@@ -11596,6 +11598,7 @@ export type Database = {
           state_province?: string | null
           store_number?: string | null
           stripe_account_id?: string | null
+          stripe_connect_status?: string
           stripe_payments_enabled?: boolean | null
           stripe_status?: string | null
           stylist_capacity?: number | null
