@@ -43,6 +43,12 @@ export function BusinessSettingsContent() {
     email: '',
     website: '',
     default_tax_rate: '',
+    instagram_url: '',
+    facebook_url: '',
+    tiktok_url: '',
+    twitter_url: '',
+    youtube_url: '',
+    linkedin_url: '',
   });
 
   const [uploadingLight, setUploadingLight] = useState(false);
@@ -70,6 +76,12 @@ export function BusinessSettingsContent() {
         email: settings.email || '',
         website: settings.website || '',
         default_tax_rate: settings.default_tax_rate != null ? (settings.default_tax_rate * 100).toString() : '',
+        instagram_url: settings.instagram_url || '',
+        facebook_url: settings.facebook_url || '',
+        tiktok_url: settings.tiktok_url || '',
+        twitter_url: settings.twitter_url || '',
+        youtube_url: settings.youtube_url || '',
+        linkedin_url: settings.linkedin_url || '',
       };
       setFormData(snapshot);
       setInitialFormData(snapshot);
@@ -418,6 +430,38 @@ export function BusinessSettingsContent() {
               <div className="space-y-2">
                 <Label htmlFor="website">Website</Label>
                 <Input id="website" value={formData.website} onChange={(e) => handleChange('website', e.target.value)} placeholder="https://www.example.com" type="url" />
+              </div>
+
+              {/* Social Links */}
+              <div className="pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground font-display tracking-wide uppercase mb-3">Social Links</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram_url">Instagram</Label>
+                    <Input id="instagram_url" value={formData.instagram_url} onChange={(e) => handleChange('instagram_url', e.target.value)} placeholder="https://instagram.com/yourbrand" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="facebook_url">Facebook</Label>
+                    <Input id="facebook_url" value={formData.facebook_url} onChange={(e) => handleChange('facebook_url', e.target.value)} placeholder="https://facebook.com/yourbrand" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tiktok_url">TikTok</Label>
+                    <Input id="tiktok_url" value={formData.tiktok_url} onChange={(e) => handleChange('tiktok_url', e.target.value)} placeholder="https://tiktok.com/@yourbrand" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="twitter_url">X / Twitter</Label>
+                    <Input id="twitter_url" value={formData.twitter_url} onChange={(e) => handleChange('twitter_url', e.target.value)} placeholder="https://x.com/yourbrand" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="youtube_url">YouTube</Label>
+                    <Input id="youtube_url" value={formData.youtube_url} onChange={(e) => handleChange('youtube_url', e.target.value)} placeholder="https://youtube.com/@yourbrand" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin_url">LinkedIn</Label>
+                    <Input id="linkedin_url" value={formData.linkedin_url} onChange={(e) => handleChange('linkedin_url', e.target.value)} placeholder="https://linkedin.com/company/yourbrand" />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">These appear on receipts and your public website. Locations can override with their own links.</p>
               </div>
             </CardContent>
           </Card>
