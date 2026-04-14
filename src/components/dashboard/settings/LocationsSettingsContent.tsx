@@ -45,6 +45,7 @@ import {
   X,
   FolderOpen,
   Layers,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
@@ -116,6 +117,8 @@ type LocationFormData = {
   break_minutes_per_day: number | null;
   lunch_minutes: number | null;
   appointment_padding_minutes: number | null;
+  legal_name: string;
+  ein: string;
 };
 
 const emptyForm: LocationFormData = {
@@ -139,6 +142,8 @@ const emptyForm: LocationFormData = {
   break_minutes_per_day: 30,
   lunch_minutes: 45,
   appointment_padding_minutes: 10,
+  legal_name: '',
+  ein: '',
 };
 
 import { toast } from 'sonner';
@@ -203,6 +208,8 @@ export function LocationsSettingsContent() {
       break_minutes_per_day: location.break_minutes_per_day ?? 30,
       lunch_minutes: location.lunch_minutes ?? 45,
       appointment_padding_minutes: location.appointment_padding_minutes ?? 10,
+      legal_name: (location as any).legal_name || '',
+      ein: (location as any).ein || '',
     });
     setIsDialogOpen(true);
   };
@@ -240,6 +247,8 @@ export function LocationsSettingsContent() {
       stripe_payments_enabled: false,
       stripe_status: 'not_connected' as const,
       location_group_id: null,
+      legal_name: formData.legal_name || null,
+      ein: formData.ein || null,
     };
 
     if (editingLocation) {
@@ -949,6 +958,41 @@ export function LocationsSettingsContent() {
                   </div>
                 </div>
                 
+                {/* Legal Entity (Multi-LLC) */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h4 className="font-medium text-sm">Legal Entity</h4>
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    Only needed if this location operates under a different LLC than the organization default
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="legal_name">Legal Name</Label>
+                      <Input
+                        id="legal_name"
+                        value={formData.legal_name}
+                        onChange={(e) => setFormData(f => ({ ...f, legal_name: e.target.value }))}
+                        placeholder="Leave blank to use org default"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ein">EIN</Label>
+                      <Input
+                        id="ein"
+                        value={formData.ein}
+                        onChange={(e) => setFormData(f => ({ ...f, ein: e.target.value }))}
+                        placeholder="Leave blank to use org default"
+                        autoCapitalize="none"
+                      />
+                    </div>
+                  </div>
+                  {!formData.legal_name && !formData.ein && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Info className="w-3 h-3" />
+                      Using organization defaults
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex items-center justify-between pt-4 border-t">
                   <Label htmlFor="is_active">Active (operational status)</Label>
                   <Switch

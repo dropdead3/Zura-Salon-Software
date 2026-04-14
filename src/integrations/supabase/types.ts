@@ -11496,6 +11496,7 @@ export type Database = {
           day_rate_default_price: number | null
           day_rate_enabled: boolean | null
           display_order: number | null
+          ein: string | null
           google_maps_url: string | null
           holiday_closures: Json | null
           hours: string | null
@@ -11503,6 +11504,7 @@ export type Database = {
           id: string
           import_job_id: string | null
           is_active: boolean | null
+          legal_name: string | null
           location_group_id: string | null
           lunch_minutes: number | null
           major_crossroads: string | null
@@ -11537,6 +11539,7 @@ export type Database = {
           day_rate_default_price?: number | null
           day_rate_enabled?: boolean | null
           display_order?: number | null
+          ein?: string | null
           google_maps_url?: string | null
           holiday_closures?: Json | null
           hours?: string | null
@@ -11544,6 +11547,7 @@ export type Database = {
           id: string
           import_job_id?: string | null
           is_active?: boolean | null
+          legal_name?: string | null
           location_group_id?: string | null
           lunch_minutes?: number | null
           major_crossroads?: string | null
@@ -11578,6 +11582,7 @@ export type Database = {
           day_rate_default_price?: number | null
           day_rate_enabled?: boolean | null
           display_order?: number | null
+          ein?: string | null
           google_maps_url?: string | null
           holiday_closures?: Json | null
           hours?: string | null
@@ -11585,6 +11590,7 @@ export type Database = {
           id?: string
           import_job_id?: string | null
           is_active?: boolean | null
+          legal_name?: string | null
           location_group_id?: string | null
           lunch_minutes?: number | null
           major_crossroads?: string | null
