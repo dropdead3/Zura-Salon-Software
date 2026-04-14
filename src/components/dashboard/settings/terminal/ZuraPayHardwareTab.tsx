@@ -436,6 +436,9 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                     {[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <p className={cn(tokens.body.muted, 'text-xs')}>
+                  Order one reader per checkout station in your salon.
+                </p>
               </div>
 
               {/* Order summary */}
