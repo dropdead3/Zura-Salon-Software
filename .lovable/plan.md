@@ -1,35 +1,34 @@
 
 
-# Reader Firmware Status Indicator
+# Make NeverDown Payments Section Reader-Model-Aware
 
-## What this does
-Compares each reader's `device_sw_version` against the known latest version for its device type. Displays a small badge or subtitle indicating whether firmware is current or outdated.
-
-## Limitations (Stripe API constraint)
-- Cannot detect "currently updating" — Stripe does not expose this state
-- Cannot query "update available" — we maintain a hardcoded latest-version map
-- The version map will need periodic manual updates as Stripe releases new firmware
+## Problem
+The Connectivity tab currently shows "WiFi + Cellular" failover as if all readers support it. Only the S710 has cellular. The S700 relies solely on store-and-forward when WiFi drops. The copy also doesn't clarify the risk difference between real-time cellular auth and deferred store-and-forward auth.
 
 ## Changes
 
-### 1. Add version constants and comparison helper
-**File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
+### 1. Pass reader data to ZuraPayConnectivityTab
+**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
 
-Add a map of latest known firmware versions per device type:
-```text
-stripe_s700 → 2.40.1.0
-stripe_s710 → 2.40.1.0
-bbpos_wisepos_e → 2.40.1.0
-```
+Pass the `readers` array as a prop to `ZuraPayConnectivityTab` so it can detect which device types are registered.
 
-Add a `compareVersions(current, latest)` helper that returns `'current' | 'outdated' | 'unknown'`.
+### 2. Rewrite NeverDown section with model awareness
+**File:** `src/components/dashboard/settings/terminal/ZuraPayConnectivityTab.tsx`
 
-### 2. Show firmware status in reader row
-In the existing firmware line (line ~641), append a small indicator:
-- **Up to date** → small green check icon, no extra text (clean)
-- **Update available** → amber `Update Available` text with info tooltip explaining "Leave reader powered on overnight to receive automatic updates"
-- **Unknown** → no indicator (graceful fallback)
+Accept `readers` prop. Derive a boolean `hasS710` by checking if any reader has `device_type === 'stripe_s710'`.
 
-### 3. No backend changes needed
-The `device_sw_version` is already returned by the Stripe API and already present in the Reader interface and UI. This is purely a frontend comparison.
+**When S710 is present** — show all three feature cards:
+- **WiFi + Cellular** — "Real-time authorization continues over cellular when WiFi drops. Payments are approved or declined instantly — no deferred risk."
+- **Store-and-Forward** — "Last-resort fallback during total outages. Payments are stored on-device and authorized when connectivity returns. Small risk of post-service declines."
+- **Revenue Protected** — unchanged
+
+**When only S700** — show two feature cards (drop the cellular card):
+- **Store-and-Forward** — same copy as above
+- **Revenue Protected** — unchanged
+- Add a subtle note: "Upgrade to the S710 for cellular failover with real-time authorization."
+
+Update the intro paragraph to be model-aware as well, removing the "cellular failover" claim when no S710 is present.
+
+### 3. Grid layout adjustment
+Use `sm:grid-cols-3` when S710 present (3 cards), `sm:grid-cols-2` when S700-only (2 cards) for balanced layout.
 
