@@ -96,12 +96,9 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
     setDialogOpen(true);
   }, []);
 
-  // Derive per-model SKU data
-  const s700Sku = skuData?.skus?.find((s) => s.product.toLowerCase().includes('s700'))
-    || skuData?.skus?.[0];
-  const s710Sku = skuData?.s710_skus?.[0]
-    || skuData?.skus?.find((s) => s.product.toLowerCase().includes('s710'))
-    || s700Sku; // fallback: share price if only one SKU exists
+  // Derive per-model SKU data from dedicated arrays
+  const s700Sku = skuData?.s700_skus?.[0] || skuData?.skus?.[0];
+  const s710Sku = skuData?.s710_skus?.[0] || s700Sku;
 
   const getModelSku = (model: ReaderModel) => model === 's710' ? s710Sku : s700Sku;
   const activeSku = getModelSku(selectedModel);
