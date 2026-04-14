@@ -602,6 +602,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                                 applyCategoryTheme.mutate(matched);
                                 toast({ title: 'Theme updated', description: `Service colors synced to "${mappedName}"` });
                               }
+                              syncSplashToTheme(themeOption.id);
                             }}
                               className={cn("relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
                                 isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50")}>
