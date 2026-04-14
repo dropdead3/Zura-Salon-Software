@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
     // S1: Role-based gating — write actions require admin or manager
     if (WRITE_ACTIONS.has(action)) {
       const allowedRoles = ["admin", "manager", "owner"];
-      if (!allowedRoles.includes(membership.role)) {
+      if (!allowedRoles.includes(memberRole)) {
         return new Response(
           JSON.stringify({
             error:
