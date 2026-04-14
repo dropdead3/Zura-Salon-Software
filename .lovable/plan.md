@@ -1,29 +1,110 @@
 
 
-# Fix Logo Size Selector for Wide Logos
+# Wire Receipt Branding to Checkout + Add Email/SMS Receipt
 
-## Problem
-The logo size selector uses fixed height classes (`h-6`/`h-10`/`h-14`) with `object-contain`. For wide/landscape logos (like "DROP DEAD" in the screenshots), this only changes the bounding box height — the logo itself stays the same width because `object-contain` scales to fit the constraining dimension (width, not height). The visual result is more padding, not a bigger logo.
+## Two Problems
 
-## Solution
-Replace fixed `h-*` classes with `max-h-*` and add explicit width scaling so the logo actually grows/shrinks visually. Use a combination of `max-h` and `max-w` percentages to create meaningful size differences for both tall and wide logos.
+### 1. Scheduler checkout ignores receipt branding
+`CheckoutSummarySheet.generateReceiptPDF()` is a standalone jsPDF function with hardcoded styles. It doesn't import `useReceiptConfig`, `printReceipt`, or any branding hooks. The Receipt Configurator only affects the Transactions page reprint — not the receipt clients actually receive at checkout.
 
-### Size mapping (preview + print):
-| Size | Preview (Tailwind) | Print (inline) |
-|------|-------------------|----------------|
-| `sm` | `max-h-8 max-w-[50%]` | `max-height:32px;max-width:50%` |
-| `md` | `max-h-12 max-w-[70%]` | `max-height:48px;max-width:70%` |
-| `lg` | `max-h-16 max-w-[90%]` | `max-height:64px;max-width:90%` |
+### 2. No email/SMS receipt capability exists
+The "Email Receipt" dropdown item in `TransactionDetailSheet` is disabled with a "Soon" badge. No edge function or sending logic exists.
 
-All with `w-auto h-auto object-contain` so the image scales naturally within the constraint box.
+---
 
-## Files to modify
+## Plan
 
-### `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx`
-- Line 33: Replace `logoHeightClass` with a combined class string using `max-h` + `max-w` instead of fixed `h-*`
-- Line 53: Update the `<img>` to use the new sizing classes, remove fixed height
+### Step 1: Unify checkout receipt with branded system
 
-### `src/components/dashboard/transactions/ReceiptPrintView.tsx`
-- Update `getLogoHeight()` (or replace it) to return both max-height and max-width inline styles
-- Line 62: Apply the new sizing to the logo `<img>` tag
+**File: `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`**
+
+- Import `useReceiptConfig` and `useBusinessSettings` (already imported partially)
+- Replace the entire `generateReceiptPDF()` function with a call to a shared receipt generator that respects `receipt_config`
+- Two options:
+  - **Option A**: Refactor `printReceipt()` from `ReceiptPrintView.tsx` to accept a generic line-item array (not just `GroupedTransaction`), then call it from both the Transactions page and the checkout sheet
+  - **Option B**: Create a shared `buildReceiptHTML()` utility that both `printReceipt` and `generateReceiptPDF` consume, keeping PDF generation separate but using the same branded template
+
+Option A is cleaner — adapt `printReceipt` to accept a `ReceiptData` interface that both `GroupedTransaction` and the checkout context can satisfy.
+
+**New file: `src/components/dashboard/transactions/receiptData.ts`**
+- Define a `ReceiptData` interface with: client name, stylist name, date, items (name + amount), add-ons, usage charges, subtotal, discount, tax, tip, total, payment method
+- Add a mapper: `groupedTransactionToReceiptData(txn: GroupedTransaction): ReceiptData`
+- Add a mapper: `checkoutToReceiptData(appointment, addonEvents, usageCharges, totals): ReceiptData`
+
+**File: `src/components/dashboard/transactions/ReceiptPrintView.tsx`**
+- Refactor `printReceipt` to accept `ReceiptData` instead of `GroupedTransaction`
+- All branding logic (logo, socials, policies, footer) stays intact
+
+**File: `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`**
+- Remove the 200-line `generateReceiptPDF` function
+- Import and call refactored `printReceipt` with checkout data mapped through `checkoutToReceiptData`
+
+### Step 2: Add "Send Test Receipt" to Receipt Configurator
+
+**File: `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx`**
+- Add a "Send Test Receipt" button in the preview panel
+- On click, opens a small dialog asking for delivery method (Email or SMS) and recipient address/number
+- Calls a new edge function with sample receipt data + branding config
+
+### Step 3: Create receipt-sending edge function
+
+**New file: `supabase/functions/send-receipt/index.ts`**
+- Accepts: `{ method: 'email' | 'sms', recipient: string, receiptHtml: string, orgName: string }`
+- For **email**: Uses Resend (already available as a connector) to send a styled HTML email with the branded receipt
+- For **SMS**: Sends a simplified text summary with a link to a hosted receipt (or just key totals if no hosted version yet)
+- Returns success/failure
+
+### Step 4: Wire email/SMS receipt to checkout flow
+
+**File: `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`**
+- After successful payment confirmation, if client has email on file, auto-send email receipt via the edge function
+- Add a manual "Send Receipt" button (email/SMS toggle) post-checkout
+
+**File: `src/components/dashboard/transactions/TransactionDetailSheet.tsx`**
+- Enable the "Email Receipt" dropdown item
+- Remove the "Soon" badge
+- On click, call the same edge function with the transaction's receipt data
+
+### Step 5: No database migration needed
+All receipt config already lives in `site_settings`. Client emails exist on appointments. No new tables required.
+
+---
+
+## Technical Details
+
+### ReceiptData interface (shared)
+```ts
+interface ReceiptLineItem {
+  name: string;
+  amount: number;
+  category?: 'service' | 'addon' | 'retail' | 'overage' | 'product_cost';
+}
+
+interface ReceiptData {
+  clientName: string;
+  stylistName: string;
+  date: string;
+  receiptNumber: string;
+  items: ReceiptLineItem[];
+  subtotal: number;
+  discount: number;
+  discountLabel?: string;
+  taxRate: number;
+  taxAmount: number;
+  tip: number;
+  total: number;
+  paymentMethod?: string;
+}
+```
+
+### File change summary
+| File | Action |
+|------|--------|
+| `src/components/dashboard/transactions/receiptData.ts` | New — shared interface + mappers |
+| `src/components/dashboard/transactions/ReceiptPrintView.tsx` | Refactor to use `ReceiptData` |
+| `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Remove `generateReceiptPDF`, use shared `printReceipt` |
+| `src/components/dashboard/transactions/GroupedTransactionTable.tsx` | Update to use mapper |
+| `src/components/dashboard/transactions/TransactionDetailSheet.tsx` | Enable email receipt action |
+| `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx` | Add "Send Test Receipt" button |
+| `supabase/functions/send-receipt/index.ts` | New — email/SMS delivery |
 
