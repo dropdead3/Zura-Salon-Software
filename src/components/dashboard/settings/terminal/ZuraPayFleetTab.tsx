@@ -593,22 +593,20 @@ export function ZuraPayFleetTab({
                   <div className="mt-5 flex justify-center gap-3">
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => {
                         const params = new URLSearchParams(searchParams);
                         params.set('subtab', 'hardware');
                         setSearchParams(params);
                       }}
                     >
-                      <ExternalLink className="w-4 h-4 mr-1" />
+                      <ExternalLink className="w-4 h-4" />
                       Order Hardware
                     </Button>
                     <Button
-                      size="sm"
                       onClick={onRegisterReader}
                       disabled={!isLocationConnected}
                     >
-                      <Plus className="w-4 h-4 mr-1" />
+                      <Plus className="w-4 h-4" />
                       Register Reader
                     </Button>
                   </div>
