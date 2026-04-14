@@ -507,7 +507,7 @@ export function ZuraPayFleetTab({
                       </Button>
                       {orgBankLast4 && (
                         <span className="text-xs text-muted-foreground mt-1">
-                          Payouts to account ending in ••{orgBankLast4}
+                          Payouts for {selectedLoc.name} to account ending in ••{orgBankLast4}
                         </span>
                       )}
                     </div>
