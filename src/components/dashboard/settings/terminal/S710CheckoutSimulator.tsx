@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CreditCard, Check, Wifi, Signal, Battery, ChevronRight } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 // S710 screen: 1080x1920 @ 420dpi — we simulate at ~270x480 (25% scale)
 const SCREEN_W = 270;
@@ -19,6 +21,7 @@ interface S710SimulatorProps {
   cartItems?: SimCartItem[];
   autoPlay?: boolean;
   className?: string;
+  orgLogoUrl?: string | null;
   onScreenChange?: (index: number, total: number) => void;
 }
 
@@ -39,7 +42,7 @@ function StatusBar() {
   );
 }
 
-function SplashScreen({ businessName }: { businessName: string }) {
+function SplashScreen({ businessName, orgLogoUrl }: { businessName: string; orgLogoUrl?: string | null }) {
   return (
     <motion.div
       key="splash"
@@ -55,9 +58,13 @@ function SplashScreen({ businessName }: { businessName: string }) {
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         className="relative mb-6"
       >
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-          <CreditCard className="w-8 h-8 text-white" />
-        </div>
+        {orgLogoUrl ? (
+          <img src={orgLogoUrl} alt={businessName} className="max-h-12 object-contain" />
+        ) : (
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <CreditCard className="w-8 h-8 text-white" />
+          </div>
+        )}
       </motion.div>
       <motion.div
         initial={{ y: 10, opacity: 0 }}
@@ -80,7 +87,7 @@ function SplashScreen({ businessName }: { businessName: string }) {
   );
 }
 
-function IdleScreen({ businessName }: { businessName: string }) {
+function IdleScreen({ businessName, orgLogoUrl }: { businessName: string; orgLogoUrl?: string | null }) {
   return (
     <motion.div
       key="idle"
@@ -90,6 +97,15 @@ function IdleScreen({ businessName }: { businessName: string }) {
       className="flex flex-col items-center justify-center h-full px-6"
     >
       <div className="text-center">
+        {orgLogoUrl && (
+          <motion.img
+            src={orgLogoUrl}
+            alt={businessName}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-h-10 object-contain mx-auto mb-4"
+          />
+        )}
         <p className="text-white/40 text-[9px] tracking-[0.15em] uppercase mb-3">Welcome to</p>
         <h2 className="text-white text-base font-medium tracking-wide mb-1">{businessName}</h2>
         <div className="w-8 h-px bg-emerald-500/40 mx-auto my-4" />
@@ -309,6 +325,7 @@ export function S710CheckoutSimulator({
   ],
   autoPlay = false,
   className,
+  orgLogoUrl,
   onScreenChange,
 }: S710SimulatorProps) {
   const total = cartItems.reduce((s, i) => s + i.amount, 0);
@@ -362,8 +379,8 @@ export function S710CheckoutSimulator({
           <StatusBar />
           <div className="absolute inset-0 pt-6">
             <AnimatePresence mode="wait">
-              {screen === 'splash' && <SplashScreen businessName={businessName} />}
-              {screen === 'idle' && <IdleScreen businessName={businessName} />}
+              {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
+              {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
               {screen === 'tip' && <TipScreen total={total} />}
               {screen === 'tap' && <TapScreen total={total} />}
@@ -382,8 +399,9 @@ export function S710CheckoutSimulator({
             </div>
           )}
 
-          <div className="absolute bottom-0 inset-x-0 flex items-center justify-center pb-2">
-            <span className="text-white/15 text-[7px] tracking-[0.2em] uppercase">Zura Pay</span>
+          <div className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1.5 pb-2">
+            <ZuraZIcon className="w-2 h-2 text-white/20" />
+            <span className="text-white/20 text-[7px] tracking-[0.2em] uppercase">Powered by {PLATFORM_NAME}</span>
           </div>
         </div>
 
