@@ -101,9 +101,32 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const registerReader = useRegisterReader();
+  const { data: business } = useBusinessSettings();
+  const { colorTheme } = useColorTheme();
 
   // Auto-select the single terminal location (infrastructure detail, hidden from user)
   const targetTerminalLocationId = terminalLocations.length > 0 ? terminalLocations[0].id : '';
+
+  // Fire-and-forget: apply default luxury splash after registration
+  const applyDefaultSplash = useCallback(async (locId: string, termLocId: string) => {
+    const orgLogoUrl = business?.logo_dark_url;
+    if (!orgLogoUrl) return;
+    try {
+      // Check if splash already active — don't overwrite custom ones
+      const status = await invokeTerminalAction('get_splash_screen', locId, { terminal_location_id: termLocId });
+      if (status?.splash_screen_active) return;
+
+      const { base64 } = await generateDefaultSplash(orgLogoUrl, business?.business_name || 'Your Salon', colorTheme);
+      await invokeTerminalAction('upload_splash_screen', locId, {
+        terminal_location_id: termLocId,
+        image_base64: base64,
+        image_mime_type: 'image/jpeg',
+      });
+      toast.success('Splash screen applied to reader');
+    } catch (err) {
+      console.error('Auto-apply splash failed:', err);
+    }
+  }, [business, colorTheme]);
 
   const handleClose = () => {
     setRegistrationCode('');
@@ -127,7 +150,11 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
         label: readerLabel.trim() || undefined,
       },
       {
-        onSuccess: () => setSuccess(true),
+        onSuccess: () => {
+          setSuccess(true);
+          // Auto-apply default luxury splash in background
+          applyDefaultSplash(locationId, targetTerminalLocationId);
+        },
         onError: (error) => {
           setInlineError((error as Error).message || 'Registration failed. Please check the pairing code and try again.');
         },
