@@ -24,6 +24,7 @@ interface S710SimulatorProps {
   autoPlay?: boolean;
   className?: string;
   orgLogoUrl?: string | null;
+  splashImageUrl?: string | null;
   tipPercentages?: number[];
   tipEnabled?: boolean;
   receiptSlogan?: string;
@@ -48,72 +49,89 @@ function StatusBar() {
   );
 }
 
-function SplashScreen({ businessName, orgLogoUrl, colorTheme = 'cream' }: { businessName: string; orgLogoUrl?: string | null; colorTheme?: ColorTheme }) {
+function SplashScreen({ businessName, orgLogoUrl, splashImageUrl, colorTheme = 'cream' }: { businessName: string; orgLogoUrl?: string | null; splashImageUrl?: string | null; colorTheme?: ColorTheme }) {
   const p = getTerminalPalette(colorTheme);
 
+  // If an actual splash image has been uploaded, show it full-bleed
+  if (splashImageUrl) {
+    return (
+      <motion.div
+        key="splash-image"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0"
+      >
+        <img
+          src={splashImageUrl}
+          alt="Splash screen"
+          className="w-full h-full object-cover"
+        />
+      </motion.div>
+    );
+  }
+
+  // Default: match the canvas-generated design (solid black, corner glows, centered brand)
   return (
     <motion.div
       key="splash"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center h-full relative"
+      className="absolute inset-0 flex flex-col items-center justify-center"
+      style={{ background: '#000000' }}
     >
-      {/* Animated radial glow behind logo */}
-      <motion.div
-        animate={{ scale: [1, 1.12, 1], opacity: [0.08, 0.16, 0.08] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute inset-0 rounded-full"
+      {/* Corner radial glows matching canvas generator */}
+      <div
+        className="absolute top-0 left-0 w-full h-full pointer-events-none"
         style={{
-          background: `radial-gradient(circle at 50% 45%, ${p.accentRgba(0.15)}, transparent 70%)`,
+          background: `radial-gradient(circle at 5% 5%, ${p.accentRgba(0.18)}, transparent 50%), radial-gradient(circle at 95% 95%, ${p.accentRgba(0.18)}, transparent 50%)`,
         }}
       />
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="relative mb-6"
-      >
+
+      {/* Center content */}
+      <div className="relative flex flex-col items-center">
         {orgLogoUrl ? (
-          <img src={orgLogoUrl} alt={businessName} className="max-h-12 object-contain" />
+          <img src={orgLogoUrl} alt={businessName} className="max-h-14 max-w-[60%] object-contain mb-5" />
         ) : (
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              background: `linear-gradient(135deg, ${p.accentColor}, ${p.accentGlow})`,
-              boxShadow: `0 8px 24px ${p.accentRgba(0.3)}`,
-            }}
+          <motion.h1
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-white text-xl font-display tracking-[0.14em] uppercase mb-2"
           >
-            <CreditCard className="w-8 h-8 text-white" />
-          </div>
+            ZURA PAY
+          </motion.h1>
         )}
-      </motion.div>
-      <motion.div
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="text-center"
-      >
-        <h1 className="text-white text-lg font-medium tracking-[0.12em] uppercase">ZURA PAY</h1>
-        <p className="text-white/40 text-[9px] tracking-[0.2em] uppercase mt-1">Powered by Intelligence</p>
-      </motion.div>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.4 }}
+          transition={{ delay: 0.4 }}
+          className="text-white text-[8px] tracking-[0.25em] uppercase"
+        >
+          Powered by Intelligence
+        </motion.p>
 
-      {/* Shimmer divider */}
-      <motion.div
-        animate={{ opacity: [0.3, 0.6, 0.3] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        className="w-10 h-px mt-4"
-        style={{ background: p.accentColor }}
-      />
+        {/* Accent divider */}
+        <div className="w-8 h-px mt-5 mb-4" style={{ background: p.accentColor }} />
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="text-white/30 text-[8px] tracking-wider uppercase mt-4"
-      >
-        {businessName}
-      </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.35 }}
+          transition={{ delay: 0.6 }}
+          className="text-white text-[9px] tracking-[0.15em] uppercase font-display"
+        >
+          {businessName}
+        </motion.p>
+      </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-6 flex items-center gap-1.5">
+        <ZuraZIcon className="w-2.5 h-2.5" style={{ color: p.accentRgba(0.5) }} />
+        <span className="text-[7px] tracking-[0.2em] uppercase font-display" style={{ color: p.accentRgba(0.5) }}>
+          Powered by Zura
+        </span>
+      </div>
     </motion.div>
   );
 }
@@ -392,6 +410,7 @@ export function S710CheckoutSimulator({
   autoPlay = false,
   className,
   orgLogoUrl,
+  splashImageUrl,
   tipPercentages = [20, 25, 30],
   tipEnabled = true,
   receiptSlogan,
@@ -457,7 +476,7 @@ export function S710CheckoutSimulator({
           <StatusBar />
           <div className="absolute inset-0 pt-6">
             <AnimatePresence mode="wait">
-              {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} colorTheme={colorTheme} />}
+              {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} splashImageUrl={splashImageUrl} colorTheme={colorTheme} />}
               {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} colorTheme={colorTheme} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
               {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} colorTheme={colorTheme} />}
