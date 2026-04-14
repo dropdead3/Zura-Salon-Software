@@ -243,13 +243,16 @@ export function ZuraPayFleetTab({
       testTimerRef.current = null;
     }
     try {
-      await supabase.functions.invoke('terminal-reader-display', {
+      const { data, error } = await supabase.functions.invoke('terminal-reader-display', {
         body: {
           action: 'clear_reader_display',
           reader_id: readerId,
           organization_id: orgId,
         },
       });
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Clear failed');
+      }
       toast.success('Reader display cleared');
     } catch (err) {
       toast.error('Failed to clear display', { description: (err as Error).message });
