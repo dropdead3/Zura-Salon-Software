@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw, CircleCheck, CircleAlert } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw, CircleCheck, CircleAlert, MonitorSmartphone } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface Reader {
   id: string;
@@ -223,11 +226,50 @@ export function ZuraPayFleetTab({
   const [showConfirmConnect, setShowConfirmConnect] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
+  const [testingReaderId, setTestingReaderId] = useState<string | null>(null);
+  const { effectiveOrganization } = useOrganizationContext();
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
 
   const selectedLoc = locations.find((l) => l.id === activeLocationId);
   const selectedStatus = selectedLoc ? getConnectionStatus(selectedLoc) : null;
+
+  const handleTestDisplay = useCallback(async (readerId: string) => {
+    const orgId = effectiveOrganization?.id;
+    if (!orgId) {
+      toast.error('Organization not found');
+      return;
+    }
+    setTestingReaderId(readerId);
+    try {
+      const { error: setError } = await supabase.functions.invoke('terminal-reader-display', {
+        body: {
+          action: 'set_reader_display',
+          reader_id: readerId,
+          organization_id: orgId,
+          line_items: [
+            { description: 'Sample Haircut', amount: 4500, quantity: 1 },
+            { description: 'Styling Product', amount: 2250, quantity: 2 },
+          ],
+          tax: 382,
+        },
+      });
+      if (setError) throw setError;
+      toast.success('Test display sent', { description: 'Cart data pushed to reader. Clearing in 8 seconds…' });
+      await new Promise((r) => setTimeout(r, 8000));
+      await supabase.functions.invoke('terminal-reader-display', {
+        body: {
+          action: 'clear_reader_display',
+          reader_id: readerId,
+          organization_id: orgId,
+        },
+      });
+    } catch (err) {
+      toast.error('Test display failed', { description: (err as Error).message });
+    } finally {
+      setTestingReaderId(null);
+    }
+  }, [effectiveOrganization?.id]);
 
   return (
     <div className="space-y-6">
@@ -695,7 +737,7 @@ export function ZuraPayFleetTab({
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <Badge
                           variant={reader.status === 'online' ? 'default' : 'secondary'}
                           className={
@@ -706,6 +748,29 @@ export function ZuraPayFleetTab({
                         >
                           {reader.status === 'online' ? 'Online' : 'Offline'}
                         </Badge>
+                        {reader.status === 'online' && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2.5 gap-1.5 text-xs"
+                                disabled={testingReaderId === reader.id}
+                                onClick={() => handleTestDisplay(reader.id)}
+                              >
+                                {testingReaderId === reader.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <MonitorSmartphone className="h-3.5 w-3.5" />
+                                )}
+                                Test
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              Push sample cart data to verify display connectivity
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
