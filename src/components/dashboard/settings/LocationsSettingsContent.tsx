@@ -116,6 +116,8 @@ type LocationFormData = {
   break_minutes_per_day: number | null;
   lunch_minutes: number | null;
   appointment_padding_minutes: number | null;
+  legal_name: string;
+  ein: string;
 };
 
 const emptyForm: LocationFormData = {
@@ -139,6 +141,8 @@ const emptyForm: LocationFormData = {
   break_minutes_per_day: 30,
   lunch_minutes: 45,
   appointment_padding_minutes: 10,
+  legal_name: '',
+  ein: '',
 };
 
 import { toast } from 'sonner';
@@ -203,6 +207,8 @@ export function LocationsSettingsContent() {
       break_minutes_per_day: location.break_minutes_per_day ?? 30,
       lunch_minutes: location.lunch_minutes ?? 45,
       appointment_padding_minutes: location.appointment_padding_minutes ?? 10,
+      legal_name: (location as any).legal_name || '',
+      ein: (location as any).ein || '',
     });
     setIsDialogOpen(true);
   };
@@ -240,6 +246,8 @@ export function LocationsSettingsContent() {
       stripe_payments_enabled: false,
       stripe_status: 'not_connected' as const,
       location_group_id: null,
+      legal_name: formData.legal_name || null,
+      ein: formData.ein || null,
     };
 
     if (editingLocation) {
