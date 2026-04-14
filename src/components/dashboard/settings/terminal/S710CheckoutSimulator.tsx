@@ -461,9 +461,9 @@ export function S710CheckoutSimulator({
               {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} colorTheme={colorTheme} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
               {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} colorTheme={colorTheme} />}
-              {screen === 'tap' && <TapScreen total={total} colorTheme={colorTheme} />}
-              {screen === 'processing' && <ProcessingScreen colorTheme={colorTheme} />}
-              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} colorTheme={colorTheme} />}
+              {screen === 'tap' && <TapScreen total={total} />}
+              {screen === 'processing' && <ProcessingScreen />}
+              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} />}
             </AnimatePresence>
           </div>
 
