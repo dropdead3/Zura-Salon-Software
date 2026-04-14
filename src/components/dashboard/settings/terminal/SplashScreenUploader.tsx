@@ -309,11 +309,11 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                 <Loader2 className={tokens.loading.spinner} />
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Dropzone / Preview */}
+              <div className="flex flex-col items-center gap-4">
+                {/* Dropzone / Preview — centered */}
                 <div
                   className={cn(
-                    'relative w-[180px] h-[320px] rounded-xl border-2 border-dashed transition-colors shrink-0 overflow-hidden cursor-pointer',
+                    'relative w-[200px] h-[356px] rounded-xl border-2 border-dashed transition-colors shrink-0 overflow-hidden cursor-pointer',
                     dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
                     (previewUrl || hasSplash) && 'border-solid'
                   )}
@@ -349,32 +349,31 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   />
                 </div>
 
-                {/* Actions */}
-                <div className="flex-1 space-y-3">
+                {/* Action buttons — horizontal row */}
+                <div className="flex items-center justify-center gap-2 flex-wrap">
                   {pendingFile && (
-                    <Button
-                      onClick={handleUpload}
-                      disabled={isUploading}
-                      className={tokens.button.card}
-                    >
-                      {isUploading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4 mr-2" />
-                      )}
-                      Upload to Reader
-                    </Button>
-                  )}
-
-                  {pendingFile && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { setPreviewUrl(null); setPendingFile(null); }}
-                      className="text-xs"
-                    >
-                      Clear
-                    </Button>
+                    <>
+                      <Button
+                        onClick={handleUpload}
+                        disabled={isUploading}
+                        className={tokens.button.card}
+                      >
+                        {isUploading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4 mr-2" />
+                        )}
+                        Upload to Reader
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setPreviewUrl(null); setPendingFile(null); }}
+                        className="text-xs"
+                      >
+                        Clear
+                      </Button>
+                    </>
                   )}
 
                   {orgLogoUrl && !pendingFile && (
@@ -410,15 +409,16 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                       Remove Splash Screen
                     </Button>
                   )}
+                </div>
 
-                  <div className="pt-2 space-y-1">
-                    <p className="text-[10px] text-muted-foreground">
-                      Recommended: 1080×1920px portrait JPG or PNG under 2MB.
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Readers auto-update within ~10 minutes of upload.
-                    </p>
-                  </div>
+                {/* Help text */}
+                <div className="text-center space-y-0.5">
+                  <p className="text-[10px] text-muted-foreground">
+                    Recommended: 1080×1920px portrait JPG or PNG under 2MB.
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Readers auto-update within ~10 minutes of upload.
+                  </p>
                 </div>
               </div>
             )}
