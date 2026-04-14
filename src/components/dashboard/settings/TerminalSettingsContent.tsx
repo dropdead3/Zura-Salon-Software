@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { tokens } from '@/lib/design-tokens';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogCancel, AlertDialogContent,
@@ -93,33 +92,38 @@ interface RegisterReaderDialogProps {
 }
 
 function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocations }: RegisterReaderDialogProps) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedTerminalLocation, setSelectedTerminalLocation] = useState('');
   const [registrationCode, setRegistrationCode] = useState('');
   const [readerLabel, setReaderLabel] = useState('');
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const registerReader = useRegisterReader();
 
+  // Auto-select the single terminal location (infrastructure detail, hidden from user)
+  const targetTerminalLocationId = terminalLocations.length > 0 ? terminalLocations[0].id : '';
+
   const handleClose = () => {
-    setStep(1);
-    setSelectedTerminalLocation('');
     setRegistrationCode('');
     setReaderLabel('');
     setInlineError(null);
+    setSuccess(false);
     onOpenChange(false);
   };
 
   const handleRegister = () => {
+    if (!targetTerminalLocationId) {
+      setInlineError('Terminal location is still being set up. Please try again in a moment.');
+      return;
+    }
     setInlineError(null);
     registerReader.mutate(
       {
         locationId,
-        terminalLocationId: selectedTerminalLocation,
+        terminalLocationId: targetTerminalLocationId,
         registrationCode: registrationCode.trim(),
         label: readerLabel.trim() || undefined,
       },
       {
-        onSuccess: () => setStep(3),
+        onSuccess: () => setSuccess(true),
         onError: (error) => {
           setInlineError((error as Error).message || 'Registration failed. Please check the pairing code and try again.');
         },
@@ -132,46 +136,14 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="font-display text-lg tracking-wide">
-            {step === 3 ? 'READER REGISTERED' : 'REGISTER TERMINAL READER'}
+            {success ? 'READER REGISTERED' : 'REGISTER TERMINAL READER'}
           </DialogTitle>
           <DialogDescription>
-            {step === 1 && 'Select the terminal location to assign this reader to.'}
-            {step === 2 && 'Enter the pairing code shown on your terminal screen.'}
-            {step === 3 && 'Your reader has been successfully paired and is ready to accept payments.'}
+            {!success ? 'Enter the pairing code shown on your terminal screen.' : 'Your reader has been successfully paired and is ready to accept payments.'}
           </DialogDescription>
         </DialogHeader>
 
-        {step === 1 && (
-          <div className="space-y-4 py-2">
-            {terminalLocations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No terminal locations found. Create a terminal location first before registering a reader.
-              </p>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label>Terminal Location</Label>
-                  <Select value={selectedTerminalLocation} onValueChange={setSelectedTerminalLocation}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a terminal location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {terminalLocations.map((tl) => (
-                        <SelectItem key={tl.id} value={tl.id}>{tl.display_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={handleClose}>Cancel</Button>
-                  <Button onClick={() => setStep(2)} disabled={!selectedTerminalLocation}>Next</Button>
-                </DialogFooter>
-              </>
-            )}
-          </div>
-        )}
-
-        {step === 2 && (
+        {!success ? (
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Pairing Code</Label>
@@ -204,7 +176,7 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
               />
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setStep(1); setInlineError(null); }}>Back</Button>
+              <Button variant="outline" onClick={handleClose}>Cancel</Button>
               <Button
                 onClick={handleRegister}
                 disabled={!registrationCode.trim() || registerReader.isPending}
@@ -214,9 +186,7 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
               </Button>
             </DialogFooter>
           </div>
-        )}
-
-        {step === 3 && (
+        ) : (
           <div className="space-y-4 py-2">
             <div className="flex items-center justify-center py-6">
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
@@ -245,9 +215,7 @@ export function TerminalSettingsContent() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
-  const [deleteLocationTarget, setDeleteLocationTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteReaderTarget, setDeleteReaderTarget] = useState<{ id: string; label: string } | null>(null);
-  const [isDeletingLocation, setIsDeletingLocation] = useState(false);
   const [isDeletingReader, setIsDeletingReader] = useState(false);
 
   const connectMutation = useConnectZuraPay();
@@ -330,7 +298,6 @@ export function TerminalSettingsContent() {
   const { data: terminalLocations, isLoading: tlLoading } = useTerminalLocations(connectedLocationId);
   const { data: readers, isLoading: readersLoading } = useTerminalReaders(connectedLocationId);
   const createTerminalLocation = useCreateTerminalLocation();
-  const deleteTerminalLocation = useDeleteTerminalLocation();
   const deleteReader = useDeleteReader();
 
   // Auto-create terminal location when a connected location has none
@@ -389,26 +356,6 @@ export function TerminalSettingsContent() {
   const selectedLocation = activeLocation;
   const isLocationConnected = !!selectedLocation?.stripe_account_id;
 
-  const handleCreateTerminalLocation = () => {
-    if (!activeLocationId || !isLocationConnected) return;
-    createTerminalLocation.mutate({
-      locationId: activeLocationId,
-      displayName: selectedLocation?.name,
-    });
-  };
-
-  const handleDeleteLocation = () => {
-    if (!activeLocationId || !deleteLocationTarget) return;
-    setIsDeletingLocation(true);
-    deleteTerminalLocation.mutate(
-      { locationId: activeLocationId, terminalLocationId: deleteLocationTarget.id },
-      {
-        onSuccess: () => { setDeleteLocationTarget(null); setIsDeletingLocation(false); },
-        onError: () => { setIsDeletingLocation(false); },
-      }
-    );
-  };
-
   const handleDeleteReader = () => {
     if (!activeLocationId || !deleteReaderTarget) return;
     setIsDeletingReader(true);
@@ -420,10 +367,6 @@ export function TerminalSettingsContent() {
       }
     );
   };
-
-  const affectedReaderCount = deleteLocationTarget
-    ? (readers?.filter((r) => r.location === deleteLocationTarget.id).length || 0)
-    : 0;
 
   return (
     <div className="space-y-6">
@@ -465,16 +408,10 @@ export function TerminalSettingsContent() {
               isLocationConnected={isLocationConnected}
               setShowAllLocations={setShowAllLocations}
               setSelectedLocationId={setSelectedLocationId}
-              terminalLocations={terminalLocations}
-              tlLoading={tlLoading}
               readers={readers}
               readersLoading={readersLoading}
-              onCreateTerminalLocation={handleCreateTerminalLocation}
-              createTerminalLocationPending={createTerminalLocation.isPending}
-              onDeleteLocation={setDeleteLocationTarget}
               onDeleteReader={setDeleteReaderTarget}
               onRegisterReader={() => setRegisterOpen(true)}
-              useTerminalLocationsHook={useTerminalLocations}
               useTerminalReadersHook={useTerminalReaders}
               orgConnectStatus={connectStatus?.stripe_connect_status}
               onStartConnect={() => orgId && connectMutation.mutate({
@@ -541,7 +478,7 @@ export function TerminalSettingsContent() {
 
       </Tabs>
 
-      {/* Register Reader Wizard — guarded against empty locationId */}
+      {/* Register Reader Wizard — auto-targets the single terminal location */}
       {activeLocationId && (
         <RegisterReaderDialog
           open={registerOpen}
@@ -553,31 +490,6 @@ export function TerminalSettingsContent() {
           }))}
         />
       )}
-
-      {/* Delete Terminal Location Confirmation */}
-      <AlertDialog
-        open={!!deleteLocationTarget}
-        onOpenChange={(o) => { if (!o && !isDeletingLocation) setDeleteLocationTarget(null); }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Terminal Location</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{deleteLocationTarget?.name}"?
-              {affectedReaderCount > 0
-                ? ` This location has ${affectedReaderCount} reader${affectedReaderCount !== 1 ? 's' : ''} that will need to be reassigned.`
-                : ' Any readers assigned to this location will need to be reassigned.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingLocation}>Cancel</AlertDialogCancel>
-            <Button variant="destructive" onClick={handleDeleteLocation} disabled={isDeletingLocation}>
-              {isDeletingLocation && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Delete
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Delete Reader Confirmation */}
       <AlertDialog

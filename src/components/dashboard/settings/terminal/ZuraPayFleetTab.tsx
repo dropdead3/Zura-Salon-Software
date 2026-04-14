@@ -19,12 +19,6 @@ import {
 import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface TerminalLocation {
-  id: string;
-  display_name: string;
-  address: { line1: string; city: string; state: string; postal_code: string };
-}
-
 interface Reader {
   id: string;
   label: string;
@@ -60,20 +54,18 @@ function hasOwnAccount(loc: LocationWithPayment, orgAccountId: string | null): b
 interface LocationSummaryRowProps {
   loc: LocationWithPayment;
   orgConnectAccountId?: string | null;
-  useTerminalLocations: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReaders: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
   onSelect?: (locationId: string) => void;
 }
 
-function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalLocations, useTerminalReaders, onSelect }: LocationSummaryRowProps) {
+function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalReaders, onSelect }: LocationSummaryRowProps) {
   const isConnected = !!loc.stripe_account_id;
-  const { data: tlData, isLoading: tlLoading } = useTerminalLocations(isConnected ? loc.id : null);
   const { data: readerData, isLoading: readersLoading } = useTerminalReaders(isConnected ? loc.id : null);
   const status = getConnectionStatus(loc);
 
-  if (isConnected && (tlLoading || readersLoading)) {
+  if (isConnected && readersLoading) {
     return (
-      <div className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border min-w-[500px]">
+      <div className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border min-w-[400px]">
         <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
         <div className="flex justify-center">
           <Badge variant={status.variant} className={cn(
@@ -81,7 +73,6 @@ function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalLocations, us
             status.variant === 'default' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10'
           )}>{status.label}</Badge>
         </div>
-        <Skeleton className="h-4 w-8 mx-auto" />
         <Skeleton className="h-4 w-8 mx-auto" />
         <Skeleton className="h-4 w-16 mx-auto" />
       </div>
@@ -94,7 +85,7 @@ function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalLocations, us
 
   return (
     <div
-      className="grid grid-cols-5 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border cursor-pointer hover:bg-muted/50 transition-colors"
+      className="grid grid-cols-4 gap-2 items-center px-3 py-3 rounded-lg bg-muted/30 border cursor-pointer hover:bg-muted/50 transition-colors"
       onClick={() => onSelect?.(loc.id)}
       role="button"
       tabIndex={0}
@@ -113,7 +104,6 @@ function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalLocations, us
           status.variant === 'default' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10'
         )}>{status.label}</Badge>
       </div>
-      <span className="text-center text-sm text-muted-foreground">{isConnected ? (tlData?.length || 0) : '—'}</span>
       <span className="text-center text-sm text-muted-foreground">{isConnected ? readerList.length : '—'}</span>
       <div className="flex items-center justify-center gap-2">
         {!isConnected ? (
@@ -147,16 +137,10 @@ export interface ZuraPayFleetTabProps {
   isLocationConnected: boolean;
   setShowAllLocations: (v: boolean) => void;
   setSelectedLocationId: (v: string | null) => void;
-  terminalLocations: TerminalLocation[] | undefined;
-  tlLoading: boolean;
   readers: Reader[] | undefined;
   readersLoading: boolean;
-  onCreateTerminalLocation: () => void;
-  createTerminalLocationPending: boolean;
-  onDeleteLocation: (target: { id: string; name: string }) => void;
   onDeleteReader: (target: { id: string; label: string }) => void;
   onRegisterReader: () => void;
-  useTerminalLocationsHook: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReadersHook: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
   // Payment connect self-serve props
   orgConnectStatus?: string;
@@ -186,16 +170,10 @@ export function ZuraPayFleetTab({
   isLocationConnected,
   setShowAllLocations,
   setSelectedLocationId,
-  terminalLocations,
-  tlLoading,
   readers,
   readersLoading,
-  onCreateTerminalLocation,
-  createTerminalLocationPending,
-  onDeleteLocation,
   onDeleteReader,
   onRegisterReader,
-  useTerminalLocationsHook,
   useTerminalReadersHook,
   orgConnectStatus,
   orgConnectAccountId,
@@ -279,7 +257,7 @@ export function ZuraPayFleetTab({
           <AlertDialogHeader>
             <AlertDialogTitle>Disconnect location from Zura Pay</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the Zura Pay connection for this location. Terminal locations and readers will need to be reconfigured if you reconnect later. Continue?
+              This will remove the Zura Pay connection for this location. Readers will need to be reconfigured if you reconnect later. Continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -377,16 +355,15 @@ export function ZuraPayFleetTab({
               </div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>FLEET OVERVIEW</CardTitle>
-                <MetricInfoTooltip description="Summary of all terminal locations and readers across your organization. Locations must be connected to Zura Pay before they can manage terminals." />
+                <MetricInfoTooltip description="Summary of all readers across your organization. Locations must be connected to Zura Pay before they can manage terminals." />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 overflow-x-auto">
-              <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans min-w-[500px]">
+              <div className="grid grid-cols-4 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans min-w-[400px]">
                 <span>Location</span>
                 <span className="text-center">Connection</span>
-                <span className="text-center">Terminal Locations</span>
                 <span className="text-center">Readers</span>
                 <span className="text-center">Status</span>
               </div>
@@ -395,7 +372,6 @@ export function ZuraPayFleetTab({
                   key={loc.id}
                   loc={loc}
                   orgConnectAccountId={orgConnectAccountId}
-                  useTerminalLocations={useTerminalLocationsHook}
                   useTerminalReaders={useTerminalReadersHook}
                   onSelect={(id) => {
                     setShowAllLocations(false);
@@ -559,90 +535,6 @@ export function ZuraPayFleetTab({
         </Card>
       ) : (
         <>
-          {/* Terminal Locations */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={tokens.card.iconBox}>
-                    <MapPin className={tokens.card.icon} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <CardTitle className={tokens.card.title}>TERMINAL LOCATIONS</CardTitle>
-                      <MetricInfoTooltip description="Terminal locations represent physical sites where your readers accept payments. Each reader must be assigned to a terminal location." />
-                    </div>
-                    <CardDescription>Payment terminal locations for accepting in-person payments at this site.</CardDescription>
-                  </div>
-                </div>
-                {/* Terminal location is auto-created when Zura Pay connects */}
-                {createTerminalLocationPending && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Setting up...</span>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {tlLoading ? (
-                <div className="space-y-3">
-                  {[1, 2].map((i) => (
-                    <Skeleton key={i} className={tokens.loading.skeleton} />
-                  ))}
-                </div>
-              ) : !terminalLocations || terminalLocations.length === 0 ? (
-                <div className="text-center py-8">
-                  <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    No terminal locations yet. Create one to start pairing readers.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {terminalLocations.map((tl) => {
-                    const locationReaders = readers?.filter((r) => r.location === tl.id) || [];
-                    return (
-                      <div key={tl.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
-                        <div>
-                          <p className="font-sans font-medium text-sm">{tl.display_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {tl.address.line1}, {tl.address.city}, {tl.address.state} {tl.address.postal_code}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant="secondary" className="text-xs">
-                            {locationReaders.length} reader{locationReaders.length !== 1 ? 's' : ''}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onDeleteLocation({ id: tl.id, name: tl.display_name })}
-                            className="text-muted-foreground hover:text-destructive h-8 w-8"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Disconnect Location */}
-          <div className="flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground hover:text-destructive"
-              onClick={() => setShowConfirmDisconnect(true)}
-            >
-              Disconnect this location from Zura Pay
-            </Button>
-          </div>
-
           {/* Terminal Readers */}
           <Card>
             <CardHeader>
@@ -654,7 +546,7 @@ export function ZuraPayFleetTab({
                   <div>
                     <div className="flex items-center gap-2">
                       <CardTitle className={tokens.card.title}>TERMINAL READERS</CardTitle>
-                      <MetricInfoTooltip description="Physical card readers paired to this location. Online readers are connected and ready to accept payments." />
+                      <MetricInfoTooltip description="Physical card readers paired to this location. One reader per point of sale. Online readers are connected and ready to accept payments." />
                     </div>
                     <CardDescription>Physical card readers paired to this location.</CardDescription>
                   </div>
@@ -673,7 +565,6 @@ export function ZuraPayFleetTab({
                     size={tokens.button.card}
                     className={tokens.button.cardAction}
                     onClick={onRegisterReader}
-                    disabled={!terminalLocations || terminalLocations.length === 0}
                   >
                   <Plus className="h-4 w-4" />
                   Register Reader
@@ -692,9 +583,7 @@ export function ZuraPayFleetTab({
                 <div className="text-center py-8">
                   <Smartphone className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">
-                    {terminalLocations && terminalLocations.length > 0
-                      ? 'No readers paired yet. Register a reader using its pairing code.'
-                      : 'Create a terminal location first, then register readers.'}
+                    No readers paired yet. Register a reader using its pairing code.
                   </p>
                 </div>
               ) : (
@@ -760,6 +649,18 @@ export function ZuraPayFleetTab({
               )}
             </CardContent>
           </Card>
+
+          {/* Disconnect Location */}
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => setShowConfirmDisconnect(true)}
+            >
+              Disconnect this location from Zura Pay
+            </Button>
+          </div>
         </>
       )}
     </div>
