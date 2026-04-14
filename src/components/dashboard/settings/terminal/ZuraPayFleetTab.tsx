@@ -577,6 +577,18 @@ export function ZuraPayFleetTab({
             </CardContent>
           </Card>
 
+          {/* Disconnect Location */}
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => setShowConfirmDisconnect(true)}
+            >
+              Disconnect this location from Zura Pay
+            </Button>
+          </div>
+
           {/* Terminal Readers */}
           <Card>
             <CardHeader>
