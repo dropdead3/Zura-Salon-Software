@@ -38,12 +38,10 @@ import { checkoutToReceiptData } from '@/components/dashboard/transactions/recei
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
-// Constants
-const RECEIPT_WIDTH = 80; // mm
-const RECEIPT_MARGIN = 5; // mm
+
+type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
 // Helpers
-const formatAddress = (address: any) => {
   if (!address) return '';
   return `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
 };
