@@ -40,6 +40,9 @@ export function ZuraPayConnectivityTab({ readers }: ZuraPayConnectivityTabProps)
                   <p className="text-xs text-muted-foreground">
                     Real-time authorization continues over cellular when WiFi drops. Payments are approved or declined instantly — no deferred risk.
                   </p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5">
+                    Built-in eSIM — no carrier contract or SIM card required. Cellular is enabled automatically for your S710 readers.
+                  </p>
                 </div>
               </div>
             )}
@@ -75,7 +78,7 @@ export function ZuraPayConnectivityTab({ readers }: ZuraPayConnectivityTabProps)
                   Upgrade to S710 for Cellular Failover
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  The S710 adds cellular connectivity for real-time payment authorization when WiFi is unavailable — eliminating the risk of deferred declines.
+                  The S710 includes a built-in eSIM with cellular data bundled — no additional mobile line or setup required. Payments authorize in real-time over cellular when WiFi is unavailable, eliminating the risk of deferred declines.
                 </p>
               </div>
             </div>

@@ -15,6 +15,7 @@ const ActionSchema = z.enum([
   "list_readers",
   "register_reader",
   "delete_reader",
+  "enable_cellular",
 ]);
 
 const StripeTerminalLocationIdSchema = z
@@ -44,6 +45,7 @@ const WRITE_ACTIONS = new Set([
   "delete_location",
   "register_reader",
   "delete_reader",
+  "enable_cellular",
 ]);
 
 Deno.serve(async (req) => {
@@ -277,6 +279,27 @@ Deno.serve(async (req) => {
           "/v1/terminal/locations",
           formParams
         );
+
+        // Auto-enable cellular on the new location (harmless on S700, required for S710)
+        try {
+          const configResult = await stripeRequest(
+            "POST",
+            "/v1/terminal/configurations",
+            { "cellular[enabled]": "true" }
+          );
+          if (configResult?.id) {
+            // Assign the configuration to the new location
+            await stripeRequest(
+              "POST",
+              `/v1/terminal/locations/${(result as { id: string }).id}`,
+              { configuration_overrides: configResult.id }
+            );
+            console.log(`[manage-stripe-terminals] Cellular enabled for location ${(result as { id: string }).id}`);
+          }
+        } catch (cellularErr) {
+          // Non-fatal — log but don't block location creation
+          console.warn(`[manage-stripe-terminals] Failed to enable cellular:`, cellularErr);
+        }
         break;
       }
 
@@ -329,6 +352,26 @@ Deno.serve(async (req) => {
           "DELETE",
           `/v1/terminal/readers/${params.reader_id}`
         );
+        break;
+      }
+
+      case "enable_cellular": {
+        if (!params.terminal_location_id) {
+          throw new Error("terminal_location_id is required");
+        }
+        // Create a configuration with cellular enabled
+        const cellularConfig = await stripeRequest(
+          "POST",
+          "/v1/terminal/configurations",
+          { "cellular[enabled]": "true" }
+        );
+        // Assign to the specified location
+        await stripeRequest(
+          "POST",
+          `/v1/terminal/locations/${params.terminal_location_id}`,
+          { configuration_overrides: cellularConfig.id }
+        );
+        result = { cellular_enabled: true, configuration_id: cellularConfig.id };
         break;
       }
 
