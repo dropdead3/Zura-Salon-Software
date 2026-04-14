@@ -475,13 +475,16 @@ Deno.serve(async (req) => {
           break;
         }
 
-        // Get file URL for preview
+        // Create a temporary public file link for preview
         let splashUrl: string | null = null;
         try {
-          const fileInfo = await stripeRequest("GET", `/v1/files/${splashFileId}`);
-          splashUrl = fileInfo.url || null;
+          const fileLink = await stripeRequest("POST", `/v1/file_links`, {
+            file: splashFileId,
+            expires_at: String(Math.floor(Date.now() / 1000) + 1800), // 30 min expiry
+          });
+          splashUrl = fileLink.url || null;
         } catch {
-          // File URL may not always be available
+          // File link may not always be available
         }
 
         result = {
