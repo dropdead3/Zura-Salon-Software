@@ -1,40 +1,44 @@
 
 
-# Enable Cellular on S710 Locations + Update Connectivity Copy
+# Enhance Terminal Order Cards — Per-Model Feature Breakdown
 
-## What this does
-1. Automatically enables cellular connectivity via the Stripe Terminal Configuration API when creating a location with S710 readers
-2. Updates the Connectivity tab copy to explain zero-config cellular to users
+## Problem
+The Hardware tab currently shows a single combined "S700/S710" card with no differentiation between the two models. Users cannot understand the feature differences or make an informed choice about which reader to order.
 
-## Changes
+## What changes
 
-### 1. Edge function: Enable cellular on location creation
-**File:** `supabase/functions/manage-stripe-terminals/index.ts`
+### 1. Replace single reader card with two distinct product cards
+**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx`
 
-After creating a terminal location, create (or update) a Terminal Configuration object for that location with `cellular.enabled = true`. This uses the Stripe API:
+Replace the single pricing preview row (lines 179–205) with two side-by-side product cards in a `grid sm:grid-cols-2` layout:
 
-```
-POST /v1/terminal/configurations
-  cellular[enabled] = true
-  tipping[usd][fixed_amounts] = ...  (if applicable)
-```
+**S700 Card:**
+- Icon: Smartphone
+- Name: Zura Pay Reader S700
+- Subtitle: Countertop and handheld
+- Feature chips/bullets: WiFi connectivity, Store-and-forward offline payments, 4" touchscreen display
+- Price from SKU data (or fallback)
+- Label: "Entry-level terminal"
 
-Then assign it to the location. Since we can't know at location-creation time whether S710 readers will be registered, we enable cellular by default — it's harmless on S700 (the reader simply ignores it).
+**S710 Card:**
+- Icon: Smartphone with Signal overlay or distinct icon
+- Name: Zura Pay Reader S710
+- Subtitle: Countertop and handheld
+- Feature chips/bullets: WiFi + Cellular failover (built-in eSIM), Store-and-forward offline payments, 4" touchscreen display, Real-time auth during WiFi outages
+- A small emerald "Recommended" badge
+- Price from SKU data (or fallback)
+- Label: "Full NeverDown protection"
 
-Add a new action `enable_cellular` to the edge function so existing locations can also be updated.
+Each card uses `bg-muted/30 border rounded-xl p-4` styling consistent with the existing design. The S710 card gets a subtle `border-emerald-500/30` highlight to indicate the recommended option.
 
-### 2. Update Connectivity tab copy
-**File:** `src/components/dashboard/settings/terminal/ZuraPayConnectivityTab.tsx`
+### 2. Update the Order Dialog to include model selection
+In the purchase dialog, add a model selector (two clickable cards or a select) so users explicitly choose S700 or S710. The selected model flows through to the checkout items and hardware request metadata.
 
-When `hasS710` is true, add a brief note under the WiFi + Cellular card:
-- "Built-in eSIM — no carrier contract or SIM card required. Cellular is enabled automatically for your S710 readers."
+### 3. Keep the zero-markup callout and order history unchanged
+The emerald DollarSign callout and the order history section remain as-is below the product cards.
 
-When `hasS710` is false, update the upgrade callout to mention zero-config cellular:
-- "The S710 includes a built-in eSIM with cellular data bundled — no additional mobile line or setup required."
-
-### 3. No new database tables or RLS changes needed
-
-## Technical detail
-
-The Stripe Terminal Configuration API (`/v1/terminal/configurations`) accepts `cellular[enabled]=true`. This is set per-location. The S710's eSIM activates automatically when this flag is set — no user action required. The S700 ignores the cellular config silently.
+### Technical notes
+- The SKU data currently returns a single SKU. If only one SKU exists, both cards show the same price with a note that the same hardware ships for both (Stripe provisions the model based on availability). If the API returns multiple SKUs in the future, map them by product name.
+- Feature lists use small `text-xs` bullet items with check icons for clean scanability.
+- All typography follows design tokens — `font-display` for prices, `font-sans` for descriptions, no bold above `font-medium`.
 
