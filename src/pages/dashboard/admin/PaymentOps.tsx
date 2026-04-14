@@ -1,4 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 import { isCardExpired } from '@/lib/card-utils';
 import { format, subDays } from 'date-fns';
 import { useDebounce } from '@/hooks/use-debounce';
