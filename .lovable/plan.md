@@ -2,63 +2,56 @@
 
 ## Problem
 
-When the system theme changes, the splash screen generator already uses the correct palette — but the generated image isn't automatically pushed to readers. Users must manually navigate to the splash screen tab and click "Use Default Luxury Splash" again.
+When a new reader is registered to a terminal location, the user must manually navigate to the Display tab and click "Use Default Luxury Splash" to brand it. This should happen automatically.
 
 ## Solution
 
-After a system theme change (in both SettingsCategoryDetail and WebsiteSettingsContent), automatically regenerate the default luxury splash screen using the new theme palette and push it to all terminal locations that already have an active splash screen.
+After a reader is successfully registered via `useRegisterReader`, automatically generate and push the default luxury splash screen to that terminal location (if it doesn't already have one active).
 
-### Approach
+### Changes
 
-Extract the splash generation logic from `SplashScreenUploader.tsx` into a reusable utility function, then call it from the theme change handlers.
+**File: `src/hooks/useStripeTerminals.ts`**
 
-### 1. Extract splash generation into a shared utility
+Expand `useRegisterReader` to accept the org's logo URL, business name, and current color theme. In `onSuccess`, fire an async side-effect that:
 
-**New file: `src/lib/generate-terminal-splash.ts`**
+1. Checks if the terminal location already has an active splash screen (via `get_splash_screen` action)
+2. If not active, generates the default luxury splash using `generateDefaultSplash()`
+3. Pushes it to the terminal location via `upload_splash_screen` action
+4. Shows a secondary toast: "Splash screen applied to reader"
 
-- Move the canvas-drawing logic (lines 197-313 of SplashScreenUploader) into a pure async function: `generateDefaultSplash(orgLogoUrl, businessName, colorTheme) → { base64, dataUrl }`
-- Takes logo URL, business name, and `ColorTheme` as inputs
-- Returns the base64 JPEG string ready for upload
-- SplashScreenUploader's `handleGenerateFromLogo` refactored to call this utility
+This keeps the registration itself fast (fire-and-forget for the splash) and only applies when no splash exists yet — so manually customized splash screens aren't overwritten.
 
-### 2. Create an auto-sync hook
+**Alternative approach (simpler):** Instead of adding parameters to `useRegisterReader`, create a wrapper hook or handle this in the UI component that calls `registerReader.mutate()`. Let me check where registration is triggered from.
 
-**New file: `src/hooks/useAutoSyncTerminalSplash.ts`**
+Actually, the cleanest approach: add the auto-splash logic directly in `useRegisterReader`'s `onSuccess` callback by accepting optional splash parameters. But hooks can't access org context internally without being called from the right component tree.
 
-- Exposes `syncSplashToTheme(colorTheme)` function
-- Logic:
-  1. Resolve all terminal locations across all org locations (using `resolveAllTerminalLocations`)
-  2. Filter to only locations that currently have an active splash screen (call `get_splash_screen` for each)
-  3. Generate the new default splash using the utility from step 1
-  4. Push to all active-splash locations via `usePushSplashToAllLocations`
-  5. Show a toast: "Terminal splash screens updated to match {theme} theme"
-- If no locations have active splash screens, silently skip (no error)
+**Recommended approach:** Handle it at the call site. After `registerReader` succeeds, the calling component triggers splash generation + upload. This requires:
 
-### 3. Wire into theme change handlers
+1. Finding the component that calls `useRegisterReader`
+2. Adding a post-registration effect there that generates and pushes the splash
 
-**File: `src/components/dashboard/settings/SettingsCategoryDetail.tsx`** (line 593-600)
+Let me refine — the simplest path is to add an `onSuccess` callback option to the mutation call site, since react-query supports per-call `onSuccess` via `mutate(vars, { onSuccess })`.
 
-After `setColorTheme` + category theme sync, also call `syncSplashToTheme(themeOption.id)`.
+### Implementation
 
-**File: `src/components/dashboard/settings/WebsiteSettingsContent.tsx`** (line 494-498)
+1. **`src/hooks/useStripeTerminals.ts`** — No changes needed to the hook itself
 
-Same pattern after website theme activation sets the color theme.
+2. **Registration call site component** (likely in the Fleet tab) — After successful registration:
+   - Import `generateDefaultSplash` and the splash upload action
+   - Get org logo, business name, and color theme from context
+   - Call `generateDefaultSplash()` then `invokeTerminalAction('upload_splash_screen', ...)` 
+   - Toast: "Splash screen applied to reader"
+   - This runs as fire-and-forget so registration UX stays instant
 
-### 4. Refactor SplashScreenUploader
+3. **`src/hooks/useStripeTerminals.ts`** — Export `invokeTerminalAction` so the call site can use it for the splash upload (currently it's a private function)
 
-**File: `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`**
-
-Replace inline canvas logic in `handleGenerateFromLogo` with a call to the shared `generateDefaultSplash` utility.
+### Behavior
+- Only applies splash on new reader registration (not retroactively)
+- Does NOT overwrite if a splash is already active on that terminal location
+- Fire-and-forget — registration completes immediately, splash uploads in background
+- If splash generation fails (e.g., no org logo), silently skips — no error shown
 
 ### Files changed
-- **New**: `src/lib/generate-terminal-splash.ts` (~80 lines)
-- **New**: `src/hooks/useAutoSyncTerminalSplash.ts` (~50 lines)
-- **Edit**: `src/components/dashboard/settings/SettingsCategoryDetail.tsx` (~5 lines)
-- **Edit**: `src/components/dashboard/settings/WebsiteSettingsContent.tsx` (~5 lines)
-- **Edit**: `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` (refactor to use shared utility)
-
-### Behavior notes
-- Only locations with **already-active** splash screens get updated — we don't push splash to locations that never had one
-- The sync is fire-and-forget (async, non-blocking) so the theme change feels instant
-- If the org has no logo URL, splash sync is silently skipped
+- `src/hooks/useStripeTerminals.ts` — Export `invokeTerminalAction`
+- Registration UI component (Fleet tab) — Add post-registration splash logic (~15 lines)
 
