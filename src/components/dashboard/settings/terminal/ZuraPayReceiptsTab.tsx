@@ -411,32 +411,33 @@ export function ZuraPayReceiptsTab() {
       </Card>
 
       {/* Live Preview */}
-      <Card className="rounded-xl border-border bg-card/80 backdrop-blur-xl">
-        <CardHeader className="flex flex-row items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <Eye className={tokens.card.icon} />
-          </div>
-          <div>
-            <CardTitle className={tokens.card.title}>Live Preview</CardTitle>
-            <CardDescription className="font-sans text-sm text-muted-foreground">
-              See how your receipt will appear to clients.
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ReceiptPreview
-            config={local}
-            businessName={business?.business_name || 'Your Salon'}
-            logoUrl={logoUrl}
-            iconUrl={iconUrl}
-            address={address}
-            phone={business?.phone || null}
-            website={business?.website || null}
-            socials={socials}
-            reviewUrls={reviewUrls}
-          />
-        </CardContent>
-      </Card>
+      <div className="lg:sticky lg:top-6 self-start">
+        <Card className="rounded-xl border-border bg-card/80 backdrop-blur-xl max-w-[360px] mx-auto">
+          <CardHeader className="flex flex-row items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <Eye className={tokens.card.icon} />
+            </div>
+            <div>
+              <CardTitle className={tokens.card.title}>Live Preview</CardTitle>
+              <CardDescription className="font-sans text-sm text-muted-foreground">
+                See how your receipt will appear to clients.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ReceiptPreview
+              config={local}
+              businessName={business?.business_name || 'Your Salon'}
+              logoUrl={logoUrl}
+              iconUrl={iconUrl}
+              address={address}
+              phone={business?.phone || null}
+              website={business?.website || null}
+              socials={socials}
+              reviewUrls={reviewUrls}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
