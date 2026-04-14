@@ -1,18 +1,18 @@
 
 
-# Update Payout Destination Text with Location Name
+# Update "Connect Separate Account" Description Text
 
 ## Change
 
-One line edit in `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` (line 510):
+Single line edit in `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` (line 532):
 
-**From:** `Payouts to account ending in ••{orgBankLast4}`
+**From:** `Use a separate account if this location operates under a different LLC or needs its own bank account for payouts.`
 
-**To:** `Payouts for {selectedLoc.name} to account ending in ••{orgBankLast4}`
+**To:** `Connect a different bank account if this location operates under a different LLC or needs its own bank account for payouts.`
 
-This adds location context so operators know exactly which location's payouts will route to the displayed bank account.
+This reframes the context from "use a separate account" to "connect a different bank account," which is clearer about the action being taken.
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Update payout subtitle text to include location name |
+| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Update description copy under "Connect Separate Account" button |
 
