@@ -23,6 +23,7 @@ export interface HardwareAccessory {
 interface SkuResponse {
   source: 'stripe_api' | 'fallback';
   skus: HardwareSku[];
+  s700_skus?: HardwareSku[];
   s710_skus?: HardwareSku[];
   accessories?: HardwareAccessory[];
   shipping_methods?: unknown[];

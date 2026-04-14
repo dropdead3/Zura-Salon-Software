@@ -100,8 +100,9 @@ Deno.serve(async (req) => {
     if (body.action === "get_skus") {
       const country = body.country;
 
-      // Stable CDN images for S710 product line
+      // Stable CDN images for S700/S710 product line
       const FALLBACK_IMAGES: Record<string, string> = {
+        s700_reader: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700.png",
         s710_reader: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s710.png",
         s710_hub: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700_hub.png",
         s710_dock: "https://b.stripecdn.com/terminal-ui-resources/img/hardware_skus/verifone/s700_dock.png",
@@ -127,6 +128,7 @@ Deno.serve(async (req) => {
           const isAccessory = (name: string) =>
             ACCESSORY_KEYWORDS.some((kw) => name.toLowerCase().includes(kw));
 
+          const s700Skus: Record<string, unknown>[] = [];
           const s710Skus: Record<string, unknown>[] = [];
           const accessorySkus: Record<string, unknown>[] = [];
 
@@ -134,13 +136,17 @@ Deno.serve(async (req) => {
             const productName = String(
               (sku as Record<string, { name?: string }>).hardware_product?.name || sku.product || ""
             );
-            const isS7xx = productName.toLowerCase().includes("s710") || productName.toLowerCase().includes("s700");
+            const lowerName = productName.toLowerCase();
+            const isS7xx = lowerName.includes("s710") || lowerName.includes("s700");
             if (!isS7xx) continue;
 
             if (isAccessory(productName)) {
               accessorySkus.push(sku);
-            } else {
+            } else if (lowerName.includes("s710")) {
               s710Skus.push(sku);
+            } else {
+              // S700 or generic reader (e.g. "BBPOS WisePOS E") defaults to S700
+              s700Skus.push(sku);
             }
           }
 
@@ -187,6 +193,7 @@ Deno.serve(async (req) => {
           return jsonResponse({
             source: "stripe_api",
             skus: allSkus.map(enrichSku),
+            s700_skus: s700Skus.map(enrichSku),
             s710_skus: s710Skus.map(enrichSku),
             accessories: finalAccessories,
             shipping_methods: shippingData.data || [],
@@ -198,20 +205,30 @@ Deno.serve(async (req) => {
         console.warn("Hardware SKUs API call failed, using fallback:", e);
       }
 
-      // Fallback: Return known pricing for S710
+      // Fallback: Return known pricing with distinct S700 / S710 entries
+      const s700Fallback = {
+        id: "s700_reader",
+        product: "Zura Pay Reader S700",
+        amount: 29900,
+        currency: "usd",
+        status: "available",
+        description: "Android-based smart reader with WiFi. Countertop and handheld use.",
+        image_url: FALLBACK_IMAGES.s700_reader,
+      };
+      const s710Fallback = {
+        id: "s710_reader",
+        product: "Zura Pay Reader S710",
+        amount: 34900,
+        currency: "usd",
+        status: "available",
+        description: "Android-based smart reader with WiFi + cellular failover. Countertop and handheld use.",
+        image_url: FALLBACK_IMAGES.s710_reader,
+      };
       return jsonResponse({
         source: "fallback",
-        skus: [
-          {
-            id: "s710_reader",
-            product: "Zura Pay Reader S700/S710",
-            amount: 29900,
-            currency: "usd",
-            status: "available",
-            description: "Android-based smart reader with cellular connectivity. Countertop and handheld use.",
-            image_url: FALLBACK_IMAGES.s710_reader,
-          },
-        ],
+        skus: [s700Fallback, s710Fallback],
+        s700_skus: [s700Fallback],
+        s710_skus: [s710Fallback],
         accessories: [
           { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd", image_url: FALLBACK_IMAGES.s710_hub },
           { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd", image_url: FALLBACK_IMAGES.s710_dock },
