@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
 
     // ---- clear_reader_display: Reset to default ----
     if (action === "clear_reader_display") {
-      const readerAction = await stripe.terminal.readers.clearReaderDisplay(
+      const readerAction = await stripe.terminal.readers.cancelAction(
         reader_id,
         stripeOpts
       );
