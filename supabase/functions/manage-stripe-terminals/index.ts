@@ -422,9 +422,10 @@ Deno.serve(async (req) => {
           throw new Error(fileData.error?.message || "Failed to upload file to Stripe");
         }
 
-        // Step 2: Create a terminal configuration with the splashscreen + cellular
+        // Step 2: Create a terminal configuration with the splashscreen on S700/S710 + cellular
         const configResult = await stripeRequest("POST", "/v1/terminal/configurations", {
-          "splashscreen": fileData.id,
+          "stripe_s700[splashscreen]": fileData.id,
+          "stripe_s710[splashscreen]": fileData.id,
           "cellular[enabled]": "true",
         });
 
