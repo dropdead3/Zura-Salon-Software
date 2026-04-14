@@ -22,6 +22,9 @@ interface S710SimulatorProps {
   autoPlay?: boolean;
   className?: string;
   orgLogoUrl?: string | null;
+  tipPercentages?: number[];
+  tipEnabled?: boolean;
+  receiptSlogan?: string;
   onScreenChange?: (index: number, total: number) => void;
 }
 
