@@ -1,14 +1,18 @@
-import { CheckCircle2, Circle, ArrowRight, Loader2 } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, Loader2, ExternalLink } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { FormSuccess } from '@/components/ui/form-success';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface ChecklistStep {
   label: string;
   description: string;
   complete: boolean;
   loading?: boolean;
+  /** Navigation action for the current (next) step */
+  action?: { label: string; onClick: () => void };
 }
 
 interface ZuraPayActivationChecklistProps {
@@ -30,41 +34,50 @@ export function ZuraPayActivationChecklist({
   hasFirstTransaction,
   locationHasOwnAccount,
 }: ZuraPayActivationChecklistProps) {
+  const [, setSearchParams] = useSearchParams();
+  const { dashPath } = useOrgDashboardPath();
+
+  const goToFleetTab = () => setSearchParams((prev) => { prev.set('subtab', 'fleet'); return prev; });
+
   const steps: ChecklistStep[] = [
     {
       label: 'Create Account',
       description: 'Set up your Zura Pay account to start processing payments',
       complete: locationHasOwnAccount
-        ? true // location has its own account, org-level step is N/A
+        ? true
         : !!connectStatus && connectStatus !== 'not_connected',
     },
     {
       label: 'Complete Verification',
-      description: 'Submit business details and verify your identity',
+      description: 'Submit business details and verify your identity in the activation panel above',
       complete: locationHasOwnAccount
-        ? true // location has its own account, org-level verification is N/A
+        ? true
         : connectStatus === 'active',
     },
     {
       label: 'Connect Location',
-      description: 'Link at least one salon location to Zura Pay',
+      description: 'Link a salon location using the Location Mapping section in the Fleet tab',
       complete: isLocationConnected,
+      action: { label: 'Go to Fleet tab', onClick: goToFleetTab },
     },
     {
       label: 'Create Terminal Location',
-      description: 'Create a terminal location and pair a reader to accept card-present payments',
+      description: 'Go to the Fleet tab and create a terminal location for your salon',
       complete: hasTerminalLocations,
+      action: { label: 'Go to Fleet tab', onClick: goToFleetTab },
     },
     {
       label: 'Pair Reader',
-      description: 'Register a Zura Pay reader to accept card-present payments',
+      description: 'Register a reader in the Fleet tab — you\'ll need hardware from the Hardware tab first',
       complete: hasReaders,
+      action: { label: 'Go to Fleet tab', onClick: goToFleetTab },
     },
     {
       label: 'First Transaction',
-      description: 'Process your first payment to confirm everything works',
+      description: 'Go to the Scheduler, select an appointment, and check out using Zura Pay on a paired reader',
       complete: !!hasFirstTransaction,
       loading: hasFirstTransaction === undefined,
+      action: { label: 'Go to Scheduler', onClick: () => { window.location.href = dashPath('/schedule'); } },
     },
   ];
 
@@ -145,6 +158,15 @@ export function ZuraPayActivationChecklist({
                   <p className="text-xs text-muted-foreground">
                     {step.description}
                   </p>
+                  {isCurrent && step.action && (
+                    <button
+                      onClick={step.action.onClick}
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-500 transition-colors"
+                    >
+                      {step.action.label}
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               </div>
             );
