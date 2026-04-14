@@ -2,56 +2,41 @@
 
 ## Problem
 
-When a new reader is registered to a terminal location, the user must manually navigate to the Display tab and click "Use Default Luxury Splash" to brand it. This should happen automatically.
+The system color theme (`useColorTheme`) is persisted **only to `localStorage`** — not to the database. Every component that calls `useColorTheme()` creates its own independent `useState('zura')`, and the saved value is only read via a `useEffect` after mount. This causes two issues:
+
+1. **No shared state**: When the theme is changed in Settings, other mounted components still hold the old state value until they individually remount and re-read `localStorage`.
+2. **Flash/revert**: On navigation, components remount with the default `'zura'` state, then the `useEffect` fires and reads `localStorage` — causing a visible flash. If the user had set "Zura" but it defaults and then reads "cream" from a stale localStorage (or vice versa), they see a revert.
+
+The theme should be organization-scoped (persisted to `site_settings`) and use React Query for shared, reactive state across all consumers.
 
 ## Solution
 
-After a reader is successfully registered via `useRegisterReader`, automatically generate and push the default luxury splash screen to that terminal location (if it doesn't already have one active).
+Persist the color theme to `site_settings` (key: `org_color_theme`) using the existing `useSiteSettings` / `useUpdateSiteSetting` pattern, while keeping `localStorage` as a fast synchronous cache for instant CSS class application (no flash).
 
-### Changes
+### 1. Update `src/hooks/useColorTheme.ts`
 
-**File: `src/hooks/useStripeTerminals.ts`**
+- Add a `useSiteSettings<{ theme: ColorTheme }>('org_color_theme')` query to read the persisted theme
+- Add a `useUpdateSiteSetting` mutation to write theme changes
+- On mount: apply from `localStorage` immediately (no flash), then sync from DB when query resolves
+- On `setColorTheme`: update `localStorage` + CSS classes immediately, then persist to DB via mutation
+- Use `useQueryClient` to update the query cache on mutation so all consumers of `useColorTheme` reactively get the new value
+- Replace internal `useState` with the query data as source of truth (localStorage is just the sync cache)
 
-Expand `useRegisterReader` to accept the org's logo URL, business name, and current color theme. In `onSuccess`, fire an async side-effect that:
+### 2. Ensure `useSiteSettings` upsert works for this new key
 
-1. Checks if the terminal location already has an active splash screen (via `get_splash_screen` action)
-2. If not active, generates the default luxury splash using `generateDefaultSplash()`
-3. Pushes it to the terminal location via `upload_splash_screen` action
-4. Shows a secondary toast: "Splash screen applied to reader"
+The existing `useUpdateSiteSetting` already uses `.upsert()` with `onConflict`, so no migration is needed — the `site_settings` table already supports arbitrary keys.
 
-This keeps the registration itself fast (fire-and-forget for the splash) and only applies when no splash exists yet — so manually customized splash screens aren't overwritten.
+### 3. No other file changes needed
 
-**Alternative approach (simpler):** Instead of adding parameters to `useRegisterReader`, create a wrapper hook or handle this in the UI component that calls `registerReader.mutate()`. Let me check where registration is triggered from.
+All consumers already call `useColorTheme()` — they'll automatically get reactive updates through the shared query cache instead of isolated `useState`.
 
-Actually, the cleanest approach: add the auto-splash logic directly in `useRegisterReader`'s `onSuccess` callback by accepting optional splash parameters. But hooks can't access org context internally without being called from the right component tree.
-
-**Recommended approach:** Handle it at the call site. After `registerReader` succeeds, the calling component triggers splash generation + upload. This requires:
-
-1. Finding the component that calls `useRegisterReader`
-2. Adding a post-registration effect there that generates and pushes the splash
-
-Let me refine — the simplest path is to add an `onSuccess` callback option to the mutation call site, since react-query supports per-call `onSuccess` via `mutate(vars, { onSuccess })`.
-
-### Implementation
-
-1. **`src/hooks/useStripeTerminals.ts`** — No changes needed to the hook itself
-
-2. **Registration call site component** (likely in the Fleet tab) — After successful registration:
-   - Import `generateDefaultSplash` and the splash upload action
-   - Get org logo, business name, and color theme from context
-   - Call `generateDefaultSplash()` then `invokeTerminalAction('upload_splash_screen', ...)` 
-   - Toast: "Splash screen applied to reader"
-   - This runs as fire-and-forget so registration UX stays instant
-
-3. **`src/hooks/useStripeTerminals.ts`** — Export `invokeTerminalAction` so the call site can use it for the splash upload (currently it's a private function)
-
-### Behavior
-- Only applies splash on new reader registration (not retroactively)
-- Does NOT overwrite if a splash is already active on that terminal location
-- Fire-and-forget — registration completes immediately, splash uploads in background
-- If splash generation fails (e.g., no org logo), silently skips — no error shown
+### Behavior after fix
+- Theme change in Settings instantly applies CSS (localStorage + DOM)
+- Theme persists to database (organization-scoped)
+- All components sharing `useColorTheme` reactively update via query cache
+- No flash on navigation — localStorage provides synchronous initial value
+- Theme follows the organization, not the browser
 
 ### Files changed
-- `src/hooks/useStripeTerminals.ts` — Export `invokeTerminalAction`
-- Registration UI component (Fleet tab) — Add post-registration splash logic (~15 lines)
+- `src/hooks/useColorTheme.ts` — Add DB persistence via `useSiteSettings`, keep localStorage as sync cache
 
