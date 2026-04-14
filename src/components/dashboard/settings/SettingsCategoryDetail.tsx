@@ -28,6 +28,8 @@ import { useColorTheme, colorThemes, COLOR_THEME_TO_CATEGORY_MAP } from '@/hooks
 import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+import { useAutoSyncTerminalSplash } from '@/hooks/useAutoSyncTerminalSplash';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
 import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
