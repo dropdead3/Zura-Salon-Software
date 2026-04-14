@@ -187,6 +187,7 @@ export function ZuraPayFleetTab({
   useTerminalLocationsHook,
   useTerminalReadersHook,
   orgConnectStatus,
+  orgConnectAccountId,
   onStartConnect,
   isConnecting,
   onVerifyConnection,
@@ -198,6 +199,8 @@ export function ZuraPayFleetTab({
   onDisconnectLocation,
   isDisconnectingLocation,
   onRefreshReaders,
+  onCreateLocationAccount,
+  isCreatingLocationAccount,
 }: ZuraPayFleetTabProps) {
   const [showConfirmConnect, setShowConfirmConnect] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
