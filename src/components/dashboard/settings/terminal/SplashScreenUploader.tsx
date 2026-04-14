@@ -241,7 +241,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       ctx.font = '500 28px "Termina", sans-serif';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '3px';
-      ctx.fillText('Powered by Zura', TARGET_W / 2, zY + zSize + 50);
+      ctx.fillText('POWERED BY ZURA', TARGET_W / 2, zY + zSize + 50);
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       const base64 = dataUrl.split(',')[1];
