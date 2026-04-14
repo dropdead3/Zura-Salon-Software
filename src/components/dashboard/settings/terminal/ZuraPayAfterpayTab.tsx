@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CreditCard, Info, Loader2, Percent } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -72,8 +72,14 @@ export function ZuraPayAfterpayTab() {
   };
 
   const ratePercent = Math.round(surchargeRate * 100);
+  const [localRate, setLocalRate] = useState<string>(String(ratePercent));
   const sampleAmount = 1000;
   const sampleSurcharge = sampleAmount * surchargeRate;
+
+  // Sync local state when server value changes
+  useEffect(() => {
+    setLocalRate(String(Math.round(surchargeRate * 100)));
+  }, [surchargeRate]);
 
   return (
     <div className="space-y-6">
@@ -134,7 +140,8 @@ export function ZuraPayAfterpayTab() {
                         min={1}
                         max={10}
                         step={0.5}
-                        defaultValue={ratePercent}
+                        value={localRate}
+                        onChange={(e) => setLocalRate(e.target.value)}
                         onBlur={(e) => handleRateChange(e.target.value)}
                         className="pr-8 text-sm"
                       />
