@@ -397,7 +397,7 @@ export function TerminalSettingsContent() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList>
-          <TabsTrigger value="fleet" className="font-sans">Fleet</TabsTrigger>
+          <TabsTrigger value="fleet" className="font-sans">Location Set Up</TabsTrigger>
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
           <TabsTrigger value="connectivity" className="font-sans">Connectivity</TabsTrigger>
           <TabsTrigger value="display" className="font-sans">Display</TabsTrigger>
@@ -406,7 +406,7 @@ export function TerminalSettingsContent() {
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
-          <TabErrorBoundary tabName="Fleet" key={activeTab === 'fleet' ? 'fleet-active' : 'fleet'}>
+          <TabErrorBoundary tabName="Location Set Up" key={activeTab === 'fleet' ? 'fleet-active' : 'fleet'}>
             <ZuraPayFleetTab
               locations={locations}
               activeLocationId={activeLocationId}

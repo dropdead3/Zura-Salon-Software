@@ -380,7 +380,7 @@ export function ZuraPayFleetTab({
                 <Building2 className={tokens.card.icon} />
               </div>
               <div className="flex items-center gap-2">
-                <CardTitle className={tokens.card.title}>FLEET OVERVIEW</CardTitle>
+                <CardTitle className={tokens.card.title}>LOCATION SET UP</CardTitle>
                 <MetricInfoTooltip description="Summary of all readers across your organization. Locations must be connected to Zura Pay before they can manage terminals." />
               </div>
             </div>
