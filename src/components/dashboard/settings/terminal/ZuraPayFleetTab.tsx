@@ -159,6 +159,7 @@ export interface ZuraPayFleetTabProps {
   // Payment connect self-serve props
   orgConnectStatus?: string;
   orgConnectAccountId?: string | null;
+  orgBankLast4?: string | null;
   onStartConnect?: () => void;
   isConnecting?: boolean;
   onVerifyConnection?: () => void;
@@ -194,6 +195,7 @@ export function ZuraPayFleetTab({
   useTerminalReadersHook,
   orgConnectStatus,
   orgConnectAccountId,
+  orgBankLast4,
   onStartConnect,
   isConnecting,
   onVerifyConnection,
@@ -483,22 +485,32 @@ export function ZuraPayFleetTab({
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
                     <CheckCircle2 className="h-7 w-7 text-emerald-500" />
                   </div>
-                  <h3 className="font-display text-sm tracking-[0.14em]">ENABLE ZURA PAY FOR THIS LOCATION</h3>
+                  <h3 className="font-display text-sm tracking-[0.14em]">
+                    ENABLE ZURA PAY FOR {selectedLoc?.name?.toUpperCase() || 'THIS LOCATION'}
+                  </h3>
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                    Your organization is verified and ready to accept payments. Choose how this location connects to Zura Pay.
+                    Your organization is verified and ready to accept payments. Select a preferred payout destination for this location.
                   </p>
+                  <p className="text-xs font-display tracking-wide text-muted-foreground mt-1">SELECT PAYOUT DESTINATION</p>
                   <div className="flex flex-col items-center gap-3 mt-2">
-                    <Button
-                      onClick={() => activeLocationId && onConnectLocation?.(activeLocationId)}
-                      disabled={isConnectingLocation || !activeLocationId}
-                    >
-                      {isConnectingLocation ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Zap className="h-4 w-4 mr-2" />
+                    <div className="flex flex-col items-center">
+                      <Button
+                        onClick={() => activeLocationId && onConnectLocation?.(activeLocationId)}
+                        disabled={isConnectingLocation || !activeLocationId}
+                      >
+                        {isConnectingLocation ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Zap className="h-4 w-4 mr-2" />
+                        )}
+                        Use Organization Account
+                      </Button>
+                      {orgBankLast4 && (
+                        <span className="text-xs text-muted-foreground mt-1">
+                          Payouts to account ending in ••{orgBankLast4}
+                        </span>
                       )}
-                      Use Organization Account
-                    </Button>
+                    </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="h-px w-8 bg-border" />
                       <span>or</span>

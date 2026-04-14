@@ -81,7 +81,12 @@ Deno.serve(async (req) => {
     }
 
     // Retrieve the account from payment processor
-    const account = await stripe.accounts.retrieve(org.stripe_connect_account_id);
+    const account = await stripe.accounts.retrieve(org.stripe_connect_account_id, {
+      expand: ['external_accounts'],
+    });
+
+    // Extract bank account last4 for display
+    const bankLast4 = account.external_accounts?.data?.[0]?.last4 || null;
 
     const newStatus = account.charges_enabled ? "active" : "pending";
 
@@ -136,6 +141,7 @@ Deno.serve(async (req) => {
       payouts_enabled: account.payouts_enabled,
       account_id: org.stripe_connect_account_id,
       auto_connected_location_id,
+      bank_last4: bankLast4,
     });
   } catch (error) {
     console.error("verify-zura-pay-connection error:", error);
