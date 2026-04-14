@@ -27,6 +27,7 @@ const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
   rose: '#DB5A6E',
   sage: '#4A9C6D',
   ocean: '#3B82F6',
+  zura: '#8B5CF6',
 };
 
 const SAMPLE_VARIABLES: Record<string, string> = {

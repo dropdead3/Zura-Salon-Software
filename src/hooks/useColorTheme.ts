@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 
-export type ColorTheme = 'cream' | 'rose' | 'sage' | 'ocean';
+export type ColorTheme = 'cream' | 'rose' | 'sage' | 'ocean' | 'zura';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 
 export function useColorTheme() {
-  const [colorTheme, setColorThemeState] = useState<ColorTheme>('cream');
+  const [colorTheme, setColorThemeState] = useState<ColorTheme>('zura');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     // Load saved theme from localStorage
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as ColorTheme | null;
-    if (savedTheme && ['cream', 'rose', 'sage', 'ocean'].includes(savedTheme)) {
+    if (savedTheme && ['cream', 'rose', 'sage', 'ocean', 'zura'].includes(savedTheme)) {
       setColorThemeState(savedTheme);
       applyTheme(savedTheme);
     }
@@ -21,7 +21,7 @@ export function useColorTheme() {
   const applyTheme = (theme: ColorTheme) => {
     const html = document.documentElement;
     // Remove all theme classes
-    html.classList.remove('theme-cream', 'theme-rose', 'theme-sage', 'theme-ocean');
+    html.classList.remove('theme-cream', 'theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura');
     // Add new theme class
     html.classList.add(`theme-${theme}`);
   };
@@ -33,7 +33,7 @@ export function useColorTheme() {
   };
 
   return {
-    colorTheme: mounted ? colorTheme : 'cream',
+    colorTheme: mounted ? colorTheme : 'zura',
     setColorTheme,
     mounted,
   };
@@ -99,6 +99,21 @@ export const colorThemes = [
       bg: 'hsl(210 15% 6%)',
       accent: 'hsl(210 18% 25%)',
       primary: 'hsl(210 55% 55%)',
+    },
+  },
+  {
+    id: 'zura' as ColorTheme,
+    name: 'Zura',
+    description: 'Brand violet & purple',
+    lightPreview: {
+      bg: 'hsl(260 25% 95%)',
+      accent: 'hsl(260 20% 88%)',
+      primary: 'hsl(270 70% 55%)',
+    },
+    darkPreview: {
+      bg: 'hsl(230 25% 5%)',
+      accent: 'hsl(270 30% 20%)',
+      primary: 'hsl(270 75% 60%)',
     },
   },
 ];

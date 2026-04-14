@@ -56,6 +56,12 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#3a72b8',
     74, 138, 212,
   ),
+  zura: palette(
+    ['#0a0a14', '#1a1040', '#0a0a14'],
+    '#8b5cf6',
+    '#7c3aed',
+    139, 92, 246,
+  ),
 };
 
 export function getTerminalPalette(theme: ColorTheme): TerminalPalette {
