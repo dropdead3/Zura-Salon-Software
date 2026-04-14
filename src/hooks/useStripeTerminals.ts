@@ -29,7 +29,7 @@ interface StripeReader {
   ip_address?: string;
 }
 
-async function invokeTerminalAction(action: string, locationId: string, params: Record<string, unknown> = {}) {
+export async function invokeTerminalAction(action: string, locationId: string, params: Record<string, unknown> = {}) {
   const { data, error } = await supabase.functions.invoke('manage-stripe-terminals', {
     body: { action, location_id: locationId, ...params },
   });
