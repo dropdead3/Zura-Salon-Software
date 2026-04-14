@@ -31,28 +31,28 @@ function ReceiptPreview({ config, businessName, logoUrl, address, phone }: {
           <p className="font-display text-base tracking-wide" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>{businessName}</p>
         )}
         {config.show_address && address && (
-          <p className="text-xs text-muted-foreground">{address}</p>
+          <p className="text-xs text-gray-500">{address}</p>
         )}
         {config.show_phone && phone && (
-          <p className="text-xs text-muted-foreground">{phone}</p>
+          <p className="text-xs text-gray-500">{phone}</p>
         )}
-        <p className="text-xs text-muted-foreground mt-1">April 13, 2026</p>
+        <p className="text-xs text-gray-500 mt-1">April 13, 2026</p>
       </div>
 
       {/* Meta */}
-      <div className="text-xs text-muted-foreground space-y-0.5 mb-3">
-        <p><span className="font-medium text-foreground">Client:</span> Jane Doe</p>
-        {config.show_stylist && <p><span className="font-medium text-foreground">Stylist:</span> Sarah M.</p>}
-        {config.show_payment_method && <p><span className="font-medium text-foreground">Payment:</span> Card</p>}
+        <div className="text-xs text-gray-500 space-y-0.5 mb-3">
+        <p><span className="font-medium text-black">Client:</span> Jane Doe</p>
+        {config.show_stylist && <p><span className="font-medium text-black">Stylist:</span> Sarah M.</p>}
+        {config.show_payment_method && <p><span className="font-medium text-black">Payment:</span> Card</p>}
       </div>
 
       {/* Items */}
       <table className="w-full text-xs mb-3">
         <thead>
           <tr style={{ borderBottom: `1px solid ${accentColor}` }}>
-            <th className="text-left pb-1 text-muted-foreground" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Item</th>
-            <th className="text-center pb-1 text-muted-foreground" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Qty</th>
-            <th className="text-right pb-1 text-muted-foreground" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Amount</th>
+             <th className="text-left pb-1 text-gray-500" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Item</th>
+            <th className="text-center pb-1 text-gray-500" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Qty</th>
+            <th className="text-right pb-1 text-gray-500" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Amount</th>
           </tr>
         </thead>
         <tbody style={{ borderBottom: `1px solid ${accentColor}` }}>
@@ -71,7 +71,7 @@ function ReceiptPreview({ config, businessName, logoUrl, address, phone }: {
       </div>
 
       {/* Footer */}
-      <div className="text-center mt-4 text-xs text-muted-foreground space-y-1">
+      <div className="text-center mt-4 text-xs text-gray-400 space-y-1">
         {config.custom_message && <p>{config.custom_message}</p>}
         {config.footer_text && <p>{config.footer_text}</p>}
       </div>
