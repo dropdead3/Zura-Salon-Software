@@ -50,6 +50,8 @@ interface SplashScreenUploaderProps {
 
 export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenUploaderProps) {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const { data: locations = [] } = useLocations();
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
@@ -67,9 +69,12 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const removeMutation = useRemoveSplashScreen();
   const pushAllMutation = usePushSplashToAllLocations();
 
+  // Durable splash origin tracking
+  const { data: splashOrigin } = useTerminalSplashOrigin(orgId, selectedLocationId || null, terminalLocationId);
+  const isDefaultLuxury = splashOrigin === 'default_luxury';
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<{ base64: string; mime: 'image/jpeg' | 'image/png' | 'image/gif'; fromDefault?: boolean } | null>(null);
-  const [isDefaultLuxury, setIsDefaultLuxury] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [generatingFromLogo, setGeneratingFromLogo] = useState(false);
   const [pushProgress, setPushProgress] = useState<string | null>(null);
