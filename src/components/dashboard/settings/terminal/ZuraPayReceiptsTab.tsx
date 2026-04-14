@@ -22,7 +22,7 @@ function ReceiptPreview({ config, businessName, logoUrl, address, phone }: {
   const accentColor = config.accent_color || '#e5e5e5';
 
   return (
-    <div className="rounded-xl border border-border bg-background p-6 max-w-[320px] mx-auto font-sans text-sm" style={{ color: '#1a1a1a' }}>
+    <div className="rounded-xl border border-gray-200 bg-white text-black p-6 max-w-[320px] mx-auto font-sans text-sm">
       {/* Header */}
       <div className="pb-4 mb-4" style={{ borderBottom: `1px solid ${accentColor}`, textAlign: config.logo_position === 'center' ? 'center' : 'left' }}>
         {config.show_logo && logoUrl ? (
