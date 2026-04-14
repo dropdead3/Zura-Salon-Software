@@ -1,29 +1,42 @@
 
 
-# Improve Splash Screen Uploader Layout
+# Add "Test Display" Button to Fleet Tab
 
-## What Changes
+## What This Does
+Adds a "Test Display" button next to each online reader in the Fleet tab. Clicking it pushes sample cart data (e.g., "Sample Haircut $45.00", "Styling Product $22.50") to the physical reader display for ~8 seconds, then auto-clears it. This lets operators verify end-to-end connectivity without processing a real payment.
 
-The current layout has the dropzone and actions side-by-side in a cramped horizontal flex. The "Generate from Logo" button floats awkwardly next to a tall dropzone. The screenshot shows significant wasted space.
+## Changes
 
-## Proposed Layout
+### `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
 
-Restructure the card content area into a cleaner, more balanced design:
+In the reader row (lines 640-722), add a "Test Display" button between the status badge and the delete button for online readers only:
 
-1. **Location selector** stays at top, unchanged.
+- Import `useAuth` to get the current user's organization context
+- Add local state `testingReaderId` to track which reader is being tested
+- On click:
+  1. Set `testingReaderId` to the reader's ID
+  2. Call `supabase.functions.invoke('terminal-reader-display', { body: { action: 'set_reader_display', reader_id, organization_id, line_items: [...sample items], tax: 382 } })`
+  3. Wait 8 seconds
+  4. Call `clear_reader_display` to reset the screen
+  5. Toast success/error
+  6. Clear `testingReaderId`
 
-2. **Main content area** becomes a centered, vertically-stacked layout:
-   - The dropzone/preview panel remains 9:16 aspect but is centered and slightly larger (200x356)
-   - Below the preview: action buttons in a horizontal row (Generate from Logo | Upload to Reader | Clear/Remove)
-   - Help text sits below the buttons as a muted footer
+- Button styling: `variant="outline"` `size="sm"` with `MonitorSmartphone` icon, shows `Loader2` spinner while testing
+- Only visible for readers with `status === 'online'`
 
-3. **When a preview exists**: the dropzone shows the image, and the action row below shows "Upload to Reader" (primary) + "Clear" (ghost) side by side
+Sample cart data:
+```text
+Line 1: "Sample Haircut"         — $45.00 × 1
+Line 2: "Styling Product"        — $22.50 × 2
+Tax:    $3.82
+Total:  $93.32
+```
 
-4. **When no preview + no active splash**: dropzone is empty with upload prompt, "Generate from Logo" button is below as a standalone outlined button
+### No edge function changes needed
+The existing `set_reader_display` and `clear_reader_display` actions in `terminal-reader-display` already support exactly this use case.
 
-5. **When splash is active + no pending**: show the active indicator inside the dropzone area, with "Remove" button below
-
-## File Changed
-
-`src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — restructure the JSX in the `hasTerminalLocation` section (lines 304-425) from horizontal flex to centered vertical stack with button row beneath.
+## Technical Notes
+- The `organization_id` comes from the component's existing location data (`selectedLoc`) which has the org reference, or from the auth context
+- Need to find how org ID is available — will check `useAuth` or derive from `locations[0]` prop which likely has `organization_id`
+- The 8-second display duration gives enough time to visually confirm the reader screen updates
 
