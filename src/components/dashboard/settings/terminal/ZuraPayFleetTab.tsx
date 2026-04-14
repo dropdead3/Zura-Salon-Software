@@ -503,13 +503,8 @@ export function ZuraPayFleetTab({
                         ) : (
                           <Zap className="h-4 w-4 mr-2" />
                         )}
-                        Use Organization Account
+                        {orgBankLast4 ? `Use Account Ending in ••${orgBankLast4}` : 'Use Organization Account'}
                       </Button>
-                      {orgBankLast4 && (
-                        <span className="text-xs text-muted-foreground mt-1">
-                          Payouts for {selectedLoc.name} to account ending in ••{orgBankLast4}
-                        </span>
-                      )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="h-px w-8 bg-border" />
