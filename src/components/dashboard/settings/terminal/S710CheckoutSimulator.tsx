@@ -448,16 +448,6 @@ export function S710CheckoutSimulator({
             </AnimatePresence>
           </div>
 
-          {/* Auto-play progress bar */}
-          {autoPlay && (
-            <div className="absolute bottom-4 inset-x-4 h-[2px] rounded-full bg-white/[0.06] overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ width: `${progress * 100}%`, background: p.accentRgba(0.5) }}
-              />
-            </div>
-          )}
-
           <div className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1.5 pb-2">
             <ZuraZIcon className="w-2 h-2 text-white/20" />
             <span className="text-white/20 text-[7px] tracking-[0.2em] uppercase">Powered by {PLATFORM_NAME}</span>
@@ -466,6 +456,16 @@ export function S710CheckoutSimulator({
 
         <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full bg-white/[0.06]" />
       </div>
+
+      {/* Auto-play progress bar */}
+      {autoPlay && (
+        <div className="w-full mt-3 h-[2px] rounded-full bg-muted/40 overflow-hidden">
+          <motion.div
+            className="h-full rounded-full"
+            style={{ width: `${progress * 100}%`, backgroundColor: p.accentColor, opacity: 0.6 }}
+          />
+        </div>
+      )}
 
       {/* Stage dots */}
       <div className="flex items-center gap-1.5 mt-3">
