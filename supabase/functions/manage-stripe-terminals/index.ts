@@ -214,6 +214,17 @@ Deno.serve(async (req) => {
       }
 
       case "create_location": {
+        // Deduplication guard: check if a terminal location already exists for this Zura location
+        const existingLocations = await stripeRequest("GET", "/v1/terminal/locations?limit=100");
+        const existingMatch = (existingLocations?.data || []).find(
+          (tl: { metadata?: Record<string, string> }) => tl.metadata?.zura_location_id === location_id
+        );
+        if (existingMatch) {
+          // Already exists — return it instead of creating a duplicate
+          result = existingMatch;
+          break;
+        }
+
         const displayName =
           params.display_name || locationData.name || "Terminal Location";
 
@@ -259,9 +270,8 @@ Deno.serve(async (req) => {
         if (stateCode) {
           formParams["address[state]"] = stateCode;
         }
-        if (params.metadata_location_id) {
-          formParams["metadata[zura_location_id]"] = location_id;
-        }
+        // Always tag with zura_location_id for deduplication
+        formParams["metadata[zura_location_id]"] = location_id;
         result = await stripeRequest(
           "POST",
           "/v1/terminal/locations",
