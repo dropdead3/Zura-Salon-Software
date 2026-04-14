@@ -25,6 +25,7 @@ import {
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useColorTheme } from '@/hooks/useColorTheme';
 import { generateDefaultSplash } from '@/lib/generate-terminal-splash';
+import { upsertSplashOrigin } from '@/hooks/useTerminalSplashMetadata';
 import { useOrgConnectStatus, useOrgBankLast4, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation, useCreateLocationAccount } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';

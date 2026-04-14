@@ -476,6 +476,7 @@ function ThemeTab() {
   const applyCategoryTheme = useApplyCategoryTheme();
   const isMobile = useIsMobile();
   const { data: business } = useBusinessSettings();
+  const { effectiveOrganization } = useOrganizationContext();
   const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '', effectiveOrganization?.id);
 
   // Editor state
