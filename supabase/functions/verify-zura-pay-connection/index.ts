@@ -99,12 +99,43 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Auto-connect single-location orgs when status transitions to active
+    let auto_connected_location_id: string | null = null;
+    if (newStatus === "active" && org.stripe_connect_status !== "active") {
+      const { data: unconnectedLocs } = await supabase
+        .from("locations")
+        .select("id")
+        .eq("organization_id", organization_id)
+        .is("stripe_account_id", null)
+        .eq("is_active", true);
+
+      if (unconnectedLocs?.length === 1) {
+        const { error: locErr } = await supabase
+          .from("locations")
+          .update({
+            stripe_account_id: org.stripe_connect_account_id,
+            stripe_status: "active",
+            stripe_payments_enabled: true,
+            stripe_connect_status: "active",
+          })
+          .eq("id", unconnectedLocs[0].id);
+
+        if (locErr) {
+          console.error("Auto-connect location failed:", locErr);
+        } else {
+          auto_connected_location_id = unconnectedLocs[0].id;
+          console.log(`Auto-connected location ${auto_connected_location_id} for org ${organization_id}`);
+        }
+      }
+    }
+
     return jsonResponse({
       status: newStatus,
       charges_enabled: account.charges_enabled,
       details_submitted: account.details_submitted,
       payouts_enabled: account.payouts_enabled,
       account_id: org.stripe_connect_account_id,
+      auto_connected_location_id,
     });
   } catch (error) {
     console.error("verify-zura-pay-connection error:", error);

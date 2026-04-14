@@ -15,6 +15,7 @@ interface VerifyResult {
   details_submitted: boolean;
   payouts_enabled: boolean;
   account_id?: string;
+  auto_connected_location_id?: string | null;
 }
 
 export function useOrgConnectStatus(orgId: string | undefined) {
@@ -138,7 +139,9 @@ export function useVerifyZuraPayConnection() {
     onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
-      if (data.status === 'active') {
+      if (data.auto_connected_location_id) {
+        toast.success('Zura Pay is active and your location has been automatically connected!');
+      } else if (data.status === 'active') {
         toast.success('Zura Pay is active! You can now enable locations.');
       } else if (data.status === 'pending') {
         toast.info('Verification is still in progress. Additional information may be required to complete verification.');
