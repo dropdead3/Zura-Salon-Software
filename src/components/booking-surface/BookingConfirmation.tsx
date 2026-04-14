@@ -29,6 +29,7 @@ interface BookingConfirmationProps {
   stripeConnectedAccountId?: string | null;
   onPaymentComplete?: (intentId: string) => void;
   showPaymentForm?: boolean;
+  afterpayEnabled?: boolean;
 }
 
 export function BookingConfirmation({
@@ -36,7 +37,7 @@ export function BookingConfirmation({
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
   depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
   paymentClientSecret, paymentIntentType, stripePublishableKey, stripeConnectedAccountId,
-  onPaymentComplete, showPaymentForm,
+  onPaymentComplete, showPaymentForm, afterpayEnabled,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
     const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
