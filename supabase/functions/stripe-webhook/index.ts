@@ -339,6 +339,11 @@ async function handleCheckoutCompleted(
       split_payment_link_intent_id: paymentIntentId,
     };
 
+    // Persist surcharge amount from checkout metadata
+    if (metadata.surcharge_amount_cents) {
+      updatePayload.afterpay_surcharge_amount = parseInt(metadata.surcharge_amount_cents, 10);
+    }
+
     // If there's no terminal split leg (full amount via link), mark as paid
     if (!appt?.split_payment_terminal_intent_id) {
       updatePayload.payment_status = 'paid';

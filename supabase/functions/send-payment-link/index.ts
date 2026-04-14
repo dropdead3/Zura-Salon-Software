@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
       client_email,
       client_phone,
       amount_display,
+      surcharge_display,
       send_sms = true,
       send_email = true,
     } = body;
@@ -79,6 +80,9 @@ Deno.serve(async (req) => {
     // ── Send SMS ─────────────────────────────────────────────────
     if (send_sms && client_phone) {
       try {
+        const smsAmount = surcharge_display
+          ? `${amount_display || ""} + ${surcharge_display} processing fee`
+          : (amount_display || "");
         const smsResult = await sendSms(
           supabase,
           {
@@ -87,7 +91,7 @@ Deno.serve(async (req) => {
             variables: {
               first_name: firstName,
               salon_name: salonName,
-              amount: amount_display || "",
+              amount: smsAmount,
               payment_url: checkout_url,
             },
           },
@@ -104,9 +108,13 @@ Deno.serve(async (req) => {
     if (send_email && client_email) {
       try {
         const amountLine = amount_display ? ` for <strong>${amount_display}</strong>` : "";
+        const surchargeLine = surcharge_display
+          ? `<p style="font-size: 13px; color: #666;">A processing fee of <strong>${surcharge_display}</strong> will be added at checkout.</p>`
+          : "";
         const emailHtml = `
           <p>Hi ${firstName},</p>
           <p>Here's your payment link${amountLine} from <strong>${salonName}</strong>.</p>
+          ${surchargeLine}
           <div style="text-align: center; margin: 24px 0;">
             <a href="${checkout_url}" 
                style="display: inline-block; padding: 14px 32px; background-color: #000; color: #fff; 
