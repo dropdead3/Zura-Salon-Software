@@ -148,22 +148,41 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
               <p className={cn(tokens.body.muted, 'leading-relaxed')}>
                 Your readers display a branded checkout flow with your business name, itemized cart details, totals, and payment prompts. The experience updates automatically across all your readers — no manual device configuration needed.
               </p>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  'Branded splash screen',
-                  'Itemized cart display',
-                  ...(tipEnabled ? ['Tip selection'] : []),
-                  'Tap / chip / swipe prompts',
-                  'Real-time status updates',
-                ].map((cap) => (
-                  <span key={cap} className={cn(
-                    'text-xs px-2.5 py-1 rounded-full bg-muted border text-muted-foreground font-sans',
-                    'transition-colors hover:text-foreground hover:border-foreground/20'
-                  )}>
-                    {cap}
-                  </span>
-                ))}
+
+              {/* Brandable vs firmware-locked */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="space-y-1">
+                  <p className="text-[10px] tracking-wider uppercase text-emerald-600 font-display">Brandable</p>
+                  {[
+                    'Splash / idle screen',
+                    'Itemized cart display',
+                    ...(tipEnabled ? ['Tip percentages'] : []),
+                  ].map((cap) => (
+                    <span key={cap} className={cn(
+                      'block text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-sans',
+                    )}>
+                      {cap}
+                    </span>
+                  ))}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] tracking-wider uppercase text-muted-foreground/60 font-display">Reader Firmware</p>
+                  {[
+                    'Tap / insert screen',
+                    'Processing screen',
+                    'Success screen',
+                  ].map((cap) => (
+                    <span key={cap} className={cn(
+                      'block text-xs px-2.5 py-1 rounded-full bg-muted border text-muted-foreground/60 font-sans',
+                    )}>
+                      {cap}
+                    </span>
+                  ))}
+                </div>
               </div>
+              <p className={cn(tokens.body.muted, 'text-[10px] leading-relaxed pt-1')}>
+                Payment, processing, and success screens are controlled by the reader's firmware and cannot be customized. Splash, cart, and tip screens reflect your brand settings.
+              </p>
             </div>
           </div>
         </div>
