@@ -388,7 +388,7 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                       facebook: reviewSettings?.facebookReviewUrl || '',
                     },
                   };
-                  printReceipt(transaction, formatCurrency, orgName, receiptConfig, businessInfo);
+                  printReceipt(transaction, formatCurrency, orgName, receiptConfig, businessInfo, undefined, transaction.afterpaySurchargeAmount);
                 }}>
                   <Printer className="w-4 h-4 mr-2" />
                   Print Receipt
@@ -421,7 +421,7 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                           facebook: reviewSettings?.facebookReviewUrl || '',
                         },
                       };
-                      const data = groupedTransactionToReceiptData(transaction);
+                      const data = groupedTransactionToReceiptData(transaction, transaction.afterpaySurchargeAmount);
                       const html = buildReceiptHtml(data, formatCurrency, orgName, receiptConfig, bInfo);
                       const { error } = await supabase.functions.invoke('send-receipt', {
                         body: {
