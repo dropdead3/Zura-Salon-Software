@@ -1490,6 +1490,7 @@ export default function PaymentOps() {
                     </p>
                   </div>
                 ) : (
+                  <>
                   <Table>
                     <TableHeader>
                       <TableRow>
