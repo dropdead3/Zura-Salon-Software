@@ -426,7 +426,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                           )}
                           {pushProgress || 'Push to All Locations'}
                         </Button>
-                      )
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
