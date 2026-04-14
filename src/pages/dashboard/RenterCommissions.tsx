@@ -11,6 +11,9 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
 import { useAuth } from '@/contexts/AuthContext';
 import { tokens } from '@/lib/design-tokens';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 
 export default function RenterCommissions() {
   const { formatDate } = useFormatDate();
@@ -20,13 +23,29 @@ export default function RenterCommissions() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Get booth renter profile - would need to query by user_id in real implementation
   const { data: renterProfile } = useBoothRenter(undefined);
   
   const { data: statements, isLoading } = useCommissionStatements({
     boothRenterId: renterProfile?.id,
     year: selectedYear,
     status: statusFilter !== 'all' ? statusFilter : undefined,
+  });
+
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+    sortField,
+    toggleSort,
+  } = usePaginatedSort({
+    data: statements || [],
+    defaultPageSize: 20,
+    defaultSortField: 'period_start' as any,
+    defaultSortDirection: 'desc',
   });
 
   const totalEarned = statements?.reduce((sum, s) => sum + s.total_commission, 0) || 0;
@@ -145,65 +164,75 @@ export default function RenterCommissions() {
               ))}
             </div>
           ) : statements && statements.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Period</TableHead>
-                  <TableHead className="text-right">Retail Sales</TableHead>
-                  <TableHead className="text-right">Commission</TableHead>
-                  <TableHead className="text-right">Deductions</TableHead>
-                  <TableHead className="text-right">Net Payout</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {statements.map((statement) => (
-                  <TableRow key={statement.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">
-                          {formatDate(new Date(statement.period_start), 'MMM yyyy')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(new Date(statement.period_start), 'MMM d')} - {formatDate(new Date(statement.period_end), 'MMM d')}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(statement.total_retail_sales)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(statement.total_commission)}
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({(statement.commission_rate * 100).toFixed(0)}%)
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {statement.deductions && statement.deductions > 0 
-                        ? `-${formatCurrency(statement.deductions)}`
-                        : '-'
-                      }
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(statement.net_payout)}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(statement.status)}
-                    </TableCell>
-                    <TableCell>
-                      {statement.statement_pdf_url && (
-                        <Button size={tokens.button.inline} variant="ghost" asChild>
-                          <a href={statement.statement_pdf_url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      )}
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortableColumnHeader label="Period" sortKey="period_start" currentSortField={sortField} onToggleSort={toggleSort} />
+                    <SortableColumnHeader label="Retail Sales" sortKey="total_retail_sales" currentSortField={sortField} onToggleSort={toggleSort} className="text-right" />
+                    <SortableColumnHeader label="Commission" sortKey="total_commission" currentSortField={sortField} onToggleSort={toggleSort} className="text-right" />
+                    <TableHead className="text-right">Deductions</TableHead>
+                    <SortableColumnHeader label="Net Payout" sortKey="net_payout" currentSortField={sortField} onToggleSort={toggleSort} className="text-right" />
+                    <SortableColumnHeader label="Status" sortKey="status" currentSortField={sortField} onToggleSort={toggleSort} />
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.map((statement) => (
+                    <TableRow key={statement.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">
+                            {formatDate(new Date(statement.period_start), 'MMM yyyy')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(new Date(statement.period_start), 'MMM d')} - {formatDate(new Date(statement.period_end), 'MMM d')}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(statement.total_retail_sales)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(statement.total_commission)}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({(statement.commission_rate * 100).toFixed(0)}%)
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {statement.deductions && statement.deductions > 0 
+                          ? `-${formatCurrency(statement.deductions)}`
+                          : '-'
+                        }
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(statement.net_payout)}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(statement.status)}
+                      </TableCell>
+                      <TableCell>
+                        {statement.statement_pdf_url && (
+                          <Button size={tokens.button.inline} variant="ghost" asChild>
+                            <a href={statement.statement_pdf_url} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                showingFrom={showingFrom}
+                showingTo={showingTo}
+                onPageChange={setCurrentPage}
+              />
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
