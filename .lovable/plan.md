@@ -1,29 +1,24 @@
 
 
-# Improve Checklist Step Clarity with Actionable Descriptions & Navigation
+# Always-Available "Clear Display" Button for Terminal Readers
 
 ## Problem
-The activation checklist steps (especially "First Transaction") lack clear guidance on **where to go** and **what to do**. The user sees "Process your first payment to confirm everything works" but has no link or instruction pointing them to the Scheduler.
+The "Clear" button only appears while `testingReaderId` state is set (during the 10-second test window). If the page refreshes, the timer fires but the Stripe API call fails, or the user navigates away and back — the Clear button disappears while the cart data remains on the physical reader. There's no way to reset the reader.
+
+## Solution
+Make the "Clear Display" action always accessible for online readers, not just during an active test. This is a simple UI restructuring — no backend changes needed.
 
 ## Changes
 
-### 1. Add actionable descriptions with navigation hints
-Update each incomplete step's description to include a clear instruction of where to go. For the current (next) step, add a clickable link/button that navigates directly to the relevant page.
+**File: `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`**
 
-Updated step descriptions:
-- **Create Account** → "Set up your Zura Pay account to start processing payments" *(has inline action button already)*
-- **Complete Verification** → "Submit business details and verify your identity in the activation panel above"
-- **Connect Location** → "Link a salon location using the Location Mapping section in the Fleet tab"
-- **Create Terminal Location** → "Go to the Fleet tab and create a terminal location for your salon"
-- **Pair Reader** → "Register a reader in the Fleet tab — you'll need hardware from the Hardware tab first"
-- **First Transaction** → "Go to the Scheduler, select an appointment, and check out using Zura Pay on a paired reader"
+1. **Always show both Test and Clear buttons** for online readers. Remove the conditional that hides Clear when `testingReaderId !== reader.id`. Instead, show both side-by-side:
+   - "Test" button (pushes sample cart) — disabled while a test is active on that reader
+   - "Clear" button (clears reader display) — always visible for online readers
 
-### 2. Add a "Go to Scheduler" link on the First Transaction step
-When "First Transaction" is the current step, render a small link/button below the description that navigates to `/dashboard/schedule`. Use the same amber accent styling.
+2. **Keep the visual emphasis during active test**: When `testingReaderId === reader.id`, highlight the Clear button with the existing destructive styling to draw attention. When no test is active, use a subtle ghost/outline style so it doesn't dominate.
 
-### 3. Add contextual navigation links for other steps
-For steps like "Connect Location", "Create Terminal Location", and "Pair Reader" — when they are the current step, add a small text link that switches to the relevant subtab (Fleet) or scrolls to the relevant section. This uses `useSearchParams` to set the subtab.
+3. **Decouple `handleClearDisplay` from `testingReaderId`**: Allow `handleClearDisplay` to be called even when `testingReaderId` is null (it already works this way in the function body — just remove the UI guard).
 
-## Files
-- **Edit**: `src/components/dashboard/settings/terminal/ZuraPayActivationChecklist.tsx` — update descriptions, add navigation links for current step
+The result: users can always tap "Clear" to reset a reader's display, whether or not they just ran a test from this session.
 
