@@ -357,84 +357,14 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Collected Via</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Charged At</TableHead>
-                  {isPending && <TableHead className={tokens.table.columnHeader}>Actions</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {feeCharges.map((charge) => (
-                  <TableRow key={charge.id}>
-                    <TableCell className="font-medium">
-                      {charge.appointment?.client_name || 'Unknown'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {charge.appointment?.appointment_date
-                        ? format(new Date(charge.appointment.appointment_date), 'MMM d, yyyy')
-                        : '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {FEE_TYPE_LABELS[charge.fee_type] ?? charge.fee_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <BlurredAmount>{formatCurrency(charge.fee_amount)}</BlurredAmount>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {charge.collected_via
-                        ? COLLECTED_VIA_LABELS[charge.collected_via] ?? charge.collected_via
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {charge.charged_at
-                        ? format(new Date(charge.charged_at), 'MMM d, h:mm a')
-                        : '—'}
-                    </TableCell>
-                    {isPending && (
-                      <TableCell>
-                        <div className="flex gap-1.5">
-                          <Button
-                            size="sm"
-                            className={tokens.button.inline}
-                            disabled={collectMutation.isPending}
-                            onClick={() => openCollectDialog({
-                              id: charge.id,
-                              clientName: charge.appointment?.client_name || 'Unknown',
-                              amount: charge.fee_amount,
-                              feeType: charge.fee_type,
-                              appointmentId: charge.appointment_id,
-                              clientId: charge.appointment?.client_id ?? charge.appointment?.phorest_client_id ?? null,
-                            })}
-                          >
-                            Collect
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className={tokens.button.inline}
-                            onClick={() => openWaiveDialog({
-                              id: charge.id,
-                              clientName: charge.appointment?.client_name || 'Unknown',
-                              amount: charge.fee_amount,
-                            })}
-                          >
-                            Waive
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <FeeLedgerTable
+              feeCharges={feeCharges}
+              isPending={isPending}
+              formatCurrency={formatCurrency}
+              openCollectDialog={openCollectDialog}
+              openWaiveDialog={openWaiveDialog}
+              collectMutation={collectMutation}
+            />
           )}
         </CardContent>
       </Card>
