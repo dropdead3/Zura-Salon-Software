@@ -146,37 +146,39 @@ export function LeaderboardHistoryPanel({
           No history for this week
         </div>
       ) : (
-        <div className="space-y-2">
-          {paginatedData.map((entry) => (
-            <div
-              key={entry.id}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-            >
-              <div className="w-8 h-8 flex items-center justify-center font-display text-sm bg-muted rounded">
-                {entry.overall_rank}
+        <>
+          <div className="space-y-2">
+            {paginatedData.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="w-8 h-8 flex items-center justify-center font-display text-sm bg-muted rounded">
+                  {entry.overall_rank}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-sans text-sm truncate">
+                    User {entry.user_id.slice(0, 8)}...
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {Number(entry.overall_score).toFixed(1)} pts
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  {getRankChangeIcon(entry)}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-sans text-sm truncate">
-                  User {entry.user_id.slice(0, 8)}...
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {Number(entry.overall_score).toFixed(1)} pts
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                {getRankChangeIcon(entry)}
-              </div>
-            </div>
-          ))}
-        </div>
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          showingFrom={showingFrom}
-          showingTo={showingTo}
-          onPageChange={setCurrentPage}
-        />
+            ))}
+          </div>
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            showingFrom={showingFrom}
+            showingTo={showingTo}
+            onPageChange={setCurrentPage}
+          />
+        </>
       )}
     </Card>
   );
