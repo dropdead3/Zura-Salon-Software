@@ -120,7 +120,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, reader: readerAction });
     }
 
-    // ---- clear_reader_display: Reset to default ----
+    // ---- clear_reader_display: Reset reader to default idle screen ----
+    // NOTE: This uses the same Stripe method (cancelAction) as cancel_action below.
+    // Stripe's Terminal API uses cancelAction for both clearing a display cart and
+    // cancelling an in-progress payment collection. We keep them as separate actions
+    // for semantic clarity: clear_reader_display = UI test cleanup, cancel_action = payment cancellation.
     if (action === "clear_reader_display") {
       const readerAction = await stripe.terminal.readers.cancelAction(
         reader_id,
