@@ -1,45 +1,51 @@
+<final-text>Strong prompt: you focused on the actual behavior that matters (editable controls, saved state, real-time updates), which is exactly the right way to surface a bug like this. An even sharper version next time would be: “Audit the tipping tab end-to-end. Verify every input and toggle edits locally, persists to the backend, survives refresh, and reflects in the reader preview. Fix any failures and add test coverage.”
 
+What I found
+- The main issue is the shared settings save path, not just the tip inputs.
+- Tip changes are currently sending save requests, but the backend is rejecting them with `42P10`.
+- Root cause: `useUpdateSiteSetting` uses an `upsert` conflict target that does not match the current uniqueness setup of `site_settings`, so writes fail even though the UI can appear to update locally.
+- That explains why earlier UI-only fixes did not fully solve it.
+- The fixed threshold amount is also fragile because it saves on every keystroke instead of committing cleanly on blur/confirm.
 
-# Stripe Terminal Display — What's Customizable vs. Firmware-Locked
+Plan
+1. Fix the shared settings mutation
+   - Update `src/hooks/useSiteSettings.ts`.
+   - Replace the failing `upsert(... onConflict: 'id,organization_id')` with the safer existing repo pattern: read existing row by `id + organization_id`, then `update` or `insert`.
+   - Add optimistic query-cache updates plus rollback on error so the UI feels real-time without pretending a failed save succeeded.
 
-## The Reality
+2. Harden the tipping form behavior
+   - Update `src/components/dashboard/settings/terminal/ZuraPayTippingTab.tsx`.
+   - Keep percentage inputs as local text until blur/Enter, then sanitize and persist.
+   - Give the threshold amount its own local input state and save on blur/Enter instead of every keystroke.
+   - Make sure saves are built from the latest draft state, not a stale render snapshot.
+   - Add visible save/error feedback so failed writes are obvious.
 
-The "Tap or insert" screen you photographed (blue concentric circles, Stripe-default styling) is **rendered by Stripe's reader firmware**. When `processPaymentIntent` is called, Stripe takes full control of the display. The Stripe Terminal API does **not** expose any parameters to change the payment collection screen's colors, layout, or branding.
+3. Verify adjacent terminal settings using the same shared hook
+   - Spot-check the receipts tab after the shared fix, since it uses the same settings mutation path.
+   - This keeps the terminal settings area consistent instead of fixing only one screen.
 
-**What the Stripe Terminal API actually controls:**
+4. Add end-to-end coverage
+   - Create a new Playwright test in `e2e/` for the tipping settings flow.
+   - Cover:
+     - editing all 3 tip percentages
+     - toggling tipping on/off
+     - toggling fixed threshold on/off
+     - editing threshold amount
+     - toggling retail inclusion
+     - toggling saved-card prompting
+     - refreshing the page and confirming values persist
+     - opening the display preview/tab and confirming it reflects the saved config
 
-| Surface | Customizable? | How |
-|---------|--------------|-----|
-| Splash/idle screen | Yes | Already implemented (splash uploader) |
-| Cart display (line items before payment) | Yes — content only | `setReaderDisplay` with line items |
-| Tap/insert payment screen | **No** | Firmware-controlled by Stripe |
-| Tipping screen | Partial — percentages only | Via Terminal Configuration API |
-| Processing/success screens | **No** | Firmware-controlled |
+5. Manual QA after implementation
+   - Test each control once with successful saves.
+   - Refresh and confirm persistence.
+   - Switch tabs and return.
+   - Confirm there is no false “saved” state if the backend rejects a write.
 
-The blue concentric circles and white background are baked into the S710 firmware. There is no API parameter, Terminal Configuration field, or workaround to change them to match your organization's brand colors.
-
-## What We CAN Do
-
-### 1. Update the Simulator to Match Reality
-The in-app S710 simulator currently shows a **dark-themed, brand-colored** tap screen — which sets incorrect expectations. We should update the simulator's "Tap" screen to match what the real reader actually displays (white background, blue rings, Stripe's native look) so operators know exactly what clients will see.
-
-### 2. Add an Explanatory Note in the Display Tab
-Add a brief, honest note in the Checkout Display card explaining that the payment collection screen is controlled by the payment processor's firmware and cannot be customized, while the splash screen and cart line items are fully brandable.
-
-### 3. Maximize the Surfaces We Control
-Ensure the **cart display** (the screen shown BEFORE tapping) includes the business name and is as branded as the API allows. The `setReaderDisplay` call currently only sends `description`, `amount`, and `quantity` per line item — that's the full extent of Stripe's cart API. No logo, no colors.
-
-## Proposed Changes
-
-### File: `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx`
-- Update the `TapScreen` component to render with a **white background** and **blue/purple concentric circles** matching the real S710 firmware UI, instead of the current dark-themed branded version
-- Keep the dark-themed branded look for splash, idle, cart, and tip screens (those are actually customizable)
-- Add a small "Stripe firmware" badge on the tap screen in the simulator to signal it's not customizable
-
-### File: `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
-- Add a note in the "Your Checkout Experience" section clarifying which screens are brandable (splash, cart, tip percentages) vs. firmware-locked (tap/insert, processing, success)
-
-## What This Does NOT Include
-- There is no hidden Stripe API to change the tap screen appearance — this plan is honest about that constraint
-- No edge function changes needed — the limitation is at the Stripe firmware level, not our integration
-
+Technical details
+- Files likely to change:
+  - `src/hooks/useSiteSettings.ts`
+  - `src/components/dashboard/settings/terminal/ZuraPayTippingTab.tsx`
+  - one new `e2e/*.spec.ts` file
+- No immediate database change should be required; this can be fixed safely in the shared mutation layer.
+- This shared fix should also stabilize other org-scoped settings that rely on `useUpdateSiteSetting`.</final-text>
