@@ -51,10 +51,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Appointment not found" }, 404);
     }
 
-    // ── Look up Connected Account ───────────────────────────────
+    // ── Look up Connected Account + Afterpay setting ────────────
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
-      .select("stripe_connect_account_id")
+      .select("stripe_connect_account_id, afterpay_enabled")
       .eq("id", organization_id)
       .maybeSingle();
 
