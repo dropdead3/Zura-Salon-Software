@@ -219,6 +219,10 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
           <div className="grid sm:grid-cols-2 gap-4">
             {(Object.entries(READER_MODELS) as [ReaderModel, typeof READER_MODELS[ReaderModel]][]).map(([model, config]) => {
               const ModelIcon = config.icon;
+              const sku = getModelSku(model);
+              const cardPrice = sku?.amount || 29900;
+              const cardImage = sku?.image_url;
+              const cardImageFailed = cardImage ? failedImages.has(cardImage) : true;
               return (
                 <div
                   key={model}
@@ -234,12 +238,21 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                   )}
 
                   <div className="flex items-center gap-3 mb-3">
-                    <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-                      config.recommended ? 'bg-emerald-500/10' : 'bg-primary/10'
-                    )}>
-                      <ModelIcon className={cn('w-5 h-5', config.recommended ? 'text-emerald-600' : 'text-primary')} />
-                    </div>
+                    {cardImage && !cardImageFailed ? (
+                      <img
+                        src={cardImage}
+                        alt={config.name}
+                        className="w-10 h-10 rounded-lg object-contain bg-white shrink-0"
+                        onError={() => handleImageError(cardImage)}
+                      />
+                    ) : (
+                      <div className={cn(
+                        'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
+                        config.recommended ? 'bg-emerald-500/10' : 'bg-primary/10'
+                      )}>
+                        <ModelIcon className={cn('w-5 h-5', config.recommended ? 'text-emerald-600' : 'text-primary')} />
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="font-sans font-medium text-sm">{config.name}</p>
                       <p className="text-xs text-muted-foreground">{config.subtitle}</p>
@@ -263,7 +276,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                         <Skeleton className="h-6 w-20" />
                       ) : (
                         <>
-                          <p className="font-display text-lg tracking-wide">{formatCurrency(readerPrice / 100)}</p>
+                          <p className="font-display text-lg tracking-wide">{formatCurrency(cardPrice / 100)}</p>
                           <p className="text-[10px] text-muted-foreground">
                             {pricingSource === 'stripe_api' ? 'Live pricing' : 'Published rate'} · No markup
                           </p>
