@@ -6,6 +6,7 @@ interface ConnectResult {
   onboarding_url: string;
   account_id: string;
   status: string;
+  location_id?: string;
 }
 
 interface VerifyResult {
@@ -71,6 +72,51 @@ export function useConnectZuraPay() {
     },
     onError: (error) => {
       toast.error('Failed to start Zura Pay setup', {
+        description: (error as Error).message,
+      });
+    },
+  });
+}
+
+export function useCreateLocationAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      organizationId,
+      locationId,
+      returnUrl,
+      refreshUrl,
+    }: {
+      organizationId: string;
+      locationId: string;
+      returnUrl?: string;
+      refreshUrl?: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('connect-zura-pay', {
+        body: {
+          action: 'create_location_account',
+          organization_id: organizationId,
+          location_id: locationId,
+          return_url: returnUrl,
+          refresh_url: refreshUrl,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as ConnectResult;
+    },
+    onSuccess: (data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
+      if (data.onboarding_url) {
+        window.location.href = data.onboarding_url;
+      } else {
+        toast.info('Location account is already set up.');
+      }
+    },
+    onError: (error) => {
+      toast.error('Failed to start location account setup', {
         description: (error as Error).message,
       });
     },
