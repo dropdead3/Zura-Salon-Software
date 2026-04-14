@@ -392,10 +392,10 @@ export function S710CheckoutSimulator({
               {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
               {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
-              {screen === 'tip' && <TipScreen total={total} />}
+              {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} />}
               {screen === 'tap' && <TapScreen total={total} />}
               {screen === 'processing' && <ProcessingScreen />}
-              {screen === 'success' && <SuccessScreen total={total} />}
+              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} />}
             </AnimatePresence>
           </div>
 
