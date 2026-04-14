@@ -409,6 +409,10 @@ export function TerminalSettingsContent() {
         hasTerminalLocations={(terminalLocations?.length ?? 0) > 0}
         hasReaders={(readers?.length ?? 0) > 0}
         hasFirstTransaction={hasFirstTransaction}
+        locationHasOwnAccount={
+          !!activeLocation?.stripe_account_id &&
+          activeLocation.stripe_account_id !== connectStatus?.stripe_connect_account_id
+        }
       />
 
       {/* Tabs */}
