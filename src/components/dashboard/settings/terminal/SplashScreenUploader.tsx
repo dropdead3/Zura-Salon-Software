@@ -411,6 +411,22 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                         )}
                         Upload to Reader
                       </Button>
+                      {locations.length >= 2 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handlePushToAll}
+                          disabled={!!pushProgress}
+                          className="text-xs"
+                        >
+                          {pushProgress ? (
+                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                          ) : (
+                            <Layers className="w-3.5 h-3.5 mr-1.5" />
+                          )}
+                          {pushProgress || 'Push to All Locations'}
+                        </Button>
+                      )
                       <Button
                         variant="ghost"
                         size="sm"
