@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
+import { resolveConnectAccount } from "../_shared/resolve-connect-account.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,20 +75,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2. Look up org's Stripe connected account (canonical source)
-    const { data: org, error: orgError } = await supabase
-      .from("organizations")
-      .select("stripe_connect_account_id")
-      .eq("id", organization_id)
-      .single();
-
-    if (orgError || !org?.stripe_connect_account_id) {
-      return new Response(JSON.stringify({ error: "No Stripe account connected for this organization" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // 2. Resolve location from appointment for location-first account resolution
+    let locationId: string | null = null;
+    if (appointment_id) {
+      const { data: appt } = await supabase
+        .from("appointments")
+        .select("location_id")
+        .eq("id", appointment_id)
+        .maybeSingle();
+      if (appt?.location_id) {
+        locationId = appt.location_id;
+      }
     }
 
-    // 3. Get Stripe secret key
+    // 3. Resolve Connect account: location-first, then org fallback
+    const stripeAccountId = await resolveConnectAccount(supabase, organization_id, locationId);
+
+    // 4. Get Stripe secret key
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       return new Response(JSON.stringify({ error: "Stripe not configured" }), {
@@ -97,7 +101,7 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // 4. Create PaymentIntent with manual capture (pre-auth hold)
+    // 5. Create PaymentIntent with manual capture (pre-auth hold)
     const amountCents = Math.round(amount * 100);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
@@ -115,10 +119,10 @@ Deno.serve(async (req) => {
         collected_by: user.id,
       },
     }, {
-      stripeAccount: org.stripe_connect_account_id,
+      stripeAccount: stripeAccountId,
     });
 
-    // 5. Update appointment with deposit status
+    // 6. Update appointment with deposit status
     const depositStatus = paymentIntent.status === "requires_capture" ? "held" : 
                           paymentIntent.status === "succeeded" ? "collected" : "pending";
 

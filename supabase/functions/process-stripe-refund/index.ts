@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
+import { resolveConnectAccount } from "../_shared/resolve-connect-account.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
 
     // B1: Resolve payment_intent_id from original_transaction_id if not provided directly
     let resolvedPiId = payment_intent_id;
+    let locationId: string | null = null;
 
     if (!resolvedPiId && original_transaction_id) {
       // Try phorest_sales_transactions first
@@ -88,12 +90,15 @@ Deno.serve(async (req) => {
         // Fallback: look up from appointments table
         const { data: apt } = await supabase
           .from("appointments")
-          .select("stripe_payment_intent_id")
+          .select("stripe_payment_intent_id, location_id")
           .eq("id", original_transaction_id)
           .single();
 
         if (apt?.stripe_payment_intent_id) {
           resolvedPiId = apt.stripe_payment_intent_id;
+        }
+        if (apt?.location_id) {
+          locationId = apt.location_id;
         }
       }
     }
@@ -104,20 +109,12 @@ Deno.serve(async (req) => {
       }, 400);
     }
 
-    // Resolve Connected Account
-    const { data: orgData, error: orgError } = await supabase
-      .from("organizations")
-      .select("stripe_connect_account_id")
-      .eq("id", organization_id)
-      .single();
-
-    if (orgError || !orgData?.stripe_connect_account_id) {
-      return jsonResponse({ error: "Zura Pay is not connected for this organization" }, 400);
-    }
+    // Resolve Connect Account: location-first, then org fallback
+    const stripeAccountId = await resolveConnectAccount(supabase, organization_id, locationId);
 
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
 
-    // B2: Convert amount from dollars to cents
+    // Convert amount from dollars to cents
     const amountCents = Math.round(amount * 100);
 
     // Issue refund on the Connected Account
@@ -127,7 +124,7 @@ Deno.serve(async (req) => {
         amount: amountCents,
         reason: reason || "requested_by_customer",
       },
-      { stripeAccount: orgData.stripe_connect_account_id }
+      { stripeAccount: stripeAccountId }
     );
 
     // Update local refund record

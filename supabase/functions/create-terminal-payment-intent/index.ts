@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
 import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
+import { resolveConnectAccount } from "../_shared/resolve-connect-account.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +18,7 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 
 const CreatePaymentIntentSchema = z.object({
   organization_id: z.string().uuid(),
+  location_id: z.string().optional(),
   amount: z.number().int().min(50).max(99999999), // in cents
   currency: z.string().length(3).default("usd"),
   tip_amount: z.number().int().min(0).default(0),
@@ -29,7 +31,7 @@ const CreatePaymentIntentSchema = z.object({
  * create-terminal-payment-intent
  *
  * Creates a Stripe PaymentIntent with `card_present` payment method type
- * for in-person terminal collection, scoped to the org's Connected Account.
+ * for in-person terminal collection, scoped to the location's or org's Connected Account.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -70,19 +72,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { organization_id, amount, currency, tip_amount, appointment_id, description, metadata } =
+    const { organization_id, location_id, amount, currency, tip_amount, appointment_id, description, metadata } =
       parsed.data;
 
-    // Look up client email for receipt
+    // Look up client email for receipt and resolve location from appointment
     let receiptEmail: string | null = null;
+    let resolvedLocationId = location_id || null;
     if (appointment_id) {
       const { data: appt } = await supabase
         .from("appointments")
-        .select("client_email")
+        .select("client_email, location_id")
         .eq("id", appointment_id)
         .maybeSingle();
       if (appt?.client_email) {
         receiptEmail = appt.client_email;
+      }
+      if (!resolvedLocationId && appt?.location_id) {
+        resolvedLocationId = appt.location_id;
       }
     }
 
@@ -99,21 +105,9 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
 
-    // B1 fix: use correct column name stripe_connect_account_id
-    const { data: orgData } = await supabase
-      .from("organizations")
-      .select("stripe_connect_account_id")
-      .eq("id", organization_id)
-      .maybeSingle();
+    // Resolve Connect account: location-first, then org fallback
+    const stripeAccountId = await resolveConnectAccount(supabase, organization_id, resolvedLocationId);
 
-    if (!orgData?.stripe_connect_account_id) {
-      return jsonResponse(
-        { error: "Zura Pay is not connected for this organization" },
-        400
-      );
-    }
-
-    const stripeAccountId = orgData.stripe_connect_account_id;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
     const totalAmount = amount + tip_amount;
