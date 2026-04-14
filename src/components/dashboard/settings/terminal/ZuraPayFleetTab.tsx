@@ -479,20 +479,41 @@ export function ZuraPayFleetTab({
                   </div>
                   <h3 className="font-display text-sm tracking-[0.14em]">ENABLE ZURA PAY FOR THIS LOCATION</h3>
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                    Your organization is verified and ready to accept payments. Enable Zura Pay for this location to start managing terminals.
+                    Your organization is verified and ready to accept payments. Choose how this location connects to Zura Pay.
                   </p>
-                  <Button
-                    onClick={() => activeLocationId && onConnectLocation?.(activeLocationId)}
-                    disabled={isConnectingLocation || !activeLocationId}
-                    className="mt-2"
-                  >
-                    {isConnectingLocation ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Zap className="h-4 w-4 mr-2" />
-                    )}
-                    Enable Zura Pay
-                  </Button>
+                  <div className="flex flex-col items-center gap-3 mt-2">
+                    <Button
+                      onClick={() => activeLocationId && onConnectLocation?.(activeLocationId)}
+                      disabled={isConnectingLocation || !activeLocationId}
+                    >
+                      {isConnectingLocation ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Zap className="h-4 w-4 mr-2" />
+                      )}
+                      Use Organization Account
+                    </Button>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="h-px w-8 bg-border" />
+                      <span>or</span>
+                      <span className="h-px w-8 bg-border" />
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => activeLocationId && onCreateLocationAccount?.(activeLocationId)}
+                      disabled={isCreatingLocationAccount || !activeLocationId}
+                    >
+                      {isCreatingLocationAccount ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Building2 className="h-4 w-4 mr-2" />
+                      )}
+                      Connect Separate Account
+                    </Button>
+                    <p className="text-xs text-muted-foreground max-w-sm">
+                      Use a separate account if this location operates under a different LLC or needs its own bank account for payouts.
+                    </p>
+                  </div>
                 </>
               ) : (
                 /* Fallback */
