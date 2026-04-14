@@ -25,7 +25,7 @@ interface ReceiptBusinessInfo {
 function getLogoStyle(size?: string): string {
   if (size === 'sm') return 'max-height:32px;max-width:50%';
   if (size === 'lg') return 'max-height:64px;max-width:90%';
-  return '40px';
+  return 'max-height:48px;max-width:70%';
 }
 
 function getIconHeight(size?: string): string {
@@ -57,9 +57,9 @@ export function printReceipt(
     day: 'numeric',
   });
 
-  const logoHeight = getLogoHeight(cfg.logo_size as string);
+  const logoStyle = getLogoStyle(cfg.logo_size as string);
   const logoHtml = cfg.show_logo && businessInfo?.logoUrl
-    ? `<img src="${escapeHtml(businessInfo.logoUrl)}" alt="${escapeHtml(orgName)}" style="height:${logoHeight};object-fit:contain;margin:${cfg.logo_position === 'center' ? '0 auto 8px' : '0 0 8px'}" />`
+    ? `<img src="${escapeHtml(businessInfo.logoUrl)}" alt="${escapeHtml(orgName)}" style="${logoStyle};width:auto;height:auto;object-fit:contain;margin:${cfg.logo_position === 'center' ? '0 auto 8px' : '0 0 8px'}" />`
     : `<h1 style="font-size:18px;font-weight:500;margin:0 0 4px;letter-spacing:0.05em;text-transform:uppercase;">${escapeHtml(orgName)}</h1>`;
 
   const addressHtml = cfg.show_address && businessInfo?.address
