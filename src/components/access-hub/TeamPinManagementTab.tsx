@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 import { Link } from 'react-router-dom';
 import { Lock, Search, Eye, EyeOff, Crown, Shield, History, User, ExternalLink, Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
