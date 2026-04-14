@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { HandCoins, Loader2, AlertTriangle } from 'lucide-react';
+import { HandCoins, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useTipConfig, useUpdateTipConfig, DEFAULT_TIP_CONFIG, type TipConfig } from '@/hooks/useTipConfig';
+import { toast } from 'sonner';
 
 export function ZuraPayTippingTab() {
   const { data: config, isLoading } = useTipConfig();
@@ -15,37 +16,44 @@ export function ZuraPayTippingTab() {
   const [localPercentages, setLocalPercentages] = useState<string[]>(
     DEFAULT_TIP_CONFIG.percentages.map(String)
   );
+  const [localThreshold, setLocalThreshold] = useState('');
 
-  const justSaved = useRef(false);
+  // Track whether we're mid-edit to avoid server overwrite
+  const isEditing = useRef(false);
 
+  // Sync from server only when not actively editing
   useEffect(() => {
-    if (config) {
-      if (justSaved.current) {
-        justSaved.current = false;
-        return;
-      }
+    if (config && !isEditing.current) {
       setLocalConfig(config);
       setLocalPercentages(config.percentages.map(String));
+      setLocalThreshold((config.fixed_threshold_amount / 100).toFixed(0));
     }
   }, [config]);
 
-  const save = (updates: Partial<TipConfig>) => {
+  const save = useCallback((updates: Partial<TipConfig>) => {
     const next = { ...localConfig, ...updates };
     setLocalConfig(next);
-    if (updates.percentages) {
-      setLocalPercentages(updates.percentages.map(String));
-    }
-    justSaved.current = true;
-    updateTip.mutate({ key: 'tip_config', value: next });
-  };
+    updateTip.mutate(
+      { key: 'tip_config', value: next },
+      {
+        onError: (err) => {
+          toast.error('Failed to save tipping settings', {
+            description: err instanceof Error ? err.message : 'Please try again.',
+          });
+        },
+      }
+    );
+  }, [localConfig, updateTip]);
 
   const handlePercentageChange = (index: number, value: string) => {
+    isEditing.current = true;
     const next = [...localPercentages];
     next[index] = value.replace(/[^0-9]/g, '');
     setLocalPercentages(next);
   };
 
-  const handlePercentageBlur = (index: number) => {
+  const commitPercentage = (index: number) => {
+    isEditing.current = false;
     const raw = parseInt(localPercentages[index], 10);
     const clamped = isNaN(raw) ? 0 : Math.min(100, Math.max(0, raw));
     const nextLocal = [...localPercentages];
@@ -54,6 +62,35 @@ export function ZuraPayTippingTab() {
     const nextPcts = [...localConfig.percentages] as [number, number, number];
     nextPcts[index] = clamped;
     save({ percentages: nextPcts });
+  };
+
+  const handlePercentageKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitPercentage(index);
+      (e.target as HTMLInputElement).blur();
+    }
+  };
+
+  const handleThresholdChange = (value: string) => {
+    isEditing.current = true;
+    setLocalThreshold(value);
+  };
+
+  const commitThreshold = () => {
+    isEditing.current = false;
+    const dollars = parseFloat(localThreshold || '0');
+    const cents = Math.round(Math.max(0, dollars) * 100);
+    setLocalThreshold((cents / 100).toFixed(0));
+    save({ fixed_threshold_amount: cents });
+  };
+
+  const handleThresholdKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitThreshold();
+      (e.target as HTMLInputElement).blur();
+    }
   };
 
   if (isLoading) {
@@ -112,7 +149,8 @@ export function ZuraPayTippingTab() {
                         pattern="[0-9]*"
                         value={localPercentages[i]}
                         onChange={(e) => handlePercentageChange(i, e.target.value)}
-                        onBlur={() => handlePercentageBlur(i)}
+                        onBlur={() => commitPercentage(i)}
+                        onKeyDown={(e) => handlePercentageKeyDown(e, i)}
                         className="pr-8 text-center font-mono"
                         autoCapitalize="off"
                       />
@@ -160,11 +198,10 @@ export function ZuraPayTippingTab() {
                       type="number"
                       min={0}
                       step={1}
-                      value={(localConfig.fixed_threshold_amount / 100).toFixed(0)}
-                      onChange={(e) => {
-                        const cents = Math.round(parseFloat(e.target.value || '0') * 100);
-                        save({ fixed_threshold_amount: cents });
-                      }}
+                      value={localThreshold}
+                      onChange={(e) => handleThresholdChange(e.target.value)}
+                      onBlur={commitThreshold}
+                      onKeyDown={handleThresholdKeyDown}
                       className="pl-7 font-mono"
                       autoCapitalize="off"
                     />
