@@ -457,6 +457,7 @@ export function TerminalSettingsContent() {
               onDisconnectLocation={(locationId) => orgId && disconnectLocationMutation.mutate({ organizationId: orgId, locationId })}
               isDisconnectingLocation={disconnectLocationMutation.isPending}
               orgConnectAccountId={connectStatus?.stripe_connect_account_id}
+              orgBankLast4={verifyMutation.data?.bank_last4 ?? null}
               onCreateLocationAccount={(locationId) => orgId && createLocationAccountMutation.mutate({
                 organizationId: orgId,
                 locationId,
