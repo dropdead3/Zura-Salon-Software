@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { colorThemes, COLOR_THEME_TO_CATEGORY_MAP, type ColorTheme } from '@/hooks/useColorTheme';
+import { colorThemes, COLOR_THEME_TO_CATEGORY_MAP, useColorTheme, type ColorTheme } from '@/hooks/useColorTheme';
 import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import {
   useWebsiteBookingSettings,
@@ -52,7 +52,7 @@ import { TipDistributionPolicySettings } from './TipDistributionPolicySettings';
 import { ActiveThemeCard } from './ActiveThemeCard';
 import { ThemeLibraryGrid } from './ThemeLibraryGrid';
 import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
-import { useColorTheme } from '@/hooks/useColorTheme';
+// useColorTheme already imported above
 // Website Editor components for embedded editor
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
