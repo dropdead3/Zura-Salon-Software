@@ -39,19 +39,56 @@ export function useUpdateSiteSetting<T extends SiteSettingValue = SiteSettingVal
     mutationFn: async ({ key, value }: { key: string; value: T }) => {
       if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-      
-      const { error } = await supabase
-        .from('site_settings')
-        .upsert({
-          id: key,
-          organization_id: orgId,
-          value: value as never,
-          updated_by: user?.id,
-        }, { onConflict: 'id,organization_id' });
 
-      if (error) throw error;
+      // Check if a row already exists
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('id', key)
+        .eq('organization_id', orgId)
+        .maybeSingle();
+
+      if (existing) {
+        // Update existing row
+        const { error } = await supabase
+          .from('site_settings')
+          .update({
+            value: value as never,
+            updated_by: user?.id,
+          })
+          .eq('id', key)
+          .eq('organization_id', orgId);
+
+        if (error) throw error;
+      } else {
+        // Insert new row
+        const { error } = await supabase
+          .from('site_settings')
+          .insert({
+            id: key,
+            organization_id: orgId,
+            value: value as never,
+            updated_by: user?.id,
+          });
+
+        if (error) throw error;
+      }
     },
-    onSuccess: (_, { key }) => {
+    onMutate: async ({ key, value }) => {
+      // Optimistic update
+      const queryKey = ['site-settings', orgId, key];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, value);
+      return { previous, queryKey };
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback on error
+      if (context?.queryKey && context?.previous !== undefined) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_, __, { key }) => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, key] });
     },
   });
