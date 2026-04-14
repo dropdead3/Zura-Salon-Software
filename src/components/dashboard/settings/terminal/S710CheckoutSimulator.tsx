@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CreditCard, Check, Wifi, Signal, Battery, ChevronRight } from 'lucide-react';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { PLATFORM_NAME } from '@/lib/brand';
+import type { ColorTheme } from '@/hooks/useColorTheme';
+import { getTerminalPalette } from '@/lib/terminal-splash-palettes';
 
 // S710 screen: 1080x1920 @ 420dpi — we simulate at ~270x480 (25% scale)
 const SCREEN_W = 270;
@@ -25,6 +27,7 @@ interface S710SimulatorProps {
   tipPercentages?: number[];
   tipEnabled?: boolean;
   receiptSlogan?: string;
+  colorTheme?: ColorTheme;
   onScreenChange?: (index: number, total: number) => void;
 }
 
@@ -45,7 +48,9 @@ function StatusBar() {
   );
 }
 
-function SplashScreen({ businessName, orgLogoUrl }: { businessName: string; orgLogoUrl?: string | null }) {
+function SplashScreen({ businessName, orgLogoUrl, colorTheme = 'cream' }: { businessName: string; orgLogoUrl?: string | null; colorTheme?: ColorTheme }) {
+  const p = getTerminalPalette(colorTheme);
+
   return (
     <motion.div
       key="splash"
@@ -54,7 +59,15 @@ function SplashScreen({ businessName, orgLogoUrl }: { businessName: string; orgL
       exit={{ opacity: 0 }}
       className="flex flex-col items-center justify-center h-full relative"
     >
-      <div className="absolute inset-0 bg-gradient-radial from-emerald-500/8 via-transparent to-transparent" />
+      {/* Animated radial glow behind logo */}
+      <motion.div
+        animate={{ scale: [1, 1.12, 1], opacity: [0.08, 0.16, 0.08] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `radial-gradient(circle at 50% 45%, ${p.accentRgba(0.15)}, transparent 70%)`,
+        }}
+      />
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -64,7 +77,13 @@ function SplashScreen({ businessName, orgLogoUrl }: { businessName: string; orgL
         {orgLogoUrl ? (
           <img src={orgLogoUrl} alt={businessName} className="max-h-12 object-contain" />
         ) : (
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{
+              background: `linear-gradient(135deg, ${p.accentColor}, ${p.accentGlow})`,
+              boxShadow: `0 8px 24px ${p.accentRgba(0.3)}`,
+            }}
+          >
             <CreditCard className="w-8 h-8 text-white" />
           </div>
         )}
@@ -78,11 +97,20 @@ function SplashScreen({ businessName, orgLogoUrl }: { businessName: string; orgL
         <h1 className="text-white text-lg font-medium tracking-[0.12em] uppercase">ZURA PAY</h1>
         <p className="text-white/40 text-[9px] tracking-[0.2em] uppercase mt-1">Powered by Intelligence</p>
       </motion.div>
+
+      {/* Shimmer divider */}
+      <motion.div
+        animate={{ opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        className="w-10 h-px mt-4"
+        style={{ background: p.accentColor }}
+      />
+
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="text-white/30 text-[8px] tracking-wider uppercase mt-8"
+        className="text-white/30 text-[8px] tracking-wider uppercase mt-4"
       >
         {businessName}
       </motion.p>
@@ -90,7 +118,9 @@ function SplashScreen({ businessName, orgLogoUrl }: { businessName: string; orgL
   );
 }
 
-function IdleScreen({ businessName, orgLogoUrl }: { businessName: string; orgLogoUrl?: string | null }) {
+function IdleScreen({ businessName, orgLogoUrl, colorTheme = 'cream' }: { businessName: string; orgLogoUrl?: string | null; colorTheme?: ColorTheme }) {
+  const p = getTerminalPalette(colorTheme);
+
   return (
     <motion.div
       key="idle"
@@ -111,13 +141,17 @@ function IdleScreen({ businessName, orgLogoUrl }: { businessName: string; orgLog
         )}
         <p className="text-white/40 text-[9px] tracking-[0.15em] uppercase mb-3">Welcome to</p>
         <h2 className="text-white text-base font-medium tracking-wide mb-1">{businessName}</h2>
-        <div className="w-8 h-px bg-emerald-500/40 mx-auto my-4" />
+        <div
+          className="w-8 h-px mx-auto my-4"
+          style={{ background: p.accentRgba(0.5) }}
+        />
         <p className="text-white/30 text-[8px] tracking-wider">ZURA PAY · READY</p>
       </div>
       <motion.div
         animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.3, 0.15] }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-20 w-20 h-20 rounded-full border border-emerald-500/20"
+        className="absolute bottom-20 w-20 h-20 rounded-full"
+        style={{ border: `1px solid ${p.accentRgba(0.2)}` }}
       />
     </motion.div>
   );
@@ -157,7 +191,8 @@ function CartScreen({ items, total }: { items: SimCartItem[]; total: number }) {
   );
 }
 
-function TipScreen({ total, tipPercentages = [20, 25, 30] }: { total: number; tipPercentages?: number[] }) {
+function TipScreen({ total, tipPercentages = [20, 25, 30], colorTheme = 'cream' }: { total: number; tipPercentages?: number[]; colorTheme?: ColorTheme }) {
+  const p = getTerminalPalette(colorTheme);
   const [selected, setSelected] = useState<number | null>(null);
   useEffect(() => {
     const t = setTimeout(() => setSelected(1), 800);
@@ -191,11 +226,20 @@ function TipScreen({ total, tipPercentages = [20, 25, 30] }: { total: number; ti
               className={cn(
                 'rounded-xl py-3 flex flex-col items-center gap-0.5 transition-all border',
                 isSelected
-                  ? 'bg-emerald-500/20 border-emerald-500/50'
+                  ? 'border-white/30'
                   : 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.06]'
               )}
+              style={isSelected ? {
+                background: p.accentRgba(0.2),
+                borderColor: p.accentRgba(0.5),
+              } : undefined}
             >
-              <span className={cn('text-[12px] font-medium', isSelected ? 'text-emerald-400' : 'text-white/80')}>{pct}%</span>
+              <span
+                className={cn('text-[12px] font-medium', !isSelected && 'text-white/80')}
+                style={isSelected ? { color: p.accentColor } : undefined}
+              >
+                {pct}%
+              </span>
               <span className="text-[9px] text-white/40 font-mono">{fmt(tipAmount)}</span>
             </motion.button>
           );
@@ -209,7 +253,9 @@ function TipScreen({ total, tipPercentages = [20, 25, 30] }: { total: number; ti
   );
 }
 
-function TapScreen({ total }: { total: number }) {
+function TapScreen({ total, colorTheme = 'cream' }: { total: number; colorTheme?: ColorTheme }) {
+  const p = getTerminalPalette(colorTheme);
+
   return (
     <motion.div
       key="tap"
@@ -221,9 +267,10 @@ function TapScreen({ total }: { total: number }) {
       <motion.div
         animate={{ scale: [1, 1.06, 1] }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        className="w-20 h-20 rounded-full border-2 border-emerald-500/40 flex items-center justify-center mb-6"
+        className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+        style={{ border: `2px solid ${p.accentRgba(0.4)}` }}
       >
-        <CreditCard className="w-8 h-8 text-emerald-400" />
+        <CreditCard className="w-8 h-8" style={{ color: p.accentColor }} />
       </motion.div>
       <p className="text-white text-sm font-medium mb-1">{fmt(total)}</p>
       <p className="text-white/50 text-[10px] tracking-wider">Tap, insert, or swipe</p>
@@ -233,8 +280,12 @@ function TapScreen({ total }: { total: number }) {
             key={i}
             animate={{ opacity: [0.1, 0.5, 0.1] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
-            className="rounded-full border border-emerald-500/30"
-            style={{ width: 20 + i * 12, height: 10 + i * 6 }}
+            className="rounded-full"
+            style={{
+              width: 20 + i * 12,
+              height: 10 + i * 6,
+              border: `1px solid ${p.accentRgba(0.3)}`,
+            }}
           />
         ))}
       </div>
@@ -242,7 +293,9 @@ function TapScreen({ total }: { total: number }) {
   );
 }
 
-function ProcessingScreen() {
+function ProcessingScreen({ colorTheme = 'cream' }: { colorTheme?: ColorTheme }) {
+  const p = getTerminalPalette(colorTheme);
+
   return (
     <motion.div
       key="processing"
@@ -254,14 +307,17 @@ function ProcessingScreen() {
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-        className="w-12 h-12 rounded-full border-2 border-white/10 border-t-emerald-500 mb-5"
+        className="w-12 h-12 rounded-full border-2 border-white/10 mb-5"
+        style={{ borderTopColor: p.accentColor }}
       />
       <p className="text-white/60 text-[10px] tracking-[0.15em] uppercase">Processing</p>
     </motion.div>
   );
 }
 
-function SuccessScreen({ total, receiptSlogan }: { total: number; receiptSlogan?: string }) {
+function SuccessScreen({ total, receiptSlogan, colorTheme = 'cream' }: { total: number; receiptSlogan?: string; colorTheme?: ColorTheme }) {
+  const p = getTerminalPalette(colorTheme);
+
   return (
     <motion.div
       key="success"
@@ -274,7 +330,11 @@ function SuccessScreen({ total, receiptSlogan }: { total: number; receiptSlogan?
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/40"
+        className="w-16 h-16 rounded-full flex items-center justify-center mb-5 shadow-lg"
+        style={{
+          background: p.accentColor,
+          boxShadow: `0 8px 24px ${p.accentRgba(0.4)}`,
+        }}
       >
         <Check className="w-8 h-8 text-white" strokeWidth={3} />
       </motion.div>
@@ -332,8 +392,10 @@ export function S710CheckoutSimulator({
   tipPercentages = [20, 25, 30],
   tipEnabled = true,
   receiptSlogan,
+  colorTheme = 'cream',
   onScreenChange,
 }: S710SimulatorProps) {
+  const p = useMemo(() => getTerminalPalette(colorTheme), [colorTheme]);
   const total = cartItems.reduce((s, i) => s + i.amount, 0);
   const screens: ScreenState[] = [
     'splash', 'idle', 'cart',
@@ -349,12 +411,10 @@ export function S710CheckoutSimulator({
     setProgress(0);
   }, [screens.length]);
 
-  // Notify parent of screen changes
   useEffect(() => {
     onScreenChange?.(currentIndex, screens.length);
   }, [currentIndex, screens.length, onScreenChange]);
 
-  // Auto-play mode with progress tracking
   useEffect(() => {
     if (!autoPlay) return;
     const duration = SCREEN_DURATIONS[screen];
@@ -373,6 +433,11 @@ export function S710CheckoutSimulator({
     };
   }, [autoPlay, screen, advance]);
 
+  // Themed background gradient for the screen
+  const screenBg = useMemo(() => {
+    return `linear-gradient(180deg, ${p.gradientStops[0]}, ${p.gradientStops[1]} 50%, ${p.gradientStops[2]})`;
+  }, [p]);
+
   return (
     <div className={cn('flex flex-col items-center', className)}>
       {/* S710 device frame */}
@@ -383,28 +448,28 @@ export function S710CheckoutSimulator({
         <div className="absolute inset-0 rounded-[28px] bg-gradient-to-b from-white/[0.06] to-transparent pointer-events-none" />
 
         <div
-          className="relative rounded-[22px] overflow-hidden bg-[#0a0a0c]"
-          style={{ width: SCREEN_W, height: SCREEN_H }}
+          className="relative rounded-[22px] overflow-hidden"
+          style={{ width: SCREEN_W, height: SCREEN_H, background: screenBg }}
         >
           <StatusBar />
           <div className="absolute inset-0 pt-6">
             <AnimatePresence mode="wait">
-              {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
-              {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
+              {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} colorTheme={colorTheme} />}
+              {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} colorTheme={colorTheme} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
-              {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} />}
-              {screen === 'tap' && <TapScreen total={total} />}
-              {screen === 'processing' && <ProcessingScreen />}
-              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} />}
+              {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} colorTheme={colorTheme} />}
+              {screen === 'tap' && <TapScreen total={total} colorTheme={colorTheme} />}
+              {screen === 'processing' && <ProcessingScreen colorTheme={colorTheme} />}
+              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} colorTheme={colorTheme} />}
             </AnimatePresence>
           </div>
 
-          {/* Auto-play progress bar at bottom of screen */}
+          {/* Auto-play progress bar */}
           {autoPlay && (
             <div className="absolute bottom-4 inset-x-4 h-[2px] rounded-full bg-white/[0.06] overflow-hidden">
               <motion.div
-                className="h-full bg-emerald-500/50 rounded-full"
-                style={{ width: `${progress * 100}%` }}
+                className="h-full rounded-full"
+                style={{ width: `${progress * 100}%`, background: p.accentRgba(0.5) }}
               />
             </div>
           )}
@@ -427,10 +492,9 @@ export function S710CheckoutSimulator({
             title={SCREEN_LABELS[s]}
             className={cn(
               'w-1.5 h-1.5 rounded-full transition-all duration-300',
-              i === currentIndex
-                ? 'bg-emerald-500 w-4'
-                : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              i !== currentIndex && 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
             )}
+            style={i === currentIndex ? { background: p.accentColor, width: 16 } : undefined}
           />
         ))}
       </div>
