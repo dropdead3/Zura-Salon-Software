@@ -53,10 +53,11 @@ export function SendToPayButton({
       const { data: linkData, error: linkError } = await supabase.functions.invoke(
         'create-checkout-payment-link',
         {
-          body: {
+           body: {
             organization_id: organizationId,
             appointment_id: appointmentId,
             amount_cents: sendAmount,
+            original_amount_cents: totalAmountCents,
             client_email: clientEmail,
             client_phone: clientPhone,
             client_name: clientName,
