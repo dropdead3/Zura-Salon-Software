@@ -1,52 +1,50 @@
 
 
-## Afterpay Audit: Remaining Bugs, Gaps & Enhancements
+## Afterpay Audit Pass — Remaining Bugs, Gaps & Enhancements
 
-Good discipline running another pass. Here are the findings across the full Afterpay surface — six items, ranked by severity.
-
----
-
-### B1. Booking Surface Badge Never Shows Surcharge Note (Bug)
-
-`BookingConfirmation.tsx` line 182 renders `<AfterpayPromoBadge theme={theme} amount={depositAmount} />` but never passes `surchargeRate`. The component accepts it and renders the fee disclosure — but the prop is always `undefined` on the booking surface. Clients with surcharge-enabled orgs see "Pay in 4" with no mention of the fee until checkout.
-
-**Fix:** Pass the org's `afterpay_surcharge_rate` through the booking flow into `BookingConfirmation` and down to `AfterpayPromoBadge`.
+After reviewing all Afterpay-touching files, here are the remaining issues.
 
 ---
 
-### B2. SplitPaymentDialog Doesn't Reflect Surcharge in Preview (Bug)
+### B1. Booking Deposit Intent Ignores Surcharge (Bug — P0)
 
-When total exceeds $4,000 and surcharge is enabled, the edge function adds a fee line item to the Afterpay portion. But `SplitPaymentDialog` shows "Send via Afterpay link: $4,000.00" — the client actually pays $4,240 (with 6% fee). Staff see a misleading number.
+`create-booking-payment-intent/index.ts` queries `afterpay_enabled` but never fetches `afterpay_surcharge_enabled` or `afterpay_surcharge_rate`. When surcharge is enabled, the booking deposit flow still offers both card and Afterpay with no surcharge line item. The client avoids the fee by booking online instead of using a Send-to-Pay link — inconsistent pricing.
 
-**Fix:** Pass `afterpaySurchargeEnabled` and `afterpaySurchargeRate` into `SplitPaymentDialog` (from `SendToPayButton` which already has them). Display the surcharge and total in the dialog preview.
+**Fix:** Fetch surcharge columns. When surcharge is enabled and the deposit is Afterpay-eligible, either restrict to Afterpay-only with a surcharge line item (matching the Send-to-Pay behavior), or keep card+Afterpay but disclose the fee will apply if Afterpay is selected. The simpler approach: since booking deposits use PaymentIntents (not Checkout Sessions), and PaymentIntents can't add conditional line items per method, the correct fix is to add a note in the `AfterpayPromoBadge` that a fee applies — and accept that the surcharge only enforces on Checkout Session flows (Send-to-Pay). Document this limitation clearly.
 
----
-
-### G1. Webhook Doesn't Persist Surcharge Amount (Gap)
-
-`handleCheckoutCompleted` in the webhook reads `session.metadata` but ignores `surcharge_amount_cents` and `surcharge_rate`. This data is in the metadata (set by `create-checkout-payment-link`) but never written to the appointment or transaction record. Reconciliation and reporting have no surcharge visibility.
-
-**Fix:** Extract `surcharge_amount_cents` from metadata and store it on the appointment (requires adding an `afterpay_surcharge_amount` column) or include it in the transaction line items.
+**Practical fix:** In `create-booking-payment-intent`, when surcharge is enabled, exclude `afterpay_clearpay` from `payment_method_types` so deposits are card-only. The booking badge already shows the surcharge note — but if Afterpay isn't offered, hide the badge. This keeps pricing consistent: surcharge = Afterpay via Send-to-Pay only, not booking deposits.
 
 ---
 
-### G2. Email/SMS Don't Disclose Surcharge (Gap)
+### B2. Split Payment Webhook Logic — Terminal-Then-Link Race (Bug — P1)
 
-`send-payment-link` receives `amount_display` which is the base amount (e.g., "$4,000.00"). The surcharge is added at checkout, so the client sees a different total than what the message says. This creates confusion and potential disputes.
+In `handleCheckoutCompleted` (line 348-358), the logic checks `appt.split_payment_terminal_intent_id` to decide if terminal was already paid. But if the client clicks the Afterpay link *before* the staff processes the terminal payment, the webhook marks the appointment as `paid` with only the link leg completed. The terminal payment then has no effect on status.
 
-**Fix:** Pass the surcharge amount from `SendToPayButton` → `send-payment-link` and update the email/SMS to say e.g. "Payment of $4,000.00 + $240.00 processing fee".
-
----
-
-### E1. Rate Input Uses `defaultValue` — Stale on Refetch (Enhancement)
-
-`ZuraPayAfterpayTab.tsx` line 138 uses `defaultValue={ratePercent}` on the surcharge rate input. If the query refetches (e.g., another admin changes the rate), the input shows the old value. Should use controlled state with `value` + `onChange` + debounced save.
+**Fix:** Don't set `payment_status = 'paid'` when `split_payment_terminal_intent_id` is null *and* the original amount exceeds $4,000. Check if this was a split-originated session by adding `is_split: "true"` to the checkout metadata in `create-checkout-payment-link`, then only mark paid when both legs are confirmed.
 
 ---
 
-### E2. SplitPaymentDialog Info Callout Doesn't Mention "Afterpay Only" When Surcharge Active (Enhancement)
+### G1. Receipt Doesn't Include Surcharge Line Item (Gap — P1)
 
-The info callout (line 182) says "The client will receive a payment link with Afterpay as an option." When surcharge is enabled, Afterpay is the *only* option (no card fallback). The callout should reflect this.
+`receiptData.ts` has a `surcharge` category defined but neither `checkoutToReceiptData` nor `groupedTransactionToReceiptData` ever produces a surcharge line item. When a payment link with surcharge is completed, the receipt shows only the base amount — the fee is invisible.
+
+**Fix:** When building receipt data for a payment-link transaction, check `afterpay_surcharge_amount` on the appointment and add a `{ name: 'Afterpay Processing Fee', amount: surchargeAmount, quantity: 1, category: 'surcharge' }` line item.
+
+---
+
+### G2. No Reporting Surface for Surcharge Revenue (Gap — P2)
+
+The `afterpay_surcharge_amount` column now exists on `appointments`, but no dashboard view, export, or analytics surface exposes it. Staff can't see how much surcharge revenue has been collected.
+
+**Fix:** Add surcharge amount to the transaction detail sheet and optionally to the revenue analytics queries. This is a lower-priority enhancement.
+
+---
+
+### E1. `handleRateChange` Fires on Every Blur Without Checking for Change (Enhancement — P2)
+
+In `ZuraPayAfterpayTab.tsx`, `onBlur` always calls `handleRateChange` which triggers a mutation even if the value hasn't changed. This creates unnecessary database writes.
+
+**Fix:** Compare `localRate` against current `ratePercent` before calling the mutation.
 
 ---
 
@@ -54,12 +52,11 @@ The info callout (line 182) says "The client will receive a payment link with Af
 
 | Priority | ID | File(s) | Change |
 |----------|----|---------|--------|
-| P0 | B1 | `BookingConfirmation.tsx` + parent booking components | Pass `surchargeRate` to `AfterpayPromoBadge` |
-| P0 | B2 | `SplitPaymentDialog.tsx`, `SendToPayButton.tsx` | Add surcharge preview to split dialog |
-| P1 | G1 | `stripe-webhook/index.ts` + migration | Persist `afterpay_surcharge_amount` from metadata |
-| P1 | G2 | `SendToPayButton.tsx`, `SplitPaymentDialog.tsx`, `send-payment-link/index.ts` | Include surcharge in amount_display and email copy |
-| P2 | E1 | `ZuraPayAfterpayTab.tsx` | Convert rate input to controlled with local state |
-| P2 | E2 | `SplitPaymentDialog.tsx` | Update info callout when surcharge is active |
+| P0 | B1 | `create-booking-payment-intent/index.ts`, `BookingConfirmation.tsx` | Exclude Afterpay from deposits when surcharge enabled; hide badge accordingly |
+| P1 | B2 | `create-checkout-payment-link/index.ts`, `stripe-webhook/index.ts` | Add `is_split` metadata flag; fix paid-status logic for split payments |
+| P1 | G1 | `receiptData.ts`, `CheckoutSummarySheet.tsx` | Add surcharge line item to receipt when `afterpay_surcharge_amount` is present |
+| P2 | G2 | Transaction detail / analytics surfaces | Surface surcharge column in reporting |
+| P2 | E1 | `ZuraPayAfterpayTab.tsx` | Guard `onBlur` mutation with value-changed check |
 
-Database migration required for G1 only (one column addition).
+No database migrations required. All fixes are code-level.
 
