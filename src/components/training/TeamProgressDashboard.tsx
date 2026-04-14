@@ -155,6 +155,28 @@ export function TeamProgressDashboard() {
     m.display_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const membersWithProgress = filteredMembers.map((m) => ({
+    ...m,
+    ...getMemberProgress(m.user_id),
+  }));
+
+  const {
+    paginatedData: paginatedMembers,
+    currentPage: membersPage,
+    setCurrentPage: setMembersPage,
+    totalPages: membersTotalPages,
+    totalItems: membersTotalItems,
+    showingFrom: membersShowingFrom,
+    showingTo: membersShowingTo,
+    sortField: membersSortField,
+    toggleSort: toggleMembersSort,
+  } = usePaginatedSort({
+    data: membersWithProgress,
+    defaultPageSize: 25,
+    defaultSortField: 'display_name' as any,
+    defaultSortDirection: 'asc',
+  });
+
   // Overall stats
   const totalCompletions = progressData.filter((p) => p.completed_at).length;
   const totalPossible = teamMembers.reduce((acc, m) => {
