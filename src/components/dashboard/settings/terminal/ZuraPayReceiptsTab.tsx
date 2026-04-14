@@ -439,7 +439,7 @@ export function ZuraPayReceiptsTab() {
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <ReceiptPreview
               config={local}
               businessName={business?.business_name || 'Your Salon'}
@@ -452,6 +452,55 @@ export function ZuraPayReceiptsTab() {
               reviewUrls={reviewUrls}
               redoPolicyFallback={redoPolicyPlaceholder}
             />
+            <Button
+              variant="outline"
+              className="w-full gap-2 font-sans"
+              onClick={async () => {
+                const email = window.prompt('Enter email address to receive a test receipt:');
+                if (!email) return;
+                try {
+                  const sampleData: ReceiptData = {
+                    clientName: 'Jane Doe',
+                    stylistName: 'Sarah M.',
+                    date: new Date().toISOString().split('T')[0],
+                    receiptNumber: 'TEST-' + Date.now().toString(36).toUpperCase(),
+                    items: [
+                      { name: 'Balayage', amount: 185, quantity: 1, category: 'service' },
+                      { name: 'Olaplex Treatment', amount: 45, quantity: 1, category: 'addon' },
+                    ],
+                    usageCharges: [{ name: 'Overage — 2 oz', quantity: 2, amount: 6, chargeType: 'overage' }],
+                    subtotal: 230,
+                    discount: 0,
+                    taxAmount: 18.40,
+                    tipAmount: 0,
+                    usageChargeTotal: 6,
+                    grandTotal: 254.40,
+                    paymentMethod: 'Card',
+                  };
+                  const fmt = (n: number) => '$' + n.toFixed(2);
+                  const html = buildReceiptHtml(sampleData, fmt, business?.business_name || 'Your Salon', local, {
+                    logoUrl,
+                    iconUrl,
+                    address,
+                    phone: business?.phone || null,
+                    website: business?.website || null,
+                    socials,
+                    reviewUrls,
+                  }, redoPolicyPlaceholder);
+                  const { error } = await supabase.functions.invoke('send-receipt', {
+                    body: { method: 'email', recipient: email, receiptHtml: html, orgName: business?.business_name || 'Your Salon' },
+                  });
+                  if (error) throw error;
+                  toast.success(`Test receipt sent to ${email}`);
+                } catch (err) {
+                  console.error('Failed to send test receipt:', err);
+                  toast.error('Failed to send test receipt');
+                }
+              }}
+            >
+              <Send className="w-4 h-4" />
+              Send Test Receipt
+            </Button>
           </CardContent>
         </Card>
       </div>
