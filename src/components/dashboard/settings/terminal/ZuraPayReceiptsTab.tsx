@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { useReceiptConfig, useUpdateReceiptConfig, DEFAULT_RECEIPT_CONFIG } from '@/hooks/useReceiptConfig';
 import type { ReceiptConfig } from '@/hooks/useReceiptConfig';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useSocialLinks } from '@/hooks/useSocialLinks';
 import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
 import { useRedoPolicySettings } from '@/hooks/useRedoPolicySettings';
 import { supabase } from '@/integrations/supabase/client';
@@ -181,7 +181,7 @@ export function ZuraPayReceiptsTab() {
   const { data: config, isLoading } = useReceiptConfig();
   const updateConfig = useUpdateReceiptConfig();
   const { data: business } = useBusinessSettings();
-  const { data: socialLinks } = useWebsiteSocialLinksSettings();
+  const socialLinks = useSocialLinks();
   const { data: reviewSettings } = useReviewThresholdSettings();
   const { data: redoPolicy } = useRedoPolicySettings();
 
@@ -220,9 +220,9 @@ export function ZuraPayReceiptsTab() {
   const address = addressParts.join(', ');
 
   const socials = {
-    instagram: socialLinks?.instagram || '',
-    facebook: socialLinks?.facebook || '',
-    tiktok: socialLinks?.tiktok || '',
+    instagram: socialLinks.instagram || '',
+    facebook: socialLinks.facebook || '',
+    tiktok: socialLinks.tiktok || '',
   };
 
   const reviewUrls = {

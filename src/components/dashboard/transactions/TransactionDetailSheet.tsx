@@ -49,7 +49,7 @@ import { RefundDialog } from './RefundDialog';
 import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
 import { useBusinessSettings, useBusinessName } from '@/hooks/useBusinessSettings';
-import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useSocialLinks } from '@/hooks/useSocialLinks';
 import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
@@ -82,7 +82,7 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
   // Receipt branding data
   const { data: receiptConfig } = useReceiptConfig();
   const { data: business } = useBusinessSettings();
-  const { data: socialLinks } = useWebsiteSocialLinksSettings();
+  const socialLinks = useSocialLinks();
   const { data: reviewSettings } = useReviewThresholdSettings();
   const orgName = useBusinessName();
 

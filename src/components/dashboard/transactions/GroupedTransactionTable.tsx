@@ -5,7 +5,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useSocialLinks } from '@/hooks/useSocialLinks';
 import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
 import { useBusinessName } from '@/hooks/useBusinessSettings';
 import {
@@ -62,7 +62,7 @@ export function GroupedTransactionTable({
   // Receipt branding data
   const { data: receiptConfig } = useReceiptConfig();
   const { data: business } = useBusinessSettings();
-  const { data: socialLinks } = useWebsiteSocialLinksSettings();
+  const socialLinks = useSocialLinks();
   const { data: reviewSettings } = useReviewThresholdSettings();
   const orgName = useBusinessName();
 
