@@ -40,6 +40,9 @@ export function ZuraPayConnectivityTab({ readers }: ZuraPayConnectivityTabProps)
                   <p className="text-xs text-muted-foreground">
                     Real-time authorization continues over cellular when WiFi drops. Payments are approved or declined instantly — no deferred risk.
                   </p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5">
+                    Built-in eSIM — no carrier contract or SIM card required. Cellular is enabled automatically for your S710 readers.
+                  </p>
                 </div>
               </div>
             )}

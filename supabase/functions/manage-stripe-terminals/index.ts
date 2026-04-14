@@ -355,6 +355,26 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "enable_cellular": {
+        if (!params.terminal_location_id) {
+          throw new Error("terminal_location_id is required");
+        }
+        // Create a configuration with cellular enabled
+        const cellularConfig = await stripeRequest(
+          "POST",
+          "/v1/terminal/configurations",
+          { "cellular[enabled]": "true" }
+        );
+        // Assign to the specified location
+        await stripeRequest(
+          "POST",
+          `/v1/terminal/locations/${params.terminal_location_id}`,
+          { configuration_overrides: cellularConfig.id }
+        );
+        result = { cellular_enabled: true, configuration_id: cellularConfig.id };
+        break;
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: `Unknown action: ${action}` }),
