@@ -1209,6 +1209,8 @@ export type Database = {
           original_price: number | null
           paid_at: string | null
           payment_failure_reason: string | null
+          payment_link_sent_at: string | null
+          payment_link_url: string | null
           payment_method: string | null
           payment_status: string
           phorest_client_id: string | null
@@ -1229,6 +1231,8 @@ export type Database = {
           service_category: string | null
           service_id: string | null
           service_name: string | null
+          split_payment_link_intent_id: string | null
+          split_payment_terminal_intent_id: string | null
           staff_name: string | null
           staff_user_id: string | null
           start_time: string
@@ -1275,6 +1279,8 @@ export type Database = {
           original_price?: number | null
           paid_at?: string | null
           payment_failure_reason?: string | null
+          payment_link_sent_at?: string | null
+          payment_link_url?: string | null
           payment_method?: string | null
           payment_status?: string
           phorest_client_id?: string | null
@@ -1295,6 +1301,8 @@ export type Database = {
           service_category?: string | null
           service_id?: string | null
           service_name?: string | null
+          split_payment_link_intent_id?: string | null
+          split_payment_terminal_intent_id?: string | null
           staff_name?: string | null
           staff_user_id?: string | null
           start_time: string
@@ -1341,6 +1349,8 @@ export type Database = {
           original_price?: number | null
           paid_at?: string | null
           payment_failure_reason?: string | null
+          payment_link_sent_at?: string | null
+          payment_link_url?: string | null
           payment_method?: string | null
           payment_status?: string
           phorest_client_id?: string | null
@@ -1361,6 +1371,8 @@ export type Database = {
           service_category?: string | null
           service_id?: string | null
           service_name?: string | null
+          split_payment_link_intent_id?: string | null
+          split_payment_terminal_intent_id?: string | null
           staff_name?: string | null
           staff_user_id?: string | null
           start_time?: string
@@ -13909,6 +13921,7 @@ export type Database = {
           access_ends_at: string | null
           account_number: number | null
           activated_at: string | null
+          afterpay_enabled: boolean
           billing_email: string | null
           billing_status: Database["public"]["Enums"]["billing_status"] | null
           business_type: string | null
@@ -13963,6 +13976,7 @@ export type Database = {
           access_ends_at?: string | null
           account_number?: number | null
           activated_at?: string | null
+          afterpay_enabled?: boolean
           billing_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null
@@ -14017,6 +14031,7 @@ export type Database = {
           access_ends_at?: string | null
           account_number?: number | null
           activated_at?: string | null
+          afterpay_enabled?: boolean
           billing_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null

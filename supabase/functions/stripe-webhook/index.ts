@@ -307,14 +307,57 @@ async function handleChargeFailed(
   console.log(`Charge failure notification created for ${org.name}`);
 }
 
-// Handler for checkout.session.completed (color bar addon)
+// Handler for checkout.session.completed (color bar addon + payment links)
 async function handleCheckoutCompleted(
   supabase: SupabaseClientAny,
   session: Record<string, unknown>
 ) {
   const metadata = session.metadata as Record<string, string> | null;
+
+  // ── Payment Link / Send-to-Pay / Afterpay completion ─────────
+  if (metadata?.source === 'payment_link' && metadata?.appointment_id) {
+    const appointmentId = metadata.appointment_id;
+    const sessionId = session.id as string;
+    const paymentIntentId = (session.payment_intent as string) || sessionId;
+
+    console.log(`Payment link checkout completed for appointment ${appointmentId} (session: ${sessionId})`);
+
+    // Update appointment — mark the payment link leg as complete
+    const { data: appt } = await supabase
+      .from('appointments')
+      .select('split_payment_terminal_intent_id, paid_at')
+      .eq('id', appointmentId)
+      .maybeSingle();
+
+    const updatePayload: Record<string, unknown> = {
+      split_payment_link_intent_id: paymentIntentId,
+    };
+
+    // If there's no terminal split leg (full amount via link), mark as paid
+    if (!appt?.split_payment_terminal_intent_id) {
+      updatePayload.payment_status = 'paid';
+      updatePayload.payment_method = 'payment_link';
+      updatePayload.stripe_payment_intent_id = paymentIntentId;
+      updatePayload.paid_at = new Date().toISOString();
+    }
+    // If terminal leg already completed, both legs done — mark paid
+    else if (appt?.paid_at) {
+      // Terminal leg already paid — this is the final leg
+      updatePayload.payment_status = 'paid';
+    }
+
+    await supabase
+      .from('appointments')
+      .update(updatePayload)
+      .eq('id', appointmentId);
+
+    console.log(`Appointment ${appointmentId} updated after payment link completion`);
+    return;
+  }
+
+  // ── Color bar addon (existing logic) ─────────────────────────
   if (!metadata || metadata.addon_type !== 'color-bar' ) {
-    console.log("Checkout session not a color bar addon - skipping");
+    console.log("Checkout session not a recognized type - skipping");
     return;
   }
 
