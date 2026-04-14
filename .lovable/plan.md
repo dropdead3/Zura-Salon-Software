@@ -1,15 +1,20 @@
 
 
-# Remove Redundant Header Buttons When No Readers Exist
+# Restyle Empty State Buttons to Match Sizes
 
 ## Problem
-When no readers are paired, the card header shows a Refresh button and "Register Reader" button that duplicate the empty state CTA buttons below. This is redundant.
+The "Order Hardware" and "Register Reader" buttons are different sizes — one is `outline` variant and one is default, creating visual imbalance.
 
 ## Change
 
-**File:** `ZuraPayFleetTab.tsx` (lines ~558-574)
+**File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` (lines 593-614)
 
-Conditionally hide the Refresh and "Register Reader" buttons in the CardHeader when `readers.length === 0`. The empty state already provides both "Order Hardware" and "Register Reader" buttons, so the header actions are only useful when readers exist.
+Make both buttons the same size and style — both `variant="outline"` and `size="sm"` for visual consistency, keeping "Register Reader" as the primary action via the default variant:
 
-Wrap the header button group in a condition: only render when `readers && readers.length > 0`.
+- Both buttons: same `size="default"` (drop the `sm`)
+- "Order Hardware": `variant="outline"`
+- "Register Reader": `variant="default"`
+- Both use consistent icon sizing and spacing via the standard `gap-2` from the Button component (remove manual `mr-1` margins)
+
+This ensures both buttons are the same height and padding, with only color distinguishing primary from secondary action.
 
