@@ -502,14 +502,18 @@ export function ZuraPayFleetTab({
                     <div className="flex flex-col items-center">
                       <Button
                         onClick={() => activeLocationId && onConnectLocation?.(activeLocationId)}
-                        disabled={isConnectingLocation || !activeLocationId}
+                        disabled={isConnectingLocation || !activeLocationId || orgBankLast4Loading}
                       >
-                        {isConnectingLocation ? (
+                        {isConnectingLocation || orgBankLast4Loading ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
                           <Zap className="h-4 w-4 mr-2" />
                         )}
-                        {orgBankLast4 ? `Use Account Ending in ••${orgBankLast4}` : 'Use Organization Account'}
+                        {orgBankLast4Loading
+                          ? 'Loading Account…'
+                          : orgBankLast4
+                            ? `Use Account Ending in ••${orgBankLast4}`
+                            : 'Use Organization Account'}
                       </Button>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
