@@ -20,6 +20,15 @@ export interface TransactionLineItem {
   saleClassification: string | null;
 }
 
+export interface UsageChargeLineItem {
+  id: string;
+  serviceName: string | null;
+  chargeType: string;
+  overageQty: number;
+  chargeAmount: number;
+  status: string;
+}
+
 export interface GroupedTransaction {
   transactionId: string;
   transactionDate: string;
@@ -29,12 +38,16 @@ export interface GroupedTransaction {
   paymentMethod: string | null;
   locationId: string | null;
   branchName: string | null;
+  appointmentId: string | null;
   items: TransactionLineItem[];
+  usageCharges: UsageChargeLineItem[];
   subtotal: number;
   taxAmount: number;
   tipAmount: number;
   discountAmount: number;
   totalAmount: number;
+  usageChargeTotal: number;
+  grandTotal: number;
   refundStatus: string | null;
   refundType: string | null;
   refundAmount: number | null;
@@ -132,6 +145,7 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
         const taxAmount = txnItems.reduce((sum, i) => sum + (Number(i.tax_amount) || 0), 0);
         const tipAmount = txnItems.reduce((sum, i) => sum + (Number(i.tip_amount) || 0), 0);
         const discountAmount = txnItems.reduce((sum, i) => sum + (Number(i.discount) || 0), 0);
+        const totalAmount = subtotal + taxAmount;
 
         result.push({
           transactionId,
@@ -142,6 +156,7 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
           paymentMethod: first.payment_method,
           locationId: first.location_id,
           branchName: first.branch_name,
+          appointmentId: first.appointment_id || null,
           items: txnItems.map(i => ({
             id: i.id,
             itemName: i.item_name,
@@ -156,11 +171,14 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
             promotionId: i.promotion_id,
             saleClassification: i.sale_classification,
           })),
+          usageCharges: [],
           subtotal,
           taxAmount,
           tipAmount,
           discountAmount,
-          totalAmount: subtotal + taxAmount,
+          totalAmount,
+          usageChargeTotal: 0,
+          grandTotal: totalAmount + tipAmount,
           refundStatus: refundMap[transactionId]?.status || null,
           refundType: refundMap[transactionId]?.type || null,
           refundAmount: refundMap[transactionId]?.amount || null,
@@ -168,6 +186,43 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
           voidReason: voidMap[transactionId] || null,
         });
       });
+
+      // Fetch usage charges for linked appointments
+      const appointmentIds = result
+        .map(t => t.appointmentId)
+        .filter((id): id is string => !!id);
+
+      if (appointmentIds.length > 0) {
+        const { data: charges } = await supabase
+          .from('checkout_usage_charges')
+          .select('id, appointment_id, service_name, charge_type, overage_qty, charge_amount, status')
+          .in('appointment_id', appointmentIds)
+          .in('status', ['approved', 'pending']);
+
+        if (charges && charges.length > 0) {
+          const chargesByAppt = new Map<string, UsageChargeLineItem[]>();
+          charges.forEach(c => {
+            const list = chargesByAppt.get(c.appointment_id) || [];
+            list.push({
+              id: c.id,
+              serviceName: c.service_name,
+              chargeType: c.charge_type,
+              overageQty: Number(c.overage_qty) || 0,
+              chargeAmount: Number(c.charge_amount) || 0,
+              status: c.status,
+            });
+            chargesByAppt.set(c.appointment_id, list);
+          });
+
+          result.forEach(txn => {
+            if (txn.appointmentId && chargesByAppt.has(txn.appointmentId)) {
+              txn.usageCharges = chargesByAppt.get(txn.appointmentId)!;
+              txn.usageChargeTotal = txn.usageCharges.reduce((s, c) => s + c.chargeAmount, 0);
+              txn.grandTotal = txn.totalAmount + txn.tipAmount + txn.usageChargeTotal;
+            }
+          });
+        }
+      }
 
       // Sort by client name as fallback since date is the same for all
       result.sort((a, b) => (a.clientName || '').localeCompare(b.clientName || ''));

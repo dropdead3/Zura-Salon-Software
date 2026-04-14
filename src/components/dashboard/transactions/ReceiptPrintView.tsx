@@ -80,6 +80,25 @@ export function printReceipt(
     )
     .join('');
 
+  const usageCharges = transaction.usageCharges || [];
+  const usageChargeTotal = usageCharges.reduce((s, c) => s + c.chargeAmount, 0);
+  const usageChargesHtml = usageCharges.length > 0
+    ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid ${borderColor};">
+        <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#888;margin:0 0 6px;">Color Room Charges</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tbody>
+            ${usageCharges.map(c => `<tr>
+              <td style="padding:3px 0;font-size:12px;">${escapeHtml(c.serviceName || (c.chargeType === 'product_cost' ? 'Product Cost' : 'Overage'))}</td>
+              <td style="padding:3px 0;font-size:12px;text-align:center;">${c.overageQty}</td>
+              <td style="padding:3px 0;font-size:12px;text-align:right;">${formatCurrency(c.chargeAmount)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`
+    : '';
+
+  const grandTotal = transaction.totalAmount + transaction.tipAmount + usageChargeTotal;
+
   const iconHeight = getIconHeight(cfg.footer_icon_size as string);
 
   const html = `<!DOCTYPE html>
@@ -118,16 +137,18 @@ export function printReceipt(
     ${cfg.show_payment_method && transaction.paymentMethod ? `<div><strong>Payment:</strong> ${escapeHtml(transaction.paymentMethod)}</div>` : ''}
     <div><strong>Transaction:</strong> ${escapeHtml(transaction.transactionId.slice(0, 12))}…</div>
   </div>
-  <table>
+   <table>
     <thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
     <tbody>${itemsHtml}</tbody>
   </table>
+  ${usageChargesHtml}
   <div class="totals">
     <div><span>Subtotal</span><span>${formatCurrency(transaction.subtotal)}</span></div>
     ${transaction.discountAmount > 0 ? `<div><span>Discount</span><span>-${formatCurrency(transaction.discountAmount)}</span></div>` : ''}
     <div><span>Tax</span><span>${formatCurrency(transaction.taxAmount)}</span></div>
     ${transaction.tipAmount > 0 ? `<div><span>Tip</span><span>${formatCurrency(transaction.tipAmount)}</span></div>` : ''}
-    <div class="grand"><span>Total</span><span>${formatCurrency(transaction.totalAmount + transaction.tipAmount)}</span></div>
+    ${usageChargeTotal > 0 ? `<div><span>Color Room</span><span>${formatCurrency(usageChargeTotal)}</span></div>` : ''}
+    <div class="grand"><span>Total</span><span>${formatCurrency(grandTotal)}</span></div>
   </div>
   <div class="footer">
     ${cfg.custom_message ? `<p>${escapeHtml(cfg.custom_message)}</p>` : ''}
