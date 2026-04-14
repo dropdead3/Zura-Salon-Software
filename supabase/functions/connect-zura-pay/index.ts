@@ -38,10 +38,16 @@ const ResetAccountSchema = BaseSchema.extend({
   refresh_url: z.string().url().optional(),
 });
 
+const DisconnectLocationSchema = BaseSchema.extend({
+  action: z.literal("disconnect_location"),
+  location_id: z.string().uuid("location_id is required"),
+});
+
 const RequestSchema = z.discriminatedUnion("action", [
   OnboardingSchema,
   ConnectLocationSchema,
   ResetAccountSchema,
+  DisconnectLocationSchema,
 ]);
 
 Deno.serve(async (req) => {
@@ -262,6 +268,29 @@ Deno.serve(async (req) => {
         .eq("stripe_account_id", accountId);
 
       return jsonResponse({ success: true, message: "Account reset successfully." });
+    }
+
+    if (action === "disconnect_location") {
+      if (!body.location_id) {
+        return jsonResponse({ error: "location_id is required" }, 400);
+      }
+
+      const { error: disconnectErr } = await supabase
+        .from("locations")
+        .update({
+          stripe_account_id: null,
+          stripe_status: null,
+          stripe_payments_enabled: false,
+        })
+        .eq("id", body.location_id)
+        .eq("organization_id", organization_id);
+
+      if (disconnectErr) {
+        console.error("Failed to disconnect location:", disconnectErr);
+        return jsonResponse({ error: "Failed to disconnect location" }, 500);
+      }
+
+      return jsonResponse({ success: true, message: "Location disconnected." });
     }
 
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
