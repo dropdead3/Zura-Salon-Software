@@ -812,12 +812,37 @@ export function CheckoutSummarySheet({
                   clientEmail={appointment.client_email}
                   clientPhone={appointment.client_phone}
                   afterpayEnabled={orgAfterpayEnabled}
+                  afterpaySurchargeEnabled={orgSurchargeEnabled}
+                  afterpaySurchargeRate={orgSurchargeRate}
                   disabled={isUpdating}
                   onPaymentLinkSent={() => {
-                    // Invalidate appointment queries so the badge / status updates
                     queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
                   }}
                 />
+                {/* Surcharge preview — only when both afterpay + surcharge enabled */}
+                {orgAfterpayEnabled && orgSurchargeEnabled && (() => {
+                  const AFTERPAY_MAX_CENTS = 400000;
+                  const rawCents = Math.round((appointment.total_price || 0) * 100);
+                  const afterpayCents = Math.min(rawCents, AFTERPAY_MAX_CENTS);
+                  const feeCents = Math.round(afterpayCents * orgSurchargeRate);
+                  const clientPaysCents = afterpayCents + feeCents;
+                  return (
+                    <div className="mt-2 rounded-lg border border-border/60 bg-muted/40 p-3 space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-display tracking-wide uppercase">
+                        <Info className="h-3 w-3" />
+                        Afterpay surcharge preview
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 text-xs text-muted-foreground">
+                        <span>Service amount:</span>
+                        <span className="text-right">{formatCurrency(afterpayCents / 100)}</span>
+                        <span>Processing fee ({Math.round(orgSurchargeRate * 100)}%):</span>
+                        <span className="text-right">+ {formatCurrency(feeCents / 100)}</span>
+                        <span className="text-foreground">Client pays:</span>
+                        <span className="text-right text-foreground">{formatCurrency(clientPaysCents / 100)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
