@@ -18,6 +18,7 @@ export interface HardwareAccessory {
   amount: number;
   currency: string;
   image_url?: string;
+  description?: string;
 }
 
 interface SkuResponse {

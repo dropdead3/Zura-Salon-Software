@@ -176,18 +176,36 @@ Deno.serve(async (req) => {
           );
           const shippingData = shippingResponse.ok ? await shippingResponse.json() : { data: [] };
 
-          const apiAccessories = accessorySkus.map(enrichSku).map((a) => ({
-            id: a.id,
-            product: (a.hardware_product as Record<string, unknown>)?.name || a.product || "Accessory",
-            amount: a.amount || 0,
-            currency: a.currency || "usd",
-            image_url: a.image_url,
-          }));
+          const ACCESSORY_DESCRIPTIONS: Record<string, string> = {
+            hub: "Ethernet connectivity adapter. Provides a hardwired network connection for maximum reliability.",
+            dock: "Countertop charging stand. Keeps your reader powered and upright at the checkout station.",
+            case: "Protective silicone sleeve for handheld use. Adds grip and drop protection for tableside payments.",
+          };
+
+          const getAccessoryDescription = (name: string): string | undefined => {
+            const lower = name.toLowerCase();
+            if (lower.includes("hub")) return ACCESSORY_DESCRIPTIONS.hub;
+            if (lower.includes("dock")) return ACCESSORY_DESCRIPTIONS.dock;
+            if (lower.includes("case") || lower.includes("cover")) return ACCESSORY_DESCRIPTIONS.case;
+            return undefined;
+          };
+
+          const apiAccessories = accessorySkus.map(enrichSku).map((a) => {
+            const productName = String((a.hardware_product as Record<string, unknown>)?.name || a.product || "Accessory");
+            return {
+              id: a.id,
+              product: productName,
+              amount: a.amount || 0,
+              currency: a.currency || "usd",
+              image_url: a.image_url,
+              description: getAccessoryDescription(productName),
+            };
+          });
 
           const finalAccessories = apiAccessories.length > 0 ? apiAccessories : [
-            { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd", image_url: FALLBACK_IMAGES.s710_hub },
-            { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd", image_url: FALLBACK_IMAGES.s710_dock },
-            { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd", image_url: FALLBACK_IMAGES.s710_case },
+            { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd", image_url: FALLBACK_IMAGES.s710_hub, description: ACCESSORY_DESCRIPTIONS.hub },
+            { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd", image_url: FALLBACK_IMAGES.s710_dock, description: ACCESSORY_DESCRIPTIONS.dock },
+            { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd", image_url: FALLBACK_IMAGES.s710_case, description: ACCESSORY_DESCRIPTIONS.case },
           ];
 
           return jsonResponse({
@@ -230,9 +248,9 @@ Deno.serve(async (req) => {
         s700_skus: [s700Fallback],
         s710_skus: [s710Fallback],
         accessories: [
-          { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd", image_url: FALLBACK_IMAGES.s710_hub },
-          { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd", image_url: FALLBACK_IMAGES.s710_dock },
-          { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd", image_url: FALLBACK_IMAGES.s710_case },
+          { id: "s710_hub", product: "S700/S710 Hub", amount: 3900, currency: "usd", image_url: FALLBACK_IMAGES.s710_hub, description: "Ethernet connectivity adapter. Provides a hardwired network connection for maximum reliability." },
+          { id: "s710_dock", product: "S700/S710 Dock", amount: 4900, currency: "usd", image_url: FALLBACK_IMAGES.s710_dock, description: "Countertop charging stand. Keeps your reader powered and upright at the checkout station." },
+          { id: "s710_case", product: "S700/S710 Case", amount: 1900, currency: "usd", image_url: FALLBACK_IMAGES.s710_case, description: "Protective silicone sleeve for handheld use. Adds grip and drop protection for tableside payments." },
         ],
         shipping_methods: [],
         pricing_note: "Prices shown are published rates. Zura applies zero markup.",

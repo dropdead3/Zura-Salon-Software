@@ -429,6 +429,7 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="font-sans text-sm font-medium truncate">{acc.product}</p>
+                              {acc.description && <p className="font-sans text-xs text-muted-foreground line-clamp-2">{acc.description}</p>}
                             </div>
                             <div className="text-right shrink-0">
                               <p className="font-display text-sm tracking-wide">{formatCurrency(acc.amount / 100)}</p>
