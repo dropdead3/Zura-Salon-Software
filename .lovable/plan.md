@@ -2,41 +2,31 @@
 
 ## Problem
 
-The system color theme (`useColorTheme`) is persisted **only to `localStorage`** — not to the database. Every component that calls `useColorTheme()` creates its own independent `useState('zura')`, and the saved value is only read via a `useEffect` after mount. This causes two issues:
-
-1. **No shared state**: When the theme is changed in Settings, other mounted components still hold the old state value until they individually remount and re-read `localStorage`.
-2. **Flash/revert**: On navigation, components remount with the default `'zura'` state, then the `useEffect` fires and reads `localStorage` — causing a visible flash. If the user had set "Zura" but it defaults and then reads "cream" from a stale localStorage (or vice versa), they see a revert.
-
-The theme should be organization-scoped (persisted to `site_settings`) and use React Query for shared, reactive state across all consumers.
+The "Use Default Luxury Splash" button remains clickable even when the default splash is already active, making it unclear whether the default is currently applied.
 
 ## Solution
 
-Persist the color theme to `site_settings` (key: `org_color_theme`) using the existing `useSiteSettings` / `useUpdateSiteSetting` pattern, while keeping `localStorage` as a fast synchronous cache for instant CSS class application (no flash).
+Track whether the current splash was generated from the default luxury template. When it is, disable the button and change its label to "Currently using Default Luxury Splash" with a check icon.
 
-### 1. Update `src/hooks/useColorTheme.ts`
+### Approach
 
-- Add a `useSiteSettings<{ theme: ColorTheme }>('org_color_theme')` query to read the persisted theme
-- Add a `useUpdateSiteSetting` mutation to write theme changes
-- On mount: apply from `localStorage` immediately (no flash), then sync from DB when query resolves
-- On `setColorTheme`: update `localStorage` + CSS classes immediately, then persist to DB via mutation
-- Use `useQueryClient` to update the query cache on mutation so all consumers of `useColorTheme` reactively get the new value
-- Replace internal `useState` with the query data as source of truth (localStorage is just the sync cache)
+Since Stripe doesn't distinguish between default and custom splash images, we'll track this with a simple `isDefaultSplash` state variable in the component:
 
-### 2. Ensure `useSiteSettings` upsert works for this new key
+- Set `true` after successfully uploading a generated default splash (in `handleUpload`'s `onSuccess` when the pending file came from `handleGenerateFromLogo`)
+- Set `true` when auto-registration splash applies
+- Set `false` when a custom file is uploaded or splash is removed
+- Initialize based on whether the splash is active and was likely default (we can add a `generatedFromDefault` flag to `pendingFile` state)
 
-The existing `useUpdateSiteSetting` already uses `.upsert()` with `onConflict`, so no migration is needed — the `site_settings` table already supports arbitrary keys.
+### Changes
 
-### 3. No other file changes needed
+**File: `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`**
 
-All consumers already call `useColorTheme()` — they'll automatically get reactive updates through the shared query cache instead of isolated `useState`.
-
-### Behavior after fix
-- Theme change in Settings instantly applies CSS (localStorage + DOM)
-- Theme persists to database (organization-scoped)
-- All components sharing `useColorTheme` reactively update via query cache
-- No flash on navigation — localStorage provides synchronous initial value
-- Theme follows the organization, not the browser
+1. Add a `wasGeneratedDefault` boolean to track if the pending file came from the logo generator
+2. Add `isDefaultLuxury` state — set `true` on successful upload of a generated splash, `false` on custom upload or removal
+3. Update the button (lines 369-384):
+   - When `hasSplash && isDefaultLuxury && !pendingFile`: show disabled button with `CheckCircle2` icon and text "Currently using Default Luxury Splash"
+   - Otherwise: show the existing clickable button
 
 ### Files changed
-- `src/hooks/useColorTheme.ts` — Add DB persistence via `useSiteSettings`, keep localStorage as sync cache
+- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — Add default-splash tracking state + conditional button rendering
 
