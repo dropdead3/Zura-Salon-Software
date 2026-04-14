@@ -26,6 +26,7 @@ import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, use
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { useSearchParams } from 'react-router-dom';
 
 import { ZuraPayFleetTab } from './terminal/ZuraPayFleetTab';
@@ -393,6 +394,9 @@ export function TerminalSettingsContent() {
 
   return (
     <div className="space-y-6">
+
+      {/* Page Explainer */}
+      <PageExplainer pageId="zura-pay-config" />
 
       {/* Activation Checklist */}
       <ZuraPayActivationChecklist

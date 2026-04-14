@@ -247,9 +247,19 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: MapPin,
   },
   'account-management': {
-    title: 'Account & Billing',
-    description: `Manage your ${PLATFORM_NAME} subscription, billing details, and account settings. View invoices and update payment methods.`,
+    title: 'Platform Billing',
+    description: `Your ${PLATFORM_NAME} subscription is billed at the organization level — one invoice covers all locations. Costs are itemized per location so your accountant can allocate to each LLC. This is separate from Zura Pay, which handles customer payment processing and payouts per-location.`,
     icon: CreditCard,
+  },
+  'zura-pay-config': {
+    title: 'Payment Processing & Payouts',
+    description: `Zura Pay handles customer-facing payment processing — terminals, card-on-file, and deposits. Each location can connect its own bank account for separate LLC payouts and liability isolation. This is independent of your platform subscription on the Account & Billing page.`,
+    icon: CreditCard,
+  },
+  'business-identity': {
+    title: 'Legal Entity Defaults',
+    description: `The EIN and Legal Name here serve as your organization default. Individual locations can override these values in Location Settings for multi-LLC setups. Stripe Connect collects its own legal and banking data separately during onboarding.`,
+    icon: Building2,
   },
   'announcements': {
     title: 'Team Announcements',
