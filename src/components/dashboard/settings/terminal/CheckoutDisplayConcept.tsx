@@ -8,6 +8,7 @@ import { S710CheckoutSimulator, SimCartItem } from './S710CheckoutSimulator';
 import { cn } from '@/lib/utils';
 import { useTipConfig } from '@/hooks/useTipConfig';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
+import { useColorTheme } from '@/hooks/useColorTheme';
 
 const S710_SPECS = [
   { label: 'Display', value: '5.5" touchscreen · 1080×1920' },
@@ -29,6 +30,7 @@ interface CheckoutDisplayConceptProps {
 
 export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl }: CheckoutDisplayConceptProps) {
   const [autoPlay, setAutoPlay] = useState(true);
+  const { colorTheme } = useColorTheme();
 
   // Pull live config from database
   const { data: tipConfig } = useTipConfig();
@@ -72,6 +74,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
               tipPercentages={tipPercentages}
               tipEnabled={tipEnabled}
               receiptSlogan={receiptSlogan}
+              colorTheme={colorTheme}
             />
             <button
               onClick={() => setAutoPlay(!autoPlay)}
