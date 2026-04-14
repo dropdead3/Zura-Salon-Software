@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const ALLOWED_TYPES = ['image/svg+xml', 'image/png'];
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -294,6 +295,7 @@ export function BusinessSettingsContent() {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit}>
+      <PageExplainer pageId="business-identity" className="mb-4" />
       <Tabs defaultValue="identity" className="w-full">
         <TabsList>
           <TabsTrigger value="identity">Identity</TabsTrigger>
