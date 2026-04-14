@@ -155,6 +155,7 @@ export function useVerifyZuraPayConnection() {
     onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
+      queryClient.invalidateQueries({ queryKey: ['org-bank-last4', vars.organizationId] });
       if (data.auto_connected_location_id) {
         toast.success('Zura Pay is active and your location has been automatically connected!');
       } else if (data.status === 'active') {
