@@ -205,7 +205,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
 
       // Corner glow constants
       const glowInset = 40;
-      const glowRadius = 900;
+      const glowRadius = 1200;
 
       // Corner glow — top-left
       const tlGlow = ctx.createRadialGradient(glowInset, glowInset, 0, glowInset, glowInset, glowRadius);
