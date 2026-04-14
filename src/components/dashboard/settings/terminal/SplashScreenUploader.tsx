@@ -165,42 +165,88 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       const p = getTerminalPalette(colorTheme);
       const grad = ctx.createLinearGradient(0, 0, 0, TARGET_H);
       grad.addColorStop(0, p.gradientStops[0]);
-      grad.addColorStop(0.5, p.gradientStops[1]);
+      grad.addColorStop(0.4, p.gradientStops[1]);
       grad.addColorStop(1, p.gradientStops[2]);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Subtle radial accent glow behind logo
-      const radGrad = ctx.createRadialGradient(TARGET_W / 2, TARGET_H * 0.42, 0, TARGET_W / 2, TARGET_H * 0.42, 400);
-      radGrad.addColorStop(0, p.accentRgba(0.12));
+      // Secondary radial glow at top — vignette atmosphere
+      const topGlow = ctx.createRadialGradient(TARGET_W / 2, 0, 0, TARGET_W / 2, 0, TARGET_H * 0.5);
+      topGlow.addColorStop(0, p.accentRgba(0.06));
+      topGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = topGlow;
+      ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+      // Main radial accent glow behind logo — broader bloom
+      const radGrad = ctx.createRadialGradient(TARGET_W / 2, TARGET_H * 0.38, 0, TARGET_W / 2, TARGET_H * 0.38, 500);
+      radGrad.addColorStop(0, p.accentRgba(0.14));
+      radGrad.addColorStop(0.5, p.accentRgba(0.05));
       radGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = radGrad;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Center logo — fit within 500x500
-      const maxLogo = 500;
+      // Third glow at bottom — lift footer area
+      const bottomGlow = ctx.createRadialGradient(TARGET_W / 2, TARGET_H - 140, 0, TARGET_W / 2, TARGET_H - 140, 300);
+      bottomGlow.addColorStop(0, p.accentRgba(0.05));
+      bottomGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = bottomGlow;
+      ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+      // Subtle noise/grain texture to prevent banding
+      const imageData = ctx.getImageData(0, 0, TARGET_W, TARGET_H);
+      const pixels = imageData.data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const noise = (Math.random() - 0.5) * 12;
+        pixels[i] = Math.min(255, Math.max(0, pixels[i] + noise));
+        pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1] + noise));
+        pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2] + noise));
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      // Soft halo behind logo
+      const halo = ctx.createRadialGradient(TARGET_W / 2, TARGET_H * 0.35, 0, TARGET_W / 2, TARGET_H * 0.35, 280);
+      halo.addColorStop(0, p.accentRgba(0.08));
+      halo.addColorStop(1, 'transparent');
+      ctx.fillStyle = halo;
+      ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+      // Center logo — fit within 420x420 with more breathing room
+      const maxLogo = 420;
       const logoScale = Math.min(maxLogo / img.width, maxLogo / img.height);
       const lw = img.width * logoScale;
       const lh = img.height * logoScale;
       const lx = (TARGET_W - lw) / 2;
-      const ly = (TARGET_H - lh) / 2 - 80;
+      const ly = (TARGET_H - lh) / 2 - 120;
       ctx.drawImage(img, lx, ly, lw, lh);
 
-      // Business name below logo
+      // Business name below logo — wider letter spacing
       ctx.fillStyle = p.textColor;
       ctx.font = '500 48px "Termina", sans-serif';
       ctx.textAlign = 'center';
-      ctx.letterSpacing = '4px';
+      ctx.letterSpacing = '6px';
       ctx.fillText(businessName.toUpperCase(), TARGET_W / 2, ly + lh + 80);
 
-      // Accent divider line
-      ctx.fillStyle = p.accentRgba(0.4);
-      ctx.fillRect(TARGET_W / 2 - 60, ly + lh + 110, 120, 2);
+      // Accent divider line — wider, rounded caps
+      ctx.strokeStyle = p.accentRgba(0.4);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(TARGET_W / 2 - 80, ly + lh + 110);
+      ctx.lineTo(TARGET_W / 2 + 80, ly + lh + 110);
+      ctx.stroke();
 
-      // Draw Zura Z icon at bottom (simplified grid of rounded squares)
-      const zSize = 60;
+      // Subtle horizontal rule above Zura section
+      ctx.strokeStyle = p.accentRgba(0.12);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(TARGET_W * 0.2, TARGET_H - 240);
+      ctx.lineTo(TARGET_W * 0.8, TARGET_H - 240);
+      ctx.stroke();
+
+      // Draw Zura Z icon at bottom — larger 72px
+      const zSize = 72;
       const zX = (TARGET_W - zSize) / 2;
-      const zY = TARGET_H - 200;
+      const zY = TARGET_H - 210;
       const cellSize = zSize / 7;
       const gap = cellSize * 0.37;
       const dotSize = cellSize - gap;
@@ -208,17 +254,13 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
 
       ctx.fillStyle = p.accentRgba(0.6);
 
-      // Z icon grid positions (row, col) — top row, diagonal, bottom row
       const zDots = [
-        // Top row
         [0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],
-        // Diagonal (right to left)
         [1,5],[1,6],
         [2,4],[2,5],
         [3,3],[3,4],
         [4,2],[4,3],
         [5,1],[5,2],
-        // Bottom row
         [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],
       ];
 
@@ -230,10 +272,11 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
         ctx.fill();
       }
 
-      // "Powered by Zura" text below Z icon
+      // "Powered by Zura" text — slightly larger with wider tracking
       ctx.fillStyle = p.mutedColor;
-      ctx.font = '300 24px "Aeonik Pro", sans-serif';
+      ctx.font = '300 26px "Aeonik Pro", sans-serif';
       ctx.textAlign = 'center';
+      ctx.letterSpacing = '3px';
       ctx.fillText('Powered by Zura', TARGET_W / 2, zY + zSize + 50);
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
