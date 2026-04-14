@@ -55,6 +55,15 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   // Bulk status for all locations
   const { data: allStatus = {}, isLoading: loadingAllStatus } = useAllLocationTerminalStatus(locationIds, orgId);
 
+  // B3: Auto-select first location with a terminal once status loads
+  useEffect(() => {
+    if (loadingAllStatus || selectedLocationId || Object.keys(allStatus).length === 0) return;
+    const firstWithTerminal = locations.find(l => allStatus[l.id]?.terminalLocationId);
+    if (firstWithTerminal) {
+      setSelectedLocationId(firstWithTerminal.id);
+    }
+  }, [loadingAllStatus, allStatus, locations, selectedLocationId]);
+
   const selectedStatus = selectedLocationId ? allStatus[selectedLocationId] : null;
   const terminalLocationId = selectedStatus?.terminalLocationId ?? undefined;
   const hasTerminalLocation = !!terminalLocationId;
@@ -198,15 +207,25 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
         imageMimeType: pendingFile.mime,
         onProgress: (done, total) => setPushProgress(`Pushing ${done}/${total}...`),
       });
+
+      // B1: Sync splash metadata for all pushed locations
+      const origin = pendingFile.fromDefault ? 'default_luxury' : 'custom';
+      if (orgId) {
+        await Promise.allSettled(
+          pairs.map(p => upsertSplashOrigin(orgId, p.locationId, p.terminalLocationId, origin as 'default_luxury' | 'custom'))
+        );
+      }
+
       setPreviewUrl(null);
       setPendingFile(null);
       queryClient.invalidateQueries({ queryKey: ['all-location-terminal-status'] });
+      queryClient.invalidateQueries({ queryKey: ['terminal-splash-metadata'] });
     } catch {
       // error handled by mutation
     } finally {
       setPushProgress(null);
     }
-  }, [pendingFile, locations, pushAllMutation, queryClient]);
+  }, [pendingFile, locations, pushAllMutation, queryClient, orgId]);
 
   const { colorTheme } = useColorTheme();
 
@@ -482,7 +501,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                 {/* Help text */}
                 <div className="text-center space-y-0.5">
                   <p className="text-[10px] text-muted-foreground">
-                    Recommended: 1080×1920px portrait JPG or PNG under 2MB.
+                    Recommended: 1080×1920px portrait · JPG/PNG under 2MB · Animated GIF under 4MB
                   </p>
                   <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs rounded-md px-2.5 py-1 w-fit">
                     <Clock className="w-3.5 h-3.5 shrink-0" />
