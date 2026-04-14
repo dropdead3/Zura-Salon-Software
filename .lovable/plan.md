@@ -1,41 +1,45 @@
 
 
-# Add Location Name, Bank Account Last4, and Label Clarity to Fleet Tab
+# Fix: Bank Account Last4 Not Displaying
+
+## Problem
+The `orgBankLast4` prop is sourced from `verifyMutation.data?.bank_last4`, which is only populated **after** the user clicks "Check Status" in the current session. On page load, the mutation has no data, so the last4 is always null.
+
+## Solution
+Add a dedicated query hook (`useOrgBankLast4`) that calls the verify edge function on load when the org is already active and has a Stripe account. This ensures `bank_last4` is available immediately without requiring a manual verify click.
 
 ## Changes
 
-### 1. Edge Function: `supabase/functions/verify-zura-pay-connection/index.ts`
+### 1. `src/hooks/useZuraPayConnect.ts`
+Add a new query hook:
+```typescript
+export function useOrgBankLast4(orgId: string | undefined, stripeAccountId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['org-bank-last4', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('verify-zura-pay-connection', {
+        body: { organization_id: orgId },
+      });
+      if (error) throw error;
+      return data?.bank_last4 as string | null;
+    },
+    enabled: !!orgId && !!stripeAccountId,
+    staleTime: 5 * 60 * 1000, // 5 minutes — bank info rarely changes
+  });
+}
+```
 
-After retrieving the Stripe account (line 84), extract the bank account last4 from `account.external_accounts.data[0].last4` (available on Connect Express accounts). Return it as `bank_last4` in the response alongside the existing fields.
+### 2. `src/components/dashboard/settings/TerminalSettingsContent.tsx`
+- Import and call `useOrgBankLast4(orgId, connectStatus?.stripe_connect_account_id)`
+- Change the prop from `verifyMutation.data?.bank_last4` to the query result:
+```typescript
+orgBankLast4={bankLast4Query.data ?? verifyMutation.data?.bank_last4 ?? null}
+```
 
-### 2. Frontend Hook: `src/hooks/useZuraPayConnect.ts`
-
-- Add `bank_last4` to the `VerifyResult` interface
-- Store it in the org connect status query or pass it through to the Fleet tab
-- Add `bank_last4` to `useOrgConnectStatus` by storing it after verification (or add a new piece of state)
-
-### 3. Fleet Tab UI: `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
-
-Three changes on the "org active, location not connected" screen (lines 480-523):
-
-- **Heading**: Change `ENABLE ZURA PAY FOR THIS LOCATION` to `ENABLE ZURA PAY FOR {selectedLoc.name}` (already available via `selectedLoc` on line 217)
-- **"Use Organization Account" button area**: Add a subtitle showing the org's bank account ending, e.g. "Payouts to account ending in ••1234". This requires passing `bank_last4` as a new prop.
-- **Label clarity**: Add helper text like "Select preferred payout destination" above the two buttons to clarify users are choosing which bank account receives payouts.
-
-### 4. Props: `ZuraPayFleetTabProps`
-
-Add `orgBankLast4?: string | null` prop to pass the bank last4 from the parent (`TerminalSettingsContent`) down to the Fleet tab.
-
-### 5. Parent Component
-
-Pass the `bank_last4` from the verify response through to the Fleet tab. This likely lives in `TerminalSettingsContent.tsx` — will need to store the last4 from the verify mutation result and pass it as a prop.
-
----
+This way the last4 loads automatically when the page opens, and also updates if the user manually verifies.
 
 | File | Change |
 |------|--------|
-| `supabase/functions/verify-zura-pay-connection/index.ts` | Extract and return `bank_last4` from Stripe account |
-| `src/hooks/useZuraPayConnect.ts` | Add `bank_last4` to `VerifyResult` interface |
-| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Use location name in heading, show bank last4, add payout destination label |
-| `src/components/dashboard/settings/terminal/TerminalSettingsContent.tsx` | Pass `orgBankLast4` prop through to FleetTab |
+| `src/hooks/useZuraPayConnect.ts` | Add `useOrgBankLast4` query hook |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Use query result for `orgBankLast4` prop |
 
