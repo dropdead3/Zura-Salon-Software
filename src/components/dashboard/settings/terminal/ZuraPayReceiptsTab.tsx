@@ -29,7 +29,8 @@ interface ReceiptPreviewProps {
 }
 
 function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone, website, socials, reviewUrls }: ReceiptPreviewProps) {
-  const accentColor = config.accent_color || '#e5e5e5';
+  const logoHeightClass = config.logo_size === 'sm' ? 'h-6' : config.logo_size === 'lg' ? 'h-14' : 'h-10';
+  const iconHeightClass = config.footer_icon_size === 'lg' ? 'h-8' : config.footer_icon_size === 'md' ? 'h-6' : 'h-4';
 
   const activeReviewPlatforms = [
     reviewUrls.google && 'Google',
@@ -46,9 +47,9 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
   return (
     <div className="rounded-xl border border-gray-200 bg-white text-black p-6 max-w-[320px] mx-auto font-sans text-sm">
       {/* Header */}
-      <div className="pb-4 mb-4" style={{ borderBottom: `1px solid ${accentColor}`, textAlign: config.logo_position === 'center' ? 'center' : 'left' }}>
+      <div className="pb-4 mb-4" style={{ borderBottom: '1px solid #e5e5e5', textAlign: config.logo_position === 'center' ? 'center' : 'left' }}>
         {config.show_logo && logoUrl ? (
-          <img src={logoUrl} alt={businessName} className="h-10 object-contain mb-2" style={{ margin: config.logo_position === 'center' ? '0 auto 8px' : '0 0 8px' }} />
+          <img src={logoUrl} alt={businessName} className={`${logoHeightClass} object-contain mb-2`} style={{ margin: config.logo_position === 'center' ? '0 auto 8px' : '0 0 8px' }} />
         ) : (
           <p className="font-display text-base tracking-wide" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>{businessName}</p>
         )}
@@ -71,13 +72,13 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
       {/* Items */}
       <table className="w-full text-xs mb-3">
         <thead>
-          <tr style={{ borderBottom: `1px solid ${accentColor}` }}>
+          <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
             <th className="text-left pb-1 text-gray-500" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Item</th>
             <th className="text-center pb-1 text-gray-500" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Qty</th>
             <th className="text-right pb-1 text-gray-500" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>Amount</th>
           </tr>
         </thead>
-        <tbody style={{ borderBottom: `1px solid ${accentColor}` }}>
+        <tbody style={{ borderBottom: '1px solid #e5e5e5' }}>
           <tr><td className="py-1">Balayage</td><td className="text-center py-1">1</td><td className="text-right py-1">$185.00</td></tr>
           <tr><td className="py-1">Olaplex Treatment</td><td className="text-center py-1">1</td><td className="text-right py-1">$45.00</td></tr>
         </tbody>
@@ -87,7 +88,7 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
       <div className="space-y-1 text-xs">
         <div className="flex justify-between"><span>Subtotal</span><span>$230.00</span></div>
         <div className="flex justify-between"><span>Tax</span><span>$18.40</span></div>
-        <div className="flex justify-between font-medium text-sm pt-2 mt-1" style={{ borderTop: `1px solid ${accentColor}` }}>
+        <div className="flex justify-between font-medium text-sm pt-2 mt-1" style={{ borderTop: '1px solid #e5e5e5' }}>
           <span>Total</span><span>$248.40</span>
         </div>
       </div>
@@ -105,7 +106,7 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
 
       {/* Policies */}
       {(config.show_redo_policy || config.show_refund_policy) && (
-        <div className="mt-3 pt-2 space-y-1" style={{ borderTop: `1px solid ${accentColor}` }}>
+        <div className="mt-3 pt-2 space-y-1" style={{ borderTop: '1px solid #e5e5e5' }}>
           {config.show_redo_policy && config.redo_policy_text && (
             <p className="text-[10px] text-gray-400 text-center">{config.redo_policy_text}</p>
           )}
@@ -117,17 +118,17 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
 
       {/* Review Prompt */}
       {config.show_review_prompt && config.review_prompt_text && (
-        <div className="mt-3 pt-2 text-center" style={{ borderTop: `1px solid ${accentColor}` }}>
-          <p className="text-[10px] text-gray-500 font-medium">{config.review_prompt_text}</p>
-          {activeReviewPlatforms.length > 0 && (
-            <p className="text-[10px] text-blue-500 mt-0.5">{activeReviewPlatforms.join(' · ')}</p>
+         <div className="mt-3 pt-2 text-center" style={{ borderTop: '1px solid #e5e5e5' }}>
+           <p className="text-[10px] text-gray-500 font-medium">{config.review_prompt_text}</p>
+           {activeReviewPlatforms.length > 0 && (
+             <p className="text-[10px] text-gray-600 mt-0.5">{activeReviewPlatforms.join(' · ')}</p>
           )}
         </div>
       )}
 
       {/* Socials & Website */}
       {(config.show_socials && activeSocials.length > 0) || (config.show_website && website) ? (
-        <div className="mt-3 pt-2 text-center space-y-0.5" style={{ borderTop: `1px solid ${accentColor}` }}>
+        <div className="mt-3 pt-2 text-center space-y-0.5" style={{ borderTop: '1px solid #e5e5e5' }}>
           {config.show_socials && activeSocials.length > 0 && (
             <p className="text-[10px] text-gray-400">{activeSocials.join(' · ')}</p>
           )}
@@ -140,7 +141,7 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
       {/* Footer Icon */}
       {config.show_footer_icon && iconUrl && (
         <div className="mt-3 flex justify-center">
-          <img src={iconUrl} alt="" className="h-6 object-contain opacity-40" />
+          <img src={iconUrl} alt="" className={`${iconHeightClass} object-contain opacity-40`} />
         </div>
       )}
     </div>
