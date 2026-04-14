@@ -217,16 +217,25 @@ Deno.serve(async (req) => {
         const displayName =
           params.display_name || locationData.name || "Terminal Location";
 
-        // Determine postal code: prefer dedicated column, then parse from city field
+        // Parse address components — city field may contain "City, State ZIP"
         let postalCode = (locationData.postal_code || "").trim();
+        let stateCode = (locationData.state_province || "").trim();
         const cityParts = (locationData.city || "").split(",");
         const cityName = cityParts[0]?.trim() || "N/A";
 
-        if (!postalCode) {
-          // Try parsing from "City, State ZIP" format in city field
+        if (!postalCode || !stateCode) {
+          // Try parsing "AZ 85203" from the second part of "Mesa, AZ 85203"
           const stateZipPart = cityParts[1]?.trim() || "";
-          const stateZipParts = stateZipPart.split(" ");
-          postalCode = stateZipParts.length > 1 ? stateZipParts.slice(1).join(" ").trim() : "";
+          const stateZipMatch = stateZipPart.match(/^([A-Z]{2})\s+(\d{5}(-\d{4})?)$/);
+          if (stateZipMatch) {
+            if (!stateCode) stateCode = stateZipMatch[1];
+            if (!postalCode) postalCode = stateZipMatch[2];
+          } else {
+            // Fallback: split by space
+            const parts = stateZipPart.split(" ");
+            if (!stateCode && parts[0]?.match(/^[A-Z]{2}$/)) stateCode = parts[0];
+            if (!postalCode && parts.length > 1) postalCode = parts.slice(1).join(" ").trim();
+          }
         }
 
         if (!postalCode) {
@@ -243,10 +252,13 @@ Deno.serve(async (req) => {
           display_name: displayName,
           "address[line1]": locationData.address || "N/A",
           "address[city]": cityName,
-          "address[state]": locationData.state_province || "",
-          "address[postal_code]": postalCode,
+          "address[postal_code]": postalCode || "00000",
           "address[country]": locationData.country || "US",
         };
+        // Only include state if we have a value — Stripe rejects empty strings
+        if (stateCode) {
+          formParams["address[state]"] = stateCode;
+        }
         if (params.metadata_location_id) {
           formParams["metadata[zura_location_id]"] = location_id;
         }
