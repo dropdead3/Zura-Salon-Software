@@ -122,6 +122,13 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
         image_base64: base64,
         image_mime_type: 'image/jpeg',
       });
+      // Mark as default_luxury in metadata
+      const orgId = business?.organization_id;
+      if (orgId) {
+        try {
+          await upsertSplashOrigin(orgId, locId, termLocId, 'default_luxury');
+        } catch { /* non-critical */ }
+      }
       toast.success('Splash screen applied to reader');
     } catch (err) {
       console.error('Auto-apply splash failed:', err);

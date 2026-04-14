@@ -6,25 +6,25 @@ import {
   resolveAllTerminalLocations,
   usePushSplashToAllLocations,
 } from '@/hooks/useTerminalSplashScreen';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchSplashOrigin, upsertSplashOrigin } from '@/hooks/useTerminalSplashMetadata';
 import { useLocations } from '@/hooks/useLocations';
 
 /**
  * Provides a `syncSplashToTheme` function that regenerates the default luxury
  * splash screen using the new palette and pushes it to all terminal locations
- * that already have an active splash screen.
+ * that are currently marked as `default_luxury` in splash metadata.
  */
 export function useAutoSyncTerminalSplash(
   orgLogoUrl: string | null | undefined,
   businessName: string,
+  orgId: string | undefined,
 ) {
   const { data: locations = [] } = useLocations();
   const pushAll = usePushSplashToAllLocations();
 
   const syncSplashToTheme = useCallback(
     async (colorTheme: ColorTheme) => {
-      // Can't generate without a logo
-      if (!orgLogoUrl) return;
+      if (!orgLogoUrl || !orgId) return;
       if (locations.length === 0) return;
 
       try {
@@ -33,23 +33,14 @@ export function useAutoSyncTerminalSplash(
         const pairs = await resolveAllTerminalLocations(locationIds);
         if (pairs.length === 0) return;
 
-        // 2. Filter to only locations with an active splash screen
-        const activePairs: typeof pairs = [];
+        // 2. Filter to only locations marked as default_luxury in metadata
+        const defaultPairs: typeof pairs = [];
         await Promise.all(
           pairs.map(async ({ locationId, terminalLocationId }) => {
             try {
-              const { data, error } = await supabase.functions.invoke(
-                'manage-stripe-terminals',
-                {
-                  body: {
-                    action: 'get_splash_screen',
-                    location_id: locationId,
-                    terminal_location_id: terminalLocationId,
-                  },
-                },
-              );
-              if (!error && data?.data?.splash_screen_active) {
-                activePairs.push({ locationId, terminalLocationId });
+              const origin = await fetchSplashOrigin(orgId, locationId, terminalLocationId);
+              if (origin === 'default_luxury') {
+                defaultPairs.push({ locationId, terminalLocationId });
               }
             } catch {
               // skip
@@ -57,7 +48,7 @@ export function useAutoSyncTerminalSplash(
           }),
         );
 
-        if (activePairs.length === 0) return;
+        if (defaultPairs.length === 0) return;
 
         // 3. Generate the new splash with the updated palette
         const { base64 } = await generateDefaultSplash(
@@ -66,9 +57,9 @@ export function useAutoSyncTerminalSplash(
           colorTheme,
         );
 
-        // 4. Push to all active locations (fire-and-forget toast handled by mutation)
+        // 4. Push to all default_luxury locations
         pushAll.mutate({
-          pairs: activePairs,
+          pairs: defaultPairs,
           imageBase64: base64,
           imageMimeType: 'image/jpeg',
         });
@@ -76,10 +67,9 @@ export function useAutoSyncTerminalSplash(
         toast.success('Terminal splash screens updating to match new theme');
       } catch (err) {
         console.error('Auto-sync splash failed:', err);
-        // Silent failure — theme change itself already succeeded
       }
     },
-    [orgLogoUrl, businessName, locations, pushAll],
+    [orgLogoUrl, businessName, orgId, locations, pushAll],
   );
 
   return { syncSplashToTheme };
