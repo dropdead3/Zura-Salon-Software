@@ -1,31 +1,21 @@
 
 
-# Fix Display Tab — Text Sizing & Card Title Tokens
+# Add Quantity Guidance Tip to Hardware Order
 
 ## Problem
-The three sub-cards (Live Configuration, S710 Specs, Checkout Experience) use raw `text-[9px]` and `text-[10px]` classes for titles and body text — too small and not following design tokens. Sub-card titles should use `tokens.heading.subsection` and body text should use `tokens.body.muted`.
+Users ordering terminal readers may not know how many to order. The quantity should match the number of checkout stations in their salon — some have 1, others have 3+. A contextual hint below the Quantity selector will guide this decision.
 
 ## Changes
 
-### `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
+### `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx`
 
-**Sub-card titles** (lines 91, 130, 143) — currently `text-[9px] ... uppercase font-sans`:
-- Replace with `tokens.heading.subsection` (`font-display text-xs font-medium text-muted-foreground/60 uppercase tracking-[0.15em]`)
+**After the Quantity `<Select>` (line 438)**, add a helper text line:
 
-**Body/description text** (lines 93-94, 145-146) — currently `text-[10px]` or `text-xs`:
-- Replace with `tokens.body.muted` (`font-sans text-sm text-muted-foreground`)
+```tsx
+<p className={cn(tokens.body.muted, 'text-xs')}>
+  Order one reader per checkout station in your salon.
+</p>
+```
 
-**Data values** (lines 107-112, 121, 134) — currently `text-[10px] font-mono`:
-- Bump to `text-xs font-mono` for readability
-
-**Config labels** (lines 105, 119, 133) — currently bare `text-muted-foreground font-sans`:
-- Use `tokens.body.muted` for consistency
-
-**Feature pills** (lines 156-159) — currently `text-[9px]`:
-- Bump to `text-xs`
-
-**Auto-play button** (line 78) — currently `text-[10px]`:
-- Bump to `text-xs`
-
-No structural changes — just token alignment and minimum text sizing from `text-[9px]`/`text-[10px]` up to `text-xs`/`text-sm`.
+This sits inside the existing `space-y-2` div wrapping the Label and Select, so spacing is automatic. No structural changes needed.
 
