@@ -80,6 +80,25 @@ export function printReceipt(
     )
     .join('');
 
+  const usageCharges = transaction.usageCharges || [];
+  const usageChargeTotal = usageCharges.reduce((s, c) => s + c.chargeAmount, 0);
+  const usageChargesHtml = usageCharges.length > 0
+    ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid ${borderColor};">
+        <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#888;margin:0 0 6px;">Color Room Charges</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tbody>
+            ${usageCharges.map(c => `<tr>
+              <td style="padding:3px 0;font-size:12px;">${escapeHtml(c.serviceName || (c.chargeType === 'product_cost' ? 'Product Cost' : 'Overage'))}</td>
+              <td style="padding:3px 0;font-size:12px;text-align:center;">${c.overageQty}</td>
+              <td style="padding:3px 0;font-size:12px;text-align:right;">${formatCurrency(c.chargeAmount)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`
+    : '';
+
+  const grandTotal = transaction.totalAmount + transaction.tipAmount + usageChargeTotal;
+
   const iconHeight = getIconHeight(cfg.footer_icon_size as string);
 
   const html = `<!DOCTYPE html>

@@ -233,6 +233,36 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
               </Table>
             </div>
 
+            {/* Color Room Charges */}
+            {transaction.usageCharges && transaction.usageCharges.length > 0 && (
+              <div className="rounded-lg border border-border/50 overflow-hidden mb-5">
+                <div className="px-3 py-2 bg-muted/30 border-b border-border/50">
+                  <span className="text-xs font-display uppercase tracking-wide text-muted-foreground">Color Room Charges</span>
+                </div>
+                <Table>
+                  <TableBody>
+                    {transaction.usageCharges.map((charge) => (
+                      <TableRow key={charge.id}>
+                        <TableCell className="py-2.5">
+                          <div className="min-w-0">
+                            <span className="text-sm truncate block">
+                              {charge.serviceName || (charge.chargeType === 'product_cost' ? 'Product Cost' : 'Overage')}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {charge.chargeType === 'product_cost' ? 'Product' : 'Overage'} × {charge.overageQty}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right text-sm tabular-nums py-2.5">
+                          <BlurredAmount>{formatCurrency(charge.chargeAmount)}</BlurredAmount>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
             {/* Payment summary */}
             <div className="rounded-lg bg-muted/30 border border-border/50 p-4 space-y-2">
               <div className="flex justify-between text-sm">
@@ -263,10 +293,18 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                   </span>
                 </div>
               )}
+              {transaction.usageCharges && transaction.usageCharges.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Color Room</span>
+                  <span className="tabular-nums">
+                    <BlurredAmount>{formatCurrency(transaction.usageChargeTotal)}</BlurredAmount>
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm font-medium pt-2 border-t border-border/50">
                 <span>Total</span>
                 <span className="tabular-nums">
-                  <BlurredAmount>{formatCurrency(transaction.totalAmount + transaction.tipAmount)}</BlurredAmount>
+                  <BlurredAmount>{formatCurrency(transaction.grandTotal)}</BlurredAmount>
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2">
