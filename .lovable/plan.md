@@ -1,34 +1,40 @@
 
 
-# Make NeverDown Payments Section Reader-Model-Aware
+# Enable Cellular on S710 Locations + Update Connectivity Copy
 
-## Problem
-The Connectivity tab currently shows "WiFi + Cellular" failover as if all readers support it. Only the S710 has cellular. The S700 relies solely on store-and-forward when WiFi drops. The copy also doesn't clarify the risk difference between real-time cellular auth and deferred store-and-forward auth.
+## What this does
+1. Automatically enables cellular connectivity via the Stripe Terminal Configuration API when creating a location with S710 readers
+2. Updates the Connectivity tab copy to explain zero-config cellular to users
 
 ## Changes
 
-### 1. Pass reader data to ZuraPayConnectivityTab
-**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
+### 1. Edge function: Enable cellular on location creation
+**File:** `supabase/functions/manage-stripe-terminals/index.ts`
 
-Pass the `readers` array as a prop to `ZuraPayConnectivityTab` so it can detect which device types are registered.
+After creating a terminal location, create (or update) a Terminal Configuration object for that location with `cellular.enabled = true`. This uses the Stripe API:
 
-### 2. Rewrite NeverDown section with model awareness
+```
+POST /v1/terminal/configurations
+  cellular[enabled] = true
+  tipping[usd][fixed_amounts] = ...  (if applicable)
+```
+
+Then assign it to the location. Since we can't know at location-creation time whether S710 readers will be registered, we enable cellular by default — it's harmless on S700 (the reader simply ignores it).
+
+Add a new action `enable_cellular` to the edge function so existing locations can also be updated.
+
+### 2. Update Connectivity tab copy
 **File:** `src/components/dashboard/settings/terminal/ZuraPayConnectivityTab.tsx`
 
-Accept `readers` prop. Derive a boolean `hasS710` by checking if any reader has `device_type === 'stripe_s710'`.
+When `hasS710` is true, add a brief note under the WiFi + Cellular card:
+- "Built-in eSIM — no carrier contract or SIM card required. Cellular is enabled automatically for your S710 readers."
 
-**When S710 is present** — show all three feature cards:
-- **WiFi + Cellular** — "Real-time authorization continues over cellular when WiFi drops. Payments are approved or declined instantly — no deferred risk."
-- **Store-and-Forward** — "Last-resort fallback during total outages. Payments are stored on-device and authorized when connectivity returns. Small risk of post-service declines."
-- **Revenue Protected** — unchanged
+When `hasS710` is false, update the upgrade callout to mention zero-config cellular:
+- "The S710 includes a built-in eSIM with cellular data bundled — no additional mobile line or setup required."
 
-**When only S700** — show two feature cards (drop the cellular card):
-- **Store-and-Forward** — same copy as above
-- **Revenue Protected** — unchanged
-- Add a subtle note: "Upgrade to the S710 for cellular failover with real-time authorization."
+### 3. No new database tables or RLS changes needed
 
-Update the intro paragraph to be model-aware as well, removing the "cellular failover" claim when no S710 is present.
+## Technical detail
 
-### 3. Grid layout adjustment
-Use `sm:grid-cols-3` when S710 present (3 cards), `sm:grid-cols-2` when S700-only (2 cards) for balanced layout.
+The Stripe Terminal Configuration API (`/v1/terminal/configurations`) accepts `cellular[enabled]=true`. This is set per-location. The S710's eSIM activates automatically when this flag is set — no user action required. The S700 ignores the cellular config silently.
 
