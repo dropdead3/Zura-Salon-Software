@@ -13,6 +13,7 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  Layers,
 } from 'lucide-react';
 import {
   Select,
@@ -26,9 +27,12 @@ import {
   useTerminalSplashScreen,
   useUploadSplashScreen,
   useRemoveSplashScreen,
+  usePushSplashToAllLocations,
+  resolveAllTerminalLocations,
 } from '@/hooks/useTerminalSplashScreen';
 import { useLocations } from '@/hooks/useLocations';
 import { useColorTheme } from '@/hooks/useColorTheme';
+import { toast } from 'sonner';
 import { getTerminalPalette } from '@/lib/terminal-splash-palettes';
 
 const TARGET_W = 1080;
@@ -57,11 +61,13 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   );
   const uploadMutation = useUploadSplashScreen();
   const removeMutation = useRemoveSplashScreen();
+  const pushAllMutation = usePushSplashToAllLocations();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<{ base64: string; mime: 'image/jpeg' | 'image/png' | 'image/gif' } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [generatingFromLogo, setGeneratingFromLogo] = useState(false);
+  const [pushProgress, setPushProgress] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback(async (file: File) => {
@@ -139,6 +145,33 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     if (!selectedLocationId || !terminalLocationId) return;
     removeMutation.mutate({ locationId: selectedLocationId, terminalLocationId });
   };
+
+  const handlePushToAll = useCallback(async () => {
+    if (!pendingFile) return;
+    setPushProgress('Resolving locations...');
+    try {
+      const allLocIds = locations.map(l => l.id);
+      const pairs = await resolveAllTerminalLocations(allLocIds);
+      if (pairs.length === 0) {
+        setPushProgress(null);
+        toast.error('No terminal locations found across any location');
+        return;
+      }
+      setPushProgress(`Pushing 0/${pairs.length}...`);
+      await pushAllMutation.mutateAsync({
+        pairs,
+        imageBase64: pendingFile.base64,
+        imageMimeType: pendingFile.mime,
+        onProgress: (done, total) => setPushProgress(`Pushing ${done}/${total}...`),
+      });
+      setPreviewUrl(null);
+      setPendingFile(null);
+    } catch {
+      // error handled by mutation
+    } finally {
+      setPushProgress(null);
+    }
+  }, [pendingFile, locations, pushAllMutation]);
 
   const { colorTheme } = useColorTheme();
 
@@ -378,6 +411,22 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                         )}
                         Upload to Reader
                       </Button>
+                      {locations.length >= 2 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handlePushToAll}
+                          disabled={!!pushProgress}
+                          className="text-xs"
+                        >
+                          {pushProgress ? (
+                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                          ) : (
+                            <Layers className="w-3.5 h-3.5 mr-1.5" />
+                          )}
+                          {pushProgress || 'Push to All Locations'}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
