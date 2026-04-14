@@ -87,6 +87,19 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       return;
     }
 
+    // GIF: pass through raw base64 (canvas destroys animation)
+    if (file.type === 'image/gif') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const base64 = dataUrl.split(',')[1];
+        setPreviewUrl(dataUrl);
+        setPendingFile({ base64, mime: 'image/gif' });
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
     // Resize/crop to 1080x1920 using canvas
     const img = new window.Image();
     const url = URL.createObjectURL(file);
