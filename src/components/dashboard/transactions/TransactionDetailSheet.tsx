@@ -33,6 +33,7 @@ import {
   MapPin,
   Calendar,
   User,
+  Loader2,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -41,7 +42,9 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PaymentMethodBadge } from './PaymentMethodBadge';
 import { VoidConfirmDialog } from './VoidConfirmDialog';
-import { printReceipt } from './ReceiptPrintView';
+import { printReceipt, buildReceiptHtml } from './ReceiptPrintView';
+import type { ReceiptBusinessInfo } from './ReceiptPrintView';
+import { groupedTransactionToReceiptData } from './receiptData';
 import { RefundDialog } from './RefundDialog';
 import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
@@ -52,6 +55,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 import type { TransactionItem } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionDetailSheetProps {
   transaction: GroupedTransaction | null;
