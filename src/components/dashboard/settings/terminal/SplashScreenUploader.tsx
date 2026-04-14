@@ -145,6 +145,33 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     removeMutation.mutate({ locationId: selectedLocationId, terminalLocationId });
   };
 
+  const handlePushToAll = useCallback(async () => {
+    if (!pendingFile) return;
+    setPushProgress('Resolving locations...');
+    try {
+      const allLocIds = locations.map(l => l.id);
+      const pairs = await resolveAllTerminalLocations(allLocIds);
+      if (pairs.length === 0) {
+        setPushProgress(null);
+        toast.error('No terminal locations found across any location');
+        return;
+      }
+      setPushProgress(`Pushing 0/${pairs.length}...`);
+      await pushAllMutation.mutateAsync({
+        pairs,
+        imageBase64: pendingFile.base64,
+        imageMimeType: pendingFile.mime,
+        onProgress: (done, total) => setPushProgress(`Pushing ${done}/${total}...`),
+      });
+      setPreviewUrl(null);
+      setPendingFile(null);
+    } catch {
+      // error handled by mutation
+    } finally {
+      setPushProgress(null);
+    }
+  }, [pendingFile, locations, pushAllMutation]);
+
   const { colorTheme } = useColorTheme();
 
   const handleGenerateFromLogo = useCallback(async () => {
