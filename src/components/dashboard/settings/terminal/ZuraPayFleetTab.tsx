@@ -603,8 +603,8 @@ export function ZuraPayFleetTab({
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => setIsRegistering(true)}
-                      disabled={!isConnected}
+                      onClick={onRegisterReader}
+                      disabled={!isLocationConnected}
                     >
                       <Plus className="w-4 h-4 mr-1" />
                       Register Reader
