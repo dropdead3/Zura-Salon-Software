@@ -363,20 +363,25 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
                     type="button"
                     onClick={() => setSelectedModel(model)}
                     className={cn(
-                      'flex items-center gap-2 p-3 rounded-lg border text-left transition-all',
+                      'relative flex items-center gap-2 p-3 rounded-lg border text-left transition-all',
                       selectedModel === model
-                        ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/10'
+                        ? 'bg-primary/10 border-primary ring-2 ring-primary/30 shadow-sm'
                         : 'bg-muted/30 border-border hover:border-primary/20'
                     )}
                   >
+                    {selectedModel === model && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                    )}
                     <div className={cn(
                       'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                      selectedModel === model ? 'bg-primary/10' : 'bg-muted'
+                      selectedModel === model ? 'bg-primary/20' : 'bg-muted'
                     )}>
-                      {model === 's710' ? <Signal className="w-4 h-4 text-primary" /> : <Wifi className="w-4 h-4 text-muted-foreground" />}
+                      {model === 's710' ? <Signal className={cn("w-4 h-4", selectedModel === model ? "text-primary" : "text-muted-foreground")} /> : <Wifi className={cn("w-4 h-4", selectedModel === model ? "text-primary" : "text-muted-foreground")} />}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-sans text-xs font-medium">{model === 's700' ? 'S700' : 'S710'}</p>
+                      <p className={cn("font-sans text-xs font-medium", selectedModel === model && "text-primary")}>{model === 's700' ? 'S700' : 'S710'}</p>
                       <p className="text-[10px] text-muted-foreground truncate">{model === 's710' ? 'WiFi + Cellular' : 'WiFi only'}</p>
                     </div>
                   </button>
