@@ -161,10 +161,15 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       imageBase64: pendingFile.base64,
       imageMimeType: pendingFile.mime,
     }, {
-      onSuccess: () => {
+      onSuccess: async () => {
         setPreviewUrl(null);
         setPendingFile(null);
-        setIsDefaultLuxury(wasDefault);
+        if (orgId) {
+          try {
+            await upsertSplashOrigin(orgId, selectedLocationId, terminalLocationId, wasDefault ? 'default_luxury' : 'custom');
+            queryClient.invalidateQueries({ queryKey: ['terminal-splash-metadata'] });
+          } catch { /* non-critical */ }
+        }
       },
     });
   };
@@ -172,7 +177,14 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
   const handleRemove = () => {
     if (!selectedLocationId || !terminalLocationId) return;
     removeMutation.mutate({ locationId: selectedLocationId, terminalLocationId }, {
-      onSuccess: () => setIsDefaultLuxury(false),
+      onSuccess: async () => {
+        if (orgId) {
+          try {
+            await deleteSplashOrigin(orgId, selectedLocationId, terminalLocationId);
+            queryClient.invalidateQueries({ queryKey: ['terminal-splash-metadata'] });
+          } catch { /* non-critical */ }
+        }
+      },
     });
   };
 
