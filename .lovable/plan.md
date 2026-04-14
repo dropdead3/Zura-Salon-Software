@@ -1,42 +1,44 @@
 
 
-# Add "Test Display" Button to Fleet Tab
+# Improve Splash Screen Design
 
-## What This Does
-Adds a "Test Display" button next to each online reader in the Fleet tab. Clicking it pushes sample cart data (e.g., "Sample Haircut $45.00", "Styling Product $22.50") to the physical reader display for ~8 seconds, then auto-clears it. This lets operators verify end-to-end connectivity without processing a real payment.
+## Current State
+The generated splash has a simple linear gradient, a single radial glow, the org logo centered, business name in Termina, a thin divider line, and the Zura Z icon with "Powered by Zura" at the bottom. It works but feels flat and basic.
 
-## Changes
+## Improvements
 
-### `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
+### 1. Richer Background Depth
+- Add a **secondary radial glow** at the top of the canvas (subtle, wide) to create a vignette/atmosphere effect
+- Add a **third glow** at the bottom near the Zura branding, very faint, to lift the footer area
+- Shift the main gradient to be slightly off-center (40% midpoint instead of 50%) for more visual interest
 
-In the reader row (lines 640-722), add a "Test Display" button between the status badge and the delete button for online readers only:
+### 2. Subtle Noise/Grain Texture
+- Overlay a procedural noise pattern at very low opacity (3-5%) across the entire canvas to add tactile depth and prevent banding — generated pixel-by-pixel using `getImageData`/`putImageData`
 
-- Import `useAuth` to get the current user's organization context
-- Add local state `testingReaderId` to track which reader is being tested
-- On click:
-  1. Set `testingReaderId` to the reader's ID
-  2. Call `supabase.functions.invoke('terminal-reader-display', { body: { action: 'set_reader_display', reader_id, organization_id, line_items: [...sample items], tax: 382 } })`
-  3. Wait 8 seconds
-  4. Call `clear_reader_display` to reset the screen
-  5. Toast success/error
-  6. Clear `testingReaderId`
+### 3. Logo Presentation
+- Add a **soft glow/halo** behind the logo using a tight radial gradient before drawing the logo itself
+- Slightly reduce max logo size from 500 to 420 to give more breathing room
+- Position logo slightly higher (offset from center by ~120px instead of 80px)
 
-- Button styling: `variant="outline"` `size="sm"` with `MonitorSmartphone` icon, shows `Loader2` spinner while testing
-- Only visible for readers with `status === 'online'`
+### 4. Typography & Layout
+- Add **location name** below the business name in a lighter weight, smaller size (if available from context, otherwise skip)
+- Increase letter-spacing on business name from 4px to 6px for more premium feel
+- Make the accent divider line slightly wider (160px instead of 120px) and use rounded caps
 
-Sample cart data:
-```text
-Line 1: "Sample Haircut"         — $45.00 × 1
-Line 2: "Styling Product"        — $22.50 × 2
-Tax:    $3.82
-Total:  $93.32
-```
+### 5. Zura Footer Enhancement
+- Increase Z icon size from 60px to 72px for better visibility
+- Add a subtle horizontal rule above the Zura section (very low opacity)
+- Slightly increase "Powered by Zura" font size from 24px to 26px with wider letter-spacing (3px)
 
-### No edge function changes needed
-The existing `set_reader_display` and `clear_reader_display` actions in `terminal-reader-display` already support exactly this use case.
+### 6. Palette Enhancement
+- Add a warm highlight stop at 20% opacity near the center to create a more dimensional, "lit from within" feel
+- Increase the main radial glow radius from 400 to 500 for a broader, softer bloom
+
+## File Changed
+- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — rewrite the canvas drawing section in `handleGenerateFromLogo` (lines 164-237)
 
 ## Technical Notes
-- The `organization_id` comes from the component's existing location data (`selectedLoc`) which has the org reference, or from the auth context
-- Need to find how org ID is available — will check `useAuth` or derive from `locations[0]` prop which likely has `organization_id`
-- The 8-second display duration gives enough time to visually confirm the reader screen updates
+- All changes are in the Canvas 2D rendering code — no new dependencies
+- Noise texture uses `ctx.getImageData`/`putImageData` with random alpha values
+- Rounded line caps via `ctx.lineCap = 'round'` for the divider
 
