@@ -1,5 +1,4 @@
 import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -66,28 +65,28 @@ export function ZuraPayActivationChecklist({
   if (allComplete) return null;
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.04]">
+      <div className="flex flex-col space-y-1.5 p-6">
         <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <ArrowRight className={tokens.card.icon} />
+          <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center">
+            <ArrowRight className="w-5 h-5 text-amber-500" />
           </div>
           <div>
-            <CardTitle className={tokens.card.title}>
+            <h3 className={tokens.card.title}>
               Activation Progress
               <MetricInfoTooltip description="Complete each step to fully activate Zura Pay for your organization." />
-            </CardTitle>
-            <CardDescription>
+            </h3>
+            <p className="text-sm text-muted-foreground">
               {completedCount} of {steps.length} steps complete
-            </CardDescription>
+            </p>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="p-6 pt-0">
         {/* Progress bar */}
-        <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-6">
+        <div className="w-full h-2 bg-amber-500/15 rounded-full overflow-hidden mb-6">
           <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
+            className="h-full bg-amber-500 rounded-full transition-all duration-500"
             style={{ width: `${(completedCount / steps.length) * 100}%` }}
           />
         </div>
@@ -96,7 +95,7 @@ export function ZuraPayActivationChecklist({
           {steps.map((step, idx) => (
             <div key={idx} className="flex items-start gap-3">
               {step.complete ? (
-                <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
               ) : (
                 <Circle className="w-5 h-5 text-muted-foreground/40 mt-0.5 shrink-0" />
               )}
@@ -114,7 +113,7 @@ export function ZuraPayActivationChecklist({
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
