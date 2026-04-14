@@ -39,6 +39,21 @@ export function useOrgConnectStatus(orgId: string | undefined) {
   });
 }
 
+export function useOrgBankLast4(orgId: string | undefined, stripeAccountId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['org-bank-last4', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('verify-zura-pay-connection', {
+        body: { organization_id: orgId },
+      });
+      if (error) throw error;
+      return (data?.bank_last4 as string | null) ?? null;
+    },
+    enabled: !!orgId && !!stripeAccountId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useConnectZuraPay() {
   const queryClient = useQueryClient();
 

@@ -22,7 +22,7 @@ import {
   useCreateTerminalLocation, useDeleteTerminalLocation,
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
-import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation, useCreateLocationAccount } from '@/hooks/useZuraPayConnect';
+import { useOrgConnectStatus, useOrgBankLast4, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation, useCreateLocationAccount } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
@@ -240,6 +240,7 @@ export function TerminalSettingsContent() {
   const orgId = effectiveOrganization?.id;
   const { data: locations, isLoading: locationsLoading } = useZuraPayLocations();
   const { data: connectStatus } = useOrgConnectStatus(orgId);
+  const { data: bankLast4 } = useOrgBankLast4(orgId, connectStatus?.stripe_connect_account_id);
   const queryClient = useQueryClient();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [showAllLocations, setShowAllLocations] = useState(false);
@@ -457,7 +458,7 @@ export function TerminalSettingsContent() {
               onDisconnectLocation={(locationId) => orgId && disconnectLocationMutation.mutate({ organizationId: orgId, locationId })}
               isDisconnectingLocation={disconnectLocationMutation.isPending}
               orgConnectAccountId={connectStatus?.stripe_connect_account_id}
-              orgBankLast4={verifyMutation.data?.bank_last4 ?? null}
+              orgBankLast4={bankLast4 ?? verifyMutation.data?.bank_last4 ?? null}
               onCreateLocationAccount={(locationId) => orgId && createLocationAccountMutation.mutate({
                 organizationId: orgId,
                 locationId,
