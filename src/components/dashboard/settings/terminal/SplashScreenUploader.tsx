@@ -167,11 +167,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
 
       // Theme-aware gradient background
       const p = getTerminalPalette(colorTheme);
-      const grad = ctx.createLinearGradient(0, 0, 0, TARGET_H);
-      grad.addColorStop(0, p.gradientStops[0]);
-      grad.addColorStop(0.4, p.gradientStops[1]);
-      grad.addColorStop(1, p.gradientStops[2]);
-      ctx.fillStyle = grad;
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
       // Subtle corner glow — top-left
