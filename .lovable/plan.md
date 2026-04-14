@@ -1,54 +1,51 @@
 
-Prompt feedback
 
-- Good bug report: you separated “the splash is actually active on the reader” from “the button state is wrong,” which made it clear this is a state/source-of-truth bug, not an upload bug.
-- Even better next time: mention whether it fails after refresh, after switching locations, and after auto-registration vs manual upload, because those are different code paths.
+## Problem
 
-Problem
+The Splash Screen card only shows a dropdown selector — it doesn't give an at-a-glance overview of which locations have splash screens set and which don't have terminals registered. The user has to click through each location one at a time.
 
-- The disabled button state is currently driven by local `isDefaultLuxury` state inside `SplashScreenUploader`.
-- That flag only updates after a same-session manual default upload.
-- It is lost on refresh and never gets set for background flows like reader auto-registration or theme-triggered splash refreshes.
-- The backend `get_splash_screen` response only tells the UI that a splash exists, not whether it is the Default Luxury Splash or a custom upload.
+## Solution
 
-Plan
+Replace the simple dropdown with a location list that shows status for each location, then loads the splash editor when a location is clicked. Locations without registered terminals are greyed out with a "No terminal registered" label.
 
-1. Add durable splash-origin tracking
-- Create an organization-scoped backend record for each terminal location storing whether the active splash origin is `default_luxury` or `custom`.
-- Key it by `organization_id`, `location_id`, and `terminal_location_id`.
-- Add proper RLS so org members can read and org admins can write.
+### UI Design
 
-2. Drive the button from backend truth, not local state
-- Add a hook to fetch the splash origin for the selected location/terminal.
-- In `SplashScreenUploader`, disable the CTA when `hasSplash && origin === 'default_luxury'`.
-- If metadata is missing, keep the button enabled so we do not falsely lock the UI.
+```text
+┌─────────────────────────────────────────────────┐
+│ SPLASH SCREEN ⓘ                        [ACTIVE] │
+│ Customize the idle screen on your readers.       │
+├─────────────────────────────────────────────────┤
+│                                                  │
+│  ┌─ Location List ─────────────────────────────┐ │
+│  │ ● Downtown Studio          ✓ Default Luxury │ │  ← clickable, selected
+│  │ ○ Uptown Salon             ✓ Custom Splash  │ │  ← clickable
+│  │ ○ Westside Branch          ○ No Splash      │ │  ← clickable
+│  │ ░ Pop-Up Location     No terminal registered │ │  ← greyed out, not clickable
+│  └─────────────────────────────────────────────┘ │
+│                                                  │
+│  [Selected location's splash editor below]       │
+│  ┌──────────┐                                    │
+│  │  Preview  │  Upload / Default Luxury / Remove │
+│  └──────────┘                                    │
+└─────────────────────────────────────────────────┘
+```
 
-3. Update every splash write path to keep metadata synced
-- Manual “Use Default Luxury Splash” upload → mark `default_luxury`
-- Manual custom upload → mark `custom`
-- Remove splash → clear/reset metadata
-- Auto-apply splash after reader registration → mark `default_luxury`
-- Theme-based splash re-sync → only touch locations already marked `default_luxury`
+### Approach
 
-4. Clean up the component logic
-- Remove `isDefaultLuxury` as the source of truth.
-- Keep `pendingFile.fromDefault` only for preview/upload intent.
-- Use query invalidation so the button updates immediately after upload/remove and stays correct after refresh.
+1. Fetch terminal locations for **all** org locations upfront (not just the selected one) so we can show status indicators
+2. For each location with a terminal, also fetch the splash metadata to show origin (default_luxury, custom, or none)
+3. Render a vertical list of location rows replacing the dropdown:
+   - **Has terminal + splash**: Show location name with status badge (emerald checkmark + "Default Luxury" or "Custom")
+   - **Has terminal, no splash**: Show location name with muted "No Splash" label
+   - **No terminal**: Greyed out row, disabled click, "No terminal registered" in muted text
+4. Clicking an enabled row selects it and shows the existing splash editor below
+5. Keep the existing splash editor logic unchanged — it just drives off `selectedLocationId`
 
-Files likely involved
+### New hook: `useAllLocationTerminalStatus`
 
-- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`
-- `src/components/dashboard/settings/TerminalSettingsContent.tsx`
-- `src/hooks/useAutoSyncTerminalSplash.ts`
-- `src/hooks/useTerminalSplashScreen.ts` or a new terminal splash metadata hook
-- New backend migration for splash-origin metadata + RLS
+A helper hook that iterates all org locations and calls `list_locations` for each to determine which have terminal locations. Results are cached per location. This avoids N sequential calls by using `Promise.allSettled` and caching individual results.
 
-Expected result
+### Files changed
 
-- When the active reader splash is the Default Luxury Splash, the button will reliably render disabled and show the correct “Using Default Luxury Splash” state.
-- That state will survive refreshes, location switches, auto-registration, and theme-sync flows.
-- Custom splashes will not be mistaken for default ones.
+- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — Replace dropdown with location status list, add bulk terminal-location fetching, show per-location splash status badges
 
-Enhancement suggestion
-
-- While fixing this, I would also tighten the theme-sync behavior so theme changes never overwrite custom reader splashes.
