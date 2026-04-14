@@ -31,9 +31,9 @@ export function ZuraPayTippingTab() {
 
   const save = (updates: Partial<TipConfig>) => {
     const next = { ...localConfig, ...updates };
-    // Only update localConfig for non-percentage fields
-    if (!updates.percentages) {
-      setLocalConfig(next);
+    setLocalConfig(next);
+    if (updates.percentages) {
+      setLocalPercentages(updates.percentages.map(String));
     }
     justSaved.current = true;
     updateTip.mutate({ key: 'tip_config', value: next });
