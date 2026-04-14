@@ -1,22 +1,25 @@
 
 
-# Fix Splash Screen Background — Solid Black + Corner Glows Only
+# Adjust Splash Screen Layout & Styling
 
-## Problem
-The 3-stop linear gradient in `terminal-splash-palettes.ts` has a lighter middle stop (e.g. `#2d2820` for cream theme) at position 0.4, creating a visible reflective band across the center of the screen.
+## Changes in `SplashScreenUploader.tsx`
 
-## Fix
+### 1. Enlarge logo
+- Line 188: `maxLogo` from `440` → `520`
 
-### 1. Replace linear gradient with solid black fill
-In `SplashScreenUploader.tsx` (lines 170-175), replace the linear gradient with a flat `#000000` fill:
-```
-ctx.fillStyle = '#000000';
-ctx.fillRect(0, 0, TARGET_W, TARGET_H);
-```
+### 2. Shrink location name
+- Line 204: font size from `36px` → `24px`
+- Line 206: letter-spacing from `8px` → `5px`
 
-### 2. Keep corner radial glows as-is
-The two radial gradients at top-left and bottom-right (lines 177-189) remain unchanged — they use the accent color at 0.10 opacity which provides the subtle tan glow.
+### 3. Increase padding between logo and location name
+- Line 193: `groupGap` from `50` → `70`
+
+### 4. Match location name color to "Powered by Zura" color
+- Line 203: change `ctx.fillStyle = p.textColor` → `ctx.fillStyle = p.mutedColor`
+
+### 5. Adjust text block height for smaller font
+- Line 192: `textBlockHeight` from `40` → `28`
 
 ## File
-- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — lines 170-175 (replace 6 lines with 2)
+- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — parameter tweaks on lines 188, 192-193, 203-204, 206
 
