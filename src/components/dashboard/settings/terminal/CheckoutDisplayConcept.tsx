@@ -6,7 +6,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Monitor, Palette, Play, Pause, Settings2, ToggleLeft, ToggleRight, Receipt } from 'lucide-react';
 import { S710CheckoutSimulator, SimCartItem } from './S710CheckoutSimulator';
 import { cn } from '@/lib/utils';
-import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useTipConfig } from '@/hooks/useTipConfig';
 import { useReceiptConfig } from '@/hooks/useReceiptConfig';
 
 const S710_SPECS = [
@@ -31,10 +31,9 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
   const [autoPlay, setAutoPlay] = useState(true);
 
   // Pull live config from database
-  const { data: tipConfigData } = useColorBarSetting('tip_config');
+  const { data: tipConfig } = useTipConfig();
   const { data: receiptConfig } = useReceiptConfig();
 
-  const tipConfig = tipConfigData?.value as { enabled?: boolean; percentages?: number[] } | undefined;
   const tipEnabled = tipConfig?.enabled ?? true;
   const tipPercentages = tipConfig?.percentages ?? [20, 25, 30];
   const receiptSlogan = receiptConfig?.custom_message || '';

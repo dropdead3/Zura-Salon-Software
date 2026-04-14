@@ -5,66 +5,30 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { HandCoins, Loader2, AlertTriangle } from 'lucide-react';
-import { useColorBarSetting, useUpsertColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
-
-const SETTING_KEY = 'tip_config';
-
-interface TipConfig {
-  enabled: boolean;
-  percentages: [number, number, number];
-  fixed_threshold_enabled: boolean;
-  fixed_threshold_amount: number;
-  include_retail: boolean;
-  prompt_on_saved_cards: boolean;
-}
-
-const DEFAULT_CONFIG: TipConfig = {
-  enabled: true,
-  percentages: [20, 25, 30],
-  fixed_threshold_enabled: false,
-  fixed_threshold_amount: 2500, // $25.00 in cents
-  include_retail: false,
-  prompt_on_saved_cards: true,
-};
+import { useTipConfig, useUpdateTipConfig, DEFAULT_TIP_CONFIG, type TipConfig } from '@/hooks/useTipConfig';
 
 export function ZuraPayTippingTab() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
-  const { data: setting, isLoading } = useColorBarSetting(SETTING_KEY);
-  const upsert = useUpsertColorBarSetting();
+  const { data: config, isLoading } = useTipConfig();
+  const updateTip = useUpdateTipConfig();
 
-  const [config, setConfig] = useState<TipConfig>(DEFAULT_CONFIG);
+  const [localConfig, setLocalConfig] = useState<TipConfig>(DEFAULT_TIP_CONFIG);
 
-  // Sync from server
   useEffect(() => {
-    if (setting?.value && Object.keys(setting.value).length > 0) {
-      setConfig({
-        enabled: setting.value.enabled === true,
-        percentages: (setting.value.percentages as [number, number, number]) || DEFAULT_CONFIG.percentages,
-        fixed_threshold_enabled: setting.value.fixed_threshold_enabled === true,
-        fixed_threshold_amount: (setting.value.fixed_threshold_amount as number) || DEFAULT_CONFIG.fixed_threshold_amount,
-        include_retail: setting.value.include_retail === true,
-        prompt_on_saved_cards: setting.value.prompt_on_saved_cards !== false,
-      });
+    if (config) {
+      setLocalConfig(config);
     }
-  }, [setting]);
+  }, [config]);
 
   const save = (updates: Partial<TipConfig>) => {
-    if (!orgId) return;
-    const next = { ...config, ...updates };
-    setConfig(next);
-    upsert.mutate({
-      organization_id: orgId,
-      setting_key: SETTING_KEY,
-      setting_value: next as unknown as Record<string, unknown>,
-    });
+    const next = { ...localConfig, ...updates };
+    setLocalConfig(next);
+    updateTip.mutate({ key: 'tip_config', value: next });
   };
 
   const updatePercentage = (index: number, value: string) => {
     const num = parseInt(value, 10);
     if (isNaN(num) || num < 0 || num > 100) return;
-    const next = [...config.percentages] as [number, number, number];
+    const next = [...localConfig.percentages] as [number, number, number];
     next[index] = num;
     save({ percentages: next });
   };
@@ -93,15 +57,15 @@ export function ZuraPayTippingTab() {
               </CardDescription>
             </div>
             <Switch
-              checked={config.enabled}
+              checked={localConfig.enabled}
               onCheckedChange={(checked) => save({ enabled: checked })}
-              disabled={upsert.isPending}
+              disabled={updateTip.isPending}
             />
           </div>
         </CardHeader>
       </Card>
 
-      {config.enabled && (
+      {localConfig.enabled && (
         <>
           {/* Tip Percentages Card */}
           <Card>
@@ -113,7 +77,7 @@ export function ZuraPayTippingTab() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4">
-                {config.percentages.map((pct, i) => (
+                {localConfig.percentages.map((pct, i) => (
                   <div key={i} className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground font-sans">
                       Option {i + 1}
@@ -152,13 +116,13 @@ export function ZuraPayTippingTab() {
                   </CardDescription>
                 </div>
                 <Switch
-                  checked={config.fixed_threshold_enabled}
+                  checked={localConfig.fixed_threshold_enabled}
                   onCheckedChange={(checked) => save({ fixed_threshold_enabled: checked })}
-                  disabled={upsert.isPending}
+                  disabled={updateTip.isPending}
                 />
               </div>
             </CardHeader>
-            {config.fixed_threshold_enabled && (
+            {localConfig.fixed_threshold_enabled && (
               <CardContent>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground font-sans">
@@ -172,7 +136,7 @@ export function ZuraPayTippingTab() {
                       type="number"
                       min={0}
                       step={1}
-                      value={(config.fixed_threshold_amount / 100).toFixed(0)}
+                      value={(localConfig.fixed_threshold_amount / 100).toFixed(0)}
                       onChange={(e) => {
                         const cents = Math.round(parseFloat(e.target.value || '0') * 100);
                         save({ fixed_threshold_amount: cents });
@@ -206,9 +170,9 @@ export function ZuraPayTippingTab() {
                 </Label>
                 <Switch
                   id="include-retail"
-                  checked={config.include_retail}
+                  checked={localConfig.include_retail}
                   onCheckedChange={(checked) => save({ include_retail: checked })}
-                  disabled={upsert.isPending}
+                  disabled={updateTip.isPending}
                 />
               </div>
 
@@ -225,9 +189,9 @@ export function ZuraPayTippingTab() {
                 </Label>
                 <Switch
                   id="saved-cards"
-                  checked={config.prompt_on_saved_cards}
+                  checked={localConfig.prompt_on_saved_cards}
                   onCheckedChange={(checked) => save({ prompt_on_saved_cards: checked })}
-                  disabled={upsert.isPending}
+                  disabled={updateTip.isPending}
                 />
               </div>
             </CardContent>
