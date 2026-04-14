@@ -74,7 +74,7 @@ function useZuraPayLocations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('id, name, stripe_account_id, stripe_status, stripe_payments_enabled, stripe_connect_status, address, city, state_province')
+        .select('id, name, stripe_account_id, stripe_status, stripe_payments_enabled, stripe_connect_status, address, city, state_province, legal_name')
         .eq('organization_id', orgId!);
       if (error) throw error;
       return data || [];
@@ -335,15 +335,19 @@ export function TerminalSettingsContent() {
 
   // Check if org has processed at least one terminal payment
   const { data: hasFirstTransaction } = useQuery({
-    queryKey: ['zura-pay-first-transaction', orgId],
+    queryKey: ['zura-pay-first-transaction', orgId, activeLocationId],
     queryFn: async () => {
-      const { count, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select('id', { count: 'exact', head: true })
         .eq('organization_id', orgId!)
         .not('paid_at', 'is', null)
         .eq('payment_method', 'terminal')
         .limit(1);
+      if (activeLocationId) {
+        query = query.eq('location_id', activeLocationId);
+      }
+      const { count, error } = await query;
       if (error) throw error;
       return (count ?? 0) > 0;
     },

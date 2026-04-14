@@ -39,12 +39,17 @@ export function useOrgConnectStatus(orgId: string | undefined) {
   });
 }
 
+/**
+ * Fetches the last 4 digits of the org's bank account.
+ * Uses the verify endpoint in read-only mode (action: 'get_bank_last4').
+ * The verify function is idempotent — safe for repeated calls.
+ */
 export function useOrgBankLast4(orgId: string | undefined, stripeAccountId: string | null | undefined) {
   return useQuery({
     queryKey: ['org-bank-last4', orgId],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('verify-zura-pay-connection', {
-        body: { organization_id: orgId },
+        body: { organization_id: orgId, action: 'get_bank_last4' },
       });
       if (error) throw error;
       return (data?.bank_last4 as string | null) ?? null;
