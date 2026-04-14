@@ -2,49 +2,25 @@
 
 ## Problem
 
-The S710 simulator's splash screen is a generic animated placeholder (gradient icon, generic layout). It doesn't match the actual splash screen shown on the physical device (screenshot reference: solid black background, centered "ZURA PAY" + "POWERED BY INTELLIGENCE" + divider + location name + footer). More critically, it's not wired to display the actual splash image that's been uploaded/generated via the Splash Screen Uploader.
+The amber-styled activation checklist card uses `amber-500` with very low opacity (`/[0.04]`, `/15`, `/[0.06]`) for backgrounds and borders. On dark mode these subtle washes read well against near-black surfaces. On light mode, the light cream/white background swallows these low-opacity ambers, making the card border, progress bar track, icon box, and current-step highlight nearly invisible.
 
-## Plan
+## Solution
 
-### 1. Wire the simulator to the actual splash screen data
+Add light-mode-specific overrides using Tailwind's `dark:` prefix pattern so amber elements are more visible on light backgrounds without changing the dark mode appearance.
 
-**File: `CheckoutDisplayConcept.tsx`**
-- Import `useTerminalSplashScreen`, `useTerminalLocations`, `useLocations` hooks
-- Fetch the active splash screen URL for the first available terminal location
-- Pass `splashImageUrl` prop down to `S710CheckoutSimulator`
+### Changes (single file: `ZuraPayActivationChecklist.tsx`)
 
-### 2. Redesign the SplashScreen component to match reality
+| Element | Current | Light-mode fix |
+|---|---|---|
+| Card border | `border-amber-500/30` | `border-amber-400/50 dark:border-amber-500/30` |
+| Card bg | `bg-amber-500/[0.04]` | `bg-amber-50 dark:bg-amber-500/[0.04]` |
+| Icon box bg | `bg-amber-500/15` | `bg-amber-100 dark:bg-amber-500/15` |
+| Progress track bg | `bg-amber-500/15` | `bg-amber-100 dark:bg-amber-500/15` |
+| Progress bar fill | `bg-amber-500` | unchanged (already visible) |
+| Current step highlight | `bg-amber-500/[0.06]` | `bg-amber-50 dark:bg-amber-500/[0.06]` |
+| Check icons | `text-amber-500` | unchanged (already visible) |
+| "Next" text | `text-amber-500` | unchanged |
+| Action link | `text-amber-600 hover:text-amber-500` | unchanged |
 
-**File: `S710CheckoutSimulator.tsx`**
-
-Add a new `splashImageUrl` prop to the simulator. The `SplashScreen` sub-component behavior changes:
-
-- **If `splashImageUrl` is set**: Render the actual uploaded image as a full-bleed cover image inside the screen frame. No animations, no placeholder — just the real splash.
-- **If no splash image**: Render a default that matches the actual canvas-generated design:
-  - Solid black background (not the themed gradient)
-  - Two subtle corner radial glows (top-left, bottom-right) using theme accent
-  - "ZURA PAY" in Termina, centered
-  - "POWERED BY INTELLIGENCE" subtitle
-  - Thin accent-colored divider line
-  - Location/business name below divider
-  - Footer: Z icon + "POWERED BY ZURA" at bottom
-
-This matches what the canvas generator produces (lines 220-301 of SplashScreenUploader) so the simulator preview is a faithful representation.
-
-### 3. Update prop threading
-
-**File: `S710CheckoutSimulator.tsx`**
-- Add `splashImageUrl?: string | null` to `S710SimulatorProps`
-- Pass through to `SplashScreen`
-
-**File: `CheckoutDisplayConcept.tsx`**
-- Pass `splashImageUrl` to the simulator component
-
-### Technical details
-
-- Files changed: `S710CheckoutSimulator.tsx`, `CheckoutDisplayConcept.tsx`
-- The splash URL comes from the existing `useTerminalSplashScreen` hook's `splash_url` field
-- Uses the first available location's terminal for the query (same pattern as `SplashScreenUploader`)
-- The default (no-image) splash design mirrors the canvas generator's output for visual consistency
-- The themed gradient background (`screenBg`) should still apply to other screens (idle, cart, tip) but splash uses solid black when showing the default design
+This uses Tailwind's native light/dark split so dark mode stays exactly as-is while light mode gets proper amber tinting via Tailwind's semantic amber palette (`amber-50`, `amber-100`, `amber-400`).
 
