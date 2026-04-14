@@ -98,7 +98,8 @@ function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalLocations, us
       onClick={() => onSelect?.(loc.id)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect?.(loc.id); }}
+      aria-label={`Select ${loc.name}`}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (e.key === ' ') e.preventDefault(); onSelect?.(loc.id); } }}
     >
       <div className="flex flex-col">
         <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
@@ -515,6 +516,9 @@ export function ZuraPayFleetTab({
                             ? `Use Account Ending in ••${orgBankLast4}`
                             : 'Use Organization Account'}
                       </Button>
+                      {orgBankLast4Error && (
+                        <p className="text-xs text-destructive mt-1">Unable to load account details</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="h-px w-8 bg-border" />

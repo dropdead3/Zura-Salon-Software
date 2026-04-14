@@ -314,6 +314,15 @@ export function TerminalSettingsContent() {
     }
   }, [orgId, searchParams, setSearchParams]);
 
+  // G3: Auto-select location after onboarding return
+  useEffect(() => {
+    const autoId = verifyMutation.data?.auto_connected_location_id;
+    if (autoId) {
+      setSelectedLocationId(autoId);
+      setShowAllLocations(false);
+    }
+  }, [verifyMutation.data?.auto_connected_location_id]);
+
   const activeLocationId = showAllLocations ? null : (selectedLocationId || locations?.[0]?.id || null);
   const activeLocation = locations?.find((l) => l.id === activeLocationId);
   const connectedLocationId = activeLocation?.stripe_account_id ? activeLocationId : null;
@@ -409,6 +418,10 @@ export function TerminalSettingsContent() {
         hasTerminalLocations={(terminalLocations?.length ?? 0) > 0}
         hasReaders={(readers?.length ?? 0) > 0}
         hasFirstTransaction={hasFirstTransaction}
+        locationHasOwnAccount={
+          !!activeLocation?.stripe_account_id &&
+          activeLocation.stripe_account_id !== connectStatus?.stripe_connect_account_id
+        }
       />
 
       {/* Tabs */}
