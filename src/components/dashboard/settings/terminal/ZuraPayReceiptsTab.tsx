@@ -260,6 +260,15 @@ export function ZuraPayReceiptsTab() {
                   <SelectItem value="left">Left</SelectItem>
                 </SelectContent>
               </Select>
+              <Label className="font-sans text-sm font-medium mt-3 block">Logo Size</Label>
+              <Select value={local.logo_size || 'md'} onValueChange={(v) => update({ logo_size: v as 'sm' | 'md' | 'lg' })}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sm">Small</SelectItem>
+                  <SelectItem value="md">Medium</SelectItem>
+                  <SelectItem value="lg">Large</SelectItem>
+                </SelectContent>
+              </Select>
               {!logoUrl && (
                 <p className="text-xs text-amber-500">No logo uploaded yet. Add one in Business Settings.</p>
               )}
@@ -374,34 +383,22 @@ export function ZuraPayReceiptsTab() {
           <p className="text-xs text-muted-foreground font-display tracking-wide uppercase pt-2">Branding</p>
 
           <SettingToggle label="Footer Icon" description="Display a small icon logo at the bottom of the receipt." checked={local.show_footer_icon} onChange={(v) => update({ show_footer_icon: v })} />
-          {local.show_footer_icon && !iconUrl && (
-            <p className="pl-1 text-xs text-amber-500">No icon uploaded yet. Add one in Business Settings.</p>
-          )}
-
-          <div className="space-y-1.5">
-            <Label className="font-sans text-sm font-medium">Accent Color</Label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={local.accent_color || '#e5e5e5'}
-                onChange={(e) => update({ accent_color: e.target.value })}
-                className="w-10 h-10 rounded-lg border border-border cursor-pointer bg-transparent"
-              />
-              <Input
-                value={local.accent_color}
-                onChange={(e) => update({ accent_color: e.target.value })}
-                placeholder="#e5e5e5"
-                className="w-32 font-mono text-xs"
-                autoCapitalize="off"
-              />
-              {local.accent_color && (
-                <Button variant="ghost" size="sm" className="font-sans" onClick={() => update({ accent_color: '' })}>
-                  Reset
-                </Button>
+          {local.show_footer_icon && (
+            <div className="pl-1 space-y-1.5">
+              <Label className="font-sans text-sm font-medium">Icon Size</Label>
+              <Select value={local.footer_icon_size || 'sm'} onValueChange={(v) => update({ footer_icon_size: v as 'sm' | 'md' | 'lg' })}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sm">Small</SelectItem>
+                  <SelectItem value="md">Medium</SelectItem>
+                  <SelectItem value="lg">Large</SelectItem>
+                </SelectContent>
+              </Select>
+              {!iconUrl && (
+                <p className="text-xs text-amber-500">No icon uploaded yet. Add one in Business Settings.</p>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">Color used for divider lines on receipts.</p>
-          </div>
+          )}
 
           {/* Save */}
           <div className="flex justify-end pt-2">
