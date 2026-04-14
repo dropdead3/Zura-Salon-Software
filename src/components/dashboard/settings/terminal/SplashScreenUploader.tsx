@@ -174,18 +174,16 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Corner glow — top-left
-      const tlGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 700);
-      tlGlow.addColorStop(0, p.accentRgba(0.18));
-      tlGlow.addColorStop(0.5, p.accentRgba(0.06));
+      // Subtle corner glow — top-left
+      const tlGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 500);
+      tlGlow.addColorStop(0, p.accentRgba(0.10));
       tlGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = tlGlow;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Corner glow — bottom-right
-      const brGlow = ctx.createRadialGradient(TARGET_W, TARGET_H, 0, TARGET_W, TARGET_H, 700);
-      brGlow.addColorStop(0, p.accentRgba(0.18));
-      brGlow.addColorStop(0.5, p.accentRgba(0.06));
+      // Subtle corner glow — bottom-right
+      const brGlow = ctx.createRadialGradient(TARGET_W, TARGET_H, 0, TARGET_W, TARGET_H, 500);
+      brGlow.addColorStop(0, p.accentRgba(0.10));
       brGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = brGlow;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
