@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -206,6 +207,7 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
 // ---- Main Terminal Settings Content ----
 
 export function TerminalSettingsContent() {
+  const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: locations, isLoading: locationsLoading } = useZuraPayLocations();
@@ -392,6 +394,10 @@ export function TerminalSettingsContent() {
           !!activeLocation?.stripe_account_id &&
           activeLocation.stripe_account_id !== connectStatus?.stripe_connect_account_id
         }
+        organizationId={orgId}
+        locationId={activeLocationId}
+        userId={user?.id}
+        userName={user?.user_metadata?.full_name || user?.email?.split('@')[0]}
       />
 
       {/* Tabs */}
