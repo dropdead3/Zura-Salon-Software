@@ -344,17 +344,26 @@ async function handleCheckoutCompleted(
       updatePayload.afterpay_surcharge_amount = parseInt(metadata.surcharge_amount_cents, 10);
     }
 
-    // If there's no terminal split leg (full amount via link), mark as paid
-    if (!appt?.split_payment_terminal_intent_id) {
+    // Determine if this was a split-payment session
+    const isSplit = metadata.is_split === 'true';
+
+    if (isSplit) {
+      // Split payment: only mark paid when both legs are confirmed
+      if (appt?.paid_at && appt?.split_payment_terminal_intent_id) {
+        // Terminal leg already paid — this link leg completes payment
+        updatePayload.payment_status = 'paid';
+      } else {
+        // Link leg done but terminal leg not yet — mark partially paid
+        updatePayload.payment_status = 'partially_paid';
+        updatePayload.payment_method = 'payment_link';
+        updatePayload.stripe_payment_intent_id = paymentIntentId;
+      }
+    } else {
+      // Non-split: full amount via link — mark as paid
       updatePayload.payment_status = 'paid';
       updatePayload.payment_method = 'payment_link';
       updatePayload.stripe_payment_intent_id = paymentIntentId;
       updatePayload.paid_at = new Date().toISOString();
-    }
-    // If terminal leg already completed, both legs done — mark paid
-    else if (appt?.paid_at) {
-      // Terminal leg already paid — this is the final leg
-      updatePayload.payment_status = 'paid';
     }
 
     await supabase

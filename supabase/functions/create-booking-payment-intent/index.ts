@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     // ── Look up Connected Account + Afterpay setting ────────────
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
-      .select("stripe_connect_account_id, afterpay_enabled")
+      .select("stripe_connect_account_id, afterpay_enabled, afterpay_surcharge_enabled")
       .eq("id", organization_id)
       .maybeSingle();
 
@@ -95,9 +95,13 @@ Deno.serve(async (req) => {
 
     if (amountCents > 0) {
       // ── Build payment method types (conditionally include Afterpay) ──
+      // When surcharge is enabled, exclude Afterpay from deposits since
+      // PaymentIntents can't add conditional surcharge line items per method.
+      // Surcharge-enabled orgs collect Afterpay only via Send-to-Pay links.
       const paymentMethodTypes: string[] = ["card"];
       if (
         org.afterpay_enabled &&
+        !org.afterpay_surcharge_enabled &&
         amountCents >= 100 &&   // Afterpay min: $1.00
         amountCents <= 400000   // Afterpay max: $4,000.00
       ) {

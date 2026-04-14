@@ -157,6 +157,7 @@ Deno.serve(async (req) => {
           organization_id,
           source: "payment_link",
           fee_type: "send_to_pay",
+          is_split: amount_cents < (body.original_amount_cents || amount_cents) ? "true" : "false",
           surcharge_amount_cents: surchargeAmountCents.toString(),
           surcharge_rate: surchargeRate.toString(),
         },
