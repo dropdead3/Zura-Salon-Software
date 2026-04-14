@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -16,8 +16,14 @@ export function ZuraPayTippingTab() {
     DEFAULT_TIP_CONFIG.percentages.map(String)
   );
 
+  const justSaved = useRef(false);
+
   useEffect(() => {
     if (config) {
+      if (justSaved.current) {
+        justSaved.current = false;
+        return;
+      }
       setLocalConfig(config);
       setLocalPercentages(config.percentages.map(String));
     }
@@ -25,7 +31,11 @@ export function ZuraPayTippingTab() {
 
   const save = (updates: Partial<TipConfig>) => {
     const next = { ...localConfig, ...updates };
-    setLocalConfig(next);
+    // Only update localConfig for non-percentage fields
+    if (!updates.percentages) {
+      setLocalConfig(next);
+    }
+    justSaved.current = true;
     updateTip.mutate({ key: 'tip_config', value: next });
   };
 
@@ -90,7 +100,7 @@ export function ZuraPayTippingTab() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4">
-                {localConfig.percentages.map((pct, i) => (
+                {localPercentages.map((pct, i) => (
                   <div key={i} className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground font-sans">
                       Option {i + 1}
