@@ -1,44 +1,48 @@
 
 
-# Enhance Checkout Display Tab — Interactivity, Responsiveness, Visual Polish
+# Add "Powered by Zura" Footer & Organization Logo on Welcome Screen
 
-## Overview
-
-Three improvements to the Display tab: let users customize the simulator content, make the layout stack properly on narrow widths, and tighten visual hierarchy.
+## Problem
+The simulator screens lack platform attribution and don't show the organization's logo on the welcome/idle screen — missing both branding hierarchy and partnership identity.
 
 ## Changes
 
-### 1. Add Interactivity — Editable Cart Items & Business Name
+### 1. Pass Organization Logo to Simulator
 **File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
 
-- Add local state for `cartItems` array (pre-populated with current defaults)
-- Add an "Edit Cart" toggle that reveals inline editable fields for item labels and amounts
-- Add/remove item buttons
-- Business name is already passed as a prop — add an inline editable field so users can preview different names on the simulator in real-time
-- All changes are preview-only (no persistence) — clarify with a subtle "Preview only" label
+- Import `useBusinessSettings` hook
+- Extract `logo_dark_url` from business settings (dark variant since the simulator has a dark background)
+- Pass it as a new `orgLogoUrl` prop to `S710CheckoutSimulator`
 
-### 2. Responsive Stacking
-**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
-
-The layout already uses `flex-col lg:flex-row` (line 46), but at the user's 1260px viewport with sidebar, the `lg` breakpoint (1024px content) may not trigger. Change to `md:flex-row` so it stacks below ~768px content width but stays side-by-side at the current viewport. Also center the simulator when stacked.
-
-### 3. Visual Polish
-**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
-
-- Add stage indicator dots below the simulator (showing which of the 7 screens is active) for better orientation during auto-play
-- Tighten the specs panel spacing and add subtle hover states on capability pills
-- Add a thin progress bar at the bottom of the device frame showing auto-play timing
-
-### 4. Stage Indicator in Simulator
+### 2. Update Simulator Component
 **File:** `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx`
 
-- Export `currentIndex` / `screens.length` or accept an `onScreenChange` callback so the parent can render stage dots
-- Alternatively, render the dots inside the simulator component itself below the device frame
+**Add `orgLogoUrl?: string | null` prop** to the interface.
+
+**Splash Screen** — Replace the generic CreditCard icon box with the org logo:
+- If `orgLogoUrl` exists, render an `<img>` with the logo (max height ~48px, object-contain)
+- If no org logo, keep the existing CreditCard icon as fallback
+- Keep "ZURA PAY" title and "Powered by Intelligence" tagline
+
+**Idle (Welcome) Screen** — Show org logo above the business name:
+- If `orgLogoUrl` exists, render `<img>` (max height ~40px) above the "Welcome to" text
+- If no org logo, keep current text-only layout
+
+**"Powered by Zura" footer** — Add a persistent footer at the bottom of every screen:
+- Replace the current `Zura Pay` text at line 386 with a layout containing the Zura "Z" icon (import `ZuraZIcon`) + "Powered by Zura" text
+- Style: `text-white/20 text-[7px]` with the Z icon at ~8px, matching the existing minimal footer treatment
+- Use `PLATFORM_NAME` token from `brand.ts` for the text
+
+### 3. ZuraPayDisplayTab — Thread Logo Prop
+**File:** `src/components/dashboard/settings/terminal/ZuraPayDisplayTab.tsx`
+
+- Import `useBusinessSettings`
+- Pass `orgLogoUrl={business?.logo_dark_url}` to `CheckoutDisplayConcept`
+- Thread it through to the simulator
 
 ## Technical Notes
-
-- No new dependencies needed
-- Editable cart uses controlled `useState` with `Input` components from the existing UI library
-- `fmt()` utility already handles cents-to-dollars formatting
-- All changes are contained to two files in the terminal settings directory
+- `logo_dark_url` is the correct variant since the simulator background is near-black (`#0a0a0c`)
+- Falls back gracefully if no org logo is configured — existing CreditCard icon remains
+- Uses `PLATFORM_NAME` token, not hardcoded "Zura"
+- `ZuraZIcon` is already a reusable SVG component with `currentColor` fill
 
