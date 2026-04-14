@@ -39,6 +39,14 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
   const { data: tipConfig } = useTipConfig();
   const { data: receiptConfig } = useReceiptConfig();
 
+  // Fetch splash screen for first available location
+  const { data: locations = [] } = useLocations();
+  const firstLocationId = locations[0]?.id || null;
+  const { data: terminalLocations = [] } = useTerminalLocations(firstLocationId);
+  const terminalLocationId = terminalLocations[0]?.id;
+  const { data: splashStatus } = useTerminalSplashScreen(firstLocationId, terminalLocationId);
+  const splashImageUrl = splashStatus?.splash_url || null;
+
   const tipEnabled = tipConfig?.enabled ?? true;
   const tipPercentages = tipConfig?.percentages ?? [20, 25, 30];
   const receiptSlogan = receiptConfig?.custom_message || '';
