@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       );
     } catch (_resolveErr) {
       return jsonResponse(
-        { error: "Zura Pay is not active for this organization" },
+        { error: "Point Of Sale is not active for this organization" },
         400
       );
     }

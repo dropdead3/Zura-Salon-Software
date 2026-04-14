@@ -27,8 +27,8 @@ export function ZuraPayConnectivityTab({ readers }: ZuraPayConnectivityTabProps)
         <CardContent className="space-y-4">
           <p className="font-sans text-sm text-muted-foreground">
             {hasS710
-              ? 'Your Zura Pay Reader S710 is equipped with cellular failover and store-and-forward technology, ensuring your business never misses a payment — even during internet outages.'
-              : 'Your Zura Pay Reader S700 includes store-and-forward technology, allowing payments to be accepted and securely stored on-device during internet outages.'}
+              ? 'Your Point Of Sale Reader S710 is equipped with cellular failover and store-and-forward technology, ensuring your business never misses a payment — even during internet outages.'
+              : 'Your Point Of Sale Reader S700 includes store-and-forward technology, allowing payments to be accepted and securely stored on-device during internet outages.'}
           </p>
 
           <div className={`grid gap-3 ${hasS710 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>

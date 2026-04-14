@@ -1078,7 +1078,7 @@ async function handleAccountUpdated(
       type: 'connect_status_degraded',
       severity: 'critical',
       title: `Payment Processing Disabled: ${org.name}`,
-      message: `Zura Pay status changed from active to ${newStatus}. Charges enabled: ${chargesEnabled}, Payouts enabled: ${payoutsEnabled}.`,
+      message: `Point Of Sale status changed from active to ${newStatus}. Charges enabled: ${chargesEnabled}, Payouts enabled: ${payoutsEnabled}.`,
       metadata: {
         organization_id: org.id,
         stripe_account_id: accountId,

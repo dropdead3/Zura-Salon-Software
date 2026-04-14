@@ -100,7 +100,7 @@ function SplashScreen({ businessName, orgLogoUrl, splashImageUrl, colorTheme = '
             transition={{ delay: 0.2 }}
             className="text-white text-xl font-display tracking-[0.14em] uppercase mb-2"
           >
-            ZURA PAY
+            POINT OF SALE
           </motion.h1>
         )}
         <motion.p
@@ -164,7 +164,7 @@ function IdleScreen({ businessName, orgLogoUrl, colorTheme = 'cream' }: { busine
           className="w-8 h-px mx-auto my-4"
           style={{ background: p.accentRgba(0.5) }}
         />
-        <p className="text-white/30 text-[8px] tracking-wider">ZURA PAY · READY</p>
+        <p className="text-white/30 text-[8px] tracking-wider">POINT OF SALE · READY</p>
       </div>
       <motion.div
         animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.3, 0.15] }}

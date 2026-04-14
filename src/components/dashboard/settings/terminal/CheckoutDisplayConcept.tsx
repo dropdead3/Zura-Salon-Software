@@ -62,7 +62,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>CHECKOUT DISPLAY</CardTitle>
-                <MetricInfoTooltip description="Live preview of the branded Zura Pay checkout experience on your S710 readers. This reflects your current tipping and receipt settings." />
+                <MetricInfoTooltip description="Live preview of the branded Point Of Sale checkout experience on your S710 readers. This reflects your current tipping and receipt settings." />
               </div>
               <CardDescription>What your clients see on the S710 touchscreen at checkout.</CardDescription>
             </div>

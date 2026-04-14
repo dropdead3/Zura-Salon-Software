@@ -30,7 +30,7 @@ export default function PaymentsHealthPage() {
   return (
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
-        title="Zura Pay Health"
+        title="Point Of Sale Health"
         description="Monitor payment processing across all organizations"
         actions={
           <div className="flex items-center gap-3">

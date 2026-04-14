@@ -248,12 +248,12 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
   },
   'account-management': {
     title: 'Platform Billing',
-    description: `Your ${PLATFORM_NAME} subscription is billed at the organization level — one invoice covers all locations. Costs are itemized per location so your accountant can allocate to each LLC. This is separate from Zura Pay, which handles customer payment processing and payouts per-location.`,
+    description: `Your ${PLATFORM_NAME} subscription is billed at the organization level — one invoice covers all locations. Costs are itemized per location so your accountant can allocate to each LLC. This is separate from Point Of Sale, which handles customer payment processing and payouts per-location.`,
     icon: CreditCard,
   },
   'zura-pay-config': {
     title: 'Payment Processing & Payouts',
-    description: `Zura Pay handles customer-facing payment processing — terminals, card-on-file, and deposits. Each location can connect its own bank account for separate LLC payouts and liability isolation. This is independent of your platform subscription on the Account & Billing page.`,
+    description: `Point Of Sale handles customer-facing payment processing — terminals, card-on-file, and deposits. Each location can connect its own bank account for separate LLC payouts and liability isolation. This is independent of your platform subscription on the Account & Billing page.`,
     icon: CreditCard,
   },
   'business-identity': {
@@ -658,7 +658,7 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: Activity,
   },
   'platform-payments-health': {
-    title: 'Zura Pay Health',
+    title: 'Point Of Sale Health',
     description: 'Monitor payment processing health. Track failed charges, subscription status, and billing issues across all accounts.',
     icon: CreditCard,
   },

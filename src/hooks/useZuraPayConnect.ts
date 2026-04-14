@@ -93,7 +93,7 @@ export function useConnectZuraPay() {
       }
     },
     onError: (error) => {
-      toast.error('Failed to start Zura Pay setup', {
+      toast.error('Failed to start Point Of Sale setup', {
         description: (error as Error).message,
       });
     },
@@ -163,9 +163,9 @@ export function useVerifyZuraPayConnection() {
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
       queryClient.invalidateQueries({ queryKey: ['org-bank-last4', vars.organizationId] });
       if (data.auto_connected_location_id) {
-        toast.success('Zura Pay is active and your location has been automatically connected!');
+        toast.success('Point Of Sale is active and your location has been automatically connected!');
       } else if (data.status === 'active') {
-        toast.success('Zura Pay is active! You can now enable locations.');
+        toast.success('Point Of Sale is active! You can now enable locations.');
       } else if (data.status === 'pending') {
         toast.info('Verification is still in progress. Additional information may be required to complete verification.');
       }
@@ -196,7 +196,7 @@ export function useResetZuraPayAccount() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
-      toast.success('Zura Pay account has been reset. You can start fresh.');
+      toast.success('Point Of Sale account has been reset. You can start fresh.');
     },
     onError: (error) => {
       toast.error('Failed to reset account', {
@@ -231,7 +231,7 @@ export function useConnectLocation() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
-      toast.success('Location connected to Zura Pay');
+      toast.success('Location connected to Point Of Sale');
     },
     onError: (error) => {
       toast.error('Failed to connect location', {
@@ -268,7 +268,7 @@ export function useDisconnectLocation() {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['terminal-locations'] });
       queryClient.invalidateQueries({ queryKey: ['terminal-readers'] });
-      toast.success('Location disconnected from Zura Pay');
+      toast.success('Location disconnected from Point Of Sale');
     },
     onError: (error) => {
       toast.error('Failed to disconnect location', {

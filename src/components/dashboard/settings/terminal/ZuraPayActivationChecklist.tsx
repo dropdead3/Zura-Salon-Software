@@ -113,7 +113,7 @@ export function ZuraPayActivationChecklist({
         staff_user_id: userId,
         staff_name: userName || 'Staff Member',
         client_name: 'Test Client',
-        service_name: 'Zura Pay Test Checkout',
+        service_name: 'Point Of Sale Test Checkout',
         appointment_date: appointmentDate,
         start_time: startTime.toTimeString().slice(0, 8),
         end_time: endTime.toTimeString().slice(0, 8),
@@ -122,7 +122,7 @@ export function ZuraPayActivationChecklist({
         original_price: 0.50,
         status: 'confirmed',
         import_source: 'zura_test',
-        notes: 'Auto-created for Zura Pay activation test',
+        notes: 'Auto-created for Point Of Sale activation test',
         payment_status: 'unpaid',
       }).select('id').single();
 
@@ -226,7 +226,7 @@ export function ZuraPayActivationChecklist({
   const steps: ChecklistStep[] = [
     {
       label: 'Create Account',
-      description: 'Set up your Zura Pay account to start processing payments',
+      description: 'Set up your Point Of Sale account to start processing payments',
       complete: locationHasOwnAccount
         ? true
         : !!connectStatus && connectStatus !== 'not_connected',
@@ -277,7 +277,7 @@ export function ZuraPayActivationChecklist({
         <div className="p-6">
           <FormSuccess
             title="Activation Complete"
-            description="All steps are finished — Zura Pay is fully active for this location."
+            description="All steps are finished — Point Of Sale is fully active for this location."
           />
         </div>
       </div>
@@ -294,7 +294,7 @@ export function ZuraPayActivationChecklist({
           <div>
             <h3 className={tokens.card.title}>
               Activation Progress
-              <MetricInfoTooltip description="Complete each step to fully activate Zura Pay for your organization." />
+              <MetricInfoTooltip description="Complete each step to fully activate Point Of Sale for your organization." />
             </h3>
             <p className="text-sm text-muted-foreground">
               {completedCount} of {steps.length} steps complete

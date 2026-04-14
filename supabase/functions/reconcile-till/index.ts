@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     switch (action) {
       case "reconcile_daily": {
         if (!stripeAccountId) {
-          return jsonResponse({ error: "Zura Pay not connected" }, 400);
+          return jsonResponse({ error: "Point Of Sale not connected" }, 400);
         }
 
         const { date } = body; // YYYY-MM-DD
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
 
       case "collect_deposit": {
         if (!stripeAccountId) {
-          return jsonResponse({ error: "Zura Pay not connected" }, 400);
+          return jsonResponse({ error: "Point Of Sale not connected" }, 400);
         }
 
         const { amount, appointment_id, reader_id, description } = body;
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
 
       case "capture_deposit": {
         if (!stripeAccountId) {
-          return jsonResponse({ error: "Zura Pay not connected" }, 400);
+          return jsonResponse({ error: "Point Of Sale not connected" }, 400);
         }
 
         const { payment_intent_id, capture_amount } = body;
@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
 
       case "cancel_deposit": {
         if (!stripeAccountId) {
-          return jsonResponse({ error: "Zura Pay not connected" }, 400);
+          return jsonResponse({ error: "Point Of Sale not connected" }, 400);
         }
 
         const { payment_intent_id: cancelPiId } = body;

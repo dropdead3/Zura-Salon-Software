@@ -360,11 +360,11 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
       detail: data.flagEnabled ? 'capital_enabled is ON' : 'capital_enabled is OFF',
     },
     {
-      label: 'Zura Pay Connected',
+      label: 'Point Of Sale Connected',
       passed: data.hasActiveStripeConnect,
       detail: data.hasActiveStripeConnect
-        ? `${data.connectedLocationCount} of ${data.totalLocationCount} location${data.totalLocationCount !== 1 ? 's' : ''} connected to Zura Pay`
-        : 'No locations connected to Zura Pay — Stripe Capital requires an active payment processing account',
+        ? `${data.connectedLocationCount} of ${data.totalLocationCount} location${data.totalLocationCount !== 1 ? 's' : ''} connected to Point Of Sale`
+        : 'No locations connected to Point Of Sale — Stripe Capital requires an active payment processing account',
     },
     {
       label: 'Qualifying Opportunities',
@@ -438,7 +438,7 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
                   Stripe Capital eligibility is determined by the platform that owns the Stripe Connect relationship.
                   Since Phorest — not Zura — is the platform of record, Zura's API keys cannot access this organization's
                   processing history or Capital offers. To qualify for Zura Capital, the organization would need to migrate
-                  payment processing to Zura Pay.
+                  payment processing to Point Of Sale.
                 </p>
               </div>
             </div>

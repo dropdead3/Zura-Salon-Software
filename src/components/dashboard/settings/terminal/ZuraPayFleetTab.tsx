@@ -314,7 +314,7 @@ export function ZuraPayFleetTab({
       <AlertDialog open={showConfirmConnect} onOpenChange={setShowConfirmConnect}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Set up Zura Pay</AlertDialogTitle>
+            <AlertDialogTitle>Set up Point Of Sale</AlertDialogTitle>
             <AlertDialogDescription>
               This will create a payment account for your organization. You'll be redirected to a secure form to complete identity verification. Continue?
             </AlertDialogDescription>
@@ -337,7 +337,7 @@ export function ZuraPayFleetTab({
       <AlertDialog open={showConfirmReset} onOpenChange={setShowConfirmReset}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reset Zura Pay account</AlertDialogTitle>
+            <AlertDialogTitle>Reset Point Of Sale account</AlertDialogTitle>
             <AlertDialogDescription>
               This will remove the current payment account and allow you to start the setup process over. This can only be done if no payments have been processed. Continue?
             </AlertDialogDescription>
@@ -360,9 +360,9 @@ export function ZuraPayFleetTab({
       <AlertDialog open={showConfirmDisconnect} onOpenChange={setShowConfirmDisconnect}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Disconnect location from Zura Pay</AlertDialogTitle>
+            <AlertDialogTitle>Disconnect location from Point Of Sale</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the Zura Pay connection for this location. Readers will need to be reconfigured if you reconnect later. Continue?
+              This will remove the Point Of Sale connection for this location. Readers will need to be reconfigured if you reconnect later. Continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -460,7 +460,7 @@ export function ZuraPayFleetTab({
               </div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>LOCATION SET UP</CardTitle>
-                <MetricInfoTooltip description="Summary of all readers across your organization. Locations must be connected to Zura Pay before they can manage terminals." />
+                <MetricInfoTooltip description="Summary of all readers across your organization. Locations must be connected to Point Of Sale before they can manage terminals." />
               </div>
             </div>
           </CardHeader>
@@ -498,7 +498,7 @@ export function ZuraPayFleetTab({
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary/20 bg-primary/5">
                     <Zap className="h-7 w-7 text-primary" />
                   </div>
-                  <h3 className="font-display text-sm tracking-[0.14em]">CONNECT TO ZURA PAY</h3>
+                  <h3 className="font-display text-sm tracking-[0.14em]">CONNECT TO POINT OF SALE</h3>
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
                     Set up in-person payment processing for your organization. You'll be guided through a secure verification process to enable payments.
                   </p>
@@ -574,7 +574,7 @@ export function ZuraPayFleetTab({
                     <CheckCircle2 className="h-7 w-7 text-emerald-500" />
                   </div>
                   <h3 className="font-display text-sm tracking-[0.14em]">
-                    ENABLE ZURA PAY FOR {selectedLoc?.name?.toUpperCase() || 'THIS LOCATION'}
+                    ENABLE POINT OF SALE FOR {selectedLoc?.name?.toUpperCase() || 'THIS LOCATION'}
                   </h3>
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
                     Your organization is verified and ready to accept payments. Select a preferred payout destination for this location.
@@ -631,7 +631,7 @@ export function ZuraPayFleetTab({
                   </div>
                   <h3 className="font-display text-sm tracking-[0.14em]">LOCATION NOT CONNECTED</h3>
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                    This location is not yet connected to Zura Pay.
+                    This location is not yet connected to Point Of Sale.
                   </p>
                 </>
               )}
@@ -848,7 +848,7 @@ export function ZuraPayFleetTab({
               className="text-xs text-muted-foreground hover:text-destructive"
               onClick={() => setShowConfirmDisconnect(true)}
             >
-              Disconnect this location from Zura Pay
+              Disconnect this location from Point Of Sale
             </Button>
           </div>
         </>
