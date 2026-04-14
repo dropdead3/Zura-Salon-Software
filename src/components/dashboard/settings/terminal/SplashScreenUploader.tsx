@@ -349,8 +349,8 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   />
                 </div>
 
-                {/* Action buttons — horizontal row */}
-                <div className="flex items-center justify-center gap-2 flex-wrap">
+                {/* Action buttons — centered stack */}
+                <div className="flex flex-col items-center gap-1.5">
                   {pendingFile && (
                     <>
                       <Button
