@@ -32,6 +32,7 @@ import {
 } from '@/hooks/useTerminalSplashScreen';
 import { useLocations } from '@/hooks/useLocations';
 import { useColorTheme } from '@/hooks/useColorTheme';
+import { toast } from 'sonner';
 import { getTerminalPalette } from '@/lib/terminal-splash-palettes';
 
 const TARGET_W = 1080;
