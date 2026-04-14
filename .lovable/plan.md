@@ -2,25 +2,21 @@
 
 ## Problem
 
-The amber-styled activation checklist card uses `amber-500` with very low opacity (`/[0.04]`, `/15`, `/[0.06]`) for backgrounds and borders. On dark mode these subtle washes read well against near-black surfaces. On light mode, the light cream/white background swallows these low-opacity ambers, making the card border, progress bar track, icon box, and current-step highlight nearly invisible.
+The "Readers auto-update within ~10 minutes of upload." notice is styled as tiny `text-[10px] text-muted-foreground` — identical to the dimensions hint above it. It blends into the background and users miss that there's a delay before changes appear on their readers.
 
 ## Solution
 
-Add light-mode-specific overrides using Tailwind's `dark:` prefix pattern so amber elements are more visible on light backgrounds without changing the dark mode appearance.
+Promote this line into a small inline callout with a clock icon and slightly stronger styling so it reads as a meaningful status note rather than fine print.
 
-### Changes (single file: `ZuraPayActivationChecklist.tsx`)
+### Changes (single file: `SplashScreenUploader.tsx`)
 
-| Element | Current | Light-mode fix |
-|---|---|---|
-| Card border | `border-amber-500/30` | `border-amber-400/50 dark:border-amber-500/30` |
-| Card bg | `bg-amber-500/[0.04]` | `bg-amber-50 dark:bg-amber-500/[0.04]` |
-| Icon box bg | `bg-amber-500/15` | `bg-amber-100 dark:bg-amber-500/15` |
-| Progress track bg | `bg-amber-500/15` | `bg-amber-100 dark:bg-amber-500/15` |
-| Progress bar fill | `bg-amber-500` | unchanged (already visible) |
-| Current step highlight | `bg-amber-500/[0.06]` | `bg-amber-50 dark:bg-amber-500/[0.06]` |
-| Check icons | `text-amber-500` | unchanged (already visible) |
-| "Next" text | `text-amber-500` | unchanged |
-| Action link | `text-amber-600 hover:text-amber-500` | unchanged |
+**Replace** the plain `<p>` at line 511-513 with a styled inline callout:
 
-This uses Tailwind's native light/dark split so dark mode stays exactly as-is while light mode gets proper amber tinting via Tailwind's semantic amber palette (`amber-50`, `amber-100`, `amber-400`).
+- Add a `Clock` icon (from lucide-react) at `w-3.5 h-3.5`
+- Wrap in a `flex items-center gap-1.5` container
+- Use `text-xs` instead of `text-[10px]` for slightly larger text
+- Apply `text-amber-600 dark:text-amber-400` to differentiate it from the dimensions hint
+- Add a subtle `bg-amber-50 dark:bg-amber-500/10 rounded-md px-2.5 py-1` pill background so it reads as a notice, not fine print
+
+Result will look like: `🕐 Readers auto-update within ~10 minutes of upload.` in a soft amber pill — visible without being alarming, consistent with the amber activation checklist styling already on this page.
 
