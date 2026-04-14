@@ -400,9 +400,9 @@ export function TerminalSettingsContent() {
           <TabsTrigger value="fleet" className="font-sans">Location Set Up</TabsTrigger>
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
           <TabsTrigger value="connectivity" className="font-sans">Connectivity</TabsTrigger>
-          <TabsTrigger value="display" className="font-sans">Display</TabsTrigger>
           <TabsTrigger value="tipping" className="font-sans">Tipping</TabsTrigger>
           <TabsTrigger value="receipts" className="font-sans">Receipts</TabsTrigger>
+          <TabsTrigger value="display" className="font-sans">Display</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
@@ -464,12 +464,6 @@ export function TerminalSettingsContent() {
           </TabErrorBoundary>
         </TabsContent>
 
-        <TabsContent value="display" className="mt-6">
-          <TabErrorBoundary tabName="Display" key={activeTab === 'display' ? 'display-active' : 'display'}>
-            <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
-          </TabErrorBoundary>
-        </TabsContent>
-
         <TabsContent value="tipping" className="mt-6">
           <TabErrorBoundary tabName="Tipping" key={activeTab === 'tipping' ? 'tipping-active' : 'tipping'}>
             <ZuraPayTippingTab />
@@ -479,6 +473,12 @@ export function TerminalSettingsContent() {
         <TabsContent value="receipts" className="mt-6">
           <TabErrorBoundary tabName="Receipts" key={activeTab === 'receipts' ? 'receipts-active' : 'receipts'}>
             <ZuraPayReceiptsTab />
+          </TabErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="display" className="mt-6">
+          <TabErrorBoundary tabName="Display" key={activeTab === 'display' ? 'display-active' : 'display'}>
+            <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
           </TabErrorBoundary>
         </TabsContent>
 
