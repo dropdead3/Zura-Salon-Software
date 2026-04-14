@@ -1,54 +1,54 @@
 
 Prompt feedback
 
-- Good bug report. The detail that it reverts to cream after refresh, then immediately flips back to Zura when you enter System Settings, is exactly what exposed the real issue.
-- Even stronger next time: include the exact URL before refresh and whether the wrong theme appears on all dashboard pages or only one page. In this case, that would have made the lazy-load pattern obvious even faster.
+- Good bug report: you separated “the splash is actually active on the reader” from “the button state is wrong,” which made it clear this is a state/source-of-truth bug, not an upload bug.
+- Even better next time: mention whether it fails after refresh, after switching locations, and after auto-registration vs manual upload, because those are different code paths.
 
 Problem
 
-The theme is likely saving correctly, but it is not being applied globally on dashboard load.
+- The disabled button state is currently driven by local `isDefaultLuxury` state inside `SplashScreenUploader`.
+- That flag only updates after a same-session manual default upload.
+- It is lost on refresh and never gets set for background flows like reader auto-registration or theme-triggered splash refreshes.
+- The backend `get_splash_screen` response only tells the UI that a splash exists, not whether it is the Default Luxury Splash or a custom upload.
 
-Root cause
+Plan
 
-- `useColorTheme.ts` is the code that applies the `theme-zura` / `theme-cream` class to `document.documentElement`.
-- But that hook only gets imported on certain screens, such as:
-  - `src/components/dashboard/settings/SettingsCategoryDetail.tsx`
-  - `src/components/dashboard/settings/TerminalSettingsContent.tsx`
-- The top-level Settings page (`src/pages/dashboard/admin/Settings.tsx`) does not use that hook.
-- So after a hard refresh on the Settings grid, no color-theme hook runs yet, and the app falls back to the CSS default in `src/index.css`, which is cream.
-- When you click into System Settings, `SettingsCategoryDetail` lazy-loads, `useColorTheme` finally runs, and Zura gets applied immediately. That is why it looks like it “fixes itself.”
+1. Add durable splash-origin tracking
+- Create an organization-scoped backend record for each terminal location storing whether the active splash origin is `default_luxury` or `custom`.
+- Key it by `organization_id`, `location_id`, and `terminal_location_id`.
+- Add proper RLS so org members can read and org admins can write.
 
-Implementation plan
+2. Drive the button from backend truth, not local state
+- Add a hook to fetch the splash origin for the selected location/terminal.
+- In `SplashScreenUploader`, disable the CTA when `hasSplash && origin === 'default_luxury'`.
+- If metadata is missing, keep the button enabled so we do not falsely lock the UI.
 
-1. Mount color-theme application globally in the authenticated dashboard shell
-- Add a tiny initializer component that calls `useColorTheme()` once for all org dashboard routes.
-- Best location: `PrivateAppShell` in `src/App.tsx` or the shared `DashboardLayout`.
+3. Update every splash write path to keep metadata synced
+- Manual “Use Default Luxury Splash” upload → mark `default_luxury`
+- Manual custom upload → mark `custom`
+- Remove splash → clear/reset metadata
+- Auto-apply splash after reader registration → mark `default_luxury`
+- Theme-based splash re-sync → only touch locations already marked `default_luxury`
 
-2. Make theme application explicit inside the hook
-- Update `src/hooks/useColorTheme.ts` so it applies the resolved `colorTheme` in an effect whenever that value changes.
-- Keep the fast local cache behavior so there is no flash on reload.
+4. Clean up the component logic
+- Remove `isDefaultLuxury` as the source of truth.
+- Keep `pendingFile.fromDefault` only for preview/upload intent.
+- Use query invalidation so the button updates immediately after upload/remove and stays correct after refresh.
 
-3. Keep public site behavior isolated
-- Only mount this initializer in the org dashboard shell.
-- Do not apply it to the public website, since `src/components/layout/Layout.tsx` intentionally forces the public site to cream.
+Files likely involved
 
-4. Optional cleanup
-- Update `src/hooks/useSiteSettings.ts` to use `maybeSingle()` instead of `single()` for missing settings rows, so expected “no row yet” reads do not generate noisy 406 responses.
-- Separate issue I noticed: `?subtab=display` does not restore the prior settings section on refresh because `Settings.tsx` only restores `category` and `tab=terminals`. That is independent from the cream-theme bug, but worth fixing next.
+- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`
+- `src/components/dashboard/settings/TerminalSettingsContent.tsx`
+- `src/hooks/useAutoSyncTerminalSplash.ts`
+- `src/hooks/useTerminalSplashScreen.ts` or a new terminal splash metadata hook
+- New backend migration for splash-origin metadata + RLS
 
-Technical details
+Expected result
 
-- Relevant files:
-  - `src/hooks/useColorTheme.ts`
-  - `src/pages/dashboard/admin/Settings.tsx`
-  - `src/components/dashboard/settings/SettingsCategoryDetail.tsx`
-  - `src/App.tsx` or `src/components/dashboard/DashboardLayout.tsx`
-  - optional: `src/hooks/useSiteSettings.ts`
-- Expected result after fix:
-  - Refreshing the Settings page keeps Zura applied immediately
-  - The dashboard no longer waits for System Settings to mount before applying the saved theme
-  - Theme behavior stays organization-scoped and consistent across pages
+- When the active reader splash is the Default Luxury Splash, the button will reliably render disabled and show the correct “Using Default Luxury Splash” state.
+- That state will survive refreshes, location switches, auto-registration, and theme-sync flows.
+- Custom splashes will not be mistaken for default ones.
 
 Enhancement suggestion
 
-- After this fix, the next best improvement is restoring the exact Settings section/subtab after refresh, so users land back where they were instead of on the main Settings grid.
+- While fixing this, I would also tighten the theme-sync behavior so theme changes never overwrite custom reader splashes.
