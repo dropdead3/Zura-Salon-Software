@@ -1,10 +1,15 @@
-import { CheckCircle2, Circle, ArrowRight, Loader2, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, Circle, ArrowRight, Loader2, ExternalLink, CalendarPlus, CalendarDays } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { FormSuccess } from '@/components/ui/form-success';
+import { Button } from '@/components/ui/button';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChecklistStep {
   label: string;
@@ -13,6 +18,8 @@ interface ChecklistStep {
   loading?: boolean;
   /** Navigation action for the current (next) step */
   action?: { label: string; onClick: () => void };
+  /** Custom render for the current step's action area */
+  renderAction?: () => React.ReactNode;
 }
 
 interface ZuraPayActivationChecklistProps {
@@ -23,6 +30,10 @@ interface ZuraPayActivationChecklistProps {
   hasReaders: boolean;
   hasFirstTransaction: boolean | undefined;
   locationHasOwnAccount?: boolean;
+  organizationId?: string;
+  locationId?: string | null;
+  userId?: string;
+  userName?: string;
 }
 
 export function ZuraPayActivationChecklist({
@@ -33,11 +44,114 @@ export function ZuraPayActivationChecklist({
   hasReaders,
   hasFirstTransaction,
   locationHasOwnAccount,
+  organizationId,
+  locationId,
+  userId,
+  userName,
 }: ZuraPayActivationChecklistProps) {
   const [, setSearchParams] = useSearchParams();
   const { dashPath } = useOrgDashboardPath();
+  const navigate = useNavigate();
+
+  const [creatingTestAppt, setCreatingTestAppt] = useState(false);
+  const [testApptCreated, setTestApptCreated] = useState(false);
 
   const goToFleetTab = () => setSearchParams((prev) => { prev.set('subtab', 'fleet'); return prev; });
+
+  const handleCreateTestAppt = async () => {
+    if (!organizationId || !userId) {
+      toast.error('Missing user or organization context');
+      return;
+    }
+
+    setCreatingTestAppt(true);
+    try {
+      // Round to next 15-min slot
+      const now = new Date();
+      const minutes = now.getMinutes();
+      const roundedMinutes = Math.ceil((minutes + 15) / 15) * 15;
+      const startTime = new Date(now);
+      startTime.setMinutes(roundedMinutes, 0, 0);
+
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + 30);
+
+      const appointmentDate = startTime.toISOString().split('T')[0];
+
+      const { error } = await supabase.from('appointments').insert({
+        organization_id: organizationId,
+        location_id: locationId || undefined,
+        staff_user_id: userId,
+        staff_name: userName || 'Staff Member',
+        client_name: 'Test Client',
+        service_name: 'Zura Pay Test Checkout',
+        appointment_date: appointmentDate,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        duration_minutes: 30,
+        total_price: 0.50,
+        original_price: 0.50,
+        status: 'confirmed',
+        import_source: 'zura_test',
+        notes: 'Auto-created for Zura Pay activation test',
+        payment_status: 'unpaid',
+      });
+
+      if (error) throw error;
+
+      setTestApptCreated(true);
+      toast.success('Test appointment created on today\'s schedule');
+    } catch (err: any) {
+      toast.error('Failed to create test appointment', { description: err.message });
+    } finally {
+      setCreatingTestAppt(false);
+    }
+  };
+
+  const renderFirstTransactionAction = () => {
+    if (testApptCreated) {
+      return (
+        <div className="mt-2 space-y-2">
+          <div className="flex items-center gap-2 text-xs text-emerald-600">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>$0.50 test appointment added to today's schedule</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+            onClick={() => navigate(dashPath('/schedule'))}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            View Today's Schedule
+            <ArrowRight className="w-3 h-3" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-2 space-y-2">
+        <p className="text-xs text-muted-foreground">
+          We'll create a $0.50 test appointment on today's schedule so you can practice the full checkout flow.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+          onClick={handleCreateTestAppt}
+          disabled={creatingTestAppt || !organizationId || !userId}
+        >
+          {creatingTestAppt ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <CalendarPlus className="w-3.5 h-3.5" />
+          )}
+          Create Test Appointment ($0.50)
+        </Button>
+      </div>
+    );
+  };
 
   const steps: ChecklistStep[] = [
     {
@@ -74,10 +188,10 @@ export function ZuraPayActivationChecklist({
     },
     {
       label: 'First Transaction',
-      description: 'Go to the Scheduler, select an appointment, and check out using Zura Pay on a paired reader',
+      description: 'Run a test checkout to confirm everything works end-to-end',
       complete: !!hasFirstTransaction,
       loading: hasFirstTransaction === undefined,
-      action: { label: 'Go to Scheduler', onClick: () => { window.location.href = dashPath('/schedule'); } },
+      renderAction: renderFirstTransactionAction,
     },
   ];
 
@@ -158,7 +272,8 @@ export function ZuraPayActivationChecklist({
                   <p className="text-xs text-muted-foreground">
                     {step.description}
                   </p>
-                  {isCurrent && step.action && (
+                  {isCurrent && step.renderAction && step.renderAction()}
+                  {isCurrent && !step.renderAction && step.action && (
                     <button
                       onClick={step.action.onClick}
                       className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-500 transition-colors"
