@@ -22,6 +22,9 @@ interface S710SimulatorProps {
   autoPlay?: boolean;
   className?: string;
   orgLogoUrl?: string | null;
+  tipPercentages?: number[];
+  tipEnabled?: boolean;
+  receiptSlogan?: string;
   onScreenChange?: (index: number, total: number) => void;
 }
 
@@ -258,7 +261,7 @@ function ProcessingScreen() {
   );
 }
 
-function SuccessScreen({ total }: { total: number }) {
+function SuccessScreen({ total, receiptSlogan }: { total: number; receiptSlogan?: string }) {
   return (
     <motion.div
       key="success"
@@ -290,7 +293,7 @@ function SuccessScreen({ total }: { total: number }) {
         transition={{ delay: 0.6 }}
         className="text-white/30 text-[8px] tracking-wider uppercase mt-6"
       >
-        Thank you
+        {receiptSlogan || 'Thank you'}
       </motion.p>
     </motion.div>
   );
@@ -326,10 +329,17 @@ export function S710CheckoutSimulator({
   autoPlay = false,
   className,
   orgLogoUrl,
+  tipPercentages = [20, 25, 30],
+  tipEnabled = true,
+  receiptSlogan,
   onScreenChange,
 }: S710SimulatorProps) {
   const total = cartItems.reduce((s, i) => s + i.amount, 0);
-  const screens: ScreenState[] = ['splash', 'idle', 'cart', 'tip', 'tap', 'processing', 'success'];
+  const screens: ScreenState[] = [
+    'splash', 'idle', 'cart',
+    ...(tipEnabled ? ['tip' as ScreenState] : []),
+    'tap', 'processing', 'success',
+  ];
   const [currentIndex, setCurrentIndex] = useState(0);
   const screen = screens[currentIndex];
   const [progress, setProgress] = useState(0);
@@ -382,10 +392,10 @@ export function S710CheckoutSimulator({
               {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
               {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} />}
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
-              {screen === 'tip' && <TipScreen total={total} />}
+              {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} />}
               {screen === 'tap' && <TapScreen total={total} />}
               {screen === 'processing' && <ProcessingScreen />}
-              {screen === 'success' && <SuccessScreen total={total} />}
+              {screen === 'success' && <SuccessScreen total={total} receiptSlogan={receiptSlogan} />}
             </AnimatePresence>
           </div>
 
