@@ -287,7 +287,7 @@ function TapScreen({ total }: { total: number; colorTheme?: ColorTheme }) {
 
       {/* Firmware badge */}
       <div className="absolute bottom-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f3f4f6] border border-[#e5e7eb]">
-        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Reader Firmware</span>
+        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Not Brandable</span>
       </div>
     </motion.div>
   );
@@ -312,7 +312,7 @@ function ProcessingScreen() {
       />
       <p className="text-[#6b7280] text-[10px] tracking-[0.15em] uppercase">Processing</p>
       <div className="absolute bottom-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f3f4f6] border border-[#e5e7eb]">
-        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Reader Firmware</span>
+        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Not Brandable</span>
       </div>
     </motion.div>
   );
@@ -356,7 +356,7 @@ function SuccessScreen({ total, receiptSlogan }: { total: number; receiptSlogan?
         {receiptSlogan || 'Thank you'}
       </motion.p>
       <div className="absolute bottom-8 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f3f4f6] border border-[#e5e7eb]">
-        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Reader Firmware</span>
+        <span className="text-[7px] text-[#9ca3af] tracking-wider uppercase">Not Brandable</span>
       </div>
     </motion.div>
   );
