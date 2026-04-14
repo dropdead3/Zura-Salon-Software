@@ -24,7 +24,8 @@ import {
 import { MessageSquareHeart } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
+import { useColorTheme, colorThemes, COLOR_THEME_TO_CATEGORY_MAP } from '@/hooks/useColorTheme';
+import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
@@ -383,6 +384,8 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
   const { toast } = useToast();
   const { theme, setTheme, resolvedTheme } = useDashboardTheme();
   const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
+  const { data: categoryThemes } = useServiceCategoryThemes();
+  const applyCategoryTheme = useApplyCategoryTheme();
   const { roleOptions: dynamicRoleOptions } = useRoleUtils();
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
@@ -587,7 +590,15 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                           const isDark = resolvedTheme === 'dark';
                           const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
                           return (
-                            <button key={themeOption.id} onClick={() => setColorTheme(themeOption.id)}
+                            <button key={themeOption.id} onClick={() => {
+                              setColorTheme(themeOption.id);
+                              const mappedName = COLOR_THEME_TO_CATEGORY_MAP[themeOption.id];
+                              const matched = categoryThemes?.find(t => t.name === mappedName);
+                              if (matched) {
+                                applyCategoryTheme.mutate(matched);
+                                toast({ title: 'Theme updated', description: `Service colors synced to "${mappedName}"` });
+                              }
+                            }}
                               className={cn("relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
                                 isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50")}>
                               <div className="flex items-center gap-1.5 w-full">

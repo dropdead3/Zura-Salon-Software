@@ -20,7 +20,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
+import { colorThemes, COLOR_THEME_TO_CATEGORY_MAP, useColorTheme, type ColorTheme } from '@/hooks/useColorTheme';
+import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import {
   useWebsiteBookingSettings,
   useUpdateWebsiteBookingSettings,
@@ -51,7 +52,7 @@ import { TipDistributionPolicySettings } from './TipDistributionPolicySettings';
 import { ActiveThemeCard } from './ActiveThemeCard';
 import { ThemeLibraryGrid } from './ThemeLibraryGrid';
 import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
-import { useColorTheme } from '@/hooks/useColorTheme';
+// useColorTheme already imported above
 // Website Editor components for embedded editor
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
@@ -469,6 +470,8 @@ function ThemeTab() {
   const activateTheme = useActivateTheme();
   const { setColorTheme } = useColorTheme();
   const { toast } = useToast();
+  const { data: categoryThemes } = useServiceCategoryThemes();
+  const applyCategoryTheme = useApplyCategoryTheme();
   const isMobile = useIsMobile();
 
   // Editor state
@@ -487,9 +490,13 @@ function ThemeTab() {
     try {
       await activateTheme.mutateAsync(themeId);
       // Apply color scheme
-      const validSchemes = ['cream', 'rose', 'sage', 'ocean'];
+      const validSchemes = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir'];
       if (validSchemes.includes(theme.color_scheme)) {
-        setColorTheme(theme.color_scheme as ColorTheme);
+        const colorThemeId = theme.color_scheme as ColorTheme;
+        setColorTheme(colorThemeId);
+        const mappedName = COLOR_THEME_TO_CATEGORY_MAP[colorThemeId];
+        const matched = categoryThemes?.find(t => t.name === mappedName);
+        if (matched) applyCategoryTheme.mutate(matched);
       }
       toast({ title: 'Theme activated', description: `"${theme.name}" is now your active theme.` });
     } catch {

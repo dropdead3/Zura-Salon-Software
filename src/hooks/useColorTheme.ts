@@ -39,6 +39,17 @@ export function useColorTheme() {
   };
 }
 
+// Map system color themes to matching service category quick themes
+export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
+  zura: 'Lavender Fields',
+  cream: 'Golden Hour',
+  rose: 'Rose Garden',
+  sage: 'Coastal Breeze',
+  ocean: 'Ocean Avenue',
+  ember: 'Sunset Bloom',
+  noir: 'Neutral Elegance',
+};
+
 // Theme metadata for UI
 export const colorThemes = [
   {
