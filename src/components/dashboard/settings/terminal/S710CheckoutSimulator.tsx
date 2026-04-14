@@ -126,9 +126,10 @@ function SplashScreen({ businessName, orgLogoUrl, splashImageUrl, colorTheme = '
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-6 flex items-center gap-1.5">
-        <ZuraZIcon className="w-2.5 h-2.5" color={p.accentRgba(0.5)} />
-        <span className="text-[7px] tracking-[0.2em] uppercase font-display" style={{ color: p.accentRgba(0.5) }}>
+      <div className="absolute bottom-6 flex items-center gap-1.5" style={{ color: p.accentRgba(0.5) }}>
+        <ZuraZIcon className="w-2.5 h-2.5" />
+        <span className="text-[7px] tracking-[0.2em] uppercase font-display">
+          Powered by Zura
           Powered by Zura
         </span>
       </div>
