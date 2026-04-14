@@ -134,6 +134,8 @@ export function HostedBookingPage() {
     : null;
   const requiresCardOnFile = selectedServiceData?.requireCardOnFile ?? false;
   const afterpayEnabled = (org as any)?.afterpay_enabled ?? false;
+  const afterpaySurchargeEnabled = (org as any)?.afterpay_surcharge_enabled ?? false;
+  const afterpaySurchargeRate = (org as any)?.afterpay_surcharge_rate ?? null;
 
   // ─── Payment state ──────────────────────────────────────────
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -356,6 +358,7 @@ export function HostedBookingPage() {
             onPaymentComplete={handlePaymentComplete}
             showPaymentForm={showPaymentForm}
             afterpayEnabled={afterpayEnabled}
+            afterpaySurchargeRate={afterpaySurchargeEnabled ? afterpaySurchargeRate : undefined}
           />
         ) : null;
       default:
