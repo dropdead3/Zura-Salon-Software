@@ -24,9 +24,10 @@ const DEFAULT_CART: SimCartItem[] = [
 
 interface CheckoutDisplayConceptProps {
   businessName?: string;
+  orgLogoUrl?: string | null;
 }
 
-export function CheckoutDisplayConcept({ businessName = 'Your Salon' }: CheckoutDisplayConceptProps) {
+export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl }: CheckoutDisplayConceptProps) {
   const [autoPlay, setAutoPlay] = useState(true);
   const [editing, setEditing] = useState(false);
   const [previewName, setPreviewName] = useState(businessName);
@@ -81,6 +82,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon' }: Checkout
               businessName={previewName}
               autoPlay={autoPlay}
               cartItems={cartItems}
+              orgLogoUrl={orgLogoUrl}
             />
             <button
               onClick={() => setAutoPlay(!autoPlay)}
