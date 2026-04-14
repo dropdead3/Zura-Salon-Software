@@ -389,7 +389,7 @@ export function ZuraPayReceiptsTab() {
 
           <SettingToggle label="Show Social Links" description="Display your social media handles on receipts." checked={local.show_socials} onChange={(v) => update({ show_socials: v })} />
           {local.show_socials && !socials.instagram && !socials.facebook && !socials.tiktok && (
-            <p className="pl-1 text-xs text-amber-500">No social links configured. Add them in Website Settings.</p>
+            <p className="pl-1 text-xs text-amber-500">No social links configured. Add them in Business Settings.</p>
           )}
 
           <SettingToggle label="Show Website" description="Display your website URL on receipts." checked={local.show_website} onChange={(v) => update({ show_website: v })} />
