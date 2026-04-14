@@ -29,6 +29,8 @@ export function SendToPayButton({
   clientEmail,
   clientPhone,
   afterpayEnabled,
+  afterpaySurchargeEnabled,
+  afterpaySurchargeRate,
   onPaymentLinkSent,
   disabled,
 }: SendToPayButtonProps) {
@@ -87,7 +89,9 @@ export function SendToPayButton({
 
       const deliveryMethod = clientPhone ? 'SMS' : 'email';
       const afterpayNote = linkData.afterpay_available
-        ? ' (Afterpay available)'
+        ? linkData.surcharge_amount_cents
+          ? ` (Afterpay only — $${(linkData.surcharge_amount_cents / 100).toFixed(2)} fee included)`
+          : ' (Afterpay available)'
         : '';
       toast.success(`Payment link sent via ${deliveryMethod}${afterpayNote}`);
       onPaymentLinkSent?.();
@@ -119,7 +123,11 @@ export function SendToPayButton({
         ) : (
           <Send className="h-4 w-4" />
         )}
-        {afterpayEnabled ? 'Send to Pay / Afterpay' : 'Send Payment Link'}
+        {afterpayEnabled
+          ? afterpaySurchargeEnabled
+            ? `Send to Pay (Afterpay + ${Math.round((afterpaySurchargeRate ?? 0.06) * 100)}% fee)`
+            : 'Send to Pay / Afterpay'
+          : 'Send Payment Link'}
       </Button>
 
       {needsSplit && (
