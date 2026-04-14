@@ -1,34 +1,29 @@
 
 
-# Wire Up Test Display & Add Clear/Timeout
+# Improve Checklist Step Clarity with Actionable Descriptions & Navigation
 
 ## Problem
-1. The Fleet tab "Test" button sends sample cart data (`Sample Haircut`, `Styling Product`) that doesn't match the Display tab's designed sample cart (`Balayage Full Head`, `Olaplex Treatment`, `Blowout & Style`)
-2. The 8-second auto-clear blocks the UI (spinner) with no way to manually clear early
-3. No explicit "Clear Display" action available to the user
+The activation checklist steps (especially "First Transaction") lack clear guidance on **where to go** and **what to do**. The user sees "Process your first payment to confirm everything works" but has no link or instruction pointing them to the Scheduler.
 
 ## Changes
 
-### 1. Match test data to Display tab design
-In `ZuraPayFleetTab.tsx`, replace the hardcoded `line_items` in `handleTestDisplay` with the same `SAMPLE_CART` items used in `CheckoutDisplayConcept.tsx`:
-- `Balayage Full Head` — $185.00
-- `Olaplex Treatment` — $45.00  
-- `Blowout & Style` — $65.00
-- Tax calculated at a reasonable rate (~8%)
+### 1. Add actionable descriptions with navigation hints
+Update each incomplete step's description to include a clear instruction of where to go. For the current (next) step, add a clickable link/button that navigates directly to the relevant page.
 
-### 2. Non-blocking auto-clear with manual override
-Replace the current blocking `await setTimeout(8000)` pattern:
-- After pushing cart data, start a 10-second countdown using `setTimeout` (stored in a ref)
-- Show a "Clear" button on the reader row that immediately clears the display and cancels the timer
-- If 10 seconds elapse without manual clear, auto-clear fires
-- Toast updated to reflect: "Clearing automatically in 10s — or tap Clear"
+Updated step descriptions:
+- **Create Account** → "Set up your Zura Pay account to start processing payments" *(has inline action button already)*
+- **Complete Verification** → "Submit business details and verify your identity in the activation panel above"
+- **Connect Location** → "Link a salon location using the Location Mapping section in the Fleet tab"
+- **Create Terminal Location** → "Go to the Fleet tab and create a terminal location for your salon"
+- **Pair Reader** → "Register a reader in the Fleet tab — you'll need hardware from the Hardware tab first"
+- **First Transaction** → "Go to the Scheduler, select an appointment, and check out using Zura Pay on a paired reader"
 
-### 3. UI for clear action
-While a test is active on a reader:
-- Replace the "Test" button with a "Clear" button (with X or eraser icon)
-- Clicking it calls `clear_reader_display` and cancels the timeout
-- After clear (manual or auto), revert back to "Test" button
+### 2. Add a "Go to Scheduler" link on the First Transaction step
+When "First Transaction" is the current step, render a small link/button below the description that navigates to `/dashboard/schedule`. Use the same amber accent styling.
+
+### 3. Add contextual navigation links for other steps
+For steps like "Connect Location", "Create Terminal Location", and "Pair Reader" — when they are the current step, add a small text link that switches to the relevant subtab (Fleet) or scrolls to the relevant section. This uses `useSearchParams` to set the subtab.
 
 ## Files
-- **Edit**: `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` — update sample data, add clear button, implement 10s auto-timeout with ref-based timer
+- **Edit**: `src/components/dashboard/settings/terminal/ZuraPayActivationChecklist.tsx` — update descriptions, add navigation links for current step
 
