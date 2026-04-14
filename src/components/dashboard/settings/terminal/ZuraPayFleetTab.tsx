@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw, CircleCheck, CircleAlert, MonitorSmartphone } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw, CircleCheck, CircleAlert, MonitorSmartphone, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
