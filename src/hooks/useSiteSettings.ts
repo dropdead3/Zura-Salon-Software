@@ -19,12 +19,9 @@ export function useSiteSettings<T extends SiteSettingValue = SiteSettingValue>(k
         .select('value')
         .eq('id', key)
         .eq('organization_id', orgId!)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        if (error.code === 'PGRST116') return null;
-        throw error;
-      }
+      if (error) throw error;
       return data?.value as T | null;
     },
     enabled: !!orgId,

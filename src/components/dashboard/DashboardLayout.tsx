@@ -8,6 +8,7 @@ import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
 import { useAutoLock } from '@/hooks/useAutoLock';
+import { useColorTheme } from '@/hooks/useColorTheme';
 import { ZuraNavigationProvider, useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { NavigationHistoryProvider, useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import { ZuraStickyGuidance } from '@/components/dashboard/ZuraStickyGuidance';
@@ -233,6 +234,9 @@ function NavHistoryArrows() {
 }
 
 function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }: DashboardLayoutProps) {
+  // Global color theme sync — ensures saved theme is applied on every dashboard route
+  useColorTheme();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [headerHovered, setHeaderHovered] = useState(false);
