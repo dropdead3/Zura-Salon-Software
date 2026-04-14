@@ -355,6 +355,7 @@ export function HostedBookingPage() {
             stripeConnectedAccountId={stripeConfig?.connectedAccountId}
             onPaymentComplete={handlePaymentComplete}
             showPaymentForm={showPaymentForm}
+            afterpayEnabled={afterpayEnabled}
           />
         ) : null;
       default:
