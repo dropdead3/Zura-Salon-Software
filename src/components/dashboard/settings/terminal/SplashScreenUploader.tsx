@@ -140,6 +140,8 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     removeMutation.mutate({ locationId: selectedLocationId, terminalLocationId });
   };
 
+  const { colorTheme } = useColorTheme();
+
   const handleGenerateFromLogo = useCallback(async () => {
     if (!orgLogoUrl) return;
     setGeneratingFromLogo(true);
@@ -159,15 +161,23 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       canvas.height = TARGET_H;
       const ctx = canvas.getContext('2d')!;
 
-      // Dark gradient background
+      // Theme-aware gradient background
+      const p = getTerminalPalette(colorTheme);
       const grad = ctx.createLinearGradient(0, 0, 0, TARGET_H);
-      grad.addColorStop(0, '#0f0f0f');
-      grad.addColorStop(0.5, '#1a1a2e');
-      grad.addColorStop(1, '#0f0f0f');
+      grad.addColorStop(0, p.gradientStops[0]);
+      grad.addColorStop(0.5, p.gradientStops[1]);
+      grad.addColorStop(1, p.gradientStops[2]);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Center logo — fit within 600x600
+      // Subtle radial accent glow behind logo
+      const radGrad = ctx.createRadialGradient(TARGET_W / 2, TARGET_H * 0.42, 0, TARGET_W / 2, TARGET_H * 0.42, 400);
+      radGrad.addColorStop(0, p.accentRgba(0.12));
+      radGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+      // Center logo — fit within 500x500
       const maxLogo = 500;
       const logoScale = Math.min(maxLogo / img.width, maxLogo / img.height);
       const lw = img.width * logoScale;
@@ -176,12 +186,55 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       const ly = (TARGET_H - lh) / 2 - 80;
       ctx.drawImage(img, lx, ly, lw, lh);
 
-      // Business name below
-      ctx.fillStyle = '#ffffff';
+      // Business name below logo
+      ctx.fillStyle = p.textColor;
       ctx.font = '500 48px "Termina", sans-serif';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '4px';
       ctx.fillText(businessName.toUpperCase(), TARGET_W / 2, ly + lh + 80);
+
+      // Accent divider line
+      ctx.fillStyle = p.accentRgba(0.4);
+      ctx.fillRect(TARGET_W / 2 - 60, ly + lh + 110, 120, 2);
+
+      // Draw Zura Z icon at bottom (simplified grid of rounded squares)
+      const zSize = 60;
+      const zX = (TARGET_W - zSize) / 2;
+      const zY = TARGET_H - 200;
+      const cellSize = zSize / 7;
+      const gap = cellSize * 0.37;
+      const dotSize = cellSize - gap;
+      const radius = dotSize * 0.2;
+
+      ctx.fillStyle = p.accentRgba(0.6);
+
+      // Z icon grid positions (row, col) — top row, diagonal, bottom row
+      const zDots = [
+        // Top row
+        [0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],
+        // Diagonal (right to left)
+        [1,5],[1,6],
+        [2,4],[2,5],
+        [3,3],[3,4],
+        [4,2],[4,3],
+        [5,1],[5,2],
+        // Bottom row
+        [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],
+      ];
+
+      for (const [row, col] of zDots) {
+        const dx = zX + col * cellSize;
+        const dy = zY + row * cellSize;
+        ctx.beginPath();
+        ctx.roundRect(dx, dy, dotSize, dotSize, radius);
+        ctx.fill();
+      }
+
+      // "Powered by Zura" text below Z icon
+      ctx.fillStyle = p.mutedColor;
+      ctx.font = '300 24px "Aeonik Pro", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Powered by Zura', TARGET_W / 2, zY + zSize + 50);
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       const base64 = dataUrl.split(',')[1];
@@ -192,7 +245,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     } finally {
       setGeneratingFromLogo(false);
     }
-  }, [orgLogoUrl, businessName]);
+  }, [orgLogoUrl, businessName, colorTheme]);
 
   const isUploading = uploadMutation.isPending;
   const isRemoving = removeMutation.isPending;
