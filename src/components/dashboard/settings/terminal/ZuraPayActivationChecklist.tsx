@@ -64,21 +64,24 @@ export function ZuraPayActivationChecklist({
   const checkExistingTestAppt = useCallback(async () => {
     if (!organizationId) return;
     const today = new Date().toISOString().split('T')[0];
-    const { data } = await supabase
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    let query = supabase
       .from('appointments')
       .select('id')
       .eq('organization_id', organizationId)
       .eq('import_source', 'zura_test')
-      .eq('appointment_date', today)
-      .neq('status', 'cancelled')
-      .limit(1)
-      .maybeSingle();
+      .in('appointment_date', [today, tomorrow])
+      .neq('status', 'cancelled');
+    if (locationId) {
+      query = query.eq('location_id', locationId);
+    }
+    const { data } = await query.limit(1).maybeSingle();
 
     if (data) {
       setTestApptCreated(true);
       setExistingTestApptId(data.id);
     }
-  }, [organizationId]);
+  }, [organizationId, locationId]);
 
   useEffect(() => {
     checkExistingTestAppt();
@@ -106,7 +109,7 @@ export function ZuraPayActivationChecklist({
 
       const { data, error } = await supabase.from('appointments').insert({
         organization_id: organizationId,
-        location_id: locationId || undefined,
+        location_id: locationId || null,
         staff_user_id: userId,
         staff_name: userName || 'Staff Member',
         client_name: 'Test Client',
