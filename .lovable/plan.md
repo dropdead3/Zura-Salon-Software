@@ -1,50 +1,36 @@
 
 
-# Decouple Tip Config from Color Bar Settings
+# Enhance Hardware Tab — Proper Order History with Delivery Details
 
 ## Problem
-
-`tip_config` is stored in `backroom_settings` and accessed via `useColorBarSetting` — a hook built for the Zura Color Bar backroom product. Terminal tipping has no relationship to color mixing. This creates a confusing architectural coupling.
-
-Receipt config already uses the correct pattern: `useSiteSettings` → `site_settings` table. Tip config should follow suit.
+The current order history is a minimal inline list at the bottom of the order card. It doesn't show which device model was ordered, delivery destination details, or provide clear visual hierarchy for tracking shipped/delivered orders.
 
 ## Changes
 
-### 1. Migrate `tip_config` from `backroom_settings` to `site_settings`
+### `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx`
 
-**Database migration:**
-- Insert existing `tip_config` rows from `backroom_settings` into `site_settings` (matching by `organization_id`)
-- This is a data migration — both tables already exist
+**Extract Order History into its own Card** below the Order Terminal card:
 
-### 2. Create `useTipConfig` hook
+- New `Card` with `Package` icon, title "Order History", and description "Track your terminal orders and deliveries"
+- Each order row becomes a richer layout showing:
+  - **Device model**: Display `device_type` (S700/S710) with the correct model icon (`Wifi`/`Signal`) — falls back to "Reader" if not set
+  - **Quantity**: Show `× N` when quantity > 1
+  - **Accessories**: List accessory names from the JSONB `accessories` column
+  - **Delivery location**: Resolve `location_id` against the `locations` prop to show the location name — labeled as "Ship to: Location Name"
+  - **Order date**: Formatted with `date-fns`
+  - **Estimated total**: From `estimated_total_cents`, formatted via `useFormatCurrency`
+  - **Tracking number**: Show as a monospace badge when present (could link to carrier tracking later)
+  - **Status badge**: Existing `REQUEST_STATUS_CONFIG` with colored badge and icon
+- **Empty state**: When no orders exist, show a centered empty state with `Package` icon and "No terminal orders yet" message
+- **Loading state**: Skeleton rows
 
-**New file:** `src/hooks/useTipConfig.ts`
+**Remove** the inline order history from inside the Order Terminal card (lines 309-348) and move it to the new dedicated card.
 
-- Built on `useSiteSettings` (same pattern as `useReceiptConfig`)
-- Exports `useTipConfig()` returning typed `TipConfig` with defaults
-- Exports `useUpdateTipConfig()` for mutations
-- Contains the `TipConfig` interface and `DEFAULT_TIP_CONFIG` constant (moved from `ZuraPayTippingTab.tsx`)
+### No new files or hooks needed
+All data is already fetched via `useTerminalRequests`. The `locations` prop is already passed in.
 
-### 3. Update `ZuraPayTippingTab.tsx`
-
-- Replace `useColorBarSetting('tip_config')` and `useUpsertColorBarSetting` with the new `useTipConfig` / `useUpdateTipConfig`
-- Remove Color Bar imports entirely
-- Keep all existing UI and logic unchanged
-
-### 4. Update `CheckoutDisplayConcept.tsx`
-
-- Replace `useColorBarSetting('tip_config')` with the new `useTipConfig`
-- Remove `useColorBarSetting` import
-
-## Technical Details
-
-- `site_settings` table uses `(organization_id, setting_key)` as the lookup pattern — same as `backroom_settings` but scoped to site/platform config rather than Color Bar
-- `useSiteSettings` already handles org context resolution via `useSettingsOrgId`
-- The migration copies data so nothing is lost; the old `backroom_settings` rows can be cleaned up later
-
-## Files Modified
-1. `src/hooks/useTipConfig.ts` — New hook (mirrors `useReceiptConfig` pattern)
-2. `src/components/dashboard/settings/terminal/ZuraPayTippingTab.tsx` — Swap to new hook
-3. `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` — Swap to new hook
-4. Database migration — Copy `tip_config` rows from `backroom_settings` to `site_settings`
+## What Users See
+- Order Terminal card stays clean — just model selection and ordering
+- Below it, a dedicated Order History card with full details per order: model, location, tracking, cost, status
+- Empty state when no orders have been placed
 
