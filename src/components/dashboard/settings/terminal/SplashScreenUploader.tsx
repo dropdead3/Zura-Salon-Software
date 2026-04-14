@@ -13,6 +13,7 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  Layers,
 } from 'lucide-react';
 import {
   Select,
@@ -26,6 +27,8 @@ import {
   useTerminalSplashScreen,
   useUploadSplashScreen,
   useRemoveSplashScreen,
+  usePushSplashToAllLocations,
+  resolveAllTerminalLocations,
 } from '@/hooks/useTerminalSplashScreen';
 import { useLocations } from '@/hooks/useLocations';
 import { useColorTheme } from '@/hooks/useColorTheme';
