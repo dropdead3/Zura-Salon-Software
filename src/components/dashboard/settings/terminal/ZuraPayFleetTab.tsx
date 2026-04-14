@@ -226,11 +226,50 @@ export function ZuraPayFleetTab({
   const [showConfirmConnect, setShowConfirmConnect] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
+  const [testingReaderId, setTestingReaderId] = useState<string | null>(null);
+  const { effectiveOrganization } = useOrganizationContext();
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
 
   const selectedLoc = locations.find((l) => l.id === activeLocationId);
   const selectedStatus = selectedLoc ? getConnectionStatus(selectedLoc) : null;
+
+  const handleTestDisplay = useCallback(async (readerId: string) => {
+    const orgId = effectiveOrganization?.id;
+    if (!orgId) {
+      toast.error('Organization not found');
+      return;
+    }
+    setTestingReaderId(readerId);
+    try {
+      const { error: setError } = await supabase.functions.invoke('terminal-reader-display', {
+        body: {
+          action: 'set_reader_display',
+          reader_id: readerId,
+          organization_id: orgId,
+          line_items: [
+            { description: 'Sample Haircut', amount: 4500, quantity: 1 },
+            { description: 'Styling Product', amount: 2250, quantity: 2 },
+          ],
+          tax: 382,
+        },
+      });
+      if (setError) throw setError;
+      toast.success('Test display sent', { description: 'Cart data pushed to reader. Clearing in 8 seconds…' });
+      await new Promise((r) => setTimeout(r, 8000));
+      await supabase.functions.invoke('terminal-reader-display', {
+        body: {
+          action: 'clear_reader_display',
+          reader_id: readerId,
+          organization_id: orgId,
+        },
+      });
+    } catch (err) {
+      toast.error('Test display failed', { description: (err as Error).message });
+    } finally {
+      setTestingReaderId(null);
+    }
+  }, [effectiveOrganization?.id]);
 
   return (
     <div className="space-y-6">
