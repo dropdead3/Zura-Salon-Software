@@ -28,6 +28,8 @@ import {
   useRemoveSplashScreen,
 } from '@/hooks/useTerminalSplashScreen';
 import { useLocations } from '@/hooks/useLocations';
+import { useColorTheme } from '@/hooks/useColorTheme';
+import { getTerminalPalette } from '@/lib/terminal-splash-palettes';
 
 const TARGET_W = 1080;
 const TARGET_H = 1920;
