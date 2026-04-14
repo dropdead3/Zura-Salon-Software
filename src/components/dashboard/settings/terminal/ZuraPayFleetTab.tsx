@@ -17,7 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw, CircleCheck, CircleAlert, MonitorSmartphone, X } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, Wifi, WifiOff, Smartphone, Building2, Info, ExternalLink, RefreshCw, CheckCircle2, Zap, RotateCcw, CircleCheck, CircleAlert, MonitorSmartphone, X, ChevronDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -776,46 +777,38 @@ export function ZuraPayFleetTab({
                         </Badge>
                         {reader.status === 'online' && (
                           <>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-8 px-2.5 gap-1.5 text-xs"
+                                  className={cn(
+                                    "h-8 px-2.5 gap-1.5 text-xs",
+                                    testingReaderId === reader.id && "border-amber-500/50 text-amber-600"
+                                  )}
+                                >
+                                  <MonitorSmartphone className="h-3.5 w-3.5" />
+                                  Display Test
+                                  <ChevronDown className="h-3 w-3 ml-0.5 opacity-60" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
                                   onClick={() => handleTestDisplay(reader.id)}
                                   disabled={testingReaderId === reader.id}
                                 >
-                                  <MonitorSmartphone className="h-3.5 w-3.5" />
-                                  Test
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
-                                Push sample cart data to verify display connectivity
-                              </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant={testingReaderId === reader.id ? "outline" : "ghost"}
-                                  size="sm"
-                                  className={cn(
-                                    "h-8 px-2.5 gap-1.5 text-xs",
-                                    testingReaderId === reader.id
-                                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                                      : "text-muted-foreground hover:text-foreground"
-                                  )}
+                                  <MonitorSmartphone className="h-4 w-4 mr-2" />
+                                  Push Test Cart
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => handleClearDisplay(reader.id)}
+                                  className="text-destructive focus:text-destructive"
                                 >
-                                  <X className="h-3.5 w-3.5" />
-                                  Clear
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
-                                {testingReaderId === reader.id
-                                  ? "Clear the test display now (auto-clears in 10s)"
-                                  : "Reset the reader display to idle"}
-                              </TooltipContent>
-                            </Tooltip>
+                                  <X className="h-4 w-4 mr-2" />
+                                  Clear Test from Reader
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </>
                         )}
                         <Button
