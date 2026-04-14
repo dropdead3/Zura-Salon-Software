@@ -94,6 +94,16 @@ Deno.serve(async (req) => {
     const amountCents = amount && amount > 0 ? Math.round(amount * 100) : 0;
 
     if (amountCents > 0) {
+      // ── Build payment method types (conditionally include Afterpay) ──
+      const paymentMethodTypes: string[] = ["card"];
+      if (
+        org.afterpay_enabled &&
+        amountCents >= 100 &&   // Afterpay min: $1.00
+        amountCents <= 400000   // Afterpay max: $4,000.00
+      ) {
+        paymentMethodTypes.push("afterpay_clearpay");
+      }
+
       // ── Create PaymentIntent for deposit ──────────────────────
       const paymentIntent = await stripe.paymentIntents.create(
         {
@@ -101,6 +111,7 @@ Deno.serve(async (req) => {
           currency: "usd",
           customer: customerId,
           capture_method: "automatic",
+          payment_method_types: paymentMethodTypes,
           metadata: {
             appointment_id,
             organization_id,
