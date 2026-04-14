@@ -166,7 +166,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
                 <div className="space-y-1">
                   <p className="text-[10px] tracking-wider uppercase text-emerald-600 font-display">Brandable</p>
                   {[
-                    'Splash / idle screen',
+                    'Splash screen',
                     'Itemized cart display',
                     ...(tipEnabled ? ['Tip percentages'] : []),
                   ].map((cap) => (

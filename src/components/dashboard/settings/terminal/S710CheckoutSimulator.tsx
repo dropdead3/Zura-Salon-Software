@@ -11,7 +11,7 @@ import { getTerminalPalette } from '@/lib/terminal-splash-palettes';
 const SCREEN_W = 270;
 const SCREEN_H = 480;
 
-type ScreenState = 'splash' | 'idle' | 'cart' | 'tip' | 'tap' | 'processing' | 'success';
+type ScreenState = 'splash' | 'cart' | 'tip' | 'tap' | 'processing' | 'success';
 
 export interface SimCartItem {
   label: string;
@@ -137,44 +137,7 @@ function SplashScreen({ businessName, orgLogoUrl, splashImageUrl, colorTheme = '
   );
 }
 
-function IdleScreen({ businessName, orgLogoUrl, colorTheme = 'cream' }: { businessName: string; orgLogoUrl?: string | null; colorTheme?: ColorTheme }) {
-  const p = getTerminalPalette(colorTheme);
 
-  return (
-    <motion.div
-      key="idle"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      className="flex flex-col items-center justify-center h-full px-6"
-    >
-      <div className="text-center">
-        {orgLogoUrl && (
-          <motion.img
-            src={orgLogoUrl}
-            alt={businessName}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-h-10 object-contain mx-auto mb-4"
-          />
-        )}
-        <p className="text-white/40 text-[9px] tracking-[0.15em] uppercase mb-3">Welcome to</p>
-        <h2 className="text-white text-base font-medium tracking-wide mb-1">{businessName}</h2>
-        <div
-          className="w-8 h-px mx-auto my-4"
-          style={{ background: p.accentRgba(0.5) }}
-        />
-        <p className="text-white/30 text-[8px] tracking-wider">POINT OF SALE · READY</p>
-      </div>
-      <motion.div
-        animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.3, 0.15] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-20 w-20 h-20 rounded-full"
-        style={{ border: `1px solid ${p.accentRgba(0.2)}` }}
-      />
-    </motion.div>
-  );
-}
 
 function CartScreen({ items, total }: { items: SimCartItem[]; total: number }) {
   return (
@@ -383,7 +346,6 @@ function SuccessScreen({ total, receiptSlogan }: { total: number; receiptSlogan?
 
 const SCREEN_LABELS: Record<ScreenState, string> = {
   splash: 'Splash',
-  idle: 'Idle',
   cart: 'Cart',
   tip: 'Tip',
   tap: 'Tap',
@@ -392,8 +354,7 @@ const SCREEN_LABELS: Record<ScreenState, string> = {
 };
 
 const SCREEN_DURATIONS: Record<ScreenState, number> = {
-  splash: 2500,
-  idle: 2000,
+  splash: 3500,
   cart: 3000,
   tip: 3000,
   tap: 2500,
@@ -421,7 +382,7 @@ export function S710CheckoutSimulator({
   const p = useMemo(() => getTerminalPalette(colorTheme), [colorTheme]);
   const total = cartItems.reduce((s, i) => s + i.amount, 0);
   const screens: ScreenState[] = [
-    'splash', 'idle', 'cart',
+    'splash', 'cart',
     ...(tipEnabled ? ['tip' as ScreenState] : []),
     'tap', 'processing', 'success',
   ];
@@ -478,7 +439,7 @@ export function S710CheckoutSimulator({
           <div className="absolute inset-0 pt-6">
             <AnimatePresence mode="wait">
               {screen === 'splash' && <SplashScreen businessName={businessName} orgLogoUrl={orgLogoUrl} splashImageUrl={splashImageUrl} colorTheme={colorTheme} />}
-              {screen === 'idle' && <IdleScreen businessName={businessName} orgLogoUrl={orgLogoUrl} colorTheme={colorTheme} />}
+              
               {screen === 'cart' && <CartScreen items={cartItems} total={total} />}
               {screen === 'tip' && <TipScreen total={total} tipPercentages={tipPercentages} colorTheme={colorTheme} />}
               {screen === 'tap' && <TapScreen total={total} />}
