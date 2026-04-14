@@ -1,24 +1,24 @@
 
 
-# Fix: S710 Fallback Price Showing $349 Instead of $299
+# Update S700 Label — Replace "Entry-level terminal"
 
-## Root Cause
+## Problem
+The S700 card label reads "Entry-level terminal," which implies the product is cheap or inferior. This undermines confidence in the hardware.
 
-The edge function has two code paths:
+## Change
 
-1. **Stripe API success** — returns real prices from Stripe (both readers at $299)
-2. **Fallback** — hardcoded prices used when the API call fails
+**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx`, line 35
 
-The fallback data has S710 at **$349** (`34900` cents) while Stripe's actual catalog lists it at **$299**. Your page is hitting the fallback path (likely the hardware SKUs API is returning a non-200 status), so it displays the incorrect $349.
+Replace:
+```
+label: 'Entry-level terminal',
+```
+With:
+```
+label: 'Standard connectivity',
+```
 
-## Fix
+This pairs cleanly with the S710's "Full NeverDown protection" label — both describe connectivity tier rather than product quality. The S700 uses WiFi; the S710 adds cellular failover. "Standard connectivity" communicates that distinction without diminishing the S700.
 
-### 1. Correct the S710 fallback price
-**File:** `supabase/functions/terminal-hardware-order/index.ts`
-
-Change the S710 fallback `amount` from `34900` to `29900` to match Stripe's published pricing.
-
-### 2. Deploy the updated edge function
-
-One-line change. Both cards will show $299.00 after this.
+One-line change, no other files affected.
 
