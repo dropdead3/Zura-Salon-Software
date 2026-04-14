@@ -317,6 +317,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
             <Loader2 className={tokens.loading.spinner} />
           </div>
         ) : (
+          <>
           <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
             {paginatedLocations.map((loc) => {
               const status = allStatus[loc.id];
@@ -412,8 +413,8 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
               </div>
             </div>
           )}
+          </>
         )}
-
         {/* Selected location editor */}
         {selectedLocationId && hasTerminalLocation && (
           <>
