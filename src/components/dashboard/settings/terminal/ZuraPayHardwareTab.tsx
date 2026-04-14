@@ -32,7 +32,7 @@ const READER_MODELS: Record<ReaderModel, {
   s700: {
     name: 'Zura Pay Reader S700',
     subtitle: 'Countertop & handheld',
-    label: 'Entry-level terminal',
+    label: 'Standard connectivity',
     features: ['WiFi connectivity', 'Store-and-forward offline payments', '4" touchscreen display'],
     icon: Smartphone,
   },
