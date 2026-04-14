@@ -314,7 +314,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
     } finally {
       setGeneratingFromLogo(false);
     }
-  }, [orgLogoUrl, businessName, colorTheme]);
+  }, [orgLogoUrl, businessName, colorTheme, selectedLocationId, locations]);
 
   const isUploading = uploadMutation.isPending;
   const isRemoving = removeMutation.isPending;
