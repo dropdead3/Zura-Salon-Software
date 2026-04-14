@@ -40,6 +40,7 @@ export function printReceipt(
   orgName = 'Salon',
   receiptConfig?: ReceiptConfig,
   businessInfo?: ReceiptBusinessInfo,
+  redoPolicyFallback?: string,
 ) {
   const win = window.open('', '_blank', 'width=400,height=600');
   if (!win) {
@@ -155,11 +156,15 @@ export function printReceipt(
     ${cfg.footer_text ? `<p>${escapeHtml(cfg.footer_text)}</p>` : ''}
   </div>
   ${cfg.show_satisfaction_note && cfg.satisfaction_text ? `<p style="text-align:center;font-size:10px;color:#aaa;margin-top:12px;">${escapeHtml(cfg.satisfaction_text)}</p>` : ''}
-  ${(cfg.show_redo_policy && cfg.redo_policy_text) || (cfg.show_refund_policy && cfg.refund_policy_text) ? `
-  <div style="margin-top:12px;padding-top:8px;border-top:1px solid ${borderColor};font-size:10px;color:#aaa;text-align:center;">
-    ${cfg.show_redo_policy && cfg.redo_policy_text ? `<p style="margin:2px 0;">${escapeHtml(cfg.redo_policy_text)}</p>` : ''}
-    ${cfg.show_refund_policy && cfg.refund_policy_text ? `<p style="margin:2px 0;">${escapeHtml(cfg.refund_policy_text)}</p>` : ''}
-  </div>` : ''}
+  ${(() => {
+    const redoText = cfg.show_redo_policy ? (cfg.redo_policy_text || redoPolicyFallback || '') : '';
+    const refundText = cfg.show_refund_policy ? cfg.refund_policy_text : '';
+    if (!redoText && !refundText) return '';
+    return `<div style="margin-top:12px;padding-top:8px;border-top:1px solid ${borderColor};font-size:10px;color:#aaa;text-align:center;">
+      ${redoText ? `<p style="margin:2px 0;">${escapeHtml(redoText)}</p>` : ''}
+      ${refundText ? `<p style="margin:2px 0;">${escapeHtml(refundText)}</p>` : ''}
+    </div>`;
+  })()}
   ${cfg.show_review_prompt && cfg.review_prompt_text ? (() => {
     const platforms = [
       businessInfo?.reviewUrls?.google ? `<a href="${escapeHtml(businessInfo.reviewUrls.google)}">Google</a>` : '',

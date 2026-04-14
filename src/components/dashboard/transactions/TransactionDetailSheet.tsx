@@ -44,6 +44,10 @@ import { VoidConfirmDialog } from './VoidConfirmDialog';
 import { printReceipt } from './ReceiptPrintView';
 import { RefundDialog } from './RefundDialog';
 import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
+import { useReceiptConfig } from '@/hooks/useReceiptConfig';
+import { useBusinessSettings, useBusinessName } from '@/hooks/useBusinessSettings';
+import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 import type { TransactionItem } from '@/hooks/useTransactions';
@@ -69,6 +73,13 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
   const { isLeadership } = useLeadershipCheck();
   const [voidOpen, setVoidOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
+
+  // Receipt branding data
+  const { data: receiptConfig } = useReceiptConfig();
+  const { data: business } = useBusinessSettings();
+  const { data: socialLinks } = useWebsiteSocialLinksSettings();
+  const { data: reviewSettings } = useReviewThresholdSettings();
+  const orgName = useBusinessName();
 
   if (!transaction) return null;
 
@@ -351,7 +362,29 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => printReceipt(transaction, formatCurrency)}>
+                <DropdownMenuItem onClick={() => {
+                  const logoUrl = business?.logo_light_url || business?.logo_dark_url || null;
+                  const iconUrl = business?.icon_light_url || business?.icon_dark_url || null;
+                  const addressParts = [business?.mailing_address, business?.city, business?.state, business?.zip].filter(Boolean);
+                  const businessInfo = {
+                    logoUrl,
+                    iconUrl,
+                    address: addressParts.join(', '),
+                    phone: business?.phone || null,
+                    website: business?.website || null,
+                    socials: {
+                      instagram: socialLinks?.instagram || '',
+                      facebook: socialLinks?.facebook || '',
+                      tiktok: socialLinks?.tiktok || '',
+                    },
+                    reviewUrls: {
+                      google: reviewSettings?.googleReviewUrl || '',
+                      yelp: reviewSettings?.yelpReviewUrl || '',
+                      facebook: reviewSettings?.facebookReviewUrl || '',
+                    },
+                  };
+                  printReceipt(transaction, formatCurrency, orgName, receiptConfig, businessInfo);
+                }}>
                   <Printer className="w-4 h-4 mr-2" />
                   Print Receipt
                 </DropdownMenuItem>

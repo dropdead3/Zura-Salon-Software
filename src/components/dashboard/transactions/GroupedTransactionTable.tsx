@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useReceiptConfig } from '@/hooks/useReceiptConfig';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useWebsiteSocialLinksSettings } from '@/hooks/useWebsiteSettings';
+import { useReviewThresholdSettings } from '@/hooks/useReviewThreshold';
+import { useBusinessName } from '@/hooks/useBusinessSettings';
 import {
   Table,
   TableBody,
@@ -53,6 +58,37 @@ export function GroupedTransactionTable({
   const { dashPath } = useOrgDashboardPath();
   const [sortField, setSortField] = useState<SortField>('clientName');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Receipt branding data
+  const { data: receiptConfig } = useReceiptConfig();
+  const { data: business } = useBusinessSettings();
+  const { data: socialLinks } = useWebsiteSocialLinksSettings();
+  const { data: reviewSettings } = useReviewThresholdSettings();
+  const orgName = useBusinessName();
+
+  const handlePrintReceipt = useCallback((txn: GroupedTransaction) => {
+    const logoUrl = business?.logo_light_url || business?.logo_dark_url || null;
+    const iconUrl = business?.icon_light_url || business?.icon_dark_url || null;
+    const addressParts = [business?.mailing_address, business?.city, business?.state, business?.zip].filter(Boolean);
+    const businessInfo = {
+      logoUrl,
+      iconUrl,
+      address: addressParts.join(', '),
+      phone: business?.phone || null,
+      website: business?.website || null,
+      socials: {
+        instagram: socialLinks?.instagram || '',
+        facebook: socialLinks?.facebook || '',
+        tiktok: socialLinks?.tiktok || '',
+      },
+      reviewUrls: {
+        google: reviewSettings?.googleReviewUrl || '',
+        yelp: reviewSettings?.yelpReviewUrl || '',
+        facebook: reviewSettings?.facebookReviewUrl || '',
+      },
+    };
+    printReceipt(txn, formatCurrency, orgName, receiptConfig, businessInfo);
+  }, [business, socialLinks, reviewSettings, orgName, receiptConfig, formatCurrency]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -215,7 +251,7 @@ export function GroupedTransactionTable({
                         <Eye className="w-4 h-4 mr-2" />
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => printReceipt(txn, formatCurrency)}>
+                      <DropdownMenuItem onClick={() => handlePrintReceipt(txn)}>
                         <Printer className="w-4 h-4 mr-2" />
                         Print Receipt
                       </DropdownMenuItem>
