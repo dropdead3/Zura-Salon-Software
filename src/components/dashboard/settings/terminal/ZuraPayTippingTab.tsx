@@ -9,15 +9,17 @@ import { useTipConfig, useUpdateTipConfig, DEFAULT_TIP_CONFIG, type TipConfig } 
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export function ZuraPayTippingTab() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
-  const { data: setting, isLoading } = useColorBarSetting(SETTING_KEY);
-  const upsert = useUpsertColorBarSetting();
+  const { data: config, isLoading } = useTipConfig();
+  const updateTip = useUpdateTipConfig();
 
-  const [config, setConfig] = useState<TipConfig>(DEFAULT_CONFIG);
+  const [localConfig, setLocalConfig] = useState<TipConfig>(DEFAULT_TIP_CONFIG);
 
   // Sync from server
   useEffect(() => {
+    if (config) {
+      setLocalConfig(config);
+    }
+  }, [config]);
     if (setting?.value && Object.keys(setting.value).length > 0) {
       setConfig({
         enabled: setting.value.enabled === true,
