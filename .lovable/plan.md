@@ -1,86 +1,45 @@
 
 
-# Zura Pay Build Audit — Gaps, Bugs & Enhancements
+# Stripe Terminal Display — What's Customizable vs. Firmware-Locked
 
-## BUG 1 (Critical): Test Appointment Fails — Wrong Time Format
+## The Reality
 
-**Status**: Broken (confirmed via session replay)
+The "Tap or insert" screen you photographed (blue concentric circles, Stripe-default styling) is **rendered by Stripe's reader firmware**. When `processPaymentIntent` is called, Stripe takes full control of the display. The Stripe Terminal API does **not** expose any parameters to change the payment collection screen's colors, layout, or branding.
 
-**Error**: `invalid input syntax for type time: "2026-04-14T17:00:00.000Z"`
+**What the Stripe Terminal API actually controls:**
 
-**Root cause**: `start_time` and `end_time` in the `appointments` table are PostgreSQL `time` columns (e.g. `"14:30:00"`), but the code sends full ISO timestamps (`startTime.toISOString()`).
+| Surface | Customizable? | How |
+|---------|--------------|-----|
+| Splash/idle screen | Yes | Already implemented (splash uploader) |
+| Cart display (line items before payment) | Yes — content only | `setReaderDisplay` with line items |
+| Tap/insert payment screen | **No** | Firmware-controlled by Stripe |
+| Tipping screen | Partial — percentages only | Via Terminal Configuration API |
+| Processing/success screens | **No** | Firmware-controlled |
 
-**Fix** in `ZuraPayActivationChecklist.tsx` (lines 89-90):
-```typescript
-// Before (broken):
-start_time: startTime.toISOString(),
-end_time: endTime.toISOString(),
+The blue concentric circles and white background are baked into the S710 firmware. There is no API parameter, Terminal Configuration field, or workaround to change them to match your organization's brand colors.
 
-// After (correct):
-start_time: startTime.toTimeString().slice(0, 8),  // "14:30:00"
-end_time: endTime.toTimeString().slice(0, 8),        // "15:00:00"
-```
+## What We CAN Do
 
----
+### 1. Update the Simulator to Match Reality
+The in-app S710 simulator currently shows a **dark-themed, brand-colored** tap screen — which sets incorrect expectations. We should update the simulator's "Tap" screen to match what the real reader actually displays (white background, blue rings, Stripe's native look) so operators know exactly what clients will see.
 
-## BUG 2 (Medium): `handleTestDisplay` Doesn't Check Response Data for Errors
+### 2. Add an Explanatory Note in the Display Tab
+Add a brief, honest note in the Checkout Display card explaining that the payment collection screen is controlled by the payment processor's firmware and cannot be customized, while the splash screen and cart line items are fully brandable.
 
-**Status**: Inconsistent error handling
+### 3. Maximize the Surfaces We Control
+Ensure the **cart display** (the screen shown BEFORE tapping) includes the business name and is as branded as the API allows. The `setReaderDisplay` call currently only sends `description`, `amount`, and `quantity` per line item — that's the full extent of Stripe's cart API. No logo, no colors.
 
-The `handleTestDisplay` function (line 276) only checks `setError` from the Supabase invocation wrapper but doesn't inspect `data?.error` from the edge function response — unlike `handleClearDisplay` which properly checks both. A Stripe API error would be silently treated as success.
+## Proposed Changes
 
-**Fix**: Add `data` destructuring and check `data?.error` the same way `handleClearDisplay` does.
+### File: `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx`
+- Update the `TapScreen` component to render with a **white background** and **blue/purple concentric circles** matching the real S710 firmware UI, instead of the current dark-themed branded version
+- Keep the dark-themed branded look for splash, idle, cart, and tip screens (those are actually customizable)
+- Add a small "Stripe firmware" badge on the tap screen in the simulator to signal it's not customizable
 
----
+### File: `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
+- Add a note in the "Your Checkout Experience" section clarifying which screens are brandable (splash, cart, tip percentages) vs. firmware-locked (tap/insert, processing, success)
 
-## BUG 3 (Low): Auto-Clear Timer Not Cleaned on Unmount
-
-**Status**: Potential memory leak
-
-`testTimerRef.current` holds a `setTimeout` ID but there's no cleanup on component unmount. If the user navigates away during the 10s window, the timer fires on an unmounted component.
-
-**Fix**: Add a `useEffect` cleanup that clears the timer on unmount.
-
----
-
-## ENHANCEMENT 1: Test Appointment Duplicate Prevention
-
-**Status**: Missing guard
-
-Users can click "Create Test Appointment" multiple times (across page refreshes — `testApptCreated` state resets). This creates duplicate $0.50 appointments on the schedule.
-
-**Fix**: Before inserting, query for an existing `import_source = 'zura_test'` appointment for today. If found, skip insertion and show the "View Schedule" link directly. Also check on mount so the button shows the correct state after refresh.
-
----
-
-## ENHANCEMENT 2: Test Appointment Cleanup
-
-**Status**: No cleanup mechanism
-
-Test appointments (`import_source: 'zura_test'`) persist indefinitely. After the first real transaction is processed, old test appointments clutter the schedule.
-
-**Fix**: Add a "Remove Test Appointment" option in the success state, or auto-clean test appointments older than 24 hours via a simple check in the same component.
-
----
-
-## ENHANCEMENT 3: Edge Function — `clear_reader_display` vs `cancel_action` Duplication
-
-**Status**: Redundant code paths
-
-Both `clear_reader_display` (line 124) and `cancel_action` (line 149) now call the identical Stripe method (`stripe.terminal.readers.cancelAction`). This is correct behavior but creates maintenance confusion.
-
-**Fix**: Add a code comment clarifying that `clear_reader_display` is the public-facing alias for clearing test carts, while `cancel_action` cancels payment collection. They share the same Stripe method because Stripe uses `cancelAction` for both purposes.
-
----
-
-## Summary of Changes
-
-| # | Type | File | Description |
-|---|------|------|-------------|
-| 1 | Bug fix | `ZuraPayActivationChecklist.tsx` | Format `start_time`/`end_time` as `HH:MM:SS` not ISO |
-| 2 | Bug fix | `ZuraPayFleetTab.tsx` | Check `data?.error` in `handleTestDisplay` |
-| 3 | Bug fix | `ZuraPayFleetTab.tsx` | Clean up auto-clear timer on unmount |
-| 4 | Enhancement | `ZuraPayActivationChecklist.tsx` | Prevent duplicate test appointments |
-| 5 | Enhancement | `ZuraPayActivationChecklist.tsx` | Add "Remove Test Appointment" action |
-| 6 | Enhancement | `terminal-reader-display/index.ts` | Clarify comment on duplicate code paths |
+## What This Does NOT Include
+- There is no hidden Stripe API to change the tap screen appearance — this plan is honest about that constraint
+- No edge function changes needed — the limitation is at the Stripe firmware level, not our integration
 
