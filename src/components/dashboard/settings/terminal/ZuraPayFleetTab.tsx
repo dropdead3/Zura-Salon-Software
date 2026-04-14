@@ -154,6 +154,9 @@ export interface ZuraPayFleetTabProps {
   isConnectingLocation?: boolean;
   onResetAccount?: () => void;
   isResetting?: boolean;
+  onDisconnectLocation?: (locationId: string) => void;
+  isDisconnectingLocation?: boolean;
+  onRefreshReaders?: () => void;
 }
 
 export function ZuraPayFleetTab({
@@ -183,9 +186,13 @@ export function ZuraPayFleetTab({
   isConnectingLocation,
   onResetAccount,
   isResetting,
+  onDisconnectLocation,
+  isDisconnectingLocation,
+  onRefreshReaders,
 }: ZuraPayFleetTabProps) {
   const [showConfirmConnect, setShowConfirmConnect] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [showConfirmDisconnect, setShowConfirmDisconnect] = useState(false);
   const onlineReaders = readers?.filter((r) => r.status === 'online') || [];
   const offlineReaders = readers?.filter((r) => r.status !== 'online') || [];
 
@@ -236,6 +243,30 @@ export function ZuraPayFleetTab({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Reset Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Confirmation Dialog — Disconnect Location */}
+      <AlertDialog open={showConfirmDisconnect} onOpenChange={setShowConfirmDisconnect}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect location from Zura Pay</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the Zura Pay connection for this location. Terminal locations and readers will need to be reconfigured if you reconnect later. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirmDisconnect(false);
+                if (activeLocationId) onDisconnectLocation?.(activeLocationId);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDisconnectingLocation ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Disconnect
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -546,6 +577,18 @@ export function ZuraPayFleetTab({
             </CardContent>
           </Card>
 
+          {/* Disconnect Location */}
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => setShowConfirmDisconnect(true)}
+            >
+              Disconnect this location from Zura Pay
+            </Button>
+          </div>
+
           {/* Terminal Readers */}
           <Card>
             <CardHeader>
@@ -562,15 +605,26 @@ export function ZuraPayFleetTab({
                     <CardDescription>Physical card readers paired to this location.</CardDescription>
                   </div>
                 </div>
-                <Button
-                  size={tokens.button.card}
-                  className={tokens.button.cardAction}
-                  onClick={onRegisterReader}
-                  disabled={!terminalLocations || terminalLocations.length === 0}
-                >
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={onRefreshReaders}
+                    title="Refresh reader status"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size={tokens.button.card}
+                    className={tokens.button.cardAction}
+                    onClick={onRegisterReader}
+                    disabled={!terminalLocations || terminalLocations.length === 0}
+                  >
                   <Plus className="h-4 w-4" />
                   Register Reader
                 </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

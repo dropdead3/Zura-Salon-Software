@@ -60,7 +60,8 @@ export function useTerminalReaders(locationId: string | null, terminalLocationId
       return (result?.data || []) as StripeReader[];
     },
     enabled: !!locationId,
-    staleTime: 30000,
+    staleTime: 10000,
+    refetchInterval: 30000,
   });
 }
 

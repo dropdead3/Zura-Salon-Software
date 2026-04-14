@@ -15,14 +15,14 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, CreditCard, Smartphone, Wifi } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   useTerminalLocations, useTerminalReaders,
   useCreateTerminalLocation, useDeleteTerminalLocation,
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
-import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount } from '@/hooks/useZuraPayConnect';
+import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
@@ -239,6 +239,7 @@ export function TerminalSettingsContent() {
   const orgId = effectiveOrganization?.id;
   const { data: locations, isLoading: locationsLoading } = useZuraPayLocations();
   const { data: connectStatus } = useOrgConnectStatus(orgId);
+  const queryClient = useQueryClient();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -252,6 +253,7 @@ export function TerminalSettingsContent() {
   const verifyPayment = useVerifyTerminalPayment();
   const connectLocationMutation = useConnectLocation();
   const resetAccountMutation = useResetZuraPayAccount();
+  const disconnectLocationMutation = useDisconnectLocation();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('subtab') || 'fleet');
@@ -317,6 +319,24 @@ export function TerminalSettingsContent() {
   const deleteTerminalLocation = useDeleteTerminalLocation();
   const deleteReader = useDeleteReader();
 
+  // Check if org has processed at least one terminal payment
+  const { data: hasFirstTransaction } = useQuery({
+    queryKey: ['zura-pay-first-transaction', orgId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('appointments')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', orgId!)
+        .not('paid_at', 'is', null)
+        .eq('payment_method', 'terminal')
+        .limit(1);
+      if (error) throw error;
+      return (count ?? 0) > 0;
+    },
+    enabled: !!orgId,
+    staleTime: 60000,
+  });
+
   if (locationsLoading) {
     return <DashboardLoader size="md" className="h-64" />;
   }
@@ -377,9 +397,10 @@ export function TerminalSettingsContent() {
       <ZuraPayActivationChecklist
         connectStatus={connectStatus?.stripe_connect_status}
         detailsSubmitted={connectStatus?.stripe_connect_status === 'active'}
+        isLocationConnected={isLocationConnected}
         hasTerminalLocations={(terminalLocations?.length ?? 0) > 0}
         hasReaders={(readers?.length ?? 0) > 0}
-        hasFirstTransaction={false}
+        hasFirstTransaction={hasFirstTransaction}
       />
 
       {/* Tabs */}
@@ -426,6 +447,11 @@ export function TerminalSettingsContent() {
               isConnectingLocation={connectLocationMutation.isPending}
               onResetAccount={() => orgId && resetAccountMutation.mutate({ organizationId: orgId })}
               isResetting={resetAccountMutation.isPending}
+              onDisconnectLocation={(locationId) => orgId && disconnectLocationMutation.mutate({ organizationId: orgId, locationId })}
+              isDisconnectingLocation={disconnectLocationMutation.isPending}
+              onRefreshReaders={() => {
+                queryClient.invalidateQueries({ queryKey: ['terminal-readers'] });
+              }}
             />
           </TabErrorBoundary>
         </TabsContent>

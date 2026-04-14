@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     const { data: locationData, error: locError } = await supabase
       .from("locations")
       .select(
-        "stripe_account_id, name, address, city, state_province, country, organization_id"
+        "stripe_account_id, name, address, city, state_province, country, organization_id, postal_code"
       )
       .eq("id", location_id)
       .single();
@@ -194,12 +194,28 @@ Deno.serve(async (req) => {
       case "create_location": {
         const displayName =
           params.display_name || locationData.name || "Terminal Location";
-        // Parse postal code from city field (format: "City, State ZIP")
+
+        // Determine postal code: prefer dedicated column, then parse from city field
+        let postalCode = (locationData.postal_code || "").trim();
         const cityParts = (locationData.city || "").split(",");
         const cityName = cityParts[0]?.trim() || "N/A";
-        const stateZipPart = cityParts[1]?.trim() || "";
-        const stateZipParts = stateZipPart.split(" ");
-        const postalCode = stateZipParts.length > 1 ? stateZipParts.slice(1).join(" ") : "";
+
+        if (!postalCode) {
+          // Try parsing from "City, State ZIP" format in city field
+          const stateZipPart = cityParts[1]?.trim() || "";
+          const stateZipParts = stateZipPart.split(" ");
+          postalCode = stateZipParts.length > 1 ? stateZipParts.slice(1).join(" ").trim() : "";
+        }
+
+        if (!postalCode) {
+          // Try extracting ZIP from state_province field
+          const stateMatch = (locationData.state_province || "").match(/\d{5}(-\d{4})?/);
+          if (stateMatch) postalCode = stateMatch[0];
+        }
+
+        if (!postalCode) {
+          console.warn(`[manage-stripe-terminals] No postal code found for location ${location_id}. Stripe may reject this.`);
+        }
 
         const formParams: Record<string, string> = {
           display_name: displayName,
