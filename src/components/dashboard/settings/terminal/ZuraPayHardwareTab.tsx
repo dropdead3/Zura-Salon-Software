@@ -307,46 +307,6 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
             </p>
           </div>
 
-          {/* Order history */}
-          {requestsLoading ? (
-            <div className="space-y-2">
-              {[1, 2].map((i) => <Skeleton key={i} className={tokens.loading.skeleton} />)}
-            </div>
-          ) : requests && requests.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-sans font-medium">Order History</p>
-              {requests.map((req) => {
-                const statusConfig = REQUEST_STATUS_CONFIG[req.status] || REQUEST_STATUS_CONFIG.pending;
-                const StatusIcon = statusConfig.icon;
-                const locName = locations.find((l) => l.id === req.location_id)?.name || req.location_id;
-                return (
-                  <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
-                    <div>
-                      <p className="font-sans font-medium text-sm">
-                        Reader{req.quantity > 1 ? ` × ${req.quantity}` : ''}
-                        {req.accessories && req.accessories.length > 0 && (
-                          <span className="text-muted-foreground font-normal"> + {req.accessories.length} accessor{req.accessories.length === 1 ? 'y' : 'ies'}</span>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {locName} · {format(new Date(req.created_at), 'MMM d, yyyy')}
-                        {req.estimated_total_cents ? ` · ${formatCurrency(req.estimated_total_cents / 100)}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {req.tracking_number && (
-                        <span className="text-xs font-mono text-muted-foreground">{req.tracking_number}</span>
-                      )}
-                      <Badge variant="outline" className={cn(statusConfig.className, 'gap-1')}>
-                        <StatusIcon className="h-3 w-3" />
-                        {statusConfig.label}
-                      </Badge>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
         </CardContent>
 
         {/* Purchase Dialog */}
