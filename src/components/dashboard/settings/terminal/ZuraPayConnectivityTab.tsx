@@ -12,7 +12,7 @@ export function ZuraPayConnectivityTab({ readers }: ZuraPayConnectivityTabProps)
 
   return (
     <div className="space-y-6">
-      <OfflinePaymentStatus />
+      <OfflinePaymentStatus readers={readers} />
 
       {/* NeverDown Payments Callout */}
       <Card>

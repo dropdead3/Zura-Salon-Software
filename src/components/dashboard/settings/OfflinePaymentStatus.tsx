@@ -8,10 +8,19 @@ import { Wifi, WifiOff, Signal, ShieldCheck, Clock, CheckCircle2 } from 'lucide-
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 
-export function OfflinePaymentStatus() {
+interface OfflinePaymentStatusProps {
+  readers?: { device_type: string }[];
+}
+
+export function OfflinePaymentStatus({ readers }: OfflinePaymentStatusProps) {
   const { isOnline, isOffline, offlineEvents, currentOfflineDuration } = useOfflineStatus();
   const { pendingCount, pendingTotalFormatted, forwardedCount, lastForwardedAt, isForwarding } = useOfflinePaymentQueue();
   const { clearOfflineEvents } = useOfflineStatus();
+
+  const hasS710 = readers?.some((r) => r.device_type === 'stripe_s710') ?? false;
+  const hasS700 = readers?.some((r) => r.device_type === 'stripe_s700') ?? false;
+  const readerCount = readers?.length ?? 0;
+  const modelLabel = hasS710 && hasS700 ? 'S700/S710' : hasS710 ? 'S710' : hasS700 ? 'S700' : 'S700/S710';
 
   const recentEvents = offlineEvents.slice(-5).reverse();
 
