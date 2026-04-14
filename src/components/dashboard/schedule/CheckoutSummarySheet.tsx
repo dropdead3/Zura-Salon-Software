@@ -98,6 +98,22 @@ export function CheckoutSummarySheet({
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
+  const queryClient = useQueryClient();
+
+  // B3: Query org's real afterpay_enabled setting
+  const { data: orgAfterpayEnabled = false } = useQuery({
+    queryKey: ['org-afterpay-enabled', organizationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('afterpay_enabled')
+        .eq('id', organizationId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.afterpay_enabled ?? false;
+    },
+    enabled: !!organizationId,
+  });
 
   // Receipt branding hooks
   const { data: receiptConfig } = useReceiptConfig();
