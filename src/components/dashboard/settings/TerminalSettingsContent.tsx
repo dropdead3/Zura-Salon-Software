@@ -22,7 +22,7 @@ import {
   useCreateTerminalLocation, useDeleteTerminalLocation,
   useRegisterReader, useDeleteReader,
 } from '@/hooks/useStripeTerminals';
-import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation } from '@/hooks/useZuraPayConnect';
+import { useOrgConnectStatus, useConnectZuraPay, useVerifyZuraPayConnection, useConnectLocation, useResetZuraPayAccount, useDisconnectLocation, useCreateLocationAccount } from '@/hooks/useZuraPayConnect';
 import { useVerifyTerminalPayment } from '@/hooks/useTerminalHardwareOrder';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
@@ -73,7 +73,7 @@ function useZuraPayLocations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('id, name, stripe_account_id, stripe_status, stripe_payments_enabled, address, city, state_province')
+        .select('id, name, stripe_account_id, stripe_status, stripe_payments_enabled, stripe_connect_status, address, city, state_province')
         .eq('organization_id', orgId!);
       if (error) throw error;
       return data || [];
