@@ -37,7 +37,6 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
   const tipEnabled = tipConfig?.enabled ?? true;
   const tipPercentages = tipConfig?.percentages ?? [20, 25, 30];
   const receiptSlogan = receiptConfig?.custom_message || '';
-  const receiptSlogan = receiptConfig?.custom_message || '';
 
   return (
     <Card>
