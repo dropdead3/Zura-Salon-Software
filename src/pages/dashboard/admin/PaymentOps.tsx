@@ -1,4 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 import { isCardExpired } from '@/lib/card-utils';
 import { format, subDays } from 'date-fns';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -82,6 +85,127 @@ const COLLECTED_VIA_LABELS: Record<string, string> = {
   online_booking: 'Online',
   card_on_file: 'Card on File',
 };
+
+function FeeLedgerTableInner({ feeCharges, isPending, formatCurrency, openCollectDialog, openWaiveDialog, collectMutation }: {
+  feeCharges: Array<{
+    id: string; fee_type: string; fee_amount: number; status: string; collected_via: string | null;
+    charged_at: string | null; created_at: string; appointment_id: string;
+    appointment: { client_name: string | null; client_id: string | null; phorest_client_id: string | null; appointment_date: string; status: string | null } | null;
+  }>;
+  isPending: boolean;
+  formatCurrency: (n: number) => string;
+  openCollectDialog: (charge: any) => void;
+  openWaiveDialog: (charge: any) => void;
+  collectMutation: { isPending: boolean };
+}) {
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+    sortField,
+    toggleSort,
+  } = usePaginatedSort({
+    data: feeCharges,
+    defaultPageSize: 25,
+    defaultSortField: 'created_at' as any,
+    defaultSortDirection: 'desc',
+  });
+
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <SortableColumnHeader label="Client" sortKey="appointment" currentSortField={sortField} onToggleSort={toggleSort} />
+            <SortableColumnHeader label="Date" sortKey="created_at" currentSortField={sortField} onToggleSort={toggleSort} />
+            <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
+            <SortableColumnHeader label="Amount" sortKey="fee_amount" currentSortField={sortField} onToggleSort={toggleSort} />
+            <TableHead className={tokens.table.columnHeader}>Collected Via</TableHead>
+            <TableHead className={tokens.table.columnHeader}>Charged At</TableHead>
+            {isPending && <TableHead className={tokens.table.columnHeader}>Actions</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.map((charge) => (
+            <TableRow key={charge.id}>
+              <TableCell className="font-medium">
+                {charge.appointment?.client_name || 'Unknown'}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {charge.appointment?.appointment_date
+                  ? format(new Date(charge.appointment.appointment_date), 'MMM d, yyyy')
+                  : '—'}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">
+                  {FEE_TYPE_LABELS[charge.fee_type] ?? charge.fee_type}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <BlurredAmount>{formatCurrency(charge.fee_amount)}</BlurredAmount>
+              </TableCell>
+              <TableCell className="text-muted-foreground text-xs">
+                {charge.collected_via
+                  ? COLLECTED_VIA_LABELS[charge.collected_via] ?? charge.collected_via
+                  : '—'}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {charge.charged_at
+                  ? format(new Date(charge.charged_at), 'MMM d, h:mm a')
+                  : '—'}
+              </TableCell>
+              {isPending && (
+                <TableCell>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      className={tokens.button.inline}
+                      disabled={collectMutation.isPending}
+                      onClick={() => openCollectDialog({
+                        id: charge.id,
+                        clientName: charge.appointment?.client_name || 'Unknown',
+                        amount: charge.fee_amount,
+                        feeType: charge.fee_type,
+                        appointmentId: charge.appointment_id,
+                        clientId: charge.appointment?.client_id ?? charge.appointment?.phorest_client_id ?? null,
+                      })}
+                    >
+                      Collect
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className={tokens.button.inline}
+                      onClick={() => openWaiveDialog({
+                        id: charge.id,
+                        clientName: charge.appointment?.client_name || 'Unknown',
+                        amount: charge.fee_amount,
+                      })}
+                    >
+                      Waive
+                    </Button>
+                  </div>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        showingFrom={showingFrom}
+        showingTo={showingTo}
+        onPageChange={setCurrentPage}
+      />
+    </>
+  );
+}
 
 function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
   const [statusFilter, setStatusFilter] = useState<FeeStatusFilter>('pending');
@@ -354,84 +478,14 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Collected Via</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Charged At</TableHead>
-                  {isPending && <TableHead className={tokens.table.columnHeader}>Actions</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {feeCharges.map((charge) => (
-                  <TableRow key={charge.id}>
-                    <TableCell className="font-medium">
-                      {charge.appointment?.client_name || 'Unknown'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {charge.appointment?.appointment_date
-                        ? format(new Date(charge.appointment.appointment_date), 'MMM d, yyyy')
-                        : '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {FEE_TYPE_LABELS[charge.fee_type] ?? charge.fee_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <BlurredAmount>{formatCurrency(charge.fee_amount)}</BlurredAmount>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {charge.collected_via
-                        ? COLLECTED_VIA_LABELS[charge.collected_via] ?? charge.collected_via
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {charge.charged_at
-                        ? format(new Date(charge.charged_at), 'MMM d, h:mm a')
-                        : '—'}
-                    </TableCell>
-                    {isPending && (
-                      <TableCell>
-                        <div className="flex gap-1.5">
-                          <Button
-                            size="sm"
-                            className={tokens.button.inline}
-                            disabled={collectMutation.isPending}
-                            onClick={() => openCollectDialog({
-                              id: charge.id,
-                              clientName: charge.appointment?.client_name || 'Unknown',
-                              amount: charge.fee_amount,
-                              feeType: charge.fee_type,
-                              appointmentId: charge.appointment_id,
-                              clientId: charge.appointment?.client_id ?? charge.appointment?.phorest_client_id ?? null,
-                            })}
-                          >
-                            Collect
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className={tokens.button.inline}
-                            onClick={() => openWaiveDialog({
-                              id: charge.id,
-                              clientName: charge.appointment?.client_name || 'Unknown',
-                              amount: charge.fee_amount,
-                            })}
-                          >
-                            Waive
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <FeeLedgerTableInner
+              feeCharges={feeCharges}
+              isPending={isPending}
+              formatCurrency={formatCurrency}
+              openCollectDialog={openCollectDialog}
+              openWaiveDialog={openWaiveDialog}
+              collectMutation={collectMutation}
+            />
           )}
         </CardContent>
       </Card>
@@ -710,6 +764,23 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
     return disputes.filter(d => (d.client_name || '').toLowerCase().includes(s));
   }, [disputes, clientSearch]);
 
+  const {
+    paginatedData: paginatedDisputes,
+    currentPage: disputePage,
+    setCurrentPage: setDisputePage,
+    totalPages: disputeTotalPages,
+    totalItems: disputeTotalItems,
+    showingFrom: disputeShowingFrom,
+    showingTo: disputeShowingTo,
+    sortField: disputeSortField,
+    toggleSort: toggleDisputeSort,
+  } = usePaginatedSort({
+    data: filteredDisputes,
+    defaultPageSize: 25,
+    defaultSortField: 'created_at' as any,
+    defaultSortDirection: 'desc',
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -740,46 +811,56 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={tokens.table.columnHeader}>Client</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Amount</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Evidence Due</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Filed</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDisputes.map((dispute) => (
-                <TableRow key={dispute.id}>
-                  <TableCell className="font-medium">
-                    {dispute.client_name || 'Unknown'}
-                  </TableCell>
-                  <TableCell>
-                    <BlurredAmount>{formatCurrency(dispute.amount / 100)}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground capitalize">
-                    {(dispute.reason || 'unknown').replace(/_/g, ' ')}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={DISPUTE_STATUS_VARIANT[dispute.status] || 'secondary'}>
-                      {DISPUTE_STATUS_LABELS[dispute.status] || dispute.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {dispute.evidence_due_by
-                      ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy')
-                      : '—'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {format(new Date(dispute.created_at), 'MMM d, yyyy')}
-                  </TableCell>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableColumnHeader label="Client" sortKey="client_name" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <SortableColumnHeader label="Amount" sortKey="amount" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
+                  <SortableColumnHeader label="Status" sortKey="status" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <SortableColumnHeader label="Evidence Due" sortKey="evidence_due_by" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                  <SortableColumnHeader label="Filed" sortKey="created_at" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedDisputes.map((dispute) => (
+                  <TableRow key={dispute.id}>
+                    <TableCell className="font-medium">
+                      {dispute.client_name || 'Unknown'}
+                    </TableCell>
+                    <TableCell>
+                      <BlurredAmount>{formatCurrency(dispute.amount / 100)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground capitalize">
+                      {(dispute.reason || 'unknown').replace(/_/g, ' ')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={DISPUTE_STATUS_VARIANT[dispute.status] || 'secondary'}>
+                        {DISPUTE_STATUS_LABELS[dispute.status] || dispute.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {dispute.evidence_due_by
+                        ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy')
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(dispute.created_at), 'MMM d, yyyy')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <TablePagination
+              currentPage={disputePage}
+              totalPages={disputeTotalPages}
+              totalItems={disputeTotalItems}
+              showingFrom={disputeShowingFrom}
+              showingTo={disputeShowingTo}
+              onPageChange={setDisputePage}
+            />
+          </>
         )}
       </CardContent>
     </Card>
@@ -932,6 +1013,26 @@ export default function PaymentOps() {
     const s = debouncedClientSearch.toLowerCase();
     return pendingRefunds.filter(r => (r.original_item_name || '').toLowerCase().includes(s));
   }, [pendingRefunds, debouncedClientSearch]);
+
+  const {
+    paginatedData: paginatedHolds,
+    currentPage: holdsPage,
+    setCurrentPage: setHoldsPage,
+    totalPages: holdsTotalPages,
+    totalItems: holdsTotalItems,
+    showingFrom: holdsShowingFrom,
+    showingTo: holdsShowingTo,
+  } = usePaginatedSort({ data: filteredHolds, defaultPageSize: 25 });
+
+  const {
+    paginatedData: paginatedRefunds,
+    currentPage: refundsPage,
+    setCurrentPage: setRefundsPage,
+    totalPages: refundsTotalPages,
+    totalItems: refundsTotalItems,
+    showingFrom: refundsShowingFrom,
+    showingTo: refundsShowingTo,
+  } = usePaginatedSort({ data: filteredRefunds, defaultPageSize: 25 });
 
   return (
     <DashboardLayout>
@@ -1288,6 +1389,7 @@ export default function PaymentOps() {
                     </p>
                   </div>
                 ) : (
+                  <>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1300,7 +1402,7 @@ export default function PaymentOps() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredHolds.map((hold) => (
+                      {paginatedHolds.map((hold) => (
                         <TableRow key={hold.id}>
                           <TableCell className="font-medium">{hold.client_name || 'Walk-in'}</TableCell>
                           <TableCell className="text-muted-foreground">{hold.staff_name || '—'}</TableCell>
@@ -1357,6 +1459,15 @@ export default function PaymentOps() {
                       ))}
                     </TableBody>
                   </Table>
+                  <TablePagination
+                    currentPage={holdsPage}
+                    totalPages={holdsTotalPages}
+                    totalItems={holdsTotalItems}
+                    showingFrom={holdsShowingFrom}
+                    showingTo={holdsShowingTo}
+                    onPageChange={setHoldsPage}
+                  />
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -1379,6 +1490,7 @@ export default function PaymentOps() {
                     </p>
                   </div>
                 ) : (
+                  <>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1392,7 +1504,7 @@ export default function PaymentOps() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredRefunds.map((refund) => (
+                      {paginatedRefunds.map((refund) => (
                         <TableRow key={refund.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-1.5">
@@ -1458,6 +1570,15 @@ export default function PaymentOps() {
                       ))}
                     </TableBody>
                   </Table>
+                  <TablePagination
+                    currentPage={refundsPage}
+                    totalPages={refundsTotalPages}
+                    totalItems={refundsTotalItems}
+                    showingFrom={refundsShowingFrom}
+                    showingTo={refundsShowingTo}
+                    onPageChange={setRefundsPage}
+                  />
+                  </>
                 )}
               </CardContent>
             </Card>

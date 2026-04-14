@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -152,6 +155,28 @@ export function TeamProgressDashboard() {
     m.display_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const membersWithProgress = filteredMembers.map((m) => ({
+    ...m,
+    ...getMemberProgress(m.user_id),
+  }));
+
+  const {
+    paginatedData: paginatedMembers,
+    currentPage: membersPage,
+    setCurrentPage: setMembersPage,
+    totalPages: membersTotalPages,
+    totalItems: membersTotalItems,
+    showingFrom: membersShowingFrom,
+    showingTo: membersShowingTo,
+    sortField: membersSortField,
+    toggleSort: toggleMembersSort,
+  } = usePaginatedSort({
+    data: membersWithProgress,
+    defaultPageSize: 25,
+    defaultSortField: 'display_name' as any,
+    defaultSortDirection: 'asc',
+  });
+
   // Overall stats
   const totalCompletions = progressData.filter((p) => p.completed_at).length;
   const totalPossible = teamMembers.reduce((acc, m) => {
@@ -300,50 +325,55 @@ export function TeamProgressDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Team Member</TableHead>
+                <SortableColumnHeader label="Team Member" sortKey="display_name" currentSortField={membersSortField} onToggleSort={toggleMembersSort} />
                 <TableHead className="text-center">Total</TableHead>
-                <TableHead className="text-center">Completed</TableHead>
-                <TableHead>Progress</TableHead>
+                <SortableColumnHeader label="Completed" sortKey="completed" currentSortField={membersSortField} onToggleSort={toggleMembersSort} className="text-center" />
+                <SortableColumnHeader label="Progress" sortKey="percentage" currentSortField={membersSortField} onToggleSort={toggleMembersSort} />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMembers.map((member) => {
-                const memberProgress = getMemberProgress(member.user_id);
-                return (
-                  <TableRow key={member.user_id}>
-                    <TableCell className="font-medium">
-                      {member.display_name}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {memberProgress.total}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={
-                          memberProgress.completed === memberProgress.total
-                            ? 'default'
-                            : 'secondary'
-                        }
-                      >
-                        {memberProgress.completed}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Progress
-                          value={memberProgress.percentage}
-                          className="h-2 flex-1 max-w-32"
-                        />
-                        <span className="text-sm text-muted-foreground w-12">
-                          {Math.round(memberProgress.percentage)}%
-                        </span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {paginatedMembers.map((member) => (
+                <TableRow key={member.user_id}>
+                  <TableCell className="font-medium">
+                    {member.display_name}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {member.total}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge
+                      variant={
+                        member.completed === member.total
+                          ? 'default'
+                          : 'secondary'
+                      }
+                    >
+                      {member.completed}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Progress
+                        value={member.percentage}
+                        className="h-2 flex-1 max-w-32"
+                      />
+                      <span className="text-sm text-muted-foreground w-12">
+                        {Math.round(member.percentage)}%
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
+          <TablePagination
+            currentPage={membersPage}
+            totalPages={membersTotalPages}
+            totalItems={membersTotalItems}
+            showingFrom={membersShowingFrom}
+            showingTo={membersShowingTo}
+            onPageChange={setMembersPage}
+          />
         </CardContent>
       </Card>
     </div>

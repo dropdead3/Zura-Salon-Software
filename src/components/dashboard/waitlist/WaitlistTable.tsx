@@ -13,6 +13,9 @@ import { tokens } from '@/lib/design-tokens';
 import { MoreHorizontal, Phone, Mail, Clock, CalendarDays, User } from 'lucide-react';
 import type { WaitlistEntry } from '@/hooks/useWaitlist';
 import { useUpdateWaitlistStatus } from '@/hooks/useWaitlist';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 
 const STATUS_STYLES: Record<string, string> = {
   waiting: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -29,6 +32,23 @@ interface WaitlistTableProps {
 
 export function WaitlistTable({ entries, isLoading }: WaitlistTableProps) {
   const updateStatus = useUpdateWaitlistStatus();
+
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+    sortField,
+    toggleSort,
+  } = usePaginatedSort({
+    data: entries,
+    defaultPageSize: 25,
+    defaultSortField: 'preferred_date_start' as any,
+    defaultSortDirection: 'asc',
+  });
 
   if (isLoading) {
     return (
@@ -58,18 +78,18 @@ export function WaitlistTable({ entries, isLoading }: WaitlistTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className={tokens.table.columnHeader}>Client</TableHead>
+              <SortableColumnHeader label="Client" sortKey="client_name" currentSortField={sortField} onToggleSort={toggleSort} />
               <TableHead className={tokens.table.columnHeader}>Service</TableHead>
-              <TableHead className={tokens.table.columnHeader}>Preferred Dates</TableHead>
+              <SortableColumnHeader label="Preferred Dates" sortKey="preferred_date_start" currentSortField={sortField} onToggleSort={toggleSort} />
               <TableHead className={tokens.table.columnHeader}>Time Window</TableHead>
-              <TableHead className={tokens.table.columnHeader}>Priority</TableHead>
-              <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+              <SortableColumnHeader label="Priority" sortKey="priority" currentSortField={sortField} onToggleSort={toggleSort} />
+              <SortableColumnHeader label="Status" sortKey="status" currentSortField={sortField} onToggleSort={toggleSort} />
               <TableHead className={tokens.table.columnHeader}>Contact</TableHead>
               <TableHead className={tokens.table.columnHeader} />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {entries.map((entry) => (
+            {paginatedData.map((entry) => (
               <TableRow key={entry.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -158,6 +178,16 @@ export function WaitlistTable({ entries, isLoading }: WaitlistTableProps) {
             ))}
           </TableBody>
         </Table>
+        <div className="px-4 pb-4">
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            showingFrom={showingFrom}
+            showingTo={showingTo}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </CardContent>
     </Card>
   );

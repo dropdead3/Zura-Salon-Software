@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { usePaginatedSort } from '@/hooks/usePaginatedSort';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { SortableColumnHeader } from '@/components/ui/SortableColumnHeader';
 import { Link } from 'react-router-dom';
 import { Lock, Search, Eye, EyeOff, Crown, Shield, History, User, ExternalLink, Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +40,60 @@ import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
+
+function PinChangelogTable({ changelog, formatDate }: { changelog: any[]; formatDate: (d: Date, f: string) => string }) {
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+    sortField,
+    toggleSort,
+  } = usePaginatedSort({
+    data: changelog,
+    defaultPageSize: 15,
+    defaultSortField: 'changed_at' as any,
+    defaultSortDirection: 'desc',
+  });
+
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <SortableColumnHeader label="Date" sortKey="changed_at" currentSortField={sortField} onToggleSort={toggleSort} />
+            <SortableColumnHeader label="Changed By" sortKey="changer_name" currentSortField={sortField} onToggleSort={toggleSort} />
+            <TableHead>Reason</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.map((entry) => (
+            <TableRow key={entry.id}>
+              <TableCell className="text-sm">
+                {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
+              </TableCell>
+              <TableCell className="text-sm">{entry.changer_name}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {entry.reason || '—'}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        showingFrom={showingFrom}
+        showingTo={showingTo}
+        onPageChange={setCurrentPage}
+      />
+    </>
+  );
+}
 
 interface TeamPinManagementTabProps {
   canManage: boolean;
@@ -276,28 +333,7 @@ export function TeamPinManagementTab({
           {changelog.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No PIN changes recorded</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Changed By</TableHead>
-                  <TableHead>Reason</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {changelog.slice(0, 10).map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="text-sm">
-                      {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
-                    </TableCell>
-                    <TableCell className="text-sm">{entry.changer_name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {entry.reason || '—'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <PinChangelogTable changelog={changelog} formatDate={formatDate} />
           )}
         </CardContent>
       </Card>
