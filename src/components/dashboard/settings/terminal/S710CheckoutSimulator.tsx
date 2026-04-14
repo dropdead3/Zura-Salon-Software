@@ -189,10 +189,13 @@ function TipScreen({ total, tipPercentages = [20, 25, 30], colorTheme = 'cream' 
       exit={{ opacity: 0, y: -10 }}
       className="flex flex-col h-full px-5 pt-4"
     >
-      <p className="text-white/40 text-[8px] tracking-[0.15em] uppercase mb-2">Add a Tip</p>
-      <div className="text-center mb-4">
+      <div className="text-center mb-2">
         <p className="text-white/50 text-[9px] tracking-wider uppercase">Subtotal</p>
         <p className="text-white text-base font-medium font-mono mt-0.5">{fmt(total)}</p>
+      </div>
+      <div className="text-center mb-4">
+        <p className="text-white/40 text-[9px] tracking-[0.15em] uppercase">Add a Tip</p>
+        <p className="text-white/25 text-[7px] mt-0.5">In addition to the subtotal above</p>
       </div>
       <div className="flex flex-col gap-2 mb-3">
         {tipPercentages.map((pct, i) => {
