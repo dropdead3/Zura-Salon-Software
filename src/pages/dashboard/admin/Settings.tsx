@@ -81,7 +81,7 @@ const categoriesMap: Record<string, { id: string; label: string; description: st
   'account-billing': { id: 'account-billing', label: 'Account & Billing', description: 'View and manage your subscription plan, payment methods, invoices, and billing history.', icon: Wallet },
   'data-import': { id: 'data-import', label: 'Data Import', description: 'Migrate data from other salon software or import from CSV files.', icon: Upload },
   'zura-config': { id: 'zura-config', label: 'Zura Configuration', description: 'Customize AI personality, knowledge base, role rules, and behavioral guardrails.', icon: Sparkles },
-  'terminals': { id: 'terminals', label: 'Zura Pay', description: 'Configure your Zura Pay hardware fleet, purchase readers, monitor connectivity, and preview checkout display.', icon: CreditCard },
+  'terminals': { id: 'terminals', label: 'Point Of Sale', description: 'Configure your Point Of Sale hardware fleet, purchase readers, monitor connectivity, and preview checkout display.', icon: CreditCard },
 };
 
 export default function Settings() {
