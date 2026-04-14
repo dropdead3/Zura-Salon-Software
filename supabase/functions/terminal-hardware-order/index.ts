@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
       const s710Fallback = {
         id: "s710_reader",
         product: "Zura Pay Reader S710",
-        amount: 34900,
+        amount: 29900,
         currency: "usd",
         status: "available",
         description: "Android-based smart reader with WiFi + cellular failover. Countertop and handheld use.",
