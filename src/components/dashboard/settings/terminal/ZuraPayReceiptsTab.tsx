@@ -230,7 +230,7 @@ export function ZuraPayReceiptsTab() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
       {/* Settings Panel */}
       <Card className="rounded-xl border-border bg-card/80 backdrop-blur-xl">
         <CardHeader className="flex flex-row items-center gap-3">
@@ -437,6 +437,7 @@ export function ZuraPayReceiptsTab() {
           />
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
