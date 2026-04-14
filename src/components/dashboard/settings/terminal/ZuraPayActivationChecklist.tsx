@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CheckCircle2, Circle, ArrowRight, Loader2, ExternalLink, CalendarPlus, CalendarDays } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { CheckCircle2, Circle, ArrowRight, Loader2, ExternalLink, CalendarPlus, CalendarDays, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -55,8 +55,34 @@ export function ZuraPayActivationChecklist({
 
   const [creatingTestAppt, setCreatingTestAppt] = useState(false);
   const [testApptCreated, setTestApptCreated] = useState(false);
+  const [existingTestApptId, setExistingTestApptId] = useState<string | null>(null);
+  const [removingTestAppt, setRemovingTestAppt] = useState(false);
 
   const goToFleetTab = () => setSearchParams((prev) => { prev.set('subtab', 'fleet'); return prev; });
+
+  // Check for existing test appointment on mount (duplicate prevention)
+  const checkExistingTestAppt = useCallback(async () => {
+    if (!organizationId) return;
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabase
+      .from('appointments')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('import_source', 'zura_test')
+      .eq('appointment_date', today)
+      .neq('status', 'cancelled')
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setTestApptCreated(true);
+      setExistingTestApptId(data.id);
+    }
+  }, [organizationId]);
+
+  useEffect(() => {
+    checkExistingTestAppt();
+  }, [checkExistingTestAppt]);
 
   const handleCreateTestAppt = async () => {
     if (!organizationId || !userId) {
@@ -78,7 +104,7 @@ export function ZuraPayActivationChecklist({
 
       const appointmentDate = startTime.toISOString().split('T')[0];
 
-      const { error } = await supabase.from('appointments').insert({
+      const { data, error } = await supabase.from('appointments').insert({
         organization_id: organizationId,
         location_id: locationId || undefined,
         staff_user_id: userId,
@@ -86,8 +112,8 @@ export function ZuraPayActivationChecklist({
         client_name: 'Test Client',
         service_name: 'Zura Pay Test Checkout',
         appointment_date: appointmentDate,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
+        start_time: startTime.toTimeString().slice(0, 8),
+        end_time: endTime.toTimeString().slice(0, 8),
         duration_minutes: 30,
         total_price: 0.50,
         original_price: 0.50,
@@ -95,16 +121,39 @@ export function ZuraPayActivationChecklist({
         import_source: 'zura_test',
         notes: 'Auto-created for Zura Pay activation test',
         payment_status: 'unpaid',
-      });
+      }).select('id').single();
 
       if (error) throw error;
 
       setTestApptCreated(true);
+      setExistingTestApptId(data?.id ?? null);
       toast.success('Test appointment created on today\'s schedule');
     } catch (err: any) {
       toast.error('Failed to create test appointment', { description: err.message });
     } finally {
       setCreatingTestAppt(false);
+    }
+  };
+
+  const handleRemoveTestAppt = async () => {
+    if (!existingTestApptId) return;
+    setRemovingTestAppt(true);
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled' })
+        .eq('id', existingTestApptId)
+        .eq('import_source', 'zura_test');
+
+      if (error) throw error;
+
+      setTestApptCreated(false);
+      setExistingTestApptId(null);
+      toast.success('Test appointment removed');
+    } catch (err: any) {
+      toast.error('Failed to remove test appointment', { description: err.message });
+    } finally {
+      setRemovingTestAppt(false);
     }
   };
 
@@ -116,16 +165,34 @@ export function ZuraPayActivationChecklist({
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>$0.50 test appointment added to today's schedule</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
-            onClick={() => navigate(dashPath('/schedule'))}
-          >
-            <CalendarDays className="w-3.5 h-3.5" />
-            View Today's Schedule
-            <ArrowRight className="w-3 h-3" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+              onClick={() => navigate(dashPath('/schedule'))}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              View Today's Schedule
+              <ArrowRight className="w-3 h-3" />
+            </Button>
+            {existingTestApptId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive"
+                onClick={handleRemoveTestAppt}
+                disabled={removingTestAppt}
+              >
+                {removingTestAppt ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                Remove Test
+              </Button>
+            )}
+          </div>
         </div>
       );
     }
