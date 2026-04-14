@@ -207,6 +207,7 @@ function FeeLedgerTableInner({ feeCharges, isPending, formatCurrency, openCollec
   );
 }
 
+function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
   const [statusFilter, setStatusFilter] = useState<FeeStatusFilter>('pending');
   const [waiveDialogOpen, setWaiveDialogOpen] = useState(false);
   const [selectedCharge, setSelectedCharge] = useState<{ id: string; clientName: string; amount: number } | null>(null);
