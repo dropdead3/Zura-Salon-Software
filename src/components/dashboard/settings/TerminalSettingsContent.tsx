@@ -314,9 +314,11 @@ export function TerminalSettingsContent() {
   }, [orgId, searchParams, setSearchParams]);
 
   const activeLocationId = showAllLocations ? null : (selectedLocationId || locations?.[0]?.id || null);
+  const activeLocation = locations?.find((l) => l.id === activeLocationId);
+  const connectedLocationId = activeLocation?.stripe_account_id ? activeLocationId : null;
 
-  const { data: terminalLocations, isLoading: tlLoading } = useTerminalLocations(activeLocationId);
-  const { data: readers, isLoading: readersLoading } = useTerminalReaders(activeLocationId);
+  const { data: terminalLocations, isLoading: tlLoading } = useTerminalLocations(connectedLocationId);
+  const { data: readers, isLoading: readersLoading } = useTerminalReaders(connectedLocationId);
   const createTerminalLocation = useCreateTerminalLocation();
   const deleteTerminalLocation = useDeleteTerminalLocation();
   const deleteReader = useDeleteReader();
