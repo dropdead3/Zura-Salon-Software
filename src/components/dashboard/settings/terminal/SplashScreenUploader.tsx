@@ -174,100 +174,44 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Secondary radial glow at top — stronger vignette atmosphere
-      const topGlow = ctx.createRadialGradient(TARGET_W / 2, 0, 0, TARGET_W / 2, 0, TARGET_H * 0.5);
-      topGlow.addColorStop(0, p.accentRgba(0.10));
-      topGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = topGlow;
+      // Corner glow — top-left
+      const tlGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 700);
+      tlGlow.addColorStop(0, p.accentRgba(0.18));
+      tlGlow.addColorStop(0.5, p.accentRgba(0.06));
+      tlGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = tlGlow;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Main radial accent glow behind logo — broader, stronger bloom
-      const radGrad = ctx.createRadialGradient(TARGET_W / 2, TARGET_H * 0.38, 0, TARGET_W / 2, TARGET_H * 0.38, 500);
-      radGrad.addColorStop(0, p.accentRgba(0.22));
-      radGrad.addColorStop(0.5, p.accentRgba(0.10));
-      radGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = radGrad;
+      // Corner glow — bottom-right
+      const brGlow = ctx.createRadialGradient(TARGET_W, TARGET_H, 0, TARGET_W, TARGET_H, 700);
+      brGlow.addColorStop(0, p.accentRgba(0.18));
+      brGlow.addColorStop(0.5, p.accentRgba(0.06));
+      brGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = brGlow;
       ctx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-      // Fourth glow — wide elliptical "stage lighting" band across center
-      ctx.save();
-      ctx.scale(1, 0.4);
-      const stageGlow = ctx.createRadialGradient(TARGET_W / 2, TARGET_H * 0.38 / 0.4, 0, TARGET_W / 2, TARGET_H * 0.38 / 0.4, 600);
-      stageGlow.addColorStop(0, p.accentRgba(0.08));
-      stageGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = stageGlow;
-      ctx.fillRect(0, 0, TARGET_W, TARGET_H / 0.4);
-      ctx.restore();
-
-      // Third glow at bottom — lift footer area
-      const bottomGlow = ctx.createRadialGradient(TARGET_W / 2, TARGET_H - 140, 0, TARGET_W / 2, TARGET_H - 140, 300);
-      bottomGlow.addColorStop(0, p.accentRgba(0.08));
-      bottomGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = bottomGlow;
-      ctx.fillRect(0, 0, TARGET_W, TARGET_H);
-
-      // Subtle noise/grain texture — reduced intensity
-      const imageData = ctx.getImageData(0, 0, TARGET_W, TARGET_H);
-      const pixels = imageData.data;
-      for (let i = 0; i < pixels.length; i += 4) {
-        const noise = (Math.random() - 0.5) * 8;
-        pixels[i] = Math.min(255, Math.max(0, pixels[i] + noise));
-        pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1] + noise));
-        pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2] + noise));
-      }
-      ctx.putImageData(imageData, 0, 0);
-
-      // Soft halo behind logo
-      const logoCenter = TARGET_H * 0.33;
-      const halo = ctx.createRadialGradient(TARGET_W / 2, logoCenter, 0, TARGET_W / 2, logoCenter, 280);
-      halo.addColorStop(0, p.accentRgba(0.08));
-      halo.addColorStop(1, 'transparent');
-      ctx.fillStyle = halo;
-      ctx.fillRect(0, 0, TARGET_W, TARGET_H);
-
-      // Center logo — fit within 380x380 with breathing room
+      // Calculate center-center layout for logo + business name group
       const maxLogo = 380;
       const logoScale = Math.min(maxLogo / img.width, maxLogo / img.height);
       const lw = img.width * logoScale;
       const lh = img.height * logoScale;
+      const textBlockHeight = 60; // approximate height for business name
+      const groupGap = 70; // space between logo and text
+      const totalGroupHeight = lh + groupGap + textBlockHeight;
+      const groupTop = (TARGET_H * 0.45) - totalGroupHeight / 2;
+
+      // Draw logo centered in group
       const lx = (TARGET_W - lw) / 2;
-      const ly = logoCenter - lh / 2;
+      const ly = groupTop;
       ctx.drawImage(img, lx, ly, lw, lh);
 
-      // Business name below logo — larger, wider letter spacing
+      // Business name below logo
       ctx.fillStyle = p.textColor;
       ctx.font = '500 52px "Termina", sans-serif';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '8px';
-      const nameY = ly + lh + 90;
+      const nameY = ly + lh + groupGap;
       ctx.fillText(businessName.toUpperCase(), TARGET_W / 2, nameY);
-
-      // Location name below business name — lighter weight, subtler
-      let dividerY = nameY + 40;
-      if (locationName) {
-        ctx.fillStyle = `rgba(255,255,255,0.7)`;
-        ctx.font = '300 32px "Aeonik Pro", sans-serif';
-        ctx.letterSpacing = '4px';
-        ctx.fillText(locationName.toUpperCase(), TARGET_W / 2, nameY + 50);
-        dividerY = nameY + 80;
-      }
-
-      // Accent divider line — wider, bolder, rounded caps
-      ctx.strokeStyle = p.accentRgba(0.55);
-      ctx.lineWidth = 2.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(TARGET_W / 2 - 100, dividerY);
-      ctx.lineTo(TARGET_W / 2 + 100, dividerY);
-      ctx.stroke();
-
-      // Subtle horizontal rule above Zura section — more visible
-      ctx.strokeStyle = p.accentRgba(0.20);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(TARGET_W * 0.2, TARGET_H - 240);
-      ctx.lineTo(TARGET_W * 0.8, TARGET_H - 240);
-      ctx.stroke();
 
       // Draw Zura Z icon at bottom — larger 84px
       const zSize = 84;
