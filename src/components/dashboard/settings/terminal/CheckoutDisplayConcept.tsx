@@ -75,7 +75,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
             />
             <button
               onClick={() => setAutoPlay(!autoPlay)}
-              className="mt-3 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors font-sans uppercase tracking-wider"
+              className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-sans uppercase tracking-wider"
             >
               {autoPlay ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
               {autoPlay ? 'Pause' : 'Auto-play'}
@@ -88,9 +88,9 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
             <div className="p-4 rounded-xl bg-muted/30 border space-y-3">
               <div className="flex items-center gap-2">
                 <Settings2 className="w-3.5 h-3.5 text-primary" />
-                <p className="text-[9px] text-muted-foreground tracking-[0.15em] uppercase font-sans">Live Configuration</p>
+                <p className={tokens.heading.subsection}>Live Configuration</p>
               </div>
-              <p className="text-[10px] text-muted-foreground/60 font-sans">
+              <p className={tokens.body.muted}>
                 This preview reflects your current settings. Changes in Tipping and Receipts tabs update here automatically.
               </p>
               <div className="space-y-2 pt-1">
@@ -102,10 +102,10 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
                     ) : (
                       <ToggleLeft className="w-3.5 h-3.5 text-muted-foreground/50" />
                     )}
-                    <span className="text-muted-foreground font-sans">Tipping</span>
+                    <span className={tokens.body.muted}>Tipping</span>
                   </div>
                   <span className={cn(
-                    'text-[10px] font-mono',
+                    'text-xs font-mono',
                     tipEnabled ? 'text-foreground' : 'text-muted-foreground/50'
                   )}>
                     {tipEnabled ? `${tipPercentages.join('% · ')}%` : 'Disabled'}
@@ -116,9 +116,9 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <Receipt className="w-3.5 h-3.5 text-muted-foreground/60" />
-                    <span className="text-muted-foreground font-sans">Receipt Message</span>
+                    <span className={tokens.body.muted}>Receipt Message</span>
                   </div>
-                  <span className="text-[10px] font-sans text-foreground truncate max-w-[180px]">
+                  <span className="text-xs font-sans text-foreground truncate max-w-[180px]">
                     {receiptSlogan || '—'}
                   </span>
                 </div>
@@ -127,11 +127,11 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
 
             {/* Device specs */}
             <div className="p-4 rounded-xl bg-muted/30 border space-y-2">
-              <p className="text-[9px] text-muted-foreground tracking-[0.15em] uppercase font-sans">S710 Reader Specifications</p>
+              <p className={tokens.heading.subsection}>S710 Reader Specifications</p>
               {S710_SPECS.map((spec) => (
                 <div key={spec.label} className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground font-sans">{spec.label}</span>
-                  <span className="font-mono text-foreground text-[10px]">{spec.value}</span>
+                  <span className={tokens.body.muted}>{spec.label}</span>
+                  <span className="font-mono text-foreground text-xs">{spec.value}</span>
                 </div>
               ))}
             </div>
@@ -140,9 +140,9 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
             <div className="p-4 rounded-xl bg-muted/30 border space-y-3">
               <div className="flex items-center gap-2">
                 <Palette className="w-4 h-4 text-primary" />
-                <p className="text-[9px] text-muted-foreground tracking-[0.15em] uppercase font-sans">Your Checkout Experience</p>
+                <p className={tokens.heading.subsection}>Your Checkout Experience</p>
               </div>
-              <p className="text-xs text-muted-foreground font-sans leading-relaxed">
+              <p className={cn(tokens.body.muted, 'leading-relaxed')}>
                 Your readers display a branded checkout flow with your business name, itemized cart details, totals, and payment prompts. The experience updates automatically across all your readers — no manual device configuration needed.
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -154,7 +154,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
                   'Real-time status updates',
                 ].map((cap) => (
                   <span key={cap} className={cn(
-                    'text-[9px] px-2 py-0.5 rounded-full bg-muted border text-muted-foreground font-sans',
+                    'text-xs px-2.5 py-1 rounded-full bg-muted border text-muted-foreground font-sans',
                     'transition-colors hover:text-foreground hover:border-foreground/20'
                   )}>
                     {cap}
