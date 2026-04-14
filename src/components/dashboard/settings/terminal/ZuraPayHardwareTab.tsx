@@ -96,9 +96,19 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
     setDialogOpen(true);
   }, []);
 
-  const readerPrice = skuData?.skus?.[0]?.amount || 29900;
-  const readerCurrency = skuData?.skus?.[0]?.currency || 'usd';
-  const readerImage = skuData?.skus?.[0]?.image_url;
+  // Derive per-model SKU data
+  const s700Sku = skuData?.skus?.find((s) => s.product.toLowerCase().includes('s700'))
+    || skuData?.skus?.[0];
+  const s710Sku = skuData?.s710_skus?.[0]
+    || skuData?.skus?.find((s) => s.product.toLowerCase().includes('s710'))
+    || s700Sku; // fallback: share price if only one SKU exists
+
+  const getModelSku = (model: ReaderModel) => model === 's710' ? s710Sku : s700Sku;
+  const activeSku = getModelSku(selectedModel);
+
+  const readerPrice = activeSku?.amount || 29900;
+  const readerCurrency = activeSku?.currency || 'usd';
+  const readerImage = activeSku?.image_url;
   const accessories = skuData?.accessories || [];
   const accessoriesTotalCents = accessories.reduce((sum, acc) => {
     const qty = selectedAccessories[acc.id] || 0;
