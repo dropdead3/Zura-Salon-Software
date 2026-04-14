@@ -8,6 +8,7 @@ import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
 import { useAutoLock } from '@/hooks/useAutoLock';
+import { useColorTheme } from '@/hooks/useColorTheme';
 import { ZuraNavigationProvider, useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { NavigationHistoryProvider, useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import { ZuraStickyGuidance } from '@/components/dashboard/ZuraStickyGuidance';
