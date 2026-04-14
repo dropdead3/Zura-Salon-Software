@@ -371,10 +371,14 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   {previewUrl ? (
                     <img src={previewUrl} alt="Splash preview" className="w-full h-full object-cover" />
                   ) : hasSplash ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/20">
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                      <span className="text-[10px] text-muted-foreground text-center px-2">Custom splash screen active on reader</span>
-                    </div>
+                    splashStatus?.splash_url ? (
+                      <img src={splashStatus.splash_url} alt="Active splash screen" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/20">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                        <span className="text-[10px] text-muted-foreground text-center px-2">Custom splash screen active on reader</span>
+                      </div>
+                    )
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
                       <Upload className="w-6 h-6 text-muted-foreground" />
