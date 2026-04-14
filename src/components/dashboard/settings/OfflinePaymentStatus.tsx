@@ -48,7 +48,8 @@ export function OfflinePaymentStatus() {
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {/* Connection Status */}
-          <div className="p-4 rounded-xl bg-muted/30 border">
+          <div className="p-4 rounded-xl bg-muted/30 border relative">
+            <MetricInfoTooltip description="Shows your current network status. When WiFi drops, S710 readers automatically switch to cellular. S700 readers rely on store-and-forward." className="absolute top-3 right-3" />
             <div className="flex items-center gap-2 mb-2">
               {isOnline ? (
                 <Wifi className="w-4 h-4 text-emerald-500" />
@@ -68,7 +69,8 @@ export function OfflinePaymentStatus() {
           </div>
 
           {/* Pending Payments */}
-          <div className="p-4 rounded-xl bg-muted/30 border">
+          <div className="p-4 rounded-xl bg-muted/30 border relative">
+            <MetricInfoTooltip description="Payments accepted while offline that are queued on-device, waiting to be authorized when connectivity returns. A count above zero means payments are stored but not yet settled." className="absolute top-3 right-3" />
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
               <span className="font-sans text-xs text-muted-foreground">Pending Forward</span>
@@ -87,7 +89,8 @@ export function OfflinePaymentStatus() {
           </div>
 
           {/* Forwarded */}
-          <div className="p-4 rounded-xl bg-muted/30 border">
+          <div className="p-4 rounded-xl bg-muted/30 border relative">
+            <MetricInfoTooltip description="Payments that were accepted offline and have since been successfully authorized and settled after connectivity was restored." className="absolute top-3 right-3" />
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               <span className="font-sans text-xs text-muted-foreground">Forwarded</span>
