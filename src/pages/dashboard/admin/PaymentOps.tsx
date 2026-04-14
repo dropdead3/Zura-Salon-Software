@@ -86,7 +86,127 @@ const COLLECTED_VIA_LABELS: Record<string, string> = {
   card_on_file: 'Card on File',
 };
 
-function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+function FeeLedgerTableInner({ feeCharges, isPending, formatCurrency, openCollectDialog, openWaiveDialog, collectMutation }: {
+  feeCharges: Array<{
+    id: string; fee_type: string; fee_amount: number; status: string; collected_via: string | null;
+    charged_at: string | null; created_at: string; appointment_id: string;
+    appointment: { client_name: string | null; client_id: string | null; phorest_client_id: string | null; appointment_date: string; status: string | null } | null;
+  }>;
+  isPending: boolean;
+  formatCurrency: (n: number) => string;
+  openCollectDialog: (charge: any) => void;
+  openWaiveDialog: (charge: any) => void;
+  collectMutation: { isPending: boolean };
+}) {
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+    sortField,
+    toggleSort,
+  } = usePaginatedSort({
+    data: feeCharges,
+    defaultPageSize: 25,
+    defaultSortField: 'created_at' as any,
+    defaultSortDirection: 'desc',
+  });
+
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <SortableColumnHeader label="Client" sortKey="appointment" currentSortField={sortField} onToggleSort={toggleSort} />
+            <SortableColumnHeader label="Date" sortKey="created_at" currentSortField={sortField} onToggleSort={toggleSort} />
+            <TableHead className={tokens.table.columnHeader}>Fee Type</TableHead>
+            <SortableColumnHeader label="Amount" sortKey="fee_amount" currentSortField={sortField} onToggleSort={toggleSort} />
+            <TableHead className={tokens.table.columnHeader}>Collected Via</TableHead>
+            <TableHead className={tokens.table.columnHeader}>Charged At</TableHead>
+            {isPending && <TableHead className={tokens.table.columnHeader}>Actions</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.map((charge) => (
+            <TableRow key={charge.id}>
+              <TableCell className="font-medium">
+                {charge.appointment?.client_name || 'Unknown'}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {charge.appointment?.appointment_date
+                  ? format(new Date(charge.appointment.appointment_date), 'MMM d, yyyy')
+                  : '—'}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">
+                  {FEE_TYPE_LABELS[charge.fee_type] ?? charge.fee_type}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <BlurredAmount>{formatCurrency(charge.fee_amount)}</BlurredAmount>
+              </TableCell>
+              <TableCell className="text-muted-foreground text-xs">
+                {charge.collected_via
+                  ? COLLECTED_VIA_LABELS[charge.collected_via] ?? charge.collected_via
+                  : '—'}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {charge.charged_at
+                  ? format(new Date(charge.charged_at), 'MMM d, h:mm a')
+                  : '—'}
+              </TableCell>
+              {isPending && (
+                <TableCell>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      className={tokens.button.inline}
+                      disabled={collectMutation.isPending}
+                      onClick={() => openCollectDialog({
+                        id: charge.id,
+                        clientName: charge.appointment?.client_name || 'Unknown',
+                        amount: charge.fee_amount,
+                        feeType: charge.fee_type,
+                        appointmentId: charge.appointment_id,
+                        clientId: charge.appointment?.client_id ?? charge.appointment?.phorest_client_id ?? null,
+                      })}
+                    >
+                      Collect
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className={tokens.button.inline}
+                      onClick={() => openWaiveDialog({
+                        id: charge.id,
+                        clientName: charge.appointment?.client_name || 'Unknown',
+                        amount: charge.fee_amount,
+                      })}
+                    >
+                      Waive
+                    </Button>
+                  </div>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        showingFrom={showingFrom}
+        showingTo={showingTo}
+        onPageChange={setCurrentPage}
+      />
+    </>
+  );
+}
+
   const [statusFilter, setStatusFilter] = useState<FeeStatusFilter>('pending');
   const [waiveDialogOpen, setWaiveDialogOpen] = useState(false);
   const [selectedCharge, setSelectedCharge] = useState<{ id: string; clientName: string; amount: number } | null>(null);
