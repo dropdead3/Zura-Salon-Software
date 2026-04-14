@@ -1,51 +1,27 @@
 
 
-# Fix: Terminal Reader Display Clear
+# Combine Test & Clear into a Single Dropdown Menu
 
-## Root Cause
-The edge function at line 125 calls `stripe.terminal.readers.clearReaderDisplay()` — this method **does not exist** in the Stripe SDK. The error is logged but swallowed on the client side, so the toast says "Reader display cleared" even though it failed.
+## Problem
+The "Test" and "Clear" buttons sit side-by-side as separate buttons. Users don't understand that "Clear" is specifically to clear the test data from the reader. Grouping them in a single dropdown with clear labeling solves this.
 
-The correct Stripe API method to reset a reader's screen is `stripe.terminal.readers.cancelAction()`, which is already implemented in the same function (line 150) for the `cancel_action` action.
+## Solution
+Replace the two separate buttons with a single `DropdownMenu` component. The trigger button shows a monitor icon + "Display Test" label. The dropdown contains two items:
 
-## Fix
+1. **"Push Test Cart"** — calls `handleTestDisplay(reader.id)`, disabled while a test is active
+2. **"Clear Test from Reader"** — calls `handleClearDisplay(reader.id)`, always available for online readers
 
-**File: `supabase/functions/terminal-reader-display/index.ts`** (lines 124-129)
+When a test is active (`testingReaderId === reader.id`), the trigger button gets a subtle pulsing indicator or destructive accent to signal that test data is currently on the reader.
 
-Replace:
-```typescript
-if (action === "clear_reader_display") {
-  const readerAction = await stripe.terminal.readers.clearReaderDisplay(
-    reader_id,
-    stripeOpts
-  );
-  return jsonResponse({ success: true, reader: readerAction });
-}
-```
+## Changes
 
-With:
-```typescript
-if (action === "clear_reader_display") {
-  const readerAction = await stripe.terminal.readers.cancelAction(
-    reader_id,
-    stripeOpts
-  );
-  return jsonResponse({ success: true, reader: readerAction });
-}
-```
+**File: `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`**
 
-**File: `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`** (lines 238-258)
-
-Add proper error handling so the toast only shows success when the API actually succeeds:
-```typescript
-const { data, error } = await supabase.functions.invoke('terminal-reader-display', {
-  body: { action: 'clear_reader_display', reader_id: readerId, organization_id: orgId },
-});
-if (error || data?.error) {
-  throw new Error(data?.error || error?.message || 'Clear failed');
-}
-toast.success('Reader display cleared');
-```
-
-## Summary
-One-line backend fix — wrong Stripe SDK method name. Plus tighten the client-side error handling so failures aren't silently reported as success.
+1. Add imports for `DropdownMenu`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuTrigger` from `@/components/ui/dropdown-menu` and `ChevronDown` from lucide
+2. Replace the two `<Tooltip><Button>` blocks (lines ~776-818) with a single `<DropdownMenu>`:
+   - Trigger: `<Button variant="outline" size="sm">` with `<MonitorSmartphone />` icon + "Display Test" + chevron
+   - When `testingReaderId === reader.id`, trigger gets amber/destructive styling to indicate active test
+   - Menu item 1: `<MonitorSmartphone />` "Push Test Cart" — disabled when testing
+   - Menu item 2: `<X />` "Clear Test from Reader" — always enabled
+3. Remove the standalone `<Tooltip>` wrappers for both old buttons
 
