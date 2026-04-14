@@ -313,7 +313,7 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                 {/* Dropzone / Preview — centered */}
                 <div
                   className={cn(
-                    'relative w-[200px] h-[356px] rounded-xl border-2 border-dashed transition-colors shrink-0 overflow-hidden cursor-pointer',
+                    'relative w-[280px] h-[498px] rounded-xl border-2 border-dashed transition-colors shrink-0 overflow-hidden cursor-pointer',
                     dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
                     (previewUrl || hasSplash) && 'border-solid'
                   )}
