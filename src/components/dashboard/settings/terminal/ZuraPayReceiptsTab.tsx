@@ -26,9 +26,10 @@ interface ReceiptPreviewProps {
   website: string | null;
   socials: { instagram?: string; facebook?: string; tiktok?: string };
   reviewUrls: { google?: string; yelp?: string; facebook?: string };
+  redoPolicyFallback?: string;
 }
 
-function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone, website, socials, reviewUrls }: ReceiptPreviewProps) {
+function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone, website, socials, reviewUrls, redoPolicyFallback }: ReceiptPreviewProps) {
   const logoHeightClass = config.logo_size === 'sm' ? 'h-6' : config.logo_size === 'lg' ? 'h-14' : 'h-10';
   const iconHeightClass = config.footer_icon_size === 'lg' ? 'h-8' : config.footer_icon_size === 'md' ? 'h-6' : 'h-4';
 
@@ -84,12 +85,23 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
         </tbody>
       </table>
 
+      {/* Color Room Charges (sample) */}
+      <div className="mt-3 pt-2" style={{ borderTop: '1px solid #e5e5e5' }}>
+        <p className="text-gray-500 mb-1" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Color Room Charges</p>
+        <table className="w-full text-xs">
+          <tbody>
+            <tr><td className="py-0.5">Overage — 2 oz</td><td className="text-right py-0.5">$6.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+
       {/* Totals */}
-      <div className="space-y-1 text-xs">
+      <div className="space-y-1 text-xs mt-3">
         <div className="flex justify-between"><span>Subtotal</span><span>$230.00</span></div>
         <div className="flex justify-between"><span>Tax</span><span>$18.40</span></div>
+        <div className="flex justify-between"><span>Color Room</span><span>$6.00</span></div>
         <div className="flex justify-between font-medium text-sm pt-2 mt-1" style={{ borderTop: '1px solid #e5e5e5' }}>
-          <span>Total</span><span>$248.40</span>
+          <span>Total</span><span>$254.40</span>
         </div>
       </div>
 
@@ -107,8 +119,8 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
       {/* Policies */}
       {(config.show_redo_policy || config.show_refund_policy) && (
         <div className="mt-3 pt-2 space-y-1" style={{ borderTop: '1px solid #e5e5e5' }}>
-          {config.show_redo_policy && config.redo_policy_text && (
-            <p className="text-[10px] text-gray-400 text-center">{config.redo_policy_text}</p>
+          {config.show_redo_policy && (config.redo_policy_text || redoPolicyFallback) && (
+            <p className="text-[10px] text-gray-400 text-center">{config.redo_policy_text || redoPolicyFallback}</p>
           )}
           {config.show_refund_policy && config.refund_policy_text && (
             <p className="text-[10px] text-gray-400 text-center">{config.refund_policy_text}</p>
@@ -435,6 +447,7 @@ export function ZuraPayReceiptsTab() {
               website={business?.website || null}
               socials={socials}
               reviewUrls={reviewUrls}
+              redoPolicyFallback={redoPolicyPlaceholder}
             />
           </CardContent>
         </Card>
