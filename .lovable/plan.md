@@ -1,52 +1,37 @@
 
-You're right — the top-left glow is effectively missing in the current render.
 
-What I found
-- In `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`, the top-left glow is being drawn, but its center is exactly at `(0, 0)` with only `0.10` opacity and a `500px` radius.
-- That means most of the glow sits off-canvas, so only a faint quarter of it appears inside the image.
-- On a pure black background and reduced preview scale, it becomes so subtle that it reads like there is no glow at all.
+# Push Splash Screen to All Locations
 
-Plan
-1. Fix the corner-glow geometry in `handleGenerateFromLogo`
-   - move the top-left glow center inward from the edge
-   - move the bottom-right glow inward symmetrically
-   - increase the glow radius so the light actually spreads into the visible canvas
-   - slightly increase the opening opacity so the tan reads in the preview
-   - use explicit fade stops so the glow falls off softly, without creating a band
-2. Keep the background strictly black
-   - retain the solid `#000000` fill
-   - no linear gradient, no center reflection, no extra overlays
-3. Rebalance visually
-   - make the top-left glow clearly visible
-   - keep the bottom-right glow matched in strength
-   - preserve the subtle luxury look rather than making either corner bright or foggy
+## Summary
+Add a "Push to All Locations" button that generates a branded splash screen once (using the existing `handleGenerateFromLogo` canvas logic) and uploads it to every location that has a mapped terminal location — in a single batch operation.
 
-File to update
-- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`
+## Changes
 
-Likely implementation shape
-```ts
-const glowInset = 180;
-const glowRadius = 760;
+### 1. New hook: `usePushSplashToAllLocations` in `src/hooks/useTerminalSplashScreen.ts`
+- A mutation that accepts `{ imageBase64, imageMimeType }` plus an array of `{ locationId, terminalLocationId }` pairs
+- Iterates through all location/terminal pairs, calling `invokeSplashAction('upload_splash_screen', ...)` for each
+- Uses `Promise.allSettled` to handle partial failures gracefully
+- Toasts a summary: "Pushed to 4/5 locations" or "Pushed to all 5 locations"
+- Invalidates all `terminal-splash-screen` queries on completion
 
-const tlGlow = ctx.createRadialGradient(
-  glowInset, glowInset, 0,
-  glowInset, glowInset, glowRadius
-);
-tlGlow.addColorStop(0, p.accentRgba(0.18));
-tlGlow.addColorStop(0.55, p.accentRgba(0.06));
-tlGlow.addColorStop(1, p.accentRgba(0));
+### 2. UI update in `SplashScreenUploader.tsx`
+- When a splash preview is pending (`pendingFile` exists), show a secondary button: **"Push to All Locations"** beneath the existing "Upload to Reader" button
+- This button is only visible when there are 2+ locations
+- On click, it fetches terminal locations for every org location (via a helper), then calls the batch mutation
+- Shows a loading state with progress indication (e.g. "Pushing 2/5...")
+- The location selector remains for single-location uploads; "Push to All" is the batch shortcut
 
-const brGlow = ctx.createRadialGradient(
-  TARGET_W - glowInset, TARGET_H - glowInset, 0,
-  TARGET_W - glowInset, TARGET_H - glowInset, glowRadius
-);
-```
+### 3. Helper: resolve all terminal location mappings
+- A small async function that iterates `locations`, calls `invokeTerminalAction('list_locations', locId)` for each, and returns an array of `{ locationId, terminalLocationId }` pairs (filtering out locations with no terminal mapping)
+- This runs on-demand when the user clicks "Push to All"
 
-Prompt feedback
-- Your prompt was clear. The miss here was implementation, not instruction quality.
-- An even tighter version for future visual requests would be:
-  `Pure black background. Two visible tan radial glows only. Centers should sit inside the canvas near the top-left and bottom-right corners so both glows are clearly visible in the preview. No center gradient.`
+## Technical Detail
+- Canvas generation happens once (client-side), producing a single base64 image
+- The location name in the splash will use `businessName` (the org name), not per-location names — this is correct for a batch push since the logo + org branding is consistent
+- Each upload is an independent edge function call; `Promise.allSettled` ensures one failure doesn't block others
+- Locations without terminal mappings are silently skipped with a note in the toast summary
 
-Possible enhancement after this fix
-- I’d recommend moving the glow values into named constants so future edits can’t accidentally push the glow back off-canvas again.
+## Files
+- **Edit**: `src/hooks/useTerminalSplashScreen.ts` — add batch push mutation
+- **Edit**: `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — add "Push to All Locations" button and batch upload flow
+
