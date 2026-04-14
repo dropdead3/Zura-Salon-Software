@@ -279,28 +279,7 @@ export function TeamPinManagementTab({
           {changelog.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No PIN changes recorded</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Changed By</TableHead>
-                  <TableHead>Reason</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {changelog.slice(0, 10).map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="text-sm">
-                      {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
-                    </TableCell>
-                    <TableCell className="text-sm">{entry.changer_name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {entry.reason || '—'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <PinChangelogTable changelog={changelog} formatDate={formatDate} />
           )}
         </CardContent>
       </Card>
