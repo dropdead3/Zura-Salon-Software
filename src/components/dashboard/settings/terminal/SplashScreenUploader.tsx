@@ -342,14 +342,14 @@ export function SplashScreenUploader({ businessName, orgLogoUrl }: SplashScreenU
                   )}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <Monitor className={cn('w-3.5 h-3.5 shrink-0', hasTerminal ? 'text-muted-foreground' : 'text-muted-foreground/40')} />
-                    <span className={cn('font-sans text-sm truncate', !hasTerminal && 'text-muted-foreground/60')}>
+                    <Monitor className={cn('w-3.5 h-3.5 shrink-0', hasTerminal ? 'text-muted-foreground' : 'text-muted-foreground/70')} />
+                    <span className={cn('font-sans text-sm truncate', !hasTerminal && 'text-muted-foreground/80')}>
                       {loc.name}
                     </span>
                   </div>
                   <div className="shrink-0 ml-2">
                     {!hasTerminal ? (
-                      <span className="text-[10px] text-muted-foreground/50 font-sans whitespace-nowrap">
+                      <span className="text-[10px] text-muted-foreground font-sans whitespace-nowrap">
                         No terminal registered
                       </span>
                     ) : splashActive && origin === 'default_luxury' ? (
