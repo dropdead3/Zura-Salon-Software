@@ -42,7 +42,7 @@ export function useColorTheme() {
 // Map system color themes to matching service category quick themes
 export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   zura: 'Lavender Fields',
-  cream: 'Golden Hour',
+  cream: 'Neutral Elegance',
   rose: 'Rose Garden',
   sage: 'Coastal Breeze',
   ocean: 'Ocean Avenue',
