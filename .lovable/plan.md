@@ -1,110 +1,83 @@
 
 
-# Wire Receipt Branding to Checkout + Add Email/SMS Receipt
+# Wire Social Links from Business Settings + Per-Location Support
 
-## Two Problems
+## Current State
+- Social links live in `site_settings` (key `website_social_links`), org-scoped only
+- `business_settings` has a `website` field but no social URL columns
+- `locations` table has no social fields
+- The receipt editor reads socials from `useWebsiteSocialLinksSettings()` and shows "No social links configured. Add them in Website Settings." when empty
+- The receipt print view and email also pull from `website_social_links`
 
-### 1. Scheduler checkout ignores receipt branding
-`CheckoutSummarySheet.generateReceiptPDF()` is a standalone jsPDF function with hardcoded styles. It doesn't import `useReceiptConfig`, `printReceipt`, or any branding hooks. The Receipt Configurator only affects the Transactions page reprint — not the receipt clients actually receive at checkout.
-
-### 2. No email/SMS receipt capability exists
-The "Email Receipt" dropdown item in `TransactionDetailSheet` is disabled with a "Soon" badge. No edge function or sending logic exists.
-
----
+## Architecture Decision
+Social links are **organization-level** data (like phone, address, website) — they belong on `business_settings`, not buried in `site_settings`. Multi-location orgs need per-location overrides via a JSONB column on `locations`.
 
 ## Plan
 
-### Step 1: Unify checkout receipt with branded system
-
-**File: `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`**
-
-- Import `useReceiptConfig` and `useBusinessSettings` (already imported partially)
-- Replace the entire `generateReceiptPDF()` function with a call to a shared receipt generator that respects `receipt_config`
-- Two options:
-  - **Option A**: Refactor `printReceipt()` from `ReceiptPrintView.tsx` to accept a generic line-item array (not just `GroupedTransaction`), then call it from both the Transactions page and the checkout sheet
-  - **Option B**: Create a shared `buildReceiptHTML()` utility that both `printReceipt` and `generateReceiptPDF` consume, keeping PDF generation separate but using the same branded template
-
-Option A is cleaner — adapt `printReceipt` to accept a `ReceiptData` interface that both `GroupedTransaction` and the checkout context can satisfy.
-
-**New file: `src/components/dashboard/transactions/receiptData.ts`**
-- Define a `ReceiptData` interface with: client name, stylist name, date, items (name + amount), add-ons, usage charges, subtotal, discount, tax, tip, total, payment method
-- Add a mapper: `groupedTransactionToReceiptData(txn: GroupedTransaction): ReceiptData`
-- Add a mapper: `checkoutToReceiptData(appointment, addonEvents, usageCharges, totals): ReceiptData`
-
-**File: `src/components/dashboard/transactions/ReceiptPrintView.tsx`**
-- Refactor `printReceipt` to accept `ReceiptData` instead of `GroupedTransaction`
-- All branding logic (logo, socials, policies, footer) stays intact
-
-**File: `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`**
-- Remove the 200-line `generateReceiptPDF` function
-- Import and call refactored `printReceipt` with checkout data mapped through `checkoutToReceiptData`
-
-### Step 2: Add "Send Test Receipt" to Receipt Configurator
-
-**File: `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx`**
-- Add a "Send Test Receipt" button in the preview panel
-- On click, opens a small dialog asking for delivery method (Email or SMS) and recipient address/number
-- Calls a new edge function with sample receipt data + branding config
-
-### Step 3: Create receipt-sending edge function
-
-**New file: `supabase/functions/send-receipt/index.ts`**
-- Accepts: `{ method: 'email' | 'sms', recipient: string, receiptHtml: string, orgName: string }`
-- For **email**: Uses Resend (already available as a connector) to send a styled HTML email with the branded receipt
-- For **SMS**: Sends a simplified text summary with a link to a hosted receipt (or just key totals if no hosted version yet)
-- Returns success/failure
-
-### Step 4: Wire email/SMS receipt to checkout flow
-
-**File: `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`**
-- After successful payment confirmation, if client has email on file, auto-send email receipt via the edge function
-- Add a manual "Send Receipt" button (email/SMS toggle) post-checkout
-
-**File: `src/components/dashboard/transactions/TransactionDetailSheet.tsx`**
-- Enable the "Email Receipt" dropdown item
-- Remove the "Soon" badge
-- On click, call the same edge function with the transaction's receipt data
-
-### Step 5: No database migration needed
-All receipt config already lives in `site_settings`. Client emails exist on appointments. No new tables required.
-
----
-
-## Technical Details
-
-### ReceiptData interface (shared)
-```ts
-interface ReceiptLineItem {
-  name: string;
-  amount: number;
-  category?: 'service' | 'addon' | 'retail' | 'overage' | 'product_cost';
-}
-
-interface ReceiptData {
-  clientName: string;
-  stylistName: string;
-  date: string;
-  receiptNumber: string;
-  items: ReceiptLineItem[];
-  subtotal: number;
-  discount: number;
-  discountLabel?: string;
-  taxRate: number;
-  taxAmount: number;
-  tip: number;
-  total: number;
-  paymentMethod?: string;
-}
+### 1. Database Migration
+Add social URL columns to `business_settings`:
+```sql
+ALTER TABLE business_settings
+  ADD COLUMN instagram_url text,
+  ADD COLUMN facebook_url text,
+  ADD COLUMN tiktok_url text,
+  ADD COLUMN twitter_url text,
+  ADD COLUMN youtube_url text,
+  ADD COLUMN linkedin_url text;
 ```
 
-### File change summary
+Add a JSONB `social_links` column to `locations` for per-location overrides:
+```sql
+ALTER TABLE locations
+  ADD COLUMN social_links jsonb DEFAULT null;
+-- Format: { instagram: "...", facebook: "...", tiktok: "...", ... }
+-- null = inherit from business_settings
+```
+
+### 2. Update `useBusinessSettings` hook
+- Add the 6 new social URL fields to the `BusinessSettings` interface
+- No query changes needed (already uses `select('*')`)
+
+### 3. Add social URL inputs to `BusinessSettingsContent.tsx`
+- Add a "Social Links" section (below the existing website field) with inputs for Instagram, Facebook, TikTok, X/Twitter, YouTube, LinkedIn
+- Wire into existing form state and save flow
+
+### 4. Add per-location social overrides to location editor
+- In whichever component edits individual locations, add an expandable "Social Links (Override)" section
+- When populated, these override the org-level defaults for that location
+- When blank/null, inherit from `business_settings`
+
+### 5. Create `useSocialLinks` resolver hook
+New hook: `src/hooks/useSocialLinks.ts`
+- Accepts optional `locationId`
+- Reads org-level socials from `useBusinessSettings()`
+- If `locationId` provided, reads location's `social_links` JSONB and merges (location wins)
+- Returns a normalized `{ instagram, facebook, tiktok, twitter, youtube, linkedin }` object
+- This replaces all current `useWebsiteSocialLinksSettings()` usage for receipts
+
+### 6. Update receipt consumers
+**`ZuraPayReceiptsTab.tsx`**: Replace `useWebsiteSocialLinksSettings()` with `useSocialLinks()`. Update the "No social links" warning to say "Add them in Business Settings."
+
+**`GroupedTransactionTable.tsx`** and **`TransactionDetailSheet.tsx`**: Replace `useWebsiteSocialLinksSettings()` with `useSocialLinks()`. Pass resolved socials to `printReceipt` / email.
+
+**`ReceiptPrintView.tsx`**: No changes needed — already receives socials as a parameter.
+
+### 7. Migrate existing `website_social_links` data (optional, recommended)
+- Add a one-time migration that copies any non-empty values from `site_settings` (key `website_social_links`) into the new `business_settings` columns, so existing data is preserved.
+
+### 8. Keep `website_social_links` in `site_settings` for now
+The website footer editor (`FooterEditor.tsx`, `ShopLayout.tsx`) still reads from `site_settings`. We can update those consumers in a follow-up to also use the new resolver, but it's not blocking.
+
+## Files
+
 | File | Action |
 |------|--------|
-| `src/components/dashboard/transactions/receiptData.ts` | New — shared interface + mappers |
-| `src/components/dashboard/transactions/ReceiptPrintView.tsx` | Refactor to use `ReceiptData` |
-| `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Remove `generateReceiptPDF`, use shared `printReceipt` |
-| `src/components/dashboard/transactions/GroupedTransactionTable.tsx` | Update to use mapper |
-| `src/components/dashboard/transactions/TransactionDetailSheet.tsx` | Enable email receipt action |
-| `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx` | Add "Send Test Receipt" button |
-| `supabase/functions/send-receipt/index.ts` | New — email/SMS delivery |
+| Migration SQL | New — add columns to `business_settings` + `locations` |
+| `src/hooks/useBusinessSettings.ts` | Update interface with 6 social fields |
+| `src/hooks/useSocialLinks.ts` | New — resolver hook with location override |
+| `src/components/dashboard/settings/BusinessSettingsContent.tsx` | Add social URL inputs section |
+| `src/components/dashboard/settings/terminal/ZuraPayReceiptsTab.tsx` | Switch to `useSocialLinks()` |
+| `src/components/dashboard/transactions/GroupedTransactionTable.tsx` | Switch to `useSocialLinks()` |
+| `src/components/dashboard/transactions/TransactionDetailSheet.tsx` | Switch to `useSocialLinks()` |
+| Location editor component | Add optional social override fields |
 
