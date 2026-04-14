@@ -22,6 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { colorThemes, COLOR_THEME_TO_CATEGORY_MAP, useColorTheme, type ColorTheme } from '@/hooks/useColorTheme';
 import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
+import { useAutoSyncTerminalSplash } from '@/hooks/useAutoSyncTerminalSplash';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
   useWebsiteBookingSettings,
   useUpdateWebsiteBookingSettings,
@@ -473,6 +475,8 @@ function ThemeTab() {
   const { data: categoryThemes } = useServiceCategoryThemes();
   const applyCategoryTheme = useApplyCategoryTheme();
   const isMobile = useIsMobile();
+  const { data: business } = useBusinessSettings();
+  const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '');
 
   // Editor state
   const [mode, setMode] = useState<'overview' | 'editor'>('overview');
