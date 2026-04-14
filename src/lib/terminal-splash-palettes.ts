@@ -62,6 +62,18 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#7c3aed',
     139, 92, 246,
   ),
+  ember: palette(
+    ['#140a04', '#3d2010', '#140a04'],
+    '#d4872a',
+    '#b87020',
+    212, 135, 42,
+  ),
+  noir: palette(
+    ['#080808', '#1a1a1a', '#080808'],
+    '#e0e0e0',
+    '#b0b0b0',
+    224, 224, 224,
+  ),
 };
 
 export function getTerminalPalette(theme: ColorTheme): TerminalPalette {

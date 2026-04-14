@@ -28,6 +28,8 @@ const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
   sage: '#4A9C6D',
   ocean: '#3B82F6',
   zura: '#8B5CF6',
+  ember: '#D4872A',
+  noir: '#1A1A1A',
 };
 
 const SAMPLE_VARIABLES: Record<string, string> = {

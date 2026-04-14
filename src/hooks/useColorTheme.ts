@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 
-export type ColorTheme = 'cream' | 'rose' | 'sage' | 'ocean' | 'zura';
+export type ColorTheme = 'zura' | 'cream' | 'rose' | 'sage' | 'ocean' | 'ember' | 'noir';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
+
+const ALL_THEMES: ColorTheme[] = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir'];
+const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 export function useColorTheme() {
   const [colorTheme, setColorThemeState] = useState<ColorTheme>('zura');
@@ -10,9 +13,8 @@ export function useColorTheme() {
 
   useEffect(() => {
     setMounted(true);
-    // Load saved theme from localStorage
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as ColorTheme | null;
-    if (savedTheme && ['cream', 'rose', 'sage', 'ocean', 'zura'].includes(savedTheme)) {
+    if (savedTheme && ALL_THEMES.includes(savedTheme)) {
       setColorThemeState(savedTheme);
       applyTheme(savedTheme);
     }
@@ -20,9 +22,7 @@ export function useColorTheme() {
 
   const applyTheme = (theme: ColorTheme) => {
     const html = document.documentElement;
-    // Remove all theme classes
-    html.classList.remove('theme-cream', 'theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura');
-    // Add new theme class
+    html.classList.remove(...THEME_CLASSES);
     html.classList.add(`theme-${theme}`);
   };
 
@@ -41,6 +41,21 @@ export function useColorTheme() {
 
 // Theme metadata for UI
 export const colorThemes = [
+  {
+    id: 'zura' as ColorTheme,
+    name: 'Zura',
+    description: 'Brand violet & purple',
+    lightPreview: {
+      bg: 'hsl(260 25% 95%)',
+      accent: 'hsl(260 20% 88%)',
+      primary: 'hsl(270 70% 55%)',
+    },
+    darkPreview: {
+      bg: 'hsl(230 25% 5%)',
+      accent: 'hsl(270 30% 20%)',
+      primary: 'hsl(270 75% 60%)',
+    },
+  },
   {
     id: 'cream' as ColorTheme,
     name: 'Cream',
@@ -102,18 +117,33 @@ export const colorThemes = [
     },
   },
   {
-    id: 'zura' as ColorTheme,
-    name: 'Zura',
-    description: 'Brand violet & purple',
+    id: 'ember' as ColorTheme,
+    name: 'Ember',
+    description: 'Warm amber & burnt orange',
     lightPreview: {
-      bg: 'hsl(260 25% 95%)',
-      accent: 'hsl(260 20% 88%)',
-      primary: 'hsl(270 70% 55%)',
+      bg: 'hsl(25 30% 94%)',
+      accent: 'hsl(25 25% 85%)',
+      primary: 'hsl(25 80% 50%)',
     },
     darkPreview: {
-      bg: 'hsl(230 25% 5%)',
-      accent: 'hsl(270 30% 20%)',
-      primary: 'hsl(270 75% 60%)',
+      bg: 'hsl(20 20% 5%)',
+      accent: 'hsl(20 25% 18%)',
+      primary: 'hsl(25 75% 55%)',
+    },
+  },
+  {
+    id: 'noir' as ColorTheme,
+    name: 'Noir',
+    description: 'Pure monochrome minimal',
+    lightPreview: {
+      bg: 'hsl(0 0% 96%)',
+      accent: 'hsl(0 0% 88%)',
+      primary: 'hsl(0 0% 8%)',
+    },
+    darkPreview: {
+      bg: 'hsl(0 0% 4%)',
+      accent: 'hsl(0 0% 15%)',
+      primary: 'hsl(0 0% 95%)',
     },
   },
 ];
