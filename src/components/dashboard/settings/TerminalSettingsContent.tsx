@@ -40,7 +40,7 @@ import { ZuraPayDisplayTab } from './terminal/ZuraPayDisplayTab';
 import { ZuraPayActivationChecklist } from './terminal/ZuraPayActivationChecklist';
 import { ZuraPayReceiptsTab } from './terminal/ZuraPayReceiptsTab';
 import { ZuraPayTippingTab } from './terminal/ZuraPayTippingTab';
-
+import { ZuraPayAfterpayTab } from './terminal/ZuraPayAfterpayTab';
 
 // Lightweight error boundary for individual tabs
 class TabErrorBoundary extends React.Component<
