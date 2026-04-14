@@ -553,7 +553,7 @@ export function ZuraPayFleetTab({
                     <CardDescription>Physical card readers paired to this location.</CardDescription>
                   </div>
                 </div>
-                {terminalReaders && terminalReaders.length > 0 && (
+                {readers && readers.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
