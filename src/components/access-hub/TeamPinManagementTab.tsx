@@ -41,6 +41,60 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
+function PinChangelogTable({ changelog, formatDate }: { changelog: any[]; formatDate: (d: Date, f: string) => string }) {
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    showingFrom,
+    showingTo,
+    sortField,
+    toggleSort,
+  } = usePaginatedSort({
+    data: changelog,
+    defaultPageSize: 15,
+    defaultSortField: 'changed_at' as any,
+    defaultSortDirection: 'desc',
+  });
+
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <SortableColumnHeader label="Date" sortKey="changed_at" currentSortField={sortField} onToggleSort={toggleSort} />
+            <SortableColumnHeader label="Changed By" sortKey="changer_name" currentSortField={sortField} onToggleSort={toggleSort} />
+            <TableHead>Reason</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedData.map((entry) => (
+            <TableRow key={entry.id}>
+              <TableCell className="text-sm">
+                {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
+              </TableCell>
+              <TableCell className="text-sm">{entry.changer_name}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {entry.reason || '—'}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        showingFrom={showingFrom}
+        showingTo={showingTo}
+        onPageChange={setCurrentPage}
+      />
+    </>
+  );
+}
+
 interface TeamPinManagementTabProps {
   canManage: boolean;
 }
