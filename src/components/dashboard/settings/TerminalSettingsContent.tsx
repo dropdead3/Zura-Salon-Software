@@ -355,7 +355,7 @@ export function TerminalSettingsContent() {
     );
   }
 
-  const selectedLocation = locations.find((l) => l.id === activeLocationId);
+  const selectedLocation = activeLocation;
   const isLocationConnected = !!selectedLocation?.stripe_account_id;
 
   const handleCreateTerminalLocation = () => {
