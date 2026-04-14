@@ -59,12 +59,13 @@ function hasOwnAccount(loc: LocationWithPayment, orgAccountId: string | null): b
 
 interface LocationSummaryRowProps {
   loc: LocationWithPayment;
+  orgConnectAccountId?: string | null;
   useTerminalLocations: (id: string | null) => { data: TerminalLocation[] | undefined; isLoading: boolean };
   useTerminalReaders: (id: string | null) => { data: Reader[] | undefined; isLoading: boolean };
   onSelect?: (locationId: string) => void;
 }
 
-function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders, onSelect }: LocationSummaryRowProps) {
+function LocationSummaryRow({ loc, orgConnectAccountId, useTerminalLocations, useTerminalReaders, onSelect }: LocationSummaryRowProps) {
   const isConnected = !!loc.stripe_account_id;
   const { data: tlData, isLoading: tlLoading } = useTerminalLocations(isConnected ? loc.id : null);
   const { data: readerData, isLoading: readersLoading } = useTerminalReaders(isConnected ? loc.id : null);
@@ -101,7 +102,7 @@ function LocationSummaryRow({ loc, useTerminalLocations, useTerminalReaders, onS
     >
       <div className="flex flex-col">
         <span className="font-sans font-medium text-sm truncate">{loc.name}</span>
-        {hasOwnAccount(loc, null) && loc.legal_name && (
+        {hasOwnAccount(loc, orgConnectAccountId ?? null) && loc.legal_name && (
           <span className="text-[10px] text-muted-foreground truncate">{loc.legal_name}</span>
         )}
       </div>
@@ -160,6 +161,8 @@ export interface ZuraPayFleetTabProps {
   orgConnectStatus?: string;
   orgConnectAccountId?: string | null;
   orgBankLast4?: string | null;
+  orgBankLast4Loading?: boolean;
+  orgBankLast4Error?: boolean;
   onStartConnect?: () => void;
   isConnecting?: boolean;
   onVerifyConnection?: () => void;
@@ -196,6 +199,8 @@ export function ZuraPayFleetTab({
   orgConnectStatus,
   orgConnectAccountId,
   orgBankLast4,
+  orgBankLast4Loading,
+  orgBankLast4Error,
   onStartConnect,
   isConnecting,
   onVerifyConnection,
@@ -376,8 +381,8 @@ export function ZuraPayFleetTab({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
+            <div className="space-y-2 overflow-x-auto">
+              <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs text-muted-foreground font-sans min-w-[500px]">
                 <span>Location</span>
                 <span className="text-center">Connection</span>
                 <span className="text-center">Terminal Locations</span>
@@ -388,6 +393,7 @@ export function ZuraPayFleetTab({
                 <LocationSummaryRow
                   key={loc.id}
                   loc={loc}
+                  orgConnectAccountId={orgConnectAccountId}
                   useTerminalLocations={useTerminalLocationsHook}
                   useTerminalReaders={useTerminalReadersHook}
                   onSelect={(id) => {
@@ -496,14 +502,18 @@ export function ZuraPayFleetTab({
                     <div className="flex flex-col items-center">
                       <Button
                         onClick={() => activeLocationId && onConnectLocation?.(activeLocationId)}
-                        disabled={isConnectingLocation || !activeLocationId}
+                        disabled={isConnectingLocation || !activeLocationId || orgBankLast4Loading}
                       >
-                        {isConnectingLocation ? (
+                        {isConnectingLocation || orgBankLast4Loading ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
                           <Zap className="h-4 w-4 mr-2" />
                         )}
-                        {orgBankLast4 ? `Use Account Ending in ••${orgBankLast4}` : 'Use Organization Account'}
+                        {orgBankLast4Loading
+                          ? 'Loading Account…'
+                          : orgBankLast4
+                            ? `Use Account Ending in ••${orgBankLast4}`
+                            : 'Use Organization Account'}
                       </Button>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">

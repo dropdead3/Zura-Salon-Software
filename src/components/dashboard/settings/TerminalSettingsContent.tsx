@@ -240,7 +240,7 @@ export function TerminalSettingsContent() {
   const orgId = effectiveOrganization?.id;
   const { data: locations, isLoading: locationsLoading } = useZuraPayLocations();
   const { data: connectStatus } = useOrgConnectStatus(orgId);
-  const { data: bankLast4 } = useOrgBankLast4(orgId, connectStatus?.stripe_connect_account_id);
+  const { data: bankLast4, isLoading: bankLast4Loading, isError: bankLast4Error } = useOrgBankLast4(orgId, connectStatus?.stripe_connect_account_id);
   const queryClient = useQueryClient();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [showAllLocations, setShowAllLocations] = useState(false);
@@ -459,6 +459,8 @@ export function TerminalSettingsContent() {
               isDisconnectingLocation={disconnectLocationMutation.isPending}
               orgConnectAccountId={connectStatus?.stripe_connect_account_id}
               orgBankLast4={bankLast4 ?? verifyMutation.data?.bank_last4 ?? null}
+              orgBankLast4Loading={bankLast4Loading}
+              orgBankLast4Error={bankLast4Error}
               onCreateLocationAccount={(locationId) => orgId && createLocationAccountMutation.mutate({
                 organizationId: orgId,
                 locationId,
