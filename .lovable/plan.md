@@ -1,15 +1,22 @@
 
 
-# Change "Powered by Zura" Font to Termina
+# Fix Splash Screen Background — Solid Black + Corner Glows Only
 
-## Change
-In `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx`, line 247:
+## Problem
+The 3-stop linear gradient in `terminal-splash-palettes.ts` has a lighter middle stop (e.g. `#2d2820` for cream theme) at position 0.4, creating a visible reflective band across the center of the screen.
 
-**Current:** `ctx.font = '300 28px "Aeonik Pro", sans-serif';`  
-**New:** `ctx.font = '500 28px "Termina", sans-serif';`
+## Fix
 
-This switches the "Powered by Zura" text from Aeonik Pro (body font) to Termina (display font), consistent with Zura's typography rules where Termina is used for branded/headline text. The weight increases from 300 to 500 (max allowed) for proper Termina rendering. The existing uppercase handling and letter-spacing remain unchanged.
+### 1. Replace linear gradient with solid black fill
+In `SplashScreenUploader.tsx` (lines 170-175), replace the linear gradient with a flat `#000000` fill:
+```
+ctx.fillStyle = '#000000';
+ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+```
+
+### 2. Keep corner radial glows as-is
+The two radial gradients at top-left and bottom-right (lines 177-189) remain unchanged — they use the accent color at 0.10 opacity which provides the subtle tan glow.
 
 ## File
-- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — single line edit (line 247)
+- `src/components/dashboard/settings/terminal/SplashScreenUploader.tsx` — lines 170-175 (replace 6 lines with 2)
 
