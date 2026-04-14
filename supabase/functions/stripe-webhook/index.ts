@@ -317,17 +317,23 @@ async function handleCheckoutCompleted(
   // ── Payment Link / Send-to-Pay / Afterpay completion ─────────
   if (metadata?.source === 'payment_link' && metadata?.appointment_id) {
     const appointmentId = metadata.appointment_id;
+    const organizationId = metadata.organization_id;
     const sessionId = session.id as string;
     const paymentIntentId = (session.payment_intent as string) || sessionId;
 
     console.log(`Payment link checkout completed for appointment ${appointmentId} (session: ${sessionId})`);
 
-    // Update appointment — mark the payment link leg as complete
+    // B2: Query appointment and verify org_id matches to prevent cross-org manipulation
     const { data: appt } = await supabase
       .from('appointments')
-      .select('split_payment_terminal_intent_id, paid_at')
+      .select('split_payment_terminal_intent_id, paid_at, organization_id')
       .eq('id', appointmentId)
       .maybeSingle();
+
+    if (organizationId && appt?.organization_id && appt.organization_id !== organizationId) {
+      console.error(`Org mismatch: appointment ${appointmentId} belongs to ${appt.organization_id}, not ${organizationId}`);
+      return;
+    }
 
     const updatePayload: Record<string, unknown> = {
       split_payment_link_intent_id: paymentIntentId,

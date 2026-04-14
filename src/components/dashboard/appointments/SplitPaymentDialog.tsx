@@ -95,14 +95,7 @@ export function SplitPaymentDialog({
         },
       });
 
-      // Update appointment with the split terminal amount info
-      await supabase
-        .from('appointments')
-        .update({
-          split_payment_link_intent_id: linkData.session_id,
-          payment_link_url: linkData.checkout_url,
-        })
-        .eq('id', appointmentId);
+      // B5/E4: Removed redundant client-side appointment update — edge function already writes these fields
 
       setStep('link_sent');
       toast.success(

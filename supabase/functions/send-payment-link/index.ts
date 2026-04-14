@@ -133,11 +133,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Update appointment ───────────────────────────────────────
-    await supabase
-      .from("appointments")
-      .update({ payment_link_sent_at: new Date().toISOString() })
-      .eq("id", appointment_id);
+    // G5: Removed duplicate payment_link_sent_at write — already set by create-checkout-payment-link
+
 
     return jsonResponse({
       success: true,

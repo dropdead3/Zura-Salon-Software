@@ -587,7 +587,7 @@ export function AppointmentDetailSheet({
   const navigate = useNavigate();
   const logAuditEvent = useLogAuditEvent();
 
-  // Realtime subscription for payment link status auto-updates
+  // Realtime subscription for payment link status auto-updates (B1: listen on `appointments` table where payment columns live)
   useEffect(() => {
     if (!appointment?.id || !open) return;
     const channel = supabase
@@ -595,7 +595,7 @@ export function AppointmentDetailSheet({
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'phorest_appointments',
+        table: 'appointments',
         filter: `id=eq.${appointment.id}`,
       }, () => {
         queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
@@ -603,6 +603,49 @@ export function AppointmentDetailSheet({
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [appointment?.id, open, queryClient]);
+
+  // Resend / create new payment link handler (B4/E1)
+  const [isResendingLink, setIsResendingLink] = useState(false);
+  const handleResendPaymentLink = useCallback(async () => {
+    if (!appointment || !effectiveOrganization?.id) return;
+    setIsResendingLink(true);
+    try {
+      const { data: linkData, error: linkError } = await supabase.functions.invoke(
+        'create-checkout-payment-link',
+        {
+          body: {
+            organization_id: effectiveOrganization.id,
+            appointment_id: appointment.id,
+            amount_cents: Math.round((appointment.total_price || 0) * 100),
+            client_email: appointment.client_email,
+            client_phone: appointment.client_phone,
+            client_name: appointment.client_name,
+          },
+        }
+      );
+      if (linkError) throw new Error(linkError.message);
+      if (!linkData?.checkout_url) throw new Error('Failed to create payment link');
+
+      await supabase.functions.invoke('send-payment-link', {
+        body: {
+          organization_id: effectiveOrganization.id,
+          appointment_id: appointment.id,
+          checkout_url: linkData.checkout_url,
+          client_name: appointment.client_name,
+          client_email: appointment.client_email,
+          client_phone: appointment.client_phone,
+          amount_display: `$${((appointment.total_price || 0)).toFixed(2)}`,
+        },
+      });
+
+      toast.success('New payment link sent');
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resend payment link');
+    } finally {
+      setIsResendingLink(false);
+    }
+  }, [appointment, effectiveOrganization?.id, queryClient]);
 
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
@@ -2150,6 +2193,8 @@ export function AppointmentDetailSheet({
                     splitPaymentLinkIntentId={appointment.split_payment_link_intent_id}
                     paidAt={appointment.paid_at}
                     paymentStatus={appointment.payment_status}
+                    onResend={handleResendPaymentLink}
+                    isResending={isResendingLink}
                   />
                 </div>
               )}

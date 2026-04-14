@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     }
 
     // ── Create Stripe Checkout Session on Connected Account ──────
-    const baseUrl = success_url || Deno.env.get("SUPABASE_URL")!;
+    const baseUrl = success_url || req.headers.get("origin") || "https://getzura.com";
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",

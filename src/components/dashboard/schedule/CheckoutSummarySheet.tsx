@@ -3,7 +3,7 @@ import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send } from 'lucide-react';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -98,6 +98,22 @@ export function CheckoutSummarySheet({
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
+  const queryClient = useQueryClient();
+
+  // B3: Query org's real afterpay_enabled setting
+  const { data: orgAfterpayEnabled = false } = useQuery({
+    queryKey: ['org-afterpay-enabled', organizationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('afterpay_enabled')
+        .eq('id', organizationId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.afterpay_enabled ?? false;
+    },
+    enabled: !!organizationId,
+  });
 
   // Receipt branding hooks
   const { data: receiptConfig } = useReceiptConfig();
@@ -778,7 +794,7 @@ export function CheckoutSummarySheet({
               ))}
             </div>
 
-            {/* Send Payment Link (Afterpay) */}
+            {/* Send Payment Link (Afterpay) — B3: use org's real afterpay_enabled, G3: wire onPaymentLinkSent */}
             {organizationId && appointment && (
               <div className="pt-1">
                 <SendToPayButton
@@ -788,8 +804,12 @@ export function CheckoutSummarySheet({
                   clientName={appointment.client_name}
                   clientEmail={appointment.client_email}
                   clientPhone={appointment.client_phone}
-                  afterpayEnabled={true}
+                  afterpayEnabled={orgAfterpayEnabled}
                   disabled={isUpdating}
+                  onPaymentLinkSent={() => {
+                    // Invalidate appointment queries so the badge / status updates
+                    queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+                  }}
                 />
               </div>
             )}
