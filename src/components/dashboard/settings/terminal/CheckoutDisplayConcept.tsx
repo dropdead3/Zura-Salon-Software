@@ -82,6 +82,7 @@ export function CheckoutDisplayConcept({ businessName = 'Your Salon', orgLogoUrl
               autoPlay={autoPlay}
               cartItems={SAMPLE_CART}
               orgLogoUrl={orgLogoUrl}
+              splashImageUrl={splashImageUrl}
               tipPercentages={tipPercentages}
               tipEnabled={tipEnabled}
               receiptSlogan={receiptSlogan}
