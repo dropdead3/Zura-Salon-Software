@@ -17,13 +17,12 @@ export async function fetchRevenue(
   locationId?: string | null,
 ): Promise<number> {
   let query = supabase
-    .from('phorest_appointments')
+    .from('v_all_appointments')
     .select('total_price')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
     .not('status', 'in', '("cancelled","no_show")')
-    .not('total_price', 'is', null)
-    .eq('is_demo', false);
+    .not('total_price', 'is', null);
 
   query = applyLocationFilter(query, locationId);
 
@@ -38,14 +37,13 @@ export async function fetchAvgTicket(
   locationId?: string | null,
 ): Promise<{ avg: number | null; count: number }> {
   let query = supabase
-    .from('phorest_appointments')
+    .from('v_all_appointments')
     .select('total_price')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
     .not('status', 'in', '("cancelled","no_show")')
     .not('total_price', 'is', null)
-    .gt('total_price', 0)
-    .eq('is_demo', false);
+    .gt('total_price', 0);
 
   query = applyLocationFilter(query, locationId);
 
@@ -62,7 +60,7 @@ export async function fetchRetailRevenue(
   locationId?: string | null,
 ): Promise<number> {
   let query = supabase
-    .from('phorest_transaction_items')
+    .from('v_all_transaction_items')
     .select('total_amount')
     .gte('transaction_date', dateFrom)
     .lte('transaction_date', dateTo)
@@ -82,20 +80,18 @@ export async function fetchNoShowRate(
   locationId?: string | null,
 ): Promise<{ rate: number | null; totalCount: number }> {
   let totalQ = supabase
-    .from('phorest_appointments')
+    .from('v_all_appointments')
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled")')
-    .eq('is_demo', false);
+    .not('status', 'in', '("cancelled")');
 
   let noshowQ = supabase
-    .from('phorest_appointments')
+    .from('v_all_appointments')
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .eq('status', 'no_show')
-    .eq('is_demo', false);
+    .eq('status', 'no_show');
 
   totalQ = applyLocationFilter(totalQ, locationId);
   noshowQ = applyLocationFilter(noshowQ, locationId);
@@ -114,12 +110,11 @@ export async function fetchRebookRate(
   locationId?: string | null,
 ): Promise<{ rate: number | null; count: number }> {
   let query = supabase
-    .from('phorest_appointments')
+    .from('v_all_appointments')
     .select('rebooked_at_checkout')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")')
-    .eq('is_demo', false);
+    .not('status', 'in', '("cancelled","no_show")');
 
   query = applyLocationFilter(query, locationId);
 
@@ -136,12 +131,11 @@ export async function fetchNewClientPct(
   locationId?: string | null,
 ): Promise<{ rate: number | null; count: number }> {
   let query = supabase
-    .from('phorest_appointments')
+    .from('v_all_appointments')
     .select('is_new_client')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
-    .not('status', 'in', '("cancelled","no_show")')
-    .eq('is_demo', false);
+    .not('status', 'in', '("cancelled","no_show")');
 
   query = applyLocationFilter(query, locationId);
 

@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       // 2. Revenue consistency (CV from appointments in last 90 days)
       const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
       const { data: revenueRows } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('total_price')
         .eq('organization_id', org.id)
         .gte('appointment_date', ninetyDaysAgo)

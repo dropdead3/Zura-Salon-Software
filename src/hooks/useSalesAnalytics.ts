@@ -41,7 +41,7 @@ export function useProductCategoryBreakdown(dateFrom?: string, dateTo?: string, 
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_sales_transactions')
+          .from('v_all_sales_transactions')
           .select('item_category, total_amount, quantity, unit_price')
           .eq('item_type', 'product')
           .range(from, to);
@@ -145,7 +145,7 @@ export function useClientFunnel(dateFrom?: string, dateTo?: string, locationId?:
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_sales_transactions')
+          .from('v_all_sales_transactions')
           .select('client_name, total_amount, phorest_transaction_id')
           .range(from, to);
         if (dateFrom) q = q.gte('transaction_date', dateFrom);
@@ -158,7 +158,7 @@ export function useClientFunnel(dateFrom?: string, dateTo?: string, locationId?:
       const clientFirstDate: Record<string, string> = {};
       const allClients = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('phorest_sales_transactions')
+          .from('v_all_sales_transactions')
           .select('client_name, transaction_date')
           .not('client_name', 'is', null)
           .order('transaction_date', { ascending: true })
@@ -214,7 +214,7 @@ export function usePeakHoursAnalysis(dateFrom?: string, dateTo?: string, locatio
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_sales_transactions')
+          .from('v_all_sales_transactions')
           .select('transaction_date, transaction_time, total_amount, phorest_transaction_id')
           .range(from, to);
         if (dateFrom) q = q.gte('transaction_date', dateFrom);

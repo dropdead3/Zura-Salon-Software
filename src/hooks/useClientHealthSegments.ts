@@ -93,7 +93,7 @@ export function useClientHealthSegments() {
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
-            .from('phorest_clients')
+            .from('v_all_clients')
             .select('id, name, email, phone, last_visit, first_visit, total_spend, visit_count, preferred_stylist_id, phorest_client_id')
             .eq('is_duplicate', false)
             .range(offset, offset + PAGE_SIZE - 1)

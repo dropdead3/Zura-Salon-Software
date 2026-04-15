@@ -20,9 +20,8 @@ export function useServiceLookup() {
     queryKey: ['service-lookup-map'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_services')
-        .select('name, category, duration_minutes, price, container_types')
-        .eq('is_active', true);
+        .from('v_all_services')
+        .select('name, category, duration_minutes, price, container_types');
 
       if (error) throw error;
 

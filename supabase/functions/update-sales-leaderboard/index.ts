@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     let pg = 0;
     while (true) {
       const { data: batch, error: batchErr } = await supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('stylist_user_id, total_amount, tax_amount')
         .gte('transaction_date', weekStartStr)
         .lte('transaction_date', todayStr)

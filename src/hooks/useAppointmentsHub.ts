@@ -126,7 +126,7 @@ export function useAppointmentsHub(filters: HubFilters) {
       let clientInfoMap: Record<string, { name?: string; email?: string; phone?: string; customer_number?: string }> = {};
       if (missingClientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients')
           .select('phorest_client_id, name, email, phone, customer_number')
           .in('phorest_client_id', missingClientIds);
         for (const c of clients || []) {

@@ -62,7 +62,7 @@ export function useServiceMenuIntelligence(organizationId?: string, locationId?:
 
       // Fetch services with price data (phorest_services has no cost column, use service_addons pattern)
       const { data: services, error: svcErr } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('name, price');
       if (svcErr) throw svcErr;
 

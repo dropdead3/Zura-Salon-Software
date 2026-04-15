@@ -86,15 +86,13 @@ export function KioskBookingWizard() {
     queryFn: async () => {
       if (!branchId) return [];
       const { data } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('id, phorest_service_id, name, duration_minutes, price, category')
-        .eq('phorest_branch_id', branchId)
-        .eq('is_active', true)
         .order('category')
         .order('name');
       return data || [];
     },
-    enabled: !!branchId,
+    enabled: !!locationData,
   });
 
   // Get unique categories

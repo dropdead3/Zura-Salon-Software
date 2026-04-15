@@ -246,8 +246,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         .eq('id', id);
       if (error) throw error;
       if (updates.container_types && orgId && svc?.name) {
-        await (supabase.from('phorest_services') as any)
-          .update({ container_types: updates.container_types })
+        // Update container_types on the native services table only
+        await supabase
+          .from('services')
+          .update({ container_types: updates.container_types } as Record<string, unknown>)
           .eq('name', svc.name)
           .eq('organization_id', orgId);
       }

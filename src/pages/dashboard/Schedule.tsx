@@ -560,21 +560,21 @@ export default function Schedule() {
       if (paymentMetadata?.method === 'card_reader' || paymentMetadata?.method === 'card') {
         const totalPrice = selectedAppointment.total_price ?? selectedAppointment.original_price ?? 0;
         const transactionInsert = {
-          phorest_transaction_id: paymentMetadata.stripe_payment_intent_id || `terminal_${selectedAppointment.id}`,
+          transaction_id: paymentMetadata.stripe_payment_intent_id || `terminal_${selectedAppointment.id}`,
           item_name: selectedAppointment.service_name || 'Service',
           item_type: 'service',
           total_amount: totalPrice,
           tip_amount: tipAmount || null,
           payment_method: 'card_reader',
           transaction_date: selectedAppointment.appointment_date || format(new Date(), 'yyyy-MM-dd'),
-          transaction_time: format(new Date(), 'HH:mm:ss'),
           client_name: selectedAppointment.client_name || null,
-          stylist_user_id: selectedAppointment.stylist_user_id || null,
+          staff_user_id: selectedAppointment.stylist_user_id || null,
           location_id: selectedAppointment.location_id || null,
-          organization_id: orgId, // E2: Include org_id for RLS
+          organization_id: orgId,
+          appointment_id: selectedAppointment.id || null,
         };
         const { error: txError } = await supabase
-          .from('phorest_sales_transactions')
+          .from('transaction_items')
           .insert(transactionInsert);
         if (txError) {
           console.error('Failed to insert transaction record:', txError);

@@ -27945,27 +27945,88 @@ export type Database = {
       }
       v_all_clients: {
         Row: {
+          ban_reason: string | null
           birthday: string | null
+          branch_name: string | null
           canonical_client_id: string | null
           client_since: string | null
           created_at: string | null
+          customer_number: string | null
           email: string | null
           email_normalized: string | null
           first_name: string | null
+          first_visit: string | null
           id: string | null
           is_archived: boolean | null
+          is_banned: boolean | null
           is_duplicate: boolean | null
+          is_vip: boolean | null
           last_name: string | null
           last_visit: string | null
           lead_source: string | null
           location_id: string | null
+          medical_alerts: string | null
           name: string | null
+          notes: string | null
           phone: string | null
           phone_normalized: string | null
           phorest_client_id: string | null
+          preferred_stylist_id: string | null
           source: string | null
           total_spend: number | null
           visit_count: number | null
+        }
+        Relationships: []
+      }
+      v_all_sales_transactions: {
+        Row: {
+          _source: string | null
+          branch_name: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string | null
+          discount_amount: number | null
+          id: string | null
+          item_category: string | null
+          item_name: string | null
+          item_type: string | null
+          location_id: string | null
+          payment_method: string | null
+          phorest_staff_id: string | null
+          phorest_transaction_id: string | null
+          quantity: number | null
+          stylist_user_id: string | null
+          tax_amount: number | null
+          tip_amount: number | null
+          total_amount: number | null
+          transaction_date: string | null
+          transaction_time: string | null
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
+      v_all_services: {
+        Row: {
+          _source: string | null
+          allow_same_day_booking: boolean | null
+          category: string | null
+          container_types: string[] | null
+          created_at: string | null
+          duration_minutes: number | null
+          id: string | null
+          is_active: boolean | null
+          is_chemical_service: boolean | null
+          lead_time_days: number | null
+          location_id: string | null
+          name: string | null
+          organization_id: string | null
+          phorest_branch_id: string | null
+          phorest_service_id: string | null
+          price: number | null
+          requires_qualification: boolean | null
+          same_day_restriction_reason: string | null
+          updated_at: string | null
         }
         Relationships: []
       }
