@@ -375,6 +375,13 @@ async function handleCheckoutCompleted(
       .eq('id', appointmentId)
       .neq('payment_status', 'paid');
 
+    // Fallback: also try phorest_appointments
+    await supabase
+      .from('phorest_appointments')
+      .update(updatePayload)
+      .eq('id', appointmentId)
+      .neq('payment_status', 'paid');
+
     console.log(`Appointment ${appointmentId} updated after payment link completion`);
     return;
   }
@@ -762,14 +769,16 @@ async function handlePaymentIntentFailed(
     .from('appointments')
     .update(failPayload)
     .eq('id', appointmentId)
-    .neq('payment_status', 'paid'); // Don't overwrite a paid status
+    .neq('payment_status', 'paid')
+    .neq('payment_status', 'partially_paid'); // Don't overwrite a split leg that already collected
 
   // Fallback: also try phorest_appointments (one will match, other is a no-op)
   await supabase
     .from('phorest_appointments')
     .update(failPayload)
     .eq('id', appointmentId)
-    .neq('payment_status', 'paid');
+    .neq('payment_status', 'paid')
+    .neq('payment_status', 'partially_paid');
 
   if (error) {
     console.error("Failed to update appointment from PI failure webhook:", error);
