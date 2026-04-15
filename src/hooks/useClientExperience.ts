@@ -131,7 +131,7 @@ export function useClientExperience(
 
       // Staff mappings
       const { data: mappings } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           phorest_staff_id,
           user_id,

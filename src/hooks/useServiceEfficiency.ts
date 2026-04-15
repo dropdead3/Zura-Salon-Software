@@ -51,7 +51,7 @@ export function useServiceEfficiency(
     queryKey: ['staff-name-mapping'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, user_id, employee_profiles(display_name, full_name)');
       if (error) throw error;
       const map = new Map<string, string>();

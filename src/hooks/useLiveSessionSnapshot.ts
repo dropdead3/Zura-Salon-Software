@@ -94,7 +94,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
 
       // Resolve staff to user profiles via phorest_staff_mapping (include phorest_staff_name)
       const { data: staffMappings, error: mappingError } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, user_id, phorest_staff_name')
         .in('phorest_staff_id', uniqueStaffIds);
 

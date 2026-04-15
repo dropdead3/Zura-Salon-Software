@@ -161,7 +161,7 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
 // Resolve phorest staff IDs for a user from the staff mapping table
 async function resolvePhorestStaffIds(userId: string): Promise<string[]> {
   const { data } = await supabase
-    .from('phorest_staff_mapping')
+    .from('v_all_staff' as any)
     .select('phorest_staff_id')
     .eq('user_id', userId)
     .eq('is_active', true);
@@ -423,7 +423,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
     queryFn: async () => {
       // Get staff mappings with photos
       const { data: mappings } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, user_id, phorest_staff_name')
         .eq('is_active', true);
 
@@ -727,7 +727,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
     queryFn: async () => {
       // Fetch staff mappings
       const { data: mappings } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, phorest_staff_name, phorest_branch_name, user_id')
         .eq('is_active', true);
 

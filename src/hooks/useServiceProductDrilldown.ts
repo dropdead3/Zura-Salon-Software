@@ -130,7 +130,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       const unresolvedPhorestIds = allStaffIds.filter(id => !staffLookup[id]);
       if (unresolvedPhorestIds.length > 0) {
         const { data: mappings } = await supabase
-          .from('phorest_staff_mapping')
+          .from('v_all_staff' as any)
           .select(`phorest_staff_id, user_id, employee_profiles:user_id (full_name, display_name)`)
           .in('phorest_staff_id', unresolvedPhorestIds)
           .eq('is_active', true);
