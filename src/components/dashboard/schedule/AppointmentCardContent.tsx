@@ -227,7 +227,7 @@ function GridContent({
   const badge = APPOINTMENT_STATUS_BADGE[statusKey] || APPOINTMENT_STATUS_BADGE.booked;
 
   return (
-    <div className="px-2 py-1 relative z-10 overflow-hidden" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
+    <div className="px-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
       {showStylistBadge ? (
         <>
           {/* Weekly view: status badge top-left */}
@@ -308,8 +308,8 @@ function GridContent({
         </div>
       )}
 
-      {/* Assisted by line */}
-      {(() => {
+      {/* Assisted by line — full size only */}
+      {size === 'full' && (() => {
         const names = assistantNamesMap?.get(appointment.id);
         if (!names || names.length === 0) return null;
         return (
@@ -331,8 +331,8 @@ function GridContent({
         </div>
       )}
 
-      {/* Rescheduled from line */}
-      {duration >= 45 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+      {/* Rescheduled from line — full size only */}
+      {size === 'full' && duration >= 45 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
         <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
           <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
           Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
