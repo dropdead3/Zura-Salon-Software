@@ -760,7 +760,8 @@ function DisputeAnalyticsCards({ disputes, formatCurrency }: { disputes: any[]; 
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <div className="rounded-xl border border-border/60 p-4">
+      <div className="rounded-xl border border-border/60 p-4 relative">
+        <MetricInfoTooltip description="Analytics are scoped to your selected date range and filters." className={tokens.kpi.infoIcon} />
         <p className={tokens.kpi.label}>Total Disputes</p>
         <p className={tokens.kpi.value}>{analytics.total}</p>
       </div>
