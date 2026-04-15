@@ -271,7 +271,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
       }
 
       const { data } = await query;
-      return (data || []) as PhorestClient[];
+      return (data || []) as unknown as PhorestClient[];
     },
     enabled: clientSearch.length >= 2,
   });
