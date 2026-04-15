@@ -550,7 +550,7 @@ export function QuickBookingPopover({
         .eq('show_on_calendar', true)
         .eq('phorest_branch_id', locationData.phorest_branch_id);
       
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: open && !!selectedLocation,
   });
@@ -575,7 +575,7 @@ export function QuickBookingPopover({
         .eq('is_active', true)
         .eq('show_on_calendar', true);
       
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: open && stylistFirstMode,
   });

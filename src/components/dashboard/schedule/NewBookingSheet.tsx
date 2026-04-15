@@ -140,7 +140,7 @@ export function NewBookingSheet({
           )
         `)
         .eq('is_active', true);
-      return data || [];
+      return (data || []) as any[];
     },
   });
 

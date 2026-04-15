@@ -757,7 +757,7 @@ export function AppointmentDetailSheet({
         .eq('phorest_client_id', appointment!.phorest_client_id!)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as any;
     },
     enabled: !!appointment?.phorest_client_id,
     staleTime: 2 * 60 * 1000,
@@ -775,7 +775,7 @@ export function AppointmentDetailSheet({
         .select('id, appointment_date, stylist_user_id, service_name, status')
         .eq('original_appointment_id', appointment.id)
         .not('status', 'in', '("cancelled")');
-      const results = (phorestRedos || []).map(r => ({
+      const results = ((phorestRedos || []) as any[]).map((r: any) => ({
         id: r.id, appointment_date: r.appointment_date,
         staff_name: null as string | null, service_name: r.service_name,
         status: r.status, _stylist_user_id: r.stylist_user_id,
@@ -851,7 +851,7 @@ export function AppointmentDetailSheet({
           .select('phorest_staff_id')
           .eq('user_id', newStylistUserId)
           .maybeSingle();
-        phorestStaffId = mapping?.phorest_staff_id || null;
+        phorestStaffId = (mapping as any)?.phorest_staff_id || null;
       }
 
       const table = appointment._source === 'local' ? 'appointments' : 'phorest_appointments';
@@ -953,7 +953,7 @@ export function AppointmentDetailSheet({
         .eq('phone_normalized', normalized)
         .limit(1)
         .maybeSingle();
-      return data?.phorest_client_id || null;
+      return (data as any)?.phorest_client_id || null;
     },
     enabled: !!appointment && !appointment.phorest_client_id && !!appointment.client_phone && open,
     staleTime: 5 * 60 * 1000,
