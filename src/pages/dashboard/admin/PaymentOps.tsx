@@ -760,7 +760,8 @@ function DisputeAnalyticsCards({ disputes, formatCurrency }: { disputes: any[]; 
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <div className="rounded-xl border border-border/60 p-4">
+      <div className="rounded-xl border border-border/60 p-4 relative">
+        <MetricInfoTooltip description="Analytics are scoped to your selected date range and filters." className={tokens.kpi.infoIcon} />
         <p className={tokens.kpi.label}>Total Disputes</p>
         <p className={tokens.kpi.value}>{analytics.total}</p>
       </div>
@@ -788,11 +789,12 @@ function DisputeAnalyticsCards({ disputes, formatCurrency }: { disputes: any[]; 
   );
 }
 
-function SubmitEvidenceDialog({ dispute, orgId, open, onOpenChange }: {
+function SubmitEvidenceDialog({ dispute, orgId, open, onOpenChange, formatCurrency }: {
   dispute: any;
   orgId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  formatCurrency: (n: number) => string;
 }) {
   const [cancellationPolicy, setCancellationPolicy] = useState('');
   const [cancellationRebuttal, setCancellationRebuttal] = useState('');
@@ -824,7 +826,7 @@ function SubmitEvidenceDialog({ dispute, orgId, open, onOpenChange }: {
           <DialogTitle>Submit Dispute Evidence</DialogTitle>
           <DialogDescription>
             Submit evidence to respond to the <strong>{(dispute?.reason || 'unknown').replace(/_/g, ' ')}</strong> dispute
-            for <BlurredAmount>{dispute ? `$${(dispute.amount / 100).toFixed(2)}` : ''}</BlurredAmount>.
+            for <BlurredAmount>{dispute ? formatCurrency(dispute.amount / 100) : ''}</BlurredAmount>.
             Evidence due by {dispute?.evidence_due_by ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy') : 'unknown'}.
           </DialogDescription>
         </DialogHeader>
@@ -878,6 +880,20 @@ function FraudAlertsCard({ orgId, formatCurrency }: { orgId?: string; formatCurr
   const { data: warnings = [], isLoading } = useFraudWarnings(orgId);
   const { data: unresolvedCount = 0 } = useUnresolvedFraudWarningCount(orgId);
   const queryClient = useQueryClient();
+  const [confirmRefundWarning, setConfirmRefundWarning] = useState<string | null>(null);
+
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    sortField,
+    sortDirection,
+    toggleSort,
+    showingFrom,
+    showingTo,
+  } = usePaginatedSort({ data: warnings, defaultPageSize: 10, defaultSortField: 'created_at', defaultSortDirection: 'desc' });
 
   const resolveMutation = useMutation({
     mutationFn: async ({ warningId, action }: { warningId: string; action: string }) => {
@@ -931,66 +947,105 @@ function FraudAlertsCard({ orgId, formatCurrency }: { orgId?: string; formatCurr
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={tokens.table.columnHeader}>Charge</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Type</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Actionable</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Date</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {warnings.map((warning) => (
-                <TableRow key={warning.id}>
-                  <TableCell className="font-mono text-xs">{warning.stripe_charge_id.slice(0, 20)}…</TableCell>
-                  <TableCell className="capitalize">{warning.fraud_type.replace(/_/g, ' ')}</TableCell>
-                  <TableCell>
-                    <Badge variant={warning.actionable ? 'destructive' : 'secondary'}>
-                      {warning.actionable ? 'Action Needed' : 'Info Only'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {format(new Date(warning.created_at), 'MMM d, yyyy')}
-                  </TableCell>
-                  <TableCell>
-                    {warning.resolved_at ? (
-                      <Badge variant="outline" className="capitalize">{warning.resolved_action}</Badge>
-                    ) : (
-                      <Badge variant="secondary">Open</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {!warning.resolved_at && (
-                      <div className="flex gap-1.5">
-                        <Button
-                          size="sm"
-                          className={tokens.button.inline}
-                          disabled={resolveMutation.isPending}
-                          onClick={() => resolveMutation.mutate({ warningId: warning.id, action: 'accepted' })}
-                        >
-                          Accept Risk
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className={tokens.button.inline}
-                          disabled={resolveMutation.isPending}
-                          onClick={() => resolveMutation.mutate({ warningId: warning.id, action: 'refunded' })}
-                        >
-                          Mark Refunded
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={tokens.table.columnHeader}>Charge</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>
+                    <SortableColumnHeader sortKey="fraud_type" label="Type" currentSortField={sortField} onToggleSort={toggleSort} />
+                  </TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Actionable</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>
+                    <SortableColumnHeader sortKey="created_at" label="Date" currentSortField={sortField} onToggleSort={toggleSort} />
+                  </TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((warning) => (
+                  <TableRow key={warning.id}>
+                    <TableCell className="font-mono text-xs">{warning.stripe_charge_id.slice(0, 20)}…</TableCell>
+                    <TableCell className="capitalize">{warning.fraud_type.replace(/_/g, ' ')}</TableCell>
+                    <TableCell>
+                      <Badge variant={warning.actionable ? 'destructive' : 'secondary'}>
+                        {warning.actionable ? 'Action Needed' : 'Info Only'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(warning.created_at), 'MMM d, yyyy')}
+                    </TableCell>
+                    <TableCell>
+                      {warning.resolved_at ? (
+                        <Badge variant="outline" className="capitalize">{warning.resolved_action}</Badge>
+                      ) : (
+                        <Badge variant="secondary">Open</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {!warning.resolved_at && (
+                        <div className="flex gap-1.5">
+                          <Button
+                            size="sm"
+                            className={tokens.button.inline}
+                            disabled={resolveMutation.isPending}
+                            onClick={() => resolveMutation.mutate({ warningId: warning.id, action: 'accepted' })}
+                          >
+                            Accept Risk
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={tokens.button.inline}
+                            disabled={resolveMutation.isPending}
+                            onClick={() => setConfirmRefundWarning(warning.id)}
+                          >
+                            Mark as Refunded
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              showingFrom={showingFrom}
+              showingTo={showingTo}
+              totalItems={totalItems}
+            />
+          </>
         )}
       </CardContent>
+
+      <AlertDialog open={!!confirmRefundWarning} onOpenChange={(open) => { if (!open) setConfirmRefundWarning(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm: Mark as Refunded</AlertDialogTitle>
+            <AlertDialogDescription>
+              This only marks the fraud warning as resolved in your records. It does <strong>not</strong> issue a refund through Stripe.
+              If you haven't already refunded this charge, please do so separately from your Stripe dashboard before marking it here.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmRefundWarning) {
+                  resolveMutation.mutate({ warningId: confirmRefundWarning, action: 'refunded' });
+                  setConfirmRefundWarning(null);
+                }
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
@@ -1164,6 +1219,7 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
           orgId={orgId}
           open={!!evidenceDispute}
           onOpenChange={(open) => { if (!open) setEvidenceDispute(null); }}
+          formatCurrency={formatCurrency}
         />
       )}
     </>
