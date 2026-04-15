@@ -26,7 +26,7 @@ export function DockClientQuickView({ open, onClose, phorestClientId, clientId, 
     queryFn: async () => {
       if (phorestClientId) {
         const { data } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients')
           .select('id, name, email, phone, notes, created_at')
           .eq('phorest_client_id', phorestClientId)
           .maybeSingle();
