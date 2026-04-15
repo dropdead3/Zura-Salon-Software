@@ -44,17 +44,25 @@ export function BanClientToggle({
 
   const banMutation = useMutation({
     mutationFn: async (banReason: string) => {
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
-          is_banned: true,
-          ban_reason: banReason || null,
-          banned_at: new Date().toISOString(),
-          banned_by: user?.id,
-        })
+      const updatePayload = {
+        is_banned: true,
+        ban_reason: banReason || null,
+        banned_at: new Date().toISOString(),
+        banned_by: user?.id,
+      };
+      // Try clients table first (native), then phorest_clients as fallback
+      const { error: nativeError } = await supabase
+        .from('clients')
+        .update(updatePayload as any)
         .eq('id', clientId);
       
-      if (error) throw error;
+      if (nativeError) {
+        const { error } = await supabase
+          .from('phorest_clients')
+          .update(updatePayload)
+          .eq('id', clientId);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-directory'] });
