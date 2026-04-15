@@ -273,6 +273,19 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const { hideNumbers, toggleHideNumbers } = useHideNumbers();
   const { data: employeeProfile } = useEmployeeProfile();
   const location = useLocation();
+
+  // Auto-collapse sidebar on schedule route for maximum grid visibility
+  useEffect(() => {
+    const isSchedule = location.pathname.includes('/schedule');
+    if (isSchedule && prevCollapseRef.current === null) {
+      prevCollapseRef.current = sidebarCollapsed;
+      setSidebarCollapsed(true);
+    } else if (!isSchedule && prevCollapseRef.current !== null) {
+      setSidebarCollapsed(prevCollapseRef.current);
+      prevCollapseRef.current = null;
+    }
+  }, [location.pathname]);
+
   const reduceMotion = useReducedMotion();
   const hasZuraGuidance = !!(zuraCtx?.savedState && location.pathname !== '/dashboard');
   const navigate = useNavigate();
