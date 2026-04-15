@@ -86,18 +86,18 @@ export function useStaffRevenuePerformance(
 
       // Also fetch transaction items for service/product breakdown
       const itemData = await fetchAllBatched<{
-        phorest_staff_id: string | null;
+        staff_user_id: string | null;
         item_type: string | null;
         total_amount: number | null;
         tax_amount: number | null;
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_staff_id, item_type, total_amount, tax_amount, transaction_date')
+          .from('v_all_transaction_items')
+          .select('staff_user_id, item_type, total_amount, tax_amount, transaction_date')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
-          .not('phorest_staff_id', 'is', null)
+          .not('staff_user_id', 'is', null)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;

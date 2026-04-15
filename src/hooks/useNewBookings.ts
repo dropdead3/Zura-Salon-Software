@@ -140,7 +140,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         // Batch check: for each client, see if they have any appointment before startDate
         const priorAppts = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) =>
           supabase
-            .from('phorest_appointments')
+            .from('v_all_appointments')
             .select('phorest_client_id')
             .in('phorest_client_id', rangeClientIds as readonly string[])
             .lt('appointment_date', startDate)
@@ -170,7 +170,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       const [last30Res, prev30Res] = await Promise.all([
         applyLocFilter(
           supabase
-            .from('phorest_appointments')
+            .from('v_all_appointments')
             .select('id', { count: 'exact', head: true })
             .gte('created_at', thirtyDaysAgoStart)
             .lte('created_at', todayEnd)
@@ -178,7 +178,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         ),
         applyLocFilter(
           supabase
-            .from('phorest_appointments')
+            .from('v_all_appointments')
             .select('id', { count: 'exact', head: true })
             .gte('created_at', sixtyDaysAgoStart)
             .lte('created_at', thirtyOneDaysAgoEnd)

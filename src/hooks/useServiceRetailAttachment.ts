@@ -48,11 +48,11 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       // 1. Fetch all service items in date range
       const serviceItems = await fetchAllPages((offset) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_client_id, transaction_date, item_name, item_category')
+          .from('v_all_transaction_items')
+          .select('external_client_id, transaction_date, item_name, item_category')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
-          .not('phorest_client_id', 'is', null)
+          .not('external_client_id', 'is', null)
           .in('item_type', ['Service', 'service', 'SERVICE'])
           .range(offset, offset + PAGE_SIZE - 1);
         return buildLocationFilter(q);
@@ -61,11 +61,11 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       // 2. Fetch all product items in date range
       const productItems = await fetchAllPages((offset) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_client_id, transaction_date, total_amount, item_name')
+          .from('v_all_transaction_items')
+          .select('external_client_id, transaction_date, total_amount, item_name')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
-          .not('phorest_client_id', 'is', null)
+          .not('external_client_id', 'is', null)
           .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
           .range(offset, offset + PAGE_SIZE - 1);
         return buildLocationFilter(q);
