@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
           currency: "usd",
           product_data: {
             name: "Afterpay Processing Fee",
-            description: `${Math.round(surchargeRate * 100)}% processing fee for Afterpay payment`,
+            description: `${parseFloat((surchargeRate * 100).toFixed(2))}% processing fee for Afterpay payment`,
           },
           unit_amount: surchargeAmountCents,
         },

@@ -73,14 +73,14 @@ export function ZuraPayAfterpayTab() {
     toast.success(`Surcharge rate updated to ${num}%`);
   };
 
-  const ratePercent = Math.round(surchargeRate * 100);
+  const ratePercent = parseFloat((surchargeRate * 100).toFixed(2));
   const [localRate, setLocalRate] = useState<string>(String(ratePercent));
   const sampleAmount = 1000;
   const sampleSurcharge = sampleAmount * surchargeRate;
 
   // Sync local state when server value changes
   useEffect(() => {
-    setLocalRate(String(Math.round(surchargeRate * 100)));
+    setLocalRate(String(parseFloat((surchargeRate * 100).toFixed(2))));
   }, [surchargeRate]);
 
   return (

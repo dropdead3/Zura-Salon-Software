@@ -835,7 +835,7 @@ export function CheckoutSummarySheet({
                       <div className="grid grid-cols-2 gap-x-4 text-xs text-muted-foreground">
                         <span>Service amount:</span>
                         <span className="text-right">{formatCurrency(afterpayCents / 100)}</span>
-                        <span>Processing fee ({Math.round(orgSurchargeRate * 100)}%):</span>
+                        <span><span>Processing fee ({parseFloat((orgSurchargeRate * 100).toFixed(2))}%):</span></span>
                         <span className="text-right">+ {formatCurrency(feeCents / 100)}</span>
                         <span className="text-foreground">Client pays:</span>
                         <span className="text-right text-foreground">{formatCurrency(clientPaysCents / 100)}</span>
