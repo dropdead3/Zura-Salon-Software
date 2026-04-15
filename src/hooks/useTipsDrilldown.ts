@@ -105,7 +105,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     queryKey: ['tips-drilldown-staff-mapping'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, phorest_staff_name, user_id');
       if (error) throw error;
       return data;

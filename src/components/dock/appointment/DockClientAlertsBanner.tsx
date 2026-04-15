@@ -87,7 +87,7 @@ export function DockClientAlertsBanner({ phorestClientId, clientId, clientName, 
       }
       if (phorestClientId) {
         const { data } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients' as any)
           .select('notes, medical_alerts')
           .eq('phorest_client_id', phorestClientId)
           .maybeSingle();

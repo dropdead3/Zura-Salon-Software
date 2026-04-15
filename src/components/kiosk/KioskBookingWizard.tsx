@@ -104,7 +104,7 @@ export function KioskBookingWizard() {
     queryFn: async () => {
       if (!branchId) return [];
       const { data } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           id,
           phorest_staff_id,
@@ -208,12 +208,10 @@ export function KioskBookingWizard() {
       const endM = endMinutes % 60;
       const endTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
 
-      // Insert into phorest_appointments
+      // Insert into native appointments table
       const { error } = await supabase
-        .from('phorest_appointments')
+        .from('appointments')
         .insert({
-          phorest_id: `kiosk-walkin-${crypto.randomUUID().slice(0, 8)}`,
-          phorest_branch_id: branchId,
           appointment_date: dateStr,
           start_time: startTime,
           end_time: endTime,
@@ -221,10 +219,10 @@ export function KioskBookingWizard() {
           client_name: clientName.trim(),
           status: 'checked_in',
           location_id: locationId,
-          stylist_user_id: selectedStylist ? undefined : undefined,
-          phorest_staff_id: selectedStylist?.phorest_staff_id || null,
+          staff_user_id: selectedStylist?.user_id || null,
           duration_minutes: totalDuration,
-        });
+          payment_status: 'pending',
+        } as any);
 
       if (error) throw error;
 

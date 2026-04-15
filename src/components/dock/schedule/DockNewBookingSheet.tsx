@@ -186,7 +186,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
     queryKey: ['dock-staff-mapping', staff.userId],
     queryFn: async () => {
       const { data } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id')
         .eq('user_id', staff.userId)
         .eq('is_active', true)
@@ -255,7 +255,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
 
       // Real query (both normal mode and usesRealData demo mode)
       let query = supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone, client_since')
         .eq('is_duplicate', false)
         .order('name')
@@ -304,9 +304,9 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
         const endTime = `${endH}:${endM}`;
 
         const { data: inserted, error } = await supabase
-          .from('phorest_appointments')
+          .from('appointments')
           .insert({
-            phorest_id: `demo-${crypto.randomUUID()}`,
+            external_id: `demo-${crypto.randomUUID()}`,
             
             location_id: selectedLocation || locationId,
             client_name: selectedClient.name,
@@ -715,7 +715,7 @@ function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: 
     queryKey: ['dock-client-last-visit', client.phorest_client_id],
     queryFn: async () => {
       const { data } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments' as any)
         .select('appointment_date')
         .eq('phorest_client_id', client.phorest_client_id)
         .eq('is_demo', false)
@@ -1076,14 +1076,8 @@ function ConfirmStepDock({
 
       // Fetch last visit with stylist + location
       const { data: lastVisitData } = await supabase
-        .from('phorest_appointments')
-        .select(`
-          appointment_date, service_name,
-          phorest_staff_mapping!phorest_appointments_phorest_staff_id_fkey(
-            employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name)
-          ),
-          locations!phorest_appointments_location_id_fkey(name)
-        `)
+        .from('v_all_appointments' as any)
+        .select('appointment_date, service_name, staff_name, stylist_user_id')
         .eq('phorest_client_id', client.phorest_client_id)
         .eq('is_demo', false)
         .in('status', ['confirmed', 'completed', 'checked_in', 'arrived'])
@@ -1092,7 +1086,7 @@ function ConfirmStepDock({
 
       // Count total visits
       const { count } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments' as any)
         .select('id', { count: 'exact', head: true })
         .eq('phorest_client_id', client.phorest_client_id)
         .eq('is_demo', false)
@@ -1106,10 +1100,8 @@ function ConfirmStepDock({
         lastVisit: {
           date: last.appointment_date,
           service: last.service_name,
-          stylist: last.phorest_staff_mapping?.employee_profiles?.display_name
-            || last.phorest_staff_mapping?.employee_profiles?.full_name
-            || null,
-          location: last.locations?.name || null,
+          stylist: last.staff_name || null,
+          location: null,
         },
       };
     },

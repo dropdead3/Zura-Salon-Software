@@ -308,7 +308,7 @@ export default function Schedule() {
     queryKey: ['schedule-stylists-with-mapping', selectedBranchId],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           user_id,
           phorest_branch_id,
@@ -657,7 +657,7 @@ export default function Schedule() {
   const handleOpenClientProfile = (phorestClientId: string) => {
     // Fetch client data to pass to ClientDetailSheet
     supabase
-      .from('phorest_clients')
+      .from('v_all_clients' as any)
       .select('*')
       .eq('phorest_client_id', phorestClientId)
       .maybeSingle()

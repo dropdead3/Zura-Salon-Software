@@ -528,7 +528,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       let staffRetail: StaffRetailRow[] = [];
       if (staffIds.length > 0) {
         const { data: mappings } = await supabase
-          .from('phorest_staff_mapping')
+          .from('v_all_staff' as any)
           .select('phorest_staff_id, user_id, phorest_staff_name')
           .in('phorest_staff_id', staffIds);
 

@@ -147,7 +147,7 @@ export function useOrganizationAnalytics() {
 
       // Also fetch phorest_clients
       const { data: phorestClients } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, location_id')
         .eq('is_duplicate', false);
 
@@ -241,7 +241,7 @@ export function useOrganizationAnalytics() {
 
       // Get staff → user_id mapping
       const { data: mappings } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, user_id');
       const staffToUser: Record<string, string> = {};
       (mappings || []).forEach((m: any) => {

@@ -124,7 +124,7 @@ export function useClientEngagement(
 
       // Fetch all staff mappings for userId cross-ref
       const { data: allMappings } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, user_id');
 
       const allPhorestIds = (allMappings || []).map(m => m.phorest_staff_id);

@@ -64,7 +64,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
       // Resolve phorest staff IDs for fallback
       const { resolveStaffNamesByPhorestIds } = await import('@/utils/resolveStaffNames');
       const { data: staffMappings } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id')
         .eq('user_id', userId)
         .eq('is_active', true);

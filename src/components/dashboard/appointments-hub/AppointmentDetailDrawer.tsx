@@ -98,7 +98,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
     queryFn: async () => {
       if (!phorestClientId) return null;
       const { data } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id')
         .eq('phorest_client_id', phorestClientId)
         .maybeSingle();

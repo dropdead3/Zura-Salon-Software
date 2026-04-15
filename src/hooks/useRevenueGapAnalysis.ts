@@ -99,7 +99,7 @@ export function useRevenueGapAnalysis(
     queryFn: async () => {
       // ── Staff mapping ──
       const { data: staffMap } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id, phorest_staff_name');
 
       const staffLookup = new Map<string, string>();

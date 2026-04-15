@@ -166,7 +166,7 @@ export function useStylistAvailability(
 
       // 3. Get Phorest staff mappings for these users at this location
       const { data: staffMappings, error: mappingError } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('user_id, phorest_staff_id, phorest_branch_id, show_on_calendar');
       
       if (mappingError) throw mappingError;

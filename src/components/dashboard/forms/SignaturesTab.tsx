@@ -29,7 +29,7 @@ export function SignaturesTab() {
     queryKey: ['phorest-clients-basic'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('phorest_client_id, name');
       
       if (error) throw error;

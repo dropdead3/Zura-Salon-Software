@@ -113,7 +113,7 @@ export default function PublicBooking() {
       if (!location?.phorest_branch_id) return [];
 
       const { data, error } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           user_id,
           phorest_staff_id,

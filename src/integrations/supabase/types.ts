@@ -28030,6 +28030,21 @@ export type Database = {
         }
         Relationships: []
       }
+      v_all_staff: {
+        Row: {
+          display_name: string | null
+          full_name: string | null
+          is_active: boolean | null
+          location_id: string | null
+          phorest_staff_id: string | null
+          phorest_staff_name: string | null
+          photo_url: string | null
+          show_on_calendar: boolean | null
+          source: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       v_all_transaction_items: {
         Row: {
           appointment_id: string | null

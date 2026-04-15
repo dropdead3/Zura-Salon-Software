@@ -88,7 +88,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
 
       // Fetch staff mappings for name resolution
       const { data: staffMappings } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           phorest_staff_id,
           user_id,

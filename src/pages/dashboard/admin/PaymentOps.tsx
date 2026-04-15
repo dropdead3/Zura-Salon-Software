@@ -234,7 +234,7 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
     queryFn: async () => {
       const cutoff = format(subDays(new Date(), 90), 'yyyy-MM-dd');
       const { data, error } = await (supabase as any)
-        .from('phorest_appointments')
+        .from('v_all_appointments' as any)
         .select('id, client_name, appointment_date')
         .eq('organization_id', orgId!)
         .gte('appointment_date', cutoff)

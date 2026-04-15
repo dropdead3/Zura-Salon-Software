@@ -34,7 +34,7 @@ export async function resolveStaffNamesByPhorestIds(
 
   // Query phorest_staff_mapping joined with employee_profiles
   const { data: mappings } = await supabase
-    .from('phorest_staff_mapping')
+    .from('v_all_staff' as any)
     .select('phorest_staff_id, phorest_staff_name, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name)')
     .in('phorest_staff_id', phorestStaffIds);
 
@@ -75,7 +75,7 @@ export async function resolveStaffWithPhotosByPhorestIds(
   const result: Record<string, { name: string; photoUrl: string | null }> = {};
 
   const { data: mappings } = await supabase
-    .from('phorest_staff_mapping')
+    .from('v_all_staff' as any)
     .select('phorest_staff_id, phorest_staff_name, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name, photo_url)')
     .in('phorest_staff_id', phorestStaffIds);
 
@@ -130,7 +130,7 @@ export async function resolveStaffNames(
   if (phorestStaffIds.length === 0) return result;
 
   const { data: mappings } = await supabase
-    .from('phorest_staff_mapping')
+    .from('v_all_staff' as any)
     .select('phorest_staff_id, phorest_staff_name, user_id, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name)')
     .in('phorest_staff_id', phorestStaffIds);
 

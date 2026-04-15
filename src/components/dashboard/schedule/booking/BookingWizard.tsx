@@ -74,7 +74,7 @@ export function BookingWizard({
     queryKey: ['booking-clients', clientSearch, user?.id, canViewAllClients],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone, preferred_stylist_id')
         .eq('is_duplicate', false)
         .order('name')
@@ -104,7 +104,7 @@ export function BookingWizard({
     queryKey: ['booking-stylists', selectedLocation],
     queryFn: async () => {
       const { data } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           phorest_staff_id,
           user_id,

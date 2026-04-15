@@ -121,7 +121,7 @@ export function useReferralConversions(referralLinkId: string | undefined) {
       // Fetch client names
       const clientIds = (data || []).map((c: any) => c.referred_client_id);
       const { data: clients } = await supabase
-        .from('phorest_clients' as any)
+        .from('v_all_clients' as any)
         .select('id, client_first_name, client_last_name')
         .in('id', clientIds);
 

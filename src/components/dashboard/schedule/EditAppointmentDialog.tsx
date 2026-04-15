@@ -136,7 +136,7 @@ export function EditAppointmentDialog({
         // Fallback: also try phorest_appointments if the record is from phorest
         if (error) {
           const { error: pErr } = await supabase
-            .from('phorest_appointments')
+            .from('phorest_appointments' as any)
             .update({ notes })
             .eq('id', appointment.id);
           if (pErr) throw pErr;

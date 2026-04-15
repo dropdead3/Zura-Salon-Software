@@ -112,7 +112,7 @@ export default function ClientDirectory() {
     // Fetch client by phorest_client_id and open the detail sheet
     const openClient = async () => {
       const { data } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('*')
         .eq('phorest_client_id', clientId)
         .maybeSingle();
@@ -135,7 +135,7 @@ export default function ClientDirectory() {
 
       // Get the organization_id from the client record
       const { data: clientRecord } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('organization_id, name' as any)
         .eq('id', clientId)
         .single();
@@ -144,7 +144,7 @@ export default function ClientDirectory() {
 
       // Get canonical name for household naming
       const { data: canonicalRecord } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('name' as any)
         .eq('id', canonicalId)
         .single();
@@ -166,7 +166,7 @@ export default function ClientDirectory() {
 
       // Clear the is_duplicate flag on the flagged client
       await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .update({ is_duplicate: false, canonical_client_id: null } as any)
         .eq('id', clientId);
 
@@ -244,7 +244,7 @@ export default function ClientDirectory() {
               .eq('id', (dismissal as any).id);
 
             await supabase
-              .from('phorest_clients')
+              .from('v_all_clients' as any)
               .update({ is_duplicate: true, canonical_client_id: canonicalId } as any)
               .eq('id', clientId);
 
@@ -342,7 +342,7 @@ export default function ClientDirectory() {
     queryKey: ['client-directory', user?.id, primaryTab, selectedStylist, canViewAllClients],
     queryFn: async () => {
       let baseQuery = supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('*', { count: 'exact' })
         .order('total_spend', { ascending: false });
 
