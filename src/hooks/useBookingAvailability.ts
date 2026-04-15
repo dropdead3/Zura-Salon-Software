@@ -253,7 +253,7 @@ export function useAvailableSlots(
         });
       };
 
-      appointments?.forEach((a) => {
+      (appointments as any[] || []).forEach((a: any) => {
         if (a.stylist_user_id) addBlock(a.stylist_user_id, a.start_time, a.end_time);
       });
       internalAppts?.forEach((a) => {
@@ -340,7 +340,7 @@ export function useResolvedServiceInfo(
           if (qual.custom_duration_minutes) duration = qual.custom_duration_minutes;
           if (qual.custom_price != null) price = qual.custom_price;
         } else {
-          // Check phorest staff services
+          // Check phorest staff services via v_all_staff_qualifications
           const { data: mapping } = await supabase
             .from('v_all_staff' as any)
             .select('phorest_staff_id')
@@ -349,6 +349,7 @@ export function useResolvedServiceInfo(
             .maybeSingle();
 
           if (mapping) {
+            const phorestStaffId = (mapping as any).phorest_staff_id;
             const { data: phorestSvc } = await supabase
               .from('v_all_services' as any)
               .select('phorest_service_id')
@@ -356,17 +357,19 @@ export function useResolvedServiceInfo(
               .maybeSingle();
 
             if (phorestSvc) {
+              const phorestServiceId = (phorestSvc as any).phorest_service_id;
               const { data: phorestQual } = await supabase
-                .from('phorest_staff_services' as any)
+                .from('v_all_staff_qualifications' as any)
                 .select('custom_price, custom_duration_minutes')
-                .eq('phorest_staff_id', mapping.phorest_staff_id)
-                .eq('phorest_service_id', phorestSvc.phorest_service_id)
+                .eq('phorest_staff_id', phorestStaffId)
+                .eq('phorest_service_id', phorestServiceId)
                 .eq('is_qualified', true)
                 .maybeSingle();
 
               if (phorestQual) {
-                if (phorestQual.custom_duration_minutes) duration = phorestQual.custom_duration_minutes;
-                if (phorestQual.custom_price != null) price = phorestQual.custom_price;
+                const q = phorestQual as any;
+                if (q.custom_duration_minutes) duration = q.custom_duration_minutes;
+                if (q.custom_price != null) price = q.custom_price;
               }
             }
           }

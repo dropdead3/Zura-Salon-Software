@@ -112,7 +112,7 @@ export function useAdjustedExpectedRevenue(
           const { data: posData, error: posError } = await posQuery;
           if (posError) throw posError;
 
-          (posData ?? []).forEach(t => {
+          ((posData as any[]) ?? []).forEach((t: any) => {
             completedActualRevenue += (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0);
             if (t.phorest_client_id) clientsWithPOS.add(t.phorest_client_id);
           });

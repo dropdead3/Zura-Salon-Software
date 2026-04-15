@@ -105,17 +105,16 @@ export function BookingWizard({
     queryFn: async () => {
       const { data } = await supabase
         .from('v_all_staff' as any)
-        .select(`
-          phorest_staff_id,
-          user_id,
-          employee_profiles!phorest_staff_mapping_user_id_fkey(
-            display_name,
-            full_name,
-            photo_url
-          )
-        `)
+        .select('phorest_staff_id, user_id, display_name, full_name, photo_url')
         .eq('is_active', true);
-      (data || []) as any[];
+      return ((data as any[]) || []).map((s: any) => ({
+        ...s,
+        employee_profiles: {
+          display_name: s.display_name,
+          full_name: s.full_name,
+          photo_url: s.photo_url,
+        },
+      }));
     },
   });
 
@@ -154,19 +153,15 @@ export function BookingWizard({
       const stylistMapping = stylists.find(s => s.user_id === selectedStylist);
       if (!stylistMapping || !selectedClient) throw new Error('Missing required data');
 
-      // Resolve phorest_branch_id from selected location
-      const selectedLoc = locations.find(l => l.id === selectedLocation);
-      const branchId = selectedLoc?.phorest_branch_id;
-      if (!branchId) throw new Error('No Phorest branch ID for selected location');
-
       const startDateTime = `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
-          branch_id: branchId,
+          branch_id: undefined,
           location_id: selectedLocation,
-          client_id: selectedClient.phorest_client_id,
-          staff_id: stylistMapping.phorest_staff_id,
+          client_id: selectedClient.phorest_client_id || selectedClient.id,
+          staff_id: stylistMapping.phorest_staff_id || undefined,
+          staff_user_id: selectedStylist,
           service_ids: selectedServices,
           start_time: startDateTime,
           notes: notes || undefined,
