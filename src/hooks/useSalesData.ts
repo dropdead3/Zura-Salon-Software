@@ -788,7 +788,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
 
       // Build staff name lookup using centralized resolution
       const staffNameLookup: Record<string, string> = {};
-      (mappings || []).forEach(m => {
+      typedMappings2.forEach((m: any) => {
         if (m.phorest_staff_id) {
           staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown';
         }

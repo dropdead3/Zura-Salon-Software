@@ -26,7 +26,7 @@ export function useServiceLookup() {
       if (error) throw error;
 
       const map = new Map<string, ServiceLookupEntry>();
-      for (const s of data || []) {
+      for (const s of ((data || []) as any[])) {
         // Keep first occurrence (or longest duration) per name
         const existing = map.get(s.name);
         if (!existing || s.duration_minutes > existing.duration_minutes) {

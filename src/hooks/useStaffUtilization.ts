@@ -293,7 +293,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
 
       // Count by location
       const locationCounts = new Map<string, number>();
-      (appointments || []).forEach(apt => {
+      ((appointments || []) as any[]).forEach((apt: any) => {
         if (apt.location_id) {
           locationCounts.set(apt.location_id, (locationCounts.get(apt.location_id) || 0) + 1);
         }

@@ -110,11 +110,12 @@ export function useStaffRevenuePerformance(
       if (mappingsError) throw mappingsError;
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const typedMappings = ((mappings || []) as any[]);
+      const phorestIds = typedMappings.map((m: any) => m.phorest_staff_id);
       const staffNameData = await resolveStaffNames(phorestIds);
 
       // Fetch photos from employee_profiles
-      const userIds = (mappings || []).filter(m => m.user_id).map(m => m.user_id!);
+      const userIds = typedMappings.filter((m: any) => m.user_id).map((m: any) => m.user_id!);
       const { data: profiles, error: profilesError } = userIds.length > 0
         ? await supabase.from('employee_profiles').select('user_id, full_name, display_name, photo_url').eq('is_active', true).in('user_id', userIds)
         : { data: [] as any[], error: null };
@@ -122,7 +123,7 @@ export function useStaffRevenuePerformance(
 
       // Create lookup maps
       const mappingByPhorestId = new Map(
-        (mappings || []).map(m => [m.phorest_staff_id, m])
+        typedMappings.map((m: any) => [m.phorest_staff_id, m])
       );
       const profileByUserId = new Map(
         (profiles || []).map((p: any) => [p.user_id, p])
@@ -165,7 +166,7 @@ export function useStaffRevenuePerformance(
         // Find the matching phorest_staff_id from mappings
         let aggregateKey = staffId;
         for (const [psid, mapping] of mappingByPhorestId) {
-          if (mapping.user_id === staffId) { aggregateKey = psid; break; }
+        if ((mapping as any)?.user_id === staffId) { aggregateKey = psid; break; }
         }
         const existing = aggregatedData.get(aggregateKey);
         if (!existing) continue;
@@ -184,7 +185,7 @@ export function useStaffRevenuePerformance(
       
       for (const [phorestStaffId, data] of aggregatedData) {
         const mapping = mappingByPhorestId.get(phorestStaffId);
-        const profile = mapping?.user_id ? profileByUserId.get(mapping.user_id) : null;
+        const profile = (mapping as any)?.user_id ? profileByUserId.get((mapping as any).user_id) : null;
         
         const daysWithData = data.daysWithData.size;
         const averageTicket = data.transactionCount > 0 
@@ -200,9 +201,9 @@ export function useStaffRevenuePerformance(
         }
         
         staffList.push({
-          userId: mapping?.user_id || null,
+          userId: (mapping as any)?.user_id || null,
           phorestStaffId,
-          name: staffNameData.byPhorestId[phorestStaffId] || mapping?.phorest_staff_name || 'Unknown Staff',
+          name: staffNameData.byPhorestId[phorestStaffId] || (mapping as any)?.phorest_staff_name || 'Unknown Staff',
           displayName: profile?.display_name || null,
           photoUrl: (profile as any)?.photo_url || null,
           totalRevenue: data.totalRevenue,

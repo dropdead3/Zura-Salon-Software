@@ -40,7 +40,7 @@ async function paginatedFetch(
 
     const { data, error } = await q;
     if (error) throw error;
-    rows.push(...(data || []));
+    rows.push(...((data || []) as any[]));
     hasMore = (data?.length || 0) === PAGE_SIZE;
     offset += PAGE_SIZE;
   }
