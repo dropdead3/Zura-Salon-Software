@@ -5,13 +5,17 @@ import { getOrgToday, orgNowMinutes, isOrgToday, isOrgTomorrow, getOrgTodayDate 
 /**
  * Reactive, timezone-safe "now" for schedule components.
  *
+ * Accepts an optional locationTimezone override. When provided (non-null),
+ * it takes priority over the org default timezone.
+ *
  * Returns primitive values (string, number) — never a raw Date —
  * so they can't be accidentally misused with date-fns comparisons.
  *
  * Refreshes every 60 seconds to keep the current-time indicator moving.
  */
-export function useOrgNow() {
-  const { timezone } = useOrgDefaults();
+export function useOrgNow(locationTimezone?: string | null) {
+  const { timezone: orgTimezone } = useOrgDefaults();
+  const timezone = locationTimezone ?? orgTimezone;
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -44,7 +48,7 @@ export function useOrgNow() {
     isToday,
     /** Is the given date "tomorrow" in org timezone? */
     isTomorrow,
-    /** The org timezone string */
+    /** The effective timezone string */
     timezone,
   };
 }
