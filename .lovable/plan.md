@@ -1,45 +1,37 @@
 
-Fix the scheduler so appointment cards use the actual service-category palette instead of the same fallback gray.
 
-### What’s actually broken
-The ghost styling is already being applied, but `AppointmentCardContent` is tinting cards from `appointment.service_category` only. When that value is missing, stale, or doesn’t match the configured category name exactly, `getCategoryColor()` falls back to the default gray — so every card ends up looking the same.
+## Improve Weekly View Appointment Card Layout
+
+### Change
+Rearrange the `GridContent` component in `AppointmentCardContent.tsx` so that when `showStylistBadge` is true (weekly view), the layout becomes:
+
+```text
+┌──────────────────────┐
+│ [Booked]    [photo]  │  ← status badge left, stylist avatar right
+│ Client Name          │  ← client name below, full width
+│ Service Name         │  ← service info
+│ 10:00 AM - 2:00 PM   │  ← time + price (full size only)
+└──────────────────────┘
+```
 
 ### Implementation
-1. **Resolve a real display category before coloring**
-   - In `src/components/dashboard/schedule/AppointmentCardContent.tsx`, add a resolved category value that prefers:
-     1. the appointment’s stored category
-     2. the primary service category from `serviceLookup`
-     3. a last-resort service-name heuristic
-   - Use this resolved category everywhere the card color is derived:
-     - main card tint
-     - accent border
-     - consultation gradient detection
-     - stored gradient marker lookup
-     - block/break overlay checks
-     - multi-service band colors
+**1 file**: `src/components/dashboard/schedule/AppointmentCardContent.tsx` — `GridContent` function (lines 229-306)
 
-2. **Make fallback matching salon-aware**
-   - In `src/utils/categoryColors.ts`, expand `getCategoryColor()` heuristics so common service names map correctly instead of defaulting to gray.
-   - Add matches for common salon naming like:
-     - `root retouch`, `single process`, `glaze`, `gloss`, `toner` → Color
-     - `highlight`, `face frame`, `foils`, `balayage` → Blonding
-     - `clipper`, `trim`, `haircut` → Haircuts
-     - `blowout`, `style`, `updo` → Styling
+Restructure the top section of the medium/full grid card:
 
-3. **Ensure the scheduler uses service palette coloring**
-   - In `src/pages/dashboard/Schedule.tsx`, stop relying on the legacy `preferences.color_by` value for the appointment cards and pass `service` coloring for day/week schedule cards so the scheduler consistently follows the configured service palette.
-   - Keep status communication in the badge/pill, not the whole card fill.
+1. Move the status badge from the top-right absolute div to a top-left position
+2. Keep the stylist photo (StylistBadge) in the top-right position, alone
+3. Move client name to its own line below the top row, removing the inline avatar circle (which is already hidden in week view via `showClientAvatar=false`)
+4. Indicator cluster stays alongside the status badge on the left
 
-### Result
-- `Root Retouch` cards pick up the org’s Color color
-- `Chunky Highlight / Face Frame Highlight` cards pick up Blonding color
-- `Clipper`/cut services stop falling back to gray
-- The existing ghost/frosted look stays, but each appointment is visibly tinted by its service category
+The compact size (< 30min appointments) remains unchanged — it only shows the client name.
 
-### Technical details
-- Files to update:
-  - `src/components/dashboard/schedule/AppointmentCardContent.tsx`
-  - `src/utils/categoryColors.ts`
-  - `src/pages/dashboard/Schedule.tsx`
-- No backend or database changes
-- Shared `AppointmentCardContent` means day + week update together
+### Technical detail
+The `GridContent` top section currently uses an absolute-positioned div at `top-1 right-1` containing indicators, status badge, and stylist badge all together. The change splits this into two absolute containers:
+- Top-left (`top-1 left-1`): status badge + indicator cluster
+- Top-right (`top-1 right-1`): stylist photo only
+
+Then the client name line gets extra top padding (`pt-7`) to clear the absolute-positioned row, and uses full width without the `pr-20` truncation constraint.
+
+This only affects `showStylistBadge=true` cards (weekly view). Day view cards (`showStylistBadge=false`) retain their current layout with status badge top-right.
+
