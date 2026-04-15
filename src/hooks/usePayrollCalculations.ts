@@ -92,9 +92,9 @@ export function usePayrollSalesData(
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
-          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
-          .in('stylist_user_id', employeeIds)
+          .from('v_all_transaction_items')
+          .select('staff_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .in('staff_user_id', employeeIds)
           .gte('transaction_date', payPeriodStart)
           .lte('transaction_date', payPeriodEnd)
           .range(from, from + pageSize - 1);
@@ -106,7 +106,7 @@ export function usePayrollSalesData(
 
       const aggregated: Record<string, { serviceRevenue: number; productRevenue: number }> = {};
       for (const item of allData) {
-        const uid = item.stylist_user_id;
+        const uid = item.staff_user_id;
         if (!uid) continue;
         if (!aggregated[uid]) {
           aggregated[uid] = { serviceRevenue: 0, productRevenue: 0 };
