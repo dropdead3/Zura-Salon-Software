@@ -11557,6 +11557,7 @@ export type Database = {
           stripe_status: string | null
           stylist_capacity: number | null
           tax_rate: number | null
+          timezone: string | null
           updated_at: string | null
         }
         Insert: {
@@ -11601,6 +11602,7 @@ export type Database = {
           stripe_status?: string | null
           stylist_capacity?: number | null
           tax_rate?: number | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -11645,6 +11647,7 @@ export type Database = {
           stripe_status?: string | null
           stylist_capacity?: number | null
           tax_rate?: number | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Relationships: [
