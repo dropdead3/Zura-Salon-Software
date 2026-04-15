@@ -130,24 +130,25 @@ export function useStylistExperienceScore(
           .range(from, to)
       );
 
-      // Group appointments by staff
+      // Group appointments by staff (prefer stylist_user_id, fallback to phorest_staff_id)
       const staffAppointments = new Map<string, typeof appointments>();
       appointments?.forEach(apt => {
-        const staffId = apt.phorest_staff_id!;
+        const staffId = apt.stylist_user_id || apt.phorest_staff_id;
+        if (!staffId) return;
         if (!staffAppointments.has(staffId)) {
           staffAppointments.set(staffId, []);
         }
         staffAppointments.get(staffId)!.push(apt);
       });
 
-      // Calculate retail attachment by staff
+      // Calculate retail attachment by staff (using staff_user_id from view)
       const staffRetail = new Map<string, { retail: number; total: number }>();
       transactionItems?.forEach(item => {
-        if (!item.phorest_staff_id) return;
-        if (!staffRetail.has(item.phorest_staff_id)) {
-          staffRetail.set(item.phorest_staff_id, { retail: 0, total: 0 });
+        if (!item.staff_user_id) return;
+        if (!staffRetail.has(item.staff_user_id)) {
+          staffRetail.set(item.staff_user_id, { retail: 0, total: 0 });
         }
-        const data = staffRetail.get(item.phorest_staff_id)!;
+        const data = staffRetail.get(item.staff_user_id)!;
         data.total += item.total_amount || 0;
         if ((item.item_type === 'Product' || item.item_type === 'product') && !isVishServiceCharge(item.item_name, item.item_type)) {
           data.retail += item.total_amount || 0;
