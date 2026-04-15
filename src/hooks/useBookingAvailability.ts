@@ -95,7 +95,7 @@ export function useEligibleStylists(
           const qualifiedUserIds = new Set(
             ((allQuals || []) as any[]).map((q: any) => q.staff_user_id)
           );
-          ]);
+          
 
           // If we have qualification data, filter by it. If no quals exist at all,
           // assume the service doesn't require specific qualifications and show all.
