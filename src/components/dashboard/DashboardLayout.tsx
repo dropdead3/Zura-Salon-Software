@@ -259,6 +259,20 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   }, [sidebarCollapsed]);
   
   const toggleSidebarCollapsed = () => setSidebarCollapsed(prev => !prev);
+
+  // Auto-collapse sidebar on schedule route for maximum grid visibility
+  const prevCollapseRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    const isSchedule = location.pathname.includes('/schedule');
+    if (isSchedule && prevCollapseRef.current === null) {
+      prevCollapseRef.current = sidebarCollapsed;
+      setSidebarCollapsed(true);
+    } else if (!isSchedule && prevCollapseRef.current !== null) {
+      setSidebarCollapsed(prevCollapseRef.current);
+      prevCollapseRef.current = null;
+    }
+  }, [location.pathname]);
+
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut, isPlatformUser, hasPlatformRoleOrHigher } = useAuth();
   const { isImpersonating, isMultiOrgOwner } = useOrganizationContext();
 
