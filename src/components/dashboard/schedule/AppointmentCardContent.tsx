@@ -576,7 +576,6 @@ export function AppointmentCardContent({
         opacity: 1,
         backdropFilter: 'none',
       };
-      };
     }
     return {};
   }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact]);
