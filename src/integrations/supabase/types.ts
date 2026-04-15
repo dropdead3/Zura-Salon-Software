@@ -1210,6 +1210,7 @@ export type Database = {
           original_price: number | null
           paid_at: string | null
           payment_failure_reason: string | null
+          payment_link_expires_at: string | null
           payment_link_sent_at: string | null
           payment_link_url: string | null
           payment_method: string | null
@@ -1281,6 +1282,7 @@ export type Database = {
           original_price?: number | null
           paid_at?: string | null
           payment_failure_reason?: string | null
+          payment_link_expires_at?: string | null
           payment_link_sent_at?: string | null
           payment_link_url?: string | null
           payment_method?: string | null
@@ -1352,6 +1354,7 @@ export type Database = {
           original_price?: number | null
           paid_at?: string | null
           payment_failure_reason?: string | null
+          payment_link_expires_at?: string | null
           payment_link_sent_at?: string | null
           payment_link_url?: string | null
           payment_method?: string | null
