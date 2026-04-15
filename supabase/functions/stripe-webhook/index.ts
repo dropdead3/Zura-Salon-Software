@@ -1634,6 +1634,13 @@ Deno.serve(async (req) => {
           await handleEarlyFraudWarning(supabase, event.data.object, event.account);
         }
         break;
+
+      // Radar risk scoring — capture risk data from every successful charge
+      case "charge.succeeded":
+        if (isConnectEvent) {
+          await handleChargeSucceeded(supabase, event.data.object, event.account);
+        }
+        break;
          
       default:
         console.log(`Unhandled event type: ${event.type}`);
