@@ -18,10 +18,9 @@ export async function resolveServiceIds(
   if (names.length === 0) return [];
 
   const { data, error } = await supabaseClient
-    .from('phorest_services')
+    .from('v_all_services')
     .select('id, name')
-    .in('name', names)
-    .eq('is_active', true);
+    .in('name', names);
 
   if (error || !data) return [];
 

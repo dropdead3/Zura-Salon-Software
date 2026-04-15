@@ -50,9 +50,8 @@ export function ServiceFormLinkDialog({ open, onOpenChange, template }: ServiceF
     queryKey: ['phorest-services-for-linking'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('id, name, category')
-        .eq('is_active', true)
         .order('category')
         .order('name');
       

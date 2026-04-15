@@ -246,7 +246,7 @@ export function usePhorestServiceByName(serviceName: string) {
     queryKey: ['phorest-service-by-name', serviceName],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('id, name, category')
         .eq('name', serviceName)
         .maybeSingle();

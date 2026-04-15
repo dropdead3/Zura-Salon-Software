@@ -103,9 +103,8 @@ export function useServiceEfficiency(
     queryKey: ['service-efficiency-catalog'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_services')
-        .select('name, category, duration_minutes, price')
-        .eq('is_active', true);
+        .from('v_all_services')
+        .select('name, category, duration_minutes, price');
       if (error) throw error;
       return data || [];
     },

@@ -80,9 +80,8 @@ export default function PublicBooking() {
     queryKey: ['public-booking-services'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('id, phorest_service_id, name, category, duration_minutes, price')
-        .eq('is_active', true)
         .order('category')
         .order('name');
       
