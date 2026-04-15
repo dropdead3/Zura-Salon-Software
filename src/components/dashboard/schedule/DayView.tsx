@@ -489,8 +489,6 @@ export function DayView({
                 </div>
               ))}
             </div>
-            {/* Gradient fade below header */}
-            <div className="h-3 bg-gradient-to-b from-muted/40 to-transparent pointer-events-none sticky top-[52px] z-[19]" />
 
             {/* Time Grid */}
             <div className="flex relative">
