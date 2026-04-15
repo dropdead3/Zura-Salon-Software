@@ -255,7 +255,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
 
       // Real query (both normal mode and usesRealData demo mode)
       let query = supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone, client_since')
         .eq('is_duplicate', false)
         .order('name')

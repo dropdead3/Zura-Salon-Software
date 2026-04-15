@@ -184,7 +184,7 @@ export function useAtRiskClients(organizationId?: string, inactivityDays = 60) {
       cutoffDate.setDate(cutoffDate.getDate() - inactivityDays);
 
       const { data, error } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, name, email, phone, last_visit, visit_count, total_spend')
         .eq('is_duplicate', false)
         .eq('location_id', organizationId)

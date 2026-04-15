@@ -39,7 +39,7 @@ export function ClientInsightsCard({
     queryKey: ['stylist-clients-insights', userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('*')
         .eq('preferred_stylist_id', userId)
         .order('total_spend', { ascending: false });

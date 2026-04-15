@@ -38,7 +38,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
 
     const fetchPreselected = async () => {
       const { data, error } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, first_name, last_name, name, email, phone, visit_count, total_spend, last_visit, is_vip, preferred_stylist_id, notes, birthday, address_line1, city, state, zip, location_id')
         .in('id', preselectedIds);
 

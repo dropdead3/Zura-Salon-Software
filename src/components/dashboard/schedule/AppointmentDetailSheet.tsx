@@ -752,7 +752,7 @@ export function AppointmentDetailSheet({
     queryKey: ['client-record-for-panel', appointment?.phorest_client_id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('email, preferred_stylist_id, client_since')
         .eq('phorest_client_id', appointment!.phorest_client_id!)
         .maybeSingle();
@@ -946,7 +946,7 @@ export function AppointmentDetailSheet({
       if (normalized.length === 10 && !normalized.startsWith('+')) normalized = '+1' + normalized;
       else if (normalized.length === 11 && normalized.startsWith('1')) normalized = '+' + normalized;
       const { data } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('phorest_client_id')
         .eq('phone_normalized', normalized)
         .limit(1)

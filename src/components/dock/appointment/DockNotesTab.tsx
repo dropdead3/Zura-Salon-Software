@@ -39,7 +39,7 @@ export function DockNotesTab({ appointment }: DockNotesTabProps) {
       if (usingDemo) return { ...DEMO_CLIENT_MOCK };
       if (phorestClientId) {
         const { data } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients' as any)
           .select('notes')
           .eq('phorest_client_id', phorestClientId)
           .maybeSingle();

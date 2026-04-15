@@ -65,7 +65,7 @@ export function useHouseholds() {
       let clientMap: Record<string, any> = {};
       if (clientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients' as any)
           .select('id, name, email, phone, visit_count, total_spend, last_visit, phorest_client_id')
           .in('id', clientIds);
         if (clients) {
@@ -119,7 +119,7 @@ export function useClientHousehold(clientId: string | undefined) {
       let clientMap: Record<string, any> = {};
       if (memberClientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients' as any)
           .select('id, name, email, phone, visit_count, total_spend, last_visit, phorest_client_id')
           .in('id', memberClientIds);
         if (clients) clientMap = Object.fromEntries(clients.map(c => [c.id, c]));
@@ -148,7 +148,7 @@ export function useHouseholdByPhorestClientId(phorestClientId: string | null | u
 
       // First get the client's internal id
       const { data: client } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id')
         .eq('phorest_client_id', phorestClientId)
         .maybeSingle();
@@ -185,7 +185,7 @@ export function useHouseholdByPhorestClientId(phorestClientId: string | null | u
       let clientMap: Record<string, any> = {};
       if (memberClientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients' as any)
           .select('id, name, email, phone, visit_count, total_spend, last_visit, phorest_client_id')
           .in('id', memberClientIds);
         if (clients) clientMap = Object.fromEntries(clients.map(c => [c.id, c]));

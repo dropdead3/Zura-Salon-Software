@@ -65,7 +65,7 @@ export function useClientPortalByToken(token?: string) {
 
       // Get client data
       const { data: clientData, error: clientError } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, name, email, visit_count, last_visit')
         .eq('id', portalToken.client_id)
         .single();

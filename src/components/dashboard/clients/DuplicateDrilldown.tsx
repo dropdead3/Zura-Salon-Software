@@ -41,7 +41,7 @@ export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons
     queryKey: ['canonical-client', canonicalClientId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('*')
         .eq('id', canonicalClientId)
         .single();
