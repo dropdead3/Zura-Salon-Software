@@ -159,7 +159,7 @@ export function useStaffRevenuePerformance(
 
       // Enrich with service/product breakdown from transaction items
       for (const item of itemData) {
-        const staffId = item.phorest_staff_id;
+        const staffId = (item as any).phorest_staff_id || item.staff_user_id;
         if (!staffId) continue;
         // Map staff_user_id back to phorest_staff_id for aggregation consistency
         // Find the matching phorest_staff_id from mappings
