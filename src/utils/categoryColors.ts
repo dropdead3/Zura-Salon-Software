@@ -248,6 +248,22 @@ export function deriveDarkModeColor(hexColor: string): ColorTokenSet {
 }
 
 /**
+ * Boost overly-pale category hex colors for better visibility on light calendar backgrounds.
+ * Colors with lightness > 85% get darkened and saturated so they don't look washed out.
+ */
+export function boostPaleCategoryColor(hexColor: string): string {
+  const hslStr = hexToHsl(hexColor);
+  const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
+  const [h, s, l] = parts;
+  // Only boost if the color is very light (L > 82%) — typical of pastel/washed-out colors
+  if (l <= 82) return hexColor;
+  // Bring lightness down to 72-78 range and bump saturation
+  const boostedL = Math.max(l * 0.82, 68);
+  const boostedS = Math.min(s + 15, 90);
+  return hslToHex(`${Math.round(h)} ${Math.round(boostedS)}% ${Math.round(boostedL)}%`);
+}
+
+/**
  * Derive light-mode token set from a hex color.
  */
 export function deriveLightModeColor(hexColor: string): ColorTokenSet {
