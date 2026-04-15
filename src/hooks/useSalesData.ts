@@ -165,7 +165,7 @@ async function resolvePhorestStaffIds(userId: string): Promise<string[]> {
     .select('phorest_staff_id')
     .eq('user_id', userId)
     .eq('is_active', true);
-  return data?.map(m => m.phorest_staff_id) || [];
+  return ((data ?? []) as any[]).map((m: any) => m.phorest_staff_id) || [];
 }
 
 // Get sales summary for a specific user (for My Stats page) — from live POS transaction items
@@ -428,12 +428,13 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         .eq('is_active', true);
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const typedMappings = ((mappings || []) as any[]);
+      const phorestIds = typedMappings.map((m: any) => m.phorest_staff_id);
       const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
       const staffNameData = await resolveStaffNames(phorestIds);
 
       // Fetch photos from employee_profiles
-      const userIds = (mappings || []).filter(m => m.user_id).map(m => m.user_id!);
+      const userIds = typedMappings.filter((m: any) => m.user_id).map((m: any) => m.user_id!);
       const { data: profiles } = userIds.length > 0
         ? await supabase.from('employee_profiles').select('user_id, photo_url').in('user_id', userIds)
         : { data: [] as any[] };
@@ -441,7 +442,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
 
       const mappingLookup: Record<string, { userId: string; name: string; photo?: string }> = {};
       const staffNameLookup: Record<string, string> = {};
-      (mappings || []).forEach(m => {
+      typedMappings.forEach((m: any) => {
         if (m.user_id) {
           mappingLookup[m.phorest_staff_id] = {
             userId: m.user_id,
@@ -554,7 +555,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
 
       // Pre-populate ALL active locations with zero values
       const byLocation: Record<string, any> = {};
-      locations?.forEach(loc => {
+      ((locations || []) as any[]).forEach((loc: any) => {
         byLocation[loc.id] = {
           location_id: loc.id,
           name: loc.name || 'Unknown Location',
@@ -674,7 +675,7 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
       // Also track by location
       const byLocationDate: Record<string, Record<string, number>> = {};
       
-      data?.forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         const dateKey = apt.appointment_date?.split('T')[0] || apt.appointment_date;
         
         // Overall aggregation
@@ -732,12 +733,13 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         .eq('is_active', true);
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const typedMappings2 = ((mappings || []) as any[]);
+      const phorestIds = typedMappings2.map((m: any) => m.phorest_staff_id);
       const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
       const staffNameData = await resolveStaffNames(phorestIds);
 
       // Fetch photos
-      const userIds = (mappings || []).filter(m => m.user_id).map(m => m.user_id!);
+      const userIds = typedMappings2.filter((m: any) => m.user_id).map((m: any) => m.user_id!);
       const { data: profiles } = userIds.length > 0
         ? await supabase.from('employee_profiles').select('user_id, photo_url').in('user_id', userIds)
         : { data: [] as any[] };
@@ -752,7 +754,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         branchName?: string;
       }> = {};
       
-      (mappings || []).forEach(m => {
+      typedMappings2.forEach((m: any) => {
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
           userName: staffNameData.byPhorestId[m.phorest_staff_id] || 'Unknown',
@@ -786,7 +788,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
 
       // Build staff name lookup using centralized resolution
       const staffNameLookup: Record<string, string> = {};
-      (mappings || []).forEach(m => {
+      typedMappings2.forEach((m: any) => {
         if (m.phorest_staff_id) {
           staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown';
         }
@@ -796,7 +798,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       const byStaff: Record<string, PhorestStaffSalesData> = {};
       const staffVisitSets: Record<string, Set<string>> = {};
       
-      data?.forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         const phorestId = apt.phorest_staff_id!;
         const mapping = mappingLookup[phorestId];
         

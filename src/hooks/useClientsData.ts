@@ -94,7 +94,7 @@ export function useClientsData(options?: {
       
       // Process clients with computed fields
       const today = new Date();
-      return (data || []).map(client => {
+      return ((data || []) as any[]).map((client: any) => {
         const daysSinceVisit = client.last_visit_date 
           ? Math.floor((today.getTime() - new Date(client.last_visit_date).getTime()) / (1000 * 60 * 60 * 24))
           : null;
@@ -146,7 +146,7 @@ export function useClientSearch(searchQuery: string, limit = 50) {
       const { data, error } = await query;
       if (error) throw error;
       
-      return (data || []).map(c => ({
+      return ((data || []) as any[]).map((c: any) => ({
         ...c,
         name: `${c.first_name} ${c.last_name}`.trim(),
       }));

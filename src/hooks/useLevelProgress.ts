@@ -244,7 +244,7 @@ export function useLevelProgress(userId: string | undefined) {
     const computeMetrics = (evalDays: number) => {
       const evalStart = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
       const filteredSales = (salesData || []).filter((s: any) => s.transaction_date >= evalStart);
-      const filteredAppts = (apptData || []).filter(a => a.appointment_date >= evalStart && a.status !== 'no_show');
+      const filteredAppts = ((apptData || []) as any[]).filter((a: any) => a.appointment_date >= evalStart && a.status !== 'no_show');
 
       let totalServiceRevenue = 0;
       let totalProductRevenue = 0;
@@ -415,7 +415,7 @@ export function useLevelProgress(userId: string | undefined) {
       const evalStart = format(subDays(new Date(), evalDays * 2), 'yyyy-MM-dd');
       const evalEnd = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
       const filteredSales = (salesData || []).filter((s: any) => s.transaction_date >= evalStart && s.transaction_date < evalEnd);
-      const filteredAppts = (apptData || []).filter(a => a.appointment_date >= evalStart && a.appointment_date < evalEnd && a.status !== 'no_show');
+      const filteredAppts = ((apptData || []) as any[]).filter((a: any) => a.appointment_date >= evalStart && a.appointment_date < evalEnd && a.status !== 'no_show');
 
       let totalServiceRevenue = 0;
       let totalProductRevenue = 0;

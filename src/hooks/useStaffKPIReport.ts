@@ -25,7 +25,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         .eq('is_active', true);
 
       const profileLookup: Record<string, string> = {};
-      (profiles || []).forEach(p => {
+      ((profiles || []) as any[]).forEach((p: any) => {
         profileLookup[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
       });
 

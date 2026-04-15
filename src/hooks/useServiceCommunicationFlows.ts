@@ -92,7 +92,7 @@ export function useServicesWithFlowsCount() {
       if (error) throw error;
       
       // Count unique service IDs
-      const uniqueServices = new Set(data?.map(f => f.service_id));
+      const uniqueServices = new Set(((data || []) as any[]).map((f: any) => f.service_id));
       return uniqueServices.size;
     },
   });

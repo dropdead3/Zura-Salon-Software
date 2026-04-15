@@ -145,7 +145,7 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         .select('user_id, full_name, display_name, photo_url')
         .in('user_id', userIds);
       
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const profileMap = new Map(((profiles || []) as any[]).map((p: any) => [p.user_id, p]) || []);
       const mappingMap = new Map(typedMappings.map((m: any) => [m.phorest_staff_id, m]));
       
       // Build staff performance list

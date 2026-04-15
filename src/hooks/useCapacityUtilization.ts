@@ -247,7 +247,7 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
       });
 
       // Process appointments
-      (appointments || []).forEach(apt => {
+      ((appointments || []) as any[]).forEach((apt: any) => {
         const dateKey = apt.appointment_date;
         if (!byDate[dateKey]) return;
 

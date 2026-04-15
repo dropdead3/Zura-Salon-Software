@@ -32,7 +32,7 @@ export function useHiringForecast() {
   const { data: locations } = useActiveLocations();
   
   return useQuery({
-    queryKey: ['hiring-forecast', locations?.map(l => l.id)],
+    queryKey: ['hiring-forecast', ((locations || []) as any[]).map((l: any) => l.id)],
     queryFn: async (): Promise<HiringForecast> => {
       if (!locations || locations.length === 0) {
         return {
@@ -59,7 +59,7 @@ export function useHiringForecast() {
         .eq('is_active', true);
 
       // Fetch departing employees' roles
-      const departureUserIds = departures?.map(d => d.user_id) || [];
+      const departureUserIds = ((departures || []) as any[]).map((d: any) => d.user_id) || [];
       const { data: departureRoles } = departureUserIds.length > 0
         ? await supabase
             .from('user_roles')
@@ -95,7 +95,7 @@ export function useHiringForecast() {
         .eq('is_active', true)
         .eq('is_approved', true);
 
-      const employeeUserIds = employees?.map(e => e.user_id) || [];
+      const employeeUserIds = ((employees || []) as any[]).map((e: any) => e.user_id) || [];
       const { data: allRoles } = employeeUserIds.length > 0
         ? await supabase
             .from('user_roles')

@@ -122,7 +122,7 @@ export function useServiceMenuIntelligence(organizationId?: string, locationId?:
       );
 
       // Also build price map from phorest_services
-      const svcPriceMap = new Map(svcList.filter(s => s.price && s.price > 0).map(s => [s.name, s.price!]));
+      const svcPriceMap = new Map(((svcList || []) as any[]).filter((s: any) => s.price && s.price > 0).map((s: any) => [s.name, s.price!]));
 
       const bookingCounts = [...recentMap.entries()].map(([, { count }]) => count);
       const medianBookings = bookingCounts.length > 0

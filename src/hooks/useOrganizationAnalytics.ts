@@ -304,7 +304,7 @@ export function useOrganizationAnalytics() {
 
     // Create user_id -> org_id mapping from employees
     const userOrgMap = new Map<string, string>();
-    employees?.forEach(emp => {
+    ((employees || []) as any[]).forEach((emp: any) => {
       if (emp.user_id && emp.organization_id) {
         userOrgMap.set(emp.user_id, emp.organization_id);
       }
@@ -361,7 +361,7 @@ export function useOrganizationAnalytics() {
     });
 
     // Count employees per org
-    employees?.forEach(emp => {
+    ((employees || []) as any[]).forEach((emp: any) => {
       if (emp.organization_id && orgMetricsMap.has(emp.organization_id)) {
         const metrics = orgMetricsMap.get(emp.organization_id)!;
         metrics.userCount++;
@@ -372,7 +372,7 @@ export function useOrganizationAnalytics() {
     });
 
     // Count clients per org (via location)
-    clients?.forEach(client => {
+    ((clients || []) as any[]).forEach((client: any) => {
       if (client.location_id) {
         const orgId = locationOrgMap.get(client.location_id);
         if (orgId && orgMetricsMap.has(orgId)) {
@@ -401,7 +401,7 @@ export function useOrganizationAnalytics() {
     const orgRevenueLastMonth = new Map<string, number>();
     const orgTickets = new Map<string, number[]>();
 
-    salesData?.forEach(sale => {
+    ((salesData || []) as any[]).forEach((sale: any) => {
       if (sale.location_id) {
         const orgId = locationOrgMap.get(sale.location_id);
         if (orgId && orgMetricsMap.has(orgId)) {
@@ -439,7 +439,7 @@ export function useOrganizationAnalytics() {
     // Aggregate performance metrics per org (via user_id -> org mapping)
     const orgPerformance = new Map<string, { rebooking: number[]; retention: number[]; newClients: number }>();
 
-    performanceData?.forEach(perf => {
+    ((performanceData || []) as any[]).forEach((perf: any) => {
       if (perf.user_id) {
         const orgId = userOrgMap.get(perf.user_id);
         if (orgId) {

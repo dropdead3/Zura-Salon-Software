@@ -124,7 +124,7 @@ export function useStylistAvailability(
         
         if (error) throw error;
         
-        return (allStylists || []).map(s => ({
+        return ((allStylists || []) as any[]).map((s: any) => ({
           user_id: s.user_id,
           full_name: s.full_name,
           display_name: s.display_name,
@@ -172,13 +172,14 @@ export function useStylistAvailability(
       if (mappingError) throw mappingError;
       
       // Filter in JavaScript to avoid deep type instantiation issues
-      const filteredMappings = (staffMappings || []).filter(
-        m => m.phorest_branch_id === locationId && m.show_on_calendar === true
+      const typedStaffMappings = ((staffMappings || []) as any[]);
+      const filteredMappings = typedStaffMappings.filter(
+        (m: any) => m.phorest_branch_id === locationId && m.show_on_calendar === true
       );
       
       // Map user_id to phorest_staff_id
       const userToPhorestMap = new Map<string, string>();
-      (staffMappings || []).forEach(m => {
+      typedStaffMappings.forEach((m: any) => {
         if (m.phorest_staff_id) {
           userToPhorestMap.set(m.user_id, m.phorest_staff_id);
         }

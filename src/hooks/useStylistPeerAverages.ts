@@ -61,12 +61,12 @@ export function useStylistPeerAverages(
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).filter(p => p.user_id !== userId);
+      return ((data || []) as any[]).filter((p: any) => p.user_id !== userId);
     },
     enabled: !!orgId && !!currentLevelSlug && !!userId,
   });
 
-  const peerIds = useMemo(() => peerProfiles?.map(p => p.user_id) || [], [peerProfiles]);
+  const peerIds = useMemo(() => ((peerProfiles || []) as any[]).map((p: any) => p.user_id) || [], [peerProfiles]);
   // Double the window for retention calculation (prior vs current)
   const fetchDays = evalDays * 2;
   const endStr = format(new Date(), 'yyyy-MM-dd');
@@ -169,7 +169,7 @@ export function useStylistPeerAverages(
       });
     }
 
-    for (const s of peerSales || []) {
+    for (const s of (peerSales || []) as any[]) {
       const u = perUser.get(s.staff_user_id);
       if (!u) continue;
       const amount = (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0);
@@ -184,7 +184,7 @@ export function useStylistPeerAverages(
       }
     }
 
-    for (const a of peerAppts || []) {
+    for (const a of (peerAppts || []) as any[]) {
       const uid = (a as any).staff_user_id;
       const u = perUser.get(uid);
       if (!u || a.status === 'no_show') continue;

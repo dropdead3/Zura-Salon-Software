@@ -53,7 +53,7 @@ export function useDuplicateClientsReport(filters: Filters) {
       const emailGroups = new Map<string, typeof data>();
       const phoneGroups = new Map<string, typeof data>();
 
-      for (const c of data || []) {
+      for (const c of (data || []) as any[]) {
         if (c.email_normalized) {
           const group = emailGroups.get(c.email_normalized) || [];
           group.push(c);

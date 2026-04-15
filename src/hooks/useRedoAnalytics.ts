@@ -46,7 +46,7 @@ export function useRedoAnalytics(days: number = 30) {
         .select('id')
         .eq('organization_id', orgId);
 
-      const locationIds = orgLocations?.map(l => l.id) || [];
+      const locationIds = ((orgLocations || []) as any[]).map((l: any) => l.id) || [];
       if (locationIds.length === 0) {
         return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, commissionImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
       }
@@ -70,7 +70,7 @@ export function useRedoAnalytics(days: number = 30) {
           .from('employee_profiles')
           .select('user_id, display_name, full_name')
           .in('user_id', stylistIds);
-        for (const p of profiles || []) {
+        for (const p of (profiles || []) as any[]) {
           stylistNameMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
         }
       }

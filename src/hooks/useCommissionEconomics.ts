@@ -97,7 +97,7 @@ export function useRevenueByLevel() {
         .from('stylist_levels')
         .select('id, slug')
         .eq('organization_id', orgId!);
-      const slugToId = new Map((levelRows || []).map(l => [l.slug, l.id]));
+      const slugToId = new Map(((levelRows || []) as any[]).map((l: any) => [l.slug, l.id]));
 
       // Get revenue from live POS transaction items for last 90 days
       const ninetyDaysAgo = new Date();

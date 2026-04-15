@@ -174,7 +174,7 @@ export function useStaffComplianceSummary(
           .from('waste_events')
           .select('quantity')
           .in('mix_session_id', sessionIds);
-        for (const w of wasteData ?? []) {
+        for (const w of (wasteData ?? []) as any[]) {
           totalWasteQty += (w as any).quantity ?? 0;
         }
       }
@@ -196,7 +196,7 @@ export function useStaffComplianceSummary(
             .select('dispensed_quantity, dispensed_cost_snapshot')
             .in('bowl_id', bowlIds);
           const { data: lines } = await blQuery;
-          for (const l of lines ?? []) {
+          for (const l of (lines ?? []) as any[]) {
             const qty = (l as any).dispensed_quantity ?? 0;
             const cost = (l as any).dispensed_cost_snapshot ?? 0;
             totalDispensed += qty;
@@ -220,7 +220,7 @@ export function useStaffComplianceSummary(
           .select('appointment_id, charge_amount')
           .in('appointment_id', allApptIds);
         const seen = new Set<string>();
-        for (const c of charges ?? []) {
+        for (const c of (charges ?? []) as any[]) {
           overageChargeTotal += (c as any).charge_amount ?? 0;
           if (!seen.has((c as any).appointment_id)) {
             seen.add((c as any).appointment_id);

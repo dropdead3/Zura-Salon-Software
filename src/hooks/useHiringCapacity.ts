@@ -93,7 +93,7 @@ export function useHiringCapacity(): HiringCapacitySummary {
 
       // Create a map of user_id to roles
       const userRolesMap = new Map<string, string[]>();
-      roles?.forEach(r => {
+      ((roles || []) as any[]).forEach((r: any) => {
         const existing = userRolesMap.get(r.user_id) || [];
         existing.push(r.role);
         userRolesMap.set(r.user_id, existing);
@@ -102,7 +102,7 @@ export function useHiringCapacity(): HiringCapacitySummary {
       // Count stylists and assistants per location
       const locationCounts = new Map<string, { stylists: number; assistants: number }>();
 
-      employees?.forEach(emp => {
+      ((employees || []) as any[]).forEach((emp: any) => {
         const userRoles = userRolesMap.get(emp.user_id) || [];
         const isStylist = userRoles.includes('stylist');
         const isAssistant = userRoles.includes('stylist_assistant');

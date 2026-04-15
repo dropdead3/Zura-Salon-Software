@@ -82,7 +82,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         .eq('is_active', true);
 
       const locationLookup: Record<string, string> = {};
-      locations?.forEach(loc => {
+      ((locations || []) as any[]).forEach((loc: any) => {
         locationLookup[loc.id] = loc.name;
       });
 
@@ -130,7 +130,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
 
       // Determine truly new clients: clients whose first-ever appointment falls within the range
       const rangeClientIdSet = new Set<string>();
-      (rangeBookings || []).forEach(a => {
+      ((rangeBookings || []) as any[]).forEach((a: any) => {
         if (a.phorest_client_id) rangeClientIdSet.add(a.phorest_client_id as string);
       });
       const rangeClientIds = Array.from(rangeClientIdSet);

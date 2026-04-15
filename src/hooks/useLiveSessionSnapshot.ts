@@ -59,7 +59,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         .from('locations')
         .select('id, name');
       const locationNameMap = new Map<string, string>(
-        (locations || []).map(l => [l.id, l.name])
+        ((locations || []) as any[]).map((l: any) => [l.id, l.name])
       );
 
       if (error) throw error;
@@ -120,7 +120,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         if (profileError) throw profileError;
 
         profileMap = new Map(
-          (profiles || []).map(p => [p.user_id, p])
+          ((profiles || []) as any[]).map((p: any) => [p.user_id, p])
         );
       }
 
@@ -167,7 +167,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
             .in('user_id', assistantUserIds);
 
           const assistantProfileMap = new Map(
-            (assistantProfiles || []).map(p => [p.user_id, formatFullDisplayName(p.full_name || '', p.display_name)])
+            ((assistantProfiles || []) as any[]).map((p: any) => [p.user_id, formatFullDisplayName(p.full_name || '', p.display_name)])
           );
 
           assistants.forEach(a => {

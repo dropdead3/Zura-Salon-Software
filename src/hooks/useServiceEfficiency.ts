@@ -52,13 +52,12 @@ export function useServiceEfficiency(
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_all_staff' as any)
-        .select('phorest_staff_id, user_id, employee_profiles(display_name, full_name)');
+        .select('phorest_staff_id, user_id, display_name, full_name');
       if (error) throw error;
       const map = new Map<string, string>();
-      for (const s of data || []) {
-        const ep = s.employee_profiles as any;
-        const name = ep?.display_name || ep?.full_name || s.phorest_staff_id;
-        map.set(s.phorest_staff_id, name);
+      for (const s of ((data || []) as any[])) {
+        const name = (s as any).display_name || (s as any).full_name || (s as any).phorest_staff_id;
+        map.set((s as any).phorest_staff_id, name);
       }
       return map;
     },
@@ -106,7 +105,7 @@ export function useServiceEfficiency(
         .from('v_all_services' as any)
         .select('name, category, duration_minutes, price');
       if (error) throw error;
-      (data || []) as any[];
+      return ((data || []) as any[]);
     },
   });
 
