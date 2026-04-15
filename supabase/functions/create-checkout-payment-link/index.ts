@@ -168,13 +168,17 @@ Deno.serve(async (req) => {
     );
 
     // ── Update appointment with payment link ─────────────────────
+    const isSplit = amount_cents < (body.original_amount_cents || amount_cents);
+    const linkUpdate: Record<string, unknown> = {
+      payment_link_url: session.url,
+      payment_link_sent_at: new Date().toISOString(),
+    };
+    if (isSplit) {
+      linkUpdate.split_payment_link_intent_id = session.id;
+    }
     await supabase
       .from("appointments")
-      .update({
-        payment_link_url: session.url,
-        payment_link_sent_at: new Date().toISOString(),
-        split_payment_link_intent_id: session.id,
-      })
+      .update(linkUpdate)
       .eq("id", appointment_id);
 
     return jsonResponse({
