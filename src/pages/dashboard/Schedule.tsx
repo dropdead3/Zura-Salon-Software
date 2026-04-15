@@ -117,7 +117,8 @@ export default function Schedule() {
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
-  
+  const locationTimezone = useLocationTimezone(selectedLocation || null);
+
   // Fetch assistant time blocks for the current date/location
   const {
     timeBlocks: assistantTimeBlocks,
