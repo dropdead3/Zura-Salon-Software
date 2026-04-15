@@ -83,51 +83,18 @@ export function useEligibleStylists(
           .maybeSingle();
 
         if (svc) {
-          // Get all qualifications for this service
-          const { data: quals } = await supabase
-            .from('staff_service_qualifications')
-            .select('user_id')
-            .eq('service_id', svc.id)
-            .eq('is_active', true);
-
-          // Also check phorest staff services via mapping
+          // Check qualifications via unified view
           const userIds = filtered.map((s) => s.user_id);
-          const { data: mappings } = await supabase
-            .from('v_all_staff' as any)
-            .select('user_id, phorest_staff_id')
-            .in('user_id', userIds)
-            .eq('is_active', true);
+          const { data: allQuals } = await supabase
+            .from('v_all_staff_qualifications' as any)
+            .select('staff_user_id, service_id')
+            .in('staff_user_id', userIds)
+            .eq('service_id', svc.id)
+            .eq('is_qualified', true);
 
-          let phorestQualifiedUserIds: string[] = [];
-          if (mappings?.length) {
-            const phorestStaffIds = mappings.map((m) => m.phorest_staff_id);
-            // Get phorest service ID
-            const { data: phorestSvc } = await supabase
-              .from('v_all_services' as any)
-              .select('phorest_service_id')
-              .eq('name', serviceName)
-              .maybeSingle();
-
-            if (phorestSvc) {
-              const { data: phorestQuals } = await supabase
-                .from('phorest_staff_services' as any)
-                .select('phorest_staff_id')
-                .in('phorest_staff_id', phorestStaffIds)
-                .eq('phorest_service_id', phorestSvc.phorest_service_id)
-                .eq('is_qualified', true);
-
-              if (phorestQuals?.length) {
-                const qualifiedPhorestIds = new Set(phorestQuals.map((q) => q.phorest_staff_id));
-                phorestQualifiedUserIds = mappings
-                  .filter((m) => qualifiedPhorestIds.has(m.phorest_staff_id))
-                  .map((m) => m.user_id);
-              }
-            }
-          }
-
-          const qualifiedUserIds = new Set([
-            ...(quals?.map((q) => q.user_id) ?? []),
-            ...phorestQualifiedUserIds,
+          const qualifiedUserIds = new Set(
+            ((allQuals || []) as any[]).map((q: any) => q.staff_user_id)
+          );
           ]);
 
           // If we have qualification data, filter by it. If no quals exist at all,
