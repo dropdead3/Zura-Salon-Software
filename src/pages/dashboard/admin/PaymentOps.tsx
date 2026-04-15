@@ -1893,8 +1893,9 @@ export default function PaymentOps() {
           </TabsContent>
 
           {/* Disputes */}
-          <TabsContent value="disputes">
+          <TabsContent value="disputes" className="space-y-6">
             <DisputesCard orgId={orgId} formatCurrency={formatCurrency} dateFrom={dateFrom} dateTo={dateTo} disputeStatus={disputeStatus} clientSearch={debouncedClientSearch} />
+            <FraudAlertsCard orgId={orgId} formatCurrency={formatCurrency} />
           </TabsContent>
 
           {/* Tip Distributions */}
