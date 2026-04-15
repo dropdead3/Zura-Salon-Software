@@ -1,65 +1,44 @@
 
 
-## Fix: "Concluded" Showing Before Day Begins → Add "First Appt at X" State
+## Refine Scheduler Top Bar to Match Active Theme
 
 ### Problem
-When `inSessionCount === 0`, the hook checks only for `completed`/`checked_in` appointments to set `dayHadAppointments`. Before the first appointment starts, there are no completed appointments, so `dayHadAppointments = false` and the indicator hides entirely. However, if a *previous* day's data is cached or the query runs mid-morning before service starts, the "Concluded" label can appear incorrectly because the hook doesn't distinguish between "day hasn't started" and "day is over."
-
-The real gap: there's no third state — **"day ahead"** — where appointments exist today but none have started yet.
+The scheduler header bar (`ScheduleHeader.tsx`) uses hardcoded near-black (`hsl(0,0%,8%)`) with cream-toned text (`hsl(40,20%,92%)`). This looks disconnected from the active theme — especially Zura, which uses deep violet/navy tones (hue 230-270). The bar should feel like it belongs to the theme.
 
 ### Solution
-Add a `firstAppointmentTime` field to the hook and a new visual state to the indicator.
+Replace the hardcoded HSL colors with CSS variable references that resolve from the active theme. This makes the header adapt automatically when users switch themes (Zura → dark purple/navy, Ocean → dark navy blue, Rose → dark rose, etc.).
 
-### Hook Change (`src/hooks/useLiveSessionSnapshot.ts`)
+### Changes
 
-In the `inSessionCount === 0` branch (line 66-79):
+**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`**
 
-1. After checking for completed appointments, also query for **any** appointments today (regardless of status) to detect scheduled-but-not-started
-2. If upcoming appointments exist, find the earliest `start_time` and return it as `firstAppointmentTime`
-3. Logic becomes:
-   - `dayHadAppointments = true` + no active → **"Day concluded"**
-   - `dayHadAppointments = false` + `firstAppointmentTime` exists → **"First appt at X"**
-   - Neither → hide (truly empty day)
+Replace all hardcoded color values in the top bar and its children:
 
-New field on `LiveSessionSnapshot`:
-```
-firstAppointmentTime: string | null;
-```
+| Current (hardcoded) | Replacement (theme-aware) |
+|---|---|
+| `bg-[hsl(0,0%,8%)]` | `bg-[hsl(var(--sidebar-background))]` |
+| `text-[hsl(40,20%,92%)]` | `text-[hsl(var(--sidebar-foreground))]` |
+| `border-[hsl(40,20%,92%)]/10` | `border-[hsl(var(--sidebar-border))]` |
+| `bg-[hsl(40,20%,92%)]/10` | `bg-[hsl(var(--sidebar-accent))]` |
+| `border-[hsl(40,20%,92%)]/20` | `border-[hsl(var(--sidebar-border))]` |
+| `text-[hsl(40,20%,92%)]/50` | `text-[hsl(var(--sidebar-foreground))]/50` |
+| `text-[hsl(40,20%,92%)]/70` | `text-[hsl(var(--sidebar-foreground))]/70` |
+| `text-[hsl(40,20%,92%)]/80` | `text-[hsl(var(--sidebar-foreground))]/80` |
+| `hover:bg-[hsl(40,20%,92%)]/10` | `hover:bg-[hsl(var(--sidebar-accent))]` |
+| `hover:bg-[hsl(40,20%,92%)]/20` | `hover:bg-[hsl(var(--sidebar-accent))]` |
+| `text-[hsl(0,0%,8%)]` (active pill text) | `text-[hsl(var(--sidebar-background))]` |
 
-Query addition (inside the `inSessionCount === 0` block):
-```sql
--- Get earliest appointment today (any non-cancelled status)
-SELECT start_time FROM v_all_appointments
-WHERE appointment_date = today
-  AND deleted_at IS NULL
-  AND status NOT IN ('cancelled', 'no_show')
-ORDER BY start_time ASC
-LIMIT 1
-```
+**Why sidebar tokens?** The sidebar variables are the closest semantic match — they represent the app's primary chrome surface (dark, branded) and already carry the correct hue per theme. For Zura dark: `sidebar-background` is `230 20% 8%` (deep navy-violet) and `sidebar-foreground` is `240 20% 95%`.
 
-### Indicator Change (`src/components/dashboard/LiveSessionIndicator.tsx`)
-
-Add a new state between "hide" and "concluded":
-
-- **Icon**: `Clock` (from lucide-react) instead of `Moon`
-- **Label**: `"First appt at {formattedTime}"` (full) / `"Starts {formattedTime}"` (compact)
-- **Style**: Same pill as concluded — muted, no pulse dot
-
-Flow becomes:
-```text
-inSessionCount > 0    → green pulse + "X stylists in service now"
-inSessionCount === 0:
-  firstAppointmentTime  → clock icon + "First appt at 9:00 AM"
-  dayHadAppointments    → moon icon + "Day concluded"
-  neither               → null (hidden)
-```
-
-### Files Modified
-- `src/hooks/useLiveSessionSnapshot.ts` — add `firstAppointmentTime` field + upcoming query
-- `src/components/dashboard/LiveSessionIndicator.tsx` — add pre-service state with Clock icon
+### Result
+- **Zura theme**: Header becomes deep navy-violet instead of flat black
+- **Ocean theme**: Header picks up dark blue tones
+- **Rose/Sage/Ember**: Each gets its own tinted dark surface
+- **Noir**: Stays pure monochrome (as designed)
+- No new CSS variables or theme changes needed — just referencing existing ones
 
 ### Technical Details
-- Time formatting: `format(parse(startTime, 'HH:mm:ss', new Date()), 'h:mm a')` using date-fns
-- The upcoming appointments query reuses `applyLocationFilter` for location scoping
-- `firstAppointmentTime` is only populated when `inSessionCount === 0` and `dayHadAppointments === false`
+- ~15 find-and-replace operations within the `ScheduleHeader.tsx` dark header div (lines 127-393)
+- The secondary nav bar (line 396) already uses `bg-card` and theme tokens — no changes needed there
+- The view toggle animated pill uses cream for the active background and dark for active text — these swap to `sidebar-foreground` and `sidebar-background` respectively
 
