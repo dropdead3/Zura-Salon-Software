@@ -1,38 +1,65 @@
 
 
-## Add Explicit `payment_link_expires_at` Column
+## Fix: "Concluded" Showing Before Day Begins → Add "First Appt at X" State
 
 ### Problem
-Payment link expiry is currently calculated client-side as `payment_link_sent_at + 24h` via a hardcoded `LINK_EXPIRY_HOURS` constant. This creates two risks:
-1. If the Stripe Checkout session expiry is ever customized (Stripe supports 30min–24h), the frontend badge will show the wrong countdown
-2. The expiry logic is duplicated — Stripe controls the real expiry, but the UI guesses it
+When `inSessionCount === 0`, the hook checks only for `completed`/`checked_in` appointments to set `dayHadAppointments`. Before the first appointment starts, there are no completed appointments, so `dayHadAppointments = false` and the indicator hides entirely. However, if a *previous* day's data is cached or the query runs mid-morning before service starts, the "Concluded" label can appear incorrectly because the hook doesn't distinguish between "day hasn't started" and "day is over."
+
+The real gap: there's no third state — **"day ahead"** — where appointments exist today but none have started yet.
 
 ### Solution
-Store the actual expiry timestamp when the payment link is created, sourced directly from the Stripe session's `expires_at`.
+Add a `firstAppointmentTime` field to the hook and a new visual state to the indicator.
 
-### Database Migration
-- Add `payment_link_expires_at TIMESTAMPTZ` column to `appointments` table (nullable, no default)
+### Hook Change (`src/hooks/useLiveSessionSnapshot.ts`)
 
-### Edge Function Change
-**File: `supabase/functions/create-checkout-payment-link/index.ts`**
-- After creating the Stripe Checkout session, read `session.expires_at` (Unix timestamp from Stripe)
-- Include `payment_link_expires_at: new Date(session.expires_at * 1000).toISOString()` in the appointment update
+In the `inSessionCount === 0` branch (line 66-79):
 
-### Frontend Changes
-**File: `src/components/dashboard/appointments/PaymentLinkStatusBadge.tsx`**
-- Add `paymentLinkExpiresAt?: string | null` prop
-- When present, use it directly instead of computing `addHours(sentDate, 24)`
-- Keep the computed fallback for backwards compatibility with existing appointments that don't have the column populated
-- Remove the `LINK_EXPIRY_HOURS` constant (replaced by prop or fallback)
+1. After checking for completed appointments, also query for **any** appointments today (regardless of status) to detect scheduled-but-not-started
+2. If upcoming appointments exist, find the earliest `start_time` and return it as `firstAppointmentTime`
+3. Logic becomes:
+   - `dayHadAppointments = true` + no active → **"Day concluded"**
+   - `dayHadAppointments = false` + `firstAppointmentTime` exists → **"First appt at X"**
+   - Neither → hide (truly empty day)
 
-**File: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`**
-- Pass `paymentLinkExpiresAt={appointment.payment_link_expires_at}` to `PaymentLinkStatusBadge`
+New field on `LiveSessionSnapshot`:
+```
+firstAppointmentTime: string | null;
+```
 
-**File: `src/hooks/usePhorestCalendar.ts`**
-- Add `payment_link_expires_at` to the appointment type
+Query addition (inside the `inSessionCount === 0` block):
+```sql
+-- Get earliest appointment today (any non-cancelled status)
+SELECT start_time FROM v_all_appointments
+WHERE appointment_date = today
+  AND deleted_at IS NULL
+  AND status NOT IN ('cancelled', 'no_show')
+ORDER BY start_time ASC
+LIMIT 1
+```
+
+### Indicator Change (`src/components/dashboard/LiveSessionIndicator.tsx`)
+
+Add a new state between "hide" and "concluded":
+
+- **Icon**: `Clock` (from lucide-react) instead of `Moon`
+- **Label**: `"First appt at {formattedTime}"` (full) / `"Starts {formattedTime}"` (compact)
+- **Style**: Same pill as concluded — muted, no pulse dot
+
+Flow becomes:
+```text
+inSessionCount > 0    → green pulse + "X stylists in service now"
+inSessionCount === 0:
+  firstAppointmentTime  → clock icon + "First appt at 9:00 AM"
+  dayHadAppointments    → moon icon + "Day concluded"
+  neither               → null (hidden)
+```
+
+### Files Modified
+- `src/hooks/useLiveSessionSnapshot.ts` — add `firstAppointmentTime` field + upcoming query
+- `src/components/dashboard/LiveSessionIndicator.tsx` — add pre-service state with Clock icon
 
 ### Technical Details
-- `session.expires_at` is a Unix timestamp (seconds) returned by Stripe on every Checkout Session creation
-- Backwards compatible: existing rows with `NULL` in `payment_link_expires_at` fall back to the `sent_at + 24h` calculation
-- No RLS changes needed — column inherits existing appointment RLS policies
+- Time formatting: `format(parse(startTime, 'HH:mm:ss', new Date()), 'h:mm a')` using date-fns
+- The upcoming appointments query reuses `applyLocationFilter` for location scoping
+- `firstAppointmentTime` is only populated when `inSessionCount === 0` and `dayHadAppointments === false`
 
