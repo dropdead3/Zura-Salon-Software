@@ -303,47 +303,36 @@ export default function Schedule() {
     return selectedLocationData?.tax_rate ?? businessSettings?.default_tax_rate ?? 0.08;
   }, [selectedLocationData, businessSettings]);
 
-  // Fetch stylists for DayView - filter by selected location's branch
+  // Fetch stylists for DayView - flat select from v_all_staff (no FK joins on views)
   const { data: allStylists = [] } = useQuery({
-    queryKey: ['schedule-stylists-with-mapping', selectedBranchId],
+    queryKey: ['schedule-stylists', selectedLocation],
     queryFn: async () => {
       let query = supabase
         .from('v_all_staff' as any)
-        .select(`
-          user_id,
-          phorest_branch_id,
-          employee_profiles!phorest_staff_mapping_user_id_fkey(
-            user_id,
-            display_name,
-            full_name,
-            photo_url
-          )
-        `)
+        .select('user_id, display_name, full_name, photo_url, location_id')
         .eq('is_active', true)
         .eq('show_on_calendar', true);
-      
-      // Filter by branch if selected
-      if (selectedBranchId) {
-        query = query.eq('phorest_branch_id', selectedBranchId);
+
+      if (selectedLocation) {
+        query = query.eq('location_id', selectedLocation);
       }
-      
+
       const { data } = await query;
-      
-      // Deduplicate by user_id (staff may be mapped to multiple locations)
-      const uniqueStylists = new Map<string, { user_id: string; display_name: string | null; full_name: string; photo_url: string | null }>();
-      
-      (data || []).forEach((d: any) => {
-        if (!uniqueStylists.has(d.user_id)) {
-          uniqueStylists.set(d.user_id, {
+
+      // Deduplicate by user_id (staff may appear in multiple mappings)
+      const unique = new Map<string, { user_id: string; display_name: string | null; full_name: string; photo_url: string | null }>();
+      ((data || []) as any[]).forEach((d: any) => {
+        if (!unique.has(d.user_id)) {
+          unique.set(d.user_id, {
             user_id: d.user_id,
-            display_name: d.employee_profiles?.display_name || null,
-            full_name: d.employee_profiles?.full_name || 'Unknown',
-            photo_url: d.employee_profiles?.photo_url || null,
+            display_name: d.display_name || null,
+            full_name: d.full_name || 'Unknown',
+            photo_url: d.photo_url || null,
           });
         }
       });
-      
-      return Array.from(uniqueStylists.values());
+
+      return Array.from(unique.values());
     },
   });
 
