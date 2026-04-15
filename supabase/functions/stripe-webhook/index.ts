@@ -1512,6 +1512,76 @@ async function handleEarlyFraudWarning(
   console.log(`Fraud warning ${warningId} recorded for org ${org.name}`);
 }
 
+// Handler for charge.succeeded — capture Radar risk scores
+async function handleChargeSucceeded(
+  supabase: SupabaseClientAny,
+  charge: Record<string, unknown>,
+  connectedAccountId: string
+) {
+  const chargeId = charge.id as string;
+  const outcome = charge.outcome as Record<string, unknown> | null;
+  const riskScore = outcome?.risk_score as number | null;
+  const riskLevel = (outcome?.risk_level as string) || 'normal';
+  const piId = (charge.payment_intent as string) || null;
+  const amount = (charge.amount as number) || 0;
+  const currency = (charge.currency as string) || 'usd';
+  const metadata = charge.metadata as Record<string, string> | null;
+  const appointmentId = metadata?.appointment_id || null;
+
+  // Resolve org from connected account
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("id, name")
+    .eq("stripe_connect_account_id", connectedAccountId)
+    .maybeSingle();
+
+  if (!org) {
+    console.log(`No org found for Connect account ${connectedAccountId} — skipping risk score`);
+    return;
+  }
+
+  // Insert risk score record (upsert on stripe_charge_id to be idempotent)
+  const { error } = await supabase.from("payment_risk_scores").upsert({
+    organization_id: org.id,
+    stripe_charge_id: chargeId,
+    stripe_payment_intent_id: piId,
+    risk_score: riskScore,
+    risk_level: riskLevel,
+    appointment_id: appointmentId,
+    amount,
+    currency,
+    metadata: outcome || {},
+  }, {
+    onConflict: 'stripe_charge_id',
+  });
+
+  if (error) {
+    console.error(`Failed to insert risk score for charge ${chargeId}:`, error);
+    return;
+  }
+
+  // Fire platform notification for elevated/highest risk
+  if (riskLevel !== 'normal') {
+    await supabase.from('platform_notifications').insert({
+      type: 'high_risk_payment',
+      severity: riskLevel === 'highest' ? 'critical' : 'warning',
+      title: `High-Risk Payment: ${org.name}`,
+      message: `A charge of ${(amount / 100).toFixed(2)} ${currency.toUpperCase()} was flagged as ${riskLevel} risk (score: ${riskScore ?? 'N/A'}).`,
+      metadata: {
+        organization_id: org.id,
+        stripe_charge_id: chargeId,
+        risk_score: riskScore,
+        risk_level: riskLevel,
+        amount,
+      }
+    });
+
+    console.log(`High-risk payment alert created for charge ${chargeId} (${riskLevel}, score ${riskScore})`);
+  } else {
+    console.log(`Risk score recorded for charge ${chargeId}: ${riskLevel} (${riskScore})`);
+  }
+}
+
 // Main handler
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -1632,6 +1702,13 @@ Deno.serve(async (req) => {
       case "radar.early_fraud_warning.created":
         if (isConnectEvent) {
           await handleEarlyFraudWarning(supabase, event.data.object, event.account);
+        }
+        break;
+
+      // Radar risk scoring — capture risk data from every successful charge
+      case "charge.succeeded":
+        if (isConnectEvent) {
+          await handleChargeSucceeded(supabase, event.data.object, event.account);
         }
         break;
          

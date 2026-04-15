@@ -14340,6 +14340,63 @@ export type Database = {
           },
         ]
       }
+      payment_risk_scores: {
+        Row: {
+          amount: number | null
+          appointment_id: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          risk_level: string | null
+          risk_score: number | null
+          stripe_charge_id: string
+          stripe_payment_intent_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          appointment_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          risk_level?: string | null
+          risk_score?: number | null
+          stripe_charge_id: string
+          stripe_payment_intent_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          appointment_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          risk_level?: string | null
+          risk_score?: number | null
+          stripe_charge_id?: string
+          stripe_payment_intent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_risk_scores_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_risk_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_analytics_snapshots: {
         Row: {
           created_at: string | null
