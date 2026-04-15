@@ -27969,6 +27969,30 @@ export type Database = {
         }
         Relationships: []
       }
+      v_all_services: {
+        Row: {
+          _source: string | null
+          allow_same_day_booking: boolean | null
+          category: string | null
+          container_types: string[] | null
+          created_at: string | null
+          duration_minutes: number | null
+          id: string | null
+          is_active: boolean | null
+          is_chemical_service: boolean | null
+          lead_time_days: number | null
+          location_id: string | null
+          name: string | null
+          organization_id: string | null
+          phorest_branch_id: string | null
+          phorest_service_id: string | null
+          price: number | null
+          requires_qualification: boolean | null
+          same_day_restriction_reason: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       v_all_transaction_items: {
         Row: {
           appointment_id: string | null
