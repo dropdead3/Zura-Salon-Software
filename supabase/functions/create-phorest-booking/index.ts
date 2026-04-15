@@ -15,13 +15,19 @@ const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/ap
 const PHOREST_WRITES_GLOBALLY_DISABLED = true;
 
 interface BookingRequest {
-  branch_id: string;
-  client_id: string;
-  staff_id: string;
+  branch_id?: string;
+  client_id?: string;
+  staff_id?: string;
   service_ids: string[];
   start_time: string;
   notes?: string;
-  location_id?: string; // Direct location_id fallback from client
+  location_id?: string;
+  // Native mode fields (Phorest-free booking)
+  staff_user_id?: string;
+  client_name?: string;
+  client_email?: string;
+  client_phone?: string;
+  native_client_id?: string;
   // Redo / adjustment fields
   is_redo?: boolean;
   redo_reason?: string;
