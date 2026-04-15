@@ -1,62 +1,45 @@
 
 
-## Stripe Fraud Prevention & Dispute Management Enhancement
+## Phase 1 Audit: Bugs and Gaps Found
 
-### What Exists Today
-- `payment_disputes` table with webhook sync
-- Dispute card in Payment Ops with status/amount tracking
-- Auto-ban policy setting
-- Client "Dispute Risk" segmentation
+### Issues Identified
 
-### What We'll Add
+**1. Edge Function Auth: `getUser()` instead of `getClaims()`**
+`submit-dispute-evidence/index.ts` line 36 uses `supabase.auth.getUser(token)` which makes a network call to Supabase Auth. Per project conventions, it should use `getClaims(token)` for faster JWT validation. The function also creates a service-role client but then validates the user JWT against it — this works but is non-standard. Should create an anon-key client with the user's auth header for `getClaims()`, then a separate service-role client for DB writes.
 
-**Phase 1: Enhanced Dispute Management (immediate value)**
+**2. Edge Function: No input validation (Zod)**
+`submit-dispute-evidence` does basic `if (!dispute_id)` checks but doesn't use Zod for structured input validation, which is required per edge function patterns.
 
-1. **Evidence Submission Flow**
-   - Add "Submit Evidence" action button on disputes with `needs_response` status
-   - Dialog with fields: cancellation policy disclosure, service documentation notes, uncategorized rebuttal text
-   - Edge function `submit-dispute-evidence` calls Stripe's dispute update API to submit evidence
-   - Track submission status in `payment_disputes` table (new `evidence_submitted_at` column)
+**3. Edge Function: `disputeRecord.status` reference bug**
+Line 128 references `disputeRecord.status` but the select on line 64 only fetches `stripe_dispute_id, metadata` — `status` is not selected. This will always be `undefined`, so the fallback on line 128 silently writes `undefined` as the status when `submit` is false.
 
-2. **Early Fraud Warning Capture**
-   - Add `radar.early_fraud_warning.created` to the existing `stripe-webhook` handler
-   - New `fraud_warnings` table: `organization_id`, `charge_id`, `fraud_type`, `actionable`, `created_at`
-   - Surface warnings in Payment Ops as a new "Fraud Alerts" section with proactive refund action
+**4. Fraud Warnings: No pagination**
+`FraudAlertsCard` renders all 50 warnings in one table with no pagination. Should use `usePaginatedSort` consistent with the disputes table.
 
-3. **Dispute Analytics Dashboard**
-   - Win/loss rate card
-   - Dispute-to-transaction ratio
-   - Breakdown by reason (fraudulent, product not received, duplicate, etc.)
-   - Monthly trend chart
-   - Total revenue lost to disputes
+**5. Fraud Warnings: "Mark Refunded" is misleading**
+The "Mark Refunded" button only resolves the warning record — it doesn't actually issue a refund via Stripe. This could confuse operators into thinking a refund was processed. Should either trigger an actual refund or clearly label it "Mark as Refunded" with a confirmation dialog.
 
-**Phase 2: Radar Risk Scoring (visibility layer)**
+**6. Evidence dialog: Currency hardcoded to `$`**
+Line 827 uses `$${(dispute.amount / 100).toFixed(2)}` instead of `formatCurrency()`, breaking multi-currency support.
 
-4. **Capture Radar Risk Score**
-   - On `charge.succeeded` webhook, extract `outcome.risk_score` and `outcome.risk_level` from the charge object
-   - Store in a new `payment_risk_scores` table or as metadata on existing payment records
-   - Surface high-risk payments (score > 65) as a filterable list in Payment Ops
+**7. Dispute analytics: Computed on filtered data only**
+`DisputeAnalyticsCards` receives the date-filtered `disputes` array, so win/loss rates only reflect the selected date range. This is arguably correct but may confuse operators — consider adding a tooltip clarifying the analytics are scoped to the filtered view.
 
-5. **Risk Score Alerts**
-   - When a payment completes with `risk_level: "elevated"` or `"highest"`, create a notification for the org
+### Plan
+
+**File 1: `supabase/functions/submit-dispute-evidence/index.ts`**
+- Replace `getUser()` with `getClaims()` pattern
+- Add Zod validation for request body
+- Fix select to include `status` column
+
+**File 2: `src/pages/dashboard/admin/PaymentOps.tsx`**
+- Fix hardcoded `$` in evidence dialog — use `formatCurrency` prop
+- Add pagination to `FraudAlertsCard` using `usePaginatedSort`
+- Add confirmation dialog to "Mark Refunded" action with clarification that no actual refund is issued
+- Add tooltip to analytics cards clarifying date-range scope
 
 ### Technical Details
-
-**Database migrations:**
-- Add `evidence_submitted_at` (timestamptz, nullable) to `payment_disputes`
-- New `fraud_warnings` table with RLS scoped to `organization_id`
-- New `payment_risk_scores` table (or add columns to existing payment tracking)
-
-**Edge functions:**
-- `submit-dispute-evidence` — calls `stripe.disputes.update()` with evidence fields and `submit: true`
-- Extend `stripe-webhook/index.ts` with `radar.early_fraud_warning.created` and risk score capture on `charge.succeeded`
-
-**Files to create/modify:**
-- `supabase/functions/submit-dispute-evidence/index.ts` — new
-- `supabase/functions/stripe-webhook/index.ts` — extend with 2 new event handlers
-- `src/pages/dashboard/admin/PaymentOps.tsx` — add Evidence Submission dialog, Fraud Alerts section, Dispute Analytics cards
-- `src/hooks/useDisputeEvidence.ts` — new mutation hook
-- `src/hooks/useFraudWarnings.ts` — new query hook
-
-**Scope:** Phase 1 first (evidence submission + early warnings + analytics). Phase 2 (Radar scoring) as a follow-up.
+- Zod import: `import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts"`
+- `getClaims` pattern per `disable-jwt-edge-functions` context
+- `formatCurrency` already available as prop in both `SubmitEvidenceDialog` (needs threading) and `FraudAlertsCard`
 
