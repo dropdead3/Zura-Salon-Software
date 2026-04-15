@@ -159,9 +159,15 @@ export function useStaffRevenuePerformance(
 
       // Enrich with service/product breakdown from transaction items
       for (const item of itemData) {
-        const staffId = item.phorest_staff_id;
+        const staffId = item.staff_user_id;
         if (!staffId) continue;
-        const existing = aggregatedData.get(staffId);
+        // Map staff_user_id back to phorest_staff_id for aggregation consistency
+        // Find the matching phorest_staff_id from mappings
+        let aggregateKey = staffId;
+        for (const [psid, mapping] of mappingByPhorestId) {
+          if (mapping.user_id === staffId) { aggregateKey = psid; break; }
+        }
+        const existing = aggregatedData.get(aggregateKey);
         if (!existing) continue;
 
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
