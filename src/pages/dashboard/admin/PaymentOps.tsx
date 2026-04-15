@@ -825,7 +825,7 @@ function SubmitEvidenceDialog({ dispute, orgId, open, onOpenChange, formatCurren
           <DialogTitle>Submit Dispute Evidence</DialogTitle>
           <DialogDescription>
             Submit evidence to respond to the <strong>{(dispute?.reason || 'unknown').replace(/_/g, ' ')}</strong> dispute
-            for <BlurredAmount>{dispute ? `$${(dispute.amount / 100).toFixed(2)}` : ''}</BlurredAmount>.
+            for <BlurredAmount>{dispute ? formatCurrency(dispute.amount / 100) : ''}</BlurredAmount>.
             Evidence due by {dispute?.evidence_due_by ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy') : 'unknown'}.
           </DialogDescription>
         </DialogHeader>
@@ -1165,6 +1165,7 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
           orgId={orgId}
           open={!!evidenceDispute}
           onOpenChange={(open) => { if (!open) setEvidenceDispute(null); }}
+          formatCurrency={formatCurrency}
         />
       )}
     </>
