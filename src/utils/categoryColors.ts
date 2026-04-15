@@ -340,14 +340,14 @@ export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   const { r, g, b } = hexToRgb(hexColor);
 
   // Translucent fill from original color
-  const fillAlpha = isGray ? 0.22 : 0.18;
+  const fillAlpha = isGray ? 0.30 : 0.28;
   const fill = `rgba(${r}, ${g}, ${b}, ${fillAlpha})`;
 
   // Hover: slightly more opaque
-  const hover = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.30 : 0.28})`;
+  const hover = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.38 : 0.36})`;
 
   // Selected: more opaque
-  const selected = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.36 : 0.32})`;
+  const selected = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.44 : 0.40})`;
 
   // Stroke: original light-mode hex
   const stroke = hexColor;
