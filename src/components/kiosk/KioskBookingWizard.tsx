@@ -21,9 +21,6 @@ interface SelectedService {
 
 interface SelectedStylist {
   id: string;
-  phorest_staff_id: string;
-interface SelectedStylist {
-  id: string;
   phorest_staff_id: string | null;
   name: string;
   photo_url: string | null;
