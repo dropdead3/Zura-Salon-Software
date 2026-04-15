@@ -1450,6 +1450,68 @@ async function handleChargeRefunded(
   }
 }
 
+// Handler for radar.early_fraud_warning.created
+async function handleEarlyFraudWarning(
+  supabase: SupabaseClientAny,
+  warning: Record<string, unknown>,
+  connectedAccountId: string
+) {
+  const warningId = warning.id as string;
+  const chargeId = warning.charge as string;
+  const fraudType = (warning.fraud_type as string) || 'unknown';
+  const actionable = (warning.actionable as boolean) ?? true;
+
+  console.log(`radar.early_fraud_warning.created: ${warningId}, charge ${chargeId}, account ${connectedAccountId}`);
+
+  // Find org
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("id, name")
+    .eq("stripe_connect_account_id", connectedAccountId)
+    .maybeSingle();
+
+  if (!org) {
+    console.warn(`No org found for Connect account ${connectedAccountId} — skipping fraud warning`);
+    return;
+  }
+
+  // Insert fraud warning record
+  const { error } = await supabase.from("fraud_warnings").insert({
+    organization_id: org.id,
+    stripe_charge_id: chargeId,
+    stripe_warning_id: warningId,
+    fraud_type: fraudType,
+    actionable,
+  });
+
+  if (error) {
+    // Might be a duplicate (unique constraint on stripe_warning_id)
+    if (error.code === '23505') {
+      console.log(`Fraud warning ${warningId} already exists — skipping`);
+      return;
+    }
+    console.error("Failed to insert fraud warning:", error);
+    return;
+  }
+
+  // Fire platform alert
+  await supabase.from('platform_notifications').insert({
+    type: 'fraud_warning',
+    severity: actionable ? 'critical' : 'warning',
+    title: `Fraud Warning: ${org.name}`,
+    message: `Early fraud warning detected (${fraudType.replace(/_/g, ' ')}). ${actionable ? 'Action recommended — consider issuing a proactive refund.' : 'No action required at this time.'}`,
+    metadata: {
+      organization_id: org.id,
+      stripe_warning_id: warningId,
+      stripe_charge_id: chargeId,
+      fraud_type: fraudType,
+      actionable,
+    }
+  });
+
+  console.log(`Fraud warning ${warningId} recorded for org ${org.name}`);
+}
+
 // Main handler
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -1564,6 +1626,13 @@ Deno.serve(async (req) => {
       case "charge.dispute.funds_withdrawn":
       case "charge.dispute.funds_reinstated":
         await handleDisputeClosed(supabase, event.data.object);
+        break;
+
+      // Early fraud warnings from Radar
+      case "radar.early_fraud_warning.created":
+        if (isConnectEvent) {
+          await handleEarlyFraudWarning(supabase, event.data.object, event.account);
+        }
         break;
          
       default:

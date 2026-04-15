@@ -69,6 +69,8 @@ import { LocationGroupSelect } from '@/components/ui/LocationGroupSelect';
 import { useLocations } from '@/hooks/useLocations';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { parseLocationIds, encodeLocationIds, isAllLocations } from '@/lib/locationFilter';
+import { useSubmitDisputeEvidence } from '@/hooks/useDisputeEvidence';
+import { useFraudWarnings, useUnresolvedFraudWarningCount } from '@/hooks/useFraudWarnings';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
 const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
@@ -724,6 +726,275 @@ const DISPUTE_STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destruct
   charge_refunded: 'outline',
 };
 
+const DISPUTE_REASON_LABELS: Record<string, string> = {
+  fraudulent: 'Fraudulent',
+  duplicate: 'Duplicate',
+  product_not_received: 'Not Received',
+  product_unacceptable: 'Unacceptable',
+  subscription_canceled: 'Sub Cancelled',
+  unrecognized: 'Unrecognized',
+  credit_not_processed: 'Credit Not Processed',
+  general: 'General',
+};
+
+function DisputeAnalyticsCards({ disputes, formatCurrency }: { disputes: any[]; formatCurrency: (n: number) => string }) {
+  const analytics = useMemo(() => {
+    const total = disputes.length;
+    const won = disputes.filter(d => d.status === 'won').length;
+    const lost = disputes.filter(d => d.status === 'lost').length;
+    const resolved = won + lost;
+    const winRate = resolved > 0 ? Math.round((won / resolved) * 100) : 0;
+    const totalLost = disputes
+      .filter(d => d.status === 'lost')
+      .reduce((sum, d) => sum + (d.amount || 0), 0);
+    const reasonBreakdown = disputes.reduce((acc, d) => {
+      const r = d.reason || 'unknown';
+      acc[r] = (acc[r] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const topReason = Object.entries(reasonBreakdown).sort((a, b) => (b[1] as number) - (a[1] as number))[0];
+    return { total, won, lost, winRate, totalLost, topReason, reasonBreakdown };
+  }, [disputes]);
+
+  if (disputes.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="rounded-xl border border-border/60 p-4">
+        <p className={tokens.kpi.label}>Total Disputes</p>
+        <p className={tokens.kpi.value}>{analytics.total}</p>
+      </div>
+      <div className="rounded-xl border border-border/60 p-4">
+        <p className={tokens.kpi.label}>Win Rate</p>
+        <p className={tokens.kpi.value}>{analytics.winRate}%</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{analytics.won}W / {analytics.lost}L</p>
+      </div>
+      <div className="rounded-xl border border-border/60 p-4">
+        <p className={tokens.kpi.label}>Revenue Lost</p>
+        <p className={tokens.kpi.value}>
+          <BlurredAmount>{formatCurrency(analytics.totalLost / 100)}</BlurredAmount>
+        </p>
+      </div>
+      <div className="rounded-xl border border-border/60 p-4">
+        <p className={tokens.kpi.label}>Top Reason</p>
+        <p className="font-display text-sm tracking-wide uppercase">
+          {analytics.topReason ? DISPUTE_REASON_LABELS[analytics.topReason[0]] || analytics.topReason[0].replace(/_/g, ' ') : '—'}
+        </p>
+        {analytics.topReason && (
+          <p className="text-xs text-muted-foreground mt-0.5">{analytics.topReason[1] as number} disputes</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SubmitEvidenceDialog({ dispute, orgId, open, onOpenChange }: {
+  dispute: any;
+  orgId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [cancellationPolicy, setCancellationPolicy] = useState('');
+  const [cancellationRebuttal, setCancellationRebuttal] = useState('');
+  const [uncategorizedText, setUncategorizedText] = useState('');
+  const submitEvidence = useSubmitDisputeEvidence();
+
+  const handleSubmit = () => {
+    submitEvidence.mutate({
+      dispute_id: dispute.id,
+      organization_id: orgId,
+      cancellation_policy_disclosure: cancellationPolicy || undefined,
+      cancellation_rebuttal: cancellationRebuttal || undefined,
+      uncategorized_text: uncategorizedText || undefined,
+      submit: true,
+    }, {
+      onSuccess: () => {
+        onOpenChange(false);
+        setCancellationPolicy('');
+        setCancellationRebuttal('');
+        setUncategorizedText('');
+      },
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[560px]">
+        <DialogHeader>
+          <DialogTitle>Submit Dispute Evidence</DialogTitle>
+          <DialogDescription>
+            Submit evidence to respond to the <strong>{(dispute?.reason || 'unknown').replace(/_/g, ' ')}</strong> dispute
+            for <BlurredAmount>{dispute ? `$${(dispute.amount / 100).toFixed(2)}` : ''}</BlurredAmount>.
+            Evidence due by {dispute?.evidence_due_by ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy') : 'unknown'}.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Cancellation Policy Disclosure</Label>
+            <textarea
+              className="flex min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Explain how and when the customer was shown your cancellation/refund policy prior to service…"
+              value={cancellationPolicy}
+              onChange={(e) => setCancellationPolicy(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Cancellation Rebuttal</Label>
+            <textarea
+              className="flex min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Explain why the cancellation policy is relevant and the customer is not entitled to a refund…"
+              value={cancellationRebuttal}
+              onChange={(e) => setCancellationRebuttal(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Additional Evidence</Label>
+            <textarea
+              className="flex min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Any additional evidence, service documentation, or rebuttal text…"
+              value={uncategorizedText}
+              onChange={(e) => setUncategorizedText(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitEvidence.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={submitEvidence.isPending || (!cancellationPolicy && !cancellationRebuttal && !uncategorizedText)}
+          >
+            {submitEvidence.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+            Submit Evidence
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FraudAlertsCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+  const { data: warnings = [], isLoading } = useFraudWarnings(orgId);
+  const { data: unresolvedCount = 0 } = useUnresolvedFraudWarningCount(orgId);
+  const queryClient = useQueryClient();
+
+  const resolveMutation = useMutation({
+    mutationFn: async ({ warningId, action }: { warningId: string; action: string }) => {
+      const { error } = await supabase
+        .from('fraud_warnings')
+        .update({ resolved_at: new Date().toISOString(), resolved_action: action })
+        .eq('id', warningId)
+        .eq('organization_id', orgId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fraud-warnings'] });
+      queryClient.invalidateQueries({ queryKey: ['fraud-warning-count'] });
+      toast.success('Fraud warning resolved');
+    },
+    onError: (error) => {
+      toast.error('Failed to resolve warning', { description: error.message });
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <AlertTriangle className={tokens.card.icon} />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>
+              Fraud Alerts
+              <MetricInfoTooltip description="Early fraud warnings from Stripe Radar. These indicate charges that card networks have flagged as potentially fraudulent. Consider issuing proactive refunds to avoid disputes." />
+              {unresolvedCount > 0 && (
+                <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-[10px]">{unresolvedCount}</Badge>
+              )}
+            </CardTitle>
+            <CardDescription>Early fraud warnings from card networks</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className={tokens.loading.spinner} />
+          </div>
+        ) : warnings.length === 0 ? (
+          <div className={tokens.empty.container}>
+            <ShieldCheck className={tokens.empty.icon} />
+            <h3 className={tokens.empty.heading}>No fraud warnings</h3>
+            <p className={tokens.empty.description}>
+              No early fraud warnings detected. Stripe Radar is monitoring your transactions.
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={tokens.table.columnHeader}>Charge</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Type</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Actionable</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Date</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {warnings.map((warning) => (
+                <TableRow key={warning.id}>
+                  <TableCell className="font-mono text-xs">{warning.stripe_charge_id.slice(0, 20)}…</TableCell>
+                  <TableCell className="capitalize">{warning.fraud_type.replace(/_/g, ' ')}</TableCell>
+                  <TableCell>
+                    <Badge variant={warning.actionable ? 'destructive' : 'secondary'}>
+                      {warning.actionable ? 'Action Needed' : 'Info Only'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {format(new Date(warning.created_at), 'MMM d, yyyy')}
+                  </TableCell>
+                  <TableCell>
+                    {warning.resolved_at ? (
+                      <Badge variant="outline" className="capitalize">{warning.resolved_action}</Badge>
+                    ) : (
+                      <Badge variant="secondary">Open</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {!warning.resolved_at && (
+                      <div className="flex gap-1.5">
+                        <Button
+                          size="sm"
+                          className={tokens.button.inline}
+                          disabled={resolveMutation.isPending}
+                          onClick={() => resolveMutation.mutate({ warningId: warning.id, action: 'accepted' })}
+                        >
+                          Accept Risk
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className={tokens.button.inline}
+                          disabled={resolveMutation.isPending}
+                          onClick={() => resolveMutation.mutate({ warningId: warning.id, action: 'refunded' })}
+                        >
+                          Mark Refunded
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, clientSearch }: {
   orgId?: string;
   formatCurrency: (n: number) => string;
@@ -734,6 +1005,7 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
 }) {
   const activeStatuses = ['needs_response', 'under_review', 'warning_needs_response'];
   const resolvedStatuses = ['won', 'lost', 'charge_refunded'];
+  const [evidenceDispute, setEvidenceDispute] = useState<any>(null);
 
   const { data: disputes = [], isLoading } = useQuery({
     queryKey: ['payment-disputes', orgId, dateFrom, dateTo, disputeStatus],
@@ -782,88 +1054,119 @@ function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, 
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <Scale className={tokens.card.icon} />
+    <>
+      <DisputeAnalyticsCards disputes={disputes} formatCurrency={formatCurrency} />
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <Scale className={tokens.card.icon} />
+            </div>
+            <div>
+              <CardTitle className={tokens.card.title}>
+                Disputes
+                <MetricInfoTooltip description="Track chargebacks and disputes filed against your organization. Respond to disputes promptly to protect revenue." />
+              </CardTitle>
+              <CardDescription>Payment disputes and chargebacks from card networks</CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle className={tokens.card.title}>
-              Disputes
-              <MetricInfoTooltip description="Track chargebacks and disputes filed against your organization. Respond to disputes promptly to protect revenue." />
-            </CardTitle>
-            <CardDescription>Payment disputes and chargebacks from card networks</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className={tokens.loading.spinner} />
-          </div>
-        ) : filteredDisputes.length === 0 ? (
-          <div className={tokens.empty.container}>
-            <Scale className={tokens.empty.icon} />
-            <h3 className={tokens.empty.heading}>No disputes</h3>
-            <p className={tokens.empty.description}>
-              No chargebacks or disputes have been filed. Keep up the good work.
-            </p>
-          </div>
-        ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableColumnHeader label="Client" sortKey="client_name" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
-                  <SortableColumnHeader label="Amount" sortKey="amount" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
-                  <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
-                  <SortableColumnHeader label="Status" sortKey="status" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
-                  <SortableColumnHeader label="Evidence Due" sortKey="evidence_due_by" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
-                  <SortableColumnHeader label="Filed" sortKey="created_at" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedDisputes.map((dispute) => (
-                  <TableRow key={dispute.id}>
-                    <TableCell className="font-medium">
-                      {dispute.client_name || 'Unknown'}
-                    </TableCell>
-                    <TableCell>
-                      <BlurredAmount>{formatCurrency(dispute.amount / 100)}</BlurredAmount>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground capitalize">
-                      {(dispute.reason || 'unknown').replace(/_/g, ' ')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={DISPUTE_STATUS_VARIANT[dispute.status] || 'secondary'}>
-                        {DISPUTE_STATUS_LABELS[dispute.status] || dispute.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {dispute.evidence_due_by
-                        ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy')
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(dispute.created_at), 'MMM d, yyyy')}
-                    </TableCell>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className={tokens.loading.spinner} />
+            </div>
+          ) : filteredDisputes.length === 0 ? (
+            <div className={tokens.empty.container}>
+              <Scale className={tokens.empty.icon} />
+              <h3 className={tokens.empty.heading}>No disputes</h3>
+              <p className={tokens.empty.description}>
+                No chargebacks or disputes have been filed. Keep up the good work.
+              </p>
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortableColumnHeader label="Client" sortKey="client_name" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                    <SortableColumnHeader label="Amount" sortKey="amount" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                    <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
+                    <SortableColumnHeader label="Status" sortKey="status" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                    <SortableColumnHeader label="Evidence Due" sortKey="evidence_due_by" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                    <SortableColumnHeader label="Filed" sortKey="created_at" currentSortField={disputeSortField} onToggleSort={toggleDisputeSort} />
+                    <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <TablePagination
-              currentPage={disputePage}
-              totalPages={disputeTotalPages}
-              totalItems={disputeTotalItems}
-              showingFrom={disputeShowingFrom}
-              showingTo={disputeShowingTo}
-              onPageChange={setDisputePage}
-            />
-          </>
-        )}
-      </CardContent>
-    </Card>
+                </TableHeader>
+                <TableBody>
+                  {paginatedDisputes.map((dispute) => (
+                    <TableRow key={dispute.id}>
+                      <TableCell className="font-medium">
+                        {dispute.client_name || 'Unknown'}
+                      </TableCell>
+                      <TableCell>
+                        <BlurredAmount>{formatCurrency(dispute.amount / 100)}</BlurredAmount>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground capitalize">
+                        {DISPUTE_REASON_LABELS[dispute.reason] || (dispute.reason || 'unknown').replace(/_/g, ' ')}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={DISPUTE_STATUS_VARIANT[dispute.status] || 'secondary'}>
+                          {DISPUTE_STATUS_LABELS[dispute.status] || dispute.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {dispute.evidence_due_by
+                          ? format(new Date(dispute.evidence_due_by), 'MMM d, yyyy')
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {format(new Date(dispute.created_at), 'MMM d, yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {(dispute.status === 'needs_response' || dispute.status === 'warning_needs_response') && !dispute.evidence_submitted_at ? (
+                          <Button
+                            size="sm"
+                            className={tokens.button.inline}
+                            onClick={() => setEvidenceDispute(dispute)}
+                          >
+                            Submit Evidence
+                          </Button>
+                        ) : dispute.evidence_submitted_at ? (
+                          <span className="text-xs text-muted-foreground">
+                            Submitted {format(new Date(dispute.evidence_submitted_at), 'MMM d')}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <TablePagination
+                currentPage={disputePage}
+                totalPages={disputeTotalPages}
+                totalItems={disputeTotalItems}
+                showingFrom={disputeShowingFrom}
+                showingTo={disputeShowingTo}
+                onPageChange={setDisputePage}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {evidenceDispute && orgId && (
+        <SubmitEvidenceDialog
+          dispute={evidenceDispute}
+          orgId={orgId}
+          open={!!evidenceDispute}
+          onOpenChange={(open) => { if (!open) setEvidenceDispute(null); }}
+        />
+      )}
+    </>
   );
 }
 
@@ -1590,8 +1893,9 @@ export default function PaymentOps() {
           </TabsContent>
 
           {/* Disputes */}
-          <TabsContent value="disputes">
+          <TabsContent value="disputes" className="space-y-6">
             <DisputesCard orgId={orgId} formatCurrency={formatCurrency} dateFrom={dateFrom} dateTo={dateTo} disputeStatus={disputeStatus} clientSearch={debouncedClientSearch} />
+            <FraudAlertsCard orgId={orgId} formatCurrency={formatCurrency} />
           </TabsContent>
 
           {/* Tip Distributions */}

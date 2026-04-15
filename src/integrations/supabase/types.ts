@@ -8417,6 +8417,53 @@ export type Database = {
         }
         Relationships: []
       }
+      fraud_warnings: {
+        Row: {
+          actionable: boolean
+          created_at: string
+          fraud_type: string
+          id: string
+          organization_id: string
+          resolved_action: string | null
+          resolved_at: string | null
+          stripe_charge_id: string
+          stripe_warning_id: string
+          updated_at: string
+        }
+        Insert: {
+          actionable?: boolean
+          created_at?: string
+          fraud_type?: string
+          id?: string
+          organization_id: string
+          resolved_action?: string | null
+          resolved_at?: string | null
+          stripe_charge_id: string
+          stripe_warning_id: string
+          updated_at?: string
+        }
+        Update: {
+          actionable?: boolean
+          created_at?: string
+          fraud_type?: string
+          id?: string
+          organization_id?: string
+          resolved_action?: string | null
+          resolved_at?: string | null
+          stripe_charge_id?: string
+          stripe_warning_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_warnings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gallery_images: {
         Row: {
           alt: string
@@ -14215,6 +14262,7 @@ export type Database = {
           created_at: string
           currency: string
           evidence_due_by: string | null
+          evidence_submitted_at: string | null
           id: string
           metadata: Json | null
           organization_id: string
@@ -14235,6 +14283,7 @@ export type Database = {
           created_at?: string
           currency?: string
           evidence_due_by?: string | null
+          evidence_submitted_at?: string | null
           id?: string
           metadata?: Json | null
           organization_id: string
@@ -14255,6 +14304,7 @@ export type Database = {
           created_at?: string
           currency?: string
           evidence_due_by?: string | null
+          evidence_submitted_at?: string | null
           id?: string
           metadata?: Json | null
           organization_id?: string
