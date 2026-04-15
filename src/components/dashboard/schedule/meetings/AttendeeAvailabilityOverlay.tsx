@@ -46,7 +46,7 @@ export function AttendeeAvailabilityOverlay({
         .not('status', 'in', '("cancelled","no_show")')
         .eq('is_demo', false);
 
-      for (const a of phorest || []) {
+      for (const a of (phorest as any[] || []) as any[]) {
         if (!a.stylist_user_id) continue;
         const arr = blocks.get(a.stylist_user_id) || [];
         arr.push({ start: timeToMinutes(a.start_time), end: timeToMinutes(a.end_time), type: 'appointment' });

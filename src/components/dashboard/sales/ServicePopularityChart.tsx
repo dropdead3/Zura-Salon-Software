@@ -95,7 +95,7 @@ function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: strin
       if (error) throw error;
 
       const byStaff: Record<string, { count: number; revenue: number }> = {};
-      data?.forEach(row => {
+      (data as any[] || []).forEach((row: any) => {
         const id = row.phorest_staff_id;
         if (!id) return;
         if (!byStaff[id]) byStaff[id] = { count: 0, revenue: 0 };

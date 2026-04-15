@@ -159,7 +159,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
         .order('category')
         .order('name');
 
-      const all = (svcData || []) as PhorestService[];
+      const all = (svcData || []) as unknown as PhorestService[];
       const grouped = all.reduce((acc, s) => {
         const cat = s.category || 'Other';
         if (!acc[cat]) acc[cat] = [];
@@ -723,7 +723,7 @@ function ClientRow({ client, onSelect }: { client: PhorestClient; onSelect: (c: 
         .order('appointment_date', { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data?.appointment_date ?? null;
+      return (data as any)?.appointment_date ?? null;
     },
     enabled: !!client.phorest_client_id,
     staleTime: 60_000,

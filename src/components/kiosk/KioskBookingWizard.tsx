@@ -105,22 +105,14 @@ export function KioskBookingWizard() {
       if (!branchId) return [];
       const { data } = await supabase
         .from('v_all_staff' as any)
-        .select(`
-          id,
-          phorest_staff_id,
-          user_id,
-          employee:employee_profiles!phorest_staff_mapping_user_id_fkey(
-            display_name,
-            photo_url
-          )
-        `)
-        .eq('phorest_branch_id', branchId)
+        .select('user_id, phorest_staff_id, display_name, photo_url, location_id, show_on_calendar')
+        .eq('location_id', branchId)
         .eq('show_on_calendar', true);
-      return (data || []).map(s => ({
-        id: s.id,
+      return ((data || []) as any[]).map((s: any) => ({
+        id: s.user_id,
         phorest_staff_id: s.phorest_staff_id,
-        name: (s.employee as any)?.display_name || 'Staff',
-        photo_url: (s.employee as any)?.photo_url || null,
+        name: s.display_name || 'Staff',
+        photo_url: s.photo_url || null,
       }));
     },
     enabled: !!branchId && showStylists,
