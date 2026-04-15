@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { Switch } from '@/components/ui/switch';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
   ChevronLeft, 
@@ -73,6 +75,8 @@ interface ScheduleHeaderProps {
   onOpenBlockManager?: () => void;
   showShiftsView?: boolean;
   onToggleShiftsView?: () => void;
+  showAllStylists?: boolean;
+  onShowAllStylistsChange?: (value: boolean) => void;
 }
 
 export function ScheduleHeader({
@@ -100,6 +104,8 @@ export function ScheduleHeader({
   onOpenBlockManager,
   showShiftsView = false,
   onToggleShiftsView,
+  showAllStylists = true,
+  onShowAllStylistsChange,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
