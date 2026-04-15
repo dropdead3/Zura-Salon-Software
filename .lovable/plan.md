@@ -1,35 +1,35 @@
 
 
-## Fix Build Errors — View Query Type Casts
+## Fix Scheduler — Remove Broken FK Join + Batch Profile Resolution
 
-All errors are the identical pattern: queries against `v_all_*` views return `SelectQueryError` because views aren't in the generated types. The fix is casting results with `as any[]` or `as any`.
+### Problem
+`usePhorestCalendar.ts` line 155-164 uses an FK join on the `v_all_appointments` view:
+```
+stylist_profile:employee_profiles!phorest_appointments_stylist_user_id_fkey(display_name, full_name, photo_url)
+```
+Supabase views don't support FK joins — the query silently returns zero rows, making the calendar empty.
 
-### Files and Fixes
+### Fix (1 file)
 
-**1. `src/hooks/useClientTransactionHistory.ts`**
-- Line 38: `items` from `v_all_transaction_items` query — already partially cast at line 65/69 but the `items` variable itself is used raw at lines 89-131
-- Fix: Cast `items` immediately after query: `const typedItems = (items || []) as any[];` then use `typedItems` in the summary loop (lines 89-131)
+**`src/hooks/usePhorestCalendar.ts`**
+1. Replace the `.select(*, stylist_profile:employee_profiles!fkey(...))` with `.select('*')`
+2. After collecting `allRows`, batch-resolve stylist profiles:
+   - Extract unique `stylist_user_id` values
+   - Query `employee_profiles` for `user_id, display_name, full_name, photo_url`
+   - Build a Map and attach `stylist_profile` to each row
+3. This restores all appointment data AND stylist names/photos
 
-**2. `src/hooks/useClientsData.ts`**
-- Lines 278-282: `data` from `v_all_clients` query used with spread and property access
-- Fix: `return ((data || []) as any[]).map((c: any) => ({ ...c, name: ... }))`
+### Build Error Fixes (3 files, same `as any` pattern)
 
-**3. `src/hooks/useDraftAvailabilityCheck.ts`**
-- Lines 27, 36-37, 50-51: `existingAppts` from `v_all_appointments` used with `.start_time`/`.end_time`
-- Fix: `const existingAppts = (appointments || []) as any[];`
+| File | Lines | Fix |
+|------|-------|-----|
+| `useRevenueGapAnalysis.ts` | 106-142 | Cast `staffMap` forEach to `(s: any)`, `clientData` forEach to `(c: any)` |
+| `useSalesAnalytics.ts` | 107-108 | Cast `services` forEach to `(s: any)` |
+| `useSalesData.ts` | 168, 431-453, 735-800 | Cast `mappings` forEach to `(m: any)`, appointment data iterations to `(apt: any)` |
 
-**4. `src/hooks/useHiringCapacity.ts`**
-- Lines 139-141: `data` from `v_all_appointments` iterated with `.location_id`
-- Fix: `(data as any[] || []).forEach((apt: any) => { ... })`
-
-**5. `src/hooks/useHouseholds.ts`**
-- Lines 72, 125, 162, 191, 196, 202: `clients` from `v_all_clients` used in `.map(c => [c.id, c])`
-- Fix: Cast all three `clients` results: `(clients as any[] || []).map((c: any) => [c.id, c])`
-- Line 156/162: `client` from `.maybeSingle()` — cast as `client as any`
-
-**6. `src/hooks/useKioskCheckin.ts`**
-- Lines 104-160: `clients` and `appointments` from view queries accessed with property names
-- Fix: Cast `clients` as `(clients as any[] || [])` and map with `(c: any) =>`, same for `appointments`
-
-### No functional changes — only type assertion additions to resolve TS inference on union views.
+### Data Preservation Guarantee
+- No writes to Phorest tables
+- No deletions
+- Union view continues serving historical + native data
+- Calendar renders both sources identically
 
