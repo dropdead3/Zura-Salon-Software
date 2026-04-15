@@ -1,55 +1,45 @@
 
+Fix the scheduler so appointment cards use the actual service-category palette instead of the same fallback gray.
 
-## Make Appointment Cards Follow Category Colors with Ghost Style
+### What’s actually broken
+The ghost styling is already being applied, but `AppointmentCardContent` is tinting cards from `appointment.service_category` only. When that value is missing, stale, or doesn’t match the configured category name exactly, `getCategoryColor()` falls back to the default gray — so every card ends up looking the same.
 
-### Problem
-All appointment cards look nearly identical in dark mode. The 0.28 opacity fill blends into the dark background, making category colors indistinguishable. The user wants a "ghost" aesthetic — translucent cards where the category color is clearly visible.
+### Implementation
+1. **Resolve a real display category before coloring**
+   - In `src/components/dashboard/schedule/AppointmentCardContent.tsx`, add a resolved category value that prefers:
+     1. the appointment’s stored category
+     2. the primary service category from `serviceLookup`
+     3. a last-resort service-name heuristic
+   - Use this resolved category everywhere the card color is derived:
+     - main card tint
+     - accent border
+     - consultation gradient detection
+     - stored gradient marker lookup
+     - block/break overlay checks
+     - multi-service band colors
 
-### Fix
-**1 file**: `src/utils/categoryColors.ts` — `getDarkCategoryStyle()` function
+2. **Make fallback matching salon-aware**
+   - In `src/utils/categoryColors.ts`, expand `getCategoryColor()` heuristics so common service names map correctly instead of defaulting to gray.
+   - Add matches for common salon naming like:
+     - `root retouch`, `single process`, `glaze`, `gloss`, `toner` → Color
+     - `highlight`, `face frame`, `foils`, `balayage` → Blonding
+     - `clipper`, `trim`, `haircut` → Haircuts
+     - `blowout`, `style`, `updo` → Styling
 
-Increase opacity and enhance the ghost aesthetic:
-
-```
-// Current (barely visible)
-fillAlpha = isGray ? 0.30 : 0.28
-hover    = isGray ? 0.38 : 0.36
-selected = isGray ? 0.44 : 0.40
-glowAlpha = isGray ? 0.08 : 0.15
-
-// Ghost style (translucent but clearly tinted)
-fillAlpha = isGray ? 0.18 : 0.15
-hover    = isGray ? 0.25 : 0.22
-selected = isGray ? 0.32 : 0.28
-glowAlpha = isGray ? 0.12 : 0.22
-```
-
-Additionally, change the border approach for a true ghost card feel:
-- Remove the solid 1px border and replace with a subtle same-color border at low opacity
-- Keep the 4px left accent bar using the full category color
-- Add `backdropFilter: 'blur(8px)'` for frosted glass depth
-
-**Also modify**: `src/components/dashboard/schedule/AppointmentCardContent.tsx` — the `cardStyle` block (lines 496-507)
-
-Update the dark+category style to use ghost properties:
-
-```tsx
-// Ghost card style
-backgroundColor: darkStyle.fill,        // lower opacity tint
-color: darkStyle.text,                   // category color for text
-borderColor: `rgba(r,g,b, 0.25)`,       // subtle matching border
-borderWidth: '1px',
-borderStyle: 'solid',
-borderLeftColor: darkStyle.accent,       // strong accent bar
-borderLeftWidth: '4px',
-backdropFilter: 'blur(8px)',             // frosted glass
-boxShadow: darkStyle.glow,              // subtle category glow
-```
+3. **Ensure the scheduler uses service palette coloring**
+   - In `src/pages/dashboard/Schedule.tsx`, stop relying on the legacy `preferences.color_by` value for the appointment cards and pass `service` coloring for day/week schedule cards so the scheduler consistently follows the configured service palette.
+   - Keep status communication in the badge/pill, not the whole card fill.
 
 ### Result
-Cards become frosted-glass panels with a visible category color tint, a strong left accent bar, and a subtle matching glow — each category clearly distinguishable while maintaining the dark-mode aesthetic.
+- `Root Retouch` cards pick up the org’s Color color
+- `Chunky Highlight / Face Frame Highlight` cards pick up Blonding color
+- `Clipper`/cut services stop falling back to gray
+- The existing ghost/frosted look stays, but each appointment is visibly tinted by its service category
 
-### Scope
-- `src/utils/categoryColors.ts` — adjust opacity values and add backdrop blur property
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — apply backdrop blur in card style
-
+### Technical details
+- Files to update:
+  - `src/components/dashboard/schedule/AppointmentCardContent.tsx`
+  - `src/utils/categoryColors.ts`
+  - `src/pages/dashboard/Schedule.tsx`
+- No backend or database changes
+- Shared `AppointmentCardContent` means day + week update together
