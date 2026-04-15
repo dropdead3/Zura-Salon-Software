@@ -1,23 +1,56 @@
 
 
-# Make Schedule Header Dropdowns Responsive Width
+# Remove Horizontal Scroll — Fit All Schedule Columns Responsively
 
-## What Changes
-The Location and Staff selector buttons in the schedule header are hardcoded at `w-[160px]`, which clips longer text like location names and "All Stylists". They need to auto-size to fit content, with a max-width cap to prevent overlapping other header elements.
+## Problem
+The DayView and WeekView enforce minimum widths (`min-w-[600px]`, `min-w-[800px]`, `min-w-[160px]` per column) that force horizontal scrolling on desktop. This is unusable without a touchscreen or trackpad.
 
-## Implementation
+## Solution
+Remove all minimum-width constraints so columns flex equally to fill available space. Card internal content adapts by truncating text and hiding secondary details when columns are narrow.
 
-### File: `src/components/dashboard/schedule/ScheduleHeader.tsx`
+## Changes
 
-**3 class changes:**
+### 1. DayView — Remove min-width constraints
+**File:** `src/components/dashboard/schedule/DayView.tsx`
 
-1. **Location SelectTrigger** (line 312): Replace `w-[160px]` with `min-w-[140px] max-w-[220px] w-auto`
-2. **Staff Button** (line 339): Replace `w-[160px]` with `min-w-[140px] max-w-[220px] w-auto`
-3. **Parent container** (line 309): Add `items-end` to right-align the stacked selectors cleanly
+- **Line 457:** Remove `min-w-[600px]` from the inner container (just use a plain `div`)
+- **Line 468:** Remove `min-w-[160px]` from stylist header columns
+- **Line 511:** Remove `min-w-[160px]` from stylist body columns
 
-This lets both dropdowns grow to fit their content (up to 220px) and shrink down to 140px when space is tight, without overlapping adjacent icon buttons or the center date display.
+All columns keep `flex-1` so they divide available space equally.
 
-## No Other Files Change
+### 2. WeekView — Remove min-width constraint
+**File:** `src/components/dashboard/schedule/WeekView.tsx`
 
-Single file, three class string edits.
+- **Line 226:** Remove `min-w-[800px]` from the inner container
+
+### 3. Card content — Responsive text truncation
+**File:** `src/components/dashboard/schedule/AppointmentCardContent.tsx`
+
+The card content already uses `truncate` on most text lines and scales by `CardSize`. The main improvement needed:
+
+- In `GridContent`, when many columns are visible and cards are narrow, ensure the status badge and indicator cluster don't overflow. Add `overflow-hidden` on the top-row containers and reduce badge padding at small widths.
+- Add `text-[11px]` fallback sizing on service name lines so they compress gracefully.
+- Ensure the compact view's `pr-16` (right padding for indicators) is reduced to `pr-8` to avoid wasting space in narrow columns.
+
+### 4. Stylist header — Responsive name display
+**File:** `src/components/dashboard/schedule/DayView.tsx`
+
+- Add `truncate` and `min-w-0` to the stylist name container so long names don't force column widths.
+- Hide the stylist phone number when columns are narrow (already conditional, just ensure it truncates).
+
+## Technical Details
+
+| Location | Current | New |
+|----------|---------|-----|
+| DayView line 457 | `min-w-[600px]` | *(removed)* |
+| DayView line 468 | `flex-1 min-w-[160px]` | `flex-1 min-w-0` |
+| DayView line 511 | `flex-1 min-w-[160px]` | `flex-1 min-w-0` |
+| WeekView line 226 | `min-w-[800px]` | *(removed)* |
+| GridContent compact `pr-16` | `pr-16` | `pr-8` |
+
+## Files to Modify
+- `src/components/dashboard/schedule/DayView.tsx` — remove min-width constraints, add truncation to headers
+- `src/components/dashboard/schedule/WeekView.tsx` — remove min-width constraint
+- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — tighten compact padding, add overflow protection
 
