@@ -339,7 +339,7 @@ export function ScheduleHeader({
                   className="h-7 w-[160px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
-                    ? 'All Staff' 
+                    ? 'All Stylists' 
                     : selectedStaffIds.length === 1
                       ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
                       : `${selectedStaffIds.length} selected`
@@ -358,7 +358,7 @@ export function ScheduleHeader({
                   >
                     {selectedStaffIds.length === 0 && <Check className="h-4 w-4" />}
                     {selectedStaffIds.length !== 0 && <div className="w-4" />}
-                    All Staff
+                    All Stylists With Appointments
                   </button>
                   <div className="h-px bg-border my-1" />
                   {stylists.map((s) => (
