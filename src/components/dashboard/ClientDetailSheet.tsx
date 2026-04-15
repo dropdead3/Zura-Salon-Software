@@ -280,9 +280,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
       if (!client) throw new Error('No client');
       const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
       
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
+      const payload = {
           first_name: editFirstName.trim() || null,
           last_name: editLastName.trim() || null,
           name: fullName,
@@ -290,10 +288,21 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           email: editEmail.trim() || null,
           phone: editPhone.trim() || null,
           landline: editLandline.trim() || null,
-        } as any)
+        } as any;
+      
+      // Try native clients table first, fall back to phorest_clients
+      const { error: nativeError } = await supabase
+        .from('clients')
+        .update(payload)
         .eq('id', client.id);
       
-      if (error) throw error;
+      if (nativeError) {
+        const { error } = await supabase
+          .from('phorest_clients')
+          .update(payload)
+          .eq('id', client.id);
+        if (error) throw error;
+      }
 
       // Belt-and-suspenders: clear stale duplicate flag if contact no longer matches canonical
       if (client.is_duplicate && client.canonical_client_id) {
