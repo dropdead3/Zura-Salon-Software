@@ -1,34 +1,49 @@
 
 
-## Make Scheduler Appointments Visibly Reflect Category Color Themes
+## Fix: Appointments Overlapping Stylist Name Bar
 
 ### Problem
-The dark-mode appointment cards use very low-opacity fills (`rgba` at 0.18 alpha), making all cards appear similarly dark regardless of their service category color. The configured category color palette themes are barely visible.
-
-### Root Cause
-In `src/utils/categoryColors.ts`, the `getDarkCategoryStyle()` function produces translucent fills that are too subtle against the dark calendar background. The left accent bar uses the category color, but the card fill is nearly invisible.
+Appointment cards and the sticky stylist header both use `z-10`. When scrolling, appointment cards render on top of the frosted-glass name bar instead of sliding underneath it.
 
 ### Fix
-**1 file**: `src/utils/categoryColors.ts` — `getDarkCategoryStyle()` function (lines 334-371)
+**1 file**: `src/components/dashboard/schedule/DayView.tsx`
 
-Increase the fill opacity from 0.18 → 0.28 (colored) and 0.22 → 0.30 (grays) so the category tint is clearly visible on cards. Also bump hover/selected states proportionally.
+**Line 469** — Bump the sticky header z-index from `z-10` to `z-20`:
+```tsx
+// Before
+<div className="flex border-b sticky top-0 z-10" ...>
 
-```
-// Current
-fillAlpha = isGray ? 0.22 : 0.18;
-hover = rgba(r, g, b, isGray ? 0.30 : 0.28);
-selected = rgba(r, g, b, isGray ? 0.36 : 0.32);
-
-// Proposed
-fillAlpha = isGray ? 0.30 : 0.28;
-hover = rgba(r, g, b, isGray ? 0.38 : 0.36);
-selected = rgba(r, g, b, isGray ? 0.44 : 0.40);
+// After
+<div className="flex border-b sticky top-0 z-20" ...>
 ```
 
-This makes each category's color visibly distinct while maintaining the dark-mode aesthetic — cards will show clear tinting that matches the org's configured category color palette.
+**Line 493** — Bump the gradient fade from `z-[9]` to `z-[19]` to stay just below the header:
+```tsx
+// Before
+<div className="h-3 ... sticky top-[52px] z-[9]" />
 
-### Scope
-- **1 file modified**: `src/utils/categoryColors.ts`
-- **3 values changed**: fill, hover, selected opacity levels
-- Zero risk to light-mode rendering (separate code path)
+// After
+<div className="h-3 ... sticky top-[52px] z-[19]" />
+```
+
+**Line 625** — The current-time red line already uses `z-20`; bump it to `z-[15]` so it stays between cards and header:
+```tsx
+// Before
+className="... z-20"
+
+// After
+className="... z-[15]"
+```
+
+### Z-index hierarchy after fix
+| Element | Z-index |
+|---------|---------|
+| Appointment cards | 10 |
+| Current time line | 15 |
+| Gradient fade | 19 |
+| Stylist header | 20 |
+| Tooltips | 40 |
+| Drag overlay | 50 |
+
+Cards stay at `z-10` and slide under the `z-20` header on scroll. No other files affected.
 
