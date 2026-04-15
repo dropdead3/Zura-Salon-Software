@@ -134,7 +134,7 @@ export function SendToPayButton({
         )}
         {afterpayEnabled
           ? afterpaySurchargeEnabled
-            ? `Send to Pay (Afterpay + ${Math.round((afterpaySurchargeRate ?? 0.06) * 100)}% fee)`
+            ? `Send to Pay (Afterpay + ${parseFloat(((afterpaySurchargeRate ?? 0.06) * 100).toFixed(2))}% fee)`
             : 'Send to Pay / Afterpay'
           : 'Send Payment Link'}
       </Button>
