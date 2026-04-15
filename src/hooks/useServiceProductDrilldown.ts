@@ -162,7 +162,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // --- Aggregate products by staff (tax-inclusive) ---
       const productMap: Record<string, { productRevenue: number; productCount: number; items: ProductLineItem[] }> = {};
       productItems.forEach(item => {
-        const sid = item.phorest_staff_id;
+        const sid = (item as any).phorest_staff_id || item.staff_user_id;
         if (!sid) return;
         if (isVishServiceCharge(item.item_name, 'product')) return;
         if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0, items: [] };
