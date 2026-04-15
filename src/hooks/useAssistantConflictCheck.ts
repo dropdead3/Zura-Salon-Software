@@ -75,7 +75,7 @@ export function useAssistantConflictCheck(
     const map = new Map<string, ConflictingAppointment[]>();
     if (!rawConflicts) return map;
 
-    const { appointments: appts, timeBlocks } = rawConflicts;
+    const { appointments: appts, timeBlocks, assistantMap } = rawConflicts;
 
     for (const apt of (appts || [])) {
       const base: Omit<ConflictingAppointment, 'role'> = {
