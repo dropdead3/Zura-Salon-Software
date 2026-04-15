@@ -262,18 +262,9 @@ function GridContent({
         </>
       ) : (
         <>
-          {/* Day view: indicator cluster + status badge top-right */}
+          {/* Day view: indicators + NC/RC badge + status badge top-right */}
           <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
             <IndicatorCluster flags={indicatorFlags} size={size} />
-            <span className={cn(
-              'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-              badge.bg, badge.text, badge.border
-            )}>
-              {badge.label}
-            </span>
-          </div>
-          {/* Client name + phone */}
-          <div className="text-sm font-medium truncate pr-20 flex items-center gap-1">
             {showClientAvatar && (
               <span className={cn(
                 'h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0',
@@ -284,9 +275,18 @@ function GridContent({
                 {appointment.is_new_client ? 'NC' : 'RC'}
               </span>
             )}
+            <span className={cn(
+              'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
+              badge.bg, badge.text, badge.border
+            )}>
+              {badge.label}
+            </span>
+          </div>
+          {/* Client name + phone below badges */}
+          <div className="text-sm font-medium truncate pt-6">
             <span className="truncate">{appointment.client_name}</span>
             {showClientPhone && appointment.client_phone && (
-              <span className="font-normal opacity-80 text-xs shrink-0">
+              <span className="font-normal opacity-80 text-xs ml-1">
                 {formatPhoneDisplay(appointment.client_phone)}
               </span>
             )}
