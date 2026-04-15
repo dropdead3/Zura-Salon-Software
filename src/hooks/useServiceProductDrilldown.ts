@@ -100,29 +100,57 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       });
 
 
-      // --- Staff name lookup ---
-      const { data: staffMappings } = await supabase
-        .from('phorest_staff_mapping')
-        .select(`
-          phorest_staff_id,
-          user_id,
-          employee_profiles:user_id (
-            full_name,
-            display_name
-          )
-        `)
-        .eq('is_active', true);
+      // --- Build staff lookup: resolve via employee_profiles (Zura-native) ---
+      // Collect unique staff identifiers from appointments (prefer stylist_user_id)
+      const staffIdSet = new Set<string>();
+      appointments.forEach(appt => {
+        const sid = appt.stylist_user_id || appt.phorest_staff_id;
+        if (sid) staffIdSet.add(sid);
+      });
+      productItems.forEach(item => {
+        if (item.staff_user_id) staffIdSet.add(item.staff_user_id);
+      });
+      const allStaffIds = [...staffIdSet];
+
+      // Try employee_profiles first
+      const { data: profiles } = allStaffIds.length > 0
+        ? await supabase
+            .from('employee_profiles')
+            .select('user_id, full_name, display_name')
+            .in('user_id', allStaffIds)
+        : { data: [] };
 
       const staffLookup: Record<string, string> = {};
-      staffMappings?.forEach(m => {
-        const profile = m.employee_profiles as any;
-        staffLookup[m.phorest_staff_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
+      (profiles || []).forEach(p => {
+        staffLookup[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
+      });
+
+      // For unresolved phorest_staff_ids, try phorest_staff_mapping
+      const unresolvedPhorestIds = allStaffIds.filter(id => !staffLookup[id]);
+      if (unresolvedPhorestIds.length > 0) {
+        const { data: mappings } = await supabase
+          .from('phorest_staff_mapping')
+          .select(`phorest_staff_id, user_id, employee_profiles:user_id (full_name, display_name)`)
+          .in('phorest_staff_id', unresolvedPhorestIds)
+          .eq('is_active', true);
+        mappings?.forEach((m: any) => {
+          const profile = m.employee_profiles;
+          staffLookup[m.phorest_staff_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
+        });
+      }
+
+      // Also use staff_name from appointments as final fallback
+      appointments.forEach(appt => {
+        const sid = appt.stylist_user_id || appt.phorest_staff_id;
+        if (sid && !staffLookup[sid] && appt.staff_name) {
+          staffLookup[sid] = appt.staff_name;
+        }
       });
 
       // --- Aggregate services by staff ---
       const serviceMap: Record<string, { serviceRevenue: number; serviceCount: number; tipTotal: number }> = {};
       appointments.forEach(appt => {
-        const sid = appt.phorest_staff_id;
+        const sid = appt.stylist_user_id || appt.phorest_staff_id;
         if (!sid) return;
         if (!serviceMap[sid]) serviceMap[sid] = { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
         serviceMap[sid].serviceRevenue += (Number(appt.total_price) || 0) - (Number(appt.tip_amount) || 0);
@@ -133,7 +161,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // --- Aggregate products by staff (tax-inclusive) ---
       const productMap: Record<string, { productRevenue: number; productCount: number; items: ProductLineItem[] }> = {};
       productItems.forEach(item => {
-        const sid = item.phorest_staff_id;
+        const sid = item.staff_user_id;
         if (!sid) return;
         if (isVishServiceCharge(item.item_name, 'product')) return;
         if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0, items: [] };
@@ -144,19 +172,19 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       });
 
       // --- Merge ---
-      const allStaffIds = new Set([...Object.keys(serviceMap), ...Object.keys(productMap)]);
+      const mergedStaffIds = new Set([...Object.keys(serviceMap), ...Object.keys(productMap)]);
       let totalServiceRevenue = 0;
       let totalProductRevenue = 0;
       Object.values(serviceMap).forEach(v => { totalServiceRevenue += v.serviceRevenue; });
       Object.values(productMap).forEach(v => { totalProductRevenue += v.productRevenue; });
 
-      const staffData: StaffServiceProduct[] = Array.from(allStaffIds).map(phorestStaffId => {
-        const svc = serviceMap[phorestStaffId] || { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
-        const prod = productMap[phorestStaffId] || { productRevenue: 0, productCount: 0, items: [] };
+      const staffData: StaffServiceProduct[] = Array.from(mergedStaffIds).map(staffId => {
+        const svc = serviceMap[staffId] || { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
+        const prod = productMap[staffId] || { productRevenue: 0, productCount: 0, items: [] };
         const sortedItems = [...prod.items].sort((a, b) => b.amount - a.amount);
         return {
-          phorestStaffId,
-          staffName: staffLookup[phorestStaffId] || 'Unknown',
+          phorestStaffId: staffId,
+          staffName: staffLookup[staffId] || 'Unknown',
           serviceRevenue: svc.serviceRevenue,
           serviceCount: svc.serviceCount,
           productRevenue: prod.productRevenue,
