@@ -1,25 +1,42 @@
 
 
-## Fix: Org Timezone Set to Wrong Default
+## Add Timezone Setting to System Settings
 
-### Root Cause
-The organization "Drop Dead Salons" has no timezone configured in its settings. The fallback is `America/New_York` (Eastern Time). Since the salons are in Mesa, Arizona (`America/Phoenix` — MST, no DST), there's a 2-3 hour offset. At 10:46 PM Arizona time, it's already 12:46 AM Eastern — so the scheduler incorrectly shows April 15 as "Today."
+### Problem
+Organization admins cannot set their timezone — it currently only exists in the Platform admin area. The org "Drop Dead Salons" defaulted to Eastern Time, causing the scheduler to show the wrong date.
 
-### Fix — Set timezone in org settings
+### Approach
+Add a "Regional" card to the **System** settings category (`/dashboard/admin/settings?category=system`) with a timezone selector. It reads/writes `organizations.settings.defaults.timezone` — the same path that `useOrgDefaults` already consumes.
 
-Update the organization's settings JSON to include the correct timezone:
+### Changes
 
-```sql
-UPDATE organizations 
-SET settings = jsonb_set(
-  COALESCE(settings, '{}'::jsonb), 
-  '{timezone}', 
-  '"America/Phoenix"'
-)
-WHERE id = 'fa23cd95-decf-436a-adba-4561b0ecc14d';
+**1. New hook: `src/hooks/useTimezoneSettings.ts`**
+- Read: Fetch `organizations.settings` for the current org, extract `defaults.timezone`
+- Write: Read-then-update pattern (per memory rules) — merge `defaults.timezone` into existing settings JSON
+- Invalidate `organizations` query key so `useOrgDefaults` picks up changes immediately
+
+**2. Update: `src/components/dashboard/settings/SettingsCategoryDetail.tsx`**
+- Add a new "Regional" card inside the `activeCategory === 'system'` section (in the `settings` tab, alongside Appearance, Keyboard Shortcuts, etc.)
+- Card contains:
+  - Globe icon + "REGIONAL" title (font-display)
+  - Description: "Set your organization's timezone. This affects the scheduler, reports, and all time-based displays."
+  - Timezone `<Select>` dropdown using the same `TIMEZONES` list (America/New_York, Chicago, Denver, LA, Phoenix, Anchorage, Honolulu)
+  - Current value from `useOrgDefaults` as the default
+  - Save button that triggers the mutation
+
+### Data flow
+```text
+Select timezone → useTimezoneSettings mutation
+  → reads organizations.settings (current)
+  → merges defaults.timezone
+  → updates organizations row
+  → invalidates queries
+  → useOrgDefaults picks up new value
+  → scheduler, formatDate, etc. all update
 ```
 
 ### Scope
-- **1 data update** — no code changes needed
-- The `useOrgDefaults` hook will immediately pick up `America/Phoenix` and all timezone-dependent UI (scheduler "Today", current-time indicator, appointment comparisons) will be correct
+- **1 new file**: `src/hooks/useTimezoneSettings.ts`
+- **1 edited file**: `SettingsCategoryDetail.tsx` (add ~40 lines for the Regional card)
+- No migration needed — `organizations.settings` is already a JSONB column
 
