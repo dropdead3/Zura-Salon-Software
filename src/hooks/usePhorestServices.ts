@@ -174,7 +174,7 @@ export function useServiceAvailability(serviceName: string) {
       if (error) throw error;
       
       // Get unique branch IDs
-      const branchIds = [...new Set(services?.map(s => s.phorest_branch_id) || [])];
+      const branchIds = [...new Set(((services || []) as any[]).map((s: any) => s.phorest_branch_id))];
       
       // Get locations for these branches
       const { data: locations } = await supabase

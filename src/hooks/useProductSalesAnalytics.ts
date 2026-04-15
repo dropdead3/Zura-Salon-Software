@@ -138,14 +138,15 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         .select('phorest_staff_id, user_id, phorest_staff_name')
         .in('phorest_staff_id', staffIds);
       
-      const userIds = mappings?.map(m => m.user_id).filter(Boolean) || [];
+      const typedMappings = (mappings || []) as any[];
+      const userIds = typedMappings.map((m: any) => m.user_id).filter(Boolean);
       const { data: profiles } = await supabase
         .from('employee_profiles')
         .select('user_id, full_name, display_name, photo_url')
         .in('user_id', userIds);
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-      const mappingMap = new Map(mappings?.map(m => [m.phorest_staff_id, m]) || []);
+      const mappingMap = new Map(typedMappings.map((m: any) => [m.phorest_staff_id, m]));
       
       // Build staff performance list
       const staffPerformance: StaffProductPerformance[] = [];

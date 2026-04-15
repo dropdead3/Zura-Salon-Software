@@ -353,13 +353,13 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
         .order('start_time');
 
       if (error) throw error;
-      return appointments || [];
+      return (appointments || []) as any[];
     },
-    onSuccess: (appointments) => {
+    onSuccess: (appointments: any[]) => {
       setSession(prev => prev ? {
         ...prev,
         lookupMethod: 'browse',
-        appointments: appointments.map(a => ({
+        appointments: appointments.map((a: any) => ({
           id: a.id,
           phorest_id: undefined,
           appointment_date: a.appointment_date,

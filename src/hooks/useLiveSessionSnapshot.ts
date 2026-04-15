@@ -102,7 +102,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
 
       const staffToUser = new Map<string, string>();
       const staffToName = new Map<string, string>();
-      (staffMappings || []).forEach(m => {
+      ((staffMappings || []) as any[]).forEach((m: any) => {
         if (m.user_id) staffToUser.set(m.phorest_staff_id, m.user_id);
         if (m.phorest_staff_name) staffToName.set(m.phorest_staff_id, m.phorest_staff_name);
       });
