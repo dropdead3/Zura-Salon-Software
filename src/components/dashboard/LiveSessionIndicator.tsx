@@ -9,7 +9,8 @@ import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
 import { LiveSessionDrilldown } from './LiveSessionDrilldown';
-import { Moon } from 'lucide-react';
+import { Moon, Clock } from 'lucide-react';
+import { parse, format } from 'date-fns';
 
 const MAX_AVATARS = 7;
 const ENTERPRISE_THRESHOLD = 40;
@@ -24,12 +25,30 @@ export function LiveSessionIndicator({ locationId, compact }: LiveSessionIndicat
   const live = useLiveSessionSnapshot(locationId);
   const [drilldownOpen, setDrilldownOpen] = useState(false);
 
-  const { inSessionCount, activeStylistCount, activeAssistantCount, stylists, dayHadAppointments, isLoading } = live;
+  const { inSessionCount, activeStylistCount, activeAssistantCount, stylists, dayHadAppointments, firstAppointmentTime, isLoading } = live;
 
   if (isLoading) return null;
 
   // Day concluded state
   if (inSessionCount === 0) {
+    // Pre-service: appointments exist but haven't started yet
+    if (firstAppointmentTime) {
+      let formattedTime = firstAppointmentTime;
+      try {
+        formattedTime = format(parse(firstAppointmentTime, 'HH:mm:ss', new Date()), 'h:mm a');
+      } catch {
+        // fallback to raw value
+      }
+      return (
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border select-none whitespace-nowrap">
+          <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap font-sans truncate">
+            {compact ? `Starts ${formattedTime}` : `First appt at ${formattedTime}`}
+          </span>
+        </div>
+      );
+    }
+
     if (!dayHadAppointments) return null;
     return (
       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border select-none whitespace-nowrap">
