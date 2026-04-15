@@ -903,7 +903,7 @@ export default function Schedule() {
           </div>
         ) : (
           <>
-            <div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-[91px]")}>
+            <div className={cn("flex-1 min-h-0 p-4 overflow-hidden")}>
               {copilotOpen && !isMobile ? (
                 <ResizablePanelGroup direction="horizontal" className="h-full">
                   <ResizablePanel defaultSize={75} minSize={50}>
@@ -926,24 +926,24 @@ export default function Schedule() {
               )}
             </div>
 
-            {/* Floating Action Bar */}
+            {/* Action Bar — flex row, always visible */}
             {(view === 'day' || view === 'week') && (
-          <div className="absolute bottom-0 left-0 right-0 pl-4 pr-20 pb-4 pointer-events-none z-20">
-            <div className="pointer-events-auto flex items-center gap-2">
-              <ScheduleActionBar
-                appointments={allAppointments.filter(apt => 
-                  apt.appointment_date === format(new Date(), 'yyyy-MM-dd') &&
-                  apt.location_id === selectedLocation
-                )}
-                onSelectAppointment={(apt) => {
-                  setSelectedAppointment(apt);
-                  setDetailOpen(true);
-                }}
-                todayAppointmentCount={todayAppointmentCount}
-              />
-            </div>
-          </div>
-        )}
+              <div className="shrink-0 px-4 pr-20 pb-4 pt-1">
+                <div className="flex items-center gap-2">
+                  <ScheduleActionBar
+                    appointments={allAppointments.filter(apt => 
+                      apt.appointment_date === format(new Date(), 'yyyy-MM-dd') &&
+                      apt.location_id === selectedLocation
+                    )}
+                    onSelectAppointment={(apt) => {
+                      setSelectedAppointment(apt);
+                      setDetailOpen(true);
+                    }}
+                    todayAppointmentCount={todayAppointmentCount}
+                  />
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
