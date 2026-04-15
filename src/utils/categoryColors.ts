@@ -339,16 +339,15 @@ export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   const isGray = s < 8;
   const { r, g, b } = hexToRgb(hexColor);
 
-  // Translucent fill from original color
-  const fillAlpha = isGray ? 0.30 : 0.28;
+  // Ghost style: translucent tint with visible category color
+  const fillAlpha = isGray ? 0.18 : 0.15;
   const fill = `rgba(${r}, ${g}, ${b}, ${fillAlpha})`;
 
   // Hover: slightly more opaque
-  const hover = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.38 : 0.36})`;
+  const hover = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.25 : 0.22})`;
 
   // Selected: more opaque
-  const selected = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.44 : 0.40})`;
-
+  const selected = `rgba(${r}, ${g}, ${b}, ${isGray ? 0.32 : 0.28})`;
   // Stroke: original light-mode hex
   const stroke = hexColor;
 
@@ -360,8 +359,8 @@ export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   // Text: original light-mode hex for colored, warm off-white for grays
   const text = isGray ? '#e8e4df' : hexColor;
 
-  // Glow: subtle box-shadow halo on hover
-  const glowAlpha = isGray ? 0.08 : 0.15;
+  // Glow: enhanced category glow for ghost aesthetic
+  const glowAlpha = isGray ? 0.12 : 0.22;
   const glow = `0 0 12px rgba(${r}, ${g}, ${b}, ${glowAlpha})`;
 
   // Ring: 2px outline for selected state

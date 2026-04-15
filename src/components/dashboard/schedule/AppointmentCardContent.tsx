@@ -497,11 +497,13 @@ export function AppointmentCardContent({
       return {
         backgroundColor: darkStyle.fill,
         color: darkStyle.text,
-        borderColor: darkStyle.stroke,
+        borderColor: darkStyle.fill,
         borderWidth: '1px',
         borderStyle: 'solid' as const,
         borderLeftColor: darkStyle.accent,
         borderLeftWidth: '4px',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         boxShadow: !isCompact ? darkStyle.glow : undefined,
         transition: 'background-color 150ms ease, box-shadow 150ms ease',
       };
