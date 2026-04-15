@@ -1154,5 +1154,6 @@ export default function Schedule() {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+    </LocationTimezoneProvider>
   );
 }
