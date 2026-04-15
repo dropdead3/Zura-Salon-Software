@@ -146,7 +146,6 @@ export function WeekView({
   assistantProfilesMap,
   assistantTimeBlocks = [],
 }: WeekViewProps) {
-  const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
 
