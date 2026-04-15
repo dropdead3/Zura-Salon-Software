@@ -76,6 +76,7 @@ export default function Schedule() {
   const { roles, user } = useAuth();
   const { data: locations = [] } = useActiveLocations();
   const { data: businessSettings } = useBusinessSettings();
+  const { todayStr: orgToday } = useOrgNow();
   const quickLoginHandled = useRef(false);
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
