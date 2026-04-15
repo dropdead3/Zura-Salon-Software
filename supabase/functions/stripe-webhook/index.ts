@@ -643,14 +643,34 @@ async function handlePaymentIntentSucceeded(
 
   console.log(`PI succeeded: ${piId} for appointment ${appointmentId} (charge_type: ${chargeType}, payment_method: ${paymentMethod})`);
 
+  // Check split-payment context: if appointment has a split_payment_link_intent_id,
+  // the terminal leg should set partially_paid until the link leg also completes.
+  let resolvedStatus = 'paid';
+  if (chargeType === 'terminal') {
+    const { data: apptCheck } = await supabase
+      .from('appointments')
+      .select('split_payment_link_intent_id, payment_status')
+      .eq('id', appointmentId)
+      .maybeSingle();
+
+    if (apptCheck?.split_payment_link_intent_id && apptCheck.payment_status !== 'partially_paid') {
+      // Terminal fired first — link leg is still pending
+      resolvedStatus = 'partially_paid';
+      console.log(`Split payment detected: terminal leg setting partially_paid for appointment ${appointmentId}`);
+    }
+  }
+
   // Idempotent update — only update if not already paid
   const updatePayload: Record<string, unknown> = {
-    payment_status: 'paid',
+    payment_status: resolvedStatus,
     payment_method: paymentMethod,
     stripe_payment_intent_id: piId,
-    paid_at: new Date().toISOString(),
+    paid_at: resolvedStatus === 'paid' ? new Date().toISOString() : undefined,
     payment_failure_reason: null, // Clear any previous failure reason on success
   };
+
+  // Remove undefined keys
+  Object.keys(updatePayload).forEach(k => updatePayload[k] === undefined && delete updatePayload[k]);
 
   // Online booking deposit reconciliation
   if (metadata?.source === 'online_booking' && metadata?.fee_type === 'deposit') {
