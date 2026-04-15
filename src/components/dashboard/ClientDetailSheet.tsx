@@ -274,8 +274,22 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
     queryClient.invalidateQueries({ queryKey: ['client-directory'] });
     queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
   };
+  // Source-aware client update: try native clients first, fall back to phorest_clients
+  const updateClient = async (clientId: string, payload: Record<string, any>) => {
+    const { error: nativeError } = await supabase
+      .from('clients')
+      .update(payload as any)
+      .eq('id', clientId);
+    if (nativeError) {
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update(payload as any)
+        .eq('id', clientId);
+      if (error) throw error;
+    }
+  };
 
-  const saveMutation = useMutation({
+
     mutationFn: async () => {
       if (!client) throw new Error('No client');
       const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
