@@ -27969,6 +27969,34 @@ export type Database = {
         }
         Relationships: []
       }
+      v_all_sales_transactions: {
+        Row: {
+          _source: string | null
+          branch_name: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string | null
+          discount_amount: number | null
+          id: string | null
+          item_category: string | null
+          item_name: string | null
+          item_type: string | null
+          location_id: string | null
+          payment_method: string | null
+          phorest_staff_id: string | null
+          phorest_transaction_id: string | null
+          quantity: number | null
+          stylist_user_id: string | null
+          tax_amount: number | null
+          tip_amount: number | null
+          total_amount: number | null
+          transaction_date: string | null
+          transaction_time: string | null
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       v_all_services: {
         Row: {
           _source: string | null
