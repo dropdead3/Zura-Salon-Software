@@ -35,15 +35,16 @@ export function usePhorestServices(locationId?: string) {
       }
 
       let query = supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('*')
-        .eq('is_active', true)
         .order('category')
         .order('name');
       
-      // Only filter by branch if we have a valid phorest_branch_id
+      // Filter by location if we have a valid location ID or phorest_branch_id
       if (phorestBranchId) {
         query = query.eq('phorest_branch_id', phorestBranchId);
+      } else if (locationId) {
+        query = query.eq('location_id', locationId);
       }
 
       const { data, error } = await query;
@@ -101,9 +102,8 @@ export function useAllServices() {
     queryKey: ['phorest-services-all'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('*')
-        .eq('is_active', true)
         .order('category')
         .order('name');
       
@@ -167,9 +167,8 @@ export function useServiceAvailability(serviceName: string) {
     queryKey: ['phorest-service-availability', serviceName],
     queryFn: async () => {
       const { data: services, error } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('phorest_branch_id')
-        .eq('is_active', true)
         .eq('name', serviceName);
       
       if (error) throw error;

@@ -153,19 +153,9 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
   const { data: realServicesByCategory, isLoading: isLoadingRealServices } = useQuery({
     queryKey: ['dock-demo-real-services', organizationId],
     queryFn: async () => {
-      // Get locations for this org
-      const { data: orgLocations } = await supabase
-        .from('locations')
-        .select('phorest_branch_id')
-        .eq('organization_id', organizationId);
-      const branchIds = (orgLocations || []).map(l => l.phorest_branch_id).filter(Boolean) as string[];
-      if (branchIds.length === 0) return { grouped: {} as Record<string, PhorestService[]>, all: [] as PhorestService[] };
-
       const { data: svcData } = await supabase
-        .from('phorest_services')
+        .from('v_all_services')
         .select('*')
-        .eq('is_active', true)
-        .in('phorest_branch_id', branchIds)
         .order('category')
         .order('name');
 
