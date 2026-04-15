@@ -1,9 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const BodySchema = z.object({
+  dispute_id: z.string().uuid("dispute_id must be a valid UUID"),
+  organization_id: z.string().uuid("organization_id must be a valid UUID"),
+  cancellation_policy_disclosure: z.string().max(5000).optional(),
+  cancellation_rebuttal: z.string().max(5000).optional(),
+  uncategorized_text: z.string().max(10000).optional(),
+  submit: z.boolean().default(true),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,6 +22,7 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
 
@@ -22,9 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Validate JWT
+    // Validate JWT using getClaims
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -32,36 +41,46 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
+    const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
+    if (authError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const body = await req.json();
+    // Validate request body
+    const rawBody = await req.json();
+    const parsed = BodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const {
       dispute_id,
       organization_id,
       cancellation_policy_disclosure,
       cancellation_rebuttal,
       uncategorized_text,
-      submit = true,
-    } = body;
+      submit,
+    } = parsed.data;
 
-    if (!dispute_id || !organization_id) {
-      return new Response(JSON.stringify({ error: "dispute_id and organization_id are required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Service-role client for DB writes
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch the dispute record to get stripe_dispute_id and connected account
+    // Fetch the dispute record — include status for fallback
     const { data: disputeRecord, error: fetchError } = await supabase
       .from("payment_disputes")
-      .select("stripe_dispute_id, metadata")
+      .select("stripe_dispute_id, status, metadata")
       .eq("id", dispute_id)
       .eq("organization_id", organization_id)
       .single();
