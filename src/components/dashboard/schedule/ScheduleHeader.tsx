@@ -223,12 +223,12 @@ export function ScheduleHeader({
 
         {/* Center: Date Display */}
         <div className="text-center">
-        <div className="text-sm font-display tracking-wide whitespace-nowrap">
-          {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
-        </div>
-          {isOrgToday(currentDate) && (
-            <div className="text-xs text-[hsl(40,20%,92%)]/70">Today</div>
-          )}
+          <div className="text-xs font-display tracking-wide text-[hsl(40,20%,92%)]/70">
+            {formatDate(currentDate, 'EEEE')}
+          </div>
+          <div className="text-sm font-display tracking-wide whitespace-nowrap">
+            {formatDate(currentDate, 'MMMM d, yyyy')}
+          </div>
         </div>
 
         {/* Right: Filters & Settings */}
