@@ -186,7 +186,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
     queryKey: ['dock-staff-mapping', staff.userId],
     queryFn: async () => {
       const { data } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('phorest_staff_id')
         .eq('user_id', staff.userId)
         .eq('is_active', true)

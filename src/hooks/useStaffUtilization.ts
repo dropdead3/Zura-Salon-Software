@@ -91,7 +91,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
     queryFn: async () => {
       // Get staff mappings filtered to service providers only
       const { data: staffMappings, error: staffError } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           user_id,
           phorest_staff_id,
@@ -209,7 +209,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
     enabled: serviceProviderIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_staff_services')
+        .from('phorest_staff_services' as any)
         .select(`
           phorest_staff_id,
           phorest_service_id,

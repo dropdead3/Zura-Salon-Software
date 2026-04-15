@@ -22,7 +22,7 @@ export function useQualifiedStaffForServices(serviceIds: string[], branchId?: st
 
       // 1. Check phorest_staff_services (Phorest sync source)
       let phorestQuery = supabase
-        .from('phorest_staff_services')
+        .from('phorest_staff_services' as any)
         .select('phorest_staff_id, phorest_service_id')
         .in('phorest_service_id', serviceIds)
         .eq('is_qualified', true);
@@ -124,7 +124,7 @@ export function useStaffQualifiedServices(phorestStaffId: string | undefined, br
       // 1. Phorest source
       if (phorestStaffId) {
         let query = supabase
-          .from('phorest_staff_services')
+          .from('phorest_staff_services' as any)
           .select('phorest_service_id')
           .eq('phorest_staff_id', phorestStaffId)
           .eq('is_qualified', true);

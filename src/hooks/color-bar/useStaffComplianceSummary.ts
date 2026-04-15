@@ -92,7 +92,7 @@ export function useStaffComplianceSummary(
 
         if (phorestStaffId) {
           const pQuery = supabase
-            .from('phorest_appointments' as any)
+            .from('v_all_appointments' as any)
             .select('id, appointment_date, service_name, start_time')
             .eq('organization_id', resolvedOrg)
             .eq('staff_id', phorestStaffId)

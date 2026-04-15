@@ -34,7 +34,7 @@ export function useOrganizationIntegrations(organizationId: string | undefined) 
         .not('phorest_branch_id', 'is', null);
 
       const staffMappingPromise = supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select('id, is_active')
         .eq('is_active', true);
 

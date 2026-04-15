@@ -77,7 +77,7 @@ export function useBookingEligibleServices(
 
         // Check phorest qualifications
         const { data: mapping } = await supabase
-          .from('phorest_staff_mapping')
+          .from('v_all_staff' as any)
           .select('phorest_staff_id')
           .eq('user_id', stylistId)
           .eq('is_active', true)
@@ -87,14 +87,14 @@ export function useBookingEligibleServices(
           // Get phorest service IDs for these services by name match
           const serviceNames = filtered.map((s) => s.name);
           const { data: phorestSvcs } = await supabase
-            .from('phorest_services')
+            .from('v_all_services' as any)
             .select('phorest_service_id, name')
             .in('name', serviceNames);
 
           if (phorestSvcs?.length) {
             const phorestServiceIds = phorestSvcs.map((ps) => ps.phorest_service_id);
             const { data: phorestQuals } = await supabase
-              .from('phorest_staff_services')
+              .from('phorest_staff_services' as any)
               .select('phorest_service_id')
               .eq('phorest_staff_id', mapping.phorest_staff_id)
               .in('phorest_service_id', phorestServiceIds)

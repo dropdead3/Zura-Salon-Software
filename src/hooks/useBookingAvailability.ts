@@ -93,7 +93,7 @@ export function useEligibleStylists(
           // Also check phorest staff services via mapping
           const userIds = filtered.map((s) => s.user_id);
           const { data: mappings } = await supabase
-            .from('phorest_staff_mapping')
+            .from('v_all_staff' as any)
             .select('user_id, phorest_staff_id')
             .in('user_id', userIds)
             .eq('is_active', true);
@@ -103,14 +103,14 @@ export function useEligibleStylists(
             const phorestStaffIds = mappings.map((m) => m.phorest_staff_id);
             // Get phorest service ID
             const { data: phorestSvc } = await supabase
-              .from('phorest_services')
+              .from('v_all_services' as any)
               .select('phorest_service_id')
               .eq('name', serviceName)
               .maybeSingle();
 
             if (phorestSvc) {
               const { data: phorestQuals } = await supabase
-                .from('phorest_staff_services')
+                .from('phorest_staff_services' as any)
                 .select('phorest_staff_id')
                 .in('phorest_staff_id', phorestStaffIds)
                 .eq('phorest_service_id', phorestSvc.phorest_service_id)
@@ -375,7 +375,7 @@ export function useResolvedServiceInfo(
         } else {
           // Check phorest staff services
           const { data: mapping } = await supabase
-            .from('phorest_staff_mapping')
+            .from('v_all_staff' as any)
             .select('phorest_staff_id')
             .eq('user_id', stylistId)
             .eq('is_active', true)
@@ -383,14 +383,14 @@ export function useResolvedServiceInfo(
 
           if (mapping) {
             const { data: phorestSvc } = await supabase
-              .from('phorest_services')
+              .from('v_all_services' as any)
               .select('phorest_service_id')
               .eq('name', serviceName!)
               .maybeSingle();
 
             if (phorestSvc) {
               const { data: phorestQual } = await supabase
-                .from('phorest_staff_services')
+                .from('phorest_staff_services' as any)
                 .select('custom_price, custom_duration_minutes')
                 .eq('phorest_staff_id', mapping.phorest_staff_id)
                 .eq('phorest_service_id', phorestSvc.phorest_service_id)

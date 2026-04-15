@@ -104,7 +104,7 @@ export function KioskBookingWizard() {
     queryFn: async () => {
       if (!branchId) return [];
       const { data } = await supabase
-        .from('phorest_staff_mapping')
+        .from('v_all_staff' as any)
         .select(`
           id,
           phorest_staff_id,
