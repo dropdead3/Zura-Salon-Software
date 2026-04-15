@@ -103,7 +103,7 @@ export function useRevenueGapAnalysis(
         .select('phorest_staff_id, phorest_staff_name');
 
       const staffLookup = new Map<string, string>();
-      (staffMap ?? []).forEach((s) => {
+      ((staffMap ?? []) as any[]).forEach((s: any) => {
         if (s.phorest_staff_id && s.phorest_staff_name)
           staffLookup.set(s.phorest_staff_id, s.phorest_staff_name);
       });
@@ -136,7 +136,7 @@ export function useRevenueGapAnalysis(
             .from('v_all_clients' as any)
             .select('phorest_client_id, name, first_name, last_name')
             .in('phorest_client_id', chunk);
-          (clientData ?? []).forEach(c => {
+          ((clientData ?? []) as any[]).forEach((c: any) => {
             if (!c.phorest_client_id) return;
             const resolved = c.name || [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
             if (resolved) clientNameMap.set(c.phorest_client_id, resolved);

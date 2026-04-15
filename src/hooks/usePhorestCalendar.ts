@@ -154,14 +154,7 @@ export function usePhorestCalendar() {
     queryFn: async () => {
       let query = supabase
         .from('v_all_appointments' as any)
-        .select(`
-          *,
-          stylist_profile:employee_profiles!phorest_appointments_stylist_user_id_fkey(
-            display_name,
-            full_name,
-            photo_url
-          )
-        `)
+        .select('*')
         .is('deleted_at', null)
         .eq('is_demo', false)
         .gte('appointment_date', dateRange.start)
@@ -217,7 +210,21 @@ export function usePhorestCalendar() {
         }
       }
 
-      return allRows as PhorestAppointment[];
+      // Batch-resolve stylist profiles (views don't support FK joins)
+      const userIds = [...new Set(allRows.map((r: any) => r.stylist_user_id).filter(Boolean))];
+      let profileMap = new Map<string, any>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, display_name, full_name, photo_url')
+          .in('user_id', userIds);
+        profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      }
+
+      return allRows.map((r: any) => ({
+        ...r,
+        stylist_profile: profileMap.get(r.stylist_user_id) || null,
+      })) as PhorestAppointment[];
     },
   });
 

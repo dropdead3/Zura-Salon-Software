@@ -104,7 +104,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
         .select('name, category');
       
       const categoryMap: Record<string, string> = {};
-      services?.forEach(s => {
+      ((services ?? []) as any[]).forEach((s: any) => {
         if (s.name && s.category) categoryMap[s.name] = s.category;
       });
 
