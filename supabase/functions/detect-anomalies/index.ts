@@ -171,7 +171,7 @@ async function checkCancellationAnomaly(
 ): Promise<AnomalyResult | null> {
   // Get today's appointments
   let todayQuery = supabase
-    .from("phorest_appointments")
+    .from("v_all_appointments")
     .select("id, status")
     .eq("appointment_date", today);
 
@@ -193,7 +193,7 @@ async function checkCancellationAnomaly(
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   let historyQuery = supabase
-    .from("phorest_appointments")
+    .from("v_all_appointments")
     .select("id, status")
     .gte("appointment_date", thirtyDaysAgo.toISOString().split('T')[0])
     .lt("appointment_date", today);
@@ -234,7 +234,7 @@ async function checkNoShowAnomaly(
   today: string
 ): Promise<AnomalyResult | null> {
   let query = supabase
-    .from("phorest_appointments")
+    .from("v_all_appointments")
     .select("id")
     .eq("appointment_date", today)
     .eq("status", "no_show");
@@ -275,7 +275,7 @@ async function checkBookingAnomaly(
   todayEnd.setHours(23, 59, 59, 999);
 
   let todayQuery = supabase
-    .from("phorest_appointments")
+    .from("v_all_appointments")
     .select("id")
     .gte("created_at", todayStart.toISOString())
     .lte("created_at", todayEnd.toISOString());
@@ -302,7 +302,7 @@ async function checkBookingAnomaly(
     end.setHours(23, 59, 59, 999);
 
     let q = supabase
-      .from("phorest_appointments")
+      .from("v_all_appointments")
       .select("id")
       .gte("created_at", start.toISOString())
       .lte("created_at", end.toISOString());
