@@ -45,7 +45,7 @@ export function ClientInsightsCard({
         .order('total_spend', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as any[];
     },
     enabled: !!userId,
   });
