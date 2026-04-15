@@ -29,20 +29,28 @@ export function useAssistantConflictCheck(
       // Fetch overlapping appointments with their assistants
       const { data, error } = await supabase
         .from('v_all_appointments')
-        .select(`
-          id,
-          start_time,
-          end_time,
-          client_name,
-          service_name,
-          stylist_user_id,
-          appointment_assistants (assistant_user_id)
-        `)
+        .select('id, start_time, end_time, client_name, service_name, stylist_user_id')
         .eq('appointment_date', appointmentDate!)
         .lt('start_time', endTime!)
         .gt('end_time', startTime!)
         .not('status', 'in', '("cancelled","no_show")')
         .neq('id', currentAppointmentId!);
+
+      if (error) throw error;
+
+      // Fetch assistants separately since views don't support FK joins
+      const apptIds = (data || []).map(a => a.id).filter(Boolean) as string[];
+      let assistantMap: Record<string, { assistant_user_id: string }[]> = {};
+      if (apptIds.length > 0) {
+        const { data: assistants } = await supabase
+          .from('appointment_assistants')
+          .select('appointment_id, assistant_user_id')
+          .in('appointment_id', apptIds);
+        for (const a of (assistants || [])) {
+          if (!assistantMap[a.appointment_id]) assistantMap[a.appointment_id] = [];
+          assistantMap[a.appointment_id].push({ assistant_user_id: a.assistant_user_id });
+        }
+      }
 
       if (error) throw error;
 
@@ -57,7 +65,7 @@ export function useAssistantConflictCheck(
 
       if (tbError) console.warn('[ConflictCheck] Time blocks query failed:', tbError);
 
-      return { appointments: data, timeBlocks: timeBlocks || [] };
+      return { appointments: data, timeBlocks: timeBlocks || [], assistantMap };
     },
     enabled: enabled && !!appointmentDate && !!startTime && !!endTime && !!currentAppointmentId,
     staleTime: 30000,
@@ -67,7 +75,7 @@ export function useAssistantConflictCheck(
     const map = new Map<string, ConflictingAppointment[]>();
     if (!rawConflicts) return map;
 
-    const { appointments: appts, timeBlocks } = rawConflicts;
+    const { appointments: appts, timeBlocks, assistantMap } = rawConflicts;
 
     for (const apt of (appts || [])) {
       const base: Omit<ConflictingAppointment, 'role'> = {
@@ -86,7 +94,7 @@ export function useAssistantConflictCheck(
       }
 
       // Assistant conflicts
-      const assistants = apt.appointment_assistants as { assistant_user_id: string }[] | null;
+      const assistants = assistantMap[apt.id] || null;
       if (assistants) {
         for (const aa of assistants) {
           const existing = map.get(aa.assistant_user_id) || [];

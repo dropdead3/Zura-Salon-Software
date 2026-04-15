@@ -65,7 +65,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('phorest_staff_id, stylist_user_id, staff_name, total_price, tip_amount, service_name')
+          .select('staff_user_id, stylist_user_id, staff_name, total_price, tip_amount, service_name')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")')
@@ -108,7 +108,8 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         if (sid) staffIdSet.add(sid);
       });
       productItems.forEach(item => {
-        if (item.staff_user_id) staffIdSet.add(item.staff_user_id);
+        const sid = (item as any).phorest_staff_id || item.staff_user_id;
+        if (sid) staffIdSet.add(sid);
       });
       const allStaffIds = [...staffIdSet];
 
@@ -161,7 +162,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // --- Aggregate products by staff (tax-inclusive) ---
       const productMap: Record<string, { productRevenue: number; productCount: number; items: ProductLineItem[] }> = {};
       productItems.forEach(item => {
-        const sid = item.staff_user_id;
+        const sid = (item as any).phorest_staff_id || item.staff_user_id;
         if (!sid) return;
         if (isVishServiceCharge(item.item_name, 'product')) return;
         if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0, items: [] };

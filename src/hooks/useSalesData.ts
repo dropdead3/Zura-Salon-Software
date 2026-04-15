@@ -117,7 +117,7 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
 
         if (filters.dateFrom) q = q.gte('transaction_date', filters.dateFrom);
         if (filters.dateTo) q = q.lte('transaction_date', filters.dateTo);
-        if (filters.userId) q = q.eq('staff_user_id', filters.userId);
+        if (filters.userId) q = q.eq('phorest_staff_id', filters.userId);
         if (filters.locationId) q = q.eq('location_id', filters.locationId);
 
         return q;
@@ -127,11 +127,11 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
       const byKey: Record<string, any> = {};
       for (const item of allData) {
         const date = (item.transaction_date || '').slice(0, 10);
-        const key = `${date}|${item.staff_user_id || ''}`;
+        const key = `${date}|${item.phorest_staff_id || ''}`;
         if (!byKey[key]) {
           byKey[key] = {
             summary_date: date,
-            user_id: item.staff_user_id,
+            user_id: item.phorest_staff_id,
             location_id: item.location_id,
             total_revenue: 0,
             service_revenue: 0,
@@ -279,7 +279,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('id, total_price, tip_amount, service_name, phorest_staff_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
+          .select('id, total_price, tip_amount, service_name, staff_user_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -464,7 +464,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('phorest_staff_id, total_amount, tax_amount, item_type, item_name')
+          .select('staff_user_id, total_amount, tax_amount, item_type, item_name')
           .not('phorest_staff_id', 'is', null)
           .not('total_amount', 'is', null)
           .range(from, to);
@@ -774,7 +774,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('phorest_staff_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
+          .select('staff_user_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
           .not('phorest_staff_id', 'is', null)
           .not('total_price', 'is', null)
           .range(from, to);

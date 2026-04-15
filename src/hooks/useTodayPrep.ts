@@ -137,13 +137,13 @@ export function useTodayPrep() {
       if (phorestClientIds.length > 0) {
         const { data: txnItems } = await supabase
           .from('v_all_transaction_items')
-          .select('phorest_client_id, transaction_date, item_name, item_type, quantity, phorest_staff_id')
+          .select('phorest_client_id, transaction_date, item_name, item_type, quantity, staff_user_id')
           .in('phorest_client_id', phorestClientIds)
           .order('transaction_date', { ascending: false })
           .limit(200);
         
         // Get staff names for recent services
-        const staffIds = [...new Set((txnItems || []).map(t => t.phorest_staff_id).filter(Boolean))];
+        const staffIds = [...new Set((txnItems || []).map(t => t.staff_user_id).filter(Boolean))];
         const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds as string[]);
 
         for (const item of txnItems || []) {
@@ -165,7 +165,7 @@ export function useTodayPrep() {
               bucket.services.push({
                 date: item.transaction_date,
                 name: item.item_name,
-                staffName: item.phorest_staff_id ? staffNameMap[item.phorest_staff_id] || null : null,
+                staffName: item.staff_user_id ? staffNameMap[item.staff_user_id] || null : null,
               });
             }
           }

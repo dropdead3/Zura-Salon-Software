@@ -25,7 +25,7 @@ interface AssistantRequest {
 }
 
 interface PhorestAppointment {
-  phorest_id: string;
+  id: string | null;
   stylist_user_id: string | null;
   appointment_date: string;
   start_time: string;
@@ -64,7 +64,7 @@ export function usePhorestRequestConflicts(requests: AssistantRequest[]) {
 
       const { data, error } = await supabase
         .from('v_all_appointments')
-        .select('phorest_id, stylist_user_id, appointment_date, start_time, end_time, client_name, service_name, status')
+        .select('id, stylist_user_id, appointment_date, start_time, end_time, client_name, service_name, status')
         .in('appointment_date', dates)
         .in('stylist_user_id', stylistIds)
         .neq('status', 'cancelled');
@@ -94,7 +94,7 @@ export function usePhorestRequestConflicts(requests: AssistantRequest[]) {
         if (request.start_time < apt.end_time && request.end_time > apt.start_time) {
           conflictList.push({
             requestId: request.id,
-            appointmentId: apt.phorest_id,
+            appointmentId: apt.id || '',
             stylistUserId: request.stylist_id,
             date: request.request_date,
             requestStartTime: request.start_time,

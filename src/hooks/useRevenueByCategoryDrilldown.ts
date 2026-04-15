@@ -47,7 +47,7 @@ export function useRevenueByCategoryDrilldown({
       while (hasMore) {
         let query = supabase
           .from('v_all_transaction_items')
-          .select('item_name, item_type, total_amount, tax_amount, phorest_staff_id, phorest_client_id, transaction_date, transaction_id')
+          .select('item_name, item_type, total_amount, tax_amount, staff_user_id, phorest_client_id, transaction_date, transaction_id')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(offset, offset + PAGE_SIZE - 1);
@@ -65,7 +65,7 @@ export function useRevenueByCategoryDrilldown({
 
 
       // Get staff name mappings via centralized resolver
-      const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
+      const staffIds = [...new Set(allItems.map(a => a.staff_user_id).filter(Boolean))];
       const staffInfoMap = await resolveStaffWithPhotosByPhorestIds(staffIds);
 
       // Aggregate by category → stylist
@@ -95,7 +95,7 @@ export function useRevenueByCategoryDrilldown({
             ? getServiceCategory(itemName)
             : (itemType === 'product' ? 'Retail' : 'Other');
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        const staffId = item.phorest_staff_id || 'unknown';
+        const staffId = item.staff_user_id || 'unknown';
 
 
 

@@ -111,25 +111,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
 
       const { data: appointments } = await supabase
         .from('v_all_appointments')
-        .select(`
-          id,
-          phorest_id,
-          appointment_date,
-          start_time,
-          end_time,
-          service_name,
-          status,
-          stylist_user_id,
-          phorest_client_id,
-          client_name,
-          location_id,
-          stylist:employee_profiles!phorest_appointments_stylist_user_id_fkey(
-            display_name,
-            photo_url,
-            phone,
-            email
-          )
-        `)
+        .select('id, appointment_date, start_time, end_time, service_name, status, stylist_user_id, phorest_client_id, client_name, location_id, staff_name')
         .in('phorest_client_id', clientIds)
         .eq('appointment_date', today)
         .in('status', ['booked', 'confirmed', 'pending'])
@@ -163,17 +145,17 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
         })),
         appointments: (appointments || []).map(a => ({
           id: a.id,
-          phorest_id: a.phorest_id || undefined,
+          phorest_id: undefined,
           appointment_date: a.appointment_date,
           start_time: a.start_time,
           end_time: a.end_time,
           service_name: a.service_name,
           status: a.status,
           stylist_user_id: a.stylist_user_id,
-          stylist_name: (a.stylist as any)?.display_name,
-          stylist_photo: (a.stylist as any)?.photo_url,
-          stylist_phone: (a.stylist as any)?.phone,
-          stylist_email: (a.stylist as any)?.email,
+          stylist_name: a.staff_name || undefined,
+          stylist_photo: undefined,
+          stylist_phone: undefined,
+          stylist_email: undefined,
           phorest_client_id: a.phorest_client_id || undefined,
           client_name: a.client_name || undefined,
           location_id: a.location_id || undefined,
@@ -254,9 +236,14 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
 
       const appointment = session.selectedAppointment;
 
-      // 1. Update appointment status
+      // 1. Update appointment status — try both tables since we don't know source
       const { error: updateError } = await supabase
-        .from('v_all_appointments')
+        .from('phorest_appointments')
+        .update({ status: 'checked_in' })
+        .eq('id', appointment.id);
+      // Also try the zura appointments table
+      await supabase
+        .from('appointments')
         .update({ status: 'checked_in' })
         .eq('id', appointment.id);
 
@@ -355,22 +342,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
 
       const { data: appointments, error } = await supabase
         .from('v_all_appointments')
-        .select(`
-          id,
-          phorest_id,
-          appointment_date,
-          start_time,
-          end_time,
-          service_name,
-          status,
-          stylist_user_id,
-          client_name,
-          location_id,
-          stylist:employee_profiles!phorest_appointments_stylist_user_id_fkey(
-            display_name,
-            photo_url
-          )
-        `)
+        .select('id, appointment_date, start_time, end_time, service_name, status, stylist_user_id, client_name, location_id, staff_name')
         .eq('appointment_date', today)
         .eq('location_id', locationId)
         .gte('start_time', startTimeStr)
@@ -387,15 +359,15 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
         lookupMethod: 'browse',
         appointments: appointments.map(a => ({
           id: a.id,
-          phorest_id: a.phorest_id || undefined,
+          phorest_id: undefined,
           appointment_date: a.appointment_date,
           start_time: a.start_time,
           end_time: a.end_time,
           service_name: a.service_name,
           status: a.status,
           stylist_user_id: a.stylist_user_id,
-          stylist_name: (a.stylist as any)?.display_name,
-          stylist_photo: (a.stylist as any)?.photo_url,
+          stylist_name: a.staff_name || undefined,
+          stylist_photo: undefined,
           client_name: a.client_name || undefined,
           location_id: a.location_id || undefined,
         })),

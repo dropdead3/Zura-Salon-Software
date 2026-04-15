@@ -17,7 +17,7 @@ export function useTopClientsReport(filters: { dateFrom: string; dateTo: string;
     queryKey: ['top-clients-report', filters],
     queryFn: async () => {
       const rows = await fetchAllBatched<{
-        external_client_id: string | null;
+        phorest_client_id: string | null;
         client_name: string | null;
         total_amount: number | null;
         transaction_date: string;
@@ -26,7 +26,7 @@ export function useTopClientsReport(filters: { dateFrom: string; dateTo: string;
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('external_client_id, client_name, total_amount, transaction_date, item_name, item_type')
+          .select('phorest_client_id, client_name, total_amount, transaction_date, item_name, item_type')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)
           .range(from, to);
@@ -37,7 +37,7 @@ export function useTopClientsReport(filters: { dateFrom: string; dateTo: string;
       const clientMap = new Map<string, { name: string; spend: number; visits: Set<string>; lastVisit: string; services: Map<string, number> }>();
 
       for (const row of rows) {
-        const id = row.external_client_id || 'walk-in';
+        const id = row.phorest_client_id || 'walk-in';
         const entry = clientMap.get(id) || { name: row.client_name || 'Walk-in', spend: 0, visits: new Set(), lastVisit: '', services: new Map() };
         entry.spend += Number(row.total_amount) || 0;
         entry.visits.add(row.transaction_date);

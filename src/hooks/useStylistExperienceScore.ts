@@ -97,7 +97,7 @@ export function useStylistExperienceScore(
         let q = supabase
           .from('v_all_appointments')
           .select(`
-            phorest_staff_id,
+            staff_user_id,
             stylist_user_id,
             total_price,
             tip_amount,
@@ -134,7 +134,7 @@ export function useStylistExperienceScore(
       // Group appointments by staff (prefer stylist_user_id, fallback to phorest_staff_id)
       const staffAppointments = new Map<string, typeof appointments>();
       appointments?.forEach(apt => {
-        const staffId = apt.stylist_user_id || apt.phorest_staff_id;
+        const staffId = apt.stylist_user_id || apt.staff_user_id;
         if (!staffId) return;
         if (!staffAppointments.has(staffId)) {
           staffAppointments.set(staffId, []);

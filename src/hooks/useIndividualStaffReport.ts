@@ -244,7 +244,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         while (hasMore) {
           const { data, error } = await supabase
             .from('v_all_transaction_items')
-            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, external_client_id, transaction_date')
+            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, phorest_client_id, transaction_date')
             .eq('staff_user_id', staffUserId)
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .range(offset, offset + PAGE_SIZE - 1);
@@ -307,7 +307,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         while (hasMore) {
           const { data, error } = await supabase
             .from('v_all_transaction_items')
-            .select('staff_user_id, item_type, total_amount, tax_amount, external_client_id, transaction_date')
+            .select('staff_user_id, item_type, total_amount, tax_amount, phorest_client_id, transaction_date')
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .not('staff_user_id', 'is', null)
             .range(offset, offset + PAGE_SIZE - 1);
@@ -356,9 +356,9 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           const isService = SERVICE_TYPES.includes(item.item_type);
           if (isService) svcRev += amount + tax;
           if (isProduct) prodRev += amount + tax;
-          if (item.external_client_id && item.transaction_date) {
+          if (item.phorest_client_id && item.transaction_date) {
             const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
-            visitKeys.add(`${item.external_client_id}|${dateOnly}`);
+            visitKeys.add(`${item.phorest_client_id}|${dateOnly}`);
           }
         });
         return { svcRev, prodRev, total: svcRev + prodRev, uniqueVisits: visitKeys.size };
@@ -404,8 +404,8 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         const isProduct = PRODUCT_TYPES.includes(item.item_type);
         const isService = SERVICE_TYPES.includes(item.item_type);
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        const visitKey = item.external_client_id && item.transaction_date
-          ? `${item.external_client_id}|${item.transaction_date}`
+        const visitKey = item.phorest_client_id && item.transaction_date
+          ? `${item.phorest_client_id}|${item.transaction_date}`
           : null;
         if (isProduct) {
           productRevenue += amount;
@@ -522,9 +522,9 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         const t = teamStaffMap.get(sid)!;
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         t.revenue += amount;
-        if (item.external_client_id && item.transaction_date) {
+        if (item.phorest_client_id && item.transaction_date) {
           const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
-          t.uniqueVisits.add(`${item.external_client_id}|${dateOnly}`);
+          t.uniqueVisits.add(`${item.phorest_client_id}|${dateOnly}`);
         }
       });
 

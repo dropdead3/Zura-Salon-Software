@@ -70,7 +70,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id, start_time')
+          .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, staff_user_id, start_time')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
@@ -147,7 +147,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('payment_method, tip_amount, phorest_staff_id, phorest_client_id, transaction_date')
+          .select('payment_method, tip_amount, staff_user_id, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .gt('tip_amount', 0)

@@ -51,10 +51,10 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
       const serviceItems = await fetchAllPages((offset) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('external_client_id, transaction_date')
+          .select('phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
-          .not('external_client_id', 'is', null)
+          .not('phorest_client_id', 'is', null)
           .in('item_type', ['Service', 'service', 'SERVICE'])
           .range(offset, offset + PAGE_SIZE - 1);
         return buildLocationFilter(q);
@@ -63,10 +63,10 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
       const productItems = await fetchAllPages((offset) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('external_client_id, transaction_date, item_name')
+          .select('phorest_client_id, transaction_date, item_name')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
-          .not('external_client_id', 'is', null)
+          .not('phorest_client_id', 'is', null)
           .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
           .range(offset, offset + PAGE_SIZE - 1);
         return buildLocationFilter(q);
@@ -75,8 +75,8 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
       // Build composite visit keys: clientId|date
       const serviceVisitSet = new Set<string>();
       for (const row of serviceItems) {
-        if (row.external_client_id && row.transaction_date) {
-          serviceVisitSet.add(`${row.external_client_id}|${row.transaction_date}`);
+        if (row.phorest_client_id && row.transaction_date) {
+          serviceVisitSet.add(`${row.phorest_client_id}|${row.transaction_date}`);
         }
       }
 
@@ -87,8 +87,8 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
 
       const productVisitSet = new Set<string>();
       for (const row of nonExtensionProducts) {
-        if (row.external_client_id && row.transaction_date) {
-          productVisitSet.add(`${row.external_client_id}|${row.transaction_date}`);
+        if (row.phorest_client_id && row.transaction_date) {
+          productVisitSet.add(`${row.phorest_client_id}|${row.transaction_date}`);
         }
       }
 

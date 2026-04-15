@@ -38,7 +38,7 @@ export function useClientTransactionHistory(clientId: string | null) {
       const { data: items, error } = await supabase
         .from('v_all_transaction_items')
         .select('*')
-        .eq('external_client_id', clientId)
+        .eq('phorest_client_id', clientId)
         .order('transaction_date', { ascending: false });
       
       if (error) throw error;

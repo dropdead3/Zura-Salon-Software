@@ -153,7 +153,7 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
           transactionDate: first.transaction_date,
           clientName: first.client_name,
           phorestClientId: first.phorest_client_id,
-          stylistName: first.stylist_name,
+          stylistName: first.staff_name,
           paymentMethod: first.payment_method,
           locationId: first.location_id,
           branchName: first.branch_name,

@@ -221,7 +221,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       const currentItems = await fetchAllRows<any>(() => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('item_name, item_category, item_type, quantity, unit_price, discount, total_amount, transaction_date, transaction_id, phorest_staff_id')
+          .select('item_name, item_category, item_type, quantity, unit_price, discount, total_amount, transaction_date, transaction_id, staff_user_id')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo);
         if (!isAllLocations(locationId)) {
@@ -235,7 +235,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       const priorItems = await fetchAllRows<any>(() => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('item_name, item_type, quantity, total_amount, transaction_id, phorest_staff_id')
+          .select('item_name, item_type, quantity, total_amount, transaction_id, staff_user_id')
           .gte('transaction_date', priorFrom)
           .lte('transaction_date', priorTo);
         if (!isAllLocations(locationId)) {

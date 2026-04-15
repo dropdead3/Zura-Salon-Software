@@ -97,7 +97,7 @@ export function useStaffRevenuePerformance(
           .select('staff_user_id, item_type, total_amount, tax_amount, transaction_date')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
-          .not('staff_user_id', 'is', null)
+          .not('phorest_staff_id', 'is', null)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -159,7 +159,7 @@ export function useStaffRevenuePerformance(
 
       // Enrich with service/product breakdown from transaction items
       for (const item of itemData) {
-        const staffId = item.staff_user_id;
+        const staffId = (item as any).phorest_staff_id || item.staff_user_id;
         if (!staffId) continue;
         // Map staff_user_id back to phorest_staff_id for aggregation consistency
         // Find the matching phorest_staff_id from mappings

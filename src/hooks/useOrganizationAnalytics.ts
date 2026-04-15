@@ -228,7 +228,7 @@ export function useOrganizationAnalytics() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('v_all_appointments')
-          .select('phorest_staff_id, rebooked_at_checkout, is_new_client, location_id')
+          .select('staff_user_id, rebooked_at_checkout, is_new_client, location_id')
           .gte('appointment_date', startDate)
           .not('status', 'in', '("cancelled","no_show")')
           .eq('is_demo', false)
@@ -245,13 +245,13 @@ export function useOrganizationAnalytics() {
         .select('phorest_staff_id, user_id');
       const staffToUser: Record<string, string> = {};
       (mappings || []).forEach((m: any) => {
-        if (m.phorest_staff_id && m.user_id) staffToUser[m.phorest_staff_id] = m.user_id;
+        if (m.staff_user_id && m.user_id) staffToUser[m.staff_user_id] = m.user_id;
       });
 
       // Aggregate per user_id
       const byUser: Record<string, { total: number; rebooked: number; newClients: number }> = {};
       for (const apt of allData) {
-        const userId = apt.phorest_staff_id ? staffToUser[apt.phorest_staff_id] : null;
+        const userId = apt.staff_user_id ? staffToUser[apt.staff_user_id] : null;
         if (!userId) continue;
         if (!byUser[userId]) byUser[userId] = { total: 0, rebooked: 0, newClients: 0 };
         byUser[userId].total++;

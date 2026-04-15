@@ -40,7 +40,7 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
       while (hasMore) {
         let query = supabase
           .from('v_all_transaction_items')
-          .select('staff_user_id, total_amount, tax_amount, item_name, item_type, external_client_id, transaction_date')
+          .select('staff_user_id, total_amount, tax_amount, item_name, item_type, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(offset, offset + PAGE_SIZE - 1);
@@ -83,7 +83,7 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
         stylistMap[staffId].count += 1;
 
         // Track unique client visits for avg ticket denominator
-        const visitKey = `${item.external_client_id || 'walk-in'}|${item.transaction_date}`;
+        const visitKey = `${item.phorest_client_id || 'walk-in'}|${item.transaction_date}`;
         stylistMap[staffId].clientVisits.add(visitKey);
 
         if (!stylistMap[staffId].categories[category]) {

@@ -112,7 +112,7 @@ export function useRevenueGapAnalysis(
       const allAppts = await fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
+          .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, staff_user_id, phorest_client_id, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started', 'booked'])
@@ -231,8 +231,8 @@ export function useRevenueGapAnalysis(
           const chunkData = await fetchAllBatched<any>((from, to) => {
             let q = supabase
               .from('v_all_transaction_items')
-              .select('external_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
-              .in('external_client_id', chunk)
+              .select('phorest_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
+              .in('phorest_client_id', chunk)
               .gte('transaction_date', dateFrom)
               .lte('transaction_date', dateTo)
               .in('item_type', ['service', 'sale_fee'])

@@ -133,7 +133,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
           clientName,
           appointmentId: appointment.id,
           staffUserId: appointment.staff_user_id || null,
-          staffName: appointment.stylist_name || appointment.staff_name || null,
+          staffName: appointment.staff_name || appointment.staff_name || null,
           serviceName: appointment.service_name || null,
           baseUrl: window.location.origin,
         },
@@ -461,7 +461,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="w-4 h-4 shrink-0" />
-                  <span>{appointment.stylist_name || 'Unassigned'}</span>
+                  <span>{appointment.staff_name || 'Unassigned'}</span>
                 </div>
                 {appointment.location_name && (
                   <div className="flex items-center gap-2 text-muted-foreground">

@@ -52,12 +52,12 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         staff_user_id: string | null;
         total_amount: number | null;
         tax_amount: number | null;
-        external_client_id: string | null;
+        phorest_client_id: string | null;
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('staff_user_id, total_amount, tax_amount, external_client_id, transaction_date')
+          .select('staff_user_id, total_amount, tax_amount, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -94,7 +94,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         staffData[staffId].totalRevenue += amount;
         staffData[staffId].totalServices += 1;
-        const visitKey = `${item.external_client_id}|${item.transaction_date}`;
+        const visitKey = `${item.phorest_client_id}|${item.transaction_date}`;
         staffVisitSets[staffId].add(visitKey);
       });
 
