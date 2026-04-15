@@ -35,7 +35,7 @@ export function usePhorestServices(locationId?: string) {
       }
 
       let query = supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('*')
         .order('category')
         .order('name');
@@ -102,7 +102,7 @@ export function useAllServices() {
     queryKey: ['phorest-services-all'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('*')
         .order('category')
         .order('name');
@@ -167,7 +167,7 @@ export function useServiceAvailability(serviceName: string) {
     queryKey: ['phorest-service-availability', serviceName],
     queryFn: async () => {
       const { data: services, error } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('phorest_branch_id')
         .eq('name', serviceName);
       

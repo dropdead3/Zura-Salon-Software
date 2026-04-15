@@ -63,7 +63,7 @@ export function usePhorestRequestConflicts(requests: AssistantRequest[]) {
       if (dates.length === 0 || stylistIds.length === 0) return [];
 
       const { data, error } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('id, stylist_user_id, appointment_date, start_time, end_time, client_name, service_name, status')
         .in('appointment_date', dates)
         .in('stylist_user_id', stylistIds)

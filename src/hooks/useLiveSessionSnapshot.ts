@@ -43,7 +43,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       // Get today's appointments where current time falls between start and end
       const activeQuery = applyLocationFilter(
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, phorest_staff_id, start_time, end_time, service_name, client_name, location_id')
           .eq('appointment_date', today)
           .lte('start_time', now)
@@ -67,7 +67,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         // Check if the day had any completed/checked-in appointments
         const completedQuery = applyLocationFilter(
           supabase
-            .from('v_all_appointments')
+            .from('v_all_appointments' as any)
             .select('id', { count: 'exact', head: true })
             .eq('appointment_date', today)
             .in('status', ['completed', 'checked_in'])
@@ -138,7 +138,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       // Get ALL of today's appointments for active staff to find wrap-up times
       const allTodayQuery = applyLocationFilter(
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, phorest_staff_id, start_time, end_time, service_name')
           .eq('appointment_date', today)
           .in('phorest_staff_id', uniqueStaffIds)

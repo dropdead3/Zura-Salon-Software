@@ -35,7 +35,7 @@ async function fetchAllAppointments(dateFrom: string, dateTo: string, locationId
 
   while (hasMore) {
     let query = supabase
-      .from('v_all_appointments')
+      .from('v_all_appointments' as any)
       .select('service_name, service_category, total_price, tip_amount, location_id')
       .gte('appointment_date', dateFrom)
       .lte('appointment_date', dateTo)

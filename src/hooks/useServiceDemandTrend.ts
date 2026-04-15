@@ -21,7 +21,7 @@ export function useServiceDemandTrend(locationId?: string) {
     queryFn: async () => {
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('service_name, appointment_date')
           .neq('status', 'cancelled')
           .gte('appointment_date', dateFrom)

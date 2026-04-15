@@ -42,7 +42,7 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
         let hasMore = true;
         while (hasMore) {
           let q: any = supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('transaction_date, total_amount, tax_amount, item_type')
             .gte('transaction_date', `${year}-01-01`)
             .lte('transaction_date', `${year}-12-31`);

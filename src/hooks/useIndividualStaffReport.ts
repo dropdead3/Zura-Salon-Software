@@ -209,21 +209,21 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       // ── Fetch appointments from union view by stylist_user_id ──
       const [currentApts, priorApts, twoPriorApts] = await Promise.all([
         fetchAllBatched<any>((from, to) =>
-          supabase.from('v_all_appointments')
+          supabase.from('v_all_appointments' as any)
             .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client, service_name, service_category, id')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
-          supabase.from('v_all_appointments')
+          supabase.from('v_all_appointments' as any)
             .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', priorFrom).lte('appointment_date', priorTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
-          supabase.from('v_all_appointments')
+          supabase.from('v_all_appointments' as any)
             .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo)
@@ -243,7 +243,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, phorest_client_id, transaction_date')
             .eq('staff_user_id', staffUserId)
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
@@ -291,7 +291,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         status: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('stylist_user_id, rebooked_at_checkout, is_new_client, status')
           .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
@@ -306,7 +306,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('staff_user_id, item_type, total_amount, tax_amount, phorest_client_id, transaction_date')
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .not('staff_user_id', 'is', null)
@@ -478,7 +478,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       let clientNameMap = new Map<string, string>();
       if (clientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .select('phorest_client_id, first_name, last_name')
           .in('phorest_client_id', clientIds.slice(0, 50));
         (clients || []).forEach((c: any) => {

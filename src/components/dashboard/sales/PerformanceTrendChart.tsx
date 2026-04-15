@@ -83,7 +83,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         let hasMore = true;
         while (hasMore) {
           let q: any = supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('total_amount, tax_amount, item_type, transaction_date, location_id')
             .gte('transaction_date', weekRanges[0].start)
             .lte('transaction_date', weekRanges[weekRanges.length - 1].end);

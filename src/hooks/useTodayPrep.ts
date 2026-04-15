@@ -62,7 +62,7 @@ export function useTodayPrep() {
           .is('deleted_at', null)
           .order('start_time'),
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, appointment_date, start_time, end_time, service_name, service_category, status, total_price, notes, client_notes, client_name, phorest_client_id, is_new_client')
           .eq('stylist_user_id', user.id)
           .eq('appointment_date', today)
@@ -136,7 +136,7 @@ export function useTodayPrep() {
       const txnMap = new Map<string, { services: any[]; products: any[] }>();
       if (phorestClientIds.length > 0) {
         const { data: txnItems } = await supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('phorest_client_id, transaction_date, item_name, item_type, quantity, staff_user_id')
           .in('phorest_client_id', phorestClientIds)
           .order('transaction_date', { ascending: false })
@@ -218,7 +218,7 @@ export function useTodayPrep() {
       if (phorestClientIds.length > 0) {
         // Get recent past appointments for these clients
         const { data: pastAppts } = await supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, phorest_client_id')
           .in('phorest_client_id', phorestClientIds)
           .lt('appointment_date', today)

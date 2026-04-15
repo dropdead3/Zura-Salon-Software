@@ -260,7 +260,7 @@ export function useAvailableSlots(
 
       // 5. Get existing appointments for these stylists on this date
       const { data: appointments } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('stylist_user_id, start_time, end_time, status')
         .in('stylist_user_id', stylistIds)
         .eq('appointment_date', selectedDate)

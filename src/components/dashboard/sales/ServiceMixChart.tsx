@@ -35,7 +35,7 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
     queryFn: async () => {
       const transactions = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('v_all_sales_transactions')
+          .from('v_all_sales_transactions' as any)
           .select('item_name, item_category, item_type, total_amount')
           .eq('stylist_user_id', userId)
           .eq('item_type', 'service')

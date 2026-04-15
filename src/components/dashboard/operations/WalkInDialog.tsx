@@ -62,7 +62,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
     queryKey: ['phorest-services-walkin'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('id, name, category, duration_minutes, price, allow_same_day_booking, lead_time_days, same_day_restriction_reason')
         .order('category')
         .order('name');

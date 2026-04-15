@@ -38,7 +38,7 @@ export function useRealizationRate(locationId?: string): RealizationRateResult {
         tip_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('appointment_date, total_price, tip_amount')
           .gte('appointment_date', fromDate)
           .lte('appointment_date', toDate)
@@ -62,7 +62,7 @@ export function useRealizationRate(locationId?: string): RealizationRateResult {
         tax_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('transaction_date, total_amount, tax_amount')
           .gte('transaction_date', fromDate)
           .lte('transaction_date', toDate)

@@ -35,7 +35,7 @@ function useClientSourceReport(filters: { dateFrom?: string; dateTo?: string; lo
         total_spend: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .select('lead_source, total_spend')
           .eq('is_archived', false)
           .range(from, to);

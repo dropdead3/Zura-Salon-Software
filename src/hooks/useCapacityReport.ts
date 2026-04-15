@@ -25,7 +25,7 @@ export function useCapacityReport(dateFrom: string, dateTo: string, locationId?:
     queryKey: ['capacity-report', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<CapacityData> => {
       let query = supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('id, appointment_date, start_time, end_time, status')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)

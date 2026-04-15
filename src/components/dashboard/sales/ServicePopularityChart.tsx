@@ -82,7 +82,7 @@ function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: strin
       if (!serviceName) return [];
       
       let query = supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('phorest_staff_id, total_price')
         .eq('service_name', serviceName)
         .not('phorest_staff_id', 'is', null);

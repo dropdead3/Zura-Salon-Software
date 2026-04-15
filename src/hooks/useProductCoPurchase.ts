@@ -27,7 +27,7 @@ export function useProductCoPurchase(locationId?: string) {
       const dateFromStr = dateFrom.toISOString().split('T')[0];
 
       let query = supabase
-        .from('v_all_transaction_items')
+        .from('v_all_transaction_items' as any)
         .select('transaction_id, item_name')
         .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
         .gte('transaction_date', dateFromStr)

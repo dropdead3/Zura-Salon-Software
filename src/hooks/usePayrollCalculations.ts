@@ -92,7 +92,7 @@ export function usePayrollSalesData(
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, total_amount, tax_amount, item_type, transaction_date')
           .in('staff_user_id', employeeIds)
           .gte('transaction_date', payPeriodStart)

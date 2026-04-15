@@ -41,7 +41,7 @@ export function useDuplicateClientsReport(filters: Filters) {
         canonical_client_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .select('id, phorest_client_id, name, first_name, last_name, email, email_normalized, phone, phone_normalized, total_spend, visit_count, last_visit, is_duplicate, canonical_client_id')
           .eq('is_archived', false)
           .range(from, to);

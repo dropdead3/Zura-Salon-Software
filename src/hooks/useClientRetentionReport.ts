@@ -75,7 +75,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
       let hasMore = true;
       while (hasMore) {
         let q = supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .select('id, phorest_client_id, name, first_name, last_name, created_at, last_visit, total_spend, visit_count, client_since')
           .eq('is_archived', false)
           .eq('is_duplicate', false)
@@ -117,7 +117,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         tip_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id, appointment_date, total_price, tip_amount')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -135,7 +135,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         tip_amount: number | null;
       }>((from, to) =>
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id, appointment_date, total_price, tip_amount')
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to)

@@ -21,7 +21,7 @@ export function useClientProductAffinity(phorestClientId: string | null | undefi
         return DEMO_PRODUCT_AFFINITY[phorestClientId] ?? [];
       }
       const { data, error } = await supabase
-        .from('v_all_transaction_items')
+        .from('v_all_transaction_items' as any)
         .select('item_name, transaction_date')
         .eq('phorest_client_id', phorestClientId!)
         .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])

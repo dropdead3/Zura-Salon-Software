@@ -25,7 +25,7 @@ async function paginatedFetch(
 
   while (hasMore) {
     let q = supabase
-      .from('v_all_appointments')
+      .from('v_all_appointments' as any)
       .select('phorest_staff_id, rebooked_at_checkout')
       .gte('appointment_date', dateFrom)
       .lte('appointment_date', dateTo)

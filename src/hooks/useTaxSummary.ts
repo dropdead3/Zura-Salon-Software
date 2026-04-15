@@ -30,7 +30,7 @@ export function useTaxSummary(filters: TaxSummaryFilters) {
         transaction_date: string;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('total_amount, tax_amount, item_type, location_id, branch_name, transaction_date')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)

@@ -43,7 +43,7 @@ export function useQuickStats(locationId?: string, accessibleLocationIds?: strin
 
       // Also check phorest_clients for historical data
       let phorestQuery = supabase
-        .from('v_all_clients')
+        .from('v_all_clients' as any)
         .select('*', { count: 'exact', head: true })
         .eq('is_duplicate', false)
         .gte('first_visit', sevenDaysAgo)

@@ -93,7 +93,7 @@ export function useClientHealthSegments() {
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
-            .from('v_all_clients')
+            .from('v_all_clients' as any)
             .select('id, name, email, phone, last_visit, first_visit, total_spend, visit_count, preferred_stylist_id, phorest_client_id')
             .eq('is_duplicate', false)
             .range(offset, offset + PAGE_SIZE - 1)
@@ -124,7 +124,7 @@ export function useClientHealthSegments() {
       // Fetch recent appointments to check for future bookings
       const futureAppts = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id')
           .gte('appointment_date', todayStr)
           .neq('status', 'cancelled')

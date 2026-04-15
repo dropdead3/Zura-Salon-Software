@@ -32,7 +32,7 @@ export function useTicketDistribution(dateFrom?: string, dateTo?: string, locati
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_sales_transactions')
+          .from('v_all_sales_transactions' as any)
           .select('total_amount, phorest_transaction_id')
           .not('total_amount', 'is', null)
           .range(from, to);

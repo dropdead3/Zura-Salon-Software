@@ -20,7 +20,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
       // Query from phorest_appointments (where redo metadata is written by the edge function)
       // First get the phorest_client_id from the client record
       const { data: client } = await supabase
-        .from('v_all_clients')
+        .from('v_all_clients' as any)
         .select('phorest_client_id')
         .eq('id', clientId)
         .maybeSingle();
@@ -38,7 +38,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
       }
 
       const { data } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('id, service_name, appointment_date, stylist_user_id, total_price, original_price, redo_reason, status')
         .eq('phorest_client_id', client.phorest_client_id)
         .eq('is_redo', true)

@@ -39,7 +39,7 @@ export function usePerLocationColorServices() {
         location_id: string | null;
       }>((from, to) =>
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, service_name, service_category, appointment_date, location_id')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

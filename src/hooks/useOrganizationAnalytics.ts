@@ -178,7 +178,7 @@ export function useOrganizationAnalytics() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('location_id, transaction_date, total_amount, tax_amount, item_type')
           .gte('transaction_date', startDate)
           .range(from, from + pageSize - 1);
@@ -227,7 +227,7 @@ export function useOrganizationAnalytics() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('staff_user_id, rebooked_at_checkout, is_new_client, location_id')
           .gte('appointment_date', startDate)
           .not('status', 'in', '("cancelled","no_show")')
@@ -277,7 +277,7 @@ export function useOrganizationAnalytics() {
     queryKey: ['platform-analytics-appointments'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('id, location_id');
       if (error) throw error;
       return data || [];

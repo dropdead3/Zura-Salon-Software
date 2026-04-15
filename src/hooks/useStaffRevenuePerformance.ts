@@ -74,7 +74,7 @@ export function useStaffRevenuePerformance(
         location_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_sales_transactions')
+          .from('v_all_sales_transactions' as any)
           .select('phorest_staff_id, total_amount, tax_amount, transaction_date, location_id')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
@@ -93,7 +93,7 @@ export function useStaffRevenuePerformance(
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, item_type, total_amount, tax_amount, transaction_date')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)

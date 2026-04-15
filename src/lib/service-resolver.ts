@@ -18,7 +18,7 @@ export async function resolveServiceIds(
   if (names.length === 0) return [];
 
   const { data, error } = await supabaseClient
-    .from('v_all_services')
+    .from('v_all_services' as any)
     .select('id, name')
     .in('name', names);
 

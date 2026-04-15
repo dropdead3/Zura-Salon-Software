@@ -41,7 +41,7 @@ function useNoShowEnhancedReport(filters: { dateFrom: string; dateTo: string; lo
         appointment_date: string;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id, client_name, status, total_price, appointment_date')
           .gte('appointment_date', filters.dateFrom)
           .lte('appointment_date', filters.dateTo)

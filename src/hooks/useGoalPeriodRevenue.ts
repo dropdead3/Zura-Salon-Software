@@ -27,7 +27,7 @@ export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string) {
       const allItems = await fetchAllBatched<{ total_amount: number | null; tax_amount: number | null }>(
         (from, to) => {
           let q = supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('total_amount, tax_amount')
             .gte('transaction_date', dateFrom)
             .lte('transaction_date', dateTo)

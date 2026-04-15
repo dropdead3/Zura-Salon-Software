@@ -110,7 +110,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       const clientIds = clients.map(c => c.phorest_client_id).filter(Boolean);
 
       const { data: appointments } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('id, appointment_date, start_time, end_time, service_name, status, stylist_user_id, phorest_client_id, client_name, location_id, staff_name')
         .in('phorest_client_id', clientIds)
         .eq('appointment_date', today)
@@ -341,7 +341,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       const endTimeStr = `${Math.floor(windowEnd/60).toString().padStart(2,'0')}:${(windowEnd%60).toString().padStart(2,'0')}:00`;
 
       const { data: appointments, error } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('id, appointment_date, start_time, end_time, service_name, status, stylist_user_id, client_name, location_id, staff_name')
         .eq('appointment_date', today)
         .eq('location_id', locationId)

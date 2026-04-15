@@ -28,7 +28,7 @@ export function useNoShowReport(dateFrom: string, dateTo: string, locationId?: s
     queryFn: async (): Promise<NoShowData> => {
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, appointment_date, status, total_price, tip_amount')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

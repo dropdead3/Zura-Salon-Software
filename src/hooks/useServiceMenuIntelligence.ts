@@ -50,7 +50,7 @@ export function useServiceMenuIntelligence(organizationId?: string, locationId?:
         transaction_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('item_name, item_type, total_amount, transaction_date, transaction_id')
           .eq('item_type', 'service')
           .gte('transaction_date', priorStart)
@@ -62,7 +62,7 @@ export function useServiceMenuIntelligence(organizationId?: string, locationId?:
 
       // Fetch services with price data (phorest_services has no cost column, use service_addons pattern)
       const { data: services, error: svcErr } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('name, price');
       if (svcErr) throw svcErr;
 

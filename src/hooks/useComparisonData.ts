@@ -109,7 +109,7 @@ export function useComparisonData(params: ComparisonParams) {
         let hasMore = true;
         while (hasMore) {
           let q: any = supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('transaction_date, total_amount, tax_amount, item_type, location_id, phorest_client_id')
             .gte('transaction_date', dateFrom)
             .lte('transaction_date', dateTo);
@@ -259,7 +259,7 @@ export function useComparisonData(params: ComparisonParams) {
         const [catDataA, catDataB] = await Promise.all([
           fetchAllBatched<any>((from, to) =>
             supabase
-              .from('v_all_sales_transactions')
+              .from('v_all_sales_transactions' as any)
               .select('item_category, total_amount')
               .gte('transaction_date', periodA.dateFrom)
               .lte('transaction_date', periodA.dateTo)
@@ -267,7 +267,7 @@ export function useComparisonData(params: ComparisonParams) {
           ),
           fetchAllBatched<any>((from, to) =>
             supabase
-              .from('v_all_sales_transactions')
+              .from('v_all_sales_transactions' as any)
               .select('item_category, total_amount')
               .gte('transaction_date', periodB.dateFrom)
               .lte('transaction_date', periodB.dateTo)

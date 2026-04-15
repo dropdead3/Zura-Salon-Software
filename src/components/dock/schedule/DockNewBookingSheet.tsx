@@ -154,7 +154,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
     queryKey: ['dock-demo-real-services', organizationId],
     queryFn: async () => {
       const { data: svcData } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('*')
         .order('category')
         .order('name');

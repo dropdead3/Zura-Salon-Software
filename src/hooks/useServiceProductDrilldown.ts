@@ -64,7 +64,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         service_name: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('staff_user_id, stylist_user_id, staff_name, total_price, tip_amount, service_name')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -86,7 +86,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         item_name: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, total_amount, tax_amount, item_name')
           .gte('transaction_date', txDateFrom)
           .lte('transaction_date', txDateTo)

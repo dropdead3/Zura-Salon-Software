@@ -44,7 +44,7 @@ function useDeletedAppointmentsReport(filters: { dateFrom: string; dateTo: strin
         deleted_by: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('appointment_date, client_name, service_name, staff_name, total_price, deleted_at, deleted_by')
           .not('deleted_at', 'is', null)
           .gte('appointment_date', filters.dateFrom)

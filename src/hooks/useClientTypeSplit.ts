@@ -32,7 +32,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       // Step 1: Get distinct POS client IDs (source of truth for transaction count)
       const txData = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('phorest_client_id')
           .not('phorest_client_id', 'is', null)
           .gte('transaction_date', dateFrom)
@@ -52,7 +52,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       // Step 2: Get appointment data for new/returning classification + revenue
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

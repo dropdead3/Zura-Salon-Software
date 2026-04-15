@@ -69,7 +69,7 @@ export function useSalesTransactions(filters: SalesFilters = {}) {
     queryKey: ['sales-transactions', filters],
     queryFn: async () => {
       let query = supabase
-        .from('v_all_sales_transactions')
+        .from('v_all_sales_transactions' as any)
         .select(`
           *,
           employee_profiles:stylist_user_id (
@@ -111,7 +111,7 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
     queryFn: async () => {
       const allData = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, total_amount, tax_amount, item_type, transaction_date, location_id')
           .range(from, to);
 
@@ -186,7 +186,7 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
         let hasMore = true;
         while (hasMore) {
           let q = supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('total_amount, tax_amount, item_type, transaction_date') as any;
           if (filterValues.length === 1) {
             q = q.eq(filterField, filterValues[0]);
@@ -278,7 +278,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         start_time: string | null; end_time: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, total_price, tip_amount, service_name, staff_user_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
@@ -299,7 +299,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         total_amount: number | null; tax_amount: number | null; item_type: string | null; item_name: string | null; tip_amount: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('total_amount, tax_amount, item_type, item_name, tip_amount, phorest_client_id')
           .not('total_amount', 'is', null)
           .range(from, to);
@@ -463,7 +463,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         item_name: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, total_amount, tax_amount, item_type, item_name')
           .not('phorest_staff_id', 'is', null)
           .not('total_amount', 'is', null)
@@ -541,7 +541,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
         location_id: string | null; total_price: number | null; tip_amount: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('location_id, total_price, tip_amount, phorest_client_id')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
@@ -611,7 +611,7 @@ export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: s
         tip_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('service_category, total_price, tip_amount')
           .not('total_price', 'is', null)
           .in('status', ['completed'])
@@ -657,7 +657,7 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
         location_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('appointment_date, total_price, tip_amount, location_id')
           .not('total_price', 'is', null)
           .order('appointment_date', { ascending: true })
@@ -773,7 +773,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         appointment_date: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('staff_user_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
           .not('phorest_staff_id', 'is', null)
           .not('total_price', 'is', null)

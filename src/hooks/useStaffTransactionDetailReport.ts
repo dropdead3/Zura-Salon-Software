@@ -44,7 +44,7 @@ export function useStaffTransactionDetailReport(filters: Filters) {
         total_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('transaction_date, staff_name, client_name, item_name, item_type, quantity, unit_price, discount, total_amount')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)

@@ -54,7 +54,7 @@ export function useRedoAnalytics(days: number = 30) {
       // Fetch all phorest_appointments in the period, filtered by org locations
       const appointments = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, stylist_user_id, is_redo, redo_reason, original_appointment_id, total_price, original_price, phorest_client_id, appointment_date')
           .in('location_id', locationIds)
           .gte('appointment_date', dateFrom)

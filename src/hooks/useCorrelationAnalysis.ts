@@ -42,7 +42,7 @@ export function useCorrelationAnalysis(locationId?: string, days = 90) {
       let hasMore = true;
       while (hasMore) {
         let q: any = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('transaction_date, total_amount, tax_amount, item_type, location_id, phorest_client_id')
           .gte('transaction_date', format(startDate, 'yyyy-MM-dd'))
           .lte('transaction_date', format(endDate, 'yyyy-MM-dd'));

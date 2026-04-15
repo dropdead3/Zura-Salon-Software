@@ -34,7 +34,7 @@ export function useDiscountsReport(filters: Filters) {
         transaction_date: string;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_name, discount, total_amount, transaction_date')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)

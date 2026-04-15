@@ -186,7 +186,7 @@ export function useStylistAvailability(
 
       // 4. Get today's appointments at this location
       const { data: appointments, error: apptError } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('start_time, end_time, phorest_staff_id, stylist_user_id')
         .eq('appointment_date', today)
         .eq('location_id', locationId)

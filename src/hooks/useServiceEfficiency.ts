@@ -76,7 +76,7 @@ export function useServiceEfficiency(
 
       while (hasMore) {
         let query = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('service_name, total_price, start_time, end_time, appointment_date, is_new_client, rebooked_at_checkout, tip_amount, phorest_staff_id')
           .neq('status', 'cancelled')
           .gte('appointment_date', dateFrom)
@@ -103,7 +103,7 @@ export function useServiceEfficiency(
     queryKey: ['service-efficiency-catalog'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('name, category, duration_minutes, price');
       if (error) throw error;
       return data || [];

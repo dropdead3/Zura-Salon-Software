@@ -116,7 +116,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       // Fetch appointments in the selected range (by created_at)
       const rangeBookings = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, total_price, tip_amount, appointment_date, phorest_client_id, phorest_staff_id, location_id')
           .gte('created_at', startDate)
           .lte('created_at', endDate)
@@ -140,7 +140,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         // Batch check: for each client, see if they have any appointment before startDate
         const priorAppts = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) =>
           supabase
-            .from('v_all_appointments')
+            .from('v_all_appointments' as any)
             .select('phorest_client_id')
             .in('phorest_client_id', rangeClientIds as readonly string[])
             .lt('appointment_date', startDate)
@@ -170,7 +170,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       const [last30Res, prev30Res] = await Promise.all([
         applyLocFilter(
           supabase
-            .from('v_all_appointments')
+            .from('v_all_appointments' as any)
             .select('id', { count: 'exact', head: true })
             .gte('created_at', thirtyDaysAgoStart)
             .lte('created_at', todayEnd)
@@ -178,7 +178,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         ),
         applyLocFilter(
           supabase
-            .from('v_all_appointments')
+            .from('v_all_appointments' as any)
             .select('id', { count: 'exact', head: true })
             .gte('created_at', sixtyDaysAgoStart)
             .lte('created_at', thirtyOneDaysAgoEnd)
@@ -204,7 +204,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
 
       if (rebookClientIds.length > 0) {
         const { data: futureAppts, error: futureError } = await supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id')
           .in('phorest_client_id', rebookClientIds as readonly string[])
           .gt('appointment_date', endDate)
@@ -278,7 +278,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       let futureClientSet = new Set<string>();
       if (rebookClientIds.length > 0) {
         const { data: futureAppts2 } = await supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id')
           .in('phorest_client_id', rebookClientIds as readonly string[])
           .gt('appointment_date', endDate)

@@ -62,7 +62,7 @@ export function useWeekAheadRevenue(locationId?: string) {
     queryFn: async () => {
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, appointment_date, total_price, tip_amount, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
           .gte('appointment_date', startDate)
           .lte('appointment_date', endDate)
