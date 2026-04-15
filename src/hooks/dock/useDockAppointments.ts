@@ -237,7 +237,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             .select('client_id, card_last4, card_brand, card_exp_month, card_exp_year')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand, exp_month: c.card_exp_month, exp_year: c.card_exp_year }]));
+          const cardMap = new Map(((cards || []) as any[]).map((c: any) => [c.client_id, { last4: c.card_last4, brand: c.card_brand, exp_month: c.card_exp_month, exp_year: c.card_exp_year }]));
           for (const a of appointments) {
             if (a.payment_status === 'failed' && a.phorest_client_id) {
               const card = cardMap.get(a.phorest_client_id);
@@ -350,7 +350,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
             .select('client_id, card_last4, card_brand, card_exp_month, card_exp_year')
             .in('client_id', clientIds)
             .eq('is_default', true);
-          const cardMap = new Map((cards || []).map(c => [c.client_id, { last4: c.card_last4, brand: c.card_brand, exp_month: c.card_exp_month, exp_year: c.card_exp_year }]));
+          const cardMap = new Map(((cards || []) as any[]).map((c: any) => [c.client_id, { last4: c.card_last4, brand: c.card_brand, exp_month: c.card_exp_month, exp_year: c.card_exp_year }]));
           for (const a of all) {
             if (a.payment_status === 'failed') {
               const cid = a.phorest_client_id || a.client_id;

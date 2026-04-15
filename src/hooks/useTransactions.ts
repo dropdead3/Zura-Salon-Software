@@ -68,7 +68,7 @@ export function useTransactions(filters: TransactionFilters = {}) {
       if (error) throw error;
 
       // Fetch refund status for each transaction
-      const transactionIds = [...new Set(data?.map(t => t.transaction_id) || [])];
+      const transactionIds = [...new Set(((data || []) as any[]).map((t: any) => t.transaction_id) || [])];
       
       let refundMap: Record<string, { status: string; type: string; amount: number }> = {};
       if (transactionIds.length > 0) {
@@ -77,7 +77,7 @@ export function useTransactions(filters: TransactionFilters = {}) {
           .select('original_transaction_id, status, refund_type, refund_amount')
           .in('original_transaction_id', transactionIds);
         
-        refunds?.forEach(r => {
+        ((refunds || []) as any[]).forEach((r: any) => {
           refundMap[r.original_transaction_id] = {
             status: r.status,
             type: r.refund_type,
@@ -87,7 +87,7 @@ export function useTransactions(filters: TransactionFilters = {}) {
       }
 
       // Fetch promotion details for items with promotion_id
-      const promoIds = [...new Set((data || []).filter(t => t.promotion_id).map(t => t.promotion_id!))];
+      const promoIds = [...new Set(((data || []) as any[]).filter((t: any) => t.promotion_id).map(t => t.promotion_id!))];
       let promoMap: Record<string, { name: string; code: string | null }> = {};
       if (promoIds.length > 0) {
         const { data: promos } = await supabase
@@ -101,7 +101,7 @@ export function useTransactions(filters: TransactionFilters = {}) {
       }
 
       // Merge refund + promo info
-      return (data || []).map(item => ({
+      return ((data || []) as any[]).map((item: any) => ({
         ...item,
         promotion_name: item.promotion_id ? promoMap[item.promotion_id]?.name || null : null,
         promo_code: item.promotion_id ? promoMap[item.promotion_id]?.code || null : null,
@@ -129,7 +129,7 @@ export function useTransactionsByClient(clientId: string | null) {
       if (error) throw error;
 
       // Fetch refund records for these transactions
-      const transactionIds = [...new Set(data?.map(t => t.transaction_id) || [])];
+      const transactionIds = [...new Set(((data || []) as any[]).map((t: any) => t.transaction_id) || [])];
       let refundMap: Record<string, { status: string; type: string; amount: number }> = {};
       
       if (transactionIds.length > 0) {
@@ -138,7 +138,7 @@ export function useTransactionsByClient(clientId: string | null) {
           .select('original_transaction_id, status, refund_type, refund_amount')
           .in('original_transaction_id', transactionIds);
         
-        refunds?.forEach(r => {
+        ((refunds || []) as any[]).forEach((r: any) => {
           refundMap[r.original_transaction_id] = {
             status: r.status,
             type: r.refund_type,
@@ -147,7 +147,7 @@ export function useTransactionsByClient(clientId: string | null) {
         });
       }
 
-      return (data || []).map(item => ({
+      return ((data || []) as any[]).map((item: any) => ({
         ...item,
         refund_status: refundMap[item.transaction_id]?.status || null,
         refund_type: refundMap[item.transaction_id]?.type || null,

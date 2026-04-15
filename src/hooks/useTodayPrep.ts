@@ -127,7 +127,7 @@ export function useTodayPrep() {
           .select('phorest_client_id, name, visit_count, total_spend, last_visit, first_visit, is_vip, birthday, client_since')
           .in('phorest_client_id', phorestClientIds);
         
-        for (const c of clients || []) {
+        for (const c of (clients || []) as any[]) {
           clientMap.set(c.phorest_client_id, c);
         }
       }
@@ -143,10 +143,10 @@ export function useTodayPrep() {
           .limit(200);
         
         // Get staff names for recent services
-        const staffIds = [...new Set((txnItems || []).map(t => t.staff_user_id).filter(Boolean))];
+        const staffIds = [...new Set(((txnItems || []) as any[]).map((t: any) => t.staff_user_id).filter(Boolean))];
         const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds as string[]);
 
-        for (const item of txnItems || []) {
+        for (const item of (txnItems || []) as any[]) {
           if (!item.phorest_client_id) continue;
           if (!txnMap.has(item.phorest_client_id)) {
             txnMap.set(item.phorest_client_id, { services: [], products: [] });
@@ -181,8 +181,8 @@ export function useTodayPrep() {
           .select('id, phorest_client_id')
           .in('phorest_client_id', phorestClientIds);
         
-        const internalIds = (clientIdRows || []).map(c => c.id);
-        const internalToPhorest = new Map((clientIdRows || []).map(c => [c.id, c.phorest_client_id]));
+        const internalIds = ((clientIdRows || []) as any[]).map((c: any) => c.id);
+        const internalToPhorest = new Map(((clientIdRows || []) as any[]).map((c: any) => [c.id, c.phorest_client_id]));
         
         if (internalIds.length > 0) {
           const { data: notes } = await supabase
@@ -195,7 +195,7 @@ export function useTodayPrep() {
             .order('created_at', { ascending: false })
             .limit(50);
           
-          for (const n of notes || []) {
+          for (const n of (notes || []) as any[]) {
             const pId = internalToPhorest.get(n.client_id);
             if (!pId) continue;
             if (!clientNoteMap.has(pId)) clientNoteMap.set(pId, []);
@@ -226,8 +226,8 @@ export function useTodayPrep() {
           .order('appointment_date', { ascending: false })
           .limit(100);
         
-        const pastApptIds = (pastAppts || []).map(a => a.id);
-        const apptToClient = new Map((pastAppts || []).map(a => [a.id, a.phorest_client_id]));
+        const pastApptIds = ((pastAppts || []) as any[]).map((a: any) => a.id);
+        const apptToClient = new Map(((pastAppts || []) as any[]).map((a: any) => [a.id, a.phorest_client_id]));
         
         if (pastApptIds.length > 0) {
           const { data: apptNotes } = await supabase
@@ -240,7 +240,7 @@ export function useTodayPrep() {
             .order('created_at', { ascending: false })
             .limit(50);
           
-          for (const n of apptNotes || []) {
+          for (const n of (apptNotes || []) as any[]) {
             const pId = apptToClient.get(n.phorest_appointment_id);
             if (!pId) continue;
             if (!apptNoteMap.has(pId)) apptNoteMap.set(pId, []);

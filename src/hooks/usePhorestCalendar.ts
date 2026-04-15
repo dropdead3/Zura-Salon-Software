@@ -177,7 +177,7 @@ export function usePhorestCalendar() {
           .select('appointment_id')
           .eq('assistant_user_id', effectiveUserId);
 
-        const assistedIds = (assistedApptIds || []).map(a => a.appointment_id);
+        const assistedIds = ((assistedApptIds || []) as any[]).map((a: any) => a.appointment_id);
 
         if (assistedIds.length > 0) {
           // Use or filter to include own + assisted appointments
@@ -288,7 +288,7 @@ export function usePhorestCalendar() {
         .from('appointment_assistants')
         .select('appointment_id')
         .eq('assistant_user_id', effectiveUserId);
-      return new Set((data || []).map(a => a.appointment_id));
+      return new Set(((data || []) as any[]).map((a: any) => a.appointment_id));
     },
     enabled: !!effectiveUserId,
   });

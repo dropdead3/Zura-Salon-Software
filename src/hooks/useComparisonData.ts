@@ -189,11 +189,11 @@ export function useComparisonData(params: ComparisonParams) {
         const dailyMapA: Record<string, number> = {};
         const dailyMapB: Record<string, number> = {};
 
-        (dataA || []).forEach(row => {
+        ((dataA || []) as any[]).forEach((row: any) => {
           const d = row.summary_date;
           dailyMapA[d] = (dailyMapA[d] || 0) + (Number(row.total_revenue) || 0);
         });
-        (dataB || []).forEach(row => {
+        ((dataB || []) as any[]).forEach((row: any) => {
           const d = row.summary_date;
           dailyMapB[d] = (dailyMapB[d] || 0) + (Number(row.total_revenue) || 0);
         });
@@ -222,10 +222,10 @@ export function useComparisonData(params: ComparisonParams) {
           .from('locations')
           .select('id, name');
 
-        const locationMap = new Map(locations?.map(l => [l.id, l.name]) || []);
+        const locationMap = new Map(((locations || []) as any[]).map((l: any) => [l.id, l.name]) || []);
         const byLocation: Record<string, LocationBreakdown> = {};
 
-        (dataA || []).forEach(row => {
+        ((dataA || []) as any[]).forEach((row: any) => {
           const locId = row.location_id || 'unknown';
           if (!byLocation[locId]) {
             byLocation[locId] = {

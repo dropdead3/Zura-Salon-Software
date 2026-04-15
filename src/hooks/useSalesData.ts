@@ -555,7 +555,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
 
       // Pre-populate ALL active locations with zero values
       const byLocation: Record<string, any> = {};
-      locations?.forEach(loc => {
+      ((locations || []) as any[]).forEach((loc: any) => {
         byLocation[loc.id] = {
           location_id: loc.id,
           name: loc.name || 'Unknown Location',
@@ -675,7 +675,7 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
       // Also track by location
       const byLocationDate: Record<string, Record<string, number>> = {};
       
-      data?.forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         const dateKey = apt.appointment_date?.split('T')[0] || apt.appointment_date;
         
         // Overall aggregation
@@ -798,7 +798,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       const byStaff: Record<string, PhorestStaffSalesData> = {};
       const staffVisitSets: Record<string, Set<string>> = {};
       
-      data?.forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         const phorestId = apt.phorest_staff_id!;
         const mapping = mappingLookup[phorestId];
         

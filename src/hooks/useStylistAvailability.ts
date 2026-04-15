@@ -124,7 +124,7 @@ export function useStylistAvailability(
         
         if (error) throw error;
         
-        return (allStylists || []).map(s => ({
+        return ((allStylists || []) as any[]).map((s: any) => ({
           user_id: s.user_id,
           full_name: s.full_name,
           display_name: s.display_name,

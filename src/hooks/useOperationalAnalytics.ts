@@ -101,7 +101,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
       // Group by date
       const volumeByDate = new Map<string, { count: number; completed: number; cancelled: number; noShow: number }>();
       
-      (data || []).forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         const date = apt.appointment_date;
         const existing = volumeByDate.get(date) || { count: 0, completed: 0, cancelled: 0, noShow: 0 };
         existing.count++;
@@ -143,7 +143,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
       const distribution: HourlyDistribution[] = [];
       const hourDayMap = new Map<string, number>();
 
-      (data || []).forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         const date = parseISO(apt.appointment_date);
         const dayOfWeek = date.getDay();
         const hour = parseInt(apt.start_time.split(':')[0]);
@@ -180,7 +180,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
 
       // Count by status
       const statusCounts = new Map<string, number>();
-      (data || []).forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         statusCounts.set(apt.status, (statusCounts.get(apt.status) || 0) + 1);
       });
 
@@ -214,11 +214,11 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
       });
 
       const totalClients = data?.length || 0;
-      const returningClients = (data || []).filter(c => c.visit_count > 1).length;
-      const newClients = (data || []).filter(c => c.visit_count === 1).length;
+      const returningClients = ((data || []) as any[]).filter((c: any) => c.visit_count > 1).length;
+      const newClients = ((data || []) as any[]).filter((c: any) => c.visit_count === 1).length;
       
       // At-risk: 2+ visits but no visit in 60+ days
-      const atRiskClientsData = (data || []).filter(c => {
+      const atRiskClientsData = ((data || []) as any[]).filter((c: any) => {
         if (c.visit_count < 2 || !c.last_visit) return false;
         return differenceInDays(new Date(), parseISO(c.last_visit)) >= 60;
       });
@@ -352,7 +352,7 @@ export function useAppointmentSummary(dateFrom: string, dateTo: string, location
       // Use first status encountered per visit; prioritize completed > no_show > cancelled > other
       const visitMap = new Map<string, string>();
       const statusPriority: Record<string, number> = { completed: 3, no_show: 2, cancelled: 1 };
-      (data || []).forEach(a => {
+      ((data || []) as any[]).forEach((a: any) => {
         const key = a.phorest_client_id
           ? `${a.phorest_client_id}|${a.appointment_date}`
           : `row-${Math.random()}`;

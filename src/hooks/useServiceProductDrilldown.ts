@@ -122,7 +122,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         : { data: [] };
 
       const staffLookup: Record<string, string> = {};
-      (profiles || []).forEach(p => {
+      ((profiles || []) as any[]).forEach((p: any) => {
         staffLookup[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
       });
 

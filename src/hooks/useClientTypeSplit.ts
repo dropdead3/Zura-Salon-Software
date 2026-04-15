@@ -67,7 +67,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       // Group by unique client visit (phorest_client_id + appointment_date)
       // Only include clients present in POS data
       const visitMap = new Map<string, { revenue: number; isNew: boolean; rebooked: boolean }>();
-      (appointments || []).forEach(apt => {
+      ((appointments || []) as any[]).forEach((apt: any) => {
         const clientId = apt.phorest_client_id;
         if (!clientId || !posClientIds.has(clientId)) return;
         

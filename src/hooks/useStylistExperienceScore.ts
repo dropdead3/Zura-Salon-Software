@@ -133,7 +133,7 @@ export function useStylistExperienceScore(
 
       // Group appointments by staff (prefer stylist_user_id, fallback to phorest_staff_id)
       const staffAppointments = new Map<string, typeof appointments>();
-      appointments?.forEach(apt => {
+      ((appointments || []) as any[]).forEach((apt: any) => {
         const staffId = apt.stylist_user_id || apt.staff_user_id;
         if (!staffId) return;
         if (!staffAppointments.has(staffId)) {
@@ -144,7 +144,7 @@ export function useStylistExperienceScore(
 
       // Calculate retail attachment by staff (using staff_user_id from view)
       const staffRetail = new Map<string, { retail: number; total: number }>();
-      transactionItems?.forEach(item => {
+      ((transactionItems || []) as any[]).forEach((item: any) => {
         if (!item.staff_user_id) return;
         if (!staffRetail.has(item.staff_user_id)) {
           staffRetail.set(item.staff_user_id, { retail: 0, total: 0 });
@@ -171,7 +171,7 @@ export function useStylistExperienceScore(
       const staffInfo = new Map<string, { name: string; photoUrl: string | null }>();
       const resolvedUserIds = new Set<string>();
       
-      (directProfiles || []).forEach(p => {
+      ((directProfiles || []) as any[]).forEach((p: any) => {
         const name = formatDisplayName(p.full_name || '', p.display_name);
         staffInfo.set(p.user_id, { name, photoUrl: p.photo_url || null });
         resolvedUserIds.add(p.user_id);
@@ -188,7 +188,7 @@ export function useStylistExperienceScore(
               .select('user_id, photo_url')
               .in('user_id', userIdsForPhotos)
           : { data: [] };
-        const photoMap = new Map((photoProfiles || []).map(p => [p.user_id, p.photo_url]));
+        const photoMap = new Map(((photoProfiles || []) as any[]).map((p: any) => [p.user_id, p.photo_url]));
 
         unresolvedIds.forEach(phorestId => {
           const name = staffNameData.byPhorestId[phorestId] || 'Unknown';

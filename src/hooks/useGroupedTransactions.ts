@@ -108,7 +108,7 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
           .from('refund_records')
           .select('original_transaction_id, status, refund_type, refund_amount')
           .in('original_transaction_id', transactionIds);
-        refunds?.forEach(r => {
+        ((refunds || []) as any[]).forEach((r: any) => {
           refundMap[r.original_transaction_id] = {
             status: r.status,
             type: r.refund_type,
@@ -125,7 +125,7 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
           .select('transaction_id, void_reason')
           .eq('organization_id', orgId)
           .in('transaction_id', transactionIds);
-        voids?.forEach(v => {
+        ((voids || []) as any[]).forEach((v: any) => {
           voidMap[v.transaction_id] = v.void_reason || '';
         });
       }

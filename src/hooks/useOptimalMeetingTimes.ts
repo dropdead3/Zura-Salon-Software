@@ -71,7 +71,7 @@ export function useOptimalMeetingTimes(
         .in('staff_user_id', attendeeUserIds)
         .not('status', 'in', '("cancelled","no_show")');
 
-      for (const a of native || []) {
+      for (const a of (native || []) as any[]) {
         if (!a.staff_user_id) continue;
         const arr = blocks.get(a.staff_user_id) || [];
         arr.push({ start: timeToMinutes(a.start_time), end: timeToMinutes(a.end_time) });
@@ -85,7 +85,7 @@ export function useOptimalMeetingTimes(
         .eq('start_date', date)
         .eq('status', 'scheduled');
 
-      for (const m of meetings || []) {
+      for (const m of (meetings || []) as any[]) {
         const mStart = timeToMinutes(m.start_time);
         const mEnd = timeToMinutes(m.end_time);
 
@@ -96,7 +96,7 @@ export function useOptimalMeetingTimes(
         }
 
         const attendees = m.admin_meeting_attendees as { user_id: string }[] | null;
-        for (const att of attendees || []) {
+        for (const att of (attendees || []) as any[]) {
           if (attendeeUserIds.includes(att.user_id)) {
             const arr = blocks.get(att.user_id) || [];
             arr.push({ start: mStart, end: mEnd });

@@ -78,7 +78,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
         .select('user_id')
         .in('role', ['stylist', 'stylist_assistant']);
       if (error) throw error;
-      return (data || []).map(r => r.user_id);
+      return ((data || []) as any[]).map((r: any) => r.user_id);
     },
   });
 
@@ -138,7 +138,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
         totalRevenue: number;
       }>();
 
-      (appointments || []).forEach(apt => {
+      ((appointments || []) as any[]).forEach((apt: any) => {
         if (!apt.stylist_user_id) return;
         
         const existing = staffStats.get(apt.stylist_user_id) || {
@@ -224,7 +224,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
           .from('services')
           .select('id, name, category')
           .in('id', serviceIds);
-        for (const s of svcs || []) {
+        for (const s of (svcs || []) as any[]) {
           serviceNameMap[s.id] = { name: s.name, category: s.category || 'General' };
         }
       }
@@ -237,7 +237,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
           .from('employee_profiles')
           .select('user_id, display_name, full_name')
           .in('user_id', staffUserIds);
-        for (const p of profiles || []) {
+        for (const p of (profiles || []) as any[]) {
           staffNameMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
         }
       }
@@ -300,7 +300,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
       });
 
       const total = appointments?.length || 0;
-      const distribution: LocationDistribution[] = (locations || []).map(loc => ({
+      const distribution: LocationDistribution[] = ((locations || []) as any[]).map((loc: any) => ({
         locationId: loc.id,
         locationName: loc.name,
         appointmentCount: locationCounts.get(loc.id) || 0,

@@ -210,7 +210,7 @@ export function usePayrollForecasting() {
     // Aggregate current sales by employee
     const employeeSales: Record<string, { services: number; products: number }> = {};
     
-    for (const row of currentSalesData || []) {
+    for (const row of (currentSalesData || []) as any[]) {
       if (!row.user_id) continue;
       if (!employeeSales[row.user_id]) {
         employeeSales[row.user_id] = { services: 0, products: 0 };

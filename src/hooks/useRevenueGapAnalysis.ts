@@ -125,7 +125,7 @@ export function useRevenueGapAnalysis(
 
       // ── Client name resolution from phorest_clients ──
       const clientIds = [...new Set(
-        (allAppts ?? []).map(a => a.phorest_client_id).filter((id): id is string => !!id)
+        ((allAppts ?? []) as any[]).map((a: any) => a.phorest_client_id).filter((id): id is string => !!id)
       )];
 
       const clientNameMap = new Map<string, string>();
@@ -148,10 +148,10 @@ export function useRevenueGapAnalysis(
         (a.phorest_client_id ? clientNameMap.get(a.phorest_client_id) : null) ?? a.client_name ?? 'Walk-in';
 
       // ── Split by status ──
-      const cancelled = (allAppts ?? []).filter(a => a.status === 'cancelled');
-      const noShows = (allAppts ?? []).filter(a => a.status === 'no_show');
-      const completed = (allAppts ?? []).filter(a => a.status === 'completed');
-      const notConcluded = (allAppts ?? []).filter(a => 
+      const cancelled = ((allAppts ?? []) as any[]).filter((a: any) => a.status === 'cancelled');
+      const noShows = ((allAppts ?? []) as any[]).filter((a: any) => a.status === 'no_show');
+      const completed = ((allAppts ?? []) as any[]).filter((a: any) => a.status === 'completed');
+      const notConcluded = ((allAppts ?? []) as any[]).filter((a: any) => 
         a.status && !['cancelled', 'no_show', 'completed'].includes(a.status)
       );
 

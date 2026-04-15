@@ -84,7 +84,7 @@ export function useAppointmentsHub(filters: HubFilters) {
           .from('employee_profiles')
           .select('user_id, display_name, full_name')
           .in('user_id', stylistIds);
-        for (const p of profiles || []) {
+        for (const p of (profiles || []) as any[]) {
           stylistMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
         }
       }
@@ -97,7 +97,7 @@ export function useAppointmentsHub(filters: HubFilters) {
           .from('employee_profiles')
           .select('user_id, display_name, full_name')
           .in('user_id', createdByIds);
-        for (const p of profiles || []) {
+        for (const p of (profiles || []) as any[]) {
           createdByMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
         }
       }
@@ -110,7 +110,7 @@ export function useAppointmentsHub(filters: HubFilters) {
           .from('locations')
           .select('id, name')
           .in('id', locationIds);
-        for (const l of locs || []) {
+        for (const l of (locs || []) as any[]) {
           locationMap[l.id] = l.name;
         }
       }

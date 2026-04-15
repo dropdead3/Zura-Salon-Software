@@ -78,7 +78,7 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
         .in('user_id', allIds);
 
       const profileMap = new Map(
-        (profiles || []).map(p => [p.user_id, p])
+        ((profiles || []) as any[]).map((p: any) => [p.user_id, p])
       );
 
       const getName = (uid: string) => {
