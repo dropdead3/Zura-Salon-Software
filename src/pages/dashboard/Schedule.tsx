@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { LocationTimezoneProvider } from '@/contexts/LocationTimezoneContext';
+import { useLocationTimezone } from '@/hooks/useLocationTimezone';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
 import { ScheduleActionBar } from '@/components/dashboard/schedule/ScheduleActionBar';
@@ -115,7 +117,8 @@ export default function Schedule() {
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
-  
+  const locationTimezone = useLocationTimezone(selectedLocation || null);
+
   // Fetch assistant time blocks for the current date/location
   const {
     timeBlocks: assistantTimeBlocks,
@@ -831,6 +834,7 @@ export default function Schedule() {
   );
 
   return (
+    <LocationTimezoneProvider timezone={locationTimezone}>
     <DashboardLayout hideFooter>
       <div className="flex flex-col h-screen relative">
         {/* Header */}
@@ -1150,5 +1154,6 @@ export default function Schedule() {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+    </LocationTimezoneProvider>
   );
 }
