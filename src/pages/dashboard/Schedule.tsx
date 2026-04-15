@@ -310,7 +310,7 @@ export default function Schedule() {
     queryFn: async () => {
       let query = supabase
         .from('v_all_staff' as any)
-        .select('user_id, display_name, full_name, photo_url, location_id')
+        .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
         .eq('is_active', true)
         .eq('show_on_calendar', true);
 
