@@ -115,10 +115,16 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const bookingData: BookingRequest = await req.json();
-    const { branch_id, client_id, staff_id, service_ids, start_time, notes, location_id: clientLocationId, is_redo, redo_reason, original_appointment_id, redo_pricing_override, redo_requires_approval, redo_is_manager } = bookingData;
+    const { branch_id, client_id, staff_id, service_ids, start_time, notes, location_id: clientLocationId, staff_user_id, client_name: nativeClientName, client_email: nativeClientEmail, client_phone: nativeClientPhone, native_client_id, is_redo, redo_reason, original_appointment_id, redo_pricing_override, redo_requires_approval, redo_is_manager } = bookingData;
 
-    if (!branch_id || !client_id || !staff_id || !service_ids?.length || !start_time) {
-      throw new Error("Missing required fields: branch_id, client_id, staff_id, service_ids, start_time");
+    // Determine if this is a native (Phorest-free) booking
+    const isNativeMode = !!staff_user_id && !staff_id;
+
+    if (!isNativeMode && (!branch_id || !client_id || !staff_id)) {
+      throw new Error("Missing required fields: branch_id, client_id, staff_id (or use staff_user_id for native mode)");
+    }
+    if (!service_ids?.length || !start_time) {
+      throw new Error("Missing required fields: service_ids, start_time");
     }
 
     console.log(`Creating booking for client ${client_id} with staff ${staff_id} at ${start_time}`);
