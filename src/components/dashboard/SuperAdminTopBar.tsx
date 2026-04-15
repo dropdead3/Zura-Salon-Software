@@ -153,10 +153,12 @@ export function SuperAdminTopBar({
       className={cn(
         "dashboard-top-bar hidden lg:block z-30 px-3 pt-3 pb-3",
         hideFooter
-          ? cn("fixed right-0 z-50 transition-transform duration-300 ease-in-out", isImpersonating ? "top-[44px]" : "top-0")
+          ? cn(
+              "fixed right-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
+              isImpersonating ? "top-[44px]" : "top-0",
+              headerHovered ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-full opacity-0 pointer-events-none"
+            )
           : cn("sticky", isImpersonating ? "top-[44px]" : "top-0"),
-        hideFooter && !headerHovered && "-translate-y-full",
-        hideFooter && headerHovered && "translate-y-0",
         hideFooter && "shrink-0"
       )}
       style={hideFooter ? { left: sidebarCollapsed ? '88px' : '344px' } : undefined}
@@ -164,8 +166,10 @@ export function SuperAdminTopBar({
     >
       {/* Extended blur zone */}
       <div
-        className="absolute inset-0 -bottom-8 backdrop-blur-md pointer-events-none"
+        className={cn("absolute inset-0 -bottom-8 pointer-events-none", hideFooter && !headerHovered && "opacity-0")}
         style={{
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
         }}
