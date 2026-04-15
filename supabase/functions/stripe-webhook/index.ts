@@ -1627,6 +1627,13 @@ Deno.serve(async (req) => {
       case "charge.dispute.funds_reinstated":
         await handleDisputeClosed(supabase, event.data.object);
         break;
+
+      // Early fraud warnings from Radar
+      case "radar.early_fraud_warning.created":
+        if (isConnectEvent) {
+          await handleEarlyFraudWarning(supabase, event.data.object, event.account);
+        }
+        break;
          
       default:
         console.log(`Unhandled event type: ${event.type}`);
