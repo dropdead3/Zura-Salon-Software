@@ -104,11 +104,11 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // Collect unique staff identifiers from appointments (prefer stylist_user_id)
       const staffIdSet = new Set<string>();
       appointments.forEach(appt => {
-        const sid = appt.stylist_user_id || appt.staff_user_id;
+        const sid = appt.stylist_user_id || appt.phorest_staff_id;
         if (sid) staffIdSet.add(sid);
       });
       productItems.forEach(item => {
-        if (item.staff_user_id) staffIdSet.add(item.staff_user_id);
+        if (item.phorest_staff_id) staffIdSet.add(item.phorest_staff_id);
       });
       const allStaffIds = [...staffIdSet];
 
@@ -131,17 +131,17 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         const { data: mappings } = await supabase
           .from('phorest_staff_mapping')
           .select(`phorest_staff_id, user_id, employee_profiles:user_id (full_name, display_name)`)
-          .in('staff_user_id', unresolvedPhorestIds)
+          .in('phorest_staff_id', unresolvedPhorestIds)
           .eq('is_active', true);
         mappings?.forEach((m: any) => {
           const profile = m.employee_profiles;
-          staffLookup[m.staff_user_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
+          staffLookup[m.phorest_staff_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
         });
       }
 
       // Also use staff_name from appointments as final fallback
       appointments.forEach(appt => {
-        const sid = appt.stylist_user_id || appt.staff_user_id;
+        const sid = appt.stylist_user_id || appt.phorest_staff_id;
         if (sid && !staffLookup[sid] && appt.staff_name) {
           staffLookup[sid] = appt.staff_name;
         }
@@ -150,7 +150,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // --- Aggregate services by staff ---
       const serviceMap: Record<string, { serviceRevenue: number; serviceCount: number; tipTotal: number }> = {};
       appointments.forEach(appt => {
-        const sid = appt.stylist_user_id || appt.staff_user_id;
+        const sid = appt.stylist_user_id || appt.phorest_staff_id;
         if (!sid) return;
         if (!serviceMap[sid]) serviceMap[sid] = { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
         serviceMap[sid].serviceRevenue += (Number(appt.total_price) || 0) - (Number(appt.tip_amount) || 0);
@@ -161,7 +161,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // --- Aggregate products by staff (tax-inclusive) ---
       const productMap: Record<string, { productRevenue: number; productCount: number; items: ProductLineItem[] }> = {};
       productItems.forEach(item => {
-        const sid = item.staff_user_id;
+        const sid = item.phorest_staff_id;
         if (!sid) return;
         if (isVishServiceCharge(item.item_name, 'product')) return;
         if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0, items: [] };

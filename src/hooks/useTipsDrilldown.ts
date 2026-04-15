@@ -173,7 +173,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     const staffNameMap = new Map<string, { name: string; photo: string | null }>();
     if (staffMapping) {
       for (const sm of staffMapping) {
-        const key = `phorest:${sm.staff_user_id}`;
+        const key = `phorest:${sm.phorest_staff_id}`;
         staffNameMap.set(key, { name: sm.phorest_staff_name || 'Staff Member', photo: null });
         // If this mapping has a user_id, ensure profileMap has the name too
         if (sm.user_id && !profileMap.has(sm.user_id)) {
@@ -206,7 +206,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       for (const ti of transactionItems) {
         const tipAmt = ti.tip_amount ?? 0;
         if (tipAmt <= 0) continue;
-        const key = `${ti.staff_user_id}|${ti.phorest_client_id}|${ti.transaction_date}`;
+        const key = `${ti.phorest_staff_id}|${ti.phorest_client_id}|${ti.transaction_date}`;
         // All items in a checkout have the same tip — just keep one
         if (!correctedTipMap.has(key)) {
           correctedTipMap.set(key, tipAmt);
@@ -222,7 +222,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       const category = apt.service_category || getServiceCategory(apt.service_name);
 
       // Use corrected tip from transaction items when available
-      const tipLookupKey = `${apt.staff_user_id}|${apt.phorest_client_id}|${apt.appointment_date}`;
+      const tipLookupKey = `${apt.phorest_staff_id}|${apt.phorest_client_id}|${apt.appointment_date}`;
       const correctedTip = correctedTipMap.get(tipLookupKey);
       const tipForThisCheckout = correctedTip ?? (apt.tip_amount ?? 0);
 
@@ -237,7 +237,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       }
 
       // Stylist aggregation — use phorest_staff_id as fallback key
-      const staffKey = apt.stylist_user_id || (apt.staff_user_id ? `phorest:${apt.staff_user_id}` : null);
+      const staffKey = apt.stylist_user_id || (apt.phorest_staff_id ? `phorest:${apt.phorest_staff_id}` : null);
       if (staffKey) {
         const existing = stylistMap.get(staffKey) ?? {
           totalTips: 0, totalRevenue: 0, noTipCount: 0, count: 0, locationId: apt.location_id
@@ -324,7 +324,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       for (const ti of transactionItems) {
         const tipAmt = ti.tip_amount ?? 0;
         if (tipAmt === 0) continue;
-        const txKey = `${ti.staff_user_id}|${ti.phorest_client_id}|${ti.transaction_date}|${tipAmt}`;
+        const txKey = `${ti.phorest_staff_id}|${ti.phorest_client_id}|${ti.transaction_date}|${tipAmt}`;
         if (seenTxTipKeys.has(txKey)) continue;
         seenTxTipKeys.add(txKey);
         const method = ti.payment_method || 'Unknown';

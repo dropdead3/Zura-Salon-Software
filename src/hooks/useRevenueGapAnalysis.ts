@@ -104,8 +104,8 @@ export function useRevenueGapAnalysis(
 
       const staffLookup = new Map<string, string>();
       (staffMap ?? []).forEach((s) => {
-        if (s.staff_user_id && s.phorest_staff_name)
-          staffLookup.set(s.staff_user_id, s.phorest_staff_name);
+        if (s.phorest_staff_id && s.phorest_staff_name)
+          staffLookup.set(s.phorest_staff_id, s.phorest_staff_name);
       });
 
       // ── Fetch all gap-relevant appointments in one go ──
@@ -165,7 +165,7 @@ export function useRevenueGapAnalysis(
           id: a.id,
           clientName: resolveClient(a),
           serviceName: a.service_name || 'Unknown service',
-          stylistName: a.staff_user_id ? staffLookup.get(a.staff_user_id) ?? null : null,
+          stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
           reason: 'cancelled',
           scheduledAmount: price,
           actualAmount: 0,
@@ -182,7 +182,7 @@ export function useRevenueGapAnalysis(
           id: a.id,
           clientName: resolveClient(a),
           serviceName: a.service_name || 'Unknown service',
-          stylistName: a.staff_user_id ? staffLookup.get(a.staff_user_id) ?? null : null,
+          stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
           reason: 'no_show',
           scheduledAmount: price,
           actualAmount: 0,
@@ -200,7 +200,7 @@ export function useRevenueGapAnalysis(
           id: a.id,
           clientName: resolveClient(a),
           serviceName: a.service_name || 'Unknown service',
-          stylistName: a.staff_user_id ? staffLookup.get(a.staff_user_id) ?? null : null,
+          stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
           reason: 'not_concluded',
           scheduledAmount: price,
           actualAmount: 0,
@@ -266,7 +266,7 @@ export function useRevenueGapAnalysis(
               id: a.id,
               clientName: a.client_name ?? 'Walk-in',
               serviceName: a.service_name || 'Unknown service',
-              stylistName: a.staff_user_id ? staffLookup.get(a.staff_user_id) ?? null : null,
+              stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
               reason: isApptToday ? 'not_concluded' : 'no_pos_record',
               scheduledAmount: price,
               actualAmount: 0,
@@ -277,7 +277,7 @@ export function useRevenueGapAnalysis(
           return;
         }
         const key = `${a.phorest_client_id}|${a.appointment_date}`;
-        const stylist = a.staff_user_id ? staffLookup.get(a.staff_user_id) ?? null : null;
+        const stylist = a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null;
         const existing = clientDayScheduled.get(key);
         if (existing) {
           existing.services.push(a.service_name || 'Unknown service');

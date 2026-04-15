@@ -78,7 +78,7 @@ export function useStaffRevenuePerformance(
           .select('staff_user_id, total_amount, tax_amount, transaction_date, location_id')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
-          .not('staff_user_id', 'is', null)
+          .not('phorest_staff_id', 'is', null)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -97,7 +97,7 @@ export function useStaffRevenuePerformance(
           .select('staff_user_id, item_type, total_amount, tax_amount, transaction_date')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
-          .not('staff_user_id', 'is', null)
+          .not('phorest_staff_id', 'is', null)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -110,7 +110,7 @@ export function useStaffRevenuePerformance(
       if (mappingsError) throw mappingsError;
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.staff_user_id);
+      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
       const staffNameData = await resolveStaffNames(phorestIds);
 
       // Fetch photos from employee_profiles
@@ -122,7 +122,7 @@ export function useStaffRevenuePerformance(
 
       // Create lookup maps
       const mappingByPhorestId = new Map(
-        (mappings || []).map(m => [m.staff_user_id, m])
+        (mappings || []).map(m => [m.phorest_staff_id, m])
       );
       const profileByUserId = new Map(
         (profiles || []).map((p: any) => [p.user_id, p])
@@ -139,7 +139,7 @@ export function useStaffRevenuePerformance(
       
       // Sum revenue from raw transactions (total_amount + tax_amount per POS-first standard)
       for (const tx of txData) {
-        const staffId = tx.staff_user_id;
+        const staffId = tx.phorest_staff_id;
         if (!staffId) continue;
         
         const existing = aggregatedData.get(staffId) || {
@@ -159,7 +159,7 @@ export function useStaffRevenuePerformance(
 
       // Enrich with service/product breakdown from transaction items
       for (const item of itemData) {
-        const staffId = item.staff_user_id;
+        const staffId = item.phorest_staff_id;
         if (!staffId) continue;
         // Map staff_user_id back to phorest_staff_id for aggregation consistency
         // Find the matching phorest_staff_id from mappings

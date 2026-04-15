@@ -337,7 +337,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         const isProduct = source === 'native' || PRODUCT_TYPES.includes(item.item_type);
         const isService = source === 'phorest' && SERVICE_TYPES.includes(item.item_type);
         const txId = item.transaction_id || item._saleDate; // native items use sale date as pseudo-tx
-        const staffId = item.staff_user_id || item._staffId;
+        const staffId = item.phorest_staff_id || item._staffId;
         const txDate = item.transaction_date || item._saleDate;
 
         // Track all service/product transactions for attachment rate
@@ -530,7 +530,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         const { data: mappings } = await supabase
           .from('phorest_staff_mapping')
           .select('phorest_staff_id, user_id, phorest_staff_name')
-          .in('staff_user_id', staffIds);
+          .in('phorest_staff_id', staffIds);
 
         const userIds = (mappings || []).map((m: any) => m.user_id).filter(Boolean);
         const { data: profiles } = userIds.length > 0
@@ -541,7 +541,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           : { data: [] };
 
         const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
-        const mappingMap = new Map((mappings || []).map((m: any) => [m.staff_user_id, m]));
+        const mappingMap = new Map((mappings || []).map((m: any) => [m.phorest_staff_id, m]));
 
         staffRetail = staffIds.map(sid => {
           const d = staffMap.get(sid)!;

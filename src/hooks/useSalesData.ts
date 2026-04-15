@@ -117,7 +117,7 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
 
         if (filters.dateFrom) q = q.gte('transaction_date', filters.dateFrom);
         if (filters.dateTo) q = q.lte('transaction_date', filters.dateTo);
-        if (filters.userId) q = q.eq('staff_user_id', filters.userId);
+        if (filters.userId) q = q.eq('phorest_staff_id', filters.userId);
         if (filters.locationId) q = q.eq('location_id', filters.locationId);
 
         return q;
@@ -127,11 +127,11 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
       const byKey: Record<string, any> = {};
       for (const item of allData) {
         const date = (item.transaction_date || '').slice(0, 10);
-        const key = `${date}|${item.staff_user_id || ''}`;
+        const key = `${date}|${item.phorest_staff_id || ''}`;
         if (!byKey[key]) {
           byKey[key] = {
             summary_date: date,
-            user_id: item.staff_user_id,
+            user_id: item.phorest_staff_id,
             location_id: item.location_id,
             total_revenue: 0,
             service_revenue: 0,
@@ -165,7 +165,7 @@ async function resolvePhorestStaffIds(userId: string): Promise<string[]> {
     .select('phorest_staff_id')
     .eq('user_id', userId)
     .eq('is_active', true);
-  return data?.map(m => m.staff_user_id) || [];
+  return data?.map(m => m.phorest_staff_id) || [];
 }
 
 // Get sales summary for a specific user (for My Stats page) — from live POS transaction items
@@ -208,7 +208,7 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
       
       // Fallback: if no data by stylist_user_id, try phorest_staff_id
       if (items.length === 0 && phorestStaffIds.length > 0) {
-        items = await fetchItems('staff_user_id', phorestStaffIds);
+        items = await fetchItems('phorest_staff_id', phorestStaffIds);
       }
 
       if (items.length === 0) return null;
@@ -349,7 +349,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       for (const apt of data) {
         const tip = Number(apt.tip_amount) || 0;
         if (tip === 0) continue;
-        const key = `${apt.staff_user_id}|${apt.phorest_client_id}|${apt.appointment_date}|${tip}`;
+        const key = `${apt.phorest_staff_id}|${apt.phorest_client_id}|${apt.appointment_date}|${tip}`;
         if (!seenTipKeys.has(key)) {
           seenTipKeys.add(key);
           totalTipsFromAppointments += tip;
@@ -428,7 +428,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         .eq('is_active', true);
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.staff_user_id);
+      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
       const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
       const staffNameData = await resolveStaffNames(phorestIds);
 
@@ -443,14 +443,14 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       const staffNameLookup: Record<string, string> = {};
       (mappings || []).forEach(m => {
         if (m.user_id) {
-          mappingLookup[m.staff_user_id] = {
+          mappingLookup[m.phorest_staff_id] = {
             userId: m.user_id,
-            name: staffNameData.byPhorestId[m.staff_user_id] || m.phorest_staff_name || 'Unknown',
+            name: staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown',
             photo: photoMap.get(m.user_id) || undefined,
           };
         }
         if (m.phorest_staff_name) {
-          staffNameLookup[m.staff_user_id] = staffNameData.byPhorestId[m.staff_user_id] || m.phorest_staff_name;
+          staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name;
         }
       });
 
@@ -465,7 +465,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         let q = supabase
           .from('v_all_transaction_items')
           .select('staff_user_id, total_amount, tax_amount, item_type, item_name')
-          .not('staff_user_id', 'is', null)
+          .not('phorest_staff_id', 'is', null)
           .not('total_amount', 'is', null)
           .range(from, to);
 
@@ -482,7 +482,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       // Aggregate by staff, splitting service vs product revenue
       const byUser: Record<string, any> = {};
       data.forEach(item => {
-        const staffId = item.staff_user_id!;
+        const staffId = item.phorest_staff_id!;
         const mapping = mappingLookup[staffId];
         
         const userId = mapping ? mapping.userId : `phorest:${staffId}`;
@@ -732,7 +732,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         .eq('is_active', true);
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.staff_user_id);
+      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
       const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
       const staffNameData = await resolveStaffNames(phorestIds);
 
@@ -753,9 +753,9 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       }> = {};
       
       (mappings || []).forEach(m => {
-        mappingLookup[m.staff_user_id] = {
+        mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
-          userName: staffNameData.byPhorestId[m.staff_user_id] || 'Unknown',
+          userName: staffNameData.byPhorestId[m.phorest_staff_id] || 'Unknown',
           userPhoto: m.user_id ? photoMap.get(m.user_id) || undefined : undefined,
           phorestName: m.phorest_staff_name || 'Unknown',
           branchName: m.phorest_branch_name || undefined,
@@ -775,7 +775,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         let q = supabase
           .from('v_all_appointments')
           .select('staff_user_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
-          .not('staff_user_id', 'is', null)
+          .not('phorest_staff_id', 'is', null)
           .not('total_price', 'is', null)
           .range(from, to);
 
@@ -787,8 +787,8 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       // Build staff name lookup using centralized resolution
       const staffNameLookup: Record<string, string> = {};
       (mappings || []).forEach(m => {
-        if (m.staff_user_id) {
-          staffNameLookup[m.staff_user_id] = staffNameData.byPhorestId[m.staff_user_id] || m.phorest_staff_name || 'Unknown';
+        if (m.phorest_staff_id) {
+          staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown';
         }
       });
 
@@ -797,7 +797,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       const staffVisitSets: Record<string, Set<string>> = {};
       
       data?.forEach(apt => {
-        const phorestId = apt.staff_user_id!;
+        const phorestId = apt.phorest_staff_id!;
         const mapping = mappingLookup[phorestId];
         
         if (!byStaff[phorestId]) {

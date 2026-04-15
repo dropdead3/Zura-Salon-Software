@@ -68,7 +68,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         .select('phorest_staff_id')
         .eq('user_id', userId)
         .eq('is_active', true);
-      const phorestStaffIds = staffMappings?.map(m => m.staff_user_id) || [];
+      const phorestStaffIds = staffMappings?.map(m => m.phorest_staff_id) || [];
 
       // Fetch locations for mapping
       const { data: locations } = await supabase
@@ -100,7 +100,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
 
       let txnItems = await fetchTxnItems('stylist_user_id', [userId]);
       if (txnItems.length === 0 && phorestStaffIds.length > 0) {
-        txnItems = await fetchTxnItems('staff_user_id', phorestStaffIds);
+        txnItems = await fetchTxnItems('phorest_staff_id', phorestStaffIds);
       }
 
       // Aggregate to daily summaries
