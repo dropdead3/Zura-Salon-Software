@@ -116,7 +116,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       // Fetch appointments in the selected range (by created_at)
       const rangeBookings = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id, total_price, tip_amount, appointment_date, phorest_client_id, phorest_staff_id, location_id')
           .gte('created_at', startDate)
           .lte('created_at', endDate)

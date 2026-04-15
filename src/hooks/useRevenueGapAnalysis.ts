@@ -22,7 +22,7 @@ export function useScheduledRevenue(
     queryFn: async () => {
       const data = await fetchAllBatched<{ total_price: number | null; expected_price: number | null; tip_amount: number | null }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('total_price, expected_price, tip_amount')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
