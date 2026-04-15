@@ -150,12 +150,11 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
       const status = isRedo && redoPolicy?.redo_requires_approval && !isManagerOrAdmin ? 'pending' : 'checked_in';
 
       const { error } = await supabase
-        .from('phorest_appointments')
+        .from('appointments')
         .insert({
-          phorest_id: `walk-in-${Date.now()}`,
           appointment_date: today,
-          start_time: now,
-          end_time: endTime,
+          start_time: `${now}:00`,
+          end_time: `${endTime}:00`,
           client_name: clientName || 'Walk-in',
           client_phone: clientPhone || null,
           service_name: serviceNames,
@@ -163,12 +162,14 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           status,
           total_price: finalPrice,
           original_price: isRedo ? calculatedTotalPrice : null,
-          stylist_user_id: stylistId || null,
+          staff_user_id: stylistId || null,
+          staff_name: null,
           location_id: locationId !== 'all' ? locationId : null,
           is_new_client: !isRedo,
           is_redo: isRedo,
           redo_reason: isRedo ? effectiveRedoReason || null : null,
-        });
+          payment_status: 'pending',
+        } as any);
       if (error) throw error;
     },
     onSuccess: () => {

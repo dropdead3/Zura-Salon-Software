@@ -115,7 +115,7 @@ export function AppointmentBatchBar({ selectedAppointments, onClearSelection }: 
       const promises = [];
       if (phorestIds.length > 0) {
         promises.push(
-          (async () => await supabase.from('phorest_appointments').update({ status: newStatus }).in('id', phorestIds))()
+          (async () => await supabase.from('phorest_appointments').update({ status: newStatus } as any).in('id', phorestIds))()
         );
       }
       if (localIds.length > 0) {

@@ -243,7 +243,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
         .eq('id', appointment.id);
       // Also try the phorest appointments table as fallback
       await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments' as any)
         .update({ status: 'checked_in' })
         .eq('id', appointment.id);
 

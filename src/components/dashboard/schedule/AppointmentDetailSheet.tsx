@@ -771,7 +771,7 @@ export function AppointmentDetailSheet({
     queryFn: async () => {
       if (!appointment?.id) return [];
       const { data: phorestRedos } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments' as any)
         .select('id, appointment_date, stylist_user_id, service_name, status')
         .eq('original_appointment_id', appointment.id)
         .not('status', 'in', '("cancelled")');
@@ -798,7 +798,8 @@ export function AppointmentDetailSheet({
   const approveRedo = useMutation({
     mutationFn: async () => {
       if (!appointment?.id || !user?.id) throw new Error('Missing data');
-      const { error } = await supabase.from('phorest_appointments').update({ redo_approved_by: user.id, status: 'confirmed' }).eq('id', appointment.id);
+      const table = appointment._source === 'local' ? 'appointments' : 'phorest_appointments';
+      const { error } = await supabase.from(table).update({ redo_approved_by: user.id, status: 'confirmed' } as any).eq('id', appointment.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -812,7 +813,8 @@ export function AppointmentDetailSheet({
   const declineRedo = useMutation({
     mutationFn: async () => {
       if (!appointment?.id) throw new Error('Missing data');
-      const { error } = await supabase.from('phorest_appointments').update({ status: 'cancelled', notes: (appointment.notes || '') + '\n[Redo declined]' }).eq('id', appointment.id);
+      const rdTable = appointment._source === 'local' ? 'appointments' : 'phorest_appointments';
+      const { error } = await supabase.from(rdTable).update({ status: 'cancelled', notes: (appointment.notes || '') + '\n[Redo declined]' } as any).eq('id', appointment.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -1129,9 +1131,10 @@ export function AppointmentDetailSheet({
       if (cancelFutureReason.trim()) {
         addNote({ note: `[Recurring Cancelled] ${cancelFutureReason.trim()}`, isPrivate: false });
       }
+      const cancelTable = appointment._source === 'local' ? 'appointments' : 'phorest_appointments';
       const { error } = await supabase
-        .from('phorest_appointments')
-        .update({ status: 'cancelled' })
+        .from(cancelTable)
+        .update({ status: 'cancelled' } as any)
         .eq('recurrence_group_id', appointment.recurrence_group_id)
         .gte('appointment_date', appointment.appointment_date)
         .neq('status', 'cancelled');
