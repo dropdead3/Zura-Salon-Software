@@ -43,7 +43,7 @@ export function useCorrelationAnalysis(locationId?: string, days = 90) {
       while (hasMore) {
         let q: any = supabase
           .from('v_all_transaction_items')
-          .select('transaction_date, total_amount, tax_amount, item_type, location_id, phorest_client_id')
+          .select('transaction_date, total_amount, tax_amount, item_type, location_id, external_client_id')
           .gte('transaction_date', format(startDate, 'yyyy-MM-dd'))
           .lte('transaction_date', format(endDate, 'yyyy-MM-dd'));
         if (locationId) q = q.eq('location_id', locationId);
@@ -67,7 +67,7 @@ export function useCorrelationAnalysis(locationId?: string, days = 90) {
         if (itemType === 'service') dailyMap[date].service_revenue += amount;
         else dailyMap[date].product_revenue += amount;
         dailyMap[date].total_transactions += 1;
-        if (item.phorest_client_id) dailyMap[date].clients.add(item.phorest_client_id);
+        if (item.external_client_id) dailyMap[date].clients.add(item.external_client_id);
       }
 
       const dailyData = Object.entries(dailyMap).map(([date, d]) => ({

@@ -87,7 +87,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     queryFn: async () => {
       const { data: txnData, error: txnError } = await supabase
         .from('v_all_transaction_items')
-        .select('item_type, total_amount, tax_amount, phorest_client_id')
+        .select('item_type, total_amount, tax_amount, external_client_id')
         .gte('transaction_date', `${today}T00:00:00`)
         .lte('transaction_date', `${today}T23:59:59`);
 
@@ -111,7 +111,7 @@ export function useTodayActualRevenue(enabled: boolean) {
         } else {
           productRevenue += amount;
         }
-        if (row.phorest_client_id) clientIds.add(row.phorest_client_id);
+        if (row.external_client_id) clientIds.add(row.external_client_id);
       }
 
       const totalRevenue = serviceRevenue + productRevenue;
@@ -171,7 +171,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
       const { data: txnData, error: txnError } = await supabase
         .from('v_all_transaction_items')
-        .select('location_id, item_type, total_amount, tax_amount, phorest_client_id')
+        .select('location_id, item_type, total_amount, tax_amount, external_client_id')
         .gte('transaction_date', `${today}T00:00:00`)
         .lte('transaction_date', `${today}T23:59:59`);
 
@@ -196,7 +196,7 @@ export function useTodayActualRevenue(enabled: boolean) {
         } else {
           byLocation[locId].actualProductRevenue += amount;
         }
-        if (row.phorest_client_id) clientsByLoc[locId].add(row.phorest_client_id);
+        if (row.external_client_id) clientsByLoc[locId].add(row.external_client_id);
       }
 
       for (const locId of Object.keys(byLocation)) {

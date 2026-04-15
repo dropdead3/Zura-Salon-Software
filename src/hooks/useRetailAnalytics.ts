@@ -221,7 +221,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       const currentItems = await fetchAllRows<any>(() => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('item_name, item_category, item_type, quantity, unit_price, discount, total_amount, transaction_date, transaction_id, phorest_staff_id')
+          .select('item_name, item_category, item_type, quantity, unit_price, discount, total_amount, transaction_date, transaction_id, staff_user_id')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo);
         if (!isAllLocations(locationId)) {
@@ -235,7 +235,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       const priorItems = await fetchAllRows<any>(() => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('item_name, item_type, quantity, total_amount, transaction_id, phorest_staff_id')
+          .select('item_name, item_type, quantity, total_amount, transaction_id, staff_user_id')
           .gte('transaction_date', priorFrom)
           .lte('transaction_date', priorTo);
         if (!isAllLocations(locationId)) {
@@ -337,7 +337,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         const isProduct = source === 'native' || PRODUCT_TYPES.includes(item.item_type);
         const isService = source === 'phorest' && SERVICE_TYPES.includes(item.item_type);
         const txId = item.transaction_id || item._saleDate; // native items use sale date as pseudo-tx
-        const staffId = item.phorest_staff_id || item._staffId;
+        const staffId = item.staff_user_id || item._staffId;
         const txDate = item.transaction_date || item._saleDate;
 
         // Track all service/product transactions for attachment rate
@@ -529,8 +529,8 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       if (staffIds.length > 0) {
         const { data: mappings } = await supabase
           .from('phorest_staff_mapping')
-          .select('phorest_staff_id, user_id, phorest_staff_name')
-          .in('phorest_staff_id', staffIds);
+          .select('staff_user_id, user_id, phorest_staff_name')
+          .in('staff_user_id', staffIds);
 
         const userIds = (mappings || []).map((m: any) => m.user_id).filter(Boolean);
         const { data: profiles } = userIds.length > 0
@@ -541,7 +541,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           : { data: [] };
 
         const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
-        const mappingMap = new Map((mappings || []).map((m: any) => [m.phorest_staff_id, m]));
+        const mappingMap = new Map((mappings || []).map((m: any) => [m.staff_user_id, m]));
 
         staffRetail = staffIds.map(sid => {
           const d = staffMap.get(sid)!;

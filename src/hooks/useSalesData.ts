@@ -162,10 +162,10 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
 async function resolvePhorestStaffIds(userId: string): Promise<string[]> {
   const { data } = await supabase
     .from('phorest_staff_mapping')
-    .select('phorest_staff_id')
+    .select('staff_user_id')
     .eq('user_id', userId)
     .eq('is_active', true);
-  return data?.map(m => m.phorest_staff_id) || [];
+  return data?.map(m => m.staff_user_id) || [];
 }
 
 // Get sales summary for a specific user (for My Stats page) — from live POS transaction items
@@ -208,7 +208,7 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
       
       // Fallback: if no data by stylist_user_id, try phorest_staff_id
       if (items.length === 0 && phorestStaffIds.length > 0) {
-        items = await fetchItems('phorest_staff_id', phorestStaffIds);
+        items = await fetchItems('staff_user_id', phorestStaffIds);
       }
 
       if (items.length === 0) return null;
@@ -279,7 +279,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('id, total_price, tip_amount, service_name, phorest_staff_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
+          .select('id, total_price, tip_amount, service_name, staff_user_id, external_client_id, location_id, appointment_date, start_time, end_time')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -300,7 +300,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('total_amount, tax_amount, item_type, item_name, tip_amount, phorest_client_id')
+          .select('total_amount, tax_amount, item_type, item_name, tip_amount, external_client_id')
           .not('total_amount', 'is', null)
           .range(from, to);
 
@@ -324,8 +324,8 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
           productRevenue += (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
           totalProducts += 1;
         }
-        if (item.phorest_client_id) {
-          posClientIds.add(item.phorest_client_id);
+        if (item.external_client_id) {
+          posClientIds.add(item.external_client_id);
         }
       }
       const posTransactionCount = posClientIds.size;
@@ -349,7 +349,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       for (const apt of data) {
         const tip = Number(apt.tip_amount) || 0;
         if (tip === 0) continue;
-        const key = `${apt.phorest_staff_id}|${apt.phorest_client_id}|${apt.appointment_date}|${tip}`;
+        const key = `${apt.staff_user_id}|${apt.external_client_id}|${apt.appointment_date}|${tip}`;
         if (!seenTipKeys.has(key)) {
           seenTipKeys.add(key);
           totalTipsFromAppointments += tip;
@@ -386,7 +386,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         ? txServiceRevenue
         : Math.max(0, totalRevenue - productRevenue);
       const totalServices = data.length;
-      const uniqueVisits = new Set(data.map(d => `${d.phorest_client_id}|${d.appointment_date}`).filter(k => !k.startsWith('null'))).size;
+      const uniqueVisits = new Set(data.map(d => `${d.external_client_id}|${d.appointment_date}`).filter(k => !k.startsWith('null'))).size;
       const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
       
       // Calculate total service hours from appointment durations
@@ -424,11 +424,11 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       // Get staff mappings with photos
       const { data: mappings } = await supabase
         .from('phorest_staff_mapping')
-        .select('phorest_staff_id, user_id, phorest_staff_name')
+        .select('staff_user_id, user_id, phorest_staff_name')
         .eq('is_active', true);
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const phorestIds = (mappings || []).map(m => m.staff_user_id);
       const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
       const staffNameData = await resolveStaffNames(phorestIds);
 
@@ -443,14 +443,14 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       const staffNameLookup: Record<string, string> = {};
       (mappings || []).forEach(m => {
         if (m.user_id) {
-          mappingLookup[m.phorest_staff_id] = {
+          mappingLookup[m.staff_user_id] = {
             userId: m.user_id,
-            name: staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown',
+            name: staffNameData.byPhorestId[m.staff_user_id] || m.phorest_staff_name || 'Unknown',
             photo: photoMap.get(m.user_id) || undefined,
           };
         }
         if (m.phorest_staff_name) {
-          staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name;
+          staffNameLookup[m.staff_user_id] = staffNameData.byPhorestId[m.staff_user_id] || m.phorest_staff_name;
         }
       });
 
@@ -464,8 +464,8 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('phorest_staff_id, total_amount, tax_amount, item_type, item_name')
-          .not('phorest_staff_id', 'is', null)
+          .select('staff_user_id, total_amount, tax_amount, item_type, item_name')
+          .not('staff_user_id', 'is', null)
           .not('total_amount', 'is', null)
           .range(from, to);
 
@@ -482,7 +482,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       // Aggregate by staff, splitting service vs product revenue
       const byUser: Record<string, any> = {};
       data.forEach(item => {
-        const staffId = item.phorest_staff_id!;
+        const staffId = item.staff_user_id!;
         const mapping = mappingLookup[staffId];
         
         const userId = mapping ? mapping.userId : `phorest:${staffId}`;
@@ -542,7 +542,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('location_id, total_price, tip_amount, phorest_client_id')
+          .select('location_id, total_price, tip_amount, external_client_id')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -578,7 +578,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
           byLocation[key].serviceRevenue += tipAdj;
           byLocation[key].totalServices += 1;
           if (!locationVisitSets[key]) locationVisitSets[key] = new Set();
-          const clientKey = (apt as any).phorest_client_id;
+          const clientKey = (apt as any).external_client_id;
           if (clientKey) locationVisitSets[key].add(clientKey);
           else byLocation[key].totalTransactions += 1;
         }
@@ -728,11 +728,11 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       // Fetch staff mappings
       const { data: mappings } = await supabase
         .from('phorest_staff_mapping')
-        .select('phorest_staff_id, phorest_staff_name, phorest_branch_name, user_id')
+        .select('staff_user_id, phorest_staff_name, phorest_branch_name, user_id')
         .eq('is_active', true);
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const phorestIds = (mappings || []).map(m => m.staff_user_id);
       const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
       const staffNameData = await resolveStaffNames(phorestIds);
 
@@ -753,9 +753,9 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       }> = {};
       
       (mappings || []).forEach(m => {
-        mappingLookup[m.phorest_staff_id] = {
+        mappingLookup[m.staff_user_id] = {
           userId: m.user_id,
-          userName: staffNameData.byPhorestId[m.phorest_staff_id] || 'Unknown',
+          userName: staffNameData.byPhorestId[m.staff_user_id] || 'Unknown',
           userPhoto: m.user_id ? photoMap.get(m.user_id) || undefined : undefined,
           phorestName: m.phorest_staff_name || 'Unknown',
           branchName: m.phorest_branch_name || undefined,
@@ -774,8 +774,8 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('phorest_staff_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
-          .not('phorest_staff_id', 'is', null)
+          .select('staff_user_id, total_price, tip_amount, service_name, location_id, external_client_id, appointment_date')
+          .not('staff_user_id', 'is', null)
           .not('total_price', 'is', null)
           .range(from, to);
 
@@ -787,8 +787,8 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       // Build staff name lookup using centralized resolution
       const staffNameLookup: Record<string, string> = {};
       (mappings || []).forEach(m => {
-        if (m.phorest_staff_id) {
-          staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown';
+        if (m.staff_user_id) {
+          staffNameLookup[m.staff_user_id] = staffNameData.byPhorestId[m.staff_user_id] || m.phorest_staff_name || 'Unknown';
         }
       });
 
@@ -797,7 +797,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       const staffVisitSets: Record<string, Set<string>> = {};
       
       data?.forEach(apt => {
-        const phorestId = apt.phorest_staff_id!;
+        const phorestId = apt.staff_user_id!;
         const mapping = mappingLookup[phorestId];
         
         if (!byStaff[phorestId]) {
@@ -824,7 +824,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         byStaff[phorestId].totalServices += 1;
         // Track unique client visits per staff
         if (!staffVisitSets[phorestId]) staffVisitSets[phorestId] = new Set();
-        const visitKey = `${(apt as any).phorest_client_id}|${(apt as any).appointment_date}`;
+        const visitKey = `${(apt as any).external_client_id}|${(apt as any).appointment_date}`;
         staffVisitSets[phorestId].add(visitKey);
       });
 

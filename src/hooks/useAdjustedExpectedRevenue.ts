@@ -40,7 +40,7 @@ export function useAdjustedExpectedRevenue(
       // 1. Fetch all today's appointments
       let apptQuery = supabase
         .from('v_all_appointments')
-        .select('id, phorest_client_id, total_price, expected_price, discount_amount, tip_amount, status, location_id')
+        .select('id, external_client_id, total_price, expected_price, discount_amount, tip_amount, status, location_id')
         .eq('appointment_date', todayStr)
         .not('total_price', 'is', null);
 
@@ -87,7 +87,7 @@ export function useAdjustedExpectedRevenue(
 
       // 2. For completed appointments, get actual POS revenue
       const completedClientIds = [
-        ...new Set(resolved.map(a => a.phorest_client_id).filter((id): id is string => !!id))
+        ...new Set(resolved.map(a => a.external_client_id).filter((id): id is string => !!id))
       ];
 
       // Track which client IDs actually have POS data
@@ -100,8 +100,8 @@ export function useAdjustedExpectedRevenue(
           const chunk = completedClientIds.slice(i, i + 100);
           let posQuery = supabase
             .from('v_all_transaction_items')
-            .select('total_amount, tax_amount, phorest_client_id')
-            .in('phorest_client_id', chunk)
+            .select('total_amount, tax_amount, external_client_id')
+            .in('external_client_id', chunk)
             .gte('transaction_date', todayStr)
             .lte('transaction_date', todayStr);
 
@@ -114,18 +114,18 @@ export function useAdjustedExpectedRevenue(
 
           (posData ?? []).forEach(t => {
             completedActualRevenue += (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0);
-            if (t.phorest_client_id) clientsWithPOS.add(t.phorest_client_id);
+            if (t.external_client_id) clientsWithPOS.add(t.external_client_id);
           });
         }
       }
 
       // For completed appointments with no client ID (walk-ins), fall back to scheduled price ex tips
-      const walkInCompleted = resolved.filter(a => !a.phorest_client_id);
+      const walkInCompleted = resolved.filter(a => !a.external_client_id);
       const walkInRevenue = walkInCompleted.reduce((s, a) => s + getPriceExTips(a), 0);
       completedActualRevenue += walkInRevenue;
 
       // Identify completed appointments awaiting checkout (have client ID but no POS data)
-      const awaitingCheckout = resolved.filter(a => a.phorest_client_id && !clientsWithPOS.has(a.phorest_client_id));
+      const awaitingCheckout = resolved.filter(a => a.external_client_id && !clientsWithPOS.has(a.external_client_id));
       const awaitingCheckoutCount = awaitingCheckout.length;
       const awaitingCheckoutRevenue = awaitingCheckout.reduce((s, a) => s + getExpectedPrice(a), 0);
 

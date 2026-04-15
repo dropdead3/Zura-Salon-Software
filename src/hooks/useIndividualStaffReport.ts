@@ -210,21 +210,21 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const [currentApts, priorApts, twoPriorApts] = await Promise.all([
         fetchAllBatched<any>((from, to) =>
           supabase.from('v_all_appointments')
-            .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client, service_name, service_category, id')
+            .select('appointment_date, total_price, tip_amount, status, external_client_id, rebooked_at_checkout, is_new_client, service_name, service_category, id')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
           supabase.from('v_all_appointments')
-            .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
+            .select('total_price, tip_amount, external_client_id, rebooked_at_checkout, status, is_new_client')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', priorFrom).lte('appointment_date', priorTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
           supabase.from('v_all_appointments')
-            .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
+            .select('total_price, tip_amount, external_client_id, rebooked_at_checkout, status, is_new_client')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo)
             .range(from, to)
@@ -332,7 +332,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       currentApts.forEach((a: any) => {
         totalTips += Number(a.tip_amount) || 0;
-        if (a.phorest_client_id) clientSet.add(a.phorest_client_id);
+        if (a.external_client_id) clientSet.add(a.external_client_id);
         if (a.rebooked_at_checkout) rebookedCount++;
 
         const status = (a.status || '').toLowerCase();
@@ -464,7 +464,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       // ── Top clients ──
       const clientRevMap = new Map<string, { visits: number; revenue: number; lastVisit: string }>();
       currentApts.forEach((a: any) => {
-        const cid = a.phorest_client_id;
+        const cid = a.external_client_id;
         if (!cid) return;
         if (!clientRevMap.has(cid)) clientRevMap.set(cid, { visits: 0, revenue: 0, lastVisit: '' });
         const c = clientRevMap.get(cid)!;
@@ -479,10 +479,10 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       if (clientIds.length > 0) {
         const { data: clients } = await supabase
           .from('v_all_clients')
-          .select('phorest_client_id, first_name, last_name')
-          .in('phorest_client_id', clientIds.slice(0, 50));
+          .select('external_client_id, first_name, last_name')
+          .in('external_client_id', clientIds.slice(0, 50));
         (clients || []).forEach((c: any) => {
-          clientNameMap.set(c.phorest_client_id, `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown');
+          clientNameMap.set(c.external_client_id, `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown');
         });
       }
 

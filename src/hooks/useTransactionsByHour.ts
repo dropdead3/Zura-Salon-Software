@@ -41,8 +41,8 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
       const aptData = await fetchAllBatched<{ phorest_client_id: string | null; start_time: string | null }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('phorest_client_id, start_time')
-          .not('phorest_client_id', 'is', null)
+          .select('external_client_id, start_time')
+          .not('external_client_id', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
         if (dateFrom) q = q.gte('appointment_date', dateFrom);
@@ -54,11 +54,11 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
       // For each POS client, find earliest appointment start_time
       const clientEarliestHour = new Map<string, number>();
       aptData.forEach(row => {
-        if (!row.phorest_client_id || !row.start_time || !posClientIds.has(row.phorest_client_id)) return;
+        if (!row.external_client_id || !row.start_time || !posClientIds.has(row.external_client_id)) return;
         const hour = parseInt(row.start_time.split(':')[0]);
-        const existing = clientEarliestHour.get(row.phorest_client_id);
+        const existing = clientEarliestHour.get(row.external_client_id);
         if (existing === undefined || hour < existing) {
-          clientEarliestHour.set(row.phorest_client_id, hour);
+          clientEarliestHour.set(row.external_client_id, hour);
         }
       });
 

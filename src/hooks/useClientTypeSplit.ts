@@ -53,7 +53,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('phorest_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
+          .select('external_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
@@ -68,7 +68,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       // Only include clients present in POS data
       const visitMap = new Map<string, { revenue: number; isNew: boolean; rebooked: boolean }>();
       (appointments || []).forEach(apt => {
-        const clientId = apt.phorest_client_id;
+        const clientId = apt.external_client_id;
         if (!clientId || !posClientIds.has(clientId)) return;
         
         const visitKey = `${clientId}|${apt.appointment_date}`;

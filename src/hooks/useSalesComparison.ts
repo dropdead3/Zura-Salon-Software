@@ -35,7 +35,7 @@ async function fetchPeriodRevenue(dateFrom: string, dateTo: string, locationId?:
   while (hasMore) {
     let q: any = supabase
       .from('v_all_transaction_items')
-      .select('total_amount, tax_amount, item_type, phorest_client_id, transaction_date')
+      .select('total_amount, tax_amount, item_type, external_client_id, transaction_date')
       .gte('transaction_date', dateFrom)
       .lte('transaction_date', dateTo);
     if (!isAllLocations(locationId)) {
@@ -58,9 +58,9 @@ async function fetchPeriodRevenue(dateFrom: string, dateTo: string, locationId?:
     const itemType = (item.item_type || '').toLowerCase();
     if (itemType === 'service') serviceRevenue += amount;
     else productRevenue += amount;
-    if (item.phorest_client_id) {
+    if (item.external_client_id) {
       const date = (item.transaction_date || '').slice(0, 10);
-      clientDates.add(`${item.phorest_client_id}|${date}`);
+      clientDates.add(`${item.external_client_id}|${date}`);
     }
   }
   const totalTransactions = clientDates.size || allData.length;

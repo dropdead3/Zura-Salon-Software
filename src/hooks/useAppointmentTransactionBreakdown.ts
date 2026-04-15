@@ -81,8 +81,8 @@ export function useAppointmentTransactionBreakdown(
       // Fetch all transaction items for this client + date
       const { data: rawItems, error } = await supabase
         .from('v_all_transaction_items')
-        .select('id, transaction_id, item_name, item_type, item_category, unit_price, discount, total_amount, tax_amount, tip_amount, quantity, payment_method, stylist_name')
-        .eq('phorest_client_id', phorestClientId)
+        .select('id, transaction_id, item_name, item_type, item_category, unit_price, discount, total_amount, tax_amount, tip_amount, quantity, payment_method, staff_name')
+        .eq('external_client_id', phorestClientId)
         .eq('transaction_date', appointmentDate);
 
       if (error) throw error;
@@ -104,7 +104,7 @@ export function useAppointmentTransactionBreakdown(
         taxAmount: Number(r.tax_amount) || 0,
         quantity: Number(r.quantity) || 1,
         paymentMethod: r.payment_method,
-        stylistName: r.stylist_name,
+        stylistName: r.staff_name,
       }));
 
       const services = items.filter((i) => categorize(i) === 'service');

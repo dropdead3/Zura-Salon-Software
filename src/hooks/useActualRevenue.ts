@@ -38,7 +38,7 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('item_type, total_amount, tax_amount, phorest_client_id')
+          .select('item_type, total_amount, tax_amount, external_client_id')
           .gte('transaction_date', `${dateFrom}T00:00:00`)
           .lte('transaction_date', `${dateTo}T23:59:59`)
           .range(from, to);
@@ -72,7 +72,7 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
           productRevenue += amount;
         }
 
-        if (row.phorest_client_id) clientIds.add(row.phorest_client_id);
+        if (row.external_client_id) clientIds.add(row.external_client_id);
       }
 
       const totalRevenue = serviceRevenue + productRevenue;

@@ -65,7 +65,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('phorest_staff_id, stylist_user_id, staff_name, total_price, tip_amount, service_name')
+          .select('staff_user_id, stylist_user_id, staff_name, total_price, tip_amount, service_name')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")')
@@ -104,7 +104,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // Collect unique staff identifiers from appointments (prefer stylist_user_id)
       const staffIdSet = new Set<string>();
       appointments.forEach(appt => {
-        const sid = appt.stylist_user_id || appt.phorest_staff_id;
+        const sid = appt.stylist_user_id || appt.staff_user_id;
         if (sid) staffIdSet.add(sid);
       });
       productItems.forEach(item => {
@@ -130,18 +130,18 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       if (unresolvedPhorestIds.length > 0) {
         const { data: mappings } = await supabase
           .from('phorest_staff_mapping')
-          .select(`phorest_staff_id, user_id, employee_profiles:user_id (full_name, display_name)`)
-          .in('phorest_staff_id', unresolvedPhorestIds)
+          .select(`staff_user_id, user_id, employee_profiles:user_id (full_name, display_name)`)
+          .in('staff_user_id', unresolvedPhorestIds)
           .eq('is_active', true);
         mappings?.forEach((m: any) => {
           const profile = m.employee_profiles;
-          staffLookup[m.phorest_staff_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
+          staffLookup[m.staff_user_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
         });
       }
 
       // Also use staff_name from appointments as final fallback
       appointments.forEach(appt => {
-        const sid = appt.stylist_user_id || appt.phorest_staff_id;
+        const sid = appt.stylist_user_id || appt.staff_user_id;
         if (sid && !staffLookup[sid] && appt.staff_name) {
           staffLookup[sid] = appt.staff_name;
         }
@@ -150,7 +150,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // --- Aggregate services by staff ---
       const serviceMap: Record<string, { serviceRevenue: number; serviceCount: number; tipTotal: number }> = {};
       appointments.forEach(appt => {
-        const sid = appt.stylist_user_id || appt.phorest_staff_id;
+        const sid = appt.stylist_user_id || appt.staff_user_id;
         if (!sid) return;
         if (!serviceMap[sid]) serviceMap[sid] = { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
         serviceMap[sid].serviceRevenue += (Number(appt.total_price) || 0) - (Number(appt.tip_amount) || 0);

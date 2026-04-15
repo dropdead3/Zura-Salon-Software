@@ -82,7 +82,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const updateServicesMutation = useUpdateAppointmentServices();
 
   // Transaction breakdown hook
-  const phorestClientIdForTx = appointment?.phorest_client_id || appointment?.client_id;
+  const phorestClientIdForTx = appointment?.external_client_id || appointment?.client_id;
   const { data: txBreakdown, isLoading: txLoading } = useAppointmentTransactionBreakdown(
     phorestClientIdForTx,
     appointment?.appointment_date
@@ -92,7 +92,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const orgId = appointment?.organization_id || null;
 
   // Resolve phorest_client_id to client directory ID
-  const phorestClientId = appointment?.phorest_client_id || appointment?.client_id;
+  const phorestClientId = appointment?.external_client_id || appointment?.client_id;
   const { data: resolvedClientId } = useQuery({
     queryKey: ['resolve-client-directory-id', phorestClientId],
     queryFn: async () => {
@@ -100,7 +100,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
       const { data } = await supabase
         .from('phorest_clients')
         .select('id')
-        .eq('phorest_client_id', phorestClientId)
+        .eq('external_client_id', phorestClientId)
         .maybeSingle();
       return data?.id || null;
     },
@@ -133,7 +133,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
           clientName,
           appointmentId: appointment.id,
           staffUserId: appointment.staff_user_id || null,
-          staffName: appointment.stylist_name || appointment.staff_name || null,
+          staffName: appointment.staff_name || appointment.staff_name || null,
           serviceName: appointment.service_name || null,
           baseUrl: window.location.origin,
         },
@@ -307,7 +307,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 {(() => {
                   const customerNumber = appointment.customer_number;
                   const fallbackId = appointment._source === 'phorest'
-                    ? appointment.phorest_client_id
+                    ? appointment.external_client_id
                     : appointment.client_id;
                   const displayValue = customerNumber || fallbackId;
                   if (!displayValue) return null;
@@ -461,7 +461,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="w-4 h-4 shrink-0" />
-                  <span>{appointment.stylist_name || 'Unassigned'}</span>
+                  <span>{appointment.staff_name || 'Unassigned'}</span>
                 </div>
                 {appointment.location_name && (
                   <div className="flex items-center gap-2 text-muted-foreground">

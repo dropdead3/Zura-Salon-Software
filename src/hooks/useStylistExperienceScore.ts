@@ -97,12 +97,12 @@ export function useStylistExperienceScore(
         let q = supabase
           .from('v_all_appointments')
           .select(`
-            phorest_staff_id,
+            staff_user_id,
             stylist_user_id,
             total_price,
             tip_amount,
             rebooked_at_checkout,
-            phorest_client_id,
+            external_client_id,
             is_new_client
           `)
           .eq('status', 'completed')
@@ -134,7 +134,7 @@ export function useStylistExperienceScore(
       // Group appointments by staff (prefer stylist_user_id, fallback to phorest_staff_id)
       const staffAppointments = new Map<string, typeof appointments>();
       appointments?.forEach(apt => {
-        const staffId = apt.stylist_user_id || apt.phorest_staff_id;
+        const staffId = apt.stylist_user_id || apt.staff_user_id;
         if (!staffId) return;
         if (!staffAppointments.has(staffId)) {
           staffAppointments.set(staffId, []);
@@ -225,9 +225,9 @@ export function useStylistExperienceScore(
           : 0;
 
         // Compute retention from appointments: returning clients / total unique clients
-        const uniqueClients = new Set(apts.map((a: any) => a.phorest_client_id).filter(Boolean));
+        const uniqueClients = new Set(apts.map((a: any) => a.external_client_id).filter(Boolean));
         const newClients = apts.filter((a: any) => a.is_new_client === true);
-        const newClientIds = new Set(newClients.map((a: any) => a.phorest_client_id).filter(Boolean));
+        const newClientIds = new Set(newClients.map((a: any) => a.external_client_id).filter(Boolean));
         const returningCount = uniqueClients.size - newClientIds.size;
         const computedRetention = uniqueClients.size > 0 ? (returningCount / uniqueClients.size) * 100 : 0;
 

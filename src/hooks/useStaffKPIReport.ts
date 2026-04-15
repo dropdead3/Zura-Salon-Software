@@ -39,7 +39,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('stylist_user_id, phorest_client_id, rebooked_at_checkout, is_new_client, status')
+          .select('stylist_user_id, external_client_id, rebooked_at_checkout, is_new_client, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .range(from, to);
@@ -119,8 +119,8 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         // New clients
         staffData[userId].newClients = valid.filter(a => a.is_new_client).length;
         // Retention: returning clients / total unique clients
-        const uniqueClients = new Set(valid.map(a => a.phorest_client_id).filter(Boolean));
-        const newClientIds = new Set(valid.filter(a => a.is_new_client).map(a => a.phorest_client_id).filter(Boolean));
+        const uniqueClients = new Set(valid.map(a => a.external_client_id).filter(Boolean));
+        const newClientIds = new Set(valid.filter(a => a.is_new_client).map(a => a.external_client_id).filter(Boolean));
         const returningCount = uniqueClients.size - newClientIds.size;
         staffData[userId].retentionRate = uniqueClients.size > 0
           ? (returningCount / uniqueClients.size) * 100

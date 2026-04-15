@@ -123,7 +123,7 @@ export function useTransactionsByClient(clientId: string | null) {
       const { data, error } = await supabase
         .from('v_all_transaction_items')
         .select('*')
-        .eq('phorest_client_id', clientId)
+        .eq('external_client_id', clientId)
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;

@@ -75,10 +75,10 @@ export function useStaffRevenuePerformance(
       }>((from, to) => {
         let q = supabase
           .from('phorest_sales_transactions')
-          .select('phorest_staff_id, total_amount, tax_amount, transaction_date, location_id')
+          .select('staff_user_id, total_amount, tax_amount, transaction_date, location_id')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
-          .not('phorest_staff_id', 'is', null)
+          .not('staff_user_id', 'is', null)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -106,11 +106,11 @@ export function useStaffRevenuePerformance(
       // Get staff mappings
       const { data: mappings, error: mappingsError } = await supabase
         .from('phorest_staff_mapping')
-        .select('user_id, phorest_staff_id, phorest_staff_name');
+        .select('user_id, staff_user_id, phorest_staff_name');
       if (mappingsError) throw mappingsError;
 
       // Resolve names via centralized utility
-      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const phorestIds = (mappings || []).map(m => m.staff_user_id);
       const staffNameData = await resolveStaffNames(phorestIds);
 
       // Fetch photos from employee_profiles
@@ -122,7 +122,7 @@ export function useStaffRevenuePerformance(
 
       // Create lookup maps
       const mappingByPhorestId = new Map(
-        (mappings || []).map(m => [m.phorest_staff_id, m])
+        (mappings || []).map(m => [m.staff_user_id, m])
       );
       const profileByUserId = new Map(
         (profiles || []).map((p: any) => [p.user_id, p])
@@ -139,7 +139,7 @@ export function useStaffRevenuePerformance(
       
       // Sum revenue from raw transactions (total_amount + tax_amount per POS-first standard)
       for (const tx of txData) {
-        const staffId = tx.phorest_staff_id;
+        const staffId = tx.staff_user_id;
         if (!staffId) continue;
         
         const existing = aggregatedData.get(staffId) || {

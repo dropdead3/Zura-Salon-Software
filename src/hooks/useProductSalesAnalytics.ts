@@ -101,9 +101,9 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         product.transactionCount += 1;
         
         // Track staff performance
-        if (item.phorest_staff_id) {
-          if (!staffProductMap.has(item.phorest_staff_id)) {
-            staffProductMap.set(item.phorest_staff_id, {
+        if (item.staff_user_id) {
+          if (!staffProductMap.has(item.staff_user_id)) {
+            staffProductMap.set(item.staff_user_id, {
               productRevenue: 0,
               productQuantity: 0,
               serviceRevenue: 0,
@@ -112,7 +112,7 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
             });
           }
           
-          const staffData = staffProductMap.get(item.phorest_staff_id)!;
+          const staffData = staffProductMap.get(item.staff_user_id)!;
           if (item.item_type === 'product') {
             staffData.productRevenue += Number(item.total_amount) || 0;
             staffData.productQuantity += item.quantity || 1;
@@ -135,8 +135,8 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
       const staffIds = Array.from(staffProductMap.keys());
       const { data: mappings } = await supabase
         .from('phorest_staff_mapping')
-        .select('phorest_staff_id, user_id, phorest_staff_name')
-        .in('phorest_staff_id', staffIds);
+        .select('staff_user_id, user_id, phorest_staff_name')
+        .in('staff_user_id', staffIds);
       
       const userIds = mappings?.map(m => m.user_id).filter(Boolean) || [];
       const { data: profiles } = await supabase
@@ -145,7 +145,7 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         .in('user_id', userIds);
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-      const mappingMap = new Map(mappings?.map(m => [m.phorest_staff_id, m]) || []);
+      const mappingMap = new Map(mappings?.map(m => [m.staff_user_id, m]) || []);
       
       // Build staff performance list
       const staffPerformance: StaffProductPerformance[] = [];
