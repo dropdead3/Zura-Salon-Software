@@ -308,8 +308,8 @@ function GridContent({
         </div>
       )}
 
-      {/* Assisted by line — full size only */}
-      {size === 'full' && (() => {
+      {/* Assisted by line — only when the card has enough vertical space */}
+      {size === 'full' && duration >= 90 && (() => {
         const names = assistantNamesMap?.get(appointment.id);
         if (!names || names.length === 0) return null;
         return (
@@ -319,8 +319,8 @@ function GridContent({
         );
       })()}
 
-      {/* Time + price (full size) */}
-      {size === 'full' && (
+      {/* Time + price — defer until taller cards so 60min cards stay clean */}
+      {size === 'full' && duration >= 75 && (
         <div className="text-[13px] opacity-80 mt-0.5 flex items-center justify-between">
           <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
           {appointment.total_price != null && appointment.total_price > 0 && (
@@ -331,8 +331,8 @@ function GridContent({
         </div>
       )}
 
-      {/* Rescheduled from line — full size only */}
-      {size === 'full' && duration >= 45 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+      {/* Rescheduled from line — reserve for the tallest cards only */}
+      {size === 'full' && duration >= 105 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
         <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
           <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
           Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
@@ -632,7 +632,7 @@ export function AppointmentCardContent({
                   backgroundColor: bandDark ? bandDark.fill : band.color.bg,
                 }}
               >
-                {duration >= 60 && (
+                {size === 'full' && duration >= 120 && (
                   <span
                     className="absolute bottom-0 right-1 text-[9px] opacity-70 truncate max-w-[90%] text-right"
                     style={{ textShadow: '0 0 3px rgba(0,0,0,0.15)' }}
