@@ -309,10 +309,10 @@ export default function Schedule() {
     queryKey: ['schedule-stylists', selectedLocation],
     queryFn: async () => {
       let query = supabase
-        .from('v_all_staff' as any)
+        .from('employee_profiles')
         .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
         .eq('is_active', true)
-        .eq('show_on_calendar', true);
+        .eq('is_approved', true);
 
       if (selectedLocation) {
         query = query.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`);
