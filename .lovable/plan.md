@@ -1,51 +1,70 @@
 
-Prompt feedback: Strong prompt. You described the intended behavior (“viewport card”, responsive, scrollable) instead of only the symptom, which is the right architectural framing. An even stronger version next time would be: “The schedule route is being clipped by the dashboard shell: the week grid grows past the viewport, page scroll is disabled, and the bottom action bar falls below the visible height.”
 
-What I found:
-- `DayView.tsx` and `WeekView.tsx` already have internal scroll containers with `min-h-0` and `overflow-auto`.
-- The bigger issue is higher up in `DashboardLayout.tsx`: when `hideFooter` is enabled, the outer wrapper uses `h-screen overflow-hidden`, but it is not acting as a real flex-column height shell.
-- That makes `<main className="flex-1 ...">` ineffective as a bounded viewport region. The schedule content grows naturally, then the outer shell clips it — which is why the appointments area extends off-screen and the bottom action bar disappears.
-- The screenshot supports this: the calendar grid reaches the visible bottom edge, but the footer never gets space inside the viewport.
+# Scheduler Audit — Implementation Plan
 
-Implementation plan:
-1. Fix the dashboard height chain
-   - Update `DashboardLayout.tsx` so `hideFooter` routes use a true full-height flex-column shell.
-   - Keep `main` and its inner wrapper as `flex-1 min-h-0`, so child pages receive an actual bounded viewport.
+## Summary
+Fix timezone bugs, propagate missing indicators, wire unused metrics, and clean dead code across the scheduler.
 
-2. Tighten the schedule shell
-   - Refactor `Schedule.tsx` into a clean 3-row viewport layout:
-     - header: `shrink-0`
-     - calendar region: `flex-1 min-h-0 overflow-hidden`
-     - action bar: `shrink-0`
-   - Reduce stacked vertical padding so more screen height goes to the appointments viewport, especially on shorter laptop screens.
+---
 
-3. Keep scrolling inside the calendar card
-   - Ensure `WeekView.tsx` and `DayView.tsx` remain the vertical scroll owners.
-   - Keep horizontal overflow inside the week card only, so the scrollbar belongs to the calendar viewport rather than the page shell.
+## Phase 1: Timezone Consistency
+Replace all `new Date()` calls with org-timezone-aware equivalents (`orgToday` / `getOrgTodayDate`).
 
-4. Verify responsive behavior
-   - Confirm day/week views fit within the visible dashboard shell.
-   - Confirm the action bar stays visible at the bottom.
-   - Confirm users can scroll down inside the appointments viewport to later time slots.
+**Files:** `Schedule.tsx`, `WeekView.tsx`
+- `WeekView.tsx:176` — week calculation uses `new Date()` instead of org timezone
+- `Schedule.tsx:939` — action bar today filter uses `new Date()`
+- `Schedule.tsx:289` — `todayAppointmentCount` uses `new Date()`
 
-Files to update:
-- `src/components/dashboard/DashboardLayout.tsx`
+## Phase 2: WeekView Navigation Fix
+Bind `WeekView` to `currentDate` prop so header date navigation actually changes the displayed week (currently always shows "today + 6").
+
+**File:** `WeekView.tsx`
+
+## Phase 3: Overdue Indicators Across Views
+Propagate `isOverdueForCheckin` detection to `WeekView` and `AgendaView` appointment cards, matching DayView behavior.
+
+**Files:** `WeekView.tsx`, `AgendaView.tsx`
+- Add `IndicatorCluster` to `MonthView` cards for consistency
+
+## Phase 4: Fix Jump Ahead Button Label
+Replace the misleading `{stylists.length} +` label with an appropriate icon or "Jump" text.
+
+**File:** `ScheduleHeader.tsx`
+
+## Phase 5: Wire ScheduleUtilizationBar
+The component is imported but never rendered. Place it as a compact strip between header and calendar. Wrap the revenue `$` value in `BlurredAmount` for privacy compliance.
+
+**Files:** `Schedule.tsx`, `ScheduleUtilizationBar.tsx`
+
+## Phase 6: Show Action Bar on Agenda View
+Currently only renders for day/week. Extend to agenda view.
+
+**File:** `Schedule.tsx`
+
+## Phase 7: Delete Dead Code
+Remove `ScheduleToolbar.tsx` — fully replaced by `ScheduleHeader`, contains unscoped queries.
+
+## Phase 8: Unify Week View Slot Click
+Week view renders inline `QuickBookingPopover` per slot, bypassing the type selector (meeting vs booking) for dual-role users. Route through the same `onSlotClick` handler as DayView.
+
+**Files:** `WeekView.tsx`, `Schedule.tsx`
+
+---
+
+## Files to Modify
 - `src/pages/dashboard/Schedule.tsx`
-- likely `src/components/dashboard/schedule/WeekView.tsx`
-- likely `src/components/dashboard/schedule/DayView.tsx`
+- `src/components/dashboard/schedule/WeekView.tsx`
+- `src/components/dashboard/schedule/AgendaView.tsx`
+- `src/components/dashboard/schedule/MonthView.tsx`
+- `src/components/dashboard/schedule/ScheduleHeader.tsx`
+- `src/components/dashboard/schedule/ScheduleUtilizationBar.tsx`
+- `src/components/dashboard/schedule/ScheduleToolbar.tsx` (delete)
 
-Technical detail:
-- `flex-1` only works when its parent is actually participating in a flex layout.
-- Right now the schedule is inside a height-clipped shell, but the top-level `hideFooter` container is not establishing a reliable flex height chain.
-- So the calendar expands and gets clipped instead of shrinking and scrolling internally.
+## Verification
+- All views reflect org timezone, not browser clock
+- Week view navigates when header date changes
+- Overdue badges appear in week/agenda/month views
+- Utilization bar visible with blurred revenue
+- Action bar visible on agenda view
+- No regressions on day view scrolling or action bar visibility
 
-Verification:
-- Week view: viewport fits on screen, internal scroll works, bottom action bar visible.
-- Day view: same behavior, including later time slots.
-- Shorter window heights: calendar gets smaller but remains scrollable.
-- Quick sanity check on another `hideFooter` route so the shared shell change does not regress other full-screen pages.
-
-Enhancement suggestions after this fix:
-- Add a subtle divider/shadow above the action bar so it reads as a pinned command footer.
-- Add compact spacing rules for shorter viewport heights to preserve maximum usable grid space.
-- Extract a reusable “bounded viewport page” layout pattern for other full-screen dashboard tools so this issue does not recur.
