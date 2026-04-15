@@ -1,48 +1,55 @@
 
 
-## Afterpay Audit Pass 3 — Remaining Bugs, Gaps & Enhancements
+## Afterpay Audit Pass 4 — Critical Split Payment Bug + Minor Issues
 
-Five issues remain after reviewing all Afterpay-touching surfaces.
+### B1. Split Payment Stuck at `partially_paid` Forever (Bug — P0)
+
+When the terminal leg fires **before** the link leg:
+
+1. Terminal handler (line 656) sees `split_payment_link_intent_id` exists, sets `partially_paid`. Does **not** set `paid_at` (line 668: `paid_at` is undefined when `resolvedStatus !== 'paid'`, and undefined keys are deleted).
+2. Link handler (line 352) checks `appt?.paid_at && appt?.split_payment_terminal_intent_id` to decide if the terminal already paid. But `paid_at` is null — so the condition fails.
+3. Link handler falls to else (line 356) and sets `partially_paid` **again**.
+4. Appointment is stuck at `partially_paid` permanently. No path ever reaches `paid`.
+
+The reverse order (link-then-terminal) works because the terminal handler checks `payment_status !== 'partially_paid'` which correctly detects the link completion.
+
+**Fix:** In `handleCheckoutCompleted` line 352, replace `appt?.paid_at` with `appt?.payment_status === 'partially_paid'`. This correctly detects "terminal already fired" regardless of whether `paid_at` was set. Also add `paid_at` and `payment_method` to the update payload when marking the split as fully `paid`.
+
+```text
+Before (broken):
+  if (appt?.paid_at && appt?.split_payment_terminal_intent_id) {
+    updatePayload.payment_status = 'paid';
+  }
+
+After (fixed):
+  if (appt?.payment_status === 'partially_paid' && appt?.split_payment_terminal_intent_id) {
+    updatePayload.payment_status = 'paid';
+    updatePayload.paid_at = new Date().toISOString();
+    updatePayload.payment_method = 'split_payment';
+    updatePayload.stripe_payment_intent_id = paymentIntentId;
+  }
+```
+
+Also update the select query (line 329) to include `payment_status`:
+```
+.select('split_payment_terminal_intent_id, paid_at, organization_id, payment_status')
+```
 
 ---
 
-### B1. SplitPaymentDialog Doesn't Pass `original_amount_cents` — Split Detection Fails (Bug — P0)
+### B2. `localRate` Syncs with Rounded Value — Fractional Rates Lost in UI (Bug — P2)
 
-`SplitPaymentDialog.tsx` line 83 sends `amount_cents: afterpayAmountCents` to `create-checkout-payment-link` but never passes `original_amount_cents`. The edge function computes `is_split` as `amount_cents < (body.original_amount_cents || amount_cents)` — without `original_amount_cents`, this evaluates to `false`. The webhook then treats split payments as non-split, marking the appointment `paid` on the link leg alone. The terminal leg becomes orphaned.
+`ZuraPayAfterpayTab.tsx` line 83: `setLocalRate(String(Math.round(surchargeRate * 100)))` rounds the display value. A rate of `0.065` (6.5%) displays as `7` in the input. The `handleRateChange` guard (line 70) now correctly compares against the raw value, but the **displayed value** is still wrong.
 
-**Fix:** Add `original_amount_cents: totalAmountCents` to the body in `SplitPaymentDialog.tsx` line 83, matching what `SendToPayButton` already does.
-
----
-
-### B2. Terminal Webhook Overwrites `partially_paid` to `paid` (Bug — P0)
-
-`handlePaymentIntentSucceeded` (line 648) unconditionally sets `payment_status: 'paid'` and only guards with `.neq('payment_status', 'paid')`. When the link leg completes first and sets `partially_paid`, the terminal webhook fires and correctly marks `paid`. But if the terminal fires first (before the link), it marks `paid` immediately — the subsequent checkout webhook then re-fires and overwrites `paid_at`. More critically, there's no awareness of split context in the terminal handler at all.
-
-**Fix:** In `handlePaymentIntentSucceeded`, when the appointment has a `split_payment_link_intent_id` set (meaning a link was created) but `split_payment_link_intent_id` has no corresponding checkout completion, set `partially_paid` instead of `paid`. Query the appointment's `split_payment_link_intent_id` and `payment_status` before deciding.
+**Fix:** Remove `Math.round` from both line 77 and line 83. Use `String(surchargeRate * 100)` so the input displays `6.5` for a 6.5% rate.
 
 ---
 
-### B3. `GroupedTransactionTable` Quick-Print Omits Surcharge (Bug — P1)
+### B3. Surcharge Preview Rounds Rate Display (Bug — P2)
 
-`GroupedTransactionTable.tsx` line 90 calls `printReceipt(txn, ...)` without passing the 7th parameter `afterpaySurchargeAmount`. The surcharge line item won't appear on receipts printed from the transaction table's dropdown menu.
+`CheckoutSummarySheet.tsx` line 838 and `AfterpayPromoBadge.tsx` line 26 both use `Math.round(surchargeRate * 100)` which shows `7%` for a 6.5% rate. The Stripe line item description in `create-checkout-payment-link` line 139 has the same issue.
 
-**Fix:** Pass `undefined, txn.afterpaySurchargeAmount` as the 6th and 7th arguments.
-
----
-
-### G1. Booking Badge Hidden Entirely When Surcharge Enabled (Gap — P1)
-
-`BookingConfirmation.tsx` line 181 has `!(afterpaySurchargeRate != null && afterpaySurchargeRate > 0)` which hides the Afterpay badge completely when surcharges are enabled. Since we already exclude Afterpay from booking deposits when surcharges are on (B1 from previous pass), hiding the badge is correct behavior. However, clients see no explanation of why Afterpay isn't available during booking but appears later via Send-to-Pay. Consider showing a muted note like "Afterpay available at checkout via payment link."
-
-**Fix (optional enhancement):** Replace the hidden badge with a subtle text note when surcharges are enabled, explaining Afterpay is available via payment link after the appointment.
-
----
-
-### E1. Surcharge Preview in Settings Uses Integer `ratePercent` for Comparison (Enhancement — P2)
-
-`ZuraPayAfterpayTab.tsx` line 70: `if (num === ratePercent) return;` — `ratePercent` is `Math.round(surchargeRate * 100)` which loses precision. A rate of `0.065` (6.5%) rounds to `7`, so entering `6.5` would always trigger a mutation since `6.5 !== 7`. The guard is ineffective for fractional rates.
-
-**Fix:** Compare against `surchargeRate * 100` without rounding instead of `ratePercent`.
+**Fix:** Use `parseFloat((surchargeRate * 100).toFixed(2))` for display so fractional rates render correctly.
 
 ---
 
@@ -50,11 +57,9 @@ Five issues remain after reviewing all Afterpay-touching surfaces.
 
 | Priority | ID | File(s) | Change |
 |----------|----|---------|--------|
-| P0 | B1 | `SplitPaymentDialog.tsx` | Add `original_amount_cents: totalAmountCents` to edge function call body |
-| P0 | B2 | `stripe-webhook/index.ts` | Query split context in `handlePaymentIntentSucceeded`; set `partially_paid` when link leg is pending |
-| P1 | B3 | `GroupedTransactionTable.tsx` | Pass `txn.afterpaySurchargeAmount` to `printReceipt` |
-| P1 | G1 | `BookingConfirmation.tsx` | Optionally show "Afterpay available via payment link" note when surcharge hides the badge |
-| P2 | E1 | `ZuraPayAfterpayTab.tsx` | Fix rate comparison to use unrounded value |
+| P0 | B1 | `stripe-webhook/index.ts` | Fix split-payment completion check: use `payment_status` not `paid_at`; set `paid_at` on completion |
+| P2 | B2 | `ZuraPayAfterpayTab.tsx` | Remove `Math.round` from `localRate` sync |
+| P2 | B3 | `CheckoutSummarySheet.tsx`, `AfterpayPromoBadge.tsx`, `create-checkout-payment-link/index.ts` | Use precise rate display instead of `Math.round` |
 
-No database migrations required. All changes are code-level.
+No database migrations required.
 
