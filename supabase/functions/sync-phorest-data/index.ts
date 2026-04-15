@@ -511,6 +511,11 @@ async function syncAppointments(
 
       // Map status
       let mappedStatus = mapPhorestStatus(apt.activationState || apt.status);
+
+      // If Phorest says ACTIVE but client confirmed via SMS/email, mark as confirmed
+      if (mappedStatus === 'booked' && apt.confirmed === true) {
+        mappedStatus = 'confirmed';
+      }
       
       // NOTE: Time-based completion inference removed — Phorest's activationState
       // is the source of truth. new Date() in Deno is UTC which caused premature
