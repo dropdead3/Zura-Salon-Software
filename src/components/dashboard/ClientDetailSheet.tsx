@@ -274,15 +274,26 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
     queryClient.invalidateQueries({ queryKey: ['client-directory'] });
     queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
   };
-
+  // Source-aware client update: try native clients first, fall back to phorest_clients
+  const updateClient = async (clientId: string, payload: Record<string, any>) => {
+    const { error: nativeError } = await supabase
+      .from('clients')
+      .update(payload as any)
+      .eq('id', clientId);
+    if (nativeError) {
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update(payload as any)
+        .eq('id', clientId);
+      if (error) throw error;
+    }
+  };
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
       const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
       
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
+      const payload = {
           first_name: editFirstName.trim() || null,
           last_name: editLastName.trim() || null,
           name: fullName,
@@ -290,10 +301,21 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           email: editEmail.trim() || null,
           phone: editPhone.trim() || null,
           landline: editLandline.trim() || null,
-        } as any)
+        } as any;
+      
+      // Try native clients table first, fall back to phorest_clients
+      const { error: nativeError } = await supabase
+        .from('clients')
+        .update(payload)
         .eq('id', client.id);
       
-      if (error) throw error;
+      if (nativeError) {
+        const { error } = await supabase
+          .from('phorest_clients')
+          .update(payload)
+          .eq('id', client.id);
+        if (error) throw error;
+      }
 
       // Belt-and-suspenders: clear stale duplicate flag if contact no longer matches canonical
       if (client.is_duplicate && client.canonical_client_id) {
@@ -339,11 +361,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
   const saveDatesMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({ birthday: editBirthday || null, client_since: editClientSince || null })
-        .eq('id', client.id);
-      if (error) throw error;
+      await updateClient(client.id, { birthday: editBirthday || null, client_since: editClientSince || null });
     },
     onSuccess: () => {
       onClientUpdated?.({ birthday: editBirthday || null, client_since: editClientSince || null });
@@ -358,14 +376,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
       const resolvedSource = editLeadSource === 'other' && editLeadSourceCustom.trim()
         ? editLeadSourceCustom.trim()
         : editLeadSource || null;
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
+      await updateClient(client.id, {
           lead_source: resolvedSource,
           referred_by: editReferredBy || null,
-        } as any)
-        .eq('id', client.id);
-      if (error) throw error;
+        });
     },
     onSuccess: () => {
       const resolvedSource = editLeadSource === 'other' && editLeadSourceCustom.trim()
@@ -381,15 +395,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
     mutationFn: async () => {
       if (!client) throw new Error('No client');
       const resolvedStylist = editPreferredStylist === 'none' ? null : editPreferredStylist || null;
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
+      await updateClient(client.id, {
           client_category: editCategory || null,
           phorest_client_id: editExternalId || null,
           preferred_stylist_id: resolvedStylist,
-        } as any)
-        .eq('id', client.id);
-      if (error) throw error;
+        });
     },
     onSuccess: () => {
       const resolvedStylist = editPreferredStylist === 'none' ? null : editPreferredStylist || null;
@@ -402,14 +412,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
   const savePromptsMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
+      await updateClient(client.id, {
           prompt_client_notes: editPromptClientNotes,
           prompt_appointment_notes: editPromptAppointmentNotes,
-        } as any)
-        .eq('id', client.id);
-      if (error) throw error;
+        });
     },
     onSuccess: () => {
       onClientUpdated?.({ prompt_client_notes: editPromptClientNotes, prompt_appointment_notes: editPromptAppointmentNotes });
@@ -421,18 +427,14 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
   const saveAddressMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
+      await updateClient(client.id, {
           address_line1: editAddress1 || null,
           address_line2: editAddress2 || null,
           city: editCity || null,
           state: editState || null,
           zip: editZip || null,
           country: editCountry || null,
-        } as any)
-        .eq('id', client.id);
-      if (error) throw error;
+        });
     },
     onSuccess: () => {
       onClientUpdated?.({ address_line1: editAddress1 || null, address_line2: editAddress2 || null, city: editCity || null, state: editState || null, zip: editZip || null, country: editCountry || null });
@@ -444,14 +446,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
   const saveRemindersMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
+      await updateClient(client.id, {
           reminder_email_opt_in: editReminderEmail,
           reminder_sms_opt_in: editReminderSms,
-        } as any)
-        .eq('id', client.id);
-      if (error) throw error;
+        });
     },
     onSuccess: () => {
       onClientUpdated?.({ reminder_email_opt_in: editReminderEmail, reminder_sms_opt_in: editReminderSms });

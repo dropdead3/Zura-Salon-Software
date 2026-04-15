@@ -151,7 +151,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
           .select('id, name, email, phone, notes, medical_alerts, preferred_stylist_id, created_at')
           .eq('phorest_client_id', phorestClientId)
           .maybeSingle();
-        return data ? { ...data, _source: 'phorest' as const } : null;
+        return data ? { ...(data as any), _source: 'phorest' as const } : null;
       }
       if (clientId) {
         const { data } = await supabase

@@ -208,49 +208,61 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
     queryKey: ['staff-service-qualifications', serviceProviderIds],
     enabled: serviceProviderIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('phorest_staff_services' as any)
-        .select(`
-          phorest_staff_id,
-          phorest_service_id,
-          is_qualified,
-          phorest_services(
-            name,
-            category
-          ),
-          phorest_staff_mapping!inner(
-            user_id,
-            employee_profiles!phorest_staff_mapping_user_id_fkey(
-              full_name,
-              display_name
-            )
-          )
-        `)
+      // Use unified qualifications view + services view for names
+      const { data: qualRows, error } = await supabase
+        .from('v_all_staff_qualifications' as any)
+        .select('staff_user_id, service_id')
         .eq('is_qualified', true);
 
       if (error) throw error;
 
-      // Group by staff -- only include service providers
+      // Get service names for qualified service IDs
+      const serviceIds = [...new Set(((qualRows || []) as any[]).map((q: any) => q.service_id).filter(Boolean))];
+      let serviceNameMap: Record<string, { name: string; category: string }> = {};
+      if (serviceIds.length > 0) {
+        const { data: svcs } = await supabase
+          .from('services')
+          .select('id, name, category')
+          .in('id', serviceIds);
+        for (const s of svcs || []) {
+          serviceNameMap[s.id] = { name: s.name, category: s.category || 'General' };
+        }
+      }
+
+      // Get staff names
+      const staffUserIds = [...new Set(((qualRows || []) as any[]).map((q: any) => q.staff_user_id).filter(Boolean))];
+      let staffNameMap: Record<string, string> = {};
+      if (staffUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, display_name, full_name')
+          .in('user_id', staffUserIds);
+        for (const p of profiles || []) {
+          staffNameMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+        }
+      }
+
+      // Group by staff — only include service providers
       const providerSet = new Set(serviceProviderIds);
       const staffQualifications = new Map<string, ServiceQualification>();
 
-      (data || []).forEach((qual: any) => {
-        const userId = qual.phorest_staff_mapping?.user_id;
+      ((qualRows || []) as any[]).forEach((qual: any) => {
+        const userId = qual.staff_user_id;
         if (!userId || !providerSet.has(userId)) return;
 
         const existing = staffQualifications.get(userId) || {
           userId,
-          staffName: qual.phorest_staff_mapping?.employee_profiles?.display_name || 
-                     qual.phorest_staff_mapping?.employee_profiles?.full_name || 'Unknown',
+          staffName: staffNameMap[userId] || 'Unknown',
           qualifiedServices: [],
           serviceCategories: [],
         };
 
-        if (qual.phorest_services?.name) {
-          existing.qualifiedServices.push(qual.phorest_services.name);
+        const svcInfo = serviceNameMap[qual.service_id];
+        if (svcInfo?.name) {
+          existing.qualifiedServices.push(svcInfo.name);
         }
-        if (qual.phorest_services?.category && !existing.serviceCategories.includes(qual.phorest_services.category)) {
-          existing.serviceCategories.push(qual.phorest_services.category);
+        if (svcInfo?.category && !existing.serviceCategories.includes(svcInfo.category)) {
+          existing.serviceCategories.push(svcInfo.category);
         }
 
         staffQualifications.set(userId, existing);

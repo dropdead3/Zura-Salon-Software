@@ -19,11 +19,12 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
     queryFn: async () => {
       // Query from phorest_appointments (where redo metadata is written by the edge function)
       // First get the phorest_client_id from the client record
-      const { data: client } = await supabase
+      const { data: clientRow } = await supabase
         .from('v_all_clients' as any)
         .select('phorest_client_id')
         .eq('id', clientId)
         .maybeSingle();
+      const client = clientRow as any;
 
       if (!client?.phorest_client_id) {
         // Fallback: try appointments table with client_id
@@ -34,10 +35,10 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
           .eq('is_redo', true)
           .order('appointment_date', { ascending: false })
           .limit(50);
-        (data || []) as any[];
+        return (data || []) as any[];
       }
 
-      const { data } = await supabase
+      const { data: rawData } = await supabase
         .from('v_all_appointments' as any)
         .select('id, service_name, appointment_date, stylist_user_id, total_price, original_price, redo_reason, status')
         .eq('phorest_client_id', client.phorest_client_id)
@@ -45,10 +46,11 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
         .order('appointment_date', { ascending: false })
         .limit(50);
 
-      if (!data) return [];
+      const rows = (rawData || []) as any[];
+      if (!rows.length) return [];
 
       // Resolve stylist names
-      const stylistIds = [...new Set(data.map(a => a.stylist_user_id).filter(Boolean))] as string[];
+      const stylistIds = [...new Set(rows.map((a: any) => a.stylist_user_id).filter(Boolean))] as string[];
       let nameMap: Record<string, string> = {};
       if (stylistIds.length > 0) {
         const { data: profiles } = await supabase
@@ -60,7 +62,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
         }
       }
 
-      return data.map(r => ({
+      return rows.map((r: any) => ({
         ...r,
         staff_name: r.stylist_user_id ? nameMap[r.stylist_user_id] || null : null,
       }));

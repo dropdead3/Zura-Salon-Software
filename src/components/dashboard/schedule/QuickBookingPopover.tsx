@@ -290,8 +290,9 @@ export function QuickBookingPopover({
           .order('appointment_date', { ascending: false })
           .limit(20);
 
-        if (data) {
-          const stylistIds = [...new Set(data.map(a => a.stylist_user_id).filter(Boolean))] as string[];
+        const rows = (data as any[] || []) as any[];
+        if (rows.length) {
+          const stylistIds = [...new Set(rows.map((a: any) => a.stylist_user_id).filter(Boolean))] as string[];
           let stylistMap: Record<string, string> = {};
           if (stylistIds.length > 0) {
             const { data: profiles } = await supabase
@@ -302,7 +303,7 @@ export function QuickBookingPopover({
               stylistMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
             }
           }
-          for (const a of data) {
+          for (const a of rows) {
             const key = `${a.appointment_date}-${a.service_name}`;
             seenDates.add(key);
             results.push({

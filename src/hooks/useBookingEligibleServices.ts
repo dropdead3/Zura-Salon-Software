@@ -65,53 +65,17 @@ export function useBookingEligibleServices(
       if (stylistId && stylistId !== 'any') {
         const serviceIds = filtered.map((s) => s.id);
 
-        // Check staff_service_qualifications
+        // Check qualifications via unified view
         const { data: quals } = await supabase
-          .from('staff_service_qualifications')
+          .from('v_all_staff_qualifications' as any)
           .select('service_id')
-          .eq('user_id', stylistId)
+          .eq('staff_user_id', stylistId)
           .in('service_id', serviceIds)
-          .eq('is_active', true);
+          .eq('is_qualified', true);
 
-        const qualifiedServiceIds = new Set(quals?.map((q) => q.service_id) ?? []);
-
-        // Check phorest qualifications
-        const { data: mapping } = await supabase
-          .from('v_all_staff' as any)
-          .select('phorest_staff_id')
-          .eq('user_id', stylistId)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (mapping) {
-          // Get phorest service IDs for these services by name match
-          const serviceNames = filtered.map((s) => s.name);
-          const { data: phorestSvcs } = await supabase
-            .from('v_all_services' as any)
-            .select('phorest_service_id, name')
-            .in('name', serviceNames);
-
-          if (phorestSvcs?.length) {
-            const phorestServiceIds = phorestSvcs.map((ps) => ps.phorest_service_id);
-            const { data: phorestQuals } = await supabase
-              .from('phorest_staff_services' as any)
-              .select('phorest_service_id')
-              .eq('phorest_staff_id', mapping.phorest_staff_id)
-              .in('phorest_service_id', phorestServiceIds)
-              .eq('is_qualified', true);
-
-            if (phorestQuals?.length) {
-              const qualPhorestIds = new Set(phorestQuals.map((q) => q.phorest_service_id));
-              const nameToService = new Map(phorestSvcs.map((ps) => [ps.name, ps.phorest_service_id]));
-              filtered.forEach((s) => {
-                const pid = nameToService.get(s.name);
-                if (pid && qualPhorestIds.has(pid)) {
-                  qualifiedServiceIds.add(s.id);
-                }
-              });
-            }
-          }
-        }
+        const qualifiedServiceIds = new Set(
+          ((quals || []) as any[]).map((q: any) => q.service_id)
+        );
 
         // Only filter if we found any qualification data (if zero quals, assume all allowed)
         if (qualifiedServiceIds.size > 0) {

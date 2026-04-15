@@ -46,7 +46,7 @@ export function GoalPaceTrendPanel({ period, target, locationId }: GoalPaceTrend
 
       // Group by date
       const byDate: Record<string, number> = {};
-      data?.forEach(row => {
+      (data as any[] || []).forEach((row: any) => {
         const d = row.appointment_date;
         byDate[d] = (byDate[d] || 0) + (Number(row.total_price) || 0);
       });

@@ -165,8 +165,9 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         .not('promotion_id', 'is', null)
         .limit(1);
 
-      if (!items || items.length === 0) return null;
-      const item = items[0];
+      const allItems = (items || []) as any[];
+      if (allItems.length === 0) return null;
+      const item = allItems[0];
 
       const { data: promo } = await supabase
         .from('promotions' as any)
