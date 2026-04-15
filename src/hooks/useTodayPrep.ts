@@ -55,7 +55,7 @@ export function useTodayPrep() {
       const [{ data: nativeAppts }, { data: phorestAppts }] = await Promise.all([
         supabase
           .from('appointments')
-          .select('id, appointment_date, start_time, end_time, service_name, service_category, status, total_price, notes, client_notes, client_name, client_id, external_client_id, is_new_client')
+          .select('id, appointment_date, start_time, end_time, service_name, service_category, status, total_price, notes, client_notes, client_name, client_id, phorest_client_id, is_new_client')
           .eq('staff_user_id', user.id)
           .eq('appointment_date', today)
           .not('status', 'in', '("cancelled","no_show")')
@@ -63,7 +63,7 @@ export function useTodayPrep() {
           .order('start_time'),
         supabase
           .from('v_all_appointments')
-          .select('id, appointment_date, start_time, end_time, service_name, service_category, status, total_price, notes, client_notes, client_name, external_client_id, is_new_client')
+          .select('id, appointment_date, start_time, end_time, service_name, service_category, status, total_price, notes, client_notes, client_name, phorest_client_id, is_new_client')
           .eq('stylist_user_id', user.id)
           .eq('appointment_date', today)
           .not('status', 'in', '("cancelled","no_show")')
@@ -87,7 +87,7 @@ export function useTodayPrep() {
           clientNotes: a.client_notes,
           clientName: a.client_name,
           clientId: a.client_id,
-          phorestClientId: a.external_client_id,
+          phorestClientId: a.phorest_client_id,
           isNewClient: a.is_new_client ?? false,
           source: 'native' as const,
         })),
@@ -104,7 +104,7 @@ export function useTodayPrep() {
           clientNotes: a.client_notes,
           clientName: a.client_name,
           clientId: null,
-          phorestClientId: a.external_client_id,
+          phorestClientId: a.phorest_client_id,
           isNewClient: a.is_new_client ?? false,
           source: 'phorest' as const,
         })),
@@ -124,11 +124,11 @@ export function useTodayPrep() {
       if (phorestClientIds.length > 0) {
         const { data: clients } = await supabase
           .from('phorest_clients')
-          .select('external_client_id, name, visit_count, total_spend, last_visit, first_visit, is_vip, birthday, client_since')
-          .in('external_client_id', phorestClientIds);
+          .select('phorest_client_id, name, visit_count, total_spend, last_visit, first_visit, is_vip, birthday, client_since')
+          .in('phorest_client_id', phorestClientIds);
         
         for (const c of clients || []) {
-          clientMap.set(c.external_client_id, c);
+          clientMap.set(c.phorest_client_id, c);
         }
       }
 
@@ -137,8 +137,8 @@ export function useTodayPrep() {
       if (phorestClientIds.length > 0) {
         const { data: txnItems } = await supabase
           .from('v_all_transaction_items')
-          .select('external_client_id, transaction_date, item_name, item_type, quantity, staff_user_id')
-          .in('external_client_id', phorestClientIds)
+          .select('phorest_client_id, transaction_date, item_name, item_type, quantity, staff_user_id')
+          .in('phorest_client_id', phorestClientIds)
           .order('transaction_date', { ascending: false })
           .limit(200);
         
@@ -147,11 +147,11 @@ export function useTodayPrep() {
         const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds as string[]);
 
         for (const item of txnItems || []) {
-          if (!item.external_client_id) continue;
-          if (!txnMap.has(item.external_client_id)) {
-            txnMap.set(item.external_client_id, { services: [], products: [] });
+          if (!item.phorest_client_id) continue;
+          if (!txnMap.has(item.phorest_client_id)) {
+            txnMap.set(item.phorest_client_id, { services: [], products: [] });
           }
-          const bucket = txnMap.get(item.external_client_id)!;
+          const bucket = txnMap.get(item.phorest_client_id)!;
           if (item.item_type === 'product') {
             if (bucket.products.length < 5) {
               bucket.products.push({
@@ -178,11 +178,11 @@ export function useTodayPrep() {
         // First get internal IDs
         const { data: clientIdRows } = await supabase
           .from('phorest_clients')
-          .select('id, external_client_id')
-          .in('external_client_id', phorestClientIds);
+          .select('id, phorest_client_id')
+          .in('phorest_client_id', phorestClientIds);
         
         const internalIds = (clientIdRows || []).map(c => c.id);
-        const internalToPhorest = new Map((clientIdRows || []).map(c => [c.id, c.external_client_id]));
+        const internalToPhorest = new Map((clientIdRows || []).map(c => [c.id, c.phorest_client_id]));
         
         if (internalIds.length > 0) {
           const { data: notes } = await supabase
@@ -219,15 +219,15 @@ export function useTodayPrep() {
         // Get recent past appointments for these clients
         const { data: pastAppts } = await supabase
           .from('v_all_appointments')
-          .select('id, external_client_id')
-          .in('external_client_id', phorestClientIds)
+          .select('id, phorest_client_id')
+          .in('phorest_client_id', phorestClientIds)
           .lt('appointment_date', today)
           .eq('is_demo', false)
           .order('appointment_date', { ascending: false })
           .limit(100);
         
         const pastApptIds = (pastAppts || []).map(a => a.id);
-        const apptToClient = new Map((pastAppts || []).map(a => [a.id, a.external_client_id]));
+        const apptToClient = new Map((pastAppts || []).map(a => [a.id, a.phorest_client_id]));
         
         if (pastApptIds.length > 0) {
           const { data: apptNotes } = await supabase

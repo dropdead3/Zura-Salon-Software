@@ -279,7 +279,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('id, total_price, tip_amount, service_name, staff_user_id, external_client_id, location_id, appointment_date, start_time, end_time')
+          .select('id, total_price, tip_amount, service_name, staff_user_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -300,7 +300,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('total_amount, tax_amount, item_type, item_name, tip_amount, external_client_id')
+          .select('total_amount, tax_amount, item_type, item_name, tip_amount, phorest_client_id')
           .not('total_amount', 'is', null)
           .range(from, to);
 
@@ -324,8 +324,8 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
           productRevenue += (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
           totalProducts += 1;
         }
-        if (item.external_client_id) {
-          posClientIds.add(item.external_client_id);
+        if (item.phorest_client_id) {
+          posClientIds.add(item.phorest_client_id);
         }
       }
       const posTransactionCount = posClientIds.size;
@@ -349,7 +349,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       for (const apt of data) {
         const tip = Number(apt.tip_amount) || 0;
         if (tip === 0) continue;
-        const key = `${apt.staff_user_id}|${apt.external_client_id}|${apt.appointment_date}|${tip}`;
+        const key = `${apt.staff_user_id}|${apt.phorest_client_id}|${apt.appointment_date}|${tip}`;
         if (!seenTipKeys.has(key)) {
           seenTipKeys.add(key);
           totalTipsFromAppointments += tip;
@@ -386,7 +386,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         ? txServiceRevenue
         : Math.max(0, totalRevenue - productRevenue);
       const totalServices = data.length;
-      const uniqueVisits = new Set(data.map(d => `${d.external_client_id}|${d.appointment_date}`).filter(k => !k.startsWith('null'))).size;
+      const uniqueVisits = new Set(data.map(d => `${d.phorest_client_id}|${d.appointment_date}`).filter(k => !k.startsWith('null'))).size;
       const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
       
       // Calculate total service hours from appointment durations
@@ -542,7 +542,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('location_id, total_price, tip_amount, external_client_id')
+          .select('location_id, total_price, tip_amount, phorest_client_id')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -578,7 +578,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
           byLocation[key].serviceRevenue += tipAdj;
           byLocation[key].totalServices += 1;
           if (!locationVisitSets[key]) locationVisitSets[key] = new Set();
-          const clientKey = (apt as any).external_client_id;
+          const clientKey = (apt as any).phorest_client_id;
           if (clientKey) locationVisitSets[key].add(clientKey);
           else byLocation[key].totalTransactions += 1;
         }
@@ -774,7 +774,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('staff_user_id, total_price, tip_amount, service_name, location_id, external_client_id, appointment_date')
+          .select('staff_user_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
           .not('staff_user_id', 'is', null)
           .not('total_price', 'is', null)
           .range(from, to);
@@ -824,7 +824,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         byStaff[phorestId].totalServices += 1;
         // Track unique client visits per staff
         if (!staffVisitSets[phorestId]) staffVisitSets[phorestId] = new Set();
-        const visitKey = `${(apt as any).external_client_id}|${(apt as any).appointment_date}`;
+        const visitKey = `${(apt as any).phorest_client_id}|${(apt as any).appointment_date}`;
         staffVisitSets[phorestId].add(visitKey);
       });
 

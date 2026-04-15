@@ -210,21 +210,21 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const [currentApts, priorApts, twoPriorApts] = await Promise.all([
         fetchAllBatched<any>((from, to) =>
           supabase.from('v_all_appointments')
-            .select('appointment_date, total_price, tip_amount, status, external_client_id, rebooked_at_checkout, is_new_client, service_name, service_category, id')
+            .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client, service_name, service_category, id')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
           supabase.from('v_all_appointments')
-            .select('total_price, tip_amount, external_client_id, rebooked_at_checkout, status, is_new_client')
+            .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', priorFrom).lte('appointment_date', priorTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
           supabase.from('v_all_appointments')
-            .select('total_price, tip_amount, external_client_id, rebooked_at_checkout, status, is_new_client')
+            .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
             .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo)
             .range(from, to)
@@ -244,7 +244,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         while (hasMore) {
           const { data, error } = await supabase
             .from('v_all_transaction_items')
-            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, external_client_id, transaction_date')
+            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, phorest_client_id, transaction_date')
             .eq('staff_user_id', staffUserId)
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .range(offset, offset + PAGE_SIZE - 1);
@@ -307,7 +307,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         while (hasMore) {
           const { data, error } = await supabase
             .from('v_all_transaction_items')
-            .select('staff_user_id, item_type, total_amount, tax_amount, external_client_id, transaction_date')
+            .select('staff_user_id, item_type, total_amount, tax_amount, phorest_client_id, transaction_date')
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .not('staff_user_id', 'is', null)
             .range(offset, offset + PAGE_SIZE - 1);
@@ -332,7 +332,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       currentApts.forEach((a: any) => {
         totalTips += Number(a.tip_amount) || 0;
-        if (a.external_client_id) clientSet.add(a.external_client_id);
+        if (a.phorest_client_id) clientSet.add(a.phorest_client_id);
         if (a.rebooked_at_checkout) rebookedCount++;
 
         const status = (a.status || '').toLowerCase();
@@ -356,9 +356,9 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           const isService = SERVICE_TYPES.includes(item.item_type);
           if (isService) svcRev += amount + tax;
           if (isProduct) prodRev += amount + tax;
-          if (item.external_client_id && item.transaction_date) {
+          if (item.phorest_client_id && item.transaction_date) {
             const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
-            visitKeys.add(`${item.external_client_id}|${dateOnly}`);
+            visitKeys.add(`${item.phorest_client_id}|${dateOnly}`);
           }
         });
         return { svcRev, prodRev, total: svcRev + prodRev, uniqueVisits: visitKeys.size };
@@ -404,8 +404,8 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         const isProduct = PRODUCT_TYPES.includes(item.item_type);
         const isService = SERVICE_TYPES.includes(item.item_type);
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        const visitKey = item.external_client_id && item.transaction_date
-          ? `${item.external_client_id}|${item.transaction_date}`
+        const visitKey = item.phorest_client_id && item.transaction_date
+          ? `${item.phorest_client_id}|${item.transaction_date}`
           : null;
         if (isProduct) {
           productRevenue += amount;
@@ -464,7 +464,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       // ── Top clients ──
       const clientRevMap = new Map<string, { visits: number; revenue: number; lastVisit: string }>();
       currentApts.forEach((a: any) => {
-        const cid = a.external_client_id;
+        const cid = a.phorest_client_id;
         if (!cid) return;
         if (!clientRevMap.has(cid)) clientRevMap.set(cid, { visits: 0, revenue: 0, lastVisit: '' });
         const c = clientRevMap.get(cid)!;
@@ -479,10 +479,10 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       if (clientIds.length > 0) {
         const { data: clients } = await supabase
           .from('v_all_clients')
-          .select('external_client_id, first_name, last_name')
-          .in('external_client_id', clientIds.slice(0, 50));
+          .select('phorest_client_id, first_name, last_name')
+          .in('phorest_client_id', clientIds.slice(0, 50));
         (clients || []).forEach((c: any) => {
-          clientNameMap.set(c.external_client_id, `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown');
+          clientNameMap.set(c.phorest_client_id, `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown');
         });
       }
 
@@ -522,9 +522,9 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         const t = teamStaffMap.get(sid)!;
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         t.revenue += amount;
-        if (item.external_client_id && item.transaction_date) {
+        if (item.phorest_client_id && item.transaction_date) {
           const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
-          t.uniqueVisits.add(`${item.external_client_id}|${dateOnly}`);
+          t.uniqueVisits.add(`${item.phorest_client_id}|${dateOnly}`);
         }
       });
 

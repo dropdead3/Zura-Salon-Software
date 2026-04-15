@@ -141,7 +141,7 @@ export function useOrganizationAnalytics() {
       // Try Zura-owned clients first
       const { data: zuraClients, error: zuraError } = await supabase
         .from('clients')
-        .select('id, location_id, external_client_id')
+        .select('id, location_id, phorest_client_id')
         .eq('status', 'active')
         .eq('is_placeholder', false);
 
@@ -153,7 +153,7 @@ export function useOrganizationAnalytics() {
 
       // Merge: deduplicate by phorest_client_id
       const seenPhorestIds = new Set(
-        (zuraClients || []).map((c: any) => c.external_client_id).filter(Boolean)
+        (zuraClients || []).map((c: any) => c.phorest_client_id).filter(Boolean)
       );
       const merged = [
         ...(zuraClients || []).map((c: any) => ({ id: c.id, location_id: c.location_id })),

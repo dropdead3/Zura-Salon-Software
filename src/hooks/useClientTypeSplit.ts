@@ -30,11 +30,11 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
     queryKey: ['client-type-split', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<ClientTypeSplitData> => {
       // Step 1: Get distinct POS client IDs (source of truth for transaction count)
-      const txData = await fetchAllBatched<{ external_client_id: string | null }>((from, to) => {
+      const txData = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('external_client_id')
-          .not('external_client_id', 'is', null)
+          .select('phorest_client_id')
+          .not('phorest_client_id', 'is', null)
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -46,14 +46,14 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
 
       const posClientIds = new Set<string>();
       txData.forEach(row => {
-        if (row.external_client_id) posClientIds.add(row.external_client_id);
+        if (row.phorest_client_id) posClientIds.add(row.phorest_client_id);
       });
 
       // Step 2: Get appointment data for new/returning classification + revenue
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('external_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
+          .select('phorest_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
@@ -68,7 +68,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       // Only include clients present in POS data
       const visitMap = new Map<string, { revenue: number; isNew: boolean; rebooked: boolean }>();
       (appointments || []).forEach(apt => {
-        const clientId = apt.external_client_id;
+        const clientId = apt.phorest_client_id;
         if (!clientId || !posClientIds.has(clientId)) return;
         
         const visitKey = `${clientId}|${apt.appointment_date}`;

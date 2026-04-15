@@ -110,7 +110,7 @@ export function useComparisonData(params: ComparisonParams) {
         while (hasMore) {
           let q: any = supabase
             .from('v_all_transaction_items')
-            .select('transaction_date, total_amount, tax_amount, item_type, location_id, external_client_id')
+            .select('transaction_date, total_amount, tax_amount, item_type, location_id, phorest_client_id')
             .gte('transaction_date', dateFrom)
             .lte('transaction_date', dateTo);
           if (locationIds && locationIds.length > 0) q = q.in('location_id', locationIds);

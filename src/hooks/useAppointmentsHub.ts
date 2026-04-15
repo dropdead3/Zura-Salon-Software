@@ -118,8 +118,8 @@ export function useAppointmentsHub(filters: HubFilters) {
       const missingClientIds = [
         ...new Set(
           paged
-            .filter((a: any) => a.external_client_id)
-            .map((a: any) => a.external_client_id)
+            .filter((a: any) => a.phorest_client_id)
+            .map((a: any) => a.phorest_client_id)
         ),
       ] as string[];
 
@@ -127,11 +127,11 @@ export function useAppointmentsHub(filters: HubFilters) {
       if (missingClientIds.length > 0) {
         const { data: clients } = await supabase
           .from('phorest_clients')
-          .select('external_client_id, name, email, phone, customer_number')
-          .in('external_client_id', missingClientIds);
+          .select('phorest_client_id, name, email, phone, customer_number')
+          .in('phorest_client_id', missingClientIds);
         for (const c of clients || []) {
-          if (c.external_client_id) {
-            clientInfoMap[c.external_client_id] = {
+          if (c.phorest_client_id) {
+            clientInfoMap[c.phorest_client_id] = {
               name: c.name || undefined,
               email: c.email || undefined,
               phone: c.phone || undefined,
@@ -197,8 +197,8 @@ export function useAppointmentsHub(filters: HubFilters) {
       const phorestClientIdsForTx = [
         ...new Set(
           paged
-            .filter((a: any) => a.external_client_id && a.appointment_date)
-            .map((a: any) => a.external_client_id)
+            .filter((a: any) => a.phorest_client_id && a.appointment_date)
+            .map((a: any) => a.phorest_client_id)
         ),
       ] as string[];
       const appointmentDates = [...new Set(paged.map((a: any) => a.appointment_date).filter(Boolean))] as string[];
@@ -208,13 +208,13 @@ export function useAppointmentsHub(filters: HubFilters) {
       if (phorestClientIdsForTx.length > 0 && appointmentDates.length > 0) {
         const { data: txMatches } = await supabase
           .from('v_all_transaction_items')
-          .select('external_client_id, transaction_date, total_amount')
-          .in('external_client_id', phorestClientIdsForTx)
+          .select('phorest_client_id, transaction_date, total_amount')
+          .in('phorest_client_id', phorestClientIdsForTx)
           .in('transaction_date', appointmentDates);
         txMatches?.forEach((t: any) => {
-          if (t.external_client_id) {
-            transactionClientIds.add(t.external_client_id);
-            const key = `${t.external_client_id}|${t.transaction_date}`;
+          if (t.phorest_client_id) {
+            transactionClientIds.add(t.phorest_client_id);
+            const key = `${t.phorest_client_id}|${t.transaction_date}`;
             transactionTotalMap[key] = (transactionTotalMap[key] || 0) + (Number(t.total_amount) || 0);
           }
         });
@@ -222,7 +222,7 @@ export function useAppointmentsHub(filters: HubFilters) {
 
       // ── Enrich ──
       const enriched = paged.map((a: any) => {
-        const clientInfo = clientInfoMap[a.external_client_id] || {};
+        const clientInfo = clientInfoMap[a.phorest_client_id] || {};
         const customerNumber = a._source === 'phorest'
           ? (clientInfo.customer_number || null)
           : (a.client_id ? localClientMap[a.client_id] || null : null);
@@ -239,9 +239,9 @@ export function useAppointmentsHub(filters: HubFilters) {
               ? 'Phorest Sync'
               : null,
           location_name: locationMap[a.location_id] || null,
-          has_transaction: a.external_client_id ? transactionClientIds.has(a.external_client_id) : false,
-          total_paid: a.external_client_id && a.appointment_date
-            ? transactionTotalMap[`${a.external_client_id}|${a.appointment_date}`] ?? null
+          has_transaction: a.phorest_client_id ? transactionClientIds.has(a.phorest_client_id) : false,
+          total_paid: a.phorest_client_id && a.appointment_date
+            ? transactionTotalMap[`${a.phorest_client_id}|${a.appointment_date}`] ?? null
             : null,
         };
       });

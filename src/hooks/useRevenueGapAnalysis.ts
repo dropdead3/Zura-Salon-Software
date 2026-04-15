@@ -112,7 +112,7 @@ export function useRevenueGapAnalysis(
       const allAppts = await fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, staff_user_id, external_client_id, status')
+          .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, staff_user_id, phorest_client_id, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started', 'booked'])
@@ -125,7 +125,7 @@ export function useRevenueGapAnalysis(
 
       // ── Client name resolution from phorest_clients ──
       const clientIds = [...new Set(
-        (allAppts ?? []).map(a => a.external_client_id).filter((id): id is string => !!id)
+        (allAppts ?? []).map(a => a.phorest_client_id).filter((id): id is string => !!id)
       )];
 
       const clientNameMap = new Map<string, string>();
@@ -134,18 +134,18 @@ export function useRevenueGapAnalysis(
           const chunk = clientIds.slice(i, i + 100);
           const { data: clientData } = await supabase
             .from('v_all_clients')
-            .select('external_client_id, name, first_name, last_name')
-            .in('external_client_id', chunk);
+            .select('phorest_client_id, name, first_name, last_name')
+            .in('phorest_client_id', chunk);
           (clientData ?? []).forEach(c => {
-            if (!c.external_client_id) return;
+            if (!c.phorest_client_id) return;
             const resolved = c.name || [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
-            if (resolved) clientNameMap.set(c.external_client_id, resolved);
+            if (resolved) clientNameMap.set(c.phorest_client_id, resolved);
           });
         }
       }
 
       const resolveClient = (a: { phorest_client_id: string | null; client_name: string | null }) =>
-        (a.external_client_id ? clientNameMap.get(a.external_client_id) : null) ?? a.client_name ?? 'Walk-in';
+        (a.phorest_client_id ? clientNameMap.get(a.phorest_client_id) : null) ?? a.client_name ?? 'Walk-in';
 
       // ── Split by status ──
       const cancelled = (allAppts ?? []).filter(a => a.status === 'cancelled');
@@ -212,7 +212,7 @@ export function useRevenueGapAnalysis(
 
       // ── POS matching for completed appointments (client-day level) ──
       const completedClientIds = [...new Set(
-        completed.map(a => a.external_client_id).filter((id): id is string => !!id)
+        completed.map(a => a.phorest_client_id).filter((id): id is string => !!id)
       )];
 
       let posItems: Array<{
@@ -231,8 +231,8 @@ export function useRevenueGapAnalysis(
           const chunkData = await fetchAllBatched<any>((from, to) => {
             let q = supabase
               .from('v_all_transaction_items')
-              .select('external_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
-              .in('external_client_id', chunk)
+              .select('phorest_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
+              .in('phorest_client_id', chunk)
               .gte('transaction_date', dateFrom)
               .lte('transaction_date', dateTo)
               .in('item_type', ['service', 'sale_fee'])
@@ -258,7 +258,7 @@ export function useRevenueGapAnalysis(
 
       completed.forEach(a => {
         // Null-client appointments can never match POS — emit as individual gap items
-        if (!a.external_client_id) {
+        if (!a.phorest_client_id) {
           const price = Number(a.expected_price) || Number(a.total_price) || 0;
           const isApptToday = rangeIncludesToday && a.appointment_date === todayStr;
           if (price > 0) {
@@ -276,7 +276,7 @@ export function useRevenueGapAnalysis(
           }
           return;
         }
-        const key = `${a.external_client_id}|${a.appointment_date}`;
+        const key = `${a.phorest_client_id}|${a.appointment_date}`;
         const stylist = a.staff_user_id ? staffLookup.get(a.staff_user_id) ?? null : null;
         const existing = clientDayScheduled.get(key);
         if (existing) {
@@ -304,9 +304,9 @@ export function useRevenueGapAnalysis(
       }>();
 
       posItems.forEach(t => {
-        if (!t.external_client_id) return;
+        if (!t.phorest_client_id) return;
         const txDate = t.transaction_date.substring(0, 10);
-        const key = `${t.external_client_id}|${txDate}`;
+        const key = `${t.phorest_client_id}|${txDate}`;
         const amount = (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0);
         const hasDisc = (Number(t.discount) || 0) > 0;
         const existing = clientDayActual.get(key);

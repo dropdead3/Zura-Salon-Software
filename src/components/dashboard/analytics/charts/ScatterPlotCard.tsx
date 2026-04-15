@@ -46,7 +46,7 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('transaction_date, total_amount, tax_amount, item_type, external_client_id')
+          .select('transaction_date, total_amount, tax_amount, item_type, phorest_client_id')
           .gte('transaction_date', dateFrom);
         if (locationId) {
           q = q.eq('location_id', locationId);

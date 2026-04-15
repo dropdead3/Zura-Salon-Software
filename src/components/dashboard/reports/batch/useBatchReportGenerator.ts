@@ -382,7 +382,7 @@ async function fetchReportData(
     case 'location-benchmark': {
       const appts = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_appointments')
-          .select('location_id, total_price, tip_amount, status, external_client_id')
+          .select('location_id, total_price, tip_amount, status, phorest_client_id')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('location_id', 'is', null)
@@ -401,7 +401,7 @@ async function fetchReportData(
         if (apt.status === 'cancelled') return;
         b.rev += (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         b.count++;
-        if (apt.external_client_id) b.clients.add(apt.external_client_id);
+        if (apt.phorest_client_id) b.clients.add(apt.phorest_client_id);
       });
       const rows = Object.entries(byLoc)
         .map(([lid, b]) => [

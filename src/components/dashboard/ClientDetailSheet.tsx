@@ -104,7 +104,7 @@ interface Client {
   client_category?: string | null;
   lead_source?: string | null;
   referred_by?: string | null;
-  external_client_id?: string | null;
+  phorest_client_id?: string | null;
   prompt_client_notes?: boolean;
   prompt_appointment_notes?: boolean;
   address_line1?: string | null;
@@ -228,7 +228,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
   const startEditingSettings = () => {
     if (!client) return;
     setEditCategory(client.client_category || '');
-    setEditExternalId(client.external_client_id || '');
+    setEditExternalId(client.phorest_client_id || '');
     setEditPreferredStylist(client.preferred_stylist_id || 'none');
     setIsEditingSettings(true);
   };
@@ -385,7 +385,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
         .from('phorest_clients')
         .update({
           client_category: editCategory || null,
-          external_client_id: editExternalId || null,
+          phorest_client_id: editExternalId || null,
           preferred_stylist_id: resolvedStylist,
         } as any)
         .eq('id', client.id);
@@ -393,8 +393,8 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
     },
     onSuccess: () => {
       const resolvedStylist = editPreferredStylist === 'none' ? null : editPreferredStylist || null;
-      onClientUpdated?.({ client_category: editCategory || null, external_client_id: editExternalId || null, preferred_stylist_id: resolvedStylist });
-      updateClientCache({ client_category: editCategory || null, external_client_id: editExternalId || null, preferred_stylist_id: resolvedStylist }); toast.success('Settings updated'); setIsEditingSettings(false);
+      onClientUpdated?.({ client_category: editCategory || null, phorest_client_id: editExternalId || null, preferred_stylist_id: resolvedStylist });
+      updateClientCache({ client_category: editCategory || null, phorest_client_id: editExternalId || null, preferred_stylist_id: resolvedStylist }); toast.success('Settings updated'); setIsEditingSettings(false);
     },
     onError: (error: Error) => { toast.error('Failed to update settings', { description: error.message }); },
   });
@@ -1105,7 +1105,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                   {client.client_category && <p><span className="text-muted-foreground">Category:</span> {client.client_category}</p>}
                   {client.lead_source && <p><span className="text-muted-foreground">Source:</span> {client.lead_source}</p>}
                   {client.referred_by && <p><span className="text-muted-foreground">Referred by:</span> {client.referred_by}</p>}
-                  {client.external_client_id && <p><span className="text-muted-foreground">External ID:</span> {client.external_client_id}</p>}
+                  {client.phorest_client_id && <p><span className="text-muted-foreground">External ID:</span> {client.phorest_client_id}</p>}
                   <p>
                     <span className="text-muted-foreground">Preferred Stylist:</span>{' '}
                     {client.preferred_stylist_id ? (
@@ -1119,7 +1119,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                       <span className="text-muted-foreground italic">None assigned</span>
                     )}
                   </p>
-                  {!client.client_category && !client.lead_source && !client.referred_by && !client.external_client_id && !client.preferred_stylist_id && (
+                  {!client.client_category && !client.lead_source && !client.referred_by && !client.phorest_client_id && !client.preferred_stylist_id && (
                     <p className="text-muted-foreground italic">No settings configured</p>
                   )}
                 </div>

@@ -23,7 +23,7 @@ export function useClientProductAffinity(phorestClientId: string | null | undefi
       const { data, error } = await supabase
         .from('v_all_transaction_items')
         .select('item_name, transaction_date')
-        .eq('external_client_id', phorestClientId!)
+        .eq('phorest_client_id', phorestClientId!)
         .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
         .not('item_name', 'is', null)
         .order('transaction_date', { ascending: false });

@@ -102,7 +102,7 @@ export function useStylistExperienceScore(
             total_price,
             tip_amount,
             rebooked_at_checkout,
-            external_client_id,
+            phorest_client_id,
             is_new_client
           `)
           .eq('status', 'completed')
@@ -225,9 +225,9 @@ export function useStylistExperienceScore(
           : 0;
 
         // Compute retention from appointments: returning clients / total unique clients
-        const uniqueClients = new Set(apts.map((a: any) => a.external_client_id).filter(Boolean));
+        const uniqueClients = new Set(apts.map((a: any) => a.phorest_client_id).filter(Boolean));
         const newClients = apts.filter((a: any) => a.is_new_client === true);
-        const newClientIds = new Set(newClients.map((a: any) => a.external_client_id).filter(Boolean));
+        const newClientIds = new Set(newClients.map((a: any) => a.phorest_client_id).filter(Boolean));
         const returningCount = uniqueClients.size - newClientIds.size;
         const computedRetention = uniqueClients.size > 0 ? (returningCount / uniqueClients.size) * 100 : 0;
 

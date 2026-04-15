@@ -12,11 +12,11 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
     queryKey: ['transactions-by-hour', dateFrom, dateTo, locationId],
     queryFn: async () => {
       // Step 1: Get distinct POS client IDs for the date range
-      const txData = await fetchAllBatched<{ external_client_id: string | null }>((from, to) => {
+      const txData = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('external_client_id')
-          .not('external_client_id', 'is', null)
+          .select('phorest_client_id')
+          .not('phorest_client_id', 'is', null)
           .range(from, to);
         if (dateFrom) q = q.gte('transaction_date', dateFrom);
         if (dateTo) q = q.lte('transaction_date', dateTo);
@@ -26,7 +26,7 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
 
       const posClientIds = new Set<string>();
       txData.forEach(row => {
-        if (row.external_client_id) posClientIds.add(row.external_client_id);
+        if (row.phorest_client_id) posClientIds.add(row.phorest_client_id);
       });
 
       if (posClientIds.size === 0) {
@@ -41,8 +41,8 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
       const aptData = await fetchAllBatched<{ phorest_client_id: string | null; start_time: string | null }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('external_client_id, start_time')
-          .not('external_client_id', 'is', null)
+          .select('phorest_client_id, start_time')
+          .not('phorest_client_id', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
         if (dateFrom) q = q.gte('appointment_date', dateFrom);
@@ -54,11 +54,11 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
       // For each POS client, find earliest appointment start_time
       const clientEarliestHour = new Map<string, number>();
       aptData.forEach(row => {
-        if (!row.external_client_id || !row.start_time || !posClientIds.has(row.external_client_id)) return;
+        if (!row.phorest_client_id || !row.start_time || !posClientIds.has(row.phorest_client_id)) return;
         const hour = parseInt(row.start_time.split(':')[0]);
-        const existing = clientEarliestHour.get(row.external_client_id);
+        const existing = clientEarliestHour.get(row.phorest_client_id);
         if (existing === undefined || hour < existing) {
-          clientEarliestHour.set(row.external_client_id, hour);
+          clientEarliestHour.set(row.phorest_client_id, hour);
         }
       });
 

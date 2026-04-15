@@ -70,7 +70,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, external_client_id, appointment_date, staff_user_id, start_time')
+          .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, staff_user_id, start_time')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
@@ -119,7 +119,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_all_clients')
-        .select('external_client_id, first_name, last_name');
+        .select('phorest_client_id, first_name, last_name');
       if (error) throw error;
       return data;
     },
@@ -131,9 +131,9 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     const map = new Map<string, string>();
     if (clientsData) {
       for (const c of clientsData) {
-        if (c.external_client_id) {
+        if (c.phorest_client_id) {
           const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
-          if (name) map.set(c.external_client_id, name);
+          if (name) map.set(c.phorest_client_id, name);
         }
       }
     }
@@ -147,7 +147,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items')
-          .select('payment_method, tip_amount, staff_user_id, external_client_id, transaction_date')
+          .select('payment_method, tip_amount, staff_user_id, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .gt('tip_amount', 0)
@@ -206,7 +206,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       for (const ti of transactionItems) {
         const tipAmt = ti.tip_amount ?? 0;
         if (tipAmt <= 0) continue;
-        const key = `${ti.staff_user_id}|${ti.external_client_id}|${ti.transaction_date}`;
+        const key = `${ti.staff_user_id}|${ti.phorest_client_id}|${ti.transaction_date}`;
         // All items in a checkout have the same tip — just keep one
         if (!correctedTipMap.has(key)) {
           correctedTipMap.set(key, tipAmt);
@@ -222,7 +222,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       const category = apt.service_category || getServiceCategory(apt.service_name);
 
       // Use corrected tip from transaction items when available
-      const tipLookupKey = `${apt.staff_user_id}|${apt.external_client_id}|${apt.appointment_date}`;
+      const tipLookupKey = `${apt.staff_user_id}|${apt.phorest_client_id}|${apt.appointment_date}`;
       const correctedTip = correctedTipMap.get(tipLookupKey);
       const tipForThisCheckout = correctedTip ?? (apt.tip_amount ?? 0);
 
@@ -324,7 +324,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       for (const ti of transactionItems) {
         const tipAmt = ti.tip_amount ?? 0;
         if (tipAmt === 0) continue;
-        const txKey = `${ti.staff_user_id}|${ti.external_client_id}|${ti.transaction_date}|${tipAmt}`;
+        const txKey = `${ti.staff_user_id}|${ti.phorest_client_id}|${ti.transaction_date}|${tipAmt}`;
         if (seenTxTipKeys.has(txKey)) continue;
         seenTxTipKeys.add(txKey);
         const method = ti.payment_method || 'Unknown';

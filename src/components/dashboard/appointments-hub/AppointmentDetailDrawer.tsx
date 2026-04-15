@@ -82,7 +82,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const updateServicesMutation = useUpdateAppointmentServices();
 
   // Transaction breakdown hook
-  const phorestClientIdForTx = appointment?.external_client_id || appointment?.client_id;
+  const phorestClientIdForTx = appointment?.phorest_client_id || appointment?.client_id;
   const { data: txBreakdown, isLoading: txLoading } = useAppointmentTransactionBreakdown(
     phorestClientIdForTx,
     appointment?.appointment_date
@@ -92,7 +92,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
   const orgId = appointment?.organization_id || null;
 
   // Resolve phorest_client_id to client directory ID
-  const phorestClientId = appointment?.external_client_id || appointment?.client_id;
+  const phorestClientId = appointment?.phorest_client_id || appointment?.client_id;
   const { data: resolvedClientId } = useQuery({
     queryKey: ['resolve-client-directory-id', phorestClientId],
     queryFn: async () => {
@@ -100,7 +100,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
       const { data } = await supabase
         .from('phorest_clients')
         .select('id')
-        .eq('external_client_id', phorestClientId)
+        .eq('phorest_client_id', phorestClientId)
         .maybeSingle();
       return data?.id || null;
     },
@@ -307,7 +307,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
                 {(() => {
                   const customerNumber = appointment.customer_number;
                   const fallbackId = appointment._source === 'phorest'
-                    ? appointment.external_client_id
+                    ? appointment.phorest_client_id
                     : appointment.client_id;
                   const displayValue = customerNumber || fallbackId;
                   if (!displayValue) return null;
