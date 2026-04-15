@@ -529,7 +529,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       if (staffIds.length > 0) {
         const { data: mappings } = await supabase
           .from('phorest_staff_mapping')
-          .select('staff_user_id, user_id, phorest_staff_name')
+          .select('phorest_staff_id, user_id, phorest_staff_name')
           .in('staff_user_id', staffIds);
 
         const userIds = (mappings || []).map((m: any) => m.user_id).filter(Boolean);

@@ -242,7 +242,7 @@ export function useOrganizationAnalytics() {
       // Get staff → user_id mapping
       const { data: mappings } = await supabase
         .from('phorest_staff_mapping')
-        .select('staff_user_id, user_id');
+        .select('phorest_staff_id, user_id');
       const staffToUser: Record<string, string> = {};
       (mappings || []).forEach((m: any) => {
         if (m.staff_user_id && m.user_id) staffToUser[m.staff_user_id] = m.user_id;

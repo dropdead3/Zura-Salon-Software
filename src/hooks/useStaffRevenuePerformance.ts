@@ -106,7 +106,7 @@ export function useStaffRevenuePerformance(
       // Get staff mappings
       const { data: mappings, error: mappingsError } = await supabase
         .from('phorest_staff_mapping')
-        .select('user_id, staff_user_id, phorest_staff_name');
+        .select('user_id, phorest_staff_id, phorest_staff_name');
       if (mappingsError) throw mappingsError;
 
       // Resolve names via centralized utility

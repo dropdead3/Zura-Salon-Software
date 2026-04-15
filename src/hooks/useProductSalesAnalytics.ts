@@ -135,7 +135,7 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
       const staffIds = Array.from(staffProductMap.keys());
       const { data: mappings } = await supabase
         .from('phorest_staff_mapping')
-        .select('staff_user_id, user_id, phorest_staff_name')
+        .select('phorest_staff_id, user_id, phorest_staff_name')
         .in('staff_user_id', staffIds);
       
       const userIds = mappings?.map(m => m.user_id).filter(Boolean) || [];

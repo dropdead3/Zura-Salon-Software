@@ -100,7 +100,7 @@ export function useRevenueGapAnalysis(
       // ── Staff mapping ──
       const { data: staffMap } = await supabase
         .from('phorest_staff_mapping')
-        .select('staff_user_id, phorest_staff_name');
+        .select('phorest_staff_id, phorest_staff_name');
 
       const staffLookup = new Map<string, string>();
       (staffMap ?? []).forEach((s) => {

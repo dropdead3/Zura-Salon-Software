@@ -130,7 +130,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       if (unresolvedPhorestIds.length > 0) {
         const { data: mappings } = await supabase
           .from('phorest_staff_mapping')
-          .select(`staff_user_id, user_id, employee_profiles:user_id (full_name, display_name)`)
+          .select(`phorest_staff_id, user_id, employee_profiles:user_id (full_name, display_name)`)
           .in('staff_user_id', unresolvedPhorestIds)
           .eq('is_active', true);
         mappings?.forEach((m: any) => {
