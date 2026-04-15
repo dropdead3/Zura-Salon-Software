@@ -1,76 +1,49 @@
 
 
-## Fix Scheduler: Role + Location Filtering
+## Fix Staff Location Assignments
 
-### Problem 1: No role filter
-The staff query in `Schedule.tsx` (L311-315) fetches all active/approved `employee_profiles` at the selected location — including receptionists, admins, and super admins. Only service providers (stylists and stylist assistants) should appear as calendar columns.
+### Root Cause
+The scheduler code is working correctly — the role filter and location filter are both functioning. The problem is **incorrect `location_id` data** in `employee_profiles`. Multiple stylists are assigned to the wrong location in the database.
 
-### Problem 2: Hayleigh's location assignment
-Hayleigh Hoy's `location_id` is `north-mesa` in the database. If she's moved to Val Vista Lakes, we need to update this. *(Pending your confirmation on correct location.)*
+### Current vs Correct Assignments
 
-### Problem 3: Appointment fallback bypasses filtering
-The `allStylists` useMemo (L342-375) merges staff from appointments into the column list without checking their role. A receptionist who somehow has an appointment assigned would get a column.
+| Stylist | Current `location_id` | Correct `location_id` | `location_ids` needed |
+|---|---|---|---|
+| **Samantha Bloom** | val-vista-lakes ❌ | north-mesa | — |
+| **Jamie Vieira** | val-vista-lakes ✅ | val-vista-lakes | `[val-vista-lakes, north-mesa]` |
+| **Chelsea Wright** | north-mesa ❌ | val-vista-lakes | — |
+| **Gavin Eagan** | north-mesa ❌ | val-vista-lakes | — |
+| **Kitty Vargas** | north-mesa ❌ | val-vista-lakes | — |
+| **Kylie Walstad** | north-mesa ❌ | val-vista-lakes | — |
+| **Leslei Botello** | north-mesa ❌ | val-vista-lakes | — |
+| **Rubie Guerrero** | north-mesa ❌ | val-vista-lakes | — |
 
-### Problem 4: No org scoping
-The query doesn't filter by `organization_id`, which violates tenant isolation rules.
+Already correct: Lex (multi-location ✅), Trinity, Cienna, Alexis, Brooklyn (all north-mesa ✅), Hayleigh, Sarah, Sarina, Savannah, Sienna (all val-vista-lakes ✅).
 
----
+### Fix — 8 data updates via insert tool
 
-### Fix 1 — Add role-based filtering to staff query
-
-**File**: `src/pages/dashboard/Schedule.tsx` (L306-337)
-
-After fetching `employee_profiles`, join against `user_roles` to restrict to `stylist` and `stylist_assistant` only:
-
-```typescript
-const { data: locationStylists = [] } = useQuery({
-  queryKey: ['schedule-stylists', selectedLocation, orgId],
-  queryFn: async () => {
-    // 1. Get service-provider user_ids from user_roles
-    const { data: roleRows } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .in('role', ['stylist', 'stylist_assistant']);
-    
-    const serviceProviderIds = (roleRows || []).map(r => r.user_id);
-    if (serviceProviderIds.length === 0) return [];
-
-    // 2. Fetch profiles for those users, filtered by location + org
-    let query = supabase
-      .from('employee_profiles')
-      .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
-      .eq('is_active', true)
-      .eq('is_approved', true)
-      .in('user_id', serviceProviderIds);
-
-    if (orgId) query = query.eq('organization_id', orgId);
-    if (selectedLocation) {
-      query = query.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`);
-    }
-
-    const { data } = await query;
-    // Deduplicate by user_id (unchanged)
-    ...
-  },
-});
-```
-
-### Fix 2 — Guard the appointment fallback
-
-In the `allStylists` useMemo (L342-375), only add fallback staff if they're already in the `serviceProviderIds` set (passed from the query). Or simpler: skip the fallback entirely for non-location-filtered appointments (since `appointments` is already location-filtered, any valid stylist should already be in the staff list).
-
-### Fix 3 — Update Hayleigh's location (if confirmed)
-
-DB data update via insert tool:
 ```sql
-UPDATE employee_profiles 
-SET location_id = 'val-vista-lakes'
-WHERE user_id = '5fc4aa39-8076-4775-bebf-e98e46776925';
+-- Move to north-mesa
+UPDATE employee_profiles SET location_id = 'north-mesa' WHERE user_id = '85f34848-41b2-40e6-8a51-d846bd9de8b8'; -- Samantha
+
+-- Add Jamie as multi-location (like Lex)
+UPDATE employee_profiles SET location_ids = ARRAY['val-vista-lakes','north-mesa'] WHERE user_id = 'c5938f1f-7192-4b2d-9ce9-0b1b0fb3dceb'; -- Jamie
+
+-- Move to val-vista-lakes
+UPDATE employee_profiles SET location_id = 'val-vista-lakes' WHERE user_id = '113cb6eb-1df9-41c3-9e52-1c0afb1c8381'; -- Chelsea
+UPDATE employee_profiles SET location_id = 'val-vista-lakes' WHERE user_id = '9136b2a1-e21b-492c-acab-cfbd2d2d2179'; -- Gavin
+UPDATE employee_profiles SET location_id = 'val-vista-lakes' WHERE user_id = '3244fd76-a657-47d9-90e7-62b33c316f5e'; -- Kitty
+UPDATE employee_profiles SET location_id = 'val-vista-lakes' WHERE user_id = '4635feb7-0ed8-4f96-b0d1-6852ce4c0522'; -- Kylie
+UPDATE employee_profiles SET location_id = 'val-vista-lakes' WHERE user_id = '37884d98-3093-41d8-92c8-4c65a2baed68'; -- Leslei
+UPDATE employee_profiles SET location_id = 'val-vista-lakes' WHERE user_id = 'fafbe974-0c55-4aec-9830-bd790f658449'; -- Rubie
 ```
 
 ### Scope
-- **1 file changed**: `Schedule.tsx` (~30 lines)
-- **1 data update**: Hayleigh's location (pending confirmation)
+- **No code changes** — the scheduler query logic is already correct
+- **8 data updates** via insert tool
 - No migration needed
-- Fully Phorest-decoupled
+
+### Result
+- **North Mesa columns**: Jamie, Lex, Trinity, Samantha, Cienna, Alexis, Brooklyn
+- **Val Vista Lakes columns**: Jamie, Lex, Chelsea, Gavin, Hayleigh, Kitty, Kylie, Leslei, Rubie, Sarah, Sarina, Savannah, Sienna
 
