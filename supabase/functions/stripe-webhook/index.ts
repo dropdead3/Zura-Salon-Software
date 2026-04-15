@@ -335,9 +335,7 @@ async function handleCheckoutCompleted(
       return;
     }
 
-    const updatePayload: Record<string, unknown> = {
-      split_payment_link_intent_id: paymentIntentId,
-    };
+    const updatePayload: Record<string, unknown> = {};
 
     // Persist surcharge amount from checkout metadata
     if (metadata.surcharge_amount_cents) {
