@@ -27908,18 +27908,29 @@ export type Database = {
           appointment_date: string | null
           client_name: string | null
           client_phone: string | null
+          created_at: string | null
           deleted_at: string | null
           deleted_by: string | null
+          discount_amount: number | null
+          duration_minutes: number | null
           end_time: string | null
           expected_price: number | null
           id: string | null
           is_demo: boolean | null
           is_new_client: boolean | null
+          is_redo: boolean | null
           is_walk_in: boolean | null
           location_id: string | null
+          notes: string | null
+          organization_id: string | null
+          original_price: number | null
+          payment_failure_reason: string | null
+          payment_method: string | null
+          payment_status: string | null
           phorest_client_id: string | null
           phorest_staff_id: string | null
           rebooked_at_checkout: boolean | null
+          redo_reason: string | null
           service_category: string | null
           service_name: string | null
           source: string | null
