@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useOrgDefaults } from '@/hooks/useOrgDefaults';
+import { useLocationTimezoneContext } from '@/contexts/LocationTimezoneContext';
 import { getOrgToday, orgNowMinutes, isOrgToday, isOrgTomorrow, getOrgTodayDate } from '@/lib/orgTime';
 
 /**
  * Reactive, timezone-safe "now" for schedule components.
  *
- * Accepts an optional locationTimezone override. When provided (non-null),
- * it takes priority over the org default timezone.
+ * Resolves timezone in order:
+ *   1. Explicit `locationTimezone` parameter (if non-null)
+ *   2. LocationTimezoneContext value (set by LocationTimezoneProvider)
+ *   3. Org default timezone from useOrgDefaults
  *
  * Returns primitive values (string, number) — never a raw Date —
  * so they can't be accidentally misused with date-fns comparisons.
@@ -15,7 +18,8 @@ import { getOrgToday, orgNowMinutes, isOrgToday, isOrgTomorrow, getOrgTodayDate 
  */
 export function useOrgNow(locationTimezone?: string | null) {
   const { timezone: orgTimezone } = useOrgDefaults();
-  const timezone = locationTimezone ?? orgTimezone;
+  const contextTimezone = useLocationTimezoneContext();
+  const timezone = locationTimezone ?? contextTimezone ?? orgTimezone;
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -38,15 +42,15 @@ export function useOrgNow(locationTimezone?: string | null) {
   );
 
   return {
-    /** Today as YYYY-MM-DD in org timezone */
+    /** Today as YYYY-MM-DD in effective timezone */
     todayStr,
-    /** Minutes since midnight in org timezone */
+    /** Minutes since midnight in effective timezone */
     nowMinutes,
-    /** A Date for org-today at midnight — use ONLY for addDays() sequences, not time math */
+    /** A Date for today at midnight — use ONLY for addDays() sequences, not time math */
     todayDate,
-    /** Is the given date "today" in org timezone? */
+    /** Is the given date "today" in effective timezone? */
     isToday,
-    /** Is the given date "tomorrow" in org timezone? */
+    /** Is the given date "tomorrow" in effective timezone? */
     isTomorrow,
     /** The effective timezone string */
     timezone,
