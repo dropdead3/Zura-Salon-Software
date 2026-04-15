@@ -1,28 +1,21 @@
 
 
-## Restack Date Display in Schedule Header
+## Fix: Tighten Scheduler Header Icon Spacing
 
-### Change
-Update the centered date display in the dark header bar to stack vertically:
-- **Top line**: Day name (e.g., "Tuesday") — smaller, muted color
-- **Bottom line**: Month Day, Year (e.g., "April 14, 2026") — larger, primary color
+### Problem
+The right-side icon buttons (Assistant Blocks, Drafts, Today's Prep, Settings) in the scheduler top bar use `gap-3` spacing, causing them to spread too wide and overflow off the header.
 
-### Scope
-- **1 file**: `src/components/dashboard/schedule/ScheduleHeader.tsx`
-- **~8 lines changed** (lines 225-232)
+### Fix
+**1 file**: `src/components/dashboard/schedule/ScheduleHeader.tsx`
 
-### Implementation
-Replace the single-line date format with a two-line stack:
+**Line 235**: Change the right-side container from `gap-3` to `gap-1` to match standard icon button spacing:
 ```tsx
-<div className="text-center">
-  <div className="text-xs font-display tracking-wide text-[hsl(40,20%,92%)]/70">
-    {formatDate(currentDate, 'EEEE')}
-  </div>
-  <div className="text-sm font-display tracking-wide whitespace-nowrap">
-    {formatDate(currentDate, 'MMMM d, yyyy')}
-  </div>
-</div>
+// Before
+<div className="flex items-center gap-3">
+
+// After  
+<div className="flex items-center gap-1">
 ```
 
-Removes the conditional "Today" label since the day name is now always visible on the top line.
+This brings the icons closer together and keeps them within the top bar, consistent with how other headers (e.g., `ChannelHeader`) space their icon buttons.
 
