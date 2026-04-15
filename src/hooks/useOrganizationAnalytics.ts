@@ -227,7 +227,7 @@ export function useOrganizationAnalytics() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_staff_id, rebooked_at_checkout, is_new_client, location_id')
           .gte('appointment_date', startDate)
           .not('status', 'in', '("cancelled","no_show")')
@@ -277,7 +277,7 @@ export function useOrganizationAnalytics() {
     queryKey: ['platform-analytics-appointments'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('id, location_id');
       if (error) throw error;
       return data || [];

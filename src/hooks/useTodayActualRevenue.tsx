@@ -60,7 +60,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     queryKey: ['today-service-hours', today],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('start_time, end_time')
         .eq('appointment_date', today)
         .not('status', 'in', '("cancelled","no_show")')
@@ -86,7 +86,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     queryKey: ['today-actual-revenue', today],
     queryFn: async () => {
       const { data: txnData, error: txnError } = await supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('item_type, total_amount, tax_amount, phorest_client_id')
         .gte('transaction_date', `${today}T00:00:00`)
         .lte('transaction_date', `${today}T23:59:59`);
@@ -135,7 +135,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     queryKey: ['today-last-appointment', today],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('end_time')
         .eq('appointment_date', today)
         .not('status', 'in', '("cancelled","no_show")')
@@ -170,7 +170,7 @@ export function useTodayActualRevenue(enabled: boolean) {
       };
 
       const { data: txnData, error: txnError } = await supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('location_id, item_type, total_amount, tax_amount, phorest_client_id')
         .gte('transaction_date', `${today}T00:00:00`)
         .lte('transaction_date', `${today}T23:59:59`);
@@ -227,7 +227,7 @@ export function useTodayActualRevenue(enabled: boolean) {
       }
 
       const { data, error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('location_id, end_time')
         .eq('appointment_date', today)
         .not('status', 'in', '("cancelled","no_show")')

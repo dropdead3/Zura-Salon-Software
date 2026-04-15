@@ -153,7 +153,7 @@ export function usePhorestCalendar() {
     queryKey: ['phorest-appointments', dateRange, filters, effectiveUserId, canViewAll, canViewTeam],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select(`
           *,
           stylist_profile:employee_profiles!phorest_appointments_stylist_user_id_fkey(
@@ -294,7 +294,7 @@ export function usePhorestCalendar() {
       // Get appointment IDs in date range that have assistants (paginated)
       const apptIds = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id')
           .gte('appointment_date', dateRange.start)
           .lte('appointment_date', dateRange.end)

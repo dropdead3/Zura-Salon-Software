@@ -110,7 +110,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       const clientIds = clients.map(c => c.phorest_client_id).filter(Boolean);
 
       const { data: appointments } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select(`
           id,
           phorest_id,
@@ -256,7 +256,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
 
       // 1. Update appointment status
       const { error: updateError } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .update({ status: 'checked_in' })
         .eq('id', appointment.id);
 
@@ -354,7 +354,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       const endTimeStr = `${Math.floor(windowEnd/60).toString().padStart(2,'0')}:${(windowEnd%60).toString().padStart(2,'0')}:00`;
 
       const { data: appointments, error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select(`
           id,
           phorest_id,
