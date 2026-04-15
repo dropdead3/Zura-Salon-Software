@@ -61,7 +61,6 @@ export interface AppointmentCardContentProps {
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, import('@/hooks/useAppointmentAssistantNames').AssistantProfile[]>;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
-  isOverdueForCheckin?: boolean;
   
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
@@ -74,10 +73,8 @@ function getIndicatorFlags(
   appointment: PhorestAppointment,
   isAssisting: boolean,
   hasAssistants: boolean,
-  isOverdueForCheckin: boolean
 ): IndicatorFlags {
   return {
-    isOverdue: isOverdueForCheckin,
     isNewClient: appointment.is_new_client || false,
     isRedo: !!(appointment as any).is_redo,
     isRescheduled: !!(appointment as any).rescheduled_at,
@@ -483,7 +480,6 @@ export function AppointmentCardContent({
   assistantNamesMap,
   assistantProfilesMap,
   categoryColors,
-  isOverdueForCheckin = false,
   
   showStylistBadge = false,
   showClientPhone = true,
@@ -538,7 +534,7 @@ export function AppointmentCardContent({
     appointment, useCategoryColor, serviceLookup, categoryColors, displayGradient, isCompact
   );
 
-  const indicatorFlags = getIndicatorFlags(appointment, isAssisting, hasAssistants, isOverdueForCheckin);
+  const indicatorFlags = getIndicatorFlags(appointment, isAssisting, hasAssistants);
 
   const isNoShow = appointment.status === 'no_show';
   const isCancelled = appointment.status === 'cancelled';
@@ -608,7 +604,6 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.text,
         isCancelled && 'opacity-60',
         isNoShow && 'ring-2 ring-destructive ring-inset',
-        isOverdueForCheckin && 'ring-2 ring-red-500/70 ring-inset bg-red-50/30 dark:bg-red-950/20',
         isSelected && 'ring-2 ring-primary/60 ring-offset-1',
         displayGradient && 'shadow-lg',
         appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',

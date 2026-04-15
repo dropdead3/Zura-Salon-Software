@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { AlertTriangle, RotateCcw, Repeat, ArrowRightLeft, Users, Star } from 'lucide-react';
+import { RotateCcw, Repeat, ArrowRightLeft, Users, Star } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -7,7 +7,6 @@ import {
 } from '@/components/ui/tooltip';
 
 export interface IndicatorFlags {
-  isOverdue?: boolean;
   isNewClient?: boolean;
   isRedo?: boolean;
   isRescheduled?: boolean;
@@ -25,17 +24,6 @@ interface IndicatorDef {
 
 function buildIndicators(flags: IndicatorFlags): IndicatorDef[] {
   const list: IndicatorDef[] = [];
-
-  if (flags.isOverdue) {
-    list.push({
-      key: 'overdue',
-      priority: 0,
-      label: 'Overdue for check-in',
-      render: (size) => size === 'compact'
-        ? <AlertTriangle key="overdue" className="h-2.5 w-2.5 text-red-500 shrink-0" />
-        : <span key="overdue" className="text-[10px] px-2 py-0.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300 border border-red-800/30 dark:border-red-300/30 font-medium whitespace-nowrap">No Check-In</span>,
-    });
-  }
 
   if (flags.isNewClient) {
     list.push({

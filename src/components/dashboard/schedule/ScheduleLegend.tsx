@@ -1,4 +1,4 @@
-import { Info, Repeat, ArrowRightLeft, Users, RotateCcw, Star, AlertTriangle, Moon } from 'lucide-react';
+import { Info, Repeat, ArrowRightLeft, Users, RotateCcw, Star, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,11 +7,12 @@ import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 
 type StatusKey = keyof typeof APPOINTMENT_STATUS_BADGE;
 
-const STATUS_ORDER: StatusKey[] = ['booked', 'confirmed', 'checked_in', 'completed', 'pending', 'cancelled', 'no_show'];
+const STATUS_ORDER: StatusKey[] = ['unconfirmed', 'confirmed', 'walk_in', 'checked_in', 'completed', 'pending', 'cancelled', 'no_show'];
 
-const STATUS_DESCRIPTIONS: Record<StatusKey, string> = {
-  booked: 'Default state when appointment is created',
+const STATUS_DESCRIPTIONS: Partial<Record<StatusKey, string>> = {
+  unconfirmed: 'Default state — not yet confirmed by client or staff',
   confirmed: 'Client or staff confirmed the visit',
+  walk_in: 'Created via kiosk walk-in or front desk same-day booking',
   checked_in: 'Client has arrived and checked in',
   completed: 'Service finished and payment processed',
   pending: 'Awaiting confirmation',
@@ -80,7 +81,7 @@ export function ScheduleLegend() {
   const statusRows: LegendRow[] = STATUS_ORDER.map((key) => ({
     visual: <StatusSwatch statusKey={key} />,
     label: APPOINTMENT_STATUS_BADGE[key].label,
-    description: STATUS_DESCRIPTIONS[key],
+    description: STATUS_DESCRIPTIONS[key] || '',
   }));
 
   const badgeRows: LegendRow[] = [
@@ -88,11 +89,6 @@ export function ScheduleLegend() {
       visual: <BadgeSwatch label="Confirmed" className="bg-green-100 text-green-800 border-green-800/30 dark:bg-green-900/30 dark:text-green-300 dark:border-green-300/30" />,
       label: 'Status Badge',
       description: 'Colored pill showing appointment status',
-    },
-    {
-      visual: <BadgeSwatch label="No Check-In" className="bg-red-200 text-red-800 border-red-800/30 dark:bg-red-900/50 dark:text-red-300 dark:border-red-300/30" />,
-      label: 'No Check-In',
-      description: 'Client is past start time and not checked in',
     },
     {
       visual: <BadgeSwatch label="NEW" className="bg-amber-100 text-amber-800 border-amber-800/30 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-300/30" />,
@@ -112,7 +108,6 @@ export function ScheduleLegend() {
     { visual: <IconSwatch icon={Users} />, label: 'Has Assistant', description: 'Assistant(s) assigned to this service' },
     { visual: <IconSwatch icon={RotateCcw} />, label: 'Redo', description: 'Service is being redone' },
     { visual: <IconSwatch icon={Star} className="text-amber-500" />, label: 'New Client', description: 'First-time client (compact cards)' },
-    { visual: <IconSwatch icon={AlertTriangle} className="text-destructive" />, label: 'Overdue', description: 'Check-in overdue (compact cards)' },
   ];
 
   const gridRows: LegendRow[] = [
@@ -163,11 +158,6 @@ export function ScheduleLegend() {
       ),
       label: 'Block / Break',
       description: 'Staff break or blocked time',
-    },
-    {
-      visual: <div className="w-5 h-5 rounded-sm border-2 border-destructive/50 bg-destructive/10" />,
-      label: 'Overdue Check-In',
-      description: 'Client past start time, not checked in',
     },
     {
       visual: <div className="w-5 h-5 rounded-sm border border-dashed border-amber-500 bg-amber-50 dark:bg-amber-900/20" />,
