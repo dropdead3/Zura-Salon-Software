@@ -353,11 +353,41 @@ export default function Schedule() {
     enabled: !!orgId,
   });
 
+  // Fetch work-day schedules for stylists at the selected location
+  const { data: stylistSchedules = [] } = useQuery({
+    queryKey: ['schedule-stylist-work-days', selectedLocation],
+    queryFn: async () => {
+      if (!selectedLocation) return [];
+      const { data } = await supabase
+        .from('employee_location_schedules')
+        .select('user_id, work_days')
+        .eq('location_id', selectedLocation);
+      return (data || []) as { user_id: string; work_days: string[] }[];
+    },
+    enabled: !!selectedLocation,
+  });
+
+  const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
   // Appointment-based staff fallback: only add staff who already passed the role+location filter
   // but may be missing due to stale data. Skip non-service-provider staff entirely.
   const allStylists = useMemo(() => {
-    const staffMap = new Map(locationStylists.map((s: any) => [s.user_id, s]));
-    const serviceProviderSet = new Set(locationStylists.map((s: any) => s.user_id));
+    const currentDayKey = DAY_KEYS[currentDate.getDay()];
+
+    // Build a map of user_id -> work_days for this location
+    const schedulesMap = new Map(
+      stylistSchedules.map(s => [s.user_id, s.work_days])
+    );
+
+    // Start with location stylists filtered by work day
+    const filteredStylists = locationStylists.filter((s: any) => {
+      const workDays = schedulesMap.get(s.user_id);
+      // No schedule entry = show always (safe default)
+      if (!workDays || workDays.length === 0) return true;
+      return workDays.includes(currentDayKey);
+    });
+
+    const staffMap = new Map(filteredStylists.map((s: any) => [s.user_id, s]));
 
     // Only add fallback entries for staff who have appointments at the selected location
     // AND are not already in the staff list. We use appointment data for display name only.
@@ -392,7 +422,7 @@ export default function Schedule() {
     }
 
     return Array.from(staffMap.values());
-  }, [locationStylists, allAppointments, selectedLocation]);
+  }, [locationStylists, allAppointments, selectedLocation, stylistSchedules, currentDate]);
 
   // Filter stylists based on staff selection (for day view columns)
   const displayedStylists = selectedStaffIds.length === 0
