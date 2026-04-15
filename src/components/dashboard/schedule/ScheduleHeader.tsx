@@ -223,7 +223,7 @@ export function ScheduleHeader({
 
         {/* Center: Date Display */}
         <div className="text-center">
-        <div className="text-lg font-display tracking-wide">
+        <div className="text-sm font-display tracking-wide whitespace-nowrap">
           {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
         </div>
           {isOrgToday(currentDate) && (
