@@ -339,7 +339,7 @@ export function ScheduleHeader({
                   className="h-7 min-w-[140px] max-w-[280px] w-auto text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
-                    ? 'All Stylists' 
+                    ? 'All Stylists With Appointments' 
                     : selectedStaffIds.length === 1
                       ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
                       : `${selectedStaffIds.length} selected`
