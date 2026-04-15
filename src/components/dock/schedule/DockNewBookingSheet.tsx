@@ -1100,10 +1100,8 @@ function ConfirmStepDock({
         lastVisit: {
           date: last.appointment_date,
           service: last.service_name,
-          stylist: last.phorest_staff_mapping?.employee_profiles?.display_name
-            || last.phorest_staff_mapping?.employee_profiles?.full_name
-            || null,
-          location: last.locations?.name || null,
+          stylist: last.staff_name || null,
+          location: null,
         },
       };
     },

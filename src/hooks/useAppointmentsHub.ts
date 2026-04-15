@@ -20,101 +20,36 @@ export function useAppointmentsHub(filters: HubFilters) {
   return useQuery({
     queryKey: ['appointments-hub', filters],
     queryFn: async () => {
-      // Build matching filters for both tables
-      const buildFilters = (q: any, stylistCol: string) => {
-        if (filters.locationId) q = q.eq('location_id', filters.locationId);
-        if (filters.status && filters.status !== 'all') q = q.eq('status', filters.status);
-        if (filters.stylistUserId) q = q.eq(stylistCol, filters.stylistUserId);
-        if (filters.startDate) q = q.gte('appointment_date', filters.startDate);
-        if (filters.endDate) q = q.lte('appointment_date', filters.endDate);
-        if (filters.search) {
-          const term = `%${filters.search}%`;
-          q = q.or(`client_name.ilike.${term},client_phone.ilike.${term}`);
-        }
-        return q;
-      };
+      // Single query against the union view
+      let q = supabase
+        .from('v_all_appointments' as any)
+        .select('*', { count: 'exact' })
+        .is('deleted_at', null);
 
-      // Query both tables in parallel (exclude soft-deleted)
-      let phorestQuery = buildFilters(
-        supabase.from('phorest_appointments').select('*', { count: 'exact' }).is('deleted_at', null),
-        'stylist_user_id'
-      );
-      let localQuery = buildFilters(
-        supabase.from('appointments').select('*', { count: 'exact' }).is('deleted_at', null),
-        'staff_user_id'
-      );
+      if (filters.locationId) q = q.eq('location_id', filters.locationId);
+      if (filters.status && filters.status !== 'all') q = q.eq('status', filters.status);
+      if (filters.stylistUserId) q = q.eq('stylist_user_id', filters.stylistUserId);
+      if (filters.startDate) q = q.gte('appointment_date', filters.startDate);
+      if (filters.endDate) q = q.lte('appointment_date', filters.endDate);
+      if (filters.search) {
+        const term = `%${filters.search}%`;
+        q = q.or(`client_name.ilike.${term},client_phone.ilike.${term}`);
+      }
 
-      // Get exact counts first
-      const [phorestCountRes, localCountRes] = await Promise.all([
-        buildFilters(
-          supabase.from('phorest_appointments').select('*', { count: 'exact', head: true }).is('deleted_at', null),
-          'stylist_user_id'
-        ),
-        buildFilters(
-          supabase.from('appointments').select('*', { count: 'exact', head: true }).is('deleted_at', null),
-          'staff_user_id'
-        ),
-      ]);
-
-      const phorestCount = phorestCountRes.count || 0;
-      const localCount = localCountRes.count || 0;
-      const totalCount = phorestCount + localCount;
-
-      // Server-side pagination: fetch only the page we need from each source
-      // Strategy: prioritize phorest rows (sorted desc), then local rows
       const rangeFrom = page * pageSize;
       const rangeTo = rangeFrom + pageSize - 1;
 
-      let phorestData: any[] = [];
-      let localData: any[] = [];
+      const { data, count, error } = await q
+        .order('appointment_date', { ascending: false })
+        .order('start_time', { ascending: false })
+        .range(rangeFrom, rangeTo);
 
-      if (rangeFrom < phorestCount) {
-        // Some or all rows come from phorest
-        const phorestEnd = Math.min(rangeTo, phorestCount - 1);
-        const { data, error } = await phorestQuery
-          .order('appointment_date', { ascending: false })
-          .order('start_time', { ascending: false })
-          .range(rangeFrom, phorestEnd);
-        if (error) throw error;
-        phorestData = data || [];
+      if (error) throw error;
 
-        // If we need more rows from local to fill the page
-        const remaining = pageSize - phorestData.length;
-        if (remaining > 0) {
-          const { data: ld, error: le } = await localQuery
-            .order('appointment_date', { ascending: false })
-            .order('start_time', { ascending: false })
-            .range(0, remaining - 1);
-          if (le) throw le;
-          localData = ld || [];
-        }
-      } else {
-        // All rows come from local
-        const localFrom = rangeFrom - phorestCount;
-        const localTo = localFrom + pageSize - 1;
-        const { data, error } = await localQuery
-          .order('appointment_date', { ascending: false })
-          .order('start_time', { ascending: false })
-          .range(localFrom, localTo);
-        if (error) throw error;
-        localData = data || [];
-      }
+      const paged = (data || []) as any[];
+      const totalCount = count || 0;
 
-      // Normalize
-      const normalizedLocal = localData.map((a: any) => ({
-        ...a,
-        stylist_user_id: a.staff_user_id,
-        _source: 'local' as const,
-      }));
-
-      const normalizedPhorest = phorestData.map((a: any) => ({
-        ...a,
-        _source: 'phorest' as const,
-      }));
-
-      const paged = [...normalizedPhorest, ...normalizedLocal];
-
-      // ── Resolve client info (name, email, phone) from phorest_clients ──
+      // ── Resolve client info from v_all_clients ──
       const missingClientIds = [
         ...new Set(
           paged
@@ -126,16 +61,16 @@ export function useAppointmentsHub(filters: HubFilters) {
       let clientInfoMap: Record<string, { name?: string; email?: string; phone?: string; customer_number?: string }> = {};
       if (missingClientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .select('phorest_client_id, name, email, phone, customer_number')
           .in('phorest_client_id', missingClientIds);
-        for (const c of clients || []) {
+        for (const c of (clients || []) as any[]) {
           if (c.phorest_client_id) {
             clientInfoMap[c.phorest_client_id] = {
               name: c.name || undefined,
               email: c.email || undefined,
               phone: c.phone || undefined,
-              customer_number: (c as any).customer_number || undefined,
+              customer_number: c.customer_number || undefined,
             };
           }
         }
@@ -188,8 +123,8 @@ export function useAppointmentsHub(filters: HubFilters) {
           .from('clients')
           .select('id, customer_number')
           .in('id', localClientIds);
-        for (const c of localClients || []) {
-          if ((c as any).customer_number) localClientMap[c.id] = (c as any).customer_number;
+        for (const c of (localClients || []) as any[]) {
+          if (c.customer_number) localClientMap[c.id] = c.customer_number;
         }
       }
 
@@ -207,11 +142,11 @@ export function useAppointmentsHub(filters: HubFilters) {
       const transactionTotalMap: Record<string, number> = {};
       if (phorestClientIdsForTx.length > 0 && appointmentDates.length > 0) {
         const { data: txMatches } = await supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('phorest_client_id, transaction_date, total_amount')
           .in('phorest_client_id', phorestClientIdsForTx)
           .in('transaction_date', appointmentDates);
-        txMatches?.forEach((t: any) => {
+        ((txMatches || []) as any[]).forEach((t: any) => {
           if (t.phorest_client_id) {
             transactionClientIds.add(t.phorest_client_id);
             const key = `${t.phorest_client_id}|${t.transaction_date}`;
