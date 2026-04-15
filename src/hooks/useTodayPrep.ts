@@ -62,7 +62,7 @@ export function useTodayPrep() {
           .is('deleted_at', null)
           .order('start_time'),
         supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id, appointment_date, start_time, end_time, service_name, service_category, status, total_price, notes, client_notes, client_name, phorest_client_id, is_new_client')
           .eq('stylist_user_id', user.id)
           .eq('appointment_date', today)
@@ -218,7 +218,7 @@ export function useTodayPrep() {
       if (phorestClientIds.length > 0) {
         // Get recent past appointments for these clients
         const { data: pastAppts } = await supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id, phorest_client_id')
           .in('phorest_client_id', phorestClientIds)
           .lt('appointment_date', today)

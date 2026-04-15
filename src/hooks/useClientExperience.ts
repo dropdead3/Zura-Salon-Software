@@ -66,7 +66,7 @@ async function fetchPaginatedAppointments(
 
   while (hasMore) {
     let query = supabase
-      .from('phorest_appointments')
+      .from('v_all_appointments')
       .select('phorest_staff_id, tip_amount, rebooked_at_checkout, total_price, status')
       .gte('appointment_date', dateFrom)
       .lte('appointment_date', dateTo)

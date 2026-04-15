@@ -39,7 +39,7 @@ export function useAdjustedExpectedRevenue(
     queryFn: async () => {
       // 1. Fetch all today's appointments
       let apptQuery = supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('id, phorest_client_id, total_price, expected_price, discount_amount, tip_amount, status, location_id')
         .eq('appointment_date', todayStr)
         .not('total_price', 'is', null);

@@ -120,7 +120,7 @@ export function useAppointmentSearchCandidates(enabled: boolean): SearchCandidat
     queryKey: ['command-appointments', orgId, today],
     queryFn: async () => {
       const base = supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('id, client_name, service_name, start_time, status') as any;
       const result = await base
         .eq('organization_id', orgId!)

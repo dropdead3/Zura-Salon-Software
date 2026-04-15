@@ -192,7 +192,7 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
         end_time: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id, appointment_date, total_price, tip_amount, status, service_name, start_time, end_time')
           .gte('appointment_date', startDate)
           .lte('appointment_date', endDate)

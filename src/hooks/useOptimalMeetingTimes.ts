@@ -50,7 +50,7 @@ export function useOptimalMeetingTimes(
 
       // Fetch phorest appointments
       const { data: phorest } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('stylist_user_id, start_time, end_time')
         .eq('appointment_date', date)
         .in('stylist_user_id', attendeeUserIds)

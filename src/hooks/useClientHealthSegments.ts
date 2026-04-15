@@ -124,7 +124,7 @@ export function useClientHealthSegments() {
       // Fetch recent appointments to check for future bookings
       const futureAppts = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id')
           .gte('appointment_date', todayStr)
           .neq('status', 'cancelled')

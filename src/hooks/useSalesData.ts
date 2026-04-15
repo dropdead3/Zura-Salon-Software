@@ -278,7 +278,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         start_time: string | null; end_time: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id, total_price, tip_amount, service_name, phorest_staff_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
@@ -541,7 +541,7 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
         location_id: string | null; total_price: number | null; tip_amount: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('location_id, total_price, tip_amount, phorest_client_id')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
@@ -611,7 +611,7 @@ export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: s
         tip_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('service_category, total_price, tip_amount')
           .not('total_price', 'is', null)
           .in('status', ['completed'])
@@ -657,7 +657,7 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
         location_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('appointment_date, total_price, tip_amount, location_id')
           .not('total_price', 'is', null)
           .order('appointment_date', { ascending: true })
@@ -773,7 +773,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         appointment_date: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_staff_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
           .not('phorest_staff_id', 'is', null)
           .not('total_price', 'is', null)
