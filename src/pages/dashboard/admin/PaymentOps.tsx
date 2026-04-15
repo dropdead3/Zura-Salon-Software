@@ -788,11 +788,12 @@ function DisputeAnalyticsCards({ disputes, formatCurrency }: { disputes: any[]; 
   );
 }
 
-function SubmitEvidenceDialog({ dispute, orgId, open, onOpenChange }: {
+function SubmitEvidenceDialog({ dispute, orgId, open, onOpenChange, formatCurrency }: {
   dispute: any;
   orgId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  formatCurrency: (n: number) => string;
 }) {
   const [cancellationPolicy, setCancellationPolicy] = useState('');
   const [cancellationRebuttal, setCancellationRebuttal] = useState('');
