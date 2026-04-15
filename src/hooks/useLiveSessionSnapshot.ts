@@ -30,6 +30,7 @@ interface LiveSessionSnapshot {
   stylists: ActiveStylist[];
   stylistDetails: StylistDetail[];
   dayHadAppointments: boolean;
+  firstAppointmentTime: string | null;
   isLoading: boolean;
 }
 
@@ -76,7 +77,26 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         );
         const { count } = await completedQuery;
         const dayHadAppointments = (count ?? 0) > 0;
-        return { inSessionCount: 0, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [], dayHadAppointments };
+
+        // If day hasn't concluded, check for upcoming appointments
+        let firstAppointmentTime: string | null = null;
+        if (!dayHadAppointments) {
+          const upcomingQuery = applyLocationFilter(
+            supabase
+              .from('v_all_appointments' as any)
+              .select('start_time')
+              .eq('appointment_date', today)
+              .is('deleted_at', null)
+              .not('status', 'in', '("cancelled","no_show")') as any,
+            locationId,
+          );
+          const { data: upcoming } = await (upcomingQuery as any).order('start_time', { ascending: true }).limit(1);
+          if (upcoming && upcoming.length > 0) {
+            firstAppointmentTime = upcoming[0].start_time;
+          }
+        }
+
+        return { inSessionCount: 0, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [], dayHadAppointments, firstAppointmentTime };
       }
 
       const inSessionCount = appointments.length;
@@ -89,7 +109,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       )];
 
       if (uniqueStaffIds.length === 0) {
-        return { inSessionCount, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
+        return { inSessionCount, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [], dayHadAppointments: true, firstAppointmentTime: null };
       }
 
       // Resolve staff to user profiles via phorest_staff_mapping (include phorest_staff_name)
@@ -249,6 +269,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         stylists,
         stylistDetails,
         dayHadAppointments: true,
+        firstAppointmentTime: null,
       };
     },
     refetchInterval: 60_000,
@@ -262,6 +283,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
     stylists: data?.stylists ?? [],
     stylistDetails: data?.stylistDetails ?? [],
     dayHadAppointments: data?.dayHadAppointments ?? false,
+    firstAppointmentTime: data?.firstAppointmentTime ?? null,
     isLoading,
   };
 }
