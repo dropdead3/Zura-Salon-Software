@@ -1500,6 +1500,7 @@ async function handleEarlyFraudWarning(
     severity: actionable ? 'critical' : 'warning',
     title: `Fraud Warning: ${org.name}`,
     message: `Early fraud warning detected (${fraudType.replace(/_/g, ' ')}). ${actionable ? 'Action recommended — consider issuing a proactive refund.' : 'No action required at this time.'}`,
+    link: '/dashboard/platform/payment-ops',
     metadata: {
       organization_id: org.id,
       stripe_warning_id: warningId,
@@ -1526,7 +1527,17 @@ async function handleChargeSucceeded(
   const amount = (charge.amount as number) || 0;
   const currency = (charge.currency as string) || 'usd';
   const metadata = charge.metadata as Record<string, string> | null;
-  const appointmentId = metadata?.appointment_id || null;
+  let appointmentId: string | null = metadata?.appointment_id || null;
+
+  // Fallback: resolve appointment from payment intent if not in charge metadata
+  if (!appointmentId && piId) {
+    const { data: appt } = await supabase
+      .from("appointments")
+      .select("id")
+      .eq("stripe_payment_intent_id", piId)
+      .maybeSingle();
+    if (appt) appointmentId = appt.id;
+  }
 
   // Resolve org from connected account
   const { data: org } = await supabase
@@ -1567,6 +1578,7 @@ async function handleChargeSucceeded(
       severity: riskLevel === 'highest' ? 'critical' : 'warning',
       title: `High-Risk Payment: ${org.name}`,
       message: `A charge of ${(amount / 100).toFixed(2)} ${currency.toUpperCase()} was flagged as ${riskLevel} risk (score: ${riskScore ?? 'N/A'}).`,
+      link: '/dashboard/platform/payment-ops',
       metadata: {
         organization_id: org.id,
         stripe_charge_id: chargeId,
