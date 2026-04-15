@@ -1,17 +1,14 @@
 
 
-# Fix: Block Horizontal Scroll on Scheduler
+# Widen Schedule Header Toggle Filters
 
 ## Problem
-While the min-width constraints were removed, both DayView and WeekView scroll containers still use `overflow-auto`, which permits horizontal scrolling. Need to allow only vertical scrolling.
+"All Stylists With Appointments" gets clipped because the max-width is capped at 220px.
 
-## Fix — 2 one-line class changes
+## Fix — 2 class changes in `src/components/dashboard/schedule/ScheduleHeader.tsx`
 
-### DayView.tsx (line 456)
-`overflow-auto` → `overflow-y-auto overflow-x-hidden`
+1. **Location SelectTrigger (line 312):** `max-w-[220px]` → `max-w-[280px]`
+2. **Staff Button (line 339):** `max-w-[220px]` → `max-w-[280px]`
 
-### WeekView.tsx (line 225)
-`overflow-auto` → `overflow-y-auto overflow-x-hidden`
-
-Vertical scroll (for time slots) is preserved. Horizontal scroll is blocked.
+280px comfortably fits "All Stylists With Appointments" while still leaving room for adjacent icon buttons and the center date display at the current viewport width (2228px).
 
