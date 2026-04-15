@@ -1,14 +1,23 @@
 
 
-# Widen Schedule Header Toggle Filters
+# Fix: Staff Filter Label to Show "All Stylists With Appointments"
 
 ## Problem
-"All Stylists With Appointments" gets clipped because the max-width is capped at 220px.
+When the "All Stylists With Appointments" option is selected in the dropdown, the toggle button only displays "All Stylists" — the label should match the full option text.
 
-## Fix — 2 class changes in `src/components/dashboard/schedule/ScheduleHeader.tsx`
+## Fix — 1 line in `src/components/dashboard/schedule/ScheduleHeader.tsx`
 
-1. **Location SelectTrigger (line 312):** `max-w-[220px]` → `max-w-[280px]`
-2. **Staff Button (line 339):** `max-w-[220px]` → `max-w-[280px]`
+**Line 342:** Change `'All Stylists'` to `'All Stylists With Appointments'`
 
-280px comfortably fits "All Stylists With Appointments" while still leaving room for adjacent icon buttons and the center date display at the current viewport width (2228px).
+```tsx
+// Before
+{selectedStaffIds.length === 0 
+  ? 'All Stylists' 
+
+// After
+{selectedStaffIds.length === 0 
+  ? 'All Stylists With Appointments' 
+```
+
+Single string change. The `max-w-[280px]` already set on the button comfortably fits this text.
 
