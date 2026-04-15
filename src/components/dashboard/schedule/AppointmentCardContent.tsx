@@ -228,38 +228,66 @@ function GridContent({
 
   return (
     <div className="px-2 py-1 relative z-10" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
-      {/* Top-right indicator cluster + status badge */}
-      <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-        <IndicatorCluster flags={indicatorFlags} size={size} />
-        <span className={cn(
-          'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-          badge.bg, badge.text, badge.border
-        )}>
-          {badge.label}
-        </span>
-        {showStylistBadge && appointment.stylist_profile && (
-          <StylistBadge
-            stylistProfile={appointment.stylist_profile}
-            assistantNames={assistantNamesMap?.get(appointment.id)}
-            assistantProfiles={assistantProfilesMap?.get(appointment.id)}
-          />
-        )}
-      </div>
-
-      {/* Client name + phone */}
-      <div className="text-sm font-medium truncate pr-20 flex items-center gap-1">
-        {showClientAvatar && (
-          <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
-            {getClientInitials(appointment.client_name)}
-          </span>
-        )}
-        <span className="truncate">{appointment.client_name}</span>
-        {showClientPhone && appointment.client_phone && (
-          <span className="font-normal opacity-80 text-xs shrink-0">
-            {formatPhoneDisplay(appointment.client_phone)}
-          </span>
-        )}
-      </div>
+      {showStylistBadge ? (
+        <>
+          {/* Weekly view: status badge top-left */}
+          <div className="absolute top-1 left-1 z-20 flex items-center gap-1">
+            <IndicatorCluster flags={indicatorFlags} size={size} />
+            <span className={cn(
+              'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
+              badge.bg, badge.text, badge.border
+            )}>
+              {badge.label}
+            </span>
+          </div>
+          {/* Weekly view: stylist photo top-right */}
+          {appointment.stylist_profile && (
+            <div className="absolute top-1 right-1 z-20">
+              <StylistBadge
+                stylistProfile={appointment.stylist_profile}
+                assistantNames={assistantNamesMap?.get(appointment.id)}
+                assistantProfiles={assistantProfilesMap?.get(appointment.id)}
+              />
+            </div>
+          )}
+          {/* Client name below top row */}
+          <div className="text-sm font-medium truncate pt-7 flex items-center gap-1">
+            <span className="truncate">{appointment.client_name}</span>
+            {showClientPhone && appointment.client_phone && (
+              <span className="font-normal opacity-80 text-xs shrink-0">
+                {formatPhoneDisplay(appointment.client_phone)}
+              </span>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Day view: indicator cluster + status badge top-right */}
+          <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
+            <IndicatorCluster flags={indicatorFlags} size={size} />
+            <span className={cn(
+              'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
+              badge.bg, badge.text, badge.border
+            )}>
+              {badge.label}
+            </span>
+          </div>
+          {/* Client name + phone */}
+          <div className="text-sm font-medium truncate pr-20 flex items-center gap-1">
+            {showClientAvatar && (
+              <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
+                {getClientInitials(appointment.client_name)}
+              </span>
+            )}
+            <span className="truncate">{appointment.client_name}</span>
+            {showClientPhone && appointment.client_phone && (
+              <span className="font-normal opacity-80 text-xs shrink-0">
+                {formatPhoneDisplay(appointment.client_phone)}
+              </span>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Service line */}
       {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
