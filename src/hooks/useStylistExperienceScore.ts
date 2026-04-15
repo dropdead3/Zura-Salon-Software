@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfDay } from 'date-fns';
+import { formatDisplayName } from '@/lib/utils';
 import { resolveStaffNames } from '@/utils/resolveStaffNames';
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { isVishServiceCharge } from '@/utils/serviceCategorization';
