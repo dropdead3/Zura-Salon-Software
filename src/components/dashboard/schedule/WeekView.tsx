@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { isClosedOnDate, getLocationHoursForDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
@@ -21,7 +21,6 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
-import { QuickBookingPopover } from './QuickBookingPopover';
 
 interface WeekViewProps {
   currentDate: Date;
