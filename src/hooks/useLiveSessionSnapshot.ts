@@ -30,6 +30,7 @@ interface LiveSessionSnapshot {
   stylists: ActiveStylist[];
   stylistDetails: StylistDetail[];
   dayHadAppointments: boolean;
+  firstAppointmentTime: string | null;
   isLoading: boolean;
 }
 
