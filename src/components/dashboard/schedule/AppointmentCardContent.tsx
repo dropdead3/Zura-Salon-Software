@@ -262,10 +262,9 @@ function GridContent({
         </>
       ) : (
         <>
-          {/* Day view: indicators + NC/RC badge + status badge top-right */}
-          <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-            <IndicatorCluster flags={indicatorFlags} size={size} />
-            {showClientAvatar && (
+          {/* Day view: NC/RC badge top-left */}
+          {showClientAvatar && (
+            <div className="absolute top-1 left-1 z-20">
               <span className={cn(
                 'h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0',
                 appointment.is_new_client
@@ -274,7 +273,11 @@ function GridContent({
               )}>
                 {appointment.is_new_client ? 'NC' : 'RC'}
               </span>
-            )}
+            </div>
+          )}
+          {/* Day view: indicators + status badge top-right */}
+          <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
+            <IndicatorCluster flags={indicatorFlags} size={size} />
             <span className={cn(
               'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
               badge.bg, badge.text, badge.border
