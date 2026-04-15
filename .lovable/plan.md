@@ -1,47 +1,62 @@
 
 
-## Afterpay Audit Pass 6 — Critical Field Misuse + Floating Point Guard
+## Afterpay Audit Pass 7 — Webhook Re-Introduces Split Field Bug
+
+One remaining P0 issue found.
 
 ---
 
-### B1. `split_payment_link_intent_id` Written for ALL Payment Links — Terminal Misidentifies Non-Split as Split (Bug — P0)
+### B1. `handleCheckoutCompleted` Always Writes `split_payment_link_intent_id` for ALL Link Payments (Bug — P0)
 
-`create-checkout-payment-link/index.ts` line 176 **always** writes `split_payment_link_intent_id: session.id` regardless of whether the payment is a split. This means:
-
-1. Staff sends a non-split $500 payment link (not a split — full amount via link)
-2. `split_payment_link_intent_id` is set on the appointment
-3. Client doesn't pay the link. Staff decides to collect via terminal instead
-4. Terminal webhook fires → sees `split_payment_link_intent_id` exists → thinks it's a split → sets `partially_paid`
-5. Appointment stuck at `partially_paid` forever — no second leg will ever fire
-
-This field should only be written when the payment is actually a split.
-
-**Fix:** In `create-checkout-payment-link/index.ts` line 170-178, conditionally write `split_payment_link_intent_id` only when `is_split` is true. For non-split links, write a different field (e.g., `payment_link_session_id`) or omit the split field entirely.
+Line 338-339 of `stripe-webhook/index.ts`:
 
 ```text
-const isSplit = amount_cents < (body.original_amount_cents || amount_cents);
-
-const linkUpdate: Record<string, unknown> = {
-  payment_link_url: session.url,
-  payment_link_sent_at: new Date().toISOString(),
+const updatePayload: Record<string, unknown> = {
+  split_payment_link_intent_id: paymentIntentId,
 };
-
-if (isSplit) {
-  linkUpdate.split_payment_link_intent_id = session.id;
-}
-
-await supabase.from("appointments").update(linkUpdate).eq("id", appointment_id);
 ```
 
----
+This unconditionally writes `split_payment_link_intent_id` for every checkout completion — even non-split payments. This **undoes** the Pass 6 fix in `create-checkout-payment-link` which conditionally writes the field only when `isSplit` is true.
 
-### B2. Floating Point Comparison in Rate Guard (Bug — P2)
+**Scenario:**
+1. Staff sends a non-split $500 link. `create-checkout-payment-link` correctly omits `split_payment_link_intent_id`.
+2. Client pays the link. Webhook fires `handleCheckoutCompleted`.
+3. Line 339 writes `split_payment_link_intent_id` anyway.
+4. Payment is already marked `paid` (line 366-369), so no immediate harm.
+5. But if staff later attempts a refund-and-re-collect via terminal for the same appointment, the terminal handler sees `split_payment_link_intent_id` exists and sets `partially_paid` instead of `paid`.
 
-`ZuraPayAfterpayTab.tsx` line 70: `if (num === surchargeRate * 100) return;` — JavaScript floating point means `0.07 * 100 === 7.000000000000001`, so the guard **never** prevents a redundant mutation for a 7% rate. The user loses nothing but it causes unnecessary DB writes on every blur.
+The field should only be written when the checkout is actually a split.
 
-**Fix:** Compare using `toFixed(2)` on both sides:
+**Fix:** Move `split_payment_link_intent_id` into the split branch only:
+
 ```text
-if (num.toFixed(2) === (surchargeRate * 100).toFixed(2)) return;
+const updatePayload: Record<string, unknown> = {};
+
+// Persist surcharge amount from checkout metadata
+if (metadata.surcharge_amount_cents) {
+  updatePayload.afterpay_surcharge_amount = parseInt(metadata.surcharge_amount_cents, 10);
+}
+
+const isSplit = metadata.is_split === 'true';
+
+if (isSplit) {
+  updatePayload.split_payment_link_intent_id = paymentIntentId;
+  if (appt?.payment_status === 'partially_paid' && appt?.split_payment_terminal_intent_id) {
+    updatePayload.payment_status = 'paid';
+    updatePayload.paid_at = new Date().toISOString();
+    updatePayload.payment_method = 'split_payment';
+    updatePayload.stripe_payment_intent_id = paymentIntentId;
+  } else {
+    updatePayload.payment_status = 'partially_paid';
+    updatePayload.payment_method = 'payment_link';
+    updatePayload.stripe_payment_intent_id = paymentIntentId;
+  }
+} else {
+  updatePayload.payment_status = 'paid';
+  updatePayload.payment_method = 'payment_link';
+  updatePayload.stripe_payment_intent_id = paymentIntentId;
+  updatePayload.paid_at = new Date().toISOString();
+}
 ```
 
 ---
@@ -50,8 +65,7 @@ if (num.toFixed(2) === (surchargeRate * 100).toFixed(2)) return;
 
 | Priority | ID | File | Change |
 |----------|----|------|--------|
-| P0 | B1 | `create-checkout-payment-link/index.ts` | Only write `split_payment_link_intent_id` when `is_split` is true |
-| P2 | B2 | `ZuraPayAfterpayTab.tsx` | Use `toFixed(2)` comparison to avoid floating point mismatch |
+| P0 | B1 | `stripe-webhook/index.ts` | Only write `split_payment_link_intent_id` in `handleCheckoutCompleted` when `isSplit` is true |
 
-No database migrations required.
+No database migrations required. Single file change.
 
