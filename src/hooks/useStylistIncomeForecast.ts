@@ -49,8 +49,8 @@ export function useStylistIncomeForecast() {
 
       if (aptError) throw aptError;
 
-      const bookedRevenue = (appointments || []).reduce(
-        (sum, a) => sum + ((Number(a.total_price) || 0) - (Number(a.tip_amount) || 0)),
+      const bookedRevenue = ((appointments || []) as any[]).reduce(
+        (sum: number, a: any) => sum + ((Number(a.total_price) || 0) - (Number(a.tip_amount) || 0)),
         0,
       );
       const appointmentCount = appointments?.length || 0;

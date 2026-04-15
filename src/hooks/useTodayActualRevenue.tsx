@@ -70,7 +70,7 @@ export function useTodayActualRevenue(enabled: boolean) {
       if (error) throw error;
       if (!data || data.length === 0) return 0;
 
-      return data.reduce((sum, apt) => {
+      return (data as any[]).reduce((sum: number, apt: any) => {
         const start = new Date(apt.start_time).getTime();
         const end = new Date(apt.end_time).getTime();
         const hours = (end - start) / (1000 * 60 * 60);
@@ -103,7 +103,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
       const SERVICE_TYPES = new Set(['service', 'sale_fee', 'special_offer_item']);
 
-      for (const row of txnData) {
+      for (const row of (txnData as any[])) {
         const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
         const itemType = (row.item_type || '').toLowerCase();
         if (SERVICE_TYPES.has(itemType)) {
@@ -143,7 +143,7 @@ export function useTodayActualRevenue(enabled: boolean) {
         .limit(1);
 
       if (error) throw error;
-      return data?.[0]?.end_time || null;
+      return (data as any[])?.[0]?.end_time || null;
     },
     enabled,
   });
@@ -181,7 +181,7 @@ export function useTodayActualRevenue(enabled: boolean) {
       const byLocation: Record<string, { actualRevenue: number; actualServiceRevenue: number; actualProductRevenue: number; actualTransactions: number }> = {};
       const clientsByLoc: Record<string, Set<string>> = {};
 
-      for (const row of txnData) {
+      for (const row of (txnData as any[])) {
         const locId = resolveLocId(row.location_id);
         if (!byLocation[locId]) {
           byLocation[locId] = { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0 };
@@ -238,7 +238,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
       // Get max end_time per location (resolve branch IDs if needed)
       const byLocation: Record<string, string> = {};
-      for (const row of data) {
+      for (const row of (data as any[])) {
         const rawId = row.location_id || 'unknown';
         const locId = branchToAppId[rawId] || rawId;
         if (!byLocation[locId]) {
