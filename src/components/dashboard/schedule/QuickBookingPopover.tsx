@@ -526,32 +526,25 @@ export function QuickBookingPopover({
   const { data: stylists = [] } = useQuery({
     queryKey: ['booking-stylists', selectedLocation],
     queryFn: async () => {
-      const { data: locationData } = await supabase
-        .from('locations')
-        .select('phorest_branch_id')
-        .eq('id', selectedLocation)
-        .maybeSingle();
-      
-      if (!locationData?.phorest_branch_id) return [];
+      if (!selectedLocation) return [];
       
       const { data } = await supabase
         .from('v_all_staff' as any)
-        .select(`
-          phorest_staff_id,
-          user_id,
-          phorest_branch_id,
-          employee_profiles!phorest_staff_mapping_user_id_fkey(
-            display_name,
-            full_name,
-            photo_url,
-            stylist_level
-          )
-        `)
+        .select('phorest_staff_id, user_id, phorest_branch_id, location_id, display_name, full_name, photo_url, stylist_level, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true)
-        .eq('phorest_branch_id', locationData.phorest_branch_id);
+        .eq('location_id', selectedLocation);
       
-      return (data || []) as any[];
+      // Reshape to match existing consumer expectations (employee_profiles nested shape)
+      return ((data as any[]) || []).map((s: any) => ({
+        ...s,
+        employee_profiles: {
+          display_name: s.display_name,
+          full_name: s.full_name,
+          photo_url: s.photo_url,
+          stylist_level: s.stylist_level,
+        },
+      }));
     },
     enabled: open && !!selectedLocation,
   });
@@ -562,21 +555,19 @@ export function QuickBookingPopover({
     queryFn: async () => {
       const { data } = await supabase
         .from('v_all_staff' as any)
-        .select(`
-          phorest_staff_id,
-          user_id,
-          phorest_branch_id,
-          employee_profiles!phorest_staff_mapping_user_id_fkey(
-            display_name,
-            full_name,
-            photo_url,
-            stylist_level
-          )
-        `)
+        .select('phorest_staff_id, user_id, phorest_branch_id, location_id, display_name, full_name, photo_url, stylist_level, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true);
       
-      return (data || []) as any[];
+      return ((data as any[]) || []).map((s: any) => ({
+        ...s,
+        employee_profiles: {
+          display_name: s.display_name,
+          full_name: s.full_name,
+          photo_url: s.photo_url,
+          stylist_level: s.stylist_level,
+        },
+      }));
     },
     enabled: open && stylistFirstMode,
   });
@@ -720,17 +711,18 @@ export function QuickBookingPopover({
     mutationFn: async () => {
       const effectiveStylistId = preSelectedStylistId || selectedStylist;
       const stylistMapping = stylists.find(s => s.user_id === effectiveStylistId) 
-        || allStylists.find(s => s.user_id === effectiveStylistId && s.phorest_branch_id === selectedLocationBranchId);
+        || allStylists.find(s => s.user_id === effectiveStylistId);
       if (!stylistMapping || !selectedClient) throw new Error('Missing required data');
 
       const startDateTime = `${format(date, 'yyyy-MM-dd')}T${time}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
-          branch_id: selectedLocationBranchId || (() => { throw new Error('No Phorest branch ID for selected location'); })(),
+          branch_id: selectedLocationBranchId || undefined,
           location_id: selectedLocation,
-          client_id: selectedClient.phorest_client_id,
-          staff_id: stylistMapping.phorest_staff_id,
+          client_id: selectedClient.phorest_client_id || selectedClient.id,
+          staff_id: stylistMapping.phorest_staff_id || undefined,
+          staff_user_id: effectiveStylistId,
           service_ids: selectedServices.filter(id => !id.startsWith('addon:')),
           addon_ids: selectedAddonDetails.map(a => ({ id: a.id, name: a.name, price: a.price, duration: a.duration_minutes })),
           start_time: startDateTime,
@@ -739,7 +731,6 @@ export function QuickBookingPopover({
           is_redo: isRedo,
           redo_reason: isRedo ? (redoReason === 'Other' ? redoCustomReason : redoReason) || undefined : undefined,
           original_appointment_id: isRedo ? originalAppointmentId || undefined : undefined,
-          // Always send computed price so edge function doesn't recalculate independently
           redo_pricing_override: isRedo ? (() => {
             if (redoPriceOverride != null) return redoPriceOverride;
             const origPrice = originalAppointmentData?.total_price;

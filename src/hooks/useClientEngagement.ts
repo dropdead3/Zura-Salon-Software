@@ -123,16 +123,17 @@ export function useClientEngagement(
       const priorToStr = priorTo.toISOString().split('T')[0];
 
       // Fetch all staff mappings for userId cross-ref
-      const { data: allMappings } = await supabase
+      const { data: rawMappings } = await supabase
         .from('v_all_staff' as any)
         .select('phorest_staff_id, user_id');
 
-      const allPhorestIds = (allMappings || []).map(m => m.phorest_staff_id);
+      const allMappings = (rawMappings as any[]) || [];
+      const allPhorestIds = allMappings.map((m: any) => m.phorest_staff_id);
       const staffNames = await resolveStaffNames(allPhorestIds);
 
       const mappingLookup: Record<string, { userId: string | null; name: string }> = {};
       let resolvedNameCount = 0;
-      (allMappings || []).forEach(m => {
+      allMappings.forEach((m: any) => {
         const name = staffNames.byPhorestId[m.phorest_staff_id] || '';
         if (name) resolvedNameCount++;
         mappingLookup[m.phorest_staff_id] = {

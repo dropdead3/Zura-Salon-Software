@@ -331,16 +331,16 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
 
       const loc = locations.find(l => l.id === selectedLocation);
       const branchId = loc?.phorest_branch_id;
-      if (!branchId) throw new Error('No branch ID for location');
 
       const startDateTime = `${selectedDate}T${selectedTime}:00Z`;
 
       const response = await supabase.functions.invoke('create-phorest-booking', {
         body: {
-          branch_id: branchId,
+          branch_id: branchId || undefined,
           location_id: selectedLocation,
-          client_id: selectedClient.phorest_client_id,
-          staff_id: staffMapping?.phorest_staff_id,
+          client_id: selectedClient.phorest_client_id || selectedClient.id,
+          staff_id: staffMapping?.phorest_staff_id || undefined,
+          staff_user_id: effectiveStylistUserId,
           service_ids: selectedServices,
           start_time: startDateTime,
           notes: notes || undefined,

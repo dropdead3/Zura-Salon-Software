@@ -20,9 +20,9 @@ export function useQualifiedStaffForServices(serviceIds: string[], branchId?: st
         return { qualifiedStaffIds: [], hasQualificationData: false };
       }
 
-      // 1. Check phorest_staff_services (Phorest sync source)
+      // 1. Check v_all_staff_qualifications (unified view: Phorest + manual)
       let phorestQuery = supabase
-        .from('phorest_staff_services' as any)
+        .from('v_all_staff_qualifications' as any)
         .select('phorest_staff_id, phorest_service_id')
         .in('phorest_service_id', serviceIds)
         .eq('is_qualified', true);
@@ -34,7 +34,7 @@ export function useQualifiedStaffForServices(serviceIds: string[], branchId?: st
       const { data: phorestData, error: phorestError } = await phorestQuery;
       
       if (phorestError) {
-        console.error('Error fetching phorest staff qualifications:', phorestError);
+        console.error('Error fetching staff qualifications:', phorestError);
       }
 
       // 2. Check staff_service_qualifications (manual/admin source)
@@ -47,7 +47,7 @@ export function useQualifiedStaffForServices(serviceIds: string[], branchId?: st
         console.error('Error fetching manual staff qualifications:', manualError);
       }
 
-      const hasPhorestData = phorestData && phorestData.length > 0;
+      const hasPhorestData = phorestData && (phorestData as any[]).length > 0;
       const hasManualData = manualData && manualData.length > 0;
 
       if (!hasPhorestData && !hasManualData) {
@@ -55,10 +55,10 @@ export function useQualifiedStaffForServices(serviceIds: string[], branchId?: st
         return { qualifiedStaffIds: [], hasQualificationData: false };
       }
 
-      // Build qualified staff from Phorest data
+      // Build qualified staff from qualification data
       const phorestStaffServiceCount: Record<string, number> = {};
       if (hasPhorestData) {
-        for (const qual of phorestData) {
+        for (const qual of (phorestData as any[])) {
           phorestStaffServiceCount[qual.phorest_staff_id] = (phorestStaffServiceCount[qual.phorest_staff_id] || 0) + 1;
         }
       }
@@ -121,10 +121,10 @@ export function useStaffQualifiedServices(phorestStaffId: string | undefined, br
     queryFn: async () => {
       const qualifiedServiceIds: string[] = [];
 
-      // 1. Phorest source
+      // 1. Unified qualifications view
       if (phorestStaffId) {
         let query = supabase
-          .from('phorest_staff_services' as any)
+          .from('v_all_staff_qualifications' as any)
           .select('phorest_service_id')
           .eq('phorest_staff_id', phorestStaffId)
           .eq('is_qualified', true);
@@ -135,7 +135,7 @@ export function useStaffQualifiedServices(phorestStaffId: string | undefined, br
 
         const { data, error } = await query;
         if (!error && data) {
-          qualifiedServiceIds.push(...data.map(d => d.phorest_service_id));
+          qualifiedServiceIds.push(...(data as any[]).map((d: any) => d.phorest_service_id));
         }
       }
 

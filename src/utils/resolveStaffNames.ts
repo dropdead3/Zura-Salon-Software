@@ -32,16 +32,15 @@ export async function resolveStaffNamesByPhorestIds(
 
   const nameMap: Record<string, string> = {};
 
-  // Query phorest_staff_mapping joined with employee_profiles
+  // Query v_all_staff view (flat columns, no FK join)
   const { data: mappings } = await supabase
     .from('v_all_staff' as any)
-    .select('phorest_staff_id, phorest_staff_name, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name)')
+    .select('phorest_staff_id, phorest_staff_name, display_name, full_name')
     .in('phorest_staff_id', phorestStaffIds);
 
-  (mappings || []).forEach((m: any) => {
-    const ep = m.employee_profiles;
-    const name = ep
-      ? formatDisplayName(ep.full_name || '', ep.display_name)
+  ((mappings as any[]) || []).forEach((m: any) => {
+    const name = m.display_name
+      ? formatDisplayName(m.full_name || '', m.display_name)
       : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : 'Unknown');
     nameMap[m.phorest_staff_id] = name;
   });
@@ -76,15 +75,14 @@ export async function resolveStaffWithPhotosByPhorestIds(
 
   const { data: mappings } = await supabase
     .from('v_all_staff' as any)
-    .select('phorest_staff_id, phorest_staff_name, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name, photo_url)')
+    .select('phorest_staff_id, phorest_staff_name, display_name, full_name, photo_url')
     .in('phorest_staff_id', phorestStaffIds);
 
-  (mappings || []).forEach((m: any) => {
-    const ep = m.employee_profiles;
-    const name = ep
-      ? formatDisplayName(ep.full_name || '', ep.display_name)
+  ((mappings as any[]) || []).forEach((m: any) => {
+    const name = m.display_name
+      ? formatDisplayName(m.full_name || '', m.display_name)
       : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : 'Unknown');
-    const photoUrl = ep?.photo_url || null;
+    const photoUrl = m.photo_url || null;
     result[m.phorest_staff_id] = { name, photoUrl };
   });
 
@@ -131,13 +129,12 @@ export async function resolveStaffNames(
 
   const { data: mappings } = await supabase
     .from('v_all_staff' as any)
-    .select('phorest_staff_id, phorest_staff_name, user_id, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name)')
+    .select('phorest_staff_id, phorest_staff_name, user_id, display_name, full_name')
     .in('phorest_staff_id', phorestStaffIds);
 
-  (mappings || []).forEach((m: any) => {
-    const ep = m.employee_profiles;
-    const name = ep
-      ? formatDisplayName(ep.full_name || '', ep.display_name)
+  ((mappings as any[]) || []).forEach((m: any) => {
+    const name = m.display_name
+      ? formatDisplayName(m.full_name || '', m.display_name)
       : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : 'Unknown');
 
     result.byPhorestId[m.phorest_staff_id] = name;

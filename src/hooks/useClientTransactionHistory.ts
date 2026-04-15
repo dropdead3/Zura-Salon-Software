@@ -62,11 +62,11 @@ export function useClientTransactionHistory(clientId: string | null) {
       }
       
       // Get staff names via centralized resolver (handles both phorest_staff_id and user_id)
-      const staffIds = [...new Set(items.map(i => i.staff_user_id).filter(Boolean))];
+      const staffIds = [...new Set((items as any[]).map((i: any) => i.staff_user_id).filter(Boolean))];
       const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds as string[]);
       
       // Build transactions list
-      const transactions: ClientTransaction[] = items.map(item => ({
+      const transactions: ClientTransaction[] = (items as any[]).map((item: any) => ({
         transactionId: item.transaction_id,
         transactionDate: item.transaction_date,
         itemType: item.item_type,

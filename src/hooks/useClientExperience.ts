@@ -129,31 +129,26 @@ export function useClientExperience(
       const priorFromStr = priorFrom.toISOString().split('T')[0];
       const priorToStr = priorTo.toISOString().split('T')[0];
 
-      // Staff mappings
-      const { data: mappings } = await supabase
+      // Staff mappings — use flat columns from v_all_staff (no FK join)
+      const { data: rawMappings } = await supabase
         .from('v_all_staff' as any)
-        .select(`
-          phorest_staff_id,
-          user_id,
-          phorest_staff_name,
-          employee_profiles!phorest_staff_mapping_user_id_fkey (
-            display_name,
-            full_name
-          )
-        `);
+        .select('phorest_staff_id, user_id, phorest_staff_name, display_name, full_name');
+
+      const mappings = (rawMappings as any[]) || [];
 
       const mappingLookup: Record<string, { userId: string | null; name: string }> = {};
       let resolvedNameCount = 0;
-      mappings?.forEach(m => {
-        const profile = m.employee_profiles as any;
-        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : null);
+      mappings.forEach((m: any) => {
+        const name = m.display_name
+          ? formatDisplayName(m.full_name || '', m.display_name)
+          : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : null);
         if (name) resolvedNameCount++;
         mappingLookup[m.phorest_staff_id] = { userId: m.user_id, name: name || '' };
       });
 
       // Build userId → phorest_staff_id reverse map for feedback matching
       const userIdToStaffId: Record<string, string> = {};
-      mappings?.forEach(m => {
+      mappings.forEach((m: any) => {
         if (m.user_id) userIdToStaffId[m.user_id] = m.phorest_staff_id;
       });
 

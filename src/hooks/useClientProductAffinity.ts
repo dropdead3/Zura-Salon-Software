@@ -29,11 +29,11 @@ export function useClientProductAffinity(phorestClientId: string | null | undefi
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
-      if (!data || data.length === 0) return [];
+      if (!data || (data as any[]).length === 0) return [];
 
       // Group by item_name, collecting all dates
       const map = new Map<string, { count: number; dates: string[] }>();
-      for (const row of data) {
+      for (const row of (data as any[])) {
         const name = row.item_name!;
         const existing = map.get(name);
         if (existing) {
