@@ -29,9 +29,9 @@ export function useTomorrowRevenue(locationId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      const appointments = data || [];
+      const appointments = (data || []) as any[];
       const totalRevenue = appointments.reduce(
-        (sum, apt) => sum + ((Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0)),
+        (sum: number, apt: any) => sum + ((Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0)),
         0
       );
 

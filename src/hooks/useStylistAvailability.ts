@@ -200,12 +200,12 @@ export function useStylistAvailability(
         const phorestStaffId = userToPhorestMap.get(profile.user_id);
         
         // Get appointments for this stylist (by user_id or phorest_staff_id)
-        const stylistAppts = (appointments || []).filter((a: Appointment) => 
+        const stylistAppts = ((appointments || []) as any[]).filter((a: any) => 
           a.stylist_user_id === profile.user_id || 
           (phorestStaffId && a.phorest_staff_id === phorestStaffId)
         );
         
-        const availableMinutes = calculateAvailableMinutes(stylistAppts);
+        const availableMinutes = calculateAvailableMinutes(stylistAppts as any);
         
         return {
           user_id: profile.user_id,

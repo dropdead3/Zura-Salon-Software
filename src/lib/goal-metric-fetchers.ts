@@ -28,7 +28,7 @@ export async function fetchRevenue(
 
   const { data, error } = await query;
   if (error) throw error;
-  return data?.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0) ?? 0;
+  return (data as any[])?.reduce((sum: number, r: any) => sum + (Number(r.total_price) || 0), 0) ?? 0;
 }
 
 export async function fetchAvgTicket(
@@ -50,8 +50,9 @@ export async function fetchAvgTicket(
   const { data, error } = await query;
   if (error) throw error;
   if (!data?.length) return { avg: null, count: 0 };
-  const total = data.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0);
-  return { avg: total / data.length, count: data.length };
+  const rows = data as any[];
+  const total = rows.reduce((sum: number, r: any) => sum + (Number(r.total_price) || 0), 0);
+  return { avg: total / rows.length, count: rows.length };
 }
 
 export async function fetchRetailRevenue(
@@ -71,7 +72,7 @@ export async function fetchRetailRevenue(
 
   const { data, error } = await query;
   if (error) throw error;
-  return data?.reduce((sum, r) => sum + (Number(r.total_amount) || 0), 0) ?? 0;
+  return (data as any[])?.reduce((sum: number, r: any) => sum + (Number(r.total_amount) || 0), 0) ?? 0;
 }
 
 export async function fetchNoShowRate(
@@ -121,8 +122,9 @@ export async function fetchRebookRate(
   const { data, error } = await query;
   if (error) throw error;
   if (!data?.length) return { rate: null, count: 0 };
-  const rebooked = data.filter(r => r.rebooked_at_checkout === true).length;
-  return { rate: (rebooked / data.length) * 100, count: data.length };
+  const rows = data as any[];
+  const rebooked = rows.filter((r: any) => r.rebooked_at_checkout === true).length;
+  return { rate: (rebooked / rows.length) * 100, count: rows.length };
 }
 
 export async function fetchNewClientPct(
@@ -142,6 +144,7 @@ export async function fetchNewClientPct(
   const { data, error } = await query;
   if (error) throw error;
   if (!data?.length) return { rate: null, count: 0 };
-  const newClients = data.filter(r => r.is_new_client === true).length;
-  return { rate: (newClients / data.length) * 100, count: data.length };
+  const rows = data as any[];
+  const newClients = rows.filter((r: any) => r.is_new_client === true).length;
+  return { rate: (newClients / rows.length) * 100, count: rows.length };
 }

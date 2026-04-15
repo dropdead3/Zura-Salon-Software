@@ -130,7 +130,7 @@ export function useTodaysQueue(locationId?: string) {
       const { data, error } = await queryBuilder;
       if (error) throw error;
 
-      const appointments = (data || []) as PhorestAppointment[];
+      const appointments = (data || []) as unknown as PhorestAppointment[];
       const now = new Date();
       const currentTime = format(now, 'HH:mm');
 
