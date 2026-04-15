@@ -25,12 +25,11 @@ async function paginatedFetch(
 
   while (hasMore) {
     let q = supabase
-      .from('phorest_appointments')
+      .from('v_all_appointments')
       .select('phorest_staff_id, rebooked_at_checkout')
       .gte('appointment_date', dateFrom)
       .lte('appointment_date', dateTo)
       .eq('status', 'completed')
-      .eq('is_demo', false)
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (locationId && locationId !== 'all') {

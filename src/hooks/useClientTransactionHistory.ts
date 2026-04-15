@@ -34,11 +34,11 @@ export function useClientTransactionHistory(clientId: string | null) {
     queryFn: async () => {
       if (!clientId) return null;
       
-      // Fetch from phorest_transaction_items
+      // Fetch from v_all_transaction_items (supports both Phorest and Zura-native data)
       const { data: items, error } = await supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('*')
-        .eq('phorest_client_id', clientId)
+        .eq('external_client_id', clientId)
         .order('transaction_date', { ascending: false });
       
       if (error) throw error;

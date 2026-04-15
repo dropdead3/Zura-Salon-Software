@@ -46,6 +46,20 @@ export async function resolveStaffNamesByPhorestIds(
     nameMap[m.phorest_staff_id] = name;
   });
 
+  // Phase B fallback: IDs not found in phorest_staff_mapping may be user_ids
+  // (Zura-only orgs have no phorest mappings — resolve from employee_profiles directly)
+  const unresolvedIds = phorestStaffIds.filter(id => !nameMap[id]);
+  if (unresolvedIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('employee_profiles')
+      .select('user_id, display_name, full_name')
+      .in('user_id', unresolvedIds);
+
+    (profiles || []).forEach((p: any) => {
+      nameMap[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
+    });
+  }
+
   return nameMap;
 }
 
