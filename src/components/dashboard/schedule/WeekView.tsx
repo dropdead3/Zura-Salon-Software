@@ -340,7 +340,6 @@ export function WeekView({
                   {/* Time slot rows */}
                   {timeSlots.map((slot) => {
                     const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`;
-                    const isActive = activeSlot?.date.getTime() === day.getTime() && activeSlot?.time === slotTime;
                     
                     // Check if this slot is in the past (only for today)
                     const isPastSlot = isCurrentDay && (() => {
@@ -353,70 +352,37 @@ export function WeekView({
                       dayHoursInfo.openTime && dayHoursInfo.closeTime &&
                       (slotTime < dayHoursInfo.openTime || slotTime >= dayHoursInfo.closeTime)
                     );
-                    
-                    // Determine if this is a "special" slot that should route through onSlotClick
-                    const isSpecialSlot = isPastSlot || dayHoursInfo.isClosed || isOutsideHours;
 
-                    // Special slots (past, closed, outside hours) route through onSlotClick for warnings
-                    if (isSpecialSlot) {
-                      return (
-                        <div 
-                          key={slotTime}
-                          className={cn(
-                            'h-[20px] cursor-pointer transition-colors group relative',
-                            isPastSlot && 'bg-muted/40',
-                            slot.isHour 
-                              ? 'border-t border-border/80 dark:border-border/60' 
-                              : slot.isHalf 
-                                ? 'border-t border-dotted border-border/70 dark:border-border/40'
-                                : 'border-t border-dotted border-border/50 dark:border-border/25'
-                          )}
-                          style={!isPastSlot && isOutsideHours ? {
-                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-                          } : undefined}
-                          onClick={() => onSlotClick?.(day, slotTime)}
-                        >
-                          {isPastSlot && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
-                              This time slot is no longer available
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    
                     return (
-                      <QuickBookingPopover
+                      <div 
                         key={slotTime}
-                        date={day}
-                        time={slotTime}
-                        open={isActive}
-                        onOpenChange={(open) => {
-                          if (open) {
-                            setActiveSlot({ date: day, time: slotTime });
-                          } else {
-                            setActiveSlot(null);
-                          }
+                        className={cn(
+                          'h-[20px] cursor-pointer transition-colors group relative',
+                          isPastSlot && 'bg-muted/40',
+                          !isPastSlot && !isOutsideHours && 'hover:bg-primary/10',
+                          slot.isHour 
+                            ? 'border-t border-border/80 dark:border-border/60' 
+                            : slot.isHalf 
+                              ? 'border-t border-dotted border-border/70 dark:border-border/40'
+                              : 'border-t border-dotted border-border/50 dark:border-border/25'
+                        )}
+                        style={!isPastSlot && isOutsideHours ? {
+                          background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+                        } : undefined}
+                        onClick={() => onSlotClick?.(day, slotTime)}
+                        onMouseMove={(e) => {
+                          if (isPastSlot || isOutsideHours) return;
+                          const target = e.currentTarget;
+                          const badge = target.querySelector('[data-slot-badge]') as HTMLElement;
+                          if (badge) badge.style.left = `${e.clientX - target.getBoundingClientRect().left}px`;
                         }}
-                        defaultLocationId={selectedLocationId}
                       >
-                        <div 
-                          className={cn(
-                            'h-[20px] hover:bg-primary/10 cursor-pointer transition-colors group relative',
-                            slot.isHour 
-                              ? 'border-t border-border/80 dark:border-border/60' 
-                              : slot.isHalf 
-                                ? 'border-t border-dotted border-border/70 dark:border-border/40'
-                                : 'border-t border-dotted border-border/50 dark:border-border/25'
-                          )}
-                          onMouseMove={(e) => {
-                            const target = e.currentTarget;
-                            const rect = target.getBoundingClientRect();
-                            target.dataset.mouseX = String(e.clientX - rect.left);
-                            const badge = target.querySelector('[data-slot-badge]') as HTMLElement;
-                            if (badge) badge.style.left = `${e.clientX - rect.left}px`;
-                          }}
-                        >
+                        {isPastSlot && (
+                          <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+                            This time slot is no longer available
+                          </div>
+                        )}
+                        {!isPastSlot && !isOutsideHours && (
                           <div data-slot-badge className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: '50%' }}>
                             {(() => {
                               const ampm = slot.hour >= 12 ? 'PM' : 'AM';
@@ -424,8 +390,8 @@ export function WeekView({
                               return `${hour12}:${slot.minute.toString().padStart(2, '0')} ${ampm}`;
                             })()}
                           </div>
-                        </div>
-                      </QuickBookingPopover>
+                        )}
+                      </div>
                     );
                   })}
                   
