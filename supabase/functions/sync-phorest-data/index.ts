@@ -512,13 +512,9 @@ async function syncAppointments(
       // Map status
       let mappedStatus = mapPhorestStatus(apt.activationState || apt.status);
       
-      // Time-based inference: if appointment is ACTIVE but in the past, mark as completed
-      if (mappedStatus === 'booked' && appointmentDate) {
-        const aptDateTime = new Date(`${appointmentDate}T${endTime || '23:59'}:00`);
-        if (aptDateTime < new Date()) {
-          mappedStatus = 'completed';
-        }
-      }
+      // NOTE: Time-based completion inference removed — Phorest's activationState
+      // is the source of truth. new Date() in Deno is UTC which caused premature
+      // "completed" badges for appointments still in the org's local future.
 
       upsertBatch.push({
         phorest_id: phorestId,
@@ -1141,17 +1137,22 @@ async function syncSalesTransactions(
           console.error(`Payment method propagation failed for ${branchName}:`, pmErr.message);
         }
 
-        // Batch appointment status reconciliation (parallel updates instead of sequential)
+        // Batch appointment status reconciliation — only for PAST dates
+        // Today's appointments are excluded to prevent premature "completed" marking
+        // when a client has a transaction but other appointments are still in progress.
         try {
+          const todayStr = new Date().toISOString().split('T')[0];
           const uniqueClientDates = [...new Set(
             purchases
               .filter((p: any) => p.clientId && p.purchaseDate)
               .map((p: any) => `${p.clientId}|${p.purchaseDate?.split('T')[0]}`)
-          )];
+          )].filter(key => {
+            const txDate = key.split('|')[1];
+            return txDate && txDate < todayStr; // strictly past dates only
+          });
 
           if (uniqueClientDates.length > 0) {
             let reconciled = 0;
-            // Process in parallel batches of 50
             for (let i = 0; i < uniqueClientDates.length; i += 50) {
               const batch = uniqueClientDates.slice(i, i + 50);
               const updates = batch.map(key => {

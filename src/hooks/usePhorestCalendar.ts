@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { getOrgToday, orgNowMinutes } from '@/lib/orgTime';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
 import { useEffectiveUserId } from './useEffectiveUser';
 import { toast } from 'sonner';
 
@@ -94,6 +96,7 @@ export { APPOINTMENT_STATUS_CONFIG as STATUS_CONFIG } from '@/lib/design-tokens'
 
 export function usePhorestCalendar() {
   const { hasPermission } = useAuth();
+  const { timezone } = useOrgDefaults();
   const effectiveUserId = useEffectiveUserId();
   const queryClient = useQueryClient();
   
@@ -222,10 +225,31 @@ export function usePhorestCalendar() {
         profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
       }
 
-      return allRows.map((r: any) => ({
+      const raw = allRows.map((r: any) => ({
         ...r,
         stylist_profile: profileMap.get(r.stylist_user_id) || null,
       })) as PhorestAppointment[];
+
+      // Display-layer safety net: prevent future/in-progress appointments
+      // from showing as "completed" due to sync race conditions or stale data.
+      const orgToday = getOrgToday(timezone);
+      const nowMins = orgNowMinutes(timezone);
+
+      return raw.map(apt => {
+        if (apt.status !== 'completed') return apt;
+        // Future date → can't be completed yet
+        if (apt.appointment_date > orgToday) {
+          return { ...apt, status: 'booked' as AppointmentStatus };
+        }
+        // Today but end time hasn't passed → not completed yet
+        if (apt.appointment_date === orgToday && apt.end_time) {
+          const [h, m] = apt.end_time.split(':').map(Number);
+          if (h * 60 + m > nowMins) {
+            return { ...apt, status: 'booked' as AppointmentStatus };
+          }
+        }
+        return apt;
+      });
     },
   });
 
