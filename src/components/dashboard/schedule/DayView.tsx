@@ -454,7 +454,7 @@ export function DayView({
         )}
         {/* Calendar Grid */}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto">
-          <div className="min-w-[600px]">
+          <div>
             {/* Stylist Headers - frosted glass sticky header */}
             <div className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
@@ -465,7 +465,7 @@ export function DayView({
               {stylists.map((stylist) => (
                 <div 
                   key={stylist.user_id} 
-                  className="flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                  className="flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
                 >
                   <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
                     <AvatarImage src={stylist.photo_url || undefined} />
@@ -508,7 +508,7 @@ export function DayView({
                 return (
                   <div 
                     key={stylist.user_id} 
-                    className="flex-1 min-w-[160px] relative border-r last:border-r-0"
+                    className="flex-1 min-w-0 relative border-r last:border-r-0"
                   >
                     {/* Time slot backgrounds (droppable) */}
                     {timeSlots.map(({ hour, minute }) => {

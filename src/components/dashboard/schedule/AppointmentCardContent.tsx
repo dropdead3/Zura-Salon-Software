@@ -213,7 +213,7 @@ function GridContent({
           size="compact"
           className="absolute top-0.5 right-1 z-20"
         />
-        <div className="text-xs font-medium truncate pr-16">
+        <div className="text-xs font-medium truncate pr-8">
           {appointment.client_name}
         </div>
       </div>
