@@ -1,39 +1,59 @@
 
 
-## Afterpay Audit Pass 8 — Two Remaining Issues
+## Afterpay Audit Pass 9 — Two Remaining Issues
 
-The core split-payment flow is now structurally sound. Two lower-priority issues remain.
-
----
-
-### B1. `phorest_appointments` Fallback Ignores Split Status (Bug — P1)
-
-In `handlePaymentIntentSucceeded`, lines 720-727 always write `payment_status: 'paid'` to `phorest_appointments`, ignoring `resolvedStatus`. When the terminal fires first in a split, the appointments table correctly gets `partially_paid`, but the phorest fallback writes `paid` — creating an inconsistency between tables.
-
-**Fix:** Use `resolvedStatus` instead of hardcoded `'paid'`:
-
-```text
-await supabase
-  .from('phorest_appointments')
-  .update({
-    payment_status: resolvedStatus,
-    payment_failure_reason: null,
-  })
-  .eq('id', appointmentId)
-  .neq('payment_status', 'paid');
-```
+The split-payment flow is structurally correct for the happy path. Two edge-case issues remain.
 
 ---
 
-### B2. `handleCheckoutCompleted` Lacks Idempotency Guard (Enhancement — P2)
+### B1. `handlePaymentIntentFailed` Overwrites `partially_paid` with `failed` (Bug — P1)
 
-The appointments update on line 372-375 has no `.neq('payment_status', 'paid')` guard. If a webhook fires twice (Stripe retries), a completed `paid` appointment could be overwritten back to `partially_paid` in the split branch, or have its `paid_at` timestamp reset in the non-split branch.
+In `handlePaymentIntentFailed` (line 756-765), the failed handler writes `payment_status: 'failed'` with only a `.neq('payment_status', 'paid')` guard. This does not protect `partially_paid`.
 
-**Fix:** Add `.neq('payment_status', 'paid')` to the update query:
+**Scenario:**
+1. Split payment — link leg fires first, appointment is `partially_paid`
+2. Terminal charge fails → overwrites status to `failed`
+3. Staff retries terminal → succeeds → terminal handler sees `split_payment_link_intent_id` exists, `payment_status` is `failed` (not `partially_paid`) → sets `partially_paid` again
+4. Appointment stuck at `partially_paid` forever — no second leg will fire because the link already completed
+
+The failed handler should not overwrite `partially_paid`, since one leg has already been collected.
+
+**Fix:** Add `.neq('payment_status', 'partially_paid')` to both update queries in `handlePaymentIntentFailed`:
 
 ```text
 await supabase
   .from('appointments')
+  .update(failPayload)
+  .eq('id', appointmentId)
+  .neq('payment_status', 'paid')
+  .neq('payment_status', 'partially_paid');
+
+await supabase
+  .from('phorest_appointments')
+  .update(failPayload)
+  .eq('id', appointmentId)
+  .neq('payment_status', 'paid')
+  .neq('payment_status', 'partially_paid');
+```
+
+---
+
+### B2. `handleCheckoutCompleted` Does Not Sync to `phorest_appointments` (Bug — P2)
+
+The terminal handler (`handlePaymentIntentSucceeded`, line 720-728) syncs status to `phorest_appointments` as a fallback. The checkout handler (`handleCheckoutCompleted`, line 372-376) only updates `appointments` — it never touches `phorest_appointments`. If an appointment exists in the phorest table, checkout completion won't be recorded.
+
+**Fix:** Add a matching phorest fallback after the appointments update:
+
+```text
+await supabase
+  .from('appointments')
+  .update(updatePayload)
+  .eq('id', appointmentId)
+  .neq('payment_status', 'paid');
+
+// Fallback: also try phorest_appointments
+await supabase
+  .from('phorest_appointments')
   .update(updatePayload)
   .eq('id', appointmentId)
   .neq('payment_status', 'paid');
@@ -45,8 +65,8 @@ await supabase
 
 | Priority | ID | File | Change |
 |----------|----|------|--------|
-| P1 | B1 | `stripe-webhook/index.ts` | Use `resolvedStatus` in phorest_appointments fallback |
-| P2 | B2 | `stripe-webhook/index.ts` | Add `.neq('payment_status', 'paid')` idempotency guard to checkout handler |
+| P1 | B1 | `stripe-webhook/index.ts` | Add `.neq('payment_status', 'partially_paid')` to failed handler |
+| P2 | B2 | `stripe-webhook/index.ts` | Add `phorest_appointments` fallback to checkout handler |
 
 No database migrations required. Single file, two small changes.
 
