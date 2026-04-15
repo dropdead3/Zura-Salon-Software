@@ -69,7 +69,7 @@ export function useHouseholds() {
           .select('id, name, email, phone, visit_count, total_spend, last_visit, phorest_client_id')
           .in('id', clientIds);
         if (clients) {
-          clientMap = Object.fromEntries(clients.map(c => [c.id, c]));
+          clientMap = Object.fromEntries((clients as any[]).map((c: any) => [c.id, c]));
         }
       }
 
@@ -122,7 +122,7 @@ export function useClientHousehold(clientId: string | undefined) {
           .from('v_all_clients' as any)
           .select('id, name, email, phone, visit_count, total_spend, last_visit, phorest_client_id')
           .in('id', memberClientIds);
-        if (clients) clientMap = Object.fromEntries(clients.map(c => [c.id, c]));
+        if (clients) clientMap = Object.fromEntries((clients as any[]).map((c: any) => [c.id, c]));
       }
 
       return {
@@ -159,7 +159,7 @@ export function useHouseholdByPhorestClientId(phorestClientId: string | null | u
       const { data: membership } = await supabase
         .from('client_household_members' as any)
         .select('household_id')
-        .eq('client_id', client.id)
+        .eq('client_id', (client as any).id)
         .maybeSingle();
 
       if (!membership) return null;
@@ -188,18 +188,18 @@ export function useHouseholdByPhorestClientId(phorestClientId: string | null | u
           .from('v_all_clients' as any)
           .select('id, name, email, phone, visit_count, total_spend, last_visit, phorest_client_id')
           .in('id', memberClientIds);
-        if (clients) clientMap = Object.fromEntries(clients.map(c => [c.id, c]));
+        if (clients) clientMap = Object.fromEntries((clients as any[]).map((c: any) => [c.id, c]));
       }
 
       return {
         ...(household as any),
-        currentClientId: client.id,
+        currentClientId: (client as any).id,
         members: (allMembers as any[] || [])
           .map((m: any) => ({
             ...m,
             client: clientMap[m.client_id] || null,
           }))
-          .filter((m: any) => m.client_id !== client.id), // Exclude current client
+          .filter((m: any) => m.client_id !== (client as any).id), // Exclude current client
       } as Household & { currentClientId: string };
     },
     enabled: !!phorestClientId,

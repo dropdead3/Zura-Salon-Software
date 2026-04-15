@@ -86,7 +86,8 @@ export function useClientTransactionHistory(clientId: string | null) {
       const staffVisitCount = new Map<string, number>();
       const visitDates = new Set<string>();
       
-      for (const item of items) {
+      const typedItems = (items || []) as any[];
+      for (const item of typedItems) {
         const amount = Number(item.total_amount) || 0;
         totalSpend += amount;
         
@@ -121,7 +122,7 @@ export function useClientTransactionHistory(clientId: string | null) {
       
       // Calculate spend by month
       const spendByMonth = new Map<string, { services: number; products: number }>();
-      for (const item of items) {
+      for (const item of typedItems) {
         const monthKey = item.transaction_date.substring(0, 7); // YYYY-MM
         if (!spendByMonth.has(monthKey)) {
           spendByMonth.set(monthKey, { services: 0, products: 0 });

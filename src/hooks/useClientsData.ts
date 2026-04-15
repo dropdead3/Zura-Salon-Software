@@ -275,7 +275,7 @@ export function usePhorestClientSearch(searchQuery: string, limit = 20) {
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(c => ({
+      return ((data || []) as any[]).map((c: any) => ({
         ...c,
         name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
         mobile: c.phone,

@@ -107,7 +107,8 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
 
       // Get today's appointments for these clients
       const today = new Date().toISOString().split('T')[0];
-      const clientIds = clients.map(c => c.phorest_client_id).filter(Boolean);
+      const typedClients = (clients || []) as any[];
+      const clientIds = typedClients.map((c: any) => c.phorest_client_id).filter(Boolean);
 
       const { data: appointments } = await supabase
         .from('v_all_appointments' as any)
@@ -118,8 +119,9 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
         .order('start_time');
 
       // Fetch location names for appointments at different locations
-      const appointmentLocationIds = [...new Set((appointments || [])
-        .map(a => a.location_id)
+      const typedAppointments = (appointments || []) as any[];
+      const appointmentLocationIds = [...new Set(typedAppointments
+        .map((a: any) => a.location_id)
         .filter(Boolean)
       )];
       
@@ -136,14 +138,14 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       }
 
       return {
-        clients: clients.map(c => ({
+        clients: typedClients.map((c: any) => ({
           id: c.id,
           phorest_client_id: c.phorest_client_id || undefined,
           name: c.name || '',
           phone: c.phone || undefined,
           email: c.email || undefined,
         })),
-        appointments: (appointments || []).map(a => ({
+        appointments: typedAppointments.map((a: any) => ({
           id: a.id,
           phorest_id: undefined,
           appointment_date: a.appointment_date,
