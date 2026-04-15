@@ -24,7 +24,7 @@ export function usePreferredStylist(stylistUserId: string | null | undefined) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as PreferredStylistInfo | null;
+      return data as unknown as PreferredStylistInfo | null;
     },
     enabled: !!stylistUserId,
     staleTime: 2 * 60 * 1000,

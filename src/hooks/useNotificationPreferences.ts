@@ -52,7 +52,7 @@ export function useNotificationPreferences() {
       if (error) throw error;
 
       // Return existing preferences or defaults
-      if (data) return data as NotificationPreferences;
+      if (data) return data as unknown as NotificationPreferences;
       
       // Return default structure if no preferences exist yet
       return {

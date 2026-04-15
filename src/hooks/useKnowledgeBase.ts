@@ -46,7 +46,7 @@ export function useKBCategories() {
         .order('display_order');
       
       if (error) throw error;
-      return data as KBCategory[];
+      return data as unknown as KBCategory[];
     },
   });
 }
@@ -181,7 +181,7 @@ export function useKBArticles(categorySlug?: string) {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data as KBArticle[];
+      return data as unknown as KBArticle[];
     },
   });
 }
@@ -196,7 +196,7 @@ export function useAdminKBArticles() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as KBArticle[];
+      return data as unknown as KBArticle[];
     },
   });
 }
@@ -214,7 +214,7 @@ export function useFeaturedKBArticles() {
         .limit(4);
       
       if (error) throw error;
-      return data as KBArticle[];
+      return data as unknown as KBArticle[];
     },
   });
 }
@@ -230,7 +230,7 @@ export function useKBArticle(slug: string) {
         .single();
       
       if (error) throw error;
-      return data as KBArticle;
+      return data as unknown as KBArticle;
     },
     enabled: !!slug,
   });
@@ -374,7 +374,7 @@ export function useKBSearch(query: string) {
         .limit(20);
       
       if (error) throw error;
-      return data as KBArticle[];
+      return data as unknown as KBArticle[];
     },
     enabled: query.length >= 2,
   });

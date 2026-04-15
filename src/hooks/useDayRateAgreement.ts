@@ -22,7 +22,7 @@ export function useDayRateAgreements() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as DayRateAgreement[];
+      return data as unknown as DayRateAgreement[];
     },
   });
 }
@@ -38,7 +38,7 @@ export function useActiveAgreement() {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data as DayRateAgreement | null;
+      return data as unknown as DayRateAgreement | null;
     },
   });
 }

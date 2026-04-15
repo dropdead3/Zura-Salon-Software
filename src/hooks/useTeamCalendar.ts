@@ -96,7 +96,7 @@ export function useTeamCalendarEvent(eventId?: string) {
         .single();
 
       if (error) throw error;
-      return data as TeamCalendarEvent;
+      return data as unknown as TeamCalendarEvent;
     },
     enabled: !!eventId,
   });

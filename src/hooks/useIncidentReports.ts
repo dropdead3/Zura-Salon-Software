@@ -38,7 +38,7 @@ export function useIncidentReports() {
         .eq('organization_id', orgId!)
         .order('incident_date', { ascending: false });
       if (error) throw error;
-      return data as IncidentReport[];
+      return data as unknown as IncidentReport[];
     },
     enabled: !!orgId,
   });

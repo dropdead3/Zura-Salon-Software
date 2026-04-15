@@ -71,7 +71,7 @@ export function useDayRateBookings(filters?: {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as DayRateBooking[];
+      return data as unknown as DayRateBooking[];
     },
   });
 }
@@ -87,7 +87,7 @@ export function useDayRateBooking(id: string) {
         .single();
 
       if (error) throw error;
-      return data as DayRateBooking;
+      return data as unknown as DayRateBooking;
     },
     enabled: !!id,
   });
@@ -108,7 +108,7 @@ export function useCreateDayRateBooking() {
         .single();
 
       if (error) throw error;
-      return data as DayRateBooking;
+      return data as unknown as DayRateBooking;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['day-rate-bookings'] });
@@ -212,7 +212,7 @@ export function useBookingsByDateRange(startDate: string, endDate: string, locat
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as DayRateBooking[];
+      return data as unknown as DayRateBooking[];
     },
     enabled: !!startDate && !!endDate,
   });

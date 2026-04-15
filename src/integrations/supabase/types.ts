@@ -28045,6 +28045,18 @@ export type Database = {
         }
         Relationships: []
       }
+      v_all_staff_qualifications: {
+        Row: {
+          _source: string | null
+          branch_id: string | null
+          is_qualified: boolean | null
+          phorest_staff_id: string | null
+          service_external_id: string | null
+          service_id: string | null
+          staff_user_id: string | null
+        }
+        Relationships: []
+      }
       v_all_transaction_items: {
         Row: {
           appointment_id: string | null

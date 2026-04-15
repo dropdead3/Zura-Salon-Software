@@ -53,7 +53,7 @@ export function useChallenges(status?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as TeamChallenge[];
+      return data as unknown as TeamChallenge[];
     },
   });
 }
@@ -69,7 +69,7 @@ export function useChallenge(challengeId: string | undefined) {
         .eq('id', challengeId)
         .single();
       if (error) throw error;
-      return data as TeamChallenge;
+      return data as unknown as TeamChallenge;
     },
     enabled: !!challengeId,
   });

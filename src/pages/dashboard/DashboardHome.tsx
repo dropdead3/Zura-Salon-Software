@@ -237,7 +237,7 @@ export default function DashboardHome() {
         .limit(3);
       
       if (error) throw error;
-      return data as Announcement[];
+      return data as unknown as Announcement[];
     },
   });
 

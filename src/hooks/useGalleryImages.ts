@@ -35,7 +35,7 @@ export function useGalleryImages() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as GalleryImage[];
+      return data as unknown as GalleryImage[];
     },
   });
 }
@@ -177,7 +177,7 @@ export function useGalleryTransformations() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as GalleryTransformation[];
+      return data as unknown as GalleryTransformation[];
     },
   });
 }

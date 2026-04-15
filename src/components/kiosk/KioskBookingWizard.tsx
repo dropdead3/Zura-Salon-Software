@@ -90,7 +90,7 @@ export function KioskBookingWizard() {
         .select('id, phorest_service_id, name, duration_minutes, price, category')
         .order('category')
         .order('name');
-      return data || [];
+      (data || []) as any[];
     },
     enabled: !!locationData,
   });

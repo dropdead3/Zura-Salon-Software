@@ -45,7 +45,7 @@ export function useServiceAllowancePolicies(serviceId?: string) {
 
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
-      return data as ServiceAllowancePolicy[];
+      return data as unknown as ServiceAllowancePolicy[];
     },
     enabled: !!orgId,
   });

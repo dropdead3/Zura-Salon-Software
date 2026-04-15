@@ -30,7 +30,7 @@ export function DockClientQuickView({ open, onClose, phorestClientId, clientId, 
           .select('id, name, email, phone, notes, created_at')
           .eq('phorest_client_id', phorestClientId)
           .maybeSingle();
-        return data;
+        return data as any;
       }
       if (clientId) {
         const { data } = await supabase
@@ -57,7 +57,7 @@ export function DockClientQuickView({ open, onClose, phorestClientId, clientId, 
           .eq('phorest_client_id', phorestClientId)
           .order('appointment_date', { ascending: false })
           .limit(5);
-        return data || [];
+        (data || []) as any[];
       }
       if (clientId) {
         const { data } = await supabase

@@ -66,7 +66,7 @@ export function usePayroll() {
         .order('check_date', { ascending: false });
       
       if (error) throw error;
-      return data as PayrollRun[];
+      return data as unknown as PayrollRun[];
     },
     enabled: !!organizationId,
   });

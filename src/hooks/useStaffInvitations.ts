@@ -64,7 +64,7 @@ export function usePendingInvitations() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as StaffInvitation[];
+      return data as unknown as StaffInvitation[];
     },
   });
 }
@@ -246,7 +246,7 @@ export function useCheckInvitation(email: string) {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error;
-      return data as StaffInvitation | null;
+      return data as unknown as StaffInvitation | null;
     },
     enabled: !!email && email.includes('@'),
   });

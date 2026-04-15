@@ -51,7 +51,7 @@ export function useProgramConfig() {
         .single();
       
       if (error) throw error;
-      return data as ProgramConfig;
+      return data as unknown as ProgramConfig;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -75,7 +75,7 @@ export function useDailyTasks() {
         .order('display_order');
       
       if (error) throw error;
-      return data as DailyTask[];
+      return data as unknown as DailyTask[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -99,7 +99,7 @@ export function useProgramRules() {
         .order('display_order');
       
       if (error) throw error;
-      return data as ProgramRule[];
+      return data as unknown as ProgramRule[];
     },
     staleTime: 5 * 60 * 1000,
   });

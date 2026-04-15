@@ -51,7 +51,7 @@ export function useServiceCategoryColors() {
         .order('category_name');
       
       if (error) throw error;
-      return data as ServiceCategoryColor[];
+      return data as unknown as ServiceCategoryColor[];
     },
   });
 }
@@ -254,7 +254,7 @@ export function useArchivedCategories() {
         .order('archived_at', { ascending: false });
       
       if (error) throw error;
-      return data as ServiceCategoryColor[];
+      return data as unknown as ServiceCategoryColor[];
     },
   });
 }

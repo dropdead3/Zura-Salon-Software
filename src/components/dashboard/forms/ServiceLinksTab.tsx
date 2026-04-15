@@ -59,7 +59,7 @@ export function ServiceLinksTab() {
         .select('id, name, category');
       
       if (error) throw error;
-      return data as Service[];
+      return data as unknown as Service[];
     },
   });
 

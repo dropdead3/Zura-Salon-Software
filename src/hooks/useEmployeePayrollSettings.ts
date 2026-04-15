@@ -59,7 +59,7 @@ export function useEmployeePayrollSettings() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as EmployeePayrollSettings[];
+      return data as unknown as EmployeePayrollSettings[];
     },
     enabled: !!organizationId,
   });

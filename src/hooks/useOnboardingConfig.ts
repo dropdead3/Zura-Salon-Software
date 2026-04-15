@@ -40,7 +40,7 @@ export function useOnboardingSectionConfig(organizationId: string | undefined) {
         .eq('organization_id', organizationId);
 
       if (error) throw error;
-      return data as OnboardingSectionConfig[];
+      return data as unknown as OnboardingSectionConfig[];
     },
     enabled: !!organizationId,
   });
@@ -56,7 +56,7 @@ export function useOnboardingTasksConfig() {
         .order('display_order');
 
       if (error) throw error;
-      return data as OnboardingTaskConfig[];
+      return data as unknown as OnboardingTaskConfig[];
     },
   });
 }

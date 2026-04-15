@@ -62,7 +62,7 @@ export function StylistPriceOverridesDialog({
         .eq('is_active', true)
         .eq('is_approved', true);
       if (error) throw error;
-      return data as EmployeeRow[];
+      return data as unknown as EmployeeRow[];
     },
     enabled: !!orgId && open,
   });

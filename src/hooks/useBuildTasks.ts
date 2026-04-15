@@ -30,7 +30,7 @@ export function useBuildTasks() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      return data as BuildTask[];
+      return data as unknown as BuildTask[];
     },
   });
 }

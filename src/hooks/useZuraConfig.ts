@@ -73,7 +73,7 @@ export function useZuraPersonality(orgId: string | undefined) {
         .eq('organization_id', orgId)
         .maybeSingle();
       if (error) throw error;
-      return data as ZuraPersonalityConfig | null;
+      return data as unknown as ZuraPersonalityConfig | null;
     },
     enabled: !!orgId,
   });

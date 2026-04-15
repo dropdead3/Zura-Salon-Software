@@ -40,7 +40,7 @@ export function useInventoryAlertSettings() {
         .maybeSingle();
 
       if (error) throw error;
-      return data as InventoryAlertSettings | null;
+      return data as unknown as InventoryAlertSettings | null;
     },
     enabled: !!orgId,
     staleTime: 5 * 60 * 1000,

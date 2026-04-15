@@ -30,7 +30,7 @@ export function useStylistPersonalGoals(userId?: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as StylistPersonalGoal | null;
+      return data as unknown as StylistPersonalGoal | null;
     },
     enabled: !!userId,
   });

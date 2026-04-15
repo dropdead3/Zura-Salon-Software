@@ -35,7 +35,7 @@ export function useVendors(activeOnly = true) {
       if (activeOnly) query = query.eq('is_active', true);
       const { data, error } = await query;
       if (error) throw error;
-      return data as Vendor[];
+      return data as unknown as Vendor[];
     },
     enabled: !!orgId,
     staleTime: 2 * 60 * 1000,
@@ -52,7 +52,7 @@ export function useVendor(vendorId: string | undefined) {
         .eq('id', vendorId!)
         .single();
       if (error) throw error;
-      return data as Vendor;
+      return data as unknown as Vendor;
     },
     enabled: !!vendorId,
   });

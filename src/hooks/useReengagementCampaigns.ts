@@ -193,7 +193,7 @@ export function useAtRiskClients(organizationId?: string, inactivityDays = 60) {
         .limit(100);
 
       if (error) throw error;
-      return data || [];
+      (data || []) as any[];
     },
     enabled: !!organizationId,
   });

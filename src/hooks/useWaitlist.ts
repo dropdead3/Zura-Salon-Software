@@ -57,7 +57,7 @@ export function useWaitlistEntries(orgId?: string, filters: WaitlistFilters = {}
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as WaitlistEntry[];
+      return data as unknown as WaitlistEntry[];
     },
     enabled: !!orgId,
     staleTime: 30000,

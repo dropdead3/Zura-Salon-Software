@@ -32,7 +32,7 @@ export function usePlatformPermissions() {
         .order('display_name', { ascending: true });
 
       if (error) throw error;
-      return data as PlatformPermission[];
+      return data as unknown as PlatformPermission[];
     },
   });
 }
@@ -46,7 +46,7 @@ export function usePlatformRolePermissions() {
         .select('*');
 
       if (error) throw error;
-      return data as PlatformRolePermission[];
+      return data as unknown as PlatformRolePermission[];
     },
   });
 }

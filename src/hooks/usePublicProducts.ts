@@ -38,7 +38,7 @@ export function usePublicProducts(filters: PublicProductFilters = {}) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
   });
 }

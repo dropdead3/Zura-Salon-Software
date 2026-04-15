@@ -24,7 +24,7 @@ export function useSmsTemplates() {
         .order('name');
 
       if (error) throw error;
-      return data as SmsTemplate[];
+      return data as unknown as SmsTemplate[];
     },
   });
 }
@@ -40,7 +40,7 @@ export function useSmsTemplate(templateKey: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as SmsTemplate | null;
+      return data as unknown as SmsTemplate | null;
     },
     enabled: !!templateKey,
   });

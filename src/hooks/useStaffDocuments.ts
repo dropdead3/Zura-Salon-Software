@@ -36,7 +36,7 @@ export function useStaffDocuments() {
         .eq('organization_id', orgId!)
         .order('expiration_date', { ascending: true });
       if (error) throw error;
-      return data as StaffDocument[];
+      return data as unknown as StaffDocument[];
     },
     enabled: !!orgId,
   });

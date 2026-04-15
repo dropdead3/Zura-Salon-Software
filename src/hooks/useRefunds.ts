@@ -38,7 +38,7 @@ export function useRefundRecords(filters?: { status?: string; clientId?: string 
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as RefundRecord[];
+      return data as unknown as RefundRecord[];
     },
   });
 }

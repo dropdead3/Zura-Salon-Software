@@ -45,7 +45,7 @@ export function usePTOPolicies() {
         .eq('organization_id', orgId!)
         .order('name');
       if (error) throw error;
-      return data as PTOPolicy[];
+      return data as unknown as PTOPolicy[];
     },
     enabled: !!orgId,
   });
@@ -106,7 +106,7 @@ export function usePTOBalances() {
         .eq('organization_id', orgId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as EmployeePTOBalance[];
+      return data as unknown as EmployeePTOBalance[];
     },
     enabled: !!orgId,
   });

@@ -39,7 +39,7 @@ export function useProductSuppliers() {
         .eq('organization_id', orgId!)
         .order('supplier_name');
       if (error) throw error;
-      return data as ProductSupplier[];
+      return data as unknown as ProductSupplier[];
     },
     enabled: !!orgId,
   });
@@ -59,7 +59,7 @@ export function useProductSupplier(productId: string | undefined) {
         .eq('organization_id', orgId!)
         .maybeSingle();
       if (error) throw error;
-      return data as ProductSupplier | null;
+      return data as unknown as ProductSupplier | null;
     },
     enabled: !!productId && !!orgId,
   });

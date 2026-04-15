@@ -43,7 +43,7 @@ export function useWebsiteAnalytics() {
         .order('date', { ascending: true });
 
       if (error) throw error;
-      return data as AnalyticsData[];
+      return data as unknown as AnalyticsData[];
     },
   });
 

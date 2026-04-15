@@ -24,7 +24,7 @@ export function useSpecialtyOptions() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as SpecialtyOption[];
+      return data as unknown as SpecialtyOption[];
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
@@ -41,7 +41,7 @@ export function useAllSpecialtyOptions() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as SpecialtyOption[];
+      return data as unknown as SpecialtyOption[];
     },
   });
 }

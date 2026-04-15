@@ -42,7 +42,7 @@ export function useBrandWebsiteScrape() {
         return { success: false, products: [], pagesScraped: 0, confidence: 'low', error: error.message };
       }
 
-      return data as ScrapeResult;
+      return data as unknown as ScrapeResult;
     },
   });
 }

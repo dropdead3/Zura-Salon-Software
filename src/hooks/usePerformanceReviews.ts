@@ -51,7 +51,7 @@ export function usePerformanceReviews() {
         .eq('organization_id', orgId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as PerformanceReview[];
+      return data as unknown as PerformanceReview[];
     },
     enabled: !!orgId,
   });
@@ -124,7 +124,7 @@ export function usePerformanceReviews() {
           .eq('review_id', reviewId)
           .order('created_at', { ascending: true });
         if (error) throw error;
-        return data as ReviewGoal[];
+        return data as unknown as ReviewGoal[];
       },
       enabled: !!reviewId,
     });

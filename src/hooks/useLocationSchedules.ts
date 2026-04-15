@@ -44,7 +44,7 @@ export function useLocationSchedules() {
         .eq('user_id', effectiveUserId!);
 
       if (error) throw error;
-      return data as LocationSchedule[];
+      return data as unknown as LocationSchedule[];
     },
     enabled: !!effectiveUserId,
   });
@@ -64,7 +64,7 @@ export function useLocationSchedule(locationId: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as LocationSchedule | null;
+      return data as unknown as LocationSchedule | null;
     },
     enabled: !!user && !!locationId,
   });
@@ -116,7 +116,7 @@ export function useMyScheduleChangeRequests() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as ScheduleChangeRequest[];
+      return data as unknown as ScheduleChangeRequest[];
     },
     enabled: !!user,
   });
@@ -133,7 +133,7 @@ export function usePendingScheduleChangeRequests() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as ScheduleChangeRequest[];
+      return data as unknown as ScheduleChangeRequest[];
     },
   });
 }

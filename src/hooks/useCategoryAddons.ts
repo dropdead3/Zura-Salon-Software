@@ -28,7 +28,7 @@ export function useCategoryAddons(categoryId?: string) {
         .order('display_order')
         .order('addon_label');
       if (error) throw error;
-      return data as CategoryAddon[];
+      return data as unknown as CategoryAddon[];
     },
     enabled: !!categoryId,
   });

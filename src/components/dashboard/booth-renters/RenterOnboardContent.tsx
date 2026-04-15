@@ -235,7 +235,7 @@ export function RenterOnboardContent({
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as OnboardResult;
+      return data as unknown as OnboardResult;
     },
     onSuccess: (data) => {
       setResult(data);

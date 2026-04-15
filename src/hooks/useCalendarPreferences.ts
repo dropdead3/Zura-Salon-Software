@@ -54,7 +54,7 @@ export function useCalendarPreferences() {
         return newPrefs as CalendarPreferences;
       }
       
-      return data as CalendarPreferences;
+      return data as unknown as CalendarPreferences;
     },
   });
 
@@ -68,7 +68,7 @@ export function useCalendarPreferences() {
         .single();
       
       if (error) throw error;
-      return data as CalendarPreferences;
+      return data as unknown as CalendarPreferences;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['calendar-preferences', user?.id], data);

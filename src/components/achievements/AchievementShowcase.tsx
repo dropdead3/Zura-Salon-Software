@@ -48,7 +48,7 @@ export function AchievementShowcase({
         .eq('is_active', true)
         .order('category');
       if (error) throw error;
-      return data as Achievement[];
+      return data as unknown as Achievement[];
     },
   });
 
@@ -61,7 +61,7 @@ export function AchievementShowcase({
         .select('id, achievement_id, earned_at')
         .eq('user_id', userId);
       if (error) throw error;
-      return data as UserAchievement[];
+      return data as unknown as UserAchievement[];
     },
     enabled: !!userId,
   });

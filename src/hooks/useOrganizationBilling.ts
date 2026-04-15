@@ -95,7 +95,7 @@ export function useSubscriptionPlans() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      return data as SubscriptionPlan[];
+      return data as unknown as SubscriptionPlan[];
     },
   });
 }
@@ -113,7 +113,7 @@ export function useOrganizationBilling(organizationId: string | undefined) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as OrganizationBilling | null;
+      return data as unknown as OrganizationBilling | null;
     },
     enabled: !!organizationId,
   });
@@ -131,7 +131,7 @@ export function useCreateOrganizationBilling() {
         .single();
 
       if (error) throw error;
-      return data as OrganizationBilling;
+      return data as unknown as OrganizationBilling;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['organization-billing', data.organization_id] });
@@ -191,7 +191,7 @@ export function useUpsertOrganizationBilling() {
         .single();
 
       if (error) throw error;
-      return data as OrganizationBilling;
+      return data as unknown as OrganizationBilling;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['organization-billing', data.organization_id] });

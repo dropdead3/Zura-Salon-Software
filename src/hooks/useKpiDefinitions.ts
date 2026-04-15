@@ -34,7 +34,7 @@ export function useKpiDefinitions() {
         .order('metric_key');
 
       if (error) throw error;
-      return data as KpiDefinition[];
+      return data as unknown as KpiDefinition[];
     },
     enabled: !!orgId,
   });
@@ -67,7 +67,7 @@ export function useCreateKpiDefinition() {
         .single();
 
       if (error) throw error;
-      return data as KpiDefinition;
+      return data as unknown as KpiDefinition;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kpi-definitions', orgId] });
@@ -97,7 +97,7 @@ export function useUpdateKpiDefinition() {
         .single();
 
       if (error) throw error;
-      return data as KpiDefinition;
+      return data as unknown as KpiDefinition;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kpi-definitions', orgId] });

@@ -83,7 +83,7 @@ export function useServiceEmailFlows() {
         .order('name');
 
       if (error) throw error;
-      return data as ServiceEmailFlow[];
+      return data as unknown as ServiceEmailFlow[];
     },
     enabled: !!orgId,
   });
@@ -101,7 +101,7 @@ export function useServiceEmailFlow(flowId: string | null) {
         .single();
 
       if (error) throw error;
-      return data as ServiceEmailFlow;
+      return data as unknown as ServiceEmailFlow;
     },
     enabled: !!flowId,
   });
@@ -119,7 +119,7 @@ export function useServiceEmailFlowSteps(flowId: string | null) {
         .order('step_order');
 
       if (error) throw error;
-      return data as ServiceEmailFlowStep[];
+      return data as unknown as ServiceEmailFlowStep[];
     },
     enabled: !!flowId,
   });
@@ -301,7 +301,7 @@ export function useStepOverrides(stepId: string | null) {
         .select('*')
         .eq('step_id', stepId);
       if (error) throw error;
-      return data as ServiceEmailFlowStepOverride[];
+      return data as unknown as ServiceEmailFlowStepOverride[];
     },
     enabled: !!stepId,
   });
@@ -374,7 +374,7 @@ export function useReminderOverrides(configId: string | null) {
         .select('*')
         .eq('config_id', configId);
       if (error) throw error;
-      return data as AppointmentReminderOverride[];
+      return data as unknown as AppointmentReminderOverride[];
     },
     enabled: !!configId,
   });
@@ -474,7 +474,7 @@ export function useServiceEmailQueue(filters?: { status?: string; limit?: number
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as ServiceEmailQueueItem[];
+      return data as unknown as ServiceEmailQueueItem[];
     },
     enabled: !!orgId,
     staleTime: 120000, // Config data, no frequent polling needed
@@ -514,7 +514,7 @@ export function useAppointmentRemindersConfig() {
         .order('reminder_type');
 
       if (error) throw error;
-      return data as AppointmentReminderConfig[];
+      return data as unknown as AppointmentReminderConfig[];
     },
     enabled: !!orgId,
   });

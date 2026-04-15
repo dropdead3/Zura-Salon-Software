@@ -46,7 +46,7 @@ export function useTrialStatus(): TrialStatus {
         .single();
       
       if (error) throw error;
-      return data as OrgTrialFields;
+      return data as unknown as OrgTrialFields;
     },
     enabled: !!orgId,
   });

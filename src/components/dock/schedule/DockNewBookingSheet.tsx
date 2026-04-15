@@ -191,7 +191,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
         .eq('user_id', staff.userId)
         .eq('is_active', true)
         .single();
-      return data;
+      return data as any;
     },
     enabled: !isDemoMode,
   });
@@ -271,7 +271,7 @@ export function DockNewBookingSheet({ open, onClose, staff, locationId, staffFil
       }
 
       const { data } = await query;
-      return (data || []) as PhorestClient[];
+      return (data || []) as unknown as PhorestClient[];
     },
     enabled: clientSearch.length >= 2,
   });

@@ -120,7 +120,7 @@ export function NewBookingSheet({
       }
       
       const { data } = await query;
-      return data as PhorestClient[];
+      return data as unknown as PhorestClient[];
     },
   });
 
@@ -140,7 +140,7 @@ export function NewBookingSheet({
           )
         `)
         .eq('is_active', true);
-      return data || [];
+      return (data || []) as any[];
     },
   });
 

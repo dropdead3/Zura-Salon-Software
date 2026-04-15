@@ -54,7 +54,7 @@ export function usePointsRules() {
         return [];
       }
 
-      return data as PointsRule[];
+      return data as unknown as PointsRule[];
     },
   });
 }

@@ -48,7 +48,7 @@ export function useBillingHistory(organizationId: string | undefined) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as BillingChange[];
+      return data as unknown as BillingChange[];
     },
     enabled: !!organizationId,
   });
@@ -71,7 +71,7 @@ export function useCreateBillingChange() {
         .single();
 
       if (error) throw error;
-      return data as BillingChange;
+      return data as unknown as BillingChange;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['billing-history', data.organization_id] });

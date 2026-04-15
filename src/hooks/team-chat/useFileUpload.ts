@@ -72,7 +72,7 @@ export function useFileUpload() {
         .single();
 
       if (error) throw error;
-      return data as UploadedFile;
+      return data as unknown as UploadedFile;
     },
     onError: (error) => {
       console.error('Upload failed:', error);

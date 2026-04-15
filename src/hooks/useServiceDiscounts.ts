@@ -37,7 +37,7 @@ export function useServiceDiscounts(organizationId?: string) {
         .eq('organization_id', organizationId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as ServiceDiscount[];
+      return data as unknown as ServiceDiscount[];
     },
     enabled: !!organizationId,
   });

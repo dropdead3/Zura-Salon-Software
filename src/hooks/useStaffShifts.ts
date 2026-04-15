@@ -133,7 +133,7 @@ export function useStaffShifts(startDate: string | null, endDate: string | null)
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as StaffShift[];
+      return data as unknown as StaffShift[];
     },
     enabled: !!orgId && !!startDate,
   });

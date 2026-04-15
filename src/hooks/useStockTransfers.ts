@@ -38,7 +38,7 @@ export function useStockTransfers(filters?: { status?: string }) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as StockTransfer[];
+      return data as unknown as StockTransfer[];
     },
     enabled: !!orgId,
   });

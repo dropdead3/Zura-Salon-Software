@@ -29,7 +29,7 @@ export function useFormTemplates() {
         .order('name');
       
       if (error) throw error;
-      return data as FormTemplate[];
+      return data as unknown as FormTemplate[];
     },
   });
 }
@@ -45,7 +45,7 @@ export function useActiveFormTemplates() {
         .order('name');
       
       if (error) throw error;
-      return data as FormTemplate[];
+      return data as unknown as FormTemplate[];
     },
   });
 }
@@ -62,7 +62,7 @@ export function useFormTemplatesByType(type: FormTemplate['form_type']) {
         .order('name');
       
       if (error) throw error;
-      return data as FormTemplate[];
+      return data as unknown as FormTemplate[];
     },
   });
 }
@@ -79,7 +79,7 @@ export function useCreateFormTemplate() {
         .single();
       
       if (error) throw error;
-      return data as FormTemplate;
+      return data as unknown as FormTemplate;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['form-templates'] });
@@ -104,7 +104,7 @@ export function useUpdateFormTemplate() {
         .single();
       
       if (error) throw error;
-      return data as FormTemplate;
+      return data as unknown as FormTemplate;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['form-templates'] });

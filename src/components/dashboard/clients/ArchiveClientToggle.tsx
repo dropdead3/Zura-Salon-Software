@@ -36,16 +36,24 @@ export function ArchiveClientToggle({
 
   const archiveMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from('phorest_clients')
-        .update({
-          is_archived: !isArchived,
-          archived_at: !isArchived ? new Date().toISOString() : null,
-          archived_by: !isArchived ? user?.id : null,
-        } as any)
+      const updatePayload = {
+        is_archived: !isArchived,
+        archived_at: !isArchived ? new Date().toISOString() : null,
+        archived_by: !isArchived ? user?.id : null,
+      };
+      // Try clients table first (native), then phorest_clients as fallback
+      const { error: nativeError } = await supabase
+        .from('clients')
+        .update(updatePayload as any)
         .eq('id', clientId);
       
-      if (error) throw error;
+      if (nativeError) {
+        const { error } = await supabase
+          .from('phorest_clients')
+          .update(updatePayload as any)
+          .eq('id', clientId);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-directory'] });

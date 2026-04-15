@@ -49,7 +49,7 @@ export function useFeatureCatalog() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as FeatureCatalogItem[];
+      return data as unknown as FeatureCatalogItem[];
     },
   });
 }

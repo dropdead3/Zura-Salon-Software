@@ -41,7 +41,7 @@ export function useRoleTemplates() {
         .order('display_name', { ascending: true });
 
       if (error) throw error;
-      return data as RoleTemplate[];
+      return data as unknown as RoleTemplate[];
     },
   });
 }

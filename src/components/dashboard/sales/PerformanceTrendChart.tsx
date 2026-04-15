@@ -68,7 +68,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         .select('phorest_staff_id')
         .eq('user_id', userId)
         .eq('is_active', true);
-      const phorestStaffIds = staffMappings?.map(m => m.phorest_staff_id) || [];
+      const phorestStaffIds = (staffMappings as any[])?.map((m: any) => m.phorest_staff_id) || [];
 
       // Fetch locations for mapping
       const { data: locations } = await supabase

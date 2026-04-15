@@ -34,7 +34,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
           .eq('is_redo', true)
           .order('appointment_date', { ascending: false })
           .limit(50);
-        return data || [];
+        (data || []) as any[];
       }
 
       const { data } = await supabase

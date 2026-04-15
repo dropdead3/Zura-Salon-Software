@@ -90,7 +90,7 @@ export function usePhorestSyncLogs() {
         .limit(50);
       
       if (error) throw error;
-      return data as PhorestSyncLog[];
+      return data as unknown as PhorestSyncLog[];
     },
   });
 }

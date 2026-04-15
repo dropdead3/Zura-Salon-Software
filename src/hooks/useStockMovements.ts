@@ -31,7 +31,7 @@ export function useStockMovements(productId: string | null, limit = 20) {
         .limit(limit);
 
       if (error) throw error;
-      return data as StockMovement[];
+      return data as unknown as StockMovement[];
     },
     enabled: !!orgId && !!productId,
     staleTime: 30_000,

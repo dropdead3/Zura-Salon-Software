@@ -106,7 +106,7 @@ export function useServiceEfficiency(
         .from('v_all_services' as any)
         .select('name, category, duration_minutes, price');
       if (error) throw error;
-      return data || [];
+      (data || []) as any[];
     },
   });
 

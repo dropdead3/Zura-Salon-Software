@@ -49,7 +49,7 @@ export function useMeetingTemplates() {
         .order('name');
 
       if (error) throw error;
-      return data as MeetingTemplate[];
+      return data as unknown as MeetingTemplate[];
     },
     enabled: !!orgId,
   });

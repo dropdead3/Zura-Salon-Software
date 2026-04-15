@@ -54,7 +54,7 @@ export function useLevelPromotionCriteria() {
         .select('*')
         .eq('organization_id', orgId!);
       if (error) throw error;
-      return data as LevelPromotionCriteria[];
+      return data as unknown as LevelPromotionCriteria[];
     },
     enabled: !!orgId,
   });
@@ -74,7 +74,7 @@ export function useLevelPromotionCriteriaForLevel(stylistLevelId: string | undef
         .eq('stylist_level_id', stylistLevelId!)
         .maybeSingle();
       if (error) throw error;
-      return data as LevelPromotionCriteria | null;
+      return data as unknown as LevelPromotionCriteria | null;
     },
     enabled: !!orgId && !!stylistLevelId,
     refetchOnMount: 'always',

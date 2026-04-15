@@ -57,7 +57,7 @@ export function useZuraPayPayouts(orgId: string | undefined, locationId?: string
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as ZuraPayPayoutsData;
+      return data as unknown as ZuraPayPayoutsData;
     },
     enabled: !!orgId,
     staleTime: 60000,
@@ -79,7 +79,7 @@ export function useLoadMorePayouts(orgId: string | undefined, locationId?: strin
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as ZuraPayPayoutsData;
+      return data as unknown as ZuraPayPayoutsData;
     },
     onSuccess: (newData) => {
       queryClient.setQueryData<ZuraPayPayoutsData>(

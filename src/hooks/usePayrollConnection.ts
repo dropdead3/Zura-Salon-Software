@@ -50,7 +50,7 @@ export function usePayrollConnection() {
         .maybeSingle();
       
       if (error) throw error;
-      return data as PayrollConnection | null;
+      return data as unknown as PayrollConnection | null;
     },
     enabled: !!organizationId,
   });

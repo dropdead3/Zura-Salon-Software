@@ -53,7 +53,7 @@ export function useServiceCommunicationFlows(serviceId?: string) {
         .order('trigger_type');
 
       if (error) throw error;
-      return data as ServiceCommunicationFlow[];
+      return data as unknown as ServiceCommunicationFlow[];
     },
     enabled: !!serviceId,
   });
@@ -74,7 +74,7 @@ export function useAllServiceCommunicationFlows() {
         .order('service_id');
 
       if (error) throw error;
-      return data as ServiceCommunicationFlow[];
+      return data as unknown as ServiceCommunicationFlow[];
     },
   });
 }
@@ -252,7 +252,7 @@ export function usePhorestServiceByName(serviceName: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data as any;
     },
     enabled: !!serviceName,
   });

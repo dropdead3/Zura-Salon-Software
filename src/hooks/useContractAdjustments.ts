@@ -35,7 +35,7 @@ export function useContractAdjustments(organizationId: string | undefined) {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as ContractAdjustment[];
+      return data as unknown as ContractAdjustment[];
     },
     enabled: !!organizationId,
   });

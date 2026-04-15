@@ -24,7 +24,7 @@ export function useProgramOutcomes() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as ProgramOutcome[];
+      return data as unknown as ProgramOutcome[];
     },
   });
 }

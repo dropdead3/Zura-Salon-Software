@@ -303,7 +303,7 @@ export function useCreateMenuItem() {
         .select()
         .single();
       if (error) throw error;
-      return data as MenuItem;
+      return data as unknown as MenuItem;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['website-menu', data.menu_id] });
@@ -324,7 +324,7 @@ export function useUpdateMenuItem() {
         .select()
         .single();
       if (error) throw error;
-      return data as MenuItem;
+      return data as unknown as MenuItem;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['website-menu', data.menu_id] });

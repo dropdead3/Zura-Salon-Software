@@ -55,7 +55,7 @@ export function useOrganizations() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Organization[];
+      return data as unknown as Organization[];
     },
   });
 }
@@ -72,7 +72,7 @@ export function useOrganization(id: string | undefined) {
         .single();
 
       if (error) throw error;
-      return data as Organization;
+      return data as unknown as Organization;
     },
     enabled: !!id,
   });
@@ -93,7 +93,7 @@ export function useOrganizationBySlug(slug: string | undefined) {
           .eq('slug', slug)
           .single();
         
-        if (!error && data) return data as Organization;
+        if (!error && data) return data as unknown as Organization;
       }
       
       // Fall back to public RPC (safe columns only, no credentials)
@@ -138,7 +138,7 @@ export function useCreateOrganization() {
         .single();
 
       if (error) throw error;
-      return data as Organization;
+      return data as unknown as Organization;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
@@ -172,7 +172,7 @@ export function useUpdateOrganization() {
         .single();
 
       if (error) throw error;
-      return data as Organization;
+      return data as unknown as Organization;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });

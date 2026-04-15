@@ -95,7 +95,7 @@ export function useClients(locationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Client[];
+      return data as unknown as Client[];
     },
   });
 }
@@ -111,7 +111,7 @@ export function useClient(clientId: string) {
         .single();
 
       if (error) throw error;
-      return data as Client;
+      return data as unknown as Client;
     },
     enabled: !!clientId,
   });
@@ -137,7 +137,7 @@ export function useServices(locationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Service[];
+      return data as unknown as Service[];
     },
   });
 }
@@ -190,7 +190,7 @@ export function useAppointments(options: {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Appointment[];
+      return data as unknown as Appointment[];
     },
   });
 }
@@ -335,7 +335,7 @@ export function useCreateClient() {
         .single();
 
       if (error) throw error;
-      return data as Client;
+      return data as unknown as Client;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -368,7 +368,7 @@ export function useUpdateClient() {
         .single();
 
       if (error) throw error;
-      return data as Client;
+      return data as unknown as Client;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -400,7 +400,7 @@ export function useCreateService() {
         .single();
 
       if (error) throw error;
-      return data as Service;
+      return data as unknown as Service;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
@@ -432,7 +432,7 @@ export function useUpdateService() {
         .single();
 
       if (error) throw error;
-      return data as Service;
+      return data as unknown as Service;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });

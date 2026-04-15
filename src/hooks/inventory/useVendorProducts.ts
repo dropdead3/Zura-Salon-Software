@@ -33,7 +33,7 @@ export function useVendorProducts(vendorId?: string) {
       if (vendorId) query = query.eq('vendor_id', vendorId);
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
-      return data as VendorProduct[];
+      return data as unknown as VendorProduct[];
     },
     enabled: !!orgId,
     staleTime: 2 * 60 * 1000,

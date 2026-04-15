@@ -26,7 +26,7 @@ export function useSEOGenerateContent() {
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as GenerateContentResult;
+      return data as unknown as GenerateContentResult;
     },
     onError: (err: Error) => {
       toast({

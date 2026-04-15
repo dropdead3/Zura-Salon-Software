@@ -82,7 +82,7 @@ export function useConnectZuraPay() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as ConnectResult;
+      return data as unknown as ConnectResult;
     },
     onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
@@ -126,7 +126,7 @@ export function useCreateLocationAccount() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as ConnectResult;
+      return data as unknown as ConnectResult;
     },
     onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
@@ -156,7 +156,7 @@ export function useVerifyZuraPayConnection() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as VerifyResult;
+      return data as unknown as VerifyResult;
     },
     onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });

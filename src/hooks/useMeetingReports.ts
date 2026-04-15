@@ -38,7 +38,7 @@ export function useMeetingReports(meetingId: string) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as MeetingReport[];
+      return data as unknown as MeetingReport[];
     },
     enabled: !!meetingId && !!user,
   });

@@ -171,7 +171,7 @@ export function usePendingApprovals() {
         })) as ShiftSwap[];
       }
 
-      return data as ShiftSwap[];
+      return data as unknown as ShiftSwap[];
     },
   });
 }

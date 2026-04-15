@@ -40,7 +40,7 @@ export function useTerminalHardwareSkus(country = 'US', enabled = true) {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as SkuResponse;
+      return data as unknown as SkuResponse;
     },
     enabled,
     staleTime: 10 * 60 * 1000, // 10 min — prices rarely change

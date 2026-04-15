@@ -108,7 +108,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
         .from('v_all_staff' as any)
         .select('phorest_staff_id, phorest_staff_name, user_id');
       if (error) throw error;
-      return data;
+      return data as any;
     },
     staleTime: 1000 * 60 * 10,
   });
@@ -121,7 +121,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
         .from('v_all_clients' as any)
         .select('phorest_client_id, first_name, last_name');
       if (error) throw error;
-      return data;
+      return data as any;
     },
     staleTime: 1000 * 60 * 10,
   });

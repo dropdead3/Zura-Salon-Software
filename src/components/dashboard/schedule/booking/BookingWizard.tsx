@@ -94,7 +94,7 @@ export function BookingWizard({
       }
 
       const { data } = await query;
-      return data as PhorestClient[];
+      return data as unknown as PhorestClient[];
     },
     enabled: !!user?.id,
   });
@@ -115,7 +115,7 @@ export function BookingWizard({
           )
         `)
         .eq('is_active', true);
-      return data || [];
+      (data || []) as any[];
     },
   });
 
