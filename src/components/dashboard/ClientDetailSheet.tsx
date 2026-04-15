@@ -76,7 +76,7 @@ import { toast } from 'sonner';
 
 interface Client {
   id: string;
-  phorest_client_id: string | null;
+  phorest_client_id?: string | null;
   name: string;
   first_name?: string | null;
   last_name?: string | null;

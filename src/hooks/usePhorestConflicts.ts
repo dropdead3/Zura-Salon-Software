@@ -94,7 +94,7 @@ export function usePhorestRequestConflicts(requests: AssistantRequest[]) {
         if (request.start_time < apt.end_time && request.end_time > apt.start_time) {
           conflictList.push({
             requestId: request.id,
-            appointmentId: apt.phorest_id,
+            appointmentId: apt.id || '',
             stylistUserId: request.stylist_id,
             date: request.request_date,
             requestStartTime: request.start_time,
