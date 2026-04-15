@@ -1,60 +1,76 @@
 
 
-## Fix: Scheduler Showing Wrong-Location Staff
+## Fix Scheduler: Role + Location Filtering
 
-### Root Cause
+### Problem 1: No role filter
+The staff query in `Schedule.tsx` (L311-315) fetches all active/approved `employee_profiles` at the selected location — including receptionists, admins, and super admins. Only service providers (stylists and stylist assistants) should appear as calendar columns.
 
-The `v_all_staff` view does **not** expose the `location_ids` column from `employee_profiles`. The current query in `Schedule.tsx` (L318) uses:
+### Problem 2: Hayleigh's location assignment
+Hayleigh Hoy's `location_id` is `north-mesa` in the database. If she's moved to Val Vista Lakes, we need to update this. *(Pending your confirmation on correct location.)*
 
-```
-.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`)
-```
+### Problem 3: Appointment fallback bypasses filtering
+The `allStylists` useMemo (L342-375) merges staff from appointments into the column list without checking their role. A receptionist who somehow has an appointment assigned would get a column.
 
-Since `location_ids` doesn't exist on the view, the filter silently fails — Supabase ignores the invalid column reference in the `.or()`, returning **all active staff** regardless of location.
+### Problem 4: No org scoping
+The query doesn't filter by `organization_id`, which violates tenant isolation rules.
 
-### Fix — Two changes
+---
 
-#### 1. Update `v_all_staff` view to include `location_ids`
+### Fix 1 — Add role-based filtering to staff query
 
-Add `ep.location_ids` to both sides of the UNION in the view definition. This makes the multi-location array available for filtering.
+**File**: `src/pages/dashboard/Schedule.tsx` (L306-337)
 
-#### 2. Query `employee_profiles` directly instead of the view (preferred)
+After fetching `employee_profiles`, join against `user_roles` to restrict to `stylist` and `stylist_assistant` only:
 
-Since the scheduler only needs Zura-native profile data (`user_id`, `display_name`, `full_name`, `photo_url`, `location_id`, `location_ids`), we can query `employee_profiles` directly — avoiding the view entirely. This is simpler and already Phorest-decoupled.
-
-**Schedule.tsx L311-318** — Replace:
 ```typescript
-let query = supabase
-  .from('v_all_staff' as any)
-  .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
-  .eq('is_active', true)
-  .eq('show_on_calendar', true);
+const { data: locationStylists = [] } = useQuery({
+  queryKey: ['schedule-stylists', selectedLocation, orgId],
+  queryFn: async () => {
+    // 1. Get service-provider user_ids from user_roles
+    const { data: roleRows } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .in('role', ['stylist', 'stylist_assistant']);
+    
+    const serviceProviderIds = (roleRows || []).map(r => r.user_id);
+    if (serviceProviderIds.length === 0) return [];
 
-if (selectedLocation) {
-  query = query.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`);
-}
+    // 2. Fetch profiles for those users, filtered by location + org
+    let query = supabase
+      .from('employee_profiles')
+      .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
+      .eq('is_active', true)
+      .eq('is_approved', true)
+      .in('user_id', serviceProviderIds);
+
+    if (orgId) query = query.eq('organization_id', orgId);
+    if (selectedLocation) {
+      query = query.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`);
+    }
+
+    const { data } = await query;
+    // Deduplicate by user_id (unchanged)
+    ...
+  },
+});
 ```
 
-With:
-```typescript
-let query = supabase
-  .from('employee_profiles')
-  .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
-  .eq('is_active', true)
-  .eq('is_approved', true);
+### Fix 2 — Guard the appointment fallback
 
-if (selectedLocation) {
-  query = query.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`);
-}
+In the `allStylists` useMemo (L342-375), only add fallback staff if they're already in the `serviceProviderIds` set (passed from the query). Or simpler: skip the fallback entirely for non-location-filtered appointments (since `appointments` is already location-filtered, any valid stylist should already be in the staff list).
+
+### Fix 3 — Update Hayleigh's location (if confirmed)
+
+DB data update via insert tool:
+```sql
+UPDATE employee_profiles 
+SET location_id = 'val-vista-lakes'
+WHERE user_id = '5fc4aa39-8076-4775-bebf-e98e46776925';
 ```
-
-This works because `employee_profiles` **does** have `location_ids`, so the `.or()` filter will correctly match both primary and multi-location staff.
-
-The `show_on_calendar` filter is replaced with `is_approved` since that column lives on `employee_profiles`, not the view. If `show_on_calendar` control is needed, we can add it to `employee_profiles` later.
 
 ### Scope
-- **1 file changed**: `Schedule.tsx` (~8 lines)
-- **No migration needed**
-- **No data changes**
-- Fully Phorest-decoupled (queries native table directly)
+- **1 file changed**: `Schedule.tsx` (~30 lines)
+- **1 data update**: Hayleigh's location (pending confirmation)
+- No migration needed
+- Fully Phorest-decoupled
 
