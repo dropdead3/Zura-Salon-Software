@@ -109,7 +109,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       )];
 
       if (uniqueStaffIds.length === 0) {
-        return { inSessionCount, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
+        return { inSessionCount, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [], dayHadAppointments: true, firstAppointmentTime: null };
       }
 
       // Resolve staff to user profiles via phorest_staff_mapping (include phorest_staff_name)
@@ -269,6 +269,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         stylists,
         stylistDetails,
         dayHadAppointments: true,
+        firstAppointmentTime: null,
       };
     },
     refetchInterval: 60_000,
@@ -282,6 +283,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
     stylists: data?.stylists ?? [],
     stylistDetails: data?.stylistDetails ?? [],
     dayHadAppointments: data?.dayHadAppointments ?? false,
+    firstAppointmentTime: data?.firstAppointmentTime ?? null,
     isLoading,
   };
 }
