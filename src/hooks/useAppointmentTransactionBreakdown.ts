@@ -86,13 +86,14 @@ export function useAppointmentTransactionBreakdown(
         .eq('transaction_date', appointmentDate);
 
       if (error) throw error;
-      if (!rawItems || rawItems.length === 0) return emptyBreakdown();
+      const allItems = (rawItems as any[] ?? []) as any[];
+      if (!allItems || allItems.length === 0) return emptyBreakdown();
 
       // Deduplicate tip: take MAX across all items
-      const tip = Math.max(0, ...rawItems.map((r) => Number(r.tip_amount) || 0));
+      const tip = Math.max(0, ...allItems.map((r: any) => Number(r.tip_amount) || 0));
 
       // Map to structured items
-      const items: TransactionLineItem[] = rawItems.map((r) => ({
+      const items: TransactionLineItem[] = allItems.map((r: any) => ({
         id: r.id,
         transactionId: r.transaction_id,
         itemName: r.item_name,

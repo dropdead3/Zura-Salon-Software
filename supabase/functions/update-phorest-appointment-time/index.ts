@@ -2,15 +2,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const PHOREST_BASE_URL = "https://api-gateway-eu.phorest.com/third-party-api-server/api/business";
 
 // ── GLOBAL SAFETY KILL SWITCH ──
-// When true, ALL Phorest write-back calls are blocked at the code level,
-// regardless of the organization's phorest_write_enabled setting.
-// Change to false and redeploy when ready to enable Phorest writes.
 const PHOREST_WRITES_GLOBALLY_DISABLED = true;
 
 interface RescheduleRequest {
@@ -74,15 +71,37 @@ Deno.serve(async (req) => {
       throw new Error("Missing required fields: appointment_id, new_date, new_time");
     }
 
-    // Fetch the current appointment from local DB
-    const { data: localApt, error: fetchError } = await supabase
-      .from("phorest_appointments")
+    // ── Source-aware table routing ──
+    // Try native appointments table first, fall back to phorest_appointments
+    let targetTable: "appointments" | "phorest_appointments" = "phorest_appointments";
+    let localApt: any = null;
+
+    // 1) Try native appointments table
+    const { data: nativeApt, error: nativeErr } = await supabase
+      .from("appointments")
       .select("*")
       .eq("id", appointment_id)
-      .single();
+      .maybeSingle();
 
-    if (fetchError || !localApt) {
-      throw new Error("Appointment not found");
+    if (nativeApt) {
+      targetTable = "appointments";
+      localApt = nativeApt;
+      console.log(`Found appointment in native 'appointments' table`);
+    }
+
+    // 2) Fall back to phorest_appointments
+    if (!localApt) {
+      const { data: phorestApt, error: fetchError } = await supabase
+        .from("phorest_appointments")
+        .select("*")
+        .eq("id", appointment_id)
+        .single();
+
+      if (fetchError || !phorestApt) {
+        throw new Error("Appointment not found in either table");
+      }
+      localApt = phorestApt;
+      console.log(`Found appointment in 'phorest_appointments' table`);
     }
 
     // Calculate new end time based on original duration
@@ -106,20 +125,33 @@ Deno.serve(async (req) => {
       rescheduled_at: new Date().toISOString(),
     };
 
-    // If staff is changing, look up the new phorest_staff_id
-    let newPhorestStaffId = localApt.phorest_staff_id;
-    if (new_staff_id && new_staff_id !== localApt.stylist_user_id) {
-      const { data: staffMapping } = await supabase
-        .from("phorest_staff_mapping")
-        .select("phorest_staff_id")
-        .eq("user_id", new_staff_id)
-        .eq("is_active", true)
-        .single();
+    // If staff is changing, resolve the new staff
+    if (new_staff_id && new_staff_id !== (localApt.stylist_user_id || localApt.staff_user_id)) {
+      if (targetTable === "appointments") {
+        // Native table uses staff_user_id directly
+        updatePayload.staff_user_id = new_staff_id;
+        // Also update staff_name
+        const { data: staffProfile } = await supabase
+          .from("employee_profiles")
+          .select("display_name")
+          .eq("user_id", new_staff_id)
+          .maybeSingle();
+        if (staffProfile?.display_name) {
+          updatePayload.staff_name = staffProfile.display_name;
+        }
+      } else {
+        // Phorest table — look up phorest_staff_id from mapping
+        const { data: staffMapping } = await supabase
+          .from("phorest_staff_mapping")
+          .select("phorest_staff_id")
+          .eq("user_id", new_staff_id)
+          .eq("is_active", true)
+          .single();
 
-      if (staffMapping) {
-        newPhorestStaffId = staffMapping.phorest_staff_id;
-        updatePayload.stylist_user_id = new_staff_id;
-        updatePayload.phorest_staff_id = newPhorestStaffId;
+        if (staffMapping) {
+          updatePayload.stylist_user_id = new_staff_id;
+          updatePayload.phorest_staff_id = staffMapping.phorest_staff_id;
+        }
       }
     }
 
@@ -143,19 +175,19 @@ Deno.serve(async (req) => {
       console.warn("GLOBAL SAFETY: Phorest writes are disabled at code level");
     }
 
-    // Try to update in Phorest if we have the phorest_appointment_id and write-back is enabled
+    // Try to update in Phorest if write-back is enabled
     let phorestUpdated = false;
     if (phorestWriteEnabled && localApt.phorest_id) {
       try {
         await phorestRequest(
-          `/appointment/${localApt.phorest_appointment_id}`,
+          `/appointment/${localApt.phorest_id}`,
           PHOREST_BUSINESS_ID,
           PHOREST_USERNAME,
           PHOREST_PASSWORD,
           "PATCH",
           {
             startTime: `${new_date}T${new_time}:00`,
-            staffId: newPhorestStaffId,
+            staffId: localApt.phorest_staff_id,
           }
         );
         phorestUpdated = true;
@@ -164,12 +196,13 @@ Deno.serve(async (req) => {
         console.error("Failed to update Phorest, updating local only:", phorestError);
       }
     } else if (!phorestWriteEnabled) {
-      console.log("Phorest write-back disabled for this organization, local-only update");
+      console.log("Phorest write-back disabled, local-only update");
     }
 
-    // Update local database
+    // Update local database (source-aware table)
+    console.log(`Updating ${targetTable} id=${appointment_id}`, JSON.stringify(updatePayload));
     const { error: updateError } = await supabase
-      .from("phorest_appointments")
+      .from(targetTable)
       .update(updatePayload)
       .eq("id", appointment_id);
 
@@ -177,11 +210,37 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to update local appointment: ${updateError.message}`);
     }
 
+    // Cross-table sync: if we updated phorest_appointments, also sync to appointments via external_id
+    if (targetTable === "phorest_appointments" && localApt.phorest_id) {
+      try {
+        await supabase
+          .from("appointments")
+          .update({
+            appointment_date: new_date,
+            start_time: new_time,
+            end_time: new_end_time,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("external_id", localApt.phorest_id);
+      } catch (_) { /* non-fatal */ }
+    } else if (targetTable === "appointments" && localApt.external_id) {
+      try {
+        await supabase
+          .from("phorest_appointments")
+          .update({
+            appointment_date: new_date,
+            start_time: new_time,
+            end_time: new_end_time,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("phorest_id", localApt.external_id);
+      } catch (_) { /* non-fatal */ }
+    }
+
     // Write audit log entry for reschedule
     try {
-      // Resolve org_id from appointment's location
-      let auditOrgId: string | null = null;
-      if (localApt.location_id) {
+      let auditOrgId: string | null = localApt.organization_id || null;
+      if (!auditOrgId && localApt.location_id) {
         const { data: locData } = await supabase
           .from("locations")
           .select("organization_id")

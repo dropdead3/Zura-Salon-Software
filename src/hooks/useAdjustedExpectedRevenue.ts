@@ -51,13 +51,13 @@ export function useAdjustedExpectedRevenue(
       const { data: appointments, error: apptError } = await apptQuery;
       if (apptError) throw apptError;
 
-      const allAppts = appointments ?? [];
+      const allAppts = (appointments as any[] ?? []) as any[];
 
       // Helper: get price minus tips
-      const getPriceExTips = (a: typeof allAppts[0]) => (Number(a.total_price) || 0) - (Number(a.tip_amount) || 0);
+      const getPriceExTips = (a: any) => (Number(a.total_price) || 0) - (Number(a.tip_amount) || 0);
 
       // Helper: get expected price (discount-aware, tip-excluded) for an appointment
-      const getExpectedPrice = (a: typeof allAppts[0]) => {
+      const getExpectedPrice = (a: any) => {
         const expected = Number(a.expected_price) || 0;
         if (expected > 0) return expected - (Number(a.tip_amount) || 0);
         return getPriceExTips(a);
