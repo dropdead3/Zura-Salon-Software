@@ -550,7 +550,8 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       </AnimatePresence>
 
       <main className={cn(
-        "flex-1 flex flex-col min-h-screen transition-[margin] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "flex-1 flex flex-col transition-[margin] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        hideFooter ? "min-h-0" : "min-h-screen",
         !hideSidebar && (sidebarCollapsed ? "lg:ml-24" : "lg:ml-[340px]")
       )}>
         {/* Mobile hamburger header */}
@@ -599,7 +600,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         <IncidentBanner />
         <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />
         
-        <div className="flex-1 p-4 lg:px-8 lg:pb-8 lg:pt-4">
+        <div className={cn("flex-1 p-4 lg:px-8 lg:pb-8 lg:pt-4", hideFooter && "min-h-0 overflow-hidden")}>
           {children}
         </div>
       </main>
