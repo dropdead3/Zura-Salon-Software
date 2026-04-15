@@ -566,12 +566,15 @@ export function AppointmentCardContent({
     if (useCategoryColor) {
       const boostedBg = boostPaleCategoryColor(catColor.bg);
       const boostedText = boostedBg !== catColor.bg ? getContrastingTextColor(boostedBg) : catColor.text;
+      const lightTokens = deriveLightModeColor(boostedBg);
       return {
         backgroundColor: boostedBg,
         color: boostedText,
-        borderLeftColor: boostedBg,
-        borderWidth: '0 0 0 4px',
+        borderColor: lightTokens.stroke,
+        borderWidth: '1px',
         borderStyle: 'solid' as const,
+        borderLeftColor: lightTokens.stroke,
+        borderLeftWidth: '4px',
         boxShadow: 'none',
         opacity: 1,
         backdropFilter: 'none',
