@@ -453,7 +453,7 @@ export function DayView({
           </div>
         )}
         {/* Calendar Grid */}
-        <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto">
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           <div>
             {/* Stylist Headers - frosted glass sticky header */}
             <div className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
