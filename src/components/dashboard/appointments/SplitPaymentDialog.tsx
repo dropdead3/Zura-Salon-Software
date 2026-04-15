@@ -81,6 +81,7 @@ export function SplitPaymentDialog({
             organization_id: organizationId,
             appointment_id: appointmentId,
             amount_cents: afterpayAmountCents,
+            original_amount_cents: totalAmountCents,
             client_email: clientEmail,
             client_phone: clientPhone,
             client_name: clientName,

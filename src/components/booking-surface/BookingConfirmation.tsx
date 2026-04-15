@@ -183,6 +183,14 @@ export function BookingConfirmation({
           <AfterpayPromoBadge theme={theme} amount={depositAmount} />
         </div>
       )}
+      {/* Afterpay note when surcharge hides the badge */}
+      {afterpayEnabled && afterpaySurchargeRate != null && afterpaySurchargeRate > 0 && (
+        <div className="mb-4">
+          <p className="text-xs" style={{ color: theme.mutedTextColor }}>
+            Afterpay is available at checkout via payment link after your appointment.
+          </p>
+        </div>
+      )}
 
       {/* Payment Form (shown after appointment creation) */}
       {showPaymentForm && paymentClientSecret && paymentIntentType && stripePublishableKey && stripeConnectedAccountId && onPaymentComplete ? (

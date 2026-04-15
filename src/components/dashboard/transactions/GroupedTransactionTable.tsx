@@ -87,7 +87,7 @@ export function GroupedTransactionTable({
         facebook: reviewSettings?.facebookReviewUrl || '',
       },
     };
-    printReceipt(txn, formatCurrency, orgName, receiptConfig, businessInfo);
+    printReceipt(txn, formatCurrency, orgName, receiptConfig, businessInfo, undefined, txn.afterpaySurchargeAmount);
   }, [business, socialLinks, reviewSettings, orgName, receiptConfig, formatCurrency]);
 
   const handleSort = (field: SortField) => {
