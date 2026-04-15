@@ -524,7 +524,7 @@ const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
   no_show: [],
 };
 
-const LIFECYCLE_STEPS: AppointmentStatus[] = ['booked', 'confirmed', 'checked_in', 'completed'];
+const LIFECYCLE_STEPS: AppointmentStatus[] = ['unconfirmed', 'confirmed', 'checked_in', 'completed'];
 
 function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':');

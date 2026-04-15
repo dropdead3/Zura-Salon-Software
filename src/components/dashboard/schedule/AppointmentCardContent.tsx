@@ -515,7 +515,7 @@ export function AppointmentCardContent({
   }, [appointment.service_category, appointment.service_name, serviceLookup, categoryColors]);
 
   const catColor = getCategoryColor(resolvedCategory, categoryColors);
-  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked';
+  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked' || appointment.status === 'unconfirmed';
   const isConsultation = isConsultationCategory(resolvedCategory);
 
   const storedColorHex = categoryColors[resolvedCategory?.toLowerCase() || '']?.bg || '';
