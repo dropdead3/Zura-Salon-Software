@@ -98,6 +98,52 @@ interface SettingsCategoryDetailProps {
 
 // ---- Inline sub-components ----
 
+function RegionalSettingsCard() {
+  const { timezone } = useOrgDefaults();
+  const [selected, setSelected] = useState(timezone);
+  const updateTimezone = useUpdateTimezone();
+  const isDirty = selected !== timezone;
+
+  // Sync if org data loads after mount
+  useEffect(() => { setSelected(timezone); }, [timezone]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Globe className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-lg">REGIONAL</CardTitle>
+        </div>
+        <CardDescription>Set your organization's timezone. This affects the scheduler, reports, and all time-based displays.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Timezone</Label>
+          <Select value={selected} onValueChange={setSelected}>
+            <SelectTrigger><SelectValue placeholder="Select timezone" /></SelectTrigger>
+            <SelectContent>
+              {TIMEZONES.map(tz => (
+                <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {isDirty && (
+          <Button
+            size="sm"
+            onClick={() => updateTimezone.mutate(selected)}
+            disabled={updateTimezone.isPending}
+            className="font-sans"
+          >
+            {updateTimezone.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            Save Timezone
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function RevenueDisplayModeCard() {
   const { revenueMode, setRevenueMode, isLoading } = useRevenueDisplay();
   return (
