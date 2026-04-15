@@ -304,7 +304,8 @@ export default function Schedule() {
   }, [selectedLocationData, businessSettings]);
 
   // Fetch stylists for DayView - flat select from v_all_staff (no FK joins on views)
-  const { data: allStylists = [] } = useQuery({
+  // Uses .or() to include staff whose primary location_id matches OR whose location_ids array contains the selected location
+  const { data: locationStylists = [] } = useQuery({
     queryKey: ['schedule-stylists', selectedLocation],
     queryFn: async () => {
       let query = supabase
@@ -314,7 +315,7 @@ export default function Schedule() {
         .eq('show_on_calendar', true);
 
       if (selectedLocation) {
-        query = query.eq('location_id', selectedLocation);
+        query = query.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`);
       }
 
       const { data } = await query;
@@ -335,6 +336,43 @@ export default function Schedule() {
       return Array.from(unique.values());
     },
   });
+
+  // Appointment-based staff fallback: ensure every stylist with appointments gets a column,
+  // even if their location mapping is incomplete
+  const allStylists = useMemo(() => {
+    const staffMap = new Map(locationStylists.map((s: any) => [s.user_id, s]));
+
+    // Find stylist_user_ids from appointments not already in staff list
+    const missingIds = [...new Set(
+      allAppointments
+        .map((a: any) => a.stylist_user_id || a.staff_user_id)
+        .filter((id: string | null): id is string => !!id && !staffMap.has(id))
+    )];
+
+    // We can't do an async fetch inside useMemo, so just create placeholder entries.
+    // The names come from the appointment's staff_name field as fallback.
+    if (missingIds.length > 0) {
+      const appointmentsByStaff = new Map<string, any>();
+      allAppointments.forEach((a: any) => {
+        const sid = a.stylist_user_id || a.staff_user_id;
+        if (sid && !appointmentsByStaff.has(sid)) {
+          appointmentsByStaff.set(sid, a);
+        }
+      });
+
+      missingIds.forEach(id => {
+        const apt = appointmentsByStaff.get(id);
+        staffMap.set(id, {
+          user_id: id,
+          display_name: apt?.staff_name || null,
+          full_name: apt?.staff_name || 'Unknown',
+          photo_url: null,
+        });
+      });
+    }
+
+    return Array.from(staffMap.values());
+  }, [locationStylists, allAppointments]);
 
   // Filter stylists based on staff selection (for day view columns)
   const displayedStylists = selectedStaffIds.length === 0
