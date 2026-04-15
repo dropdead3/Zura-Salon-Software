@@ -232,7 +232,7 @@ export function useRevenueGapAnalysis(
             let q = supabase
               .from('v_all_transaction_items')
               .select('external_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
-              .in('phorest_client_id', chunk)
+              .in('external_client_id', chunk)
               .gte('transaction_date', dateFrom)
               .lte('transaction_date', dateTo)
               .in('item_type', ['service', 'sale_fee'])
