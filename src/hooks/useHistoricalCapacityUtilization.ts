@@ -139,7 +139,7 @@ export function useHistoricalCapacityUtilization(
     queryFn: async () => {
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('appointment_date, start_time, end_time, total_price, tip_amount, service_name, location_id, status')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
