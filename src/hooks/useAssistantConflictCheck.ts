@@ -39,7 +39,7 @@ export function useAssistantConflictCheck(
       if (error) throw error;
 
       // Fetch assistants separately since views don't support FK joins
-      const apptIds = (data || []).map(a => a.id).filter(Boolean) as string[];
+      const apptIds = ((data as any[] || []) as any[]).map((a: any) => a.id).filter(Boolean) as string[];
       let assistantMap: Record<string, { assistant_user_id: string }[]> = {};
       if (apptIds.length > 0) {
         const { data: assistants } = await supabase
@@ -65,7 +65,7 @@ export function useAssistantConflictCheck(
 
       if (tbError) console.warn('[ConflictCheck] Time blocks query failed:', tbError);
 
-      return { appointments: data, timeBlocks: timeBlocks || [], assistantMap };
+      return { appointments: (data as any[] || []) as any[], timeBlocks: timeBlocks || [], assistantMap };
     },
     enabled: enabled && !!appointmentDate && !!startTime && !!endTime && !!currentAppointmentId,
     staleTime: 30000,
