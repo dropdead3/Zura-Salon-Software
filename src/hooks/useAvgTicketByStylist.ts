@@ -56,8 +56,8 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
         offset += PAGE_SIZE;
       }
 
-      // Staff name lookup via centralized resolver
-      const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
+      // Staff name lookup via centralized resolver (handles both phorest_staff_id and user_id)
+      const staffIds = [...new Set(allItems.map(a => a.staff_user_id).filter(Boolean))];
       const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds);
 
       // Aggregate by stylist → category, using unique client visits for avg ticket
@@ -69,7 +69,7 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
       }> = {};
 
       allItems.forEach(item => {
-        const staffId = item.phorest_staff_id || 'unknown';
+        const staffId = item.staff_user_id || 'unknown';
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const itemType = (item.item_type || '').toLowerCase();
         const category = itemType === 'service'
@@ -83,7 +83,7 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
         stylistMap[staffId].count += 1;
 
         // Track unique client visits for avg ticket denominator
-        const visitKey = `${item.phorest_client_id || 'walk-in'}|${item.transaction_date}`;
+        const visitKey = `${item.external_client_id || 'walk-in'}|${item.transaction_date}`;
         stylistMap[staffId].clientVisits.add(visitKey);
 
         if (!stylistMap[staffId].categories[category]) {

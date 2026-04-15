@@ -61,8 +61,8 @@ export function useClientTransactionHistory(clientId: string | null) {
         };
       }
       
-      // Get staff names via centralized resolver
-      const staffIds = [...new Set(items.map(i => i.phorest_staff_id).filter(Boolean))];
+      // Get staff names via centralized resolver (handles both phorest_staff_id and user_id)
+      const staffIds = [...new Set(items.map(i => i.staff_user_id).filter(Boolean))];
       const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds as string[]);
       
       // Build transactions list
@@ -74,8 +74,8 @@ export function useClientTransactionHistory(clientId: string | null) {
         itemCategory: item.item_category,
         quantity: item.quantity || 1,
         totalAmount: Number(item.total_amount) || 0,
-        staffName: item.phorest_staff_id ? staffNameMap[item.phorest_staff_id] || null : null,
-        staffId: item.phorest_staff_id,
+        staffName: item.staff_user_id ? staffNameMap[item.staff_user_id] || null : null,
+        staffId: item.staff_user_id,
         branchName: item.branch_name,
       }));
       
@@ -98,10 +98,10 @@ export function useClientTransactionHistory(clientId: string | null) {
         
         visitDates.add(item.transaction_date);
         
-        if (item.phorest_staff_id) {
+        if (item.staff_user_id) {
           staffVisitCount.set(
-            item.phorest_staff_id, 
-            (staffVisitCount.get(item.phorest_staff_id) || 0) + 1
+            item.staff_user_id, 
+            (staffVisitCount.get(item.staff_user_id) || 0) + 1
           );
         }
       }
