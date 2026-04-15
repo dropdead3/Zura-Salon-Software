@@ -69,7 +69,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     queryFn: async () => {
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id, start_time')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -118,7 +118,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     queryKey: ['tips-drilldown-clients'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients')
         .select('phorest_client_id, first_name, last_name');
       if (error) throw error;
       return data;

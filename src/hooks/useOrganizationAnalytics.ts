@@ -178,7 +178,7 @@ export function useOrganizationAnalytics() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('location_id, transaction_date, total_amount, tax_amount, item_type')
           .gte('transaction_date', startDate)
           .range(from, from + pageSize - 1);

@@ -12,11 +12,11 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
     queryKey: ['transactions-by-hour', dateFrom, dateTo, locationId],
     queryFn: async () => {
       // Step 1: Get distinct POS client IDs for the date range
-      const txData = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) => {
+      const txData = await fetchAllBatched<{ external_client_id: string | null }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_client_id')
-          .not('phorest_client_id', 'is', null)
+          .from('v_all_transaction_items')
+          .select('external_client_id')
+          .not('external_client_id', 'is', null)
           .range(from, to);
         if (dateFrom) q = q.gte('transaction_date', dateFrom);
         if (dateTo) q = q.lte('transaction_date', dateTo);
@@ -26,7 +26,7 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
 
       const posClientIds = new Set<string>();
       txData.forEach(row => {
-        if (row.phorest_client_id) posClientIds.add(row.phorest_client_id);
+        if (row.external_client_id) posClientIds.add(row.external_client_id);
       });
 
       if (posClientIds.size === 0) {
@@ -40,7 +40,7 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
       // Step 2: Get earliest appointment start_time per POS client (for hour assignment)
       const aptData = await fetchAllBatched<{ phorest_client_id: string | null; start_time: string | null }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id, start_time')
           .not('phorest_client_id', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')

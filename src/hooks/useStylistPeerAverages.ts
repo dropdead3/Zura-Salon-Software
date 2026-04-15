@@ -84,9 +84,9 @@ export function useStylistPeerAverages(
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
-          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
-          .in('stylist_user_id', peerIds)
+          .from('v_all_transaction_items')
+          .select('staff_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .in('staff_user_id', peerIds)
           .gte('transaction_date', startStr)
           .lte('transaction_date', endStr)
           .range(page * pageSize, (page + 1) * pageSize - 1);
@@ -170,7 +170,7 @@ export function useStylistPeerAverages(
     }
 
     for (const s of peerSales || []) {
-      const u = perUser.get(s.stylist_user_id);
+      const u = perUser.get(s.staff_user_id);
       if (!u) continue;
       const amount = (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0);
       const itemType = (s.item_type || '').toLowerCase();

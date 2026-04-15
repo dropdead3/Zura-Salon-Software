@@ -27,11 +27,11 @@ export function useProductCoPurchase(locationId?: string) {
       const dateFromStr = dateFrom.toISOString().split('T')[0];
 
       let query = supabase
-        .from('phorest_transaction_items')
-        .select('transaction_id, product_name')
+        .from('v_all_transaction_items')
+        .select('transaction_id, item_name')
         .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
         .gte('transaction_date', dateFromStr)
-        .not('product_name', 'is', null);
+        .not('item_name', 'is', null);
 
       if (locationId) {
         query = query.eq('location_id', locationId);
@@ -42,8 +42,8 @@ export function useProductCoPurchase(locationId?: string) {
       // Group by transaction_id
       const txnMap = new Map<string, Set<string>>();
       for (const item of items) {
-        if (!item.transaction_id || !item.product_name) continue;
-        const name = (item.product_name as string).toLowerCase().trim();
+        if (!item.transaction_id || !item.item_name) continue;
+        const name = (item.item_name as string).toLowerCase().trim();
         if (!name) continue;
         if (!txnMap.has(item.transaction_id)) {
           txnMap.set(item.transaction_id, new Set());

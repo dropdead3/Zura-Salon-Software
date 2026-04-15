@@ -86,18 +86,18 @@ export function useStaffRevenuePerformance(
 
       // Also fetch transaction items for service/product breakdown
       const itemData = await fetchAllBatched<{
-        phorest_staff_id: string | null;
+        staff_user_id: string | null;
         item_type: string | null;
         total_amount: number | null;
         tax_amount: number | null;
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_staff_id, item_type, total_amount, tax_amount, transaction_date')
+          .from('v_all_transaction_items')
+          .select('staff_user_id, item_type, total_amount, tax_amount, transaction_date')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
-          .not('phorest_staff_id', 'is', null)
+          .not('staff_user_id', 'is', null)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
@@ -159,9 +159,15 @@ export function useStaffRevenuePerformance(
 
       // Enrich with service/product breakdown from transaction items
       for (const item of itemData) {
-        const staffId = item.phorest_staff_id;
+        const staffId = item.staff_user_id;
         if (!staffId) continue;
-        const existing = aggregatedData.get(staffId);
+        // Map staff_user_id back to phorest_staff_id for aggregation consistency
+        // Find the matching phorest_staff_id from mappings
+        let aggregateKey = staffId;
+        for (const [psid, mapping] of mappingByPhorestId) {
+          if (mapping.user_id === staffId) { aggregateKey = psid; break; }
+        }
+        const existing = aggregatedData.get(aggregateKey);
         if (!existing) continue;
 
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);

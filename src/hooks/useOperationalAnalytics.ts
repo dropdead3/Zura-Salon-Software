@@ -206,7 +206,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
         visit_count: number; last_visit: string | null; total_spend: number | null; created_at: string;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_clients')
+          .from('v_all_clients')
           .select('id, name, email, phone, visit_count, last_visit, total_spend, created_at')
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);

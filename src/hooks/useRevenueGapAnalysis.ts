@@ -22,7 +22,7 @@ export function useScheduledRevenue(
     queryFn: async () => {
       const data = await fetchAllBatched<{ total_price: number | null; expected_price: number | null; tip_amount: number | null }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('total_price, expected_price, tip_amount')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -111,7 +111,7 @@ export function useRevenueGapAnalysis(
       // ── Fetch all gap-relevant appointments in one go ──
       const allAppts = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -133,7 +133,7 @@ export function useRevenueGapAnalysis(
         for (let i = 0; i < clientIds.length; i += 100) {
           const chunk = clientIds.slice(i, i + 100);
           const { data: clientData } = await supabase
-            .from('phorest_clients')
+            .from('v_all_clients')
             .select('phorest_client_id, name, first_name, last_name')
             .in('phorest_client_id', chunk);
           (clientData ?? []).forEach(c => {
@@ -230,9 +230,9 @@ export function useRevenueGapAnalysis(
           const chunk = completedClientIds.slice(i, i + 100);
           const chunkData = await fetchAllBatched<any>((from, to) => {
             let q = supabase
-              .from('phorest_transaction_items')
-              .select('phorest_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
-              .in('phorest_client_id', chunk)
+              .from('v_all_transaction_items')
+              .select('external_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
+              .in('external_client_id', chunk)
               .gte('transaction_date', dateFrom)
               .lte('transaction_date', dateTo)
               .in('item_type', ['service', 'sale_fee'])

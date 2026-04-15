@@ -30,11 +30,11 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
     queryKey: ['client-type-split', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<ClientTypeSplitData> => {
       // Step 1: Get distinct POS client IDs (source of truth for transaction count)
-      const txData = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) => {
+      const txData = await fetchAllBatched<{ external_client_id: string | null }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_client_id')
-          .not('phorest_client_id', 'is', null)
+          .from('v_all_transaction_items')
+          .select('external_client_id')
+          .not('external_client_id', 'is', null)
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -46,18 +46,17 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
 
       const posClientIds = new Set<string>();
       txData.forEach(row => {
-        if (row.phorest_client_id) posClientIds.add(row.phorest_client_id);
+        if (row.external_client_id) posClientIds.add(row.external_client_id);
       });
 
       // Step 2: Get appointment data for new/returning classification + revenue
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
-          .eq('is_demo', false)
           .range(from, to);
         if (locationId && locationId !== 'all') {
           q = q.eq('location_id', locationId);
