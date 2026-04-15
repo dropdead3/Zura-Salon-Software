@@ -554,7 +554,6 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         hideFooter ? "min-h-0 overflow-hidden" : "min-h-screen",
         !hideSidebar && (sidebarCollapsed ? "lg:ml-24" : "lg:ml-[340px]")
       )}>
-...
         <div className={cn("flex-1 p-4 lg:px-8 lg:pb-8 lg:pt-4", hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
           {children}
         </div>
