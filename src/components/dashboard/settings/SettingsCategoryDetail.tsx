@@ -37,6 +37,8 @@ import { useInfotainerSettings } from '@/hooks/useInfotainers';
 import { useOrgSecuritySettings } from '@/hooks/useOrgSecuritySettings';
 import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useToast } from '@/hooks/use-toast';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
+import { useUpdateTimezone, TIMEZONES } from '@/hooks/useTimezoneSettings';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { PageExplainer } from '@/components/ui/PageExplainer';
@@ -671,6 +673,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                     <p className="text-xs text-muted-foreground pt-2 border-t">Use the command palette for navigation, quick actions, and switching theme.</p>
                   </CardContent>
                 </Card>
+                <RegionalSettingsCard />
                 <SoundSettingsSection />
                 <CheckoutAlertsSection />
                 <RevenueDisplayModeCard />
