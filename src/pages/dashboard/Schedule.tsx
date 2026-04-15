@@ -866,7 +866,7 @@ export default function Schedule() {
   return (
     <LocationTimezoneProvider timezone={locationTimezone}>
     <DashboardLayout hideFooter>
-      <div className="flex flex-col h-screen relative">
+      <div className="flex flex-col h-full relative">
         {/* Header */}
         <div className="px-4 pt-4">
           <ScheduleHeader
