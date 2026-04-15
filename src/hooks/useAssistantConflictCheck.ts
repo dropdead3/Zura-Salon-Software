@@ -65,7 +65,7 @@ export function useAssistantConflictCheck(
 
       if (tbError) console.warn('[ConflictCheck] Time blocks query failed:', tbError);
 
-      return { appointments: data, timeBlocks: timeBlocks || [] };
+      return { appointments: data, timeBlocks: timeBlocks || [], assistantMap };
     },
     enabled: enabled && !!appointmentDate && !!startTime && !!endTime && !!currentAppointmentId,
     staleTime: 30000,

@@ -104,7 +104,7 @@ interface Client {
   client_category?: string | null;
   lead_source?: string | null;
   referred_by?: string | null;
-  phorest_client_id?: string | null;
+  external_phorest_id?: string | null;
   prompt_client_notes?: boolean;
   prompt_appointment_notes?: boolean;
   address_line1?: string | null;
