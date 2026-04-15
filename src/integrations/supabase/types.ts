@@ -27945,24 +27945,33 @@ export type Database = {
       }
       v_all_clients: {
         Row: {
+          ban_reason: string | null
           birthday: string | null
+          branch_name: string | null
           canonical_client_id: string | null
           client_since: string | null
           created_at: string | null
+          customer_number: string | null
           email: string | null
           email_normalized: string | null
           first_name: string | null
+          first_visit: string | null
           id: string | null
           is_archived: boolean | null
+          is_banned: boolean | null
           is_duplicate: boolean | null
+          is_vip: boolean | null
           last_name: string | null
           last_visit: string | null
           lead_source: string | null
           location_id: string | null
+          medical_alerts: string | null
           name: string | null
+          notes: string | null
           phone: string | null
           phone_normalized: string | null
           phorest_client_id: string | null
+          preferred_stylist_id: string | null
           source: string | null
           total_spend: number | null
           visit_count: number | null
