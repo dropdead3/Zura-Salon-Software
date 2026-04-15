@@ -303,24 +303,36 @@ export default function Schedule() {
     return selectedLocationData?.tax_rate ?? businessSettings?.default_tax_rate ?? 0.08;
   }, [selectedLocationData, businessSettings]);
 
-  // Fetch stylists for DayView - flat select from v_all_staff (no FK joins on views)
-  // Uses .or() to include staff whose primary location_id matches OR whose location_ids array contains the selected location
+  // Fetch service-provider staff for DayView columns
+  // Two-step: get user_ids with stylist/stylist_assistant roles, then fetch their profiles filtered by location + org
   const { data: locationStylists = [] } = useQuery({
-    queryKey: ['schedule-stylists', selectedLocation],
+    queryKey: ['schedule-stylists', selectedLocation, orgId],
     queryFn: async () => {
+      // 1. Get service-provider user_ids from user_roles
+      const { data: roleRows } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'stylist_assistant'] as any[]);
+
+      const serviceProviderIds = (roleRows || []).map((r: any) => r.user_id);
+      if (serviceProviderIds.length === 0) return [];
+
+      // 2. Fetch profiles for those users, filtered by location + org
       let query = supabase
         .from('employee_profiles')
         .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
         .eq('is_active', true)
-        .eq('is_approved', true);
+        .eq('is_approved', true)
+        .in('user_id', serviceProviderIds);
 
+      if (orgId) query = query.eq('organization_id', orgId);
       if (selectedLocation) {
         query = query.or(`location_id.eq.${selectedLocation},location_ids.cs.{${selectedLocation}}`);
       }
 
       const { data } = await query;
 
-      // Deduplicate by user_id (staff may appear in multiple mappings)
+      // Deduplicate by user_id
       const unique = new Map<string, { user_id: string; display_name: string | null; full_name: string; photo_url: string | null }>();
       ((data || []) as any[]).forEach((d: any) => {
         if (!unique.has(d.user_id)) {
@@ -335,25 +347,30 @@ export default function Schedule() {
 
       return Array.from(unique.values());
     },
+    enabled: !!orgId,
   });
 
-  // Appointment-based staff fallback: ensure every stylist with appointments gets a column,
-  // even if their location mapping is incomplete
+  // Appointment-based staff fallback: only add staff who already passed the role+location filter
+  // but may be missing due to stale data. Skip non-service-provider staff entirely.
   const allStylists = useMemo(() => {
     const staffMap = new Map(locationStylists.map((s: any) => [s.user_id, s]));
+    const serviceProviderSet = new Set(locationStylists.map((s: any) => s.user_id));
 
-    // Find stylist_user_ids from appointments not already in staff list
+    // Only add fallback entries for staff who have appointments at the selected location
+    // AND are not already in the staff list. We use appointment data for display name only.
+    const locationAppointments = selectedLocation
+      ? allAppointments.filter((a: any) => a.location_id === selectedLocation)
+      : allAppointments;
+
     const missingIds = [...new Set(
-      allAppointments
+      locationAppointments
         .map((a: any) => a.stylist_user_id || a.staff_user_id)
         .filter((id: string | null): id is string => !!id && !staffMap.has(id))
     )];
 
-    // We can't do an async fetch inside useMemo, so just create placeholder entries.
-    // The names come from the appointment's staff_name field as fallback.
     if (missingIds.length > 0) {
       const appointmentsByStaff = new Map<string, any>();
-      allAppointments.forEach((a: any) => {
+      locationAppointments.forEach((a: any) => {
         const sid = a.stylist_user_id || a.staff_user_id;
         if (sid && !appointmentsByStaff.has(sid)) {
           appointmentsByStaff.set(sid, a);
@@ -372,7 +389,7 @@ export default function Schedule() {
     }
 
     return Array.from(staffMap.values());
-  }, [locationStylists, allAppointments]);
+  }, [locationStylists, allAppointments, selectedLocation]);
 
   // Filter stylists based on staff selection (for day view columns)
   const displayedStylists = selectedStaffIds.length === 0
