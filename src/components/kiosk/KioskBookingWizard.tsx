@@ -92,7 +92,7 @@ export function KioskBookingWizard() {
         .order('name');
       return data || [];
     },
-    enabled: !!branchId,
+    enabled: !!locationData,
   });
 
   // Get unique categories
