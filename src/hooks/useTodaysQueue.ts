@@ -6,7 +6,7 @@ import { format, differenceInMinutes, parseISO, addMinutes, isAfter } from 'date
 
 interface PhorestAppointment {
   id: string;
-  phorest_id: string;
+  phorest_id?: string;
   appointment_date: string;
   start_time: string;
   end_time: string;

@@ -108,7 +108,8 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         if (sid) staffIdSet.add(sid);
       });
       productItems.forEach(item => {
-        if (item.phorest_staff_id) staffIdSet.add(item.phorest_staff_id);
+        const sid = (item as any).phorest_staff_id || item.staff_user_id;
+        if (sid) staffIdSet.add(sid);
       });
       const allStaffIds = [...staffIdSet];
 
