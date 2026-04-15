@@ -1051,6 +1051,131 @@ function FraudAlertsCard({ orgId, formatCurrency }: { orgId?: string; formatCurr
   );
 }
 
+// ─── Risk Score Helpers ─────────────────────────────
+function getRiskBadgeVariant(score: number | null): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (score === null) return 'secondary';
+  if (score >= 80) return 'destructive';
+  if (score >= 65) return 'destructive';
+  return 'secondary';
+}
+
+function getRiskBadgeClass(score: number | null): string {
+  if (score === null) return '';
+  if (score >= 80) return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
+  if (score >= 65) return 'bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30';
+  if (score >= 31) return 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30';
+  return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30';
+}
+
+function HighRiskPaymentsCard({ orgId, formatCurrency }: { orgId?: string; formatCurrency: (n: number) => string }) {
+  const { data: payments = [], isLoading } = useHighRiskPayments(orgId);
+
+  const {
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    sortField,
+    sortDirection,
+    toggleSort,
+    showingFrom,
+    showingTo,
+  } = usePaginatedSort({ data: payments, defaultPageSize: 10, defaultSortField: 'created_at', defaultSortDirection: 'desc' });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <ShieldCheck className={tokens.card.icon} />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>
+              High-Risk Payments
+              <MetricInfoTooltip description="Payments flagged by Stripe Radar with elevated or highest risk levels. Risk scores range from 0 (lowest risk) to 100 (highest risk). Review these payments for potential fraud." />
+              {payments.length > 0 && (
+                <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-[10px]">{payments.length}</Badge>
+              )}
+            </CardTitle>
+            <CardDescription>Payments flagged by Stripe Radar for elevated risk</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className={tokens.loading.spinner} />
+          </div>
+        ) : payments.length === 0 ? (
+          <div className={tokens.empty.container}>
+            <ShieldCheck className={tokens.empty.icon} />
+            <h3 className={tokens.empty.heading}>No high-risk payments</h3>
+            <p className={tokens.empty.description}>
+              No payments have been flagged as elevated or highest risk by Stripe Radar.
+            </p>
+          </div>
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={tokens.table.columnHeader}>
+                    <SortableColumnHeader sortKey="created_at" label="Date" currentSortField={sortField} onToggleSort={toggleSort} />
+                  </TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Charge</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>
+                    <SortableColumnHeader sortKey="amount" label="Amount" currentSortField={sortField} onToggleSort={toggleSort} />
+                  </TableHead>
+                  <TableHead className={tokens.table.columnHeader}>
+                    <SortableColumnHeader sortKey="risk_score" label="Risk Score" currentSortField={sortField} onToggleSort={toggleSort} />
+                  </TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Risk Level</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(payment.created_at), 'MMM d, yyyy')}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {payment.stripe_charge_id.slice(0, 20)}…
+                    </TableCell>
+                    <TableCell>
+                      <BlurredAmount>
+                        {formatCurrency((payment.amount ?? 0) / 100)}
+                      </BlurredAmount>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn('font-mono', getRiskBadgeClass(payment.risk_score))}>
+                        {payment.risk_score ?? '—'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={payment.risk_level === 'highest' ? 'destructive' : 'secondary'} className="capitalize">
+                        {payment.risk_level ?? 'unknown'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              showingFrom={showingFrom}
+              showingTo={showingTo}
+              totalItems={totalItems}
+            />
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function DisputesCard({ orgId, formatCurrency, dateFrom, dateTo, disputeStatus, clientSearch }: {
   orgId?: string;
   formatCurrency: (n: number) => string;
