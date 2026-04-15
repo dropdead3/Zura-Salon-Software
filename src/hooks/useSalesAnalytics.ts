@@ -87,7 +87,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('service_name, total_price, tip_amount, location_id')
           .not('service_name', 'is', null)
           .not('total_price', 'is', null)

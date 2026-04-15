@@ -40,7 +40,7 @@ export function useTransactions(filters: TransactionFilters = {}) {
     queryKey: ['transactions', filters],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('*')
         .order('transaction_date', { ascending: false });
 
@@ -121,7 +121,7 @@ export function useTransactionsByClient(clientId: string | null) {
       if (!clientId) return [];
       
       const { data, error } = await supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('*')
         .eq('phorest_client_id', clientId)
         .order('transaction_date', { ascending: false });

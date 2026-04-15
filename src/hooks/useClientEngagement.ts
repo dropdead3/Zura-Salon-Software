@@ -80,7 +80,7 @@ async function fetchAppointments(
 
   while (hasMore) {
     let query = supabase
-      .from('phorest_appointments')
+      .from('v_all_appointments')
       .select(fields)
       .gte('appointment_date', dateFrom)
       .lte('appointment_date', dateTo)

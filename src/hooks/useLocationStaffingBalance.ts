@@ -112,7 +112,7 @@ export function useLocationStaffingBalance(dateRange: DateRange = '30days'): Loc
     queryFn: async () => {
       return fetchAllBatched<any>((from, to) =>
         supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('location_id, appointment_date, start_time, end_time')
           .gte('appointment_date', startStr)
           .lte('appointment_date', endStr)

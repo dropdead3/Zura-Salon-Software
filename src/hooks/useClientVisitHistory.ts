@@ -25,7 +25,7 @@ export function useClientVisitHistory(phorestClientId: string | null | undefined
       }
 
       const { data, error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select(`
           id,
           appointment_date,

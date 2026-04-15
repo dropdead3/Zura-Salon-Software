@@ -207,7 +207,7 @@ export function useAppointmentsHub(filters: HubFilters) {
       const transactionTotalMap: Record<string, number> = {};
       if (phorestClientIdsForTx.length > 0 && appointmentDates.length > 0) {
         const { data: txMatches } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('phorest_client_id, transaction_date, total_amount')
           .in('phorest_client_id', phorestClientIdsForTx)
           .in('transaction_date', appointmentDates);

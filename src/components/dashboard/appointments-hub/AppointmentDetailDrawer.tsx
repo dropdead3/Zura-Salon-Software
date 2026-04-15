@@ -159,7 +159,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
       if (!lookupId) return null;
 
       const { data: items } = await supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('discount, promotion_id')
         .eq('transaction_id', lookupId)
         .not('promotion_id', 'is', null)

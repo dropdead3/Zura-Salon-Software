@@ -124,7 +124,7 @@ export function usePayrollForecasting() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
           .gte('transaction_date', periodStart)
           .lte('transaction_date', periodEnd)
@@ -168,7 +168,7 @@ export function usePayrollForecasting() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('stylist_user_id, total_amount, tax_amount, item_type')
           .gte('transaction_date', lastPeriodStart)
           .lte('transaction_date', lastPeriodEnd)

@@ -118,7 +118,7 @@ export function useTodaysQueue(locationId?: string) {
     queryKey: ['todays-queue', today, locationId],
     queryFn: async (): Promise<TodaysQueueData> => {
       let queryBuilder = supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('*')
         .eq('appointment_date', today)
         .order('start_time', { ascending: true });

@@ -41,7 +41,7 @@ export function useNewClientConversion(
 
       while (hasMore) {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id, appointment_date, service_name, status')
           .not('phorest_client_id', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')

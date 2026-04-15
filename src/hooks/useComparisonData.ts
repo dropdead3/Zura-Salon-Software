@@ -109,7 +109,7 @@ export function useComparisonData(params: ComparisonParams) {
         let hasMore = true;
         while (hasMore) {
           let q: any = supabase
-            .from('phorest_transaction_items')
+            .from('v_all_transaction_items')
             .select('transaction_date, total_amount, tax_amount, item_type, location_id, phorest_client_id')
             .gte('transaction_date', dateFrom)
             .lte('transaction_date', dateTo);

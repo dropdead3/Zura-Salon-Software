@@ -76,7 +76,7 @@ export function useServiceEfficiency(
 
       while (hasMore) {
         let query = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('service_name, total_price, start_time, end_time, appointment_date, is_new_client, rebooked_at_checkout, tip_amount, phorest_staff_id')
           .neq('status', 'cancelled')
           .gte('appointment_date', dateFrom)

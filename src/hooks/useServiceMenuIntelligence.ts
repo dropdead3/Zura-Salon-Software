@@ -50,7 +50,7 @@ export function useServiceMenuIntelligence(organizationId?: string, locationId?:
         transaction_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('item_name, item_type, total_amount, transaction_date, transaction_id')
           .eq('item_type', 'service')
           .gte('transaction_date', priorStart)

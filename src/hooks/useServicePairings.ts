@@ -49,7 +49,7 @@ export function useServicePairings(
 
       while (hasMore) {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id, appointment_date, service_name, total_price, tip_amount')
           .neq('status', 'cancelled')
           .gte('appointment_date', dateFrom)

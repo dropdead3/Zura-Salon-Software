@@ -34,7 +34,7 @@ async function fetchPeriodRevenue(dateFrom: string, dateTo: string, locationId?:
   let hasMore = true;
   while (hasMore) {
     let q: any = supabase
-      .from('phorest_transaction_items')
+      .from('v_all_transaction_items')
       .select('total_amount, tax_amount, item_type, phorest_client_id, transaction_date')
       .gte('transaction_date', dateFrom)
       .lte('transaction_date', dateTo);

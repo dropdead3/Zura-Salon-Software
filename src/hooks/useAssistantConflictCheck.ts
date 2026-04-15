@@ -28,7 +28,7 @@ export function useAssistantConflictCheck(
     queryFn: async () => {
       // Fetch overlapping appointments with their assistants
       const { data, error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select(`
           id,
           start_time,

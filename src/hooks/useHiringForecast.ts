@@ -72,7 +72,7 @@ export function useHiringForecast() {
       const [recentAppointments, priorAppointments] = await Promise.all([
         fetchAllBatched<any>((from, to) =>
           supabase
-            .from('phorest_appointments')
+            .from('v_all_appointments')
             .select('location_id, start_time')
             .gte('start_time', format(thirtyDaysAgo, 'yyyy-MM-dd'))
             .lt('start_time', format(today, 'yyyy-MM-dd'))
@@ -80,7 +80,7 @@ export function useHiringForecast() {
         ),
         fetchAllBatched<any>((from, to) =>
           supabase
-            .from('phorest_appointments')
+            .from('v_all_appointments')
             .select('location_id, start_time')
             .gte('start_time', format(sixtyDaysAgo, 'yyyy-MM-dd'))
             .lt('start_time', format(thirtyDaysAgo, 'yyyy-MM-dd'))

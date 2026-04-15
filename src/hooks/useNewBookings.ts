@@ -204,7 +204,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
 
       if (rebookClientIds.length > 0) {
         const { data: futureAppts, error: futureError } = await supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id')
           .in('phorest_client_id', rebookClientIds as readonly string[])
           .gt('appointment_date', endDate)
@@ -278,7 +278,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       let futureClientSet = new Set<string>();
       if (rebookClientIds.length > 0) {
         const { data: futureAppts2 } = await supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id')
           .in('phorest_client_id', rebookClientIds as readonly string[])
           .gt('appointment_date', endDate)

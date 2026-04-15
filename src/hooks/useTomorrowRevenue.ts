@@ -12,7 +12,7 @@ export function useTomorrowRevenue(locationId?: string) {
     queryFn: async () => {
       // Future-dated: use appointments with tip-adjusted price
       let query = supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('total_price, tip_amount, status')
         .eq('appointment_date', tomorrowStr)
         .not('status', 'in', '("cancelled","no_show")');

@@ -52,7 +52,7 @@ export function DockClientQuickView({ open, onClose, phorestClientId, clientId, 
     queryFn: async () => {
       if (phorestClientId) {
         const { data } = await supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('id, service_name, appointment_date, start_time, status')
           .eq('phorest_client_id', phorestClientId)
           .order('appointment_date', { ascending: false })

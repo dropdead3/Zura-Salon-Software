@@ -146,7 +146,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
     queryFn: async () => {
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('payment_method, tip_amount, phorest_staff_id, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)

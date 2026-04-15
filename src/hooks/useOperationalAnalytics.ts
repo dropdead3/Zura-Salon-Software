@@ -88,7 +88,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
     queryFn: async () => {
       const data = await fetchAllBatched<{ appointment_date: string; status: string }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('appointment_date, status')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
@@ -128,7 +128,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
     queryFn: async () => {
       const data = await fetchAllBatched<{ appointment_date: string; start_time: string }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('appointment_date, start_time')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
@@ -168,7 +168,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
     queryFn: async () => {
       const data = await fetchAllBatched<{ status: string }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('status')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
@@ -280,7 +280,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('rebooked_at_checkout')
           .eq('status', 'completed')
           .gte('appointment_date', startDateStr)
@@ -334,7 +334,7 @@ export function useAppointmentSummary(dateFrom: string, dateTo: string, location
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('status, phorest_client_id, appointment_date')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

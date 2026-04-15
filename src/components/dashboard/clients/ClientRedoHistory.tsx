@@ -38,7 +38,7 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
       }
 
       const { data } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .select('id, service_name, appointment_date, stylist_user_id, total_price, original_price, redo_reason, status')
         .eq('phorest_client_id', client.phorest_client_id)
         .eq('is_redo', true)
