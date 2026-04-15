@@ -502,7 +502,7 @@ async function syncAppointments(
       // Debug: log first appointment's raw keys
       if (!debugLogged) {
         console.log(`[DEBUG] First appointment raw keys:`, Object.keys(apt));
-        console.log(`[DEBUG] First appointment activationState:`, apt.activationState, `status:`, apt.status);
+        console.log(`[DEBUG] First appointment activationState:`, apt.activationState, `status:`, apt.status, `confirmed:`, apt.confirmed);
         if (apt.services && apt.services.length > 1) {
           console.log(`[DEBUG] Multi-service appointment detected: ${apt.services.length} services in appointment ${phorestId}`);
         }
@@ -511,6 +511,11 @@ async function syncAppointments(
 
       // Map status
       let mappedStatus = mapPhorestStatus(apt.activationState || apt.status);
+
+      // If Phorest says ACTIVE but client confirmed via SMS/email, mark as confirmed
+      if (mappedStatus === 'booked' && apt.confirmed === true) {
+        mappedStatus = 'confirmed';
+      }
       
       // NOTE: Time-based completion inference removed — Phorest's activationState
       // is the source of truth. new Date() in Deno is UTC which caused premature
