@@ -99,13 +99,58 @@ interface SettingsCategoryDetailProps {
 // ---- Inline sub-components ----
 
 function RegionalSettingsCard() {
-  const { timezone } = useOrgDefaults();
-  const [selected, setSelected] = useState(timezone);
+  const { timezone: orgTimezone } = useOrgDefaults();
   const updateTimezone = useUpdateTimezone();
-  const isDirty = selected !== timezone;
+  const { data: locations = [] } = useLocations();
+  const [scopeLocationId, setScopeLocationId] = useState<string>('all');
+  const [selected, setSelected] = useState(orgTimezone);
+  const [locationTzCache, setLocationTzCache] = useState<Record<string, string | null>>({});
 
-  // Sync if org data loads after mount
-  useEffect(() => { setSelected(timezone); }, [timezone]);
+  // Load location timezone when scope changes
+  useEffect(() => {
+    if (scopeLocationId === 'all') {
+      setSelected(orgTimezone);
+    } else {
+      // Check if we already fetched it
+      if (scopeLocationId in locationTzCache) {
+        setSelected(locationTzCache[scopeLocationId] ?? orgTimezone);
+      } else {
+        // Fetch the location's timezone
+        supabase
+          .from('locations')
+          .select('timezone')
+          .eq('id', scopeLocationId)
+          .single()
+          .then(({ data }) => {
+            const tz = (data?.timezone as string) ?? null;
+            setLocationTzCache(prev => ({ ...prev, [scopeLocationId]: tz }));
+            setSelected(tz ?? orgTimezone);
+          });
+      }
+    }
+  }, [scopeLocationId, orgTimezone]);
+
+  // Sync org default
+  useEffect(() => {
+    if (scopeLocationId === 'all') setSelected(orgTimezone);
+  }, [orgTimezone]);
+
+  const isInherited = scopeLocationId !== 'all' && !(scopeLocationId in locationTzCache && locationTzCache[scopeLocationId] !== null);
+  const effectiveValue = scopeLocationId === 'all' ? orgTimezone : (locationTzCache[scopeLocationId] ?? orgTimezone);
+  const isDirty = selected !== effectiveValue;
+
+  const handleSave = () => {
+    updateTimezone.mutate(
+      { timezone: selected, locationId: scopeLocationId === 'all' ? undefined : scopeLocationId },
+      {
+        onSuccess: () => {
+          if (scopeLocationId !== 'all') {
+            setLocationTzCache(prev => ({ ...prev, [scopeLocationId]: selected }));
+          }
+        },
+      }
+    );
+  };
 
   return (
     <Card>
@@ -114,9 +159,18 @@ function RegionalSettingsCard() {
           <Globe className="w-5 h-5 text-primary" />
           <CardTitle className="font-display text-lg">REGIONAL</CardTitle>
         </div>
-        <CardDescription>Set your organization's timezone. This affects the scheduler, reports, and all time-based displays.</CardDescription>
+        <CardDescription>Set the timezone for your organization or individual locations. This affects the scheduler, reports, and all time-based displays.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Scope</Label>
+          <LocationSelect
+            value={scopeLocationId}
+            onValueChange={setScopeLocationId}
+            includeAll
+            allLabel="All Locations (Org Default)"
+          />
+        </div>
         <div className="space-y-2">
           <Label className="text-sm font-medium">Timezone</Label>
           <Select value={selected} onValueChange={setSelected}>
@@ -127,11 +181,14 @@ function RegionalSettingsCard() {
               ))}
             </SelectContent>
           </Select>
+          {isInherited && !isDirty && (
+            <p className="text-xs text-muted-foreground">Inherited from organization default</p>
+          )}
         </div>
         {isDirty && (
           <Button
             size="sm"
-            onClick={() => updateTimezone.mutate(selected)}
+            onClick={handleSave}
             disabled={updateTimezone.isPending}
             className="font-sans"
           >
