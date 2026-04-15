@@ -952,11 +952,11 @@ function FraudAlertsCard({ orgId, formatCurrency }: { orgId?: string; formatCurr
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Charge</TableHead>
                   <TableHead className={tokens.table.columnHeader}>
-                    <SortableColumnHeader field="fraud_type" label="Type" sortField={sortField} sortDirection={sortDirection} onToggle={toggleSort} />
+                    <SortableColumnHeader sortKey="fraud_type" label="Type" sortField={sortField} sortDirection={sortDirection} onToggleSort={toggleSort} />
                   </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Actionable</TableHead>
                   <TableHead className={tokens.table.columnHeader}>
-                    <SortableColumnHeader field="created_at" label="Date" sortField={sortField} sortDirection={sortDirection} onToggle={toggleSort} />
+                    <SortableColumnHeader sortKey="created_at" label="Date" sortField={sortField} sortDirection={sortDirection} onToggleSort={toggleSort} />
                   </TableHead>
                   <TableHead className={tokens.table.columnHeader}>Status</TableHead>
                   <TableHead className={tokens.table.columnHeader}>Actions</TableHead>
