@@ -12,7 +12,7 @@ import {
   ChevronsRight,
   Calendar as CalendarIcon,
   Plus,
-  LayoutGrid,
+  
   Check,
   Settings,
   Sparkles,
@@ -128,7 +128,6 @@ export function ScheduleHeader({
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <LayoutGrid className="h-4 w-4 text-[hsl(40,20%,92%)]/60" />
             <div className="relative flex rounded-full overflow-hidden bg-[hsl(40,20%,92%)]/10 p-[2px]">
               {/* Animated sliding pill */}
               <div 
