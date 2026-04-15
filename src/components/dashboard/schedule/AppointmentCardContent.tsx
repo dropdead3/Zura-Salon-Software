@@ -459,12 +459,34 @@ export function AppointmentCardContent({
   const isDark = resolvedTheme === 'dark';
 
   const statusColors = APPOINTMENT_STATUS_COLORS[appointment.status];
-  const serviceCategory = appointment.service_category;
-  const catColor = getCategoryColor(serviceCategory, categoryColors);
-  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked';
-  const isConsultation = isConsultationCategory(serviceCategory);
 
-  const storedColorHex = categoryColors[serviceCategory?.toLowerCase() || '']?.bg || '';
+  // Resolve the display category: stored → serviceLookup primary → service-name heuristic
+  const resolvedCategory = useMemo(() => {
+    // 1. Use stored service_category if it resolves to a known color
+    const stored = appointment.service_category;
+    if (stored && categoryColors[stored.toLowerCase()]) return stored;
+
+    // 2. Look up primary service category from serviceLookup
+    if (serviceLookup && appointment.service_name) {
+      const names = appointment.service_name.split(',').map(s => s.trim()).filter(Boolean);
+      for (const name of names) {
+        const info = serviceLookup.get(name);
+        if (info?.category) return info.category;
+      }
+    }
+
+    // 3. Fall back to stored value (getCategoryColor heuristics will handle it)
+    if (stored) return stored;
+
+    // 4. Last resort: use service_name itself so heuristic matching can try
+    return appointment.service_name || null;
+  }, [appointment.service_category, appointment.service_name, serviceLookup, categoryColors]);
+
+  const catColor = getCategoryColor(resolvedCategory, categoryColors);
+  const useCategoryColor = colorBy === 'service' || appointment.status === 'booked';
+  const isConsultation = isConsultationCategory(resolvedCategory);
+
+  const storedColorHex = categoryColors[resolvedCategory?.toLowerCase() || '']?.bg || '';
   const gradientFromMarker = isGradientMarker(storedColorHex) ? getGradientFromMarker(storedColorHex) : null;
   const displayGradient = gradientFromMarker || (isConsultation ? DEFAULT_CONSULTATION_GRADIENT : null);
 
