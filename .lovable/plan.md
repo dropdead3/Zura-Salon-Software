@@ -1,41 +1,43 @@
 
 
-## Replace Client Initial Avatars with RC/NC Badges in Day View
+## Move Client Name Below NC/RC Badge and Status Badge (Day View)
 
 ### Change
-In the day view appointment cards, replace the round client-initials avatar (e.g. "PE", "MM") with a badge indicating **NC** (New Client) or **RC** (Returning Client), using the existing `is_new_client` flag on the appointment.
+In the day view, restructure the card header so the NC/RC icon and status badge sit on the top row, and the client name drops to its own line below them.
 
-### Implementation
-**1 file**: `src/components/dashboard/schedule/AppointmentCardContent.tsx` — lines 277-281
-
-Replace the current avatar circle that shows `getClientInitials()` with a styled badge:
-
-- **NC** (New Client): amber tint — `bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300`
-- **RC** (Returning Client): emerald tint — `bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300`
-
-The badge keeps the same `h-5 w-5 rounded-full` dimensions and `text-[8px]` sizing so it fits the existing layout without shifting anything.
-
-```tsx
-// Before (lines 278-280):
-<span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
-  {getClientInitials(appointment.client_name)}
-</span>
-
-// After:
-<span className={cn(
-  'h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0',
-  appointment.is_new_client
-    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-)}>
-  {appointment.is_new_client ? 'NC' : 'RC'}
-</span>
+### Current layout
+```text
+┌──────────────────────────────────┐
+│ [NC] Client Name...    [Booked]  │
+│ Service Name                     │
+│ Time Range              $Price   │
+└──────────────────────────────────┘
 ```
 
-This is a day-view-only change — the weekly view branch (`showStylistBadge=true`) already hides the client avatar via `showClientAvatar=false`.
+### Target layout
+```text
+┌──────────────────────────────────┐
+│ [NC]                   [Booked]  │
+│ Client Name                      │
+│ Service Name                     │
+│ Time Range              $Price   │
+└──────────────────────────────────┘
+```
 
-### Scope
-- Single file, single code block edit
-- No backend changes
-- Uses existing `is_new_client` boolean from the appointment data
+### Implementation
+**1 file**: `src/components/dashboard/schedule/AppointmentCardContent.tsx` — lines 264-293
+
+In the day view branch (`showStylistBadge=false`):
+
+1. Move the NC/RC badge into the top-right absolute container alongside the status badge, positioned first (left of status badge)
+2. Remove the NC/RC badge from the client name line
+3. Remove `pr-20` width constraint and `flex items-center gap-1` from client name div — it becomes a simple full-width truncated line below the badges
+
+```text
+// Top row (absolute top-1 right-1):
+[IndicatorCluster] [NC/RC badge] [Status badge]
+
+// Below (with pt-6 to clear absolute row):
+Client Name (full width, truncated)
+```
 
