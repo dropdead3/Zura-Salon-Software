@@ -59,7 +59,7 @@ export function useColorBarPricingEstimate(stylistCountFallback = 2) {
         appointment_date: string;
       }>((from, to) =>
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, service_name, service_category, appointment_date')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -115,7 +115,7 @@ export function useColorBarPricingEstimate(stylistCountFallback = 2) {
           tax_amount: number | null;
         }>((from, to) =>
           supabase
-            .from('v_all_transaction_items')
+            .from('v_all_transaction_items' as any)
             .select('total_amount, tax_amount')
             .in('appointment_id', chunk)
             .eq('item_type', 'Product')

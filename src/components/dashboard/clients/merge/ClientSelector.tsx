@@ -43,7 +43,7 @@ export function ClientSelector({ selectedClients, onSelectionChange, preselected
         .in('id', preselectedIds);
 
       if (!error && data?.length) {
-        const clients = data.map(c => ({
+        const clients = (data as any[]).map((c: any) => ({
           ...c,
           name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
           mobile: c.phone,

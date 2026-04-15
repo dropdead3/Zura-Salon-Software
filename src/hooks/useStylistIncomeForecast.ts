@@ -39,7 +39,7 @@ export function useStylistIncomeForecast() {
 
       // Fetch this week's appointments for the stylist (tip-adjusted)
       const { data: appointments, error: aptError } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('total_price, tip_amount, status')
         .eq('stylist_user_id', userId)
         .gte('appointment_date', startStr)

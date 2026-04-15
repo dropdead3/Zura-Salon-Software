@@ -95,7 +95,7 @@ export function useStylistExperienceScore(
       // Fetch completed appointments with tip amounts
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select(`
             staff_user_id,
             stylist_user_id,
@@ -124,7 +124,7 @@ export function useStylistExperienceScore(
       // Fetch transaction items for retail attachment
       const transactionItems = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, item_type, item_name, total_amount')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)

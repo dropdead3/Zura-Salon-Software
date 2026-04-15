@@ -25,7 +25,7 @@ export function useTopClientsReport(filters: { dateFrom: string; dateTo: string;
         item_type: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('phorest_client_id, client_name, total_amount, transaction_date, item_name, item_type')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)

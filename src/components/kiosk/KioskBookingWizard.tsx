@@ -86,7 +86,7 @@ export function KioskBookingWizard() {
     queryFn: async () => {
       if (!branchId) return [];
       const { data } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('id, phorest_service_id, name, duration_minutes, price, category')
         .order('category')
         .order('name');

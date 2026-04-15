@@ -16,7 +16,7 @@ export function useDraftAvailabilityCheck(draft: DraftBooking): AvailabilityResu
     queryFn: async () => {
       // Get appointments for that stylist on that day
       const { data: appointments } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('start_time, end_time')
         .eq('stylist_user_id', draft.staff_user_id!)
         .eq('appointment_date', draft.appointment_date!)

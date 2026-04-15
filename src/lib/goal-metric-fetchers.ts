@@ -17,7 +17,7 @@ export async function fetchRevenue(
   locationId?: string | null,
 ): Promise<number> {
   let query = supabase
-    .from('v_all_appointments')
+    .from('v_all_appointments' as any)
     .select('total_price')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
@@ -37,7 +37,7 @@ export async function fetchAvgTicket(
   locationId?: string | null,
 ): Promise<{ avg: number | null; count: number }> {
   let query = supabase
-    .from('v_all_appointments')
+    .from('v_all_appointments' as any)
     .select('total_price')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
@@ -60,7 +60,7 @@ export async function fetchRetailRevenue(
   locationId?: string | null,
 ): Promise<number> {
   let query = supabase
-    .from('v_all_transaction_items')
+    .from('v_all_transaction_items' as any)
     .select('total_amount')
     .gte('transaction_date', dateFrom)
     .lte('transaction_date', dateTo)
@@ -80,14 +80,14 @@ export async function fetchNoShowRate(
   locationId?: string | null,
 ): Promise<{ rate: number | null; totalCount: number }> {
   let totalQ = supabase
-    .from('v_all_appointments')
+    .from('v_all_appointments' as any)
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
     .not('status', 'in', '("cancelled")');
 
   let noshowQ = supabase
-    .from('v_all_appointments')
+    .from('v_all_appointments' as any)
     .select('id', { count: 'exact', head: true })
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
@@ -110,7 +110,7 @@ export async function fetchRebookRate(
   locationId?: string | null,
 ): Promise<{ rate: number | null; count: number }> {
   let query = supabase
-    .from('v_all_appointments')
+    .from('v_all_appointments' as any)
     .select('rebooked_at_checkout')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)
@@ -131,7 +131,7 @@ export async function fetchNewClientPct(
   locationId?: string | null,
 ): Promise<{ rate: number | null; count: number }> {
   let query = supabase
-    .from('v_all_appointments')
+    .from('v_all_appointments' as any)
     .select('is_new_client')
     .gte('appointment_date', dateFrom)
     .lte('appointment_date', dateTo)

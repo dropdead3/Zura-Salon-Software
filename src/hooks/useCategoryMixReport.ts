@@ -27,7 +27,7 @@ export function useCategoryMixReport(filters: CategoryMixFilters) {
         item_type: string;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('item_name, total_amount, tax_amount, item_type')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)

@@ -49,7 +49,7 @@ export function useClientAttritionReport(filters: AttritionFilters) {
         staff_name: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('phorest_client_id, client_name, appointment_date, total_price, staff_name')
           .not('status', 'in', '("cancelled","no_show")')
           .gte('appointment_date', lowerBound)

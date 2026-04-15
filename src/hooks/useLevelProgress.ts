@@ -138,7 +138,7 @@ export function useLevelProgress(userId: string | undefined) {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('total_amount, tax_amount, item_type, transaction_date')
           .eq('stylist_user_id', userId!)
           .gte('transaction_date', startStr)

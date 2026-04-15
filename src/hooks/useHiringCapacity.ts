@@ -128,7 +128,7 @@ export function useHiringCapacity(): HiringCapacitySummary {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
       const { data, error } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('location_id')
         .gte('appointment_date', sevenDaysAgo.toISOString().split('T')[0]);
 

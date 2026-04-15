@@ -38,7 +38,7 @@ export function useClientBirthdaysReport(filters: Filters) {
         visit_count: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .select('id, phorest_client_id, name, first_name, last_name, birthday, email, phone, total_spend, visit_count')
           .not('birthday', 'is', null)
           .eq('is_archived', false)

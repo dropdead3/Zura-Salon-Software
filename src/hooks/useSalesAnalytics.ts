@@ -41,7 +41,7 @@ export function useProductCategoryBreakdown(dateFrom?: string, dateTo?: string, 
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_sales_transactions')
+          .from('v_all_sales_transactions' as any)
           .select('item_category, total_amount, quantity, unit_price')
           .eq('item_type', 'product')
           .range(from, to);
@@ -87,7 +87,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('service_name, total_price, tip_amount, location_id')
           .not('service_name', 'is', null)
           .not('total_price', 'is', null)
@@ -145,7 +145,7 @@ export function useClientFunnel(dateFrom?: string, dateTo?: string, locationId?:
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_sales_transactions')
+          .from('v_all_sales_transactions' as any)
           .select('client_name, total_amount, phorest_transaction_id')
           .range(from, to);
         if (dateFrom) q = q.gte('transaction_date', dateFrom);
@@ -158,7 +158,7 @@ export function useClientFunnel(dateFrom?: string, dateTo?: string, locationId?:
       const clientFirstDate: Record<string, string> = {};
       const allClients = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('v_all_sales_transactions')
+          .from('v_all_sales_transactions' as any)
           .select('client_name, transaction_date')
           .not('client_name', 'is', null)
           .order('transaction_date', { ascending: true })
@@ -214,7 +214,7 @@ export function usePeakHoursAnalysis(dateFrom?: string, dateTo?: string, locatio
     queryFn: async () => {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_sales_transactions')
+          .from('v_all_sales_transactions' as any)
           .select('transaction_date, transaction_time, total_amount, phorest_transaction_id')
           .range(from, to);
         if (dateFrom) q = q.gte('transaction_date', dateFrom);

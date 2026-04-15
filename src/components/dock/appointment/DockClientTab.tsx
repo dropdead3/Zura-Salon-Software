@@ -147,7 +147,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
 
       if (phorestClientId) {
         const { data } = await supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .select('id, name, email, phone, notes, medical_alerts, preferred_stylist_id, created_at')
           .eq('phorest_client_id', phorestClientId)
           .maybeSingle();
@@ -310,7 +310,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       const trimmed = alertText.trim() || null;
       if (phorestClientId && client) {
         const { error } = await supabase
-          .from('v_all_clients')
+          .from('v_all_clients' as any)
           .update({ medical_alerts: trimmed })
           .eq('id', client.id);
         if (error) throw error;

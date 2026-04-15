@@ -26,7 +26,7 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
       // First get appointment IDs in date range
       const apptIds = await fetchAllBatched<{ id: string }>((from, to) =>
         supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

@@ -96,7 +96,7 @@ async function fetchReportData(
     case 'stylist-sales':
     case 'product-sales': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('transaction_date, staff_name, item_name, item_type, quantity, total_amount, location_id')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -133,7 +133,7 @@ async function fetchReportData(
     }
     case 'compensation-ratio': {
       const compData = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('staff_name, item_type, total_amount, tip_amount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -162,7 +162,7 @@ async function fetchReportData(
     case 'tip-analysis':
     case 'staff-transaction-detail': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('staff_name, item_name, item_type, total_amount, transaction_date, tip_amount, quantity, unit_price')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -205,7 +205,7 @@ async function fetchReportData(
     case 'end-of-month':
     case 'payroll-summary': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('transaction_date, item_type, item_name, total_amount, tip_amount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -234,7 +234,7 @@ async function fetchReportData(
     }
     case 'client-birthdays': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = (supabase.from('v_all_clients') as any)
+        let q = (supabase.from('v_all_clients' as any) as any)
           .select('name, first_name, last_name, email, phone, total_spend, visit_count, birthday')
           .eq('is_archived', false)
           .not('birthday', 'is', null)
@@ -261,7 +261,7 @@ async function fetchReportData(
     }
     case 'duplicate-clients': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = (supabase.from('v_all_clients') as any)
+        let q = (supabase.from('v_all_clients' as any) as any)
           .select('name, first_name, last_name, email, phone')
           .eq('is_archived', false)
           .eq('is_duplicate', true)
@@ -280,7 +280,7 @@ async function fetchReportData(
     }
     case 'client-attrition': {
       const attrData = await fetchAllBatched<any>((from, to) => {
-        let q = (supabase.from('v_all_clients') as any)
+        let q = (supabase.from('v_all_clients' as any) as any)
           .select('name, first_name, last_name, email, total_spend, visit_count, last_visit')
           .eq('is_archived', false)
           .range(from, to);
@@ -308,7 +308,7 @@ async function fetchReportData(
     case 'top-clients':
     case 'client-source': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = (supabase.from('v_all_clients') as any)
+        let q = (supabase.from('v_all_clients' as any) as any)
           .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, lead_source, birthday')
           .eq('is_archived', false)
           .range(from, to);
@@ -326,7 +326,7 @@ async function fetchReportData(
     case 'demand-heatmap': {
       const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_appointments')
+        let q = supabase.from('v_all_appointments' as any)
           .select('appointment_date, start_time, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -357,7 +357,7 @@ async function fetchReportData(
     case 'deleted-appointments':
     case 'future-appointments': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_appointments')
+        let q = supabase.from('v_all_appointments' as any)
           .select('appointment_date, start_time, status, staff_name, client_name, total_price, deleted_at')
           .range(from, to);
         if (reportId === 'deleted-appointments') {
@@ -381,7 +381,7 @@ async function fetchReportData(
     }
     case 'location-benchmark': {
       const appts = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_appointments')
+        let q = supabase.from('v_all_appointments' as any)
           .select('location_id, total_price, tip_amount, status, phorest_client_id')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -417,7 +417,7 @@ async function fetchReportData(
     }
     case 'tax-summary': {
       const taxData = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('item_type, total_amount, tax_amount, branch_name, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -451,7 +451,7 @@ async function fetchReportData(
     }
     case 'service-profitability': {
       const spData = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('item_name, item_type, total_amount, quantity')
           .eq('item_type', 'service')
           .gte('transaction_date', dateFrom)
@@ -477,7 +477,7 @@ async function fetchReportData(
     }
     case 'chemical-cost': {
       const ccData = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('item_name, item_type, total_amount, quantity, unit_price')
           .eq('item_type', 'service')
           .gte('transaction_date', dateFrom)
@@ -508,7 +508,7 @@ async function fetchReportData(
     }
     case 'location-sales': {
       const lsData = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('location_id, branch_name, total_amount, item_type')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -537,7 +537,7 @@ async function fetchReportData(
     case 'category-mix':
     case 'discounts': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_transaction_items')
+        let q = supabase.from('v_all_transaction_items' as any)
           .select('item_name, item_type, total_amount, quantity, staff_name, transaction_date, discount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)

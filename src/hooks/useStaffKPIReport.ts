@@ -38,7 +38,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         status: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('stylist_user_id, phorest_client_id, rebooked_at_checkout, is_new_client, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -56,7 +56,7 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, total_amount, tax_amount, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)

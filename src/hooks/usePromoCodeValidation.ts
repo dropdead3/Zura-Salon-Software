@@ -97,7 +97,7 @@ export function useValidatePromoCode() {
       // Check target audience
       if (promo.target_audience === 'new_clients' && clientId) {
         const { data: prevAppointments } = await supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id')
           .eq('phorest_client_id', clientId)
           .limit(1);

@@ -102,7 +102,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
         .select('id')
         .eq('phorest_client_id', phorestClientId)
         .maybeSingle();
-      return data?.id || null;
+      return (data as any)?.id || null;
     },
     enabled: !!phorestClientId,
     staleTime: 5 * 60 * 1000,
@@ -159,7 +159,7 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
       if (!lookupId) return null;
 
       const { data: items } = await supabase
-        .from('v_all_transaction_items')
+        .from('v_all_transaction_items' as any)
         .select('discount, promotion_id')
         .eq('transaction_id', lookupId)
         .not('promotion_id', 'is', null)

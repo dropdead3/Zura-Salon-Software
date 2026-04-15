@@ -33,11 +33,11 @@ export function SignaturesTab() {
         .select('phorest_client_id, name');
       
       if (error) throw error;
-      return data;
+      return data as any[];
     },
   });
 
-  const clientMap = new Map(clients?.map(c => [c.phorest_client_id, c.name]) || []);
+  const clientMap = new Map((clients || []).map((c: any) => [c.phorest_client_id, c.name]));
 
   // Filter signatures by search
   const filteredSignatures = signatures?.filter((sig) => {

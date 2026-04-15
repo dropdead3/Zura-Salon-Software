@@ -61,7 +61,7 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
       // Fetch from phorest_transaction_items table with pagination
       const items = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('*')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)

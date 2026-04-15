@@ -21,7 +21,7 @@ export function useDemandHeatmap(dateFrom: string, dateTo: string, locationId?: 
         start_time: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('appointment_date, start_time')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

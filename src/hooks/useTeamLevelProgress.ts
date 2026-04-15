@@ -117,7 +117,7 @@ export function useTeamLevelProgress() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
           .in('stylist_user_id', userIds)
           .gte('transaction_date', startStr)

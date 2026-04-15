@@ -44,7 +44,7 @@ export function useProductVelocity(locationId?: string) {
       // bucket3 = 61-90 days (weight 1), starts at midpoint
 
       let query = supabase
-        .from('v_all_transaction_items')
+        .from('v_all_transaction_items' as any)
         .select('product_name, quantity, transaction_date')
         .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
         .gte('transaction_date', dateFrom)

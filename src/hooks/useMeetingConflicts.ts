@@ -29,7 +29,7 @@ export function useMeetingConflicts(
 
       // Check phorest_appointments
       const { data: phorest, error: pError } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('id, stylist_user_id, start_time, end_time, client_name, service_name')
         .eq('appointment_date', date)
         .in('stylist_user_id', attendeeUserIds)

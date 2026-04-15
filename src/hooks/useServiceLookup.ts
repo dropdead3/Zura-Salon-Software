@@ -20,7 +20,7 @@ export function useServiceLookup() {
     queryKey: ['service-lookup-map'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('v_all_services')
+        .from('v_all_services' as any)
         .select('name, category, duration_minutes, price, container_types');
 
       if (error) throw error;

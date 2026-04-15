@@ -282,7 +282,7 @@ export function QuickBookingPopover({
       // 1. Query all appointments via the union view
       if (selectedClient?.phorest_client_id) {
         const { data } = await supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('id, service_name, appointment_date, start_time, total_price, stylist_user_id')
           .eq('phorest_client_id', selectedClient.phorest_client_id)
           .gte('appointment_date', dateFrom)
@@ -496,7 +496,7 @@ export function QuickBookingPopover({
     queryKey: ['phorest-clients-booking', clientSearch, user?.id, canViewAllClients],
     queryFn: async () => {
       let query = supabase
-        .from('v_all_clients')
+        .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone, preferred_stylist_id, visit_count, last_visit, total_spend, is_vip, branch_name, is_banned, ban_reason, birthday, client_since')
         .eq('is_duplicate', false)
         .order('name')

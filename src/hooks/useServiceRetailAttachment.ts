@@ -48,7 +48,7 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       // 1. Fetch all service items in date range
       const serviceItems = await fetchAllPages((offset) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('phorest_client_id, transaction_date, item_name, item_category')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -61,7 +61,7 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       // 2. Fetch all product items in date range
       const productItems = await fetchAllPages((offset) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('phorest_client_id, transaction_date, total_amount, item_name')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)

@@ -114,7 +114,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
         tip_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('stylist_user_id, status, total_price, tip_amount')
           .gte('appointment_date', startDateStr)
           .lte('appointment_date', endDateStr)
@@ -265,7 +265,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
     queryKey: ['staff-utilization-locations', startDateStr, endDateStr],
     queryFn: async () => {
       const { data: appointments, error: aptError } = await supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('location_id')
         .gte('appointment_date', startDateStr)
         .lte('appointment_date', endDateStr)

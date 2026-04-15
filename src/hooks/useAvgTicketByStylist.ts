@@ -39,7 +39,7 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
 
       while (hasMore) {
         let query = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('staff_user_id, total_amount, tax_amount, item_name, item_type, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)

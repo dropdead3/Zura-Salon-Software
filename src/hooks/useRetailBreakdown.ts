@@ -59,7 +59,7 @@ export function useRetailBreakdown(
         tax_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('v_all_transaction_items')
+          .from('v_all_transaction_items' as any)
           .select('item_type, item_name, total_amount, tax_amount')
           .gte('transaction_date', txDateFrom)
           .lte('transaction_date', txDateTo)

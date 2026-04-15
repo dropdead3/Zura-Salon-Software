@@ -27,7 +27,7 @@ export function useServiceClientAnalysis(
     queryFn: async () => {
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('v_all_appointments')
+          .from('v_all_appointments' as any)
           .select('service_name, is_new_client, rebooked_at_checkout, tip_amount, total_price, phorest_staff_id')
           .neq('status', 'cancelled')
           .gte('appointment_date', dateFrom)

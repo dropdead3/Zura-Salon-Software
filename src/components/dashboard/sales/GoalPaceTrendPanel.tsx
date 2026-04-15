@@ -31,7 +31,7 @@ export function GoalPaceTrendPanel({ period, target, locationId }: GoalPaceTrend
       const dateTo = format(now, 'yyyy-MM-dd');
 
       let query = supabase
-        .from('v_all_appointments')
+        .from('v_all_appointments' as any)
         .select('appointment_date, total_price')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)

@@ -105,7 +105,7 @@ export function NewBookingSheet({
     queryKey: ['phorest-clients', clientSearch],
     queryFn: async () => {
       let query = supabase
-        .from('v_all_clients')
+        .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone')
         .order('name')
         .limit(20);
