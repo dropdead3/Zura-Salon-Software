@@ -69,6 +69,8 @@ import { LocationGroupSelect } from '@/components/ui/LocationGroupSelect';
 import { useLocations } from '@/hooks/useLocations';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { parseLocationIds, encodeLocationIds, isAllLocations } from '@/lib/locationFilter';
+import { useSubmitDisputeEvidence } from '@/hooks/useDisputeEvidence';
+import { useFraudWarnings, useUnresolvedFraudWarningCount } from '@/hooks/useFraudWarnings';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
 const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
