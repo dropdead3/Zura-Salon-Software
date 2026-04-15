@@ -335,9 +335,7 @@ async function handleCheckoutCompleted(
       return;
     }
 
-    const updatePayload: Record<string, unknown> = {
-      split_payment_link_intent_id: paymentIntentId,
-    };
+    const updatePayload: Record<string, unknown> = {};
 
     // Persist surcharge amount from checkout metadata
     if (metadata.surcharge_amount_cents) {
@@ -348,7 +346,9 @@ async function handleCheckoutCompleted(
     const isSplit = metadata.is_split === 'true';
 
     if (isSplit) {
-      // Split payment: only mark paid when both legs are confirmed
+      // Split payment: record the link intent ID only for actual splits
+      updatePayload.split_payment_link_intent_id = paymentIntentId;
+      // Only mark paid when both legs are confirmed
       if (appt?.payment_status === 'partially_paid' && appt?.split_payment_terminal_intent_id) {
         // Terminal leg already paid — this link leg completes payment
         updatePayload.payment_status = 'paid';
