@@ -120,7 +120,7 @@ export function useMyPayData(): MyPayData {
         .maybeSingle();
       
       if (error) throw error;
-      return data as EmployeePayrollSettings | null;
+      return data as unknown as EmployeePayrollSettings | null;
     },
     enabled: !!user?.id && !!organizationId,
   });

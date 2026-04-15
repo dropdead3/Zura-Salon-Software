@@ -67,7 +67,7 @@ export function IncidentManagementCard() {
         .order('created_at', { ascending: false })
         .limit(10);
       if (error) throw error;
-      return data as Incident[];
+      return data as unknown as Incident[];
     },
   });
 

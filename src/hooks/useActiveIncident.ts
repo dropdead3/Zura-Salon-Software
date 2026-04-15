@@ -30,7 +30,7 @@ export function useActiveIncident() {
         .maybeSingle();
 
       if (error) throw error;
-      return data as PlatformIncident | null;
+      return data as unknown as PlatformIncident | null;
     },
     staleTime: 30_000,
   });

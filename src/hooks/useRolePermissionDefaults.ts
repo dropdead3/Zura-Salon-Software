@@ -22,7 +22,7 @@ export function useRolePermissionDefaults() {
         .select('*');
 
       if (error) throw error;
-      return data as RolePermissionDefault[];
+      return data as unknown as RolePermissionDefault[];
     },
   });
 }

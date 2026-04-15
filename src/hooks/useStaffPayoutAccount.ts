@@ -36,7 +36,7 @@ export function useMyPayoutAccount() {
         .maybeSingle();
 
       if (error) throw error;
-      return data as StaffPayoutAccount | null;
+      return data as unknown as StaffPayoutAccount | null;
     },
     enabled: !!orgId,
   });

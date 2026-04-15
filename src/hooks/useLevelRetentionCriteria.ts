@@ -46,7 +46,7 @@ export function useLevelRetentionCriteria() {
         .select('*')
         .eq('organization_id', orgId!);
       if (error) throw error;
-      return data as LevelRetentionCriteria[];
+      return data as unknown as LevelRetentionCriteria[];
     },
     enabled: !!orgId,
   });
@@ -66,7 +66,7 @@ export function useLevelRetentionCriteriaForLevel(stylistLevelId: string | undef
         .eq('stylist_level_id', stylistLevelId!)
         .maybeSingle();
       if (error) throw error;
-      return data as LevelRetentionCriteria | null;
+      return data as unknown as LevelRetentionCriteria | null;
     },
     enabled: !!orgId && !!stylistLevelId,
     refetchOnMount: 'always' as const,

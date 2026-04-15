@@ -24,7 +24,7 @@ export function useEmailVariables() {
         .order('variable_key');
       
       if (error) throw error;
-      return data as EmailVariable[];
+      return data as unknown as EmailVariable[];
     },
   });
 }

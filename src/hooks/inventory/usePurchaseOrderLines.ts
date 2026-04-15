@@ -25,7 +25,7 @@ export function usePurchaseOrderLines(poId: string | undefined) {
         .eq('purchase_order_id', poId!)
         .order('created_at');
       if (error) throw error;
-      return data as PurchaseOrderLine[];
+      return data as unknown as PurchaseOrderLine[];
     },
     enabled: !!poId,
   });

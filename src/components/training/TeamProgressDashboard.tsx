@@ -72,7 +72,7 @@ export function TeamProgressDashboard() {
         .eq('is_active', true)
         .order('display_name');
       if (error) throw error;
-      return data as TeamMember[];
+      return data as unknown as TeamMember[];
     },
   });
 
@@ -86,7 +86,7 @@ export function TeamProgressDashboard() {
         .eq('is_active', true)
         .order('order_index');
       if (error) throw error;
-      return data as TrainingVideo[];
+      return data as unknown as TrainingVideo[];
     },
   });
 
@@ -98,7 +98,7 @@ export function TeamProgressDashboard() {
         .from('training_progress')
         .select('user_id, video_id, completed_at');
       if (error) throw error;
-      return data as ProgressRecord[];
+      return data as unknown as ProgressRecord[];
     },
   });
 
@@ -110,7 +110,7 @@ export function TeamProgressDashboard() {
         .from('user_roles')
         .select('user_id, role');
       if (error) throw error;
-      return data as UserRole[];
+      return data as unknown as UserRole[];
     },
   });
 

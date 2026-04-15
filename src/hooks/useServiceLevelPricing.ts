@@ -31,7 +31,7 @@ export function useServiceLevelPrices(serviceId: string | null) {
         .select('*')
         .eq('service_id', serviceId!);
       if (error) throw error;
-      return data as ServiceLevelPrice[];
+      return data as unknown as ServiceLevelPrice[];
     },
     enabled: !!serviceId,
   });
@@ -75,7 +75,7 @@ export function useStylistPriceOverrides(serviceId: string | null) {
         .select('*')
         .eq('service_id', serviceId!);
       if (error) throw error;
-      return data as StylistPriceOverride[];
+      return data as unknown as StylistPriceOverride[];
     },
     enabled: !!serviceId,
   });

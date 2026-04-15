@@ -27,7 +27,7 @@ export function useEmailTemplates() {
         .order('name');
 
       if (error) throw error;
-      return data as EmailTemplate[];
+      return data as unknown as EmailTemplate[];
     },
   });
 }
@@ -43,7 +43,7 @@ export function useEmailTemplate(templateKey: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as EmailTemplate | null;
+      return data as unknown as EmailTemplate | null;
     },
     enabled: !!templateKey,
   });

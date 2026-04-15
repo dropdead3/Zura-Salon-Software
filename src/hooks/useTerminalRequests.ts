@@ -59,7 +59,7 @@ export function useTerminalRequests(orgId: string | undefined) {
         .eq('organization_id', orgId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as TerminalHardwareRequest[];
+      return data as unknown as TerminalHardwareRequest[];
     },
     enabled: !!orgId,
     staleTime: 30000,

@@ -101,7 +101,7 @@ export default function DemoFeatures() {
         .select('*')
         .order('display_order', { ascending: true });
       if (error) throw error;
-      return data as ProductFeature[];
+      return data as unknown as ProductFeature[];
     },
   });
 

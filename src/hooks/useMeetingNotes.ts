@@ -30,7 +30,7 @@ export function useMeetingNotes(meetingId: string) {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as MeetingNote[];
+      return data as unknown as MeetingNote[];
     },
     enabled: !!meetingId && !!user,
   });

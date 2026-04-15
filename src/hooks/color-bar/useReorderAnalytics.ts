@@ -266,7 +266,7 @@ export function useProcurementBudget() {
         .eq('organization_id', orgId!)
         .maybeSingle();
       if (error) throw error;
-      return data as ProcurementBudget | null;
+      return data as unknown as ProcurementBudget | null;
     },
     enabled: !!orgId,
     staleTime: 5 * 60_000,

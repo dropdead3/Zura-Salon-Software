@@ -186,7 +186,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         .order('name')
         .limit(2000);
       if (error) throw error;
-      return data as CatalogProduct[];
+      return data as unknown as CatalogProduct[];
     },
     enabled: !!orgId && open,
     staleTime: 120_000,

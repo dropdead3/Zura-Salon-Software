@@ -144,7 +144,7 @@ export function useCreateTimeOffRequest() {
         .single();
 
       if (error) throw error;
-      return data as TimeOffRequest;
+      return data as unknown as TimeOffRequest;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['time-off-requests'] });

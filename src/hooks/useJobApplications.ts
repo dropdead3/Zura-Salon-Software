@@ -64,7 +64,7 @@ export function useJobApplications(includeArchived = false) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as JobApplication[];
+      return data as unknown as JobApplication[];
     },
   });
 }
@@ -80,7 +80,7 @@ export function useJobApplication(id: string) {
         .single();
 
       if (error) throw error;
-      return data as JobApplication;
+      return data as unknown as JobApplication;
     },
     enabled: !!id,
   });
@@ -97,7 +97,7 @@ export function useApplicationNotes(applicationId: string) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as JobApplicationNote[];
+      return data as unknown as JobApplicationNote[];
     },
     enabled: !!applicationId,
   });
@@ -114,7 +114,7 @@ export function usePipelineStages() {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return data as PipelineStage[];
+      return data as unknown as PipelineStage[];
     },
   });
 }

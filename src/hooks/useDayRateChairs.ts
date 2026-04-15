@@ -28,7 +28,7 @@ export function useDayRateChairs(locationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as DayRateChair[];
+      return data as unknown as DayRateChair[];
     },
     enabled: locationId !== undefined || locationId === undefined,
   });

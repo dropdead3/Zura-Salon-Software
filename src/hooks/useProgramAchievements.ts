@@ -34,7 +34,7 @@ export function useProgramAchievements() {
         .order('threshold');
       
       if (error) throw error;
-      return data as ProgramAchievement[];
+      return data as unknown as ProgramAchievement[];
     },
     staleTime: 10 * 60 * 1000,
   });
@@ -55,7 +55,7 @@ export function useUserProgramAchievements(enrollmentId: string | undefined) {
         .eq('enrollment_id', enrollmentId);
       
       if (error) throw error;
-      return data as UserProgramAchievement[];
+      return data as unknown as UserProgramAchievement[];
     },
     enabled: !!enrollmentId,
   });

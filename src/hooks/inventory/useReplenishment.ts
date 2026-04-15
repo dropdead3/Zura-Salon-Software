@@ -39,7 +39,7 @@ export function useReplenishmentRecommendations(status = 'pending') {
       if (status !== 'all') query = query.eq('status', status);
       const { data, error } = await query;
       if (error) throw error;
-      return data as ReplenishmentRecommendation[];
+      return data as unknown as ReplenishmentRecommendation[];
     },
     enabled: !!orgId,
     staleTime: 30_000,

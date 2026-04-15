@@ -20,7 +20,7 @@ export function useServiceLocationPrices(serviceId: string | null) {
         .select('*')
         .eq('service_id', serviceId!);
       if (error) throw error;
-      return data as ServiceLocationPrice[];
+      return data as unknown as ServiceLocationPrice[];
     },
     enabled: !!serviceId,
   });

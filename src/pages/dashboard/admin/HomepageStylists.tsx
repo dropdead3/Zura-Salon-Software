@@ -71,7 +71,7 @@ function useHomepagePendingRequests() {
         .order('homepage_requested_at', { ascending: true });
 
       if (error) throw error;
-      return data as StylistProfile[];
+      return data as unknown as StylistProfile[];
     },
   });
 }
@@ -104,7 +104,7 @@ function useAllStylists() {
         .order('full_name', { ascending: true });
 
       if (error) throw error;
-      return data as StylistProfile[];
+      return data as unknown as StylistProfile[];
     },
   });
 }

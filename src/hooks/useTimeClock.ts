@@ -44,7 +44,7 @@ export function useTimeClock() {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data as TimeEntry | null;
+      return data as unknown as TimeEntry | null;
     },
     enabled: !!userId && !!orgId,
   });

@@ -74,7 +74,7 @@ export function useStylistLevels() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as StylistLevel[];
+      return data as unknown as StylistLevel[];
     },
   });
 }
@@ -94,7 +94,7 @@ export function useAllStylistLevels() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as StylistLevel[];
+      return data as unknown as StylistLevel[];
     },
   });
 }

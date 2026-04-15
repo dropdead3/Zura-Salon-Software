@@ -56,7 +56,7 @@ export function ServiceFormLinkDialog({ open, onOpenChange, template }: ServiceF
         .order('name');
       
       if (error) throw error;
-      return data as Service[];
+      return data as unknown as Service[];
     },
   });
 

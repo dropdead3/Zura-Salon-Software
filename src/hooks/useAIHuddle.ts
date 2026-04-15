@@ -48,7 +48,7 @@ export function useGenerateAIHuddle() {
         throw new Error(data.error);
       }
 
-      return data as AIHuddleResponse;
+      return data as unknown as AIHuddleResponse;
     },
     onError: (error: Error) => {
       console.error('Failed to generate AI huddle:', error);

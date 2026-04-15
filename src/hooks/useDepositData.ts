@@ -34,7 +34,7 @@ export function useClientCardsOnFile(clientId?: string) {
         .eq('client_id', clientId!)
         .order('is_default', { ascending: false });
       if (error) throw error;
-      return data as ClientCard[];
+      return data as unknown as ClientCard[];
     },
     enabled: !!orgId && !!clientId,
   });
@@ -86,7 +86,7 @@ export function useCancellationFeePolicies() {
         .eq('organization_id', orgId!)
         .order('min_notice_hours', { ascending: false });
       if (error) throw error;
-      return data as CancellationFeePolicy[];
+      return data as unknown as CancellationFeePolicy[];
     },
     enabled: !!orgId,
   });

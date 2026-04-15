@@ -110,7 +110,7 @@ export function useGrowthForecast(locationId?: string) {
       });
 
       if (error) throw error;
-      return data as GrowthForecastData;
+      return data as unknown as GrowthForecastData;
     },
     enabled: !!effectiveOrganization?.id,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
@@ -148,7 +148,7 @@ export function useMonthlyForecast(
       });
 
       if (error) throw error;
-      return data as MonthlyForecastData;
+      return data as unknown as MonthlyForecastData;
     },
     enabled: !!effectiveOrganization?.id,
     staleTime: 4 * 60 * 60 * 1000, // 4 hours

@@ -83,7 +83,7 @@ export function useCreateResponsibility() {
         .select()
         .single();
       if (error) throw error;
-      return data as Responsibility;
+      return data as unknown as Responsibility;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['responsibilities'] });
@@ -292,7 +292,7 @@ export function useCreateResponsibilityAsset() {
         .select()
         .single();
       if (error) throw error;
-      return data as ResponsibilityAsset;
+      return data as unknown as ResponsibilityAsset;
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['responsibility-assets', data.responsibility_id] });

@@ -35,7 +35,7 @@ export function useDashboardVisibility() {
         .limit(5000);
 
       if (error) throw error;
-      return data as DashboardElementVisibility[];
+      return data as unknown as DashboardElementVisibility[];
     },
   });
 }

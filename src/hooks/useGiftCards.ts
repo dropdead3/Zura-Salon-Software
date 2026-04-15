@@ -44,7 +44,7 @@ export function useGiftCards(organizationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as GiftCard[];
+      return data as unknown as GiftCard[];
     },
     enabled: !!organizationId,
   });
@@ -63,7 +63,7 @@ export function useGiftCardByCode(code: string | null) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as GiftCard | null;
+      return data as unknown as GiftCard | null;
     },
     enabled: !!code && code.length >= 16,
   });
@@ -115,7 +115,7 @@ export function useCreateGiftCard() {
         .single();
 
       if (error) throw error;
-      return data as GiftCard;
+      return data as unknown as GiftCard;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['gift-cards', variables.organizationId] });
@@ -235,7 +235,7 @@ export function useUpdateGiftCard() {
         .single();
 
       if (error) throw error;
-      return data as GiftCard;
+      return data as unknown as GiftCard;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gift-cards'] });
@@ -270,7 +270,7 @@ export function useGiftCardTransactions(giftCardId: string | null) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as BalanceTransaction[];
+      return data as unknown as BalanceTransaction[];
     },
     enabled: !!giftCardId,
   });

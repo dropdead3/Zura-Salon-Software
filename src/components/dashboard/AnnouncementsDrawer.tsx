@@ -194,7 +194,7 @@ export function AnnouncementsPanel({ isLeadership, onClose }: AnnouncementsPanel
         .limit(20);
 
       if (error) throw error;
-      return data as Announcement[];
+      return data as unknown as Announcement[];
     },
   });
 

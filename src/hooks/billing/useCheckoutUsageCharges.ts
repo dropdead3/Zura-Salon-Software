@@ -41,7 +41,7 @@ export function useCheckoutUsageCharges(appointmentId: string | null) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as CheckoutUsageCharge[];
+      return data as unknown as CheckoutUsageCharge[];
     },
     enabled: !!appointmentId,
   });

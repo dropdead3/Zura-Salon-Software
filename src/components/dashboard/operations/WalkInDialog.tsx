@@ -67,7 +67,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
         .order('category')
         .order('name');
       if (error) throw error;
-      return data as ServiceWithRestrictions[];
+      return data as unknown as ServiceWithRestrictions[];
     },
   });
 

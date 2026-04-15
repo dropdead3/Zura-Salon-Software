@@ -26,7 +26,7 @@ export function useOrganizationDomain(orgId: string | undefined) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as OrganizationDomain | null;
+      return data as unknown as OrganizationDomain | null;
     },
     enabled: !!orgId,
   });
@@ -56,7 +56,7 @@ export function useSaveDomain() {
         .single();
 
       if (error) throw error;
-      return data as OrganizationDomain;
+      return data as unknown as OrganizationDomain;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['organization-domain', variables.organizationId] });

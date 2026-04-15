@@ -33,7 +33,7 @@ export function usePandaDocDocuments(organizationId: string | undefined) {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as PandaDocDocument[];
+      return data as unknown as PandaDocDocument[];
     },
     enabled: !!organizationId,
   });

@@ -74,7 +74,7 @@ export function VideoLibraryManager() {
         .select('*')
         .order('order_index');
       if (error) throw error;
-      return data as TrainingVideo[];
+      return data as unknown as TrainingVideo[];
     },
   });
 

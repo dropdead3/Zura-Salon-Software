@@ -32,7 +32,7 @@ export function useOrgPaymentInfo(organizationId: string | undefined) {
         body: { organization_id: organizationId },
       });
       if (error) throw error;
-      return data as PaymentInfoResponse;
+      return data as unknown as PaymentInfoResponse;
     },
     enabled: !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes

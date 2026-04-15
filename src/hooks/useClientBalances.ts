@@ -63,7 +63,7 @@ export function useClientBalanceTransactions(clientId: string | null) {
         .limit(50);
 
       if (error) throw error;
-      return data as BalanceTransaction[];
+      return data as unknown as BalanceTransaction[];
     },
     enabled: !!clientId,
   });

@@ -44,7 +44,7 @@ export function useChatSections() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      return data as ChatSection[];
+      return data as unknown as ChatSection[];
     },
     enabled: !!orgId,
   });

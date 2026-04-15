@@ -80,7 +80,7 @@ export function useAppointmentNotes(appointmentId: string | null) {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as AppointmentNote[];
+      return data as unknown as AppointmentNote[];
     },
   });
 
@@ -123,7 +123,7 @@ export function useAppointmentNotes(appointmentId: string | null) {
         .single();
       
       if (error) throw error;
-      return data as AppointmentNote;
+      return data as unknown as AppointmentNote;
     },
     onSuccess: () => {
       if (!isDemo) {

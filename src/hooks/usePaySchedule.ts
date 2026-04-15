@@ -274,7 +274,7 @@ export function usePaySchedule() {
         .maybeSingle();
       
       if (error) throw error;
-      return data as PayScheduleSettings | null;
+      return data as unknown as PayScheduleSettings | null;
     },
     enabled: !!organizationId,
   });

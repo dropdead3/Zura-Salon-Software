@@ -60,7 +60,7 @@ export function useLocationInventoryLeads() {
         });
       }
 
-      return data as LocationInventoryLead[];
+      return data as unknown as LocationInventoryLead[];
     },
     enabled: !!orgId,
     staleTime: 2 * 60 * 1000,

@@ -29,7 +29,7 @@ export function useServiceAddons(organizationId?: string) {
         .order('display_order')
         .order('name');
       if (error) throw error;
-      return data as ServiceAddon[];
+      return data as unknown as ServiceAddon[];
     },
     enabled: !!organizationId,
     staleTime: 2 * 60 * 1000,

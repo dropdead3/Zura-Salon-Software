@@ -50,7 +50,7 @@ export function useChatPermissions() {
         .eq('organization_id', orgId);
 
       if (error) throw error;
-      return data as ChatPermission[];
+      return data as unknown as ChatPermission[];
     },
     enabled: !!orgId,
   });

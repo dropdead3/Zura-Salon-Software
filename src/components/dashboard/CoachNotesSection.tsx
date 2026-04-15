@@ -84,7 +84,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as CoachNote[];
+      return data as unknown as CoachNote[];
     },
   });
 

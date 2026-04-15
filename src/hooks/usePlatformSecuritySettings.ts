@@ -27,7 +27,7 @@ export function usePlatformSecuritySettings() {
         .single();
 
       if (error) throw error;
-      return data as PlatformSecuritySettings;
+      return data as unknown as PlatformSecuritySettings;
     },
   });
 }

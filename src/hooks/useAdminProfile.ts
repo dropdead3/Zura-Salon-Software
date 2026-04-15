@@ -20,7 +20,7 @@ export function useUserProfile(userId: string | undefined) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as EmployeeProfile | null;
+      return data as unknown as EmployeeProfile | null;
     },
     enabled: !!userId,
   });

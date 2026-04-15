@@ -30,7 +30,7 @@ export function useAccountApprovals() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as PendingAccount[];
+      return data as unknown as PendingAccount[];
     },
   });
 }
@@ -47,7 +47,7 @@ export function usePendingApprovals() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as PendingAccount[];
+      return data as unknown as PendingAccount[];
     },
   });
 }
@@ -239,7 +239,7 @@ export function useCanApproveAdmin() {
         console.error('Error checking admin approval permission:', error);
         return false;
       }
-      return data as boolean;
+      return data as unknown as boolean;
     },
     enabled: !!user,
   });

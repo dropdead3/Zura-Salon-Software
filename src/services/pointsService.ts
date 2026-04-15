@@ -109,7 +109,7 @@ export async function getPointsHistory(
     return [];
   }
 
-  return data as PointsTransaction[];
+  return data as unknown as PointsTransaction[];
 }
 
 /**
@@ -127,7 +127,7 @@ export async function getPointsRules(): Promise<PointsRule[]> {
     return [];
   }
 
-  return data as PointsRule[];
+  return data as unknown as PointsRule[];
 }
 
 /**
@@ -170,7 +170,7 @@ export async function getRewardsCatalog(activeOnly = true): Promise<Reward[]> {
     return [];
   }
 
-  return data as Reward[];
+  return data as unknown as Reward[];
 }
 
 /**
@@ -188,7 +188,7 @@ export async function createReward(reward: Omit<Reward, 'id'>): Promise<Reward |
     return null;
   }
 
-  return data as Reward;
+  return data as unknown as Reward;
 }
 
 /**

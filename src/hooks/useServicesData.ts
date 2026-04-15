@@ -67,7 +67,7 @@ export function useServicesData(locationId?: string, organizationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Service[];
+      return data as unknown as Service[];
     },
   });
 }
@@ -104,7 +104,7 @@ export function useAllServicesData() {
         .order('name');
       
       if (error) throw error;
-      return data as Service[];
+      return data as unknown as Service[];
     },
   });
 }
@@ -147,7 +147,7 @@ export function useService(serviceId: string | undefined) {
         .single();
       
       if (error) throw error;
-      return data as Service;
+      return data as unknown as Service;
     },
     enabled: !!serviceId,
   });
@@ -339,7 +339,7 @@ export function useArchivedServices(organizationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Service[];
+      return data as unknown as Service[];
     },
   });
 }

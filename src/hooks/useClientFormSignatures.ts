@@ -45,7 +45,7 @@ export function useClientSignatures(clientId: string | undefined) {
         .order('signed_at', { ascending: false });
       
       if (error) throw error;
-      return data as ClientFormSignature[];
+      return data as unknown as ClientFormSignature[];
     },
     enabled: !!clientId,
   });
@@ -69,7 +69,7 @@ export function useAllSignatures(options?: { limit?: number }) {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data as ClientFormSignature[];
+      return data as unknown as ClientFormSignature[];
     },
   });
 }
@@ -156,7 +156,7 @@ export function useRecordSignature() {
         .single();
       
       if (error) throw error;
-      return data as ClientFormSignature;
+      return data as unknown as ClientFormSignature;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['client-form-signatures', variables.client_id] });

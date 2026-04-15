@@ -65,7 +65,7 @@ function useHomepagePendingRequests() {
         .order('homepage_requested_at', { ascending: true });
 
       if (error) throw error;
-      return data as StylistProfile[];
+      return data as unknown as StylistProfile[];
     },
   });
 }
@@ -95,7 +95,7 @@ function useHomepageVisibleStylists() {
         .in('user_id', stylistUserIds);
 
       if (error) throw error;
-      return data as StylistProfile[];
+      return data as unknown as StylistProfile[];
     },
   });
 }

@@ -26,7 +26,7 @@ export function useTeamChatRoleAutoJoin() {
         .eq('organization_id', effectiveOrganization.id);
 
       if (error) throw error;
-      return data as RoleAutoJoinRule[];
+      return data as unknown as RoleAutoJoinRule[];
     },
     enabled: !!effectiveOrganization?.id,
   });

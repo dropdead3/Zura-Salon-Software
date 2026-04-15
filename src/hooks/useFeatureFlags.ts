@@ -34,7 +34,7 @@ export function useFeatureFlags() {
         .order('flag_name', { ascending: true });
 
       if (error) throw error;
-      return data as FeatureFlag[];
+      return data as unknown as FeatureFlag[];
     },
   });
 }
@@ -154,7 +154,7 @@ export function useCreateFeatureFlag() {
         .single();
 
       if (error) throw error;
-      return data as FeatureFlag;
+      return data as unknown as FeatureFlag;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feature-flags'] });
@@ -197,7 +197,7 @@ export function useUpdateFeatureFlag() {
         .single();
 
       if (error) throw error;
-      return data as FeatureFlag;
+      return data as unknown as FeatureFlag;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['feature-flags'] });
@@ -258,7 +258,7 @@ export function useToggleFeatureFlag() {
         .single();
 
       if (error) throw error;
-      return data as FeatureFlag;
+      return data as unknown as FeatureFlag;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['feature-flags'] });

@@ -56,7 +56,7 @@ export function useRoles() {
         .order('sort_order');
 
       if (error) throw error;
-      return data as Role[];
+      return data as unknown as Role[];
     },
   });
 }
@@ -72,7 +72,7 @@ export function useAllRoles() {
         .order('sort_order');
 
       if (error) throw error;
-      return data as Role[];
+      return data as unknown as Role[];
     },
   });
 }
@@ -89,7 +89,7 @@ export function useRoleByName(name: string) {
         .single();
 
       if (error) throw error;
-      return data as Role;
+      return data as unknown as Role;
     },
     enabled: !!name,
   });
@@ -128,7 +128,7 @@ export function useCreateRole() {
         }
         throw error;
       }
-      return data as Role;
+      return data as unknown as Role;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
@@ -325,7 +325,7 @@ export function useToggleSystemRole() {
         .single();
 
       if (error) throw error;
-      return data as Role;
+      return data as unknown as Role;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });

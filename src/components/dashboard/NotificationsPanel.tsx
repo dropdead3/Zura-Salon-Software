@@ -148,7 +148,7 @@ export function NotificationsPanel({
         .limit(20);
 
       if (error) throw error;
-      return data as UserNotification[];
+      return data as unknown as UserNotification[];
     },
     enabled: !!user?.id,
   });

@@ -24,7 +24,7 @@ export function useTaskChecklist(taskId: string | null) {
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return data as ChecklistItem[];
+      return data as unknown as ChecklistItem[];
     },
     enabled: !!taskId,
   });

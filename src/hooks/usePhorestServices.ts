@@ -49,7 +49,7 @@ export function usePhorestServices(locationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as PhorestService[];
+      return data as unknown as PhorestService[];
     },
     // Enable the query when we have a location selected
     enabled: !!locationId,
@@ -108,7 +108,7 @@ export function useAllServices() {
         .order('name');
       
       if (error) throw error;
-      return data as PhorestService[];
+      return data as unknown as PhorestService[];
     },
   });
 }

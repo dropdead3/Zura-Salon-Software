@@ -32,7 +32,7 @@ export function useServiceSeasonalAdjustments(serviceId: string | null) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as ServiceSeasonalAdjustment[];
+      return data as unknown as ServiceSeasonalAdjustment[];
     },
     enabled: !!serviceId,
   });

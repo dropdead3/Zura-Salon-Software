@@ -33,7 +33,7 @@ export function useServiceFormRequirements() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as ServiceFormRequirement[];
+      return data as unknown as ServiceFormRequirement[];
     },
   });
 }
@@ -54,7 +54,7 @@ export function useRequiredFormsForService(serviceId: string | undefined) {
         .eq('is_required', true);
       
       if (error) throw error;
-      return data as ServiceFormRequirement[];
+      return data as unknown as ServiceFormRequirement[];
     },
     enabled: !!serviceId,
   });

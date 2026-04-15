@@ -58,7 +58,7 @@ export function useTodaysHuddle(locationId?: string) {
 
       const { data, error } = await query.maybeSingle();
       if (error) throw error;
-      return data as DailyHuddle | null;
+      return data as unknown as DailyHuddle | null;
     },
   });
 }
@@ -80,7 +80,7 @@ export function useHuddleHistory(limit = 30, locationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as DailyHuddle[];
+      return data as unknown as DailyHuddle[];
     },
   });
 }
@@ -96,7 +96,7 @@ export function useHuddleById(huddleId: string | undefined) {
         .eq('id', huddleId)
         .single();
       if (error) throw error;
-      return data as DailyHuddle;
+      return data as unknown as DailyHuddle;
     },
     enabled: !!huddleId,
   });
@@ -117,7 +117,7 @@ export function useHuddleTemplates(locationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as HuddleTemplate[];
+      return data as unknown as HuddleTemplate[];
     },
   });
 }
@@ -136,7 +136,7 @@ export function useMyHuddleAcknowledgment(huddleId: string | undefined) {
         .eq('user_id', user.id)
         .maybeSingle();
       if (error) throw error;
-      return data as HuddleAcknowledgment | null;
+      return data as unknown as HuddleAcknowledgment | null;
     },
     enabled: !!huddleId && !!user,
   });
@@ -152,7 +152,7 @@ export function useHuddleAcknowledgments(huddleId: string | undefined) {
         .select('*')
         .eq('huddle_id', huddleId);
       if (error) throw error;
-      return data as HuddleAcknowledgment[];
+      return data as unknown as HuddleAcknowledgment[];
     },
     enabled: !!huddleId,
   });

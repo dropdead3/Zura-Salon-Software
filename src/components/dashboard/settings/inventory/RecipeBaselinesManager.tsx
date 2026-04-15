@@ -54,7 +54,7 @@ export function RecipeBaselinesManager() {
         .eq('organization_id', orgId!)
         .order('name');
       if (error) throw error;
-      return data as ServiceOption[];
+      return data as unknown as ServiceOption[];
     },
     enabled: !!orgId,
   });
@@ -69,7 +69,7 @@ export function RecipeBaselinesManager() {
         .eq('organization_id', orgId!)
         .order('name');
       if (error) throw error;
-      return data as ProductOption[];
+      return data as unknown as ProductOption[];
     },
     enabled: !!orgId,
   });

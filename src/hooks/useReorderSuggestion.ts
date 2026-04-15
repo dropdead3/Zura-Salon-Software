@@ -18,7 +18,7 @@ export function useReorderSuggestion(productId: string | undefined, organization
         body: { product_id: productId, organization_id: organizationId },
       });
       if (error) throw error;
-      return data as ReorderSuggestion;
+      return data as unknown as ReorderSuggestion;
     },
     enabled: !!productId && !!organizationId && enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes

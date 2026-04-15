@@ -46,7 +46,7 @@ export function useActiveRecommendation() {
         .maybeSingle();
 
       if (error) throw error;
-      return data as LeverRecommendation | null;
+      return data as unknown as LeverRecommendation | null;
     },
     enabled: !!orgId,
   });
@@ -67,7 +67,7 @@ export function useRecommendationHistory() {
         .limit(50);
 
       if (error) throw error;
-      return data as LeverRecommendation[];
+      return data as unknown as LeverRecommendation[];
     },
     enabled: !!orgId,
   });
@@ -100,7 +100,7 @@ export function useDecideOnRecommendation() {
         .single();
 
       if (error) throw error;
-      return data as LeverRecommendation;
+      return data as unknown as LeverRecommendation;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['lever-recommendation-active', orgId] });

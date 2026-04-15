@@ -70,7 +70,7 @@ export function usePhorestRequestConflicts(requests: AssistantRequest[]) {
         .neq('status', 'cancelled');
 
       if (error) throw error;
-      return data as PhorestAppointment[];
+      return data as unknown as PhorestAppointment[];
     },
     enabled: dates.length > 0 && stylistIds.length > 0,
   });

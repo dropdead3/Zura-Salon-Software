@@ -97,7 +97,7 @@ export function IndividualAssignments() {
         .eq('is_active', true)
         .order('display_name');
       if (error) throw error;
-      return data as TeamMember[];
+      return data as unknown as TeamMember[];
     },
   });
 
@@ -111,7 +111,7 @@ export function IndividualAssignments() {
         .eq('is_active', true)
         .order('title');
       if (error) throw error;
-      return data as TrainingVideo[];
+      return data as unknown as TrainingVideo[];
     },
   });
 
@@ -124,7 +124,7 @@ export function IndividualAssignments() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Assignment[];
+      return data as unknown as Assignment[];
     },
   });
 

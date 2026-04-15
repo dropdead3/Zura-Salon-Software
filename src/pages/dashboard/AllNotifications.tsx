@@ -146,7 +146,7 @@ export default function AllNotifications() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as UserNotification[];
+      return data as unknown as UserNotification[];
     },
     enabled: !!user?.id,
   });

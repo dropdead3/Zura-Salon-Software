@@ -95,7 +95,7 @@ export function useOrganizationsByStatus(status?: string) {
         .limit(500);
 
       if (error) throw error;
-      return data as Organization[];
+      return data as unknown as Organization[];
     },
   });
 }

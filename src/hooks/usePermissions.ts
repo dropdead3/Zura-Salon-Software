@@ -33,7 +33,7 @@ export function usePermissions() {
         .order('display_name', { ascending: true });
 
       if (error) throw error;
-      return data as Permission[];
+      return data as unknown as Permission[];
     },
   });
 }
@@ -47,7 +47,7 @@ export function useRolePermissions() {
         .select('*');
 
       if (error) throw error;
-      return data as RolePermission[];
+      return data as unknown as RolePermission[];
     },
   });
 }

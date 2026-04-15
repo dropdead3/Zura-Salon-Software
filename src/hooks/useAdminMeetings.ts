@@ -72,7 +72,7 @@ export function useAdminMeetings(dateRange?: { start: string; end: string }) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as AdminMeeting[];
+      return data as unknown as AdminMeeting[];
     },
     enabled: !!orgId,
   });
@@ -110,7 +110,7 @@ export function useMeetingAttendees(meetingId: string | null) {
         .eq('meeting_id', meetingId!);
 
       if (error) throw error;
-      return data as MeetingAttendee[];
+      return data as unknown as MeetingAttendee[];
     },
     enabled: !!meetingId,
   });

@@ -98,7 +98,7 @@ export function AchievementsConfigPanel() {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      return data as Achievement[];
+      return data as unknown as Achievement[];
     },
   });
 
