@@ -475,11 +475,11 @@ export function DayView({
               {stylists.map((stylist) => (
                 <div 
                   key={stylist.user_id} 
-                  className="flex-1 min-w-[160px] bg-foreground/95 text-background p-2 flex items-center gap-2 border-r border-foreground/20 last:border-r-0"
+                  className="flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
                 >
-                  <Avatar className="h-8 w-8 border border-background/20">
+                  <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
                     <AvatarImage src={stylist.photo_url || undefined} />
-                    <AvatarFallback className="text-xs bg-background/20 text-background">
+                    <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
                       {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
