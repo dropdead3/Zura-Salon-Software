@@ -372,7 +372,8 @@ async function handleCheckoutCompleted(
     await supabase
       .from('appointments')
       .update(updatePayload)
-      .eq('id', appointmentId);
+      .eq('id', appointmentId)
+      .neq('payment_status', 'paid');
 
     console.log(`Appointment ${appointmentId} updated after payment link completion`);
     return;
@@ -720,7 +721,7 @@ async function handlePaymentIntentSucceeded(
   await supabase
     .from('phorest_appointments')
     .update({
-      payment_status: 'paid',
+      payment_status: resolvedStatus,
       payment_failure_reason: null,
     })
     .eq('id', appointmentId)
