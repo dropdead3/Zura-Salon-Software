@@ -94,7 +94,7 @@ export function useStylistExperienceScore(
       // Fetch completed appointments with tip amounts
       const appointments = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select(`
             phorest_staff_id,
             stylist_user_id,
@@ -107,7 +107,6 @@ export function useStylistExperienceScore(
           .eq('status', 'completed')
           .gte('appointment_date', startDate)
           .lte('appointment_date', endDate)
-          .not('phorest_staff_id', 'is', null)
           .range(from, to);
 
         if (locationId) {
@@ -124,8 +123,8 @@ export function useStylistExperienceScore(
       // Fetch transaction items for retail attachment
       const transactionItems = await fetchAllBatched<any>((from, to) =>
         supabase
-          .from('phorest_transaction_items')
-          .select('phorest_staff_id, item_type, item_name, total_amount')
+          .from('v_all_transaction_items')
+          .select('staff_user_id, item_type, item_name, total_amount')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
           .range(from, to)
