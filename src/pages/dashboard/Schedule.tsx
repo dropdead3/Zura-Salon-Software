@@ -746,7 +746,7 @@ export default function Schedule() {
                 closureReason={hoursInfo.closureReason}
                 assistedAppointmentIds={assistedAppointmentIds}
                 appointmentsWithAssistants={appointmentsWithAssistants}
-                colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+                colorBy="service"
                 serviceLookup={serviceLookup}
                 assistantNamesMap={assistantNamesMap}
                 assistantProfilesMap={assistantProfilesMap}
@@ -770,7 +770,7 @@ export default function Schedule() {
               selectedAppointmentId={selectedAppointment?.id}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
-              colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+               colorBy="service"
               serviceLookup={serviceLookup}
                assistantNamesMap={assistantNamesMap}
                  assistantProfilesMap={assistantProfilesMap}
@@ -795,7 +795,7 @@ export default function Schedule() {
               locationHolidayClosures={selectedLocationData?.holiday_closures}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
-              colorBy={preferences.color_by as 'status' | 'service' | 'stylist'}
+              colorBy="service"
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
               assistantProfilesMap={assistantProfilesMap}

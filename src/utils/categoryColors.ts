@@ -110,22 +110,46 @@ export function getCategoryColor(
   if (normalizedName.includes('consult')) {
     return FALLBACK_COLORS['consultation'];
   }
-  if (normalizedName.includes('blond') || normalizedName.includes('highlight') || normalizedName.includes('balayage')) {
+  // Blonding patterns
+  if (normalizedName.includes('blond') || normalizedName.includes('highlight') || normalizedName.includes('balayage') ||
+      normalizedName.includes('foil') || normalizedName.includes('face frame') || normalizedName.includes('ombre') ||
+      normalizedName.includes('babylight') || normalizedName.includes('lightener') || normalizedName.includes('bleach')) {
     return { ...FALLBACK_COLORS['blonding'], abbr: getCategoryAbbreviation(categoryName) };
   }
-  if (normalizedName.includes('color') || normalizedName.includes('colour')) {
+  // Color patterns
+  if (normalizedName.includes('color') || normalizedName.includes('colour') ||
+      normalizedName.includes('root retouch') || normalizedName.includes('single process') ||
+      normalizedName.includes('double process') || normalizedName.includes('glaze') ||
+      normalizedName.includes('gloss') || normalizedName.includes('toner') ||
+      normalizedName.includes('demi') || normalizedName.includes('semi') ||
+      normalizedName.includes('retouch') || normalizedName.includes('touch up') ||
+      normalizedName.includes('all over')) {
     return { ...FALLBACK_COLORS['color'], abbr: getCategoryAbbreviation(categoryName) };
   }
-  if (normalizedName.includes('cut')) {
+  // Haircut patterns
+  if (normalizedName.includes('cut') || normalizedName.includes('trim') ||
+      normalizedName.includes('clipper') || normalizedName.includes('haircut') ||
+      normalizedName.includes('bang') || normalizedName.includes('fringe') ||
+      normalizedName.includes('shave') || normalizedName.includes('fade') ||
+      normalizedName.includes('taper') || normalizedName.includes('razor')) {
     return { ...FALLBACK_COLORS['haircuts'], abbr: getCategoryAbbreviation(categoryName) };
   }
-  if (normalizedName.includes('style') || normalizedName.includes('blow')) {
+  // Styling patterns
+  if (normalizedName.includes('style') || normalizedName.includes('blow') ||
+      normalizedName.includes('updo') || normalizedName.includes('braid') ||
+      normalizedName.includes('blowout') || normalizedName.includes('set') ||
+      normalizedName.includes('iron') || normalizedName.includes('curl') ||
+      normalizedName.includes('flat iron') || normalizedName.includes('wave')) {
     return { ...FALLBACK_COLORS['styling'], abbr: getCategoryAbbreviation(categoryName) };
   }
-  if (normalizedName.includes('extension')) {
+  if (normalizedName.includes('extension') || normalizedName.includes('install') ||
+      normalizedName.includes('tape-in') || normalizedName.includes('sew-in') ||
+      normalizedName.includes('weft')) {
     return { ...FALLBACK_COLORS['extensions'], abbr: getCategoryAbbreviation(categoryName) };
   }
-  if (normalizedName.includes('treatment') || normalizedName.includes('keratin') || normalizedName.includes('condition')) {
+  if (normalizedName.includes('treatment') || normalizedName.includes('keratin') || normalizedName.includes('condition') ||
+      normalizedName.includes('repair') || normalizedName.includes('olaplex') || normalizedName.includes('deep condition') ||
+      normalizedName.includes('mask') || normalizedName.includes('scalp')) {
     return { ...FALLBACK_COLORS['treatment'], abbr: getCategoryAbbreviation(categoryName) };
   }
   
