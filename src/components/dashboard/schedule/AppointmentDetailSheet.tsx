@@ -2192,6 +2192,7 @@ export function AppointmentDetailSheet({
                   <PaymentLinkStatusBadge
                     paymentLinkSentAt={appointment.payment_link_sent_at}
                     paymentLinkUrl={appointment.payment_link_url}
+                    paymentLinkExpiresAt={appointment.payment_link_expires_at}
                     splitPaymentTerminalIntentId={appointment.split_payment_terminal_intent_id}
                     splitPaymentLinkIntentId={appointment.split_payment_link_intent_id}
                     paidAt={appointment.paid_at}

@@ -4,11 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LiveCountdown } from '@/components/dashboard/LiveCountdown';
 
-const LINK_EXPIRY_HOURS = 24;
+const LINK_EXPIRY_HOURS_FALLBACK = 24;
 
 interface PaymentLinkStatusBadgeProps {
   paymentLinkSentAt?: string | null;
   paymentLinkUrl?: string | null;
+  paymentLinkExpiresAt?: string | null;
   splitPaymentTerminalIntentId?: string | null;
   splitPaymentLinkIntentId?: string | null;
   paidAt?: string | null;
@@ -20,6 +21,7 @@ interface PaymentLinkStatusBadgeProps {
 export function PaymentLinkStatusBadge({
   paymentLinkSentAt,
   paymentLinkUrl,
+  paymentLinkExpiresAt,
   splitPaymentTerminalIntentId,
   splitPaymentLinkIntentId,
   paidAt,
@@ -31,7 +33,9 @@ export function PaymentLinkStatusBadge({
   if (paymentStatus === 'paid' || paidAt) return null;
 
   const sentDate = parseISO(paymentLinkSentAt);
-  const expiresAt = addHours(sentDate, LINK_EXPIRY_HOURS);
+  const expiresAt = paymentLinkExpiresAt
+    ? parseISO(paymentLinkExpiresAt)
+    : addHours(sentDate, LINK_EXPIRY_HOURS_FALLBACK);
   const isExpired = expiresAt.getTime() <= Date.now();
   const sentTimeAgo = formatDistanceToNow(sentDate, { addSuffix: true });
 
