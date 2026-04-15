@@ -275,8 +275,13 @@ function GridContent({
           {/* Client name + phone */}
           <div className="text-sm font-medium truncate pr-20 flex items-center gap-1">
             {showClientAvatar && (
-              <span className={cn('h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0', getAvatarColor(appointment.client_name))}>
-                {getClientInitials(appointment.client_name)}
+              <span className={cn(
+                'h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0',
+                appointment.is_new_client
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+              )}>
+                {appointment.is_new_client ? 'NC' : 'RC'}
               </span>
             )}
             <span className="truncate">{appointment.client_name}</span>
