@@ -1,43 +1,30 @@
 
 
-## Move Client Name Below NC/RC Badge and Status Badge (Day View)
+## Hide Clipping Content on Appointment Cards
 
-### Change
-In the day view, restructure the card header so the NC/RC icon and status badge sit on the top row, and the client name drops to its own line below them.
+### Problem
+When an appointment card is too short to fit all its detail lines (service name, time/price, assisted-by, rescheduled-from), the text visually overflows past the card's bottom edge, looking messy.
 
-### Current layout
-```text
-┌──────────────────────────────────┐
-│ [NC] Client Name...    [Booked]  │
-│ Service Name                     │
-│ Time Range              $Price   │
-└──────────────────────────────────┘
-```
-
-### Target layout
-```text
-┌──────────────────────────────────┐
-│ [NC]                   [Booked]  │
-│ Client Name                      │
-│ Service Name                     │
-│ Time Range              $Price   │
-└──────────────────────────────────┘
-```
+### Solution
+Add `overflow-hidden` to the card's content container so any lines that don't fit are cleanly hidden rather than clipping at the edge.
 
 ### Implementation
-**1 file**: `src/components/dashboard/schedule/AppointmentCardContent.tsx` — lines 264-293
+**1 file**: `src/components/dashboard/schedule/AppointmentCardContent.tsx`
 
-In the day view branch (`showStylistBadge=false`):
-
-1. Move the NC/RC badge into the top-right absolute container alongside the status badge, positioned first (left of status badge)
-2. Remove the NC/RC badge from the client name line
-3. Remove `pr-20` width constraint and `flex items-center gap-1` from client name div — it becomes a simple full-width truncated line below the badges
-
-```text
-// Top row (absolute top-1 right-1):
-[IndicatorCluster] [NC/RC badge] [Status badge]
-
-// Below (with pt-6 to clear absolute row):
-Client Name (full width, truncated)
+**Change 1** — Line 213, compact size container: add `overflow-hidden`
+```tsx
+<div className="px-2 py-1 relative z-10 overflow-hidden">
 ```
+
+**Change 2** — Line 230, medium/full size container: add `overflow-hidden`
+```tsx
+<div className="px-2 py-1 relative z-10 overflow-hidden" style={...}>
+```
+
+This ensures the outer card naturally clips any content that exceeds the card height. The absolute-positioned badges (NC/RC, status) at `top-1` will still be visible since they're at the top. Only bottom-edge content that doesn't fit will be hidden.
+
+### Scope
+- Single file, two className additions
+- No layout or structural changes
+- Cards will look cleaner at all durations
 
