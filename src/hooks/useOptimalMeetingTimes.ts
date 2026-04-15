@@ -56,7 +56,7 @@ export function useOptimalMeetingTimes(
         .in('stylist_user_id', attendeeUserIds)
         .not('status', 'in', '("cancelled","no_show")');
 
-      for (const a of phorest || []) {
+      for (const a of ((phorest || []) as any[])) {
         if (!a.stylist_user_id) continue;
         const arr = blocks.get(a.stylist_user_id) || [];
         arr.push({ start: timeToMinutes(a.start_time), end: timeToMinutes(a.end_time) });

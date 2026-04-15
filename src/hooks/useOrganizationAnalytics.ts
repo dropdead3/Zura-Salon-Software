@@ -280,7 +280,7 @@ export function useOrganizationAnalytics() {
         .from('v_all_appointments' as any)
         .select('id, location_id');
       if (error) throw error;
-      (data || []) as any[];
+      return (data || []) as any[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -382,7 +382,7 @@ export function useOrganizationAnalytics() {
     });
 
     // Count appointments per org
-    appointments?.forEach(apt => {
+    ((appointments || []) as any[]).forEach((apt: any) => {
       if (apt.location_id) {
         const orgId = locationOrgMap.get(apt.location_id);
         if (orgId && orgMetricsMap.has(orgId)) {

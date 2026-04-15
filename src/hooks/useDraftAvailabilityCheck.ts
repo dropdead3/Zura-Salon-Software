@@ -24,7 +24,7 @@ export function useDraftAvailabilityCheck(draft: DraftBooking): AvailabilityResu
         .eq('is_demo', false)
         .order('start_time');
 
-      const existingAppts = appointments || [];
+      const existingAppts = (appointments || []) as any[];
 
       // Check if the draft's time conflicts
       const draftStart = draft.start_time!;

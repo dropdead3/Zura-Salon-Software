@@ -100,7 +100,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         .eq('is_active', true);
 
       const staffLookup: Record<string, string> = {};
-      staffMappings?.forEach(m => {
+      ((staffMappings || []) as any[]).forEach((m: any) => {
         const profile = m.employee_profiles as any;
         staffLookup[m.phorest_staff_id] = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown';
       });
@@ -212,7 +212,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         if (futureError) throw futureError;
 
         const clientsWithFuture = new Set(
-          (futureAppts || []).map(a => a.phorest_client_id as string)
+          (futureAppts || []).map((a: any) => a.phorest_client_id as string)
         );
 
         rebookedAtCheckoutInRange = [...returningClientSet].filter((cid: string) => clientsWithFuture.has(cid)).length;
@@ -283,7 +283,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
           .in('phorest_client_id', rebookClientIds as readonly string[])
           .gt('appointment_date', endDate)
           .not('status', 'eq', 'cancelled');
-        futureClientSet = new Set((futureAppts2 || []).map(a => a.phorest_client_id as string));
+        futureClientSet = new Set((futureAppts2 || []).map((a: any) => a.phorest_client_id as string));
       }
 
       const returningClientsByStaff: StaffBreakdownReturning[] = Object.entries(returningByStaffMap)

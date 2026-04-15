@@ -136,7 +136,7 @@ export function useHiringCapacity(): HiringCapacitySummary {
 
       // Count by location
       const counts = new Map<string, number>();
-      data?.forEach(apt => {
+      ((data || []) as any[]).forEach((apt: any) => {
         if (apt.location_id) {
           counts.set(apt.location_id, (counts.get(apt.location_id) || 0) + 1);
         }

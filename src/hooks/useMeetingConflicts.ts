@@ -53,7 +53,7 @@ export function useMeetingConflicts(
 
       const conflicts: MeetingConflict[] = [];
 
-      for (const apt of (phorest || [])) {
+      for (const apt of ((phorest || []) as any[])) {
         if (apt.stylist_user_id) {
           conflicts.push({
             userId: apt.stylist_user_id,
