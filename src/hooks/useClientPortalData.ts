@@ -95,7 +95,7 @@ export function useClientPortalByToken(token?: string) {
         .limit(20);
 
       return {
-        client: clientData,
+        client: clientData as unknown as ClientPortalData['client'],
         loyalty: loyaltyData as unknown as ClientPortalData['loyalty'],
         tiers: (tiersData || []) as unknown as ClientPortalData['tiers'],
         pointsHistory: (historyData || []) as unknown as ClientPortalData['pointsHistory'],

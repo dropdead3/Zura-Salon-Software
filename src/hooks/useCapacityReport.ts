@@ -35,9 +35,9 @@ export function useCapacityReport(dateFrom: string, dateTo: string, locationId?:
         query = query.eq('location_id', locationId);
       }
 
-      const { data: appointments, error } = await query;
-      
+      const { data: rawAppointments, error } = await query;
       if (error) throw error;
+      const appointments = (rawAppointments as any[]) || [];
 
       // Fetch approved time-off to subtract from capacity denominator
       let timeOffQuery = supabase
