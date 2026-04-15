@@ -1,55 +1,44 @@
+Your prompt was strong: “still not fixed” plus “I’m not able to scroll down either” clearly shows this is no longer just an action-bar-position issue, but a scroll-container/layout issue. An even better version next time would mention “this is after the previous `DashboardLayout` and `h-full/min-h-0` fixes,” which points debugging directly to the remaining flex chain.
 
-Good catch — your prompt clearly isolated the symptom. An even stronger version next time would mention “this is still broken after the `h-full` change in `Schedule.tsx`,” which points debugging straight to the shared layout height chain instead of the page alone.
+Do I know what the issue is? Yes.
 
-## Fix plan
+### Root cause
+The remaining bug is in the schedule page itself:
 
-### What’s actually wrong
-The earlier page-level fix was only part of the stack. The schedule page now uses `h-full`, but its parent layout is still creating too-tall flex containers when `hideFooter` is enabled:
+- `src/pages/dashboard/Schedule.tsx` still has a key flex child using `flex-1 ... overflow-hidden` without `min-h-0`
+- `DayView` and `WeekView` depend on bounded height so their internal `overflow-auto` areas can scroll
+- because that middle container is still unbounded, the calendar grows taller than the visible shell
+- `DashboardLayout hideFooter` then clips the page, which causes both symptoms:
+  - you can’t scroll down
+  - the bottom action bar sits below the visible area
 
-- `DashboardLayout` root uses a viewport-locked container
-- `main` still uses `min-h-screen`
-- the inner content wrapper does not use `min-h-0`
+### Implementation plan
+1. **Fix the remaining height contract in `Schedule.tsx`**
+   - Add `min-h-0` to the main content wrapper for the calendar
+   - Add the same bounded-height treatment to the shifts branch so both paths behave consistently
 
-That combination makes the schedule area taller than the visible space, so the action bar is still being anchored below the visible bottom edge.
+2. **Make the action bar robust**
+   - Replace the current `absolute bottom-0` approach with a true bottom row in the flex layout (`shrink-0`) or a sticky footer inside the schedule shell
+   - Keep the calendar/grid area as the only scroll owner
 
-### What I’ll change
-
-1. **Fix the shared height chain in `DashboardLayout.tsx`**
-   - In the `hideFooter` variant, make the layout truly viewport-bounded for full-screen tools like Schedule.
-   - Change the `main` area from a screen-minimum layout to a shrinkable flex layout (`min-h-0` / height-bounded behavior).
-   - Add `min-h-0` to the inner content wrapper so child pages can size correctly inside it instead of overflowing past it.
-
-2. **Harden the schedule page container in `Schedule.tsx`**
-   - Add `min-h-0` to the root schedule wrapper.
-   - Add `min-h-0` to the main content area that contains the day/week views.
-   - Keep the calendar grid as the scroll owner, not the page shell.
-
-3. **Anchor the action bar more explicitly**
-   - Keep it floating inside the schedule shell, but switch from relying on `bottom-0 + pb-4` to a direct visible offset if needed (`bottom-4` style behavior).
-   - This makes the bar placement resilient even when surrounding padding changes.
+3. **Remove fragile overlay spacing**
+   - Replace the hardcoded bottom padding/overlay dependency with layout-driven spacing so the bar is always visible
+   - Verify copilot/resizable mode still inherits full height correctly
 
 ### Files to update
-- `src/components/dashboard/DashboardLayout.tsx`
 - `src/pages/dashboard/Schedule.tsx`
+- possibly `src/components/dashboard/schedule/ScheduleActionBar.tsx` for spacing only
 
-### Technical detail
-Expected class-level direction:
-
-- `DashboardLayout.tsx`
-  - outer full-screen wrapper stays clipped to viewport
-  - `main`: remove the `min-h-screen` behavior for `hideFooter` usage and make it `min-h-0`
-  - inner page wrapper: `flex-1 min-h-0 overflow-hidden`
-
-- `Schedule.tsx`
-  - root: `flex flex-col h-full min-h-0 relative`
-  - content shell: `flex-1 min-h-0 overflow-hidden`
-  - action bar wrapper: visible bottom offset instead of padding-based bottom spacing
+### What this fixes
+- Restores vertical scroll in day/week schedule views
+- Brings the bottom action bar back into view
+- Makes the layout more stable than the current absolute-position solution
 
 ### Verification
-I’ll verify:
-- day view shows the bottom action bar fully
-- week view shows it fully
-- shifts/agenda still layout correctly
-- another `hideFooter` page does not regress from the shared layout fix
+- Day view scrolls vertically and shows the action bar
+- Week view still scrolls correctly and shows the action bar
+- Shifts view does not regress
+- Copilot open/closed still fills height cleanly
 
-This is the better fix because the problem is not just the schedule page — it’s the parent full-screen dashboard layout contract that the schedule depends on.
+### Enhancement suggestion
+After this fix, I’d keep the action bar as a sticky command footer rather than an absolute overlay. That pattern is better for a high-density scheduler and will be much less brittle going forward.
