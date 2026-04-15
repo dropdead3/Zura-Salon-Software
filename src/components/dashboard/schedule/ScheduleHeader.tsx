@@ -232,7 +232,7 @@ export function ScheduleHeader({
         </div>
 
         {/* Right: Filters & Settings */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
             filters={calendarFilters}
             onFiltersChange={onCalendarFiltersChange}
