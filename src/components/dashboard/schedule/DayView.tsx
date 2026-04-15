@@ -454,7 +454,7 @@ export function DayView({
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-full bg-card rounded-lg border border-border overflow-hidden">
+      <div className="flex h-full min-h-0 flex-col bg-card rounded-lg border border-border overflow-hidden">
         {/* Closed day banner */}
         {isLocationClosed && (
           <div className="px-3 py-2 bg-muted/60 border-b border-border flex items-center gap-2">

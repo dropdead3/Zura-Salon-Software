@@ -866,9 +866,9 @@ export default function Schedule() {
   return (
     <LocationTimezoneProvider timezone={locationTimezone}>
     <DashboardLayout hideFooter>
-      <div className="flex flex-col h-full min-h-0 relative">
+      <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-4 pt-4">
+        <div className="shrink-0 px-4 pt-4">
           <ScheduleHeader
                 currentDate={currentDate}
                 setCurrentDate={setCurrentDate}
@@ -895,23 +895,26 @@ export default function Schedule() {
               />
         </div>
 
-
         {/* Main Content Area */}
         {showShiftsView ? (
-          <div className="flex-1 p-4 overflow-y-auto">
-            <ShiftScheduleView locationId={selectedLocation} />
+          <div className="flex-1 min-h-0 p-4 overflow-hidden">
+            <div className="h-full min-h-0 overflow-auto">
+              <ShiftScheduleView locationId={selectedLocation} />
+            </div>
           </div>
         ) : (
           <>
-            <div className={cn("flex-1 min-h-0 p-4 overflow-hidden")}>
+            <div className={cn("flex flex-1 min-h-0 flex-col overflow-hidden p-4")}>
               {copilotOpen && !isMobile ? (
-                <ResizablePanelGroup direction="horizontal" className="h-full">
+                <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
                   <ResizablePanel defaultSize={75} minSize={50}>
-                    {calendarContent}
+                    <div className="h-full min-h-0 overflow-hidden">
+                      {calendarContent}
+                    </div>
                   </ResizablePanel>
                   <ResizableHandle withHandle />
                   <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                    <div className="h-full overflow-auto pl-2">
+                    <div className="h-full min-h-0 overflow-auto pl-2">
                       <SchedulingCopilotPanel
                         date={currentDate}
                         locationId={selectedLocation}
@@ -922,11 +925,12 @@ export default function Schedule() {
                   </ResizablePanel>
                 </ResizablePanelGroup>
               ) : (
-                calendarContent
+                <div className="h-full min-h-0 overflow-hidden">
+                  {calendarContent}
+                </div>
               )}
             </div>
 
-            {/* Action Bar — flex row, always visible */}
             {(view === 'day' || view === 'week') && (
               <div className="shrink-0 px-4 pr-20 pb-4 pt-1">
                 <div className="flex items-center gap-2">

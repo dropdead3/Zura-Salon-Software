@@ -551,56 +551,11 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
 
       <main className={cn(
         "flex-1 flex flex-col transition-[margin] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        hideFooter ? "min-h-0" : "min-h-screen",
+        hideFooter ? "min-h-0 overflow-hidden" : "min-h-screen",
         !hideSidebar && (sidebarCollapsed ? "lg:ml-24" : "lg:ml-[340px]")
       )}>
-        {/* Mobile hamburger header */}
-        <div className="lg:hidden sticky top-0 z-40">
-          <header className={cn(
-            "flex items-center justify-between px-4 h-14 transition-all duration-300",
-            headerScrolled ? "bg-background/80 backdrop-blur-md border-b border-border/40" : "bg-transparent"
-          )}>
-            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-              <Menu className="h-5 w-5" />
-            </Button>
-          </header>
-        </div>
-
-        {/* Desktop top bar */}
-        {!hideTopBar && (
-          <SuperAdminTopBar
-            sidebarCollapsed={sidebarCollapsed}
-            hideFooter={hideFooter}
-            headerHovered={headerHovered}
-            onHeaderHoverEnd={() => setHeaderHovered(false)}
-            filterNavItems={filterNavItems}
-            ViewAsToggle={ViewAsToggle}
-            HideNumbersToggle={HideNumbersToggle}
-            roleBadges={roleBadges}
-            onSearchClick={() => setCommandOpen(true)}
-            isSearchOpen={commandOpen}
-            searchBarRef={searchBarRef}
-            isAdmin={isAdmin}
-            isPlatformUser={isPlatformUser}
-            isStylistRole={roles.includes('stylist')}
-            isStylistAssistantRole={roles.includes('stylist_assistant')}
-            isViewingAsUser={isViewingAsUser}
-            viewAsUser={viewAsUser}
-          />
-        )}
-
-        <ZuraCommandSurface
-          open={commandOpen}
-          onOpenChange={setCommandOpen}
-          filterNavItems={filterNavItems}
-          anchorRef={searchBarRef}
-        />
-
-        {/* Banners */}
-        <IncidentBanner />
-        <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />
-        
-        <div className={cn("flex-1 p-4 lg:px-8 lg:pb-8 lg:pt-4", hideFooter && "min-h-0 overflow-hidden")}>
+...
+        <div className={cn("flex-1 p-4 lg:px-8 lg:pb-8 lg:pt-4", hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
           {children}
         </div>
       </main>

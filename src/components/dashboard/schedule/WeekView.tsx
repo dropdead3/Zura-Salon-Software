@@ -225,7 +225,7 @@ export function WeekView({
     : 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto border border-border rounded-lg bg-card">
         <div className="min-w-[800px]">
           {/* Day Headers with luxury blur effect */}
