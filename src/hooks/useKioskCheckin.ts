@@ -236,14 +236,14 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
 
       const appointment = session.selectedAppointment;
 
-      // 1. Update appointment status — try both tables since we don't know source
+      // 1. Update appointment status — try native table first, then phorest fallback
       const { error: updateError } = await supabase
-        .from('phorest_appointments')
+        .from('appointments')
         .update({ status: 'checked_in' })
         .eq('id', appointment.id);
-      // Also try the zura appointments table
+      // Also try the phorest appointments table as fallback
       await supabase
-        .from('appointments')
+        .from('phorest_appointments')
         .update({ status: 'checked_in' })
         .eq('id', appointment.id);
 
