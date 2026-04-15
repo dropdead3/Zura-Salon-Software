@@ -28,6 +28,7 @@ import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/hooks/useLocations';
 import { ClosedDayWarningDialog } from '@/components/dashboard/schedule/ClosedDayWarningDialog';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
@@ -75,6 +76,7 @@ export default function Schedule() {
   const { roles, user } = useAuth();
   const { data: locations = [] } = useActiveLocations();
   const { data: businessSettings } = useBusinessSettings();
+  const { todayStr: orgToday } = useOrgNow();
   const quickLoginHandled = useRef(false);
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
@@ -284,15 +286,15 @@ export default function Schedule() {
     }
   }, [appointments]);
 
-  // Calculate today's appointment count for the selected location
+  // Calculate today's appointment count for the selected location (org-timezone-aware)
   const todayAppointmentCount = useMemo(() => {
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = orgToday;
     return allAppointments.filter(apt => 
-      apt.appointment_date === today && 
+      apt.appointment_date === todayStr && 
       apt.location_id === selectedLocation &&
       !['cancelled', 'no_show'].includes(apt.status)
     ).length;
-  }, [allAppointments, selectedLocation]);
+  }, [allAppointments, selectedLocation, orgToday]);
 
   // Get the phorest_branch_id and effective tax rate for the selected location
   const selectedLocationData = useMemo(() => {
@@ -931,12 +933,12 @@ export default function Schedule() {
               )}
             </div>
 
-            {(view === 'day' || view === 'week') && (
+            {(view === 'day' || view === 'week' || view === 'agenda') && (
               <div className="shrink-0 px-4 pr-20 pb-4 pt-1">
                 <div className="flex items-center gap-2">
                   <ScheduleActionBar
                     appointments={allAppointments.filter(apt => 
-                      apt.appointment_date === format(new Date(), 'yyyy-MM-dd') &&
+                      apt.appointment_date === orgToday &&
                       apt.location_id === selectedLocation
                     )}
                     onSelectAppointment={(apt) => {

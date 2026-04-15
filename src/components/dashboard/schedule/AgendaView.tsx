@@ -58,7 +58,7 @@ export function AgendaView({
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
-  const { timezone } = useOrgNow();
+  const { timezone, nowMinutes: orgNowMins } = useOrgNow();
 
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
@@ -120,20 +120,26 @@ export function AgendaView({
 
             {/* Appointments List */}
             <div className="space-y-3">
-              {dayAppointments.map((apt) => (
-                <AppointmentCardContent
-                  key={apt.id}
-                  appointment={apt}
-                  variant="agenda"
-                  size={getCardSize(apt.start_time, apt.end_time)}
-                  onClick={() => onAppointmentClick(apt)}
-                  isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                  assistantNamesMap={assistantNamesMap}
-                  hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                  serviceLookup={serviceLookup}
-                  categoryColors={categoryColors}
-                />
-              ))}
+              {dayAppointments.map((apt) => {
+                const isOverdue = isOrgToday(apt.appointment_date, timezone) &&
+                  (apt.status === 'booked' || apt.status === 'confirmed') &&
+                  orgNowMins > (() => { const [h, m] = apt.start_time.split(':').map(Number); return h * 60 + m; })();
+                return (
+                  <AppointmentCardContent
+                    key={apt.id}
+                    appointment={apt}
+                    variant="agenda"
+                    size={getCardSize(apt.start_time, apt.end_time)}
+                    onClick={() => onAppointmentClick(apt)}
+                    isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                    assistantNamesMap={assistantNamesMap}
+                    hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                    serviceLookup={serviceLookup}
+                    categoryColors={categoryColors}
+                    isOverdueForCheckin={isOverdue}
+                  />
+                );
+              })}
 
               {/* Admin Meetings */}
               {adminMeetings

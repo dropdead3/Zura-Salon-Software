@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { isClosedOnDate, getLocationHoursForDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
@@ -21,7 +21,6 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
-import { QuickBookingPopover } from './QuickBookingPopover';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -83,6 +82,7 @@ function WeekAppointmentCard({
   serviceLookup,
   assistantNamesMap,
   assistantProfilesMap,
+  isOverdueForCheckin = false,
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -94,6 +94,7 @@ function WeekAppointmentCard({
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
+  isOverdueForCheckin?: boolean;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const size = getCardSize(appointment.start_time, appointment.end_time);
@@ -115,6 +116,7 @@ function WeekAppointmentCard({
         assistantNamesMap={assistantNamesMap}
         assistantProfilesMap={assistantProfilesMap}
         categoryColors={categoryColors}
+        isOverdueForCheckin={isOverdueForCheckin}
         
         showStylistBadge
         showClientPhone={false}
@@ -144,7 +146,6 @@ export function WeekView({
   assistantProfilesMap,
   assistantTimeBlocks = [],
 }: WeekViewProps) {
-  const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -172,12 +173,10 @@ export function WeekView({
     });
   }, [currentDate.toDateString(), locationHoursJson, hoursStart]);
   
-  // Week starts with today, followed by 6 future days
-  const today = new Date();
-  
+  // Week starts with currentDate, followed by 6 future days
   const weekDays = useMemo(() => 
-    Array.from({ length: 7 }, (_, i) => addDays(today, i)),
-    [today.toDateString()]
+    Array.from({ length: 7 }, (_, i) => addDays(currentDate, i)),
+    [currentDate.toDateString()]
   );
   
   // Generate all 15-minute time slots
@@ -341,7 +340,6 @@ export function WeekView({
                   {/* Time slot rows */}
                   {timeSlots.map((slot) => {
                     const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`;
-                    const isActive = activeSlot?.date.getTime() === day.getTime() && activeSlot?.time === slotTime;
                     
                     // Check if this slot is in the past (only for today)
                     const isPastSlot = isCurrentDay && (() => {
@@ -354,70 +352,37 @@ export function WeekView({
                       dayHoursInfo.openTime && dayHoursInfo.closeTime &&
                       (slotTime < dayHoursInfo.openTime || slotTime >= dayHoursInfo.closeTime)
                     );
-                    
-                    // Determine if this is a "special" slot that should route through onSlotClick
-                    const isSpecialSlot = isPastSlot || dayHoursInfo.isClosed || isOutsideHours;
 
-                    // Special slots (past, closed, outside hours) route through onSlotClick for warnings
-                    if (isSpecialSlot) {
-                      return (
-                        <div 
-                          key={slotTime}
-                          className={cn(
-                            'h-[20px] cursor-pointer transition-colors group relative',
-                            isPastSlot && 'bg-muted/40',
-                            slot.isHour 
-                              ? 'border-t border-border/80 dark:border-border/60' 
-                              : slot.isHalf 
-                                ? 'border-t border-dotted border-border/70 dark:border-border/40'
-                                : 'border-t border-dotted border-border/50 dark:border-border/25'
-                          )}
-                          style={!isPastSlot && isOutsideHours ? {
-                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-                          } : undefined}
-                          onClick={() => onSlotClick?.(day, slotTime)}
-                        >
-                          {isPastSlot && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
-                              This time slot is no longer available
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    
                     return (
-                      <QuickBookingPopover
+                      <div 
                         key={slotTime}
-                        date={day}
-                        time={slotTime}
-                        open={isActive}
-                        onOpenChange={(open) => {
-                          if (open) {
-                            setActiveSlot({ date: day, time: slotTime });
-                          } else {
-                            setActiveSlot(null);
-                          }
+                        className={cn(
+                          'h-[20px] cursor-pointer transition-colors group relative',
+                          isPastSlot && 'bg-muted/40',
+                          !isPastSlot && !isOutsideHours && 'hover:bg-primary/10',
+                          slot.isHour 
+                            ? 'border-t border-border/80 dark:border-border/60' 
+                            : slot.isHalf 
+                              ? 'border-t border-dotted border-border/70 dark:border-border/40'
+                              : 'border-t border-dotted border-border/50 dark:border-border/25'
+                        )}
+                        style={!isPastSlot && isOutsideHours ? {
+                          background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+                        } : undefined}
+                        onClick={() => onSlotClick?.(day, slotTime)}
+                        onMouseMove={(e) => {
+                          if (isPastSlot || isOutsideHours) return;
+                          const target = e.currentTarget;
+                          const badge = target.querySelector('[data-slot-badge]') as HTMLElement;
+                          if (badge) badge.style.left = `${e.clientX - target.getBoundingClientRect().left}px`;
                         }}
-                        defaultLocationId={selectedLocationId}
                       >
-                        <div 
-                          className={cn(
-                            'h-[20px] hover:bg-primary/10 cursor-pointer transition-colors group relative',
-                            slot.isHour 
-                              ? 'border-t border-border/80 dark:border-border/60' 
-                              : slot.isHalf 
-                                ? 'border-t border-dotted border-border/70 dark:border-border/40'
-                                : 'border-t border-dotted border-border/50 dark:border-border/25'
-                          )}
-                          onMouseMove={(e) => {
-                            const target = e.currentTarget;
-                            const rect = target.getBoundingClientRect();
-                            target.dataset.mouseX = String(e.clientX - rect.left);
-                            const badge = target.querySelector('[data-slot-badge]') as HTMLElement;
-                            if (badge) badge.style.left = `${e.clientX - rect.left}px`;
-                          }}
-                        >
+                        {isPastSlot && (
+                          <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+                            This time slot is no longer available
+                          </div>
+                        )}
+                        {!isPastSlot && !isOutsideHours && (
                           <div data-slot-badge className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: '50%' }}>
                             {(() => {
                               const ampm = slot.hour >= 12 ? 'PM' : 'AM';
@@ -425,8 +390,8 @@ export function WeekView({
                               return `${hour12}:${slot.minute.toString().padStart(2, '0')} ${ampm}`;
                             })()}
                           </div>
-                        </div>
-                      </QuickBookingPopover>
+                        )}
+                      </div>
                     );
                   })}
                   
@@ -472,21 +437,27 @@ export function WeekView({
                     })}
 
                   {/* Appointments */}
-                  {dayAppointments.map((apt) => (
-                    <WeekAppointmentCard
-                      key={apt.id}
-                      appointment={apt}
-                      hoursStart={hoursStart}
-                      onClick={() => onAppointmentClick(apt)}
-                      categoryColors={categoryColors}
-                      isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                      hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                      colorBy={colorBy}
-                      serviceLookup={serviceLookup}
-                      assistantNamesMap={assistantNamesMap}
-                      assistantProfilesMap={assistantProfilesMap}
-                    />
-                  ))}
+                  {dayAppointments.map((apt) => {
+                    const overdueForCheckin = isCurrentDay && 
+                      (apt.status === 'booked' || apt.status === 'confirmed') &&
+                      wkNowMins > parseTimeToMinutes(apt.start_time);
+                    return (
+                      <WeekAppointmentCard
+                        key={apt.id}
+                        appointment={apt}
+                        hoursStart={hoursStart}
+                        onClick={() => onAppointmentClick(apt)}
+                        categoryColors={categoryColors}
+                        isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                        hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                        colorBy={colorBy}
+                        serviceLookup={serviceLookup}
+                        assistantNamesMap={assistantNamesMap}
+                        assistantProfilesMap={assistantProfilesMap}
+                        isOverdueForCheckin={overdueForCheckin}
+                      />
+                    );
+                  })}
 
                   {/* Current time indicator */}
                   {isCurrentDay && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (

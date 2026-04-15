@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Clock, TrendingUp, AlertCircle } from 'lucide-react';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 
 interface ScheduleUtilizationBarProps {
@@ -107,7 +108,7 @@ export function ScheduleUtilizationBar({
       <div className="flex items-center gap-1.5">
         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
         <span className={cn(tokens.stat.large, 'text-lg')}>
-          ${Math.round(metrics.revenuePotential).toLocaleString()}
+          <BlurredAmount>${Math.round(metrics.revenuePotential).toLocaleString()}</BlurredAmount>
         </span>
         <span className={tokens.body.muted}>potential</span>
       </div>
