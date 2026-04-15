@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { formatFullDisplayName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
 import { useOrgNow } from '@/hooks/useOrgNow';
@@ -273,9 +274,7 @@ export function ScheduleHeader({
                   {selectedStaffIds.length === 0 
                     ? 'All Staff' 
                     : selectedStaffIds.length === 1
-                      ? stylists.find(s => s.user_id === selectedStaffIds[0])?.display_name || 
-                        stylists.find(s => s.user_id === selectedStaffIds[0])?.full_name || 
-                        '1 selected'
+                      ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
                       : `${selectedStaffIds.length} selected`
                   }
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
@@ -305,7 +304,7 @@ export function ScheduleHeader({
                         checked={selectedStaffIds.includes(s.user_id)}
                         className="pointer-events-none"
                       />
-                      {s.display_name || s.full_name}
+                      {formatFullDisplayName(s.full_name, s.display_name)}
                     </button>
                   ))}
                 </div>
