@@ -70,6 +70,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { parseLocationIds, encodeLocationIds, isAllLocations } from '@/lib/locationFilter';
 import { useSubmitDisputeEvidence } from '@/hooks/useDisputeEvidence';
+import { useFraudWarnings, useUnresolvedFraudWarningCount } from '@/hooks/useFraudWarnings';
 import { useHighRiskPayments } from '@/hooks/useHighRiskPayments';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
