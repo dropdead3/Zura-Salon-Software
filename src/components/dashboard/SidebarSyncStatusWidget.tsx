@@ -35,7 +35,9 @@ export function SidebarSyncStatusWidget({
   onNavClick?: () => void;
 }) {
   const { dashPath } = useOrgDashboardPath();
-  const { syncLabel } = usePOSProviderLabel();
+  const { syncLabel, isConnected } = usePOSProviderLabel();
+  // Hide sync widget when no POS integration is connected (Zura-only mode)
+  if (!isConnected) return null;
 
   // Fetch latest sync status for each type
   const { data: syncStatuses } = useQuery({

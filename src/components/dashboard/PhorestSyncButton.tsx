@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { useTriggerPhorestSync } from '@/hooks/usePhorestSync';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 interface PhorestSyncButtonProps {
   syncType?: 'appointments' | 'sales' | 'staff' | 'clients' | 'reports' | 'services' | 'all';
@@ -20,6 +21,10 @@ export function PhorestSyncButton({
   showLabel = true 
 }: PhorestSyncButtonProps) {
   const { mutate: syncData, isPending } = useTriggerPhorestSync();
+  const { isConnected } = usePOSProviderLabel();
+
+  // Hide sync button when no POS integration is connected (Zura-only mode)
+  if (!isConnected) return null;
 
   const handleSync = () => {
     syncData(syncType);
