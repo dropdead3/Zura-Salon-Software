@@ -39,6 +39,8 @@ import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useToast } from '@/hooks/use-toast';
 import { useOrgDefaults } from '@/hooks/useOrgDefaults';
 import { useUpdateTimezone, TIMEZONES } from '@/hooks/useTimezoneSettings';
+import { useLocations } from '@/hooks/useLocations';
+import { LocationSelect } from '@/components/ui/location-select';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { PageExplainer } from '@/components/ui/PageExplainer';
