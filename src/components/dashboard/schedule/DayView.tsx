@@ -215,15 +215,6 @@ function AppointmentCard({
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
-  // Late check-in detection
-  const { isToday: isOrgToday, nowMinutes: orgNowMins } = useOrgNow();
-  const isOverdueForCheckin = useMemo(() => {
-    if (!date || !isOrgToday(date)) return false;
-    const status = appointment.status;
-    if (status !== 'booked' && status !== 'confirmed') return false;
-    const startMinutes = parseTimeToMinutes(appointment.start_time);
-    return orgNowMins > startMinutes;
-  }, [date, appointment.status, appointment.start_time, isOrgToday, orgNowMins]);
 
   return (
     <div
@@ -256,7 +247,6 @@ function AppointmentCard({
         serviceLookup={serviceLookup}
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
-        isOverdueForCheckin={isOverdueForCheckin}
         
         onClick={() => {}}
       />

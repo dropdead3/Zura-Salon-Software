@@ -79,7 +79,7 @@ export interface PhorestAppointment {
   };
 }
 
-export type AppointmentStatus = 'pending' | 'booked' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentStatus = 'pending' | 'booked' | 'unconfirmed' | 'confirmed' | 'walk_in' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 
 export type CalendarView = 'day' | 'week' | 'month' | 'agenda';
 
@@ -106,7 +106,7 @@ export function usePhorestCalendar() {
   const [filters, setFilters] = useState<CalendarFilters>({
     locationIds: [],
     stylistIds: [],
-    statuses: ['booked', 'confirmed', 'checked_in', 'completed'],
+    statuses: ['booked', 'unconfirmed', 'confirmed', 'walk_in', 'checked_in', 'completed'],
     showCancelled: false,
   });
 
@@ -236,17 +236,22 @@ export function usePhorestCalendar() {
       const nowMins = orgNowMinutes(timezone);
 
       return raw.map(apt => {
-        if (apt.status !== 'completed') return apt;
-        // Future date → can't be completed yet
-        if (apt.appointment_date > orgToday) {
-          return { ...apt, status: 'booked' as AppointmentStatus };
-        }
-        // Today but end time hasn't passed → not completed yet
-        if (apt.appointment_date === orgToday && apt.end_time) {
-          const [h, m] = apt.end_time.split(':').map(Number);
-          if (h * 60 + m > nowMins) {
-            return { ...apt, status: 'booked' as AppointmentStatus };
+        // Fix premature "completed" from sync race conditions
+        if (apt.status === 'completed') {
+          if (apt.appointment_date > orgToday) {
+            return { ...apt, status: 'unconfirmed' as AppointmentStatus };
           }
+          if (apt.appointment_date === orgToday && apt.end_time) {
+            const [h, m] = apt.end_time.split(':').map(Number);
+            if (h * 60 + m > nowMins) {
+              return { ...apt, status: 'unconfirmed' as AppointmentStatus };
+            }
+          }
+          return apt;
+        }
+        // Remap legacy 'booked' to 'unconfirmed' for display
+        if (apt.status === 'booked') {
+          return { ...apt, status: 'unconfirmed' as AppointmentStatus };
         }
         return apt;
       });

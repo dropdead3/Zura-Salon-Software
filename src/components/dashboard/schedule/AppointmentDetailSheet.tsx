@@ -501,26 +501,30 @@ const staggerItem = {
 const STATUS_CONFIG: Record<AppointmentStatus, {
   bg: string; text: string; label: string; icon: React.ElementType;
 }> = {
-  pending:    { bg: 'bg-amber-100 dark:bg-amber-900/50',  text: 'text-amber-800 dark:text-amber-300',  label: 'Pending',    icon: Clock },
-  booked:     { bg: 'bg-slate-100 dark:bg-slate-800',      text: 'text-slate-700 dark:text-slate-300',  label: 'Booked',     icon: Calendar },
-  confirmed:  { bg: 'bg-green-100 dark:bg-green-900/50',   text: 'text-green-800 dark:text-green-300',  label: 'Confirmed',  icon: CheckCircle },
-  checked_in: { bg: 'bg-blue-100 dark:bg-blue-900/50',     text: 'text-blue-800 dark:text-blue-300',    label: 'Checked In', icon: UserCheck },
-  completed:  { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-800 dark:text-purple-300',label: 'Completed',  icon: CheckCircle },
-  cancelled:  { bg: 'bg-gray-100 dark:bg-gray-800',        text: 'text-gray-600 dark:text-gray-400',    label: 'Cancelled',  icon: XCircle },
-  no_show:    { bg: 'bg-red-100 dark:bg-red-900/50',       text: 'text-red-800 dark:text-red-300',      label: 'No Show',    icon: AlertTriangle },
+  pending:      { bg: 'bg-amber-100 dark:bg-amber-900/50',  text: 'text-amber-800 dark:text-amber-300',  label: 'Pending',      icon: Clock },
+  booked:       { bg: 'bg-amber-100 dark:bg-amber-900/50',  text: 'text-amber-800 dark:text-amber-300',  label: 'Unconfirmed',  icon: Clock },
+  unconfirmed:  { bg: 'bg-amber-100 dark:bg-amber-900/50',  text: 'text-amber-800 dark:text-amber-300',  label: 'Unconfirmed',  icon: Clock },
+  confirmed:    { bg: 'bg-green-100 dark:bg-green-900/50',   text: 'text-green-800 dark:text-green-300',  label: 'Confirmed',    icon: CheckCircle },
+  walk_in:      { bg: 'bg-teal-100 dark:bg-teal-900/50',    text: 'text-teal-800 dark:text-teal-300',    label: 'Walk-In',      icon: UserCheck },
+  checked_in:   { bg: 'bg-blue-100 dark:bg-blue-900/50',     text: 'text-blue-800 dark:text-blue-300',    label: 'Checked In',   icon: UserCheck },
+  completed:    { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-800 dark:text-purple-300',label: 'Completed',    icon: CheckCircle },
+  cancelled:    { bg: 'bg-gray-100 dark:bg-gray-800',        text: 'text-gray-600 dark:text-gray-400',    label: 'Cancelled',    icon: XCircle },
+  no_show:      { bg: 'bg-red-100 dark:bg-red-900/50',       text: 'text-red-800 dark:text-red-300',      label: 'No Show',      icon: AlertTriangle },
 };
 
 const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
   pending: ['confirmed', 'cancelled'],
   booked: ['confirmed', 'cancelled'],
+  unconfirmed: ['confirmed', 'cancelled'],
   confirmed: ['checked_in', 'cancelled', 'no_show'],
+  walk_in: ['checked_in', 'cancelled', 'no_show'],
   checked_in: ['completed', 'cancelled'],
   completed: [],
   cancelled: [],
   no_show: [],
 };
 
-const LIFECYCLE_STEPS: AppointmentStatus[] = ['booked', 'confirmed', 'checked_in', 'completed'];
+const LIFECYCLE_STEPS: AppointmentStatus[] = ['unconfirmed', 'confirmed', 'checked_in', 'completed'];
 
 function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':');

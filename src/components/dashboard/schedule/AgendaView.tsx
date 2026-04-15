@@ -121,9 +121,6 @@ export function AgendaView({
             {/* Appointments List */}
             <div className="space-y-3">
               {dayAppointments.map((apt) => {
-                const isOverdue = isOrgToday(apt.appointment_date, timezone) &&
-                  (apt.status === 'booked' || apt.status === 'confirmed') &&
-                  orgNowMins > (() => { const [h, m] = apt.start_time.split(':').map(Number); return h * 60 + m; })();
                 return (
                   <AppointmentCardContent
                     key={apt.id}
@@ -136,7 +133,6 @@ export function AgendaView({
                     hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
                     serviceLookup={serviceLookup}
                     categoryColors={categoryColors}
-                    isOverdueForCheckin={isOverdue}
                   />
                 );
               })}

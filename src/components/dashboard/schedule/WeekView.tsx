@@ -82,7 +82,6 @@ function WeekAppointmentCard({
   serviceLookup,
   assistantNamesMap,
   assistantProfilesMap,
-  isOverdueForCheckin = false,
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -94,7 +93,6 @@ function WeekAppointmentCard({
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
-  isOverdueForCheckin?: boolean;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const size = getCardSize(appointment.start_time, appointment.end_time);
@@ -116,7 +114,6 @@ function WeekAppointmentCard({
         assistantNamesMap={assistantNamesMap}
         assistantProfilesMap={assistantProfilesMap}
         categoryColors={categoryColors}
-        isOverdueForCheckin={isOverdueForCheckin}
         
         showStylistBadge
         showClientPhone={false}
@@ -438,9 +435,6 @@ export function WeekView({
 
                   {/* Appointments */}
                   {dayAppointments.map((apt) => {
-                    const overdueForCheckin = isCurrentDay && 
-                      (apt.status === 'booked' || apt.status === 'confirmed') &&
-                      wkNowMins > parseTimeToMinutes(apt.start_time);
                     return (
                       <WeekAppointmentCard
                         key={apt.id}
@@ -454,7 +448,6 @@ export function WeekView({
                         serviceLookup={serviceLookup}
                         assistantNamesMap={assistantNamesMap}
                         assistantProfilesMap={assistantProfilesMap}
-                        isOverdueForCheckin={overdueForCheckin}
                       />
                     );
                   })}
