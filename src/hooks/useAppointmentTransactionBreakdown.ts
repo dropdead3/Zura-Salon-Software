@@ -80,7 +80,7 @@ export function useAppointmentTransactionBreakdown(
 
       // Fetch all transaction items for this client + date
       const { data: rawItems, error } = await supabase
-        .from('phorest_transaction_items')
+        .from('v_all_transaction_items')
         .select('id, transaction_id, item_name, item_type, item_category, unit_price, discount, total_amount, tax_amount, tip_amount, quantity, payment_method, stylist_name')
         .eq('phorest_client_id', phorestClientId)
         .eq('transaction_date', appointmentDate);

@@ -74,7 +74,7 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
       const items = await fetchAllBatched<any>(
         (from, to) => {
           let query = supabase
-            .from('phorest_transaction_items')
+            .from('v_all_transaction_items')
             .select('*')
             .eq('transaction_date', filters.date)
             .order('transaction_date', { ascending: false })

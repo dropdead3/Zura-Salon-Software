@@ -154,7 +154,7 @@ export function useMyPayData(): MyPayData {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('total_amount, tax_amount, item_type')
           .eq('stylist_user_id', user.id)
           .gte('transaction_date', currentPeriod.startDate)

@@ -136,7 +136,7 @@ export function useTodayPrep() {
       const txnMap = new Map<string, { services: any[]; products: any[] }>();
       if (phorestClientIds.length > 0) {
         const { data: txnItems } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('phorest_client_id, transaction_date, item_name, item_type, quantity, phorest_staff_id')
           .in('phorest_client_id', phorestClientIds)
           .order('transaction_date', { ascending: false })

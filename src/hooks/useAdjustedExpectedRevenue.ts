@@ -99,7 +99,7 @@ export function useAdjustedExpectedRevenue(
         for (let i = 0; i < completedClientIds.length; i += 100) {
           const chunk = completedClientIds.slice(i, i + 100);
           let posQuery = supabase
-            .from('phorest_transaction_items')
+            .from('v_all_transaction_items')
             .select('total_amount, tax_amount, phorest_client_id')
             .in('phorest_client_id', chunk)
             .gte('transaction_date', todayStr)

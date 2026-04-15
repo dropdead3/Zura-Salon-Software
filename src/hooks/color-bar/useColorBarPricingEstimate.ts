@@ -115,7 +115,7 @@ export function useColorBarPricingEstimate(stylistCountFallback = 2) {
           tax_amount: number | null;
         }>((from, to) =>
           supabase
-            .from('phorest_transaction_items')
+            .from('v_all_transaction_items')
             .select('total_amount, tax_amount')
             .in('appointment_id', chunk)
             .eq('item_type', 'Product')

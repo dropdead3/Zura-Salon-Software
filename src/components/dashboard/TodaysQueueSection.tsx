@@ -101,7 +101,7 @@ export function TodaysQueueSection({
     
     try {
       const { error } = await supabase
-        .from('phorest_appointments')
+        .from('v_all_appointments')
         .delete()
         .eq('id', appointmentId);
       

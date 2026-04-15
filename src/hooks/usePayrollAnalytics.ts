@@ -73,7 +73,7 @@ export function usePayrollAnalytics(): PayrollAnalyticsData {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
           .gte('transaction_date', periodStart)
           .lte('transaction_date', periodEnd)
@@ -112,7 +112,7 @@ export function usePayrollAnalytics(): PayrollAnalyticsData {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('total_amount, tax_amount')
           .gte('transaction_date', yearStart)
           .lte('transaction_date', today)

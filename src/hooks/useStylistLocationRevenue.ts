@@ -38,7 +38,7 @@ export function useStylistLocationRevenue(userId: string | undefined, dateFrom?:
       let hasMore = true;
       while (hasMore) {
         let q: any = supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('location_id, total_amount, tax_amount, item_type')
           .eq('stylist_user_id', userId);
         if (dateFrom) q = q.gte('transaction_date', dateFrom);
@@ -119,7 +119,7 @@ export function useStylistLocationTrend(userId: string | undefined, weeks: numbe
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('transaction_date, location_id, total_amount, tax_amount')
           .eq('stylist_user_id', userId)
           .gte('transaction_date', weekRanges[0].start)

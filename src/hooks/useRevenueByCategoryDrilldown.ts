@@ -46,7 +46,7 @@ export function useRevenueByCategoryDrilldown({
 
       while (hasMore) {
         let query = supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('item_name, item_type, total_amount, tax_amount, phorest_staff_id, phorest_client_id, transaction_date, transaction_id')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -135,7 +135,7 @@ export function useRevenueByCategoryDrilldown({
         for (let i = 0; i < txIds.length; i += 100) {
           const batch = txIds.slice(i, i + 100);
           const { data: svcItems } = await supabase
-            .from('phorest_transaction_items')
+            .from('v_all_transaction_items')
             .select('transaction_id, item_name')
             .in('transaction_id', batch)
             .eq('item_type', 'service');

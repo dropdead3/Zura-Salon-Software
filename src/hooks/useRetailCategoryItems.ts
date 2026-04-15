@@ -54,7 +54,7 @@ export function useRetailCategoryItems(
         tax_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('item_type, item_name, total_amount, tax_amount')
           .gte('transaction_date', txDateFrom)
           .lte('transaction_date', txDateTo)

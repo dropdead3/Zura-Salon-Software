@@ -186,7 +186,7 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
         let hasMore = true;
         while (hasMore) {
           let q = supabase
-            .from('phorest_transaction_items')
+            .from('v_all_transaction_items')
             .select('total_amount, tax_amount, item_type, transaction_date') as any;
           if (filterValues.length === 1) {
             q = q.eq(filterField, filterValues[0]);
@@ -299,7 +299,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         total_amount: number | null; tax_amount: number | null; item_type: string | null; item_name: string | null; tip_amount: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('total_amount, tax_amount, item_type, item_name, tip_amount, phorest_client_id')
           .not('total_amount', 'is', null)
           .range(from, to);
@@ -463,7 +463,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         item_name: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
+          .from('v_all_transaction_items')
           .select('phorest_staff_id, total_amount, tax_amount, item_type, item_name')
           .not('phorest_staff_id', 'is', null)
           .not('total_amount', 'is', null)
