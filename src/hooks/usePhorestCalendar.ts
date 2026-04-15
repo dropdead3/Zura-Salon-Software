@@ -62,6 +62,7 @@ export interface PhorestAppointment {
   // Payment link fields
   payment_link_sent_at?: string | null;
   payment_link_url?: string | null;
+  payment_link_expires_at?: string | null;
   split_payment_terminal_intent_id?: string | null;
   split_payment_link_intent_id?: string | null;
   // Client contact

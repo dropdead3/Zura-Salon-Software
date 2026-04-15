@@ -1210,6 +1210,7 @@ export type Database = {
           original_price: number | null
           paid_at: string | null
           payment_failure_reason: string | null
+          payment_link_expires_at: string | null
           payment_link_sent_at: string | null
           payment_link_url: string | null
           payment_method: string | null
@@ -1281,6 +1282,7 @@ export type Database = {
           original_price?: number | null
           paid_at?: string | null
           payment_failure_reason?: string | null
+          payment_link_expires_at?: string | null
           payment_link_sent_at?: string | null
           payment_link_url?: string | null
           payment_method?: string | null
@@ -1352,6 +1354,7 @@ export type Database = {
           original_price?: number | null
           paid_at?: string | null
           payment_failure_reason?: string | null
+          payment_link_expires_at?: string | null
           payment_link_sent_at?: string | null
           payment_link_url?: string | null
           payment_method?: string | null
@@ -28034,7 +28037,11 @@ export type Database = {
           notes: string | null
           organization_id: string | null
           original_price: number | null
+          paid_at: string | null
           payment_failure_reason: string | null
+          payment_link_expires_at: string | null
+          payment_link_sent_at: string | null
+          payment_link_url: string | null
           payment_method: string | null
           payment_status: string | null
           phorest_client_id: string | null
@@ -28044,6 +28051,8 @@ export type Database = {
           service_category: string | null
           service_name: string | null
           source: string | null
+          split_payment_link_intent_id: string | null
+          split_payment_terminal_intent_id: string | null
           staff_name: string | null
           start_time: string | null
           status: string | null

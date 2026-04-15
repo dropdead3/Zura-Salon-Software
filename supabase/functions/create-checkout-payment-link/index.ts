@@ -172,6 +172,7 @@ Deno.serve(async (req) => {
     const linkUpdate: Record<string, unknown> = {
       payment_link_url: session.url,
       payment_link_sent_at: new Date().toISOString(),
+      payment_link_expires_at: new Date(session.expires_at * 1000).toISOString(),
     };
     if (isSplit) {
       linkUpdate.split_payment_link_intent_id = session.id;
