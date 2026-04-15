@@ -147,7 +147,7 @@ export function useOrganizationAnalytics() {
 
       // Also fetch phorest_clients
       const { data: phorestClients } = await supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, location_id')
         .eq('is_duplicate', false);
 

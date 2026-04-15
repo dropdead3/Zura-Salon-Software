@@ -262,7 +262,7 @@ export function usePhorestClientSearch(searchQuery: string, limit = 20) {
     queryKey: ['phorest-client-search', searchQuery],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_clients')
+        .from('v_all_clients' as any)
         .select('id, first_name, last_name, name, email, phone, visit_count, total_spend, last_visit, is_vip, preferred_stylist_id, is_duplicate, canonical_client_id, notes, birthday, address_line1, city, state, zip, location_id')
         .order('last_name')
         .order('first_name')
