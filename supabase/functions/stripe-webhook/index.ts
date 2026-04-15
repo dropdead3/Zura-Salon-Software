@@ -326,7 +326,7 @@ async function handleCheckoutCompleted(
     // B2: Query appointment and verify org_id matches to prevent cross-org manipulation
     const { data: appt } = await supabase
       .from('appointments')
-      .select('split_payment_terminal_intent_id, paid_at, organization_id')
+      .select('split_payment_terminal_intent_id, paid_at, organization_id, payment_status')
       .eq('id', appointmentId)
       .maybeSingle();
 
@@ -349,9 +349,12 @@ async function handleCheckoutCompleted(
 
     if (isSplit) {
       // Split payment: only mark paid when both legs are confirmed
-      if (appt?.paid_at && appt?.split_payment_terminal_intent_id) {
+      if (appt?.payment_status === 'partially_paid' && appt?.split_payment_terminal_intent_id) {
         // Terminal leg already paid — this link leg completes payment
         updatePayload.payment_status = 'paid';
+        updatePayload.paid_at = new Date().toISOString();
+        updatePayload.payment_method = 'split_payment';
+        updatePayload.stripe_payment_intent_id = paymentIntentId;
       } else {
         // Link leg done but terminal leg not yet — mark partially paid
         updatePayload.payment_status = 'partially_paid';

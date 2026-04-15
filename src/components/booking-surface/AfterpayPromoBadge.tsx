@@ -29,7 +29,7 @@ export function AfterpayPromoBadge({ theme, amount, surchargeRate }: AfterpayPro
         Pay in 4 interest-free installments with Afterpay
         {installment && <span style={{ color: theme.mutedTextColor }}> — {installment}/ea</span>}
         {hasSurcharge && (
-          <span style={{ color: theme.mutedTextColor }}> ({Math.round(surchargeRate * 100)}% processing fee applies)</span>
+          <span style={{ color: theme.mutedTextColor }}> ({parseFloat((surchargeRate * 100).toFixed(2))}% processing fee applies)</span>
         )}
       </span>
     </div>
