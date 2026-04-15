@@ -466,7 +466,7 @@ export function DayView({
         <div ref={scrollRef} className="flex-1 overflow-auto">
           <div className="min-w-[600px]">
             {/* Stylist Headers - frosted glass sticky header */}
-            <div className="flex border-b sticky top-0 z-10" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+            <div className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
               <div className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
                 W {weekNumber}
@@ -490,7 +490,7 @@ export function DayView({
               ))}
             </div>
             {/* Gradient fade below header */}
-            <div className="h-3 bg-gradient-to-b from-muted/40 to-transparent pointer-events-none sticky top-[52px] z-[9]" />
+            <div className="h-3 bg-gradient-to-b from-muted/40 to-transparent pointer-events-none sticky top-[52px] z-[19]" />
 
             {/* Time Grid */}
             <div className="flex relative">
@@ -622,7 +622,7 @@ export function DayView({
               {/* Current Time Indicator */}
               {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
                 <div 
-                  className="absolute left-[70px] right-0 border-t-2 border-destructive pointer-events-none z-20"
+                  className="absolute left-[70px] right-0 border-t-2 border-destructive pointer-events-none z-[15]"
                   style={{ top: `${currentTimeOffset}px` }}
                 >
                   <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-destructive rounded-full" />
