@@ -27984,12 +27984,16 @@ export type Database = {
           item_type: string | null
           location_id: string | null
           payment_method: string | null
+          phorest_client_id: string | null
+          phorest_staff_id: string | null
           promotion_id: string | null
           quantity: number | null
           sale_classification: string | null
           source: string | null
           staff_name: string | null
           staff_user_id: string | null
+          stylist_name: string | null
+          stylist_user_id: string | null
           tax_amount: number | null
           tip_amount: number | null
           total_amount: number | null
