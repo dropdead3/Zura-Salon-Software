@@ -18,7 +18,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import { IndicatorCluster, type IndicatorFlags } from './appointment-card-indicators';
 import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor } from '@/utils/categoryColors';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
@@ -566,12 +566,15 @@ export function AppointmentCardContent({
     if (useCategoryColor) {
       const boostedBg = boostPaleCategoryColor(catColor.bg);
       const boostedText = boostedBg !== catColor.bg ? getContrastingTextColor(boostedBg) : catColor.text;
+      const lightTokens = deriveLightModeColor(boostedBg);
       return {
         backgroundColor: boostedBg,
         color: boostedText,
-        borderLeftColor: boostedBg,
-        borderWidth: '0 0 0 4px',
+        borderColor: lightTokens.stroke,
+        borderWidth: '1px',
         borderStyle: 'solid' as const,
+        borderLeftColor: lightTokens.stroke,
+        borderLeftWidth: '4px',
         boxShadow: 'none',
         opacity: 1,
         backdropFilter: 'none',
