@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { LocationTimezoneProvider } from '@/contexts/LocationTimezoneContext';
+import { useLocationTimezone } from '@/hooks/useLocationTimezone';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
 import { ScheduleActionBar } from '@/components/dashboard/schedule/ScheduleActionBar';
