@@ -284,15 +284,15 @@ export default function Schedule() {
     }
   }, [appointments]);
 
-  // Calculate today's appointment count for the selected location
+  // Calculate today's appointment count for the selected location (org-timezone-aware)
   const todayAppointmentCount = useMemo(() => {
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = orgToday;
     return allAppointments.filter(apt => 
-      apt.appointment_date === today && 
+      apt.appointment_date === todayStr && 
       apt.location_id === selectedLocation &&
       !['cancelled', 'no_show'].includes(apt.status)
     ).length;
-  }, [allAppointments, selectedLocation]);
+  }, [allAppointments, selectedLocation, orgToday]);
 
   // Get the phorest_branch_id and effective tax rate for the selected location
   const selectedLocationData = useMemo(() => {
@@ -931,12 +931,12 @@ export default function Schedule() {
               )}
             </div>
 
-            {(view === 'day' || view === 'week') && (
+            {(view === 'day' || view === 'week' || view === 'agenda') && (
               <div className="shrink-0 px-4 pr-20 pb-4 pt-1">
                 <div className="flex items-center gap-2">
                   <ScheduleActionBar
                     appointments={allAppointments.filter(apt => 
-                      apt.appointment_date === format(new Date(), 'yyyy-MM-dd') &&
+                      apt.appointment_date === orgToday &&
                       apt.location_id === selectedLocation
                     )}
                     onSelectAppointment={(apt) => {

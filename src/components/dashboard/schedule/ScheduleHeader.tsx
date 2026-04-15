@@ -491,14 +491,14 @@ export function ScheduleHeader({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size={tokens.button.inline} className="ml-1 gap-1">
-                {stylists.length} <Plus className="h-3 w-3" />
+                Jump <Plus className="h-3 w-3" />
                 <ChevronRight className="h-3 w-3 rotate-90" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-1" align="end">
               <div className="flex flex-col">
                 {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((weeks) => {
-                  const targetDate = addDays(new Date(), weeks * 7);
+                  const targetDate = addDays(orgToday, weeks * 7);
                   return (
                     <Button
                       key={weeks}

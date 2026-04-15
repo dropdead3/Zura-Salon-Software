@@ -83,6 +83,7 @@ function WeekAppointmentCard({
   serviceLookup,
   assistantNamesMap,
   assistantProfilesMap,
+  isOverdueForCheckin = false,
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -94,6 +95,7 @@ function WeekAppointmentCard({
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
+  isOverdueForCheckin?: boolean;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const size = getCardSize(appointment.start_time, appointment.end_time);
@@ -115,6 +117,7 @@ function WeekAppointmentCard({
         assistantNamesMap={assistantNamesMap}
         assistantProfilesMap={assistantProfilesMap}
         categoryColors={categoryColors}
+        isOverdueForCheckin={isOverdueForCheckin}
         
         showStylistBadge
         showClientPhone={false}
@@ -172,12 +175,10 @@ export function WeekView({
     });
   }, [currentDate.toDateString(), locationHoursJson, hoursStart]);
   
-  // Week starts with today, followed by 6 future days
-  const today = new Date();
-  
+  // Week starts with currentDate, followed by 6 future days
   const weekDays = useMemo(() => 
-    Array.from({ length: 7 }, (_, i) => addDays(today, i)),
-    [today.toDateString()]
+    Array.from({ length: 7 }, (_, i) => addDays(currentDate, i)),
+    [currentDate.toDateString()]
   );
   
   // Generate all 15-minute time slots
@@ -472,21 +473,27 @@ export function WeekView({
                     })}
 
                   {/* Appointments */}
-                  {dayAppointments.map((apt) => (
-                    <WeekAppointmentCard
-                      key={apt.id}
-                      appointment={apt}
-                      hoursStart={hoursStart}
-                      onClick={() => onAppointmentClick(apt)}
-                      categoryColors={categoryColors}
-                      isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                      hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                      colorBy={colorBy}
-                      serviceLookup={serviceLookup}
-                      assistantNamesMap={assistantNamesMap}
-                      assistantProfilesMap={assistantProfilesMap}
-                    />
-                  ))}
+                  {dayAppointments.map((apt) => {
+                    const overdueForCheckin = isCurrentDay && 
+                      (apt.status === 'booked' || apt.status === 'confirmed') &&
+                      wkNowMins > parseTimeToMinutes(apt.start_time);
+                    return (
+                      <WeekAppointmentCard
+                        key={apt.id}
+                        appointment={apt}
+                        hoursStart={hoursStart}
+                        onClick={() => onAppointmentClick(apt)}
+                        categoryColors={categoryColors}
+                        isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                        hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                        colorBy={colorBy}
+                        serviceLookup={serviceLookup}
+                        assistantNamesMap={assistantNamesMap}
+                        assistantProfilesMap={assistantProfilesMap}
+                        isOverdueForCheckin={overdueForCheckin}
+                      />
+                    );
+                  })}
 
                   {/* Current time indicator */}
                   {isCurrentDay && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
