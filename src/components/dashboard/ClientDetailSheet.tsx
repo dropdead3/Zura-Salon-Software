@@ -288,8 +288,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
       if (error) throw error;
     }
   };
-
-
+  const saveMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
       const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
