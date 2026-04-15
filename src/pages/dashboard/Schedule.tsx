@@ -28,6 +28,7 @@ import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/hooks/useLocations';
 import { ClosedDayWarningDialog } from '@/components/dashboard/schedule/ClosedDayWarningDialog';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useDraftBookings, type DraftBooking } from '@/hooks/useDraftBookings';
