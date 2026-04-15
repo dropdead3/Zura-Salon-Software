@@ -672,6 +672,11 @@ async function handlePaymentIntentSucceeded(
     payment_failure_reason: null, // Clear any previous failure reason on success
   };
 
+  // Write split_payment_terminal_intent_id so the link handler can detect terminal completion
+  if (resolvedStatus === 'partially_paid') {
+    updatePayload.split_payment_terminal_intent_id = piId;
+  }
+
   // Remove undefined keys
   Object.keys(updatePayload).forEach(k => updatePayload[k] === undefined && delete updatePayload[k]);
 
