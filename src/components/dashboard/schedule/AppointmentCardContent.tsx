@@ -210,7 +210,7 @@ function GridContent({
 }) {
   if (size === 'compact') {
     return (
-      <div className="px-2 py-1 relative z-10">
+      <div className="px-2 py-1 relative z-10 overflow-hidden">
         <IndicatorCluster
           flags={indicatorFlags}
           size="compact"
@@ -227,7 +227,7 @@ function GridContent({
   const badge = APPOINTMENT_STATUS_BADGE[statusKey] || APPOINTMENT_STATUS_BADGE.booked;
 
   return (
-    <div className="px-2 py-1 relative z-10" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
+    <div className="px-2 py-1 relative z-10 overflow-hidden" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
       {showStylistBadge ? (
         <>
           {/* Weekly view: status badge top-left */}
