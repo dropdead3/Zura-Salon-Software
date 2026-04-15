@@ -1,4 +1,4 @@
-import { Info, Repeat, ArrowRightLeft, Users, RotateCcw, Star, Moon } from 'lucide-react';
+import { Info, Repeat, ArrowRightLeft, Users, RotateCcw, Star, AlertTriangle, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
