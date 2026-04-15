@@ -426,10 +426,23 @@ export default function Schedule() {
     return Array.from(staffMap.values());
   }, [locationStylists, allAppointments, selectedLocation, stylistSchedules, currentDate]);
 
-  // Filter stylists based on staff selection (for day view columns)
-  const displayedStylists = selectedStaffIds.length === 0
-    ? allStylists 
-    : allStylists.filter(s => selectedStaffIds.includes(s.user_id));
+  // Toggle: show all stylists vs only those with appointments
+  const [showAllStylists, setShowAllStylists] = useState(true);
+
+  // Filter stylists based on staff selection + showAllStylists toggle
+  const displayedStylists = useMemo(() => {
+    let base = selectedStaffIds.length === 0
+      ? allStylists
+      : allStylists.filter(s => selectedStaffIds.includes(s.user_id));
+
+    if (!showAllStylists) {
+      const staffWithAppts = new Set(
+        appointments.map(a => (a as any).stylist_user_id || (a as any).staff_user_id).filter(Boolean)
+      );
+      base = base.filter(s => staffWithAppts.has(s.user_id));
+    }
+    return base;
+  }, [allStylists, selectedStaffIds, showAllStylists, appointments]);
 
   // Auto-switch to agenda view on mobile
   useEffect(() => {
@@ -894,6 +907,8 @@ export default function Schedule() {
                 onOpenBlockManager={() => setBlockManagerOpen(true)}
                 showShiftsView={showShiftsView}
                 onToggleShiftsView={() => setShowShiftsView(prev => !prev)}
+                showAllStylists={showAllStylists}
+                onShowAllStylistsChange={setShowAllStylists}
               />
         </div>
 

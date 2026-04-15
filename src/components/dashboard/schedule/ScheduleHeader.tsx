@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { Switch } from '@/components/ui/switch';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
   ChevronLeft, 
@@ -73,6 +75,8 @@ interface ScheduleHeaderProps {
   onOpenBlockManager?: () => void;
   showShiftsView?: boolean;
   onToggleShiftsView?: () => void;
+  showAllStylists?: boolean;
+  onShowAllStylistsChange?: (value: boolean) => void;
 }
 
 export function ScheduleHeader({
@@ -100,6 +104,8 @@ export function ScheduleHeader({
   onOpenBlockManager,
   showShiftsView = false,
   onToggleShiftsView,
+  showAllStylists = true,
+  onShowAllStylistsChange,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
@@ -368,6 +374,26 @@ export function ScheduleHeader({
                       {formatFullDisplayName(s.full_name, s.display_name)}
                     </button>
                   ))}
+                  {/* Show All Stylists toggle */}
+                  {(view === 'day' || view === 'week') && onShowAllStylistsChange && (
+                    <>
+                      <div className="h-px bg-border my-1" />
+                      <div className="flex items-center justify-between px-2 py-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm text-muted-foreground">All Stylists</span>
+                          <MetricInfoTooltip 
+                            description="Show all stylists who work at this location on this day. Turn off to only show stylists with appointments." 
+                            side="left"
+                          />
+                        </div>
+                        <Switch
+                          checked={showAllStylists}
+                          onCheckedChange={onShowAllStylistsChange}
+                          className="scale-75"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </PopoverContent>
             </Popover>
