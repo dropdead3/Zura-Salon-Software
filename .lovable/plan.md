@@ -1,62 +1,42 @@
 
 
-## Afterpay Audit Pass 7 — Webhook Re-Introduces Split Field Bug
+## Afterpay Audit Pass 8 — Two Remaining Issues
 
-One remaining P0 issue found.
+The core split-payment flow is now structurally sound. Two lower-priority issues remain.
 
 ---
 
-### B1. `handleCheckoutCompleted` Always Writes `split_payment_link_intent_id` for ALL Link Payments (Bug — P0)
+### B1. `phorest_appointments` Fallback Ignores Split Status (Bug — P1)
 
-Line 338-339 of `stripe-webhook/index.ts`:
+In `handlePaymentIntentSucceeded`, lines 720-727 always write `payment_status: 'paid'` to `phorest_appointments`, ignoring `resolvedStatus`. When the terminal fires first in a split, the appointments table correctly gets `partially_paid`, but the phorest fallback writes `paid` — creating an inconsistency between tables.
+
+**Fix:** Use `resolvedStatus` instead of hardcoded `'paid'`:
 
 ```text
-const updatePayload: Record<string, unknown> = {
-  split_payment_link_intent_id: paymentIntentId,
-};
+await supabase
+  .from('phorest_appointments')
+  .update({
+    payment_status: resolvedStatus,
+    payment_failure_reason: null,
+  })
+  .eq('id', appointmentId)
+  .neq('payment_status', 'paid');
 ```
 
-This unconditionally writes `split_payment_link_intent_id` for every checkout completion — even non-split payments. This **undoes** the Pass 6 fix in `create-checkout-payment-link` which conditionally writes the field only when `isSplit` is true.
+---
 
-**Scenario:**
-1. Staff sends a non-split $500 link. `create-checkout-payment-link` correctly omits `split_payment_link_intent_id`.
-2. Client pays the link. Webhook fires `handleCheckoutCompleted`.
-3. Line 339 writes `split_payment_link_intent_id` anyway.
-4. Payment is already marked `paid` (line 366-369), so no immediate harm.
-5. But if staff later attempts a refund-and-re-collect via terminal for the same appointment, the terminal handler sees `split_payment_link_intent_id` exists and sets `partially_paid` instead of `paid`.
+### B2. `handleCheckoutCompleted` Lacks Idempotency Guard (Enhancement — P2)
 
-The field should only be written when the checkout is actually a split.
+The appointments update on line 372-375 has no `.neq('payment_status', 'paid')` guard. If a webhook fires twice (Stripe retries), a completed `paid` appointment could be overwritten back to `partially_paid` in the split branch, or have its `paid_at` timestamp reset in the non-split branch.
 
-**Fix:** Move `split_payment_link_intent_id` into the split branch only:
+**Fix:** Add `.neq('payment_status', 'paid')` to the update query:
 
 ```text
-const updatePayload: Record<string, unknown> = {};
-
-// Persist surcharge amount from checkout metadata
-if (metadata.surcharge_amount_cents) {
-  updatePayload.afterpay_surcharge_amount = parseInt(metadata.surcharge_amount_cents, 10);
-}
-
-const isSplit = metadata.is_split === 'true';
-
-if (isSplit) {
-  updatePayload.split_payment_link_intent_id = paymentIntentId;
-  if (appt?.payment_status === 'partially_paid' && appt?.split_payment_terminal_intent_id) {
-    updatePayload.payment_status = 'paid';
-    updatePayload.paid_at = new Date().toISOString();
-    updatePayload.payment_method = 'split_payment';
-    updatePayload.stripe_payment_intent_id = paymentIntentId;
-  } else {
-    updatePayload.payment_status = 'partially_paid';
-    updatePayload.payment_method = 'payment_link';
-    updatePayload.stripe_payment_intent_id = paymentIntentId;
-  }
-} else {
-  updatePayload.payment_status = 'paid';
-  updatePayload.payment_method = 'payment_link';
-  updatePayload.stripe_payment_intent_id = paymentIntentId;
-  updatePayload.paid_at = new Date().toISOString();
-}
+await supabase
+  .from('appointments')
+  .update(updatePayload)
+  .eq('id', appointmentId)
+  .neq('payment_status', 'paid');
 ```
 
 ---
@@ -65,7 +45,8 @@ if (isSplit) {
 
 | Priority | ID | File | Change |
 |----------|----|------|--------|
-| P0 | B1 | `stripe-webhook/index.ts` | Only write `split_payment_link_intent_id` in `handleCheckoutCompleted` when `isSplit` is true |
+| P1 | B1 | `stripe-webhook/index.ts` | Use `resolvedStatus` in phorest_appointments fallback |
+| P2 | B2 | `stripe-webhook/index.ts` | Add `.neq('payment_status', 'paid')` idempotency guard to checkout handler |
 
-No database migrations required. Single file change.
+No database migrations required. Single file, two small changes.
 
