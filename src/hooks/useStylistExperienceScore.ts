@@ -156,34 +156,48 @@ export function useStylistExperienceScore(
       });
 
 
-      // Fetch staff names and photos via centralized resolver
+      // Fetch staff names and photos — try direct employee_profiles first, then phorest mapping
       const allStaffIds = [...staffAppointments.keys()];
-      const staffNameData = await resolveStaffNames(allStaffIds);
-
-      // Also fetch photos from employee_profiles
-      const userIdsForPhotos = Object.values(staffNameData.phorestToUserId);
-      const { data: photoProfiles } = userIdsForPhotos.length > 0
+      
+      // Try resolving as user_ids first (Zura-native)
+      const { data: directProfiles } = allStaffIds.length > 0
         ? await supabase
             .from('employee_profiles')
-            .select('user_id, photo_url')
-            .in('user_id', userIdsForPhotos)
+            .select('user_id, display_name, full_name, photo_url')
+            .in('user_id', allStaffIds)
         : { data: [] };
-      const photoMap = new Map((photoProfiles || []).map(p => [p.user_id, p.photo_url]));
 
-      // Build staff name/photo lookup + phorest→user_id mapping
       const staffInfo = new Map<string, { name: string; photoUrl: string | null }>();
-      const phorestToUserId = new Map<string, string>();
-      allStaffIds.forEach(phorestId => {
-        const name = staffNameData.byPhorestId[phorestId] || 'Unknown';
-        const userId = staffNameData.phorestToUserId[phorestId];
-        staffInfo.set(phorestId, {
-          name,
-          photoUrl: userId ? photoMap.get(userId) || null : null,
-        });
-        if (userId) {
-          phorestToUserId.set(phorestId, userId);
-        }
+      const resolvedUserIds = new Set<string>();
+      
+      (directProfiles || []).forEach(p => {
+        const name = formatDisplayName(p.full_name || '', p.display_name);
+        staffInfo.set(p.user_id, { name, photoUrl: p.photo_url || null });
+        resolvedUserIds.add(p.user_id);
       });
+
+      // For any unresolved (likely phorest_staff_ids), try phorest_staff_mapping
+      const unresolvedIds = allStaffIds.filter(id => !resolvedUserIds.has(id));
+      if (unresolvedIds.length > 0) {
+        const staffNameData = await resolveStaffNames(unresolvedIds);
+        const userIdsForPhotos = Object.values(staffNameData.phorestToUserId);
+        const { data: photoProfiles } = userIdsForPhotos.length > 0
+          ? await supabase
+              .from('employee_profiles')
+              .select('user_id, photo_url')
+              .in('user_id', userIdsForPhotos)
+          : { data: [] };
+        const photoMap = new Map((photoProfiles || []).map(p => [p.user_id, p.photo_url]));
+
+        unresolvedIds.forEach(phorestId => {
+          const name = staffNameData.byPhorestId[phorestId] || 'Unknown';
+          const userId = staffNameData.phorestToUserId[phorestId];
+          staffInfo.set(phorestId, {
+            name,
+            photoUrl: userId ? photoMap.get(userId) || null : null,
+          });
+        });
+      }
 
       // Calculate scores for each staff
       const scores: StylistExperienceScore[] = [];
@@ -238,7 +252,7 @@ export function useStylistExperienceScore(
           (retailAttachment * WEIGHTS.retailAttachment);
 
         scores.push({
-          staffId: phorestToUserId.get(staffId) || staffId,
+          staffId,
           staffName: info.name,
           photoUrl: info.photoUrl,
           compositeScore: Math.round(compositeScore),
