@@ -61,7 +61,7 @@ async function fetchUpcomingServices(
   // Query phorest_appointments (primary source)
   const phorestData = await fetchAllBatched<any>((from, to) =>
     (supabase
-      .from('phorest_appointments' as any)
+      .from('v_all_appointments' as any)
       .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
       .eq('organization_id', orgId)
       .gte('appointment_date', startDate)

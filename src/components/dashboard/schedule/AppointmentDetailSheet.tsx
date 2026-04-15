@@ -847,7 +847,7 @@ export function AppointmentDetailSheet({
       let phorestStaffId: string | null = null;
       if (appointment._source !== 'local') {
         const { data: mapping } = await supabase
-          .from('phorest_staff_mapping')
+          .from('v_all_staff' as any)
           .select('phorest_staff_id')
           .eq('user_id', newStylistUserId)
           .maybeSingle();

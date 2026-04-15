@@ -220,7 +220,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
       if (!appointment.service_name) return [];
       // Get retail products bought by clients with same service
       const { data } = await supabase
-        .from('phorest_transaction_items' as any)
+        .from('v_all_transaction_items' as any)
         .select('item_name, phorest_client_id')
         .eq('item_type', 'product')
         .eq('organization_id', staff.organizationId)

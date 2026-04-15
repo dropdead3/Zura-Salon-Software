@@ -55,7 +55,7 @@ export function ServiceLinksTab() {
     queryKey: ['phorest-services-basic'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_services')
+        .from('v_all_services' as any)
         .select('id, name, category');
       
       if (error) throw error;

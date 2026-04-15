@@ -123,7 +123,7 @@ export function useTodayPrep() {
       const clientMap = new Map<string, any>();
       if (phorestClientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients' as any)
           .select('phorest_client_id, name, visit_count, total_spend, last_visit, first_visit, is_vip, birthday, client_since')
           .in('phorest_client_id', phorestClientIds);
         
@@ -177,7 +177,7 @@ export function useTodayPrep() {
       if (phorestClientIds.length > 0) {
         // First get internal IDs
         const { data: clientIdRows } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients' as any)
           .select('id, phorest_client_id')
           .in('phorest_client_id', phorestClientIds);
         

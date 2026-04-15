@@ -100,7 +100,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
 
       // Fetch service→category mapping from phorest_services
       const { data: services } = await supabase
-        .from('phorest_services')
+        .from('v_all_services' as any)
         .select('name, category');
       
       const categoryMap: Record<string, string> = {};
