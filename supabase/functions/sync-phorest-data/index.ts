@@ -502,7 +502,7 @@ async function syncAppointments(
       // Debug: log first appointment's raw keys
       if (!debugLogged) {
         console.log(`[DEBUG] First appointment raw keys:`, Object.keys(apt));
-        console.log(`[DEBUG] First appointment activationState:`, apt.activationState, `status:`, apt.status);
+        console.log(`[DEBUG] First appointment activationState:`, apt.activationState, `status:`, apt.status, `confirmed:`, apt.confirmed);
         if (apt.services && apt.services.length > 1) {
           console.log(`[DEBUG] Multi-service appointment detected: ${apt.services.length} services in appointment ${phorestId}`);
         }
