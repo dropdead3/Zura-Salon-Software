@@ -280,7 +280,7 @@ export function useOrganizationAnalytics() {
         .from('v_all_appointments' as any)
         .select('id, location_id');
       if (error) throw error;
-      return data || [];
+      (data || []) as any[];
     },
     staleTime: 5 * 60 * 1000,
   });

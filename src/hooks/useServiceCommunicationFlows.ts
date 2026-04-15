@@ -252,7 +252,7 @@ export function usePhorestServiceByName(serviceName: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data as any;
     },
     enabled: !!serviceName,
   });

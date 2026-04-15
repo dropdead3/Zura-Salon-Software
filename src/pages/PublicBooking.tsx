@@ -86,7 +86,7 @@ export default function PublicBooking() {
         .order('name');
       
       if (error) throw error;
-      return data;
+      return data as any;
     },
   });
 

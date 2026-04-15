@@ -115,7 +115,7 @@ export function BookingWizard({
           )
         `)
         .eq('is_active', true);
-      return data || [];
+      (data || []) as any[];
     },
   });
 
