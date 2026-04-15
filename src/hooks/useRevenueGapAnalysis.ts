@@ -230,8 +230,8 @@ export function useRevenueGapAnalysis(
           const chunk = completedClientIds.slice(i, i + 100);
           const chunkData = await fetchAllBatched<any>((from, to) => {
             let q = supabase
-              .from('phorest_transaction_items')
-              .select('phorest_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
+              .from('v_all_transaction_items')
+              .select('external_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
               .in('phorest_client_id', chunk)
               .gte('transaction_date', dateFrom)
               .lte('transaction_date', dateTo)
