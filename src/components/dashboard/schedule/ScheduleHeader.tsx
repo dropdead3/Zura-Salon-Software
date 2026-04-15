@@ -14,7 +14,6 @@ import {
   Plus,
   
   Check,
-  Settings,
   Sparkles,
   FileText,
   Users,
@@ -230,12 +229,75 @@ export function ScheduleHeader({
           </div>
         </div>
 
-        {/* Right: Filters & Settings */}
+        {/* Right: Filters & Actions */}
         <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
             filters={calendarFilters}
             onFiltersChange={onCalendarFiltersChange}
           />
+
+          {/* Assistant Blocks Button */}
+          {onOpenBlockManager && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                   className="relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                  onClick={onOpenBlockManager}
+                >
+                  <Users className="h-4 w-4" />
+                  {pendingBlockCount > 0 && (
+                    <NavBadge count={pendingBlockCount} className="absolute -top-1 -right-1" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : ''}` : 'Assistant Blocks'}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {/* Drafts Button */}
+          {onOpenDrafts && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                  onClick={onOpenDrafts}
+                >
+                  <FileText className="h-4 w-4" />
+                  {draftCount > 0 && (
+                    <NavBadge count={draftCount} className="absolute -top-1 -right-1" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : ''}` : 'No drafts'}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {/* Today's Prep Button — only when viewing today */}
+          {isServiceProvider && isOrgToday(currentDate) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                   className="text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                  onClick={() => navigate(dashPath('/today-prep'))}
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Today's Prep</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           
           {/* Stacked Location & Staff Selectors */}
           <div className="flex flex-col gap-1.5">
@@ -310,85 +372,6 @@ export function ScheduleHeader({
               </PopoverContent>
             </Popover>
           </div>
-
-
-          {/* Assistant Blocks Button */}
-          {onOpenBlockManager && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                   className="relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
-                  onClick={onOpenBlockManager}
-                >
-                  <Users className="h-4 w-4" />
-                  {pendingBlockCount > 0 && (
-                    <NavBadge count={pendingBlockCount} className="absolute -top-1 -right-1" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : ''}` : 'Assistant Blocks'}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Drafts Button */}
-          {onOpenDrafts && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
-                  onClick={onOpenDrafts}
-                >
-                  <FileText className="h-4 w-4" />
-                  {draftCount > 0 && (
-                    <NavBadge count={draftCount} className="absolute -top-1 -right-1" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : ''}` : 'No drafts'}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Today's Prep Button — only when viewing today */}
-          {isServiceProvider && isOrgToday(currentDate) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                   className="text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
-                  onClick={() => navigate(dashPath('/today-prep'))}
-                >
-                  <ClipboardCheck className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Today's Prep</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
-                onClick={() => navigate(dashPath('/admin/settings?category=services'))}
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Schedule Settings</p>
-            </TooltipContent>
-          </Tooltip>
         </div>
       </div>
 
