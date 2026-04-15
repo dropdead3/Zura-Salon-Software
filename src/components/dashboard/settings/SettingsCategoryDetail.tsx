@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import {
   Users, Bell, Shield, Loader2, Trash2, Cog, Palette, Sun, Moon, Monitor, Check, DollarSign as DollarSignIcon,
-  GraduationCap, Keyboard, Sparkles, Settings2, Save,
+  GraduationCap, Keyboard, Sparkles, Settings2, Save, Globe,
 } from 'lucide-react';
 import { MessageSquareHeart } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
