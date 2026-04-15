@@ -106,6 +106,7 @@ export function useServiceEfficiency(
         .select('name, category, duration_minutes, price');
       if (error) throw error;
       return ((data || []) as any[]);
+    },
   });
 
   const result = useMemo<ServiceEfficiencyData | undefined>(() => {
