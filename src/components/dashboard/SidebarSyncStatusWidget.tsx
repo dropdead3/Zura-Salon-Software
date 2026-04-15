@@ -35,7 +35,7 @@ export function SidebarSyncStatusWidget({
   onNavClick?: () => void;
 }) {
   const { dashPath } = useOrgDashboardPath();
-  const { syncLabel } = usePOSProviderLabel();
+  const { syncLabel, isConnected } = usePOSProviderLabel();
 
   // Fetch latest sync status for each type
   const { data: syncStatuses } = useQuery({
