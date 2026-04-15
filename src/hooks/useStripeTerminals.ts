@@ -47,6 +47,8 @@ export function useTerminalLocations(locationId: string | null) {
     },
     enabled: !!locationId,
     staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 
@@ -62,6 +64,8 @@ export function useTerminalReaders(locationId: string | null, terminalLocationId
     enabled: !!locationId,
     staleTime: 10000,
     refetchInterval: 30000,
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 
