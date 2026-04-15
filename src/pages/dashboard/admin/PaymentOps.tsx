@@ -70,7 +70,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { TogglePill } from '@/components/ui/toggle-pill';
 import { parseLocationIds, encodeLocationIds, isAllLocations } from '@/lib/locationFilter';
 import { useSubmitDisputeEvidence } from '@/hooks/useDisputeEvidence';
-import { useFraudWarnings, useUnresolvedFraudWarningCount } from '@/hooks/useFraudWarnings';
+import { useHighRiskPayments } from '@/hooks/useHighRiskPayments';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
 const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
@@ -1952,6 +1952,7 @@ export default function PaymentOps() {
           <TabsContent value="disputes" className="space-y-6">
             <DisputesCard orgId={orgId} formatCurrency={formatCurrency} dateFrom={dateFrom} dateTo={dateTo} disputeStatus={disputeStatus} clientSearch={debouncedClientSearch} />
             <FraudAlertsCard orgId={orgId} formatCurrency={formatCurrency} />
+            <HighRiskPaymentsCard orgId={orgId} formatCurrency={formatCurrency} />
           </TabsContent>
 
           {/* Tip Distributions */}
