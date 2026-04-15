@@ -96,6 +96,7 @@ export { APPOINTMENT_STATUS_CONFIG as STATUS_CONFIG } from '@/lib/design-tokens'
 
 export function usePhorestCalendar() {
   const { hasPermission } = useAuth();
+  const { timezone } = useOrgDefaults();
   const effectiveUserId = useEffectiveUserId();
   const queryClient = useQueryClient();
   
