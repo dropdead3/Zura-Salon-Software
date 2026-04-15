@@ -54,16 +54,18 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       const txDateFrom = dateFrom.includes('T') ? dateFrom : `${dateFrom}T00:00:00`;
       const txDateTo = dateTo.includes('T') ? dateTo : `${dateTo}T23:59:59.999`;
 
-      // --- Fetch appointments (paginated) ---
+      // --- Fetch appointments (paginated) --- uses staff_name from view
       const appointments = await fetchAllPages<{
         phorest_staff_id: string | null;
+        stylist_user_id: string | null;
+        staff_name: string | null;
         total_price: number | null;
         tip_amount: number | null;
         service_name: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
-          .select('phorest_staff_id, total_price, tip_amount, service_name')
+          .from('v_all_appointments')
+          .select('phorest_staff_id, stylist_user_id, staff_name, total_price, tip_amount, service_name')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")')
@@ -76,16 +78,16 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         return q;
       });
 
-      // --- Fetch product transaction items (paginated) ---
+      // --- Fetch product transaction items (paginated) --- uses staff_user_id from view
       const productItems = await fetchAllPages<{
-        phorest_staff_id: string | null;
+        staff_user_id: string | null;
         total_amount: number | null;
         tax_amount: number | null;
         item_name: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_staff_id, total_amount, tax_amount, item_name')
+          .from('v_all_transaction_items')
+          .select('staff_user_id, total_amount, tax_amount, item_name')
           .gte('transaction_date', txDateFrom)
           .lte('transaction_date', txDateTo)
           .in('item_type', ['product', 'Product', 'retail', 'Retail', 'PRODUCT', 'RETAIL'])
