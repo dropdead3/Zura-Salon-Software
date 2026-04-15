@@ -312,31 +312,6 @@ export function ScheduleHeader({
             </Popover>
           </div>
 
-          {/* New Booking / Meeting Button */}
-          {canCreate && (
-            <Button
-              onClick={onNewBooking}
-              size="sm"
-              className="h-8 px-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 text-xs"
-            >
-              {isAdminRole && !isServiceProvider ? (
-                <>
-                  <Users className="h-3.5 w-3.5" />
-                  New Meeting
-                </>
-              ) : isAdminRole && isServiceProvider ? (
-                <>
-                  <Plus className="h-3.5 w-3.5" />
-                  New
-                </>
-              ) : (
-                <>
-                  <Plus className="h-3.5 w-3.5" />
-                  New Booking
-                </>
-              )}
-            </Button>
-          )}
 
           {/* Assistant Blocks Button */}
           {onOpenBlockManager && (
