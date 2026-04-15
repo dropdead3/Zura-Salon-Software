@@ -69,7 +69,7 @@ export function useSalesTransactions(filters: SalesFilters = {}) {
     queryKey: ['sales-transactions', filters],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_sales_transactions')
+        .from('v_all_sales_transactions')
         .select(`
           *,
           employee_profiles:stylist_user_id (
