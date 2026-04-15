@@ -94,7 +94,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         if (phorestErr) throw phorestErr;
 
         // Resolve stylist names from employee_profiles
-        const stylistIds = [...new Set((phorestData || []).map(a => a.stylist_user_id).filter(Boolean))];
+        const stylistIds = [...new Set((phorestData as any[] || []).map((a: any) => a.stylist_user_id).filter(Boolean))];
         let stylistMap: Record<string, string> = {};
         if (stylistIds.length > 0) {
           const { data: profiles } = await supabase
@@ -107,7 +107,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         }
 
         // Resolve assistant names from appointment_assistants
-        const apptIds = (phorestData || []).map(a => a.id);
+        const apptIds = (phorestData as any[] || []).map((a: any) => a.id);
         let assistantMap: Record<string, string[]> = {};
         if (apptIds.length > 0) {
           const { data: assistantData } = await supabase
@@ -134,7 +134,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           }
         }
 
-        const appointments: DockAppointment[] = (phorestData || []).map((a) => ({
+        const appointments: DockAppointment[] = (phorestData as any[] || []).map((a: any) => ({
           id: a.id,
           source: 'phorest' as const,
           client_name: a.client_name,
@@ -146,13 +146,13 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
           start_time: a.start_time,
           end_time: a.end_time,
           status: a.status,
-          payment_status: (a as any).payment_status || 'pending',
-          payment_failure_reason: (a as any).payment_failure_reason || null,
+          payment_status: a.payment_status || 'pending',
+          payment_failure_reason: a.payment_failure_reason || null,
           location_id: a.location_id,
           phorest_client_id: a.phorest_client_id,
           notes: a.notes,
           mix_bowl_count: 0,
-          total_price: (a as any).total_price ?? null,
+          total_price: a.total_price ?? null,
         }));
 
         // Fetch bowl counts for these appointments via mix_sessions + mix_bowls
@@ -201,7 +201,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
                 .eq('appointment_date', today)
                 .is('deleted_at', null)
                 .order('start_time', { ascending: true });
-              for (const a of (extraAppts || [])) {
+              for (const a of ((extraAppts || []) as any[])) {
                 appointments.push({
                   id: a.id,
                   source: 'phorest' as const,
@@ -214,13 +214,13 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
                   start_time: a.start_time,
                   end_time: a.end_time,
                   status: a.status,
-                   payment_status: (a as any).payment_status || 'pending',
-                   payment_failure_reason: (a as any).payment_failure_reason || null,
+                   payment_status: a.payment_status || 'pending',
+                   payment_failure_reason: a.payment_failure_reason || null,
                    location_id: a.location_id,
                   phorest_client_id: a.phorest_client_id,
                   notes: a.notes,
                   mix_bowl_count: 0,
-                  total_price: (a as any).total_price ?? null,
+                  total_price: a.total_price ?? null,
                 });
               }
               appointments.sort((a, b) => a.start_time.localeCompare(b.start_time));
@@ -275,7 +275,7 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
       if (phorestResult.error) throw phorestResult.error;
       if (localResult.error) throw localResult.error;
 
-      const phorest: DockAppointment[] = (phorestResult.data || []).map((a) => ({
+      const phorest: DockAppointment[] = ((phorestResult.data || []) as any[]).map((a: any) => ({
         id: a.id,
         source: 'phorest' as const,
         client_name: a.client_name,
@@ -286,12 +286,12 @@ export function useDockAppointments(staffUserId: string | null, locationId?: str
         start_time: a.start_time,
         end_time: a.end_time,
         status: a.status,
-        payment_status: (a as any).payment_status || 'pending',
-        payment_failure_reason: (a as any).payment_failure_reason || null,
+        payment_status: a.payment_status || 'pending',
+        payment_failure_reason: a.payment_failure_reason || null,
         location_id: a.location_id,
         phorest_client_id: a.phorest_client_id,
         notes: a.notes,
-        total_price: (a as any).total_price ?? null,
+        total_price: a.total_price ?? null,
       }));
 
       const local: DockAppointment[] = (localResult.data || []).map((a) => ({

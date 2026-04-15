@@ -22,6 +22,9 @@ interface SelectedService {
 interface SelectedStylist {
   id: string;
   phorest_staff_id: string;
+interface SelectedStylist {
+  id: string;
+  phorest_staff_id: string | null;
   name: string;
   photo_url: string | null;
 }
@@ -211,7 +214,7 @@ export function KioskBookingWizard() {
           client_name: clientName.trim(),
           status: 'checked_in',
           location_id: locationId,
-          staff_user_id: selectedStylist?.user_id || null,
+          staff_user_id: selectedStylist?.id || null,
           duration_minutes: totalDuration,
           payment_status: 'pending',
         } as any);
