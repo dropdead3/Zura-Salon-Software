@@ -1,24 +1,25 @@
 
 
-## Reorder Scheduler Header Right Section & Remove Settings
+## Auto-Collapse Sidebar on Schedule Page
 
 ### Problem
-The settings gear icon is unnecessary in the scheduler header. The icon buttons (Assistant Blocks, Drafts, Today's Prep) should appear to the left of the dropdown toggles (Location, Staff), with dropdowns pushed to the far right.
+The schedule view needs maximum horizontal space for the day/week grid. Currently the sidebar retains whatever state the user last set, often expanded, which wastes space on this particular route.
+
+### Solution
+Add a `useEffect` in `DashboardLayout.tsx` that auto-collapses the sidebar when the user navigates to the schedule route, and restores the previous state when they leave.
 
 ### Changes
 
-**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`**
+**File: `src/components/dashboard/DashboardLayout.tsx`**
 
-In the right section (lines 234-392), reorder children and remove the Settings button:
+1. Track the previous collapse state with a ref (`prevCollapseRef`)
+2. Add a `useEffect` watching `location.pathname`:
+   - When pathname includes `/schedule` → store current collapse state in ref, then set `sidebarCollapsed = true`
+   - When navigating away from `/schedule` → restore the ref value
+3. The user can still manually expand the sidebar while on schedule — the auto-collapse only fires on route entry
 
-**Current order:** CalendarFilters → Dropdowns → Icons → Settings
-**New order:** CalendarFilters → Icons → Dropdowns
-
-1. **Remove** the Settings button block (lines 377-391) and its `Settings` icon import
-2. **Move** the three icon buttons (Assistant Blocks, Drafts, Today's Prep — lines 315-376) **before** the stacked Location & Staff selectors (lines 241-312)
-
-No styling or functionality changes — just element reordering and removal.
+This keeps localStorage as the user's general preference but treats the schedule page as a special case that defaults to collapsed for maximum grid visibility.
 
 ### Files Modified
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` — reorder right section children, remove Settings button
+- `src/components/dashboard/DashboardLayout.tsx` — add schedule-aware auto-collapse effect (~10 lines)
 
