@@ -47,6 +47,7 @@ import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockFo
 import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAssistantPanel';
 import { AssistantBlockManagerSheet } from '@/components/dashboard/schedule/AssistantBlockManagerSheet';
 import { useAssistantTimeBlocks, useAssistantTimeBlocksRange, useMyPendingAssistantBlocks } from '@/hooks/useAssistantTimeBlocks';
+import { useScheduleHotkeys } from '@/hooks/useScheduleHotkeys';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import { useStaffScheduleBlocks } from '@/hooks/useStaffScheduleBlocks';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -225,6 +226,15 @@ export default function Schedule() {
       setSelectedLocation(locations[0].id);
     }
   }, [locations, selectedLocation]);
+
+  // Keyboard hotkeys: arrows for date/location, letters to jump locations
+  useScheduleHotkeys({
+    currentDate,
+    setCurrentDate,
+    selectedLocation,
+    setSelectedLocation,
+    locations,
+  });
 
   // Handle quick login navigation state
   useEffect(() => {
