@@ -188,9 +188,6 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
                       ? 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                       : 'text-muted-foreground/30 pointer-events-none',
                   )}
-                  tabIndex={-1}
-                >
-                  {letter}
                 </button>
               );
             })}
