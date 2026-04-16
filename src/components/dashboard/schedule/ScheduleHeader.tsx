@@ -477,21 +477,21 @@ export function ScheduleHeader({
       </div>
 
       {/* Secondary Navigation Bar */}
-      <div className="bg-card border border-t-0 border-border/50 px-4 py-2 flex items-center justify-between rounded-b-lg">
+      <div className="bg-card border border-t-0 border-border/50 px-4 py-2 flex items-center justify-between gap-2 min-w-0 overflow-hidden rounded-b-lg">
         {/* Left: Week/Day Navigation */}
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevWeek} className="gap-1">
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevWeek} className="gap-1" title="Previous Week">
             <ChevronsLeft className="h-4 w-4" />
-            Week
+            <span className="hidden lg:inline">Week</span>
           </Button>
-          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevDay} className="gap-1">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevDay} className="gap-1" title="Previous Day">
             <ChevronLeft className="h-4 w-4" />
-            Day
+            <span className="hidden lg:inline">Day</span>
           </Button>
         </div>
 
         {/* Center: Quick Day Buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none flex items-center justify-center gap-1 px-1">
           {(() => {
             const selectedLoc = locations.find(l => l.id === selectedLocation);
             const todayClosed = selectedLoc
