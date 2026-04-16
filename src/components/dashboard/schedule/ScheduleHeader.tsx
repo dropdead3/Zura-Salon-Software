@@ -47,6 +47,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { getLevelColor } from '@/lib/level-colors';
+import { getLevelNumber } from '@/utils/levelPricing';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
@@ -351,7 +354,7 @@ export function ScheduleHeader({
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[280px] p-2 bg-popover" align="end">
+              <PopoverContent className="w-[320px] p-2 bg-popover" align="end">
                 <div className="space-y-1">
                   <button
                     onClick={() => {
@@ -380,19 +383,59 @@ export function ScheduleHeader({
                     Only Stylists With Appointments
                   </button>
                   <div className="h-px bg-border my-1" />
-                  {[...stylists].sort((a, b) => formatFullDisplayName(a.full_name, a.display_name).localeCompare(formatFullDisplayName(b.full_name, b.display_name))).map((s) => (
-                    <button
-                      key={s.user_id}
-                      onClick={() => onStaffToggle(s.user_id)}
-                      className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
-                    >
-                      <Checkbox 
-                        checked={selectedStaffIds.includes(s.user_id)}
-                        className="pointer-events-none"
-                      />
-                      {formatFullDisplayName(s.full_name, s.display_name)}
-                    </button>
-                  ))}
+                  {[...stylists]
+                    .sort((a, b) =>
+                      formatFullDisplayName(a.full_name, a.display_name).localeCompare(
+                        formatFullDisplayName(b.full_name, b.display_name),
+                      ),
+                    )
+                    .map((s) => {
+                      const levelNum = getLevelNumber(s.stylist_level);
+                      const dbLevel = s.stylist_level
+                        ? activeLevels.find(
+                            (l) => l.slug === levelSlugByNumber.get(levelNum ?? -1),
+                          )
+                        : undefined;
+                      const levelLabel = dbLevel?.label ?? (levelNum ? `Level ${levelNum}` : null);
+                      const levelIdx = dbLevel
+                        ? activeLevels.findIndex((l) => l.id === dbLevel.id)
+                        : -1;
+                      const levelColor =
+                        levelIdx >= 0
+                          ? getLevelColor(levelIdx, activeLevels.length)
+                          : null;
+                      const util = s.utilization ?? 0;
+
+                      return (
+                        <button
+                          key={s.user_id}
+                          onClick={() => onStaffToggle(s.user_id)}
+                          className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
+                        >
+                          <Checkbox
+                            checked={selectedStaffIds.includes(s.user_id)}
+                            className="pointer-events-none"
+                          />
+                          <span className="flex-1 text-left truncate">
+                            {formatFullDisplayName(s.full_name, s.display_name)}
+                          </span>
+                          {levelLabel && (
+                            <span
+                              className={cn(
+                                'text-[10px] px-1.5 py-0.5 rounded shrink-0',
+                                levelColor?.bg,
+                                levelColor?.text,
+                              )}
+                            >
+                              {levelLabel}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-muted-foreground tabular-nums w-9 text-right shrink-0">
+                            {util}%
+                          </span>
+                        </button>
+                      );
+                    })}
                 </div>
               </PopoverContent>
             </Popover>
