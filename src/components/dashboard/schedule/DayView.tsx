@@ -119,6 +119,7 @@ function DroppableSlot({
   
   isOver,
   rowHeight = 20,
+  slotInterval = 20,
 }: {
   id: string;
   hour: number;
