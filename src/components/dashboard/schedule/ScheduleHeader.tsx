@@ -462,7 +462,7 @@ export function ScheduleHeader({
                   setView('day');
                 }}
                 className={cn(
-                  'flex flex-col items-center justify-center min-w-[64px] px-3.5 py-3 rounded-xl text-sm font-sans transition-all duration-200',
+                  'flex flex-col items-center justify-center min-w-[64px] px-3.5 py-3 rounded-lg text-sm font-sans transition-all duration-200',
                   isSelected
                     ? 'bg-secondary text-secondary-foreground shadow-sm font-medium'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
