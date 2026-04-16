@@ -117,6 +117,9 @@ export function ScheduleHeader({
   onToggleShiftsView,
   staffFilterMode = 'work-this-day',
   onStaffFilterModeChange,
+  appointments = [],
+  hoursStart = 9,
+  hoursEnd = 18,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
