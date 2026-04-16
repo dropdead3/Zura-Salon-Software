@@ -81,6 +81,69 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
+function WeekSlot({
+  hour,
+  minute,
+  isHour,
+  isHalf,
+  isPastSlot,
+  isOutsideHours,
+  rowHeight,
+  slotInterval,
+  onClick,
+}: {
+  hour: number;
+  minute: number;
+  isHour: boolean;
+  isHalf: boolean;
+  isPastSlot: boolean;
+  isOutsideHours: boolean;
+  rowHeight: number;
+  slotInterval: number;
+  onClick: () => void;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const showBadge = isHovered && (isPastSlot || !isOutsideHours);
+  const badgeLabel = isPastSlot
+    ? 'Unavailable'
+    : formatTime12h(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+
+  return (
+    <div
+      className={cn(
+        'cursor-pointer transition-colors group relative',
+        isPastSlot && 'bg-muted/40',
+        !isPastSlot && !isOutsideHours && 'hover:bg-primary/10',
+        isHour
+          ? 'border-t border-border/80 dark:border-border/60'
+          : isHalf && slotInterval <= 30
+            ? 'border-t border-dashed border-border/70 dark:border-border/40'
+            : 'border-t border-dotted border-border/50 dark:border-border/25'
+      )}
+      style={{
+        height: rowHeight,
+        ...(!isPastSlot && isOutsideHours ? {
+          background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+        } : {}),
+      }}
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {showBadge && (
+        <div
+          className={cn(
+            'pointer-events-none absolute left-1/2 -top-8 z-40 w-max max-w-[calc(100%-8px)] -translate-x-1/2 truncate rounded px-2 py-1 text-center text-xs font-display font-medium tracking-wide shadow',
+            isPastSlot ? 'bg-muted-foreground text-white' : 'bg-foreground text-background'
+          )}
+        >
+          {badgeLabel}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function WeekAppointmentCard({
   appointment,
   hoursStart,
@@ -446,47 +509,18 @@ export function WeekView({
                     );
 
                     return (
-                      <div 
+                      <WeekSlot
                         key={slotTime}
-                        className={cn(
-                          'cursor-pointer transition-colors group relative',
-                          isPastSlot && 'bg-muted/40',
-                          !isPastSlot && !isOutsideHours && 'hover:bg-primary/10',
-                          slot.isHour 
-                            ? 'border-t border-border/80 dark:border-border/60' 
-                            : slot.isHalf && slotInterval <= 30
-                              ? 'border-t border-dashed border-border/70 dark:border-border/40'
-                              : 'border-t border-dotted border-border/50 dark:border-border/25'
-                        )}
-                        style={{
-                          height: ROW_HEIGHT,
-                          ...(!isPastSlot && isOutsideHours ? {
-                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-                          } : {}),
-                        }}
+                        hour={slot.hour}
+                        minute={slot.minute}
+                        isHour={slot.isHour}
+                        isHalf={slot.isHalf}
+                        isPastSlot={!!isPastSlot}
+                        isOutsideHours={!!isOutsideHours}
+                        rowHeight={ROW_HEIGHT}
+                        slotInterval={slotInterval}
                         onClick={() => onSlotClick?.(day, slotTime)}
-                        onMouseMove={(e) => {
-                          if (isPastSlot || isOutsideHours) return;
-                          const target = e.currentTarget;
-                          const badge = target.querySelector('[data-slot-badge]') as HTMLElement;
-                          if (badge) badge.style.left = `${e.clientX - target.getBoundingClientRect().left}px`;
-                        }}
-                      >
-                        {isPastSlot && (
-                          <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
-                            This time slot is no longer available
-                          </div>
-                        )}
-                        {!isPastSlot && !isOutsideHours && (
-                          <div data-slot-badge className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: '50%' }}>
-                            {(() => {
-                              const ampm = slot.hour >= 12 ? 'PM' : 'AM';
-                              const hour12 = slot.hour % 12 || 12;
-                              return `${hour12}:${slot.minute.toString().padStart(2, '0')} ${ampm}`;
-                            })()}
-                          </div>
-                        )}
-                      </div>
+                      />
                     );
                   })}
                   

@@ -115,7 +115,6 @@ function DroppableSlot({
   isAvailable,
   isPastSlot,
   isOutsideHours,
-  showCurrentTime,
   onClick,
   
   isOver,
@@ -128,7 +127,6 @@ function DroppableSlot({
   isAvailable: boolean;
   isPastSlot: boolean;
   isOutsideHours: boolean;
-  showCurrentTime: boolean;
   onClick: () => void;
   
   isOver: boolean;
@@ -137,7 +135,9 @@ function DroppableSlot({
 }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
   const highlight = isOver || dndIsOver;
-  const [mouseX, setMouseX] = useState<number | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const showBadge = isHovered && (isPastSlot || isAvailable || isOutsideHours);
+  const badgeLabel = isPastSlot ? 'Unavailable' : formatSlotTime(hour, minute);
 
   const borderClass = minute === 0
     ? 'border-t border-border dark:border-border/50'
@@ -169,16 +169,17 @@ function DroppableSlot({
       onClick={() => {
         if (isPastSlot || isAvailable || isOutsideHours) onClick();
       }}
-      onMouseMove={(e) => setMouseX(e.nativeEvent.offsetX)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {isPastSlot && (
-        <div className="absolute -translate-x-1/2 -top-8 bg-muted-foreground text-white text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: mouseX ?? '50%' }}>
-          This time slot is no longer available
-        </div>
-      )}
-      {(isAvailable || isOutsideHours) && !isPastSlot && (
-        <div className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: mouseX ?? '50%' }}>
-          {formatSlotTime(hour, minute)}
+      {showBadge && (
+        <div
+          className={cn(
+            'pointer-events-none absolute left-1/2 -top-8 z-40 w-max max-w-[calc(100%-8px)] -translate-x-1/2 truncate rounded px-2 py-1 text-center text-xs font-display font-medium tracking-wide shadow',
+            isPastSlot ? 'bg-muted-foreground text-white' : 'bg-foreground text-background'
+          )}
+        >
+          {badgeLabel}
         </div>
       )}
     </div>
@@ -396,10 +397,12 @@ export function DayView({
 
   // Measure container height for dynamic row sizing
   const [containerHeight, setContainerHeight] = useState(0);
+  const [scrollViewportWidth, setScrollViewportWidth] = useState(0);
   useEffect(() => {
     if (!scrollRef.current) return;
     const observer = new ResizeObserver(([entry]) => {
       setContainerHeight(entry.contentRect.height);
+      setScrollViewportWidth(entry.contentRect.width);
     });
     observer.observe(scrollRef.current);
     return () => observer.disconnect();
@@ -518,6 +521,9 @@ export function DayView({
       return bUtil - aUtil;
     });
   }, [stylists, utilizationByStylist]);
+
+  const requiredGridWidth = 70 + (sortedStylists.length * MIN_COL_WIDTH);
+  const needsHorizontalScroll = scrollViewportWidth > 0 && requiredGridWidth > scrollViewportWidth;
 
   
   useEffect(() => {
@@ -644,7 +650,7 @@ export function DayView({
         )}
         {/* Calendar Grid */}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
-          <div>
+          <div style={{ width: needsHorizontalScroll ? requiredGridWidth : '100%' }}>
             {/* Stylist Headers - frosted glass sticky header */}
             <div ref={headerRowRef} className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
@@ -813,7 +819,6 @@ export function DayView({
                           isAvailable={isAvailable}
                           isPastSlot={!!isPastSlot}
                           isOutsideHours={!!isOutsideHours}
-                          showCurrentTime={showCurrentTime}
                           isOver={false}
                           rowHeight={ROW_HEIGHT}
                           slotInterval={slotInterval}
