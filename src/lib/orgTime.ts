@@ -96,3 +96,25 @@ export function getOrgTodayDate(timezone: string): Date {
   const p = getOrgParts(timezone);
   return new Date(p.year, p.month - 1, p.day, 0, 0, 0, 0);
 }
+
+/**
+ * Returns the signed integer day offset between the given date and "today"
+ * in the org's timezone. Negative = past, 0 = today, positive = future.
+ *
+ * Uses noon anchors on both sides to avoid DST edge errors.
+ */
+export function getOrgDayOffset(date: Date | string, timezone: string): number {
+  const p = getOrgParts(timezone);
+  const orgTodayNoon = new Date(p.year, p.month - 1, p.day, 12, 0, 0);
+
+  let target: Date;
+  if (typeof date === 'string') {
+    const ymd = date.slice(0, 10).split('-').map(Number);
+    target = new Date(ymd[0], (ymd[1] ?? 1) - 1, ymd[2] ?? 1, 12, 0, 0);
+  } else {
+    target = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
+  }
+
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round((target.getTime() - orgTodayNoon.getTime()) / msPerDay);
+}
