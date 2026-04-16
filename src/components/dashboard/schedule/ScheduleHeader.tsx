@@ -481,6 +481,7 @@ export function ScheduleHeader({
           </div>
         </div>
         </div>
+        </div>
         {/* End Row 2 wrapper */}
       </div>
 
