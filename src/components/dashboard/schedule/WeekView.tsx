@@ -63,13 +63,13 @@ function parseTimeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-function getEventStyle(startTime: string, endTime: string, hoursStart: number) {
+function getEventStyle(startTime: string, endTime: string, hoursStart: number, slotInterval: number, rowHeight: number) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 15) * ROW_HEIGHT;
-  const height = Math.max((duration / 15) * ROW_HEIGHT, ROW_HEIGHT);
+  const top = (startOffset / slotInterval) * rowHeight;
+  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
   return { top: `${top}px`, height: `${height}px` };
 }
 
