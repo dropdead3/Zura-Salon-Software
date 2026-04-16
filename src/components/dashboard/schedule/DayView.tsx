@@ -137,7 +137,7 @@ function DroppableSlot({
         'group relative',
         borderClass,
         isPastSlot
-          ? 'bg-muted/40 cursor-not-allowed'
+          ? 'cursor-not-allowed'
           : isOutsideHours
             ? 'cursor-pointer'
             : isAvailable
@@ -765,12 +765,19 @@ export function DayView({
                  const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
                  
                  return (
-                   <div 
-                     key={stylist.user_id} 
-                     className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
-                     style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
-                   >
-                     {/* Time slot backgrounds (droppable) */}
+                    <div 
+                      key={stylist.user_id} 
+                      className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                      style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
+                    >
+                      {/* Past-time overlay — pixel-aligned to the current-time indicator */}
+                      {showCurrentTime && currentTimeOffset > 0 && (
+                        <div
+                          className="absolute inset-x-0 top-0 bg-muted/40 pointer-events-none z-[1]"
+                          style={{ height: `${Math.min(currentTimeOffset, timeSlots.length * ROW_HEIGHT)}px` }}
+                        />
+                      )}
+                      {/* Time slot backgrounds (droppable) */}
                      {timeSlots.map(({ hour, minute }) => {
                      const isPastSlot = showCurrentTime && (() => {
                        const slotMins = hour * 60 + minute;
