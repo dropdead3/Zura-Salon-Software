@@ -149,6 +149,41 @@ export function NewClientDialog({
   }, [locations, locationId]);
 
   const [preferredStylistId, setPreferredStylistId] = useState('');
+  const [stylistPickerOpen, setStylistPickerOpen] = useState(false);
+  const [showAllStylists, setShowAllStylists] = useState(false);
+  const [stylistAutoCleared, setStylistAutoCleared] = useState(false);
+
+  // Stylist works at a location if their primary location_id matches OR
+  // they have a schedule entry for that location.
+  const stylistWorksAtLocation = useCallback(
+    (member: any, locId: string) => {
+      if (!locId) return true;
+      if (member.location_id === locId) return true;
+      const schedules = member.location_schedules || {};
+      return Object.prototype.hasOwnProperty.call(schedules, locId);
+    },
+    [],
+  );
+
+  const locationFilteredStylists = useMemo(() => {
+    if (!teamMembers) return [];
+    if (!locationId || showAllStylists) return teamMembers;
+    return teamMembers.filter(m => stylistWorksAtLocation(m, locationId));
+  }, [teamMembers, locationId, showAllStylists, stylistWorksAtLocation]);
+
+  // When preferred location changes, clear preferred stylist if they don't work there.
+  useEffect(() => {
+    if (!preferredStylistId || preferredStylistId === 'none' || !locationId) {
+      setStylistAutoCleared(false);
+      return;
+    }
+    const selected = teamMembers?.find(m => m.user_id === preferredStylistId);
+    if (selected && !stylistWorksAtLocation(selected, locationId)) {
+      setPreferredStylistId('');
+      setStylistAutoCleared(true);
+      setShowAllStylists(false);
+    }
+  }, [locationId, preferredStylistId, teamMembers, stylistWorksAtLocation]);
 
   const debouncedEmail = useDebounce(email.trim(), 500);
   const debouncedPhone = useDebounce(phone.replace(/\D/g, ''), 500);
