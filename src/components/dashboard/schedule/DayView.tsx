@@ -367,8 +367,8 @@ export function DayView({
     '-3': { interval: 60, rowHeight: 60 },
     '-2': { interval: 60, rowHeight: 80 },
     '-1': { interval: 30, rowHeight: 30 },
-    '0': { interval: 20, rowHeight: 20 },
-    '1': { interval: 15, rowHeight: 20 },
+    '0': { interval: 20, rowHeight: 30 },
+    '1': { interval: 15, rowHeight: 24 },
     '2': { interval: 10, rowHeight: 20 },
     '3': { interval: 5, rowHeight: 20 },
   };
