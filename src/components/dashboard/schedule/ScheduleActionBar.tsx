@@ -28,6 +28,7 @@ interface ScheduleActionBarProps {
   zoomLevel?: number;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
+  onCreateAppointment?: () => void;
 }
 
 function getFirstName(fullName: string): string {
