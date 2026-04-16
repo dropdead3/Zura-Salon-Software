@@ -1247,30 +1247,27 @@ export default function Schedule() {
         onOpenChange={setMeetingDetailOpen}
       />
 
-      {/* Type Selector Dialog (dual-role users) */}
-      <Dialog open={typeSelectorOpen} onOpenChange={setTypeSelectorOpen}>
-        <DialogContent className="sm:max-w-sm p-6 bg-card/80 backdrop-blur-xl border-border/60 shadow-2xl">
-          <DialogTitle className="sr-only">Schedule Type</DialogTitle>
-          <ScheduleTypeSelector
-            selectedTime={bookingDefaults.time}
-            onSelectClientBooking={() => {
-              setTypeSelectorOpen(false);
-              setActiveDraft(null);
-              setBookingDefaults({});
-              setBookingOpen(true);
-            }}
-            onSelectMeeting={() => {
-              setTypeSelectorOpen(false);
-              setMeetingWizardOpen(true);
-            }}
-            onSelectTimeblock={() => {
-              setTypeSelectorOpen(false);
-              setBreakDefaults({ time: bookingDefaults.time || '09:00', stylistId: bookingDefaults.stylistId || '' });
-              setBreakDialogOpen(true);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Type Selector Drawer (dual-role users) - unified entry point */}
+      <ScheduleEntryDrawer
+        open={typeSelectorOpen}
+        onOpenChange={setTypeSelectorOpen}
+        selectedTime={bookingDefaults.time}
+        onSelectClientBooking={() => {
+          setTypeSelectorOpen(false);
+          setActiveDraft(null);
+          setBookingDefaults({});
+          setBookingOpen(true);
+        }}
+        onSelectMeeting={() => {
+          setTypeSelectorOpen(false);
+          setMeetingWizardOpen(true);
+        }}
+        onSelectTimeblock={() => {
+          setTypeSelectorOpen(false);
+          setBreakDefaults({ time: bookingDefaults.time || '09:00', stylistId: bookingDefaults.stylistId || '' });
+          setBreakDialogOpen(true);
+        }}
+      />
     </DashboardLayout>
     </LocationTimezoneProvider>
   );
