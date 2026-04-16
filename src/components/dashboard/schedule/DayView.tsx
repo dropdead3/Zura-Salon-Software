@@ -625,9 +625,9 @@ export function DayView({
                 const avatar = (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 shrink-0')}>
-                        <AvatarImage src={stylist.photo_url || undefined} />
-                        <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
+                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 shrink-0 rounded-lg')}>
+                        <AvatarImage src={stylist.photo_url || undefined} className="rounded-lg" />
+                        <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-lg">
                           {fullName.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
