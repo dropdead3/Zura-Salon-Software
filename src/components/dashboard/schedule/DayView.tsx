@@ -552,11 +552,6 @@ export function DayView({
                         <span className="text-sm font-medium truncate">
                           {formatDisplayName(stylist.full_name, stylist.display_name)}
                         </span>
-                        {levelColor && levelInfo && (
-                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full shrink-0', levelColor.bg, levelColor.text)}>
-                            {levelInfo.label}
-                          </span>
-                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <span className={cn(pctColor)}>{pct}%</span>
