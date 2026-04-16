@@ -594,10 +594,10 @@ export function WeekView({
                   })}
 
                   {/* Current time indicator */}
-                  {isCurrentDay && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
+                  {isCurrentDay && currentTimeVisible && (
                     <div 
                       className="absolute left-0 right-0 pointer-events-none z-30"
-                      style={{ top: `${currentTimeOffset}px` }}
+                      style={{ top: `${currentTimeLinePx}px` }}
                     >
                       <div className="relative">
                         <div className="absolute left-0 right-0 border-t-2 border-primary" />
