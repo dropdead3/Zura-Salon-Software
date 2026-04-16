@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Switch } from '@/components/ui/switch';
-import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
   ChevronLeft, 
@@ -75,8 +73,8 @@ interface ScheduleHeaderProps {
   onOpenBlockManager?: () => void;
   showShiftsView?: boolean;
   onToggleShiftsView?: () => void;
-  showAllStylists?: boolean;
-  onShowAllStylistsChange?: (value: boolean) => void;
+  staffFilterMode?: 'with-appointments' | 'work-this-day';
+  onStaffFilterModeChange?: (mode: 'with-appointments' | 'work-this-day') => void;
 }
 
 export function ScheduleHeader({
@@ -104,8 +102,8 @@ export function ScheduleHeader({
   onOpenBlockManager,
   showShiftsView = false,
   onToggleShiftsView,
-  showAllStylists = true,
-  onShowAllStylistsChange,
+  staffFilterMode = 'work-this-day',
+  onStaffFilterModeChange,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
@@ -339,7 +337,7 @@ export function ScheduleHeader({
                   className="h-7 w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
-                    ? 'All Stylists With Appointments' 
+                    ? (staffFilterMode === 'with-appointments' ? 'All Stylists With Appointments' : 'All Stylists That Work This Day')
                     : selectedStaffIds.length === 1
                       ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
                       : `${selectedStaffIds.length} selected`
@@ -350,15 +348,30 @@ export function ScheduleHeader({
               <PopoverContent className="w-[280px] p-2 bg-popover" align="end">
                 <div className="space-y-1">
                   <button
-                    onClick={() => onStaffToggle('all')}
+                    onClick={() => {
+                      if (onStaffFilterModeChange) onStaffFilterModeChange('with-appointments');
+                      onStaffToggle('all');
+                    }}
                     className={cn(
                       'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
-                      selectedStaffIds.length === 0 && 'bg-accent'
+                      selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && 'bg-accent'
                     )}
                   >
-                    {selectedStaffIds.length === 0 && <Check className="h-4 w-4" />}
-                    {selectedStaffIds.length !== 0 && <div className="w-4" />}
+                    {selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
                     All Stylists With Appointments
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (onStaffFilterModeChange) onStaffFilterModeChange('work-this-day');
+                      onStaffToggle('all');
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
+                      selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' && 'bg-accent'
+                    )}
+                  >
+                    {selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
+                    All Stylists That Work This Day
                   </button>
                   <div className="h-px bg-border my-1" />
                   {stylists.map((s) => (
@@ -374,26 +387,6 @@ export function ScheduleHeader({
                       {formatFullDisplayName(s.full_name, s.display_name)}
                     </button>
                   ))}
-                  {/* Show All Stylists toggle */}
-                  {(view === 'day' || view === 'week') && onShowAllStylistsChange && (
-                    <>
-                      <div className="h-px bg-border my-1" />
-                      <div className="flex items-center justify-between px-2 py-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm text-muted-foreground">All Stylists</span>
-                          <MetricInfoTooltip 
-                            description="Show all stylists who work at this location on this day. Turn off to only show stylists with appointments." 
-                            side="left"
-                          />
-                        </div>
-                        <Switch
-                          checked={showAllStylists}
-                          onCheckedChange={onShowAllStylistsChange}
-                          className="scale-75"
-                        />
-                      </div>
-                    </>
-                  )}
                 </div>
               </PopoverContent>
             </Popover>
