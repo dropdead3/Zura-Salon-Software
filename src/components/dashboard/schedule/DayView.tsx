@@ -76,7 +76,7 @@ interface DayViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
 import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 
 // Categories that display the X pattern overlay
@@ -900,6 +900,9 @@ export function DayView({
                     }}
                   >
                     <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full" />
+                    <div className="absolute -top-2.5 right-full mr-2 bg-primary/15 text-primary ring-1 ring-primary/30 backdrop-blur-sm text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">
+                      {formatMinutesAs12h(dayNowMins)}
+                    </div>
                   </div>
                 )}
               </div>

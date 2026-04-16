@@ -60,7 +60,7 @@ const ZOOM_CONFIG: Record<string, { interval: number }> = {
 
 const MIN_ROW_HEIGHT = 20;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
 
 function WeekSlot({
   hour,
@@ -602,14 +602,8 @@ export function WeekView({
                       <div className="relative">
                         <div className="absolute left-0 right-0 border-t-2 border-primary" />
                         <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full shadow" />
-                        <div className="absolute left-3 -top-2.5 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded font-medium shadow">
-                          {(() => {
-                            const h = Math.floor(wkNowMins / 60);
-                            const m = wkNowMins % 60;
-                            const ampm = h >= 12 ? 'PM' : 'AM';
-                            const h12 = h % 12 || 12;
-                            return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
-                          })()}
+                        <div className="absolute -top-2.5 right-full mr-2 bg-primary/15 text-primary ring-1 ring-primary/30 backdrop-blur-sm text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">
+                          {formatMinutesAs12h(wkNowMins)}
                         </div>
                       </div>
                     </div>
