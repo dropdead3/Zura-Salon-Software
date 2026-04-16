@@ -598,6 +598,25 @@ export function QuickBookingPopover({
     return rows.map(r => ({ ...r, stylist_level: levelMap[r.user_id] ?? null }));
   };
 
+  // Filter rows to only users with role 'stylist' or 'stylist_assistant', and dedupe by user_id
+  const filterToStylistsAndDedupe = async (rows: any[]) => {
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))] as string[];
+    if (userIds.length === 0) return [];
+    const { data: roleRows } = await supabase
+      .from('user_roles')
+      .select('user_id, role')
+      .in('user_id', userIds)
+      .in('role', ['stylist', 'stylist_assistant']);
+    const allowed = new Set<string>((roleRows || []).map((r: any) => r.user_id));
+    const seen = new Set<string>();
+    return rows.filter((r: any) => {
+      if (!r.user_id || !allowed.has(r.user_id)) return false;
+      if (seen.has(r.user_id)) return false;
+      seen.add(r.user_id);
+      return true;
+    });
+  };
+
   // Fetch stylists filtered by selected location (normal mode)
   const { data: stylists = [] } = useQuery({
     queryKey: ['booking-stylists', selectedLocation],
@@ -617,7 +636,8 @@ export function QuickBookingPopover({
         return [];
       }
 
-      const hydrated = await hydrateLevels((data as any[]) || []);
+      const filtered = await filterToStylistsAndDedupe((data as any[]) || []);
+      const hydrated = await hydrateLevels(filtered);
 
       // Reshape to match existing consumer expectations (employee_profiles nested shape)
       return hydrated.map((s: any) => ({
@@ -649,7 +669,8 @@ export function QuickBookingPopover({
         return [];
       }
 
-      const hydrated = await hydrateLevels((data as any[]) || []);
+      const filtered = await filterToStylistsAndDedupe((data as any[]) || []);
+      const hydrated = await hydrateLevels(filtered);
 
       return hydrated.map((s: any) => ({
         ...s,
@@ -1929,11 +1950,8 @@ export function QuickBookingPopover({
               </h4>
               <div className="flex flex-col gap-3">
                 {(stylistFirstMode ? uniqueAllStylists : filteredStylists).map((stylist) => {
-                  const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
-                  const nameParts = fullName.split(' ');
-                  const firstName = nameParts[0];
-                  const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) + '.' : '';
-                  const displayName = `${firstName} ${lastInitial}`.trim();
+                  const fullName = stylist.employee_profiles?.full_name || stylist.employee_profiles?.display_name || 'Unknown';
+                  const displayName = fullName;
                   const isSelected = stylistFirstMode 
                     ? preSelectedStylistId === stylist.user_id 
                     : selectedStylist === stylist.user_id;
