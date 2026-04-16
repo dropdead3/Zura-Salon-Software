@@ -1,63 +1,43 @@
 
-
 ## Prompt review
 
-Direct and clearly scoped — "fix this layout at this size." A more precise version: "At ~1256px, the Schedule dark header wraps into an unintentional 2-row layout with the date floating far right and filter icons stranded on row 2. Redesign the <xl layout as an intentional compact structure."
+Clear and atomic. You named the elements (Location + Stylist dropdowns), the desired behavior (stacked), and the scope (all widths). Tighter version: "Stack the Location and Stylist selectors vertically at all widths in the Schedule header — they're currently side-by-side at <xl."
 
-## Diagnosis (1256px viewport, below xl breakpoint)
+## Diagnosis
 
-The current `flex-wrap` causes an accidental break:
-- **Row 1**: Day/Week toggle + stacked Shifts/Date pills on the left, `THU · APR 16` floating far right
-- **Row 2**: 3 filter icons + two 180px selectors side-by-side, spread across full width
+In `src/components/dashboard/schedule/ScheduleHeader.tsx`, the recent restructure put the Location + Stylist selectors in a `flex-row` group inside the `< xl` Row 2 wrapper (right side). At the current 1291px viewport, they sit side-by-side, making each selector cramped.
 
-Problems:
-1. Center date is disconnected — it floats to the far right of row 1 because `justify-between` pushes it there
-2. Filter icons are stranded on row 2 with too much space between them and the selectors
-3. The overall layout looks broken rather than intentionally compact
+Per your screenshot, you want them stacked vertically — Location pill on top, Stylist pill below — at every width.
 
-## Fix Plan
+## Fix
 
-Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`
+Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Pure className change.
 
-### Restructure the dark header for `< xl` as an intentional 2-row layout
+### Change selectors group from `flex-row` to `flex-col` at all widths
 
-**Row 1** (full width, `justify-between`):
-- Left: Day/Week toggle + Shifts pill + Date pill (all inline, horizontal)
-- Right: Condensed date `THU · APR 16`
+- Current: `flex flex-row gap-2` (or similar)
+- New: `flex flex-col gap-2 items-stretch`
 
-**Row 2** (full width, `justify-between`):
-- Left: Filter icons (CalendarFilters, Assistant Blocks, Drafts, Today's Prep) grouped tight
-- Right: Location selector + Staff selector side-by-side
+This applies at every breakpoint — including `xl+` — so the wide-screen layout will also stack them. If you want to preserve inline behavior at `xl+` and only stack `<xl`, say so and I'll scope it. Per your instruction ("at all widths"), I'll stack everywhere.
 
-### Implementation
+### Width consistency
 
-1. **Change the outer container** from `flex-wrap` to a responsive structure:
-   - At `< xl`: use `flex flex-col gap-2` — two deliberate rows
-   - At `xl+`: keep current single-row `flex-nowrap justify-between`
-
-2. **Row 1 (< xl)**: A `flex items-center justify-between` div containing:
-   - Left: Day/Week toggle + Shifts + Date pills (inline, `flex-row gap-3`)
-   - Right: Condensed date display
-
-3. **Row 2 (< xl)**: A `flex items-center justify-between` div containing:
-   - Left: Filter icon buttons grouped in a `flex gap-1`
-   - Right: Location + Staff selectors side-by-side
-
-4. **At xl+**: Render the existing single-row layout unchanged — all elements in one `flex-nowrap justify-between` row with the two-line centered date
-
-### Key detail
-
-The Shifts + Date pills should NOT stack vertically at this width — there's enough room for them inline next to Day/Week at 1256px. The vertical stacking was premature.
+Both selectors should match width when stacked. Use a fixed `w-[200px]` (or current width) on both triggers so the stacked column is visually aligned.
 
 ## Acceptance checks
 
-1. At **1256px**: Two clean, intentional rows — no floating date, no stranded icons
-2. At **≥ 1280px (xl)**: Single-row layout identical to current wide design
-3. All popovers, tooltips, and handlers still work correctly
-4. No changes to the secondary nav bar (bottom row)
-5. No font, color, or token changes
+1. At 1291px: Location pill sits above Stylist pill in a vertical column.
+2. At ≥ 1280px (xl): Same vertical stacking — no horizontal layout.
+3. Both pills are the same width when stacked.
+4. No change to the filter icons group, popovers, or handler logic.
+5. No change to the secondary nav bar.
+
+## Out of scope
+
+- Filter icons, Day/Week toggle, Shifts/Date pills, condensed date — unchanged.
+- Secondary nav bar — unchanged.
+- Color/token system — unchanged.
 
 ## File touched
 
 - `src/components/dashboard/schedule/ScheduleHeader.tsx`
-
