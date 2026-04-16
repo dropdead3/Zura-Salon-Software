@@ -200,7 +200,7 @@ export function ScheduleHeader({
                   <button
                     onClick={onToggleShiftsView}
                     className={cn(
-                      'hidden @xl/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                      'hidden @[1320px]/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
                       showShiftsView
                         ? 'bg-[hsl(var(--sidebar-foreground))] text-[hsl(var(--sidebar-background))] font-medium'
                         : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
@@ -231,7 +231,7 @@ export function ScheduleHeader({
                   <TooltipTrigger asChild>
                     <button
                       className={cn(
-                        'hidden @xl/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                        'hidden @[1320px]/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
                         'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
                       )}
                     >
@@ -319,7 +319,7 @@ export function ScheduleHeader({
                 <Button
                   variant="ghost"
                   size="icon"
-                    className="hidden @xl/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                    className="hidden @[1320px]/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
                   onClick={onOpenBlockManager}
                 >
                   <Users className="h-4 w-4" />
@@ -341,7 +341,7 @@ export function ScheduleHeader({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hidden @xl/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                  className="hidden @[1320px]/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
                   onClick={onOpenDrafts}
                 >
                   <FileText className="h-4 w-4" />
