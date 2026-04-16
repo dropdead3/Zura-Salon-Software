@@ -1,5 +1,5 @@
 import { CalendarPlus, Users, Clock } from 'lucide-react';
-import { parse, format } from 'date-fns';
+
 import { cn } from '@/lib/utils';
 
 interface ScheduleTypeSelectorProps {
