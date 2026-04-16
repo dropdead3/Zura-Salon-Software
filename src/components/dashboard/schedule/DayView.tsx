@@ -346,6 +346,22 @@ export function DayView({
     return map;
   }, [appointments, stylists, dateStr]);
 
+  // Per-stylist utilization: booked client minutes / available minutes
+  const utilizationByStylist = useMemo(() => {
+    const totalAvailable = (hoursEnd - hoursStart) * 60;
+    const map = new Map<string, number>();
+    appointmentsByStylist.forEach((apts, stylistId) => {
+      const booked = apts
+        .filter(a => !['cancelled', 'no_show'].includes(a.status) && !BLOCKED_CATEGORIES.includes(a.service_category || ''))
+        .reduce((sum, a) => {
+          const dur = parseTimeToMinutes(a.end_time) - parseTimeToMinutes(a.start_time);
+          return sum + Math.max(dur, 0);
+        }, 0);
+      map.set(stylistId, totalAvailable > 0 ? Math.min(Math.round((booked / totalAvailable) * 100), 100) : 0);
+    });
+    return map;
+  }, [appointmentsByStylist, hoursStart, hoursEnd]);
+
   // Find active appointment for drag overlay
   const activeAppointment = useMemo(() => {
     if (!activeId) return null;
