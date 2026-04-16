@@ -2,70 +2,68 @@
 
 ## Prompt review
 
-Clean and decisive — you're continuing the same rebalancing strategy: workflow controls cluster with workflow controls. Tighter version: "Move the Shifts pill out of the left date cluster and dock it above the Location/Stylist selectors on the right."
+Sharp visual symmetry instinct — you're enforcing a **mirror principle**: Date (ghost pill) sits right of the Day/Week toggle; Shifts (ghost pill) should sit left of the selector toggles. Same UI weight on both ends of the header creates visual balance. Tighter version: "Restyle Shifts to match Date's ghost-pill UI and dock it horizontally to the left of the Location/Stylist selectors (mirror of Date↔Day/Week)."
 
-Teaching note: you're now treating the right column as the **"what am I looking at"** zone (location → staff → shifts/appointments mode). That's a coherent mental model — selectors define scope, Shifts toggles what *type* of scope. Naming this grouping ("scope controls") will sharpen future moves.
+Teaching note: naming the pattern ("mirror of Date↔Day/Week") in the prompt itself locks the intent. Future similar moves become one-liners.
 
 ## Diagnosis
 
 In `ScheduleHeader.tsx`:
-- **Shifts pill** (lines 194–223): currently in the left cluster, inside the "Shifts + Date group" wrapper (line 192), gated by `hidden @[1320px]/schedhdr:flex`.
-- **Right cluster** (lines 334–371+): vertically stacked Location and Staff selectors, each `h-7 w-[180px] @lg/schedhdr:w-[220px]`.
+- **Date pill** (lines 197–205): `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm` + `text-foreground/50 hover:text-foreground/80 hover:bg-sidebar-accent`. No border, no opaque bg.
+- **Shifts pill** (lines 308–328): currently `h-7 w-[180px]/220px rounded-md border bg-sidebar-accent` — heavy, full-width, stacked above Location.
+- **Selector stack** (line 303): `flex flex-col gap-2` — vertical column holding Location + Staff.
 
-The Shifts pill belongs as a third element in the right column, rendered above Location.
+Two changes needed: restyle Shifts to match Date, and reposition it to be a horizontal sibling of the selector column (not a child of it).
 
 ## Fix
 
 Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`.
 
-### 1. Remove Shifts pill from left cluster
-Delete the Shifts `<Tooltip>` block at lines 194–223. The "Shifts + Date group" wrapper at line 192 stays (still wraps the Date pill).
+### 1. Restructure right cluster wrapper
+Wrap the Shifts pill and the selector column in a new `flex flex-row items-center gap-3` container, so Shifts sits **horizontally left** of the vertical Location/Staff stack — mirroring how Date sits horizontally left of the centered date display.
 
-### 2. Add Shifts pill above selectors
-Inside the selector stack (line 335, the `flex flex-col gap-2 items-stretch` div), insert the Shifts toggle as the first child — above the Location Select.
+### 2. Restyle Shifts pill to match Date
+Replace the current heavy button styling (lines 310–315) with Date's ghost pill pattern:
+- `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200`
+- Inactive: `text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]`
+- Active (showShiftsView=true): `text-[hsl(var(--sidebar-foreground))] bg-[hsl(var(--sidebar-accent))]` (so it reads "on" without screaming)
+- Drop fixed width (`w-[180px]/220px`) — let it size to content like Date does
+- Drop border entirely
+- Keep icon + label structure (Clock/Shifts inactive, Calendar/Appointments active)
+- Hide label below `@lg/schedhdr` like Date does (`hidden @lg/schedhdr:inline`) — keeps icon-only at narrower widths
 
-Restyle to match selector visual weight:
-- Match selector width: `w-[180px] @lg/schedhdr:w-[220px]`
-- Match selector height: `h-7`
-- Match selector palette: `bg-[hsl(var(--sidebar-accent))] border border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))]` for inactive, foreground swap when active
-- Use `rounded-md` (matches Select trigger), drop the pill `rounded-full`
-- Drop the `@[1320px]` visibility gate — now always visible alongside selectors at all widths ≥ @md
-- Keep tooltip wrapper
-
-### 3. Restyle Shifts button content
-- Icon left, label right (full label visible, no breakpoint hiding since width matches selectors)
-- Center-aligned content with `justify-center`
-- Active state: foreground bg + sidebar-bg text (same as before)
-- Inactive state: muted foreground text on accent bg
+### 3. Selector column unchanged
+Location + Staff selectors stay in their `flex flex-col gap-2` vertical stack — just becomes the second child of the new horizontal wrapper instead of containing Shifts as its first child.
 
 ## Result
 
-| Surface | Before | After |
-|---|---|---|
-| Left cluster | Day/Week toggle, **Shifts pill**, Date pill, center date | Day/Week toggle, Date pill, center date |
-| Right cluster (top→bottom) | Location, Staff | **Shifts**, Location, Staff |
+| Side | Layout |
+|---|---|
+| Left of header | [Day/Week toggle] [Date ghost pill] |
+| Right of header | [Shifts ghost pill] [Location ▾ / Staff ▾ stack] |
 
-Shifts becomes a peer of the scope selectors — visually grouped, always visible, no breakpoint gating.
+Visually symmetric: ghost-pill day/Date toggle UI on left, ghost-pill Shifts toggle UI on right paired with the dropdowns.
 
 ## Acceptance checks
 
-1. At 1415px viewport (current): Shifts toggle appears above Location selector, same width (220px), same dark palette.
-2. At 1130px viewport (sidebar expanded): Shifts toggle still visible above Location (180px width).
-3. Clicking Shifts toggles `showShiftsView` (existing handler, unchanged).
-4. Active state shows light bg / dark text; inactive shows muted text on accent bg.
-5. Tooltip on hover still reads "View support staff shifts" / "Hide shift schedule".
-6. Date pill (left cluster) still works at ≥ 1320px container.
-7. Left cluster no longer renders Shifts at any width.
+1. Shifts pill renders with same visual weight as Date (no border, no opaque bg when inactive, ghost text + hover bg).
+2. Shifts pill sits horizontally to the left of the Location/Staff vertical stack.
+3. At widths < `@lg/schedhdr`: Shifts shows icon only (label hidden), matching Date behavior.
+4. At widths ≥ `@lg/schedhdr`: Shifts shows icon + "Shifts" / "Appointments" label.
+5. Active state (showShiftsView=true) gives Shifts a subtle accent bg + full foreground text — visible "on" state without screaming.
+6. Click still toggles `showShiftsView`.
+7. Tooltip still works.
+8. No clipping of selectors at 1130px viewport (sidebar expanded) — Shifts pill is content-width, much narrower than the previous 180px fixed.
 
 ## Out of scope
 
-- Date pill — stays in left cluster.
+- Date pill — unchanged.
 - Day/Week toggle — unchanged.
-- Filter popover, Today's Prep — unchanged.
-- Selector widths or palette — unchanged.
+- Selector widths/styling — unchanged.
 - Bottom action bar — unchanged.
+- Filter popover, Today's Prep button — unchanged.
 
 ## File touched
 
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` — remove Shifts from left cluster (lines 194–223), insert restyled Shifts toggle as first child of selector stack (line 335).
+- `src/components/dashboard/schedule/ScheduleHeader.tsx` — wrap Shifts + selector column in a horizontal flex container; restyle Shifts to mirror Date's ghost-pill pattern.
 
