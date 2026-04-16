@@ -113,7 +113,7 @@ export function PremiumFloatingPanel({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'fixed inset-0 bg-black/20 backdrop-blur-sm',
+              'fixed inset-0 bg-black/40 backdrop-blur-md',
               backdropClassName,
             )}
             style={{ zIndex: zIndex - 10, top: backdropTopStyle }}
