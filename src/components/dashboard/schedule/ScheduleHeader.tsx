@@ -150,11 +150,11 @@ export function ScheduleHeader({
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col @container/schedhdr">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-0">
-        {/* Row 1 (<md): Left cluster + condensed date right. At md+: just the left cluster. */}
-        <div className="flex items-center justify-between md:justify-start md:contents">
+      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 @md/schedhdr:flex-row @md/schedhdr:flex-nowrap @md/schedhdr:items-center @md/schedhdr:justify-between @md/schedhdr:gap-0">
+        {/* Row 1 (<@md): Left cluster + condensed date right. At @md+: just the left cluster. */}
+        <div className="flex items-center justify-between @md/schedhdr:justify-start @md/schedhdr:contents">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export function ScheduleHeader({
               />
               <button
                 className={cn(
-                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[60px] lg:w-[72px] flex items-center justify-center',
+                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[60px] @lg/schedhdr:w-[72px] flex items-center justify-center',
                   view === 'day' 
                     ? 'text-[hsl(var(--sidebar-background))] font-medium' 
                     : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80'
@@ -179,7 +179,7 @@ export function ScheduleHeader({
               </button>
               <button
                 className={cn(
-                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[60px] lg:w-[72px] flex items-center justify-center',
+                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[60px] @lg/schedhdr:w-[72px] flex items-center justify-center',
                   view === 'week' 
                     ? 'text-[hsl(var(--sidebar-background))] font-medium' 
                     : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80'
@@ -209,12 +209,12 @@ export function ScheduleHeader({
                     {showShiftsView ? (
                       <>
                         <CalendarIcon className="h-3.5 w-3.5" />
-                        <span className="hidden lg:inline">Appointments</span>
+                        <span className="hidden @lg/schedhdr:inline">Appointments</span>
                       </>
                     ) : (
                       <>
                         <Clock className="h-3.5 w-3.5" />
-                        <span className="hidden lg:inline">Shifts</span>
+                        <span className="hidden @lg/schedhdr:inline">Shifts</span>
                       </>
                     )}
                   </button>
@@ -236,7 +236,7 @@ export function ScheduleHeader({
                       )}
                     >
                       <CalendarIcon className="h-3.5 w-3.5" />
-                      <span className="hidden lg:inline">Date</span>
+                      <span className="hidden @lg/schedhdr:inline">Date</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
@@ -263,12 +263,12 @@ export function ScheduleHeader({
 
         {/* Center: Date Display */}
         <div className="text-center min-w-0">
-          {/* Compact single-line at < xl — abbreviated, no year */}
-          <div className="xl:hidden text-sm font-display tracking-wide whitespace-nowrap">
+          {/* Compact single-line at < @xl — abbreviated, no year */}
+          <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
             {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
           </div>
-          {/* Two-line at xl+ */}
-          <div className="hidden xl:block">
+          {/* Two-line at @xl+ */}
+          <div className="hidden @xl/schedhdr:block">
             <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
               {formatDate(currentDate, 'EEEE')}
             </div>
@@ -278,12 +278,12 @@ export function ScheduleHeader({
           </div>
         </div>
         </div>
-        {/* End Row 1 wrapper (<xl). At xl+, this wrapper is `contents` so children flow into the parent row. */}
+        {/* End Row 1 wrapper (<@md). At @md+, this wrapper is `contents` so children flow into the parent row. */}
 
-        {/* Row 2 wrapper (<md): filter icons left, selectors right. At md+, dissolves via `contents`. */}
-        <div className="flex items-center justify-between md:contents">
+        {/* Row 2 wrapper (<@md): filter icons left, selectors right. At @md+, dissolves via `contents`. */}
+        <div className="flex items-center justify-between @md/schedhdr:contents">
         {/* Right: Filters & Actions */}
-        <div className="flex items-center gap-1 w-full md:w-auto justify-between md:justify-start">
+        <div className="flex items-center gap-1 w-full @md/schedhdr:w-auto justify-between @md/schedhdr:justify-start">
           {/* Filter icons group */}
           <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
@@ -370,7 +370,7 @@ export function ScheduleHeader({
               onOpenChange={setLocationSelectOpen}
             >
               <SelectTrigger
-                className="h-7 w-[180px] lg:w-[220px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                className="h-7 w-[180px] @lg/schedhdr:w-[220px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
@@ -401,7 +401,7 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 w-[180px] lg:w-[220px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  className="h-7 w-[180px] @lg/schedhdr:w-[220px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
                     ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
