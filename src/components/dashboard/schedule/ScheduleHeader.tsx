@@ -123,6 +123,20 @@ export function ScheduleHeader({
   // Org-timezone-aware "today"
   const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
 
+  // Stylist levels — used to render the per-row level chip + color.
+  const { data: allLevels = [] } = useStylistLevels();
+  const activeLevels = useMemo(
+    () => allLevels.filter((l) => l.is_active).sort((a, b) => a.display_order - b.display_order),
+    [allLevels],
+  );
+  // Map "Level N" → matching DB slug. The legacy stylist_level string ("LEVEL 2 STYLIST")
+  // resolves to a number; we then match it positionally to the active levels list.
+  const levelSlugByNumber = useMemo(() => {
+    const m = new Map<number, string>();
+    activeLevels.forEach((lvl, i) => m.set(i + 1, lvl.slug));
+    return m;
+  }, [activeLevels]);
+
   // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
   const quickDays = Array.from({ length: 7 }, (_, i) => addDays(orgToday, i + 1));
 
