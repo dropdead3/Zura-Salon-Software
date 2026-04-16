@@ -291,6 +291,14 @@ export function DayView({
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const { data: stylistLevels = [] } = useStylistLevels();
+
+  // Build slug→label map for level badges
+  const levelLabelMap = useMemo(() => {
+    const m = new Map<string, { label: string; index: number }>();
+    stylistLevels.forEach((l, i) => m.set(l.slug, { label: l.label, index: i }));
+    return m;
+  }, [stylistLevels]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to 1 hour before opening time
