@@ -223,10 +223,6 @@ export function ScheduleHeader({
               />
             </PopoverContent>
             </Popover>
-            </div>
-            {/* End selector stack */}
-          </div>
-          {/* End Shifts + selectors horizontal cluster */}
         </div>
 
         {/* Center: Date Display — also acts as date picker trigger */}
