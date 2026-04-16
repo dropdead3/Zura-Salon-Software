@@ -188,49 +188,52 @@ export function ScheduleHeader({
             </div>
           </div>
 
-          {/* Shifts View Toggle */}
-          {onToggleShiftsView && (
-            <Tooltip>
-              <TooltipTrigger asChild>
+          {/* Shifts + Date group: stacked at <xl, inline at xl+ */}
+          <div className="flex flex-col gap-1 items-start xl:flex-row xl:gap-3 xl:items-center">
+            {/* Shifts View Toggle */}
+            {onToggleShiftsView && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onToggleShiftsView}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                      showShiftsView
+                        ? 'bg-[hsl(var(--sidebar-foreground))] text-[hsl(var(--sidebar-background))] font-medium'
+                        : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
+                    )}
+                  >
+                    {showShiftsView ? (
+                      <>
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        Appointments
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-3.5 w-3.5" />
+                        Shifts
+                      </>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
                 <button
-                  onClick={onToggleShiftsView}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
-                    showShiftsView
-                      ? 'bg-[hsl(var(--sidebar-foreground))] text-[hsl(var(--sidebar-background))] font-medium'
-                      : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
+                    'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
                   )}
                 >
-                  {showShiftsView ? (
-                    <>
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                      Appointments
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="h-3.5 w-3.5" />
-                      Shifts
-                    </>
-                  )}
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  Date
                 </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size={tokens.button.inline}
-                className="text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
-              >
-                <CalendarIcon className="h-4 w-4 mr-1.5" />
-                Date
-              </Button>
-            </PopoverTrigger>
+              </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <CalendarPicker
                 mode="single"
@@ -245,6 +248,7 @@ export function ScheduleHeader({
               />
             </PopoverContent>
           </Popover>
+          </div>
         </div>
 
         {/* Center: Date Display */}
