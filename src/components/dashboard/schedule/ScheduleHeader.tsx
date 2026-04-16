@@ -439,7 +439,7 @@ export function ScheduleHeader({
               onOpenChange={setLocationSelectOpen}
             >
               <SelectTrigger
-                className="h-7 w-[180px] @lg/schedhdr:w-[220px] text-xs text-left bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] [&>span]:flex-1 [&>span]:text-left"
+                className="h-7 w-[220px] @lg/schedhdr:w-[280px] text-xs text-left bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] [&>span]:flex-1 [&>span]:text-left"
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
@@ -470,7 +470,7 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 w-[180px] @lg/schedhdr:w-[220px] px-4 text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  className="h-7 w-[220px] @lg/schedhdr:w-[280px] px-4 text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   <span className="flex-1 text-left truncate">
                     {selectedStaffIds.length === 0 
