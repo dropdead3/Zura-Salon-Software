@@ -17,6 +17,7 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import { StylistBadge } from './StylistBadge';
 import { AssistantBlockOverlay } from './AssistantBlockOverlay';
+import { BreakBlockOverlay } from './BreakBlockOverlay';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
 import {
