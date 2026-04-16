@@ -1,23 +1,15 @@
 
 
-# Fix: Staff Filter Label to Show "All Stylists With Appointments"
+# Fix Schedule Header Filters to Fixed Matching Width
 
 ## Problem
-When the "All Stylists With Appointments" option is selected in the dropdown, the toggle button only displays "All Stylists" — the label should match the full option text.
+The Location and Staff filter dropdowns use `w-auto` with min/max constraints, so they render at different widths depending on content. They should be the same fixed width — wide enough to fit "All Stylists With Appointments".
 
-## Fix — 1 line in `src/components/dashboard/schedule/ScheduleHeader.tsx`
+## Fix — 3 class changes in `src/components/dashboard/schedule/ScheduleHeader.tsx`
 
-**Line 342:** Change `'All Stylists'` to `'All Stylists With Appointments'`
+1. **Location SelectTrigger (line 312):** Replace `min-w-[140px] max-w-[280px] w-auto` with `w-[280px]`
+2. **Staff Button (line 339):** Replace `min-w-[140px] max-w-[280px] w-auto` with `w-[280px]`
+3. **Staff PopoverContent (line 350):** Change `w-[220px]` to `w-[280px]` so the dropdown matches the trigger width
 
-```tsx
-// Before
-{selectedStaffIds.length === 0 
-  ? 'All Stylists' 
-
-// After
-{selectedStaffIds.length === 0 
-  ? 'All Stylists With Appointments' 
-```
-
-Single string change. The `max-w-[280px]` already set on the button comfortably fits this text.
+Both filters become exactly 280px — aligned and consistent.
 
