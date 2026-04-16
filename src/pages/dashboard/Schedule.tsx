@@ -957,7 +957,7 @@ export default function Schedule() {
             </div>
 
             {(view === 'day' || view === 'week' || view === 'agenda') && (
-              <div className="shrink-0 px-4 pr-20 pb-4 pt-1">
+              <div className="shrink-0 px-4 pr-20 pb-3 pt-1">
                 <div className="flex items-center gap-2">
                   <ScheduleActionBar
                     appointments={allAppointments.filter(apt => 
