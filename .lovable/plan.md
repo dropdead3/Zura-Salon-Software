@@ -1,29 +1,24 @@
 
 
-# Remove Visual Artifacts from Consultation Gradient Cards
+# Fix Double-Booked Appointment Gaps in Day View
 
 ## Problem
-New Client Consultation appointments use the `teal-lime` gradient from `SPECIAL_GRADIENTS`. The `CardOverlays` component adds two decorative layers on all gradient cards:
+When a stylist is double-booked, overlapping appointments show visible padding/gaps between them. This is caused by the width and left offset calculations in `DayView.tsx` (lines 288–304):
 
-1. **Glass stroke border** (lines 122–131) — a semi-transparent gradient border using CSS masking that creates a visible white halo around the card
-2. **Shimmer animation** (lines 132–138) — a constantly animating white highlight sweep (`animate-shimmer`) that makes the card look like it has a persistent hover effect
+- Width: `calc(${widthPercent}% - 4px)` — subtracts 4px from each column
+- Left: `calc(${leftPercent}% + 2px)` — offsets each column 2px from the left
 
-These two overlays cause the artifact visible in the screenshot — a glowing/shimmering border around consultation cards that doesn't match the clean look of other appointment types.
+This creates a ~4px gap between adjacent overlapping appointment cards. For single-column appointments the 2px side padding is fine, but for side-by-side overlapping cards it produces a noticeable visual gap.
 
 ## Fix
-In `AppointmentCardContent.tsx`, remove the two gradient overlay elements from the `CardOverlays` component (lines 120–139). The gradient `background` applied via `cardStyle` already provides the visual distinction for consultation cards — the additional glass stroke and shimmer are unnecessary decoration.
+In `DayView.tsx`, reduce the gap between overlapping columns while preserving a thin outer margin:
 
-### Lines to remove (inside `CardOverlays`):
-```tsx
-// Remove this entire block (lines 120-139):
-{displayGradient && (
-  <>
-    <div className="absolute inset-0 rounded-sm pointer-events-none" style={{...glassStroke...}} />
-    <div className="absolute inset-0 pointer-events-none animate-shimmer" style={{...shimmer...}} />
-  </>
-)}
-```
+**Lines 288–306** — adjust the width/left calculations:
+- When `totalOverlapping > 1`: use `calc(${widthPercent}% - 2px)` for width and `calc(${leftPercent}% + 1px)` for left — this cuts the inter-card gap from ~4px to ~2px
+- When `totalOverlapping === 1` (no overlap): keep current `- 4px` / `+ 2px` padding for breathing room
 
-### Files Modified
-1. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — remove glass stroke + shimmer overlays from `CardOverlays`
+This is a targeted 2-line change in the style calculation block.
+
+### File Modified
+1. `src/components/dashboard/schedule/DayView.tsx` — reduce gap between overlapping appointment columns
 
