@@ -47,6 +47,11 @@ export function StaffingContent({ workload, isLoading, locationId, dateRange = '
           locationId={locationId} 
           dateRange={dateRange}
         />
+
+        <DoubleBookingCard 
+          locationId={locationId}
+          dateRange={dateRange}
+        />
       </div>
     </>
   );
