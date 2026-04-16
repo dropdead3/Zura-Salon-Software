@@ -155,10 +155,10 @@ export function ScheduleActionBar({
           <TooltipTrigger asChild>
             <button
               onClick={onZoomOut}
-              disabled={zoomLevel <= 0}
+              disabled={zoomLevel <= -2}
               className={cn(
                 'h-7 w-7 flex items-center justify-center rounded-full transition-colors',
-                zoomLevel <= 0 ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                zoomLevel <= -2 ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
               <ZoomOut className="h-3.5 w-3.5" />
