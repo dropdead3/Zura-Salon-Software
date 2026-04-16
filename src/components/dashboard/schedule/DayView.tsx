@@ -609,7 +609,7 @@ export function DayView({
                         <span className="flex items-center gap-1 cursor-default">
                           <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
                           {!isMedium && (
-                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            <span className={cn("text-[10px] whitespace-nowrap", acceptingClients ? "text-emerald-500" : "text-destructive/70")}>
                               {acceptingClients ? 'Booking' : 'Not Booking'}
                             </span>
                           )}
