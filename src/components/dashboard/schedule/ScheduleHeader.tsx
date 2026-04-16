@@ -439,7 +439,7 @@ export function ScheduleHeader({
               onOpenChange={setLocationSelectOpen}
             >
               <SelectTrigger
-                className="h-7 w-[180px] @lg/schedhdr:w-[220px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                className="h-7 w-[180px] @lg/schedhdr:w-[220px] text-xs text-left bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] [&>span]:flex-1 [&>span]:text-left"
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
@@ -472,12 +472,14 @@ export function ScheduleHeader({
                   variant="outline" 
                   className="h-7 w-[180px] @lg/schedhdr:w-[220px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
-                  {selectedStaffIds.length === 0 
-                    ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
-                    : selectedStaffIds.length === 1
-                      ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
-                      : `${selectedStaffIds.length} selected`
-                  }
+                  <span className="flex-1 text-left truncate">
+                    {selectedStaffIds.length === 0 
+                      ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
+                      : selectedStaffIds.length === 1
+                        ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
+                        : `${selectedStaffIds.length} selected`
+                    }
+                  </span>
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
                 </Button>
               </PopoverTrigger>
