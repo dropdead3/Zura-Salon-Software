@@ -1,58 +1,54 @@
 
 ## Prompt review
 
-Sharp prompt. You arrived at a hypothesis ("is this pulling from Phorest?") and grounded it in real-world context (Julia archived in Phorest, doesn't exist in Zura). That's exactly how to triage a stale-data bug. Teaching note: your hypothesis was *almost* right but slightly off — the actual issue is even more interesting. The data is correctly being pulled from Zura, but Julia DOES exist in Zura's `employee_profiles` (active, approved, North Mesa). So this isn't a Phorest-vs-Zura bug — it's a **role classification** bug. Even tighter prompt next time: "Julia is in the list — is she classified as a stylist somewhere she shouldn't be?"
+Clear, scoped prompt. You named the surface ("Draft Bookings") and the desired action ("clear all at once"). Tighter framing next time: specify scope ("all drafts org-wide" vs "all drafts for this client group" vs "all drafts I created") and whether you want a confirmation step. Right now I'll infer the most defensive interpretation.
 
 ## Diagnosis
 
-Database confirms three facts:
+Looking at the screenshot of the Draft Bookings sheet:
+- Drafts are grouped by client (e.g., "Eric Day (4 drafts)", "No Client Selected (1 draft)")
+- Each group already has a per-group "Discard All" link (visible top-right of Eric Day group)
+- There's no global "Clear All Drafts" action at the sheet level
 
-1. **Julia exists in Zura** — `employee_profiles` has her as active, approved, North Mesa. Not a phantom Phorest record.
-2. **Julia's role is `receptionist`** — not `stylist` or `stylist_assistant`. Our role filter SHOULD have excluded her.
-3. **`v_all_staff` is a UNION** — pulls from `phorest_staff_mapping` (when she has one) AND from `employee_profiles`. Julia has a Phorest mapping (`JBIpYAt3DR85aHvHucHlcg`), so she appears via the Phorest branch with `show_on_calendar = true`.
-
-So the data source isn't wrong. The role filter is being **bypassed** somewhere.
-
-Looking at the popover: the role filter (`filterToStylistsAndDedupe`) is correctly applied to both `stylists` (location-scoped) and `allStylists` (all locations). Both queries should drop Julia.
-
-But the screenshot shows **7 names including Julia** — same list size as before our role-filter change. That means one of three things:
-- The query cache is stale and rendering pre-filter results
-- A different code path is feeding the list (not `filteredStylists`)
-- The role lookup itself is returning Julia because she has a *secondary* role we're not seeing
-
-I just confirmed via `user_roles`: Julia ONLY has `receptionist`. No stylist role. So the filter should work — meaning the most likely cause is **the list isn't rendering from `filteredStylists`**. There's likely a fallback path (e.g. when `qualificationData` is empty, or when `selectedServices` is empty, the component falls back to raw `stylists` or `allStylists` instead of `uniqueStylists` / `filteredStylists`).
-
-Need to inspect the actual render path (line ~1900–1950) to confirm which array feeds the visible list at this step.
+The `useBatchDeleteDrafts` hook already exists in `src/hooks/useDraftBookings.ts` and accepts an array of IDs — backend work is done. This is purely a UI addition.
 
 ## Fix
 
-Single file: `src/components/dashboard/schedule/QuickBookingPopover.tsx`.
+Single surface: the Draft Bookings sheet component (likely `src/components/dashboard/schedule/DraftBookingsSheet.tsx` — will confirm during implementation).
 
-### A. Audit the render path
-Find the JSX at the Available Stylists step and confirm it iterates `filteredStylists`, not `stylists` or `allStylists` directly. If any branch falls back to the raw arrays, route them through `uniqueStylists` / `uniqueAllStylists` (which are role-filtered upstream).
+### A. Add a sheet-level "Clear All" action
+- Place a destructive button in the sheet header next to the close button, or just below the search bar aligned right.
+- Only render when `drafts.length > 0`.
+- Label: "Clear All Drafts" with a Trash icon.
+- Style: ghost variant with destructive text color (matches existing "Discard All" / "Discard" styling).
 
-### B. Verify the role-filter is actually executing
-Add a temporary `console.log` in `filterToStylistsAndDedupe` to confirm it runs and returns the expected filtered set. If the cached query is stale, invalidate `['booking-stylists', selectedLocation]` and `['booking-stylists-all']` so the next open re-runs the filter.
+### B. Confirmation gate (mandatory)
+- Wrap in an `AlertDialog` — clearing all drafts is destructive and irreversible.
+- Title: "Clear all drafts?"
+- Description: "This will permanently delete all {N} draft bookings. This cannot be undone."
+- Cancel + "Clear All" (destructive) buttons.
 
-### C. Defense-in-depth at the database
-Add a `v_calendar_stylists` view that pre-filters `v_all_staff` to only `stylist` + `stylist_assistant` roles via `user_roles`. Then point both queries at the new view. This kills the entire class of "forgot to filter roles in surface X" bugs forever — the data layer enforces it.
+### C. Wire to existing batch hook
+- On confirm: collect every draft ID across all groups → call `useBatchDeleteDrafts` with the full array.
+- Toast on success: "Cleared {N} drafts."
+- Existing query invalidation in the hook handles the refresh.
 
-The view definition would join `v_all_staff` to `user_roles` and only emit rows where the user has at least one of the two allowed roles. This becomes the single source of truth for any booking surface.
-
-### D. Cache invalidation
-Once the filter works, the existing cached results for North Mesa may still be stale. Force a refetch by bumping the query key (e.g. add a version suffix `'v2'`) so old cache entries are abandoned.
+### D. Selection-aware behavior (nice-to-have, in scope)
+- The screenshot shows checkboxes on each draft card — if any are selected, the button label switches to "Clear Selected ({N})" and only deletes selected IDs.
+- If none selected, falls back to "Clear All Drafts" behavior.
+- This makes the same button serve both bulk operations without adding a second control.
 
 ## Acceptance checks
 
-1. North Mesa Quick Booking → Available Stylists shows **5 names**: Alexis Heasley, Brooklyn Colvin, Cienna Ruthem, Samantha Bloom, Trinity Graves.
-2. **Julia Gross is gone** — `receptionist` role correctly excluded.
-3. **Eric Day is gone** — `super_admin` role correctly excluded.
-4. Switch location → Switch back → still 5 names (no stale cache).
-5. Stylist-first mode shows the same role-filtered list across all locations.
-6. If a real `stylist_assistant` exists, they appear.
+1. Open Draft Bookings sheet with multiple drafts → "Clear All Drafts" button visible in header area.
+2. Click → confirmation dialog appears with accurate count.
+3. Confirm → all drafts deleted, sheet shows empty state, toast confirms count.
+4. Cancel → no drafts deleted.
+5. With drafts selected via checkboxes → button label changes to "Clear Selected (N)" and only deletes those.
+6. Empty draft list → button hidden.
 
 ## Follow-up enhancements
 
-- Build the `v_calendar_stylists` view as the canonical source. Every booking surface (popover, wizard, public booking) should query it instead of re-implementing role filters.
-- Add a runtime assertion: if `Available Stylists` ever renders a user whose role isn't `stylist` or `stylist_assistant`, log a warning to the console. Catches drift the moment it happens.
-- Audit `BookingWizard` and public booking surfaces for the same role-filter gap before users find them in production.
+- Add an "Auto-clear drafts older than X days" setting (currently hardcoded to 7 days at the DB level via `expires_at`).
+- Add an "Undo" toast action with a 5-second window before the delete is finalized — useful for accidental clears.
+- Track "drafts cleared" in the audit log so leadership can spot patterns of staff abandoning bookings.
