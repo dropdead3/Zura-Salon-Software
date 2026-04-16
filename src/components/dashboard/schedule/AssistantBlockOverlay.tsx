@@ -59,6 +59,7 @@ export function AssistantBlockOverlay({
   stylistUserId,
   hoursStart,
   rowHeight = 20,
+  slotInterval = 15,
   onBlockClick,
   onBlockResize,
   currentUserId,
@@ -135,7 +136,7 @@ export function AssistantBlockOverlay({
       {relevantBlocks.map(block => {
         const isResizing = resizingBlockId === block.id;
         const extraHeight = isResizing ? resizeDeltaPx : 0;
-        const style = getBlockStyle(block.start_time, block.end_time, hoursStart, rowHeight);
+        const style = getBlockStyle(block.start_time, block.end_time, hoursStart, rowHeight, slotInterval);
         const baseHeight = parseInt(style.height);
         const finalHeight = Math.max(rowHeight, baseHeight + extraHeight);
 
