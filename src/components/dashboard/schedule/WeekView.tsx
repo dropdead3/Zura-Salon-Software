@@ -491,10 +491,11 @@ export function WeekView({
                   {timeSlots.map((slot) => {
                     const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`;
                     
-                    // Check if this slot is in the past (only for today)
+                    // "Fully past" — slot is unavailable only after its END time has elapsed,
+                    // so the slot the indicator line is currently inside remains bookable.
                     const isPastSlot = isCurrentDay && (() => {
                       const slotMins = slot.hour * 60 + slot.minute;
-                      return slotMins < wkNowMins;
+                      return slotMins + slotInterval <= wkNowMins;
                     })();
 
                     // Check if slot is outside operating hours

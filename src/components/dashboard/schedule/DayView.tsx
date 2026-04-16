@@ -778,10 +778,12 @@ export function DayView({
                       )}
                       {/* Time slot backgrounds (droppable) */}
                      {timeSlots.map(({ hour, minute }) => {
-                     const isPastSlot = showCurrentTime && (() => {
-                       const slotMins = hour * 60 + minute;
-                       return slotMins < dayNowMins;
-                     })();
+                      // "Fully past" — slot is unavailable only after its END time has elapsed,
+                      // so the slot the indicator line is currently inside remains bookable.
+                      const isPastSlot = showCurrentTime && (() => {
+                        const slotMins = hour * 60 + minute;
+                        return slotMins + slotInterval <= dayNowMins;
+                      })();
                        
                        const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                        
