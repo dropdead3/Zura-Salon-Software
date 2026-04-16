@@ -1,53 +1,42 @@
 
 
-# Calculate Stylist Double-Booked Time
+# Double-Booking Density Heatmap
+
+## What We're Building
+A day-of-week × hour-of-day heatmap showing where double-booking overlap concentrates. This extends the existing per-stylist table in `DoubleBookingCard` with a visual grid — mirroring the existing `DemandHeatmapReport` pattern but measuring overlap minutes instead of appointment counts.
 
 ## Approach
+Add a tabbed view to the existing `DoubleBookingCard`: **"By Stylist"** (current table) and **"Heatmap"** (new grid). This keeps the feature self-contained.
 
-Yes — this is fully calculable from existing appointment data. The `v_all_appointments` view contains `stylist_user_id`, `appointment_date`, `start_time`, and `end_time` per appointment. By grouping appointments per stylist per day and detecting time overlaps, we can compute exact double-booked minutes.
+## Changes
 
-## Algorithm
+### 1. Extend `useDoubleBookingStats` hook
+Add a secondary return value: `heatmapCells` — an array of `{ day: number, hour: number, overlapMinutes: number }`.
 
-For each stylist on each day:
-1. Collect all non-cancelled appointments, sorted by `start_time`
-2. For each pair of appointments, detect overlap: `startA < endB && startB < endA`
-3. Calculate overlap minutes: `min(endA, endB) - max(startA, startB)`
-4. Merge overlapping intervals to avoid triple-counting (union of overlap regions)
-5. Sum total overlap minutes per stylist across the date range
+During the existing per-stylist loop, also bucket each overlap interval into its hour slot and day-of-week (using `getDay()` on `appointment_date`). This requires no additional query — the data is already fetched.
 
-## Implementation
-
-### 1. New hook: `src/hooks/useDoubleBookingStats.ts`
-- Accepts `dateFrom`, `dateTo`, `locationId?`
-- Fetches from `v_all_appointments`: `stylist_user_id`, `staff_name`, `start_time`, `end_time`, `appointment_date`, `status`
-- Filters out cancelled/no-show statuses
-- Groups by `stylist_user_id` + `appointment_date`
-- Runs interval overlap detection per group
-- Returns per-stylist: `totalDoubleBookedMinutes`, `doubleBookedSessions` (count of appointments involved), `percentOfSchedule` (overlap minutes / total booked minutes)
-
-### 2. New card: `src/components/dashboard/analytics/DoubleBookingCard.tsx`
-- Canonical card header with icon + title + `MetricInfoTooltip`
-- Table showing each stylist: name, double-booked hours, % of schedule, session count
-- Sorted by double-booked time descending
+### 2. Update `DoubleBookingCard`
+- Add `Tabs` toggle: "By Stylist" | "Heatmap"
+- **Heatmap tab**: Render a 7×15 grid (Sun–Sat × 7:00–21:00) identical to `DemandHeatmapReport`'s layout
+  - Cell color intensity based on overlap minutes relative to max cell
+  - Tooltip: `"Mon 10:00 — 45 min overlap"`
+  - Same legend strip (Less → More)
+- Uses `tokens.card.*` header, `tokens.table.columnHeader` for axis labels
 - Empty state if no overlaps detected
 
-### 3. Integration into `StaffingContent.tsx`
-- Add `DoubleBookingCard` into the staffing analytics section
+### 3. No new files needed
+All changes fit within the existing hook and card component. The heatmap grid reuses the same CSS grid pattern from `DemandHeatmapReport`.
 
 ## Technical Detail
-
-Overlap calculation uses an interval-merge algorithm (O(n log n) per day per stylist):
-
 ```text
-Sort appointments by start_time
-merged = []
-For each appointment:
-  If merged is empty or current.start >= merged.last.end:
-    push current to merged
-  Else:
-    overlap_minutes += min(current.end, merged.last.end) - current.start
-    merged.last.end = max(merged.last.end, current.end)
+For each stylist's day-group (already computed):
+  For each detected overlap interval [overlapStart, overlapEnd]:
+    dayOfWeek = getDay(appointment_date)
+    For each hour h that the overlap spans:
+      bucketStart = max(overlapStart, h * 60)
+      bucketEnd = min(overlapEnd, (h+1) * 60)
+      heatmap[dayOfWeek][h] += bucketEnd - bucketStart
 ```
 
-Time strings (e.g. "10:00") are converted to minutes-since-midnight for arithmetic.
+This gives minute-level granularity per hour slot, aggregated across all stylists and dates in the range.
 
