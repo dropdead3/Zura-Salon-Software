@@ -1,24 +1,26 @@
 
 
-# Restore Booking Label + Relocate Lead Pool Icon to Top-Right
+# Combine Booking + Lead Pool Into Single "Accepting Clients" Indicator
 
-## Changes in `src/components/dashboard/schedule/DayView.tsx`
+## Rationale
+Both `is_booking` and `lead_pool_eligible` signal the same thing: whether the front desk should schedule call-in leads on this stylist's calendar. Two separate indicators create confusion. We'll unify them into one clear status.
 
-### 1. Top-right corner: dot + "Booking" label + Lead Pool icon
-Move the booking indicator and lead pool icon together into the top-right absolute container:
-- Green/red dot + "Booking" / "Not Booking" text label (text-[10px])
-- Lead Pool `UserPlus` icon next to it, using `text-purple-400` for better visibility against the dark sidebar background
-- All wrapped in a single `absolute top-1.5 right-1.5 flex items-center gap-1.5` container
+## Changes
 
-### 2. Clean up second row
-Remove the `UserPlus` icon from the utilization row (line 545-552) since it moves to the top-right. The second row will only show the utilization percentage.
+### 1. `src/components/dashboard/schedule/DayView.tsx`
+- **Merge the two booleans** into a single derived flag: `const acceptingClients = stylist.is_booking !== false && stylist.lead_pool_eligible !== false`
+- **Replace the two indicators** (dot + "Booking" label + UserPlus icon) with one consolidated indicator in the top-right corner:
+  - Green dot + "Accepting" when both are true
+  - Red dot + "Not Accepting" when either is false
+  - Tooltip: "Accepting New Clients & Lead Pool Eligible" / "Not Accepting New Clients"
+- **Remove** the separate `UserPlus` icon — no longer needed as a distinct element
 
 ### Result per cell
 ```text
-┌──────────────────── ● Booking 👤+┐
-│ [Avatar]  Trinity Graves  L2     │
-│           72%                    │
-└──────────────────────────────────┘
+┌──────────────────────── ● Accepting ┐
+│ [Avatar]  Trinity Graves  L2        │
+│           72%                       │
+└─────────────────────────────────────┘
 ```
 
 Single file change, no new dependencies.
