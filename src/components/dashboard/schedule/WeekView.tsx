@@ -278,6 +278,7 @@ export function WeekView({
   assistantNamesMap,
   assistantProfilesMap,
   assistantTimeBlocks = [],
+  scheduleBlocks = [],
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);

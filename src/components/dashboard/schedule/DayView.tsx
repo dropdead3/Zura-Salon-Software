@@ -355,6 +355,7 @@ export function DayView({
   adminMeetings = [],
   onMeetingClick,
   zoomLevel = 0,
+  scheduleBlocks = [],
 }: DayViewProps) {
   const ZOOM_CONFIG: Record<string, { interval: number }> = {
     '-3': { interval: 60 },
