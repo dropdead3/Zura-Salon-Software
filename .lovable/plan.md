@@ -1,67 +1,46 @@
 
 
-# Direct-Click for Single-Item Sections in Collapsed Sidebar
+# Adaptive Status Labels on Appointment Cards
 
-## Problem
-`SidebarNavContent.tsx` renders every non-main section in the collapsed sidebar as a `HoverPopover`, even when the section has only one link (e.g., SYSTEM → Settings). The fix we previously applied to `CollapsibleNavGroup.tsx` doesn't apply here because the sidebar uses `SidebarNavContent.tsx` for these sections.
+## Summary
+Add `shortLabel` to `APPOINTMENT_STATUS_BADGE` and use it only on compact/medium cards and WeekView (narrow columns). Full-size DayView cards and Agenda cards keep the full label.
 
-## Change — `src/components/dashboard/SidebarNavContent.tsx` (lines 667-758)
+## Changes
 
-Add a single-item check before the `HoverPopover` block. If `filteredItems.length === 1`, render a `Tooltip`-wrapped direct-navigation button instead of the popover:
+### 1. `src/lib/design-tokens.ts` — Add `shortLabel` to badge type
+Add a `shortLabel` field to each entry in `APPOINTMENT_STATUS_BADGE`:
+- pending → "Pend"
+- booked → "Unconf"
+- unconfirmed → "Unconf"
+- confirmed → "Conf"
+- walk_in → "Walk"
+- checked_in → "In"
+- completed → "Done"
+- cancelled → "Can"
+- no_show → "NS"
 
-```tsx
-// Line 667-758: replace the collapsed section rendering
-{isCollapsed && sectionId !== 'main' ? (
-  (() => {
-    const SectionIcon = SECTION_ICONS[sectionId] || SECTION_ICONS.main;
-    const isAnyActive = filteredItems.some(item => location.pathname === item.href);
+### 2. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — Conditional label selection
 
-    // Single-item section → direct click
-    if (filteredItems.length === 1) {
-      const singleItem = filteredItems[0];
-      const Icon = singleItem.icon;
-      const resolvedHref = dashPath(singleItem.href.replace(/^\/dashboard/, ''));
-      const isActive = location.pathname === resolvedHref;
-      const label = getNavLabel(singleItem);
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href={resolvedHref}
-              onClick={(e) => {
-                e.preventDefault();
-                navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
-                onNavClick();
-              }}
-              className={cn(
-                "flex items-center justify-center px-2 py-2 mx-2 rounded-full",
-                "transition-all duration-300 text-sm",
-                isActive
-                  ? "bg-foreground/10 text-foreground"
-                  : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
-              )}
-              style={{ width: 'calc(100% - 16px)' }}
-            >
-              <Icon className="w-4 h-4" />
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="right">{label}</TooltipContent>
-        </Tooltip>
-      );
-    }
+**GridContent** (line ~233 and ~279 where `badge.label` is used):
+- Use `shortLabel` when `size === 'medium'` OR `showStylistBadge` is true (WeekView columns are always narrow)
+- Use full `label` when `size === 'full'` in DayView (non-stylist-badge mode)
 
-    // Multi-item section → existing HoverPopover (unchanged)
-    return (
-      <HoverPopover>
-        ...existing popover code...
-      </HoverPopover>
-    );
-  })()
-)
-```
+Logic: `const statusLabel = (size === 'medium' || showStylistBadge) ? badge.shortLabel : badge.label;`
 
-Also add `Tooltip`, `TooltipTrigger`, `TooltipContent` imports if not already present.
+Then replace `{badge.label}` with `{statusLabel}` in both the WeekView and DayView status badge renders.
+
+**Compact cards** — no status badge shown at all (unchanged).
+**AgendaContent** — keeps full `label` (unchanged, already has plenty of space).
+
+### 3. NC/RC badge sizing
+Shrink from `h-5 w-5` / `text-[8px]` to `h-4 w-4` / `text-[7px]` to reclaim horizontal space for the client name on medium cards.
+
+### 4. Lower progressive disclosure thresholds
+- Time + price row: show at ≥60min (was 75min)
+- Assisted by line: show at ≥75min (was 90min)
+- Rescheduled line: show at ≥90min (was 105min)
 
 ### Files Modified
-1. `src/components/dashboard/SidebarNavContent.tsx` — add single-item direct-click path in collapsed state
+1. `src/lib/design-tokens.ts` — add `shortLabel` field
+2. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — conditional label, smaller NC/RC badge, lower thresholds
 
