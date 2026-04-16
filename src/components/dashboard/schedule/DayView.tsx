@@ -203,6 +203,7 @@ interface AppointmentCardProps {
   hasCoverageScheduled?: boolean;
   date?: Date;
   rowHeight?: number;
+  slotInterval?: number;
   zoomLevel?: number;
 }
 
@@ -222,6 +223,7 @@ function AppointmentCard({
   assistantNamesMap,
   date,
   rowHeight = 20,
+  slotInterval = 15,
   zoomLevel = 0,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -274,7 +276,7 @@ function AppointmentCard({
     };
   }, [isDragOverlay, isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight, slotInterval);
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel);
