@@ -521,9 +521,6 @@ export function DayView({
                         <TooltipTrigger asChild>
                           <span className={cn('flex items-center gap-1 cursor-default')}>
                             <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
-                            <span className={cn('text-[10px]', acceptingClients ? 'text-emerald-400' : 'text-destructive/70')}>
-                              {acceptingClients ? 'Accepting' : 'Not Accepting'}
-                            </span>
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="text-xs">
@@ -548,20 +545,15 @@ export function DayView({
                       </TooltipContent>
                     </Tooltip>
                     <div className="flex flex-col min-w-0 gap-0.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-sm font-medium truncate">
-                          {formatDisplayName(stylist.full_name, stylist.display_name)}
+                      <span className="text-xs font-medium leading-tight break-words">
+                        {formatDisplayName(stylist.full_name, stylist.display_name)}
+                      </span>
+                      <span className={cn('text-[11px]', pctColor)}>{pct}%</span>
+                      {levelInfo && (
+                        <span className="text-[10px] text-muted-foreground leading-none truncate">
+                          {levelInfo.label}
                         </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[11px]">
-                        <span className={cn(pctColor)}>{pct}%</span>
-                        {levelInfo && (
-                          <>
-                            <span className="text-muted-foreground/50">·</span>
-                            <span className="text-muted-foreground">{levelInfo.label}</span>
-                          </>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 );
