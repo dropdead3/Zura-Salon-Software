@@ -1,6 +1,8 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { getLevelColor } from '@/lib/level-colors';
 import { format, getWeek } from 'date-fns';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
@@ -29,6 +31,8 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
+import { UserPlus } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DayViewProps {
   date: Date;
@@ -38,6 +42,9 @@ interface DayViewProps {
     display_name: string | null;
     full_name: string;
     photo_url: string | null;
+    stylist_level?: string | null;
+    is_booking?: boolean | null;
+    lead_pool_eligible?: boolean;
   }>;
   hoursStart?: number;
   hoursEnd?: number;
@@ -284,6 +291,14 @@ export function DayView({
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const { data: stylistLevels = [] } = useStylistLevels();
+
+  // Build slug→label map for level badges
+  const levelLabelMap = useMemo(() => {
+    const m = new Map<string, { label: string; index: number }>();
+    stylistLevels.forEach((l, i) => m.set(l.slug, { label: l.label, index: i }));
+    return m;
+  }, [stylistLevels]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to 1 hour before opening time
@@ -487,31 +502,56 @@ export function DayView({
                 W {weekNumber}
               </div>
               
-              {sortedStylists.map((stylist) => (
-                <div 
-                  key={stylist.user_id} 
-                  className="flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
-                >
-                  <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
-                    <AvatarImage src={stylist.photo_url || undefined} />
-                    <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
-                      {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium truncate">
-                      {formatDisplayName(stylist.full_name, stylist.display_name)}
-                    </span>
-                    {(() => {
-                      const pct = utilizationByStylist.get(stylist.user_id) ?? 0;
-                      const color = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
-                      return (
-                        <span className={cn('text-xs', color)}>{pct}% booked</span>
-                      );
-                    })()}
+              {sortedStylists.map((stylist) => {
+                const levelInfo = stylist.stylist_level ? levelLabelMap.get(stylist.stylist_level) : null;
+                const levelColor = levelInfo ? getLevelColor(levelInfo.index, stylistLevels.length) : null;
+                const pct = utilizationByStylist.get(stylist.user_id) ?? 0;
+                const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
+                const isBooking = stylist.is_booking !== false;
+                const isLeadPool = stylist.lead_pool_eligible !== false;
+
+                return (
+                  <div 
+                    key={stylist.user_id} 
+                    className="flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                  >
+                    <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
+                      <AvatarImage src={stylist.photo_url || undefined} />
+                      <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
+                        {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0 gap-0.5">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-sm font-medium truncate">
+                          {formatDisplayName(stylist.full_name, stylist.display_name)}
+                        </span>
+                        {levelColor && levelInfo && (
+                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full shrink-0', levelColor.bg, levelColor.text)}>
+                            {levelInfo.label}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <span className={cn(pctColor)}>{pct}%</span>
+                        <span className="text-muted-foreground/40">·</span>
+                        <span className={cn('flex items-center gap-1', isBooking ? 'text-emerald-500' : 'text-destructive/70')}>
+                          <span className={cn('inline-block w-1.5 h-1.5 rounded-full', isBooking ? 'bg-emerald-500' : 'bg-destructive/70')} />
+                          {isBooking ? 'Booking' : 'Not Booking'}
+                        </span>
+                        {isLeadPool && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <UserPlus className="h-3 w-3 text-primary/70 shrink-0 cursor-default" />
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">Lead Pool Eligible</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Time Grid */}

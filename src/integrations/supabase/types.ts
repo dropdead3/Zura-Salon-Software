@@ -7621,6 +7621,7 @@ export type Database = {
           is_onsite_staff: boolean
           is_primary_owner: boolean | null
           is_super_admin: boolean | null
+          lead_pool_eligible: boolean
           location_id: string | null
           location_ids: string[] | null
           organization_id: string | null
@@ -7677,6 +7678,7 @@ export type Database = {
           is_onsite_staff?: boolean
           is_primary_owner?: boolean | null
           is_super_admin?: boolean | null
+          lead_pool_eligible?: boolean
           location_id?: string | null
           location_ids?: string[] | null
           organization_id?: string | null
@@ -7733,6 +7735,7 @@ export type Database = {
           is_onsite_staff?: boolean
           is_primary_owner?: boolean | null
           is_super_admin?: boolean | null
+          lead_pool_eligible?: boolean
           location_id?: string | null
           location_ids?: string[] | null
           organization_id?: string | null
