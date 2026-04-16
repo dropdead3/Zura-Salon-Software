@@ -598,46 +598,40 @@ export function QuickBookingPopover({
     return rows.map(r => ({ ...r, stylist_level: levelMap[r.user_id] ?? null }));
   };
 
-  // Filter rows to only users with role 'stylist' or 'stylist_assistant', and dedupe by user_id
-  const filterToStylistsAndDedupe = async (rows: any[]) => {
-    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))] as string[];
-    if (userIds.length === 0) return [];
-    const { data: roleRows } = await supabase
-      .from('user_roles')
-      .select('user_id, role')
-      .in('user_id', userIds)
-      .in('role', ['stylist', 'stylist_assistant']);
-    const allowed = new Set<string>((roleRows || []).map((r: any) => r.user_id));
+  // Defense-in-depth: dedupe rows by user_id (v_calendar_stylists already dedupes per location,
+  // but cross-location queries can still surface a user multiple times).
+  const dedupeByUserId = (rows: any[]) => {
     const seen = new Set<string>();
     return rows.filter((r: any) => {
-      if (!r.user_id || !allowed.has(r.user_id)) return false;
+      if (!r.user_id) return false;
       if (seen.has(r.user_id)) return false;
       seen.add(r.user_id);
       return true;
     });
   };
 
-  // Fetch stylists filtered by selected location (normal mode)
+  // Fetch stylists filtered by selected location (normal mode).
+  // Uses v_calendar_stylists (role-filtered + deduped at the database layer).
   const { data: stylists = [] } = useQuery({
-    queryKey: ['booking-stylists', selectedLocation],
+    queryKey: ['booking-stylists-v2', selectedLocation],
     queryFn: async () => {
       if (!selectedLocation) return [];
-      
+
       const { data, error } = await supabase
-        .from('v_all_staff' as any)
+        .from('v_calendar_stylists' as any)
         .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true)
         .eq('location_id', selectedLocation);
-      
+
       if (error) {
         console.error('[QuickBookingPopover] Failed to load stylists for location:', error);
         toast.error('Could not load stylists. Please try again.');
         return [];
       }
 
-      const filtered = await filterToStylistsAndDedupe((data as any[]) || []);
-      const hydrated = await hydrateLevels(filtered);
+      const deduped = dedupeByUserId((data as any[]) || []);
+      const hydrated = await hydrateLevels(deduped);
 
       // Reshape to match existing consumer expectations (employee_profiles nested shape)
       return hydrated.map((s: any) => ({
@@ -655,22 +649,22 @@ export function QuickBookingPopover({
 
   // Fetch ALL stylists across all locations (stylist-first mode)
   const { data: allStylists = [] } = useQuery({
-    queryKey: ['booking-stylists-all'],
+    queryKey: ['booking-stylists-all-v2'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('v_all_staff' as any)
+        .from('v_calendar_stylists' as any)
         .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true);
-      
+
       if (error) {
         console.error('[QuickBookingPopover] Failed to load all stylists:', error);
         toast.error('Could not load stylists. Please try again.');
         return [];
       }
 
-      const filtered = await filterToStylistsAndDedupe((data as any[]) || []);
-      const hydrated = await hydrateLevels(filtered);
+      const deduped = dedupeByUserId((data as any[]) || []);
+      const hydrated = await hydrateLevels(deduped);
 
       return hydrated.map((s: any) => ({
         ...s,
