@@ -62,6 +62,7 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
   const [search, setSearch] = useState('');
   const [discardingDraft, setDiscardingDraft] = useState<DraftBooking | null>(null);
   const [discardingGroup, setDiscardingGroup] = useState<{ clientKey: string; ids: string[] } | null>(null);
+  const [clearAllOpen, setClearAllOpen] = useState(false);
 
   const filtered = drafts.filter(d => {
     if (!search) return true;
