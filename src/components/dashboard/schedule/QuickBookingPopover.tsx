@@ -583,7 +583,7 @@ export function QuickBookingPopover({
       
       const { data } = await supabase
         .from('v_all_staff' as any)
-        .select('phorest_staff_id, user_id, phorest_branch_id, location_id, display_name, full_name, photo_url, stylist_level, show_on_calendar')
+        .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, stylist_level, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true)
         .eq('location_id', selectedLocation);
