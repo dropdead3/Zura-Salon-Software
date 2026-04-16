@@ -1290,6 +1290,8 @@ export function QuickBookingPopover({
               clientSearch={clientSearch}
               onSelectClient={handleSelectClient}
               onViewProfile={setViewingClientProfile}
+              activeLetter={activeLetter}
+              onLetterChange={setActiveLetter}
             />
           </div>
         )
