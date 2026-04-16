@@ -58,28 +58,7 @@ const ZOOM_CONFIG: Record<string, { interval: number }> = {
 
 const MIN_ROW_HEIGHT = 20;
 
-function parseTimeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-function getEventStyle(startTime: string, endTime: string, hoursStart: number, slotInterval: number, rowHeight: number) {
-  const startMinutes = parseTimeToMinutes(startTime);
-  const endMinutes = parseTimeToMinutes(endTime);
-  const startOffset = startMinutes - (hoursStart * 60);
-  const duration = endMinutes - startMinutes;
-  const top = (startOffset / slotInterval) * rowHeight;
-  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
-  return { top: `${top}px`, height: `${height}px` };
-}
-
-function formatTime12h(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-}
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo } from '@/lib/schedule-utils';
 
 function WeekSlot({
   hour,

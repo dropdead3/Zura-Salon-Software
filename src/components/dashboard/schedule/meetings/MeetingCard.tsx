@@ -6,16 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Video, MapPin, Monitor } from 'lucide-react';
 import type { AdminMeeting, MeetingAttendee, MeetingMode } from '@/hooks/useAdminMeetings';
 
-function parseTimeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-function formatTime12h(time: string): string {
-  try {
-    return format(parse(time, 'HH:mm', new Date()), 'h:mm a');
-  } catch { return time; }
-}
+import { parseTimeToMinutes, formatTime12h } from '@/lib/schedule-utils';
 
 const MEETING_TYPE_LABELS: Record<string, string> = {
   one_on_one: '1-on-1',
