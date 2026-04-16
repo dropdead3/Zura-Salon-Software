@@ -249,11 +249,18 @@ export function ScheduleHeader({
 
         {/* Center: Date Display */}
         <div className="text-center min-w-0 truncate">
-          <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
-            {formatDate(currentDate, 'EEEE')}
+          {/* Compact single-line at < xl */}
+          <div className="xl:hidden text-sm font-display tracking-wide whitespace-nowrap truncate">
+            {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d, yyyy')}
           </div>
-          <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
-            {formatDate(currentDate, 'MMMM d, yyyy')}
+          {/* Two-line at xl+ */}
+          <div className="hidden xl:block">
+            <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
+              {formatDate(currentDate, 'EEEE')}
+            </div>
+            <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
+              {formatDate(currentDate, 'MMMM d, yyyy')}
+            </div>
           </div>
         </div>
 
