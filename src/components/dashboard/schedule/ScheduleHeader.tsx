@@ -269,6 +269,7 @@ export function ScheduleHeader({
             </div>
           </div>
         </div>
+        </div>
         {/* End Row 1 wrapper (<xl). At xl+, this wrapper is `contents` so children flow into the parent row. */}
 
         {/* Row 2 wrapper (<xl): filter icons left, selectors right. At xl+, dissolves via `contents`. */}
