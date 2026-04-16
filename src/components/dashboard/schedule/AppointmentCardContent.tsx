@@ -307,9 +307,6 @@ function GridContent({
               </span>
             </div>
           )}
-              </span>
-            )}
-          </div>
         </>
       )}
 
