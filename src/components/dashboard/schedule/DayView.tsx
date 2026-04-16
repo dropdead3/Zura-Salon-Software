@@ -548,22 +548,7 @@ export function DayView({
     ? (dayNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
     : 0;
 
-  // Calculate overlapping appointments for a stylist
-  const getOverlapInfo = (appointments: PhorestAppointment[], targetApt: PhorestAppointment) => {
-    const targetStart = parseTimeToMinutes(targetApt.start_time);
-    const targetEnd = parseTimeToMinutes(targetApt.end_time);
-    
-    const overlapping = appointments.filter(apt => {
-      const aptStart = parseTimeToMinutes(apt.start_time);
-      const aptEnd = parseTimeToMinutes(apt.end_time);
-      return !(aptEnd <= targetStart || aptStart >= targetEnd);
-    });
-
-    overlapping.sort((a, b) => parseTimeToMinutes(a.start_time) - parseTimeToMinutes(b.start_time));
-    const columnIndex = overlapping.findIndex(apt => apt.id === targetApt.id);
-    
-    return { columnIndex, totalOverlapping: overlapping.length };
-  };
+  // getOverlapInfo is now imported from @/lib/schedule-utils
 
   // ─── Drag Handlers ─────────────────────────────────────────────
   const handleDragStart = useCallback((event: DragStartEvent) => {
