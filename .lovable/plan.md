@@ -1,109 +1,56 @@
-<final-text>
+
 ## Prompt review
 
-Good prompt. You clearly identified the user expectation and the trigger path: clicked an open slot in Alexis’ column, then expected Alexis to be surfaced first or preselected. That’s strong debugging input because it ties the broken behavior to a specific interaction, not just a vague empty state.
-
-Even tighter prompt framing for next time:
-- name the exact surface: “Quick Booking popover from Day View”
-- mention whether services were already selected
-- mention whether the issue is “empty list” vs “wrong default”
-
-That helps separate:
-1. preselection bugs
-2. data-loading bugs
-3. qualification-filter bugs
+Excellent debugging prompt. You named both symptoms in one shot: (1) duplicates in the list, (2) Alexis not being preselected from the clicked column. You also gave the screenshot which made it instantly verifiable. Teaching note: when something "renders wrong," calling out *both* the visual bug and the expected interaction behavior — like you did — is the gold standard, because it separates "data is wrong" from "default selection is wrong."
 
 ## Diagnosis
 
-There are actually **three stacked issues** causing this:
+Two distinct bugs in `QuickBookingPopover.tsx`:
 
-1. **Clicked stylist is never applied**
-   - `Schedule.tsx` correctly passes the clicked column’s stylist as `defaultStylistId`.
-   - `QuickBookingPopover.tsx` receives `defaultStylistId`.
-   - But the popover never uses it to initialize `selectedStylist` or `preSelectedStylistId`.
-   - So clicking Alexis’ column does **not** default the flow to Alexis.
+### 1. Duplicates — confirmed at the database
+The `v_all_staff` view returns multiple rows per stylist per location at North Mesa:
+- Trinity: 2 rows
+- Samantha: 2 rows
+- Brooklyn: 2 rows
+- Eric D.: 2 rows (matches screenshot)
+- Alexis, Cienna, Julia: 1 row each
 
-2. **The stylist query is failing**
-   - Current `v_all_staff` request selects `stylist_level`, but that column does **not** exist on `v_all_staff`.
-   - Network log confirms the 400:
-     - `column v_all_staff.stylist_level does not exist`
-   - Result: “Available Stylists” becomes empty.
+The location-scoped `stylists` query (line 602) renders rows directly with no dedup. Only the *all-locations* `uniqueAllStylists` memo (line 668) dedupes by `user_id`. The normal-mode list path (`filteredStylists`) skips dedup entirely → duplicates render.
 
-3. **Qualification filtering is also broken**
-   - `useQualifiedStaffForServices` still queries old column names on `v_all_staff_qualifications`:
-     - expects `phorest_service_id` / `phorest_branch_id`
-     - actual view has `service_external_id` / `branch_id`
-   - It also queries `staff_service_qualifications.service_id` using a Phorest external ID string, which causes UUID errors.
-   - Network log confirms both failures.
-   - So even after fixing stylist preselection, service qualification can still wrongly collapse the list.
+### 2. Alexis not surfaced first
+The `defaultStylistId` *is* now applied to `selectedStylist` (line 477 effect we added last round), but the auto-select effect at line 729 still runs and can clobber/overwrite, AND the visual list ordering at line 1912 sorts purely by stylist level (line 715) — Alexis isn't pinned to the top even when she's the clicked-column default. So even when she's selected, she renders mid-list and the user can't see the highlight without scrolling.
 
-## What to build
+## Fix
 
-### 1) Fix clicked-slot stylist preselection
-In `QuickBookingPopover.tsx`:
-- when opening with `defaultStylistId`, initialize the booking state from it
-- set `selectedStylist` to that stylist on open
-- optionally promote it to the first/highlighted stylist in the stylist step
-- preserve existing draft/rebook behavior so draft data still wins when present
+Single file: `src/components/dashboard/schedule/QuickBookingPopover.tsx`.
 
-Expected result:
-- clicking Alexis’ column opens the wizard already scoped to Alexis
-- Alexis appears selected first instead of requiring manual selection
+### A. Dedupe location-scoped stylists
+Add a `useMemo` that dedupes `stylists` by `user_id` before it feeds `filteredStylists`. Mirror the exact pattern already used in `uniqueAllStylists` (line 668).
 
-### 2) Fix the broken stylist fetch
-In `QuickBookingPopover.tsx`:
-- stop selecting `stylist_level` from `v_all_staff`
-- if level is needed for UI, hydrate it separately from `employee_profiles` or tolerate `null`
-- add explicit error handling instead of silently coercing failed queries to `[]`
+### B. Pin clicked-column stylist to the top of the list
+Update the sort inside `filteredStylists` (line 715):
+- If a stylist's `user_id === defaultStylistId`, force them to position 0
+- Otherwise fall back to the existing level-descending sort
 
-Expected result:
-- North Mesa stylists actually load again
+This guarantees Alexis appears at the top of "Available Stylists" when launched from her column, regardless of her stylist level.
 
-### 3) Fix qualification queries to the current schema
-In `useStaffServiceQualifications.ts`:
-- update the unified qualification view query to use:
-  - `service_external_id` instead of `phorest_service_id`
-  - `branch_id` instead of `phorest_branch_id`
-- for manual qualifications, resolve selected service external IDs to real internal `service_id` UUIDs before querying `staff_service_qualifications`
-- in the consumer, filter by both:
-  - `qualifiedStaffIds` via `phorest_staff_id`
-  - `qualifiedUserIds` via `user_id`
-  - and exclude `disqualifiedUserIds`
+### C. Harden the auto-select guard
+At the auto-select effect (line 729), add `defaultStylistId` to the early-return condition so it never overwrites the explicit clicked-column selection. Currently it only checks `!selectedStylist`, which can race with the seeding effect on first render.
 
-Expected result:
-- qualification filtering stops throwing 400s
-- stylists qualified for the selected service still appear correctly
-
-## Files to update
-
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx`
-  - apply `defaultStylistId` on open
-  - repair stylist fetch
-  - surface selected/default stylist first in UI
-  - add error handling for failed staff load
-
-- `src/hooks/useStaffServiceQualifications.ts`
-  - align queries to current database schema
-  - resolve external service IDs to internal UUIDs for manual qualification checks
-  - return data in a way the booking flow can use safely
+### D. (Out of scope but flagged) Database hygiene
+The duplicate rows in `v_all_staff` are a view-level data issue (likely a join multiplying rows from `phorest_staff_mapping` or a staff_locations join). I will not change the view in this pass — only defend against it in the consumer. Worth a follow-up to add `DISTINCT ON (user_id, location_id)` at the view level so every consumer is protected.
 
 ## Acceptance checks
 
-1. Click an open slot in **Alexis’** column.
-2. Open Quick Booking.
-3. Pick client Eric Day.
-4. Reach stylist step.
-5. Alexis is already selected or shown first.
-6. North Mesa stylists are visible instead of an empty list.
-7. If a service is selected, only qualified stylists remain.
-8. No 400 errors for:
-   - `v_all_staff`
-   - `v_all_staff_qualifications`
-   - `staff_service_qualifications`
+1. Click an empty slot in **Alexis's** column at North Mesa → open Quick Booking → pick Eric Day → reach Available Stylists.
+2. List shows **7 unique stylists** (no Trinity x2, no Samantha x2, no Eric D. x2).
+3. **Alexis appears first** with the selected/highlighted ring.
+4. Clicking another stylist still works and updates selection.
+5. Switching to a different location reloads correctly with no duplicates.
+6. Stylist-first mode (people icon) is unaffected — `uniqueAllStylists` already dedupes.
 
 ## Follow-up enhancements
 
-- Add a small badge at the top: “Booking with Alexis” when launched from a stylist column.
-- If the clicked stylist is unavailable for the selected service, show Alexis first with a clear “Not qualified for selected service” reason instead of silently removing her.
-- Consolidate the booking popover and booking wizard stylist-loading logic so these schema drifts do not happen in only one surface.
-</final-text>
+- Fix `v_all_staff` at the view level so no consumer has to re-dedupe — single source of truth.
+- Add a small "Selected from schedule" badge under Alexis's row when she's the `defaultStylistId`, so the user understands why she's pinned to the top.
+- If Alexis is *not qualified* for the selected service, still show her at the top with a muted "Not qualified for this service" subtitle and a disabled select state — better UX than silently dropping her.
