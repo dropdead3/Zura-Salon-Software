@@ -120,17 +120,6 @@ export function ScheduleHeader({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
   const [locationSelectOpen, setLocationSelectOpen] = useState(false);
-  const locationCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cancelLocationClose = () => {
-    if (locationCloseTimerRef.current) {
-      clearTimeout(locationCloseTimerRef.current);
-      locationCloseTimerRef.current = null;
-    }
-  };
-  const scheduleLocationClose = () => {
-    cancelLocationClose();
-    locationCloseTimerRef.current = setTimeout(() => setLocationSelectOpen(false), 120);
-  };
 
   // Org-timezone-aware "today"
   const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
