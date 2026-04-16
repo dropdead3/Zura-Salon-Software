@@ -835,6 +835,7 @@ export function DayView({
                           meeting={meeting}
                           hoursStart={hoursStart}
                           rowHeight={ROW_HEIGHT}
+                          slotInterval={slotInterval}
                           onClick={() => onMeetingClick?.(meeting)}
                         />
                       ))}
