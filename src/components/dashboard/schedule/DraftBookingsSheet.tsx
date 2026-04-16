@@ -8,6 +8,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { format } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -268,9 +270,24 @@ interface ClientGroupProps {
 }
 
 function ClientGroup({ clientKey, drafts, orgId, onResume, onDiscard, onDiscardAll, onCloseSheet }: ClientGroupProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
   const showCompare = drafts.length >= 2;
+
+  // Derive most recent draft + creator attribution for the collapsed header
+  const { mostRecent, otherCreatorsCount } = useMemo(() => {
+    const sorted = [...drafts].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    const recent = sorted[0];
+    const uniqueCreators = new Set(
+      drafts.map(d => d.created_by_name).filter((n): n is string => !!n)
+    );
+    const others = recent?.created_by_name
+      ? Math.max(0, uniqueCreators.size - 1)
+      : Math.max(0, uniqueCreators.size);
+    return { mostRecent: recent, otherCreatorsCount: others };
+  }, [drafts]);
 
   const toggleCompare = (id: string) => {
     setCompareIds(prev => {
@@ -294,22 +311,53 @@ function ClientGroup({ clientKey, drafts, orgId, onResume, onDiscard, onDiscardA
     onCloseSheet();
   };
 
+  const recentDate = mostRecent ? new Date(mostRecent.created_at) : null;
+  const relativeTime = recentDate ? formatDistanceToNow(recentDate, { addSuffix: true }) : null;
+  const absoluteTime = recentDate ? format(recentDate, "PPp") : null;
+  const creatorName = mostRecent?.created_by_name || 'Unknown';
+
   return (
     <>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden">
           {/* Group header */}
           <CollapsibleTrigger asChild>
-            <button className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/50 transition-colors text-left">
-              <div className="flex items-center gap-2">
-                {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-sans text-sm text-foreground">{clientKey}</span>
-                <span className="text-xs text-muted-foreground">
-                  ({drafts.length} draft{drafts.length > 1 ? 's' : ''})
-                </span>
+            <button className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/50 transition-colors text-left gap-2">
+              <div className="flex items-start gap-2 min-w-0 flex-1">
+                {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />}
+                <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1 leading-tight">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-sans text-sm text-foreground">{clientKey}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({drafts.length} draft{drafts.length > 1 ? 's' : ''})
+                    </span>
+                  </div>
+                  {mostRecent && (
+                    <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1 flex-wrap">
+                      <span className="truncate">{creatorName}</span>
+                      {otherCreatorsCount > 0 && (
+                        <span className="text-muted-foreground/70">+{otherCreatorsCount} other{otherCreatorsCount > 1 ? 's' : ''}</span>
+                      )}
+                      <span className="text-muted-foreground/50">·</span>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="hover:text-foreground transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {relativeTime}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">{absoluteTime}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {showCompare && compareIds.size === 2 && (
                   <span
                     className="text-xs text-primary hover:underline cursor-pointer flex items-center gap-1"
