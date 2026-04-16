@@ -585,7 +585,7 @@ export function DayView({
                   return (
                     <div
                       key={stylist.user_id}
-                      className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/50")}
+                      className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "shadow-[inset_0_0_0_9999px_hsl(var(--background)/0.32)]")}
                     >
                       {statusDot}
                       {avatar}
@@ -604,7 +604,7 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id}
-                    className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/50")}
+                    className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "shadow-[inset_0_0_0_9999px_hsl(var(--background)/0.32)]")}
                   >
                     {statusDot}
                     {avatar}
@@ -653,7 +653,7 @@ export function DayView({
                 return (
                   <div 
                     key={stylist.user_id} 
-                    className={cn("flex-1 min-w-0 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/50")}
+                    className={cn("flex-1 min-w-0 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "shadow-[inset_0_0_0_9999px_hsl(var(--background)/0.32)]")}
                   >
                     {/* Time slot backgrounds (droppable) */}
                     {timeSlots.map(({ hour, minute }) => {
