@@ -68,7 +68,7 @@ export function HelpFAB() {
               aria-label="AI Copilot"
               onClick={handleCopilotToggle}
             >
-              <CalendarClock className="h-6 w-6" />
+              <ZuraZIcon className="h-6 w-6 text-purple-400" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
