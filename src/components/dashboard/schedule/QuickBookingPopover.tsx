@@ -2410,6 +2410,7 @@ export function QuickBookingPopover({
             <>
               <motion.div
                 className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+                style={{ top: godModeOffset }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -2417,7 +2418,8 @@ export function QuickBookingPopover({
                 aria-hidden="true"
               />
               <motion.div
-                className="fixed z-50 top-3 right-3 bottom-3 w-full sm:max-w-md rounded-xl bg-card/80 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden"
+                className="fixed z-50 right-3 bottom-3 w-full sm:max-w-md rounded-xl bg-card/80 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden"
+                style={{ top: godModeOffset + 12 }}
                 initial={{ x: '100%', opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0 }}
