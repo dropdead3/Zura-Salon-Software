@@ -263,6 +263,7 @@ export function ScheduleHeader({
           </PopoverContent>
         </Popover>
         </div>
+        </div>
         {/* End Row 1 wrapper (<@md). At @md+, this wrapper is `contents` so children flow into the parent row. */}
 
         {/* Row 2 wrapper (<@md): filter icons left, selectors right. At @md+, dissolves via `contents`. */}
