@@ -182,6 +182,7 @@ function WeekAppointmentCard({
         showStylistBadge
         showClientPhone={false}
         showClientAvatar={false}
+        useShortLabels
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}

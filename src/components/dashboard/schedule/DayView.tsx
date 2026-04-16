@@ -319,6 +319,7 @@ function AppointmentCard({
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
         
+        useShortLabels={stylists.length >= 3}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
