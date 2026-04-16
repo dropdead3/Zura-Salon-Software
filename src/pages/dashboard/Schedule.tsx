@@ -119,6 +119,7 @@ export default function Schedule() {
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [zoomLevel, setZoomLevel] = useState(0);
   const locationTimezone = useLocationTimezone(selectedLocation || null);
 
   // Fetch assistant time blocks for the current date/location
@@ -807,6 +808,7 @@ export default function Schedule() {
                 onBlockClick={() => setBlockManagerOpen(true)}
                 adminMeetings={adminMeetings}
                 onMeetingClick={handleMeetingClick}
+                zoomLevel={zoomLevel}
               />
             );
           })()}
@@ -829,9 +831,10 @@ export default function Schedule() {
                  assistantProfilesMap={assistantProfilesMap}
                   assistantTimeBlocks={assistantTimeBlocks}
                   onBlockClick={() => setBlockManagerOpen(true)}
-                  adminMeetings={adminMeetings}
-                  onMeetingClick={handleMeetingClick}
-               />
+                   adminMeetings={adminMeetings}
+                   onMeetingClick={handleMeetingClick}
+                   zoomLevel={zoomLevel}
+                />
           )}
           
           {view === 'week' && (
@@ -969,6 +972,9 @@ export default function Schedule() {
                       setDetailOpen(true);
                     }}
                     todayAppointmentCount={todayAppointmentCount}
+                    zoomLevel={zoomLevel}
+                    onZoomIn={() => setZoomLevel(prev => Math.min(prev + 1, 2))}
+                    onZoomOut={() => setZoomLevel(prev => Math.max(prev - 1, 0))}
                   />
                 </div>
               </div>

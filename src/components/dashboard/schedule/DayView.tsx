@@ -68,6 +68,7 @@ interface DayViewProps {
   currentUserId?: string;
   adminMeetings?: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] })[];
   onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
+  zoomLevel?: number;
 }
 
 // Use consolidated status colors from design tokens
@@ -117,6 +118,7 @@ function DroppableSlot({
   onClick,
   
   isOver,
+  rowHeight = 20,
 }: {
   id: string;
   hour: number;
@@ -128,6 +130,7 @@ function DroppableSlot({
   onClick: () => void;
   
   isOver: boolean;
+  rowHeight?: number;
 }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
   const highlight = isOver || dndIsOver;
@@ -143,7 +146,7 @@ function DroppableSlot({
     <div
       ref={setNodeRef}
       className={cn(
-        'h-5 group relative',
+        'group relative',
         borderClass,
         isPastSlot
           ? 'bg-muted/40 cursor-not-allowed'
@@ -154,9 +157,12 @@ function DroppableSlot({
               : 'bg-muted/50',
         highlight && isAvailable && 'bg-primary/20 ring-1 ring-primary/40'
       )}
-      style={isOutsideHours && !isPastSlot ? {
-        background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-      } : undefined}
+      style={{
+        height: `${rowHeight}px`,
+        ...(isOutsideHours && !isPastSlot ? {
+          background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+        } : {}),
+      }}
       onClick={() => {
         if (isPastSlot || isAvailable || isOutsideHours) onClick();
       }}
@@ -194,6 +200,8 @@ interface AppointmentCardProps {
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   hasCoverageScheduled?: boolean;
   date?: Date;
+  rowHeight?: number;
+  zoomLevel?: number;
 }
 
 function AppointmentCard({
@@ -211,6 +219,8 @@ function AppointmentCard({
   serviceLookup,
   assistantNamesMap,
   date,
+  rowHeight = 20,
+  zoomLevel = 0,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -262,10 +272,10 @@ function AppointmentCard({
     };
   }, [isDragOverlay, isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight);
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
-  const size = getCardSize(appointment.start_time, appointment.end_time);
+  const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel);
 
   const shrunkWidth = isDragOverlay ? undefined : isHoveredRight
     ? `calc(${widthPercent * 0.7}% - 4px)`
@@ -347,8 +357,10 @@ export function DayView({
   currentUserId,
   adminMeetings = [],
   onMeetingClick,
+  zoomLevel = 0,
 }: DayViewProps) {
-  const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
+  const ROW_HEIGHTS = [20, 30, 40];
+  const ROW_HEIGHT = ROW_HEIGHTS[zoomLevel] ?? 20;
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -692,8 +704,9 @@ export function DayView({
                 {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => (
                   <div 
                     key={`${hour}-${minute}`}
+                    style={{ height: `${ROW_HEIGHT}px` }}
                     className={cn(
-                      'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
+                      'text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
                       isHour && 'font-medium'
                     )}
                   >
@@ -744,6 +757,7 @@ export function DayView({
                           isOutsideHours={!!isOutsideHours}
                           showCurrentTime={showCurrentTime}
                           isOver={false}
+                          rowHeight={ROW_HEIGHT}
                           onClick={() => {
                             onSlotClick?.(stylist.user_id, slotTime);
                           }}
@@ -792,6 +806,8 @@ export function DayView({
                           assistantProfilesMap={assistantProfilesMap}
                           hasCoverageScheduled={hasCoverage}
                           date={date}
+                          rowHeight={ROW_HEIGHT}
+                          zoomLevel={zoomLevel}
                         />
                       );
                     })}
@@ -837,6 +853,8 @@ export function DayView({
             colorBy={colorBy}
             serviceLookup={serviceLookup}
             isDragOverlay
+            rowHeight={ROW_HEIGHT}
+            zoomLevel={zoomLevel}
           />
         )}
       </DragOverlay>
