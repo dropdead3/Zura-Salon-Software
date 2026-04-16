@@ -323,7 +323,7 @@ function GridContent({
       {/* Time + price — defer until taller cards so 60min cards stay clean */}
       {size === 'full' && duration >= 60 && (
         <div className="text-[13px] opacity-80 mt-0.5 flex items-center justify-between">
-          <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
+          <span className="whitespace-nowrap truncate">{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
           {appointment.total_price != null && appointment.total_price > 0 && (
             <BlurredAmount className="text-[11px] opacity-70">
               ${appointment.total_price.toFixed(0)}
