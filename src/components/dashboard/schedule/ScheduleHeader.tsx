@@ -269,7 +269,10 @@ export function ScheduleHeader({
             </div>
           </div>
         </div>
+        {/* End Row 1 wrapper (<xl). At xl+, this wrapper is `contents` so children flow into the parent row. */}
 
+        {/* Row 2 wrapper (<xl): filter icons left, selectors right. At xl+, dissolves via `contents`. */}
+        <div className="flex items-center justify-between xl:contents">
         {/* Right: Filters & Actions */}
         <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
