@@ -172,7 +172,7 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
         <div className="px-3 pt-2 pb-2 border-b border-border/60">
           <div className="flex items-center gap-px">
             {ALPHABET.map((letter) => {
-              const available = availableLetters.has(letter);
+              const available = isControlled || availableLetters.has(letter);
               const active = activeLetter === letter;
               return (
                 <button

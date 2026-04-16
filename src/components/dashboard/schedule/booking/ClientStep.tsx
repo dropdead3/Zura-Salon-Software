@@ -42,15 +42,17 @@ function AlphabetBar({
   availableLetters,
   activeLetter,
   onLetterClick,
+  allEnabled = false,
 }: {
   availableLetters: Set<string>;
   activeLetter: string | null;
   onLetterClick: (letter: string) => void;
+  allEnabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-0.5 select-none">
       {ALPHABET.map((letter) => {
-        const available = availableLetters.has(letter);
+        const available = allEnabled || availableLetters.has(letter);
         const active = activeLetter === letter;
         return (
           <button
@@ -198,6 +200,7 @@ export function ClientStep({
               availableLetters={availableLetters}
               activeLetter={activeLetter}
               onLetterClick={handleLetterClick}
+              allEnabled={isControlled}
             />
             {activeLetter && (
               <div className="flex justify-end mt-1.5">
