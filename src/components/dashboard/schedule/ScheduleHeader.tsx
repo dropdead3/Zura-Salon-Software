@@ -252,10 +252,10 @@ export function ScheduleHeader({
         </div>
 
         {/* Center: Date Display */}
-        <div className="text-center min-w-0 truncate">
-          {/* Compact single-line at < xl */}
-          <div className="xl:hidden text-sm font-display tracking-wide whitespace-nowrap truncate">
-            {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d, yyyy')}
+        <div className="text-center min-w-0">
+          {/* Compact single-line at < xl — abbreviated, no year */}
+          <div className="xl:hidden text-sm font-display tracking-wide whitespace-nowrap">
+            {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
           </div>
           {/* Two-line at xl+ */}
           <div className="hidden xl:block">
