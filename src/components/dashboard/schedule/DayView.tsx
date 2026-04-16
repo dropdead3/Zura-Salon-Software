@@ -221,9 +221,11 @@ function AppointmentCard({
   const [isHoveredRight, setIsHoveredRight] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragOverlay) return;
+    if (isDragOverlay || isHoveredRight) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    setIsHoveredRight(e.clientX > rect.right - 24);
+    if (e.clientX > rect.right - 24) {
+      setIsHoveredRight(true);
+    }
   };
 
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
