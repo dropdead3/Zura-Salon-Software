@@ -1375,6 +1375,15 @@ export function AppointmentDetailSheet({
                       <Star className="h-3 w-3 mr-1" /> New
                     </Badge>
                   )}
+                  {appointment._source === 'local' ? (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
+                      Source: Native
+                    </Badge>
+                  ) : appointment._source === 'phorest' ? (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
+                      Source: Synced (legacy)
+                    </Badge>
+                  ) : null}
                 </div>
 
                 {/* Status Lifecycle Timeline */}
