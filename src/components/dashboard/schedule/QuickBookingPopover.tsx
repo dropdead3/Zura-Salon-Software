@@ -41,7 +41,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAllServicesByCategory } from '@/hooks/usePhorestServices';
 import { useLocations } from '@/hooks/useLocations';
-import { NewClientDialog } from './NewClientDialog';
 import { NewClientStep } from './booking/NewClientStep';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAuth } from '@/contexts/AuthContext';
