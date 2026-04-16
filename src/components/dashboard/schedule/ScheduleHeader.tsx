@@ -152,9 +152,9 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 xl:flex-row xl:flex-nowrap xl:items-center xl:justify-between xl:gap-0">
-        {/* Row 1 (<xl): Left cluster + condensed date right. At xl+: just the left cluster. */}
-        <div className="flex items-center justify-between xl:justify-start xl:contents">
+      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-0">
+        {/* Row 1 (<md): Left cluster + condensed date right. At md+: just the left cluster. */}
+        <div className="flex items-center justify-between md:justify-start md:contents">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
