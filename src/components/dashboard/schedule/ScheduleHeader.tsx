@@ -200,7 +200,7 @@ export function ScheduleHeader({
                   <button
                     onClick={onToggleShiftsView}
                     className={cn(
-                      'hidden @lg/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                      'hidden @xl/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
                       showShiftsView
                         ? 'bg-[hsl(var(--sidebar-foreground))] text-[hsl(var(--sidebar-background))] font-medium'
                         : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
