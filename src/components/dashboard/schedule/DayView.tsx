@@ -395,13 +395,13 @@ export function DayView({
       openHour = h;
     }
     const scrollToHour = Math.max(openHour - 1, hoursStart);
-    const slotsOffset = (scrollToHour - hoursStart) * 4; // 4 slots per hour
+    const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
     const top = slotsOffset * ROW_HEIGHT;
     const ref = scrollRef.current;
     requestAnimationFrame(() => {
       ref?.scrollTo({ top, behavior: 'instant' });
     });
-  }, [date.toDateString(), locationHours?.open, hoursStart]);
+  }, [date.toDateString(), locationHours?.open, hoursStart, slotInterval, ROW_HEIGHT]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -417,7 +417,7 @@ export function DayView({
   const timeSlots = useMemo(() => {
     const slots: { hour: number; minute: number; label: string; isHour: boolean; isHalf: boolean }[] = [];
     for (let hour = hoursStart; hour < hoursEnd; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += slotInterval) {
         const isHour = minute === 0;
         const isHalf = minute === 30;
         const label = isHour ? formatHour(hour) : isHalf ? '30' : '';
@@ -425,7 +425,7 @@ export function DayView({
       }
     }
     return slots;
-  }, [hoursStart, hoursEnd]);
+  }, [hoursStart, hoursEnd, slotInterval]);
 
   const dateStr = format(date, 'yyyy-MM-dd');
   const weekNumber = getWeek(date);
@@ -498,7 +498,7 @@ export function DayView({
   const { isToday: isDayToday, nowMinutes: dayNowMins } = useOrgNow();
   const showCurrentTime = isDayToday(date);
   const currentTimeOffset = showCurrentTime
-    ? (dayNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (dayNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
     : 0;
 
   // Calculate overlapping appointments for a stylist
