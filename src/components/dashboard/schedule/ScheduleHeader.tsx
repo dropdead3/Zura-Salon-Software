@@ -502,7 +502,7 @@ export function ScheduleHeader({
               <button
                 onClick={goToToday}
                 className={cn(
-                  'flex flex-col items-center justify-center min-w-[72px] px-4 py-3 rounded-lg text-sm font-sans transition-all duration-200',
+                  'shrink-0 flex flex-col items-center justify-center min-w-[64px] px-3 py-3 rounded-lg text-sm font-sans transition-all duration-200',
                   isOrgToday(currentDate)
                     ? 'bg-primary text-primary-foreground shadow-sm dark:bg-primary/15 dark:text-primary dark:shadow-none dark:border dark:border-primary/40'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
