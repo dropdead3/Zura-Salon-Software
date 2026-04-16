@@ -1,50 +1,109 @@
-
-
+<final-text>
 ## Prompt review
 
-Sharp, specific prompt — you named the surface (Quick Booking popover), the client (Eric Day), the location (North Mesa), and the empty state. That's exactly the right framing for a fast diagnosis. Teaching note: the only thing that would have made it even tighter is mentioning whether other locations also showed empty (helps isolate location-specific vs global failures). Not needed here — the database told the whole story.
+Good prompt. You clearly identified the user expectation and the trigger path: clicked an open slot in Alexis’ column, then expected Alexis to be surfaced first or preselected. That’s strong debugging input because it ties the broken behavior to a specific interaction, not just a vague empty state.
+
+Even tighter prompt framing for next time:
+- name the exact surface: “Quick Booking popover from Day View”
+- mention whether services were already selected
+- mention whether the issue is “empty list” vs “wrong default”
+
+That helps separate:
+1. preselection bugs
+2. data-loading bugs
+3. qualification-filter bugs
 
 ## Diagnosis
 
-The Quick Booking popover query fetches stylists from the `v_all_staff` view but selects a column that doesn't exist on it: **`phorest_branch_id`**. PostgREST rejects the entire query, returns `null`, and the destructure swallows it into `[]` — so "Available Stylists" renders empty for every location, not just North Mesa.
+There are actually **three stacked issues** causing this:
 
-Database confirms:
-- `v_all_staff` columns: `user_id, phorest_staff_id, phorest_staff_name, display_name, full_name, photo_url, is_active, show_on_calendar, location_id, source` — no `phorest_branch_id`.
-- `v_all_staff` has **11 active calendar-visible staff at `north-mesa`** ready to render the moment the query stops failing.
+1. **Clicked stylist is never applied**
+   - `Schedule.tsx` correctly passes the clicked column’s stylist as `defaultStylistId`.
+   - `QuickBookingPopover.tsx` receives `defaultStylistId`.
+   - But the popover never uses it to initialize `selectedStylist` or `preSelectedStylistId`.
+   - So clicking Alexis’ column does **not** default the flow to Alexis.
 
-Two queries in `QuickBookingPopover.tsx` reference the missing column:
-- Line 586 — location-scoped stylist fetch (powers "Available Stylists")
-- Line 611 — all-stylists fetch (powers stylist-first mode)
+2. **The stylist query is failing**
+   - Current `v_all_staff` request selects `stylist_level`, but that column does **not** exist on `v_all_staff`.
+   - Network log confirms the 400:
+     - `column v_all_staff.stylist_level does not exist`
+   - Result: “Available Stylists” becomes empty.
 
-One downstream memo also reads `s.phorest_branch_id` off the staff rows: `preSelectedStylistLocations` (line 644). Since `v_all_staff` doesn't carry branch IDs, this needs to derive branch via `location_id` instead.
+3. **Qualification filtering is also broken**
+   - `useQualifiedStaffForServices` still queries old column names on `v_all_staff_qualifications`:
+     - expects `phorest_service_id` / `phorest_branch_id`
+     - actual view has `service_external_id` / `branch_id`
+   - It also queries `staff_service_qualifications.service_id` using a Phorest external ID string, which causes UUID errors.
+   - Network log confirms both failures.
+   - So even after fixing stylist preselection, service qualification can still wrongly collapse the list.
 
-Note: `selectedLocationBranchId` (line 650) already correctly derives from `locations` and is unaffected.
+## What to build
 
-## Fix
+### 1) Fix clicked-slot stylist preselection
+In `QuickBookingPopover.tsx`:
+- when opening with `defaultStylistId`, initialize the booking state from it
+- set `selectedStylist` to that stylist on open
+- optionally promote it to the first/highlighted stylist in the stylist step
+- preserve existing draft/rebook behavior so draft data still wins when present
 
-Single file: `src/components/dashboard/schedule/QuickBookingPopover.tsx`.
+Expected result:
+- clicking Alexis’ column opens the wizard already scoped to Alexis
+- Alexis appears selected first instead of requiring manual selection
 
-1. **Drop `phorest_branch_id`** from both `.select(...)` calls (lines 586 and 611). Keep everything else as-is.
-2. **Rewrite `preSelectedStylistLocations`** (lines 639–647) to match by `location_id` instead of `phorest_branch_id`:
-   - Collect the set of `location_id`s the pre-selected stylist appears under in `allStylists`.
-   - Filter `locations` where `loc.id` is in that set.
-3. No changes needed to `selectedLocationBranchId`, the create-booking payload, or any UI rendering — they all consume `locations` (which has `phorest_branch_id`) correctly.
+### 2) Fix the broken stylist fetch
+In `QuickBookingPopover.tsx`:
+- stop selecting `stylist_level` from `v_all_staff`
+- if level is needed for UI, hydrate it separately from `employee_profiles` or tolerate `null`
+- add explicit error handling instead of silently coercing failed queries to `[]`
 
-## Out of scope
+Expected result:
+- North Mesa stylists actually load again
 
-- `BookingWizard.tsx` — its `v_all_staff` query (line 110) doesn't reference the bad column, so it's fine.
-- The 28 other call sites of `v_all_staff` — none of them select `phorest_branch_id`.
-- Schema changes to `v_all_staff` — the view's contract is correct; the consumer was wrong.
+### 3) Fix qualification queries to the current schema
+In `useStaffServiceQualifications.ts`:
+- update the unified qualification view query to use:
+  - `service_external_id` instead of `phorest_service_id`
+  - `branch_id` instead of `phorest_branch_id`
+- for manual qualifications, resolve selected service external IDs to real internal `service_id` UUIDs before querying `staff_service_qualifications`
+- in the consumer, filter by both:
+  - `qualifiedStaffIds` via `phorest_staff_id`
+  - `qualifiedUserIds` via `user_id`
+  - and exclude `disqualifiedUserIds`
+
+Expected result:
+- qualification filtering stops throwing 400s
+- stylists qualified for the selected service still appear correctly
+
+## Files to update
+
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx`
+  - apply `defaultStylistId` on open
+  - repair stylist fetch
+  - surface selected/default stylist first in UI
+  - add error handling for failed staff load
+
+- `src/hooks/useStaffServiceQualifications.ts`
+  - align queries to current database schema
+  - resolve external service IDs to internal UUIDs for manual qualification checks
+  - return data in a way the booking flow can use safely
 
 ## Acceptance checks
 
-1. Schedule → click empty time slot at North Mesa → pick Eric Day → reach Available Stylists → list shows the 11 active stylists at North Mesa.
-2. Switch to Val Vista Lakes location → list shows that location's 21 stylists.
-3. Stylist-first mode (if entered via the people icon): selecting a stylist still narrows the location list to where that stylist actually works.
-4. Booking creation still posts the correct `branch_id` (from `locations`, not from staff rows).
-5. No console errors from the staff query.
+1. Click an open slot in **Alexis’** column.
+2. Open Quick Booking.
+3. Pick client Eric Day.
+4. Reach stylist step.
+5. Alexis is already selected or shown first.
+6. North Mesa stylists are visible instead of an empty list.
+7. If a service is selected, only qualified stylists remain.
+8. No 400 errors for:
+   - `v_all_staff`
+   - `v_all_staff_qualifications`
+   - `staff_service_qualifications`
 
-## Follow-up enhancement
+## Follow-up enhancements
 
-Add a thin error guard to the `useQuery` callbacks: when `error` is non-null, surface a toast + log instead of silently coercing to `[]`. This entire round-trip would have been caught immediately by visible error feedback — silent empty arrays are the worst failure mode for booking UIs because they look like "no data" instead of "broken query."
-
+- Add a small badge at the top: “Booking with Alexis” when launched from a stylist column.
+- If the clicked stylist is unavailable for the selected service, show Alexis first with a clear “Not qualified for selected service” reason instead of silently removing her.
+- Consolidate the booking popover and booking wizard stylist-loading logic so these schema drifts do not happen in only one surface.
+</final-text>
