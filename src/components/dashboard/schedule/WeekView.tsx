@@ -93,7 +93,7 @@ function WeekSlot({
     <div
       className={cn(
         'cursor-pointer transition-colors group relative',
-        isPastSlot && 'bg-muted/40',
+        isPastSlot && 'cursor-not-allowed',
         !isPastSlot && !isOutsideHours && 'hover:bg-primary/10',
         isHour
           ? 'border-t border-border/80 dark:border-border/60'
@@ -481,6 +481,13 @@ export function WeekView({
                     dayHoursInfo.isClosed && 'bg-muted/20'
                   )}
                 >
+                  {/* Past-time overlay — pixel-aligned to the current-time indicator (today only) */}
+                  {isCurrentDay && currentTimeOffset > 0 && (
+                    <div
+                      className="absolute inset-x-0 top-0 bg-muted/40 pointer-events-none z-[1]"
+                      style={{ height: `${Math.min(currentTimeOffset, timeSlots.length * ROW_HEIGHT)}px` }}
+                    />
+                  )}
                   {/* Time slot rows */}
                   {timeSlots.map((slot) => {
                     const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`;
