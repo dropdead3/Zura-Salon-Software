@@ -155,51 +155,83 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
   const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => { if (el) letterRefs.current.set(letter, el); else letterRefs.current.delete(letter); }, []);
   const gi = (name: string) => { const p = name.trim().split(/\s+/); return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase(); };
   const fp = (phone: string | null) => { if (!phone) return null; const d = phone.replace(/\D/g, ''); if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`; if (d.length === 11 && d[0] === '1') return `(${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`; return phone; };
-  const showStrip = sortedClients.length > 0 && !isLoading;
-  const handleTouchMove = useCallback((e: React.TouchEvent) => { const t = e.touches[0]; const el = document.elementFromPoint(t.clientX, t.clientY); const l = el?.getAttribute('data-letter'); if (l && availableLetters.has(l)) handleLetterClick(l); }, [availableLetters, handleLetterClick]);
+  const showBar = sortedClients.length > 0 && !isLoading;
 
   return (
-    <div className="flex-1 relative min-h-0">
-      <ScrollArea className="h-full">
-        <div className={cn('p-2', showStrip && 'pr-8')}>
-          {isLoading ? (
-            <DashboardLoader size="sm" className="py-8" />
-          ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search'}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
-          ) : (
-            <div className="space-y-0.5">
-              {filteredClients.map((client) => {
-                const letter = getSortLetterForClient(client.name);
-                const isFirst = firstClientPerLetter.get(letter) === client.id;
-                return (
-                  <div key={client.id}>
-                    {isFirst && (<div ref={(el) => setLetterRef(letter, el)} className="px-3 pt-2 pb-1"><span className="font-sans text-[11px] text-muted-foreground tracking-wide">{letter}</span></div>)}
-                    <div className={cn('flex items-center gap-2 p-2.5 rounded-lg', 'hover:bg-muted/70 transition-colors', client.is_banned && 'border border-destructive/30 bg-destructive/5')}>
-                      <button className="flex items-center gap-3 flex-1 min-w-0 text-left" onClick={() => onSelectClient(client)}>
-                        <Avatar className="h-9 w-9 bg-muted shrink-0"><AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">{gi(client.name)}</AvatarFallback></Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2"><span className="font-medium text-sm truncate">{client.name}</span>{client.is_banned && <BannedClientBadge />}</div>
-                          <div className="text-xs text-muted-foreground truncate">{fp(client.phone) || client.email || 'No contact info'}</div>
-                        </div>
-                      </button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); onViewProfile(client); }}><Info className="h-4 w-4" /></Button>
-                    </div>
-                  </div>
-                );
-              })}
+    <div className="flex-1 flex flex-col min-h-0">
+      {showBar && (
+        <div className="px-3 pt-2 pb-2 border-b border-border/60">
+          <div className="flex items-center gap-px">
+            {ALPHABET.map((letter) => {
+              const available = availableLetters.has(letter);
+              const active = activeLetter === letter;
+              return (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => available && handleLetterClick(letter)}
+                  disabled={!available}
+                  className={cn(
+                    'flex-1 min-w-0 h-7 rounded-md font-sans text-[11px] leading-none transition-all',
+                    active
+                      ? 'bg-primary/10 text-primary font-medium scale-105'
+                      : available
+                      ? 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      : 'text-muted-foreground/30 pointer-events-none',
+                  )}
+                  tabIndex={-1}
+                >
+                  {letter}
+                </button>
+              );
+            })}
+          </div>
+          {activeLetter && (
+            <div className="flex justify-end mt-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveLetter(null)}
+                className="font-sans text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear "{activeLetter}"
+              </button>
             </div>
           )}
         </div>
-      </ScrollArea>
-      {showStrip && (
-        <div className="absolute right-1 top-0 bottom-0 w-5 flex flex-col items-center justify-center z-10 select-none" onTouchMove={handleTouchMove}>
-          {ALPHABET.map((letter) => {
-            const available = availableLetters.has(letter);
-            const active = activeLetter === letter;
-            return (<button key={letter} data-letter={letter} className={cn('font-sans leading-none py-[1px] w-full text-center transition-all', available ? active ? 'text-primary font-medium text-[11px]' : 'text-muted-foreground text-[10px] hover:text-foreground' : 'text-muted-foreground/30 text-[10px] pointer-events-none')} onClick={() => available && handleLetterClick(letter)} tabIndex={-1} type="button">{letter}</button>);
-          })}
-        </div>
       )}
+      <div className="flex-1 min-h-0 relative">
+        <ScrollArea className="h-full">
+          <div className="p-2">
+            {isLoading ? (
+              <DashboardLoader size="sm" className="py-8" />
+            ) : filteredClients.length === 0 ? (
+              <div className="text-center py-8"><p className="text-muted-foreground text-sm">{activeLetter ? `No clients starting with "${activeLetter}"` : clientSearch ? 'No clients found' : 'Start typing to search'}</p>{activeLetter && <button className="text-primary text-xs mt-1 hover:underline" onClick={() => setActiveLetter(null)}>Clear filter</button>}</div>
+            ) : (
+              <div className="space-y-0.5">
+                {filteredClients.map((client) => {
+                  const letter = getSortLetterForClient(client.name);
+                  const isFirst = firstClientPerLetter.get(letter) === client.id;
+                  return (
+                    <div key={client.id}>
+                      {isFirst && (<div ref={(el) => setLetterRef(letter, el)} className="px-3 pt-2 pb-1"><span className="font-sans text-[11px] text-muted-foreground tracking-wide">{letter}</span></div>)}
+                      <div className={cn('flex items-center gap-2 p-2.5 rounded-lg', 'hover:bg-muted/70 transition-colors', client.is_banned && 'border border-destructive/30 bg-destructive/5')}>
+                        <button className="flex items-center gap-3 flex-1 min-w-0 text-left" onClick={() => onSelectClient(client)}>
+                          <Avatar className="h-9 w-9 bg-muted shrink-0"><AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">{gi(client.name)}</AvatarFallback></Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2"><span className="font-medium text-sm truncate">{client.name}</span>{client.is_banned && <BannedClientBadge />}</div>
+                            <div className="text-xs text-muted-foreground truncate">{fp(client.phone) || client.email || 'No contact info'}</div>
+                          </div>
+                        </button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); onViewProfile(client); }}><Info className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   );
 }
