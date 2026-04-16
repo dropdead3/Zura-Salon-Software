@@ -1,65 +1,38 @@
 
-
 ## Prompt review
 
-Good catch — you reported the symptom precisely (booking wizard covered by God Mode bar) and the screenshot makes the clipping unmistakable. Teaching note: when reporting overlay/z-index bugs, the surface name ("the panel-mode QuickBookingPopover") and which mode you're in (God Mode vs normal) speeds diagnosis. Micro-improvement: the platform's `PremiumFloatingPanel` already solves this — calling that out ("does this use the canonical panel?") would have pre-confirmed my fix path.
+Clear and actionable — you described the trigger (mouse exits) and the desired behavior (auto-close). Teaching note: naming the surface ("the date picker popover in the schedule header") would have skipped a discovery step. Micro-improvement: specifying intent around the legend row ("Filling / Tight / Booked") helps me decide whether the close zone includes it — I'll assume yes (the whole popover panel).
 
 ## Diagnosis
 
-`QuickBookingPopover.tsx` does **not** use the canonical `PremiumFloatingPanel`. It hand-rolls its own floating container with hardcoded positioning that ignores the God Mode bar:
+Need to locate the calendar popover used in the schedule header (visible in screenshot). Based on prior context, this lives near `ScheduleActionBar.tsx`. Most likely a shadcn `Popover` opened on click. The fix is to add hover-leave auto-close behavior on the `PopoverContent` — close after a short delay (~200ms) when the cursor leaves, with a re-entry cancel.
 
-**Panel mode** (lines 2410–2426):
-- Backdrop: `fixed inset-0 z-40` — covers the bar.
-- Panel: `fixed z-50 top-3 right-3 bottom-3` — top edge sits at 12px, but the God Mode bar occupies the top 44px → panel header (progress bar, "Thu, Apr 16 at 9:00 AM", close button) is hidden behind the bar.
-
-**Popover mode** (lines 2438–2455): same backdrop issue, plus a centered modal at `top-1/2`. Less affected (centered ≠ clipped) but the backdrop still covers the bar.
-
-The God Mode bar is `z-[60]` (`GodModeBar.tsx` line 33), so even though the panel renders below it, the panel's own top edge is geometrically beneath the bar — the bar wins visually but the panel's interactive controls become unreachable.
-
-`PremiumFloatingPanel` already handles this exact case (lines 91–102 of `premium-floating-panel.tsx`): adds 44px top offset when `isImpersonating`, and shifts the backdrop down so it doesn't darken the bar.
+The pattern already exists in the codebase: `HoverPopover.tsx` implements exactly this (open/close with `CLOSE_DELAY = 150ms`, timer cancellation on re-enter). However, that component opens *on hover* — the user wants click-to-open, hover-out-to-close. So the right move is to add `onMouseLeave` / `onMouseEnter` handlers directly to the existing `PopoverContent` with a debounced close.
 
 ## Fix
 
-Mirror the `PremiumFloatingPanel` God Mode logic inside `QuickBookingPopover.tsx`. Minimal, surgical — no API change, no refactor to `PremiumFloatingPanel` (separate concern, the inner content has its own header/scroll system that doesn't drop into the canonical panel cleanly).
+1. Locate the calendar popover (likely `src/components/dashboard/schedule/ScheduleActionBar.tsx` or a date-picker child).
+2. Add a small ref-tracked timer:
+   - `onMouseLeave` on `PopoverContent` → `setTimeout(close, 200ms)`
+   - `onMouseEnter` → clear the timer (covers brief cursor flicker)
+3. Clean up the timer on unmount and on manual close.
 
-### 1. Read God Mode state
-
-Add inside the component body (near other context hooks):
-```ts
-const { isImpersonating } = useOrganizationContext();
-const godModeOffset = isImpersonating ? 44 : 0;
-```
-
-### 2. Panel mode (the failing case in the screenshot)
-
-- **Backdrop** (line 2411): add inline `style={{ top: godModeOffset }}` so the dimmer starts below the bar.
-- **Panel** (line 2419): swap `top-3` for an inline `style={{ top: godModeOffset + 12 }}` (preserves the 12px gap on normal screens, gives 56px in God Mode → 12px breathing room below the 44px bar). Keep `right-3 bottom-3` as-is.
-
-### 3. Popover mode (centered)
-
-- **Backdrop** (line 2440): same `style={{ top: godModeOffset }}` shift.
-- **Centered card** (line 2452): no position change needed — centered modal already sits well below the bar at typical viewport heights. Backdrop fix alone is sufficient.
-
-### 4. Mobile parity
-
-`useIsMobile` already exists in the file (used elsewhere). On mobile in God Mode, the panel's `top-3` similarly clips. The same `godModeOffset` math handles both — `44px` on mobile, `44px` on desktop (bar height is `40` mobile / `44` desktop per `GodModeBar.tsx`). Use `44` for both — the 4px difference on mobile becomes a tiny extra gap, imperceptible and safe.
+Keep the click-to-open trigger as-is — only the close behavior changes. 200ms grace period prevents accidental closes when the cursor briefly grazes the edge.
 
 ## Acceptance checks
 
-1. Open booking wizard in God Mode → top edge sits ~12px below the violet bar; full header (progress dots, datetime, close X) is visible and clickable.
-2. Open booking wizard with God Mode off → no visual change vs today (still `top: 12px`).
-3. Backdrop in God Mode does not darken the violet bar — bar stays fully readable.
-4. Centered popover mode in God Mode → backdrop clears the bar; modal still centered.
-5. Mobile God Mode → panel slides in below the bar, no header clipping.
-6. No regression on `Sheet`/`Dialog` siblings (`NewClientDialog`, `BannedClientWarningDialog`) — they're shadcn primitives unaffected by this change.
+1. Click the date pill → popover opens (unchanged).
+2. Move cursor off the popover → closes after ~200ms.
+3. Move cursor off then back within 200ms → stays open.
+4. Selecting a date still closes the popover (existing behavior preserved).
+5. Clicking outside still closes (Radix default preserved).
 
 ## Out of scope
 
-- Migrating `QuickBookingPopover` to `PremiumFloatingPanel` (heavier refactor; the inner shell has bespoke step/progress chrome that doesn't drop in cleanly).
-- Auditing every other hand-rolled `fixed` overlay in the codebase for God Mode awareness (separate sweep — file a follow-up if you want platform-wide compliance).
-- Changing the bar height or z-index hierarchy.
+- Converting to hover-to-open (would change interaction model).
+- Restyling the calendar or legend.
+- Touching `HoverPopover` or other popovers platform-wide.
 
 ## Files touched
 
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — add `useOrganizationContext` import (already imported elsewhere; verify), compute `godModeOffset`, apply `style={{ top: ... }}` to the two backdrops + the panel container.
-
+- The schedule header date-picker file (to be confirmed on read — likely `src/components/dashboard/schedule/ScheduleActionBar.tsx` or a `DatePickerPopover` child) — add controlled `open` state + mouse leave/enter handlers with debounced close.
