@@ -560,6 +560,12 @@ export function DayView({
                       </div>
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <span className={cn(pctColor)}>{pct}%</span>
+                        {levelInfo && (
+                          <>
+                            <span className="text-muted-foreground/50">·</span>
+                            <span className="text-muted-foreground">{levelInfo.label}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
