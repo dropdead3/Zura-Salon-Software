@@ -528,7 +528,7 @@ export function DayView({
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const containerWidth = entry.contentRect.width - 70; // subtract week indicator
-        const colWidth = containerWidth / count;
+        const colWidth = Math.max(containerWidth / count, MIN_COL_WIDTH);
         setColumnWidth(colWidth);
       }
     });
@@ -642,8 +642,8 @@ export function DayView({
           </div>
         )}
         {/* Calendar Grid */}
-        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <div>
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+          <div style={{ minWidth: gridMinWidth }}>
             {/* Stylist Headers - frosted glass sticky header */}
             <div ref={headerRowRef} className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
@@ -714,7 +714,7 @@ export function DayView({
                   return (
                     <div
                       key={stylist.user_id}
-                      className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                      className={cn("relative flex-1 min-w-[120px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
                     >
                       {statusDot}
                       {avatar}
@@ -733,7 +733,7 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id}
-                    className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                    className={cn("relative flex-1 min-w-[120px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
                   >
                     {statusDot}
                     {avatar}
@@ -783,7 +783,7 @@ export function DayView({
                 return (
                   <div 
                     key={stylist.user_id} 
-                    className={cn("flex-1 min-w-0 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                    className={cn("flex-1 min-w-[120px] relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
                   >
                     {/* Time slot backgrounds (droppable) */}
                     {timeSlots.map(({ hour, minute }) => {
