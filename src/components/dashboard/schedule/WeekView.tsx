@@ -136,6 +136,8 @@ function WeekAppointmentCard({
   serviceLookup,
   assistantNamesMap,
   assistantProfilesMap,
+  columnIndex = 0,
+  totalOverlapping = 1,
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -149,6 +151,8 @@ function WeekAppointmentCard({
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
+  columnIndex?: number;
+  totalOverlapping?: number;
 }) {
   const [isHoveredRight, setIsHoveredRight] = useState(false);
   const hoverBoundsRef = useRef<DOMRect | null>(null);
@@ -194,18 +198,30 @@ function WeekAppointmentCard({
     };
   }, [isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, slotInterval, rowHeight);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight, slotInterval);
   const pixelHeight = parseInt(style.height);
   const size = getCardSize(appointment.start_time, appointment.end_time, undefined, pixelHeight);
+
+  // Overlap layout
+  const widthPercent = 100 / totalOverlapping;
+  const leftPercent = columnIndex * widthPercent;
+  const isFirstCol = columnIndex === 0;
+  const isLastCol = columnIndex === totalOverlapping - 1;
+  const leftOffset = isFirstCol ? 1 : 0;
+  const rightPad = isLastCol ? 1 : 0;
+  const cardWidth = (isHoveredRight && totalOverlapping <= 1)
+    ? `calc(${widthPercent * 0.7}%)`
+    : `calc(${widthPercent}% - ${leftOffset + rightPad}px)`;
 
   return (
     <div
       className="absolute z-10"
       style={{
-        ...style,
-        left: '4px',
-        right: isHoveredRight ? '30%' : '4px',
-        transition: 'right 200ms ease-out',
+        top: style.top,
+        height: style.height,
+        left: `calc(${leftPercent}% + ${leftOffset}px)`,
+        width: cardWidth,
+        transition: 'width 200ms ease-out',
       }}
       onMouseMove={handleMouseMove}
       onClick={onClick}
