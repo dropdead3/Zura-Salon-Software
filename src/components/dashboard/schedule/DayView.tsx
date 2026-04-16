@@ -1,6 +1,8 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { getLevelColor } from '@/lib/level-colors';
 import { format, getWeek } from 'date-fns';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
@@ -38,6 +40,9 @@ interface DayViewProps {
     display_name: string | null;
     full_name: string;
     photo_url: string | null;
+    stylist_level?: string | null;
+    is_booking?: boolean | null;
+    lead_pool_eligible?: boolean;
   }>;
   hoursStart?: number;
   hoursEnd?: number;
