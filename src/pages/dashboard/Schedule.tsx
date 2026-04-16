@@ -939,7 +939,7 @@ export default function Schedule() {
     <DashboardLayout hideFooter>
       <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
         {/* Header */}
-        <div className="shrink-0 px-4 pt-4">
+        <div className="shrink-0 px-4 pt-2">
           <ScheduleHeader
                 currentDate={currentDate}
                 setCurrentDate={setCurrentDate}
