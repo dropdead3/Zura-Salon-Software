@@ -151,6 +151,14 @@ export function ScheduleActionBar({
 
       {/* Zoom Controls */}
       <div className="shrink-0 flex items-center border-l border-border pl-2 gap-0.5">
+        {(() => {
+          const ZOOM_LABELS: Record<number, string> = { '-3': '1hr', '-2': '1hr', '-1': '30m', '0': '20m', '1': '15m', '2': '10m', '3': '5m' };
+          return (
+            <span className="text-[10px] text-muted-foreground font-sans min-w-[28px] text-center select-none">
+              {ZOOM_LABELS[zoomLevel] ?? '20m'}
+            </span>
+          );
+        })()}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
