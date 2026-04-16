@@ -1,48 +1,53 @@
 
 
-# Make Stylist Header Cells Responsive
+# Responsive Condensed Stylist Headers
 
 ## Problem
-At smaller column widths, the name, "Accepting" label, and level text overlap and crash into each other.
+From the screenshot, when columns are narrow the name characters break awkwardly mid-word and "Studio..." truncates poorly. At very condensed widths, the layout needs to switch to a vertically stacked, centered design.
 
 ## Changes — `src/components/dashboard/schedule/DayView.tsx`
 
-### 1. Hide "Accepting"/"Not Accepting" text label — show dot only
-Remove the text `<span>` next to the dot. The tooltip already explains it on hover. This saves ~60px of horizontal space.
+### 1. Switch layout to vertical stack (centered)
+Change the header cell from `flex items-center gap-2` (horizontal) to `flex flex-col items-center text-center gap-1` so the avatar sits centered above the text.
 
+### 2. Format name as "First L." when condensed
+Add a helper that extracts the first name and last initial from the full name:
 ```text
-Before:  ● Accepting
-After:   ●  (tooltip on hover still says "Accepting New Clients...")
+"Sarah Spencer" → "Sarah S."
+"Gavin Eagan"   → "Gavin E."
 ```
+Use this condensed format in the header cell instead of the full display name.
 
-### 2. Name wrapping — allow last name to break to new line
-Change the name `<span>` from `truncate` to `break-words` / natural wrapping so "Sarah Spencer" can wrap as:
-```
-Sarah
-Spencer
-```
-Use `text-xs` instead of `text-sm` to fit better, and remove `truncate` class.
-
-### 3. Stylist level breaks below utilization
-Wrap the level onto its own line instead of inline with the percentage. Change the second row from a single `flex` row to a stacked layout:
-
+### 3. Center all elements vertically
 ```text
-Before:  75% · Studio Artist
-After:   75%
-         Studio Artist
+┌─────────────┐
+│      ●      │  ← status dot (top-right, stays absolute)
+│    [Ava]    │  ← avatar centered
+│  Sarah S.   │  ← first name + last initial
+│    75%      │  ← utilization
+│   Stud...   │  ← level (truncated)
+└─────────────┘
 ```
 
-Remove the bullet separator. Level text uses `text-[10px] text-muted-foreground` on its own line, truncated if needed.
+### Implementation Detail
 
-### Result per cell
-```text
-┌────────────────── ● ┐
-│ [Av] Sarah          │
-│      Spencer        │
-│      75%            │
-│      Studio Artist  │
-└─────────────────────┘
+**Line ~516**: Change the cell class from horizontal flex to vertical centered flex:
+```tsx
+className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
 ```
+
+**Line ~547-557**: Remove the wrapping `div` with `flex flex-col min-w-0`, flatten the name/pct/level as direct children, all centered.
+
+**Line ~548-549**: Add a condensed name formatter:
+```tsx
+function formatCondensedName(fullName: string, displayName?: string | null): string {
+  const name = formatDisplayName(fullName, displayName);
+  const parts = name.trim().split(' ');
+  if (parts.length <= 1) return name;
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+```
+Use `formatCondensedName(stylist.full_name, stylist.display_name)` in the header.
 
 Single file change, no new dependencies.
 
