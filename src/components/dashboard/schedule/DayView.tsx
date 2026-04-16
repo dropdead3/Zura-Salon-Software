@@ -362,6 +362,15 @@ export function DayView({
     return map;
   }, [appointmentsByStylist, hoursStart, hoursEnd]);
 
+  // Sort stylists by utilization descending (most booked first)
+  const sortedStylists = useMemo(() => {
+    return [...stylists].sort((a, b) => {
+      const aUtil = utilizationByStylist.get(a.user_id) ?? 0;
+      const bUtil = utilizationByStylist.get(b.user_id) ?? 0;
+      return bUtil - aUtil;
+    });
+  }, [stylists, utilizationByStylist]);
+
   // Find active appointment for drag overlay
   const activeAppointment = useMemo(() => {
     if (!activeId) return null;
@@ -478,7 +487,7 @@ export function DayView({
                 W {weekNumber}
               </div>
               
-              {stylists.map((stylist) => (
+              {sortedStylists.map((stylist) => (
                 <div 
                   key={stylist.user_id} 
                   className="flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
@@ -527,7 +536,7 @@ export function DayView({
               </div>
 
               {/* Stylist Columns */}
-              {stylists.map((stylist) => {
+              {sortedStylists.map((stylist) => {
                 const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
                 
                 return (
