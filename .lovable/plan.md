@@ -1,37 +1,53 @@
 
 
-# Fix Jumpy Hover-Shrink on Appointment Cards
+# Calculate Stylist Double-Booked Time
 
-## Problem
-The shrink uses `e.currentTarget.getBoundingClientRect().right - 24` to detect the right edge. But when the card shrinks, its `right` boundary moves left, so the mouse position that triggered the shrink is now *outside* the card — the card expands back, the mouse is inside again, it shrinks again, causing a rapid jitter loop.
+## Approach
 
-## Solution
-Instead of tracking the card's current `right` edge (which moves), use the card's `left` edge + original full width to define a fixed trigger zone. This way the zone doesn't shift when the card shrinks.
+Yes — this is fully calculable from existing appointment data. The `v_all_appointments` view contains `stylist_user_id`, `appointment_date`, `start_time`, and `end_time` per appointment. By grouping appointments per stylist per day and detecting time overlaps, we can compute exact double-booked minutes.
 
-## Changes — `src/components/dashboard/schedule/DayView.tsx`
+## Algorithm
 
-### 1. Fix `handleMouseMove` logic
-Replace `rect.right - 24` with a calculation based on the card's parent container width and the card's left position. Since we know `widthPercent` and the parent width, we can compute the *original* right edge regardless of current shrink state.
+For each stylist on each day:
+1. Collect all non-cancelled appointments, sorted by `start_time`
+2. For each pair of appointments, detect overlap: `startA < endB && startB < endA`
+3. Calculate overlap minutes: `min(endA, endB) - max(startA, startB)`
+4. Merge overlapping intervals to avoid triple-counting (union of overlap regions)
+5. Sum total overlap minutes per stylist across the date range
 
-Simpler approach: use `useRef` to store the card's full-width right boundary on first hover (or when not shrunk), and compare against that stable value.
+## Implementation
 
-**Simplest fix:** Once `isHoveredRight` is true, keep it true until `onMouseLeave`. The shrink stays locked until the mouse fully exits the card. No jitter possible.
+### 1. New hook: `src/hooks/useDoubleBookingStats.ts`
+- Accepts `dateFrom`, `dateTo`, `locationId?`
+- Fetches from `v_all_appointments`: `stylist_user_id`, `staff_name`, `start_time`, `end_time`, `appointment_date`, `status`
+- Filters out cancelled/no-show statuses
+- Groups by `stylist_user_id` + `appointment_date`
+- Runs interval overlap detection per group
+- Returns per-stylist: `totalDoubleBookedMinutes`, `doubleBookedSessions` (count of appointments involved), `percentOfSchedule` (overlap minutes / total booked minutes)
 
-```tsx
-const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-  if (isDragOverlay || isHoveredRight) return; // Once shrunk, stay shrunk
-  const rect = e.currentTarget.getBoundingClientRect();
-  if (e.clientX > rect.right - 24) {
-    setIsHoveredRight(true);
-  }
-};
+### 2. New card: `src/components/dashboard/analytics/DoubleBookingCard.tsx`
+- Canonical card header with icon + title + `MetricInfoTooltip`
+- Table showing each stylist: name, double-booked hours, % of schedule, session count
+- Sorted by double-booked time descending
+- Empty state if no overlaps detected
+
+### 3. Integration into `StaffingContent.tsx`
+- Add `DoubleBookingCard` into the staffing analytics section
+
+## Technical Detail
+
+Overlap calculation uses an interval-merge algorithm (O(n log n) per day per stylist):
+
+```text
+Sort appointments by start_time
+merged = []
+For each appointment:
+  If merged is empty or current.start >= merged.last.end:
+    push current to merged
+  Else:
+    overlap_minutes += min(current.end, merged.last.end) - current.start
+    merged.last.end = max(merged.last.end, current.end)
 ```
 
-`onMouseLeave` already resets to false — that's the only exit path.
-
-### 2. Same fix in `WeekView.tsx`
-Apply identical early-return pattern to `WeekAppointmentCard`.
-
-## Result
-Card shrinks once when hovering the right edge, stays shrunk until the mouse leaves entirely. No jitter, smooth and predictable. Two lines changed per file.
+Time strings (e.g. "10:00") are converted to minutes-since-midnight for arithmetic.
 
