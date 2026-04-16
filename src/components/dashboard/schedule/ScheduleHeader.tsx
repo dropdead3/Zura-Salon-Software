@@ -168,7 +168,7 @@ export function ScheduleHeader({
               />
               <button
                 className={cn(
-                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[72px] flex items-center justify-center',
+                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[60px] lg:w-[72px] flex items-center justify-center',
                   view === 'day' 
                     ? 'text-[hsl(var(--sidebar-background))] font-medium' 
                     : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80'
@@ -179,7 +179,7 @@ export function ScheduleHeader({
               </button>
               <button
                 className={cn(
-                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[72px] flex items-center justify-center',
+                  'relative z-10 py-1.5 text-sm rounded-full transition-colors duration-300 w-[60px] lg:w-[72px] flex items-center justify-center',
                   view === 'week' 
                     ? 'text-[hsl(var(--sidebar-background))] font-medium' 
                     : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80'
