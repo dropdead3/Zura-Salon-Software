@@ -151,7 +151,7 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 flex flex-wrap items-center justify-between gap-y-2 rounded-t-lg">
+      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 flex flex-wrap xl:flex-nowrap items-center justify-between gap-y-2 rounded-t-lg">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
