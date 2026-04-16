@@ -310,15 +310,15 @@ export default function Schedule() {
     }
   }, [appointments]);
 
-  // Calculate today's appointment count for the selected location (org-timezone-aware)
+  // Today's appointment count — respects ALL active filters (location, staff, client type, etc.)
+  // so the action bar reflects whatever the user is currently viewing.
   const todayAppointmentCount = useMemo(() => {
     const todayStr = orgToday;
-    return allAppointments.filter(apt => 
-      apt.appointment_date === todayStr && 
-      apt.location_id === selectedLocation &&
+    return appointments.filter(apt =>
+      apt.appointment_date === todayStr &&
       !['cancelled', 'no_show'].includes(apt.status)
     ).length;
-  }, [allAppointments, selectedLocation, orgToday]);
+  }, [appointments, orgToday]);
 
   // Get the phorest_branch_id and effective tax rate for the selected location
   const selectedLocationData = useMemo(() => {
