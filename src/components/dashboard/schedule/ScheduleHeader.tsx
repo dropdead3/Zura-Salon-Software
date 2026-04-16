@@ -261,22 +261,43 @@ export function ScheduleHeader({
           </div>
         </div>
 
-        {/* Center: Date Display */}
-        <div className="text-center min-w-0">
-          {/* Compact single-line at < @xl — abbreviated, no year */}
-          <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
-            {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
-          </div>
-          {/* Two-line at @xl+ */}
-          <div className="hidden @xl/schedhdr:block">
-            <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
-              {formatDate(currentDate, 'EEEE')}
-            </div>
-            <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
-              {formatDate(currentDate, 'MMMM d, yyyy')}
-            </div>
-          </div>
-        </div>
+        {/* Center: Date Display — also acts as date picker trigger */}
+        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
+              aria-label="Pick a date"
+            >
+              {/* Compact single-line at < @xl — abbreviated, no year */}
+              <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
+                {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
+              </div>
+              {/* Two-line at @xl+ */}
+              <div className="hidden @xl/schedhdr:block">
+                <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
+                  {formatDate(currentDate, 'EEEE')}
+                </div>
+                <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
+                  {formatDate(currentDate, 'MMMM d, yyyy')}
+                </div>
+              </div>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="center">
+            <CalendarPicker
+              mode="single"
+              selected={currentDate}
+              onSelect={(date) => {
+                if (date) {
+                  setCurrentDate(date);
+                  setDatePickerOpen(false);
+                }
+              }}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
         </div>
         {/* End Row 1 wrapper (<@md). At @md+, this wrapper is `contents` so children flow into the parent row. */}
 
