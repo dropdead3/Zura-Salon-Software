@@ -151,7 +151,9 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 flex flex-wrap xl:flex-nowrap items-center justify-between gap-y-2 rounded-t-lg">
+      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 xl:flex-row xl:flex-nowrap xl:items-center xl:justify-between xl:gap-0">
+        {/* Row 1 (<xl): Left cluster + condensed date right. At xl+: just the left cluster. */}
+        <div className="flex items-center justify-between xl:justify-start xl:contents">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -188,8 +190,8 @@ export function ScheduleHeader({
             </div>
           </div>
 
-          {/* Shifts + Date group: stacked at <xl, inline at xl+ */}
-          <div className="flex flex-col gap-1 items-start xl:flex-row xl:gap-3 xl:items-center">
+          {/* Shifts + Date group: inline at all sizes */}
+          <div className="flex flex-row gap-3 items-center">
             {/* Shifts View Toggle */}
             {onToggleShiftsView && (
               <Tooltip>
@@ -267,9 +269,15 @@ export function ScheduleHeader({
             </div>
           </div>
         </div>
+        </div>
+        {/* End Row 1 wrapper (<xl). At xl+, this wrapper is `contents` so children flow into the parent row. */}
 
+        {/* Row 2 wrapper (<xl): filter icons left, selectors right. At xl+, dissolves via `contents`. */}
+        <div className="flex items-center justify-between xl:contents">
         {/* Right: Filters & Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 w-full xl:w-auto justify-between xl:justify-start">
+          {/* Filter icons group */}
+          <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
             filters={calendarFilters}
             onFiltersChange={onCalendarFiltersChange}
@@ -338,8 +346,11 @@ export function ScheduleHeader({
             </Tooltip>
           )}
           
-          {/* Location & Staff Selectors — side-by-side at <xl, stacked at xl+ */}
-          <div className="flex flex-row xl:flex-col gap-2 xl:gap-1.5 items-center xl:items-end">
+          </div>
+          {/* End filter icons group */}
+
+          {/* Location & Staff Selectors — side-by-side */}
+          <div className="flex flex-row gap-2 items-center">
             {/* Location Selector */}
             <Select
               value={selectedLocation}
@@ -485,6 +496,8 @@ export function ScheduleHeader({
             </Popover>
           </div>
         </div>
+        </div>
+        {/* End Row 2 wrapper */}
       </div>
 
       {/* Secondary Navigation Bar */}
