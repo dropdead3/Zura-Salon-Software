@@ -1860,11 +1860,11 @@ async function saveTransactionItems(
 }
 
 /**
- * Sync roster/breaks from Phorest for each branch.
- * Fetches roster entries and extracts break periods, upserting into staff_schedule_blocks.
+ * Sync breaks from Phorest for each branch using the /break endpoint.
+ * Each break is a flat object with breakId, breakDate, startTime, endTime, staffId, label.
  */
 async function syncRoster(supabase: any, businessId: string, username: string, password: string, dateFrom: string, dateTo: string) {
-  console.log(`Syncing roster/breaks from ${dateFrom} to ${dateTo}...`);
+  console.log(`Syncing breaks from ${dateFrom} to ${dateTo}...`);
 
   // Get branches
   const branchData = await phorestRequest("/branch", businessId, username, password);
@@ -1878,65 +1878,67 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
 
   let totalBlocks = 0;
 
+  const normalizeTime = (t: string) => {
+    if (!t) return t;
+    if (t.length === 5) return t + ':00'; // HH:MM -> HH:MM:SS
+    return t;
+  };
+
   for (const branch of branches) {
     const branchId = branch.branchId || branch.id;
     try {
-      const rosterData = await phorestRequest(
-        `/branch/${branchId}/roster?from_date=${dateFrom}&to_date=${dateTo}`,
-        businessId, username, password
-      );
-
-      // Parse roster response — shape may vary; common patterns:
-      // { _embedded: { rosters: [ { staffId, date, shifts: [ { start, end, breaks: [ { start, end, type } ] } ] } ] } }
-      // or { rosters: [...] } or direct array
-      const rosters = rosterData._embedded?.rosters || rosterData.rosters || rosterData.page?.content || (Array.isArray(rosterData) ? rosterData : []);
-      console.log(`Branch ${branchId}: ${rosters.length} roster entries`);
-
+      // Paginate through the /break endpoint (max 100 per page)
+      let page = 0;
+      let totalPages = 1;
       const blocks: any[] = [];
 
-      for (const entry of rosters) {
-        const staffId = entry.staffId || entry.staff_id;
-        const rosterDate = entry.date || entry.rosterDate;
-        if (!staffId || !rosterDate) continue;
+      while (page < totalPages) {
+        const breakData = await phorestRequest(
+          `/branch/${branchId}/break?from_date=${dateFrom}&to_date=${dateTo}&size=100&page=${page}`,
+          businessId, username, password
+        );
 
-        const mapping = staffMap.get(staffId);
-        const orgId = mapping?.organization_id;
-        if (!orgId) continue; // Skip unmapped staff
-
-        // Extract breaks from shifts
-        const shifts = entry.shifts || entry.schedule || [];
-        for (const shift of shifts) {
-          const shiftBreaks = shift.breaks || shift.break_periods || [];
-          for (const brk of shiftBreaks) {
-            const startTime = brk.start || brk.startTime || brk.from;
-            const endTime = brk.end || brk.endTime || brk.to;
-            if (!startTime || !endTime) continue;
-
-            // Normalize time to HH:MM:SS format
-            const normalizeTime = (t: string) => {
-              if (t.length === 5) return t + ':00'; // HH:MM -> HH:MM:SS
-              return t;
-            };
-
-            const blockType = (brk.type || brk.breakType || 'break').toLowerCase();
-            const label = brk.label || brk.name || (blockType === 'lunch' ? 'Lunch' : 'Break');
-            const phorestId = `${staffId}_${rosterDate}_${startTime}_${endTime}`;
-
-            blocks.push({
-              user_id: mapping.user_id,
-              phorest_staff_id: staffId,
-              location_id: branchId,
-              block_date: rosterDate,
-              start_time: normalizeTime(startTime),
-              end_time: normalizeTime(endTime),
-              block_type: blockType,
-              label,
-              source: 'phorest',
-              phorest_id: phorestId,
-              organization_id: orgId,
-            });
-          }
+        // Update pagination info
+        if (breakData.page) {
+          totalPages = breakData.page.totalPages || 1;
         }
+
+        // Extract flat break entries
+        const breaks = breakData._embedded?.breaks || breakData.breaks || (Array.isArray(breakData) ? breakData : []);
+        console.log(`Branch ${branchId}, page ${page}: ${breaks.length} breaks`);
+
+        for (const brk of breaks) {
+          const staffId = brk.staffId || brk.staff_id;
+          const breakDate = brk.breakDate || brk.break_date;
+          const startTime = brk.startTime || brk.start_time;
+          const endTime = brk.endTime || brk.end_time;
+          const breakId = brk.breakId || brk.break_id || brk.id;
+
+          if (!staffId || !breakDate || !startTime || !endTime) continue;
+
+          const mapping = staffMap.get(staffId);
+          const orgId = mapping?.organization_id;
+          if (!orgId) continue; // Skip unmapped staff
+
+          const labelRaw = brk.label || brk.name || 'Break';
+          const blockType = labelRaw.toLowerCase().includes('lunch') ? 'lunch' : 'break';
+
+          blocks.push({
+            user_id: mapping.user_id,
+            phorest_staff_id: staffId,
+            location_id: branchId,
+            block_date: breakDate,
+            start_time: normalizeTime(startTime),
+            end_time: normalizeTime(endTime),
+            block_type: blockType,
+            label: labelRaw,
+            source: 'phorest',
+            phorest_id: breakId,
+            organization_id: orgId,
+          });
+        }
+
+        page++;
       }
 
       // Upsert in batches
@@ -1946,17 +1948,17 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
           .from('staff_schedule_blocks')
           .upsert(batch, { onConflict: 'phorest_id' });
         if (error) {
-          console.error(`Roster upsert error for branch ${branchId}:`, error.message);
+          console.error(`Break upsert error for branch ${branchId}:`, error.message);
         } else {
           totalBlocks += batch.length;
         }
       }
     } catch (e: any) {
-      console.log(`Roster fetch failed for branch ${branchId}:`, e.message);
+      console.log(`Break fetch failed for branch ${branchId}:`, e.message);
     }
   }
 
-  console.log(`Roster sync complete: ${totalBlocks} break blocks upserted`);
+  console.log(`Break sync complete: ${totalBlocks} break blocks upserted`);
   return { synced: totalBlocks };
 }
 
