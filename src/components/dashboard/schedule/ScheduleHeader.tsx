@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ChevronDown,
   Calendar as CalendarIcon,
   Plus,
   
@@ -607,44 +608,68 @@ export function ScheduleHeader({
             <span className="hidden lg:inline">Day</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size={tokens.button.inline} onClick={goToNextWeek} className="gap-1" title="Next Week">
-            <span className="hidden lg:inline">Week</span>
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
-          
-          {/* Jump Ahead Dropdown */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size={tokens.button.inline} className="ml-1 gap-1" title="Jump ahead">
-                <span className="hidden md:inline">Jump</span>
-                <Plus className="h-3 w-3" />
-                <ChevronRight className="h-3 w-3 rotate-90 hidden md:inline-block" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-1" align="end">
-              <div className="flex flex-col">
-                {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((weeks) => {
-                  const targetDate = addDays(orgToday, weeks * 7);
-                  return (
-                    <Button
-                      key={weeks}
-                      variant="ghost"
-                      size={tokens.button.inline}
-                      className="justify-start h-auto py-2 px-3"
-                      onClick={() => setCurrentDate(targetDate)}
+
+          {/* Split Button: Week forward + Jump-ahead dropdown */}
+          <div className="inline-flex items-center h-8 rounded-full border border-input overflow-hidden bg-background">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={goToNextWeek}
+                  className="flex items-center gap-1 h-full px-3 text-sm font-sans font-medium border-r border-input hover:bg-foreground/10 transition-colors"
+                  aria-label="Next week"
+                >
+                  <span className="hidden lg:inline">Week</span>
+                  <ChevronsRight className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Next week</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Popover>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center justify-center h-full px-2 hover:bg-foreground/10 transition-colors"
+                      aria-label="Jump ahead 2 to 10 weeks"
                     >
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">+{weeks} Weeks</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(targetDate, 'EEE, MMM d, yyyy')}
-                        </span>
-                      </div>
-                    </Button>
-                  );
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Jump ahead 2–10 weeks</p>
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent className="w-48 p-1" align="end">
+                <div className="flex flex-col">
+                  {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((weeks) => {
+                    const targetDate = addDays(orgToday, weeks * 7);
+                    return (
+                      <Button
+                        key={weeks}
+                        variant="ghost"
+                        size={tokens.button.inline}
+                        className="justify-start h-auto py-2 px-3"
+                        onClick={() => setCurrentDate(targetDate)}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">+{weeks} Weeks</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(targetDate, 'EEE, MMM d, yyyy')}
+                          </span>
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
     </div>
