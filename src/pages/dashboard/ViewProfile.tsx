@@ -871,14 +871,28 @@ export default function ViewProfile() {
                         Accepting new clients.
                       </p>
                     </div>
-                    <Switch
+                     <Switch
                       checked={profile?.is_booking ?? true}
                       onCheckedChange={(checked) => {
                         updateProfile.mutate({ is_booking: checked });
                       }}
                     />
                   </div>
-                )}
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Lead Pool Eligible</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Receive new client leads from the salon lead pool.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={profile?.lead_pool_eligible ?? true}
+                      onCheckedChange={(checked) => {
+                        updateProfile.mutate({ lead_pool_eligible: checked });
+                      }}
+                    />
+                  </div>
               </CardContent>
             </Card>
           )}
