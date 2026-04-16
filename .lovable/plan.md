@@ -1,60 +1,38 @@
 
 
-# Responsive Stylist Headers — Three-Tier Adaptive Layout
+# Show Abbreviated Level Numbers in Schedule Headers
 
 ## Problem
-Currently there are only two modes (condensed < 120px, normal ≥ 120px). The user wants finer-grained responsiveness:
-- **Wide**: Status dot with "Booking" label, top-right corner; full name
-- **Medium**: Status dot only (no label), top-right; name switches to "First L." when too long
-- **Narrow** (existing condensed): Vertical stack with "First L." name
+The schedule header cells display full level names (e.g., "Studio Artist") which are too long for compact cells. Since this is an internal-facing view, abbreviated level numbers ("L1", "L2", etc.) are more appropriate and space-efficient.
 
 ## Changes — `src/components/dashboard/schedule/DayView.tsx`
 
-### 1. Track column width as a number (not just boolean)
-Replace `isCondensed` boolean with a numeric `columnWidth` state. Derive two thresholds:
-- `isCondensed = columnWidth < 120` — vertical stack mode (existing)
-- `isMedium = columnWidth >= 120 && columnWidth < 200` — horizontal but compact
+### 1. Add level number to the `levelLabelMap`
+Update the map to also store an abbreviated label based on the level's 1-based index:
 
-### 2. Normal (wide ≥ 200px) layout
-- Status dot + "Booking" label, positioned absolute top-right
-- Full display name (e.g., "Lex Feddern")
-- Utilization + level on second row as-is
-
-### 3. Medium (120–200px) layout
-- Status dot only (no label), absolute top-right
-- Condensed name ("First L." format, e.g., "Lex F.")
-- Utilization + level on second row
-
-### 4. Condensed (< 120px) — no change
-Keeps existing vertical stack with condensed name.
-
-### Implementation detail
-
-**ResizeObserver** — store `colWidth` in state instead of a boolean:
 ```tsx
-const [columnWidth, setColumnWidth] = useState(200);
-const isCondensed = columnWidth < 120;
-const isMedium = columnWidth < 200;
+const m = new Map<string, { label: string; shortLabel: string; index: number }>();
+stylistLevels.forEach((l, i) => m.set(l.slug, { label: l.label, shortLabel: `L${i + 1}`, index: i }));
 ```
 
-**Status dot** — add "Booking" label conditionally:
-```tsx
-<span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
-{!isMedium && (
-  <span className="text-[10px] text-muted-foreground">
-    {acceptingClients ? 'Booking' : 'Not Booking'}
-  </span>
-)}
-```
+### 2. Replace `levelInfo.label` with `levelInfo.shortLabel` in both layouts
 
-**Name** — use condensed format when medium:
+**Condensed layout (line ~596):**
 ```tsx
-<span className="text-xs font-medium leading-tight truncate">
-  {isMedium ? condensedName : fullName}
+<span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
+  {levelInfo.shortLabel}
 </span>
 ```
 
-**Status dot placement** — always absolute top-right in both normal and medium modes (currently inline in normal mode, needs to move to absolute).
+**Normal/Medium layout (line ~618):**
+```tsx
+<span className="text-[10px] text-muted-foreground truncate">{levelInfo.shortLabel}</span>
+```
 
-Single file change, no new dependencies.
+### Result
+- "Studio Artist" → "L1"
+- "Senior Stylist" → "L2"
+- etc.
+
+The full level name remains available via the existing tooltip on the avatar. Single file change, no new dependencies.
 
