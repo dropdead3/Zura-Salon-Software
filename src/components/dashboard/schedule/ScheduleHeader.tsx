@@ -311,7 +311,7 @@ export function ScheduleHeader({
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
               <SelectContent>
-                {locations.map((loc) => {
+                {[...locations].sort((a, b) => a.name.localeCompare(b.name)).map((loc) => {
                   const cityState = loc.city 
                     ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
                     : '';
