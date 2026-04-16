@@ -478,7 +478,7 @@ export function DayView({
                 W {weekNumber}
               </div>
               
-              {stylists.map((stylist) => (
+              {sortedStylists.map((stylist) => (
                 <div 
                   key={stylist.user_id} 
                   className="flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
@@ -527,7 +527,7 @@ export function DayView({
               </div>
 
               {/* Stylist Columns */}
-              {stylists.map((stylist) => {
+              {sortedStylists.map((stylist) => {
                 const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
                 
                 return (
