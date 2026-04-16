@@ -841,8 +841,8 @@ export default function Schedule() {
             <WeekView
               currentDate={currentDate}
               appointments={appointments}
-              hoursStart={preferences.hours_start}
-              hoursEnd={preferences.hours_end}
+              hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
+              hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
               onAppointmentClick={handleAppointmentClick}
               onSlotClick={handleSlotClick}
               selectedLocationId={selectedLocation}
@@ -855,6 +855,7 @@ export default function Schedule() {
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
               assistantProfilesMap={assistantProfilesMap}
+              zoomLevel={zoomLevel}
             />
           )}
           

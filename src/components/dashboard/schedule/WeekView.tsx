@@ -27,6 +27,7 @@ interface WeekViewProps {
   appointments: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
+  zoomLevel?: number;
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   onSlotClick?: (date: Date, time: string) => void;
   selectedLocationId?: string;
@@ -45,8 +46,17 @@ interface WeekViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-const ROW_HEIGHT = 20; // Height per 15-minute slot
-const SLOTS_PER_HOUR = 4;
+const ZOOM_CONFIG: Record<string, { interval: number }> = {
+  '-3': { interval: 60 },
+  '-2': { interval: 60 },
+  '-1': { interval: 30 },
+  '0':  { interval: 20 },
+  '1':  { interval: 15 },
+  '2':  { interval: 10 },
+  '3':  { interval: 5 },
+};
+
+const MIN_ROW_HEIGHT = 20;
 
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
