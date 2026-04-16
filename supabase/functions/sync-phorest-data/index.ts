@@ -1859,7 +1859,108 @@ async function saveTransactionItems(
   return savedCount;
 }
 
-serve(async (req: Request) => {
+/**
+ * Sync roster/breaks from Phorest for each branch.
+ * Fetches roster entries and extracts break periods, upserting into staff_schedule_blocks.
+ */
+async function syncRoster(supabase: any, businessId: string, username: string, password: string, dateFrom: string, dateTo: string) {
+  console.log(`Syncing roster/breaks from ${dateFrom} to ${dateTo}...`);
+
+  // Get branches
+  const branchData = await phorestRequest("/branch", businessId, username, password);
+  const branches = branchData._embedded?.branches || branchData.branches || (Array.isArray(branchData) ? branchData : []);
+
+  // Get staff mappings to resolve phorest_staff_id -> user_id + org
+  const { data: staffMappings } = await supabase
+    .from('phorest_staff_mapping')
+    .select('phorest_staff_id, user_id, organization_id');
+  const staffMap = new Map((staffMappings || []).map((m: any) => [m.phorest_staff_id, m]));
+
+  let totalBlocks = 0;
+
+  for (const branch of branches) {
+    const branchId = branch.branchId || branch.id;
+    try {
+      const rosterData = await phorestRequest(
+        `/branch/${branchId}/roster?from_date=${dateFrom}&to_date=${dateTo}`,
+        businessId, username, password
+      );
+
+      // Parse roster response — shape may vary; common patterns:
+      // { _embedded: { rosters: [ { staffId, date, shifts: [ { start, end, breaks: [ { start, end, type } ] } ] } ] } }
+      // or { rosters: [...] } or direct array
+      const rosters = rosterData._embedded?.rosters || rosterData.rosters || rosterData.page?.content || (Array.isArray(rosterData) ? rosterData : []);
+      console.log(`Branch ${branchId}: ${rosters.length} roster entries`);
+
+      const blocks: any[] = [];
+
+      for (const entry of rosters) {
+        const staffId = entry.staffId || entry.staff_id;
+        const rosterDate = entry.date || entry.rosterDate;
+        if (!staffId || !rosterDate) continue;
+
+        const mapping = staffMap.get(staffId);
+        const orgId = mapping?.organization_id;
+        if (!orgId) continue; // Skip unmapped staff
+
+        // Extract breaks from shifts
+        const shifts = entry.shifts || entry.schedule || [];
+        for (const shift of shifts) {
+          const shiftBreaks = shift.breaks || shift.break_periods || [];
+          for (const brk of shiftBreaks) {
+            const startTime = brk.start || brk.startTime || brk.from;
+            const endTime = brk.end || brk.endTime || brk.to;
+            if (!startTime || !endTime) continue;
+
+            // Normalize time to HH:MM:SS format
+            const normalizeTime = (t: string) => {
+              if (t.length === 5) return t + ':00'; // HH:MM -> HH:MM:SS
+              return t;
+            };
+
+            const blockType = (brk.type || brk.breakType || 'break').toLowerCase();
+            const label = brk.label || brk.name || (blockType === 'lunch' ? 'Lunch' : 'Break');
+            const phorestId = `${staffId}_${rosterDate}_${startTime}_${endTime}`;
+
+            blocks.push({
+              user_id: mapping.user_id,
+              phorest_staff_id: staffId,
+              location_id: branchId,
+              block_date: rosterDate,
+              start_time: normalizeTime(startTime),
+              end_time: normalizeTime(endTime),
+              block_type: blockType,
+              label,
+              source: 'phorest',
+              phorest_id: phorestId,
+              organization_id: orgId,
+            });
+          }
+        }
+      }
+
+      // Upsert in batches
+      for (let i = 0; i < blocks.length; i += 100) {
+        const batch = blocks.slice(i, i + 100);
+        const { error } = await supabase
+          .from('staff_schedule_blocks')
+          .upsert(batch, { onConflict: 'phorest_id' });
+        if (error) {
+          console.error(`Roster upsert error for branch ${branchId}:`, error.message);
+        } else {
+          totalBlocks += batch.length;
+        }
+      }
+    } catch (e: any) {
+      console.log(`Roster fetch failed for branch ${branchId}:`, e.message);
+    }
+  }
+
+  console.log(`Roster sync complete: ${totalBlocks} break blocks upserted`);
+  return { synced: totalBlocks };
+}
+
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -1951,9 +2052,20 @@ serve(async (req: Request) => {
         await logSync(supabase, 'appointments', 'failed', 0, error.message);
         notifyFailure('appointments', error.message);
       }
+      }
+
+      // Also sync roster/breaks for the same date range
+      try {
+        results.roster = await syncRoster(supabase, businessId, username, password, defaultFrom, defaultTo);
+        await logSync(supabase, 'roster', 'success', results.roster.synced);
+      } catch (error: any) {
+        results.roster = { error: error.message };
+        await logSync(supabase, 'roster', 'failed', 0, error.message);
+        console.error('Roster sync failed:', error.message);
+      }
     }
 
-    if (sync_type === 'clients' || sync_type === 'all') {
+
       try {
         results.clients = await syncClients(supabase, businessId, username, password);
         await logSync(supabase, 'clients', 'success', results.clients.synced);

@@ -17,6 +17,7 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import { StylistBadge } from './StylistBadge';
 import { AssistantBlockOverlay } from './AssistantBlockOverlay';
+import { BreakBlockOverlay } from './BreakBlockOverlay';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
 import {
@@ -69,6 +70,7 @@ interface DayViewProps {
   adminMeetings?: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] })[];
   onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
   zoomLevel?: number;
+  scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
 }
 
 // Use consolidated status colors from design tokens
@@ -354,6 +356,7 @@ export function DayView({
   adminMeetings = [],
   onMeetingClick,
   zoomLevel = 0,
+  scheduleBlocks = [],
 }: DayViewProps) {
   const ZOOM_CONFIG: Record<string, { interval: number }> = {
     '-3': { interval: 60 },
@@ -819,7 +822,16 @@ export function DayView({
                       currentUserId={currentUserId}
                     />
 
-                    {/* Appointments */}
+                    {/* Break / Lunch / Blocked Time Overlay */}
+                    <BreakBlockOverlay
+                      blocks={scheduleBlocks}
+                      stylistUserId={stylist.user_id}
+                      hoursStart={hoursStart}
+                      rowHeight={ROW_HEIGHT}
+                      slotInterval={slotInterval}
+                    />
+
+
                     {stylistAppointments.map((apt) => {
                       const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
                       // Check if any confirmed time block overlaps this appointment

@@ -21,6 +21,7 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
+import { BreakBlockOverlay } from './BreakBlockOverlay';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -41,6 +42,7 @@ interface WeekViewProps {
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
+  scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
 }
 
 // Use consolidated status colors from design tokens
@@ -277,6 +279,7 @@ export function WeekView({
   assistantNamesMap,
   assistantProfilesMap,
   assistantTimeBlocks = [],
+  scheduleBlocks = [],
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -550,6 +553,15 @@ export function WeekView({
                         </Tooltip>
                       );
                     })}
+
+                  {/* Break / Lunch / Blocked Time Overlay */}
+                  <BreakBlockOverlay
+                    blocks={scheduleBlocks}
+                    dateKey={dateKey}
+                    hoursStart={hoursStart}
+                    rowHeight={ROW_HEIGHT}
+                    slotInterval={slotInterval}
+                  />
 
                   {/* Appointments */}
                   {dayAppointments.map((apt) => {

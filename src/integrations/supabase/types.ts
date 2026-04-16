@@ -23503,6 +23503,65 @@ export type Database = {
           },
         ]
       }
+      staff_schedule_blocks: {
+        Row: {
+          block_date: string
+          block_type: string
+          created_at: string
+          end_time: string
+          id: string
+          label: string | null
+          location_id: string | null
+          organization_id: string
+          phorest_id: string | null
+          phorest_staff_id: string | null
+          source: string
+          start_time: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          block_date: string
+          block_type?: string
+          created_at?: string
+          end_time: string
+          id?: string
+          label?: string | null
+          location_id?: string | null
+          organization_id: string
+          phorest_id?: string | null
+          phorest_staff_id?: string | null
+          source?: string
+          start_time: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          block_date?: string
+          block_type?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          label?: string | null
+          location_id?: string | null
+          organization_id?: string
+          phorest_id?: string | null
+          phorest_staff_id?: string | null
+          source?: string
+          start_time?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_schedule_blocks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_service_qualifications: {
         Row: {
           created_at: string | null

@@ -48,6 +48,7 @@ import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAs
 import { AssistantBlockManagerSheet } from '@/components/dashboard/schedule/AssistantBlockManagerSheet';
 import { useAssistantTimeBlocks, useAssistantTimeBlocksRange, useMyPendingAssistantBlocks } from '@/hooks/useAssistantTimeBlocks';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
+import { useStaffScheduleBlocks } from '@/hooks/useStaffScheduleBlocks';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -142,6 +143,18 @@ export default function Schedule() {
     (view === 'week' || view === 'agenda') ? weekStartStr : null,
     (view === 'week' || view === 'agenda') ? weekEndStr : null,
     selectedLocation || null,
+  );
+
+  // Staff schedule blocks (breaks, lunches, blocked time from POS)
+  const weekEndDate = useMemo(() => {
+    const end = new Date(currentDate);
+    end.setDate(end.getDate() + 13);
+    return end;
+  }, [currentDate]);
+  const { data: scheduleBlocks = [] } = useStaffScheduleBlocks(
+    currentDate,
+    view === 'week' || view === 'agenda' ? weekEndDate : currentDate,
+    selectedLocation || undefined,
   );
 
   const [detailOpen, setDetailOpen] = useState(false);
@@ -809,6 +822,7 @@ export default function Schedule() {
                 adminMeetings={adminMeetings}
                 onMeetingClick={handleMeetingClick}
                 zoomLevel={zoomLevel}
+                scheduleBlocks={scheduleBlocks}
               />
             );
           })()}
@@ -833,7 +847,8 @@ export default function Schedule() {
                   onBlockClick={() => setBlockManagerOpen(true)}
                    adminMeetings={adminMeetings}
                    onMeetingClick={handleMeetingClick}
-                   zoomLevel={zoomLevel}
+                    zoomLevel={zoomLevel}
+                    scheduleBlocks={scheduleBlocks}
                 />
           )}
           
@@ -855,7 +870,8 @@ export default function Schedule() {
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
               assistantProfilesMap={assistantProfilesMap}
-              zoomLevel={zoomLevel}
+               zoomLevel={zoomLevel}
+               scheduleBlocks={scheduleBlocks}
             />
           )}
           
