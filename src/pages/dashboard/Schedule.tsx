@@ -157,6 +157,7 @@ export default function Schedule() {
     selectedLocation || undefined,
   );
 
+  const [detailOpen, setDetailOpen] = useState(false);
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
