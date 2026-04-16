@@ -278,7 +278,16 @@ export function QuickBookingPopover({
   
   // Form state
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
-  const [clientSearch, setClientSearch] = useState('');
+  const [clientSearch, setClientSearchRaw] = useState('');
+  const [activeLetter, setActiveLetterRaw] = useState<string | null>(null);
+  const setClientSearch = useCallback((value: string) => {
+    setClientSearchRaw(value);
+    if (value) setActiveLetterRaw(null);
+  }, []);
+  const setActiveLetter = useCallback((letter: string | null) => {
+    setActiveLetterRaw(letter);
+    if (letter) setClientSearchRaw('');
+  }, []);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedStylist, setSelectedStylist] = useState('');
   const [selectedLocation, setSelectedLocation] = useState(defaultLocationId || '');
