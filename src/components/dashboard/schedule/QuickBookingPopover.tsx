@@ -2003,7 +2003,7 @@ export function QuickBookingPopover({
                       }}
                     >
                       <div className="relative flex-shrink-0">
-                        <Avatar className="h-12 w-12 ring-2 ring-background shadow-md">
+                        <Avatar className="h-12 w-12 shadow-md">
                           <AvatarImage src={stylist.employee_profiles?.photo_url || undefined} />
                           <AvatarFallback className="bg-muted text-sm font-medium">
                             {fullName.slice(0, 2).toUpperCase()}
