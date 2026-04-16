@@ -1,66 +1,44 @@
 
 
-# Fix: Phorest Breaks Not Syncing — Wrong API Endpoint
+# Fix: Phorest Breaks Fetched but Not Inserted (0 Upserted)
 
-## Root Cause
+## Root Cause Analysis
 
-The `syncRoster` function calls **`/branch/{branchId}/roster`** — an endpoint that **does not exist** in the Phorest Third-Party API. The correct endpoint is:
+The edge function logs confirm the Break API is now working — **37 breaks are fetched** across 2 branches. But **0 are upserted**. There are two issues:
 
-```
-GET /api/business/{businessId}/branch/{branchId}/break?from_date=YYYY-MM-DD&to_date=YYYY-MM-DD&size=100&page=0
-```
+### Issue 1: Silent Skip — Missing Staff Mapping
+The `syncRoster` function skips any break where the `staffId` isn't found in `phorest_staff_mapping` (line 1921: `if (!orgId) continue`). There's **no debug logging** to reveal how many breaks are skipped or why, making this impossible to diagnose from logs alone.
 
-This returns a paginated response:
-```json
-{
-  "_embedded": {
-    "breaks": [
-      {
-        "breakId": "abc123",
-        "breakDate": "2026-04-16",
-        "startTime": "12:00:00",
-        "endTime": "12:30:00",
-        "staffId": "xyz789",
-        "label": "Lunch",
-        "paidBreak": false
-      }
-    ]
-  },
-  "page": { "size": 100, "totalElements": 5, "totalPages": 1, "number": 0 }
-}
-```
-
-The response is **flat** (no nested shifts/roster entries). Each break is a direct object with `breakDate`, `startTime`, `endTime`, `staffId`, `label`, `breakId`.
+### Issue 2: Partial Unique Index vs PostgREST Upsert
+The `phorest_id` dedup index is a **partial unique index** (`WHERE phorest_id IS NOT NULL`). PostgREST's `upsert` with `onConflict: 'phorest_id'` may not recognize a partial index for conflict resolution, causing silent failures. This needs to be changed to a full unique constraint.
 
 ## Changes Required
 
-### 1. `supabase/functions/sync-phorest-data/index.ts` — Rewrite `syncRoster`
+### 1. Edge Function — Add Diagnostic Logging + Fix Upsert Strategy
+**File**: `supabase/functions/sync-phorest-data/index.ts`
 
-Replace the current function with one that:
-- Calls `/branch/{branchId}/break?from_date=X&to_date=Y&size=100&page=N`
-- Paginates through all pages (max 100 per page)
-- Maps each `BreakResponse` directly to a `staff_schedule_blocks` row:
-  - `phorest_id` = `breakId`
-  - `block_date` = `breakDate`
-  - `start_time` = `startTime`
-  - `end_time` = `endTime`
-  - `phorest_staff_id` = `staffId`
-  - `label` = `label` (from API)
-  - `block_type` = infer from label: if label contains "lunch" → `lunch`, else → `break`
-  - `location_id` = `branchId`
-  - `source` = `phorest`
-  - `user_id` / `organization_id` = resolved from `phorest_staff_mapping`
-- Upserts into `staff_schedule_blocks` on `phorest_id`
+- Add logging to show: how many breaks had missing fields, how many had unmapped staff, which staffIds were unmapped
+- Log the first break object from the API to verify field names
+- Change upsert strategy: instead of `onConflict: 'phorest_id'`, delete existing phorest-sourced blocks for the date range first, then insert fresh — this avoids the partial index problem entirely
 
-### 2. No other files change
-The database table, hook, overlay component, and DayView/WeekView integrations are already built and correct. Once the edge function actually fetches data, it will flow through automatically.
+### 2. Database Migration — Replace Partial Index with Full Unique Constraint
+**New migration SQL**:
+- Drop the partial unique index
+- Add a proper unique constraint on `phorest_id` (nullable column, but the constraint only fires on non-null values by default in PostgreSQL — actually no, we need to ensure it works). Alternative: keep delete-then-insert strategy which doesn't need the conflict clause at all.
 
-## Technical Detail
+## Recommended Approach: Delete + Insert (Simplest Fix)
 
-```text
-Current (broken):  /branch/{branchId}/roster?from_date=X&to_date=Y  → 404
-Fixed:             /branch/{branchId}/break?from_date=X&to_date=Y&size=100&page=0  → 200
-```
+Rather than fighting PostgREST's partial index limitations:
 
-The Phorest break API has a max 1-month date range limit and 100-per-page pagination, both of which must be respected.
+1. Before inserting breaks for a branch+date range, delete existing `source = 'phorest'` blocks for that branch and date range
+2. Insert the new blocks fresh
+3. This is idempotent and avoids all upsert/constraint issues
+
+## Implementation Summary
+
+| Step | File | Change |
+|------|------|--------|
+| 1 | `sync-phorest-data/index.ts` | Add debug logging (log first break object, count skipped-by-field, count skipped-by-mapping, list unmapped staffIds) |
+| 2 | `sync-phorest-data/index.ts` | Replace upsert with delete-then-insert for the date range |
+| 3 | Deploy + test | Trigger sync, check logs for diagnostic output |
 
