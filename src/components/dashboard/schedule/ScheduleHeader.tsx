@@ -236,7 +236,7 @@ export function ScheduleHeader({
                       )}
                     >
                       <CalendarIcon className="h-3.5 w-3.5" />
-                      <span className="hidden lg:inline">Date</span>
+                      <span className="hidden @lg/schedhdr:inline">Date</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
@@ -263,12 +263,12 @@ export function ScheduleHeader({
 
         {/* Center: Date Display */}
         <div className="text-center min-w-0">
-          {/* Compact single-line at < xl — abbreviated, no year */}
-          <div className="xl:hidden text-sm font-display tracking-wide whitespace-nowrap">
+          {/* Compact single-line at < @xl — abbreviated, no year */}
+          <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
             {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
           </div>
-          {/* Two-line at xl+ */}
-          <div className="hidden xl:block">
+          {/* Two-line at @xl+ */}
+          <div className="hidden @xl/schedhdr:block">
             <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
               {formatDate(currentDate, 'EEEE')}
             </div>
@@ -278,12 +278,12 @@ export function ScheduleHeader({
           </div>
         </div>
         </div>
-        {/* End Row 1 wrapper (<xl). At xl+, this wrapper is `contents` so children flow into the parent row. */}
+        {/* End Row 1 wrapper (<@md). At @md+, this wrapper is `contents` so children flow into the parent row. */}
 
-        {/* Row 2 wrapper (<md): filter icons left, selectors right. At md+, dissolves via `contents`. */}
-        <div className="flex items-center justify-between md:contents">
+        {/* Row 2 wrapper (<@md): filter icons left, selectors right. At @md+, dissolves via `contents`. */}
+        <div className="flex items-center justify-between @md/schedhdr:contents">
         {/* Right: Filters & Actions */}
-        <div className="flex items-center gap-1 w-full md:w-auto justify-between md:justify-start">
+        <div className="flex items-center gap-1 w-full @md/schedhdr:w-auto justify-between @md/schedhdr:justify-start">
           {/* Filter icons group */}
           <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
@@ -370,7 +370,7 @@ export function ScheduleHeader({
               onOpenChange={setLocationSelectOpen}
             >
               <SelectTrigger
-                className="h-7 w-[180px] lg:w-[220px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                className="h-7 w-[180px] @lg/schedhdr:w-[220px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
