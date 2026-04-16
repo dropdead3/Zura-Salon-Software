@@ -1000,6 +1000,7 @@ export default function Schedule() {
                     zoomLevel={zoomLevel}
                     onZoomIn={() => setZoomLevel(prev => Math.min(prev + 1, 3))}
                     onZoomOut={() => setZoomLevel(prev => Math.max(prev - 1, -3))}
+                    onCreateAppointment={handleNewBooking}
                   />
                 </div>
               </div>

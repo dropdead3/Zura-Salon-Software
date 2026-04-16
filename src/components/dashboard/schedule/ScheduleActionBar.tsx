@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut } from 'lucide-react';
+import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -28,6 +28,7 @@ interface ScheduleActionBarProps {
   zoomLevel?: number;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
+  onCreateAppointment?: () => void;
 }
 
 function getFirstName(fullName: string): string {
@@ -68,6 +69,7 @@ export function ScheduleActionBar({
   zoomLevel = 0,
   onZoomIn,
   onZoomOut,
+  onCreateAppointment,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
   const { nowMinutes } = useOrgNow();
@@ -88,6 +90,18 @@ export function ScheduleActionBar({
           {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
         </span>
       </div>
+
+      {/* Create Appointment button */}
+      {onCreateAppointment && (
+        <Button
+          size="sm"
+          onClick={onCreateAppointment}
+          className="rounded-full h-7 px-3 text-xs shrink-0 gap-1"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Create Appointment
+        </Button>
+      )}
 
       {/* Center: Payment queue bubbles */}
       <div className="flex-1 min-w-0">
