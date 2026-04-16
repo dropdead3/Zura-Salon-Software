@@ -808,6 +808,7 @@ export default function Schedule() {
                 onBlockClick={() => setBlockManagerOpen(true)}
                 adminMeetings={adminMeetings}
                 onMeetingClick={handleMeetingClick}
+                zoomLevel={zoomLevel}
               />
             );
           })()}
@@ -830,9 +831,10 @@ export default function Schedule() {
                  assistantProfilesMap={assistantProfilesMap}
                   assistantTimeBlocks={assistantTimeBlocks}
                   onBlockClick={() => setBlockManagerOpen(true)}
-                  adminMeetings={adminMeetings}
-                  onMeetingClick={handleMeetingClick}
-               />
+                   adminMeetings={adminMeetings}
+                   onMeetingClick={handleMeetingClick}
+                   zoomLevel={zoomLevel}
+                />
           )}
           
           {view === 'week' && (
