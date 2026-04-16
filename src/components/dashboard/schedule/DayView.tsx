@@ -519,7 +519,7 @@ export function DayView({
     });
   }, [stylists, utilizationByStylist]);
 
-  // Measure column width to toggle condensed layout
+  const gridMinWidth = 70 + sortedStylists.length * MIN_COL_WIDTH;
   useEffect(() => {
     const el = headerRowRef.current;
     if (!el) return;
