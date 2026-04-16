@@ -2,60 +2,62 @@
 
 ## Prompt review
 
-Strong follow-up — you noticed a specific edge case (the "Unavailable" badge fires above the indicator line) and provided a zoomed screenshot that makes the boundary mismatch obvious. Teaching note: calling out *which* artifact spills (the badge/cursor vs the gray fill) helps target the fix faster, since we already fixed the visual gray overlay in the prior round. Micro-improvement: "the unavailable badge appears on the slot the time bar is currently inside" would have pinned the root cause in one sentence.
+Clear intent backed by a screenshot — you correctly noticed the ADD EVENT drawer feels less premium than the BookingWizard. Teaching note: naming the *specific* visual delta you want propagated ("the darker, dimmer backdrop and bolder glass contrast from the booking wizard") would have skipped a discovery step. Micro-improvement: when asking for cross-surface consistency, mention whether you want the change at the **shared component level** (one place) or **per consumer** (multiple places). Shared is almost always better and is what we'll do here.
 
 ## Diagnosis
 
-The visual gray overlay is now pixel-aligned to the line (prior fix). What's still wrong is the **slot interaction logic**:
+All drawers already use the same `PremiumFloatingPanel` shell, which provides:
+- `bg-card/80 backdrop-blur-xl` — the glass panel itself
+- `border border-border shadow-2xl` — the frame
 
-```ts
-// DayView.tsx:781 and WeekView.tsx:495
-const isPastSlot = slotMins < dayNowMins;
-```
+So the **panel glass is already identical** across BookingWizard, ScheduleEntryDrawer, MeetingSchedulerWizard, ProviderDetailSheet, AIChatPanel, mobile sheets, etc.
 
-A slot becomes "past" the moment `now` crosses its **start**, not its **end**. So at 1:53 PM:
-- 1:45–2:00 slot: `slotMins = 105 < 113` → marked past
-- The line sits at 1:53 (mid-slot), but hovering the slot above the line shows the "UNAVAILABLE" badge and `cursor-not-allowed`
+The only meaningful delta is the **backdrop dimming**:
+- Default: `bg-black/20 backdrop-blur-sm` — light, washy
+- BookingWizard override: `bg-black/40` — noticeably darker, makes the glass pop
 
-This is exactly what your screenshot shows — the badge appears for a slot whose end is still in the future.
+That's why the ADD EVENT drawer in your screenshot feels "lighter" than the booking wizard — the page behind it isn't dimmed enough, so the glass edge contrast is weaker.
 
 ## Fix
 
-Change the past-slot test from "start has passed" to **"end has passed"**:
+Promote the BookingWizard's backdrop treatment to be the **canonical default** in `PremiumFloatingPanel`, so every drawer inherits the same premium dim + blur.
 
-```ts
-// DayView.tsx
-const isPastSlot = showCurrentTime && (() => {
-  const slotMins = hour * 60 + minute;
-  return slotMins + slotInterval <= dayNowMins;  // slot fully in past
-})();
+### 1. `src/components/ui/premium-floating-panel.tsx`
+- Change default backdrop from `bg-black/20 backdrop-blur-sm` → `bg-black/40 backdrop-blur-md`
+  - Darker dim (matches booking)
+  - Slightly stronger blur (`md` vs `sm`) for a more premium depth feel
+- Keep `backdropClassName` prop so any consumer can still override if needed
 
-// WeekView.tsx
-const isPastSlot = isCurrentDay && (() => {
-  const slotMins = slot.hour * 60 + slot.minute;
-  return slotMins + slotInterval <= wkNowMins;   // slot fully in past
-})();
-```
+### 2. `src/components/dashboard/schedule/booking/BookingWizard.tsx`
+- Remove the now-redundant `backdropClassName="bg-black/40"` override (it'll be the default)
+- This proves the unification — booking wizard renders identically with zero per-consumer config
 
-`slotInterval` is already 15 in both files (the slot grid step). This makes the current slot (the one the line cuts through) **interactive** — bookable from the line forward — while everything strictly before it remains unavailable.
+### 3. No changes needed to the 30+ other consumers
+They all automatically pick up the upgraded backdrop because they use the shared component without overriding `backdropClassName`.
 
 ## Acceptance checks
 
-1. The "UNAVAILABLE" badge no longer appears on the slot containing the current-time line.
-2. Hovering above the line still shows "UNAVAILABLE" + `cursor-not-allowed`.
-3. Hovering at or below the line shows the slot-time badge + pointer cursor.
-4. The gray overlay still ends exactly at the line (untouched).
-5. Both Day and Week views behave identically.
-6. As `nowMinutes` ticks past a slot's end, that slot flips to unavailable on the next tick.
+1. ADD EVENT drawer (ScheduleEntryDrawer) backdrop matches BookingWizard exactly — same dim, same blur strength.
+2. BookingWizard looks identical to before (since the new default equals its prior override).
+3. All other drawers (Meeting wizard, Provider sheet, AI chat panel, mobile sheets, scheduled reports history, sidebar mobile) feel one tier more premium with the deeper dim.
+4. The God Mode bar offset on the backdrop still works (untouched logic).
+5. No regressions in mobile (full-screen panels — backdrop is hidden behind the panel anyway).
+
+## Out of scope
+
+- Restyling the panel surface itself (already unified at `bg-card/80 backdrop-blur-xl`).
+- Touching individual drawer headers, padding, or content layout.
+- Animation tuning (spring physics already shared).
+- Dialog/Drawer primitives outside `PremiumFloatingPanel` (e.g., shadcn Dialog) — those are governed by `drilldownDialogStyles.ts` separately.
 
 ## Files to touch
 
-- `src/components/dashboard/schedule/DayView.tsx` — line ~781, change `<` to `+ slotInterval <=`.
-- `src/components/dashboard/schedule/WeekView.tsx` — line ~495, same change.
+- `src/components/ui/premium-floating-panel.tsx` — upgrade default backdrop class.
+- `src/components/dashboard/schedule/booking/BookingWizard.tsx` — drop now-redundant `backdropClassName` prop.
 
 ## Further enhancement suggestions
 
-- Add a one-line comment next to each check explaining the "fully past" semantic so future refactors don't regress.
-- Consider extracting `isSlotFullyPast(slotMins, nowMins, slotInterval)` into `schedule-utils.ts` for a single source of truth (mirrors the recent `getCurrentTimeRenderMetrics` consolidation).
-- Sweep AgendaView and any drag-validation logic for the same `<` pattern in case it exists there too.
+- Add a `tokens.panel.backdrop` and `tokens.panel.glass` entry to `design-tokens.ts` so the canonical drawer treatment is declared once and referenced by name.
+- Consider a quick visual sweep of shadcn `Dialog`/`Sheet` usage to align *those* backdrops with the same `bg-black/40 backdrop-blur-md` treatment for cross-primitive consistency.
+- Add a Storybook-style "Drawer Gallery" page in dev-only routes so future drawers can be eyeballed against the canonical reference at a glance.
 
