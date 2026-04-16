@@ -45,6 +45,7 @@ interface DayViewProps {
     stylist_level?: string | null;
     is_booking?: boolean | null;
     lead_pool_eligible?: boolean;
+    specialties?: string[] | null;
   }>;
   hoursStart?: number;
   hoursEnd?: number;
@@ -531,12 +532,21 @@ export function DayView({
                       </Tooltip>
                     </div>
 
-                    <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
-                      <AvatarImage src={stylist.photo_url || undefined} />
-                      <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
-                        {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer">
+                          <AvatarImage src={stylist.photo_url || undefined} />
+                          <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
+                            {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                        {stylist.specialties && stylist.specialties.length > 0
+                          ? stylist.specialties.join(' · ')
+                          : 'No specialties listed'}
+                      </TooltipContent>
+                    </Tooltip>
                     <div className="flex flex-col min-w-0 gap-0.5">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="text-sm font-medium truncate">
