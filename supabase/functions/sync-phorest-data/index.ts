@@ -2052,7 +2052,6 @@ serve(async (req) => {
         await logSync(supabase, 'appointments', 'failed', 0, error.message);
         notifyFailure('appointments', error.message);
       }
-      }
 
       // Also sync roster/breaks for the same date range
       try {
@@ -2065,7 +2064,7 @@ serve(async (req) => {
       }
     }
 
-
+    if (sync_type === 'clients' || sync_type === 'all') {
       try {
         results.clients = await syncClients(supabase, businessId, username, password);
         await logSync(supabase, 'clients', 'success', results.clients.synced);
