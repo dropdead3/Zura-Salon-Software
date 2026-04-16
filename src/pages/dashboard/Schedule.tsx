@@ -1252,19 +1252,22 @@ export default function Schedule() {
         open={typeSelectorOpen}
         onOpenChange={setTypeSelectorOpen}
         selectedTime={bookingDefaults.time}
-        onSelectClientBooking={() => {
+        onSelectClientBooking={(date, time) => {
           setTypeSelectorOpen(false);
           setActiveDraft(null);
-          setBookingDefaults({});
+          setBookingDefaults({ date, time, stylistId: bookingDefaults.stylistId });
           setBookingOpen(true);
         }}
-        onSelectMeeting={() => {
+        onSelectMeeting={(date, time) => {
           setTypeSelectorOpen(false);
+          setCurrentDate(date);
+          setBookingDefaults({ date, time });
           setMeetingWizardOpen(true);
         }}
-        onSelectTimeblock={() => {
+        onSelectTimeblock={(date, time) => {
           setTypeSelectorOpen(false);
-          setBreakDefaults({ time: bookingDefaults.time || '09:00', stylistId: bookingDefaults.stylistId || '' });
+          setCurrentDate(date);
+          setBreakDefaults({ time, stylistId: bookingDefaults.stylistId || '' });
           setBreakDialogOpen(true);
         }}
       />

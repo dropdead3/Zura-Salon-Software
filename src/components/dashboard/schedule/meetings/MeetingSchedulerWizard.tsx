@@ -71,9 +71,10 @@ interface MeetingSchedulerWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultDate?: Date;
+  defaultTime?: string;
 }
 
-export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: MeetingSchedulerWizardProps) {
+export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate, defaultTime }: MeetingSchedulerWizardProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { user } = useAuth();
   const orgId = effectiveOrganization?.id;
