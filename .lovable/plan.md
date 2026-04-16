@@ -1,27 +1,35 @@
 
 
-# Combine Booking + Lead Pool Into Single "Accepting Clients" Indicator
+# Show Stylist Specialties on Avatar Hover in Scheduler
 
-## Rationale
-Both `is_booking` and `lead_pool_eligible` signal the same thing: whether the front desk should schedule call-in leads on this stylist's calendar. Two separate indicators create confusion. We'll unify them into one clear status.
+## Problem
+Front desk staff can't quickly see what each stylist specializes in when booking clients. They need a fast glance at specialties without leaving the scheduler.
 
 ## Changes
 
-### 1. `src/components/dashboard/schedule/DayView.tsx`
-- **Merge the two booleans** into a single derived flag: `const acceptingClients = stylist.is_booking !== false && stylist.lead_pool_eligible !== false`
-- **Replace the two indicators** (dot + "Booking" label + UserPlus icon) with one consolidated indicator in the top-right corner:
-  - Green dot + "Accepting" when both are true
-  - Red dot + "Not Accepting" when either is false
-  - Tooltip: "Accepting New Clients & Lead Pool Eligible" / "Not Accepting New Clients"
-- **Remove** the separate `UserPlus` icon — no longer needed as a distinct element
+### 1. `src/pages/dashboard/Schedule.tsx` — Add `specialties` to query & type
+- Add `specialties` to the `.select()` call (~line 328) and to the `unique` map type + assignment (~line 341-352)
+- Include `specialties: d.specialties || []` in the mapped object
 
-### Result per cell
+### 2. `src/components/dashboard/schedule/DayView.tsx` — Add specialties to props & avatar popover
+- Extend the `stylists` array type in `DayViewProps` to include `specialties?: string[] | null`
+- Wrap the `Avatar` in a `Tooltip` (or `Popover` for click) that shows the stylist's specialties as small badges/chips
+- On hover: show a tooltip with the list of specialties (e.g., "Blonding · Extensions · Creative Color")
+- If no specialties are set, show "No specialties listed"
+
+### Result
+Hovering the avatar shows a compact tooltip with specialty tags — instant context for booking decisions.
+
 ```text
-┌──────────────────────── ● Accepting ┐
-│ [Avatar]  Trinity Graves  L2        │
-│           72%                       │
-└─────────────────────────────────────┘
+┌──────────────────────────── ● Accepting ┐
+│ [Avatar]  Trinity Graves  L2            │
+│           72%                           │
+└─────────────────────────────────────────┘
+       ┌─────────────────────────┐
+       │ Blonding · Extensions   │
+       │ Creative Color          │
+       └─────────────────────────┘
 ```
 
-Single file change, no new dependencies.
+Two files changed, no new dependencies.
 
