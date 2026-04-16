@@ -638,12 +638,14 @@ export function QuickBookingPopover({
   // Get the pre-selected stylist's locations (branches they work at)
   const preSelectedStylistLocations = useMemo(() => {
     if (!preSelectedStylistId) return [];
-    // Get all branch IDs this stylist works at
-    const branchIds = allStylists
-      .filter(s => s.user_id === preSelectedStylistId)
-      .map(s => s.phorest_branch_id);
-    // Match to locations
-    return locations.filter(loc => branchIds.includes(loc.phorest_branch_id));
+    // Collect location_ids this stylist appears under
+    const locationIds = new Set(
+      allStylists
+        .filter(s => s.user_id === preSelectedStylistId)
+        .map(s => s.location_id)
+        .filter(Boolean)
+    );
+    return locations.filter(loc => locationIds.has(loc.id));
   }, [preSelectedStylistId, allStylists, locations]);
 
   // Get the phorest_branch_id for the selected location
