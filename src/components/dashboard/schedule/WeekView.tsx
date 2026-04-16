@@ -399,6 +399,7 @@ export function WeekView({
                     'text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
                     slot.isHour && 'font-medium'
                   )}
+                  style={{ height: ROW_HEIGHT }}
                 >
                   {slot.label && (
                     <span className={cn(
@@ -447,16 +448,18 @@ export function WeekView({
                       <div 
                         key={slotTime}
                         className={cn(
-                          'h-[20px] cursor-pointer transition-colors group relative',
+                          'cursor-pointer transition-colors group relative',
                           isPastSlot && 'bg-muted/40',
                           !isPastSlot && !isOutsideHours && 'hover:bg-primary/10',
                           slot.isHour 
                             ? 'border-t border-border/80 dark:border-border/60' 
-                            : slot.isHalf 
-                              ? 'border-t border-dotted border-border/70 dark:border-border/40'
+                            : slot.isHalf && slotInterval <= 30
+                              ? 'border-t border-dashed border-border/70 dark:border-border/40'
                               : 'border-t border-dotted border-border/50 dark:border-border/25'
                         )}
-                        style={!isPastSlot && isOutsideHours ? {
+                        style={{
+                          height: ROW_HEIGHT,
+                          ...(!isPastSlot && isOutsideHours ? {
                           background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
                         } : undefined}
                         onClick={() => onSlotClick?.(day, slotTime)}
