@@ -1,37 +1,33 @@
 
 
-# Align Action Bar Bottom with FAB
+# Enlarge Stylist Profile Photos & Names in Schedule Column Headers
 
-## Problem
-The bottom action bar on the schedule page sits ~44px from the window bottom (32px from `lg:pb-8` on the main wrapper + 12px from the bar's own `pb-3`). The floating action button is positioned at `bottom-4` (16px). These need to match.
+## Change — `src/components/dashboard/schedule/DayView.tsx`
 
-## Changes
+### 1. Avatar size (line 628)
+Increase from `h-8 w-8` to `h-10 w-10`:
 
-### 1. `src/components/dashboard/DashboardLayout.tsx` (line 557)
-Reduce bottom padding when `hideFooter` is true — there's no footer to clear, so the large `pb-8` is unnecessary.
-
-**Current:**
 ```
-"flex-1 p-4 lg:px-8 lg:pb-8 lg:pt-4"
+'h-8 w-8 shrink-0' → 'h-10 w-10 shrink-0'
 ```
 
-**New:**
+### 2. Name text in normal/medium layout (line 672)
+Increase from `text-xs` to `text-sm`:
+
 ```
-`flex-1 p-4 lg:px-8 lg:pt-4 ${hideFooter ? 'lg:pb-4' : 'lg:pb-8'}`
+<span className="text-xs font-medium leading-tight truncate">
+→
+<span className="text-sm font-medium leading-tight truncate">
 ```
 
-### 2. `src/pages/dashboard/Schedule.tsx` (line 960)
-Remove the action bar's extra bottom padding since the parent now provides the correct spacing.
+### 3. Name text in condensed layout (line 652)
+Increase from `text-[11px]` to `text-xs`:
 
-**Current:**
 ```
-<div className="shrink-0 px-4 pr-20 pb-3 pt-1">
-```
-
-**New:**
-```
-<div className="shrink-0 px-4 pr-20 pb-0 pt-1">
+<span className="text-[11px] font-medium leading-tight">
+→
+<span className="text-xs font-medium leading-tight">
 ```
 
-This gives 16px total from window bottom to action bar, matching the FAB's `bottom-4` position. Two lines, two files.
+Three class changes, one file. Avatar goes from 32px → 40px; names bump up one size step in both layout modes.
 
