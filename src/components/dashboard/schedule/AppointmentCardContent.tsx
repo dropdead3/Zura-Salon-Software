@@ -193,6 +193,7 @@ function GridContent({
   showStylistBadge,
   showClientPhone,
   showClientAvatar,
+  useShortLabels,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -205,6 +206,7 @@ function GridContent({
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
+  useShortLabels?: boolean;
 }) {
   if (size === 'compact') {
     return (
