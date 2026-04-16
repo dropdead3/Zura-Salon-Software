@@ -227,15 +227,22 @@ export function ScheduleHeader({
 
             <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
               <PopoverTrigger asChild>
-                <button
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
-                    'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
-                  )}
-                >
-                  <CalendarIcon className="h-3.5 w-3.5" />
-                  Date
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                        'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
+                      )}
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      <span className="hidden lg:inline">Date</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Pick a date</p>
+                  </TooltipContent>
+                </Tooltip>
               </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <CalendarPicker
