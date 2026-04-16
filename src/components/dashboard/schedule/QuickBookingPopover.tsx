@@ -674,6 +674,17 @@ export function QuickBookingPopover({
     });
   }, [allStylists]);
 
+  // Deduplicate location-scoped stylists by user_id (v_all_staff can return duplicate rows)
+  const uniqueStylists = useMemo(() => {
+    const seen = new Set<string>();
+    return stylists.filter(s => {
+      if (!s.user_id) return true;
+      if (seen.has(s.user_id)) return false;
+      seen.add(s.user_id);
+      return true;
+    });
+  }, [stylists]);
+
   // Get the pre-selected stylist's locations (branches they work at)
   const preSelectedStylistLocations = useMemo(() => {
     if (!preSelectedStylistId) return [];
