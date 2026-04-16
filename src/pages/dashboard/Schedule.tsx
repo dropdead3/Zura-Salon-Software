@@ -590,12 +590,11 @@ export default function Schedule() {
   };
 
   const handleNewBooking = () => {
-    // Role-based branching: admin-only → meeting wizard, dual-role → type selector
-    if (isAdminRole && !isServiceProvider) {
-      setMeetingWizardOpen(true);
-      return;
-    }
-    if (isAdminRole && isServiceProvider) {
+    // Any admin gets the type selector (client appt / meeting / timeblock).
+    // Pure stylists go straight to client booking.
+    if (isAdminRole) {
+      setActiveDraft(null);
+      setBookingDefaults({});
       setTypeSelectorOpen(true);
       return;
     }
