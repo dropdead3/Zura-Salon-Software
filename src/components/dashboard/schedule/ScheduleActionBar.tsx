@@ -98,7 +98,7 @@ export function ScheduleActionBar({
           className="rounded-full h-9 px-5 text-sm shrink-0 gap-1.5"
         >
           <Plus className="h-4 w-4" />
-          Create Appointment
+          Add Event
         </Button>
       )}
 
