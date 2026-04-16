@@ -81,7 +81,10 @@ import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
-const MIN_COL_WIDTH = 120;
+// Single source of truth for grid sizing — keep header, body, and indicator in sync
+const TIME_GUTTER_WIDTH = 70;
+const COLUMN_MIN_WIDTH = 160;
+const MIN_COL_WIDTH = COLUMN_MIN_WIDTH;
 
 // ─── Droppable Time Slot ───────────────────────────────────────────
 function formatSlotTime(hour: number, minute: number): string {
@@ -737,7 +740,7 @@ export function DayView({
             {/* Time Grid */}
             <div className="flex relative" style={{ minWidth: requiredGridWidth }}>
               {/* Time Labels */}
-              <div className="w-[70px] shrink-0 border-r bg-sidebar">
+              <div className="shrink-0 border-r bg-sidebar" style={{ width: `${TIME_GUTTER_WIDTH}px` }}>
                 {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => (
                   <div 
                     key={`${hour}-${minute}`}
@@ -756,113 +759,115 @@ export function DayView({
                 ))}
               </div>
 
-              {/* Stylist Columns */}
-               {sortedStylists.map((stylist, idx) => {
-                const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
-                
-                return (
-                  <div 
-                    key={stylist.user_id} 
-                    className={cn("flex-1 min-w-[160px] relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
-                  >
-                    {/* Time slot backgrounds (droppable) */}
-                    {timeSlots.map(({ hour, minute }) => {
-                    const isPastSlot = showCurrentTime && (() => {
-                      const slotMins = hour * 60 + minute;
-                      return slotMins < dayNowMins;
-                    })();
-                      
-                      const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                      
-                      // Determine if slot is outside operating hours
-                      const isOutsideHours = isLocationClosed || (
-                        locationHours != null &&
-                        (slotTime < locationHours.open || slotTime >= locationHours.close)
-                      );
-                      
-                      const isAvailable = !isOutsideHours && !isPastSlot;
-                      const slotId = `slot-${stylist.user_id}-${slotTime}`;
-                      
-                      return (
-                        <DroppableSlot
-                          key={slotId}
-                          id={slotId}
-                          hour={hour}
-                          minute={minute}
-                          isAvailable={isAvailable}
-                          isPastSlot={!!isPastSlot}
-                          isOutsideHours={!!isOutsideHours}
-                          isOver={false}
-                          rowHeight={ROW_HEIGHT}
-                          slotInterval={slotInterval}
-                          onClick={() => {
-                            onSlotClick?.(stylist.user_id, slotTime);
-                          }}
-                        />
-                      );
-                    })}
-                    
-                    {/* Assistant Time Block Overlay */}
-                    <AssistantBlockOverlay
-                      timeBlocks={assistantTimeBlocks}
-                      stylistUserId={stylist.user_id}
-                      hoursStart={hoursStart}
-                      rowHeight={ROW_HEIGHT}
-                      slotInterval={slotInterval}
-                      onBlockClick={onBlockClick}
-                      onBlockResize={onBlockResize}
-                      currentUserId={currentUserId}
-                    />
+              {/* Stylist Columns wrapper — relative anchor for the current-time indicator */}
+              <div className="flex-1 flex relative min-w-0">
+                {sortedStylists.map((stylist, idx) => {
+                 const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
+                 
+                 return (
+                   <div 
+                     key={stylist.user_id} 
+                     className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                     style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
+                   >
+                     {/* Time slot backgrounds (droppable) */}
+                     {timeSlots.map(({ hour, minute }) => {
+                     const isPastSlot = showCurrentTime && (() => {
+                       const slotMins = hour * 60 + minute;
+                       return slotMins < dayNowMins;
+                     })();
+                       
+                       const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                       
+                       // Determine if slot is outside operating hours
+                       const isOutsideHours = isLocationClosed || (
+                         locationHours != null &&
+                         (slotTime < locationHours.open || slotTime >= locationHours.close)
+                       );
+                       
+                       const isAvailable = !isOutsideHours && !isPastSlot;
+                       const slotId = `slot-${stylist.user_id}-${slotTime}`;
+                       
+                       return (
+                         <DroppableSlot
+                           key={slotId}
+                           id={slotId}
+                           hour={hour}
+                           minute={minute}
+                           isAvailable={isAvailable}
+                           isPastSlot={!!isPastSlot}
+                           isOutsideHours={!!isOutsideHours}
+                           isOver={false}
+                           rowHeight={ROW_HEIGHT}
+                           slotInterval={slotInterval}
+                           onClick={() => {
+                             onSlotClick?.(stylist.user_id, slotTime);
+                           }}
+                         />
+                       );
+                     })}
+                     
+                     {/* Assistant Time Block Overlay */}
+                     <AssistantBlockOverlay
+                       timeBlocks={assistantTimeBlocks}
+                       stylistUserId={stylist.user_id}
+                       hoursStart={hoursStart}
+                       rowHeight={ROW_HEIGHT}
+                       slotInterval={slotInterval}
+                       onBlockClick={onBlockClick}
+                       onBlockResize={onBlockResize}
+                       currentUserId={currentUserId}
+                     />
 
-                    {/* Break / Lunch / Blocked Time Overlay */}
-                    <BreakBlockOverlay
-                      blocks={scheduleBlocks}
-                      stylistUserId={stylist.user_id}
-                      hoursStart={hoursStart}
-                      rowHeight={ROW_HEIGHT}
-                      slotInterval={slotInterval}
-                    />
+                     {/* Break / Lunch / Blocked Time Overlay */}
+                     <BreakBlockOverlay
+                       blocks={scheduleBlocks}
+                       stylistUserId={stylist.user_id}
+                       hoursStart={hoursStart}
+                       rowHeight={ROW_HEIGHT}
+                       slotInterval={slotInterval}
+                     />
 
 
-                    {stylistAppointments.map((apt) => {
-                      const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
-                      // Check if any confirmed time block overlaps this appointment
-                      const aptStartMin = parseTimeToMinutes(apt.start_time);
-                      const aptEndMin = parseTimeToMinutes(apt.end_time);
-                      const hasCoverage = assistantTimeBlocks.some(b =>
-                        b.status === 'confirmed' &&
-                        parseTimeToMinutes(b.start_time) < aptEndMin &&
-                        parseTimeToMinutes(b.end_time) > aptStartMin &&
-                        (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
-                      );
-                      return (
-                        <AppointmentCard
-                          key={apt.id}
-                          appointment={apt}
-                          hoursStart={hoursStart}
-                          onClick={() => onAppointmentClick(apt)}
-                          isSelected={apt.id === selectedAppointmentId}
-                          columnIndex={columnIndex}
-                          totalOverlapping={totalOverlapping}
-                          categoryColors={categoryColors}
-                          isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                          hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                          colorBy={colorBy}
-                          serviceLookup={serviceLookup}
-                          assistantNamesMap={assistantNamesMap}
-                          assistantProfilesMap={assistantProfilesMap}
-                          hasCoverageScheduled={hasCoverage}
-                          date={date}
-                          rowHeight={ROW_HEIGHT}
-                          slotInterval={slotInterval}
-                          zoomLevel={zoomLevel}
-                          useShortLabels={sortedStylists.length >= 3}
-                        />
-                      );
-                    })}
+                     {stylistAppointments.map((apt) => {
+                       const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
+                       // Check if any confirmed time block overlaps this appointment
+                       const aptStartMin = parseTimeToMinutes(apt.start_time);
+                       const aptEndMin = parseTimeToMinutes(apt.end_time);
+                       const hasCoverage = assistantTimeBlocks.some(b =>
+                         b.status === 'confirmed' &&
+                         parseTimeToMinutes(b.start_time) < aptEndMin &&
+                         parseTimeToMinutes(b.end_time) > aptStartMin &&
+                         (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
+                       );
+                       return (
+                         <AppointmentCard
+                           key={apt.id}
+                           appointment={apt}
+                           hoursStart={hoursStart}
+                           onClick={() => onAppointmentClick(apt)}
+                           isSelected={apt.id === selectedAppointmentId}
+                           columnIndex={columnIndex}
+                           totalOverlapping={totalOverlapping}
+                           categoryColors={categoryColors}
+                           isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                           hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                           colorBy={colorBy}
+                           serviceLookup={serviceLookup}
+                           assistantNamesMap={assistantNamesMap}
+                           assistantProfilesMap={assistantProfilesMap}
+                           hasCoverageScheduled={hasCoverage}
+                           date={date}
+                           rowHeight={ROW_HEIGHT}
+                           slotInterval={slotInterval}
+                           zoomLevel={zoomLevel}
+                           useShortLabels={sortedStylists.length >= 3}
+                         />
+                       );
+                     })}
 
-                    {/* Admin Meeting Cards */}
-                    {adminMeetings
+                     {/* Admin Meeting Cards */}
+                     {adminMeetings
                       .filter(m => m.admin_meeting_attendees?.some(a => a.user_id === stylist.user_id) || m.organizer_user_id === stylist.user_id)
                       .map(meeting => (
                         <MeetingGridCard
@@ -878,19 +883,20 @@ export function DayView({
                 );
               })}
 
-              {/* Current Time Indicator */}
-              {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
-                <div
-                  className="absolute border-t-2 border-primary pointer-events-none z-[15]"
-                  style={{
-                    top: `${currentTimeOffset}px`,
-                    left: '70px',
-                    right: 0,
-                  }}
-                >
-                  <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full" />
-                </div>
-              )}
+                {/* Current Time Indicator — spans full width of stylist columns track */}
+                {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
+                  <div
+                    className="absolute border-t-2 border-primary pointer-events-none z-[15]"
+                    style={{
+                      top: `${currentTimeOffset}px`,
+                      left: 0,
+                      right: 0,
+                    }}
+                  >
+                    <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
