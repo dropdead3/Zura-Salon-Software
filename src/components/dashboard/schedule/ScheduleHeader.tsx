@@ -149,7 +149,7 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col @container/schedhdr">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 @md/schedhdr:flex-row @md/schedhdr:flex-nowrap @md/schedhdr:items-center @md/schedhdr:justify-between @md/schedhdr:gap-0">
+      <div className="relative bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 @md/schedhdr:flex-row @md/schedhdr:flex-nowrap @md/schedhdr:items-center @md/schedhdr:justify-between @md/schedhdr:gap-0">
         {/* Row 1 (<@md): Left cluster + condensed date right. At @md+: just the left cluster. */}
         <div className="flex items-center justify-between @md/schedhdr:justify-start @md/schedhdr:contents">
         {/* Left: View Toggle & Date Picker */}
@@ -225,12 +225,13 @@ export function ScheduleHeader({
             </Popover>
         </div>
 
-        {/* Center: Date Display — also acts as date picker trigger */}
+        {/* Center: Date Display — absolutely centered at @md+, inline at narrow */}
+        <div className="@md/schedhdr:absolute @md/schedhdr:left-1/2 @md/schedhdr:top-1/2 @md/schedhdr:-translate-x-1/2 @md/schedhdr:-translate-y-1/2 @md/schedhdr:pointer-events-none">
         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
+              className="@md/schedhdr:pointer-events-auto text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
               aria-label="Pick a date"
             >
               {/* Compact single-line at < @xl — abbreviated, no year */}
@@ -262,6 +263,7 @@ export function ScheduleHeader({
             />
           </PopoverContent>
         </Popover>
+        </div>
         </div>
         </div>
         {/* End Row 1 wrapper (<@md). At @md+, this wrapper is `contents` so children flow into the parent row. */}
