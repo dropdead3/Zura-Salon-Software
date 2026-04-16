@@ -2,70 +2,76 @@
 
 ## Prompt review
 
-Sharp request — "consolidate into the drawer" is exactly the right framing because it names the *outcome* (one continuous flow) rather than the implementation. Teaching note: also calling out scope (e.g. "only for the booking wizard, leave QuickBookingPopover and NewBookingSheet alone for now") would lock the blast radius. I'll assume that limited scope and flag the other two surfaces as out of scope.
+Direct and accurate — the screenshot shows exactly what's broken. Teaching note: naming the surface ("QuickBookingPopover") or how you opened it ("clicked an empty time slot on the calendar") would have skipped a discovery step. I confirmed in code that the previous fix only touched `BookingWizard`, but the surface in the screenshot is `QuickBookingPopover` — a separate component with its own step machine. That's why the modal still appears.
 
 ## Diagnosis
 
-Today, `BookingWizard.tsx` opens `NewClientDialog` as a separate stacked `Dialog` on top of the `PremiumFloatingPanel` drawer. That creates:
+There are **two booking surfaces** on the schedule page:
 
-- Two overlays competing for focus and z-index (the cause of the recent popover bugs).
-- A jarring context switch — the user leaves the drawer, fills a modal, gets returned.
-- Duplicated chrome (header, close button, footer) that doesn't match the rest of the wizard.
+1. `BookingWizard` (the "+ New Booking" toolbar button) — already consolidated last round.
+2. `QuickBookingPopover` (clicking a time slot on the calendar) — **still uses the stacked `NewClientDialog`**. This is the surface in the screenshot.
 
-The same `NewClientDialog` is also used by `QuickBookingPopover` and `NewBookingSheet` — those must keep working.
+`QuickBookingPopover` (`src/components/dashboard/schedule/QuickBookingPopover.tsx`) has:
+- Step machine: `'service' | 'location' | 'client' | 'stylist' | 'confirm'`
+- `[showNewClientDialog, setShowNewClientDialog]` state (line 269)
+- Three call sites that open the dialog: lines ~1152, ~1256, and an empty-state link
+- A `<NewClientDialog>` rendered at the bottom (line ~2409) inside a stacked `<Dialog>` on top of the popover panel — exactly the layered overlay seen in the screenshot.
+
+The same `NewClientStep` component built last round is reusable here — it's drawer-shaped, no `Dialog` wrapper, sticky footer, viewport-aware popovers.
 
 ## Fix
 
-### 1. Extract a reusable in-flow form
-Create `src/components/dashboard/schedule/booking/NewClientStep.tsx` containing the entire form body of the existing dialog (fields, gender chips, location, email/phone, birthday, client since, preferred stylist combobox, notes, duplicate detection hook + modal, create mutation).
+Single-file change in `QuickBookingPopover.tsx`. Reuse `NewClientStep` already in `src/components/dashboard/schedule/booking/NewClientStep.tsx`. No new components.
 
-- Same props as the dialog's behavior, minus dialog open state:
-  - `defaultLocationId?: string`
-  - `onCreated(client): void`
-  - `onCancel(): void`
-- Layout matches the wizard's other steps (`flex flex-col h-full`, scrollable middle, sticky footer with Cancel + Create Client buttons, no `Dialog`/`DialogContent` wrapper).
-- Keep `DuplicateDetectionModal` (it's a true secondary confirmation, fine to remain a small modal).
+1. **Extend the step type** to include `'newClient'`:
+   ```ts
+   type Step = 'service' | 'location' | 'client' | 'newClient' | 'stylist' | 'confirm';
+   ```
+   Keep `STEPS` array unchanged (`'newClient'` is a sub-step of `'client'`, doesn't appear in the progress bar). The step-bar render loop already iterates `STEPS`, so the bar stays at 5 segments.
 
-### 2. Wire it into the wizard as a real step
-In `BookingWizard.tsx`:
+2. **Replace all three `setShowNewClientDialog(true)` call sites** with `setStep('newClient')`. Remove the `showNewClientDialog` state and the standalone `<NewClientDialog>` JSX block at the bottom.
 
-- Extend `BookingStep` to `'service' | 'client' | 'newClient' | 'stylist' | 'confirm'`.
-- Replace `setShowNewClientDialog(true)` in the `ClientStep` `onNewClient` callback with `setStep('newClient')`.
-- Render `<NewClientStep />` when `step === 'newClient'` inside the same drawer body.
-- On created → set selected client and advance to `'stylist'` (matches today's post-creation flow, which currently goes back to `'service'` — that was a bug-ish behavior; verify with user via outcome, but logical next step after picking client is stylist).
-- On cancel → go back to `'client'`.
-- Remove the standalone `<NewClientDialog>` instance from the wizard's JSX.
-- Update `BookingHeader`'s `STEPS` array to include `'newClient'` so the progress bar stays accurate (or treat `'newClient'` as a sub-step of `'client'` and keep the bar at the client position — leaning toward sub-step to avoid lengthening the progress bar).
+3. **Render `<NewClientStep />` when `step === 'newClient'`** inside the same panel body, alongside the other step views. Wire:
+   - `defaultLocationId={selectedLocation}`
+   - `onCancel={() => setStep('client')}`
+   - `onCreated={(client) => { setSelectedClient({ ...client, preferred_stylist_id: null }); setStep('stylist'); }}` (mirrors the dialog's previous post-creation handler at line ~2418, but advances forward in the flow rather than just closing).
 
-### 3. Header/title for the embedded step
-- `getStepTitle()` returns `'Add New Client'` when `step === 'newClient'`.
-- Subtitle: `'Create a client to continue'`.
-- Back button on the header returns to `'client'`.
+4. **Back-button handling**: extend the existing back-navigation switch to handle `step === 'newClient'` → `setStep('client')`.
 
-### 4. Out of scope (keep dialog working there)
-- `QuickBookingPopover.tsx` and `NewBookingSheet.tsx` continue to use `NewClientDialog` as-is. The dialog stays in the codebase. We're only changing the wizard's flow.
+5. **Step indicator / clickable progress dots**: the step bar maps over `STEPS`; since `'newClient'` is not in `STEPS`, treat the active highlight as `'client'` when on `'newClient'`. One-line conditional in the render.
+
+6. **Header/title**: if there's a step-title helper, return `'Add New Client'` for `'newClient'`. If the title is computed inline, add the conditional next to where it lives.
+
+## Out of scope
+
+- `NewBookingSheet.tsx` continues to use `NewClientDialog` (separate flow, not what the user is hitting). Same dialog file remains in the codebase for that surface.
+- No changes to `NewClientStep.tsx` itself — it already works in `BookingWizard`.
 
 ## Acceptance checks
 
-1. Open Schedule → New Booking → reach Client step → click "Add new client" → drawer transitions to an embedded "Add New Client" view (no second modal opens).
-2. The form contains all fields from the previous dialog (name, gender, location, email/phone, birthday, client since, preferred stylist combobox with search + location filter, notes).
-3. Preferred Stylist combobox opens above the drawer with no z-index issues and scrolls cleanly (already-fixed behavior carries over).
-4. Cancel returns to the client list with prior search preserved.
-5. Successful Create Client selects the new client and advances to the Stylist step.
-6. Duplicate detection modal still appears on conflict; "Create anyway" / "Open existing" / "Start merge" all behave as before.
-7. Header back button on the new step returns to the client list.
-8. `QuickBookingPopover` and `NewBookingSheet` flows still open the standalone `NewClientDialog` correctly (no regression).
+1. Schedule → click an empty time slot → QuickBookingPopover opens → reach Client step → click "Add new client" (icon button or empty-state link) → panel transitions to embedded "Add New Client" view in the same drawer (no second modal).
+2. All form fields work (search-enabled Preferred Stylist, location-scoped default, scrolling fixes carry over since it's the same component).
+3. Cancel returns to the client list with prior search preserved.
+4. Successful Create Client selects the new client and advances to the Stylist step.
+5. Step progress bar still shows 5 segments and highlights "Client" while on the embedded new-client view.
+6. Back button on the embedded step returns to the client list.
+7. `NewBookingSheet` (different surface) still opens its standalone `NewClientDialog`.
+8. `BookingWizard` flow (already consolidated last round) continues to work.
 
 ## Files to touch
 
-- **Create** `src/components/dashboard/schedule/booking/NewClientStep.tsx` — extracted form, no Dialog wrapper, sticky footer.
-- **Modify** `src/components/dashboard/schedule/booking/BookingWizard.tsx` — add `'newClient'` step, render `NewClientStep`, drop the embedded `<NewClientDialog>`, route success → `'stylist'`, cancel → `'client'`.
-- **Modify** `src/components/dashboard/schedule/booking/BookingHeader.tsx` — title handling for new step (or leave progress bar alone if treated as client sub-step).
-- **Untouched** `NewClientDialog.tsx`, `QuickBookingPopover.tsx`, `NewBookingSheet.tsx`.
+- **Modify** `src/components/dashboard/schedule/QuickBookingPopover.tsx`
+  - Add `'newClient'` to `Step` type
+  - Remove `showNewClientDialog` state and the bottom `<NewClientDialog>` block
+  - Replace 3 `setShowNewClientDialog(true)` call sites with `setStep('newClient')`
+  - Render `<NewClientStep />` in the step body
+  - Extend back-navigation and (if needed) title helper
+  - Import `NewClientStep` from `./booking/NewClientStep`
+- **Untouched**: `NewClientStep.tsx`, `NewClientDialog.tsx`, `NewBookingSheet.tsx`, `BookingWizard.tsx`.
 
 ## Further enhancement suggestions
 
-- Once the embedded version is proven, migrate `NewBookingSheet` to use the same `NewClientStep` for consistency.
-- Add a subtle "Created — adding to booking" toast inline at the top of the Stylist step so the handoff feels intentional.
-- Consider collapsing the Birthday + Client Since row on narrow drawer widths to single-column for breathing room.
+- Once both wizards are converted, deprecate the embedded `NewClientDialog` in `NewBookingSheet` next so all booking surfaces have the same single-drawer behavior.
+- Move the shared step-machine pattern (`'newClient'` as a sub-step of `'client'`) into a small helper hook to prevent the next surface from drifting back into stacked dialogs.
+- Add a one-line E2E/Playwright check: "open quick booking → add new client → confirm no second overlay in DOM" — would have caught this regression instantly.
 
