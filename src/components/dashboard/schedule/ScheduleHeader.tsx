@@ -309,7 +309,7 @@ export function ScheduleHeader({
           <div className="flex flex-col gap-1.5 items-end">
             {/* Location Selector */}
             <Select value={selectedLocation} onValueChange={onLocationChange}>
-              <SelectTrigger className="h-7 min-w-[140px] max-w-[280px] w-auto text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]">
+              <SelectTrigger className="h-7 w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]">
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
               <SelectContent>
@@ -336,7 +336,7 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 min-w-[140px] max-w-[280px] w-auto text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  className="h-7 w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
                     ? 'All Stylists With Appointments' 
@@ -347,7 +347,7 @@ export function ScheduleHeader({
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[220px] p-2 bg-popover" align="end">
+              <PopoverContent className="w-[280px] p-2 bg-popover" align="end">
                 <div className="space-y-1">
                   <button
                     onClick={() => onStaffToggle('all')}
