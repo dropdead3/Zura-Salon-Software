@@ -47,6 +47,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { getLevelColor } from '@/lib/level-colors';
+import { getLevelNumber } from '@/utils/levelPricing';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
@@ -55,7 +58,13 @@ interface ScheduleHeaderProps {
   setView: (view: CalendarView) => void;
   selectedStaffIds: string[];
   onStaffToggle: (staffId: string) => void;
-  stylists: Array<{ user_id: string; display_name: string | null; full_name: string }>;
+  stylists: Array<{
+    user_id: string;
+    display_name: string | null;
+    full_name: string;
+    stylist_level?: string | null;
+    utilization?: number;
+  }>;
   selectedLocation: string;
   onLocationChange: (locationId: string) => void;
   locations: Array<{ id: string; name: string; city?: string | null; hours_json?: HoursJson | null; holiday_closures?: HolidayClosure[] | null }>;
@@ -113,6 +122,20 @@ export function ScheduleHeader({
 
   // Org-timezone-aware "today"
   const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
+
+  // Stylist levels — used to render the per-row level chip + color.
+  const { data: allLevels = [] } = useStylistLevels();
+  const activeLevels = useMemo(
+    () => allLevels.filter((l) => l.is_active).sort((a, b) => a.display_order - b.display_order),
+    [allLevels],
+  );
+  // Map "Level N" → matching DB slug. The legacy stylist_level string ("LEVEL 2 STYLIST")
+  // resolves to a number; we then match it positionally to the active levels list.
+  const levelSlugByNumber = useMemo(() => {
+    const m = new Map<number, string>();
+    activeLevels.forEach((lvl, i) => m.set(i + 1, lvl.slug));
+    return m;
+  }, [activeLevels]);
 
   // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
   const quickDays = Array.from({ length: 7 }, (_, i) => addDays(orgToday, i + 1));
@@ -345,7 +368,7 @@ export function ScheduleHeader({
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[280px] p-2 bg-popover" align="end">
+              <PopoverContent className="w-[320px] p-2 bg-popover" align="end">
                 <div className="space-y-1">
                   <button
                     onClick={() => {
@@ -374,19 +397,59 @@ export function ScheduleHeader({
                     Only Stylists With Appointments
                   </button>
                   <div className="h-px bg-border my-1" />
-                  {[...stylists].sort((a, b) => formatFullDisplayName(a.full_name, a.display_name).localeCompare(formatFullDisplayName(b.full_name, b.display_name))).map((s) => (
-                    <button
-                      key={s.user_id}
-                      onClick={() => onStaffToggle(s.user_id)}
-                      className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
-                    >
-                      <Checkbox 
-                        checked={selectedStaffIds.includes(s.user_id)}
-                        className="pointer-events-none"
-                      />
-                      {formatFullDisplayName(s.full_name, s.display_name)}
-                    </button>
-                  ))}
+                  {[...stylists]
+                    .sort((a, b) =>
+                      formatFullDisplayName(a.full_name, a.display_name).localeCompare(
+                        formatFullDisplayName(b.full_name, b.display_name),
+                      ),
+                    )
+                    .map((s) => {
+                      const levelNum = getLevelNumber(s.stylist_level);
+                      const dbLevel = s.stylist_level
+                        ? activeLevels.find(
+                            (l) => l.slug === levelSlugByNumber.get(levelNum ?? -1),
+                          )
+                        : undefined;
+                      const levelLabel = dbLevel?.label ?? (levelNum ? `Level ${levelNum}` : null);
+                      const levelIdx = dbLevel
+                        ? activeLevels.findIndex((l) => l.id === dbLevel.id)
+                        : -1;
+                      const levelColor =
+                        levelIdx >= 0
+                          ? getLevelColor(levelIdx, activeLevels.length)
+                          : null;
+                      const util = s.utilization ?? 0;
+
+                      return (
+                        <button
+                          key={s.user_id}
+                          onClick={() => onStaffToggle(s.user_id)}
+                          className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
+                        >
+                          <Checkbox
+                            checked={selectedStaffIds.includes(s.user_id)}
+                            className="pointer-events-none"
+                          />
+                          <span className="flex-1 text-left truncate">
+                            {formatFullDisplayName(s.full_name, s.display_name)}
+                          </span>
+                          {levelLabel && (
+                            <span
+                              className={cn(
+                                'text-[10px] px-1.5 py-0.5 rounded shrink-0',
+                                levelColor?.bg,
+                                levelColor?.text,
+                              )}
+                            >
+                              {levelLabel}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-muted-foreground tabular-nums w-9 text-right shrink-0">
+                            {util}%
+                          </span>
+                        </button>
+                      );
+                    })}
                 </div>
               </PopoverContent>
             </Popover>

@@ -10,6 +10,7 @@ import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
 import { ScheduleActionBar } from '@/components/dashboard/schedule/ScheduleActionBar';
 // ScheduleLegend is now embedded inside ScheduleActionBar
 import { DayView } from '@/components/dashboard/schedule/DayView';
+import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 import { WeekView } from '@/components/dashboard/schedule/WeekView';
 import { MonthView } from '@/components/dashboard/schedule/MonthView';
 import { AgendaView } from '@/components/dashboard/schedule/AgendaView';
@@ -476,6 +477,25 @@ export default function Schedule() {
     return allStylists;
   }, [allStylists, selectedStaffIds, staffFilterMode, appointments]);
 
+  // Per-stylist utilization for the current date — feeds the staff-dropdown capacity badge.
+  const headerUtilization = useMemo(() => {
+    const hStart = zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start;
+    const hEnd = zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end;
+    return computeUtilizationByStylist(
+      allStylists,
+      appointments as any,
+      format(currentDate, 'yyyy-MM-dd'),
+      hStart,
+      hEnd,
+    );
+  }, [allStylists, appointments, currentDate, zoomLevel, preferences.hours_start, preferences.hours_end]);
+
+  // Stylists enriched with utilization for the dropdown.
+  const headerStylists = useMemo(
+    () => allStylists.map((s) => ({ ...s, utilization: headerUtilization.get(s.user_id) ?? 0 })),
+    [allStylists, headerUtilization],
+  );
+
   // Auto-switch to agenda view on mobile
   useEffect(() => {
     if (isMobile && view !== 'agenda') {
@@ -927,7 +947,7 @@ export default function Schedule() {
                 setView={setView}
                 selectedStaffIds={selectedStaffIds}
                 onStaffToggle={handleStaffToggle}
-                stylists={allStylists}
+                stylists={headerStylists}
                 selectedLocation={selectedLocation}
                 onLocationChange={setSelectedLocation}
                 locations={locations}
