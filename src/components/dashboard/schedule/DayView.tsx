@@ -819,6 +819,7 @@ export function DayView({
                           hasCoverageScheduled={hasCoverage}
                           date={date}
                           rowHeight={ROW_HEIGHT}
+                          slotInterval={slotInterval}
                           zoomLevel={zoomLevel}
                         />
                       );
@@ -866,6 +867,7 @@ export function DayView({
             serviceLookup={serviceLookup}
             isDragOverlay
             rowHeight={ROW_HEIGHT}
+            slotInterval={slotInterval}
             zoomLevel={zoomLevel}
           />
         )}
