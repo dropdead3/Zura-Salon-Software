@@ -1,30 +1,56 @@
 
 ## Prompt review
 
-Strong prompt — you justified the rename ("you can actually create an appointment, meeting or break") which makes the intent unambiguous and prevents me from second-guessing. Teaching note: pairing a UI change with the *why* (the button opens `ScheduleTypeSelector` with three branches) is exactly how to keep copy decisions traceable. Micro-improvement: you could also specify casing convention ("Add Event" title case vs "Add event" sentence case) — I'll match the existing button's title-case pattern.
+Concise and observation-driven — you correctly identified the styling gap by inspecting the live UI, then named the target aesthetic ("luxury glass morphism") which maps cleanly to the platform's documented glass standard (`bg-card/80` + `backdrop-blur-xl`). Teaching note: referencing an existing pattern by name (e.g., "match `PremiumFloatingPanel`" or "match the bento card glass") would let me skip the diagnosis step entirely. Micro-improvement: when asking for visual parity, naming the reference component is the fastest path to a deterministic result.
 
 ## Diagnosis
 
-`src/components/dashboard/schedule/ScheduleActionBar.tsx` currently renders `Create Appointment` with a `Plus` icon. The button triggers `onCreateAppointment`, which in dual-role contexts opens `ScheduleTypeSelector` (Client Appointment / Internal Meeting / Timeblock-Break). Label is too narrow for actual scope.
+The Schedule Type Selector dialog (`src/pages/dashboard/Schedule.tsx` line 1252) uses the default `DialogContent`, which renders **solid** `bg-background` with a plain `border` and `shadow-lg`. No backdrop blur, no translucency. The three option tiles inside `ScheduleTypeSelector.tsx` are also solid (`border-border` + `hover:bg-muted/50`).
+
+This contradicts the platform's glass canon used by `PremiumFloatingPanel`, bento cards, and other premium surfaces: `bg-card/80` + `backdrop-blur-xl` + softened border.
 
 ## Fix
 
-In `src/components/dashboard/schedule/ScheduleActionBar.tsx`, change the button text from `Create Appointment` to `Add Event`. The leading `+` is already provided by the `Plus` icon — no need to add a literal `+` to the string (would double up).
+Two targeted changes, both confined to the Schedule Type Selector surface (no touching shared `dialog.tsx` — that would leak globally).
 
-No other files reference this label as a string match for behavior. Sizing, padding, and icon stay as-is from the previous change.
+### 1. `src/pages/dashboard/Schedule.tsx` (line 1252)
+
+Upgrade the `DialogContent` className to layer the glass aesthetic on top of the default styles:
+
+```tsx
+<DialogContent className="sm:max-w-sm p-6 bg-card/80 backdrop-blur-xl border-border/60 shadow-2xl">
+```
+
+- `bg-card/80` — translucent card surface (overrides `bg-background`)
+- `backdrop-blur-xl` — signature glass wash
+- `border-border/60` — softened edge to match bento standard
+- `shadow-2xl` — deepened depth for the floating feel
+
+### 2. `src/components/dashboard/schedule/meetings/ScheduleTypeSelector.tsx` (the three `<button>` tiles)
+
+Upgrade each tile to a nested glass card, one tier inside the parent:
+
+- Replace `border-border` → `border-border/60`
+- Replace `hover:bg-muted/50` → `bg-card/40 backdrop-blur-md hover:bg-card/60`
+- Tighten transition to `transition-all duration-150 ease-out` (matches platform `bento.hover.transition`)
+
+Icon containers (`bg-muted`) stay as-is — they read correctly against the translucent tile.
 
 ## Acceptance checks
 
-1. Button reads "+ Add Event" (Plus icon + "Add Event" text).
-2. Click still opens the type selector / appointment wizard.
-3. No layout shift (string is shorter, button shrinks naturally with `shrink-0` + intrinsic width).
-4. Title case preserved to match platform copy convention.
+1. Dialog renders with visible blur of underlying schedule grid (the stylist row, agenda cards behind become softly diffused).
+2. Tiles read as nested glass cards, not solid buttons.
+3. Hover state on each tile lifts the translucency without flashing solid.
+4. No regression on other dialogs — change is scoped via inline className, not in `dialog.tsx`.
+5. Dark-mode contrast remains legible (border `/60` keeps edge visible on dark backdrop).
 
 ## Out of scope
 
-- Renaming the underlying handler `onCreateAppointment` (internal name, no user impact).
-- Updating `ScheduleTypeSelector` heading copy ("What would you like to schedule?" already matches the broader scope).
+- Modifying shared `dialog.tsx` (would impact every dialog platform-wide).
+- Migrating the selector to `PremiumFloatingPanel` (heavier refactor; the dialog pattern works fine here).
+- Restyling the X close button or the heading typography.
 
-## File touched
+## Files touched
 
-- `src/components/dashboard/schedule/ScheduleActionBar.tsx` — replace button label text.
+- `src/pages/dashboard/Schedule.tsx` — add glass classes to the type-selector `DialogContent`.
+- `src/components/dashboard/schedule/meetings/ScheduleTypeSelector.tsx` — upgrade the three option tiles to nested glass surfaces.
