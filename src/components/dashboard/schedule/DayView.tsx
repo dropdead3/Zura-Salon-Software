@@ -822,7 +822,16 @@ export function DayView({
                       currentUserId={currentUserId}
                     />
 
-                    {/* Appointments */}
+                    {/* Break / Lunch / Blocked Time Overlay */}
+                    <BreakBlockOverlay
+                      blocks={scheduleBlocks}
+                      stylistUserId={stylist.user_id}
+                      hoursStart={hoursStart}
+                      rowHeight={ROW_HEIGHT}
+                      slotInterval={slotInterval}
+                    />
+
+
                     {stylistAppointments.map((apt) => {
                       const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
                       // Check if any confirmed time block overlaps this appointment
