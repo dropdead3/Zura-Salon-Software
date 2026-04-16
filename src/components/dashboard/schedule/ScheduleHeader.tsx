@@ -40,6 +40,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { CalendarView } from '@/hooks/usePhorestCalendar';
 import { CalendarFiltersPopover, type CalendarFilterState } from './CalendarFiltersPopover';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import {
 
   Tooltip,
@@ -242,35 +243,27 @@ export function ScheduleHeader({
           {/* Center: Date Display — absolutely centered at @md+, inline at narrow */}
         <div className="@md/schedhdr:absolute @md/schedhdr:left-1/2 @md/schedhdr:top-1/2 @md/schedhdr:-translate-x-1/2 @md/schedhdr:-translate-y-1/2 @md/schedhdr:pointer-events-none">
         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="@md/schedhdr:pointer-events-auto text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
-                  aria-label="Pick a date"
-                >
-                  {/* Compact single-line at < @xl — abbreviated, no year */}
-                  <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
-                    {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
-                  </div>
-                  {/* Two-line at @xl+ */}
-                  <div className="hidden @xl/schedhdr:block">
-                    <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
-                      {formatDate(currentDate, 'EEEE')}
-                    </div>
-                    <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
-                      {formatDate(currentDate, 'MMMM d, yyyy')}
-                    </div>
-                  </div>
-                </button>
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-[260px] text-xs">
-              <p className="font-medium mb-1">Capacity signal</p>
-              <p>Dots under each date reflect org-wide booked time vs available shift time. White = open · Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%.</p>
-            </TooltipContent>
-          </Tooltip>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="@md/schedhdr:pointer-events-auto text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
+              aria-label="Pick a date"
+            >
+              {/* Compact single-line at < @xl — abbreviated, no year */}
+              <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
+                {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
+              </div>
+              {/* Two-line at @xl+ */}
+              <div className="hidden @xl/schedhdr:block">
+                <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
+                  {formatDate(currentDate, 'EEEE')}
+                </div>
+                <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
+                  {formatDate(currentDate, 'MMMM d, yyyy')}
+                </div>
+              </div>
+            </button>
+          </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="center">
             <CalendarPicker
               mode="single"
@@ -310,6 +303,11 @@ export function ScheduleHeader({
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 Booked
               </span>
+              <MetricInfoTooltip
+                title="Capacity signal"
+                description="Dots under each date reflect org-wide booked time vs available shift time. White = open · Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%."
+                side="top"
+              />
             </div>
           </PopoverContent>
         </Popover>
