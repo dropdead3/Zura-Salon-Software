@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { formatFullDisplayName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { format, addDays } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
+import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
+import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
