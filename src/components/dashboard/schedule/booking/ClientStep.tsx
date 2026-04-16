@@ -22,6 +22,8 @@ interface ClientStepProps {
   onSearchChange: (query: string) => void;
   onSelectClient: (client: ExtendedPhorestClient) => void;
   onNewClient: () => void;
+  activeLetter?: string | null;
+  onLetterChange?: (letter: string | null) => void;
 }
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -79,9 +81,20 @@ export function ClientStep({
   onSearchChange,
   onSelectClient,
   onNewClient,
+  activeLetter: controlledLetter,
+  onLetterChange,
 }: ClientStepProps) {
   const [pendingBannedClient, setPendingBannedClient] = useState<ExtendedPhorestClient | null>(null);
-  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const [internalLetter, setInternalLetter] = useState<string | null>(null);
+  const isControlled = onLetterChange !== undefined;
+  const activeLetter = isControlled ? (controlledLetter ?? null) : internalLetter;
+  const setActiveLetter = useCallback(
+    (next: string | null) => {
+      if (isControlled) onLetterChange!(next);
+      else setInternalLetter(next);
+    },
+    [isControlled, onLetterChange]
+  );
   const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Sort clients alphabetically by first name
@@ -93,11 +106,11 @@ export function ClientStep({
     });
   }, [clients]);
 
-  // Filter by active letter
+  // Filter by active letter (only when uncontrolled — controlled mode filters server-side)
   const filteredClients = useMemo(() => {
-    if (!activeLetter) return sortedClients;
+    if (isControlled || !activeLetter) return sortedClients;
     return sortedClients.filter(c => getSortLetter(c.name) === activeLetter);
-  }, [sortedClients, activeLetter]);
+  }, [sortedClients, activeLetter, isControlled]);
 
   // Build set of available letters (from full list, not filtered)
   const availableLetters = useMemo(() => {
@@ -121,8 +134,8 @@ export function ClientStep({
   }, [filteredClients]);
 
   const handleLetterClick = useCallback((letter: string) => {
-    setActiveLetter(prev => prev === letter ? null : letter);
-  }, []);
+    setActiveLetter(activeLetter === letter ? null : letter);
+  }, [activeLetter, setActiveLetter]);
 
   const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => {
     if (el) {

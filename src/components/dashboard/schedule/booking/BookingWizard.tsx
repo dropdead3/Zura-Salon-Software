@@ -54,6 +54,7 @@ export function BookingWizard({
   // Form state
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
   const [clientSearch, setClientSearch] = useState('');
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedStylist, setSelectedStylist] = useState(defaultStylistId || '');
@@ -70,14 +71,14 @@ export function BookingWizard({
 
   // Fetch clients
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
-    queryKey: ['booking-clients', clientSearch, user?.id, canViewAllClients],
+    queryKey: ['booking-clients', clientSearch, activeLetter, user?.id, canViewAllClients],
     queryFn: async () => {
       let query = supabase
         .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone, preferred_stylist_id')
         .eq('is_duplicate', false)
         .order('name')
-        .limit(50);
+        .limit(activeLetter ? 500 : 50);
 
       if (!canViewAllClients && user?.id) {
         query = query.eq('preferred_stylist_id', user.id);
@@ -90,6 +91,8 @@ export function BookingWizard({
         if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
         if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
         query = query.or(filters.join(','));
+      } else if (activeLetter) {
+        query = query.ilike('name', `${activeLetter}%`);
       }
 
       const { data } = await query;
@@ -205,6 +208,7 @@ export function BookingWizard({
     setStep('service');
     setSelectedClient(null);
     setClientSearch('');
+    setActiveLetter(null);
     setSelectedLocation('');
     setSelectedServices([]);
     setSelectedStylist(defaultStylistId || '');
@@ -294,9 +298,11 @@ export function BookingWizard({
                     clients={clients}
                     isLoading={isLoadingClients}
                     searchQuery={clientSearch}
-                    onSearchChange={setClientSearch}
+                    onSearchChange={(q) => { setClientSearch(q); if (q) setActiveLetter(null); }}
                     onSelectClient={handleSelectClient}
                     onNewClient={() => setStep('newClient')}
+                    activeLetter={activeLetter}
+                    onLetterChange={(l) => { setActiveLetter(l); if (l) setClientSearch(''); }}
                   />
                 )}
 
