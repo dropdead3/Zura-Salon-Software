@@ -84,6 +84,10 @@ interface ScheduleHeaderProps {
   onToggleShiftsView?: () => void;
   staffFilterMode?: 'with-appointments' | 'work-this-day';
   onStaffFilterModeChange?: (mode: 'with-appointments' | 'work-this-day') => void;
+  /** Org-wide appointments used to compute capacity dots in the date picker */
+  appointments?: PhorestAppointment[];
+  hoursStart?: number;
+  hoursEnd?: number;
 }
 
 export function ScheduleHeader({
