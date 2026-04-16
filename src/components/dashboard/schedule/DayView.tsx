@@ -99,6 +99,7 @@ function formatTime12h(time: string): string {
 
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
+const MIN_COL_WIDTH = 120;
 
 // ─── Droppable Time Slot ───────────────────────────────────────────
 function formatSlotTime(hour: number, minute: number): string {
