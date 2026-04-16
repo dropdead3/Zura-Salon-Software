@@ -216,7 +216,8 @@ function WeekAppointmentCard({
   }, [isHoveredRight]);
 
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, slotInterval, rowHeight);
-  const size = getCardSize(appointment.start_time, appointment.end_time);
+  const pixelHeight = parseInt(style.height);
+  const size = getCardSize(appointment.start_time, appointment.end_time, undefined, pixelHeight);
 
   return (
     <div
@@ -234,6 +235,7 @@ function WeekAppointmentCard({
         appointment={appointment}
         variant="grid"
         size={size}
+        pixelHeight={pixelHeight}
         isAssisting={isAssisting}
         hasAssistants={hasAssistants}
         colorBy={colorBy}
