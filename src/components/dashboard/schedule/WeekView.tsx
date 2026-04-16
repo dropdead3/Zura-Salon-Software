@@ -553,6 +553,7 @@ export function WeekView({
 
                   {/* Appointments */}
                   {dayAppointments.map((apt) => {
+                    const { columnIndex, totalOverlapping } = getOverlapInfo(dayAppointments, apt);
                     return (
                       <WeekAppointmentCard
                         key={apt.id}
@@ -568,6 +569,8 @@ export function WeekView({
                         serviceLookup={serviceLookup}
                         assistantNamesMap={assistantNamesMap}
                         assistantProfilesMap={assistantProfilesMap}
+                        columnIndex={columnIndex}
+                        totalOverlapping={totalOverlapping}
                       />
                     );
                   })}
