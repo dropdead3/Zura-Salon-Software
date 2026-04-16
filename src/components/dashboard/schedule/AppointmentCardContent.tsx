@@ -117,27 +117,6 @@ function CardOverlays({
           <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-current opacity-50" />
         </div>
       )}
-      {displayGradient && (
-        <>
-          <div
-            className="absolute inset-0 rounded-sm pointer-events-none"
-            style={{
-              background: displayGradient.glassStroke,
-              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              maskComposite: 'xor',
-              WebkitMaskComposite: 'xor',
-              padding: '1px',
-            }}
-          />
-          <div
-            className="absolute inset-0 pointer-events-none animate-shimmer"
-            style={{
-              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-              backgroundSize: '200% 100%',
-            }}
-          />
-        </>
-      )}
       {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div
