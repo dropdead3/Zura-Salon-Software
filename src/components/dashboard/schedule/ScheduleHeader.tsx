@@ -349,8 +349,8 @@ export function ScheduleHeader({
           </div>
           {/* End filter icons group */}
 
-          {/* Location & Staff Selectors — side-by-side */}
-          <div className="flex flex-row gap-2 items-center">
+          {/* Location & Staff Selectors — stacked vertically at all widths */}
+          <div className="flex flex-col gap-2 items-stretch">
             {/* Location Selector */}
             <Select
               value={selectedLocation}
