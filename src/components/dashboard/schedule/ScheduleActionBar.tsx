@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut, Plus } from 'lucide-react';
+import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut, Plus, Users, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { ScheduleLegend } from './ScheduleLegend';
+import { NavBadge } from '@/components/dashboard/NavBadge';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -29,6 +30,10 @@ interface ScheduleActionBarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onCreateAppointment?: () => void;
+  onOpenBlockManager?: () => void;
+  pendingBlockCount?: number;
+  onOpenDrafts?: () => void;
+  draftCount?: number;
 }
 
 function getFirstName(fullName: string): string {
@@ -70,6 +75,10 @@ export function ScheduleActionBar({
   onZoomIn,
   onZoomOut,
   onCreateAppointment,
+  onOpenBlockManager,
+  pendingBlockCount = 0,
+  onOpenDrafts,
+  draftCount = 0,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
   const { nowMinutes } = useOrgNow();
@@ -149,6 +158,46 @@ export function ScheduleActionBar({
           </ScrollArea>
         )}
       </div>
+
+      {/* Assistant Blocks */}
+      {onOpenBlockManager && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onOpenBlockManager}
+              className="relative shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+            >
+              <Users className="h-4 w-4 text-muted-foreground" />
+              {pendingBlockCount > 0 && (
+                <NavBadge count={pendingBlockCount} className="absolute -top-1 -right-1" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : ''}` : 'Assistant Blocks'}
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {/* Drafts */}
+      {onOpenDrafts && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onOpenDrafts}
+              className="relative shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+            >
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              {draftCount > 0 && (
+                <NavBadge count={draftCount} className="absolute -top-1 -right-1" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : ''}` : 'No drafts'}
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       {/* Appointments & Transactions link */}
       <Tooltip>

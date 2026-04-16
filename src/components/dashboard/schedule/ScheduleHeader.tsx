@@ -312,50 +312,6 @@ export function ScheduleHeader({
             onFiltersChange={onCalendarFiltersChange}
           />
 
-          {/* Assistant Blocks Button */}
-          {onOpenBlockManager && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                    className="hidden @[1320px]/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
-                  onClick={onOpenBlockManager}
-                >
-                  <Users className="h-4 w-4" />
-                  {pendingBlockCount > 0 && (
-                    <NavBadge count={pendingBlockCount} className="absolute -top-1 -right-1" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{pendingBlockCount > 0 ? `${pendingBlockCount} pending assist${pendingBlockCount > 1 ? 's' : ''}` : 'Assistant Blocks'}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Drafts Button */}
-          {onOpenDrafts && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hidden @[1320px]/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
-                  onClick={onOpenDrafts}
-                >
-                  <FileText className="h-4 w-4" />
-                  {draftCount > 0 && (
-                    <NavBadge count={draftCount} className="absolute -top-1 -right-1" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{draftCount > 0 ? `${draftCount} draft${draftCount > 1 ? 's' : ''}` : 'No drafts'}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
           {/* Today's Prep Button — only when viewing today */}
           {isServiceProvider && isOrgToday(currentDate) && (
             <Tooltip>
