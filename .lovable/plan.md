@@ -1,70 +1,58 @@
 
-
 ## Prompt review
 
-Strong, focused prompt. You correctly scoped it to "tighter window layouts only — don't touch full-screen." A tighter version next time: "On the Schedule header at 1024–1366px widths, the dark header bar wraps awkwardly — filter icons get stranded and the stacked selectors create dead space. Tighten the layout so it stays compact without breaking the wide layout."
+Clear, atomic prompt. You named the two elements, the visual goal (same style/color), and the responsive behavior (stack when condensed). A slightly tighter version: "Make the `Shifts` and `Date` buttons in the Schedule header visually identical (same pill style, same color treatment). At < `xl`, stack them vertically; at `xl+`, keep them inline." — that explicitly names the breakpoint so the implementation has zero ambiguity.
 
 ## Diagnosis
 
-At 1296px (your screenshot), the top dark header bar wraps because the right-side cluster (filters + 280px-wide stacked selectors) can't fit alongside the left toggles and center date. Result:
+In `src/components/dashboard/schedule/ScheduleHeader.tsx` (left cluster, lines 156–248):
 
-1. **Left group** (Day/Week + Shifts + Date) sits on row 1.
-2. **Filter icons** (`CalendarFiltersPopover`, Users, Drafts) get stranded on row 2 because they're glued to the stacked selectors.
-3. **Stacked Location + Staff selectors** take 240px on row 2.
-4. **Center date** (THURSDAY APRIL 16, 2026) gets pushed to the far right of row 1, looking detached.
+- **Shifts button** (lines 192–221) — custom pill: `rounded-full px-3 py-1.5 text-sm`, with active/idle color treatment using `sidebar-foreground/50` idle state, icon left of label.
+- **Date button** (lines 223–247) — shadcn `Button variant="ghost" size="sm"`: different padding, different idle color (`sidebar-foreground/70`), no rounded-full pill, icon styling differs.
 
-The secondary nav bar is now fine at this width.
+They visually disagree: different shape, different idle opacity, different hit-target. They're the same conceptual class (secondary toggles/triggers next to the Day/Week pill), so they should match.
 
-## Fix Plan
+## Fix
 
-Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. No changes to wide-layout behavior.
+Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Pure className changes. No logic, no token changes, no behavior changes.
 
-### 1. Top dark header bar (lines 154–477)
+### 1. Unify Date button to match Shifts pill style
 
-**Restructure the right cluster** so filter icons sit inline with the selectors instead of getting stranded:
+Replace the shadcn `Button` wrapper (lines 225–232) with the same `<button>` pill used for Shifts:
+- `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200`
+- Idle: `text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]`
+- Icon `h-3.5 w-3.5` (matches Shifts icon size)
+- Keep the Popover wiring intact
 
-- Group filter icons (`CalendarFiltersPopover`, Assistant Blocks, Drafts, Today's Prep) into their own `flex shrink-0` row that sits **above** the stacked selectors on the right side at < `xl` widths, or inline at `xl+`.
-- At **< xl (1280px)**: collapse the stacked Location + Staff selectors to a **single row, side-by-side**, each `w-[180px]`, so the whole right cluster fits on one line with the center date.
-- At **xl+ (1280px+)**: keep current stacked 240px/280px behavior.
-- Reduce the center date from two lines to a single compact line at < `xl` (e.g., "Thu, Apr 16, 2026") so it competes less for horizontal space.
+### 2. Stack Shifts + Date vertically when condensed
 
-### 2. Center date block (lines 250–258)
+Wrap the Shifts button + Date popover in a sibling group `<div>`:
+- At `< xl`: `flex flex-col gap-1 items-start`
+- At `xl+`: `flex flex-row gap-3 items-center` (current inline behavior)
 
-- At < `xl`: render a single-line condensed format `Thu · Apr 16, 2026` using `font-display text-sm`.
-- At `xl+`: keep the current two-line eyebrow + headline format.
+Result:
+- **Wide (xl+)**: `[Day|Week] · Shifts · Date` inline — visually identical to today's wide layout.
+- **Condensed (<xl)**: `[Day|Week]` then a small stacked column with `Shifts` on top and `Date` below — both as matching pills.
 
-### 3. Selector widths (lines 343, 374)
+### 3. Optional hover/active consistency
 
-- Replace `w-[240px] lg:w-[280px]` with `w-[180px] xl:w-[240px] 2xl:w-[280px]`.
-- This gives 3 graceful breakpoint steps instead of 2.
-
-### 4. Header container (line 154)
-
-- Keep `flex-wrap` as a safety net but reduce wrap likelihood by making the right cluster narrower.
-- Add `xl:flex-nowrap` so the wide layout (which currently works) is explicitly preserved.
-
-### 5. Selector stacking direction (line 331)
-
-- At < `xl`: `flex-row gap-2` (side-by-side) instead of `flex-col gap-1.5`.
-- At `xl+`: keep `flex-col` stacked behavior.
+Shifts button's "active" state (when shifts view is on) keeps its filled-pill treatment. Date has no active state, so it stays in idle pill style — that's fine and expected.
 
 ## Acceptance checks
 
-1. At **1296px** (current viewport), the dark header bar fits on a single row: left toggles · center date · filter icons + side-by-side selectors.
-2. At **1024–1280px**, the layout still degrades gracefully — selectors may wrap below if needed but filter icons stay grouped with them.
-3. At **1440px+ (wide)**, layout is **identical** to current — stacked 280px selectors, two-line center date, no visual change.
-4. Secondary nav bar (bottom row) is untouched.
-5. No logic, state, or behavior changes — purely responsive Tailwind classes.
+1. Shifts and Date buttons render identical pill shape, padding, idle color, and icon size.
+2. At viewport `≥ 1280px (xl)`: both pills sit inline next to the Day/Week toggle — visually matches current wide layout.
+3. At viewport `< 1280px`: Shifts pill stacks above Date pill in a tight vertical group.
+4. No change to Day/Week toggle, popovers, or any handler logic.
+5. Date popover still anchors correctly to its trigger.
 
 ## Out of scope
 
-- No changes to secondary navigation bar.
-- No changes to Day/Week toggle, Shifts toggle, or any popover/dropdown logic.
-- No changes to the staff filter level chip work.
-- No changes to wide-layout (≥1440px) appearance.
-- No font, color, or token changes.
+- Wide-screen (≥ xl) overall layout — unchanged.
+- Right cluster (filters, selectors) — unchanged.
+- Secondary nav bar — unchanged.
+- Any color/token system additions.
 
 ## File touched
 
 - `src/components/dashboard/schedule/ScheduleHeader.tsx`
-
