@@ -578,22 +578,23 @@ export function ScheduleHeader({
         </div>
 
         {/* Right: Forward Navigation + Jump Ahead */}
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size={tokens.button.inline} onClick={goToNextDay} className="gap-1">
-            Day
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToNextDay} className="gap-1" title="Next Day">
+            <span className="hidden lg:inline">Day</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size={tokens.button.inline} onClick={goToNextWeek} className="gap-1">
-            Week
+          <Button variant="outline" size={tokens.button.inline} onClick={goToNextWeek} className="gap-1" title="Next Week">
+            <span className="hidden lg:inline">Week</span>
             <ChevronsRight className="h-4 w-4" />
           </Button>
           
           {/* Jump Ahead Dropdown */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size={tokens.button.inline} className="ml-1 gap-1">
-                Jump <Plus className="h-3 w-3" />
-                <ChevronRight className="h-3 w-3 rotate-90" />
+              <Button variant="outline" size={tokens.button.inline} className="ml-1 gap-1" title="Jump ahead">
+                <span className="hidden md:inline">Jump</span>
+                <Plus className="h-3 w-3" />
+                <ChevronRight className="h-3 w-3 rotate-90 hidden md:inline-block" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-1" align="end">
