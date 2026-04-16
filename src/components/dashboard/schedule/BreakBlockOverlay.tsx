@@ -11,24 +11,64 @@ import type { StaffScheduleBlock } from '@/hooks/useStaffScheduleBlocks';
 
 interface BreakBlockOverlayProps {
   blocks: StaffScheduleBlock[];
-  /** In DayView: the stylist user_id. In WeekView: not used (pass undefined). */
   stylistUserId?: string;
-  /** In WeekView: the date string 'yyyy-MM-dd' to filter blocks for that day. */
   dateKey?: string;
   hoursStart: number;
   rowHeight?: number;
   slotInterval?: number;
 }
 
-const BLOCK_TYPE_CONFIG: Record<string, { icon: typeof Coffee; label: string; className: string }> = {
-  break: { icon: Coffee, label: 'Break', className: 'bg-amber-500/15 border-l-2 border-l-amber-500/50' },
-  lunch: { icon: Coffee, label: 'Lunch', className: 'bg-amber-500/15 border-l-2 border-l-amber-500/50' },
-  off: { icon: Moon, label: 'Off', className: 'bg-muted/40 border-l-2 border-l-muted-foreground/30' },
-  blocked: { icon: Moon, label: 'Blocked', className: 'bg-muted/30 border-l-2 border-l-muted-foreground/30' },
-  meeting: { icon: Coffee, label: 'Meeting', className: 'bg-primary/10 border-l-2 border-l-primary/40' },
+const BLOCK_TYPE_CONFIG: Record<string, {
+  icon: typeof Coffee;
+  label: string;
+  bg: string;
+  border: string;
+  text: string;
+}> = {
+  break: {
+    icon: Coffee,
+    label: 'Break',
+    bg: 'bg-amber-500/20',
+    border: 'border-l-amber-500',
+    text: 'text-amber-900 dark:text-amber-200',
+  },
+  lunch: {
+    icon: Coffee,
+    label: 'Lunch',
+    bg: 'bg-amber-500/20',
+    border: 'border-l-amber-500',
+    text: 'text-amber-900 dark:text-amber-200',
+  },
+  off: {
+    icon: Moon,
+    label: 'Off',
+    bg: 'bg-muted/50',
+    border: 'border-l-muted-foreground/40',
+    text: 'text-muted-foreground',
+  },
+  blocked: {
+    icon: Moon,
+    label: 'Blocked',
+    bg: 'bg-muted/40',
+    border: 'border-l-muted-foreground/30',
+    text: 'text-muted-foreground',
+  },
+  meeting: {
+    icon: Coffee,
+    label: 'Meeting',
+    bg: 'bg-primary/15',
+    border: 'border-l-primary',
+    text: 'text-primary',
+  },
 };
 
-const DEFAULT_CONFIG = { icon: Coffee, label: 'Block', className: 'bg-muted/30 border-l-2 border-l-muted-foreground/30' };
+const DEFAULT_CONFIG = {
+  icon: Coffee,
+  label: 'Block',
+  bg: 'bg-muted/40',
+  border: 'border-l-muted-foreground/30',
+  text: 'text-muted-foreground',
+};
 
 export function BreakBlockOverlay({
   blocks,
@@ -63,26 +103,42 @@ export function BreakBlockOverlay({
               <div
                 className={cn(
                   'absolute left-0 right-0 z-[3] pointer-events-auto cursor-default',
-                  'flex items-start gap-1 px-1.5 overflow-hidden',
-                  config.className,
+                  'mx-0.5 rounded-lg border-l-4 overflow-hidden',
+                  'transition-all hover:shadow-md hover:brightness-[1.08]',
+                  config.bg,
+                  config.border,
+                  config.text,
                 )}
-                style={{
-                  ...style,
-                  // Hatched pattern overlay
-                  backgroundImage: `repeating-linear-gradient(
-                    -45deg,
-                    transparent,
-                    transparent 4px,
-                    hsl(var(--muted-foreground) / 0.06) 4px,
-                    hsl(var(--muted-foreground) / 0.06) 5px
-                  )`,
-                }}
+                style={style}
               >
-                {pixelHeight >= 24 && (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Icon className="h-3 w-3 text-muted-foreground/70 shrink-0" />
-                    <span className="text-[10px] text-muted-foreground/80 font-medium truncate">
+                {/* Compact: icon only */}
+                {pixelHeight < 28 && (
+                  <div className="flex items-center justify-center h-full">
+                    <Icon className="h-3 w-3 shrink-0 opacity-70" />
+                  </div>
+                )}
+
+                {/* Medium: icon + label */}
+                {pixelHeight >= 28 && pixelHeight < 55 && (
+                  <div className="flex items-center gap-1 px-1.5 mt-0.5">
+                    <Icon className="h-3 w-3 shrink-0 opacity-70" />
+                    <span className="text-[10px] font-medium truncate">
                       {displayLabel}
+                    </span>
+                  </div>
+                )}
+
+                {/* Full: icon + label + time */}
+                {pixelHeight >= 55 && (
+                  <div className="flex flex-col gap-0.5 px-1.5 py-1">
+                    <div className="flex items-center gap-1">
+                      <Icon className="h-3 w-3 shrink-0 opacity-70" />
+                      <span className="text-[10px] font-medium truncate">
+                        {displayLabel}
+                      </span>
+                    </div>
+                    <span className="text-[9px] opacity-60 truncate pl-4">
+                      {formatTime12h(block.start_time)} – {formatTime12h(block.end_time)}
                     </span>
                   </div>
                 )}
