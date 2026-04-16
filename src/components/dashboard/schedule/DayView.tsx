@@ -783,6 +783,7 @@ export function DayView({
                       stylistUserId={stylist.user_id}
                       hoursStart={hoursStart}
                       rowHeight={ROW_HEIGHT}
+                      slotInterval={slotInterval}
                       onBlockClick={onBlockClick}
                       onBlockResize={onBlockResize}
                       currentUserId={currentUserId}
