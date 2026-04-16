@@ -286,7 +286,23 @@ export function ScheduleHeader({
               </div>
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="center">
+          <PopoverContent
+            className="w-auto p-0"
+            align="center"
+            onMouseEnter={() => {
+              if (datePickerCloseTimer.current) {
+                clearTimeout(datePickerCloseTimer.current);
+                datePickerCloseTimer.current = null;
+              }
+            }}
+            onMouseLeave={() => {
+              if (datePickerCloseTimer.current) clearTimeout(datePickerCloseTimer.current);
+              datePickerCloseTimer.current = setTimeout(() => {
+                setDatePickerOpen(false);
+                datePickerCloseTimer.current = null;
+              }, 200);
+            }}
+          >
             <CalendarPicker
               mode="single"
               selected={currentDate}
