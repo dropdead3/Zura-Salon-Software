@@ -22,6 +22,8 @@ interface ClientStepProps {
   onSearchChange: (query: string) => void;
   onSelectClient: (client: ExtendedPhorestClient) => void;
   onNewClient: () => void;
+  activeLetter?: string | null;
+  onLetterChange?: (letter: string | null) => void;
 }
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
