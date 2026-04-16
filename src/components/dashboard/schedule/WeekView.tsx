@@ -21,6 +21,7 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
 import type { AssistantProfile } from '@/hooks/useAppointmentAssistantNames';
 import { AppointmentCardContent, getCardSize } from './AppointmentCardContent';
+import { BreakBlockOverlay } from './BreakBlockOverlay';
 
 interface WeekViewProps {
   currentDate: Date;
