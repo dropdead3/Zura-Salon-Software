@@ -422,16 +422,17 @@ export function ScheduleHeader({
                       ),
                     )
                     .map((s) => {
-                      const levelNum = getLevelNumber(s.stylist_level);
+                      // Resolve by slug first (current DB format), fall back to legacy "LEVEL N STYLIST"
                       const dbLevel = s.stylist_level
-                        ? activeLevels.find(
-                            (l) => l.slug === levelSlugByNumber.get(levelNum ?? -1),
+                        ? activeLevels.find((l) => l.slug === s.stylist_level)
+                          ?? activeLevels.find(
+                            (l) => l.slug === levelSlugByNumber.get(getLevelNumber(s.stylist_level) ?? -1),
                           )
                         : undefined;
-                      const levelLabel = dbLevel?.label ?? (levelNum ? `Level ${levelNum}` : null);
                       const levelIdx = dbLevel
                         ? activeLevels.findIndex((l) => l.id === dbLevel.id)
                         : -1;
+                      const levelLabel = levelIdx >= 0 ? `Level ${levelIdx + 1}` : null;
                       const levelColor =
                         levelIdx >= 0
                           ? getLevelColor(levelIdx, activeLevels.length)
