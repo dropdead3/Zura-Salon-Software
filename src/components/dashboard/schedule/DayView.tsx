@@ -522,7 +522,7 @@ export function DayView({
                 W {weekNumber}
               </div>
               
-              {sortedStylists.map((stylist) => {
+               {sortedStylists.map((stylist, idx) => {
                 const levelInfo = stylist.stylist_level ? levelLabelMap.get(stylist.stylist_level) : null;
                 const levelColor = levelInfo ? getLevelColor(levelInfo.index, stylistLevels.length) : null;
                 const pct = utilizationByStylist.get(stylist.user_id) ?? 0;
@@ -585,7 +585,7 @@ export function DayView({
                   return (
                     <div
                       key={stylist.user_id}
-                      className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                      className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-border/50 last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
                     >
                       {statusDot}
                       {avatar}
@@ -604,7 +604,7 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id}
-                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                    className={cn("relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-border/50 last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
                   >
                     {statusDot}
                     {avatar}
@@ -647,13 +647,13 @@ export function DayView({
               </div>
 
               {/* Stylist Columns */}
-              {sortedStylists.map((stylist) => {
+               {sortedStylists.map((stylist, idx) => {
                 const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
                 
                 return (
                   <div 
                     key={stylist.user_id} 
-                    className="flex-1 min-w-0 relative border-r last:border-r-0"
+                    className={cn("flex-1 min-w-0 relative border-r-2 border-r-border/40 last:border-r-0", idx % 2 === 1 && "bg-muted/[0.08]")}
                   >
                     {/* Time slot backgrounds (droppable) */}
                     {timeSlots.map(({ hour, minute }) => {
