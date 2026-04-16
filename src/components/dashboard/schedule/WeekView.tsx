@@ -514,7 +514,7 @@ export function WeekView({
                   {assistantTimeBlocks
                     .filter(b => b.date === dateKey)
                     .map(block => {
-                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart, slotInterval, ROW_HEIGHT);
+                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart, ROW_HEIGHT, slotInterval);
                       const isUnassigned = !block.assistant_user_id;
                       const isConfirmed = block.status === 'confirmed';
                       return (
