@@ -177,6 +177,7 @@ function GridContent({
   assistantProfilesMap,
   serviceBands,
   duration,
+  pixelHeight,
   showStylistBadge,
   showClientPhone,
   showClientAvatar,
@@ -190,6 +191,7 @@ function GridContent({
   assistantProfilesMap?: Map<string, import('@/hooks/useAppointmentAssistantNames').AssistantProfile[]>;
   serviceBands: any[] | null;
   duration: number;
+  pixelHeight?: number;
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
