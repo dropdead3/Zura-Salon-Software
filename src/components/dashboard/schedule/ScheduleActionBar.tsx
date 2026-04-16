@@ -150,11 +150,11 @@ export function ScheduleActionBar({
       </Tooltip>
 
       {/* Zoom Controls */}
-      <div className="shrink-0 flex items-center border-l border-border pl-2 gap-0.5">
+      <div className="shrink-0 flex items-center border-l border-border pl-2 gap-1">
         {(() => {
           const ZOOM_LABELS: Record<number, string> = { '-3': '1hr', '-2': '1hr', '-1': '30m', '0': '20m', '1': '15m', '2': '10m', '3': '5m' };
           return (
-            <span className="text-[10px] text-muted-foreground font-sans min-w-[28px] text-center select-none">
+            <span className="text-xs text-muted-foreground font-sans min-w-[32px] text-center select-none">
               {ZOOM_LABELS[zoomLevel] ?? '20m'}
             </span>
           );
@@ -165,11 +165,11 @@ export function ScheduleActionBar({
               onClick={onZoomOut}
               disabled={zoomLevel <= -3}
               className={cn(
-                'h-7 w-7 flex items-center justify-center rounded-full transition-colors',
+                'h-8 w-8 flex items-center justify-center rounded-full transition-colors',
                 zoomLevel <= -3 ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <ZoomOut className="h-3.5 w-3.5" />
+              <ZoomOut className="h-4 w-4" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top">Zoom out</TooltipContent>
@@ -180,11 +180,11 @@ export function ScheduleActionBar({
               onClick={onZoomIn}
               disabled={zoomLevel >= 3}
               className={cn(
-                'h-7 w-7 flex items-center justify-center rounded-full transition-colors',
+                'h-8 w-8 flex items-center justify-center rounded-full transition-colors',
                 zoomLevel >= 3 ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <ZoomIn className="h-3.5 w-3.5" />
+              <ZoomIn className="h-4 w-4" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top">Zoom in</TooltipContent>
