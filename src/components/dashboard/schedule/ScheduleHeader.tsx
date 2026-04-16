@@ -495,6 +495,8 @@ export function ScheduleHeader({
             </Popover>
           </div>
         </div>
+        </div>
+        {/* End Row 2 wrapper */}
       </div>
 
       {/* Secondary Navigation Bar */}
