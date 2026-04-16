@@ -1,18 +1,33 @@
 
 
-# Fix: Enlarge NC/RC Badge on Appointment Cards
+# Scheduler Hotkeys: Arrow Navigation + Letter Jump
 
-## Problem
-The NC (New Client) / RC (Returning Client) badge in the bottom-right corner of appointment cards is `h-4 w-4` (16px) with `text-[7px]` — barely visible.
+## What's changing
 
-## Change
-**File**: `src/components/dashboard/schedule/AppointmentCardContent.tsx`
+Adding keyboard shortcuts to the Schedule page for fast navigation:
+- **Left/Right arrows**: Move forward/back 1 day
+- **Up/Down arrows**: Cycle through locations
+- **Letter keys**: Jump to the first location whose name starts with that letter
 
-Increase the badge size in both the Weekly view (line ~241) and Day view (line ~271) instances:
+## Implementation
 
-- Circle: `h-4 w-4` → `h-5 w-5` (20px)
-- Font: `text-[7px]` → `text-[9px]`
-- Position: keep `bottom-1 right-1`
+### New hook: `src/hooks/useScheduleHotkeys.ts`
 
-Both NC and RC badges get the same size increase. No other files change.
+A focused hook that accepts `currentDate`, `setCurrentDate`, `selectedLocation`, `setSelectedLocation`, and the `locations` array.
+
+Registers a `keydown` listener that:
+1. Skips when focus is inside `INPUT`, `TEXTAREA`, `contentEditable`, or `[role="dialog"]` (same guard as the global shortcuts hook)
+2. **ArrowRight** → `setCurrentDate(addDays(currentDate, 1))`
+3. **ArrowLeft** → `setCurrentDate(subDays(currentDate, 1))`
+4. **ArrowDown** → select next location in the array (wrap to first)
+5. **ArrowUp** → select previous location in the array (wrap to last)
+6. **Any single letter (a-z)** → find first location whose `name` starts with that letter (case-insensitive), set it as selected. No-op if no match.
+
+All arrow actions call `event.preventDefault()` to avoid page scrolling.
+
+### Wire into Schedule page: `src/pages/dashboard/Schedule.tsx`
+
+Import and call `useScheduleHotkeys({ currentDate, setCurrentDate, selectedLocation, setSelectedLocation, locations })` alongside existing state declarations (~line 222).
+
+No other files change. The global `useKeyboardShortcuts` hook is unaffected — its input/dialog guard already prevents conflicts.
 
