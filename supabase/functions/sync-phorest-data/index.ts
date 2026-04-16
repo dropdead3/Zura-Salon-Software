@@ -1888,6 +1888,14 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
   ]));
   console.log(`Staff mapping has ${staffMap.size} entries (${profileMap.size} with org). Keys: ${[...staffMap.keys()].slice(0, 5).join(', ')}...`);
 
+  // Build branch-to-location map: phorest_branch_id -> app location id
+  const { data: locations } = await supabase
+    .from('locations')
+    .select('id, phorest_branch_id')
+    .not('phorest_branch_id', 'is', null);
+  const branchToLocationMap = new Map((locations || []).map((l: any) => [l.phorest_branch_id, l.id]));
+  console.log(`Branch-to-location map: ${branchToLocationMap.size} entries. Mappings: ${[...branchToLocationMap.entries()].map(([k, v]) => `${k}->${v}`).join(', ')}`);
+
   let totalBlocks = 0;
 
   const normalizeTime = (t: string) => {
@@ -1898,6 +1906,11 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
 
   for (const branch of branches) {
     const branchId = branch.branchId || branch.id;
+    const appLocationId = branchToLocationMap.get(branchId);
+    if (!appLocationId) {
+      console.log(`No app location mapping for branch ${branchId}, skipping break sync for this branch`);
+      continue;
+    }
     try {
       // Paginate through the /break endpoint (max 100 per page)
       let page = 0;
@@ -1956,7 +1969,7 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
           blocks.push({
             user_id: mapping.user_id,
             phorest_staff_id: staffId,
-            location_id: branchId,
+            location_id: appLocationId,
             block_date: breakDate,
             start_time: normalizeTime(startTime),
             end_time: normalizeTime(endTime),
@@ -1978,10 +1991,11 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
 
       if (blocks.length > 0) {
         // Delete existing phorest-sourced blocks for this branch + date range, then insert fresh
+        // Delete by app location ID (and also legacy branchId for cleanup)
         const { error: deleteError } = await supabase
           .from('staff_schedule_blocks')
           .delete()
-          .eq('location_id', branchId)
+          .in('location_id', [appLocationId, branchId])
           .eq('source', 'phorest')
           .gte('block_date', dateFrom)
           .lte('block_date', dateTo);
