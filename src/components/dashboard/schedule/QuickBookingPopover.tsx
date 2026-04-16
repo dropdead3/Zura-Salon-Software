@@ -883,6 +883,7 @@ export function QuickBookingPopover({
     setHighestStepReached(0);
     setSelectedClient(null);
     setClientSearch('');
+    setActiveLetter(null);
     setSelectedServices([]);
     setSelectedStylist('');
     setSelectedLocation('');
