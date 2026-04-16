@@ -81,7 +81,10 @@ import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
-const MIN_COL_WIDTH = 120;
+// Single source of truth for grid sizing — keep header, body, and indicator in sync
+const TIME_GUTTER_WIDTH = 70;
+const COLUMN_MIN_WIDTH = 160;
+const MIN_COL_WIDTH = COLUMN_MIN_WIDTH;
 
 // ─── Droppable Time Slot ───────────────────────────────────────────
 function formatSlotTime(hour: number, minute: number): string {
