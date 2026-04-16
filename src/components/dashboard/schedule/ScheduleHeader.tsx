@@ -5,6 +5,16 @@ import { format, addDays, parseISO } from 'date-fns';
 import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { useOrgNow } from '@/hooks/useOrgNow';
+import { getOrgDayOffset } from '@/lib/orgTime';
+
+function getRelativeDayLabel(offset: number): string | null {
+  if (offset === 0) return 'Today';
+  if (offset === 1) return 'Tomorrow';
+  if (offset === -1) return 'Yesterday';
+  if (offset > 1 && offset <= 30) return `In ${offset} days`;
+  if (offset < -1 && offset >= -30) return `${Math.abs(offset)} days ago`;
+  return null;
+}
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
