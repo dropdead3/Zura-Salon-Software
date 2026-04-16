@@ -439,17 +439,6 @@ export function WeekView({
                 );
               })}
             </div>
-            {/* Bottom blur fade for smooth transition */}
-            <div 
-              className="h-4 w-full pointer-events-none -mt-px"
-              style={{
-                background: 'linear-gradient(to bottom, hsl(var(--muted) / 0.5), transparent)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
-              }}
-            />
           </div>
 
           {/* Time Grid */}
