@@ -489,9 +489,18 @@ export function DayView({
                       {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium truncate">
-                    {formatDisplayName(stylist.full_name, stylist.display_name)}
-                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium truncate">
+                      {formatDisplayName(stylist.full_name, stylist.display_name)}
+                    </span>
+                    {(() => {
+                      const pct = utilizationByStylist.get(stylist.user_id) ?? 0;
+                      const color = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
+                      return (
+                        <span className={cn('text-xs', color)}>{pct}% booked</span>
+                      );
+                    })()}
+                  </div>
                 </div>
               ))}
             </div>
