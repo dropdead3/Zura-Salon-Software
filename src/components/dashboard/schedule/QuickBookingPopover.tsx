@@ -543,14 +543,13 @@ export function QuickBookingPopover({
 
   // Fetch clients
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
-    queryKey: ['phorest-clients-booking', clientSearch, user?.id, canViewAllClients],
+    queryKey: ['phorest-clients-booking', clientSearch, activeLetter, user?.id, canViewAllClients],
     queryFn: async () => {
       let query = supabase
         .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone, preferred_stylist_id, visit_count, last_visit, total_spend, is_vip, branch_name, is_banned, ban_reason, birthday, client_since')
         .eq('is_duplicate', false)
-        .order('name')
-        .limit(50);
+        .order('name');
       
       if (!canViewAllClients && user?.id) {
         query = query.eq('preferred_stylist_id', user.id);
@@ -563,6 +562,11 @@ export function QuickBookingPopover({
         if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
         if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
         query = query.or(filters.join(','));
+        query = query.limit(50);
+      } else if (activeLetter) {
+        query = query.ilike('name', `${activeLetter}%`).limit(500);
+      } else {
+        query = query.limit(50);
       }
       
       const { data } = await query;
