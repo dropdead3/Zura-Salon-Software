@@ -148,7 +148,7 @@ function WeekAppointmentCard({
     };
   }, [isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, slotInterval, rowHeight);
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
   return (
@@ -198,6 +198,7 @@ export function WeekView({
   appointments,
   hoursStart = 8,
   hoursEnd = 20,
+  zoomLevel = 0,
   onAppointmentClick,
   onSlotClick,
   selectedLocationId,
@@ -214,6 +215,25 @@ export function WeekView({
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  // Measure container height for dynamic row sizing
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerHeight(entry.contentRect.height);
+    });
+    observer.observe(scrollRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Derive slot interval from zoom level
+  const slotInterval = ZOOM_CONFIG[String(zoomLevel)]?.interval ?? 20;
+  const totalSlots = (hoursEnd - hoursStart) * (60 / slotInterval);
+  const availableHeight = containerHeight - 56;
+  const ROW_HEIGHT = containerHeight > 0
+    ? Math.max(MIN_ROW_HEIGHT, Math.floor(availableHeight / totalSlots))
+    : MIN_ROW_HEIGHT;
 
   // Auto-scroll to 1 hour before earliest opening time across the week
   useEffect(() => {
@@ -231,13 +251,13 @@ export function WeekView({
       }
     }
     const scrollToHour = Math.max(earliestOpen - 1, hoursStart);
-    const slotsOffset = (scrollToHour - hoursStart) * SLOTS_PER_HOUR;
+    const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
     const top = slotsOffset * ROW_HEIGHT;
     const ref = scrollRef.current;
     requestAnimationFrame(() => {
       ref?.scrollTo({ top, behavior: 'instant' });
     });
-  }, [currentDate.toDateString(), locationHoursJson, hoursStart]);
+  }, [currentDate.toDateString(), locationHoursJson, hoursStart, slotInterval, ROW_HEIGHT]);
   
   // Week starts with currentDate, followed by 6 future days
   const weekDays = useMemo(() => 
@@ -245,11 +265,11 @@ export function WeekView({
     [currentDate.toDateString()]
   );
   
-  // Generate all 15-minute time slots
+  // Generate time slots based on zoom interval
   const timeSlots = useMemo(() => {
     const slots: { hour: number; minute: number; label: string; isHour: boolean; isHalf: boolean }[] = [];
     for (let hour = hoursStart; hour < hoursEnd; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += slotInterval) {
         const isHour = minute === 0;
         const isHalf = minute === 30;
         let label = '';
@@ -257,14 +277,14 @@ export function WeekView({
           const ampm = hour >= 12 ? 'PM' : 'AM';
           const hour12 = hour % 12 || 12;
           label = `${hour12} ${ampm}`;
-        } else if (isHalf) {
+        } else if (isHalf && slotInterval <= 30) {
           label = '30';
         }
         slots.push({ hour, minute, label, isHour, isHalf });
       }
     }
     return slots;
-  }, [hoursStart, hoursEnd]);
+  }, [hoursStart, hoursEnd, slotInterval]);
 
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
@@ -286,7 +306,7 @@ export function WeekView({
   const todayInWeek = weekDays.find(d => isOrgToday(d));
   const showCurrentTime = !!todayInWeek;
   const currentTimeOffset = showCurrentTime
-    ? (wkNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (wkNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
     : 0;
 
   return (
