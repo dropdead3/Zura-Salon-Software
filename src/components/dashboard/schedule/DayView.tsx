@@ -793,6 +793,7 @@ export function DayView({
                           showCurrentTime={showCurrentTime}
                           isOver={false}
                           rowHeight={ROW_HEIGHT}
+                          slotInterval={slotInterval}
                           onClick={() => {
                             onSlotClick?.(stylist.user_id, slotTime);
                           }}
