@@ -30,7 +30,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CalendarIcon, Loader2, UserPlus } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { CalendarIcon, Check, ChevronsUpDown, Loader2, UserPlus } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
@@ -141,6 +149,41 @@ export function NewClientDialog({
   }, [locations, locationId]);
 
   const [preferredStylistId, setPreferredStylistId] = useState('');
+  const [stylistPickerOpen, setStylistPickerOpen] = useState(false);
+  const [showAllStylists, setShowAllStylists] = useState(false);
+  const [stylistAutoCleared, setStylistAutoCleared] = useState(false);
+
+  // Stylist works at a location if their primary location_id matches OR
+  // they have a schedule entry for that location.
+  const stylistWorksAtLocation = useCallback(
+    (member: any, locId: string) => {
+      if (!locId) return true;
+      if (member.location_id === locId) return true;
+      const schedules = member.location_schedules || {};
+      return Object.prototype.hasOwnProperty.call(schedules, locId);
+    },
+    [],
+  );
+
+  const locationFilteredStylists = useMemo(() => {
+    if (!teamMembers) return [];
+    if (!locationId || showAllStylists) return teamMembers;
+    return teamMembers.filter(m => stylistWorksAtLocation(m, locationId));
+  }, [teamMembers, locationId, showAllStylists, stylistWorksAtLocation]);
+
+  // When preferred location changes, clear preferred stylist if they don't work there.
+  useEffect(() => {
+    if (!preferredStylistId || preferredStylistId === 'none' || !locationId) {
+      setStylistAutoCleared(false);
+      return;
+    }
+    const selected = teamMembers?.find(m => m.user_id === preferredStylistId);
+    if (selected && !stylistWorksAtLocation(selected, locationId)) {
+      setPreferredStylistId('');
+      setStylistAutoCleared(true);
+      setShowAllStylists(false);
+    }
+  }, [locationId, preferredStylistId, teamMembers, stylistWorksAtLocation]);
 
   const debouncedEmail = useDebounce(email.trim(), 500);
   const debouncedPhone = useDebounce(phone.replace(/\D/g, ''), 500);
@@ -161,6 +204,9 @@ export function NewClientDialog({
     setClientSince(new Date());
     setLocationId(defaultLocationId || '');
     setPreferredStylistId('');
+    setShowAllStylists(false);
+    setStylistAutoCleared(false);
+    setStylistPickerOpen(false);
   };
 
   const createClient = useMutation({
@@ -442,42 +488,158 @@ export function NewClientDialog({
 
           <div className="space-y-2">
             <Label>Preferred Stylist</Label>
-            <Select value={preferredStylistId} onValueChange={setPreferredStylistId}>
-              <SelectTrigger>
-                <SelectValue placeholder="None (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {(!teamMembers || teamMembers.length === 0) && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground text-center">
-                    No service providers in system yet
-                  </div>
-                )}
-                {teamMembers?.map(member => {
-                  const name = formatDisplayName(member.full_name || '', member.display_name);
-                  const initials = name
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .map(p => p[0])
-                    .slice(0, 2)
-                    .join('')
-                    .toUpperCase() || '?';
-                  return (
-                    <SelectItem key={member.user_id} value={member.user_id}>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6 shrink-0">
-                          {member.photo_url && <AvatarImage src={member.photo_url} alt={name} />}
-                          <AvatarFallback className="text-[10px] bg-muted">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{name}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            {(() => {
+              const selectedMember = teamMembers?.find(m => m.user_id === preferredStylistId);
+              const selectedName = selectedMember
+                ? formatDisplayName(selectedMember.full_name || '', selectedMember.display_name)
+                : '';
+              const selectedInitials = selectedName
+                .split(/\s+/)
+                .filter(Boolean)
+                .map(p => p[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase() || '?';
+
+              return (
+                <Popover open={stylistPickerOpen} onOpenChange={setStylistPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={stylistPickerOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedMember ? (
+                        <span className="flex items-center gap-2 min-w-0">
+                          <Avatar className="h-5 w-5 shrink-0">
+                            {selectedMember.photo_url && (
+                              <AvatarImage src={selectedMember.photo_url} alt={selectedName} />
+                            )}
+                            <AvatarFallback className="text-[9px] bg-muted">
+                              {selectedInitials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">{selectedName}</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">None (optional)</span>
+                      )}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command
+                      filter={(value, search) => {
+                        if (!search) return 1;
+                        return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                      }}
+                    >
+                      <CommandInput placeholder="Search stylists..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          <div className="py-3 px-3 text-center space-y-2">
+                            <p className="text-sm text-muted-foreground">
+                              {locationId && !showAllStylists
+                                ? 'No stylists at this location'
+                                : 'No stylists found'}
+                            </p>
+                            {locationId && !showAllStylists && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setShowAllStylists(true)}
+                              >
+                                Show all stylists
+                              </Button>
+                            )}
+                          </div>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="none"
+                            onSelect={() => {
+                              setPreferredStylistId('');
+                              setStylistAutoCleared(false);
+                              setStylistPickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                !preferredStylistId ? 'opacity-100' : 'opacity-0',
+                              )}
+                            />
+                            <span className="text-muted-foreground">None</span>
+                          </CommandItem>
+                          {locationFilteredStylists.length === 0 && teamMembers && teamMembers.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                              No service providers in system yet
+                            </div>
+                          )}
+                          {locationFilteredStylists.map(member => {
+                            const name = formatDisplayName(member.full_name || '', member.display_name);
+                            const initials = name
+                              .split(/\s+/)
+                              .filter(Boolean)
+                              .map(p => p[0])
+                              .slice(0, 2)
+                              .join('')
+                              .toUpperCase() || '?';
+                            return (
+                              <CommandItem
+                                key={member.user_id}
+                                value={`${name} ${member.full_name || ''}`}
+                                onSelect={() => {
+                                  setPreferredStylistId(member.user_id);
+                                  setStylistAutoCleared(false);
+                                  setStylistPickerOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    preferredStylistId === member.user_id ? 'opacity-100' : 'opacity-0',
+                                  )}
+                                />
+                                <Avatar className="h-6 w-6 shrink-0 mr-2">
+                                  {member.photo_url && <AvatarImage src={member.photo_url} alt={name} />}
+                                  <AvatarFallback className="text-[10px] bg-muted">
+                                    {initials}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="truncate">{name}</span>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                        {locationId && !showAllStylists && locationFilteredStylists.length > 0 && (
+                          <div className="border-t px-2 py-1.5">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="w-full h-7 text-xs justify-center text-muted-foreground"
+                              onClick={() => setShowAllStylists(true)}
+                            >
+                              Show all stylists
+                            </Button>
+                          </div>
+                        )}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              );
+            })()}
+            {stylistAutoCleared && (
+              <p className="text-xs text-muted-foreground">
+                Cleared — previous stylist isn't at this location.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
