@@ -889,10 +889,10 @@ export function DayView({
               {/* Current Time Indicator */}
               {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
                 <div 
-                  className="absolute left-[70px] right-0 border-t-2 border-destructive pointer-events-none z-[15]"
+                  className="absolute left-[70px] right-0 border-t-2 border-primary pointer-events-none z-[15]"
                   style={{ top: `${currentTimeOffset}px` }}
                 >
-                  <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-destructive rounded-full" />
+                  <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full" />
                 </div>
               )}
             </div>

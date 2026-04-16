@@ -594,9 +594,9 @@ export function WeekView({
                       style={{ top: `${currentTimeOffset}px` }}
                     >
                       <div className="relative">
-                        <div className="absolute left-0 right-0 border-t-2 border-blue-500" />
-                        <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-blue-500 rounded-full shadow" />
-                        <div className="absolute left-3 -top-2.5 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow">
+                        <div className="absolute left-0 right-0 border-t-2 border-primary" />
+                        <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full shadow" />
+                        <div className="absolute left-3 -top-2.5 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded font-medium shadow">
                           {(() => {
                             const h = Math.floor(wkNowMins / 60);
                             const m = wkNowMins % 60;
