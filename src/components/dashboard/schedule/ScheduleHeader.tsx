@@ -151,7 +151,7 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 flex flex-wrap items-center justify-between gap-y-2 rounded-t-lg">
+      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 flex flex-wrap xl:flex-nowrap items-center justify-between gap-y-2 rounded-t-lg">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -249,11 +249,18 @@ export function ScheduleHeader({
 
         {/* Center: Date Display */}
         <div className="text-center min-w-0 truncate">
-          <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
-            {formatDate(currentDate, 'EEEE')}
+          {/* Compact single-line at < xl */}
+          <div className="xl:hidden text-sm font-display tracking-wide whitespace-nowrap truncate">
+            {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d, yyyy')}
           </div>
-          <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
-            {formatDate(currentDate, 'MMMM d, yyyy')}
+          {/* Two-line at xl+ */}
+          <div className="hidden xl:block">
+            <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
+              {formatDate(currentDate, 'EEEE')}
+            </div>
+            <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
+              {formatDate(currentDate, 'MMMM d, yyyy')}
+            </div>
           </div>
         </div>
 
@@ -327,8 +334,8 @@ export function ScheduleHeader({
             </Tooltip>
           )}
           
-          {/* Stacked Location & Staff Selectors */}
-          <div className="flex flex-col gap-1.5 items-end">
+          {/* Location & Staff Selectors — side-by-side at <xl, stacked at xl+ */}
+          <div className="flex flex-row xl:flex-col gap-2 xl:gap-1.5 items-center xl:items-end">
             {/* Location Selector */}
             <Select
               value={selectedLocation}
@@ -340,7 +347,7 @@ export function ScheduleHeader({
               onOpenChange={setLocationSelectOpen}
             >
               <SelectTrigger
-                className="h-7 w-[240px] lg:w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                className="h-7 w-[180px] xl:w-[240px] 2xl:w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
@@ -371,7 +378,7 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 w-[240px] lg:w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  className="h-7 w-[180px] xl:w-[240px] 2xl:w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
                     ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
