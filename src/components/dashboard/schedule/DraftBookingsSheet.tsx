@@ -135,13 +135,28 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
     <>
       <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="440px">
         <div className="p-5 pb-3 border-b border-border/40">
-          <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Draft Bookings
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Resume incomplete bookings or discard them. Drafts auto-delete after 7 days.
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Draft Bookings
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Resume incomplete bookings or discard them. Drafts auto-delete after 7 days.
+              </p>
+            </div>
+            {drafts.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setClearAllOpen(true)}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 -mt-1 -mr-1"
+              >
+                <Trash2 className="h-4 w-4" />
+                Clear All
+              </Button>
+            )}
+          </div>
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
