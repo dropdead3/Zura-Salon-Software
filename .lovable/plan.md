@@ -1,53 +1,53 @@
 
 
-# Responsive Condensed Stylist Headers
+# Adaptive Stylist Header Layout — Condensed Only When Narrow
 
 ## Problem
-From the screenshot, when columns are narrow the name characters break awkwardly mid-word and "Studio..." truncates poorly. At very condensed widths, the layout needs to switch to a vertically stacked, centered design.
+The vertical stacked layout (avatar above, "First L." name) is currently applied at all column widths. It should only kick in when columns are extremely narrow. At normal widths, the original horizontal layout (avatar left, full name right) should be used.
+
+## Approach
+Use a width-aware strategy: measure each stylist column width and switch layouts at a threshold (~100px). Since stylist columns use `flex-1`, their width depends on the number of stylists. We can use `ResizeObserver` or calculate based on stylist count, but the simplest reliable approach is a CSS container query or a JS ref-based width check.
+
+**Chosen method**: Use a `useRef` + `ResizeObserver` on the header row to get available width per stylist, then conditionally render either the **horizontal** (normal) or **vertical** (condensed) layout.
 
 ## Changes — `src/components/dashboard/schedule/DayView.tsx`
 
-### 1. Switch layout to vertical stack (centered)
-Change the header cell from `flex items-center gap-2` (horizontal) to `flex flex-col items-center text-center gap-1` so the avatar sits centered above the text.
+### 1. Add width measurement
+- Add a `ref` on the header row container
+- Use a `ResizeObserver` (or derive from `sortedStylists.length`) to compute `columnWidth = containerWidth / stylistCount`
+- Store a boolean `isCondensed = columnWidth < 120` in state
 
-### 2. Format name as "First L." when condensed
-Add a helper that extracts the first name and last initial from the full name:
-```text
-"Sarah Spencer" → "Sarah S."
-"Gavin Eagan"   → "Gavin E."
-```
-Use this condensed format in the header cell instead of the full display name.
-
-### 3. Center all elements vertically
+### 2. Dual layout rendering
+**When `isCondensed` (narrow columns):**
 ```text
 ┌─────────────┐
-│      ●      │  ← status dot (top-right, stays absolute)
+│      ●      │  ← status dot absolute
 │    [Ava]    │  ← avatar centered
-│  Sarah S.   │  ← first name + last initial
+│  Sarah S.   │  ← condensed name
 │    75%      │  ← utilization
-│   Stud...   │  ← level (truncated)
+│   Studio…   │  ← level truncated
 └─────────────┘
 ```
+- Vertical stack: `flex-col items-center text-center gap-1`
+- Name: "First L." format
+- Text sizes: `text-[11px]` name, `text-[10px]` stats
 
-### Implementation Detail
-
-**Line ~516**: Change the cell class from horizontal flex to vertical centered flex:
-```tsx
-className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+**When normal width:**
+```text
+┌──────────────────────────────── ● ┐
+│ [Ava]  Sarah Spencer    75%      │
+│        Studio Artist             │
+└──────────────────────────────────┘
 ```
+- Horizontal: `flex items-center gap-2`
+- Full display name
+- Utilization + level on second row
+- Text sizes: `text-xs` name, `text-[11px]` stats
 
-**Line ~547-557**: Remove the wrapping `div` with `flex flex-col min-w-0`, flatten the name/pct/level as direct children, all centered.
-
-**Line ~548-549**: Add a condensed name formatter:
-```tsx
-function formatCondensedName(fullName: string, displayName?: string | null): string {
-  const name = formatDisplayName(fullName, displayName);
-  const parts = name.trim().split(' ');
-  if (parts.length <= 1) return name;
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
-}
-```
-Use `formatCondensedName(stylist.full_name, stylist.display_name)` in the header.
+### 3. Implementation detail
+- Add `useRef` + `useEffect` with `ResizeObserver` on the header flex container (the `div` wrapping all stylist columns, excluding the week indicator)
+- Threshold: ~120px per column triggers condensed mode
+- Both layouts keep the same tooltip, avatar hover, and status dot behavior
 
 Single file change, no new dependencies.
 
