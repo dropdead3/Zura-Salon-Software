@@ -1,52 +1,67 @@
 
 
-# Direct-Click for Single-Link Nav Groups (Collapsed Sidebar)
+# Direct-Click for Single-Item Sections in Collapsed Sidebar
 
 ## Problem
-In the collapsed sidebar, groups with only one visible link still require hovering to reveal a popover menu, then clicking the link inside. The screenshot shows the "SYSTEM" section with just "Settings" — this should navigate directly on click.
+`SidebarNavContent.tsx` renders every non-main section in the collapsed sidebar as a `HoverPopover`, even when the section has only one link (e.g., SYSTEM → Settings). The fix we previously applied to `CollapsibleNavGroup.tsx` doesn't apply here because the sidebar uses `SidebarNavContent.tsx` for these sections.
 
-## Change — `src/components/dashboard/CollapsibleNavGroup.tsx` (lines 176-229)
+## Change — `src/components/dashboard/SidebarNavContent.tsx` (lines 667-758)
 
-In the collapsed `isCollapsed` branch, add a check: if a group has exactly 1 visible item, render a direct-navigation icon button (with tooltip) instead of the `HoverPopover`. The existing popover behavior stays for groups with 2+ items.
+Add a single-item check before the `HoverPopover` block. If `filteredItems.length === 1`, render a `Tooltip`-wrapped direct-navigation button instead of the popover:
 
 ```tsx
-// Inside the isCollapsed block, for each group:
-if (items.length === 1) {
-  const singleItem = items[0];
-  const Icon = singleItem.icon;
-  const isActive = location.pathname === singleItem.href;
-  const label = getNavLabel ? getNavLabel(singleItem) : singleItem.label;
-  
-  return (
-    <Tooltip key={group.id}>
-      <TooltipTrigger asChild>
-        <a
-          href={singleItem.href}
-          onClick={(e) => {
-            e.preventDefault();
-            navigate(singleItem.href, { state: { navTimestamp: Date.now() } });
-            onNavClick();
-          }}
-          className={cn(
-            "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
-            "transition-all duration-200 text-sm",
-            isActive
-              ? "bg-foreground/10 text-foreground"
-              : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
-          )}
-          style={{ width: 'calc(100% - 16px)' }}
-        >
-          <Icon className="w-4 h-4" />
-        </a>
-      </TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
-    </Tooltip>
-  );
-}
+// Line 667-758: replace the collapsed section rendering
+{isCollapsed && sectionId !== 'main' ? (
+  (() => {
+    const SectionIcon = SECTION_ICONS[sectionId] || SECTION_ICONS.main;
+    const isAnyActive = filteredItems.some(item => location.pathname === item.href);
 
-// else: existing HoverPopover code for multi-item groups
+    // Single-item section → direct click
+    if (filteredItems.length === 1) {
+      const singleItem = filteredItems[0];
+      const Icon = singleItem.icon;
+      const resolvedHref = dashPath(singleItem.href.replace(/^\/dashboard/, ''));
+      const isActive = location.pathname === resolvedHref;
+      const label = getNavLabel(singleItem);
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={resolvedHref}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
+                onNavClick();
+              }}
+              className={cn(
+                "flex items-center justify-center px-2 py-2 mx-2 rounded-full",
+                "transition-all duration-300 text-sm",
+                isActive
+                  ? "bg-foreground/10 text-foreground"
+                  : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
+              )}
+              style={{ width: 'calc(100% - 16px)' }}
+            >
+              <Icon className="w-4 h-4" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent side="right">{label}</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    // Multi-item section → existing HoverPopover (unchanged)
+    return (
+      <HoverPopover>
+        ...existing popover code...
+      </HoverPopover>
+    );
+  })()
+)
 ```
 
+Also add `Tooltip`, `TooltipTrigger`, `TooltipContent` imports if not already present.
+
 ### Files Modified
-1. `src/components/dashboard/CollapsibleNavGroup.tsx` — single-item groups navigate directly on click in collapsed state
+1. `src/components/dashboard/SidebarNavContent.tsx` — add single-item direct-click path in collapsed state
 
