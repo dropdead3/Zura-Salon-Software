@@ -279,9 +279,24 @@ function GridContent({
         </>
       ) : (
         <>
-          {/* Day view: NC/RC badge top-left */}
+          {/* Day view: top row — client name + indicators + status badge */}
+          <div className="flex items-center justify-between gap-1 pr-0.5">
+            <span className="text-sm font-medium truncate min-w-0 flex-1">
+              {useShortLabels ? formatCompactName(appointment.client_name) : (appointment.client_name || 'Walk-in')}
+            </span>
+            <div className="flex items-center gap-1 shrink-0">
+              <IndicatorCluster flags={indicatorFlags} size={size} />
+              <span className={cn(
+                'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
+                badge.bg, badge.text, badge.border
+              )}>
+                {statusLabel}
+              </span>
+            </div>
+          </div>
+          {/* NC/RC badge — bottom right */}
           {showClientAvatar && (
-            <div className="absolute top-1 left-1 z-20">
+            <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
                 'h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0',
                 appointment.is_new_client
@@ -292,22 +307,6 @@ function GridContent({
               </span>
             </div>
           )}
-          {/* Day view: indicators + status badge top-right */}
-          <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-            <IndicatorCluster flags={indicatorFlags} size={size} />
-            <span className={cn(
-              'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-              badge.bg, badge.text, badge.border
-            )}>
-              {statusLabel}
-            </span>
-          </div>
-          {/* Client name + phone below badges */}
-          <div className="text-sm font-medium truncate pt-6">
-            <span className="truncate">{appointment.client_name}</span>
-            {showClientPhone && appointment.client_phone && (
-              <span className="font-normal opacity-80 text-xs ml-1">
-                {formatPhoneDisplay(appointment.client_phone)}
               </span>
             )}
           </div>
