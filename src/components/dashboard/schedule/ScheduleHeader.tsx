@@ -374,7 +374,7 @@ export function ScheduleHeader({
                     Only Stylists With Appointments
                   </button>
                   <div className="h-px bg-border my-1" />
-                  {stylists.map((s) => (
+                  {[...stylists].sort((a, b) => formatFullDisplayName(a.full_name, a.display_name).localeCompare(formatFullDisplayName(b.full_name, b.display_name))).map((s) => (
                     <button
                       key={s.user_id}
                       onClick={() => onStaffToggle(s.user_id)}
