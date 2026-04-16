@@ -1,23 +1,17 @@
 
 
-# Fix Week View Header Opacity
+# Widen Minimum Column Width in DayView
 
-## Problem
-The sticky day-header row in the week view uses a semi-transparent background (`hsl(var(--muted) / 0.7)`), so appointment cards bleed through when scrolling — visible in all three screenshots.
+## Change
+Update all `min-w-[120px]` occurrences in `DayView.tsx` to `min-w-[160px]`. This gives each stylist column more breathing room for names, appointment cards, and status badges while still allowing horizontal scroll when there are many stylists.
 
-## Fix
-In `WeekView.tsx` line 391, increase the background opacity from `0.7` to `0.95` (or `1` for fully opaque). This keeps the frosted glass aesthetic while ensuring content beneath is not visible through the header.
+Three locations to update (all in `DayView.tsx`):
+- **Line 724** — condensed header columns
+- **Line 743** — normal header columns  
+- **Line 793** — time slot grid columns
 
-```tsx
-// Before
-background: 'hsl(var(--muted) / 0.7)',
-
-// After
-background: 'hsl(var(--muted) / 0.95)',
-```
-
-Also bump `z-10` to `z-20` on the sticky wrapper (line 385) to ensure the header reliably sits above all appointment cards.
+Replace `min-w-[120px]` → `min-w-[160px]` in all three.
 
 ### Files Modified
-1. `src/components/dashboard/schedule/WeekView.tsx` — increase header background opacity and z-index
+1. `src/components/dashboard/schedule/DayView.tsx`
 
