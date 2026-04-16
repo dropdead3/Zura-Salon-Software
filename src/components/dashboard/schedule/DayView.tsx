@@ -301,6 +301,8 @@ export function DayView({
     return m;
   }, [stylistLevels]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const headerRowRef = useRef<HTMLDivElement>(null);
+  const [isCondensed, setIsCondensed] = useState(false);
 
   // Auto-scroll to 1 hour before opening time
   useEffect(() => {
@@ -387,7 +389,24 @@ export function DayView({
     });
   }, [stylists, utilizationByStylist]);
 
-  // Find active appointment for drag overlay
+  // Measure column width to toggle condensed layout
+  useEffect(() => {
+    const el = headerRowRef.current;
+    if (!el) return;
+    const count = sortedStylists.length;
+    if (count === 0) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const containerWidth = entry.contentRect.width - 70; // subtract week indicator
+        const colWidth = containerWidth / count;
+        setIsCondensed(colWidth < 120);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [sortedStylists.length]);
+
   const activeAppointment = useMemo(() => {
     if (!activeId) return null;
     return appointments.find(a => a.id === activeId) || null;
@@ -497,7 +516,7 @@ export function DayView({
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           <div>
             {/* Stylist Headers - frosted glass sticky header */}
-            <div className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+            <div ref={headerRowRef} className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
               <div className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
                 W {weekNumber}
@@ -510,54 +529,88 @@ export function DayView({
                 const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
                 const acceptingClients = stylist.is_booking !== false && stylist.lead_pool_eligible !== false;
 
-                return (
-                  <div
-                    key={stylist.user_id} 
-                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
-                  >
-                    {/* Accepting Clients indicator — top-right corner */}
-                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className={cn('flex items-center gap-1 cursor-default')}>
-                            <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">
-                          {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
+                const fullName = formatDisplayName(stylist.full_name, stylist.display_name);
+                const condensedName = (() => {
+                  const parts = fullName.trim().split(' ');
+                  if (parts.length <= 1) return fullName;
+                  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+                })();
 
+                // Status dot (shared)
+                const statusDot = (
+                  <div className={cn('flex items-center gap-1', isCondensed ? 'absolute top-1.5 right-1.5' : '')}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer">
-                          <AvatarImage src={stylist.photo_url || undefined} />
-                          <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
-                            {formatDisplayName(stylist.full_name, stylist.display_name).slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <span className={cn('flex items-center gap-1 cursor-default')}>
+                          <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
+                        </span>
                       </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-                        {stylist.specialties && stylist.specialties.length > 0
-                          ? stylist.specialties.join(' · ')
-                          : 'No specialties listed'}
+                      <TooltipContent side="bottom" className="text-xs">
+                        {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
                       </TooltipContent>
                     </Tooltip>
-                    <span className="text-[11px] font-medium leading-tight">
-                      {(() => {
-                        const name = formatDisplayName(stylist.full_name, stylist.display_name);
-                        const parts = name.trim().split(' ');
-                        if (parts.length <= 1) return name;
-                        return `${parts[0]} ${parts[parts.length - 1][0]}.`;
-                      })()}
-                    </span>
-                    <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
-                    {levelInfo && (
-                      <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
-                        {levelInfo.label}
-                      </span>
-                    )}
+                  </div>
+                );
+
+                const avatar = (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', isCondensed ? 'h-8 w-8' : 'h-8 w-8 shrink-0')}>
+                        <AvatarImage src={stylist.photo_url || undefined} />
+                        <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
+                          {fullName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                      {stylist.specialties && stylist.specialties.length > 0
+                        ? stylist.specialties.join(' · ')
+                        : 'No specialties listed'}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+
+                if (isCondensed) {
+                  return (
+                    <div
+                      key={stylist.user_id}
+                      className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                    >
+                      {statusDot}
+                      {avatar}
+                      <span className="text-[11px] font-medium leading-tight">{condensedName}</span>
+                      <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
+                      {levelInfo && (
+                        <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
+                          {levelInfo.label}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Normal (wide) layout
+                return (
+                  <div
+                    key={stylist.user_id}
+                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-start gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                  >
+                    {avatar}
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs font-medium leading-tight truncate">{fullName}</span>
+                        {statusDot}
+                      </div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className={cn('text-[11px]', pctColor)}>{pct}%</span>
+                        {levelInfo && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground">·</span>
+                            <span className="text-[10px] text-muted-foreground truncate">{levelInfo.label}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
