@@ -565,10 +565,9 @@ export default function Schedule() {
       setBookingDefaults({ date: dateOrStylistId, time });
     }
 
-    // Role-based branching (mirrors handleNewBooking logic)
-    if (isAdminRole && !isServiceProvider) {
-      setMeetingWizardOpen(true);
-    } else if (isAdminRole && isServiceProvider) {
+    // Admins (with or without service-provider role) get the type selector
+    // so they can book client appointments, internal meetings, or timeblocks.
+    if (isAdminRole) {
       setTypeSelectorOpen(true);
     } else {
       setBookingOpen(true);
@@ -591,12 +590,11 @@ export default function Schedule() {
   };
 
   const handleNewBooking = () => {
-    // Role-based branching: admin-only → meeting wizard, dual-role → type selector
-    if (isAdminRole && !isServiceProvider) {
-      setMeetingWizardOpen(true);
-      return;
-    }
-    if (isAdminRole && isServiceProvider) {
+    // Any admin gets the type selector (client appt / meeting / timeblock).
+    // Pure stylists go straight to client booking.
+    if (isAdminRole) {
+      setActiveDraft(null);
+      setBookingDefaults({});
       setTypeSelectorOpen(true);
       return;
     }

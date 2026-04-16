@@ -39,7 +39,7 @@ export function ScheduleTypeSelector({ onSelectClientBooking, onSelectMeeting, o
           </div>
           <div>
             <p className="text-sm font-sans text-foreground">Client Appointment</p>
-            <p className="text-xs font-sans text-muted-foreground">Book a service for a client</p>
+            <p className="text-xs font-sans text-muted-foreground">Book a service or lead for a client</p>
           </div>
         </button>
 
