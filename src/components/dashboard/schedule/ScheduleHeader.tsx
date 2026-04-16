@@ -340,7 +340,7 @@ export function ScheduleHeader({
               onOpenChange={setLocationSelectOpen}
             >
               <SelectTrigger
-                className="h-7 w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                className="h-7 w-[240px] lg:w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
