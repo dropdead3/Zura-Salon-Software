@@ -420,8 +420,8 @@ export function DayView({
     if (isZoomChange) {
       // Preserve the time the user is looking at
       const viewportCenter = ref.scrollTop + ref.clientHeight / 2;
-      const oldTotalSlots = (hoursEnd - hoursStart) * (60 / (prevSlotIntervalRef.current || slotInterval));
-      const oldTotalHeight = oldTotalSlots * (prevRowHeightRef.current || ROW_HEIGHT);
+      const oldTotalSlots = (hoursEnd - hoursStart) * (60 / oldSlotInterval);
+      const oldTotalHeight = oldTotalSlots * oldRowHeight;
       const fraction = oldTotalHeight > 0 ? viewportCenter / (ref.scrollHeight || 1) : 0;
       requestAnimationFrame(() => {
         const newTop = fraction * ref.scrollHeight - ref.clientHeight / 2;
