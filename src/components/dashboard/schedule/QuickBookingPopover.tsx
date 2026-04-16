@@ -42,6 +42,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAllServicesByCategory } from '@/hooks/usePhorestServices';
 import { useLocations } from '@/hooks/useLocations';
 import { NewClientDialog } from './NewClientDialog';
+import { NewClientStep } from './booking/NewClientStep';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -114,7 +115,7 @@ interface PhorestClient {
   ban_reason?: string | null;
 }
 
-type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
+type Step = 'service' | 'location' | 'client' | 'newClient' | 'stylist' | 'confirm';
 
 const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
 
@@ -266,7 +267,6 @@ export function QuickBookingPopover({
   const { formatDate: formatDateLocale } = useFormatDate();
   const { getLevelPrice } = useBookingLevelPricing();
   const [step, setStep] = useState<Step>('service');
-  const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   const [highestStepReached, setHighestStepReached] = useState<number>(0);
   
   // Form state
@@ -936,6 +936,10 @@ export function QuickBookingPopover({
   };
 
   const handleBack = () => {
+    if (step === 'newClient') {
+      setStep('client');
+      return;
+    }
     const currentIndex = STEPS.indexOf(step);
     if (stylistFirstMode) {
       // Custom back navigation for stylist-first mode
@@ -1085,7 +1089,8 @@ export function QuickBookingPopover({
     return phone;
   };
 
-  const currentStepIndex = STEPS.indexOf(step);
+  // Treat 'newClient' as a sub-step of 'client' for the progress bar
+  const currentStepIndex = STEPS.indexOf(step === 'newClient' ? 'client' : step);
   const effectiveStylistSelected = !!selectedStylist || !!preSelectedStylistId;
   const redoReasonValid = !isRedo || !redoPolicy?.redo_reason_required || (redoReason && (redoReason !== 'Other' || redoCustomReason.trim()));
   const redoOriginalLinked = !isRedo || !!originalAppointmentId;
@@ -1148,8 +1153,8 @@ export function QuickBookingPopover({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 rounded-full"
-                    onClick={() => {
-                      setShowNewClientDialog(true);
+                  onClick={() => {
+                      setStep('newClient');
                     }}
                   >
                     <UserPlus className="h-4 w-4" />
@@ -1253,7 +1258,7 @@ export function QuickBookingPopover({
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 shrink-0"
-                  onClick={() => setShowNewClientDialog(true)}
+                  onClick={() => setStep('newClient')}
                 >
                   <UserPlus className="h-4 w-4" />
                 </Button>
