@@ -1960,7 +1960,7 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
   return { synced: totalBlocks };
 }
 
-
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -2052,7 +2052,6 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
         await logSync(supabase, 'appointments', 'failed', 0, error.message);
         notifyFailure('appointments', error.message);
       }
-      }
 
       // Also sync roster/breaks for the same date range
       try {
@@ -2065,7 +2064,7 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
       }
     }
 
-
+    if (sync_type === 'clients' || sync_type === 'all') {
       try {
         results.clients = await syncClients(supabase, businessId, username, password);
         await logSync(supabase, 'clients', 'success', results.clients.synced);
