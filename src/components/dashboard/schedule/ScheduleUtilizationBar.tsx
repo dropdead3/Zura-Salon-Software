@@ -18,10 +18,7 @@ interface ScheduleUtilizationBarProps {
   timeOffUserIds?: string[];
 }
 
-function parseTimeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
+import { parseTimeToMinutes } from '@/lib/schedule-utils';
 
 export function ScheduleUtilizationBar({
   date,

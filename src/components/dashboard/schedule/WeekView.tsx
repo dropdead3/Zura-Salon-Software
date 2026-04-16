@@ -58,28 +58,7 @@ const ZOOM_CONFIG: Record<string, { interval: number }> = {
 
 const MIN_ROW_HEIGHT = 20;
 
-function parseTimeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-function getEventStyle(startTime: string, endTime: string, hoursStart: number, slotInterval: number, rowHeight: number) {
-  const startMinutes = parseTimeToMinutes(startTime);
-  const endMinutes = parseTimeToMinutes(endTime);
-  const startOffset = startMinutes - (hoursStart * 60);
-  const duration = endMinutes - startMinutes;
-  const top = (startOffset / slotInterval) * rowHeight;
-  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
-  return { top: `${top}px`, height: `${height}px` };
-}
-
-function formatTime12h(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-}
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo } from '@/lib/schedule-utils';
 
 function WeekSlot({
   hour,
@@ -157,6 +136,8 @@ function WeekAppointmentCard({
   serviceLookup,
   assistantNamesMap,
   assistantProfilesMap,
+  columnIndex = 0,
+  totalOverlapping = 1,
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -170,6 +151,8 @@ function WeekAppointmentCard({
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
+  columnIndex?: number;
+  totalOverlapping?: number;
 }) {
   const [isHoveredRight, setIsHoveredRight] = useState(false);
   const hoverBoundsRef = useRef<DOMRect | null>(null);
@@ -215,18 +198,30 @@ function WeekAppointmentCard({
     };
   }, [isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, slotInterval, rowHeight);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight, slotInterval);
   const pixelHeight = parseInt(style.height);
   const size = getCardSize(appointment.start_time, appointment.end_time, undefined, pixelHeight);
+
+  // Overlap layout
+  const widthPercent = 100 / totalOverlapping;
+  const leftPercent = columnIndex * widthPercent;
+  const isFirstCol = columnIndex === 0;
+  const isLastCol = columnIndex === totalOverlapping - 1;
+  const leftOffset = isFirstCol ? 1 : 0;
+  const rightPad = isLastCol ? 1 : 0;
+  const cardWidth = (isHoveredRight && totalOverlapping <= 1)
+    ? `calc(${widthPercent * 0.7}%)`
+    : `calc(${widthPercent}% - ${leftOffset + rightPad}px)`;
 
   return (
     <div
       className="absolute z-10"
       style={{
-        ...style,
-        left: '4px',
-        right: isHoveredRight ? '30%' : '4px',
-        transition: 'right 200ms ease-out',
+        top: style.top,
+        height: style.height,
+        left: `calc(${leftPercent}% + ${leftOffset}px)`,
+        width: cardWidth,
+        transition: 'width 200ms ease-out',
       }}
       onMouseMove={handleMouseMove}
       onClick={onClick}
@@ -519,7 +514,7 @@ export function WeekView({
                   {assistantTimeBlocks
                     .filter(b => b.date === dateKey)
                     .map(block => {
-                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart, slotInterval, ROW_HEIGHT);
+                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart, ROW_HEIGHT, slotInterval);
                       const isUnassigned = !block.assistant_user_id;
                       const isConfirmed = block.status === 'confirmed';
                       return (
@@ -558,6 +553,7 @@ export function WeekView({
 
                   {/* Appointments */}
                   {dayAppointments.map((apt) => {
+                    const { columnIndex, totalOverlapping } = getOverlapInfo(dayAppointments, apt);
                     return (
                       <WeekAppointmentCard
                         key={apt.id}
@@ -573,6 +569,8 @@ export function WeekView({
                         serviceLookup={serviceLookup}
                         assistantNamesMap={assistantNamesMap}
                         assistantProfilesMap={assistantProfilesMap}
+                        columnIndex={columnIndex}
+                        totalOverlapping={totalOverlapping}
                       />
                     );
                   })}

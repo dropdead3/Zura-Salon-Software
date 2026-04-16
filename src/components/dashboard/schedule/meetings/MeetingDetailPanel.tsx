@@ -1,4 +1,4 @@
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,10 +35,7 @@ const RSVP_CONFIG: Record<string, { label: string; Icon: typeof CheckCircle; cla
   pending: { label: 'Pending', Icon: HelpCircle, className: 'text-muted-foreground' },
 };
 
-function formatTime12h(time: string): string {
-  try { return format(parse(time, 'HH:mm', new Date()), 'h:mm a'); }
-  catch { return time; }
-}
+import { formatTime12h } from '@/lib/schedule-utils';
 
 interface MeetingDetailPanelProps {
   meeting: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) | null;

@@ -74,28 +74,7 @@ interface DayViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-function parseTimeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20, slotInterval: number = 15) {
-  const startMinutes = parseTimeToMinutes(startTime);
-  const endMinutes = parseTimeToMinutes(endTime);
-  const startOffset = startMinutes - (hoursStart * 60);
-  const duration = endMinutes - startMinutes;
-  const top = (startOffset / slotInterval) * rowHeight;
-  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
-  return { top: `${top}px`, height: `${height}px` };
-}
-
-function formatTime12h(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-}
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo } from '@/lib/schedule-utils';
 
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
@@ -286,12 +265,15 @@ function AppointmentCard({
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel, pixelHeight);
 
-  const widthPadding = totalOverlapping > 1 ? 2 : 4;
-  const leftOffset = totalOverlapping > 1 ? 1 : 2;
+  // Flush edges: no inner gutter between overlapping cards
+  const isFirstCol = columnIndex === 0;
+  const isLastCol = columnIndex === totalOverlapping - 1;
+  const leftOffset = isFirstCol ? 1 : 0;
+  const rightPad = isLastCol ? 1 : 0;
 
-  const shrunkWidth = isDragOverlay ? undefined : isHoveredRight
-    ? `calc(${widthPercent * 0.7}% - ${widthPadding}px)`
-    : `calc(${widthPercent}% - ${widthPadding}px)`;
+  const shrunkWidth = isDragOverlay ? undefined : (isHoveredRight && totalOverlapping <= 1)
+    ? `calc(${widthPercent * 0.7}%)`
+    : `calc(${widthPercent}% - ${leftOffset + rightPad}px)`;
 
   return (
     <div
@@ -429,15 +411,17 @@ export function DayView({
   useEffect(() => {
     if (!scrollRef.current) return;
     const ref = scrollRef.current;
-    const isZoomChange = prevSlotIntervalRef.current !== slotInterval || prevRowHeightRef.current !== ROW_HEIGHT;
+    const oldSlotInterval = prevSlotIntervalRef.current;
+    const oldRowHeight = prevRowHeightRef.current;
+    const isZoomChange = oldSlotInterval !== slotInterval || oldRowHeight !== ROW_HEIGHT;
     prevSlotIntervalRef.current = slotInterval;
     prevRowHeightRef.current = ROW_HEIGHT;
 
     if (isZoomChange) {
       // Preserve the time the user is looking at
       const viewportCenter = ref.scrollTop + ref.clientHeight / 2;
-      const oldTotalSlots = (hoursEnd - hoursStart) * (60 / (prevSlotIntervalRef.current || slotInterval));
-      const oldTotalHeight = oldTotalSlots * (prevRowHeightRef.current || ROW_HEIGHT);
+      const oldTotalSlots = (hoursEnd - hoursStart) * (60 / oldSlotInterval);
+      const oldTotalHeight = oldTotalSlots * oldRowHeight;
       const fraction = oldTotalHeight > 0 ? viewportCenter / (ref.scrollHeight || 1) : 0;
       requestAnimationFrame(() => {
         const newTop = fraction * ref.scrollHeight - ref.clientHeight / 2;
@@ -564,22 +548,7 @@ export function DayView({
     ? (dayNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
     : 0;
 
-  // Calculate overlapping appointments for a stylist
-  const getOverlapInfo = (appointments: PhorestAppointment[], targetApt: PhorestAppointment) => {
-    const targetStart = parseTimeToMinutes(targetApt.start_time);
-    const targetEnd = parseTimeToMinutes(targetApt.end_time);
-    
-    const overlapping = appointments.filter(apt => {
-      const aptStart = parseTimeToMinutes(apt.start_time);
-      const aptEnd = parseTimeToMinutes(apt.end_time);
-      return !(aptEnd <= targetStart || aptStart >= targetEnd);
-    });
-
-    overlapping.sort((a, b) => parseTimeToMinutes(a.start_time) - parseTimeToMinutes(b.start_time));
-    const columnIndex = overlapping.findIndex(apt => apt.id === targetApt.id);
-    
-    return { columnIndex, totalOverlapping: overlapping.length };
-  };
+  // getOverlapInfo is now imported from @/lib/schedule-utils
 
   // ─── Drag Handlers ─────────────────────────────────────────────
   const handleDragStart = useCallback((event: DragStartEvent) => {

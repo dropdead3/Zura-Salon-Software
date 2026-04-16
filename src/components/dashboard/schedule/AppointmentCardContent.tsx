@@ -40,18 +40,7 @@ const isConsultationCategory = (category: string | null | undefined) => {
 
 const DEFAULT_CONSULTATION_GRADIENT = SPECIAL_GRADIENTS['teal-lime'];
 
-function formatTime12h(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-}
-
-function parseTimeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
+import { formatTime12h, parseTimeToMinutes } from '@/lib/schedule-utils';
 
 // ─── Types ────────────────────────────────────────────────────
 export type CardSize = 'compact' | 'medium' | 'full';
