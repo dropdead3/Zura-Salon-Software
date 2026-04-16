@@ -214,6 +214,8 @@ function AppointmentCard({
   serviceLookup,
   assistantNamesMap,
   date,
+  rowHeight = 20,
+  zoomLevel = 0,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
