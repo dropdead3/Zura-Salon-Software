@@ -790,8 +790,8 @@ export default function Schedule() {
                 date={currentDate}
                 appointments={appointments}
                 stylists={displayedStylists}
-                hoursStart={zoomLevel < 0 ? 6 : preferences.hours_start}
-                hoursEnd={zoomLevel < 0 ? 24 : preferences.hours_end}
+                hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
+                hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
                 onAppointmentClick={handleAppointmentClick}
                 onSlotClick={handleSlotClick}
                 selectedAppointmentId={selectedAppointment?.id}
@@ -817,8 +817,8 @@ export default function Schedule() {
               date={currentDate}
               appointments={appointments}
               stylists={displayedStylists}
-              hoursStart={zoomLevel < 0 ? 6 : preferences.hours_start}
-              hoursEnd={zoomLevel < 0 ? 24 : preferences.hours_end}
+               hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
+               hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
               onAppointmentClick={handleAppointmentClick}
               onSlotClick={handleSlotClick}
               

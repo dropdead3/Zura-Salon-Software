@@ -364,13 +364,13 @@ export function DayView({
   zoomLevel = 0,
 }: DayViewProps) {
   const ZOOM_CONFIG: Record<string, { interval: number; rowHeight: number }> = {
-    '-3': { interval: 60, rowHeight: 60 },
-    '-2': { interval: 60, rowHeight: 80 },
-    '-1': { interval: 30, rowHeight: 30 },
-    '0': { interval: 20, rowHeight: 30 },
+    '-3': { interval: 60, rowHeight: 24 },
+    '-2': { interval: 60, rowHeight: 24 },
+    '-1': { interval: 30, rowHeight: 24 },
+    '0': { interval: 20, rowHeight: 24 },
     '1': { interval: 15, rowHeight: 24 },
-    '2': { interval: 10, rowHeight: 20 },
-    '3': { interval: 5, rowHeight: 20 },
+    '2': { interval: 10, rowHeight: 24 },
+    '3': { interval: 5, rowHeight: 24 },
   };
   const zoomConfig = ZOOM_CONFIG[String(zoomLevel)] ?? ZOOM_CONFIG['0'];
   const ROW_HEIGHT = zoomConfig.rowHeight;
