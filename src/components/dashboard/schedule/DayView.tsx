@@ -79,13 +79,13 @@ function parseTimeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20) {
+function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20, slotInterval: number = 15) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 15) * rowHeight;
-  const height = Math.max((duration / 15) * rowHeight, rowHeight);
+  const top = (startOffset / slotInterval) * rowHeight;
+  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
   return { top: `${top}px`, height: `${height}px` };
 }
 
@@ -140,7 +140,9 @@ function DroppableSlot({
     ? 'border-t border-border dark:border-border/50'
     : minute === 30
       ? 'border-t border-dashed border-border dark:border-border/35'
-      : 'border-t border-dotted border-border/80 dark:border-border/15';
+      : minute % 15 === 0
+        ? 'border-t border-dotted border-border/80 dark:border-border/15'
+        : '';
 
   return (
     <div
@@ -201,6 +203,7 @@ interface AppointmentCardProps {
   hasCoverageScheduled?: boolean;
   date?: Date;
   rowHeight?: number;
+  slotInterval?: number;
   zoomLevel?: number;
 }
 
@@ -220,6 +223,7 @@ function AppointmentCard({
   assistantNamesMap,
   date,
   rowHeight = 20,
+  slotInterval = 15,
   zoomLevel = 0,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -272,7 +276,7 @@ function AppointmentCard({
     };
   }, [isDragOverlay, isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight, slotInterval);
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel);
@@ -359,8 +363,16 @@ export function DayView({
   onMeetingClick,
   zoomLevel = 0,
 }: DayViewProps) {
-  const ROW_HEIGHTS = [20, 30, 40];
-  const ROW_HEIGHT = ROW_HEIGHTS[zoomLevel] ?? 20;
+  const ZOOM_CONFIG: Record<string, { interval: number; rowHeight: number }> = {
+    '-2': { interval: 5, rowHeight: 4 },
+    '-1': { interval: 10, rowHeight: 8 },
+    '0': { interval: 15, rowHeight: 20 },
+    '1': { interval: 15, rowHeight: 30 },
+    '2': { interval: 15, rowHeight: 40 },
+  };
+  const zoomConfig = ZOOM_CONFIG[String(zoomLevel)] ?? ZOOM_CONFIG['0'];
+  const ROW_HEIGHT = zoomConfig.rowHeight;
+  const slotInterval = zoomConfig.interval;
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -385,13 +397,13 @@ export function DayView({
       openHour = h;
     }
     const scrollToHour = Math.max(openHour - 1, hoursStart);
-    const slotsOffset = (scrollToHour - hoursStart) * 4; // 4 slots per hour
+    const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
     const top = slotsOffset * ROW_HEIGHT;
     const ref = scrollRef.current;
     requestAnimationFrame(() => {
       ref?.scrollTo({ top, behavior: 'instant' });
     });
-  }, [date.toDateString(), locationHours?.open, hoursStart]);
+  }, [date.toDateString(), locationHours?.open, hoursStart, slotInterval, ROW_HEIGHT]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -407,7 +419,7 @@ export function DayView({
   const timeSlots = useMemo(() => {
     const slots: { hour: number; minute: number; label: string; isHour: boolean; isHalf: boolean }[] = [];
     for (let hour = hoursStart; hour < hoursEnd; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += slotInterval) {
         const isHour = minute === 0;
         const isHalf = minute === 30;
         const label = isHour ? formatHour(hour) : isHalf ? '30' : '';
@@ -415,7 +427,7 @@ export function DayView({
       }
     }
     return slots;
-  }, [hoursStart, hoursEnd]);
+  }, [hoursStart, hoursEnd, slotInterval]);
 
   const dateStr = format(date, 'yyyy-MM-dd');
   const weekNumber = getWeek(date);
@@ -488,7 +500,7 @@ export function DayView({
   const { isToday: isDayToday, nowMinutes: dayNowMins } = useOrgNow();
   const showCurrentTime = isDayToday(date);
   const currentTimeOffset = showCurrentTime
-    ? (dayNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (dayNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
     : 0;
 
   // Calculate overlapping appointments for a stylist
@@ -771,6 +783,7 @@ export function DayView({
                       stylistUserId={stylist.user_id}
                       hoursStart={hoursStart}
                       rowHeight={ROW_HEIGHT}
+                      slotInterval={slotInterval}
                       onBlockClick={onBlockClick}
                       onBlockResize={onBlockResize}
                       currentUserId={currentUserId}
@@ -807,6 +820,7 @@ export function DayView({
                           hasCoverageScheduled={hasCoverage}
                           date={date}
                           rowHeight={ROW_HEIGHT}
+                          slotInterval={slotInterval}
                           zoomLevel={zoomLevel}
                         />
                       );
@@ -821,6 +835,7 @@ export function DayView({
                           meeting={meeting}
                           hoursStart={hoursStart}
                           rowHeight={ROW_HEIGHT}
+                          slotInterval={slotInterval}
                           onClick={() => onMeetingClick?.(meeting)}
                         />
                       ))}
@@ -854,6 +869,7 @@ export function DayView({
             serviceLookup={serviceLookup}
             isDragOverlay
             rowHeight={ROW_HEIGHT}
+            slotInterval={slotInterval}
             zoomLevel={zoomLevel}
           />
         )}

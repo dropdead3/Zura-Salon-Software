@@ -36,6 +36,7 @@ interface MeetingGridCardProps {
   meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] };
   hoursStart: number;
   rowHeight?: number;
+  slotInterval?: number;
   onClick: () => void;
   attendeeProfiles?: Map<string, { display_name: string | null; full_name: string; photo_url: string | null }>;
 }
@@ -44,6 +45,7 @@ export function MeetingGridCard({
   meeting,
   hoursStart,
   rowHeight = 20,
+  slotInterval = 15,
   onClick,
   attendeeProfiles,
 }: MeetingGridCardProps) {
@@ -51,8 +53,8 @@ export function MeetingGridCard({
   const endMinutes = parseTimeToMinutes(meeting.end_time);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 15) * rowHeight;
-  const height = Math.max((duration / 15) * rowHeight, rowHeight * 2);
+  const top = (startOffset / slotInterval) * rowHeight;
+  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight * 2);
 
   const ModeIcon = MODE_ICON[meeting.meeting_mode];
   const attendeeCount = meeting.admin_meeting_attendees?.length || 0;

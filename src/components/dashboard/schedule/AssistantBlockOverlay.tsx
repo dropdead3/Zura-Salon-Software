@@ -14,6 +14,7 @@ interface AssistantBlockOverlayProps {
   stylistUserId: string;
   hoursStart: number;
   rowHeight?: number;
+  slotInterval?: number;
   onBlockClick?: (block: AssistantTimeBlock) => void;
   onBlockResize?: (blockId: string, newEndTime: string) => void;
   currentUserId?: string;
@@ -30,13 +31,13 @@ function minutesToTimeStr(minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
 }
 
-function getBlockStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20) {
+function getBlockStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20, slotInterval: number = 15) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 15) * rowHeight;
-  const height = Math.max((duration / 15) * rowHeight, rowHeight);
+  const top = (startOffset / slotInterval) * rowHeight;
+  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
   return { top: `${top}px`, height: `${height}px` };
 }
 
@@ -58,6 +59,7 @@ export function AssistantBlockOverlay({
   stylistUserId,
   hoursStart,
   rowHeight = 20,
+  slotInterval = 15,
   onBlockClick,
   onBlockResize,
   currentUserId,
@@ -89,15 +91,15 @@ export function AssistantBlockOverlay({
 
     const handleUp = (ev: PointerEvent) => {
       const finalDelta = ev.clientY - startYRef.current;
-      // Snap to 15-minute increments
+      // Snap to slot increments
       const deltaSlots = Math.round(finalDelta / rowHeight);
-      const deltaMinutes = deltaSlots * 15;
+      const deltaMinutes = deltaSlots * slotInterval;
 
       if (deltaMinutes !== 0 && onBlockResize) {
         const block = timeBlocks.find(b => b.id === blockId);
         if (block) {
           const currentEnd = parseTimeToMinutes(block.end_time);
-          const newEnd = Math.max(parseTimeToMinutes(block.start_time) + 15, currentEnd + deltaMinutes);
+          const newEnd = Math.max(parseTimeToMinutes(block.start_time) + slotInterval, currentEnd + deltaMinutes);
           const newEndStr = minutesToTimeStr(newEnd);
 
           // Basic overlap check against other blocks for same user
@@ -134,7 +136,7 @@ export function AssistantBlockOverlay({
       {relevantBlocks.map(block => {
         const isResizing = resizingBlockId === block.id;
         const extraHeight = isResizing ? resizeDeltaPx : 0;
-        const style = getBlockStyle(block.start_time, block.end_time, hoursStart, rowHeight);
+        const style = getBlockStyle(block.start_time, block.end_time, hoursStart, rowHeight, slotInterval);
         const baseHeight = parseInt(style.height);
         const finalHeight = Math.max(rowHeight, baseHeight + extraHeight);
 
@@ -155,9 +157,9 @@ export function AssistantBlockOverlay({
         let ghostEndTime: string | null = null;
         if (isResizing) {
           const deltaSlots = Math.round(resizeDeltaPx / rowHeight);
-          const deltaMinutes = deltaSlots * 15;
+          const deltaMinutes = deltaSlots * slotInterval;
           const currentEnd = parseTimeToMinutes(block.end_time);
-          const newEnd = Math.max(parseTimeToMinutes(block.start_time) + 15, currentEnd + deltaMinutes);
+          const newEnd = Math.max(parseTimeToMinutes(block.start_time) + slotInterval, currentEnd + deltaMinutes);
           ghostEndTime = formatTime12h(minutesToTimeStr(newEnd));
         }
 
