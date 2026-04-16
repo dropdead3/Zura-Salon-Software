@@ -885,7 +885,7 @@ export function DayView({
                   style={{
                     top: `${currentTimeOffset}px`,
                     left: '70px',
-                    width: `${requiredGridWidth - 70}px`,
+                    right: 0,
                   }}
                 >
                   <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full" />
