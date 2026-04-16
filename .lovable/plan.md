@@ -1,29 +1,47 @@
 
 
-# Add Stylist Level Next to Utilization Percentage
+# Make Stylist Header Cells Responsive
 
-## Change
-In `src/components/dashboard/schedule/DayView.tsx`, add the stylist level label next to the utilization percentage on the second row, separated by a bullet point. The level pill badge on the name row will remain as-is (or can be removed to reduce clutter — keeping it since the user didn't ask to remove it).
+## Problem
+At smaller column widths, the name, "Accepting" label, and level text overlap and crash into each other.
 
-## Implementation
+## Changes — `src/components/dashboard/schedule/DayView.tsx`
 
-### `src/components/dashboard/schedule/DayView.tsx` (~line 561-563)
-Update the second row to include the level label after the utilization percentage:
+### 1. Hide "Accepting"/"Not Accepting" text label — show dot only
+Remove the text `<span>` next to the dot. The tooltip already explains it on hover. This saves ~60px of horizontal space.
 
 ```text
-Before:  63%
-After:   63% · L2
+Before:  ● Accepting
+After:   ●  (tooltip on hover still says "Accepting New Clients...")
 ```
 
-- After the `<span>{pct}%</span>`, add a `·` separator and the level label text (e.g., `levelInfo?.label`) in `text-muted-foreground`
-- Only show the bullet + level if `levelInfo` exists
+### 2. Name wrapping — allow last name to break to new line
+Change the name `<span>` from `truncate` to `break-words` / natural wrapping so "Sarah Spencer" can wrap as:
+```
+Sarah
+Spencer
+```
+Use `text-xs` instead of `text-sm` to fit better, and remove `truncate` class.
+
+### 3. Stylist level breaks below utilization
+Wrap the level onto its own line instead of inline with the percentage. Change the second row from a single `flex` row to a stacked layout:
+
+```text
+Before:  75% · Studio Artist
+After:   75%
+         Studio Artist
+```
+
+Remove the bullet separator. Level text uses `text-[10px] text-muted-foreground` on its own line, truncated if needed.
 
 ### Result per cell
 ```text
-┌──────────────────────── ● Accepting ┐
-│ [Avatar]  Trinity Graves  L2        │
-│           63% · L2                  │
-└─────────────────────────────────────┘
+┌────────────────── ● ┐
+│ [Av] Sarah          │
+│      Spencer        │
+│      75%            │
+│      Studio Artist  │
+└─────────────────────┘
 ```
 
 Single file change, no new dependencies.
