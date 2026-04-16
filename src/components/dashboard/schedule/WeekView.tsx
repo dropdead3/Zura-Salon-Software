@@ -481,10 +481,10 @@ export function WeekView({
                   )}
                 >
                   {/* Past-time overlay — pixel-aligned to the current-time indicator (today only) */}
-                  {isCurrentDay && currentTimeOffset > 0 && (
+                  {isCurrentDay && currentTimeOverlayPx > 0 && (
                     <div
                       className="absolute inset-x-0 top-0 bg-muted/40 pointer-events-none z-[1]"
-                      style={{ height: `${Math.min(currentTimeOffset, timeSlots.length * ROW_HEIGHT)}px` }}
+                      style={{ height: `${currentTimeOverlayPx}px` }}
                     />
                   )}
                   {/* Time slot rows */}
