@@ -79,13 +79,13 @@ function parseTimeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20) {
+function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20, slotInterval: number = 15) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 15) * rowHeight;
-  const height = Math.max((duration / 15) * rowHeight, rowHeight);
+  const top = (startOffset / slotInterval) * rowHeight;
+  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
   return { top: `${top}px`, height: `${height}px` };
 }
 
@@ -140,7 +140,9 @@ function DroppableSlot({
     ? 'border-t border-border dark:border-border/50'
     : minute === 30
       ? 'border-t border-dashed border-border dark:border-border/35'
-      : 'border-t border-dotted border-border/80 dark:border-border/15';
+      : minute % 15 === 0
+        ? 'border-t border-dotted border-border/80 dark:border-border/15'
+        : '';
 
   return (
     <div
@@ -359,8 +361,16 @@ export function DayView({
   onMeetingClick,
   zoomLevel = 0,
 }: DayViewProps) {
-  const ROW_HEIGHTS = [20, 30, 40];
-  const ROW_HEIGHT = ROW_HEIGHTS[zoomLevel] ?? 20;
+  const ZOOM_CONFIG: Record<string, { interval: number; rowHeight: number }> = {
+    '-2': { interval: 5, rowHeight: 4 },
+    '-1': { interval: 10, rowHeight: 8 },
+    '0': { interval: 15, rowHeight: 20 },
+    '1': { interval: 15, rowHeight: 30 },
+    '2': { interval: 15, rowHeight: 40 },
+  };
+  const zoomConfig = ZOOM_CONFIG[String(zoomLevel)] ?? ZOOM_CONFIG['0'];
+  const ROW_HEIGHT = zoomConfig.rowHeight;
+  const slotInterval = zoomConfig.interval;
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
