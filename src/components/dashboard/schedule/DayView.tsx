@@ -131,6 +131,7 @@ function DroppableSlot({
   
   isOver: boolean;
   rowHeight?: number;
+  slotInterval?: number;
 }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
   const highlight = isOver || dndIsOver;
@@ -138,11 +139,9 @@ function DroppableSlot({
 
   const borderClass = minute === 0
     ? 'border-t border-border dark:border-border/50'
-    : minute === 30
+    : minute === 30 && (slotInterval ?? 20) <= 30
       ? 'border-t border-dashed border-border dark:border-border/35'
-      : minute % 15 === 0
-        ? 'border-t border-dotted border-border/80 dark:border-border/15'
-        : '';
+      : 'border-t border-dotted border-border/60 dark:border-border/15';
 
   return (
     <div
@@ -390,22 +389,43 @@ export function DayView({
   const headerRowRef = useRef<HTMLDivElement>(null);
   const [columnWidth, setColumnWidth] = useState(200);
 
-  // Auto-scroll to 1 hour before opening time
+  // Track previous zoom config to detect zoom changes vs date changes
+  const prevSlotIntervalRef = useRef(slotInterval);
+  const prevRowHeightRef = useRef(ROW_HEIGHT);
+
+  // Auto-scroll: preserve viewport center on zoom, scroll to opening on date change
   useEffect(() => {
     if (!scrollRef.current) return;
-    let openHour = hoursStart;
-    if (locationHours?.open) {
-      const [h] = locationHours.open.split(':').map(Number);
-      openHour = h;
-    }
-    const scrollToHour = Math.max(openHour - 1, hoursStart);
-    const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
-    const top = slotsOffset * ROW_HEIGHT;
     const ref = scrollRef.current;
-    requestAnimationFrame(() => {
-      ref?.scrollTo({ top, behavior: 'instant' });
-    });
-  }, [date.toDateString(), locationHours?.open, hoursStart, slotInterval, ROW_HEIGHT]);
+    const isZoomChange = prevSlotIntervalRef.current !== slotInterval || prevRowHeightRef.current !== ROW_HEIGHT;
+    prevSlotIntervalRef.current = slotInterval;
+    prevRowHeightRef.current = ROW_HEIGHT;
+
+    if (isZoomChange) {
+      // Preserve the time the user is looking at
+      const viewportCenter = ref.scrollTop + ref.clientHeight / 2;
+      const oldTotalSlots = (hoursEnd - hoursStart) * (60 / (prevSlotIntervalRef.current || slotInterval));
+      const oldTotalHeight = oldTotalSlots * (prevRowHeightRef.current || ROW_HEIGHT);
+      const fraction = oldTotalHeight > 0 ? viewportCenter / (ref.scrollHeight || 1) : 0;
+      requestAnimationFrame(() => {
+        const newTop = fraction * ref.scrollHeight - ref.clientHeight / 2;
+        ref.scrollTo({ top: Math.max(0, newTop), behavior: 'instant' });
+      });
+    } else {
+      // Date change or initial mount — scroll to opening time
+      let openHour = hoursStart;
+      if (locationHours?.open) {
+        const [h] = locationHours.open.split(':').map(Number);
+        openHour = h;
+      }
+      const scrollToHour = Math.max(openHour - 1, hoursStart);
+      const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
+      const top = slotsOffset * ROW_HEIGHT;
+      requestAnimationFrame(() => {
+        ref.scrollTo({ top, behavior: 'instant' });
+      });
+    }
+  }, [date.toDateString(), locationHours?.open, hoursStart, slotInterval, ROW_HEIGHT, hoursEnd]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
