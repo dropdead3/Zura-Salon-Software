@@ -76,7 +76,7 @@ export function ScheduleActionBar({
     >
       {/* Left: Appointment count */}
       <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
-        <Calendar className="h-4 w-4" />
+        <CalendarDays className="h-4 w-4" />
         <span>
           <span className="font-medium text-foreground">{todayAppointmentCount}</span>
           {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
@@ -137,7 +137,7 @@ export function ScheduleActionBar({
             to={dashPath('/appointments-hub?tab=transactions')}
             className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
           >
-            <Receipt className="h-4 w-4 text-muted-foreground" />
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
           </Link>
         </TooltipTrigger>
         <TooltipContent side="top">Appointments &amp; Transactions</TooltipContent>
