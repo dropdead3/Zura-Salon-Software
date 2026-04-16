@@ -704,8 +704,9 @@ export function DayView({
                 {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => (
                   <div 
                     key={`${hour}-${minute}`}
+                    style={{ height: `${ROW_HEIGHT}px` }}
                     className={cn(
-                      'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
+                      'text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
                       isHour && 'font-medium'
                     )}
                   >
@@ -756,6 +757,7 @@ export function DayView({
                           isOutsideHours={!!isOutsideHours}
                           showCurrentTime={showCurrentTime}
                           isOver={false}
+                          rowHeight={ROW_HEIGHT}
                           onClick={() => {
                             onSlotClick?.(stylist.user_id, slotTime);
                           }}
@@ -804,6 +806,8 @@ export function DayView({
                           assistantProfilesMap={assistantProfilesMap}
                           hasCoverageScheduled={hasCoverage}
                           date={date}
+                          rowHeight={ROW_HEIGHT}
+                          zoomLevel={zoomLevel}
                         />
                       );
                     })}
@@ -849,6 +853,8 @@ export function DayView({
             colorBy={colorBy}
             serviceLookup={serviceLookup}
             isDragOverlay
+            rowHeight={ROW_HEIGHT}
+            zoomLevel={zoomLevel}
           />
         )}
       </DragOverlay>
