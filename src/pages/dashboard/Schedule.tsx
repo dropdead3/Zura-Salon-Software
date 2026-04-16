@@ -427,22 +427,23 @@ export default function Schedule() {
   }, [locationStylists, allAppointments, selectedLocation, stylistSchedules, currentDate]);
 
   // Toggle: show all stylists vs only those with appointments
-  const [showAllStylists, setShowAllStylists] = useState(true);
+  const [staffFilterMode, setStaffFilterMode] = useState<'with-appointments' | 'work-this-day'>('work-this-day');
 
-  // Filter stylists based on staff selection + showAllStylists toggle
+  // Filter stylists based on staff selection + staffFilterMode
   const displayedStylists = useMemo(() => {
-    let base = selectedStaffIds.length === 0
-      ? allStylists
-      : allStylists.filter(s => selectedStaffIds.includes(s.user_id));
+    if (selectedStaffIds.length > 0) {
+      return allStylists.filter(s => selectedStaffIds.includes(s.user_id));
+    }
 
-    if (!showAllStylists) {
+    if (staffFilterMode === 'with-appointments') {
       const staffWithAppts = new Set(
         appointments.map(a => (a as any).stylist_user_id || (a as any).staff_user_id).filter(Boolean)
       );
-      base = base.filter(s => staffWithAppts.has(s.user_id));
+      return allStylists.filter(s => staffWithAppts.has(s.user_id));
     }
-    return base;
-  }, [allStylists, selectedStaffIds, showAllStylists, appointments]);
+
+    return allStylists;
+  }, [allStylists, selectedStaffIds, staffFilterMode, appointments]);
 
   // Auto-switch to agenda view on mobile
   useEffect(() => {
@@ -907,8 +908,8 @@ export default function Schedule() {
                 onOpenBlockManager={() => setBlockManagerOpen(true)}
                 showShiftsView={showShiftsView}
                 onToggleShiftsView={() => setShowShiftsView(prev => !prev)}
-                showAllStylists={showAllStylists}
-                onShowAllStylistsChange={setShowAllStylists}
+                staffFilterMode={staffFilterMode}
+                onStaffFilterModeChange={setStaffFilterMode}
               />
         </div>
 
