@@ -90,7 +90,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate, defaul
   const [title, setTitle] = useState('');
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(defaultDate || todayDate);
-  const [startTime, setStartTime] = useState('10:00');
+  const [startTime, setStartTime] = useState(defaultTime || '10:00');
   const [duration, setDuration] = useState(30);
   const [meetingMode, setMeetingMode] = useState<MeetingMode>('in_person');
   const [locationId, setLocationId] = useState<string>('');
