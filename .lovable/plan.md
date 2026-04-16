@@ -1,33 +1,29 @@
 
 
-# Enlarge Stylist Profile Photos & Names in Schedule Column Headers
+# Tint Schedule Column Headers with Theme-Aware Primary Color
 
-## Change — `src/components/dashboard/schedule/DayView.tsx`
+## Problem
+The stylist column headers currently use `bg-[hsl(var(--sidebar-background))]/95` — a neutral color regardless of theme. The user wants them tinted with the active color theme (e.g. dark purple for Zura, rose for Rose, etc.).
 
-### 1. Avatar size (line 628)
-Increase from `h-8 w-8` to `h-10 w-10`:
+## Approach
+Replace the neutral sidebar background with a layered approach: keep the dark sidebar base but overlay the theme's `--sidebar-primary` color at low opacity. This automatically adapts to every color theme.
 
+## Changes — `src/components/dashboard/schedule/DayView.tsx`
+
+### Line 648 (condensed layout)
 ```
-'h-8 w-8 shrink-0' → 'h-10 w-10 shrink-0'
-```
-
-### 2. Name text in normal/medium layout (line 672)
-Increase from `text-xs` to `text-sm`:
-
-```
-<span className="text-xs font-medium leading-tight truncate">
-→
-<span className="text-sm font-medium leading-tight truncate">
+Current:  bg-[hsl(var(--sidebar-background))]/95
+New:      bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5
 ```
 
-### 3. Name text in condensed layout (line 652)
-Increase from `text-[11px]` to `text-xs`:
-
+### Line 667 (normal/medium layout)
+Same change:
 ```
-<span className="text-[11px] font-medium leading-tight">
-→
-<span className="text-xs font-medium leading-tight">
+Current:  bg-[hsl(var(--sidebar-background))]/95
+New:      bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5
 ```
 
-Three class changes, one file. Avatar goes from 32px → 40px; names bump up one size step in both layout modes.
+This uses `--sidebar-primary` which is already defined per-theme in the CSS (purple for Zura, rose for Rose, green for Sage, etc.), giving a subtle but distinct tinted header row that respects the active color theme.
+
+Two class changes, one file.
 
