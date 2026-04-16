@@ -373,9 +373,8 @@ export function WeekView({
   const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
   const todayInWeek = weekDays.find(d => isOrgToday(d));
   const showCurrentTime = !!todayInWeek;
-  const currentTimeOffset = showCurrentTime
-    ? (wkNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
-    : 0;
+  const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
+    getCurrentTimeRenderMetrics(wkNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
