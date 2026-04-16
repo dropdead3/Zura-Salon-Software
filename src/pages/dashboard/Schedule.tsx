@@ -325,7 +325,7 @@ export default function Schedule() {
       // 2. Fetch profiles for those users, filtered by location + org
       let query = supabase
         .from('employee_profiles')
-        .select('user_id, display_name, full_name, photo_url, location_id, location_ids')
+        .select('user_id, display_name, full_name, photo_url, location_id, location_ids, stylist_level, is_booking, lead_pool_eligible')
         .eq('is_active', true)
         .eq('is_approved', true)
         .in('user_id', serviceProviderIds);
@@ -338,7 +338,7 @@ export default function Schedule() {
       const { data } = await query;
 
       // Deduplicate by user_id
-      const unique = new Map<string, { user_id: string; display_name: string | null; full_name: string; photo_url: string | null }>();
+      const unique = new Map<string, { user_id: string; display_name: string | null; full_name: string; photo_url: string | null; stylist_level: string | null; is_booking: boolean | null; lead_pool_eligible: boolean }>();
       ((data || []) as any[]).forEach((d: any) => {
         if (!unique.has(d.user_id)) {
           unique.set(d.user_id, {
@@ -346,6 +346,9 @@ export default function Schedule() {
             display_name: d.display_name || null,
             full_name: d.full_name || 'Unknown',
             photo_url: d.photo_url || null,
+            stylist_level: d.stylist_level || null,
+            is_booking: d.is_booking ?? null,
+            lead_pool_eligible: d.lead_pool_eligible ?? true,
           });
         }
       });
