@@ -625,7 +625,7 @@ export function DayView({
                 const avatar = (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-8 w-8 shrink-0')}>
+                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 shrink-0')}>
                         <AvatarImage src={stylist.photo_url || undefined} />
                         <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
                           {fullName.slice(0, 2).toUpperCase()}
@@ -649,7 +649,7 @@ export function DayView({
                     >
                       {statusDot}
                       {avatar}
-                      <span className="text-[11px] font-medium leading-tight">{condensedName}</span>
+                      <span className="text-xs font-medium leading-tight">{condensedName}</span>
                       <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
                       {levelInfo && (
                         <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
@@ -669,7 +669,7 @@ export function DayView({
                     {statusDot}
                     {avatar}
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-xs font-medium leading-tight truncate">{displayName}</span>
+                      <span className="text-sm font-medium leading-tight truncate">{displayName}</span>
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className={cn('text-[11px]', pctColor)}>{pct}%</span>
                         {levelInfo && (
