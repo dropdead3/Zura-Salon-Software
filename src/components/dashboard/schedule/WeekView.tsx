@@ -95,14 +95,48 @@ function WeekAppointmentCard({
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
 }) {
   const [isHoveredRight, setIsHoveredRight] = useState(false);
+  const hoverBoundsRef = useRef<DOMRect | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isHoveredRight) return;
     const rect = e.currentTarget.getBoundingClientRect();
     if (e.clientX > rect.right - 24) {
+      hoverBoundsRef.current = rect;
       setIsHoveredRight(true);
     }
   };
+
+  useEffect(() => {
+    if (!isHoveredRight) {
+      hoverBoundsRef.current = null;
+      return;
+    }
+
+    const handleWindowMouseMove = (event: MouseEvent) => {
+      const bounds = hoverBoundsRef.current;
+      if (!bounds) return;
+
+      const isWithinOriginalCardBounds =
+        event.clientX >= bounds.left &&
+        event.clientX <= bounds.right &&
+        event.clientY >= bounds.top &&
+        event.clientY <= bounds.bottom;
+
+      if (!isWithinOriginalCardBounds) {
+        setIsHoveredRight(false);
+      }
+    };
+
+    const handleWindowBlur = () => setIsHoveredRight(false);
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [isHoveredRight]);
 
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const size = getCardSize(appointment.start_time, appointment.end_time);
@@ -117,7 +151,6 @@ function WeekAppointmentCard({
         transition: 'right 200ms ease-out',
       }}
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => setIsHoveredRight(false)}
       onClick={onClick}
     >
       <AppointmentCardContent
