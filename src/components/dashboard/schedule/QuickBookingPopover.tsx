@@ -429,7 +429,8 @@ export function QuickBookingPopover({
   const { data: categoryColorsList = [] } = useServiceCategoryColors();
 
   // Add-on recommendations (new system)
-  const { effectiveOrganization } = useOrganizationContext();
+  const { effectiveOrganization, isImpersonating } = useOrganizationContext();
+  const godModeOffset = isImpersonating ? 44 : 0;
   const { data: addonLibrary = [] } = useServiceAddons(effectiveOrganization?.id);
   const { byCategoryId, byServiceId } = useAddonAssignmentMaps(effectiveOrganization?.id);
 
