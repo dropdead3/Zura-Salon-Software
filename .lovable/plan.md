@@ -1,38 +1,57 @@
 
 ## Prompt review
 
-Clear and actionable — you described the trigger (mouse exits) and the desired behavior (auto-close). Teaching note: naming the surface ("the date picker popover in the schedule header") would have skipped a discovery step. Micro-improvement: specifying intent around the legend row ("Filling / Tight / Booked") helps me decide whether the close zone includes it — I'll assume yes (the whole popover panel).
+Excellent observation — you spotted a precision mismatch (overlay extends past the indicator line) and the zoomed screenshot makes the gap unmistakable. Teaching note: you correctly identified both the symptom (gray goes too far) and the desired boundary (the time bar). Micro-improvement: mentioning that this happens at 15-min slot boundaries ("the gray seems to fill the whole 15-min slot the current time falls inside") would have pre-confirmed the root cause.
 
 ## Diagnosis
 
-Need to locate the calendar popover used in the schedule header (visible in screenshot). Based on prior context, this lives near `ScheduleActionBar.tsx`. Most likely a shadcn `Popover` opened on click. The fix is to add hover-leave auto-close behavior on the `PopoverContent` — close after a short delay (~200ms) when the cursor leaves, with a re-entry cancel.
+The "past" gray is painted at **slot granularity (15 min)** while the current-time bar is painted at **minute precision**. Both files use the same logic:
 
-The pattern already exists in the codebase: `HoverPopover.tsx` implements exactly this (open/close with `CLOSE_DELAY = 150ms`, timer cancellation on re-enter). However, that component opens *on hover* — the user wants click-to-open, hover-out-to-close. So the right move is to add `onMouseLeave` / `onMouseEnter` handlers directly to the existing `PopoverContent` with a debounced close.
+```ts
+const isPastSlot = slotMins < dayNowMins;  // entire slot greys when now passes its start
+```
+
+Example: at 1:23 PM, the 1:15–1:30 slot has `slotMins = 75 < 83 = dayNowMins`, so the whole 15-min cell renders `bg-muted/40` — the gray reaches 1:30 even though the indicator sits at 1:23. Visible gap: up to 14 minutes of extra gray below the line.
+
+The current-time line itself is correctly positioned via `currentTimeOffset = (dayNowMins - hoursStart*60) / slotInterval * ROW_HEIGHT` — minute-accurate.
 
 ## Fix
 
-1. Locate the calendar popover (likely `src/components/dashboard/schedule/ScheduleActionBar.tsx` or a date-picker child).
-2. Add a small ref-tracked timer:
-   - `onMouseLeave` on `PopoverContent` → `setTimeout(close, 200ms)`
-   - `onMouseEnter` → clear the timer (covers brief cursor flicker)
-3. Clean up the timer on unmount and on manual close.
+Stop painting "past" via per-slot background. Instead, render a **single overlay rectangle** per stylist column (DayView) and per day column (WeekView) whose height equals exactly `currentTimeOffset` px — pixel-aligned to the indicator line.
 
-Keep the click-to-open trigger as-is — only the close behavior changes. 200ms grace period prevents accidental closes when the cursor briefly grazes the edge.
+Concretely:
+
+1. **DayView.tsx**
+   - Remove `isPastSlot` from the per-slot `DroppableSlot` render path (slots stay clickable as "available" or "outside hours" only).
+   - Inside the stylist column wrapper (the `relative` div at line 763), add a non-interactive overlay positioned `absolute inset-x-0 top-0` with `height: currentTimeOffset` px and `bg-muted/40 pointer-events-none`. Render only when `showCurrentTime && currentTimeOffset > 0`.
+   - Keep slot click-handler logic for past slots: re-derive `isPastSlot` inline at click time using `dayNowMins` (so clicks on past slots still no-op / show the "Unavailable" hover badge). The hover badge uses `isPastSlot` — keep that prop, just compute it the same way (still slot-granular for the *label*, which is fine since the badge says "Unavailable" anyway).
+   - Actually simpler: keep `isPastSlot` for the slot's interaction/badge behavior, but **remove the `bg-muted/40` background** from the slot itself. The overlay handles the visual. This preserves cursor/click semantics with zero change.
+
+2. **WeekView.tsx**
+   - Same surgical change: remove `isPastSlot && 'bg-muted/40'` from the slot's className.
+   - In each day column (the one matching `todayInWeek`), render the overlay `absolute inset-x-0 top-0 height: weekCurrentTimeOffset` with `bg-muted/40 pointer-events-none`.
+   - Need to confirm where the per-day column wrapper is and that it's `relative` — will verify on read; if not, add `relative`.
+
+3. **Z-index**
+   - Overlay sits below appointments (z < 10) and below the current-time line (which is z-30+ typically). Use `z-0` or omit z-index — slot droppables are background, appointments are `z-10`, line is higher. Overlay with no z-index sits above slot bg, below appointments. 
 
 ## Acceptance checks
 
-1. Click the date pill → popover opens (unchanged).
-2. Move cursor off the popover → closes after ~200ms.
-3. Move cursor off then back within 200ms → stays open.
-4. Selecting a date still closes the popover (existing behavior preserved).
-5. Clicking outside still closes (Radix default preserved).
+1. On today's view at any minute: the gray ends **exactly** at the purple current-time line (no 1–14 min spillover).
+2. The current slot under the line is half-gray, half-clear — pixel-aligned.
+3. Past slots remain non-interactive (click no-ops, hover badge still says "Unavailable").
+4. Outside-operating-hours diagonal hatching is unaffected.
+5. Appointments rendered in the past still display normally on top of the overlay.
+6. Refresh the page — overlay updates as `nowMinutes` ticks (every 60s via `useOrgNow`).
+7. WeekView: only today's column shows the overlay; other days unaffected.
 
 ## Out of scope
 
-- Converting to hover-to-open (would change interaction model).
-- Restyling the calendar or legend.
-- Touching `HoverPopover` or other popovers platform-wide.
+- Changing slot granularity or the indicator line styling.
+- Touching MonthView or AgendaView (no time-of-day overlay there).
+- Changing how past appointments are rendered.
 
 ## Files touched
 
-- The schedule header date-picker file (to be confirmed on read — likely `src/components/dashboard/schedule/ScheduleActionBar.tsx` or a `DatePickerPopover` child) — add controlled `open` state + mouse leave/enter handlers with debounced close.
+- `src/components/dashboard/schedule/DayView.tsx` — remove past-slot bg class, add per-column past overlay rectangle.
+- `src/components/dashboard/schedule/WeekView.tsx` — same treatment for today's column only.
