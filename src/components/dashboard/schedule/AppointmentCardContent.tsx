@@ -238,10 +238,10 @@ function GridContent({
           {showClientAvatar && (
             <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
-                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0',
+                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0 border',
                 appointment.is_new_client
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                  ? 'bg-amber-100 text-amber-700 border-transparent dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/25'
               )}>
                 {appointment.is_new_client ? 'NC' : 'RC'}
               </span>
@@ -269,10 +269,10 @@ function GridContent({
           {showClientAvatar && (
             <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
-                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0',
+                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0 border',
                 appointment.is_new_client
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                  ? 'bg-amber-100 text-amber-700 border-transparent dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/25'
               )}>
                 {appointment.is_new_client ? 'NC' : 'RC'}
               </span>
