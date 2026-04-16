@@ -231,7 +231,7 @@ export function ScheduleHeader({
                   <TooltipTrigger asChild>
                     <button
                       className={cn(
-                        'hidden @xl/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                        'hidden @[1320px]/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
                         'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
                       )}
                     >
