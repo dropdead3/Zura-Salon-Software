@@ -71,9 +71,10 @@ interface MeetingSchedulerWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultDate?: Date;
+  defaultTime?: string;
 }
 
-export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: MeetingSchedulerWizardProps) {
+export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate, defaultTime }: MeetingSchedulerWizardProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const { user } = useAuth();
   const orgId = effectiveOrganization?.id;
@@ -89,7 +90,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
   const [title, setTitle] = useState('');
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(defaultDate || todayDate);
-  const [startTime, setStartTime] = useState('10:00');
+  const [startTime, setStartTime] = useState(defaultTime || '10:00');
   const [duration, setDuration] = useState(30);
   const [meetingMode, setMeetingMode] = useState<MeetingMode>('in_person');
   const [locationId, setLocationId] = useState<string>('');
@@ -208,7 +209,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate }: Meet
     setTitle('');
     setSelectedAttendees([]);
     setSelectedDate(defaultDate || todayDate);
-    setStartTime('10:00');
+    setStartTime(defaultTime || '10:00');
     setDuration(30);
     setMeetingMode('in_person');
     setLocationId('');

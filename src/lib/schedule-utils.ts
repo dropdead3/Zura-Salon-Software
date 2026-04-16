@@ -82,6 +82,58 @@ export function getCurrentTimeRenderMetrics(
   return { linePx, overlayPx, visible };
 }
 
+/**
+ * Compute the next "available" 15-min interval ≥ now, clamped to business hours.
+ *
+ * - Rounds `now` up to the next `slotMinutes` boundary.
+ * - Before business start → today at `businessStartHour:00`.
+ * - At/after business end → tomorrow at `businessStartHour:00`.
+ *
+ * Returns a date object (midnight) and "HH:MM" 24h time string. The date
+ * object is constructed from local Y/M/D — safe for date-fns sequences.
+ */
+export function getNextAvailableSlot(
+  now: Date = new Date(),
+  slotMinutes: number = 15,
+  businessStartHour: number = 9,
+  businessEndHour: number = 19,
+): { date: Date; time: string } {
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  const todayMidnight = new Date(y, m, d, 0, 0, 0, 0);
+
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const startMins = businessStartHour * 60;
+  const endMins = businessEndHour * 60;
+
+  // Before business hours → today at start
+  if (nowMins < startMins) {
+    return { date: todayMidnight, time: `${String(businessStartHour).padStart(2, '0')}:00` };
+  }
+
+  // At/after business end → tomorrow at start
+  if (nowMins >= endMins) {
+    const tomorrow = new Date(y, m, d + 1, 0, 0, 0, 0);
+    return { date: tomorrow, time: `${String(businessStartHour).padStart(2, '0')}:00` };
+  }
+
+  // Round up to next slot boundary
+  const rounded = Math.ceil(nowMins / slotMinutes) * slotMinutes;
+  // If rounding pushed past business end, bump to tomorrow
+  if (rounded >= endMins) {
+    const tomorrow = new Date(y, m, d + 1, 0, 0, 0, 0);
+    return { date: tomorrow, time: `${String(businessStartHour).padStart(2, '0')}:00` };
+  }
+
+  const h = Math.floor(rounded / 60);
+  const min = rounded % 60;
+  return {
+    date: todayMidnight,
+    time: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+  };
+}
+
 export function getOverlapInfo<T extends { id: string; start_time: string; end_time: string }>(
   appointments: T[],
   target: T,
