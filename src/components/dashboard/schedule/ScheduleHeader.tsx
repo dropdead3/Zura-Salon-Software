@@ -299,30 +299,30 @@ export function ScheduleHeader({
           </div>
           {/* End filter icons group */}
 
-          {/* Shifts toggle + Location & Staff Selectors — stacked vertically at all widths */}
-          <div className="flex flex-col gap-2 items-stretch">
-            {/* Shifts View Toggle — peer of scope selectors */}
+          {/* Shifts toggle (ghost pill) + Location & Staff selector stack — horizontal cluster */}
+          <div className="flex flex-row items-center gap-3">
+            {/* Shifts View Toggle — mirrors Date pill UI on the left of the selector stack */}
             {onToggleShiftsView && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleShiftsView}
                     className={cn(
-                      'h-7 w-[180px] @lg/schedhdr:w-[220px] inline-flex items-center justify-center gap-1.5 rounded-md border text-xs transition-all duration-200',
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
                       showShiftsView
-                        ? 'bg-[hsl(var(--sidebar-foreground))] text-[hsl(var(--sidebar-background))] border-[hsl(var(--sidebar-foreground))] font-medium'
-                        : 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]'
+                        ? 'text-[hsl(var(--sidebar-foreground))] bg-[hsl(var(--sidebar-accent))]'
+                        : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
                     )}
                   >
                     {showShiftsView ? (
                       <>
                         <CalendarIcon className="h-3.5 w-3.5" />
-                        <span>Appointments</span>
+                        <span className="hidden @lg/schedhdr:inline">Appointments</span>
                       </>
                     ) : (
                       <>
                         <Clock className="h-3.5 w-3.5" />
-                        <span>Shifts</span>
+                        <span className="hidden @lg/schedhdr:inline">Shifts</span>
                       </>
                     )}
                   </button>
@@ -332,6 +332,9 @@ export function ScheduleHeader({
                 </TooltipContent>
               </Tooltip>
             )}
+
+            {/* Location & Staff Selectors — stacked vertically */}
+            <div className="flex flex-col gap-2 items-stretch">
 
             {/* Location Selector */}
             <Select
