@@ -299,8 +299,40 @@ export function ScheduleHeader({
           </div>
           {/* End filter icons group */}
 
-          {/* Location & Staff Selectors — stacked vertically at all widths */}
+          {/* Shifts toggle + Location & Staff Selectors — stacked vertically at all widths */}
           <div className="flex flex-col gap-2 items-stretch">
+            {/* Shifts View Toggle — peer of scope selectors */}
+            {onToggleShiftsView && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onToggleShiftsView}
+                    className={cn(
+                      'h-7 w-[180px] @lg/schedhdr:w-[220px] inline-flex items-center justify-center gap-1.5 rounded-md border text-xs transition-all duration-200',
+                      showShiftsView
+                        ? 'bg-[hsl(var(--sidebar-foreground))] text-[hsl(var(--sidebar-background))] border-[hsl(var(--sidebar-foreground))] font-medium'
+                        : 'bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]'
+                    )}
+                  >
+                    {showShiftsView ? (
+                      <>
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        <span>Appointments</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>Shifts</span>
+                      </>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             {/* Location Selector */}
             <Select
               value={selectedLocation}
