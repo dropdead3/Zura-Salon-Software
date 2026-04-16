@@ -1,46 +1,65 @@
 
-The bug is in the wrong component.
+Good catch — your prompt is strong because it identifies the real UX regression: click opens, but the menu closes before the pointer can reach it. An even tighter version next time would be: “On the Schedule header, make the location dropdown behave exactly like the staff/calendar filters: click to open, stay open while hovered, close when the pointer leaves the menu.” That framing names the exact control, desired reference behavior, and acceptance criteria.
 
-On the Schedule page, the location dropdown is not `LocationGroupSelect`. The actual control is the Radix `Select` inside `src/components/dashboard/schedule/ScheduleHeader.tsx`. That means the earlier `LocationGroupSelect.tsx` changes would not affect this screen at all. Search also shows `LocationGroupSelect` is used elsewhere (like Payment Ops), not in this schedule header.
+## Diagnosis
+
+The current Schedule header location filter in `src/components/dashboard/schedule/ScheduleHeader.tsx` is now over-corrected:
+
+- it uses controlled `open` state
+- it starts a close timer from the `SelectTrigger` `onMouseLeave`
+- the menu is portaled, so the trigger and menu are not one continuous hover surface
+
+Result: the close timer can fire before the pointer reaches the dropdown content. So the issue is no longer “it won’t close” — it is now “it closes too early.”
+
+The working staff and calendar filters do not use trigger-leave timers. They simply close when the pointer leaves the popover content.
 
 ## Plan
 
-### Diagnosis
-- The schedule location filter is this block in `ScheduleHeader.tsx`:
-  - `<Select value={selectedLocation} onValueChange={onLocationChange}>`
-- It currently has:
-  - no controlled `open` state
-  - no `onMouseLeave` close logic
-  - a shared `SelectContent` wrapper that adds a small bottom translate (`data-[side=bottom]:translate-y-1`), which creates a tiny gap and can make hover-off closing feel inconsistent
+Update the Schedule header location select to mirror the staff/calendar behavior instead of trying to bridge trigger → menu with a timer.
 
-### Fix
+### Changes
+
 In `src/components/dashboard/schedule/ScheduleHeader.tsx`:
 
-1. Add local `locationSelectOpen` state.
-2. Make the location `Select` controlled with:
-   - `open={locationSelectOpen}`
-   - `onOpenChange={setLocationSelectOpen}`
-3. Add a short close-delay hover controller for the location filter only:
-   - `onMouseEnter` clears any pending close
-   - `onMouseLeave` schedules `setLocationSelectOpen(false)`
-4. Attach those handlers to both:
-   - `SelectTrigger`
-   - `SelectContent`
-5. Override the content offset for this one dropdown with:
-   - `className="data-[side=bottom]:translate-y-0"`
-   so there is no dead zone between trigger and menu
-6. Keep click-to-open behavior exactly the same, and still close on selection
+1. Keep the location select controlled with `locationSelectOpen`.
+2. Remove the trigger-based hover logic:
+   - remove `locationCloseTimerRef`
+   - remove `cancelLocationClose`
+   - remove `scheduleLocationClose`
+   - remove `onMouseEnter` / `onMouseLeave` from `SelectTrigger`
+3. Keep the dropdown open after click until the pointer actually leaves the menu.
+4. Put the close behavior on `SelectContent` only:
+   - preferably `onPointerLeave={() => setLocationSelectOpen(false)}`
+5. Keep the existing `onValueChange` close behavior so selection still closes immediately.
+6. Keep the existing `data-[side=bottom]:translate-y-0 data-[side=top]:translate-y-0` override so there is no visual dead zone.
 
-### Why this is the right fix
-- It targets the actual schedule location dropdown
-- It matches the intended UX: visible after click, stays open while hovered, closes when the mouse leaves
-- It avoids changing all `Select` components globally
-- It is more reliable than only adding `onMouseLeave`, because it handles the trigger/content transition and removes the small gap
+## Why this is the right fix
 
-### Files to touch
+- It matches the already-working staff and calendar filter UX.
+- It removes the race condition introduced by the trigger close timer.
+- It stays scoped to the Schedule header only.
+- It avoids changing shared `Select` behavior globally.
+
+## File to touch
+
 - `src/components/dashboard/schedule/ScheduleHeader.tsx`
 
-### Out of scope
-- No global changes to `src/components/ui/select.tsx`
+## Acceptance checks
+
+After implementation, verify:
+
+1. Click location filter → menu stays open.
+2. Move pointer from trigger into menu → menu does not close mid-transition.
+3. Leave the menu area → menu closes.
+4. Select a location → menu closes immediately.
+5. Staff and calendar filters still behave unchanged.
+
+## Out of scope
+
+- No changes to `src/components/ui/select.tsx`
 - No changes to `src/components/ui/LocationGroupSelect.tsx`
-- No visual redesign, spacing, or label changes
+- No styling or layout changes
+
+## Technical note
+
+If you later want stricter behavior where the menu must also close when the pointer leaves the trigger before ever entering the menu, that would require a more advanced pointer-corridor/grace-period solution. For now, the best fix is to match the working staff/calendar pattern exactly and remove the trigger timer.
