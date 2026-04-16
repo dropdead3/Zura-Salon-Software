@@ -382,12 +382,12 @@ export function WeekView({
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden border border-border rounded-lg bg-card">
         <div>
           {/* Day Headers with luxury blur effect */}
-          <div className="sticky top-0 z-10">
+          <div className="sticky top-0 z-20">
             {/* Main header with frosted glass effect */}
             <div 
               className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border/50"
               style={{
-                background: 'hsl(var(--muted) / 0.7)',
+                background: 'hsl(var(--muted) / 0.95)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
               }}
