@@ -472,7 +472,7 @@ export function NewClientDialog({
                     {clientSince ? format(clientSince, "MMM d, yyyy") : "Optional"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 z-[80]" align="start">
                   <Calendar
                     mode="single"
                     selected={clientSince}
