@@ -280,10 +280,10 @@ export function ScheduleHeader({
         </div>
         {/* End Row 1 wrapper (<xl). At xl+, this wrapper is `contents` so children flow into the parent row. */}
 
-        {/* Row 2 wrapper (<xl): filter icons left, selectors right. At xl+, dissolves via `contents`. */}
-        <div className="flex items-center justify-between xl:contents">
+        {/* Row 2 wrapper (<md): filter icons left, selectors right. At md+, dissolves via `contents`. */}
+        <div className="flex items-center justify-between md:contents">
         {/* Right: Filters & Actions */}
-        <div className="flex items-center gap-1 w-full xl:w-auto justify-between xl:justify-start">
+        <div className="flex items-center gap-1 w-full md:w-auto justify-between md:justify-start">
           {/* Filter icons group */}
           <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
