@@ -204,6 +204,9 @@ export function NewClientDialog({
     setClientSince(new Date());
     setLocationId(defaultLocationId || '');
     setPreferredStylistId('');
+    setShowAllStylists(false);
+    setStylistAutoCleared(false);
+    setStylistPickerOpen(false);
   };
 
   const createClient = useMutation({
