@@ -48,6 +48,7 @@ import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAs
 import { AssistantBlockManagerSheet } from '@/components/dashboard/schedule/AssistantBlockManagerSheet';
 import { useAssistantTimeBlocks, useAssistantTimeBlocksRange, useMyPendingAssistantBlocks } from '@/hooks/useAssistantTimeBlocks';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
+import { useStaffScheduleBlocks } from '@/hooks/useStaffScheduleBlocks';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
