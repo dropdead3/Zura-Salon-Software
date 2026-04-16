@@ -1,34 +1,37 @@
 
 
-# Shrink-on-Hover Appointment Cards for Double-Booking
+# Fix Jumpy Hover-Shrink on Appointment Cards
 
 ## Problem
-Appointment cards fill the entire time slot width, blocking clicks on the underlying time slot. This makes it impossible to double-book by clicking the same time slot when an appointment already exists.
+The shrink uses `e.currentTarget.getBoundingClientRect().right - 24` to detect the right edge. But when the card shrinks, its `right` boundary moves left, so the mouse position that triggered the shrink is now *outside* the card — the card expands back, the mouse is inside again, it shrinks again, causing a rapid jitter loop.
 
 ## Solution
-Add a right-edge hover zone to each appointment card. When the user hovers near the right edge (~20% of card width), the card shrinks to ~75% width from the left, revealing the clickable time slot behind it. A subtle visual indicator (thin vertical line or grip dots) appears on the right edge to hint at this behavior.
+Instead of tracking the card's current `right` edge (which moves), use the card's `left` edge + original full width to define a fixed trigger zone. This way the zone doesn't shift when the card shrinks.
 
 ## Changes — `src/components/dashboard/schedule/DayView.tsx`
 
-### 1. Add hover state to `AppointmentCard`
-- Track `isHoveredRight` state via `onMouseMove` / `onMouseLeave`
-- When mouse is in the rightmost ~24px of the card, set `isHoveredRight = true`
-- Apply a CSS transition: `width` shrinks from `calc(${widthPercent}% - 4px)` to `calc(${widthPercent * 0.7}% - 4px)` with a smooth `transition: width 200ms ease`
-- Add `pointer-events: none` would NOT work here — instead we let the smaller card reveal the slot underneath
+### 1. Fix `handleMouseMove` logic
+Replace `rect.right - 24` with a calculation based on the card's parent container width and the card's left position. Since we know `widthPercent` and the parent width, we can compute the *original* right edge regardless of current shrink state.
 
-### 2. Visual affordance
-- When hovering, show a subtle grip indicator (2-3 small dots or a thin vertical bar) on the right edge of the card to signal the shrink zone
-- The card maintains its full click area for opening the appointment detail when clicking on the card body itself
+Simpler approach: use `useRef` to store the card's full-width right boundary on first hover (or when not shrunk), and compare against that stable value.
 
-### 3. Implementation detail
-- Use `onMouseMove` with `getBoundingClientRect()` to detect right-edge proximity
-- `onMouseLeave` resets the shrink state
-- The drag overlay card (`isDragOverlay`) skips this behavior
-- Transition uses `transition-all duration-200 ease-out` for smooth animation
-- The z-index stays the same — the slot behind naturally becomes clickable when the card shrinks away
+**Simplest fix:** Once `isHoveredRight` is true, keep it true until `onMouseLeave`. The shrink stays locked until the mouse fully exits the card. No jitter possible.
 
-### 4. Also apply to `WeekView.tsx`
-- Same hover-shrink pattern on `WeekAppointmentCard` for consistency
+```tsx
+const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  if (isDragOverlay || isHoveredRight) return; // Once shrunk, stay shrunk
+  const rect = e.currentTarget.getBoundingClientRect();
+  if (e.clientX > rect.right - 24) {
+    setIsHoveredRight(true);
+  }
+};
+```
 
-Single interaction pattern, two file changes, no new dependencies.
+`onMouseLeave` already resets to false — that's the only exit path.
+
+### 2. Same fix in `WeekView.tsx`
+Apply identical early-return pattern to `WeekAppointmentCard`.
+
+## Result
+Card shrinks once when hovering the right edge, stays shrunk until the mouse leaves entirely. No jitter, smooth and predictable. Two lines changed per file.
 
