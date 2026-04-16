@@ -274,7 +274,9 @@ export function ScheduleHeader({
         {/* Row 2 wrapper (<xl): filter icons left, selectors right. At xl+, dissolves via `contents`. */}
         <div className="flex items-center justify-between xl:contents">
         {/* Right: Filters & Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 w-full xl:w-auto justify-between xl:justify-start">
+          {/* Filter icons group */}
+          <div className="flex items-center gap-1">
           <CalendarFiltersPopover 
             filters={calendarFilters}
             onFiltersChange={onCalendarFiltersChange}
