@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import { CalendarIcon, Loader2, UserPlus } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -452,11 +453,29 @@ export function NewClientDialog({
                     No service providers in system yet
                   </div>
                 )}
-                {teamMembers?.map(member => (
-                  <SelectItem key={member.user_id} value={member.user_id}>
-                    {formatDisplayName(member.full_name || '', member.display_name)}
-                  </SelectItem>
-                ))}
+                {teamMembers?.map(member => {
+                  const name = formatDisplayName(member.full_name || '', member.display_name);
+                  const initials = name
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .map(p => p[0])
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase() || '?';
+                  return (
+                    <SelectItem key={member.user_id} value={member.user_id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6 shrink-0">
+                          {member.photo_url && <AvatarImage src={member.photo_url} alt={name} />}
+                          <AvatarFallback className="text-[10px] bg-muted">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{name}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
