@@ -219,14 +219,48 @@ function AppointmentCard({
   });
 
   const [isHoveredRight, setIsHoveredRight] = useState(false);
+  const hoverBoundsRef = useRef<DOMRect | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragOverlay || isHoveredRight) return;
     const rect = e.currentTarget.getBoundingClientRect();
     if (e.clientX > rect.right - 24) {
+      hoverBoundsRef.current = rect;
       setIsHoveredRight(true);
     }
   };
+
+  useEffect(() => {
+    if (!isHoveredRight || isDragOverlay) {
+      hoverBoundsRef.current = null;
+      return;
+    }
+
+    const handleWindowMouseMove = (event: MouseEvent) => {
+      const bounds = hoverBoundsRef.current;
+      if (!bounds) return;
+
+      const isWithinOriginalCardBounds =
+        event.clientX >= bounds.left &&
+        event.clientX <= bounds.right &&
+        event.clientY >= bounds.top &&
+        event.clientY <= bounds.bottom;
+
+      if (!isWithinOriginalCardBounds) {
+        setIsHoveredRight(false);
+      }
+    };
+
+    const handleWindowBlur = () => setIsHoveredRight(false);
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [isDragOverlay, isHoveredRight]);
 
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const widthPercent = 100 / totalOverlapping;
@@ -255,7 +289,6 @@ function AppointmentCard({
         } : {}),
       }}
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => setIsHoveredRight(false)}
       onClick={(e) => {
         if (!isDragging) onClick();
       }}
