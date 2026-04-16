@@ -621,20 +621,20 @@ export function NewClientDialog({
                             );
                           })}
                         </CommandGroup>
-                        {locationId && !showAllStylists && locationFilteredStylists.length > 0 && (
-                          <div className="border-t px-2 py-1.5">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="w-full h-7 text-xs justify-center text-muted-foreground"
-                              onClick={() => setShowAllStylists(true)}
-                            >
-                              Show all stylists
-                            </Button>
-                          </div>
-                        )}
                       </CommandList>
+                      {locationId && !showAllStylists && locationFilteredStylists.length > 0 && (
+                        <div className="border-t px-2 py-1.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="w-full h-7 text-xs justify-center text-muted-foreground"
+                            onClick={() => setShowAllStylists(true)}
+                          >
+                            Show all stylists
+                          </Button>
+                        </div>
+                      )}
                     </Command>
                   </PopoverContent>
                 </Popover>
