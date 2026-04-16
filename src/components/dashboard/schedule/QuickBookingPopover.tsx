@@ -141,17 +141,26 @@ function getSortLetterForClient(name: string): string {
   return ch >= 'A' && ch <= 'Z' ? ch : '#';
 }
 
-function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClient, onViewProfile }: {
+function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClient, onViewProfile, activeLetter: activeLetterProp, onLetterChange }: {
   clients: PhorestClient[]; isLoading: boolean; clientSearch: string;
   onSelectClient: (client: PhorestClient) => void; onViewProfile: (client: PhorestClient) => void;
+  activeLetter?: string | null;
+  onLetterChange?: (letter: string | null) => void;
 }) {
-  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const isControlled = onLetterChange !== undefined;
+  const [internalActiveLetter, setInternalActiveLetter] = useState<string | null>(null);
+  const activeLetter = isControlled ? (activeLetterProp ?? null) : internalActiveLetter;
+  const setActiveLetter = useCallback((next: string | null) => {
+    if (isControlled) onLetterChange?.(next);
+    else setInternalActiveLetter(next);
+  }, [isControlled, onLetterChange]);
   const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const sortedClients = useMemo(() => [...clients].sort((a, b) => getFirstNameForSort(a.name).toLowerCase().localeCompare(getFirstNameForSort(b.name).toLowerCase())), [clients]);
   const availableLetters = useMemo(() => { const s = new Set<string>(); sortedClients.forEach(c => s.add(getSortLetterForClient(c.name))); return s; }, [sortedClients]);
   const firstClientPerLetter = useMemo(() => { const m = new Map<string, string>(); sortedClients.forEach(c => { const l = getSortLetterForClient(c.name); if (!m.has(l)) m.set(l, c.id); }); return m; }, [sortedClients]);
-  const filteredClients = useMemo(() => { if (!activeLetter) return sortedClients; return sortedClients.filter(c => getSortLetterForClient(c.name) === activeLetter); }, [sortedClients, activeLetter]);
-  const handleLetterClick = useCallback((letter: string) => { setActiveLetter(prev => prev === letter ? null : letter); }, []);
+  // When controlled, the parent has already filtered the dataset server-side, so don't re-filter client-side.
+  const filteredClients = useMemo(() => { if (!activeLetter || isControlled) return sortedClients; return sortedClients.filter(c => getSortLetterForClient(c.name) === activeLetter); }, [sortedClients, activeLetter, isControlled]);
+  const handleLetterClick = useCallback((letter: string) => { setActiveLetter(activeLetter === letter ? null : letter); }, [activeLetter, setActiveLetter]);
   const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => { if (el) letterRefs.current.set(letter, el); else letterRefs.current.delete(letter); }, []);
   const gi = (name: string) => { const p = name.trim().split(/\s+/); return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase(); };
   const fp = (phone: string | null) => { if (!phone) return null; const d = phone.replace(/\D/g, ''); if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`; if (d.length === 11 && d[0] === '1') return `(${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`; return phone; };
@@ -179,7 +188,6 @@ function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClie
                       ? 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                       : 'text-muted-foreground/30 pointer-events-none',
                   )}
-                  tabIndex={-1}
                 >
                   {letter}
                 </button>
@@ -270,7 +278,16 @@ export function QuickBookingPopover({
   
   // Form state
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
-  const [clientSearch, setClientSearch] = useState('');
+  const [clientSearch, setClientSearchRaw] = useState('');
+  const [activeLetter, setActiveLetterRaw] = useState<string | null>(null);
+  const setClientSearch = useCallback((value: string) => {
+    setClientSearchRaw(value);
+    if (value) setActiveLetterRaw(null);
+  }, []);
+  const setActiveLetter = useCallback((letter: string | null) => {
+    setActiveLetterRaw(letter);
+    if (letter) setClientSearchRaw('');
+  }, []);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedStylist, setSelectedStylist] = useState('');
   const [selectedLocation, setSelectedLocation] = useState(defaultLocationId || '');
@@ -526,14 +543,13 @@ export function QuickBookingPopover({
 
   // Fetch clients
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
-    queryKey: ['phorest-clients-booking', clientSearch, user?.id, canViewAllClients],
+    queryKey: ['phorest-clients-booking', clientSearch, activeLetter, user?.id, canViewAllClients],
     queryFn: async () => {
       let query = supabase
         .from('v_all_clients' as any)
         .select('id, phorest_client_id, name, email, phone, preferred_stylist_id, visit_count, last_visit, total_spend, is_vip, branch_name, is_banned, ban_reason, birthday, client_since')
         .eq('is_duplicate', false)
-        .order('name')
-        .limit(50);
+        .order('name');
       
       if (!canViewAllClients && user?.id) {
         query = query.eq('preferred_stylist_id', user.id);
@@ -546,6 +562,11 @@ export function QuickBookingPopover({
         if (hasDigit) filters.push(`phone.ilike.%${clientSearch}%`);
         if (hasAt) filters.push(`email.ilike.%${clientSearch}%`);
         query = query.or(filters.join(','));
+        query = query.limit(50);
+      } else if (activeLetter) {
+        query = query.ilike('name', `${activeLetter}%`).limit(500);
+      } else {
+        query = query.limit(50);
       }
       
       const { data } = await query;
@@ -862,6 +883,7 @@ export function QuickBookingPopover({
     setHighestStepReached(0);
     setSelectedClient(null);
     setClientSearch('');
+    setActiveLetter(null);
     setSelectedServices([]);
     setSelectedStylist('');
     setSelectedLocation('');
@@ -1269,6 +1291,8 @@ export function QuickBookingPopover({
               clientSearch={clientSearch}
               onSelectClient={handleSelectClient}
               onViewProfile={setViewingClientProfile}
+              activeLetter={activeLetter}
+              onLetterChange={setActiveLetter}
             />
           </div>
         )
