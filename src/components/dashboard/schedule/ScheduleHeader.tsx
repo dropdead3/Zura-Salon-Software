@@ -188,44 +188,7 @@ export function ScheduleHeader({
             </div>
           </div>
 
-          {/* Date group: inline at all sizes */}
-          <div className="flex flex-row gap-3 items-center">
-            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-              <PopoverTrigger asChild>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      className={cn(
-                        'hidden @[1320px]/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
-                        'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
-                      )}
-                    >
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                      <span className="hidden @lg/schedhdr:inline">Date</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Pick a date</p>
-                  </TooltipContent>
-                </Tooltip>
-              </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarPicker
-                mode="single"
-                selected={currentDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setCurrentDate(date);
-                    setDatePickerOpen(false);
-                  }
-                }}
-                initialFocus
-              />
-            </PopoverContent>
-            </Popover>
-        </div>
-
-        {/* Center: Date Display — absolutely centered at @md+, inline at narrow */}
+          {/* Center: Date Display — absolutely centered at @md+, inline at narrow */}
         <div className="@md/schedhdr:absolute @md/schedhdr:left-1/2 @md/schedhdr:top-1/2 @md/schedhdr:-translate-x-1/2 @md/schedhdr:-translate-y-1/2 @md/schedhdr:pointer-events-none">
         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
           <PopoverTrigger asChild>
