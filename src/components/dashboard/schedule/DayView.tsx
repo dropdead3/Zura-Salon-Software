@@ -218,11 +218,22 @@ function AppointmentCard({
     disabled: isDragOverlay,
   });
 
+  const [isHoveredRight, setIsHoveredRight] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragOverlay) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setIsHoveredRight(e.clientX > rect.right - 24);
+  };
+
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
+  const shrunkWidth = isDragOverlay ? undefined : isHoveredRight
+    ? `calc(${widthPercent * 0.7}% - 4px)`
+    : `calc(${widthPercent}% - 4px)`;
 
   return (
     <div
@@ -237,9 +248,12 @@ function AppointmentCard({
         ...(isDragOverlay ? { position: 'relative', width: '200px', height: style.height } : style),
         ...(!isDragOverlay ? {
           left: `calc(${leftPercent}% + 2px)`,
-          width: `calc(${widthPercent}% - 4px)`,
+          width: shrunkWidth,
+          transition: 'width 200ms ease-out',
         } : {}),
       }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setIsHoveredRight(false)}
       onClick={(e) => {
         if (!isDragging) onClick();
       }}
@@ -258,6 +272,17 @@ function AppointmentCard({
         
         onClick={() => {}}
       />
+      {/* Right-edge grip indicator */}
+      {!isDragOverlay && (
+        <div className={cn(
+          'absolute right-0 top-0 bottom-0 w-5 flex flex-col items-center justify-center gap-0.5 transition-opacity duration-200',
+          isHoveredRight ? 'opacity-60' : 'opacity-0',
+        )}>
+          <div className="w-0.5 h-1.5 rounded-full bg-foreground/50" />
+          <div className="w-0.5 h-1.5 rounded-full bg-foreground/50" />
+          <div className="w-0.5 h-1.5 rounded-full bg-foreground/50" />
+        </div>
+      )}
     </div>
   );
 }
