@@ -215,15 +215,6 @@ function AppointmentCard({
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
-  // Sort stylists by utilization descending (most booked first)
-  const sortedStylists = useMemo(() => {
-    return [...stylists].sort((a, b) => {
-      const aUtil = utilizationByStylist.get(a.user_id) ?? 0;
-      const bUtil = utilizationByStylist.get(b.user_id) ?? 0;
-      return bUtil - aUtil;
-    });
-  }, [stylists, utilizationByStylist]);
-
 
   return (
     <div
