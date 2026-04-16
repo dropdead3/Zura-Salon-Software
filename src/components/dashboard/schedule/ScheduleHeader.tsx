@@ -368,7 +368,11 @@ export function ScheduleHeader({
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[320px] p-2 bg-popover" align="end">
+              <PopoverContent
+                className="w-[320px] p-2 bg-popover"
+                align="end"
+                onMouseLeave={() => setStaffPopoverOpen(false)}
+              >
                 <div className="space-y-1">
                   <button
                     onClick={() => {
