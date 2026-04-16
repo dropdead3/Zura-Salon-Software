@@ -82,16 +82,7 @@ export function ScheduleActionBar({
         'bg-card/80 backdrop-blur-xl border border-border rounded-full px-4 py-2.5 flex items-center gap-3 transition-all duration-300 shadow-lg flex-1'
       )}
     >
-      {/* Left: Appointment count */}
-      <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
-        <CalendarDays className="h-4 w-4" />
-        <span>
-          <span className="font-medium text-foreground">{todayAppointmentCount}</span>
-          {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {/* Create Appointment button */}
+      {/* Left: Create Appointment button */}
       {onCreateAppointment && (
         <Button
           size="sm"
@@ -102,6 +93,15 @@ export function ScheduleActionBar({
           Create Appointment
         </Button>
       )}
+
+      {/* Appointment count */}
+      <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
+        <CalendarDays className="h-4 w-4" />
+        <span>
+          <span className="font-medium text-foreground">{todayAppointmentCount}</span>
+          {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
+        </span>
+      </div>
 
       {/* Center: Payment queue bubbles */}
       <div className="flex-1 min-w-0">
