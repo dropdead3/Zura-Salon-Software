@@ -965,6 +965,9 @@ export default function Schedule() {
                 onToggleShiftsView={() => setShowShiftsView(prev => !prev)}
                 staffFilterMode={staffFilterMode}
                 onStaffFilterModeChange={setStaffFilterMode}
+                appointments={appointments}
+                hoursStart={preferences.hours_start}
+                hoursEnd={preferences.hours_end}
               />
         </div>
 

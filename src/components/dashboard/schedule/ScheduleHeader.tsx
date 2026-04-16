@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { formatFullDisplayName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { format, addDays } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
+import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
+import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
@@ -82,6 +84,10 @@ interface ScheduleHeaderProps {
   onToggleShiftsView?: () => void;
   staffFilterMode?: 'with-appointments' | 'work-this-day';
   onStaffFilterModeChange?: (mode: 'with-appointments' | 'work-this-day') => void;
+  /** Org-wide appointments used to compute capacity dots in the date picker */
+  appointments?: PhorestAppointment[];
+  hoursStart?: number;
+  hoursEnd?: number;
 }
 
 export function ScheduleHeader({
@@ -111,6 +117,9 @@ export function ScheduleHeader({
   onToggleShiftsView,
   staffFilterMode = 'work-this-day',
   onStaffFilterModeChange,
+  appointments = [],
+  hoursStart = 9,
+  hoursEnd = 18,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
@@ -145,6 +154,48 @@ export function ScheduleHeader({
   const goToNextDay = () => setCurrentDate(addDays(currentDate, 1));
   const goToPrevWeek = () => setCurrentDate(addDays(currentDate, -7));
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
+
+  // Capacity tiers per date for the date picker — org-wide utilization signal.
+  // Uses the shared computeUtilizationByStylist (single source of truth) and
+  // aggregates booked vs available minutes across all stylists for each date.
+  const capacityModifiers = useMemo(() => {
+    const moderate: Date[] = [];
+    const low: Date[] = [];
+    const critical: Date[] = [];
+
+    if (!appointments.length || !stylists.length) {
+      return { moderate, low, critical };
+    }
+
+    // Bucket appointments by date string for cheap lookup
+    const dateSet = new Set<string>();
+    appointments.forEach((a) => {
+      if (a.appointment_date) dateSet.add(a.appointment_date);
+    });
+
+    dateSet.forEach((dateStr) => {
+      const perStylist = computeUtilizationByStylist(
+        stylists.map((s) => ({ user_id: s.user_id })),
+        appointments as any,
+        dateStr,
+        hoursStart,
+        hoursEnd,
+      );
+      // Org-wide average across stylists who have any data
+      const values = Array.from(perStylist.values());
+      if (values.length === 0) return;
+      const avg = values.reduce((s, v) => s + v, 0) / values.length;
+
+      // Parse the YYYY-MM-DD into a Date (local) for react-day-picker matching
+      const d = parseISO(dateStr);
+      if (avg >= 90) critical.push(d);
+      else if (avg >= 70) low.push(d);
+      else if (avg >= 50) moderate.push(d);
+    });
+
+    return { moderate, low, critical };
+  }, [appointments, stylists, hoursStart, hoursEnd]);
+
 
   return (
     <div className="flex flex-col @container/schedhdr">
@@ -191,27 +242,35 @@ export function ScheduleHeader({
           {/* Center: Date Display — absolutely centered at @md+, inline at narrow */}
         <div className="@md/schedhdr:absolute @md/schedhdr:left-1/2 @md/schedhdr:top-1/2 @md/schedhdr:-translate-x-1/2 @md/schedhdr:-translate-y-1/2 @md/schedhdr:pointer-events-none">
         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="@md/schedhdr:pointer-events-auto text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
-              aria-label="Pick a date"
-            >
-              {/* Compact single-line at < @xl — abbreviated, no year */}
-              <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
-                {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
-              </div>
-              {/* Two-line at @xl+ */}
-              <div className="hidden @xl/schedhdr:block">
-                <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
-                  {formatDate(currentDate, 'EEEE')}
-                </div>
-                <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
-                  {formatDate(currentDate, 'MMMM d, yyyy')}
-                </div>
-              </div>
-            </button>
-          </PopoverTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="@md/schedhdr:pointer-events-auto text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
+                  aria-label="Pick a date"
+                >
+                  {/* Compact single-line at < @xl — abbreviated, no year */}
+                  <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
+                    {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
+                  </div>
+                  {/* Two-line at @xl+ */}
+                  <div className="hidden @xl/schedhdr:block">
+                    <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
+                      {formatDate(currentDate, 'EEEE')}
+                    </div>
+                    <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
+                      {formatDate(currentDate, 'MMMM d, yyyy')}
+                    </div>
+                  </div>
+                </button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+              <p className="font-medium mb-1">Capacity signal</p>
+              <p>Dots under each date reflect org-wide booked time vs available shift time. White = open · Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%.</p>
+            </TooltipContent>
+          </Tooltip>
           <PopoverContent className="w-auto p-0" align="center">
             <CalendarPicker
               mode="single"
@@ -223,7 +282,35 @@ export function ScheduleHeader({
                 }
               }}
               initialFocus
+              modifiers={{
+                moderate: capacityModifiers.moderate,
+                low: capacityModifiers.low,
+                critical: capacityModifiers.critical,
+              }}
+              modifiersClassNames={{
+                moderate:
+                  "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-amber-500",
+                low:
+                  "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-orange-500",
+                critical:
+                  "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-red-500",
+              }}
             />
+            {/* Capacity legend strip */}
+            <div className="flex items-center justify-center gap-3 px-3 pb-3 pt-1 text-[11px] text-muted-foreground border-t border-border/50">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Filling
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                Tight
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                Booked
+              </span>
+            </div>
           </PopoverContent>
         </Popover>
         </div>
