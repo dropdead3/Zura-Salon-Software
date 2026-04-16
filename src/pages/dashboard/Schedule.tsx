@@ -1249,7 +1249,7 @@ export default function Schedule() {
 
       {/* Type Selector Dialog (dual-role users) */}
       <Dialog open={typeSelectorOpen} onOpenChange={setTypeSelectorOpen}>
-        <DialogContent className="sm:max-w-sm p-6">
+        <DialogContent className="sm:max-w-sm p-6 bg-card/80 backdrop-blur-xl border-border/60 shadow-2xl">
           <DialogTitle className="sr-only">Schedule Type</DialogTitle>
           <ScheduleTypeSelector
             selectedTime={bookingDefaults.time}

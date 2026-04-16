@@ -30,8 +30,9 @@ export function ScheduleTypeSelector({ onSelectClientBooking, onSelectMeeting, o
         <button
           onClick={onSelectClientBooking}
           className={cn(
-            'flex items-center gap-4 p-4 rounded-xl border border-border',
-            'hover:border-primary/30 hover:bg-muted/50 transition-all text-left'
+            'flex items-center gap-4 p-4 rounded-xl border border-border/60',
+            'bg-card/40 backdrop-blur-md hover:bg-card/60 hover:border-primary/30',
+            'transition-all duration-150 ease-out text-left'
           )}
         >
           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
@@ -46,8 +47,9 @@ export function ScheduleTypeSelector({ onSelectClientBooking, onSelectMeeting, o
         <button
           onClick={onSelectMeeting}
           className={cn(
-            'flex items-center gap-4 p-4 rounded-xl border border-border',
-            'hover:border-primary/30 hover:bg-muted/50 transition-all text-left'
+            'flex items-center gap-4 p-4 rounded-xl border border-border/60',
+            'bg-card/40 backdrop-blur-md hover:bg-card/60 hover:border-primary/30',
+            'transition-all duration-150 ease-out text-left'
           )}
         >
           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
@@ -62,8 +64,9 @@ export function ScheduleTypeSelector({ onSelectClientBooking, onSelectMeeting, o
         <button
           onClick={onSelectTimeblock}
           className={cn(
-            'flex items-center gap-4 p-4 rounded-xl border border-border',
-            'hover:border-primary/30 hover:bg-muted/50 transition-all text-left'
+            'flex items-center gap-4 p-4 rounded-xl border border-border/60',
+            'bg-card/40 backdrop-blur-md hover:bg-card/60 hover:border-primary/30',
+            'transition-all duration-150 ease-out text-left'
           )}
         >
           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
