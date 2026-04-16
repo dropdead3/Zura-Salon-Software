@@ -420,7 +420,7 @@ export function ScheduleHeader({
               <button
                 onClick={goToToday}
                 className={cn(
-                  'flex flex-col items-center justify-center min-w-[56px] px-3 py-2 rounded-lg text-sm font-sans transition-all duration-200',
+                  'flex flex-col items-center justify-center min-w-[72px] px-4 py-3 rounded-xl text-sm font-sans transition-all duration-200',
                   isOrgToday(currentDate)
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
@@ -431,9 +431,9 @@ export function ScheduleHeader({
                   {todayClosed.isClosed && (
                     <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
                   )}
-                  <span className="font-medium text-xs tracking-wide">Today</span>
+                  <span className="font-medium text-sm tracking-wide">Today</span>
                 </div>
-                <span className="text-[10px] opacity-70">{format(orgToday, 'MMM d')}</span>
+                <span className="text-xs opacity-70">{format(orgToday, 'MMM d')}</span>
               </button>
             );
 
@@ -462,7 +462,7 @@ export function ScheduleHeader({
                   setView('day');
                 }}
                 className={cn(
-                  'flex flex-col items-center justify-center min-w-[48px] px-2.5 py-2 rounded-lg text-sm font-sans transition-all duration-200',
+                  'flex flex-col items-center justify-center min-w-[64px] px-3.5 py-3 rounded-xl text-sm font-sans transition-all duration-200',
                   isSelected
                     ? 'bg-secondary text-secondary-foreground shadow-sm font-medium'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
@@ -475,9 +475,9 @@ export function ScheduleHeader({
                     {closed.isClosed && (
                       <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
                     )}
-                    <span className="text-xs font-medium tracking-wide">{format(day, 'EEE')}</span>
+                    <span className="text-sm font-medium tracking-wide">{format(day, 'EEE')}</span>
                   </div>
-                  <span className="text-[10px] opacity-70">{format(day, 'd')}</span>
+                  <span className="text-xs opacity-70">{format(day, 'd')}</span>
                 </div>
               </button>
             );
