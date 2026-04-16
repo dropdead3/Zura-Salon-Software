@@ -44,8 +44,8 @@ export function useQualifiedStaffForServices(serviceIds: string[], branchId?: st
 
       // 2. Manual qualifications use internal service_id (UUID).
       //    Resolve external IDs -> internal UUIDs first.
-      const { data: serviceRows, error: serviceLookupError } = await supabase
-        .from('services')
+      const { data: serviceRows, error: serviceLookupError } = await (supabase
+        .from('services') as any)
         .select('id, phorest_service_id')
         .in('phorest_service_id', serviceIds);
 
