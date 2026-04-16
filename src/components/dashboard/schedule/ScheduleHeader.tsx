@@ -371,7 +371,7 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  className="h-7 w-[240px] lg:w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
                     ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
