@@ -2405,28 +2405,33 @@ export function QuickBookingPopover({
           </div>
         </div>
       )}
+
+      {/* Step: New Client (embedded, replaces stacked dialog) */}
+      {step === 'newClient' && (
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          <NewClientStep
+            defaultLocationId={selectedLocation}
+            onCancel={() => setStep('client')}
+            onCreated={(client) => {
+              handleSelectClient({
+                id: client.id,
+                phorest_client_id: client.phorest_client_id,
+                name: client.name,
+                email: client.email,
+                phone: client.phone,
+                preferred_stylist_id: null,
+              });
+              setStep('stylist');
+            }}
+          />
+        </div>
+      )}
     </>
   );
 
   // ─── Dialogs shared by both modes ─────────────────────────────
   const dialogs = (
     <>
-      <NewClientDialog
-        open={showNewClientDialog}
-        onOpenChange={setShowNewClientDialog}
-        defaultLocationId={selectedLocation}
-        onClientCreated={(client) => {
-          handleSelectClient({
-            id: client.id,
-            phorest_client_id: client.phorest_client_id,
-            name: client.name,
-            email: client.email,
-            phone: client.phone,
-            preferred_stylist_id: null,
-          });
-          setShowNewClientDialog(false);
-        }}
-      />
       <BannedClientWarningDialog
         open={!!pendingBannedClient}
         onOpenChange={(open) => !open && setPendingBannedClient(null)}
