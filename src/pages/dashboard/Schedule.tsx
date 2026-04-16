@@ -145,7 +145,18 @@ export default function Schedule() {
     selectedLocation || null,
   );
 
-  const [detailOpen, setDetailOpen] = useState(false);
+  // Staff schedule blocks (breaks, lunches, blocked time from POS)
+  const weekEndDate = useMemo(() => {
+    const end = new Date(currentDate);
+    end.setDate(end.getDate() + 13);
+    return end;
+  }, [currentDate]);
+  const { data: scheduleBlocks = [] } = useStaffScheduleBlocks(
+    currentDate,
+    view === 'week' || view === 'agenda' ? weekEndDate : currentDate,
+    selectedLocation || undefined,
+  );
+
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
