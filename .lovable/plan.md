@@ -2,78 +2,70 @@
 
 ## Prompt review
 
-Smart move — instead of fighting the breakpoint math, you're rebalancing the surface. Assistant Blocks and Drafts are workflow-adjacent (not viewport identifiers), so they belong with the bottom action bar that already houses workflow tools (Create, Zoom, Legend). Tighter version: "Promote Assistant Blocks + Drafts out of the dark header into ScheduleActionBar; they're workflow shortcuts, not header chrome."
+Clean and decisive — you're continuing the same rebalancing strategy: workflow controls cluster with workflow controls. Tighter version: "Move the Shifts pill out of the left date cluster and dock it above the Location/Stylist selectors on the right."
 
-Teaching note: when responsive layouts get crowded, the best fix is often **relocation, not compression**. You instinctively chose this — naming it explicitly ("workflow tools belong with workflow tools") will make future calls even sharper.
+Teaching note: you're now treating the right column as the **"what am I looking at"** zone (location → staff → shifts/appointments mode). That's a coherent mental model — selectors define scope, Shifts toggles what *type* of scope. Naming this grouping ("scope controls") will sharpen future moves.
 
 ## Diagnosis
 
-Currently in `ScheduleHeader.tsx`:
-- **Assistant Blocks** (lines 315–335): icon button with badge, hidden below `@[1320px]/schedhdr`
-- **Drafts** (lines 337–357): icon button with badge, hidden below `@[1320px]/schedhdr`
+In `ScheduleHeader.tsx`:
+- **Shifts pill** (lines 194–223): currently in the left cluster, inside the "Shifts + Date group" wrapper (line 192), gated by `hidden @[1320px]/schedhdr:flex`.
+- **Right cluster** (lines 334–371+): vertically stacked Location and Staff selectors, each `h-7 w-[180px] @lg/schedhdr:w-[220px]`.
 
-Bottom bar (`ScheduleActionBar.tsx`) already hosts: Create Appointment, appt count, payment queue, Appointments link, Zoom, Legend. It's the natural home for two more workflow icons.
+The Shifts pill belongs as a third element in the right column, rendered above Location.
 
 ## Fix
 
-### 1. `ScheduleActionBar.tsx` — add two optional icon buttons
+Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`.
 
-Add four new optional props:
-- `onOpenBlockManager?: () => void`
-- `pendingBlockCount?: number`
-- `onOpenDrafts?: () => void`
-- `draftCount?: number`
+### 1. Remove Shifts pill from left cluster
+Delete the Shifts `<Tooltip>` block at lines 194–223. The "Shifts + Date group" wrapper at line 192 stays (still wraps the Date pill).
 
-Insert two icon buttons (Users + FileText, both with `NavBadge`) into the right cluster, **before** the Appointments & Transactions link (line 153). Use the same h-8 w-8 rounded-full styling as the existing zoom/link buttons for visual consistency. Each button is conditionally rendered (`onOpenBlockManager && ...`).
+### 2. Add Shifts pill above selectors
+Inside the selector stack (line 335, the `flex flex-col gap-2 items-stretch` div), insert the Shifts toggle as the first child — above the Location Select.
 
-### 2. `ScheduleHeader.tsx` — remove the two buttons
+Restyle to match selector visual weight:
+- Match selector width: `w-[180px] @lg/schedhdr:w-[220px]`
+- Match selector height: `h-7`
+- Match selector palette: `bg-[hsl(var(--sidebar-accent))] border border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))]` for inactive, foreground swap when active
+- Use `rounded-md` (matches Select trigger), drop the pill `rounded-full`
+- Drop the `@[1320px]` visibility gate — now always visible alongside selectors at all widths ≥ @md
+- Keep tooltip wrapper
 
-Delete lines 315–357 (Assistant Blocks + Drafts blocks) entirely. Keep `onOpenBlockManager`, `onOpenDrafts`, `draftCount`, `pendingBlockCount` props in the interface (still passed down), but no longer rendered here.
-
-Remove the now-unused `Users` and `FileText` icon imports if they have no other usage in the file. Remove `NavBadge` import if unused.
-
-### 3. `Schedule.tsx` — wire the new props through
-
-At lines 1010–1024, pass the four new props to `<ScheduleActionBar>`:
-```tsx
-onOpenBlockManager={() => setBlockManagerOpen(true)}
-pendingBlockCount={pendingCount}
-onOpenDrafts={() => setDraftsSheetOpen(true)}
-draftCount={drafts.length}
-```
-
-Header still receives them too (no breaking change to `ScheduleHeader`'s signature) so we can clean those up later if confirmed.
+### 3. Restyle Shifts button content
+- Icon left, label right (full label visible, no breakpoint hiding since width matches selectors)
+- Center-aligned content with `justify-center`
+- Active state: foreground bg + sidebar-bg text (same as before)
+- Inactive state: muted foreground text on accent bg
 
 ## Result
 
 | Surface | Before | After |
 |---|---|---|
-| Dark header (right cluster) | Filters, Assist, Drafts, Today's Prep, Selectors | **Filters, Today's Prep, Selectors** |
-| Bottom action bar | Create, count, queue, Appts link, Zoom, Legend | Create, count, queue, **Assist, Drafts**, Appts link, Zoom, Legend |
+| Left cluster | Day/Week toggle, **Shifts pill**, Date pill, center date | Day/Week toggle, Date pill, center date |
+| Right cluster (top→bottom) | Location, Staff | **Shifts**, Location, Staff |
 
-At any viewport ≥ 768px, Assistant Blocks and Drafts are now **always visible** in the bottom bar — no more breakpoint games. Header stays clean even at narrow widths with the sidebar expanded.
+Shifts becomes a peer of the scope selectors — visually grouped, always visible, no breakpoint gating.
 
 ## Acceptance checks
 
-1. At 1130px viewport (sidebar expanded): header shows date + selectors cleanly, no clipping. Bottom bar shows Assist + Drafts icons with badges.
-2. At 1415px viewport (current): same — Assist + Drafts live in bottom bar, badges intact.
-3. Clicking Assist icon opens the block manager (existing behavior).
-4. Clicking Drafts icon opens the drafts sheet (existing behavior).
-5. Pending/draft count badges still render correctly.
-6. Tooltips on both icons still work.
-7. Dark header no longer renders these two buttons at any width.
+1. At 1415px viewport (current): Shifts toggle appears above Location selector, same width (220px), same dark palette.
+2. At 1130px viewport (sidebar expanded): Shifts toggle still visible above Location (180px width).
+3. Clicking Shifts toggles `showShiftsView` (existing handler, unchanged).
+4. Active state shows light bg / dark text; inactive shows muted text on accent bg.
+5. Tooltip on hover still reads "View support staff shifts" / "Hide shift schedule".
+6. Date pill (left cluster) still works at ≥ 1320px container.
+7. Left cluster no longer renders Shifts at any width.
 
 ## Out of scope
 
-- Shifts pill + Date pill — stay in header (they relate to view mode, not workflow).
-- Today's Prep — stays in header (contextual, only shows on today).
-- Filters popover — stays in header.
-- Selectors, Day/Week toggle, navigation — unchanged.
-- Bottom bar styling/layout reflow — minimal; just two icons added with same h-8 w-8 pattern.
+- Date pill — stays in left cluster.
+- Day/Week toggle — unchanged.
+- Filter popover, Today's Prep — unchanged.
+- Selector widths or palette — unchanged.
+- Bottom action bar — unchanged.
 
-## Files touched
+## File touched
 
-- `src/components/dashboard/schedule/ScheduleActionBar.tsx` — add 4 props + 2 icon buttons.
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` — remove Assist + Drafts blocks; clean unused imports.
-- `src/pages/dashboard/Schedule.tsx` — pass 4 new props to `ScheduleActionBar`.
+- `src/components/dashboard/schedule/ScheduleHeader.tsx` — remove Shifts from left cluster (lines 194–223), insert restyled Shifts toggle as first child of selector stack (line 335).
 
