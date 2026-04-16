@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getOrgToday, orgNowMinutes } from '@/lib/orgTime';
 import { useOrgDefaults } from '@/hooks/useOrgDefaults';
 import { useEffectiveUserId } from './useEffectiveUser';
+import { usePOSProviderLabel } from './usePOSProviderLabel';
 import { toast } from 'sonner';
 
 export interface PhorestAppointment {
@@ -99,6 +100,7 @@ export function usePhorestCalendar() {
   const { timezone } = useOrgDefaults();
   const effectiveUserId = useEffectiveUserId();
   const queryClient = useQueryClient();
+  const { isConnected: isPOSConnected } = usePOSProviderLabel();
   
   // Calendar state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -258,9 +260,9 @@ export function usePhorestCalendar() {
     },
   });
 
-  // Get last sync time
+  // Get last sync time (only when a POS integration is connected)
   const { data: lastSync } = useQuery({
-    queryKey: ['phorest-last-sync'],
+    queryKey: ['phorest-last-sync', isPOSConnected],
     queryFn: async () => {
       const { data } = await supabase
         .from('phorest_sync_log')
@@ -270,9 +272,10 @@ export function usePhorestCalendar() {
         .order('completed_at', { ascending: false })
         .limit(1)
         .single();
-      
+
       return data?.completed_at ? new Date(data.completed_at) : null;
     },
+    enabled: isPOSConnected,
   });
 
   // Update appointment status mutation
@@ -397,24 +400,33 @@ export function usePhorestCalendar() {
 
   // Manual sync trigger
   const triggerSync = useCallback(async () => {
+    // No-op when running standalone (no POS integration connected)
+    if (!isPOSConnected) {
+      toast.info('Calendar runs natively', {
+        description: 'No external POS sync is needed.',
+      });
+      await refetch();
+      return;
+    }
+
     try {
       const response = await supabase.functions.invoke('sync-phorest-data', {
-        body: { 
+        body: {
           sync_type: 'appointments',
           date_from: dateRange.start,
           date_to: dateRange.end,
         },
       });
-      
+
       if (response.error) throw response.error;
-      
+
       await refetch();
       queryClient.invalidateQueries({ queryKey: ['phorest-last-sync'] });
       toast.success('Calendar synced successfully');
     } catch (error: any) {
       toast.error('Sync failed', { description: error.message });
     }
-  }, [dateRange, refetch, queryClient]);
+  }, [dateRange, refetch, queryClient, isPOSConnected]);
 
   return {
     // State

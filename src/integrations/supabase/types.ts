@@ -14814,6 +14814,7 @@ export type Database = {
           end_time: string
           expected_price: number | null
           id: string
+          is_archived: boolean
           is_demo: boolean
           is_new_client: boolean | null
           is_redo: boolean
@@ -14870,6 +14871,7 @@ export type Database = {
           end_time: string
           expected_price?: number | null
           id?: string
+          is_archived?: boolean
           is_demo?: boolean
           is_new_client?: boolean | null
           is_redo?: boolean
@@ -14926,6 +14928,7 @@ export type Database = {
           end_time?: string
           expected_price?: number | null
           id?: string
+          is_archived?: boolean
           is_demo?: boolean
           is_new_client?: boolean | null
           is_redo?: boolean
