@@ -97,7 +97,11 @@ export function CalendarFiltersPopover({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0" align="end">
+      <PopoverContent
+        className="w-[280px] p-0"
+        align="end"
+        onMouseLeave={() => setOpen(false)}
+      >
         <div className="p-3 border-b border-border flex items-center justify-between">
           <span className="font-medium text-sm">Filter Appointments</span>
           {activeFilterCount > 0 && (
