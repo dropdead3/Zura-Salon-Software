@@ -151,7 +151,7 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 flex items-center justify-between rounded-t-lg">
+      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 flex flex-wrap items-center justify-between gap-y-2 rounded-t-lg">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -248,11 +248,11 @@ export function ScheduleHeader({
         </div>
 
         {/* Center: Date Display */}
-        <div className="text-center">
-          <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70">
+        <div className="text-center min-w-0 truncate">
+          <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
             {formatDate(currentDate, 'EEEE')}
           </div>
-          <div className="text-sm font-display tracking-wide whitespace-nowrap">
+          <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
             {formatDate(currentDate, 'MMMM d, yyyy')}
           </div>
         </div>
@@ -340,7 +340,7 @@ export function ScheduleHeader({
               onOpenChange={setLocationSelectOpen}
             >
               <SelectTrigger
-                className="h-7 w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                className="h-7 w-[240px] lg:w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
@@ -371,7 +371,7 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  className="h-7 w-[240px] lg:w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
                     ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
@@ -477,21 +477,21 @@ export function ScheduleHeader({
       </div>
 
       {/* Secondary Navigation Bar */}
-      <div className="bg-card border border-t-0 border-border/50 px-4 py-2 flex items-center justify-between rounded-b-lg">
+      <div className="bg-card border border-t-0 border-border/50 px-4 py-2 flex items-center justify-between gap-2 min-w-0 overflow-hidden rounded-b-lg">
         {/* Left: Week/Day Navigation */}
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevWeek} className="gap-1">
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevWeek} className="gap-1" title="Previous Week">
             <ChevronsLeft className="h-4 w-4" />
-            Week
+            <span className="hidden lg:inline">Week</span>
           </Button>
-          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevDay} className="gap-1">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevDay} className="gap-1" title="Previous Day">
             <ChevronLeft className="h-4 w-4" />
-            Day
+            <span className="hidden lg:inline">Day</span>
           </Button>
         </div>
 
         {/* Center: Quick Day Buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none flex items-center justify-center gap-1 px-1">
           {(() => {
             const selectedLoc = locations.find(l => l.id === selectedLocation);
             const todayClosed = selectedLoc
@@ -502,7 +502,7 @@ export function ScheduleHeader({
               <button
                 onClick={goToToday}
                 className={cn(
-                  'flex flex-col items-center justify-center min-w-[72px] px-4 py-3 rounded-lg text-sm font-sans transition-all duration-200',
+                  'shrink-0 flex flex-col items-center justify-center min-w-[64px] px-3 py-3 rounded-lg text-sm font-sans transition-all duration-200',
                   isOrgToday(currentDate)
                     ? 'bg-primary text-primary-foreground shadow-sm dark:bg-primary/15 dark:text-primary dark:shadow-none dark:border dark:border-primary/40'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
@@ -544,7 +544,7 @@ export function ScheduleHeader({
                   setView('day');
                 }}
                 className={cn(
-                  'flex flex-col items-center justify-center min-w-[64px] px-3.5 py-3 rounded-lg text-sm font-sans transition-all duration-200',
+                  'shrink-0 flex flex-col items-center justify-center min-w-[56px] px-2.5 py-3 rounded-lg text-sm font-sans transition-all duration-200',
                   isSelected
                     ? 'bg-secondary text-secondary-foreground shadow-sm font-medium'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
@@ -578,22 +578,23 @@ export function ScheduleHeader({
         </div>
 
         {/* Right: Forward Navigation + Jump Ahead */}
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size={tokens.button.inline} onClick={goToNextDay} className="gap-1">
-            Day
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToNextDay} className="gap-1" title="Next Day">
+            <span className="hidden lg:inline">Day</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size={tokens.button.inline} onClick={goToNextWeek} className="gap-1">
-            Week
+          <Button variant="outline" size={tokens.button.inline} onClick={goToNextWeek} className="gap-1" title="Next Week">
+            <span className="hidden lg:inline">Week</span>
             <ChevronsRight className="h-4 w-4" />
           </Button>
           
           {/* Jump Ahead Dropdown */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size={tokens.button.inline} className="ml-1 gap-1">
-                Jump <Plus className="h-3 w-3" />
-                <ChevronRight className="h-3 w-3 rotate-90" />
+              <Button variant="outline" size={tokens.button.inline} className="ml-1 gap-1" title="Jump ahead">
+                <span className="hidden md:inline">Jump</span>
+                <Plus className="h-3 w-3" />
+                <ChevronRight className="h-3 w-3 rotate-90 hidden md:inline-block" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-1" align="end">
