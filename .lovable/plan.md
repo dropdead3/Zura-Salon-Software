@@ -2,65 +2,50 @@
 
 ## Prompt review
 
-Clear and well-scoped — you're stacking two precise improvements on the same selector: (1) searchability and (2) location-aware defaulting. Teaching note: calling out the *fallback* explicitly ("if no preferred location is set, show all") would close the only ambiguity here. I'll assume that fallback by default.
+Tight, observable bug report — "dropdown not opening" + screenshot of the exact field. Teaching note: adding what *does* happen on click (nothing, flicker, opens but blank, console error) speeds up the diagnosis. I'll proceed with what I confirmed in code.
 
 ## Diagnosis
 
-`NewClientDialog.tsx` currently renders the Preferred Stylist field as a plain `Select` populated from `useTeamDirectory()` — no search input, no location filter. The dialog already collects `preferred_location` (from `useActiveLocations`) earlier in the form, so the data needed to scope the stylist list is already in form state.
+The Preferred Stylist `Popover` is rendered **behind** the Dialog because of a z-index mismatch:
 
-What's missing:
-1. A way to filter team members by the location they work at.
-2. A search input inside the stylist dropdown.
+- `DialogContent` and `DialogOverlay` use `z-[70]` (`src/components/ui/dialog.tsx`)
+- `PopoverContent` uses `z-50` (`src/components/ui/popover.tsx`)
+
+Both portal to `document.body`. The popover panel ends up underneath the dialog's overlay, so the click never lands on a `CommandItem` and the popover appears non-functional. The trigger itself fires `setStylistPickerOpen(true)`, but the panel is invisible/non-interactive beneath the dialog.
+
+The neighboring "Client Since" popover suffers the same theoretical issue but is less noticeable because the calendar can render in clear space; the stylist dropdown is wider and overlaps the dialog area.
 
 ## Fix
 
-### 1. Swap `Select` → searchable `Combobox` (Popover + Command)
-Replace the native-style `Select` for Preferred Stylist with a shadcn `Popover` + `Command` combobox (same pattern used elsewhere in the app for searchable pickers). Structure:
-- Trigger: button styled identically to current select (avatar + name when chosen, "None (optional)" placeholder).
-- Popover content: `CommandInput` (search) + `CommandList` with `CommandEmpty` + `CommandGroup` of stylists.
-- Each `CommandItem` renders the same avatar + name row already in place.
-- Always include a "None" item at the top to clear the selection.
-- Search matches on `display_name` / `full_name` (case-insensitive, substring).
+Single, surgical change in `NewClientDialog.tsx`:
 
-### 2. Default the list to stylists at the selected preferred location
-- Watch the `preferred_location` form field.
-- Filter `teamMembers` to those whose `location_ids` (or equivalent assignment field on `employee_profiles`) include the selected location.
-- If `preferred_location` is empty/`none` → show all active team members (no filter).
-- If the filter yields zero stylists → show empty state inside the combobox: "No stylists at this location" + a small "Show all stylists" toggle that bypasses the filter for this session.
+- Add an explicit `z-[80]` (one tier above the dialog's `z-[70]`) to the Preferred Stylist `PopoverContent`.
+- Apply the same fix to the "Client Since" `PopoverContent` to prevent the same latent bug.
 
-### 3. Reactivity rules
-- When `preferred_location` changes and the currently selected `preferred_stylist` no longer works at the new location → clear the stylist selection (and surface a tiny inline helper: "Cleared — previous stylist isn't at this location").
-- Keep the avatar + initials fallback already added.
-
-### 4. Discovery step (during implementation)
-Confirm exactly which field on `employee_profiles` ties a stylist to a location (likely `location_ids: uuid[]` or a join table). Inspect `useTeamDirectory` and a sample row to lock the filter predicate before wiring it. If it's a join table, extend the hook with a lightweight org-scoped query rather than N+1 lookups.
+No structural or logic changes. The combobox keeps:
+- search input
+- location-scoped default list
+- "Show all stylists" escape hatch
+- auto-clear on location change
 
 ## Acceptance checks
 
-1. Open Add New Client → Preferred Stylist now opens a popover with a search input at the top.
-2. Typing filters the list in real time by name.
-3. With a Preferred Location selected, only stylists assigned to that location appear by default.
-4. With no Preferred Location selected, all active stylists appear.
-5. "None" option is always available at the top to clear the selection.
-6. Changing Preferred Location after picking a stylist who doesn't work there clears the stylist field with a subtle helper note.
-7. Empty result state offers a "Show all stylists" escape hatch.
-8. Avatar + initials fallback continues to render for every item.
-9. No regression: form submit still saves `preferred_stylist` correctly.
-
-## Out of scope
-
-- Changing how locations are assigned to staff.
-- Adding stylist level/specialty filters.
-- Restyling the rest of the Add New Client form.
+1. Open Add New Client → click Preferred Stylist → popover opens above the dialog.
+2. Search input is focusable; typing filters results.
+3. Selecting a stylist updates the trigger label with avatar + name and closes the popover.
+4. Selecting "None" clears the value.
+5. Client Since calendar still opens correctly.
+6. No regressions to other popovers in the app (change is scoped to this file).
 
 ## Files to touch
 
-- `src/components/dashboard/schedule/NewClientDialog.tsx` — replace `Select` with `Popover + Command` combobox; add location-based filter; add reactive clear-on-location-change effect.
-- (Read-only) `src/hooks/useEmployeeProfile.ts` — confirm location field name on the returned team member rows; extend the hook only if needed.
+- `src/components/dashboard/schedule/NewClientDialog.tsx`
+  - Add `z-[80]` to the Preferred Stylist `PopoverContent` className.
+  - Add `z-[80]` to the Client Since `PopoverContent` className.
 
 ## Further enhancement suggestions
 
-- Show a tiny location chip next to each stylist when "Show all stylists" is toggled on, so the user sees who's off-location.
-- Reuse the new searchable stylist combobox in the booking wizard's stylist step for consistency.
-- Sort the filtered list by recent assignment frequency or alphabetically — pick one canonically and apply everywhere.
+- Promote the global `PopoverContent` z-index to `z-[80]` so any popover inside any dialog "just works" — would prevent this class of bug across the app.
+- Add a Storybook/visual test for "popover-inside-dialog" to catch z-index regressions.
+- Consider unifying dialog/popover/sheet z-index tokens in `design-tokens.ts` so layering is explicit instead of magic numbers.
 
