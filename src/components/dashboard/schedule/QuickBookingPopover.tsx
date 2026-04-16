@@ -2441,6 +2441,7 @@ export function QuickBookingPopover({
       {open && (
         <div 
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+          style={{ top: godModeOffset }}
           onClick={() => onOpenChange(false)}
           aria-hidden="true"
         />
