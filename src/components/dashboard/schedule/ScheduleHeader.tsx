@@ -262,9 +262,9 @@ export function ScheduleHeader({
             >
               {/* Compact single-line at < @xl — abbreviated, no year */}
               <div className="@xl/schedhdr:hidden">
-                {isOrgToday(currentDate) && (
+                {relativeDayLabel && (
                   <div className="text-[9px] font-display tracking-[0.2em] text-primary uppercase leading-none mb-0.5">
-                    Today
+                    {relativeDayLabel}
                   </div>
                 )}
                 <div className="text-sm font-display tracking-wide whitespace-nowrap">
@@ -273,9 +273,9 @@ export function ScheduleHeader({
               </div>
               {/* Two-line at @xl+ */}
               <div className="hidden @xl/schedhdr:block">
-                {isOrgToday(currentDate) && (
+                {relativeDayLabel && (
                   <div className="text-[10px] font-display tracking-[0.2em] text-primary uppercase leading-none mb-0.5">
-                    Today
+                    {relativeDayLabel}
                   </div>
                 )}
                 <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
