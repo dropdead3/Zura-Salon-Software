@@ -155,6 +155,48 @@ export function ScheduleHeader({
   const goToPrevWeek = () => setCurrentDate(addDays(currentDate, -7));
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
 
+  // Capacity tiers per date for the date picker — org-wide utilization signal.
+  // Uses the shared computeUtilizationByStylist (single source of truth) and
+  // aggregates booked vs available minutes across all stylists for each date.
+  const capacityModifiers = useMemo(() => {
+    const moderate: Date[] = [];
+    const low: Date[] = [];
+    const critical: Date[] = [];
+
+    if (!appointments.length || !stylists.length) {
+      return { moderate, low, critical };
+    }
+
+    // Bucket appointments by date string for cheap lookup
+    const dateSet = new Set<string>();
+    appointments.forEach((a) => {
+      if (a.appointment_date) dateSet.add(a.appointment_date);
+    });
+
+    dateSet.forEach((dateStr) => {
+      const perStylist = computeUtilizationByStylist(
+        stylists.map((s) => ({ user_id: s.user_id })),
+        appointments as any,
+        dateStr,
+        hoursStart,
+        hoursEnd,
+      );
+      // Org-wide average across stylists who have any data
+      const values = Array.from(perStylist.values());
+      if (values.length === 0) return;
+      const avg = values.reduce((s, v) => s + v, 0) / values.length;
+
+      // Parse the YYYY-MM-DD into a Date (local) for react-day-picker matching
+      const d = parseISO(dateStr);
+      if (avg >= 90) critical.push(d);
+      else if (avg >= 70) low.push(d);
+      else if (avg >= 50) moderate.push(d);
+    });
+
+    return { moderate, low, critical };
+  }, [appointments, stylists, hoursStart, hoursEnd]);
+
+
   return (
     <div className="flex flex-col @container/schedhdr">
       {/* Dark Header Bar */}
