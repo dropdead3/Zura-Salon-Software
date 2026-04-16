@@ -190,8 +190,8 @@ export function ScheduleHeader({
             </div>
           </div>
 
-          {/* Shifts + Date group: stacked at <xl, inline at xl+ */}
-          <div className="flex flex-col gap-1 items-start xl:flex-row xl:gap-3 xl:items-center">
+          {/* Shifts + Date group: inline at all sizes */}
+          <div className="flex flex-row gap-3 items-center">
             {/* Shifts View Toggle */}
             {onToggleShiftsView && (
               <Tooltip>
