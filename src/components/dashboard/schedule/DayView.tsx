@@ -653,7 +653,7 @@ export function DayView({
                 return (
                   <div 
                     key={stylist.user_id} 
-                    className={cn("flex-1 min-w-0 relative border-r-2 border-r-border/40 last:border-r-0", idx % 2 === 1 && "bg-muted/[0.08]")}
+                    className={cn("flex-1 min-w-0 relative className={cn("flex-1 min-w-0 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}}
                   >
                     {/* Time slot backgrounds (droppable) */}
                     {timeSlots.map(({ hour, minute }) => {
