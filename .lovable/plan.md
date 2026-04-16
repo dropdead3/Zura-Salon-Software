@@ -1,60 +1,61 @@
 
+
 ## Prompt review
 
-Clear and visual — the screenshots show exactly what you want (red pill is the "before"-style example; purple line + 1:43 PM is your target). Teaching note: explicitly saying "ghost = translucent purple, not solid" and "in the time-gutter area to the left" would have removed two assumptions. I'll proceed with: translucent purple background (`bg-primary/15`), purple text, purple ring, vertically centered on the line, positioned to the **left of the dot** so it sits over the time-label gutter.
+Strong follow-up — you noticed a specific edge case (the "Unavailable" badge fires above the indicator line) and provided a zoomed screenshot that makes the boundary mismatch obvious. Teaching note: calling out *which* artifact spills (the badge/cursor vs the gray fill) helps target the fix faster, since we already fixed the visual gray overlay in the prior round. Micro-improvement: "the unavailable badge appears on the slot the time bar is currently inside" would have pinned the root cause in one sentence.
 
-## What's there now
+## Diagnosis
 
-- **DayView** (`src/components/dashboard/schedule/DayView.tsx`, ~line 893): renders the line + dot only — no time label at all.
-- **WeekView** (`src/components/dashboard/schedule/WeekView.tsx`, ~line 597): renders line + dot + a **solid purple** label on the **right** of the dot.
+The visual gray overlay is now pixel-aligned to the line (prior fix). What's still wrong is the **slot interaction logic**:
 
-Both use the shared snapped `currentTimeLinePx` from `getCurrentTimeRenderMetrics`.
+```ts
+// DayView.tsx:781 and WeekView.tsx:495
+const isPastSlot = slotMins < dayNowMins;
+```
+
+A slot becomes "past" the moment `now` crosses its **start**, not its **end**. So at 1:53 PM:
+- 1:45–2:00 slot: `slotMins = 105 < 113` → marked past
+- The line sits at 1:53 (mid-slot), but hovering the slot above the line shows the "UNAVAILABLE" badge and `cursor-not-allowed`
+
+This is exactly what your screenshot shows — the badge appears for a slot whose end is still in the future.
 
 ## Fix
 
-Add a small reusable formatter inline (or use `formatTime12h` from `schedule-utils` after converting `nowMinutes` → `HH:MM` string) and render a ghost pill positioned to the **left** of the dot, vertically centered on the line.
+Change the past-slot test from "start has passed" to **"end has passed"**:
 
-Pill styling (matches "ghost" + brand):
-- `bg-primary/15` translucent purple fill
-- `text-primary` purple text
-- `ring-1 ring-primary/30` subtle outline
-- `backdrop-blur-sm` for the glassy ghost feel
-- `text-[10px] font-medium px-2 py-0.5 rounded-full`
-- positioned `absolute right-1 -translate-y-1/2 top-0` inside the indicator wrapper, so it sits in the time-gutter to the left of the dot
+```ts
+// DayView.tsx
+const isPastSlot = showCurrentTime && (() => {
+  const slotMins = hour * 60 + minute;
+  return slotMins + slotInterval <= dayNowMins;  // slot fully in past
+})();
 
-### DayView changes (~line 893–904)
-- Wrap the indicator content in a `relative` container so the pill can be absolutely positioned relative to the line.
-- Add the ghost pill to the **left** of the dot using `right-2` (since the indicator spans the full track, "left of the dot" = positioned with `right` from the dot's anchor, or simpler: render the pill at `left: -<offset>` relative to the column wrapper).
-- Cleanest: render the pill at `style={{ right: '100%' }}` on the dot's wrapper, with a small `mr-1` so it sits just outside the column track in the time-gutter area.
+// WeekView.tsx
+const isPastSlot = isCurrentDay && (() => {
+  const slotMins = slot.hour * 60 + slot.minute;
+  return slotMins + slotInterval <= wkNowMins;   // slot fully in past
+})();
+```
 
-### WeekView changes (~line 605–613)
-- Replace the existing solid right-side label with the same ghost pill positioned on the **left** (`right: '100%'` + `mr-1`), removing the current `left-3 -top-2.5 bg-primary text-primary-foreground` styling.
-
-### Shared helper
-- Add a tiny `formatMinutesAs12h(mins: number)` to `src/lib/schedule-utils.ts` (DRY — used by both views) so the time string isn't duplicated as an IIFE.
+`slotInterval` is already 15 in both files (the slot grid step). This makes the current slot (the one the line cuts through) **interactive** — bookable from the line forward — while everything strictly before it remains unavailable.
 
 ## Acceptance checks
 
-1. Both Day and Week views show a translucent purple pill with the current time (e.g. `1:43 PM`) just left of the purple dot.
-2. The pill is vertically centered on the purple line — no clipping above/below.
-3. Pill updates each minute (already handled by `useOrgNow` ticking `nowMinutes`).
-4. In Week view, only today's column shows the pill (existing `isCurrentDay` gate).
-5. Pill doesn't overlap appointments — sits in the time-gutter area to the left of the column track.
-6. Looks crisp at 100% and 200% zoom.
-
-## Out of scope
-
-- Restyling the dot or line.
-- MonthView / AgendaView (no time-of-day line there).
-- Animations on the pill (could be a follow-up if you want a soft pulse).
+1. The "UNAVAILABLE" badge no longer appears on the slot containing the current-time line.
+2. Hovering above the line still shows "UNAVAILABLE" + `cursor-not-allowed`.
+3. Hovering at or below the line shows the slot-time badge + pointer cursor.
+4. The gray overlay still ends exactly at the line (untouched).
+5. Both Day and Week views behave identically.
+6. As `nowMinutes` ticks past a slot's end, that slot flips to unavailable on the next tick.
 
 ## Files to touch
 
-- `src/lib/schedule-utils.ts` — add `formatMinutesAs12h(mins)` helper.
-- `src/components/dashboard/schedule/DayView.tsx` — add ghost pill left of the dot.
-- `src/components/dashboard/schedule/WeekView.tsx` — replace right-side solid label with the same ghost pill on the left.
+- `src/components/dashboard/schedule/DayView.tsx` — line ~781, change `<` to `+ slotInterval <=`.
+- `src/components/dashboard/schedule/WeekView.tsx` — line ~495, same change.
 
 ## Further enhancement suggestions
 
-- Add a subtle pulse animation on the dot to reinforce "live now" status.
-- Mirror this pill on any other live-time surfaces (e.g., Zura Dock prep timeline) so the "current time" treatment is consistent platform-wide.
+- Add a one-line comment next to each check explaining the "fully past" semantic so future refactors don't regress.
+- Consider extracting `isSlotFullyPast(slotMins, nowMins, slotInterval)` into `schedule-utils.ts` for a single source of truth (mirrors the recent `getCurrentTimeRenderMetrics` consolidation).
+- Sweep AgendaView and any drag-validation logic for the same `<` pattern in case it exists there too.
+
