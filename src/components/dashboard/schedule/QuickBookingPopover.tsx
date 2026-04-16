@@ -750,6 +750,34 @@ export function QuickBookingPopover({
     });
   }, [uniqueStylists, qualificationData, defaultStylistId]);
 
+  // Runtime assertion: warn if any non-stylist role leaks into the rendered list.
+  // Catches drift the moment it happens (e.g., view changes, role-filter regression).
+  useEffect(() => {
+    if (!open) return;
+    const list = stylistFirstMode ? uniqueAllStylists : filteredStylists;
+    if (list.length === 0) return;
+    const userIds = list.map(s => s.user_id).filter(Boolean) as string[];
+    if (userIds.length === 0) return;
+    (async () => {
+      const { data: roleRows } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+      const allowedUsers = new Set(
+        (roleRows || [])
+          .filter((r: any) => ['stylist', 'stylist_assistant'].includes(r.role))
+          .map((r: any) => r.user_id)
+      );
+      const leaks = list.filter(s => s.user_id && !allowedUsers.has(s.user_id));
+      if (leaks.length > 0) {
+        console.warn(
+          '[QuickBookingPopover] ⚠️ Non-stylist users leaked into Available Stylists:',
+          leaks.map(s => ({ user_id: s.user_id, name: s.full_name || s.display_name })),
+        );
+      }
+    })();
+  }, [open, stylistFirstMode, uniqueAllStylists, filteredStylists]);
+
   // Auto-select stylist when entering stylist step for the first time
   useEffect(() => {
     // Don't auto-select in stylist-first mode (user picks manually)
