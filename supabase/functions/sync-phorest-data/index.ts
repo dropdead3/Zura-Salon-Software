@@ -1960,7 +1960,7 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
   return { synced: totalBlocks };
 }
 
-
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
