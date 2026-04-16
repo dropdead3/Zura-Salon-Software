@@ -970,6 +970,9 @@ export default function Schedule() {
                       setDetailOpen(true);
                     }}
                     todayAppointmentCount={todayAppointmentCount}
+                    zoomLevel={zoomLevel}
+                    onZoomIn={() => setZoomLevel(prev => Math.min(prev + 1, 2))}
+                    onZoomOut={() => setZoomLevel(prev => Math.max(prev - 1, 0))}
                   />
                 </div>
               </div>
