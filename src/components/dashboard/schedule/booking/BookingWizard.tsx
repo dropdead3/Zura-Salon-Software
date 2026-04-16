@@ -208,6 +208,7 @@ export function BookingWizard({
     setStep('service');
     setSelectedClient(null);
     setClientSearch('');
+    setActiveLetter(null);
     setSelectedLocation('');
     setSelectedServices([]);
     setSelectedStylist(defaultStylistId || '');
