@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CalendarClock, CheckCircle2, Info } from 'lucide-react';
+import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -25,6 +25,9 @@ interface ScheduleActionBarProps {
   appointments: PhorestAppointment[];
   onSelectAppointment: (apt: PhorestAppointment) => void;
   todayAppointmentCount?: number;
+  zoomLevel?: number;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
 }
 
 function getFirstName(fullName: string): string {
@@ -62,6 +65,9 @@ export function ScheduleActionBar({
   appointments,
   onSelectAppointment,
   todayAppointmentCount = 0,
+  zoomLevel = 0,
+  onZoomIn,
+  onZoomOut,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
   const { nowMinutes } = useOrgNow();
@@ -142,6 +148,40 @@ export function ScheduleActionBar({
         </TooltipTrigger>
         <TooltipContent side="top">Appointments &amp; Transactions</TooltipContent>
       </Tooltip>
+
+      {/* Zoom Controls */}
+      <div className="shrink-0 flex items-center border-l border-border pl-2 gap-0.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onZoomOut}
+              disabled={zoomLevel <= 0}
+              className={cn(
+                'h-7 w-7 flex items-center justify-center rounded-full transition-colors',
+                zoomLevel <= 0 ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <ZoomOut className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Zoom out</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onZoomIn}
+              disabled={zoomLevel >= 2}
+              className={cn(
+                'h-7 w-7 flex items-center justify-center rounded-full transition-colors',
+                zoomLevel >= 2 ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Zoom in</TooltipContent>
+        </Tooltip>
+      </div>
 
       {/* Right: Schedule Legend */}
       <div className="shrink-0">
