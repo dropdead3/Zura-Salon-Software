@@ -1,80 +1,96 @@
 
 ## Prompt review
 
-Clear and visual — the screenshot pinpoints exactly which surface (booking wizard's client step) and the desired direction (move from right rail → top horizontal). Teaching note: the alphabet was *already clickable* — calling out "make it more visible / discoverable as a filter" instead of "make it clickable" would have been even more precise. Micro-improvement: when moving UI between axes (vertical → horizontal), specifying behavior under width constraint ("wrap, scroll, or shrink letters?") helps lock the responsive answer in one round.
+Good catch — your feedback is precise and outcome-focused: “nothing changed” immediately tells us this is not a design issue anymore, it’s a targeting issue. Better prompt framing for next time: call out the exact live surface you’re looking at, e.g. “the New Booking drawer opened from Schedule still shows the alphabet rail on the right.” That would have pointed straight at the correct component.
 
 ## Diagnosis
 
-`ClientStep.tsx` already has:
-- A clickable `AlphabetStrip` with available/disabled letters and toggle-to-clear behavior.
-- Filtering logic (`filteredClients`) keyed off `activeLetter`.
-- An "available letters" set so unused letters render dimmed.
+The earlier fix landed in `src/components/dashboard/schedule/booking/ClientStep.tsx`, but that is not the surface shown in your screenshot.
 
-It's just rendered as a thin vertical rail at `right-1 top-0 bottom-0 w-5`. All the logic stays; only the layout component changes.
+The live drawer on `/dashboard/schedule` is using:
+- `src/pages/dashboard/Schedule.tsx` → `QuickBookingPopover`
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx`
+- specifically its internal `ClientListWithAlphabet`
 
-## Fix — horizontal strip under the search bar
+That component still renders:
+- the vertical alphabet rail on the right
+- `pr-8` gutter space to make room for it
+- touch-scrub behavior tied to the right-side strip
 
-### 1. Replace `AlphabetStrip` with `AlphabetBar` (horizontal)
-- Render letters in a single horizontal row, evenly distributed using `flex justify-between` so the 26 letters span the panel width edge-to-edge (matches the calm/executive density of the wizard).
-- Each letter is a small `button`:
-  - Available: `text-muted-foreground hover:text-foreground` + subtle hover bg.
-  - Active: `text-primary` with `bg-primary/10` pill background to make selection unmistakable.
-  - Disabled (no clients): `text-muted-foreground/30 pointer-events-none`.
-- Tap target: `h-7 min-w-[18px]` so it stays usable on touch without feeling chunky.
-- Typography: `font-sans text-[11px]` (Aeonik Pro, never uppercase per token rules — letters are inherently single-char so case is moot, but keep `font-sans`).
-- Drop the `onTouchMove` swipe-scrub — irrelevant in horizontal layout where every letter is already one tap away.
+So the previous change was real, but it hit the wrong client-picker implementation.
 
-### 2. Place the bar inside the search-bar block
-- New structure for the top region:
-  ```
-  <div className="border-b border-border">
-    <div className="p-4 pb-3">{search + add-client}</div>
-    {showAlphabetBar && (
-      <div className="px-3 pb-3">
-        <AlphabetBar ... />
-        {activeLetter && <ClearChip />}  // tiny "Clear A" link, right-aligned
-      </div>
-    )}
-  </div>
-  ```
-- The `ScrollArea` below loses its right-padding hack (`pr-8`) since the rail is gone — change `cn('p-2', showAlphabetStrip && 'pr-8')` → `'p-2'`.
-- Remove the absolutely-positioned `<AlphabetStrip>` block at the bottom of the list container.
+## Fix
 
-### 3. Empty-state copy unchanged
-The existing "No clients starting with 'X'" + clear-filter link continues to work since `activeLetter` state and handlers are preserved.
+### 1. Update the actual live client picker in `QuickBookingPopover.tsx`
+Change `ClientListWithAlphabet` so the alphabet filter is rendered horizontally directly under the search bar instead of as an absolute right-side rail.
 
-### 4. Active letter ergonomics
-- Keep the toggle behavior (click active letter again → clear).
-- Add a small inline "Clear" affordance next to the bar when `activeLetter` is set, since horizontal selection isn't as obvious as a highlighted vertical rail item — gives explicit escape.
+Implementation:
+- Replace the right-side vertical strip with a top in-flow alphabet row
+- Keep the existing `activeLetter` filter logic
+- Keep click-to-toggle behavior
+- Dim unavailable letters
+- Highlight the active letter with the same pill treatment used in the earlier plan
+
+### 2. Move the alphabet into the search block
+Restructure the client step so it becomes:
+
+```text
+Search row
+Alphabet filter row
+Client list
+```
+
+That means:
+- search input + add-client button stay at the top
+- alphabet row sits immediately beneath them
+- optional small “Clear” action appears when a letter is active
+
+### 3. Remove the old right-rail behavior
+Delete the vertical-strip-specific pieces from `ClientListWithAlphabet`:
+- absolute positioned right rail
+- `onTouchMove` scrub logic
+- extra list padding (`pr-8`) reserved for the rail
+
+### 4. Keep filtering behavior intact
+No logic rewrite is needed beyond layout:
+- clicking a letter filters clients by first-name initial
+- clicking the same letter again clears it
+- empty state still shows “No clients starting with X”
+- search and letter filters continue to combine
+
+### 5. Optional hardening to prevent this happening again
+After the visible fix, align the two booking client pickers so they don’t drift:
+- either extract a shared alphabet bar component
+- or mirror the same structure in both `ClientStep.tsx` and `QuickBookingPopover.tsx`
+
+This is not strictly required for the bug fix, but it would prevent future “fixed in one place, not the other” regressions.
 
 ## Acceptance checks
 
-1. Booking wizard → Client step shows search bar, then horizontal A–Z bar directly beneath it, then list. No vertical rail on the right.
-2. Letters with at least one client are interactive; letters with none are visibly dimmed and unclickable.
-3. Clicking a letter filters the list to clients whose first name starts with that letter; section header for that letter still shows.
-4. Clicking the active letter again (or "Clear" chip) restores the full list.
-5. Letter selection persists while typing in search; combined filter works (search narrows within the letter, or letter narrows within search results — current logic already filters sortedClients by `activeLetter` regardless of search).
-6. List items now occupy full panel width (no reserved right gutter).
-7. Empty state still offers "Clear filter" + "Add new client".
-8. No regressions to the new-client (`UserPlus`) button or banned-client warning dialog.
-9. Mobile: bar still fits — 26 single-letter buttons across the panel width works at the wizard's narrowest mobile width with `flex-1 min-w-0` letters.
-
-## Out of scope
-
-- Restyling the search input or add-client button.
-- Changing sort order (still alphabetical by first name).
-- Per-section sticky letter headers in the scroll list.
-- Server-side filtering — purely client-side over the already-loaded list.
+1. Open `+ Add Event` from Schedule.
+2. Go to client selection.
+3. The alphabet filter appears under the search bar, not on the right edge.
+4. Clicking a letter filters the client list.
+5. Clicking the active letter again clears the filter.
+6. No right gutter remains in the client list.
+7. Empty-state copy still works for letter filtering.
+8. Add-client button and client profile/info actions still work.
 
 ## Files to touch
 
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx`
+  - update `ClientListWithAlphabet`
+  - remove vertical rail
+  - add horizontal alphabet row under search
+  - remove old right-gutter spacing and touch-scrub logic
+
+Optional follow-up:
 - `src/components/dashboard/schedule/booking/ClientStep.tsx`
-  - Replace `AlphabetStrip` (vertical, absolutely positioned) with `AlphabetBar` (horizontal, in-flow under the search bar).
-  - Remove the `pr-8` reserve in the scroll area.
-  - Add a small "Clear" chip when a letter is active.
+  - align styling/structure with the same shared pattern so both flows stay consistent
 
 ## Further enhancement suggestions
 
-- Add a subtle slide/scale transition on the active-letter pill (`transition-all duration-150`) for a more premium feel that matches the wizard's animation language.
-- When `searchQuery` is non-empty, dim letters that aren't represented in the search-filtered results (right now they reflect the full list) — gives more honest feedback.
-- Consider sticky letter section headers inside the list so as you scroll, you always know what letter you're in — pairs well with the new top bar as a "mini map → current position" relationship.
+- Extract a shared `AlphabetFilterBar` used by both booking flows.
+- Make the active letter more obvious with a slightly stronger pill/background contrast.
+- When search is active, optionally dim letters not represented in the current search result set.
+- Add a tiny sticky section header behavior for the current letter in long client lists.
