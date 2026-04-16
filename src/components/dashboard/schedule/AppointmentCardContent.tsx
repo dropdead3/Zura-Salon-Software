@@ -26,6 +26,13 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 // ─── Shared helpers ───────────────────────────────────────────
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
 
+function formatCompactName(name: string | null | undefined): string {
+  if (!name?.trim()) return 'Walk-in';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 const isConsultationCategory = (category: string | null | undefined) => {
   if (!category) return false;
   return category.toLowerCase().includes('consult');
