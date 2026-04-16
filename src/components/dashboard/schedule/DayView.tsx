@@ -890,11 +890,11 @@ export function DayView({
               })}
 
                 {/* Current Time Indicator — spans full width of stylist columns track */}
-                {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
+                {showCurrentTime && currentTimeVisible && (
                   <div
                     className="absolute border-t-2 border-primary pointer-events-none z-[15]"
                     style={{
-                      top: `${currentTimeOffset}px`,
+                      top: `${currentTimeLinePx}px`,
                       left: 0,
                       right: 0,
                     }}
