@@ -265,12 +265,15 @@ function AppointmentCard({
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel, pixelHeight);
 
-  const widthPadding = totalOverlapping > 1 ? 2 : 4;
-  const leftOffset = totalOverlapping > 1 ? 1 : 2;
+  // Flush edges: no inner gutter between overlapping cards
+  const isFirstCol = columnIndex === 0;
+  const isLastCol = columnIndex === totalOverlapping - 1;
+  const leftOffset = isFirstCol ? 1 : 0;
+  const rightPad = isLastCol ? 1 : 0;
 
-  const shrunkWidth = isDragOverlay ? undefined : isHoveredRight
-    ? `calc(${widthPercent * 0.7}% - ${widthPadding}px)`
-    : `calc(${widthPercent}% - ${widthPadding}px)`;
+  const shrunkWidth = isDragOverlay ? undefined : (isHoveredRight && totalOverlapping <= 1)
+    ? `calc(${widthPercent * 0.7}%)`
+    : `calc(${widthPercent}% - ${leftOffset + rightPad}px)`;
 
   return (
     <div
@@ -408,7 +411,9 @@ export function DayView({
   useEffect(() => {
     if (!scrollRef.current) return;
     const ref = scrollRef.current;
-    const isZoomChange = prevSlotIntervalRef.current !== slotInterval || prevRowHeightRef.current !== ROW_HEIGHT;
+    const oldSlotInterval = prevSlotIntervalRef.current;
+    const oldRowHeight = prevRowHeightRef.current;
+    const isZoomChange = oldSlotInterval !== slotInterval || oldRowHeight !== ROW_HEIGHT;
     prevSlotIntervalRef.current = slotInterval;
     prevRowHeightRef.current = ROW_HEIGHT;
 
