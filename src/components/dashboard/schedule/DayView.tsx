@@ -118,6 +118,7 @@ function DroppableSlot({
   onClick,
   
   isOver,
+  rowHeight = 20,
 }: {
   id: string;
   hour: number;
@@ -129,6 +130,7 @@ function DroppableSlot({
   onClick: () => void;
   
   isOver: boolean;
+  rowHeight?: number;
 }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
   const highlight = isOver || dndIsOver;
@@ -155,9 +157,12 @@ function DroppableSlot({
               : 'bg-muted/50',
         highlight && isAvailable && 'bg-primary/20 ring-1 ring-primary/40'
       )}
-      style={isOutsideHours && !isPastSlot ? {
-        background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-      } : undefined}
+      style={{
+        height: `${rowHeight}px`,
+        ...(isOutsideHours && !isPastSlot ? {
+          background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+        } : {}),
+      }}
       onClick={() => {
         if (isPastSlot || isAvailable || isOutsideHours) onClick();
       }}
