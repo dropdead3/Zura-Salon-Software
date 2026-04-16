@@ -553,6 +553,15 @@ export function WeekView({
                       );
                     })}
 
+                  {/* Break / Lunch / Blocked Time Overlay */}
+                  <BreakBlockOverlay
+                    blocks={scheduleBlocks}
+                    dateKey={dateKey}
+                    hoursStart={hoursStart}
+                    rowHeight={ROW_HEIGHT}
+                    slotInterval={slotInterval}
+                  />
+
                   {/* Appointments */}
                   {dayAppointments.map((apt) => {
                     const { columnIndex, totalOverlapping } = getOverlapInfo(dayAppointments, apt);
