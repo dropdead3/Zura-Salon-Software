@@ -515,13 +515,28 @@ export function DayView({
                     key={stylist.user_id} 
                     className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
                   >
-                    {/* Booking status dot — top-right corner */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className={cn('absolute top-1.5 right-1.5 w-2 h-2 rounded-full cursor-default', isBooking ? 'bg-emerald-500' : 'bg-destructive/70')} />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">{isBooking ? 'Accepting New Clients' : 'Not Accepting New Clients'}</TooltipContent>
-                    </Tooltip>
+                    {/* Booking + Lead Pool indicators — top-right corner */}
+                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={cn('flex items-center gap-1 cursor-default')}>
+                            <span className={cn('w-2 h-2 rounded-full shrink-0', isBooking ? 'bg-emerald-500' : 'bg-destructive/70')} />
+                            <span className={cn('text-[10px]', isBooking ? 'text-emerald-400' : 'text-destructive/70')}>
+                              {isBooking ? 'Booking' : 'Not Booking'}
+                            </span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">{isBooking ? 'Accepting New Clients' : 'Not Accepting New Clients'}</TooltipContent>
+                      </Tooltip>
+                      {isLeadPool && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <UserPlus className="h-3 w-3 text-purple-400 shrink-0 cursor-default" />
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs">Lead Pool Eligible</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
 
                     <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
                       <AvatarImage src={stylist.photo_url || undefined} />
@@ -542,14 +557,6 @@ export function DayView({
                       </div>
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <span className={cn(pctColor)}>{pct}%</span>
-                        {isLeadPool && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <UserPlus className="h-3 w-3 text-primary/70 shrink-0 cursor-default" />
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="text-xs">Lead Pool Eligible</TooltipContent>
-                          </Tooltip>
-                        )}
                       </div>
                     </div>
                   </div>
