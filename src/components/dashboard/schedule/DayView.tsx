@@ -513,7 +513,7 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id} 
-                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
                   >
                     {/* Accepting Clients indicator — top-right corner */}
                     <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
@@ -544,17 +544,20 @@ export function DayView({
                           : 'No specialties listed'}
                       </TooltipContent>
                     </Tooltip>
-                    <div className="flex flex-col min-w-0 gap-0.5">
-                      <span className="text-xs font-medium leading-tight break-words">
-                        {formatDisplayName(stylist.full_name, stylist.display_name)}
+                    <span className="text-[11px] font-medium leading-tight">
+                      {(() => {
+                        const name = formatDisplayName(stylist.full_name, stylist.display_name);
+                        const parts = name.trim().split(' ');
+                        if (parts.length <= 1) return name;
+                        return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+                      })()}
+                    </span>
+                    <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
+                    {levelInfo && (
+                      <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
+                        {levelInfo.label}
                       </span>
-                      <span className={cn('text-[11px]', pctColor)}>{pct}%</span>
-                      {levelInfo && (
-                        <span className="text-[10px] text-muted-foreground leading-none truncate">
-                          {levelInfo.label}
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 );
               })}
