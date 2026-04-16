@@ -1,14 +1,52 @@
 
 
-# Enlarge Zoom Controls for Better Readability
+# Direct-Click for Single-Link Nav Groups (Collapsed Sidebar)
 
 ## Problem
-The zoom increment label (`5m`, `15m`, etc.) uses `text-[10px]` and the zoom icons use `h-3.5 w-3.5` inside `h-7 w-7` buttons — too small to read comfortably, as shown in the screenshot.
+In the collapsed sidebar, groups with only one visible link still require hovering to reveal a popover menu, then clicking the link inside. The screenshot shows the "SYSTEM" section with just "Settings" — this should navigate directly on click.
 
-## Changes — `src/components/dashboard/schedule/ScheduleActionBar.tsx`
+## Change — `src/components/dashboard/CollapsibleNavGroup.tsx` (lines 176-229)
 
-1. **Increment label** (line 157): `text-[10px]` → `text-xs`, `min-w-[28px]` → `min-w-[32px]`
-2. **Button hit targets** (lines 168, 183): `h-7 w-7` → `h-8 w-8`
-3. **Icon sizes** (lines 172, 186): `h-3.5 w-3.5` → `h-4 w-4`
-4. **Gap between controls** (line 153): `gap-0.5` → `gap-1`
+In the collapsed `isCollapsed` branch, add a check: if a group has exactly 1 visible item, render a direct-navigation icon button (with tooltip) instead of the `HoverPopover`. The existing popover behavior stays for groups with 2+ items.
+
+```tsx
+// Inside the isCollapsed block, for each group:
+if (items.length === 1) {
+  const singleItem = items[0];
+  const Icon = singleItem.icon;
+  const isActive = location.pathname === singleItem.href;
+  const label = getNavLabel ? getNavLabel(singleItem) : singleItem.label;
+  
+  return (
+    <Tooltip key={group.id}>
+      <TooltipTrigger asChild>
+        <a
+          href={singleItem.href}
+          onClick={(e) => {
+            e.preventDefault();
+            navigate(singleItem.href, { state: { navTimestamp: Date.now() } });
+            onNavClick();
+          }}
+          className={cn(
+            "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
+            "transition-all duration-200 text-sm",
+            isActive
+              ? "bg-foreground/10 text-foreground"
+              : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
+          )}
+          style={{ width: 'calc(100% - 16px)' }}
+        >
+          <Icon className="w-4 h-4" />
+        </a>
+      </TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+// else: existing HoverPopover code for multi-item groups
+```
+
+### Files Modified
+1. `src/components/dashboard/CollapsibleNavGroup.tsx` — single-item groups navigate directly on click in collapsed state
 
