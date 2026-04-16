@@ -471,6 +471,16 @@ export function QuickBookingPopover({
     }
   }, [open, defaultLocationId, initialDraftData]);
 
+  // Apply defaultStylistId (from clicked column) when popover opens
+  // Only seeds the selection — does not override draft data or manual selections
+  useEffect(() => {
+    if (open && defaultStylistId && !initialDraftData?.staffUserId && !selectedStylist) {
+      setSelectedStylist(defaultStylistId);
+      setAutoSelectReason('self');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultStylistId]);
+
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -575,21 +585,42 @@ export function QuickBookingPopover({
     enabled: !!user?.id && open,
   });
 
+  // Hydrate stylist_level from employee_profiles (not on v_all_staff view)
+  const hydrateLevels = async (rows: any[]) => {
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))] as string[];
+    if (userIds.length === 0) return rows;
+    const { data: profiles } = await supabase
+      .from('employee_profiles')
+      .select('user_id, stylist_level')
+      .in('user_id', userIds);
+    const levelMap: Record<string, string | null> = {};
+    (profiles || []).forEach((p: any) => { levelMap[p.user_id] = p.stylist_level ?? null; });
+    return rows.map(r => ({ ...r, stylist_level: levelMap[r.user_id] ?? null }));
+  };
+
   // Fetch stylists filtered by selected location (normal mode)
   const { data: stylists = [] } = useQuery({
     queryKey: ['booking-stylists', selectedLocation],
     queryFn: async () => {
       if (!selectedLocation) return [];
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('v_all_staff' as any)
-        .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, stylist_level, show_on_calendar')
+        .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true)
         .eq('location_id', selectedLocation);
       
+      if (error) {
+        console.error('[QuickBookingPopover] Failed to load stylists for location:', error);
+        toast.error('Could not load stylists. Please try again.');
+        return [];
+      }
+
+      const hydrated = await hydrateLevels((data as any[]) || []);
+
       // Reshape to match existing consumer expectations (employee_profiles nested shape)
-      return ((data as any[]) || []).map((s: any) => ({
+      return hydrated.map((s: any) => ({
         ...s,
         employee_profiles: {
           display_name: s.display_name,
@@ -606,13 +637,21 @@ export function QuickBookingPopover({
   const { data: allStylists = [] } = useQuery({
     queryKey: ['booking-stylists-all'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('v_all_staff' as any)
-        .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, stylist_level, show_on_calendar')
+        .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true);
       
-      return ((data as any[]) || []).map((s: any) => ({
+      if (error) {
+        console.error('[QuickBookingPopover] Failed to load all stylists:', error);
+        toast.error('Could not load stylists. Please try again.');
+        return [];
+      }
+
+      const hydrated = await hydrateLevels((data as any[]) || []);
+
+      return hydrated.map((s: any) => ({
         ...s,
         employee_profiles: {
           display_name: s.display_name,
