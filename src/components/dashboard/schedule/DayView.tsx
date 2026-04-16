@@ -362,6 +362,15 @@ export function DayView({
     return map;
   }, [appointmentsByStylist, hoursStart, hoursEnd]);
 
+  // Sort stylists by utilization descending (most booked first)
+  const sortedStylists = useMemo(() => {
+    return [...stylists].sort((a, b) => {
+      const aUtil = utilizationByStylist.get(a.user_id) ?? 0;
+      const bUtil = utilizationByStylist.get(b.user_id) ?? 0;
+      return bUtil - aUtil;
+    });
+  }, [stylists, utilizationByStylist]);
+
   // Find active appointment for drag overlay
   const activeAppointment = useMemo(() => {
     if (!activeId) return null;
