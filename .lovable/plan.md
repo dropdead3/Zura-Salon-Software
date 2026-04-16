@@ -1,95 +1,60 @@
 
 
-# Scheduler Zoom Analysis — Bugs, Errors & Enhancements
+# Fill Viewport: Dynamic Row Height Based on Available Space
 
-## Bugs Found
+## Problem
+Row height is hardcoded at 24px for all zoom levels. At zoomed-out levels (e.g., -3 with 18 slots), the grid is only 432px tall, leaving ~600px of empty space below. The grid container already uses `flex-1 min-h-0` so it fills the viewport — but the content inside doesn't stretch to match.
 
-### 1. Border logic doesn't adapt to zoom interval (DroppableSlot, line 139-145)
-The `borderClass` in DroppableSlot is hardcoded for 15/30/60-min marks:
+## Solution
+Calculate `ROW_HEIGHT` dynamically: measure the scroll container's height and divide by the number of time slots. Use a `min-height` of 24px so zoomed-in levels still scroll naturally.
+
+```
+ROW_HEIGHT = max(24, floor(containerHeight / totalSlots))
+```
+
+This means:
+- **Zoomed out** (-3, 18 slots): rows stretch to fill (e.g., 1080/18 = 60px per row)
+- **Zoomed in** (3, 144 slots): 24px minimum applies, grid scrolls as expected
+
+## Changes
+
+### `src/components/dashboard/schedule/DayView.tsx`
+
+1. **Add container height measurement** — use `ResizeObserver` on `scrollRef` to track available height:
 ```ts
-minute === 0 → solid border
-minute === 30 → dashed border
-minute % 15 === 0 → dotted border
-else → no border
+const [containerHeight, setContainerHeight] = useState(0);
+
+useEffect(() => {
+  if (!scrollRef.current) return;
+  const observer = new ResizeObserver(([entry]) => {
+    setContainerHeight(entry.contentRect.height);
+  });
+  observer.observe(scrollRef.current);
+  return () => observer.disconnect();
+}, []);
 ```
-**Problem**: At 20-min intervals (level 0), slots are at :00, :20, :40. The :20 and :40 marks hit the `else` branch → **no border at all**. At 10-min intervals (level 2), slots like :10, :50 also get no border. At 5-min intervals (level 3), most slots get no border. Only levels -3, -2, -1, and 1 work correctly.
 
-**Fix**: Make border logic interval-aware. Every slot gets a border. Solid at hour marks, dashed at half-hour, dotted for all others.
-
-### 2. `getCardSize` doesn't handle zoom levels -3 to -1 or level 3 (AppointmentCardContent.tsx, line 669-685)
-The function only has branches for levels 0, 1, and 2. Levels -3 through -1 fall through to the default (level 0) logic, and level 3 (5-min intervals) is completely missing. At level 3, even a 10-min appointment spans 2 rows × 20px = 40px, which should render as `medium` or `full`, but gets `compact` because 10 ≤ 30.
-
-**Fix**: Add cases for levels -3 to -1 (force `compact` since rows are small and appointments span many slots) and level 3 (aggressive thresholds since pixel height per minute is very large).
-
-### 3. `hoursEnd` override for negative zoom is exclusive, potentially clipping midnight appointments (Schedule.tsx, line 794)
+2. **Compute dynamic row height** — replace fixed `ROW_HEIGHT`:
 ```ts
-hoursEnd={zoomLevel < 0 ? 24 : preferences.hours_end}
+const totalSlots = (hoursEnd - hoursStart) * (60 / slotInterval);
+const MIN_ROW_HEIGHT = 24;
+// Subtract ~56px for sticky header row
+const availableHeight = containerHeight - 56;
+const ROW_HEIGHT = Math.max(MIN_ROW_HEIGHT, Math.floor(availableHeight / totalSlots));
 ```
-If `preferences.hours_end` is set to e.g. 21 (9 PM), zooming out shows 6-24. But zooming back to level 0+ snaps the range back, potentially hiding late appointments that were visible. This isn't a crash bug but a UX inconsistency.
 
-## Enhancement Opportunities
-
-### 4. No zoom level indicator
-Users have no visual feedback showing which of the 7 zoom levels they're at. Phorest shows the current interval. Add a small label between the zoom buttons (e.g., "20m" or "1hr").
-
-### 5. Auto-scroll position resets on zoom change
-The `useEffect` on line 394 re-scrolls to opening time whenever `slotInterval` or `ROW_HEIGHT` changes. When a user zooms while looking at 3 PM, they jump back to the opening hour. Should preserve the current viewport center time across zoom changes.
-
-### 6. WeekView also receives zoomLevel but may not use the same ZOOM_CONFIG
-The WeekView component at line 818-837 receives `zoomLevel` and uses the same `hoursStart`/`hoursEnd` overrides, but its internal row height handling may not match DayView. This should be audited for consistency.
-
----
-
-## Proposed Changes
-
-### File 1: `src/components/dashboard/schedule/DayView.tsx`
-
-**Border logic fix** (DroppableSlot, lines 139-145):
-Replace hardcoded border logic with interval-aware logic that receives `slotInterval` as a prop:
+3. **Remove static rowHeight from ZOOM_CONFIG** — it only needs `interval` now:
 ```ts
-const borderClass = minute === 0
-  ? 'border-t border-border dark:border-border/50'
-  : minute === 30 && slotInterval <= 30
-    ? 'border-t border-dashed border-border dark:border-border/35'
-    : 'border-t border-dotted border-border/60 dark:border-border/15';
-```
-Pass `slotInterval` to DroppableSlot.
-
-**Scroll preservation** (lines 394-408):
-Store the current center time before zoom changes, and scroll to that time after zoom changes instead of always jumping to opening hour. Only scroll to opening hour on initial mount or date change.
-
-### File 2: `src/components/dashboard/schedule/AppointmentCardContent.tsx`
-
-**getCardSize fix** (lines 669-685):
-Add missing zoom level branches:
-```ts
-// Level 3 (5-min): huge pixel density
-if (zoomLevel === 3) {
-  if (duration <= 5) return 'compact';
-  if (duration <= 15) return 'medium';
-  return 'full';
-}
-// Negative levels: compressed rows, force compact for short, medium threshold raised
-if (zoomLevel < 0) {
-  if (duration <= 45) return 'compact';
-  if (duration <= 90) return 'medium';
-  return 'full';
-}
+const ZOOM_CONFIG: Record<string, { interval: number }> = {
+  '-3': { interval: 60 },
+  '-2': { interval: 60 },
+  '-1': { interval: 30 },
+  '0':  { interval: 20 },
+  '1':  { interval: 15 },
+  '2':  { interval: 10 },
+  '3':  { interval: 5 },
+};
 ```
 
-### File 3: `src/components/dashboard/schedule/ScheduleActionBar.tsx`
-
-**Zoom level indicator** (between zoom buttons, ~line 153):
-Add a small text label showing the current interval:
-```tsx
-<span className="text-[10px] text-muted-foreground font-sans min-w-[28px] text-center">
-  {zoomConfig.label}
-</span>
-```
-Derive label from zoom level: `{ '-3': '1hr', '-2': '1hr', '-1': '30m', '0': '20m', '1': '15m', '2': '10m', '3': '5m' }`.
-
-### Files Modified
-1. `src/components/dashboard/schedule/DayView.tsx` — border logic + scroll preservation
-2. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — missing zoom level branches
-3. `src/components/dashboard/schedule/ScheduleActionBar.tsx` — zoom level indicator label
+**One file changed. Grid rows now auto-scale to fill the viewport at every zoom level.**
 
