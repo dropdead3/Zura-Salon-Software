@@ -375,6 +375,21 @@ export function DayView({
   const zoomConfig = ZOOM_CONFIG[String(zoomLevel)] ?? ZOOM_CONFIG['0'];
   const slotInterval = zoomConfig.interval;
 
+  const { colorMap: categoryColors } = useServiceCategoryColorsMap();
+  const reschedule = useRescheduleAppointment();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const { data: stylistLevels = [] } = useStylistLevels();
+
+  // Build slug→label map for level badges
+  const levelLabelMap = useMemo(() => {
+    const m = new Map<string, { label: string; shortLabel: string; index: number }>();
+    stylistLevels.forEach((l, i) => m.set(l.slug, { label: l.label, shortLabel: `L${i + 1}`, index: i }));
+    return m;
+  }, [stylistLevels]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const headerRowRef = useRef<HTMLDivElement>(null);
+  const [columnWidth, setColumnWidth] = useState(200);
+
   // Measure container height for dynamic row sizing
   const [containerHeight, setContainerHeight] = useState(0);
   useEffect(() => {
@@ -393,20 +408,6 @@ export function DayView({
   const ROW_HEIGHT = containerHeight > 0
     ? Math.max(MIN_ROW_HEIGHT, Math.floor(availableHeight / totalSlots))
     : MIN_ROW_HEIGHT;
-  const { colorMap: categoryColors } = useServiceCategoryColorsMap();
-  const reschedule = useRescheduleAppointment();
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const { data: stylistLevels = [] } = useStylistLevels();
-
-  // Build slug→label map for level badges
-  const levelLabelMap = useMemo(() => {
-    const m = new Map<string, { label: string; shortLabel: string; index: number }>();
-    stylistLevels.forEach((l, i) => m.set(l.slug, { label: l.label, shortLabel: `L${i + 1}`, index: i }));
-    return m;
-  }, [stylistLevels]);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const headerRowRef = useRef<HTMLDivElement>(null);
-  const [columnWidth, setColumnWidth] = useState(200);
 
   // Track previous zoom config to detect zoom changes vs date changes
   const prevSlotIntervalRef = useRef(slotInterval);
