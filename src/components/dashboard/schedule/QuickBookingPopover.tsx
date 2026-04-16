@@ -674,6 +674,17 @@ export function QuickBookingPopover({
     });
   }, [allStylists]);
 
+  // Deduplicate location-scoped stylists by user_id (v_all_staff can return duplicate rows)
+  const uniqueStylists = useMemo(() => {
+    const seen = new Set<string>();
+    return stylists.filter(s => {
+      if (!s.user_id) return true;
+      if (seen.has(s.user_id)) return false;
+      seen.add(s.user_id);
+      return true;
+    });
+  }, [stylists]);
+
   // Get the pre-selected stylist's locations (branches they work at)
   const preSelectedStylistLocations = useMemo(() => {
     if (!preSelectedStylistId) return [];
@@ -702,33 +713,41 @@ export function QuickBookingPopover({
   // Fetch qualification data for selected services (normal mode)
   const { data: qualificationData } = useQualifiedStaffForServices(selectedServices, selectedLocation);
 
-  // Filter stylists by qualification and sort by level (highest first)
+  // Filter stylists by qualification and sort by level (highest first); pin defaultStylistId on top
   const filteredStylists = useMemo(() => {
-    let list = stylists;
-    
+    let list = uniqueStylists;
+
     if (qualificationData?.hasQualificationData) {
-      list = stylists.filter(stylist => 
+      list = uniqueStylists.filter(stylist =>
         qualificationData.qualifiedStaffIds.includes(stylist.phorest_staff_id)
       );
     }
-    
+
     return [...list].sort((a, b) => {
+      // Pin clicked-column stylist to the very top
+      if (defaultStylistId) {
+        if (a.user_id === defaultStylistId && b.user_id !== defaultStylistId) return -1;
+        if (b.user_id === defaultStylistId && a.user_id !== defaultStylistId) return 1;
+      }
       const levelA = getLevelNumber(a.employee_profiles?.stylist_level) ?? 0;
       const levelB = getLevelNumber(b.employee_profiles?.stylist_level) ?? 0;
       return levelB - levelA;
     });
-  }, [stylists, qualificationData]);
+  }, [uniqueStylists, qualificationData, defaultStylistId]);
 
   // Auto-select stylist when entering stylist step for the first time
   useEffect(() => {
     // Don't auto-select in stylist-first mode (user picks manually)
     if (stylistFirstMode) return;
 
+    // Don't override an explicit clicked-column default — that's already seeded above
+    if (defaultStylistId) return;
+
     const stylistStepIndex = STEPS.indexOf('stylist');
-    const isFirstVisit = step === 'stylist' && 
+    const isFirstVisit = step === 'stylist' &&
                          highestStepReached === stylistStepIndex &&
                          !selectedStylist;
-    
+
     if (isFirstVisit && filteredStylists.length > 0) {
       const isStylistRole = roles.some(r => ['stylist', 'stylist_assistant'].includes(r));
       if (isStylistRole && user?.id) {
@@ -739,7 +758,7 @@ export function QuickBookingPopover({
           return;
         }
       }
-      
+
       if (selectedClient?.preferred_stylist_id) {
         const preferredStylist = filteredStylists.find(
           s => s.user_id === selectedClient.preferred_stylist_id
@@ -750,11 +769,11 @@ export function QuickBookingPopover({
           return;
         }
       }
-      
+
       setSelectedStylist(filteredStylists[0].user_id);
       setAutoSelectReason('highest');
     }
-  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient, highestStepReached, stylistFirstMode]);
+  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient, highestStepReached, stylistFirstMode, defaultStylistId]);
 
   const totalDuration = useMemo(() => {
     const serviceDur = selectedServiceDetails.reduce((sum, s) => sum + s.duration_minutes, 0);
