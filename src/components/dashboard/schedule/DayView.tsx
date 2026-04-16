@@ -513,8 +513,16 @@ export function DayView({
                 return (
                   <div 
                     key={stylist.user_id} 
-                    className="flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
                   >
+                    {/* Booking status dot — top-right corner */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className={cn('absolute top-1.5 right-1.5 w-2 h-2 rounded-full cursor-default', isBooking ? 'bg-emerald-500' : 'bg-destructive/70')} />
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">{isBooking ? 'Accepting New Clients' : 'Not Accepting New Clients'}</TooltipContent>
+                    </Tooltip>
+
                     <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
                       <AvatarImage src={stylist.photo_url || undefined} />
                       <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
@@ -534,11 +542,6 @@ export function DayView({
                       </div>
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <span className={cn(pctColor)}>{pct}%</span>
-                        <span className="text-muted-foreground/40">·</span>
-                        <span className={cn('flex items-center gap-1', isBooking ? 'text-emerald-500' : 'text-destructive/70')}>
-                          <span className={cn('inline-block w-1.5 h-1.5 rounded-full', isBooking ? 'bg-emerald-500' : 'bg-destructive/70')} />
-                          {isBooking ? 'Booking' : 'Not Booking'}
-                        </span>
                         {isLeadPool && (
                           <Tooltip>
                             <TooltipTrigger asChild>
