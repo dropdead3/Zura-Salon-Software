@@ -1,29 +1,35 @@
 
 
-# Show Time Increment Labels Like Phorest
+# Fix Zoom Level 0+ Row Heights to Fill Viewport
 
 ## Problem
-Currently, time labels only appear at hour marks (e.g., "12 PM") and half-hour marks ("30"). At 5-min or 10-min zoom levels, most rows have no label — making it hard to read the timeline. Phorest shows a label on every single slot: full time at the hour, just the minute number for everything else.
+At zoom level 0 (20-min intervals), the grid is only 36 slots × 20px = 720px — leaving ~350px of empty space in a 1303px viewport. Levels 1–3 have the same 20px row height issue. The Phorest reference shows the grid filling the full available height.
 
 ## Solution
-Update the `timeSlots` label generation in `DayView.tsx` so every slot gets a label:
-- **Hour marks** (minute === 0): Full label like "12 PM" (already works)
-- **Sub-hour slots**: Show the minute number as a string (e.g., "5", "10", "15", "25", "30", "45")
+Increase row heights for levels 0 and 1 so the grid fills the viewport naturally. Levels 2 and 3 (10-min and 5-min) are expected to scroll since they have many rows.
+
+Available viewport for grid rows: ~1080px (1303px minus header, action bar, utilization bar, stylist headers).
+
+### Updated ZOOM_CONFIG
+
+| Level | Interval | Row Height | Rows (12hr range) | Grid Height |
+|-------|----------|------------|-------------------|-------------|
+| -3 | 60 min | 60px | 18 | 1080px ✓ |
+| -2 | 60 min | 80px | 18 | 1440px (scroll) |
+| -1 | 30 min | 30px | 36 | 1080px ✓ |
+| **0** | 20 min | **30px** (was 20) | 36 | **1080px** ✓ |
+| **1** | 15 min | **24px** (was 20) | 48 | **1152px** ✓ |
+| 2 | 10 min | 20px | 72 | 1440px (scroll) |
+| 3 | 5 min | 20px | 144 | 2880px (scroll) |
 
 ## Change
 
-### `src/components/dashboard/schedule/DayView.tsx`
-
-**Line 427** — Replace label logic:
+### `src/components/dashboard/schedule/DayView.tsx` (lines 366–374)
+Update two values in ZOOM_CONFIG:
 ```ts
-// Before
-const label = isHour ? formatHour(hour) : isHalf ? '30' : '';
-
-// After
-const label = isHour ? formatHour(hour) : String(minute);
+'0': { interval: 20, rowHeight: 30 },  // was 20
+'1': { interval: 15, rowHeight: 24 },  // was 20
 ```
 
-This single-line change makes every time slot display its minute value (matching the Phorest pattern exactly), while hours continue to show the formatted time.
-
-**One line changed, one file.**
+Two values changed, one file.
 
