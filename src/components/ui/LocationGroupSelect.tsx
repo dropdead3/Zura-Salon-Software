@@ -2,7 +2,7 @@
  * LocationGroupSelect — A location dropdown that groups locations by their
  * location_group when groups exist. Falls back to flat list when no groups are defined.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { MapPin, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
