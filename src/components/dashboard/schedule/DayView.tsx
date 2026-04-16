@@ -513,14 +513,14 @@ export function DayView({
     return map;
   }, [appointmentsByStylist, hoursStart, hoursEnd]);
 
-  // Sort stylists by utilization descending (most booked first)
+  // Sort stylists alphabetically by display name
   const sortedStylists = useMemo(() => {
     return [...stylists].sort((a, b) => {
-      const aUtil = utilizationByStylist.get(a.user_id) ?? 0;
-      const bUtil = utilizationByStylist.get(b.user_id) ?? 0;
-      return bUtil - aUtil;
+      const aName = formatDisplayName(a.full_name, a.display_name);
+      const bName = formatDisplayName(b.full_name, b.display_name);
+      return aName.localeCompare(bName);
     });
-  }, [stylists, utilizationByStylist]);
+  }, [stylists]);
 
   const requiredGridWidth = 70 + (sortedStylists.length * MIN_COL_WIDTH);
   const needsHorizontalScroll = scrollViewportWidth > 0 && requiredGridWidth > scrollViewportWidth;
