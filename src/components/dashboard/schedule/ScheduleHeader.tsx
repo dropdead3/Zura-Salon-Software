@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { formatFullDisplayName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays, parseISO } from 'date-fns';
@@ -135,6 +135,10 @@ export function ScheduleHeader({
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const datePickerCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (datePickerCloseTimer.current) clearTimeout(datePickerCloseTimer.current);
+  }, []);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
   const [locationSelectOpen, setLocationSelectOpen] = useState(false);
 
