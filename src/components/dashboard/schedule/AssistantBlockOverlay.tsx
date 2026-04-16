@@ -14,6 +14,7 @@ interface AssistantBlockOverlayProps {
   stylistUserId: string;
   hoursStart: number;
   rowHeight?: number;
+  slotInterval?: number;
   onBlockClick?: (block: AssistantTimeBlock) => void;
   onBlockResize?: (blockId: string, newEndTime: string) => void;
   currentUserId?: string;
@@ -30,13 +31,13 @@ function minutesToTimeStr(minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
 }
 
-function getBlockStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20) {
+function getBlockStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20, slotInterval: number = 15) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 15) * rowHeight;
-  const height = Math.max((duration / 15) * rowHeight, rowHeight);
+  const top = (startOffset / slotInterval) * rowHeight;
+  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
   return { top: `${top}px`, height: `${height}px` };
 }
 
