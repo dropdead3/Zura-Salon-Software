@@ -389,7 +389,24 @@ export function DayView({
     });
   }, [stylists, utilizationByStylist]);
 
-  // Find active appointment for drag overlay
+  // Measure column width to toggle condensed layout
+  useEffect(() => {
+    const el = headerRowRef.current;
+    if (!el) return;
+    const count = sortedStylists.length;
+    if (count === 0) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const containerWidth = entry.contentRect.width - 70; // subtract week indicator
+        const colWidth = containerWidth / count;
+        setIsCondensed(colWidth < 120);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [sortedStylists.length]);
+
   const activeAppointment = useMemo(() => {
     if (!activeId) return null;
     return appointments.find(a => a.id === activeId) || null;
