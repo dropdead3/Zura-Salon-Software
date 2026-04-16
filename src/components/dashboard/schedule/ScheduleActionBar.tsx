@@ -69,6 +69,7 @@ export function ScheduleActionBar({
   zoomLevel = 0,
   onZoomIn,
   onZoomOut,
+  onCreateAppointment,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
   const { nowMinutes } = useOrgNow();
