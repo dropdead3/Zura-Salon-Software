@@ -1,49 +1,56 @@
 
 ## Prompt review
 
-Clear bug report with reproducible behavior. Tighter version: "Centered date pill opens calendar but it closes immediately on click — keep it open until a date is selected or user clicks outside." Teaching note: pairing the symptom ("doesn't stay open") with desired behavior ("stays open when clicked") in one sentence is exactly right — saves a clarification round.
+Crisp visual bug report. Tighter version: "Today's cell in the date picker shows both a purple circle (selected) and a square accent (today) — remove the square so only the selected indicator renders." Teaching note: naming both visual layers ("circle" + "square highlight") is exactly what helps me locate the right CSS class — keep that pattern.
 
 ## Diagnosis
 
-In `ScheduleHeader.tsx`, **two `Popover` components are bound to the same `datePickerOpen` state**:
+The Calendar component (`src/components/ui/calendar.tsx`) applies two distinct visual treatments to today's date:
 
-- L193: First Popover — `<Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>` wrapping the small "Date" pill button (visible at ≥1320px)
-- L230: Second Popover — same `open`/`onOpenChange` bindings, wrapping the centered date display button
+- `day_selected`: `bg-primary text-primary-foreground` → the purple circle (rounded via button shape)
+- `day_today`: `bg-accent text-accent-foreground` → the subtle square highlight behind it
 
-When state flips to `true`, **both popovers render their `PopoverContent` in separate portals**. Radix UI's outside-click detection on each portal sees the *other* portal's content as "outside the popover" → fires `onOpenChange(false)` → calendar closes instantly.
+When today is also the selected date, both classes apply → square accent peeks behind the circle.
 
-Plus there's a layout mirror bug: the L193 popover anchors to its (hidden) trigger, but the calendar would render at the wrong position even if it stayed open.
-
-Also at L229, the wrapper has `@md/schedhdr:pointer-events-none` to let the absolute-centered date not block clicks behind it. The button has `pointer-events-auto` to remain clickable. That's fine — but `PopoverContent` renders in a portal, so portal pointer events are unaffected. Not the cause, but worth noting it's correct.
+Per project doctrine, the selected state should be the sole indicator when they coincide. Today's distinct accent should remain when today is *not* selected (e.g., user navigates to a different date — today still gets a visual marker).
 
 ## Fix
 
-Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`.
+Single file: `src/components/ui/calendar.tsx`.
 
-**Remove the duplicate Popover at L193–225 entirely.** The centered date pill at L230–265 is the only date trigger we need. The small ghost-pill "Date" button was a leftover from the earlier left-cluster layout and was already redundant once the centered pill was introduced.
+Modify `day_today` class to remove the visible square accent. Two options:
+
+**Option A**: Remove `day_today` background entirely → today gets no visual marker ever.
+**Option B**: Keep `day_today` accent only when *not* selected → use `aria-selected:bg-transparent` or similar to suppress when overlapping selection.
+
+Going with **Option B** — preserves "today" affordance when user navigates to other dates (standard date-picker UX), only suppresses the square when redundant with selection.
 
 ### Implementation
-1. Delete L191–226 (the entire "Date group" wrapper containing the duplicate Popover + small Date pill button + its PopoverContent)
-2. Keep L228–266 (centered date Popover) untouched — this is the canonical date picker
 
-### Why this fixes it
-- Only one Popover bound to `datePickerOpen` → no portal-vs-portal outside-click conflict
-- Calendar stays open until user picks a date (`setDatePickerOpen(false)` in `onSelect`) or clicks truly outside
-- Removes dead UI (the small "Date" pill served no purpose once date moved to center)
+Change:
+```tsx
+day_today: "bg-accent text-accent-foreground",
+```
+
+To:
+```tsx
+day_today: "bg-accent text-accent-foreground [&[aria-selected=true]]:bg-transparent [&[aria-selected=true]]:text-primary-foreground",
+```
+
+This keeps the today indicator for unselected today, but transparent background when today is also selected (so only the purple circle shows).
 
 ## Acceptance checks
 
-1. Click centered date pill → calendar opens and stays open.
-2. Pick a date → calendar closes, header date updates.
-3. Click outside calendar → calendar closes.
-4. No duplicate "Date" ghost pill renders anywhere at any viewport width.
-5. Centered date stays centered (no layout shift from removed sibling).
+1. Today + selected (default state): only purple circle visible, no square behind it.
+2. Navigate to a different month/date: today still shows subtle accent square (preserves orientation).
+3. Other selected dates: render purple circle as before.
+4. No regression in any other consumer of `Calendar` (date pickers across the app share this component).
 
 ## Out of scope
 
-- Day/Week toggle, Shifts pill, selectors, bottom action bar — unchanged.
-- Calendar styling — unchanged.
+- Day/Week toggle, Shifts pill, header layout — unchanged.
+- Calendar typography, spacing, navigation chevrons — unchanged.
 
 ## File touched
 
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` — delete lines 191–226 (duplicate date Popover and its wrapper).
+- `src/components/ui/calendar.tsx` — adjust `day_today` className to suppress accent when also selected.
