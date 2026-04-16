@@ -235,6 +235,24 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Clear all drafts dialog */}
+      <AlertDialog open={clearAllOpen} onOpenChange={setClearAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all drafts?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all {drafts.length} draft booking{drafts.length > 1 ? 's' : ''}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Clear All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
