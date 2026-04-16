@@ -1,60 +1,68 @@
 
 
-# Fill Viewport: Dynamic Row Height Based on Available Space
+# Sync Zoom Level Between Day View and Week View
 
 ## Problem
-Row height is hardcoded at 24px for all zoom levels. At zoomed-out levels (e.g., -3 with 18 slots), the grid is only 432px tall, leaving ~600px of empty space below. The grid container already uses `flex-1 min-h-0` so it fills the viewport — but the content inside doesn't stretch to match.
+WeekView is hardcoded to 15-minute intervals with a fixed 20px row height and ignores the `zoomLevel` prop entirely. When toggling between Day and Week views, the zoom level doesn't carry over — Week always shows the same density regardless of what zoom level the user selected.
 
 ## Solution
-Calculate `ROW_HEIGHT` dynamically: measure the scroll container's height and divide by the number of time slots. Use a `min-height` of 24px so zoomed-in levels still scroll naturally.
-
-```
-ROW_HEIGHT = max(24, floor(containerHeight / totalSlots))
-```
-
-This means:
-- **Zoomed out** (-3, 18 slots): rows stretch to fill (e.g., 1080/18 = 60px per row)
-- **Zoomed in** (3, 144 slots): 24px minimum applies, grid scrolls as expected
+Apply the same ZOOM_CONFIG and dynamic row height logic from DayView to WeekView, and pass the `zoomLevel` prop + adjusted `hoursStart`/`hoursEnd` from Schedule.tsx.
 
 ## Changes
 
-### `src/components/dashboard/schedule/DayView.tsx`
-
-1. **Add container height measurement** — use `ResizeObserver` on `scrollRef` to track available height:
-```ts
-const [containerHeight, setContainerHeight] = useState(0);
-
-useEffect(() => {
-  if (!scrollRef.current) return;
-  const observer = new ResizeObserver(([entry]) => {
-    setContainerHeight(entry.contentRect.height);
-  });
-  observer.observe(scrollRef.current);
-  return () => observer.disconnect();
-}, []);
+### 1. `src/pages/dashboard/Schedule.tsx` (~lines 840-858)
+Pass `zoomLevel` and zoom-adjusted `hoursStart`/`hoursEnd` to WeekView (same as DayView already receives):
+```tsx
+<WeekView
+  currentDate={currentDate}
+  appointments={appointments}
+  hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
+  hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
+  zoomLevel={zoomLevel}
+  // ...rest unchanged
+/>
 ```
 
-2. **Compute dynamic row height** — replace fixed `ROW_HEIGHT`:
-```ts
-const totalSlots = (hoursEnd - hoursStart) * (60 / slotInterval);
-const MIN_ROW_HEIGHT = 24;
-// Subtract ~56px for sticky header row
-const availableHeight = containerHeight - 56;
-const ROW_HEIGHT = Math.max(MIN_ROW_HEIGHT, Math.floor(availableHeight / totalSlots));
-```
+### 2. `src/components/dashboard/schedule/WeekView.tsx`
+**Interface** — add `zoomLevel?: number` prop.
 
-3. **Remove static rowHeight from ZOOM_CONFIG** — it only needs `interval` now:
+**Replace hardcoded constants** — remove `ROW_HEIGHT = 20` and `SLOTS_PER_HOUR = 4`. Add the same `ZOOM_CONFIG` lookup used in DayView:
 ```ts
 const ZOOM_CONFIG: Record<string, { interval: number }> = {
-  '-3': { interval: 60 },
-  '-2': { interval: 60 },
-  '-1': { interval: 30 },
-  '0':  { interval: 20 },
-  '1':  { interval: 15 },
-  '2':  { interval: 10 },
-  '3':  { interval: 5 },
+  '-3': { interval: 60 }, '-2': { interval: 60 }, '-1': { interval: 30 },
+  '0': { interval: 20 }, '1': { interval: 15 }, '2': { interval: 10 }, '3': { interval: 5 },
 };
+const slotInterval = ZOOM_CONFIG[String(zoomLevel)]?.interval ?? 20;
 ```
 
-**One file changed. Grid rows now auto-scale to fill the viewport at every zoom level.**
+**Dynamic row height** — add `ResizeObserver` on `scrollRef` (same pattern as DayView) to calculate `ROW_HEIGHT` dynamically:
+```ts
+const totalSlots = (hoursEnd - hoursStart) * (60 / slotInterval);
+const ROW_HEIGHT = containerHeight > 0
+  ? Math.max(20, Math.floor((containerHeight - 56) / totalSlots))
+  : 20;
+```
+
+**Time slots generation** (~line 239-257) — replace hardcoded `minute += 15` with `minute += slotInterval`. Update label logic to match DayView (hour = full time, others = minute number).
+
+**`getEventStyle`** (~line 56-64) — replace hardcoded `/15` divisions with `/slotInterval`:
+```ts
+const top = (startOffset / slotInterval) * ROW_HEIGHT;
+const height = Math.max((duration / slotInterval) * ROW_HEIGHT, ROW_HEIGHT);
+```
+
+**Slot row height** (~lines 365, 416) — replace `h-[20px]` with dynamic `style={{ height: ROW_HEIGHT }}`.
+
+**Current time offset** (~line 279) — replace `/ 15 * ROW_HEIGHT` with `/ slotInterval * ROW_HEIGHT`.
+
+**Border logic** — replace hardcoded `isHour`/`isHalf` border classes with interval-aware borders (same as DayView fix):
+```ts
+minute === 0 ? 'border-t border-border' 
+  : minute === 30 && slotInterval <= 30 ? 'border-t border-dashed border-border'
+  : 'border-t border-dotted border-border/60'
+```
+
+### Files Modified
+1. `src/pages/dashboard/Schedule.tsx` — pass `zoomLevel` and adjusted hours to WeekView
+2. `src/components/dashboard/schedule/WeekView.tsx` — accept `zoomLevel`, dynamic intervals, dynamic row height, interval-aware borders and labels
 
