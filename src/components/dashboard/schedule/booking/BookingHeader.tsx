@@ -14,7 +14,9 @@ interface BookingHeaderProps {
 const STEPS: BookingStep[] = ['client', 'service', 'stylist', 'confirm'];
 
 export function BookingHeader({ step, title, subtitle, onClose, onBack }: BookingHeaderProps) {
-  const currentStepIndex = STEPS.indexOf(step);
+  // Treat 'newClient' as a sub-step of 'client' so the progress bar stays at 4 segments.
+  const progressStep: BookingStep = step === 'newClient' ? 'client' : step;
+  const currentStepIndex = STEPS.indexOf(progressStep);
 
   return (
     <div className="border-b border-border bg-transparent rounded-t-xl">

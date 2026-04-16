@@ -16,7 +16,7 @@ import { ClientStep } from './ClientStep';
 import { ServiceStep } from './ServiceStep';
 import { StylistStep } from './StylistStep';
 import { ConfirmStep } from './ConfirmStep';
-import { NewClientDialog } from '../NewClientDialog';
+import { NewClientStep } from './NewClientStep';
 import type { RecurrenceRule } from './RecurrenceSelector';
 
 export interface PhorestClient {
@@ -27,7 +27,7 @@ export interface PhorestClient {
   phone: string | null;
 }
 
-export type BookingStep = 'service' | 'client' | 'stylist' | 'confirm';
+export type BookingStep = 'service' | 'client' | 'newClient' | 'stylist' | 'confirm';
 
 interface BookingWizardProps {
   open: boolean;
@@ -50,7 +50,6 @@ export function BookingWizard({
 
   // Step state
   const [step, setStep] = useState<BookingStep>('service');
-  const [showNewClientDialog, setShowNewClientDialog] = useState(false);
 
   // Form state
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
@@ -234,6 +233,9 @@ export function BookingWizard({
       case 'client':
         setStep('service');
         break;
+      case 'newClient':
+        setStep('client');
+        break;
       case 'stylist':
         setStep('client');
         break;
@@ -247,6 +249,8 @@ export function BookingWizard({
     switch (step) {
       case 'client':
         return 'Select Client';
+      case 'newClient':
+        return 'Add New Client';
       case 'service':
         return 'Choose Services';
       case 'stylist':
@@ -274,9 +278,11 @@ export function BookingWizard({
                 step={step}
                 title={getStepTitle()}
                 subtitle={
-                  step !== 'service' && selectedServices.length > 0
-                    ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
-                    : formatDate(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
+                  step === 'newClient'
+                    ? 'Create a client to continue'
+                    : step !== 'service' && selectedServices.length > 0
+                      ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
+                      : formatDate(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
                 }
                 onClose={handleClose}
                 onBack={step !== 'service' ? handleBack : undefined}
@@ -290,7 +296,24 @@ export function BookingWizard({
                     searchQuery={clientSearch}
                     onSearchChange={setClientSearch}
                     onSelectClient={handleSelectClient}
-                    onNewClient={() => setShowNewClientDialog(true)}
+                    onNewClient={() => setStep('newClient')}
+                  />
+                )}
+
+                {step === 'newClient' && (
+                  <NewClientStep
+                    defaultLocationId={selectedLocation}
+                    onCancel={() => setStep('client')}
+                    onCreated={(client) => {
+                      setSelectedClient({
+                        id: client.id,
+                        phorest_client_id: client.phorest_client_id,
+                        name: client.name,
+                        email: client.email,
+                        phone: client.phone,
+                      });
+                      setStep('stylist');
+                    }}
                   />
                 )}
 
@@ -355,24 +378,6 @@ export function BookingWizard({
                 )}
               </div>
       </PremiumFloatingPanel>
-
-      <NewClientDialog
-        open={showNewClientDialog}
-        onOpenChange={setShowNewClientDialog}
-        defaultLocationId={selectedLocation}
-        onClientCreated={(client) => {
-          const newClient: PhorestClient = {
-            id: client.id,
-            phorest_client_id: client.phorest_client_id,
-            name: client.name,
-            email: client.email,
-            phone: client.phone,
-          };
-          setSelectedClient(newClient);
-          setShowNewClientDialog(false);
-          setStep('service');
-        }}
-      />
     </>
   );
 }
