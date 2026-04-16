@@ -112,6 +112,20 @@ export function DraftBookingsSheet({ open, onOpenChange, orgId, onResume }: Draf
     );
   };
 
+  const handleClearAll = () => {
+    if (!orgId || drafts.length === 0) return;
+    const ids = drafts.map(d => d.id);
+    batchDelete.mutate(
+      { ids, orgId },
+      {
+        onSuccess: () => {
+          toast.success(`Cleared ${ids.length} draft${ids.length > 1 ? 's' : ''}`);
+          setClearAllOpen(false);
+        },
+      }
+    );
+  };
+
   const handleResume = (draft: DraftBooking) => {
     onResume(draft);
     onOpenChange(false);
