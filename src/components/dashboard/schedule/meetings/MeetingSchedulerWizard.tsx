@@ -209,7 +209,7 @@ export function MeetingSchedulerWizard({ open, onOpenChange, defaultDate, defaul
     setTitle('');
     setSelectedAttendees([]);
     setSelectedDate(defaultDate || todayDate);
-    setStartTime('10:00');
+    setStartTime(defaultTime || '10:00');
     setDuration(30);
     setMeetingMode('in_person');
     setLocationId('');

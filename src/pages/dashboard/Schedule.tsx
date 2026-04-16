@@ -1237,7 +1237,8 @@ export default function Schedule() {
       <MeetingSchedulerWizard
         open={meetingWizardOpen}
         onOpenChange={setMeetingWizardOpen}
-        defaultDate={currentDate}
+        defaultDate={bookingDefaults.date || currentDate}
+        defaultTime={bookingDefaults.time}
       />
 
       {/* Meeting Detail Panel */}
