@@ -151,38 +151,60 @@ export function ClientStep({
     setPendingBannedClient(null);
   };
 
-  const showAlphabetStrip = sortedClients.length > 0 && !isLoading;
+  const showAlphabetBar = sortedClients.length > 0 && !isLoading;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Search bar */}
-      <div className="p-4 border-b border-border">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-9 h-10 bg-muted/50 border-0 focus-visible:ring-1"
-            />
+      {/* Search bar + alphabet bar */}
+      <div className="border-b border-border">
+        <div className="p-4 pb-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-9 h-10 bg-muted/50 border-0 focus-visible:ring-1"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={onNewClient}
+              title="Add new client"
+            >
+              <UserPlus className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 shrink-0"
-            onClick={onNewClient}
-            title="Add new client"
-          >
-            <UserPlus className="h-4 w-4" />
-          </Button>
         </div>
+        {showAlphabetBar && (
+          <div className="px-3 pb-3">
+            <AlphabetBar
+              availableLetters={availableLetters}
+              activeLetter={activeLetter}
+              onLetterClick={handleLetterClick}
+            />
+            {activeLetter && (
+              <div className="flex justify-end mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveLetter(null)}
+                  className="font-sans text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Clear "{activeLetter}"
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Client list with alphabet strip */}
+      {/* Client list */}
       <div className="flex-1 relative min-h-0">
         <ScrollArea className="h-full">
-          <div className={cn('p-2', showAlphabetStrip && 'pr-8')}>
+          <div className="p-2">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
