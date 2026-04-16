@@ -345,8 +345,11 @@ export function ScheduleHeader({
             </Tooltip>
           )}
           
-          {/* Location & Staff Selectors — side-by-side at <xl, stacked at xl+ */}
-          <div className="flex flex-row xl:flex-col gap-2 xl:gap-1.5 items-center xl:items-end">
+          </div>
+          {/* End filter icons group */}
+
+          {/* Location & Staff Selectors — side-by-side */}
+          <div className="flex flex-row gap-2 items-center">
             {/* Location Selector */}
             <Select
               value={selectedLocation}
