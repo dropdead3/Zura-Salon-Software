@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { formatFullDisplayName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
@@ -119,6 +119,18 @@ export function ScheduleHeader({
   const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
+  const [locationSelectOpen, setLocationSelectOpen] = useState(false);
+  const locationCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelLocationClose = () => {
+    if (locationCloseTimerRef.current) {
+      clearTimeout(locationCloseTimerRef.current);
+      locationCloseTimerRef.current = null;
+    }
+  };
+  const scheduleLocationClose = () => {
+    cancelLocationClose();
+    locationCloseTimerRef.current = setTimeout(() => setLocationSelectOpen(false), 120);
+  };
 
   // Org-timezone-aware "today"
   const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
@@ -329,11 +341,28 @@ export function ScheduleHeader({
           {/* Stacked Location & Staff Selectors */}
           <div className="flex flex-col gap-1.5 items-end">
             {/* Location Selector */}
-            <Select value={selectedLocation} onValueChange={onLocationChange}>
-              <SelectTrigger className="h-7 w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]">
+            <Select
+              value={selectedLocation}
+              onValueChange={(v) => {
+                onLocationChange(v);
+                cancelLocationClose();
+                setLocationSelectOpen(false);
+              }}
+              open={locationSelectOpen}
+              onOpenChange={setLocationSelectOpen}
+            >
+              <SelectTrigger
+                className="h-7 w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                onMouseEnter={cancelLocationClose}
+                onMouseLeave={scheduleLocationClose}
+              >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                className="data-[side=bottom]:translate-y-0 data-[side=top]:translate-y-0"
+                onMouseEnter={cancelLocationClose}
+                onMouseLeave={scheduleLocationClose}
+              >
                 {[...locations].sort((a, b) => a.name.localeCompare(b.name)).map((loc) => {
                   const cityState = loc.city 
                     ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
