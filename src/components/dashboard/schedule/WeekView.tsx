@@ -460,8 +460,9 @@ export function WeekView({
                         style={{
                           height: ROW_HEIGHT,
                           ...(!isPastSlot && isOutsideHours ? {
-                          background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-                        } : undefined}
+                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+                          } : {}),
+                        }}
                         onClick={() => onSlotClick?.(day, slotTime)}
                         onMouseMove={(e) => {
                           if (isPastSlot || isOutsideHours) return;
