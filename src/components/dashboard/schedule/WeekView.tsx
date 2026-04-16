@@ -84,6 +84,8 @@ function formatTime12h(time: string): string {
 function WeekAppointmentCard({
   appointment,
   hoursStart,
+  slotInterval,
+  rowHeight,
   onClick,
   categoryColors,
   isAssisting = false,
@@ -95,6 +97,8 @@ function WeekAppointmentCard({
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
+  slotInterval: number;
+  rowHeight: number;
   onClick: () => void;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isAssisting?: boolean;
@@ -392,7 +396,7 @@ export function WeekView({
                 <div 
                   key={`${slot.hour}-${slot.minute}`}
                   className={cn(
-                    'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
+                    'text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
                     slot.isHour && 'font-medium'
                   )}
                 >
@@ -485,7 +489,7 @@ export function WeekView({
                   {assistantTimeBlocks
                     .filter(b => b.date === dateKey)
                     .map(block => {
-                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart);
+                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart, slotInterval, ROW_HEIGHT);
                       const isUnassigned = !block.assistant_user_id;
                       const isConfirmed = block.status === 'confirmed';
                       return (
@@ -529,6 +533,8 @@ export function WeekView({
                         key={apt.id}
                         appointment={apt}
                         hoursStart={hoursStart}
+                        slotInterval={slotInterval}
+                        rowHeight={ROW_HEIGHT}
                         onClick={() => onAppointmentClick(apt)}
                         categoryColors={categoryColors}
                         isAssisting={assistedAppointmentIds?.has(apt.id) || false}
