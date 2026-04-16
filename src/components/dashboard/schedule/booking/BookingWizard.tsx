@@ -267,7 +267,7 @@ export function BookingWizard({
         open={open}
         onOpenChange={(v) => { if (!v) handleClose(); }}
         maxWidth="448px"
-        backdropClassName="bg-black/40"
+        
         showCloseButton={false}
       >
               <BookingHeader
