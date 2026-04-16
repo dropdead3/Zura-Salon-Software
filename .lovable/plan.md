@@ -1,22 +1,22 @@
 
 
-# Make Booking Indicator Label Green to Match Dot
+# Replace AI Copilot FAB Icon with Zura Z in Purple
 
-## Change — `src/components/dashboard/schedule/DayView.tsx` (line 612)
+## Change — `src/components/dashboard/HelpFAB.tsx` (line 71)
 
-Update the "Booking" / "Not Booking" label color to match its corresponding dot color instead of using neutral `text-muted-foreground`.
+Replace the `CalendarClock` icon with the `ZuraZIcon` component (already imported at line 6) and add a purple color.
 
 **Current:**
 ```tsx
-<span className="text-[10px] text-muted-foreground whitespace-nowrap">
+<CalendarClock className="h-6 w-6" />
 ```
 
 **New:**
 ```tsx
-<span className={cn("text-[10px] whitespace-nowrap", acceptingClients ? "text-emerald-500" : "text-destructive/70")}>
+<ZuraZIcon className="h-6 w-6 text-purple-400" />
 ```
 
-When `acceptingClients` is true, the label turns emerald-500 (matching the green dot). When false, it uses `text-destructive/70` (matching the red dot).
+The `ZuraZIcon` is already imported in this file. The `CalendarClock` import can be removed since it's no longer used here (it was removed from `ScheduleActionBar` previously too — verify if still needed elsewhere before removing).
 
-One line, one file.
+One class swap, one file.
 
