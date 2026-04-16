@@ -529,7 +529,12 @@ export function NewClientDialog({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[80]" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0 z-[80]"
+                    align="start"
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                  >
                     <Command
                       filter={(value, search) => {
                         if (!search) return 1;
@@ -537,7 +542,7 @@ export function NewClientDialog({
                       }}
                     >
                       <CommandInput placeholder="Search stylists..." />
-                      <CommandList>
+                      <CommandList className="max-h-[min(60vh,420px)] overflow-y-auto overscroll-contain">
                         <CommandEmpty>
                           <div className="py-3 px-3 text-center space-y-2">
                             <p className="text-sm text-muted-foreground">
