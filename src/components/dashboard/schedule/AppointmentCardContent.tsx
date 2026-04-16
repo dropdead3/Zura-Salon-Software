@@ -235,7 +235,7 @@ function GridContent({
               'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
               badge.bg, badge.text, badge.border
             )}>
-              {badge.label}
+              {statusLabel}
             </span>
           </div>
           {/* Weekly view: stylist photo top-right */}
@@ -264,7 +264,7 @@ function GridContent({
           {showClientAvatar && (
             <div className="absolute top-1 left-1 z-20">
               <span className={cn(
-                'h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-medium shrink-0',
+                'h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0',
                 appointment.is_new_client
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                   : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
@@ -280,7 +280,7 @@ function GridContent({
               'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
               badge.bg, badge.text, badge.border
             )}>
-              {badge.label}
+              {statusLabel}
             </span>
           </div>
           {/* Client name + phone below badges */}
@@ -307,7 +307,7 @@ function GridContent({
       )}
 
       {/* Assisted by line — only when the card has enough vertical space */}
-      {size === 'full' && duration >= 90 && (() => {
+      {size === 'full' && duration >= 75 && (() => {
         const names = assistantNamesMap?.get(appointment.id);
         if (!names || names.length === 0) return null;
         return (
@@ -318,7 +318,7 @@ function GridContent({
       })()}
 
       {/* Time + price — defer until taller cards so 60min cards stay clean */}
-      {size === 'full' && duration >= 75 && (
+      {size === 'full' && duration >= 60 && (
         <div className="text-[13px] opacity-80 mt-0.5 flex items-center justify-between">
           <span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
           {appointment.total_price != null && appointment.total_price > 0 && (
@@ -330,7 +330,7 @@ function GridContent({
       )}
 
       {/* Rescheduled from line — reserve for the tallest cards only */}
-      {size === 'full' && duration >= 105 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+      {size === 'full' && duration >= 90 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
         <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
           <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
           Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
