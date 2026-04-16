@@ -2,62 +2,85 @@
 
 ## Prompt review
 
-Clear intent backed by a screenshot — you correctly noticed the ADD EVENT drawer feels less premium than the BookingWizard. Teaching note: naming the *specific* visual delta you want propagated ("the darker, dimmer backdrop and bolder glass contrast from the booking wizard") would have skipped a discovery step. Micro-improvement: when asking for cross-surface consistency, mention whether you want the change at the **shared component level** (one place) or **per consumer** (multiple places). Shared is almost always better and is what we'll do here.
+Strong, well-framed prompt — you correctly diagnosed both the bug ("defaulting to 9 AM") and the architectural gap ("no step to choose when"). Teaching note: you also smartly bounded the fix ("but keep the default to today and the next available time slot today"), which removes ambiguity about the desired UX. Micro-improvement: clarifying whether "next available" means the next empty slot for a specific stylist vs. just "the next 15-min interval from now during business hours" would have saved one round-trip — those are very different computations. I'll go with the simpler, faster, fully-deterministic interpretation (next 15-min interval ≥ now, clamped to business hours), since stylist isn't chosen yet at that point in the flow, and the user can adjust.
 
 ## Diagnosis
 
-All drawers already use the same `PremiumFloatingPanel` shell, which provides:
-- `bg-card/80 backdrop-blur-xl` — the glass panel itself
-- `border border-border shadow-2xl` — the frame
+Today, when "+ Add Event" is clicked from the page header (`Schedule.tsx:612 handleNewBooking`), admins get the `ScheduleEntryDrawer` (Client Appointment / Internal Meeting / Timeblock). After picking a type, downstream wizards open with `bookingDefaults = {}`, so:
+- `BookingWizard` falls back to `defaultDate = new Date()` and `defaultTime = '09:00'`
+- `MeetingSchedulerWizard` gets `defaultDate={currentDate}` only (no time)
+- Timeblock gets `time: '09:00'`
 
-So the **panel glass is already identical** across BookingWizard, ScheduleEntryDrawer, MeetingSchedulerWizard, ProviderDetailSheet, AIChatPanel, mobile sheets, etc.
+When "+ Add Event" is clicked from a calendar cell instead, time/stylist *are* known and pre-filled. So this fix only matters for the **header-button entry path**.
 
-The only meaningful delta is the **backdrop dimming**:
-- Default: `bg-black/20 backdrop-blur-sm` — light, washy
-- BookingWizard override: `bg-black/40` — noticeably darker, makes the glass pop
+## Fix — add a "When?" step inside the entry drawer
 
-That's why the ADD EVENT drawer in your screenshot feels "lighter" than the booking wizard — the page behind it isn't dimmed enough, so the glass edge contrast is weaker.
+Insert a lightweight Step 2 in `ScheduleEntryDrawer`. After the user picks a type tile, show a compact date + time form with smart defaults, then route to the existing downstream wizard with those defaults wired through.
 
-## Fix
+### 1. New helper — `getNextAvailableSlot(now, slotMinutes = 15, businessStartHour = 9, businessEndHour = 19)`
+Add to `src/lib/schedule-utils.ts`:
+- Round `now` *up* to the next 15-min boundary (e.g., 1:53 PM → 2:00 PM, 2:01 PM → 2:15 PM).
+- If before business hours → return `09:00`.
+- If at/after business end → return tomorrow's `09:00` (and signal a date bump).
+- Returns `{ date: Date, time: 'HH:MM' }`.
 
-Promote the BookingWizard's backdrop treatment to be the **canonical default** in `PremiumFloatingPanel`, so every drawer inherits the same premium dim + blur.
+### 2. `ScheduleEntryDrawer` — add internal step state
+- New local state: `step: 'type' | 'when'` and `selectedType: 'booking' | 'meeting' | 'timeblock' | null`.
+- New local state: `whenDate: Date`, `whenTime: string`, initialized via `getNextAvailableSlot(orgNow)` when the drawer opens (or from `selectedTime` prop if pre-set from a slot click — in which case we **skip** the When step entirely, since context already has time).
+- Step `'type'`: existing `ScheduleTypeSelector`. On tile click → set `selectedType`, advance to `'when'`.
+- Step `'when'`: small panel with:
+  - Date picker (shadcn `Popover` + `Calendar`, restricted to today and forward, default = today)
+  - Time input (15-min increments, native `<input type="time" step="900">` or a simple Select of common times — Select is more on-brand)
+  - Back button (returns to type step)
+  - "Continue" primary button
+- Reuse the BookingWizard step-progress styling (two pills) for visual continuity with the rest of the flow.
+- Reset internal state when drawer closes.
 
-### 1. `src/components/ui/premium-floating-panel.tsx`
-- Change default backdrop from `bg-black/20 backdrop-blur-sm` → `bg-black/40 backdrop-blur-md`
-  - Darker dim (matches booking)
-  - Slightly stronger blur (`md` vs `sm`) for a more premium depth feel
-- Keep `backdropClassName` prop so any consumer can still override if needed
+### 3. Wire the chosen `{date, time}` upward
+Change drawer props from three callbacks to three callbacks **that accept `(date: Date, time: string)`**:
+```ts
+onSelectClientBooking: (date: Date, time: string) => void;
+onSelectMeeting: (date: Date, time: string) => void;
+onSelectTimeblock: (date: Date, time: string) => void;
+```
 
-### 2. `src/components/dashboard/schedule/booking/BookingWizard.tsx`
-- Remove the now-redundant `backdropClassName="bg-black/40"` override (it'll be the default)
-- This proves the unification — booking wizard renders identically with zero per-consumer config
+### 4. `Schedule.tsx` — feed defaults into downstream wizards
+In each `onSelect…` handler (lines 1255–1269):
+- `onSelectClientBooking`: `setBookingDefaults({ date, time });` then `setBookingOpen(true);`
+- `onSelectMeeting`: `setBookingDefaults({ date, time });` then `setMeetingWizardOpen(true);` — and update `MeetingSchedulerWizard` to also accept a `defaultTime` prop (currently it only takes `defaultDate`). Pass both.
+- `onSelectTimeblock`: `setBreakDefaults({ time, stylistId: '' });` and ensure the break dialog also receives the date (it currently uses `currentDate` — set `setCurrentDate(date)` if changed, or pass `defaultDate` explicitly).
 
-### 3. No changes needed to the 30+ other consumers
-They all automatically pick up the upgraded backdrop because they use the shared component without overriding `backdropClassName`.
+### 5. Smart skip when context is known
+If `selectedTime` is already provided to the drawer (e.g., user clicked a slot in the calendar), skip the `'when'` step entirely and pass the existing date/time straight through. This preserves today's slot-click → type-pick → wizard flow with zero extra clicks.
 
 ## Acceptance checks
 
-1. ADD EVENT drawer (ScheduleEntryDrawer) backdrop matches BookingWizard exactly — same dim, same blur strength.
-2. BookingWizard looks identical to before (since the new default equals its prior override).
-3. All other drawers (Meeting wizard, Provider sheet, AI chat panel, mobile sheets, scheduled reports history, sidebar mobile) feel one tier more premium with the deeper dim.
-4. The God Mode bar offset on the backdrop still works (untouched logic).
-5. No regressions in mobile (full-screen panels — backdrop is hidden behind the panel anyway).
+1. Click "+ Add Event" in header (admin) → drawer opens at type step; pick "Client Appointment" → "When?" step appears with **today + next 15-min slot** (e.g., 2:15 PM if it's currently 2:01 PM).
+2. Adjust date/time → click Continue → BookingWizard opens with those values pre-filled (visible on the confirm step and slot loader).
+3. Same flow for Internal Meeting and Timeblock — both honor the chosen date/time.
+4. Click an empty cell in DayView → type drawer opens with `selectedTime` set → **When step is skipped**, downstream wizard opens directly with that slot's time (zero regression).
+5. If current time is after business hours (e.g., 8 PM), the default jumps to tomorrow 9:00 AM with the date picker reflecting that.
+6. Before 9 AM, default is today 9:00 AM.
+7. Back button on When step returns to type tiles (no state lost on type selection).
+8. Closing/reopening the drawer recomputes "next available slot" from current `now`.
 
 ## Out of scope
 
-- Restyling the panel surface itself (already unified at `bg-card/80 backdrop-blur-xl`).
-- Touching individual drawer headers, padding, or content layout.
-- Animation tuning (spring physics already shared).
-- Dialog/Drawer primitives outside `PremiumFloatingPanel` (e.g., shadcn Dialog) — those are governed by `drilldownDialogStyles.ts` separately.
+- Per-stylist availability lookup (would require choosing a stylist first; that's the BookingWizard's job).
+- Conflict detection at this step (BookingWizard already handles it via `useAvailableSlots`).
+- Recurring event defaults.
+- Mobile-specific layout changes (drawer is already responsive).
 
 ## Files to touch
 
-- `src/components/ui/premium-floating-panel.tsx` — upgrade default backdrop class.
-- `src/components/dashboard/schedule/booking/BookingWizard.tsx` — drop now-redundant `backdropClassName` prop.
+- `src/lib/schedule-utils.ts` — add `getNextAvailableSlot(now, slotMin, businessStart, businessEnd)`.
+- `src/components/dashboard/schedule/meetings/ScheduleEntryDrawer.tsx` — add internal `step` state, "When?" sub-step UI, smart-skip logic, updated callback signatures.
+- `src/pages/dashboard/Schedule.tsx` — update `<ScheduleEntryDrawer>` callback handlers (lines 1255–1269) to receive and forward `(date, time)`; pass into booking/meeting/timeblock state.
+- `src/components/dashboard/schedule/meetings/MeetingSchedulerWizard.tsx` — accept and respect a `defaultTime` prop (read first to confirm prop shape; if it already has time defaults, just wire it).
 
 ## Further enhancement suggestions
 
-- Add a `tokens.panel.backdrop` and `tokens.panel.glass` entry to `design-tokens.ts` so the canonical drawer treatment is declared once and referenced by name.
-- Consider a quick visual sweep of shadcn `Dialog`/`Sheet` usage to align *those* backdrops with the same `bg-black/40 backdrop-blur-md` treatment for cross-primitive consistency.
-- Add a Storybook-style "Drawer Gallery" page in dev-only routes so future drawers can be eyeballed against the canonical reference at a glance.
+- Add a small "Now +15m" / "Now +30m" / "Tomorrow 9 AM" quick-pick chip row above the date/time inputs for one-tap defaults.
+- Show next-slot computation source in a faint helper line ("Defaulted to next open 15-minute slot today") so the behavior is discoverable.
+- Long-term: when stylist is preselected from a calendar column click, query `useAvailableSlots` to truly pick the next *available* slot rather than the next *clock* slot.
 
