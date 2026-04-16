@@ -55,7 +55,13 @@ interface ScheduleHeaderProps {
   setView: (view: CalendarView) => void;
   selectedStaffIds: string[];
   onStaffToggle: (staffId: string) => void;
-  stylists: Array<{ user_id: string; display_name: string | null; full_name: string }>;
+  stylists: Array<{
+    user_id: string;
+    display_name: string | null;
+    full_name: string;
+    stylist_level?: string | null;
+    utilization?: number;
+  }>;
   selectedLocation: string;
   onLocationChange: (locationId: string) => void;
   locations: Array<{ id: string; name: string; city?: string | null; hours_json?: HoursJson | null; holiday_closures?: HolidayClosure[] | null }>;
