@@ -26,6 +26,7 @@ export function LocationGroupSelect({
   selectedIds,
   onSelectionChange,
 }: LocationGroupSelectProps) {
+  const [open, setOpen] = useState(false);
   const { data: groups = [] } = useLocationGroups();
   const allSelected = selectedIds.length === 0 || selectedIds.length === locations.length;
   const effectiveSelected = allSelected ? locations.map(l => l.id) : selectedIds;
@@ -102,7 +103,7 @@ export function LocationGroupSelect({
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -116,7 +117,7 @@ export function LocationGroupSelect({
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[260px] p-0" align="start">
+      <PopoverContent className="w-[260px] p-0" align="start" onMouseLeave={() => setOpen(false)}>
         <div className="p-2 border-b border-border">
           <label className="flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded-md hover:bg-accent text-sm font-medium">
             <Checkbox
