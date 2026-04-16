@@ -150,11 +150,11 @@ export function ScheduleHeader({
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col @container/schedhdr">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-0">
-        {/* Row 1 (<md): Left cluster + condensed date right. At md+: just the left cluster. */}
-        <div className="flex items-center justify-between md:justify-start md:contents">
+      <div className="bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] border border-[hsl(var(--sidebar-border))] px-4 py-3 rounded-t-lg flex flex-col gap-2 @md/schedhdr:flex-row @md/schedhdr:flex-nowrap @md/schedhdr:items-center @md/schedhdr:justify-between @md/schedhdr:gap-0">
+        {/* Row 1 (<@md): Left cluster + condensed date right. At @md+: just the left cluster. */}
+        <div className="flex items-center justify-between @md/schedhdr:justify-start @md/schedhdr:contents">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
