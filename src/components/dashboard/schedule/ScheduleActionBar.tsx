@@ -94,11 +94,10 @@ export function ScheduleActionBar({
       {/* Left: Create Appointment button */}
       {onCreateAppointment && (
         <Button
-          size="sm"
           onClick={onCreateAppointment}
-          className="rounded-full h-7 px-3 text-xs shrink-0 gap-1"
+          className="rounded-full h-9 px-5 text-sm shrink-0 gap-1.5"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4" />
           Create Appointment
         </Button>
       )}
