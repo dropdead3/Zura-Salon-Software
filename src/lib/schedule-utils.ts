@@ -48,6 +48,32 @@ export interface OverlapInfo {
   totalOverlapping: number;
 }
 
+/**
+ * Compute pixel-snapped render metrics for the current-time indicator and
+ * the "past" overlay rectangle, ensuring both share an identical pixel boundary.
+ *
+ * - `linePx`: integer top offset for the indicator bar (border-t-2)
+ * - `overlayPx`: height for the gray overlay, snapped to end exactly at the
+ *   visible top edge of the indicator line (no 1–2px subpixel halo)
+ * - `visible`: whether the indicator falls within the rendered grid
+ */
+export function getCurrentTimeRenderMetrics(
+  nowMinutes: number,
+  hoursStart: number,
+  slotInterval: number,
+  rowHeight: number,
+  totalSlots: number,
+): { linePx: number; overlayPx: number; visible: boolean } {
+  const gridHeight = totalSlots * rowHeight;
+  const raw = ((nowMinutes - hoursStart * 60) / slotInterval) * rowHeight;
+  const clamped = Math.max(0, Math.min(raw, gridHeight));
+  const linePx = Math.round(clamped);
+  // Overlay stops exactly at the visible top edge of the line — no spillover.
+  const overlayPx = Math.max(0, linePx);
+  const visible = clamped > 0 && clamped < gridHeight;
+  return { linePx, overlayPx, visible };
+}
+
 export function getOverlapInfo<T extends { id: string; start_time: string; end_time: string }>(
   appointments: T[],
   target: T,

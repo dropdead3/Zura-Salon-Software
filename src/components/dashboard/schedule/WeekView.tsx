@@ -60,7 +60,7 @@ const ZOOM_CONFIG: Record<string, { interval: number }> = {
 
 const MIN_ROW_HEIGHT = 20;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics } from '@/lib/schedule-utils';
 
 function WeekSlot({
   hour,
@@ -373,9 +373,8 @@ export function WeekView({
   const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
   const todayInWeek = weekDays.find(d => isOrgToday(d));
   const showCurrentTime = !!todayInWeek;
-  const currentTimeOffset = showCurrentTime
-    ? (wkNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
-    : 0;
+  const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
+    getCurrentTimeRenderMetrics(wkNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -482,10 +481,10 @@ export function WeekView({
                   )}
                 >
                   {/* Past-time overlay — pixel-aligned to the current-time indicator (today only) */}
-                  {isCurrentDay && currentTimeOffset > 0 && (
+                  {isCurrentDay && currentTimeOverlayPx > 0 && (
                     <div
                       className="absolute inset-x-0 top-0 bg-muted/40 pointer-events-none z-[1]"
-                      style={{ height: `${Math.min(currentTimeOffset, timeSlots.length * ROW_HEIGHT)}px` }}
+                      style={{ height: `${currentTimeOverlayPx}px` }}
                     />
                   )}
                   {/* Time slot rows */}
@@ -595,10 +594,10 @@ export function WeekView({
                   })}
 
                   {/* Current time indicator */}
-                  {isCurrentDay && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
+                  {isCurrentDay && currentTimeVisible && (
                     <div 
                       className="absolute left-0 right-0 pointer-events-none z-30"
-                      style={{ top: `${currentTimeOffset}px` }}
+                      style={{ top: `${currentTimeLinePx}px` }}
                     >
                       <div className="relative">
                         <div className="absolute left-0 right-0 border-t-2 border-primary" />

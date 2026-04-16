@@ -76,7 +76,7 @@ interface DayViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics } from '@/lib/schedule-utils';
 import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 
 // Categories that display the X pattern overlay
@@ -542,9 +542,8 @@ export function DayView({
   // Current time indicator
   const { isToday: isDayToday, nowMinutes: dayNowMins } = useOrgNow();
   const showCurrentTime = isDayToday(date);
-  const currentTimeOffset = showCurrentTime
-    ? (dayNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
-    : 0;
+  const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
+    getCurrentTimeRenderMetrics(dayNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
   // getOverlapInfo is now imported from @/lib/schedule-utils
 
@@ -771,10 +770,10 @@ export function DayView({
                       style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
                     >
                       {/* Past-time overlay — pixel-aligned to the current-time indicator */}
-                      {showCurrentTime && currentTimeOffset > 0 && (
+                      {showCurrentTime && currentTimeOverlayPx > 0 && (
                         <div
                           className="absolute inset-x-0 top-0 bg-muted/40 pointer-events-none z-[1]"
-                          style={{ height: `${Math.min(currentTimeOffset, timeSlots.length * ROW_HEIGHT)}px` }}
+                          style={{ height: `${currentTimeOverlayPx}px` }}
                         />
                       )}
                       {/* Time slot backgrounds (droppable) */}
@@ -891,11 +890,11 @@ export function DayView({
               })}
 
                 {/* Current Time Indicator — spans full width of stylist columns track */}
-                {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
+                {showCurrentTime && currentTimeVisible && (
                   <div
                     className="absolute border-t-2 border-primary pointer-events-none z-[15]"
                     style={{
-                      top: `${currentTimeOffset}px`,
+                      top: `${currentTimeLinePx}px`,
                       left: 0,
                       right: 0,
                     }}
