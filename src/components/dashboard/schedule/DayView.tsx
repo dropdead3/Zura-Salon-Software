@@ -424,7 +424,7 @@ export function DayView({
       for (let minute = 0; minute < 60; minute += slotInterval) {
         const isHour = minute === 0;
         const isHalf = minute === 30;
-        const label = isHour ? formatHour(hour) : isHalf ? '30' : '';
+        const label = isHour ? formatHour(hour) : String(minute);
         slots.push({ hour, minute, label, isHour, isHalf });
       }
     }
