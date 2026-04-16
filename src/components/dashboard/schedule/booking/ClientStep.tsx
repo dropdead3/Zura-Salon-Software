@@ -273,15 +273,8 @@ export function ClientStep({
             )}
           </div>
         </ScrollArea>
-
-        {showAlphabetStrip && (
-          <AlphabetStrip
-            availableLetters={availableLetters}
-            activeLetter={activeLetter}
-            onLetterClick={handleLetterClick}
-          />
-        )}
       </div>
+
 
       {/* Banned Client Warning Dialog */}
       <BannedClientWarningDialog
