@@ -301,6 +301,26 @@ export function DayView({
     return m;
   }, [stylistLevels]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const headerRowRef = useRef<HTMLDivElement>(null);
+  const [isCondensed, setIsCondensed] = useState(false);
+
+  // Measure column width to toggle condensed layout
+  useEffect(() => {
+    const el = headerRowRef.current;
+    if (!el) return;
+    const count = sortedStylists.length;
+    if (count === 0) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const containerWidth = entry.contentRect.width - 70; // subtract week indicator
+        const colWidth = containerWidth / count;
+        setIsCondensed(colWidth < 120);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [sortedStylists.length]);
 
   // Auto-scroll to 1 hour before opening time
   useEffect(() => {
