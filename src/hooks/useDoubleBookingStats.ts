@@ -72,7 +72,7 @@ export function useDoubleBookingStats(
       const { data, error } = await query;
       if (error) throw error;
 
-      const rows = (data || []) as {
+      const rows = ((data || []) as unknown) as {
         stylist_user_id: string | null;
         staff_name: string | null;
         appointment_date: string;
