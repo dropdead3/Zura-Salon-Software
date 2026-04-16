@@ -1,24 +1,72 @@
 
 
-# Fix Time Range Line Wrapping on Appointment Cards
+# Move RC/NC to Bottom-Right and Inline Client Name with Status Badge
 
 ## Problem
-Line 326 in `AppointmentCardContent.tsx` renders the time range (`10:00 AM - 12:00 PM`) without `whitespace-nowrap` or `truncate`. On narrow cards, longer time strings wrap to a second line — visible on Angela Rapazzini's card where "12:00" and "PM" break apart. Shorter time ranges (e.g., `10:00 AM - 11:30 AM`) happen to fit, masking the issue.
+Currently in DayView, the NC/RC badge sits top-left and the client name is on a separate row below the status badge. The user wants:
+1. RC/NC icons moved to the **bottom-right corner** of the card
+2. Client name on the **same row** as the status badge (top row)
+3. Name intelligently truncates to "First L." format when space is tight
 
-## Fix
-Add `whitespace-nowrap` to the time `<span>` on line 326 so the time range never breaks mid-string. The parent `<div>` already has `flex items-center justify-between`, so adding `truncate` on the time span and `shrink-0` on the price span will keep layout stable if the card is extremely narrow.
+## Changes
 
-### Change in `AppointmentCardContent.tsx`
+### `AppointmentCardContent.tsx` — GridContent DayView branch (lines 264-298)
 
-Line 326 — wrap the time span:
-```tsx
-// Before
-<span>{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
+**Remove** the NC/RC badge from `absolute top-1 left-1` (lines 267-278).
 
-// After
-<span className="whitespace-nowrap truncate">{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
+**Add** NC/RC badge at `absolute bottom-1 right-1` so it anchors to the card's bottom-right corner regardless of card height.
+
+**Restructure top row** to put client name and status badge inline:
+```
+[Client Name (truncate)]  [Indicators] [Status Badge]
 ```
 
+The top row becomes a single `absolute top-1 left-1 right-1` flex container with `justify-between`. The client name gets `truncate` and `min-w-0 flex-1`. The status badge side gets `shrink-0`.
+
+**Add smart truncation helper**: A `formatCompactName(fullName)` function that returns "FirstName L." (first name + last initial with period). The card uses a `useRef` + `ResizeObserver` approach — but that's heavy. Simpler: since `useShortLabels` already tells us the column is narrow, use that same flag to switch to compact name format. When `useShortLabels` is true OR `showStylistBadge` is true, use `formatCompactName`. Otherwise use full name with CSS truncation.
+
+**`formatCompactName` logic:**
+```ts
+function formatCompactName(name: string): string {
+  if (!name?.trim()) return 'Walk-in';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+```
+
+### Layout for DayView (non-stylistBadge) branch:
+
+```tsx
+{/* Top row: client name + status badge */}
+<div className="flex items-center justify-between gap-1 pr-0.5">
+  <span className="text-sm font-medium truncate min-w-0">
+    {useShortLabels ? formatCompactName(appointment.client_name) : appointment.client_name}
+  </span>
+  <div className="flex items-center gap-1 shrink-0">
+    <IndicatorCluster flags={indicatorFlags} size={size} />
+    <span className={cn('text-[10px] px-2 py-0.5 rounded-full ...')}>
+      {statusLabel}
+    </span>
+  </div>
+</div>
+
+{/* NC/RC badge — bottom right */}
+{showClientAvatar && (
+  <div className="absolute bottom-1 right-1 z-20">
+    <span className="h-4 w-4 rounded-full ...">
+      {appointment.is_new_client ? 'NC' : 'RC'}
+    </span>
+  </div>
+)}
+```
+
+Remove `pt-6` from client name (no longer offset below badges). Remove the old separate NC/RC and status badge absolute containers.
+
+### WeekView (showStylistBadge) branch — same treatment:
+- Move NC/RC (currently shown via IndicatorCluster's `isNewClient` flag) to bottom-right
+- Client name inline with status badge, using `formatCompactName` always (WeekView is always narrow)
+
 ### Files Modified
-1. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — add `whitespace-nowrap truncate` to time range span
+1. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — restructure grid layout, add `formatCompactName`, relocate NC/RC badge
 
