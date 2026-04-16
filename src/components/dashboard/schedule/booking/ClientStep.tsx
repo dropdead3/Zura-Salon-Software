@@ -134,8 +134,8 @@ export function ClientStep({
   }, [filteredClients]);
 
   const handleLetterClick = useCallback((letter: string) => {
-    setActiveLetter(prev => prev === letter ? null : letter);
-  }, []);
+    setActiveLetter(activeLetter === letter ? null : letter);
+  }, [activeLetter, setActiveLetter]);
 
   const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => {
     if (el) {
