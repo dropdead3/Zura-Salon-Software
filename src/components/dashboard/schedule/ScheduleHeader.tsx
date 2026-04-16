@@ -248,6 +248,7 @@ export function ScheduleHeader({
               />
             </PopoverContent>
           </Popover>
+          </div>
         </div>
 
         {/* Center: Date Display */}
