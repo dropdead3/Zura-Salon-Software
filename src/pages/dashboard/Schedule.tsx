@@ -39,7 +39,7 @@ import { Loader2, Sparkles, Users } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { MeetingSchedulerWizard, ScheduleTypeSelector, MeetingDetailPanel } from '@/components/dashboard/schedule/meetings';
+import { MeetingSchedulerWizard, ScheduleTypeSelector, MeetingDetailPanel, ScheduleEntryDrawer } from '@/components/dashboard/schedule/meetings';
 import { useAdminMeetingsForDate, type AdminMeeting, type MeetingAttendee } from '@/hooks/useAdminMeetings';
 import { ShiftScheduleView } from '@/components/dashboard/schedule/shifts/ShiftScheduleView';
 import { cn } from '@/lib/utils';
