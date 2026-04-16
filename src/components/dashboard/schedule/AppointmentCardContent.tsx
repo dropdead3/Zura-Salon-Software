@@ -65,6 +65,7 @@ export interface AppointmentCardContentProps {
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
+  useShortLabels?: boolean;
   onClick: () => void;
 }
 
@@ -192,6 +193,7 @@ function GridContent({
   showStylistBadge,
   showClientPhone,
   showClientAvatar,
+  useShortLabels,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -204,6 +206,7 @@ function GridContent({
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
+  useShortLabels?: boolean;
 }) {
   if (size === 'compact') {
     return (
@@ -222,7 +225,7 @@ function GridContent({
 
   const statusKey = (appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_BADGE;
   const badge = APPOINTMENT_STATUS_BADGE[statusKey] || APPOINTMENT_STATUS_BADGE.booked;
-  const statusLabel = (size === 'medium' || showStylistBadge) ? badge.shortLabel : badge.label;
+  const statusLabel = useShortLabels ? badge.shortLabel : badge.label;
 
   return (
     <div className="px-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
@@ -485,6 +488,7 @@ export function AppointmentCardContent({
   showStylistBadge = false,
   showClientPhone = true,
   showClientAvatar = true,
+  useShortLabels = false,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
@@ -659,6 +663,7 @@ export function AppointmentCardContent({
         showStylistBadge={showStylistBadge}
         showClientPhone={showClientPhone}
         showClientAvatar={showClientAvatar}
+        useShortLabels={useShortLabels}
       />
     </div>
   );

@@ -205,6 +205,7 @@ interface AppointmentCardProps {
   rowHeight?: number;
   slotInterval?: number;
   zoomLevel?: number;
+  useShortLabels?: boolean;
 }
 
 function AppointmentCard({
@@ -225,6 +226,7 @@ function AppointmentCard({
   rowHeight = 20,
   slotInterval = 15,
   zoomLevel = 0,
+  useShortLabels = false,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -319,6 +321,7 @@ function AppointmentCard({
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
         
+        useShortLabels={useShortLabels}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
@@ -865,6 +868,7 @@ export function DayView({
                           rowHeight={ROW_HEIGHT}
                           slotInterval={slotInterval}
                           zoomLevel={zoomLevel}
+                          useShortLabels={sortedStylists.length >= 3}
                         />
                       );
                     })}
