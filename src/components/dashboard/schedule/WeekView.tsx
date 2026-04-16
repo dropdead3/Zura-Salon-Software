@@ -27,6 +27,7 @@ interface WeekViewProps {
   appointments: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
+  zoomLevel?: number;
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   onSlotClick?: (date: Date, time: string) => void;
   selectedLocationId?: string;
@@ -45,21 +46,30 @@ interface WeekViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-const ROW_HEIGHT = 20; // Height per 15-minute slot
-const SLOTS_PER_HOUR = 4;
+const ZOOM_CONFIG: Record<string, { interval: number }> = {
+  '-3': { interval: 60 },
+  '-2': { interval: 60 },
+  '-1': { interval: 30 },
+  '0':  { interval: 20 },
+  '1':  { interval: 15 },
+  '2':  { interval: 10 },
+  '3':  { interval: 5 },
+};
+
+const MIN_ROW_HEIGHT = 20;
 
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
-function getEventStyle(startTime: string, endTime: string, hoursStart: number) {
+function getEventStyle(startTime: string, endTime: string, hoursStart: number, slotInterval: number, rowHeight: number) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 15) * ROW_HEIGHT;
-  const height = Math.max((duration / 15) * ROW_HEIGHT, ROW_HEIGHT);
+  const top = (startOffset / slotInterval) * rowHeight;
+  const height = Math.max((duration / slotInterval) * rowHeight, rowHeight);
   return { top: `${top}px`, height: `${height}px` };
 }
 
@@ -74,6 +84,8 @@ function formatTime12h(time: string): string {
 function WeekAppointmentCard({
   appointment,
   hoursStart,
+  slotInterval,
+  rowHeight,
   onClick,
   categoryColors,
   isAssisting = false,
@@ -85,6 +97,8 @@ function WeekAppointmentCard({
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
+  slotInterval: number;
+  rowHeight: number;
   onClick: () => void;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isAssisting?: boolean;
@@ -138,7 +152,7 @@ function WeekAppointmentCard({
     };
   }, [isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, slotInterval, rowHeight);
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
   return (
@@ -188,6 +202,7 @@ export function WeekView({
   appointments,
   hoursStart = 8,
   hoursEnd = 20,
+  zoomLevel = 0,
   onAppointmentClick,
   onSlotClick,
   selectedLocationId,
@@ -204,6 +219,25 @@ export function WeekView({
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  // Measure container height for dynamic row sizing
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerHeight(entry.contentRect.height);
+    });
+    observer.observe(scrollRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Derive slot interval from zoom level
+  const slotInterval = ZOOM_CONFIG[String(zoomLevel)]?.interval ?? 20;
+  const totalSlots = (hoursEnd - hoursStart) * (60 / slotInterval);
+  const availableHeight = containerHeight - 56;
+  const ROW_HEIGHT = containerHeight > 0
+    ? Math.max(MIN_ROW_HEIGHT, Math.floor(availableHeight / totalSlots))
+    : MIN_ROW_HEIGHT;
 
   // Auto-scroll to 1 hour before earliest opening time across the week
   useEffect(() => {
@@ -221,13 +255,13 @@ export function WeekView({
       }
     }
     const scrollToHour = Math.max(earliestOpen - 1, hoursStart);
-    const slotsOffset = (scrollToHour - hoursStart) * SLOTS_PER_HOUR;
+    const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
     const top = slotsOffset * ROW_HEIGHT;
     const ref = scrollRef.current;
     requestAnimationFrame(() => {
       ref?.scrollTo({ top, behavior: 'instant' });
     });
-  }, [currentDate.toDateString(), locationHoursJson, hoursStart]);
+  }, [currentDate.toDateString(), locationHoursJson, hoursStart, slotInterval, ROW_HEIGHT]);
   
   // Week starts with currentDate, followed by 6 future days
   const weekDays = useMemo(() => 
@@ -235,11 +269,11 @@ export function WeekView({
     [currentDate.toDateString()]
   );
   
-  // Generate all 15-minute time slots
+  // Generate time slots based on zoom interval
   const timeSlots = useMemo(() => {
     const slots: { hour: number; minute: number; label: string; isHour: boolean; isHalf: boolean }[] = [];
     for (let hour = hoursStart; hour < hoursEnd; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += slotInterval) {
         const isHour = minute === 0;
         const isHalf = minute === 30;
         let label = '';
@@ -247,14 +281,14 @@ export function WeekView({
           const ampm = hour >= 12 ? 'PM' : 'AM';
           const hour12 = hour % 12 || 12;
           label = `${hour12} ${ampm}`;
-        } else if (isHalf) {
+        } else if (isHalf && slotInterval <= 30) {
           label = '30';
         }
         slots.push({ hour, minute, label, isHour, isHalf });
       }
     }
     return slots;
-  }, [hoursStart, hoursEnd]);
+  }, [hoursStart, hoursEnd, slotInterval]);
 
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
@@ -276,7 +310,7 @@ export function WeekView({
   const todayInWeek = weekDays.find(d => isOrgToday(d));
   const showCurrentTime = !!todayInWeek;
   const currentTimeOffset = showCurrentTime
-    ? (wkNowMins - (hoursStart * 60)) / 15 * ROW_HEIGHT
+    ? (wkNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
     : 0;
 
   return (
@@ -362,9 +396,10 @@ export function WeekView({
                 <div 
                   key={`${slot.hour}-${slot.minute}`}
                   className={cn(
-                    'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
+                    'text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
                     slot.isHour && 'font-medium'
                   )}
+                  style={{ height: ROW_HEIGHT }}
                 >
                   {slot.label && (
                     <span className={cn(
@@ -413,18 +448,21 @@ export function WeekView({
                       <div 
                         key={slotTime}
                         className={cn(
-                          'h-[20px] cursor-pointer transition-colors group relative',
+                          'cursor-pointer transition-colors group relative',
                           isPastSlot && 'bg-muted/40',
                           !isPastSlot && !isOutsideHours && 'hover:bg-primary/10',
                           slot.isHour 
                             ? 'border-t border-border/80 dark:border-border/60' 
-                            : slot.isHalf 
-                              ? 'border-t border-dotted border-border/70 dark:border-border/40'
+                            : slot.isHalf && slotInterval <= 30
+                              ? 'border-t border-dashed border-border/70 dark:border-border/40'
                               : 'border-t border-dotted border-border/50 dark:border-border/25'
                         )}
-                        style={!isPastSlot && isOutsideHours ? {
-                          background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-                        } : undefined}
+                        style={{
+                          height: ROW_HEIGHT,
+                          ...(!isPastSlot && isOutsideHours ? {
+                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+                          } : {}),
+                        }}
                         onClick={() => onSlotClick?.(day, slotTime)}
                         onMouseMove={(e) => {
                           if (isPastSlot || isOutsideHours) return;
@@ -455,7 +493,7 @@ export function WeekView({
                   {assistantTimeBlocks
                     .filter(b => b.date === dateKey)
                     .map(block => {
-                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart);
+                      const blockStyle = getEventStyle(block.start_time, block.end_time, hoursStart, slotInterval, ROW_HEIGHT);
                       const isUnassigned = !block.assistant_user_id;
                       const isConfirmed = block.status === 'confirmed';
                       return (
@@ -499,6 +537,8 @@ export function WeekView({
                         key={apt.id}
                         appointment={apt}
                         hoursStart={hoursStart}
+                        slotInterval={slotInterval}
+                        rowHeight={ROW_HEIGHT}
                         onClick={() => onAppointmentClick(apt)}
                         categoryColors={categoryColors}
                         isAssisting={assistedAppointmentIds?.has(apt.id) || false}
