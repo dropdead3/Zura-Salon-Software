@@ -41,6 +41,7 @@ interface WeekViewProps {
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
+  scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
 }
 
 // Use consolidated status colors from design tokens

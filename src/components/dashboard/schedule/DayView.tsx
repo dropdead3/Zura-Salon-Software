@@ -69,6 +69,7 @@ interface DayViewProps {
   adminMeetings?: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] })[];
   onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
   zoomLevel?: number;
+  scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
 }
 
 // Use consolidated status colors from design tokens
