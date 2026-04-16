@@ -238,7 +238,7 @@ function GridContent({
           {showClientAvatar && (
             <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
-                'h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0',
+                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0',
                 appointment.is_new_client
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                   : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
@@ -269,7 +269,7 @@ function GridContent({
           {showClientAvatar && (
             <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
-                'h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0',
+                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0',
                 appointment.is_new_client
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                   : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
