@@ -519,7 +519,7 @@ export function DayView({
     });
   }, [stylists, utilizationByStylist]);
 
-  const gridMinWidth = 70 + sortedStylists.length * MIN_COL_WIDTH;
+  
   useEffect(() => {
     const el = headerRowRef.current;
     if (!el) return;
@@ -644,7 +644,7 @@ export function DayView({
         )}
         {/* Calendar Grid */}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
-          <div style={{ minWidth: gridMinWidth }}>
+          <div>
             {/* Stylist Headers - frosted glass sticky header */}
             <div ref={headerRowRef} className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
