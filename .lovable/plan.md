@@ -1,17 +1,10 @@
 
 
-# Widen Minimum Column Width in DayView
+# Remove Bottom Blur Effect from Week View Header
 
 ## Change
-Update all `min-w-[120px]` occurrences in `DayView.tsx` to `min-w-[160px]`. This gives each stylist column more breathing room for names, appointment cards, and status badges while still allowing horizontal scroll when there are many stylists.
+Delete the "Bottom blur fade" div (lines 442–452) in `WeekView.tsx`. This is a decorative gradient/blur element below the sticky day-header row that creates a visual smear over appointment cards.
 
-Three locations to update (all in `DayView.tsx`):
-- **Line 724** — condensed header columns
-- **Line 743** — normal header columns  
-- **Line 793** — time slot grid columns
-
-Replace `min-w-[120px]` → `min-w-[160px]` in all three.
-
-### Files Modified
-1. `src/components/dashboard/schedule/DayView.tsx`
+### File Modified
+1. `src/components/dashboard/schedule/WeekView.tsx` — remove lines 442–452
 
