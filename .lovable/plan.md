@@ -1,53 +1,60 @@
 
 
-# Adaptive Stylist Header Layout — Condensed Only When Narrow
+# Responsive Stylist Headers — Three-Tier Adaptive Layout
 
 ## Problem
-The vertical stacked layout (avatar above, "First L." name) is currently applied at all column widths. It should only kick in when columns are extremely narrow. At normal widths, the original horizontal layout (avatar left, full name right) should be used.
-
-## Approach
-Use a width-aware strategy: measure each stylist column width and switch layouts at a threshold (~100px). Since stylist columns use `flex-1`, their width depends on the number of stylists. We can use `ResizeObserver` or calculate based on stylist count, but the simplest reliable approach is a CSS container query or a JS ref-based width check.
-
-**Chosen method**: Use a `useRef` + `ResizeObserver` on the header row to get available width per stylist, then conditionally render either the **horizontal** (normal) or **vertical** (condensed) layout.
+Currently there are only two modes (condensed < 120px, normal ≥ 120px). The user wants finer-grained responsiveness:
+- **Wide**: Status dot with "Booking" label, top-right corner; full name
+- **Medium**: Status dot only (no label), top-right; name switches to "First L." when too long
+- **Narrow** (existing condensed): Vertical stack with "First L." name
 
 ## Changes — `src/components/dashboard/schedule/DayView.tsx`
 
-### 1. Add width measurement
-- Add a `ref` on the header row container
-- Use a `ResizeObserver` (or derive from `sortedStylists.length`) to compute `columnWidth = containerWidth / stylistCount`
-- Store a boolean `isCondensed = columnWidth < 120` in state
+### 1. Track column width as a number (not just boolean)
+Replace `isCondensed` boolean with a numeric `columnWidth` state. Derive two thresholds:
+- `isCondensed = columnWidth < 120` — vertical stack mode (existing)
+- `isMedium = columnWidth >= 120 && columnWidth < 200` — horizontal but compact
 
-### 2. Dual layout rendering
-**When `isCondensed` (narrow columns):**
-```text
-┌─────────────┐
-│      ●      │  ← status dot absolute
-│    [Ava]    │  ← avatar centered
-│  Sarah S.   │  ← condensed name
-│    75%      │  ← utilization
-│   Studio…   │  ← level truncated
-└─────────────┘
-```
-- Vertical stack: `flex-col items-center text-center gap-1`
-- Name: "First L." format
-- Text sizes: `text-[11px]` name, `text-[10px]` stats
+### 2. Normal (wide ≥ 200px) layout
+- Status dot + "Booking" label, positioned absolute top-right
+- Full display name (e.g., "Lex Feddern")
+- Utilization + level on second row as-is
 
-**When normal width:**
-```text
-┌──────────────────────────────── ● ┐
-│ [Ava]  Sarah Spencer    75%      │
-│        Studio Artist             │
-└──────────────────────────────────┘
-```
-- Horizontal: `flex items-center gap-2`
-- Full display name
+### 3. Medium (120–200px) layout
+- Status dot only (no label), absolute top-right
+- Condensed name ("First L." format, e.g., "Lex F.")
 - Utilization + level on second row
-- Text sizes: `text-xs` name, `text-[11px]` stats
 
-### 3. Implementation detail
-- Add `useRef` + `useEffect` with `ResizeObserver` on the header flex container (the `div` wrapping all stylist columns, excluding the week indicator)
-- Threshold: ~120px per column triggers condensed mode
-- Both layouts keep the same tooltip, avatar hover, and status dot behavior
+### 4. Condensed (< 120px) — no change
+Keeps existing vertical stack with condensed name.
+
+### Implementation detail
+
+**ResizeObserver** — store `colWidth` in state instead of a boolean:
+```tsx
+const [columnWidth, setColumnWidth] = useState(200);
+const isCondensed = columnWidth < 120;
+const isMedium = columnWidth < 200;
+```
+
+**Status dot** — add "Booking" label conditionally:
+```tsx
+<span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
+{!isMedium && (
+  <span className="text-[10px] text-muted-foreground">
+    {acceptingClients ? 'Booking' : 'Not Booking'}
+  </span>
+)}
+```
+
+**Name** — use condensed format when medium:
+```tsx
+<span className="text-xs font-medium leading-tight truncate">
+  {isMedium ? condensedName : fullName}
+</span>
+```
+
+**Status dot placement** — always absolute top-right in both normal and medium modes (currently inline in normal mode, needs to move to absolute).
 
 Single file change, no new dependencies.
 
