@@ -302,7 +302,7 @@ export function DayView({
   }, [stylistLevels]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const headerRowRef = useRef<HTMLDivElement>(null);
-  const [isCondensed, setIsCondensed] = useState(false);
+  const [columnWidth, setColumnWidth] = useState(200);
 
   // Auto-scroll to 1 hour before opening time
   useEffect(() => {
@@ -400,7 +400,7 @@ export function DayView({
       for (const entry of entries) {
         const containerWidth = entry.contentRect.width - 70; // subtract week indicator
         const colWidth = containerWidth / count;
-        setIsCondensed(colWidth < 120);
+        setColumnWidth(colWidth);
       }
     });
     observer.observe(el);
@@ -529,6 +529,9 @@ export function DayView({
                 const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
                 const acceptingClients = stylist.is_booking !== false && stylist.lead_pool_eligible !== false;
 
+                const isCondensed = columnWidth < 120;
+                const isMedium = columnWidth < 200;
+
                 const fullName = formatDisplayName(stylist.full_name, stylist.display_name);
                 const condensedName = (() => {
                   const parts = fullName.trim().split(' ');
@@ -536,13 +539,20 @@ export function DayView({
                   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
                 })();
 
-                // Status dot (shared)
+                const displayName = isMedium ? condensedName : fullName;
+
+                // Status dot — absolute top-right in all modes
                 const statusDot = (
-                  <div className={cn('flex items-center gap-1', isCondensed ? 'absolute top-1.5 right-1.5' : '')}>
+                  <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className={cn('flex items-center gap-1 cursor-default')}>
+                        <span className="flex items-center gap-1 cursor-default">
                           <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
+                          {!isMedium && (
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              {acceptingClients ? 'Booking' : 'Not Booking'}
+                            </span>
+                          )}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="text-xs">
@@ -555,7 +565,7 @@ export function DayView({
                 const avatar = (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', isCondensed ? 'h-8 w-8' : 'h-8 w-8 shrink-0')}>
+                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-8 w-8 shrink-0')}>
                         <AvatarImage src={stylist.photo_url || undefined} />
                         <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))]">
                           {fullName.slice(0, 2).toUpperCase()}
@@ -570,6 +580,7 @@ export function DayView({
                   </Tooltip>
                 );
 
+                // Condensed (< 120px) — vertical stack
                 if (isCondensed) {
                   return (
                     <div
@@ -589,18 +600,16 @@ export function DayView({
                   );
                 }
 
-                // Normal (wide) layout
+                // Normal + Medium — horizontal layout
                 return (
                   <div
                     key={stylist.user_id}
-                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-start gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
+                    className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
                   >
+                    {statusDot}
                     {avatar}
                     <div className="flex flex-col min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs font-medium leading-tight truncate">{fullName}</span>
-                        {statusDot}
-                      </div>
+                      <span className="text-xs font-medium leading-tight truncate">{displayName}</span>
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className={cn('text-[11px]', pctColor)}>{pct}%</span>
                         {levelInfo && (
