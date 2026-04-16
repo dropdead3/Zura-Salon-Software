@@ -1,14 +1,22 @@
 
 
-# Change Avatar Radius to 5px
+# Make Booking Indicator Label Green to Match Dot
 
-## Change — `src/components/dashboard/schedule/DayView.tsx`
+## Change — `src/components/dashboard/schedule/DayView.tsx` (line 612)
 
-Replace `rounded-lg` (8px) with `rounded-[5px]` on all three instances added in the previous change:
+Update the "Booking" / "Not Booking" label color to match its corresponding dot color instead of using neutral `text-muted-foreground`.
 
-1. **Avatar container** (line ~628): `rounded-lg` → `rounded-[5px]`
-2. **AvatarImage** (line ~629): `rounded-lg` → `rounded-[5px]`
-3. **AvatarFallback** (line ~630): `rounded-lg` → `rounded-[5px]`
+**Current:**
+```tsx
+<span className="text-[10px] text-muted-foreground whitespace-nowrap">
+```
 
-Three class swaps, one file.
+**New:**
+```tsx
+<span className={cn("text-[10px] whitespace-nowrap", acceptingClients ? "text-emerald-500" : "text-destructive/70")}>
+```
+
+When `acceptingClients` is true, the label turns emerald-500 (matching the green dot). When false, it uses `text-destructive/70` (matching the red dot).
+
+One line, one file.
 
