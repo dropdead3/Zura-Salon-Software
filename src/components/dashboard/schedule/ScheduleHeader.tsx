@@ -250,11 +250,23 @@ export function ScheduleHeader({
               aria-label="Pick a date"
             >
               {/* Compact single-line at < @xl — abbreviated, no year */}
-              <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
-                {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
+              <div className="@xl/schedhdr:hidden">
+                {isOrgToday(currentDate) && (
+                  <div className="text-[9px] font-display tracking-[0.2em] text-primary uppercase leading-none mb-0.5">
+                    Today
+                  </div>
+                )}
+                <div className="text-sm font-display tracking-wide whitespace-nowrap">
+                  {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
+                </div>
               </div>
               {/* Two-line at @xl+ */}
               <div className="hidden @xl/schedhdr:block">
+                {isOrgToday(currentDate) && (
+                  <div className="text-[10px] font-display tracking-[0.2em] text-primary uppercase leading-none mb-0.5">
+                    Today
+                  </div>
+                )}
                 <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
                   {formatDate(currentDate, 'EEEE')}
                 </div>
