@@ -542,9 +542,8 @@ export function DayView({
   // Current time indicator
   const { isToday: isDayToday, nowMinutes: dayNowMins } = useOrgNow();
   const showCurrentTime = isDayToday(date);
-  const currentTimeOffset = showCurrentTime
-    ? (dayNowMins - (hoursStart * 60)) / slotInterval * ROW_HEIGHT
-    : 0;
+  const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
+    getCurrentTimeRenderMetrics(dayNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
   // getOverlapInfo is now imported from @/lib/schedule-utils
 
