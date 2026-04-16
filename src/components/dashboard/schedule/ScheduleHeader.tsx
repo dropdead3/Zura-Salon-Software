@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { formatFullDisplayName } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
@@ -120,17 +120,6 @@ export function ScheduleHeader({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
   const [locationSelectOpen, setLocationSelectOpen] = useState(false);
-  const locationCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cancelLocationClose = () => {
-    if (locationCloseTimerRef.current) {
-      clearTimeout(locationCloseTimerRef.current);
-      locationCloseTimerRef.current = null;
-    }
-  };
-  const scheduleLocationClose = () => {
-    cancelLocationClose();
-    locationCloseTimerRef.current = setTimeout(() => setLocationSelectOpen(false), 120);
-  };
 
   // Org-timezone-aware "today"
   const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
@@ -345,7 +334,6 @@ export function ScheduleHeader({
               value={selectedLocation}
               onValueChange={(v) => {
                 onLocationChange(v);
-                cancelLocationClose();
                 setLocationSelectOpen(false);
               }}
               open={locationSelectOpen}
@@ -353,15 +341,12 @@ export function ScheduleHeader({
             >
               <SelectTrigger
                 className="h-7 w-[280px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
-                onMouseEnter={cancelLocationClose}
-                onMouseLeave={scheduleLocationClose}
               >
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
               <SelectContent
                 className="data-[side=bottom]:translate-y-0 data-[side=top]:translate-y-0"
-                onMouseEnter={cancelLocationClose}
-                onMouseLeave={scheduleLocationClose}
+                onPointerLeave={() => setLocationSelectOpen(false)}
               >
                 {[...locations].sort((a, b) => a.name.localeCompare(b.name)).map((loc) => {
                   const cityState = loc.city 
