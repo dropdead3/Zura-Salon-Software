@@ -2052,9 +2052,20 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
         await logSync(supabase, 'appointments', 'failed', 0, error.message);
         notifyFailure('appointments', error.message);
       }
+      }
+
+      // Also sync roster/breaks for the same date range
+      try {
+        results.roster = await syncRoster(supabase, businessId, username, password, defaultFrom, defaultTo);
+        await logSync(supabase, 'roster', 'success', results.roster.synced);
+      } catch (error: any) {
+        results.roster = { error: error.message };
+        await logSync(supabase, 'roster', 'failed', 0, error.message);
+        console.error('Roster sync failed:', error.message);
+      }
     }
 
-    if (sync_type === 'clients' || sync_type === 'all') {
+
       try {
         results.clients = await syncClients(supabase, businessId, username, password);
         await logSync(supabase, 'clients', 'success', results.clients.synced);
