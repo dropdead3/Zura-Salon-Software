@@ -947,7 +947,7 @@ export default function Schedule() {
                 setView={setView}
                 selectedStaffIds={selectedStaffIds}
                 onStaffToggle={handleStaffToggle}
-                stylists={allStylists}
+                stylists={headerStylists}
                 selectedLocation={selectedLocation}
                 onLocationChange={setSelectedLocation}
                 locations={locations}
