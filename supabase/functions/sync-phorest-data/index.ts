@@ -1870,11 +1870,23 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
   const branchData = await phorestRequest("/branch", businessId, username, password);
   const branches = branchData._embedded?.branches || branchData.branches || (Array.isArray(branchData) ? branchData : []);
 
-  // Get staff mappings to resolve phorest_staff_id -> user_id + org
+  // Get staff mappings to resolve phorest_staff_id -> user_id
   const { data: staffMappings } = await supabase
     .from('phorest_staff_mapping')
-    .select('phorest_staff_id, user_id, organization_id');
-  const staffMap = new Map((staffMappings || []).map((m: any) => [m.phorest_staff_id, m]));
+    .select('phorest_staff_id, user_id');
+
+  // Get organization_id for each user from employee_profiles
+  const userIds = [...new Set((staffMappings || []).map((m: any) => m.user_id).filter(Boolean))];
+  const { data: profiles } = userIds.length > 0
+    ? await supabase.from('employee_profiles').select('user_id, organization_id').in('user_id', userIds)
+    : { data: [] };
+  const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p.organization_id]));
+
+  const staffMap = new Map((staffMappings || []).map((m: any) => [
+    m.phorest_staff_id,
+    { user_id: m.user_id, organization_id: profileMap.get(m.user_id) || null }
+  ]));
+  console.log(`Staff mapping has ${staffMap.size} entries (${profileMap.size} with org). Keys: ${[...staffMap.keys()].slice(0, 5).join(', ')}...`);
 
   let totalBlocks = 0;
 
@@ -1891,6 +1903,10 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
       let page = 0;
       let totalPages = 1;
       const blocks: any[] = [];
+      let skippedMissingFields = 0;
+      let skippedUnmapped = 0;
+      const unmappedStaffIds = new Set<string>();
+      let loggedFirstBreak = false;
 
       while (page < totalPages) {
         const breakData = await phorestRequest(
@@ -1907,6 +1923,13 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
         const breaks = breakData._embedded?.breaks || breakData.breaks || (Array.isArray(breakData) ? breakData : []);
         console.log(`Branch ${branchId}, page ${page}: ${breaks.length} breaks`);
 
+        // Log first break object for field name verification
+        if (!loggedFirstBreak && breaks.length > 0) {
+          console.log(`First break object keys: ${JSON.stringify(Object.keys(breaks[0]))}`);
+          console.log(`First break object: ${JSON.stringify(breaks[0])}`);
+          loggedFirstBreak = true;
+        }
+
         for (const brk of breaks) {
           const staffId = brk.staffId || brk.staff_id;
           const breakDate = brk.breakDate || brk.break_date;
@@ -1914,11 +1937,18 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
           const endTime = brk.endTime || brk.end_time;
           const breakId = brk.breakId || brk.break_id || brk.id;
 
-          if (!staffId || !breakDate || !startTime || !endTime) continue;
+          if (!staffId || !breakDate || !startTime || !endTime) {
+            skippedMissingFields++;
+            continue;
+          }
 
           const mapping = staffMap.get(staffId);
           const orgId = mapping?.organization_id;
-          if (!orgId) continue; // Skip unmapped staff
+          if (!orgId) {
+            skippedUnmapped++;
+            unmappedStaffIds.add(staffId);
+            continue;
+          }
 
           const labelRaw = brk.label || brk.name || 'Break';
           const blockType = labelRaw.toLowerCase().includes('lunch') ? 'lunch' : 'break';
@@ -1941,16 +1971,37 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
         page++;
       }
 
-      // Upsert in batches
-      for (let i = 0; i < blocks.length; i += 100) {
-        const batch = blocks.slice(i, i + 100);
-        const { error } = await supabase
+      console.log(`Branch ${branchId} break diagnostics: ${blocks.length} valid, ${skippedMissingFields} skipped (missing fields), ${skippedUnmapped} skipped (unmapped staff)`);
+      if (unmappedStaffIds.size > 0) {
+        console.log(`Unmapped staffIds for branch ${branchId}: ${[...unmappedStaffIds].join(', ')}`);
+      }
+
+      if (blocks.length > 0) {
+        // Delete existing phorest-sourced blocks for this branch + date range, then insert fresh
+        const { error: deleteError } = await supabase
           .from('staff_schedule_blocks')
-          .upsert(batch, { onConflict: 'phorest_id' });
-        if (error) {
-          console.error(`Break upsert error for branch ${branchId}:`, error.message);
-        } else {
-          totalBlocks += batch.length;
+          .delete()
+          .eq('location_id', branchId)
+          .eq('source', 'phorest')
+          .gte('block_date', dateFrom)
+          .lte('block_date', dateTo);
+
+        if (deleteError) {
+          console.error(`Delete error for branch ${branchId}:`, deleteError.message);
+        }
+
+        // Insert in batches
+        for (let i = 0; i < blocks.length; i += 100) {
+          const batch = blocks.slice(i, i + 100);
+          const { error } = await supabase
+            .from('staff_schedule_blocks')
+            .insert(batch);
+          if (error) {
+            console.error(`Break insert error for branch ${branchId}:`, error.message);
+            console.error(`Sample block: ${JSON.stringify(batch[0])}`);
+          } else {
+            totalBlocks += batch.length;
+          }
         }
       }
     } catch (e: any) {
@@ -1958,7 +2009,7 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
     }
   }
 
-  console.log(`Break sync complete: ${totalBlocks} break blocks upserted`);
+  console.log(`Break sync complete: ${totalBlocks} break blocks inserted`);
   return { synced: totalBlocks };
 }
 
