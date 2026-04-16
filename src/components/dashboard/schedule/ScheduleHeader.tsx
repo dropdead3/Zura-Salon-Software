@@ -16,12 +16,9 @@ import {
   
   Check,
   Sparkles,
-  FileText,
-  Users,
   ClipboardCheck,
   Clock,
 } from 'lucide-react';
-import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import {
