@@ -200,7 +200,7 @@ export function ScheduleHeader({
                   <button
                     onClick={onToggleShiftsView}
                     className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                      'hidden @lg/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
                       showShiftsView
                         ? 'bg-[hsl(var(--sidebar-foreground))] text-[hsl(var(--sidebar-background))] font-medium'
                         : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
@@ -231,7 +231,7 @@ export function ScheduleHeader({
                   <TooltipTrigger asChild>
                     <button
                       className={cn(
-                        'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                        'hidden @lg/schedhdr:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
                         'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
                       )}
                     >
@@ -261,22 +261,43 @@ export function ScheduleHeader({
           </div>
         </div>
 
-        {/* Center: Date Display */}
-        <div className="text-center min-w-0">
-          {/* Compact single-line at < @xl — abbreviated, no year */}
-          <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
-            {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
-          </div>
-          {/* Two-line at @xl+ */}
-          <div className="hidden @xl/schedhdr:block">
-            <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
-              {formatDate(currentDate, 'EEEE')}
-            </div>
-            <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
-              {formatDate(currentDate, 'MMMM d, yyyy')}
-            </div>
-          </div>
-        </div>
+        {/* Center: Date Display — also acts as date picker trigger */}
+        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="text-center shrink-0 px-2 py-1 cursor-pointer rounded-md hover:bg-[hsl(var(--sidebar-accent))]/40 transition-colors"
+              aria-label="Pick a date"
+            >
+              {/* Compact single-line at < @xl — abbreviated, no year */}
+              <div className="@xl/schedhdr:hidden text-sm font-display tracking-wide whitespace-nowrap">
+                {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
+              </div>
+              {/* Two-line at @xl+ */}
+              <div className="hidden @xl/schedhdr:block">
+                <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
+                  {formatDate(currentDate, 'EEEE')}
+                </div>
+                <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
+                  {formatDate(currentDate, 'MMMM d, yyyy')}
+                </div>
+              </div>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="center">
+            <CalendarPicker
+              mode="single"
+              selected={currentDate}
+              onSelect={(date) => {
+                if (date) {
+                  setCurrentDate(date);
+                  setDatePickerOpen(false);
+                }
+              }}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
         </div>
         {/* End Row 1 wrapper (<@md). At @md+, this wrapper is `contents` so children flow into the parent row. */}
 
@@ -298,7 +319,7 @@ export function ScheduleHeader({
                 <Button
                   variant="ghost"
                   size="icon"
-                   className="relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                   className="hidden @lg/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
                   onClick={onOpenBlockManager}
                 >
                   <Users className="h-4 w-4" />
@@ -320,7 +341,7 @@ export function ScheduleHeader({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                  className="hidden @lg/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
                   onClick={onOpenDrafts}
                 >
                   <FileText className="h-4 w-4" />
