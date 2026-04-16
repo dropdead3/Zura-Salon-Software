@@ -1,49 +1,26 @@
 
 
-# Replace "All Stylists" Toggle with Dropdown Filter Option
+# Add Per-Stylist Capacity Utilization in Column Headers
 
-## Problem
-The current "All Stylists" toggle at the bottom of the staff popover is easy to miss and creates a confusing UX. The user wants it replaced with a selectable filter option in the dropdown — similar to "All Stylists With Appointments" — called "All Stylists That Work This Day."
+## What it does
+Adds a small utilization percentage below each stylist's name in the DayView header bar. Shows how much of their available time is booked with actual client appointments.
 
-## Approach
-Replace the toggle with a new top-level filter mode. The staff filter will have three modes:
-1. **All Stylists With Appointments** — only show stylists who have appointments (current default when toggle is off)
-2. **All Stylists That Work This Day** — show all stylists scheduled to work on the selected day (current default when toggle is on)
-3. **Individual stylist checkboxes** — unchanged
+## Calculation
+- **Booked minutes**: Sum of all appointment durations for that stylist on that day, excluding `cancelled`, `no_show`, and `Block`/`Break` categories
+- **Available minutes**: `(hoursEnd - hoursStart) * 60` (the visible schedule window)
+- **Utilization**: `bookedMinutes / availableMinutes * 100`, capped at 100%
 
 ## Changes
 
-### `src/components/dashboard/schedule/ScheduleHeader.tsx`
-- Remove the `showAllStylists` / `onShowAllStylistsChange` props
-- Add a new prop: `staffFilterMode: 'with-appointments' | 'work-this-day'` and `onStaffFilterModeChange`
-- Replace the toggle section (lines 377-396) with nothing
-- Add "All Stylists That Work This Day" as a second selectable option below "All Stylists With Appointments" (lines 352-362)
-- Update the button label (line 341) to show "All Stylists That Work This Day" when that mode is active
-- Both options show a checkmark when active; selecting either clears individual staff selections
+### `src/components/dashboard/schedule/DayView.tsx`
 
-### `src/pages/dashboard/Schedule.tsx`
-- Replace `showAllStylists` state with `staffFilterMode` state (`'work-this-day'` as default to match current behavior)
-- Update `displayedStylists` memo: when mode is `'with-appointments'`, filter to only those with appointments; when `'work-this-day'`, show all (current `allStylists`)
-- Pass `staffFilterMode` / `onStaffFilterModeChange` to `ScheduleHeader` instead of `showAllStylists` / `onShowAllStylistsChange`
-- Update `onStaffToggle('all')` to set mode to `'with-appointments'` (preserving current "All" = appointments-only behavior)
+1. **Add a `useMemo` hook** that computes a `Map<string, number>` of `stylistId → utilization%` from `appointmentsByStylist`, filtering out Block/Break categories and cancelled/no_show statuses.
 
-### `ScheduleHeader` prop interface update
-- Remove: `showAllStylists?: boolean`, `onShowAllStylistsChange?: (value: boolean) => void`
-- Add: `staffFilterMode?: 'with-appointments' | 'work-this-day'`, `onStaffFilterModeChange?: (mode: 'with-appointments' | 'work-this-day') => void`
+2. **Update the stylist header cell** (lines 465-479) to add the utilization percentage below the name:
+   - Show as a small text like `72%` with a subtle color indicator (green ≥75%, amber 50-74%, muted <50%)
+   - Uses `text-xs text-muted-foreground` styling, fitting naturally next to or below the stylist name
+   - Wrapped in the existing flex layout — no structural changes needed
 
-## UX Result
-The dropdown will look like:
-```text
-┌──────────────────────────────────┐
-│ ✓ All Stylists With Appointments │
-│   All Stylists That Work This Day│
-│ ─────────────────────────────── │
-│ □ Trinity Graves                 │
-│ □ Lex Feddern                    │
-│ □ Samantha Bloom                 │
-│ ...                              │
-└──────────────────────────────────┘
-```
-
-Selecting either "All" option clears individual selections. Selecting an individual stylist deselects both "All" options.
+### No new files or dependencies required
+All data is already available in the component via `appointments`, `stylists`, `hoursStart`, and `hoursEnd`.
 
