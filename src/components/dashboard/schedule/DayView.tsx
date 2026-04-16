@@ -285,9 +285,12 @@ function AppointmentCard({
   const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel);
 
+  const widthPadding = totalOverlapping > 1 ? 2 : 4;
+  const leftOffset = totalOverlapping > 1 ? 1 : 2;
+
   const shrunkWidth = isDragOverlay ? undefined : isHoveredRight
-    ? `calc(${widthPercent * 0.7}% - 4px)`
-    : `calc(${widthPercent}% - 4px)`;
+    ? `calc(${widthPercent * 0.7}% - ${widthPadding}px)`
+    : `calc(${widthPercent}% - ${widthPadding}px)`;
 
   return (
     <div
@@ -301,7 +304,7 @@ function AppointmentCard({
       style={{
         ...(isDragOverlay ? { position: 'relative', width: '200px', height: style.height } : style),
         ...(!isDragOverlay ? {
-          left: `calc(${leftPercent}% + 2px)`,
+          left: `calc(${leftPercent}% + ${leftOffset}px)`,
           width: shrunkWidth,
           transition: 'width 200ms ease-out',
         } : {}),
