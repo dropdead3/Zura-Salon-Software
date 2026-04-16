@@ -666,8 +666,19 @@ export function AppointmentCardContent({
 }
 
 // ─── Helper to compute card size from duration ────────────────
-export function getCardSize(startTime: string, endTime: string): CardSize {
+export function getCardSize(startTime: string, endTime: string, zoomLevel: number = 0): CardSize {
   const duration = parseTimeToMinutes(endTime) - parseTimeToMinutes(startTime);
+  if (zoomLevel === 2) {
+    // Max zoom: everything is at least medium, 16+ min is full
+    if (duration <= 15) return 'medium';
+    return 'full';
+  }
+  if (zoomLevel === 1) {
+    if (duration <= 15) return 'compact';
+    if (duration <= 30) return 'medium';
+    return 'full';
+  }
+  // Default (level 0)
   if (duration <= 30) return 'compact';
   if (duration <= 59) return 'medium';
   return 'full';

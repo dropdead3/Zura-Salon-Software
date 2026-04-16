@@ -68,6 +68,7 @@ interface DayViewProps {
   currentUserId?: string;
   adminMeetings?: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] })[];
   onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
+  zoomLevel?: number;
 }
 
 // Use consolidated status colors from design tokens
@@ -143,7 +144,7 @@ function DroppableSlot({
     <div
       ref={setNodeRef}
       className={cn(
-        'h-5 group relative',
+        'group relative',
         borderClass,
         isPastSlot
           ? 'bg-muted/40 cursor-not-allowed'
@@ -194,6 +195,8 @@ interface AppointmentCardProps {
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   hasCoverageScheduled?: boolean;
   date?: Date;
+  rowHeight?: number;
+  zoomLevel?: number;
 }
 
 function AppointmentCard({
@@ -262,10 +265,10 @@ function AppointmentCard({
     };
   }, [isDragOverlay, isHoveredRight]);
 
-  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
+  const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight);
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
-  const size = getCardSize(appointment.start_time, appointment.end_time);
+  const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel);
 
   const shrunkWidth = isDragOverlay ? undefined : isHoveredRight
     ? `calc(${widthPercent * 0.7}% - 4px)`
@@ -347,8 +350,10 @@ export function DayView({
   currentUserId,
   adminMeetings = [],
   onMeetingClick,
+  zoomLevel = 0,
 }: DayViewProps) {
-  const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
+  const ROW_HEIGHTS = [20, 30, 40];
+  const ROW_HEIGHT = ROW_HEIGHTS[zoomLevel] ?? 20;
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
