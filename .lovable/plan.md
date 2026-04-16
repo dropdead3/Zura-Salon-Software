@@ -1,13 +1,19 @@
 
 
-# Reduce Day Button Radii to Match Today
+# Align Bottom Action Bar Padding with Sidebar
 
-## Change — `src/components/dashboard/schedule/ScheduleHeader.tsx` (line 465)
+## Change — `src/pages/dashboard/Schedule.tsx` (line 960)
 
-The quick-day buttons currently use `rounded-xl` while the Today button uses `rounded-lg`. Change line 465 to match:
+Reduce the bottom padding of the action bar container from `pb-4` (16px) to `pb-3` (12px) to match the sidebar's `bottom-3` spacing.
 
+**Current:**
 ```
-rounded-xl → rounded-lg
+<div className="shrink-0 px-4 pr-20 pb-4 pt-1">
+```
+
+**New:**
+```
+<div className="shrink-0 px-4 pr-20 pb-3 pt-1">
 ```
 
 Single class change, one line, one file.
