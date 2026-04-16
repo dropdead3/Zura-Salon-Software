@@ -297,9 +297,11 @@ export function BookingWizard({
                     clients={clients}
                     isLoading={isLoadingClients}
                     searchQuery={clientSearch}
-                    onSearchChange={setClientSearch}
+                    onSearchChange={(q) => { setClientSearch(q); if (q) setActiveLetter(null); }}
                     onSelectClient={handleSelectClient}
                     onNewClient={() => setStep('newClient')}
+                    activeLetter={activeLetter}
+                    onLetterChange={(l) => { setActiveLetter(l); if (l) setClientSearch(''); }}
                   />
                 )}
 
