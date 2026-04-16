@@ -10,13 +10,7 @@ interface ScheduleTypeSelectorProps {
   selectedTime?: string;
 }
 
-function formatTime12h(time: string): string {
-  try {
-    return format(parse(time, 'HH:mm', new Date()), 'h:mm a');
-  } catch {
-    return time;
-  }
-}
+import { formatTime12h } from '@/lib/schedule-utils';
 
 /**
  * For dual-role users (admin + service provider): 
