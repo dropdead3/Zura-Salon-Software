@@ -60,6 +60,7 @@ export interface AppointmentCardContentProps {
   appointment: PhorestAppointment;
   variant: 'grid' | 'agenda';
   size: CardSize;
+  pixelHeight?: number;
   isSelected?: boolean;
   isAssisting?: boolean;
   hasAssistants?: boolean;
@@ -176,6 +177,7 @@ function GridContent({
   assistantProfilesMap,
   serviceBands,
   duration,
+  pixelHeight,
   showStylistBadge,
   showClientPhone,
   showClientAvatar,
@@ -189,6 +191,7 @@ function GridContent({
   assistantProfilesMap?: Map<string, import('@/hooks/useAppointmentAssistantNames').AssistantProfile[]>;
   serviceBands: any[] | null;
   duration: number;
+  pixelHeight?: number;
   showStylistBadge?: boolean;
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
@@ -289,19 +292,21 @@ function GridContent({
         </>
       )}
 
-      {/* Service line */}
-      {duration >= 60 && serviceBands && serviceBands.length > 1 ? (
-        <div className="text-[13px] opacity-90 truncate">
-          {serviceBands.map(b => `${b.name} ${b.duration}min`).join(' + ')}
-        </div>
-      ) : (
-        <div className="text-[13px] opacity-90 truncate">
-          {(duration >= 45 && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
-        </div>
+      {/* Service line — show when pixelHeight >= 40, fallback to duration >= 45 */}
+      {(pixelHeight ? pixelHeight >= 40 : true) && (
+        (pixelHeight ? pixelHeight >= 70 : duration >= 60) && serviceBands && serviceBands.length > 1 ? (
+          <div className="text-[13px] opacity-90 truncate">
+            {serviceBands.map(b => `${b.name} ${b.duration}min`).join(' + ')}
+          </div>
+        ) : (
+          <div className="text-[13px] opacity-90 truncate">
+            {((pixelHeight ? pixelHeight >= 40 : duration >= 45) && formatServicesWithDuration(appointment.service_name, serviceLookup)) || appointment.service_name}
+          </div>
+        )
       )}
 
-      {/* Assisted by line — only when the card has enough vertical space */}
-      {size === 'full' && duration >= 75 && (() => {
+      {/* Assisted by line — pixelHeight >= 85 or duration >= 75 */}
+      {size === 'full' && (pixelHeight ? pixelHeight >= 85 : duration >= 75) && (() => {
         const names = assistantNamesMap?.get(appointment.id);
         if (!names || names.length === 0) return null;
         return (
@@ -311,8 +316,8 @@ function GridContent({
         );
       })()}
 
-      {/* Time + price — defer until taller cards so 60min cards stay clean */}
-      {size === 'full' && duration >= 60 && (
+      {/* Time + price — pixelHeight >= 65 or duration >= 60 */}
+      {size === 'full' && (pixelHeight ? pixelHeight >= 65 : duration >= 60) && (
         <div className="text-[13px] opacity-80 mt-0.5 flex items-center justify-between">
           <span className="whitespace-nowrap truncate">{formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}</span>
           {appointment.total_price != null && appointment.total_price > 0 && (
@@ -323,8 +328,8 @@ function GridContent({
         </div>
       )}
 
-      {/* Rescheduled from line — reserve for the tallest cards only */}
-      {size === 'full' && duration >= 90 && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
+      {/* Rescheduled from line — pixelHeight >= 105 or duration >= 90 */}
+      {size === 'full' && (pixelHeight ? pixelHeight >= 105 : duration >= 90) && (appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
         <div className="text-[10px] opacity-70 italic truncate flex items-center gap-0.5">
           <ArrowRightLeft className="h-2.5 w-2.5 shrink-0" />
           Moved from {formatTime12h((appointment as any).rescheduled_from_time)}
@@ -467,6 +472,7 @@ export function AppointmentCardContent({
   appointment,
   variant,
   size,
+  pixelHeight,
   isSelected = false,
   isAssisting = false,
   hasAssistants = false,
@@ -651,6 +657,7 @@ export function AppointmentCardContent({
         assistantProfilesMap={assistantProfilesMap}
         serviceBands={serviceBands}
         duration={duration}
+        pixelHeight={pixelHeight}
         showStylistBadge={showStylistBadge}
         showClientPhone={showClientPhone}
         showClientAvatar={showClientAvatar}
@@ -663,7 +670,13 @@ export function AppointmentCardContent({
 }
 
 // ─── Helper to compute card size from duration ────────────────
-export function getCardSize(startTime: string, endTime: string, zoomLevel: number = 0): CardSize {
+export function getCardSize(startTime: string, endTime: string, zoomLevel: number = 0, pixelHeight?: number): CardSize {
+  // When pixelHeight is provided, use pixel-based thresholds (zoom-aware)
+  if (pixelHeight != null) {
+    if (pixelHeight < 28) return 'compact';
+    if (pixelHeight < 55) return 'medium';
+    return 'full';
+  }
   const duration = parseTimeToMinutes(endTime) - parseTimeToMinutes(startTime);
   // Level 3 (5-min): huge pixel density per minute
   if (zoomLevel === 3) {

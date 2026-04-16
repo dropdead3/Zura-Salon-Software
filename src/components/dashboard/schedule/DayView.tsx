@@ -281,9 +281,10 @@ function AppointmentCard({
   }, [isDragOverlay, isHoveredRight]);
 
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight, slotInterval);
+  const pixelHeight = parseInt(style.height);
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
-  const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel);
+  const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel, pixelHeight);
 
   const widthPadding = totalOverlapping > 1 ? 2 : 4;
   const leftOffset = totalOverlapping > 1 ? 1 : 2;
@@ -318,6 +319,7 @@ function AppointmentCard({
         appointment={appointment}
         variant="grid"
         size={size}
+        pixelHeight={pixelHeight}
         isSelected={isSelected}
         isAssisting={isAssisting}
         hasAssistants={hasAssistants}
