@@ -35,13 +35,7 @@ interface AssistantBlockManagerSheetProps {
   currentDate: Date;
 }
 
-function formatTime12h(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes?.slice(0, 2)} ${ampm}`;
-}
+import { formatTime12h } from '@/lib/schedule-utils';
 
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, string> = {
