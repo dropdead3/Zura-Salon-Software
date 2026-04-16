@@ -302,6 +302,11 @@ export function ScheduleHeader({
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 Booked
               </span>
+              <MetricInfoTooltip
+                title="Capacity signal"
+                description="Dots under each date reflect org-wide booked time vs available shift time. White = open · Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%."
+                side="top"
+              />
             </div>
           </PopoverContent>
         </Popover>
