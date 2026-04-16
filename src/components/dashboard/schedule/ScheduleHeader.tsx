@@ -140,7 +140,8 @@ export function ScheduleHeader({
   const [locationSelectOpen, setLocationSelectOpen] = useState(false);
 
   // Org-timezone-aware "today"
-  const { isToday: isOrgToday, todayDate: orgToday } = useOrgNow();
+  const { isToday: isOrgToday, todayDate: orgToday, timezone } = useOrgNow();
+  const relativeDayLabel = getRelativeDayLabel(getOrgDayOffset(currentDate, timezone));
 
   // Stylist levels — used to render the per-row level chip + color.
   const { data: allLevels = [] } = useStylistLevels();
