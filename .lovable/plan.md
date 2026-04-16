@@ -1,48 +1,44 @@
 
-Good news: the break sync is now working. The problem has shifted from “not pulling” to “not showing.”
 
-## Root cause
-- Edge function logs show: `Break sync complete: 37 break blocks inserted`
-- Database inspection confirms 37 rows exist in `staff_schedule_blocks`
-- The mismatch is in `location_id`:
-  - `appointments.location_id` stores app location IDs like `north-mesa` / `val-vista-lakes`
-  - `staff_schedule_blocks.location_id` currently stores raw Phorest branch IDs like `hYztERWv...` / `6YPlWL5...`
-- `Schedule.tsx` passes the selected app location ID into `useStaffScheduleBlocks`
-- `useStaffScheduleBlocks` filters `staff_schedule_blocks.location_id = selectedLocation`
-- Result: breaks are filtered out before DayView / WeekView ever render them
+# Restyle Break Blocks to Match Appointment Cards
 
-## Plan
-1. Fix the sync writer
-- Update `supabase/functions/sync-phorest-data/index.ts`
-- Build a branch-to-location map from `locations.phorest_branch_id -> locations.id`
-- When inserting break blocks, store the app location ID in `staff_schedule_blocks.location_id` instead of the raw branch ID
-- Update the delete step to delete by mapped app location ID
-- Keep logging for unmapped branches so future sync issues are visible
+## What's changing
 
-2. Add a compatibility fallback in the reader
-- Update `src/hooks/useStaffScheduleBlocks.ts`
-- When a location is selected, resolve that location’s `phorest_branch_id`
-- Query blocks where `location_id` matches either:
-  - the app location ID, or
-  - the legacy Phorest branch ID
-- This makes existing synced records appear immediately after deploy, even before backfill
+The break/lunch overlays on the schedule currently use a flat hatched-pattern style. We'll restyle them to match the appointment card aesthetic: rounded corners, left border accent, proper padding, readable typography, and hover effects.
 
-3. Backfill existing break rows
-- Run a one-time data update to convert existing `staff_schedule_blocks.location_id` values from raw branch IDs to app location IDs using `locations.phorest_branch_id`
-- No schema migration is required for this fix
+## Design
 
-4. Verify schedule rendering
-- Re-test Day and Week views for both locations
-- Confirm breaks appear under the correct stylist column and correct date
-- Confirm switching locations hides/shows the right break blocks
+Break blocks will adopt the same visual language as appointment cards:
+- **Rounded `rounded-lg`** container (matching `AppointmentCardContent` grid cards)
+- **4px left border** accent (amber for break/lunch, muted for off/blocked, primary for meeting)
+- **Solid background** with subtle opacity instead of hatched lines — removing the `repeating-linear-gradient` pattern
+- **Card-like content layout**: icon + label on first line, time range on second line (when tall enough)
+- **Hover effect**: `hover:shadow-md hover:brightness-[1.08]` matching appointment cards
+- **Status badge** style label using a small pill (e.g., "Break", "Lunch")
+- Keeps the existing tooltip on hover for full details
 
-## Files to update
-- `supabase/functions/sync-phorest-data/index.ts`
-- `src/hooks/useStaffScheduleBlocks.ts`
+## File changes
 
-## Technical notes
-- DayView and WeekView do not appear to be the root cause; they already render whatever `scheduleBlocks` they receive
-- Database evidence already proves the mismatch:
-  - `appointments`: app location IDs
-  - `staff_schedule_blocks`: branch IDs
-- This is why appointments show while breaks do not
+### `src/components/dashboard/schedule/BreakBlockOverlay.tsx`
+
+1. Replace the hatched `backgroundImage` with solid fills using theme-aware colors (amber-based for breaks, muted for off/blocked)
+2. Add `rounded-lg`, `border-l-4`, `hover:shadow-md`, `transition-all` to match appointment card classes
+3. Structure internal content to show:
+   - **Compact** (< 28px): icon only
+   - **Medium** (28–54px): icon + label
+   - **Full** (≥ 55px): icon + label + time range
+4. Remove the diagonal stripe pattern entirely
+5. Add a small `mx-0.5` margin so break blocks don't touch the column edges flush (matching appointment card inset)
+
+### Color mapping (updated)
+
+| Block type | Background | Left border | Text |
+|-----------|-----------|------------|------|
+| break | `bg-amber-500/20` | `border-l-amber-500` | `text-amber-900 dark:text-amber-200` |
+| lunch | `bg-amber-500/20` | `border-l-amber-500` | `text-amber-900 dark:text-amber-200` |
+| off | `bg-muted/50` | `border-l-muted-foreground/40` | `text-muted-foreground` |
+| blocked | `bg-muted/40` | `border-l-muted-foreground/30` | `text-muted-foreground` |
+| meeting | `bg-primary/15` | `border-l-primary` | `text-primary` |
+
+No other files change — DayView and WeekView already render `BreakBlockOverlay` correctly.
+
