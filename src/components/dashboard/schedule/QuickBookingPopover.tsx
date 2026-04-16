@@ -141,17 +141,26 @@ function getSortLetterForClient(name: string): string {
   return ch >= 'A' && ch <= 'Z' ? ch : '#';
 }
 
-function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClient, onViewProfile }: {
+function ClientListWithAlphabet({ clients, isLoading, clientSearch, onSelectClient, onViewProfile, activeLetter: activeLetterProp, onLetterChange }: {
   clients: PhorestClient[]; isLoading: boolean; clientSearch: string;
   onSelectClient: (client: PhorestClient) => void; onViewProfile: (client: PhorestClient) => void;
+  activeLetter?: string | null;
+  onLetterChange?: (letter: string | null) => void;
 }) {
-  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const isControlled = onLetterChange !== undefined;
+  const [internalActiveLetter, setInternalActiveLetter] = useState<string | null>(null);
+  const activeLetter = isControlled ? (activeLetterProp ?? null) : internalActiveLetter;
+  const setActiveLetter = useCallback((next: string | null) => {
+    if (isControlled) onLetterChange?.(next);
+    else setInternalActiveLetter(next);
+  }, [isControlled, onLetterChange]);
   const letterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const sortedClients = useMemo(() => [...clients].sort((a, b) => getFirstNameForSort(a.name).toLowerCase().localeCompare(getFirstNameForSort(b.name).toLowerCase())), [clients]);
   const availableLetters = useMemo(() => { const s = new Set<string>(); sortedClients.forEach(c => s.add(getSortLetterForClient(c.name))); return s; }, [sortedClients]);
   const firstClientPerLetter = useMemo(() => { const m = new Map<string, string>(); sortedClients.forEach(c => { const l = getSortLetterForClient(c.name); if (!m.has(l)) m.set(l, c.id); }); return m; }, [sortedClients]);
-  const filteredClients = useMemo(() => { if (!activeLetter) return sortedClients; return sortedClients.filter(c => getSortLetterForClient(c.name) === activeLetter); }, [sortedClients, activeLetter]);
-  const handleLetterClick = useCallback((letter: string) => { setActiveLetter(prev => prev === letter ? null : letter); }, []);
+  // When controlled, the parent has already filtered the dataset server-side, so don't re-filter client-side.
+  const filteredClients = useMemo(() => { if (!activeLetter || isControlled) return sortedClients; return sortedClients.filter(c => getSortLetterForClient(c.name) === activeLetter); }, [sortedClients, activeLetter, isControlled]);
+  const handleLetterClick = useCallback((letter: string) => { setActiveLetter(activeLetter === letter ? null : letter); }, [activeLetter, setActiveLetter]);
   const setLetterRef = useCallback((letter: string, el: HTMLDivElement | null) => { if (el) letterRefs.current.set(letter, el); else letterRefs.current.delete(letter); }, []);
   const gi = (name: string) => { const p = name.trim().split(/\s+/); return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase(); };
   const fp = (phone: string | null) => { if (!phone) return null; const d = phone.replace(/\D/g, ''); if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`; if (d.length === 11 && d[0] === '1') return `(${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`; return phone; };
