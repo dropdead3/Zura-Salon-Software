@@ -31,7 +31,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
-import { UserPlus } from 'lucide-react';
+
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DayViewProps {
@@ -507,35 +507,28 @@ export function DayView({
                 const levelColor = levelInfo ? getLevelColor(levelInfo.index, stylistLevels.length) : null;
                 const pct = utilizationByStylist.get(stylist.user_id) ?? 0;
                 const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
-                const isBooking = stylist.is_booking !== false;
-                const isLeadPool = stylist.lead_pool_eligible !== false;
+                const acceptingClients = stylist.is_booking !== false && stylist.lead_pool_eligible !== false;
 
                 return (
-                  <div 
+                  <div
                     key={stylist.user_id} 
                     className="relative flex-1 min-w-0 bg-[hsl(var(--sidebar-background))]/95 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r border-[hsl(var(--sidebar-border))] last:border-r-0"
                   >
-                    {/* Booking + Lead Pool indicators — top-right corner */}
-                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1.5">
+                    {/* Accepting Clients indicator — top-right corner */}
+                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className={cn('flex items-center gap-1 cursor-default')}>
-                            <span className={cn('w-2 h-2 rounded-full shrink-0', isBooking ? 'bg-emerald-500' : 'bg-destructive/70')} />
-                            <span className={cn('text-[10px]', isBooking ? 'text-emerald-400' : 'text-destructive/70')}>
-                              {isBooking ? 'Booking' : 'Not Booking'}
+                            <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
+                            <span className={cn('text-[10px]', acceptingClients ? 'text-emerald-400' : 'text-destructive/70')}>
+                              {acceptingClients ? 'Accepting' : 'Not Accepting'}
                             </span>
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">{isBooking ? 'Accepting New Clients' : 'Not Accepting New Clients'}</TooltipContent>
+                        <TooltipContent side="bottom" className="text-xs">
+                          {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
+                        </TooltipContent>
                       </Tooltip>
-                      {isLeadPool && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <UserPlus className="h-3 w-3 text-purple-400 shrink-0 cursor-default" />
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="text-xs">Lead Pool Eligible</TooltipContent>
-                        </Tooltip>
-                      )}
                     </div>
 
                     <Avatar className="h-8 w-8 border border-[hsl(var(--sidebar-foreground))]/20">
