@@ -321,7 +321,7 @@ function AppointmentCard({
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
         
-        useShortLabels={stylists.length >= 3}
+        useShortLabels={useShortLabels}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
@@ -868,6 +868,7 @@ export function DayView({
                           rowHeight={ROW_HEIGHT}
                           slotInterval={slotInterval}
                           zoomLevel={zoomLevel}
+                          useShortLabels={sortedStylists.length >= 3}
                         />
                       );
                     })}
