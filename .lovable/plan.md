@@ -1,39 +1,34 @@
 
 
-# Minimum Column Width with Horizontal Scroll in DayView
+# Fix Dead-Space Horizontal Scroll in DayView
 
 ## Problem
-With 12+ stylists visible, columns compress to unusable widths (screenshot shows ~100px per column). Client names, service names, and time ranges all truncate severely. The layout should enforce a minimum column width and allow horizontal scrolling when stylists exceed available space.
+`gridMinWidth` is always set to `70 + sortedStylists.length * 120`, and the outer container uses `overflow-x-auto`. When all stylists fit comfortably (columns are wider than 120px), the grid content fills the viewport but `overflow-x-auto` still allows slight horizontal scrolling due to sub-pixel rounding or border widths. The user sees dead space to the right with no content.
 
-## Approach
-Set a minimum column width (120px) on both header cells and grid columns. The outer container switches from `overflow-x-hidden` to `overflow-x-auto`. The header and grid share the same computed `min-width` so they scroll in sync. The `columnWidth` measurement and `useShortLabels` logic remain unchanged — they'll naturally read 120px+ now instead of being squeezed.
+## Fix
+Only enable horizontal scrolling when the content actually needs it. Two changes:
 
-## Changes
+### 1. Remove the static `minWidth` on the inner wrapper
+Instead of always applying `style={{ minWidth: gridMinWidth }}`, only apply it when columns would actually be squeezed. Better approach: let CSS handle it naturally — use `min-w-0` on columns but set `min-w-[120px]` on each column cell. The grid will expand naturally via `flex` when there's room, and the `min-w-[120px]` constraint will force overflow only when needed.
 
-### 1. `DayView.tsx` — Add minimum column width and horizontal scroll
+The current approach double-constrains: `minWidth` on the wrapper forces a fixed total, while `min-w-[120px]` on individual cells also enforces minimums. Remove the wrapper `minWidth` — the individual cell minimums are sufficient to trigger horizontal scroll when needed.
 
-**Constants:** Add `const MIN_COL_WIDTH = 120;` near the top.
+### 2. Keep `overflow-x-auto` on the scroll container
+This is correct — it only shows a scrollbar when content overflows.
 
-**Outer scroll container (line 645):** Change `overflow-x-hidden` → `overflow-x-auto` to enable horizontal scrolling.
+### Change in `DayView.tsx`
+**Line 647** — Remove the `style={{ minWidth: gridMinWidth }}` from the inner div. The `min-w-[120px]` on each column cell already handles the constraint. Without the forced wrapper width, the grid will fill available space naturally and only scroll when columns genuinely can't fit.
 
-**Compute grid min-width:** Add a derived value:
-```ts
-const gridMinWidth = 70 + sortedStylists.length * MIN_COL_WIDTH;
+```tsx
+// Before
+<div style={{ minWidth: gridMinWidth }}>
+
+// After  
+<div>
 ```
 
-**Inner wrapper (line 646):** Add `style={{ minWidth: gridMinWidth }}` so the content forces scroll when needed.
-
-**Header row columns (lines 715, 736):** Replace `min-w-0` with `min-w-[120px]` on each stylist header cell (both condensed and normal variants).
-
-**Grid columns (line 786):** Replace `min-w-0` with `min-w-[120px]` on each stylist column in the time grid.
-
-**columnWidth measurement (line 530-532):** Clamp to minimum:
-```ts
-const colWidth = Math.max(containerWidth / count, MIN_COL_WIDTH);
-```
-
-This ensures `useShortLabels` and condensed layout logic still triggers correctly based on actual rendered width.
+The `gridMinWidth` constant and its calculation (line 522) can also be removed as dead code.
 
 ### Files Modified
-1. `src/components/dashboard/schedule/DayView.tsx` — min column width, horizontal scroll, clamped measurement
+1. `src/components/dashboard/schedule/DayView.tsx` — remove `gridMinWidth` wrapper style
 
