@@ -1,72 +1,39 @@
 
 
-# Move RC/NC to Bottom-Right and Inline Client Name with Status Badge
+# Minimum Column Width with Horizontal Scroll in DayView
 
 ## Problem
-Currently in DayView, the NC/RC badge sits top-left and the client name is on a separate row below the status badge. The user wants:
-1. RC/NC icons moved to the **bottom-right corner** of the card
-2. Client name on the **same row** as the status badge (top row)
-3. Name intelligently truncates to "First L." format when space is tight
+With 12+ stylists visible, columns compress to unusable widths (screenshot shows ~100px per column). Client names, service names, and time ranges all truncate severely. The layout should enforce a minimum column width and allow horizontal scrolling when stylists exceed available space.
+
+## Approach
+Set a minimum column width (120px) on both header cells and grid columns. The outer container switches from `overflow-x-hidden` to `overflow-x-auto`. The header and grid share the same computed `min-width` so they scroll in sync. The `columnWidth` measurement and `useShortLabels` logic remain unchanged — they'll naturally read 120px+ now instead of being squeezed.
 
 ## Changes
 
-### `AppointmentCardContent.tsx` — GridContent DayView branch (lines 264-298)
+### 1. `DayView.tsx` — Add minimum column width and horizontal scroll
 
-**Remove** the NC/RC badge from `absolute top-1 left-1` (lines 267-278).
+**Constants:** Add `const MIN_COL_WIDTH = 120;` near the top.
 
-**Add** NC/RC badge at `absolute bottom-1 right-1` so it anchors to the card's bottom-right corner regardless of card height.
+**Outer scroll container (line 645):** Change `overflow-x-hidden` → `overflow-x-auto` to enable horizontal scrolling.
 
-**Restructure top row** to put client name and status badge inline:
-```
-[Client Name (truncate)]  [Indicators] [Status Badge]
-```
-
-The top row becomes a single `absolute top-1 left-1 right-1` flex container with `justify-between`. The client name gets `truncate` and `min-w-0 flex-1`. The status badge side gets `shrink-0`.
-
-**Add smart truncation helper**: A `formatCompactName(fullName)` function that returns "FirstName L." (first name + last initial with period). The card uses a `useRef` + `ResizeObserver` approach — but that's heavy. Simpler: since `useShortLabels` already tells us the column is narrow, use that same flag to switch to compact name format. When `useShortLabels` is true OR `showStylistBadge` is true, use `formatCompactName`. Otherwise use full name with CSS truncation.
-
-**`formatCompactName` logic:**
+**Compute grid min-width:** Add a derived value:
 ```ts
-function formatCompactName(name: string): string {
-  if (!name?.trim()) return 'Walk-in';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
-}
+const gridMinWidth = 70 + sortedStylists.length * MIN_COL_WIDTH;
 ```
 
-### Layout for DayView (non-stylistBadge) branch:
+**Inner wrapper (line 646):** Add `style={{ minWidth: gridMinWidth }}` so the content forces scroll when needed.
 
-```tsx
-{/* Top row: client name + status badge */}
-<div className="flex items-center justify-between gap-1 pr-0.5">
-  <span className="text-sm font-medium truncate min-w-0">
-    {useShortLabels ? formatCompactName(appointment.client_name) : appointment.client_name}
-  </span>
-  <div className="flex items-center gap-1 shrink-0">
-    <IndicatorCluster flags={indicatorFlags} size={size} />
-    <span className={cn('text-[10px] px-2 py-0.5 rounded-full ...')}>
-      {statusLabel}
-    </span>
-  </div>
-</div>
+**Header row columns (lines 715, 736):** Replace `min-w-0` with `min-w-[120px]` on each stylist header cell (both condensed and normal variants).
 
-{/* NC/RC badge — bottom right */}
-{showClientAvatar && (
-  <div className="absolute bottom-1 right-1 z-20">
-    <span className="h-4 w-4 rounded-full ...">
-      {appointment.is_new_client ? 'NC' : 'RC'}
-    </span>
-  </div>
-)}
+**Grid columns (line 786):** Replace `min-w-0` with `min-w-[120px]` on each stylist column in the time grid.
+
+**columnWidth measurement (line 530-532):** Clamp to minimum:
+```ts
+const colWidth = Math.max(containerWidth / count, MIN_COL_WIDTH);
 ```
 
-Remove `pt-6` from client name (no longer offset below badges). Remove the old separate NC/RC and status badge absolute containers.
-
-### WeekView (showStylistBadge) branch — same treatment:
-- Move NC/RC (currently shown via IndicatorCluster's `isNewClient` flag) to bottom-right
-- Client name inline with status badge, using `formatCompactName` always (WeekView is always narrow)
+This ensures `useShortLabels` and condensed layout logic still triggers correctly based on actual rendered width.
 
 ### Files Modified
-1. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — restructure grid layout, add `formatCompactName`, relocate NC/RC badge
+1. `src/components/dashboard/schedule/DayView.tsx` — min column width, horizontal scroll, clamped measurement
 
