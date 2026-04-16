@@ -1,60 +1,50 @@
 
+
 ## Prompt review
 
-Good catch — your prompt clearly identified the actual symptom: the letters are disabled because the initial client batch only contains A-names. Better prompt framing for next time: name the exact surface too, e.g. “Quick booking popover from clicking a time slot” or “toolbar booking wizard,” because both surfaces have similar client pickers.
+Sharp, specific prompt — you named the surface (Quick Booking popover), the client (Eric Day), the location (North Mesa), and the empty state. That's exactly the right framing for a fast diagnosis. Teaching note: the only thing that would have made it even tighter is mentioning whether other locations also showed empty (helps isolate location-specific vs global failures). Not needed here — the database told the whole story.
 
 ## Diagnosis
 
-The remaining bug is not the server-side letter filter itself anymore — it is the **button availability logic**.
+The Quick Booking popover query fetches stylists from the `v_all_staff` view but selects a column that doesn't exist on it: **`phorest_branch_id`**. PostgREST rejects the entire query, returns `null`, and the destructure swallows it into `[]` — so "Available Stylists" renders empty for every location, not just North Mesa.
 
-Right now both client pickers still do this:
-- load a default batch of 50 alphabetically sorted clients
-- build `availableLetters` from that currently loaded batch
-- disable every letter not present in that batch
+Database confirms:
+- `v_all_staff` columns: `user_id, phorest_staff_id, phorest_staff_name, display_name, full_name, photo_url, is_active, show_on_calendar, location_id, source` — no `phorest_branch_id`.
+- `v_all_staff` has **11 active calendar-visible staff at `north-mesa`** ready to render the moment the query stops failing.
 
-So if the first 50 records are all A’s, only **A** is clickable, which blocks the server-side query from ever running for B-Z.
+Two queries in `QuickBookingPopover.tsx` reference the missing column:
+- Line 586 — location-scoped stylist fetch (powers "Available Stylists")
+- Line 611 — all-stylists fetch (powers stylist-first mode)
 
-This same pattern exists in both places:
-- `src/components/dashboard/schedule/booking/ClientStep.tsx`
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx`
+One downstream memo also reads `s.phorest_branch_id` off the staff rows: `preSelectedStylistLocations` (line 644). Since `v_all_staff` doesn't carry branch IDs, this needs to derive branch via `location_id` instead.
 
-## Fix plan
+Note: `selectedLocationBranchId` (line 650) already correctly derives from `locations` and is unaffected.
 
-1. **Treat server-controlled alphabet filters differently**
-   - In both client picker components, when letter filtering is controlled by the parent (`onLetterChange` exists), stop deriving clickable letters from the currently loaded client list.
-   - Make **all A-Z letters clickable** in controlled mode.
+## Fix
 
-2. **Keep current limited availability logic only for local-only filtering**
-   - If the picker is ever used in uncontrolled/client-only mode, it can still disable letters based on the local dataset.
-   - But for booking surfaces using server fetches, every letter must remain selectable.
+Single file: `src/components/dashboard/schedule/QuickBookingPopover.tsx`.
 
-3. **Preserve the existing server-side fetch behavior**
-   - Clicking any letter should continue to:
-     - set `activeLetter`
-     - clear text search
-     - refetch clients with `name ilike 'LETTER%'`
-   - Clicking the same letter again should clear the filter.
+1. **Drop `phorest_branch_id`** from both `.select(...)` calls (lines 586 and 611). Keep everything else as-is.
+2. **Rewrite `preSelectedStylistLocations`** (lines 639–647) to match by `location_id` instead of `phorest_branch_id`:
+   - Collect the set of `location_id`s the pre-selected stylist appears under in `allStylists`.
+   - Filter `locations` where `loc.id` is in that set.
+3. No changes needed to `selectedLocationBranchId`, the create-booking payload, or any UI rendering — they all consume `locations` (which has `phorest_branch_id`) correctly.
 
-4. **Keep empty-state behavior for truly missing letters**
-   - If a user clicks `Q` or `Z` and no clients exist, show the existing “No clients starting with…” state instead of disabling that letter in advance.
+## Out of scope
 
-## Files to update
-
-- `src/components/dashboard/schedule/booking/ClientStep.tsx`
-  - Change alphabet availability logic so all letters are enabled in controlled mode.
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx`
-  - Apply the same change to `ClientListWithAlphabet`.
+- `BookingWizard.tsx` — its `v_all_staff` query (line 110) doesn't reference the bad column, so it's fine.
+- The 28 other call sites of `v_all_staff` — none of them select `phorest_branch_id`.
+- Schema changes to `v_all_staff` — the view's contract is correct; the consumer was wrong.
 
 ## Acceptance checks
 
-1. Open the booking wizard/popover client step with the default A-heavy list.
-2. Click `M` even though the visible list only shows A’s.
-3. The list reloads with M-names.
-4. Click `Z` and it also triggers a fetch.
-5. If no Z-clients exist, show the empty state instead of disabling the letter.
-6. Search text still clears letter selection, and letter selection still clears search.
-7. Clicking the active letter again clears the filter.
+1. Schedule → click empty time slot at North Mesa → pick Eric Day → reach Available Stylists → list shows the 11 active stylists at North Mesa.
+2. Switch to Val Vista Lakes location → list shows that location's 21 stylists.
+3. Stylist-first mode (if entered via the people icon): selecting a stylist still narrows the location list to where that stylist actually works.
+4. Booking creation still posts the correct `branch_id` (from `locations`, not from staff rows).
+5. No console errors from the staff query.
 
 ## Follow-up enhancement
 
-After this fix, the next cleanup would be to consolidate `ClientStep` and `ClientListWithAlphabet` into one shared client-picker so this bug cannot drift between booking surfaces again.
+Add a thin error guard to the `useQuery` callbacks: when `error` is non-null, surface a toast + log instead of silently coercing to `[]`. This entire round-trip would have been caught immediately by visible error feedback — silent empty arrays are the worst failure mode for booking UIs because they look like "no data" instead of "broken query."
+
