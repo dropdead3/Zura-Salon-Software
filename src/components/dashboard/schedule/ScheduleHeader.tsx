@@ -319,7 +319,7 @@ export function ScheduleHeader({
                 <Button
                   variant="ghost"
                   size="icon"
-                   className="relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
+                   className="hidden @lg/schedhdr:inline-flex relative text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]"
                   onClick={onOpenBlockManager}
                 >
                   <Users className="h-4 w-4" />
