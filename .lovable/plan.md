@@ -2,95 +2,58 @@
 
 ## Prompt review
 
-Excellent observation — you correctly identified that **date is the highest-priority element** in a schedule header (it's the answer to "what am I looking at?"), yet it's the first thing being sacrificed. You also proposed a precise fix: hide lower-value chrome (Shifts pill, Date picker pill, Assistant Blocks icon, Drafts icon) before sacrificing the date itself. Tighter version: "Date is the schedule's primary identifier — it must never hide. Drop Shifts/Date pills and Assistant/Drafts icons first when space is tight."
+Sharp catch — you noticed the selectors (Location/Stylist) are getting clipped on the right edge of the screenshot ("North Mes…" and "All Stylist…" cut off). You correctly re-asserted the priority hierarchy: selectors are critical and must stay visible, so the lower-value buttons (Shifts, Date, Assistant Blocks, Drafts) need to hide *earlier* — not just below `@lg`, but below `@xl` too.
 
-Teaching note: when prompting responsive-priority issues, naming the **hierarchy of importance** (e.g., "Date > Selectors > Filter icons > Shifts/Date pills > Assistant/Drafts") makes the fix unambiguous. You did this implicitly — making it explicit in future prompts will get even sharper results on the first pass.
+Tighter version: "Selectors are critical — never clip them. Hide Shifts/Date pills and Assistant/Drafts icons below `@xl` (not `@lg`) so selectors keep their full width."
 
 ## Diagnosis
 
-In `ScheduleHeader.tsx` (lines 264–279), the center date container has `min-w-0` with no protection. When the container width drops (sidebar expanded at ~1130px viewport → ~790px header), flexbox squeezes the date to zero before reducing other elements.
+In `ScheduleHeader.tsx`, the four low-priority controls currently use `hidden @lg/schedhdr:flex` — meaning they reappear at container width ≥ 1024px. At your current viewport (1130px) with sidebar expanded (~340px), the header container is ~790px, which is below `@lg` so those buttons are correctly hidden.
 
-**Current visible elements at narrow container, in left-to-right order:**
-1. Day/Week pill toggle
-2. Shifts pill (icon-only at <@lg)
-3. Date picker pill (icon-only at <@lg)
-4. **[Center date — gets crushed]**
-5. Filter icons (CalendarFiltersPopover)
-6. Assistant Blocks icon
-7. Drafts icon
-8. Today's Prep icon (conditional)
-9. Location selector
-10. Staff selector
-11. Day/Week navigation split-buttons
+But your screenshot shows the viewport is 1130px wide and the header appears to be ~1100px+ wide (sidebar collapsed or near-collapsed state), so container is between `@lg` (1024px) and `@xl` (1280px). At this width:
+- Shifts pill, Date pill, Assistant Blocks, Drafts all reappear (they're keyed to `@lg`)
+- Selectors get pushed to the right edge and clip ("North Mes…", "All Stylist…")
 
-**Priority order should be (highest to lowest):**
-1. Day/Week toggle (core view mode)
-2. Center date (primary identifier)
-3. Location + Staff selectors (data scope)
-4. Day/Week navigation (movement)
-5. CalendarFiltersPopover (active filters)
-6. Today's Prep (conditional, contextually critical)
-7. **Shifts pill, Date picker pill, Assistant Blocks, Drafts** ← drop these first
+**Fix:** Push the visibility threshold for those four buttons up from `@lg/schedhdr` to `@xl/schedhdr`. They only appear when there's truly enough room (header ≥ 1280px).
 
 ## Fix
 
-Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Add container-query visibility rules so the four lowest-priority controls hide before the date is squeezed.
+Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Change four class strings.
 
-### 1. Hide Shifts pill below `@lg/schedhdr`
+| Element | Current class | New class |
+|---|---|---|
+| Shifts pill | `hidden @lg/schedhdr:flex` | `hidden @xl/schedhdr:flex` |
+| Date pill | `hidden @lg/schedhdr:flex` | `hidden @xl/schedhdr:flex` |
+| Assistant Blocks | `hidden @lg/schedhdr:inline-flex` | `hidden @xl/schedhdr:inline-flex` |
+| Drafts | `hidden @lg/schedhdr:inline-flex` | `hidden @xl/schedhdr:inline-flex` |
 
-Wrap the Shifts toggle (lines 197–226) so the entire button hides at narrow container widths:
-- Add `hidden @lg/schedhdr:flex` to the Tooltip's button
-- Tooltip remains accessible at @lg+; users at narrower widths can use the existing date strip / popover for the same intent (the Shifts toggle is also surfaced from secondary nav)
-
-### 2. Hide Date picker pill below `@lg/schedhdr`
-
-Same treatment for the Date picker button (lines 228–246):
-- Add `hidden @lg/schedhdr:flex` so it disappears below 1024px container width
-- Date picking is still possible by clicking the center date itself (we'll wrap it in the same popover trigger as a fallback), or via the day-strip nav below
-
-### 3. Make the center date itself open the date picker
-
-To preserve date-picking functionality when the explicit pill is hidden, wrap the center date display (lines 264–279) in the same `<Popover>` trigger. Single click on date → calendar opens. This is also better UX (the date *is* the picker — discoverable, no separate button needed).
-
-### 4. Hide Assistant Blocks + Drafts icons below `@lg/schedhdr`
-
-Lines 295–336: add `hidden @lg/schedhdr:inline-flex` to both Tooltip wrappers. These are secondary workflow tools accessible from other locations (they live as deep links in the schedule and from drafts surfaces).
-
-### 5. Protect the center date from collapse
-
-Line 265: change `text-center min-w-0` → `text-center shrink-0 px-2`. This makes the date a fixed-width island that flexbox cannot squeeze.
-
-### 6. Keep Today's Prep visible
-
-Lines 339–355 remain unchanged — it's conditional (only on today) and contextually critical when shown.
+Everything else (date protection, click-to-open-picker fallback, selector widths, Day/Week toggles) stays as-is.
 
 ## Result by container width
 
-| Container width | Visible chrome (left of date) | Visible chrome (right of date) | Date |
-|---|---|---|---|
-| **< @md (<768px)** | 2-row layout (existing) | — | Visible (condensed) |
-| **@md–@lg (768–1023px)** | Day/Week toggle only | Filters, Today's Prep (cond.), Selectors, Nav | **Visible** (condensed, single line) |
-| **@lg+ (≥1024px)** | Day/Week toggle, Shifts, Date pills | Filters, Assist Blocks, Drafts, Today's Prep, Selectors, Nav | Visible |
-| **@xl+ (≥1280px)** | All of @lg | All of @lg | Two-line full date |
+| Container | Day/Week toggle | Shifts/Date pills | Assist/Drafts | Filters | Selectors | Date |
+|---|---|---|---|---|---|---|
+| `< @md` (<768px) | Visible | Hidden | Hidden | Visible | Visible | Visible (2-row) |
+| `@md–@xl` (768–1279px) | Visible | **Hidden** | **Hidden** | Visible | **Visible, full width** | Visible (condensed) |
+| `@xl+` (≥1280px) | Visible | Visible | Visible | Visible | Visible, full width | Two-line full |
 
-At your current 1130px viewport with sidebar expanded (~790px header), you'll now see: Day/Week toggle → Date "THU · APR 16" → filter icons → selectors → nav. Clean, no crushing, date prominent.
+At your current 1130px viewport (regardless of sidebar state), selectors will keep their full 220px width and never clip.
 
 ## Acceptance checks
 
-1. At 1130px viewport with sidebar expanded: date "THU · APR 16" is clearly visible center-row, no overlap.
-2. At 1130px viewport with sidebar collapsed: Shifts pill, Date pill, Assistant Blocks, Drafts all reappear (container ≥ 1024px).
-3. Clicking the center date opens the calendar picker (replaces the dropped Date pill's function).
-4. At ≥ 1280px container: full two-line date and all chrome restored exactly as today.
-5. Shifts toggle still functional at ≥ 1024px container (matches previous behavior).
-6. No changes to handlers, state, or the secondary day-strip nav bar.
+1. At 1130px viewport, sidebar collapsed (~1034px header): Shifts, Date, Assist, Drafts are hidden. Selectors show full "North Mesa" / "All Stylists" labels — no clipping.
+2. At 1130px viewport, sidebar expanded (~790px header): same as above (already worked, still works).
+3. At ≥ 1280px container (e.g., 1600px viewport collapsed): all four buttons reappear, full layout restored.
+4. Date stays visible at all widths.
+5. Clicking center date still opens calendar picker.
+6. No changes to handlers, state, or secondary nav bar.
 
 ## Out of scope
 
-- DashboardLayout sidebar logic — unchanged.
-- Day-strip secondary nav bar — unchanged.
-- Selector layout (stays vertically stacked) — unchanged.
-- Mobile (<768px) 2-row stack — unchanged.
-- Color, token, font system — unchanged.
+- Selector widths — unchanged.
+- Day/Week toggle — unchanged.
+- Filter icons — unchanged.
+- Today's Prep conditional — unchanged.
 
 ## File touched
 
