@@ -36,7 +36,7 @@ function getSortLetter(name: string): string {
   return ch >= 'A' && ch <= 'Z' ? ch : '#';
 }
 
-function AlphabetStrip({
+function AlphabetBar({
   availableLetters,
   activeLetter,
   onLetterClick,
@@ -45,41 +45,24 @@ function AlphabetStrip({
   activeLetter: string | null;
   onLetterClick: (letter: string) => void;
 }) {
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      const touch = e.touches[0];
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      const letter = el?.getAttribute('data-letter');
-      if (letter && availableLetters.has(letter)) {
-        onLetterClick(letter);
-      }
-    },
-    [availableLetters, onLetterClick]
-  );
-
   return (
-    <div
-      className="absolute right-1 top-0 bottom-0 w-5 flex flex-col items-center justify-center z-10 select-none"
-      onTouchMove={handleTouchMove}
-    >
+    <div className="flex items-center justify-between gap-0.5 select-none">
       {ALPHABET.map((letter) => {
         const available = availableLetters.has(letter);
         const active = activeLetter === letter;
         return (
           <button
             key={letter}
-            data-letter={letter}
+            type="button"
+            onClick={() => available && onLetterClick(letter)}
             className={cn(
-              'font-sans leading-none py-[1px] w-full text-center transition-all',
+              'font-sans text-[11px] leading-none flex-1 min-w-0 h-7 rounded-md flex items-center justify-center transition-all duration-150',
               available
                 ? active
-                  ? 'text-primary text-[11px]'
-                  : 'text-muted-foreground text-[10px] hover:text-foreground'
-                : 'text-muted-foreground/30 text-[10px] pointer-events-none'
+                  ? 'text-primary bg-primary/10 scale-105'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                : 'text-muted-foreground/30 pointer-events-none'
             )}
-            onClick={() => available && onLetterClick(letter)}
-            tabIndex={-1}
-            type="button"
           >
             {letter}
           </button>
