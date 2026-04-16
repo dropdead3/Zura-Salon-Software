@@ -337,7 +337,7 @@ export function ScheduleHeader({
                   className="h-7 w-[280px] text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   {selectedStaffIds.length === 0 
-                    ? (staffFilterMode === 'with-appointments' ? 'All Stylists With Appointments' : 'All Stylists That Work This Day')
+                    ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
                     : selectedStaffIds.length === 1
                       ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
                       : `${selectedStaffIds.length} selected`
@@ -347,19 +347,6 @@ export function ScheduleHeader({
               </PopoverTrigger>
               <PopoverContent className="w-[280px] p-2 bg-popover" align="end">
                 <div className="space-y-1">
-                  <button
-                    onClick={() => {
-                      if (onStaffFilterModeChange) onStaffFilterModeChange('with-appointments');
-                      onStaffToggle('all');
-                    }}
-                    className={cn(
-                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
-                      selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && 'bg-accent'
-                    )}
-                  >
-                    {selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
-                    All Stylists With Appointments
-                  </button>
                   <button
                     onClick={() => {
                       if (onStaffFilterModeChange) onStaffFilterModeChange('work-this-day');
@@ -372,6 +359,19 @@ export function ScheduleHeader({
                   >
                     {selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
                     All Stylists That Work This Day
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (onStaffFilterModeChange) onStaffFilterModeChange('with-appointments');
+                      onStaffToggle('all');
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
+                      selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && 'bg-accent'
+                    )}
+                  >
+                    {selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
+                    Only Stylists With Appointments
                   </button>
                   <div className="h-px bg-border my-1" />
                   {stylists.map((s) => (
