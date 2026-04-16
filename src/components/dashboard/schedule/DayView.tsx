@@ -296,8 +296,8 @@ export function DayView({
 
   // Build slug→label map for level badges
   const levelLabelMap = useMemo(() => {
-    const m = new Map<string, { label: string; index: number }>();
-    stylistLevels.forEach((l, i) => m.set(l.slug, { label: l.label, index: i }));
+    const m = new Map<string, { label: string; shortLabel: string; index: number }>();
+    stylistLevels.forEach((l, i) => m.set(l.slug, { label: l.label, shortLabel: `L${i + 1}`, index: i }));
     return m;
   }, [stylistLevels]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -593,7 +593,7 @@ export function DayView({
                       <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
                       {levelInfo && (
                         <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
-                          {levelInfo.label}
+{levelInfo.shortLabel}
                         </span>
                       )}
                     </div>
@@ -615,7 +615,7 @@ export function DayView({
                         {levelInfo && (
                           <>
                             <span className="text-[10px] text-muted-foreground">·</span>
-                            <span className="text-[10px] text-muted-foreground truncate">{levelInfo.label}</span>
+                            <span className="text-[10px] text-muted-foreground truncate">{levelInfo.shortLabel}</span>
                           </>
                         )}
                       </div>
