@@ -40,6 +40,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { CalendarView } from '@/hooks/usePhorestCalendar';
 import { CalendarFiltersPopover, type CalendarFilterState } from './CalendarFiltersPopover';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import {
 
   Tooltip,
