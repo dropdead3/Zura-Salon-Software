@@ -669,6 +669,42 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 (() => {
                   const SectionIcon = SECTION_ICONS[sectionId] || SECTION_ICONS.main;
                   const isAnyActive = filteredItems.some(item => location.pathname === item.href);
+
+                  // Single-item section → direct click (no popover)
+                  if (filteredItems.length === 1) {
+                    const singleItem = filteredItems[0];
+                    const Icon = singleItem.icon;
+                    const resolvedHref = dashPath(singleItem.href.replace(/^\/dashboard/, ''));
+                    const isActive = location.pathname === resolvedHref;
+                    const label = getNavLabel(singleItem);
+                    return (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={resolvedHref}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
+                              onNavClick();
+                            }}
+                            className={cn(
+                              "flex items-center justify-center px-2 py-2 mx-2 rounded-full",
+                              "transition-all duration-300 text-sm",
+                              isActive
+                                ? "bg-foreground/10 text-foreground"
+                                : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
+                            )}
+                            style={{ width: 'calc(100% - 16px)' }}
+                          >
+                            <Icon className="w-4 h-4" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{label}</TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
+                  // Multi-item section → popover menu
                   return (
                     <HoverPopover>
                       <PopoverTrigger asChild>
