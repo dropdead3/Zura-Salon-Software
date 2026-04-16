@@ -363,18 +363,36 @@ export function DayView({
   onMeetingClick,
   zoomLevel = 0,
 }: DayViewProps) {
-  const ZOOM_CONFIG: Record<string, { interval: number; rowHeight: number }> = {
-    '-3': { interval: 60, rowHeight: 24 },
-    '-2': { interval: 60, rowHeight: 24 },
-    '-1': { interval: 30, rowHeight: 24 },
-    '0': { interval: 20, rowHeight: 24 },
-    '1': { interval: 15, rowHeight: 24 },
-    '2': { interval: 10, rowHeight: 24 },
-    '3': { interval: 5, rowHeight: 24 },
+  const ZOOM_CONFIG: Record<string, { interval: number }> = {
+    '-3': { interval: 60 },
+    '-2': { interval: 60 },
+    '-1': { interval: 30 },
+    '0': { interval: 20 },
+    '1': { interval: 15 },
+    '2': { interval: 10 },
+    '3': { interval: 5 },
   };
   const zoomConfig = ZOOM_CONFIG[String(zoomLevel)] ?? ZOOM_CONFIG['0'];
-  const ROW_HEIGHT = zoomConfig.rowHeight;
   const slotInterval = zoomConfig.interval;
+
+  // Measure container height for dynamic row sizing
+  const [containerHeight, setContainerHeight] = useState(0);
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerHeight(entry.contentRect.height);
+    });
+    observer.observe(scrollRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Dynamic row height: fill viewport when few slots, scroll when many
+  const totalSlots = (hoursEnd - hoursStart) * (60 / slotInterval);
+  const MIN_ROW_HEIGHT = 24;
+  const availableHeight = containerHeight - 56; // sticky header
+  const ROW_HEIGHT = containerHeight > 0
+    ? Math.max(MIN_ROW_HEIGHT, Math.floor(availableHeight / totalSlots))
+    : MIN_ROW_HEIGHT;
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
