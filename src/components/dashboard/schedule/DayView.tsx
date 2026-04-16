@@ -743,7 +743,7 @@ export function DayView({
             </div>
 
             {/* Time Grid */}
-            <div className="flex relative">
+            <div className="flex relative" style={{ minWidth: requiredGridWidth }}>
               {/* Time Labels */}
               <div className="w-[70px] shrink-0 border-r bg-sidebar">
                 {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => (
@@ -888,9 +888,13 @@ export function DayView({
 
               {/* Current Time Indicator */}
               {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
-                <div 
-                  className="absolute left-[70px] right-0 border-t-2 border-primary pointer-events-none z-[15]"
-                  style={{ top: `${currentTimeOffset}px` }}
+                <div
+                  className="absolute border-t-2 border-primary pointer-events-none z-[15]"
+                  style={{
+                    top: `${currentTimeOffset}px`,
+                    left: '70px',
+                    width: `${requiredGridWidth - 70}px`,
+                  }}
                 >
                   <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-primary rounded-full" />
                 </div>
