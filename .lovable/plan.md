@@ -1,24 +1,57 @@
 
 
-# Fix Double-Booked Appointment Gaps in Day View
+# Height-Aware Appointment Cards
 
 ## Problem
-When a stylist is double-booked, overlapping appointments show visible padding/gaps between them. This is caused by the width and left offset calculations in `DayView.tsx` (lines 288–304):
+Appointment cards decide what content to show based on **duration in minutes** — not actual pixel height. A 60-minute appointment at zoom level 0 has ~80px of height, but the same 60 minutes at zoom level 2 has ~240px. The card shows the same content in both cases, wasting space when there's plenty of room, or cramming content when space is tight.
 
-- Width: `calc(${widthPercent}% - 4px)` — subtracts 4px from each column
-- Left: `calc(${leftPercent}% + 2px)` — offsets each column 2px from the left
+The `GridContent` component has hardcoded duration thresholds like `duration >= 60` for time/price, `duration >= 75` for assistant names, and `duration >= 90` for reschedule info. These don't reflect actual available pixel space.
 
-This creates a ~4px gap between adjacent overlapping appointment cards. For single-column appointments the 2px side padding is fine, but for side-by-side overlapping cards it produces a noticeable visual gap.
+## Solution
+Replace duration-based content gating with **pixel-height-based** thresholds. The pixel height is already computed by `getEventStyle` — pass it through to `AppointmentCardContent` and use it for content visibility decisions.
 
-## Fix
-In `DayView.tsx`, reduce the gap between overlapping columns while preserving a thin outer margin:
+## Changes
 
-**Lines 288–306** — adjust the width/left calculations:
-- When `totalOverlapping > 1`: use `calc(${widthPercent}% - 2px)` for width and `calc(${leftPercent}% + 1px)` for left — this cuts the inter-card gap from ~4px to ~2px
-- When `totalOverlapping === 1` (no overlap): keep current `- 4px` / `+ 2px` padding for breathing room
+### 1. `AppointmentCardContent.tsx` — Add `pixelHeight` prop and height-based rendering
 
-This is a targeted 2-line change in the style calculation block.
+- Add optional `pixelHeight?: number` to `AppointmentCardContentProps`
+- Update `getCardSize` to accept `pixelHeight` as an alternative input — when provided, use pixel thresholds instead of duration thresholds:
+  - `compact`: < 28px
+  - `medium`: 28–54px
+  - `full`: ≥ 55px
+- Replace duration gates inside `GridContent` with pixel-height gates:
+  - Service line: show when `pixelHeight >= 40` (instead of always for medium+)
+  - Time + price row: show when `pixelHeight >= 65` (instead of `duration >= 60`)
+  - Assisted-by line: show when `pixelHeight >= 85` (instead of `duration >= 75`)
+  - Reschedule info: show when `pixelHeight >= 105` (instead of `duration >= 90`)
+  - Multi-service breakdown: show when `pixelHeight >= 70` (instead of `duration >= 60`)
 
-### File Modified
-1. `src/components/dashboard/schedule/DayView.tsx` — reduce gap between overlapping appointment columns
+### 2. `DayView.tsx` — Pass computed pixel height
+
+- After `getEventStyle`, parse the numeric height from the style and pass it as `pixelHeight` to `AppointmentCardContent`
+
+### 3. `WeekView.tsx` — Pass computed pixel height
+
+- Same approach: parse height from `getEventStyle` result and pass `pixelHeight`
+
+## Technical Detail
+The height is already computed as `(duration / slotInterval) * rowHeight` inside `getEventStyle`. We extract the numeric value and thread it through:
+
+```tsx
+const eventStyle = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight, slotInterval);
+const pixelHeight = parseInt(eventStyle.height);
+
+<AppointmentCardContent
+  pixelHeight={pixelHeight}
+  size={pixelHeight < 28 ? 'compact' : pixelHeight < 55 ? 'medium' : 'full'}
+  ...
+/>
+```
+
+This ensures that at high zoom levels, even 30-minute appointments show full details when there's plenty of vertical space, and at low zoom levels, even 60-minute appointments stay clean when pixel space is limited.
+
+### Files Modified
+1. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — add `pixelHeight` prop, replace duration gates with pixel-height gates
+2. `src/components/dashboard/schedule/DayView.tsx` — compute and pass `pixelHeight`
+3. `src/components/dashboard/schedule/WeekView.tsx` — compute and pass `pixelHeight`
 
