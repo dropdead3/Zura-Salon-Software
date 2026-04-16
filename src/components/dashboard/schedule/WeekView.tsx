@@ -94,13 +94,27 @@ function WeekAppointmentCard({
   assistantNamesMap?: Map<string, string[]>;
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
 }) {
+  const [isHoveredRight, setIsHoveredRight] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setIsHoveredRight(e.clientX > rect.right - 20);
+  };
+
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const size = getCardSize(appointment.start_time, appointment.end_time);
 
   return (
     <div
-      className="absolute left-1 right-1 z-10"
-      style={style}
+      className="absolute z-10"
+      style={{
+        ...style,
+        left: '4px',
+        right: isHoveredRight ? '30%' : '4px',
+        transition: 'right 200ms ease-out',
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setIsHoveredRight(false)}
       onClick={onClick}
     >
       <AppointmentCardContent
@@ -120,6 +134,15 @@ function WeekAppointmentCard({
         showClientAvatar={false}
         onClick={() => {}}
       />
+      {/* Right-edge grip indicator */}
+      <div className={cn(
+        'absolute right-0 top-0 bottom-0 w-4 flex flex-col items-center justify-center gap-0.5 transition-opacity duration-200',
+        isHoveredRight ? 'opacity-60' : 'opacity-0',
+      )}>
+        <div className="w-0.5 h-1.5 rounded-full bg-foreground/50" />
+        <div className="w-0.5 h-1.5 rounded-full bg-foreground/50" />
+        <div className="w-0.5 h-1.5 rounded-full bg-foreground/50" />
+      </div>
     </div>
   );
 }
