@@ -17,6 +17,14 @@ export function formatTime12h(time: string): string {
   return `${hour12}:${minutes.slice(0, 2)} ${ampm}`;
 }
 
+export function formatMinutesAs12h(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 export function minutesToTimeStr(minutes: number): string {
   const h = Math.floor(minutes / 60) % 24;
   const m = minutes % 60;
