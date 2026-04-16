@@ -1,57 +1,53 @@
 
 ## Prompt review
 
-Clear, atomic prompt. You named the two elements, the visual goal (same style/color), and the responsive behavior (stack when condensed). A slightly tighter version: "Make the `Shifts` and `Date` buttons in the Schedule header visually identical (same pill style, same color treatment). At < `xl`, stack them vertically; at `xl+`, keep them inline." — that explicitly names the breakpoint so the implementation has zero ambiguity.
+Clear and specific — you named the problem (ellipsis truncation) and gave the exact fallback rules (drop year, abbreviate month). Tighter version: "In the Schedule header center date, at <xl widths, replace the truncated `April 16, 2…` with an abbreviated single-line format (`Thu · Apr 16`) — drop the year and use 3-letter month."
 
 ## Diagnosis
 
-In `src/components/dashboard/schedule/ScheduleHeader.tsx` (left cluster, lines 156–248):
+In `src/components/dashboard/schedule/ScheduleHeader.tsx`, the center date block currently renders two formats:
+- `≥ xl`: two-line `THURSDAY` / `APRIL 16, 2026`
+- `< xl`: single-line condensed format using full month name + year, which overflows the available center column at 1296px and triggers ellipsis truncation (visible as `APRIL 16, 2…`).
 
-- **Shifts button** (lines 192–221) — custom pill: `rounded-full px-3 py-1.5 text-sm`, with active/idle color treatment using `sidebar-foreground/50` idle state, icon left of label.
-- **Date button** (lines 223–247) — shadcn `Button variant="ghost" size="sm"`: different padding, different idle color (`sidebar-foreground/70`), no rounded-full pill, icon styling differs.
-
-They visually disagree: different shape, different idle opacity, different hit-target. They're the same conceptual class (secondary toggles/triggers next to the Day/Week pill), so they should match.
+Root cause: the condensed format still uses `MMMM d, yyyy` (full month + year), which is too wide for the constrained center slot when stacked Shifts/Date pills sit on the left and selectors sit on the right.
 
 ## Fix
 
-Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Pure className changes. No logic, no token changes, no behavior changes.
+Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Pure format/className change.
 
-### 1. Unify Date button to match Shifts pill style
+### 1. Replace condensed date format
 
-Replace the shadcn `Button` wrapper (lines 225–232) with the same `<button>` pill used for Shifts:
-- `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200`
-- Idle: `text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]`
-- Icon `h-3.5 w-3.5` (matches Shifts icon size)
-- Keep the Popover wiring intact
+At `< xl`, change from full month + year to abbreviated month, no year:
+- Current: `Thu · April 16, 2026` (or similar full format)
+- New: `Thu · Apr 16` using date-fns `EEE · MMM d`
 
-### 2. Stack Shifts + Date vertically when condensed
+### 2. Add a mid-tier (optional, only if it fits)
 
-Wrap the Shifts button + Date popover in a sibling group `<div>`:
-- At `< xl`: `flex flex-col gap-1 items-start`
-- At `xl+`: `flex flex-row gap-3 items-center` (current inline behavior)
+At `lg` (≥ 1024px) but `< xl`, render `Thu · Apr 16` (abbreviated, no year).
+At `< lg` if needed, render even more compact `Apr 16`.
 
-Result:
-- **Wide (xl+)**: `[Day|Week] · Shifts · Date` inline — visually identical to today's wide layout.
-- **Condensed (<xl)**: `[Day|Week]` then a small stacked column with `Shifts` on top and `Date` below — both as matching pills.
+### 3. Remove ellipsis fallback
 
-### 3. Optional hover/active consistency
+Drop `truncate` / `overflow-hidden` on the condensed line — with the shorter string, truncation should never trigger at supported widths. Keep `whitespace-nowrap` so it never wraps.
 
-Shifts button's "active" state (when shifts view is on) keeps its filled-pill treatment. Date has no active state, so it stays in idle pill style — that's fine and expected.
+### 4. Preserve wide layout
+
+`≥ xl`: unchanged two-line `THURSDAY` / `APRIL 16, 2026`.
 
 ## Acceptance checks
 
-1. Shifts and Date buttons render identical pill shape, padding, idle color, and icon size.
-2. At viewport `≥ 1280px (xl)`: both pills sit inline next to the Day/Week toggle — visually matches current wide layout.
-3. At viewport `< 1280px`: Shifts pill stacks above Date pill in a tight vertical group.
-4. No change to Day/Week toggle, popovers, or any handler logic.
-5. Date popover still anchors correctly to its trigger.
+1. At 1296px viewport (current): center date renders as `Thu · Apr 16` on a single line, no ellipsis, no truncation.
+2. At ≥ 1280px (xl): two-line `THURSDAY` / `APRIL 16, 2026` unchanged.
+3. At narrower widths (1024–1280px): abbreviated format fits cleanly without truncation.
+4. Locale-aware via `useFormatDate` if already used; otherwise use `date-fns` `format` consistent with the existing block.
+5. No logic, state, or layout-structure changes — only format string and possibly removal of ellipsis utilities.
 
 ## Out of scope
 
-- Wide-screen (≥ xl) overall layout — unchanged.
+- Wide-screen (≥ xl) date format — unchanged.
+- Left cluster (Day/Week, Shifts, Date pills) — unchanged.
 - Right cluster (filters, selectors) — unchanged.
 - Secondary nav bar — unchanged.
-- Any color/token system additions.
 
 ## File touched
 
