@@ -472,6 +472,7 @@ export function AppointmentCardContent({
   appointment,
   variant,
   size,
+  pixelHeight,
   isSelected = false,
   isAssisting = false,
   hasAssistants = false,
@@ -656,6 +657,7 @@ export function AppointmentCardContent({
         assistantProfilesMap={assistantProfilesMap}
         serviceBands={serviceBands}
         duration={duration}
+        pixelHeight={pixelHeight}
         showStylistBadge={showStylistBadge}
         showClientPhone={showClientPhone}
         showClientAvatar={showClientAvatar}
