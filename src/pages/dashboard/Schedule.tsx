@@ -422,6 +422,9 @@ export default function Schedule() {
           display_name: apt?.staff_name || null,
           full_name: apt?.staff_name || 'Unknown',
           photo_url: null,
+          stylist_level: null,
+          is_booking: null,
+          lead_pool_eligible: true,
         });
       });
     }
