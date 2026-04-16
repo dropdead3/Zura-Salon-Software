@@ -26,6 +26,13 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 // ─── Shared helpers ───────────────────────────────────────────
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
 
+function formatCompactName(name: string | null | undefined): string {
+  if (!name?.trim()) return 'Walk-in';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 const isConsultationCategory = (category: string | null | undefined) => {
   if (!category) return false;
   return category.toLowerCase().includes('consult');
@@ -231,19 +238,24 @@ function GridContent({
     <div className="px-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
       {showStylistBadge ? (
         <>
-          {/* Weekly view: status badge top-left */}
-          <div className="absolute top-1 left-1 z-20 flex items-center gap-1">
-            <IndicatorCluster flags={indicatorFlags} size={size} />
-            <span className={cn(
-              'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-              badge.bg, badge.text, badge.border
-            )}>
-              {statusLabel}
+          {/* Weekly view: top row — client name + indicators + status badge */}
+          <div className="flex items-center justify-between gap-1 pr-0.5">
+            <span className="text-sm font-medium truncate min-w-0 flex-1">
+              {formatCompactName(appointment.client_name)}
             </span>
+            <div className="flex items-center gap-1 shrink-0">
+              <IndicatorCluster flags={indicatorFlags} size={size} />
+              <span className={cn(
+                'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
+                badge.bg, badge.text, badge.border
+              )}>
+                {statusLabel}
+              </span>
+            </div>
           </div>
-          {/* Weekly view: stylist photo top-right */}
+          {/* Weekly view: stylist photo top-right, offset below top row */}
           {appointment.stylist_profile && (
-            <div className="absolute top-1 right-1 z-20">
+            <div className="absolute top-6 right-1 z-20">
               <StylistBadge
                 stylistProfile={appointment.stylist_profile}
                 assistantNames={assistantNamesMap?.get(appointment.id)}
@@ -251,21 +263,9 @@ function GridContent({
               />
             </div>
           )}
-          {/* Client name below top row */}
-          <div className="text-sm font-medium truncate pt-7 flex items-center gap-1">
-            <span className="truncate">{appointment.client_name}</span>
-            {showClientPhone && appointment.client_phone && (
-              <span className="font-normal opacity-80 text-xs shrink-0">
-                {formatPhoneDisplay(appointment.client_phone)}
-              </span>
-            )}
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Day view: NC/RC badge top-left */}
+          {/* NC/RC badge — bottom right */}
           {showClientAvatar && (
-            <div className="absolute top-1 left-1 z-20">
+            <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
                 'h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0',
                 appointment.is_new_client
@@ -276,25 +276,37 @@ function GridContent({
               </span>
             </div>
           )}
-          {/* Day view: indicators + status badge top-right */}
-          <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
-            <IndicatorCluster flags={indicatorFlags} size={size} />
-            <span className={cn(
-              'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-              badge.bg, badge.text, badge.border
-            )}>
-              {statusLabel}
+        </>
+      ) : (
+        <>
+          {/* Day view: top row — client name + indicators + status badge */}
+          <div className="flex items-center justify-between gap-1 pr-0.5">
+            <span className="text-sm font-medium truncate min-w-0 flex-1">
+              {useShortLabels ? formatCompactName(appointment.client_name) : (appointment.client_name || 'Walk-in')}
             </span>
-          </div>
-          {/* Client name + phone below badges */}
-          <div className="text-sm font-medium truncate pt-6">
-            <span className="truncate">{appointment.client_name}</span>
-            {showClientPhone && appointment.client_phone && (
-              <span className="font-normal opacity-80 text-xs ml-1">
-                {formatPhoneDisplay(appointment.client_phone)}
+            <div className="flex items-center gap-1 shrink-0">
+              <IndicatorCluster flags={indicatorFlags} size={size} />
+              <span className={cn(
+                'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
+                badge.bg, badge.text, badge.border
+              )}>
+                {statusLabel}
               </span>
-            )}
+            </div>
           </div>
+          {/* NC/RC badge — bottom right */}
+          {showClientAvatar && (
+            <div className="absolute bottom-1 right-1 z-20">
+              <span className={cn(
+                'h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-medium shrink-0',
+                appointment.is_new_client
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+              )}>
+                {appointment.is_new_client ? 'NC' : 'RC'}
+              </span>
+            </div>
+          )}
         </>
       )}
 
