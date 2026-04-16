@@ -1,39 +1,34 @@
 
-## Prompt review
-
-Clear, surgical prompt — you named the surface ("scheduler header bar"), the elements ("these 2 toggles"), and the exact fix ("left aligned"). The screenshot removed all ambiguity. Tighter framing isn't really needed here; this is a model prompt for a small visual fix.
-
 ## Diagnosis
 
-Both controls live in `src/components/dashboard/schedule/ScheduleHeader.tsx` (lines ~432–482), stacked vertically in the header:
+Looking at the screenshot: "North Mesa" sits flush-left at the pill's edge, but "All Stylists That Work Thi…" is indented further right. The two labels don't align vertically with each other.
 
-1. **Location Selector** (`Select` + `SelectTrigger`, line 441) — uses default `SelectTrigger` styling. The trigger is `flex justify-between`, but the inner `SelectValue` span renders text that visually appears centered inside the pill because the span stretches and inherits no explicit `text-left`.
-2. **Staff Multi-Select** (`Button` + `PopoverTrigger`, line 471) — uses `justify-between`, but the label is rendered as a bare text node that also reads as visually centered against the chevron.
+Root cause: the two triggers have different left-padding because of leading icons.
 
-The visual centering effect happens because the text span isn't explicitly left-aligned and the chevron sits flush right, making the gap between text-end and chevron-start look symmetric to the text-start and pill-edge.
+- **Location Select** (`SelectTrigger`): no leading icon. Default px-4 padding → text starts at ~16px from pill edge.
+- **Staff Multi-Select** (`Button` with `justify-between`): has a `Users` icon (or similar) before the text wrapped in `flex-1 text-left`. That icon + gap pushes the text further right than the location label.
+
+So while both are individually left-aligned within their own pill, they don't align with each other across the stacked layout.
 
 ## Fix
 
 Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`.
 
-### A. Location Select trigger
-Add `text-left` and wrap the `SelectValue` so its containing span is forced to `flex-1 text-left`:
-- Add `text-left` class to the `SelectTrigger`
-- This propagates to the `SelectValue` span via inheritance
+Two options to align them — I'll go with **Option A** (remove the leading icon from the staff button) for visual cleanliness and consistency with the location pill which also has no leading icon. If the icon is intentional, fall back to Option B.
 
-### B. Staff multi-select Button
-Wrap the label text in a `<span className="flex-1 text-left truncate">` so the text fills available width and aligns left, with the chevron pushed flush right by `justify-between`.
+### Option A (preferred): Remove leading icon from staff button
+- Drop the `Users`/leading icon from the staff multi-select trigger.
+- Both labels now share identical left padding (px-4) and align flush at the same x-coordinate.
 
-That's it. No token changes, no layout changes, no other surface affected.
+### Option B (fallback): Add matching icon to location select
+- Add a `MapPin` icon before the location label so both pills have a leading icon at the same offset.
+- Less ideal — adds visual weight where none was needed.
+
+I'll confirm which icon is currently in the staff button during implementation and apply Option A.
 
 ## Acceptance checks
 
-1. "North Mesa" sits flush-left inside the location pill, chevron flush-right.
-2. "All Stylists That Work This Day" sits flush-left inside the staff pill, chevron flush-right.
-3. Long stylist names (single-select case) truncate with ellipsis, still left-aligned.
-4. No layout shift, no width change, no impact on dropdown contents.
-
-## Follow-up enhancements
-
-- Audit other pill-style `SelectTrigger` instances across the dashboard (LocationSelect, AnalyticsFilterBar) for the same centering perception — apply `text-left` consistently as a default in the base `SelectTrigger` component if it's a recurring pattern.
-- Consider adding a `text-left` default to the shared `SelectTrigger` in `src/components/ui/select.tsx` so this never recurs in any new surface.
+1. "North Mesa" and "All Stylists That Work This Day" labels share the same left x-coordinate.
+2. Chevrons remain flush right.
+3. Truncation still works on long labels.
+4. No layout shift, no width change.
