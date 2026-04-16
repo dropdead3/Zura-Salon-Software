@@ -822,6 +822,7 @@ export default function Schedule() {
                 adminMeetings={adminMeetings}
                 onMeetingClick={handleMeetingClick}
                 zoomLevel={zoomLevel}
+                scheduleBlocks={scheduleBlocks}
               />
             );
           })()}
@@ -846,7 +847,8 @@ export default function Schedule() {
                   onBlockClick={() => setBlockManagerOpen(true)}
                    adminMeetings={adminMeetings}
                    onMeetingClick={handleMeetingClick}
-                   zoomLevel={zoomLevel}
+                    zoomLevel={zoomLevel}
+                    scheduleBlocks={scheduleBlocks}
                 />
           )}
           
@@ -868,7 +870,8 @@ export default function Schedule() {
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
               assistantProfilesMap={assistantProfilesMap}
-              zoomLevel={zoomLevel}
+               zoomLevel={zoomLevel}
+               scheduleBlocks={scheduleBlocks}
             />
           )}
           
