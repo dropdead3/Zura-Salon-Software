@@ -1,24 +1,14 @@
 
 
-# Reduce Radius & Add Ghost Stroke on Today Button (Dark Mode)
+# Reduce Day Button Radii to Match Today
 
-## Change — `src/components/dashboard/schedule/ScheduleHeader.tsx` (line 423-425)
+## Change — `src/components/dashboard/schedule/ScheduleHeader.tsx` (line 465)
 
-**Line 423** — Reduce radius from `rounded-xl` to `rounded-lg`:
+The quick-day buttons currently use `rounded-xl` while the Today button uses `rounded-lg`. Change line 465 to match:
+
 ```
 rounded-xl → rounded-lg
 ```
 
-**Line 425** — Add a bright ghost-style border in dark mode:
-```
-Current:
-'bg-primary text-primary-foreground shadow-sm dark:bg-primary/15 dark:text-primary dark:shadow-none'
-
-New:
-'bg-primary text-primary-foreground shadow-sm dark:bg-primary/15 dark:text-primary dark:shadow-none dark:border dark:border-primary/40'
-```
-
-This gives the active Today button a smaller corner radius and a translucent primary-colored stroke in dark mode, reinforcing the ghost-button aesthetic shown in the screenshot.
-
-Two lines changed, one file.
+Single class change, one line, one file.
 
