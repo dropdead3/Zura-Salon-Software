@@ -209,12 +209,12 @@ export function ScheduleHeader({
                     {showShiftsView ? (
                       <>
                         <CalendarIcon className="h-3.5 w-3.5" />
-                        Appointments
+                        <span className="hidden lg:inline">Appointments</span>
                       </>
                     ) : (
                       <>
                         <Clock className="h-3.5 w-3.5" />
-                        Shifts
+                        <span className="hidden lg:inline">Shifts</span>
                       </>
                     )}
                   </button>
