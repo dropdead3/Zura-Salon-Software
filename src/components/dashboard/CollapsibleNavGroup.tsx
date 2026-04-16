@@ -177,6 +177,40 @@ export function CollapsibleNavGroup({
           const GroupIcon = group.icon;
           const active = isGroupActive(group);
           const items = getVisibleItems(group.items);
+
+          // Single-item groups navigate directly on click
+          if (items.length === 1) {
+            const singleItem = items[0];
+            const Icon = singleItem.icon;
+            const isActive = location.pathname === singleItem.href;
+            const label = getNavLabel ? getNavLabel(singleItem) : singleItem.label;
+            return (
+              <Tooltip key={group.id}>
+                <TooltipTrigger asChild>
+                  <a
+                    href={singleItem.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(singleItem.href, { state: { navTimestamp: Date.now() } });
+                      onNavClick();
+                    }}
+                    className={cn(
+                      "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
+                      "transition-all duration-200 text-sm",
+                      isActive
+                        ? "bg-foreground/10 text-foreground"
+                        : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
+                    )}
+                    style={{ width: 'calc(100% - 16px)' }}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="right">{label}</TooltipContent>
+              </Tooltip>
+            );
+          }
+
           return (
             <HoverPopover key={group.id}>
               <PopoverTrigger asChild>
