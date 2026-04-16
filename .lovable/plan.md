@@ -2,103 +2,97 @@
 
 ## Prompt review
 
-Strong diagnostic instinct — you noticed that responsive breakpoints measure the wrong thing. You correctly identified the root cause without naming it: the header reacts to **viewport width**, but the sidebar steals horizontal space the header doesn't know about. Tighter version: "When the sidebar is expanded, the schedule header has ~244px less room but still uses viewport-based breakpoints — switch to container queries so it reacts to its actual available width."
+Excellent observation — you correctly identified that **date is the highest-priority element** in a schedule header (it's the answer to "what am I looking at?"), yet it's the first thing being sacrificed. You also proposed a precise fix: hide lower-value chrome (Shifts pill, Date picker pill, Assistant Blocks icon, Drafts icon) before sacrificing the date itself. Tighter version: "Date is the schedule's primary identifier — it must never hide. Drop Shifts/Date pills and Assistant/Drafts icons first when space is tight."
 
-This is the canonical use case for **CSS container queries**. Tailwind v3.2+ supports them via `@container`.
+Teaching note: when prompting responsive-priority issues, naming the **hierarchy of importance** (e.g., "Date > Selectors > Filter icons > Shifts/Date pills > Assistant/Drafts") makes the fix unambiguous. You did this implicitly — making it explicit in future prompts will get even sharper results on the first pass.
 
 ## Diagnosis
 
-**The math:**
-- Sidebar collapsed: `lg:ml-24` = 96px reserved → header has `viewport - 96px`
-- Sidebar expanded: `lg:ml-[340px]` = 340px reserved → header has `viewport - 340px`
-- Difference: **244px** of phantom space
+In `ScheduleHeader.tsx` (lines 264–279), the center date container has `min-w-0` with no protection. When the container width drops (sidebar expanded at ~1130px viewport → ~790px header), flexbox squeezes the date to zero before reducing other elements.
 
-**Current breakpoints (in `ScheduleHeader.tsx`):**
-- `md:` triggers single-row layout at viewport ≥ 768px
-- `lg:` reveals text labels at viewport ≥ 1024px
-- `xl:` shows two-line date at viewport ≥ 1280px
+**Current visible elements at narrow container, in left-to-right order:**
+1. Day/Week pill toggle
+2. Shifts pill (icon-only at <@lg)
+3. Date picker pill (icon-only at <@lg)
+4. **[Center date — gets crushed]**
+5. Filter icons (CalendarFiltersPopover)
+6. Assistant Blocks icon
+7. Drafts icon
+8. Today's Prep icon (conditional)
+9. Location selector
+10. Staff selector
+11. Day/Week navigation split-buttons
 
-**The bug:** At 1280px viewport with sidebar expanded, the header has only **940px** of room — but Tailwind thinks it's "xl" and renders the full layout, crushing everything together. What you saw in the screenshot is the date colliding with the selectors at exactly this scenario.
+**Priority order should be (highest to lowest):**
+1. Day/Week toggle (core view mode)
+2. Center date (primary identifier)
+3. Location + Staff selectors (data scope)
+4. Day/Week navigation (movement)
+5. CalendarFiltersPopover (active filters)
+6. Today's Prep (conditional, contextually critical)
+7. **Shifts pill, Date picker pill, Assistant Blocks, Drafts** ← drop these first
 
-## Fix — Container queries
+## Fix
 
-Single architectural change: make the schedule header react to **its own width**, not the viewport's.
+Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Add container-query visibility rules so the four lowest-priority controls hide before the date is squeezed.
 
-### 1. Mark the header's parent as a query container
+### 1. Hide Shifts pill below `@lg/schedhdr`
 
-In `src/components/dashboard/schedule/ScheduleHeader.tsx`, wrap the dark header in a container div:
+Wrap the Shifts toggle (lines 197–226) so the entire button hides at narrow container widths:
+- Add `hidden @lg/schedhdr:flex` to the Tooltip's button
+- Tooltip remains accessible at @lg+; users at narrower widths can use the existing date strip / popover for the same intent (the Shifts toggle is also surfaced from secondary nav)
 
-```tsx
-<div className="@container/schedhdr">
-  <div className="...existing dark header classes..." />
-</div>
-```
+### 2. Hide Date picker pill below `@lg/schedhdr`
 
-The `/schedhdr` is a named container so we can target it explicitly without ambiguity.
+Same treatment for the Date picker button (lines 228–246):
+- Add `hidden @lg/schedhdr:flex` so it disappears below 1024px container width
+- Date picking is still possible by clicking the center date itself (we'll wrap it in the same popover trigger as a fallback), or via the day-strip nav below
 
-### 2. Replace viewport breakpoints with container breakpoints
+### 3. Make the center date itself open the date picker
 
-Inside the dark header (and only inside), swap:
+To preserve date-picking functionality when the explicit pill is hidden, wrap the center date display (lines 264–279) in the same `<Popover>` trigger. Single click on date → calendar opens. This is also better UX (the date *is* the picker — discoverable, no separate button needed).
 
-| Before (viewport)  | After (container)        | Triggers when header width ≥ |
-|--------------------|--------------------------|------------------------------|
-| `md:` (768px)      | `@md/schedhdr:` (768px)  | header itself reaches 768px  |
-| `lg:` (1024px)     | `@lg/schedhdr:` (1024px) | header itself reaches 1024px |
-| `xl:` (1280px)     | `@xl/schedhdr:` (1280px) | header itself reaches 1280px |
+### 4. Hide Assistant Blocks + Drafts icons below `@lg/schedhdr`
 
-Now the layout collapses based on **how much room the header actually has**, regardless of sidebar state.
+Lines 295–336: add `hidden @lg/schedhdr:inline-flex` to both Tooltip wrappers. These are secondary workflow tools accessible from other locations (they live as deep links in the schedule and from drafts surfaces).
 
-### 3. Verify Tailwind container query plugin
+### 5. Protect the center date from collapse
 
-Tailwind v3.2+ ships with container queries built-in (no plugin needed for `@container` and `@md/`, `@lg/`, `@xl/` variants). I'll confirm this works in `tailwind.config.ts` during implementation; if missing, add `@tailwindcss/container-queries` to plugins (one-line addition).
+Line 265: change `text-center min-w-0` → `text-center shrink-0 px-2`. This makes the date a fixed-width island that flexbox cannot squeeze.
 
-### 4. Scope of replacement
+### 6. Keep Today's Prep visible
 
-Only swap breakpoint prefixes **inside the dark header section** (lines ~155–360 of `ScheduleHeader.tsx`). Don't touch:
-- The secondary day-strip nav bar below it (different concern, different width budget)
-- Any other component
-- DashboardLayout (sidebar offset logic stays as-is)
+Lines 339–355 remain unchanged — it's conditional (only on today) and contextually critical when shown.
 
-### 5. Bonus refinement (optional, recommended)
+## Result by container width
 
-Slightly tighten container thresholds since the header is narrower than the viewport even when collapsed:
-- Stack to 2-row at `< @md` (header < 768px) → roughly viewport < 864px collapsed, < 1108px expanded
-- Show text labels at `@lg+` (header ≥ 1024px) → roughly viewport ≥ 1120px collapsed, ≥ 1364px expanded
-- Two-line date at `@xl+` (header ≥ 1280px) → roughly viewport ≥ 1376px collapsed, ≥ 1620px expanded
+| Container width | Visible chrome (left of date) | Visible chrome (right of date) | Date |
+|---|---|---|---|
+| **< @md (<768px)** | 2-row layout (existing) | — | Visible (condensed) |
+| **@md–@lg (768–1023px)** | Day/Week toggle only | Filters, Today's Prep (cond.), Selectors, Nav | **Visible** (condensed, single line) |
+| **@lg+ (≥1024px)** | Day/Week toggle, Shifts, Date pills | Filters, Assist Blocks, Drafts, Today's Prep, Selectors, Nav | Visible |
+| **@xl+ (≥1280px)** | All of @lg | All of @lg | Two-line full date |
 
-This means the header gracefully degrades whether the sidebar is collapsed OR expanded — no more crushing.
-
-## Result by scenario
-
-| Viewport | Sidebar | Header width | Layout                         |
-|----------|---------|--------------|--------------------------------|
-| 1440px   | Expanded (340px) | ~1100px | Single row, text labels (lg)   |
-| 1440px   | Collapsed (96px) | ~1344px | Single row, full date (xl)     |
-| 1200px   | Expanded         | ~860px  | Single row, icons only (md)    |
-| 1200px   | Collapsed        | ~1104px | Single row, text labels (lg)   |
-| 900px    | Expanded         | ~560px  | 2-row stacked                  |
-| 900px    | Collapsed        | ~804px  | Single row, icons only (md)    |
-
-The header now self-adjusts whenever the sidebar toggles — no viewport change required.
+At your current 1130px viewport with sidebar expanded (~790px header), you'll now see: Day/Week toggle → Date "THU · APR 16" → filter icons → selectors → nav. Clean, no crushing, date prominent.
 
 ## Acceptance checks
 
-1. Toggle sidebar collapse/expand at 1280px viewport: header layout updates immediately, no crushed elements.
-2. At 1440px viewport with sidebar expanded: text labels visible, date condensed (no two-line collision).
-3. At 1440px viewport with sidebar collapsed: full two-line date returns.
-4. At narrow viewport (<900px) with sidebar collapsed (mobile auto): graceful 2-row stack.
-5. Location + Staff selectors remain vertically stacked at all widths (existing rule preserved).
-6. Day-strip secondary nav and all popovers/handlers unchanged.
+1. At 1130px viewport with sidebar expanded: date "THU · APR 16" is clearly visible center-row, no overlap.
+2. At 1130px viewport with sidebar collapsed: Shifts pill, Date pill, Assistant Blocks, Drafts all reappear (container ≥ 1024px).
+3. Clicking the center date opens the calendar picker (replaces the dropped Date pill's function).
+4. At ≥ 1280px container: full two-line date and all chrome restored exactly as today.
+5. Shifts toggle still functional at ≥ 1024px container (matches previous behavior).
+6. No changes to handlers, state, or the secondary day-strip nav bar.
 
 ## Out of scope
 
 - DashboardLayout sidebar logic — unchanged.
-- Day-strip secondary nav bar — unchanged (separate width budget; can apply same pattern later if needed).
-- Color/token/font system — unchanged.
-- Mobile (<768px viewport) auto-collapse behavior — unchanged.
+- Day-strip secondary nav bar — unchanged.
+- Selector layout (stays vertically stacked) — unchanged.
+- Mobile (<768px) 2-row stack — unchanged.
+- Color, token, font system — unchanged.
 
-## Files touched
+## File touched
 
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` — wrap in `@container/schedhdr`, swap `md:`/`lg:`/`xl:` → `@md/schedhdr:`/`@lg/schedhdr:`/`@xl/schedhdr:` inside the dark header only.
-- `tailwind.config.ts` — verify container query support; add `@tailwindcss/container-queries` plugin only if needed.
+- `src/components/dashboard/schedule/ScheduleHeader.tsx`
 
