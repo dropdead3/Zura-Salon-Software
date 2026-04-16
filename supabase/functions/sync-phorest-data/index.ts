@@ -1870,12 +1870,23 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
   const branchData = await phorestRequest("/branch", businessId, username, password);
   const branches = branchData._embedded?.branches || branchData.branches || (Array.isArray(branchData) ? branchData : []);
 
-  // Get staff mappings to resolve phorest_staff_id -> user_id + org
+  // Get staff mappings to resolve phorest_staff_id -> user_id
   const { data: staffMappings } = await supabase
     .from('phorest_staff_mapping')
-    .select('phorest_staff_id, user_id, organization_id');
-  const staffMap = new Map((staffMappings || []).map((m: any) => [m.phorest_staff_id, m]));
-  console.log(`Staff mapping has ${staffMap.size} entries. Keys: ${[...staffMap.keys()].slice(0, 5).join(', ')}...`);
+    .select('phorest_staff_id, user_id');
+
+  // Get organization_id for each user from employee_profiles
+  const userIds = [...new Set((staffMappings || []).map((m: any) => m.user_id).filter(Boolean))];
+  const { data: profiles } = userIds.length > 0
+    ? await supabase.from('employee_profiles').select('user_id, organization_id').in('user_id', userIds)
+    : { data: [] };
+  const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p.organization_id]));
+
+  const staffMap = new Map((staffMappings || []).map((m: any) => [
+    m.phorest_staff_id,
+    { user_id: m.user_id, organization_id: profileMap.get(m.user_id) || null }
+  ]));
+  console.log(`Staff mapping has ${staffMap.size} entries (${profileMap.size} with org). Keys: ${[...staffMap.keys()].slice(0, 5).join(', ')}...`);
 
   let totalBlocks = 0;
 
