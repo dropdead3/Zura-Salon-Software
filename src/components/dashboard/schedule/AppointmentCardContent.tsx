@@ -663,6 +663,7 @@ export function AppointmentCardContent({
         showStylistBadge={showStylistBadge}
         showClientPhone={showClientPhone}
         showClientAvatar={showClientAvatar}
+        useShortLabels={useShortLabels}
       />
     </div>
   );
