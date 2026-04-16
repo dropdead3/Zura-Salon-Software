@@ -1,57 +1,60 @@
-<final-text>## Prompt review
 
-Good catch — this is a strong follow-up prompt because you identified that the first fix improved things but didn’t fully solve the visual edge case. Better prompt framing for spacing/render bugs: mention whether the spill is a full-slot issue or a thin 1–2px halo. That helps distinguish logic bugs from paint/rounding bugs faster.
+## Prompt review
 
-## What’s likely happening
+Clear and visual — the screenshots show exactly what you want (red pill is the "before"-style example; purple line + 1:43 PM is your target). Teaching note: explicitly saying "ghost = translucent purple, not solid" and "in the time-gutter area to the left" would have removed two assumptions. I'll proceed with: translucent purple background (`bg-primary/15`), purple text, purple ring, vertically centered on the line, positioned to the **left of the dot** so it sits over the time-label gutter.
 
-The big logic bug is already fixed: the past state is no longer painted per 15-minute slot.
+## What's there now
 
-What’s left appears to be a rendering precision issue:
-- `DayView.tsx` and `WeekView.tsx` still use the raw fractional `currentTimeOffset`
-- the purple indicator is drawn as a `border-t-2`
-- the gray overlay height is set separately with the same raw value
+- **DayView** (`src/components/dashboard/schedule/DayView.tsx`, ~line 893): renders the line + dot only — no time label at all.
+- **WeekView** (`src/components/dashboard/schedule/WeekView.tsx`, ~line 597): renders line + dot + a **solid purple** label on the **right** of the dot.
 
-That combination can still leave a faint visual spill because the overlay edge and the visible 2px line are not snapped to the same painted pixel boundary.
+Both use the shared snapped `currentTimeLinePx` from `getCurrentTimeRenderMetrics`.
 
-There’s also duplicated logic in both views, which makes it easy for these tiny visual mismatches to persist.
+## Fix
 
-## Fix plan
+Add a small reusable formatter inline (or use `formatTime12h` from `schedule-utils` after converting `nowMinutes` → `HH:MM` string) and render a ghost pill positioned to the **left** of the dot, vertically centered on the line.
 
-1. Add a shared helper in `src/lib/schedule-utils.ts`
-   - Return a pixel-snapped current-time position for rendering
-   - Return a separate past-overlay height that stops exactly at the visible indicator bar
-   - Clamp both values to the grid height
+Pill styling (matches "ghost" + brand):
+- `bg-primary/15` translucent purple fill
+- `text-primary` purple text
+- `ring-1 ring-primary/30` subtle outline
+- `backdrop-blur-sm` for the glassy ghost feel
+- `text-[10px] font-medium px-2 py-0.5 rounded-full`
+- positioned `absolute right-1 -translate-y-1/2 top-0` inside the indicator wrapper, so it sits in the time-gutter to the left of the dot
 
-2. Update `DayView.tsx`
-   - Replace raw `currentTimeOffset` usage with the shared snapped values
-   - Use the snapped line position for the purple bar
-   - Use the overlay height derived from the helper so the gray ends exactly at the bar
-   - Keep `isPastSlot` only for interaction rules and the “Unavailable” badge
+### DayView changes (~line 893–904)
+- Wrap the indicator content in a `relative` container so the pill can be absolutely positioned relative to the line.
+- Add the ghost pill to the **left** of the dot using `right-2` (since the indicator spans the full track, "left of the dot" = positioned with `right` from the dot's anchor, or simpler: render the pill at `left: -<offset>` relative to the column wrapper).
+- Cleanest: render the pill at `style={{ right: '100%' }}` on the dot's wrapper, with a small `mr-1` so it sits just outside the column track in the time-gutter area.
 
-3. Update `WeekView.tsx`
-   - Apply the same shared helper so Day and Week render identically
-   - Use the same snapped values for both the gray overlay and current-time line
+### WeekView changes (~line 605–613)
+- Replace the existing solid right-side label with the same ghost pill positioned on the **left** (`right: '100%'` + `mr-1`), removing the current `left-3 -top-2.5 bg-primary text-primary-foreground` styling.
 
-4. Tighten the visual edge
-   - If needed, subtract 1px from the overlay height or shift the line by 1px so the visible boundary is crisp at all zoom levels
-   - This is the small final tuning pass after applying the shared helper
+### Shared helper
+- Add a tiny `formatMinutesAs12h(mins: number)` to `src/lib/schedule-utils.ts` (DRY — used by both views) so the time string isn't duplicated as an IIFE.
 
 ## Acceptance checks
 
-- Gray past overlay stops exactly at the purple current-time line
-- No visible spill below the line at 100% or 200% zoom
-- The current slot is only gray above the line and clear below it
-- Day view and Week view behave the same
-- Past slots remain unavailable for interaction
+1. Both Day and Week views show a translucent purple pill with the current time (e.g. `1:43 PM`) just left of the purple dot.
+2. The pill is vertically centered on the purple line — no clipping above/below.
+3. Pill updates each minute (already handled by `useOrgNow` ticking `nowMinutes`).
+4. In Week view, only today's column shows the pill (existing `isCurrentDay` gate).
+5. Pill doesn't overlap appointments — sits in the time-gutter area to the left of the column track.
+6. Looks crisp at 100% and 200% zoom.
+
+## Out of scope
+
+- Restyling the dot or line.
+- MonthView / AgendaView (no time-of-day line there).
+- Animations on the pill (could be a follow-up if you want a soft pulse).
 
 ## Files to touch
 
-- `src/lib/schedule-utils.ts`
-- `src/components/dashboard/schedule/DayView.tsx`
-- `src/components/dashboard/schedule/WeekView.tsx`
+- `src/lib/schedule-utils.ts` — add `formatMinutesAs12h(mins)` helper.
+- `src/components/dashboard/schedule/DayView.tsx` — add ghost pill left of the dot.
+- `src/components/dashboard/schedule/WeekView.tsx` — replace right-side solid label with the same ghost pill on the left.
 
 ## Further enhancement suggestions
 
-- Add a single shared “current time render metrics” helper so all schedule surfaces stay visually identical
-- Do a quick sweep for other schedule overlays using raw fractional offsets
-- Verify the final boundary in both normal view and God Mode so the visual line stays crisp across contexts</final-text>
+- Add a subtle pulse animation on the dot to reinforce "live now" status.
+- Mirror this pill on any other live-time surfaces (e.g., Zura Dock prep timeline) so the "current time" treatment is consistent platform-wide.
