@@ -1021,6 +1021,10 @@ export default function Schedule() {
                     onZoomIn={() => setZoomLevel(prev => Math.min(prev + 1, 3))}
                     onZoomOut={() => setZoomLevel(prev => Math.max(prev - 1, -3))}
                     onCreateAppointment={handleNewBooking}
+                    onOpenBlockManager={() => setBlockManagerOpen(true)}
+                    pendingBlockCount={pendingCount}
+                    onOpenDrafts={() => setDraftsSheetOpen(true)}
+                    draftCount={drafts.length}
                   />
                 </div>
               </div>
