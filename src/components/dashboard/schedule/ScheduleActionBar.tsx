@@ -88,7 +88,7 @@ export function ScheduleActionBar({
   return (
     <div
       className={cn(
-        'bg-card/80 backdrop-blur-xl border border-border rounded-full px-4 py-2.5 flex items-center gap-3 transition-all duration-300 shadow-lg flex-1'
+        'bg-card/80 backdrop-blur-xl border border-border rounded-full pl-1.5 pr-4 py-2.5 flex items-center gap-3 transition-all duration-300 shadow-lg flex-1'
       )}
     >
       {/* Left: Create Appointment button */}
