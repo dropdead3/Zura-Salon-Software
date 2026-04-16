@@ -1,75 +1,54 @@
 
 ## Prompt review
 
-Tight and unambiguous — you specified the trigger condition ("when viewing today's date"), the label ("Today"), and the placement ("above the day and date"). Teaching note: this prompt works because it leaves zero room for misinterpretation about *where* the new element goes. A future micro-improvement: state styling preference (subtle vs. emphasized) when the answer isn't obvious — here it is, since the existing two-line layout already establishes a clear visual hierarchy to follow.
+Clear pattern extension — you're generalizing the "Today" eyebrow into a temporal-context indicator across the full date range. Teaching note: tight prompt because you (a) referenced the existing pattern as the anchor, (b) gave the next concrete case ("tomorrow"), and (c) gestured at the general rule ("X days in the future") while leaving room for the right copy. A micro-improvement: also state the past-direction behavior ("3 days ago"?) so I don't have to infer it. I'll propose symmetric handling and you can trim.
 
 ## Diagnosis
 
-In `src/components/dashboard/schedule/ScheduleHeader.tsx` (lines 247–265), the centered date trigger renders two layouts:
-
-- Compact (< @xl): single line — `Thu · Apr 16`
-- Full (@xl+): two lines — weekday name on top, full date below
-
-`isOrgToday(currentDate)` is already in scope (line 133, used elsewhere in the same file). When true, we prepend a small "TODAY" eyebrow above the existing weekday/date stack — and a discreet inline marker in the compact layout.
+`src/components/dashboard/schedule/ScheduleHeader.tsx` currently shows a "TODAY" eyebrow only when `isOrgToday(currentDate)` is true. We have `isOrgTomorrow` already available in `src/lib/orgTime.ts`. For arbitrary day offsets, we need a small helper that returns the signed integer day delta between `currentDate` and org-today, then maps it to a label.
 
 ## Fix
 
-Single file: `src/components/dashboard/schedule/ScheduleHeader.tsx`. Inside the trigger button (lines 252–264):
+**1. Add helper in `src/lib/orgTime.ts`** — `getOrgDayOffset(date, timezone)` returns signed integer (negative = past, 0 = today, positive = future). Uses the existing org-parts noon-anchor trick to avoid DST edges.
 
-**Two-line (@xl+) layout** — add a TODAY eyebrow above the weekday line:
+**2. Add label resolver in `ScheduleHeader.tsx`** (local function, not exported — single consumer):
 
-```tsx
-<div className="hidden @xl/schedhdr:block">
-  {isOrgToday(currentDate) && (
-    <div className="text-[10px] font-display tracking-[0.2em] text-primary uppercase">
-      Today
-    </div>
-  )}
-  <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
-    {formatDate(currentDate, 'EEEE')}
-  </div>
-  <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
-    {formatDate(currentDate, 'MMMM d, yyyy')}
-  </div>
-</div>
+```ts
+function getRelativeDayLabel(offset: number): string | null {
+  if (offset === 0) return 'Today';
+  if (offset === 1) return 'Tomorrow';
+  if (offset === -1) return 'Yesterday';
+  if (offset > 1 && offset <= 30) return `In ${offset} days`;
+  if (offset < -1 && offset >= -30) return `${Math.abs(offset)} days ago`;
+  return null; // beyond ±30 days, stay silent (calm doctrine)
+}
 ```
 
-**Compact (< @xl) layout** — add a small TODAY eyebrow above the single date line:
+Rationale:
+- `Today` / `Tomorrow` / `Yesterday` — natural language for the immediate window.
+- `In N days` / `N days ago` — concise, scannable, matches executive tone. Avoids "X days in the future" (verbose).
+- Silent beyond ±30 days — the full "Friday, April 17, 2026" line already makes far-future/past dates unambiguous; an extra label would be noise (silence is meaningful).
 
-```tsx
-<div className="@xl/schedhdr:hidden">
-  {isOrgToday(currentDate) && (
-    <div className="text-[9px] font-display tracking-[0.2em] text-primary uppercase leading-none mb-0.5">
-      Today
-    </div>
-  )}
-  <div className="text-sm font-display tracking-wide whitespace-nowrap">
-    {formatDate(currentDate, 'EEE')} · {formatDate(currentDate, 'MMM d')}
-  </div>
-</div>
-```
-
-### Styling rationale
-
-- `font-display` + uppercase + wide tracking matches the Termina canon for eyebrow labels.
-- `text-primary` ties it to the same purple accent used for the selected-date pill in the calendar — visual consistency across surfaces.
-- `text-[10px]` / `text-[9px]` keeps it as a quiet eyebrow, never competing with the date itself.
-- Renders only when `isOrgToday(currentDate)` is true — silent the rest of the time (matches "silence is meaningful" doctrine).
+**3. Wire into existing eyebrow slots** — replace the current `isOrgToday(currentDate)` checks in both compact and full layouts with `const relLabel = getRelativeDayLabel(getOrgDayOffset(currentDate, timezone));` and render when `relLabel` is non-null. Styling unchanged (`text-primary` purple, font-display, uppercase, tracking-[0.2em]).
 
 ## Acceptance checks
 
-1. When viewing today's date, a small purple "TODAY" label appears above the weekday in both layouts.
-2. Navigating to any other date hides the label completely.
-3. No layout shift on the date pill (eyebrow is small, sits above existing content).
-4. Typography uses `font-display`, no banned weights.
-5. Click behavior on the date pill (opens date picker) unchanged.
+1. Today → "TODAY" (unchanged).
+2. Tomorrow → "TOMORROW".
+3. Yesterday → "YESTERDAY".
+4. +2 to +30 days → "IN N DAYS".
+5. -2 to -30 days → "N DAYS AGO".
+6. Beyond ±30 days → no eyebrow (silent).
+7. Both compact (< @xl) and full (@xl+) layouts behave identically.
+8. No layout shift; click-to-open-picker behavior preserved.
 
 ## Out of scope
 
-- Changing existing weekday/date typography or sizes.
-- Adding the indicator anywhere else (sidebar, agenda, etc.).
-- Tooltip or hover states on the new label.
+- Localization of relative labels (single-locale today; revisit when i18n lands).
+- Changing the "Today" pill in the date strip below the header.
+- Tooltip/hover on the eyebrow.
 
-## File touched
+## Files touched
 
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` — conditional "Today" eyebrow above both compact and full date layouts.
+- `src/lib/orgTime.ts` — add `getOrgDayOffset` helper.
+- `src/components/dashboard/schedule/ScheduleHeader.tsx` — add local `getRelativeDayLabel`, replace conditional eyebrow rendering in both layouts.
