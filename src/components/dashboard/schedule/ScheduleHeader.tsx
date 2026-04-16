@@ -248,11 +248,11 @@ export function ScheduleHeader({
         </div>
 
         {/* Center: Date Display */}
-        <div className="text-center">
-          <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70">
+        <div className="text-center min-w-0 truncate">
+          <div className="text-xs font-display tracking-wide text-[hsl(var(--sidebar-foreground))]/70 truncate">
             {formatDate(currentDate, 'EEEE')}
           </div>
-          <div className="text-sm font-display tracking-wide whitespace-nowrap">
+          <div className="text-sm font-display tracking-wide whitespace-nowrap truncate">
             {formatDate(currentDate, 'MMMM d, yyyy')}
           </div>
         </div>
