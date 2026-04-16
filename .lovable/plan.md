@@ -1,54 +1,57 @@
 
 ## Prompt review
 
-Clear, scoped prompt. You named the surface ("Draft Bookings") and the desired action ("clear all at once"). Tighter framing next time: specify scope ("all drafts org-wide" vs "all drafts for this client group" vs "all drafts I created") and whether you want a confirmation step. Right now I'll infer the most defensive interpretation.
+Tight, well-scoped prompt. Two clear asks: (1) collapsed-by-default state, (2) surface creator + timestamp on the collapsed header. Teaching note: you could tighten further by specifying the timestamp format you want ("2 hours ago" relative vs "Apr 16, 4:32 PM" absolute) — right now I'll pick the most operator-friendly default (relative, with absolute on hover via tooltip).
 
 ## Diagnosis
 
-Looking at the screenshot of the Draft Bookings sheet:
-- Drafts are grouped by client (e.g., "Eric Day (4 drafts)", "No Client Selected (1 draft)")
-- Each group already has a per-group "Discard All" link (visible top-right of Eric Day group)
-- There's no global "Clear All Drafts" action at the sheet level
+Current state in `DraftBookingsSheet.tsx`:
+- Drafts are grouped by client name and rendered as `Collapsible` groups
+- Default `open` state is `true` (groups expanded by default)
+- Collapsed header shows: chevron, person icon, client name, draft count, "Discard All" button
+- Creator name (`created_by_name`) and timestamp (`created_at`) are stored on each draft but only visible after expanding
 
-The `useBatchDeleteDrafts` hook already exists in `src/hooks/useDraftBookings.ts` and accepts an array of IDs — backend work is done. This is purely a UI addition.
+The data is already on each `DraftBooking` row — just not surfaced at the group level.
 
 ## Fix
 
-Single surface: the Draft Bookings sheet component (likely `src/components/dashboard/schedule/DraftBookingsSheet.tsx` — will confirm during implementation).
+Single file: `src/components/dashboard/schedule/DraftBookingsSheet.tsx`.
 
-### A. Add a sheet-level "Clear All" action
-- Place a destructive button in the sheet header next to the close button, or just below the search bar aligned right.
-- Only render when `drafts.length > 0`.
-- Label: "Clear All Drafts" with a Trash icon.
-- Style: ghost variant with destructive text color (matches existing "Discard All" / "Discard" styling).
+### A. Default to collapsed
+- Change the `Collapsible` `defaultOpen` from `true` to `false`.
+- Keep manual expand/collapse fully functional.
 
-### B. Confirmation gate (mandatory)
-- Wrap in an `AlertDialog` — clearing all drafts is destructive and irreversible.
-- Title: "Clear all drafts?"
-- Description: "This will permanently delete all {N} draft bookings. This cannot be undone."
-- Cancel + "Clear All" (destructive) buttons.
+### B. Surface creator + timestamp on collapsed header
+For each client group, derive a "most recent draft" summary:
+- Find the newest draft in the group (max `created_at`)
+- Display `created_by_name` and a relative timestamp (e.g., "Eric Day · 2h ago")
+- Use `date-fns` `formatDistanceToNow` for the relative format
+- Add a tooltip showing the absolute timestamp on hover
 
-### C. Wire to existing batch hook
-- On confirm: collect every draft ID across all groups → call `useBatchDeleteDrafts` with the full array.
-- Toast on success: "Cleared {N} drafts."
-- Existing query invalidation in the hook handles the refresh.
+Layout change to the collapsed header row:
+- Left side stays: chevron + person icon + client name + draft count
+- New subline (under the client name): `created_by_name · {relative time}`
+- Use `tokens.body` muted styling (`text-xs text-muted-foreground`)
+- Right side stays: "Discard All" button
 
-### D. Selection-aware behavior (nice-to-have, in scope)
-- The screenshot shows checkboxes on each draft card — if any are selected, the button label switches to "Clear Selected ({N})" and only deletes selected IDs.
-- If none selected, falls back to "Clear All Drafts" behavior.
-- This makes the same button serve both bulk operations without adding a second control.
+If multiple creators contributed to one client's drafts, show the most recent creator + a "+N others" suffix.
+
+### C. Visual polish
+- The header row becomes two-line: client name on top, attribution beneath
+- Maintain existing height rhythm — use `text-xs` and tight `leading-tight` so the row doesn't grow much
+- Keep the chevron vertically centered against the full two-line block
 
 ## Acceptance checks
 
-1. Open Draft Bookings sheet with multiple drafts → "Clear All Drafts" button visible in header area.
-2. Click → confirmation dialog appears with accurate count.
-3. Confirm → all drafts deleted, sheet shows empty state, toast confirms count.
-4. Cancel → no drafts deleted.
-5. With drafts selected via checkboxes → button label changes to "Clear Selected (N)" and only deletes those.
-6. Empty draft list → button hidden.
+1. Open Draft Bookings sheet → all client groups collapsed by default.
+2. Each group header shows: client name, draft count, creator name, relative timestamp ("2h ago", "yesterday").
+3. Hover the timestamp → tooltip with absolute date/time.
+4. Click chevron → group expands as before.
+5. If a group has drafts from multiple creators → show most recent + "+N others".
+6. "Clear All" and per-group "Discard All" still work.
 
 ## Follow-up enhancements
 
-- Add an "Auto-clear drafts older than X days" setting (currently hardcoded to 7 days at the DB level via `expires_at`).
-- Add an "Undo" toast action with a 5-second window before the delete is finalized — useful for accidental clears.
-- Track "drafts cleared" in the audit log so leadership can spot patterns of staff abandoning bookings.
+- Add a "Sort groups by" toggle (Most Recent / Alphabetical / Most Drafts).
+- Show creator avatar instead of generic person icon when available — faster visual scan.
+- Add a filter chip "Mine only" to show only drafts the current user created.
