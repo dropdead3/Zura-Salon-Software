@@ -310,16 +310,16 @@ export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: strin
 };
 
 /** Agenda / badge / pastel variant colors */
-export const APPOINTMENT_STATUS_BADGE: Record<AppointmentStatusKey, { bg: string; text: string; border: string; label: string }> = {
-  pending:      { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  border: 'border-amber-800/30 dark:border-amber-300/30',  label: 'Pending' },
-  booked:       { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  border: 'border-amber-800/30 dark:border-amber-300/30',  label: 'Unconfirmed' },
-  unconfirmed:  { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  border: 'border-amber-800/30 dark:border-amber-300/30',  label: 'Unconfirmed' },
-  confirmed:    { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-800 dark:text-green-300',  border: 'border-green-800/30 dark:border-green-300/30',  label: 'Confirmed' },
-  walk_in:      { bg: 'bg-teal-100 dark:bg-teal-900/30',   text: 'text-teal-800 dark:text-teal-300',   border: 'border-teal-800/30 dark:border-teal-300/30',   label: 'Walk-In' },
-  checked_in:   { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-800 dark:text-blue-300',   border: 'border-blue-800/30 dark:border-blue-300/30',   label: 'Checked In' },
-  completed:    { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-300', border: 'border-purple-800/30 dark:border-purple-300/30', label: 'Completed' },
-  cancelled:    { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'Cancelled' },
-  no_show:      { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'No Show' },
+export const APPOINTMENT_STATUS_BADGE: Record<AppointmentStatusKey, { bg: string; text: string; border: string; label: string; shortLabel: string }> = {
+  pending:      { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  border: 'border-amber-800/30 dark:border-amber-300/30',  label: 'Pending',     shortLabel: 'Pend' },
+  booked:       { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  border: 'border-amber-800/30 dark:border-amber-300/30',  label: 'Unconfirmed', shortLabel: 'Unconf' },
+  unconfirmed:  { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-800 dark:text-amber-300',  border: 'border-amber-800/30 dark:border-amber-300/30',  label: 'Unconfirmed', shortLabel: 'Unconf' },
+  confirmed:    { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-800 dark:text-green-300',  border: 'border-green-800/30 dark:border-green-300/30',  label: 'Confirmed',   shortLabel: 'Conf' },
+  walk_in:      { bg: 'bg-teal-100 dark:bg-teal-900/30',   text: 'text-teal-800 dark:text-teal-300',   border: 'border-teal-800/30 dark:border-teal-300/30',   label: 'Walk-In',     shortLabel: 'Walk' },
+  checked_in:   { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-800 dark:text-blue-300',   border: 'border-blue-800/30 dark:border-blue-300/30',   label: 'Checked In',  shortLabel: 'In' },
+  completed:    { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-300', border: 'border-purple-800/30 dark:border-purple-300/30', label: 'Completed',   shortLabel: 'Done' },
+  cancelled:    { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'Cancelled',   shortLabel: 'Can' },
+  no_show:      { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-800 dark:text-red-300',    border: 'border-red-800/30 dark:border-red-300/30',    label: 'No Show',     shortLabel: 'NS' },
 };
 
 /** Full status config used by usePhorestCalendar (includes border + label) */

@@ -222,6 +222,7 @@ function GridContent({
 
   const statusKey = (appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_BADGE;
   const badge = APPOINTMENT_STATUS_BADGE[statusKey] || APPOINTMENT_STATUS_BADGE.booked;
+  const statusLabel = (size === 'medium' || showStylistBadge) ? badge.shortLabel : badge.label;
 
   return (
     <div className="px-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
