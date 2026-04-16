@@ -31,6 +31,8 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
+import { UserPlus } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DayViewProps {
   date: Date;
