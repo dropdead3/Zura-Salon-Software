@@ -76,7 +76,7 @@ interface DayViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics } from '@/lib/schedule-utils';
 import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 
 // Categories that display the X pattern overlay
