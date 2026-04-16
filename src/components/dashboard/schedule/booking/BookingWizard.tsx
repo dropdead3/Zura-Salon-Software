@@ -54,6 +54,7 @@ export function BookingWizard({
   // Form state
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
   const [clientSearch, setClientSearch] = useState('');
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedStylist, setSelectedStylist] = useState(defaultStylistId || '');
