@@ -91,6 +91,18 @@ export function ScheduleActionBar({
         </span>
       </div>
 
+      {/* Create Appointment button */}
+      {onCreateAppointment && (
+        <Button
+          size="sm"
+          onClick={onCreateAppointment}
+          className="rounded-full h-7 px-3 text-xs shrink-0 gap-1"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Create Appointment
+        </Button>
+      )}
+
       {/* Center: Payment queue bubbles */}
       <div className="flex-1 min-w-0">
         {queue.length === 0 ? (
