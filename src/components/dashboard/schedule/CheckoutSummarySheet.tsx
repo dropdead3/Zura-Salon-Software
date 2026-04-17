@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare, TrendingDown } from 'lucide-react';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +46,7 @@ import { CartDiscountSection, type ManagerOrderDiscount } from '@/components/das
 import { usePermission } from '@/hooks/usePermission';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { AUDIT_EVENTS } from '@/lib/audit-event-types';
+import { useStylistSkipRate } from '@/hooks/useStylistSkipRate';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
@@ -171,6 +172,47 @@ export function CheckoutSummarySheet({
       setGatePhase('checkout');
     }
   }, [rebookCompleted, open]);
+
+  // Wave 21.3 Layer 1 — Audit-log rehydration so the "skipped" receipt
+  // persists across sheet remounts (close/reopen mid-checkout).
+  const { data: priorDecline } = useQuery({
+    queryKey: ['rebook-decline-receipt', appointment?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('appointment_audit_log')
+        .select('metadata, created_at')
+        .eq('appointment_id', appointment!.id)
+        .eq('event_type', AUDIT_EVENTS.REBOOK_DECLINED)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!appointment?.id && open,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (priorDecline?.metadata && !declinedReason) {
+      const meta = priorDecline.metadata as { reason_code?: string; reason_notes?: string | null };
+      if (meta.reason_code) {
+        setDeclinedReason({
+          code: meta.reason_code as RebookDeclineReasonCode,
+          notes: meta.reason_notes ?? null,
+        });
+        // Skip the warning block on remount — operator already captured a reason
+        setGatePhase('checkout');
+      }
+    }
+  }, [priorDecline, declinedReason]);
+
+  // Wave 21.3 Layer 3 — Inline coaching nudge when stylist's 30-day skip rate
+  // breaches the elevated threshold. Honors visibility contract: returns null
+  // for healthy operators or insufficient sample.
+  const { data: skipRateSignal } = useStylistSkipRate(
+    appointment?.stylist_user_id ?? null,
+    locationId ?? null,
+  );
 
   const { data: addonEvents = [] } = useQuery({
     queryKey: ['checkout-addon-events', appointment?.id],
@@ -1019,6 +1061,16 @@ export function CheckoutSummarySheet({
                   </div>
                 );
               })()}
+
+              {/* Wave 21.3 Layer 3 — Inline coaching nudge for elevated skip rate */}
+              {declinedReason && skipRateSignal?.isElevated && (
+                <div className="flex items-center gap-2 px-3 pb-2 font-sans text-xs text-warning">
+                  <TrendingDown className="h-3.5 w-3.5 shrink-0" />
+                  <span className="min-w-0 truncate">
+                    Skip rate this month: {Math.round(skipRateSignal.skipRate)}% — review with stylist
+                  </span>
+                </div>
+              )}
 
               {cart.hasUnsetPrice && (
                 <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/[0.06] p-2 text-xs text-warning">

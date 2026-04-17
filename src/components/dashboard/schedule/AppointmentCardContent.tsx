@@ -19,6 +19,7 @@ import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import { IndicatorCluster, type IndicatorFlags } from './appointment-card-indicators';
+import { RebookSkippedDot } from './RebookSkippedDot';
 import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -65,6 +66,8 @@ export interface AppointmentCardContentProps {
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
   useShortLabels?: boolean;
+  /** Wave 21.3 Layer 2 — when set on a completed appointment, render a muted "rebook skipped" dot */
+  declinedReasonLabel?: string | null;
   onClick: () => void;
 }
 
@@ -173,6 +176,7 @@ function GridContent({
   showClientPhone,
   showClientAvatar,
   useShortLabels,
+  declinedReasonLabel,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -187,6 +191,7 @@ function GridContent({
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
   useShortLabels?: boolean;
+  declinedReasonLabel?: string | null;
 }) {
   if (size === 'compact') {
     return (
@@ -218,6 +223,9 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {declinedReasonLabel && appointment.status === 'completed' && (
+                <RebookSkippedDot label={declinedReasonLabel} />
+              )}
               <span className={cn(
                 'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
                 badge.bg, badge.text, badge.border
@@ -259,6 +267,9 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {declinedReasonLabel && appointment.status === 'completed' && (
+                <RebookSkippedDot label={declinedReasonLabel} />
+              )}
               <span className={cn(
                 'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
                 badge.bg, badge.text, badge.border
@@ -478,6 +489,7 @@ export function AppointmentCardContent({
   showClientPhone = true,
   showClientAvatar = true,
   useShortLabels = false,
+  declinedReasonLabel = null,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
@@ -654,6 +666,7 @@ export function AppointmentCardContent({
         showClientPhone={showClientPhone}
         showClientAvatar={showClientAvatar}
         useShortLabels={useShortLabels}
+        declinedReasonLabel={declinedReasonLabel}
       />
     </div>
   );

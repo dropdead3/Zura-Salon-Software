@@ -12,6 +12,7 @@ import { MeetingGridCard } from './meetings/MeetingCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { useAppointmentDeclinedReasons } from '@/hooks/useAppointmentDeclinedReasons';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
@@ -193,6 +194,7 @@ interface AppointmentCardProps {
   slotInterval?: number;
   zoomLevel?: number;
   useShortLabels?: boolean;
+  declinedReasonLabel?: string | null;
 }
 
 function AppointmentCard({
@@ -214,6 +216,7 @@ function AppointmentCard({
   slotInterval = 15,
   zoomLevel = 0,
   useShortLabels = false,
+  declinedReasonLabel = null,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -317,6 +320,7 @@ function AppointmentCard({
         categoryColors={categoryColors}
         
         useShortLabels={useShortLabels}
+        declinedReasonLabel={declinedReasonLabel}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
@@ -378,6 +382,14 @@ export function DayView({
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
   const { data: stylistLevels = [] } = useStylistLevels();
+
+  // Wave 21.3 Layer 2 — bulk-fetch decline reasons for completed appointments
+  // so the calendar can render the muted "rebook skipped" dot inline.
+  const completedAppointmentIds = useMemo(
+    () => appointments.filter((a) => a.status === 'completed').map((a) => a.id),
+    [appointments],
+  );
+  const { data: declinedReasonMap } = useAppointmentDeclinedReasons(completedAppointmentIds);
 
   // Build slug→label map for level badges
   const levelLabelMap = useMemo(() => {
@@ -870,6 +882,7 @@ export function DayView({
                            slotInterval={slotInterval}
                            zoomLevel={zoomLevel}
                            useShortLabels={sortedStylists.length >= 3}
+                           declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
                          />
                        );
                      })}
