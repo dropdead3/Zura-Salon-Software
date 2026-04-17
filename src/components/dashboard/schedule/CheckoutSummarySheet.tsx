@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare } from 'lucide-react';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -39,6 +39,13 @@ import { useBusinessName } from '@/hooks/useBusinessSettings';
 import { printReceiptFromData, buildReceiptHtml } from '@/components/dashboard/transactions/ReceiptPrintView';
 import type { ReceiptBusinessInfo } from '@/components/dashboard/transactions/ReceiptPrintView';
 import { checkoutToReceiptData } from '@/components/dashboard/transactions/receiptData';
+import { useCheckoutCart, computeLineNet, computeLineDiscountAmount } from '@/hooks/useCheckoutCart';
+import { CheckoutLineItems } from '@/components/dashboard/schedule/checkout/CheckoutLineItems';
+import { AddServiceDialog } from '@/components/dashboard/schedule/checkout/AddServiceDialog';
+import { CartDiscountSection, type ManagerOrderDiscount } from '@/components/dashboard/schedule/checkout/CartDiscountSection';
+import { usePermission } from '@/hooks/usePermission';
+import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
+import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
@@ -179,7 +186,6 @@ export function CheckoutSummarySheet({
   const productChargeLabel = billingSettings?.product_charge_label || 'Product Usage';
   const productChargeTaxable = billingSettings?.product_charge_taxable ?? true;
 
-  // Filter to approved/pending charges — both product_cost and overage
   const productCostCharges = usageCharges.filter(
     (c) => c.charge_type === 'product_cost' && c.status !== 'waived'
   );
@@ -190,26 +196,119 @@ export function CheckoutSummarySheet({
   const overageChargeTotal = overageCharges.reduce((s, c) => s + c.charge_amount, 0);
   const allUsageChargeTotal = productChargeTotal + overageChargeTotal;
 
+  // ─── Wave 1: Catalog price resolver ───────────────────────────────
+  // When `appointment.total_price` is missing/0, fall back to the catalog
+  // (location override → org default). Phorest stamps price only at settlement;
+  // this prevents $0 checkouts pre-settle.
+  const needsCatalogResolve =
+    !!appointment && (appointment.total_price == null || appointment.total_price === 0);
+
+  const { data: catalogPrice } = useQuery({
+    queryKey: ['catalog-price-resolver', appointment?.service_name, organizationId, locationId],
+    queryFn: async () => {
+      if (!appointment?.service_name || !organizationId) return null;
+      const { data: services, error } = await supabase
+        .from('services')
+        .select('id, name, price, location_id')
+        .eq('organization_id', organizationId)
+        .eq('name', appointment.service_name)
+        .eq('is_active', true);
+      if (error || !services?.length) return null;
+      if (locationId) {
+        const locMatch = services.find((s) => s.location_id === locationId);
+        if (locMatch) {
+          const { data: spLoc } = await supabase
+            .from('service_location_prices')
+            .select('price')
+            .eq('service_id', locMatch.id)
+            .eq('location_id', locationId)
+            .maybeSingle();
+          if (spLoc?.price != null) {
+            return { serviceId: locMatch.id, price: Number(spLoc.price), source: 'location-override' as const };
+          }
+          if (locMatch.price != null) {
+            return { serviceId: locMatch.id, price: Number(locMatch.price), source: 'catalog' as const };
+          }
+        }
+      }
+      const orgDefault = services.find((s) => s.location_id == null) ?? services[0];
+      if (orgDefault?.price != null) {
+        return { serviceId: orgDefault.id, price: Number(orgDefault.price), source: 'catalog' as const };
+      }
+      return { serviceId: orgDefault?.id ?? null, price: 0, source: 'unset' as const };
+    },
+    enabled: needsCatalogResolve && open && !!organizationId,
+    staleTime: 60_000,
+  });
+
+  // ─── Wave 2: Editable line-item cart ──────────────────────────────
+  const seedLines = useMemo(() => {
+    if (!appointment) return null;
+    const posPrice = appointment.total_price;
+    const hasPos = posPrice != null && posPrice > 0;
+    const resolved = hasPos
+      ? { price: Number(posPrice), source: 'pos' as const, serviceId: null as string | null }
+      : catalogPrice
+      ? { price: catalogPrice.price, source: catalogPrice.source, serviceId: catalogPrice.serviceId }
+      : null;
+    if (!resolved) return null;
+    return [
+      {
+        serviceName: appointment.service_name || 'Service',
+        serviceId: resolved.serviceId,
+        staffId: appointment.stylist_user_id ?? null,
+        unitPrice: resolved.price,
+        priceSource: resolved.source,
+      },
+    ];
+  }, [appointment, catalogPrice]);
+
+  const cart = useCheckoutCart({
+    seedLines,
+    seedKey: appointment && seedLines !== null ? appointment.id : null,
+  });
+
+  const [addServiceOpen, setAddServiceOpen] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
+  const [orderDiscount, setOrderDiscount] = useState<ManagerOrderDiscount | null>(null);
+
+  // Permissions — stylists ≤20% line discount; managers can override prices + waive
+  const { can } = usePermission();
+  const canOverridePrice = can('checkout.override_price') || can('checkout.manage');
+  const canWaive = canOverridePrice;
+  const maxDiscountPercent = canOverridePrice ? 100 : 20;
+
+  const logAudit = useLogAuditEvent();
+
   if (!appointment) return null;
 
   const addonTotal = addonEvents.reduce((sum, e) => sum + (e.addon_price || 0), 0);
-  const subtotal = (appointment.total_price || 0);
-  const discount = appliedPromo?.calculated_discount || 0;
-  // Product charges and add-ons are NOT discountable — kept separate from promo subtotal
-  const discountedSubtotal = subtotal - discount;
-  // Tax base: discounted service subtotal + add-ons + usage charges (if taxable)
-  // Note: productChargeTaxable controls tax on ALL usage charges (both product_cost and overage).
-  // If separate tax treatment is needed per charge type, add an overage_charge_taxable setting.
-  const taxableBase = discountedSubtotal + addonTotal + (productChargeTaxable ? allUsageChargeTotal : 0);
+
+  // Totals derive from the editable cart, not from appointment.total_price
+  const subtotal = cart.subtotal;
+  const lineDiscountTotal = cart.lineDiscountTotal;
+  const netServiceSubtotal = cart.netSubtotal;
+  const promoDiscount = appliedPromo?.calculated_discount || 0;
+  const orderDiscountAmount = orderDiscount
+    ? orderDiscount.type === 'pct'
+      ? netServiceSubtotal * (orderDiscount.value / 100)
+      : orderDiscount.value
+    : 0;
+  const discountedServiceSubtotal = Math.max(0, netServiceSubtotal - promoDiscount - orderDiscountAmount);
+  const discount = promoDiscount; // backwards-compat for receiptData
+
+  const taxableBase = discountedServiceSubtotal + addonTotal + (productChargeTaxable ? allUsageChargeTotal : 0);
   const tax = taxableBase * taxRate;
-  const checkoutTotal = discountedSubtotal + addonTotal + allUsageChargeTotal + tax;
-  
-  // E2: Deposit deduction — if a deposit was collected and held, deduct from amount due
+  const checkoutTotal = discountedServiceSubtotal + addonTotal + allUsageChargeTotal + tax;
+
   const depositHeld = appointment.deposit_status === 'held' && appointment.deposit_amount
     ? appointment.deposit_amount
     : 0;
   const amountDueAfterDeposit = Math.max(0, checkoutTotal + tipAmount - depositHeld);
   const grandTotal = checkoutTotal + tipAmount;
+
+  // Charge-gating: never auto-charge $0 or unresolvable price
+  const chargeBlocked = cart.lines.length === 0 || cart.hasUnsetPrice || subtotal === 0;
 
   const getDuration = () => {
     try {
@@ -564,16 +663,84 @@ export function CheckoutSummarySheet({
 
           <Separator />
 
-          {/* Service Details */}
+          {/* Editable cart — Wave 2 */}
+          <CheckoutLineItems
+            lines={cart.lines}
+            canOverridePrice={canOverridePrice}
+            canWaive={canWaive}
+            maxDiscountPercent={maxDiscountPercent}
+            onAddService={() => setAddServiceOpen(true)}
+            onRemove={(id) => {
+              const line = cart.lines.find((l) => l.id === id);
+              cart.removeLine(id);
+              if (line && organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: AUDIT_EVENTS.SERVICE_REMOVED_AT_CHECKOUT,
+                  previousValue: { name: line.name, unitPrice: line.unitPrice },
+                  newValue: null,
+                });
+              }
+            }}
+            onQuantityChange={(id, qty) => cart.updateLine(id, { quantity: qty })}
+            onPriceChange={(id, unitPrice) => {
+              const line = cart.lines.find((l) => l.id === id);
+              cart.updateLine(id, { unitPrice });
+              if (line && organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: AUDIT_EVENTS.LINE_PRICE_OVERRIDDEN,
+                  previousValue: { name: line.name, unitPrice: line.unitPrice },
+                  newValue: { name: line.name, unitPrice },
+                });
+              }
+            }}
+            onApplyDiscount={(id, d) => {
+              const line = cart.lines.find((l) => l.id === id);
+              cart.applyDiscount(id, d);
+              if (line && organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: d.type === 'waive' ? AUDIT_EVENTS.LINE_WAIVED : AUDIT_EVENTS.LINE_DISCOUNTED,
+                  previousValue: { name: line.name, discount: line.discount },
+                  newValue: { name: line.name, discount: d },
+                  metadata: { reason: d.reason ?? null },
+                });
+              }
+            }}
+            onClearDiscount={(id) => cart.clearDiscount(id)}
+          />
+
+          {/* Diff banner — appears when cart differs from original */}
+          {cart.diff.total > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowDiff((v) => !v)}
+              className="w-full flex items-center justify-between rounded-md border border-warning/40 bg-warning/[0.06] px-3 py-2 text-left transition-colors hover:bg-warning/[0.10]"
+            >
+              <span className="flex items-center gap-2 text-xs">
+                <GitCompare className="h-3.5 w-3.5 text-warning" />
+                <span className="font-medium">{cart.diff.total} {cart.diff.total === 1 ? 'change' : 'changes'} from original</span>
+              </span>
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', showDiff && 'rotate-180')} />
+            </button>
+          )}
+          {showDiff && cart.diff.total > 0 && (
+            <div className="text-xs text-muted-foreground space-y-1 px-3">
+              {cart.diff.added > 0 && <div>+ {cart.diff.added} service{cart.diff.added > 1 ? 's' : ''} added</div>}
+              {cart.diff.removed > 0 && <div>− {cart.diff.removed} removed</div>}
+              {cart.diff.repriced > 0 && <div>~ {cart.diff.repriced} repriced</div>}
+              {cart.diff.discounted > 0 && <div>% {cart.diff.discounted} discounted/waived</div>}
+            </div>
+          )}
+
+          {/* Static appointment metadata (date/time/stylist) */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">Service Details</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Service</span>
-                <span className="font-medium text-right max-w-[60%]">
-                  {appointment.service_name || 'Service'}
-                </span>
-              </div>
+            <h3 className="text-sm font-medium text-muted-foreground">Appointment</h3>
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Stylist</span>
                 <span className="font-medium">{stylistName}</span>
