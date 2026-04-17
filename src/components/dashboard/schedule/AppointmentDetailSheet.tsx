@@ -1565,10 +1565,13 @@ export function AppointmentDetailSheet({
                             appointmentId={appointment.id}
                             organizationId={resolvedOrgId!}
                             totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                            serviceName={appointment.service_name}
                             clientName={appointment.client_name}
                             clientEmail={email}
                             clientPhone={phone}
-                            afterpayEnabled={false}
+                            afterpayEnabled={orgAfterpayEnabled}
+                            afterpaySurchargeEnabled={orgSurchargeEnabled}
+                            afterpaySurchargeRate={orgSurchargeRate}
                             onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
                           />
                         )}
