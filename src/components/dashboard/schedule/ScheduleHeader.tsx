@@ -480,7 +480,16 @@ export function ScheduleHeader({
                       // Week view with no manual selection → reflect the auto-resolved stylist
                       if (view === 'week' && selectedStaffIds.length === 0 && weekViewStylistId) {
                         const s = stylists.find(s => s.user_id === weekViewStylistId);
-                        if (s) return formatFullDisplayName(s.full_name, s.display_name);
+                        if (s) {
+                          return (
+                            <>
+                              {formatFullDisplayName(s.full_name, s.display_name)}
+                              <span className="ml-1.5 text-[10px] text-muted-foreground font-sans normal-case">
+                                (week default)
+                              </span>
+                            </>
+                          );
+                        }
                       }
                       if (selectedStaffIds.length === 0) {
                         return staffFilterMode === 'with-appointments'
@@ -585,6 +594,13 @@ export function ScheduleHeader({
                           />
                           <span className="flex-1 text-left truncate">
                             {formatFullDisplayName(s.full_name, s.display_name)}
+                            {view === 'week' &&
+                              selectedStaffIds.length === 0 &&
+                              weekViewStylistId === s.user_id && (
+                                <span className="ml-1.5 text-[10px] text-muted-foreground font-sans normal-case">
+                                  (week default)
+                                </span>
+                              )}
                           </span>
                           {levelLabel && (
                             <span
