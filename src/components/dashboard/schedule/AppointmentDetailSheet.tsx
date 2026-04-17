@@ -777,15 +777,17 @@ export function AppointmentDetailSheet({
   const historyEnabled = activeTab === 'history' || activeTab === 'details';
   const auditEnabled = activeTab === 'history' || activeTab === 'details';
 
+  const notesAppointmentId = appointment?.phorest_id || appointment?.id || null;
+
   const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(
-    appointment?.phorest_id || null,
+    notesAppointmentId,
     { enabled: notesEnabled },
   );
   const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
 
   // ─── Notes: unread badge + auto-clear on tab open ───
   const { unviewedCount: unviewedNotesCount } = useUnviewedAppointmentNotes(
-    appointment?.phorest_id ?? null,
+    notesAppointmentId,
     notes,
   );
   const isAssignedStylist = !!user?.id && appointment?.stylist_user_id === user.id;
@@ -795,13 +797,13 @@ export function AppointmentDetailSheet({
     if (
       open &&
       activeTab === 'notes' &&
-      appointment?.phorest_id &&
+      notesAppointmentId &&
       unviewedNotesCount > 0
     ) {
-      markTabViewed.mutate({ appointmentId: appointment.phorest_id, tabKey: 'notes' });
+      markTabViewed.mutate({ appointmentId: notesAppointmentId, tabKey: 'notes' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, activeTab, appointment?.phorest_id, unviewedNotesCount]);
+  }, [open, activeTab, notesAppointmentId, unviewedNotesCount]);
   const { data: clientNotes = [], isLoading: clientNotesLoading } = useClientNotes(appointment?.phorest_client_id || undefined);
   const addClientNote = useAddClientNote();
   const deleteClientNote = useDeleteClientNote();
