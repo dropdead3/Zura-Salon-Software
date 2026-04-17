@@ -896,6 +896,37 @@ export function CheckoutSummarySheet({
                 </div>
               )}
 
+              {/* Line-level discounts (waives + per-service discounts) */}
+              {lineDiscountTotal > 0 && (
+                <div className="flex justify-between text-warning">
+                  <span>Service Discounts</span>
+                  <span>-{formatCurrency(lineDiscountTotal)}</span>
+                </div>
+              )}
+
+              {/* Order-level manager discount */}
+              {organizationId && (
+                <CartDiscountSection
+                  netServiceSubtotal={netServiceSubtotal}
+                  discount={orderDiscount}
+                  onChange={setOrderDiscount}
+                  canManage={canOverridePrice}
+                />
+              )}
+              {orderDiscount && orderDiscountAmount > 0 && (
+                <div className="flex justify-between text-warning">
+                  <span className="flex items-center gap-1">
+                    Manager Discount
+                    {orderDiscount.reason && (
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        · {orderDiscount.reason}
+                      </span>
+                    )}
+                  </span>
+                  <span>-{formatCurrency(orderDiscountAmount)}</span>
+                </div>
+              )}
+
               {/* Product charges (non-discountable, shown after promo) */}
               {productChargeTotal > 0 && (
                 <div className="flex justify-between">
@@ -916,11 +947,18 @@ export function CheckoutSummarySheet({
                 <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(1)}%)</span>
                 <span className="font-medium">{formatCurrency(tax)}</span>
               </div>
-              
-              <div className="flex justify-between text-lg font-bold border-t border-border/50 pt-2">
+
+              <div className="flex justify-between text-lg font-medium border-t border-border/50 pt-2">
                 <span>Checkout Total</span>
                 <span>{formatCurrency(checkoutTotal)}</span>
               </div>
+
+              {cart.hasUnsetPrice && (
+                <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/[0.06] p-2 text-xs text-warning">
+                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>Price not set on one or more services — verify before charging.</span>
+                </div>
+              )}
             </div>
           </div>
 
