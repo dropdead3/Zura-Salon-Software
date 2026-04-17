@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useClientAboutFacts } from '@/hooks/useClientAboutFacts';
@@ -43,12 +43,6 @@ export function HospitalityBlock({
 
   const [userExpanded, setUserExpanded] = useState(false);
   const isEmpty = facts.length === 0 && callbacks.length === 0;
-
-  // Render-safe re-collapse: when the user drains all data, snap back to
-  // the collapsed CTA without a setState-during-render warning.
-  useEffect(() => {
-    if (isEmpty && userExpanded) setUserExpanded(false);
-  }, [isEmpty, userExpanded]);
 
   if (!organizationId || !clientKey) return null;
 
