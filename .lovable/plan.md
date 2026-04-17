@@ -1,62 +1,64 @@
 
 
 ## Goal
-Refine the rebook prompt in the checkout flow to:
-1. Replace the smart 2-button suggestion with a uniform toggle row of week intervals: **1, 2, 3, 4, 6, 8, 10, 12 weeks**
-2. Surface a **scripted verbal prompt** for the stylist to read aloud, modeling proper commitment language
-3. Pre-select the recommended interval (based on service category) but allow override
+Layer three enhancements onto the rebook flow to make it learn from behavior, coachable, and more committal in language.
 
-## Investigation findings
+## Enhancement 1 — Track Interval Acceptance
+**Why:** Learn which week intervals clients actually commit to per service category, so defaults get smarter over time per organization.
 
-- Current component: `src/components/dashboard/schedule/NextVisitRecommendation.tsx`
-- Logic source: `src/lib/scheduling/rebook-recommender.ts` (returns 2 intervals via category match)
-- Used inside `CheckoutSummarySheet` rebooking gate
-- `onBookInterval(interval)` triggers downstream booking; `onScheduleManually` opens picker; `onDecline` skips
+**Schema change** (migration):
+- Add column `rebooked_at_weeks INTEGER` on `appointments` table (nullable)
+- Populated when stylist confirms a rebook from the script — captures the toggle value selected (1, 2, 3, 4, 6, 8, 10, 12)
+- Index on `(organization_id, service_category, rebooked_at_weeks)` for aggregation queries
 
-## Design
+**Wiring:**
+- `CheckoutSummarySheet` already calls `onBookInterval(interval)`. Extend the downstream booking handler to write `rebooked_at_weeks: interval.weeks` to the **source** appointment (not the new one).
+- Future: a nightly job can compute median accepted interval per service category per org and feed back into `rebook-recommender.ts` via a `learned_intervals` table. (Out of scope for this wave — schema only.)
 
-### New layout (top → bottom)
-1. **Verbal Script Card** (calm, advisory) — quoted prompt the stylist reads:
-   > "I'd like to see you back in **6 weeks**. How does **Tuesday, May 27 at 2:00 PM** sound?"
-   - Week count and date update live as the stylist toggles intervals
-   - Time portion shown if available; otherwise softens to "How does **Tuesday, May 27** work?"
+## Enhancement 2 — Stylist-Level Rebook Rate KPI
+**Why:** Turns the script from a UI feature into a coachable behavior. Surfaces who is converting and who needs coaching.
 
-2. **Interval Toggle Row** — `ToggleGroup` (single select) with 8 chips: `1w · 2w · 3w · 4w · 6w · 8w · 10w · 12w`
-   - Each chip shows week number on top, target date (`May 27`) below
-   - Default selection = recommended interval from `rebook-recommender` (e.g., color → 6w)
-   - Recommended chip gets a subtle "Recommended" dot/ring
+**Implementation:**
+- New hook: `src/hooks/useStylistRebookRate.ts` — mirrors `useRebookingRate.ts` but groups by `staff_id` over a date range
+- Surface as a tile in **Staff Reports** (`StaffPerformanceCard` / stylist scorecard)
+- Format: `68% rebook rate` with delta vs org average
+- Honors the visibility contract: returns `null` if completed appointments < 10 in window (insufficient sample)
+- Reuses `v_all_appointments` view + existing `rebooked_at_checkout` boolean — no schema change needed
 
-3. **Primary action**: `Book [Date] at [Time]` (full-width)
-4. **Secondary row**: `Pick a Date` · `Skip`
+**Coaching surface:**
+- Add to `TodaysPrepSection` coach script when stylist's 30-day rebook rate < org median by >15 pts: "Your rebook rate is X% — try the new commitment script today."
 
-### Token compliance
-- `font-display` uppercase for the section header ("NEXT VISIT")
-- `font-sans` for the verbal script (body, normal case — never uppercase per canon)
-- `tokens.button.card` for primary CTA, `tokens.button.inline` for secondary
-- No `font-bold`/`font-semibold` — emphasis via size + color contrast
-- Toggle chips use existing `ToggleGroup` primitive
+## Enhancement 3 — Time-Aware Verbal Script
+**Why:** "How does Tuesday May 27 at 2:00 PM work?" is materially more committal than date-only.
 
-### Logic changes
-**`src/lib/scheduling/rebook-recommender.ts`**
-- Add `REBOOK_INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 10, 12]` constant
-- Add `getAllRebookIntervals(fromDate)` → returns all 8 intervals as `RebookInterval[]`
-- Add `getRecommendedWeeks(serviceName, serviceCategory)` → returns the single recommended week count (first value from existing config) for default selection
-- Keep existing `getRecommendedRebookIntervals` and `getRebookServiceLabel` (still used elsewhere if needed)
-
-**`src/components/dashboard/schedule/NextVisitRecommendation.tsx`** — full rewrite:
-- Replace 2-button grid with `ToggleGroup` of 8 chips
-- Add verbal-script card at top with live-bound week/date/time
-- Add primary "Book" CTA bound to currently selected interval
-- Keep `onBookInterval`, `onScheduleManually`, `onDecline` props intact (no parent changes needed)
-
-### Open question
-Time of day for the verbal script — should we default to the **same time as the original appointment** (e.g., they came in at 2 PM, suggest 2 PM), or omit time and let the date picker resolve it later?
+**Implementation:**
+- `CheckoutSummarySheet` passes `appointmentStartTime` (HH:mm) prop into `NextVisitRecommendation`
+- Update script template:
+  - With time: `"...How does {dayLabel} at {timeLabel} work?"`
+  - Without time (fallback): `"...How does {dayLabel} work?"`
+- Same time-of-day is the default suggestion (assumes client prefers consistent slot). If stylist wants different time, they use **Pick a Date** for full picker.
+- `format(date, 'h:mm a')` for time label
 
 ## Files to change
-1. `src/lib/scheduling/rebook-recommender.ts` — add helpers
-2. `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — rewrite UI
+1. **New migration** — add `rebooked_at_weeks` column + index on `appointments`
+2. `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — pass `appointmentStartTime`, persist `rebooked_at_weeks` on confirm
+3. `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — accept optional `startTime` prop, render time in script
+4. **New file** `src/hooks/useStylistRebookRate.ts` — per-stylist rebook rate with sample-size gate
+5. **Edit** `src/components/dashboard/staff/StaffPerformanceCard.tsx` (or equivalent stylist scorecard) — surface KPI tile
+6. `src/components/dashboard/schedule/TodaysPrepSection.tsx` — conditional coaching script when rebook rate lags
 
-## Out of scope
-- Changes to `CheckoutSummarySheet` or downstream booking flow
-- Time-slot availability checking (handled by manual date picker if needed)
+## Doctrine compliance
+- **Visibility contract:** stylist KPI returns `null` if sample <10; coach script appears only on material gap
+- **Tenant isolation:** all queries scoped via existing `v_all_appointments` view (already org-scoped)
+- **Phorest write-back:** `rebooked_at_weeks` is Zura-native only, never synced back to Phorest
+- **Tokens:** new KPI tile uses `tokens.kpi.label` / `tokens.kpi.value`, no `font-bold`
+- **Privacy:** no monetary values, no `BlurredAmount` needed
+
+## Open question
+Stylist scorecard placement — surface the rebook rate KPI on the **Staff Performance Card** (existing card grid) or as a new dedicated tile in **Today's Prep** for the logged-in stylist's self-view? Or both?
+
+## Out of scope (future wave)
+- Smart defaults learned from `rebooked_at_weeks` aggregation
+- Org-wide rebook rate leaderboard
+- Rebook rate trend sparkline
 
