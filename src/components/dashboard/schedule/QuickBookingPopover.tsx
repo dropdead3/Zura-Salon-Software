@@ -2032,6 +2032,16 @@ export function QuickBookingPopover({
                 </Select>
               </div>
               <div className="flex flex-col gap-3">
+                {stylistFirstMode && uniqueAllStylists.length === 0 && selectedLocation && (
+                  <div className="text-center py-8 px-4 rounded-xl bg-muted/30 border border-border">
+                    <p className="text-sm text-foreground font-medium">
+                      No stylists assigned to {(locations.find(l => l.id === selectedLocation)?.name) || 'this location'}.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Add one in Operations Hub → Team.
+                    </p>
+                  </div>
+                )}
                 {(() => {
                   const baseList = stylistFirstMode ? uniqueAllStylists : filteredStylists;
                   const computePrice = (s: any) => {
