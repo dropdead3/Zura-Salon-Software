@@ -287,3 +287,6 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.send-client-sms]
+verify_jwt = false
