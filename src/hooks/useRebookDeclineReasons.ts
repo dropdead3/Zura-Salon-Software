@@ -4,7 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 
-export const REBOOK_DECLINE_REASONS = [
+export interface RebookDeclineReasonOption {
+  code: string;
+  label: string;
+  isLever?: boolean;
+}
+
+export const REBOOK_DECLINE_REASONS: readonly RebookDeclineReasonOption[] = [
   { code: 'never_asked', label: "I never asked", isLever: true },
   { code: 'client_traveling', label: 'Client declined — traveling / out of town' },
   { code: 'client_call_later', label: 'Client declined — wants to call later' },
@@ -14,7 +20,14 @@ export const REBOOK_DECLINE_REASONS = [
   { code: 'other', label: 'Other' },
 ] as const;
 
-export type RebookDeclineReasonCode = (typeof REBOOK_DECLINE_REASONS)[number]['code'];
+export type RebookDeclineReasonCode =
+  | 'never_asked'
+  | 'client_traveling'
+  | 'client_call_later'
+  | 'client_price'
+  | 'client_schedule_unsure'
+  | 'not_applicable'
+  | 'other';
 
 export function getReasonLabel(code: string | null | undefined): string {
   if (!code) return 'Unknown';
