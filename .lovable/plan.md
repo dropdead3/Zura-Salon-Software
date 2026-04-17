@@ -2,109 +2,77 @@
 
 ## Prompt review
 
-Sharp bug report — names the surface (client appt popover), the trigger (Call/Text buttons), the symptom (browser system prompt → FaceTime/Messages dialog), and the desired fix (Zura-native popups). Sharper next time: tell me what you want the Zura popup to *do* — just confirm before opening the OS app, or actually send the SMS in-app via Twilio (no OS handoff)? I'll propose both options.
+Clear consolidation ask — name the surface (appt detail sheet), the two sections to merge (Client Contact + top Call/Text buttons), and the layout direction (buttons right of contact info). Sharper next time: tell me what to do with the **Rebook** button (keep it standalone at the top? move it elsewhere?) since it's currently grouped with Call/Text. I'll propose: keep Rebook at the top as the primary action, move only Call/Text down into the Client Contact row.
 
 ## Diagnosis
 
-In `AppointmentDetailSheet.tsx` (lines 1531–1557), the Call and Text buttons use raw `<a href="tel:...">` and `<a href="sms:...">` anchors. macOS intercepts these and shows the "Open FaceTime?" / "Open Messages?" system prompt (per the screenshots) — there's no way to suppress that browser-level dialog when using the native protocol handlers.
+Two redundant contact surfaces in `AppointmentDetailSheet.tsx`:
 
-Two clean ways to replace it, both fully in-Zura:
+1. **Top action row** (~lines 1531–1557): Call / Text / Rebook buttons stacked above the tabs
+2. **Client Contact section** (lower in Details tab): Phone + email rows with a copy icon
 
-**Option A — Confirmation popup (lightweight)**
-A Zura-styled modal: "Call Eric Day at (555) 123-4567?" with Copy Number / Call buttons. The Call button still uses `tel:` (so it works on iPhone/iPad and on Mac if user keeps FaceTime), but on desktop the *primary* action is "Copy number" — eliminating the jarring system prompt for staff who don't want to call from their Mac.
+Phone number appears twice in the same view. Consolidating into one row tightens the sheet and removes redundancy.
 
-**Option B — Native SMS via Twilio (heavier, higher value)**
-Reuses the existing `sendSms` infrastructure (Twilio per-org credentials in `organization_secrets`) plus the SMS templates system. Click "Text" → opens a Zura compose modal with quick-reply templates ("Running 5 min late?", "Confirming your appt", custom message) → sends via Twilio from the salon's number → logged to client comms history. No OS handoff, ever. Call stays as Option A.
+## Plan — Wave 22.6: Consolidate Client Contact with Call/Text actions
 
-Recommended: **A for Call, B for Text** — that matches operator behavior (staff rarely call from a Mac, but they text constantly and want it logged + branded from the salon's number, not their personal phone).
+### Behavior
 
-## Plan — Wave 22.5: Zura-native Call/Text popups
+**Before:**
+```
+[Call] [Text] | [Rebook]
+─── tabs ───
+APPOINTMENT
+SERVICES  
+STYLIST
+CLIENT CONTACT
+  📞 +1 (480) 543-0240         [copy]
+  ✉️ No email on file
+```
 
-### 1. New `ContactActionDialog` component
+**After:**
+```
+[Rebook]                    ← stays at top, primary action
+─── tabs ───
+APPOINTMENT
+SERVICES
+STYLIST
+CLIENT CONTACT
+  📞 +1 (480) 543-0240   [Call] [Text] [copy]
+  ✉️ No email on file    [Email] (if email present)
+```
 
-`src/components/dashboard/schedule/ContactActionDialog.tsx`
+### Fix shape
 
-- Mode prop: `'call' | 'text'`
-- Props: `clientName`, `phone`, `clientId?`, `appointmentId?`, `organizationId`, `open`, `onOpenChange`
-- Zura-styled `Dialog` (rounded-xl, glass aesthetic, `font-display` heading)
+In `AppointmentDetailSheet.tsx`:
 
-**Call mode:**
-- Header: "Call {clientName}"
-- Big phone number display (`text-2xl font-display`)
-- Two actions: `[Copy Number]` (primary on desktop) and `[Open in Phone App]` (secondary, uses `tel:` — user knows what's coming)
-- Toast confirmation on copy
-
-**Text mode:**
-- Header: "Text {clientName}"
-- Recipient row showing name + phone
-- Quick-template chips (pulled from `sms_templates` table for the org, or hardcoded fallback set: "Running late?", "Confirm your appt", "We have an opening")
-- Textarea for custom message (160-char counter)
-- `[Send via Salon Number]` primary button → calls a new edge function
-- `[Open in Messages App]` secondary fallback (uses `sms:` for users who prefer)
-- Empty state if Twilio not configured: "Connect Twilio in Settings → Communications to text from your salon's number" + secondary `sms:` fallback
-
-### 2. New edge function: `send-client-sms`
-
-`supabase/functions/send-client-sms/index.ts`
-
-- Auth: requires JWT, validates user is org member
-- Body: `{ organization_id, client_id?, appointment_id?, to_phone, message, template_key? }`
-- Reuses `_shared/sms-sender.ts` → `sendSms()`
-- Logs to a new `client_communications` table (or extends an existing one) with: org_id, client_id, appointment_id, channel='sms', direction='outbound', body, sent_by_user_id, twilio_sid
-- Returns `{ success, sid?, error? }`
-
-### 3. Wire into `AppointmentDetailSheet.tsx`
-
-Replace lines 1531–1557:
-- Remove `<a href="tel:">` and `<a href="sms:">` anchors
-- Add `useState` for `callDialogOpen` and `textDialogOpen`
-- Buttons become regular `onClick` handlers that open the respective dialog
-- Render `<ContactActionDialog>` x2 at the bottom of the sheet
-
-### 4. Reuse opportunity
-
-The same `ContactActionDialog` plugs into:
-- `ClientDetailSheet.tsx` (lines 586–606)
-- `MobileAgendaCard.tsx` (line 207)
-- `WaitlistTable.tsx` (line 135)
-- `ClientDirectory.tsx` (line 1248)
-- `AppointmentCardContent.tsx` (line 422)
-
-I'll wire it into `AppointmentDetailSheet` first (the surface in the screenshots), then optionally roll out to the others in a follow-up wave so we don't bloat this change.
+1. **Top action row**: Remove Call and Text buttons (and the divider). Keep Rebook as the standalone primary action — it's a distinct workflow, not a contact action.
+2. **Client Contact section** (phone row): Add inline `[Call]` and `[Text]` buttons to the right of the phone number, before the existing copy icon. Use `tokens.button.inline` (sm size, pill) for compactness.
+3. **Email row enhancement** (bonus, low cost): If email exists, add an inline `[Email]` button that opens `mailto:` (kept as native handoff since email composition is universally expected to launch the OS mail client; we can revisit if you want a Zura-native composer later).
+4. **Keep dialog wiring**: Reuse the existing `callDialogOpen` / `textDialogOpen` state and `<ContactActionDialog>` instances added in Wave 22.5 — only the trigger location moves.
+5. **Empty phone state**: If no phone, hide the Call/Text buttons (existing behavior preserved).
 
 ### Acceptance checks
 
-1. Click "Call" on appt popover → Zura dialog appears (no FaceTime prompt)
-2. Dialog shows client name + formatted phone number prominently
-3. "Copy Number" → toast confirms, number is in clipboard
-4. "Open in Phone App" → triggers `tel:` (user accepts that one knowingly)
-5. Click "Text" → Zura compose dialog opens
-6. Quick-template chip click populates textarea
-7. "Send via Salon Number" → SMS sent via Twilio, toast confirms, dialog closes
-8. If Twilio not configured → message + secondary `sms:` fallback shown
-9. Dialog respects dark mode and design tokens (font-display heading, rounded-xl, glass card)
-10. No `tel:` or `sms:` href fires automatically on button click — only via secondary explicit action
+1. Top action row shows only `[Rebook]` (no Call/Text)
+2. Client Contact phone row shows: phone number → `[Call]` → `[Text]` → copy icon, all inline, vertically centered
+3. Click `[Call]` → existing Zura call dialog opens
+4. Click `[Text]` → existing Zura text dialog opens
+5. Copy icon still copies number to clipboard
+6. If `client_phone` is null → row hides entirely (no orphan buttons)
+7. Buttons use `tokens.button.inline` and respect dark mode
+8. No regression to History/Photos/Notes/Color Bar tabs
+9. Mobile: row wraps cleanly if narrow (buttons drop below number, not clipped)
 
 ### Files
 
-**New:**
-- `src/components/dashboard/schedule/ContactActionDialog.tsx` — Zura-styled call/text modal
-- `supabase/functions/send-client-sms/index.ts` — outbound SMS edge function
-- `supabase/config.toml` — register new function (verify_jwt = true)
-
-**Modified:**
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — swap anchors for dialog triggers (lines ~1531–1557)
-
-**Database (migration):**
-- `client_communications` table (org_id, client_id, appointment_id, channel, direction, body, sent_by_user_id, twilio_sid, created_at) with RLS scoped to `is_org_member` for read and `is_org_admin` for write
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — remove top Call/Text buttons, inline them into Client Contact phone row
 
 ### Open question
 
-Want me to also include the broader rollout (ClientDetailSheet, MobileAgendaCard, WaitlistTable, ClientDirectory) in this wave, or keep it scoped to `AppointmentDetailSheet` first and roll out after you verify the UX feels right?
+Should the **Rebook** button stay at the top as a standalone primary action, or also move down into a "client actions" cluster? My recommendation: keep at top — it's a workflow trigger, not a contact action, and deserves visual prominence.
 
 ### Deferred
 
-- **P2** Inbound SMS handling (Twilio webhook → notification → reply thread in Zura) — trigger: when staff request two-way conversations
-- **P2** Client-side communication history tab on `ClientDetailSheet` (shows all past texts/calls logged) — trigger: after `client_communications` table accumulates data
-- **P2** Bulk text composer (waitlist offers, "we had a cancellation") — trigger: when staff request multi-recipient outreach
+- **P2** Zura-native email composer (subject templates + send via SendGrid/org SMTP, log to `client_communications`) — trigger: when staff request branded outbound email
+- **P2** Inline communication log preview under Client Contact ("Last text: 2d ago — 'Confirming your 4pm'") — trigger: after `client_communications` accumulates data
 
