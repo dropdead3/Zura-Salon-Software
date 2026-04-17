@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare } from 'lucide-react';
@@ -135,6 +135,7 @@ export function CheckoutSummarySheet({
 
   type GatePhase = 'gate' | 'checkout';
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
+  const rebookGateRef = useRef<HTMLDivElement | null>(null);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState<string>('');
   const [declineOtherText, setDeclineOtherText] = useState<string>('');
@@ -599,7 +600,7 @@ export function CheckoutSummarySheet({
         <div className="space-y-6 p-5">
           {/* Rebooking Gate UI — surfaced first so the script is the entry point */}
           {gatePhase === 'gate' && (
-            <div className="border rounded-xl overflow-hidden bg-card shadow-sm">
+            <div ref={rebookGateRef} className="border rounded-xl overflow-hidden bg-card shadow-sm">
               <div className="bg-primary/5 p-4 border-b border-border/50">
                 <h3 className="font-medium flex items-center gap-2 text-primary">
                   <CalendarPlus className="h-4 w-4" />
@@ -951,9 +952,45 @@ export function CheckoutSummarySheet({
               </div>
 
               <div className="flex justify-between text-lg font-medium border-t border-border/50 pt-2">
-                <span>Checkout Total</span>
-                <span>{formatCurrency(checkoutTotal)}</span>
+                <span className={cn(gatePhase === 'gate' && 'text-muted-foreground')}>Checkout Total</span>
+                <span className={cn(gatePhase === 'gate' && 'text-muted-foreground')}>{formatCurrency(checkoutTotal)}</span>
               </div>
+
+              {gatePhase === 'gate' && (
+                <div className="rounded-md border border-warning/40 bg-warning/[0.06] p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <CalendarPlus className="h-4 w-4 mt-0.5 shrink-0 text-warning" />
+                    <div className="space-y-0.5 min-w-0">
+                      <p className="font-display text-xs tracking-wide text-warning">
+                        Rebook Required to Continue Checkout
+                      </p>
+                      <p className="font-sans text-xs text-muted-foreground">
+                        Book the next visit above, or skip with a tracked reason.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pl-6">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(tokens.button.inline, 'text-warning hover:text-warning hover:bg-warning/10')}
+                      onClick={() => {
+                        rebookGateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                    >
+                      Book Next Visit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(tokens.button.inline, 'text-muted-foreground hover:text-foreground')}
+                      onClick={() => setDeclineDialogOpen(true)}
+                    >
+                      Skip Rebook
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {cart.hasUnsetPrice && (
                 <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/[0.06] p-2 text-xs text-warning">
