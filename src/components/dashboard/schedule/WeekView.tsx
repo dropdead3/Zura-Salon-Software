@@ -43,6 +43,8 @@ interface WeekViewProps {
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
   scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
+  /** Day-column width: 'auto' (fit) or pixel number. Enables horizontal scroll when set. */
+  weekDayWidth?: 'auto' | number;
 }
 
 // Use consolidated status colors from design tokens
@@ -280,6 +282,7 @@ export function WeekView({
   assistantProfilesMap,
   assistantTimeBlocks = [],
   scheduleBlocks = [],
+  weekDayWidth = 'auto',
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
