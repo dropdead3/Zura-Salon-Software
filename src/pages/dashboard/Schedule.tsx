@@ -124,20 +124,8 @@ export default function Schedule() {
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Week view day-column width: 'auto' (fit) or pixel number. Persisted to localStorage.
-  const [weekDayWidth, setWeekDayWidth] = useState<'auto' | number>(() => {
-    if (typeof window === 'undefined') return 'auto';
-    const stored = window.localStorage.getItem('schedule.weekDayWidth');
-    if (!stored || stored === 'auto') return 'auto';
-    const n = parseInt(stored, 10);
-    if (!Number.isFinite(n)) return 'auto';
-    // Clamp to valid range: floor 200px, ceiling 900px.
-    return Math.min(900, Math.max(200, n));
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('schedule.weekDayWidth', weekDayWidth === 'auto' ? 'auto' : String(weekDayWidth));
-  }, [weekDayWidth]);
+  // Week view: single selected stylist (persisted per location).
+  const [selectedWeekStylistId, setSelectedWeekStylistId] = useState<string | null>(null);
   const locationTimezone = useLocationTimezone(selectedLocation || null);
 
   // Fetch assistant time blocks for the current date/location
@@ -510,6 +498,49 @@ export default function Schedule() {
     () => allStylists.map((s) => ({ ...s, utilization: headerUtilization.get(s.user_id) ?? 0 })),
     [allStylists, headerUtilization],
   );
+
+  // Stylists sorted by display name — canonical order for week-view stylist selection.
+  const sortedStylistsForWeek = useMemo(() => {
+    return [...allStylists].sort((a, b) => {
+      const an = (a.display_name || a.full_name || '').toLowerCase();
+      const bn = (b.display_name || b.full_name || '').toLowerCase();
+      return an.localeCompare(bn);
+    });
+  }, [allStylists]);
+
+  // localStorage key scoped per location
+  const weekStylistStorageKey = selectedLocation
+    ? `schedule.weekStylistId.${selectedLocation}`
+    : null;
+
+  // Hydrate selected week stylist from localStorage when location changes.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !weekStylistStorageKey) return;
+    const stored = window.localStorage.getItem(weekStylistStorageKey);
+    setSelectedWeekStylistId(stored || null);
+  }, [weekStylistStorageKey]);
+
+  // Persist selected week stylist per location.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !weekStylistStorageKey) return;
+    if (selectedWeekStylistId) {
+      window.localStorage.setItem(weekStylistStorageKey, selectedWeekStylistId);
+    }
+  }, [selectedWeekStylistId, weekStylistStorageKey]);
+
+  // Auto-select the first stylist when:
+  // - entering week view with no selection, OR
+  // - the current selection isn't in the (location-filtered) stylist list.
+  useEffect(() => {
+    if (view !== 'week') return;
+    if (sortedStylistsForWeek.length === 0) return;
+    const isValid = selectedWeekStylistId &&
+      sortedStylistsForWeek.some((s) => s.user_id === selectedWeekStylistId);
+    if (!isValid) {
+      setSelectedWeekStylistId(sortedStylistsForWeek[0].user_id);
+    }
+  }, [view, sortedStylistsForWeek, selectedWeekStylistId]);
+
 
   // Auto-switch to agenda view on mobile
   useEffect(() => {
@@ -915,7 +946,14 @@ export default function Schedule() {
               assistantProfilesMap={assistantProfilesMap}
                zoomLevel={zoomLevel}
                scheduleBlocks={scheduleBlocks}
-               weekDayWidth={weekDayWidth}
+               selectedStylistId={selectedWeekStylistId}
+               selectedStylistName={
+                 sortedStylistsForWeek.find((s) => s.user_id === selectedWeekStylistId)
+                   ?.display_name ||
+                 sortedStylistsForWeek.find((s) => s.user_id === selectedWeekStylistId)
+                   ?.full_name ||
+                 null
+               }
             />
           )}
           
@@ -984,8 +1022,9 @@ export default function Schedule() {
                 appointments={appointments}
                 hoursStart={preferences.hours_start}
                 hoursEnd={preferences.hours_end}
-                weekDayWidth={weekDayWidth}
-                onWeekDayWidthChange={setWeekDayWidth}
+                weekStylists={sortedStylistsForWeek}
+                selectedWeekStylistId={selectedWeekStylistId}
+                onSelectedWeekStylistChange={setSelectedWeekStylistId}
               />
         </div>
 

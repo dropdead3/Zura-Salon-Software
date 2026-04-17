@@ -29,9 +29,7 @@ import {
   Sparkles,
   ClipboardCheck,
   Clock,
-  StretchHorizontal,
 } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import {
@@ -100,9 +98,14 @@ interface ScheduleHeaderProps {
   appointments?: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
-  /** Week-view day column width: 'auto' (fit) or pixel number (200-600). */
-  weekDayWidth?: 'auto' | number;
-  onWeekDayWidthChange?: (width: 'auto' | number) => void;
+  /** Stylists list (sorted) for the week-view single-stylist selector. */
+  weekStylists?: Array<{
+    user_id: string;
+    display_name: string | null;
+    full_name: string;
+  }>;
+  selectedWeekStylistId?: string | null;
+  onSelectedWeekStylistChange?: (id: string) => void;
 }
 
 export function ScheduleHeader({
@@ -135,8 +138,9 @@ export function ScheduleHeader({
   appointments = [],
   hoursStart = 9,
   hoursEnd = 18,
-  weekDayWidth = 'auto',
-  onWeekDayWidthChange,
+  weekStylists = [],
+  selectedWeekStylistId = null,
+  onSelectedWeekStylistChange,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
@@ -291,32 +295,25 @@ export function ScheduleHeader({
               </Tooltip>
             )}
 
-            {/* Week-view Day Width slider — only when in week view */}
-            {view === 'week' && onWeekDayWidthChange && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="hidden @md/schedhdr:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--sidebar-accent))]">
-                    <StretchHorizontal className="h-3.5 w-3.5 text-[hsl(var(--sidebar-foreground))]/70 shrink-0" />
-                    <Slider
-                      value={[weekDayWidth === 'auto' ? 200 : weekDayWidth]}
-                      min={200}
-                      max={900}
-                      step={20}
-                      onValueChange={([v]) => {
-                        // 200 = 'auto' (Fit). >200 = fixed pixel width.
-                        onWeekDayWidthChange(v <= 200 ? 'auto' : v);
-                      }}
-                      className="w-[88px] @lg/schedhdr:w-[120px]"
-                    />
-                    <span className="text-[10px] font-display tracking-wider uppercase text-[hsl(var(--sidebar-foreground))]/70 tabular-nums w-8 text-right">
-                      {weekDayWidth === 'auto' ? 'Fit' : `${weekDayWidth}`}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Day column width — slide right to widen, scroll horizontally to view all days</p>
-                </TooltipContent>
-              </Tooltip>
+            {/* Week-view stylist selector — only when in week view */}
+            {view === 'week' && onSelectedWeekStylistChange && (
+              <Select
+                value={selectedWeekStylistId ?? undefined}
+                onValueChange={(v) => onSelectedWeekStylistChange(v)}
+              >
+                <SelectTrigger
+                  className="h-8 w-[180px] @lg/schedhdr:w-[220px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
+                >
+                  <SelectValue placeholder="Select stylist" />
+                </SelectTrigger>
+                <SelectContent>
+                  {weekStylists.map((s) => (
+                    <SelectItem key={s.user_id} value={s.user_id}>
+                      {formatFullDisplayName(s.full_name, s.display_name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 

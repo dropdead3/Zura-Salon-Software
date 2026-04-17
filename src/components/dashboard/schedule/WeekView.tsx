@@ -43,8 +43,10 @@ interface WeekViewProps {
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
   scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
-  /** Day-column width: 'auto' (fit) or pixel number. Enables horizontal scroll when set. */
-  weekDayWidth?: 'auto' | number;
+  /** Single stylist user_id whose 7-day week is rendered. */
+  selectedStylistId?: string | null;
+  /** Display name shown in empty state when no stylist is selected. */
+  selectedStylistName?: string | null;
 }
 
 // Use consolidated status colors from design tokens
@@ -282,7 +284,8 @@ export function WeekView({
   assistantProfilesMap,
   assistantTimeBlocks = [],
   scheduleBlocks = [],
-  weekDayWidth = 'auto',
+  selectedStylistId = null,
+  selectedStylistName = null,
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -357,20 +360,28 @@ export function WeekView({
     return slots;
   }, [hoursStart, hoursEnd, slotInterval]);
 
-  // Group appointments by date
+  // Filter to single selected stylist for week view (single-stylist personal calendar)
+  const stylistAppointments = useMemo(() => {
+    if (!selectedStylistId) return [] as PhorestAppointment[];
+    return appointments.filter(
+      (a: any) => (a.stylist_user_id || a.staff_user_id) === selectedStylistId,
+    );
+  }, [appointments, selectedStylistId]);
+
+  // Group (already-stylist-filtered) appointments by date
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, PhorestAppointment[]>();
     weekDays.forEach(day => map.set(format(day, 'yyyy-MM-dd'), []));
-    
-    appointments.forEach(apt => {
+
+    stylistAppointments.forEach(apt => {
       const dateKey = apt.appointment_date;
       if (map.has(dateKey)) {
         map.get(dateKey)!.push(apt);
       }
     });
-    
+
     return map;
-  }, [appointments, weekDays]);
+  }, [stylistAppointments, weekDays]);
 
   // Current time indicator
   const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
@@ -379,21 +390,25 @@ export function WeekView({
   const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
     getCurrentTimeRenderMetrics(wkNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
-  const isStretched = weekDayWidth !== 'auto';
-  const gridTemplate = isStretched
-    ? `70px repeat(7, ${weekDayWidth}px)`
-    : '70px repeat(7, 1fr)';
+  const gridTemplate = '70px repeat(7, 1fr)';
+
+  if (!selectedStylistId) {
+    return (
+      <div className="flex h-full min-h-0 flex-col items-center justify-center border border-border rounded-lg bg-card p-8">
+        <p className="text-sm text-muted-foreground">
+          Select a stylist to view their week.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div
         ref={scrollRef}
-        className={cn(
-          'flex-1 min-h-0 overflow-y-auto border border-border rounded-lg bg-card',
-          isStretched ? 'overflow-x-auto' : 'overflow-x-hidden',
-        )}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden border border-border rounded-lg bg-card"
       >
-        <div className={isStretched ? 'inline-block min-w-full' : ''}>
+        <div>
           {/* Day Headers with luxury blur effect */}
           <div className="sticky top-0 z-20">
             {/* Main header with frosted glass effect */}
@@ -406,9 +421,7 @@ export function WeekView({
                 WebkitBackdropFilter: 'blur(12px)',
               }}
             >
-              <div
-                className={cn('p-2', isStretched && 'sticky left-0 z-[21] bg-muted')}
-              /> {/* Time column spacer */}
+              <div className="p-2" /> {/* Time column spacer */}
               {weekDays.map((day) => {
                 const dayIsToday = isOrgToday(day);
                 const dayIsTomorrow = isOrgTomorrow(day);
@@ -460,12 +473,7 @@ export function WeekView({
           {/* Time Grid */}
           <div className="grid relative" style={{ gridTemplateColumns: gridTemplate }}>
             {/* Time Labels Column */}
-            <div
-              className={cn(
-                'relative bg-sidebar',
-                isStretched && 'sticky left-0 z-[15]',
-              )}
-            >
+            <div className="relative bg-sidebar">
               {timeSlots.map((slot, index) => (
                 <div 
                   key={`${slot.hour}-${slot.minute}`}
