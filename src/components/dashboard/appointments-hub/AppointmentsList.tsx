@@ -28,6 +28,7 @@ import { TogglePill } from '@/components/ui/toggle-pill';
 interface AppointmentsListProps {
   search: string;
   onSearchChange: (value: string) => void;
+  enabled?: boolean;
 }
 
 type TimePeriod = 'all' | 'past' | 'today' | 'future' | 'custom';
@@ -86,7 +87,7 @@ const TIME_PERIOD_OPTIONS = [
   { value: 'custom', label: 'Range', icon: <CalendarRange className="w-3.5 h-3.5" />, tooltip: 'Custom Date Range' },
 ];
 
-export function AppointmentsList({ search, onSearchChange }: AppointmentsListProps) {
+export function AppointmentsList({ search, onSearchChange, enabled = true }: AppointmentsListProps) {
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState('all');
   const [locationId, setLocationId] = useState('all');
@@ -113,7 +114,7 @@ export function AppointmentsList({ search, onSearchChange }: AppointmentsListPro
     pageSize: 50,
   };
 
-  const { data, isLoading } = useAppointmentsHub(filters);
+  const { data, isLoading } = useAppointmentsHub(filters, { enabled });
   const appointments = data?.appointments || [];
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / 50);
