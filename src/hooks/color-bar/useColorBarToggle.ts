@@ -20,6 +20,34 @@ import {
   useBulkSuspendLocationEntitlements,
   useBulkReactivateLocationEntitlements,
 } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { fetchReactivationStatus } from '@/hooks/color-bar/useReactivationStatus';
+
+/**
+ * Best-effort audit log writer — never blocks the toggle flow if the audit
+ * insert fails. Network Intelligence: feeds churn-pattern aggregations.
+ */
+async function logSuspensionEvent(params: {
+  organization_id: string;
+  event_type: 'suspended' | 'reactivated';
+  reason?: string | null;
+  notes?: string | null;
+  affected_location_count: number;
+}) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('color_bar_suspension_events').insert({
+      organization_id: params.organization_id,
+      event_type: params.event_type,
+      reason: params.reason ?? null,
+      notes: params.notes ?? null,
+      actor_user_id: user?.id ?? null,
+      affected_location_count: params.affected_location_count,
+    } as any);
+  } catch (err) {
+    // Non-blocking — log to console only
+    console.warn('[color-bar] failed to write suspension audit event', err);
+  }
+}
 
 export interface ReactivationTarget {
   organizationId: string;
