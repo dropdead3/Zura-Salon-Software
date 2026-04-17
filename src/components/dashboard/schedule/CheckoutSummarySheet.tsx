@@ -450,12 +450,13 @@ export function CheckoutSummarySheet({
     if (paymentMethod === 'card_reader' && activeReader && organizationId && appointment) {
       try {
         // G5: Include tip as a line item so reader display total matches grandTotal
+        // Use the negotiated cart (post-discount) — never the stale appointment.total_price
         const lineItems = [
-          {
-            description: appointment.service_name || 'Service',
-            amount: Math.round((appointment.total_price || 0) * 100),
-            quantity: 1,
-          },
+          ...cart.lines.map((l) => ({
+            description: l.name,
+            amount: Math.round(computeLineNet(l) * 100),
+            quantity: l.quantity,
+          })),
           ...addonEvents.map((e) => ({
             description: e.addon_name,
             amount: Math.round(e.addon_price * 100),
@@ -737,6 +738,36 @@ export function CheckoutSummarySheet({
             </div>
           )}
 
+          {/* Add Service Dialog */}
+          <AddServiceDialog
+            open={addServiceOpen}
+            onOpenChange={setAddServiceOpen}
+            organizationId={organizationId}
+            locationId={locationId}
+            onAdd={({ serviceId, name, unitPrice, priceSource }) => {
+              cart.addLine({
+                type: 'service',
+                name,
+                serviceId,
+                staffId: appointment.stylist_user_id ?? null,
+                unitPrice,
+                quantity: 1,
+                discount: null,
+                isOriginal: false,
+                priceSource,
+              });
+              if (organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: AUDIT_EVENTS.SERVICE_ADDED_AT_CHECKOUT,
+                  previousValue: null,
+                  newValue: { name, unitPrice, priceSource },
+                });
+              }
+            }}
+          />
+
           {/* Static appointment metadata (date/time/stylist) */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Appointment</h3>
@@ -866,6 +897,38 @@ export function CheckoutSummarySheet({
                 </div>
               )}
 
+              {/* Line-level discounts (waives + per-service discounts) */}
+              {lineDiscountTotal > 0 && (
+                <div className="flex justify-between text-warning">
+                  <span>Service Discounts</span>
+                  <span>-{formatCurrency(lineDiscountTotal)}</span>
+                </div>
+              )}
+
+              {/* Order-level manager discount */}
+              {organizationId && (
+                <CartDiscountSection
+                  baseSubtotal={netServiceSubtotal}
+                  current={orderDiscount}
+                  canApply={canOverridePrice}
+                  onApply={setOrderDiscount}
+                  onClear={() => setOrderDiscount(null)}
+                />
+              )}
+              {orderDiscount && orderDiscountAmount > 0 && (
+                <div className="flex justify-between text-warning">
+                  <span className="flex items-center gap-1">
+                    Manager Discount
+                    {orderDiscount.reason && (
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        · {orderDiscount.reason}
+                      </span>
+                    )}
+                  </span>
+                  <span>-{formatCurrency(orderDiscountAmount)}</span>
+                </div>
+              )}
+
               {/* Product charges (non-discountable, shown after promo) */}
               {productChargeTotal > 0 && (
                 <div className="flex justify-between">
@@ -886,11 +949,18 @@ export function CheckoutSummarySheet({
                 <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(1)}%)</span>
                 <span className="font-medium">{formatCurrency(tax)}</span>
               </div>
-              
-              <div className="flex justify-between text-lg font-bold border-t border-border/50 pt-2">
+
+              <div className="flex justify-between text-lg font-medium border-t border-border/50 pt-2">
                 <span>Checkout Total</span>
                 <span>{formatCurrency(checkoutTotal)}</span>
               </div>
+
+              {cart.hasUnsetPrice && (
+                <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/[0.06] p-2 text-xs text-warning">
+                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>Price not set on one or more services — verify before charging.</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -978,13 +1048,13 @@ export function CheckoutSummarySheet({
               ))}
             </div>
 
-            {/* Send Payment Link (Afterpay) — B3: use org's real afterpay_enabled, G3: wire onPaymentLinkSent */}
+            {/* Send Payment Link (Afterpay) — uses negotiated cart total */}
             {organizationId && appointment && (
               <div className="pt-1">
                 <SendToPayButton
                   appointmentId={appointment.id}
                   organizationId={organizationId}
-                  totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                  totalAmountCents={Math.round(checkoutTotal * 100)}
                   clientName={appointment.client_name}
                   clientEmail={appointment.client_email}
                   clientPhone={appointment.client_phone}
@@ -992,7 +1062,7 @@ export function CheckoutSummarySheet({
                   afterpayEnabled={orgAfterpayEnabled}
                   afterpaySurchargeEnabled={orgSurchargeEnabled}
                   afterpaySurchargeRate={orgSurchargeRate}
-                  disabled={isUpdating}
+                  disabled={isUpdating || chargeBlocked}
                   onPaymentLinkSent={() => {
                     queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
                   }}
@@ -1001,7 +1071,7 @@ export function CheckoutSummarySheet({
                 {orgAfterpayEnabled && orgSurchargeEnabled && (
                   <div className="mt-2">
                     <AfterpaySurchargePreview
-                      amountCents={Math.round((appointment.total_price || 0) * 100)}
+                      amountCents={Math.round(checkoutTotal * 100)}
                       surchargeRate={orgSurchargeRate}
                     />
                   </div>
@@ -1095,7 +1165,7 @@ export function CheckoutSummarySheet({
             ) : (
               <Button 
                 onClick={handleConfirm} 
-                disabled={isUpdating || (paymentMethod === 'card_reader' && !activeReader) || ['creating_intent', 'displaying_cart', 'awaiting_tap', 'processing'].includes(terminalFlow.flowState)}
+                disabled={isUpdating || chargeBlocked || (paymentMethod === 'card_reader' && !activeReader) || ['creating_intent', 'displaying_cart', 'awaiting_tap', 'processing'].includes(terminalFlow.flowState)}
                 className="w-full font-medium shadow-lg shadow-primary/20"
                 size="lg"
               >
