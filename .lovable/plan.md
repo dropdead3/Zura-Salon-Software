@@ -1,85 +1,56 @@
 
 
 ## Goal
-Build a checkout that mirrors how appointments actually unfold: pre-priced from catalog, then **fully editable at the register** — add/swap/remove services, apply discounts, waive fees — before settling. This is the "negotiated phase" Phorest gets right.
+Surface a visible, actionable prompt directly under the "Checkout Total" line when the rebook gate hasn't been resolved — making the structural enforcement legible instead of silent.
 
-## Scope (two waves, shipped together)
+## Why this matters
+Today the gate works (the Charge buttons live below `gatePhase === 'checkout'`, so they're hidden until the rebook is booked or declined-with-reason), but the operator sees no inline explanation under the total. They scroll, see "$64.80", and wonder where the Charge button is. This adds the missing **why**.
 
-### Wave 1 — Catalog price fallback (the $0 bug)
+Aligns with doctrine: *Silence is valid output, but structural gates must be legible. Decline tracking already flows to staff reports via `rebook_decline_reasons`.*
+
+## Scope (single file)
+
 **File:** `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`
 
-Resolution chain when `appointment.total_price` is null/0:
-1. `service_location_prices.price` (per-location override)
-2. `services.price` (org default)
-3. NULL → `text-warning` "Price not set" + Charge CTAs disabled
+Insert a `text-warning`-toned prompt block immediately after the `Checkout Total` row (line ~956), rendered only when `gatePhase === 'gate'`:
 
-Show subtle `tokens.body` muted subtitle: `"Catalog price · POS price not yet stamped"` when falling back.
-
-### Wave 2 — Editable line-item cart at checkout
-Convert the static service summary into an editable line-item table — the heart of the negotiated phase.
-
-**New file:** `src/hooks/useCheckoutCart.ts`
-Local state cart (mirrors `useRegisterCart` pattern), seeded from the appointment's resolved services on mount. Shape per line item:
-```ts
-{ id, type: 'service' | 'addon' | 'product', name, staffId, unitPrice, quantity, discount: { type: 'pct'|'amt'|'waive', value, reason? }, isOriginal: boolean }
+### Prompt content
 ```
-Methods: `addLine`, `removeLine`, `updateLine`, `applyDiscount`, `waiveLine`, `swapService`, `reset`.
+[CalendarPlus icon]  Rebook required to continue checkout
+Book the next visit above, or skip with a tracked reason.
+[Book Next Visit]   [Skip Rebook]
+```
 
-**New components in `src/components/dashboard/schedule/checkout/`:**
+- **Container**: `border-warning/40 bg-warning/[0.06] rounded-md p-3` (matches existing unset-price warning pattern below it)
+- **Heading**: `font-display text-xs tracking-wide text-warning` — "Rebook Required to Continue Checkout"
+- **Subtext**: `font-sans text-xs text-muted-foreground` — explains the two valid paths
+- **Two inline buttons** (`tokens.button.inline`, `variant="ghost"` with warning-tinted text):
+  - **"Book Next Visit"** → scrolls to / focuses the `NextVisitRecommendation` card at the top of the sheet (use `scrollIntoView({ behavior: 'smooth' })` on a ref attached to the gate card)
+  - **"Skip Rebook"** → opens existing `RebookDeclineReasonDialog` (`setDeclineDialogOpen(true)`) — already wired to insert into `rebook_decline_reasons` via `useLogRebookDeclineReason`, which already powers `RebookDeclineReasonsCard` in staff reports
 
-1. `CheckoutLineItems.tsx` — editable table replacing current static service block:
-   - Per-row inline controls: quantity stepper, price field (click-to-edit, audit-logged on change), staff picker (existing), discount popover, remove button
-   - "Original" lines visually distinct (subtle `border-l-2 border-l-primary/40`); "Added at checkout" lines plain
-   - Empty state: "Add a service to begin"
+### Visibility logic
+- Render only when `gatePhase === 'gate'`
+- Hide once `rebooked === true` OR a decline reason is captured (gate transitions to `'checkout'`)
 
-2. `AddServiceDialog.tsx` — searchable command palette over `services` (org-scoped, location price-aware). Reuses `useServices` + `useServiceLocationPrices`. Adds line as `{ type: 'service', isOriginal: false }`.
+### Reinforcement on the total itself
+When gated, render the `Checkout Total` value with `text-muted-foreground` (instead of full `text-foreground`) — visually signals "not yet actionable." Reverts to full contrast once gate clears.
 
-3. `LineDiscountPopover.tsx` — three modes:
-   - Percent off (0–100)
-   - Amount off ($)
-   - **Waive** (sets price to $0, requires `reason` from a small enum: `Comp`, `Service Recovery`, `Manager Comp`, `Other`)
-   - All discounts captured with `applied_by_user_id`, `reason`, timestamp → written to audit log on settle
+## Tracking confirmation (no new work)
+- "Skip Rebook" → `RebookDeclineReasonDialog` → `useLogRebookDeclineReason` → inserts to `rebook_decline_reasons` table with `appointment_id`, `staff_user_id`, `reason_code`
+- Already consumed by `RebookDeclineReasonsCard.tsx` in analytics + per-stylist reports
+- No schema/hook changes needed
 
-4. `CartDiscountSection.tsx` — order-level discount (existing promo code field stays; add a manual "Manager Discount" line with reason)
+## Token compliance
+- `text-warning` semantic token (already shipped)
+- `font-display` for the heading (uppercase, tracking)
+- `font-sans` for subtext (no uppercase)
+- `tokens.button.inline` for the two CTAs
+- Max weight `font-medium`
 
-**Modify:** `CheckoutSummarySheet.tsx`
-- Replace static service display with `<CheckoutLineItems>`
-- Subtotal, tax, total recompute from cart (not from `appointment.total_price`)
-- "Add Service" button in section header → opens `AddServiceDialog`
-- Diff banner when cart differs from original: `"3 changes from original appointment"` (expandable to show added/removed/repriced/discounted)
+## Out of scope
+- Persistent "skipped" badge on the closed appointment card (separate visibility wave)
+- Per-stylist skip-rate threshold alerts (already handled by `RebookDeclineReasonsCard` in coaching reports)
 
-**Audit & integrity** (doctrine: commission/margin protection):
-- Every price override, waive, and discount writes to `appointment_audit_log` (existing pattern from `useAppointmentAuditLog`) with: `event_type`, `previous_value`, `new_value`, `reason`, `applied_by`
-- On settle, the **negotiated cart** writes to Zura-native transaction items (existing `transaction_items` schema) — these become the immutable revenue record. Phorest is never written to (`phorest-write-back-safety-gate`).
-- Discount events: `LINE_PRICE_OVERRIDDEN`, `LINE_WAIVED`, `LINE_DISCOUNTED`, `SERVICE_ADDED_AT_CHECKOUT`, `SERVICE_REMOVED_AT_CHECKOUT` — added to `AUDIT_EVENTS` enum
-
-**Permissions** (waive/override are sensitive):
-- Line price override + waive gated behind `permissions.checkout.override_price` (use `usePermission` / `VisibilityGate`)
-- Stylists: can add services, apply preset discounts (≤20%)
-- Managers/Owners: can waive, apply unlimited discount, override prices
-- Below threshold → controls hidden (silence is valid output); above threshold + no permission → disabled with tooltip "Manager approval required"
-
-**Visual structure** (no new tokens, all existing):
-- Line items use `tokens.table.columnHeader` for column labels (Title Case, `font-sans`)
-- Prices wrapped in `BlurredAmount`
-- Discount badges use `text-warning` for waives, muted for percentage discounts
-- "Add Service" button: `tokens.button.cardAction` (pill, h-9)
-- Diff banner: `border-warning/40 bg-warning/[0.06]` — uses the semantic `--warning` token already shipped
-
-## Out of scope (logged for next wave)
-- **Estimate vs final separation** in DB schema (`estimated_total` + `final_total` columns) — structurally correct but requires migration + analytics rewrite. Revisit trigger: when native scheduling ships end-to-end without Phorest dependency on booking creation.
-- **Tip splitting across multiple service providers** — current tip selection assumes one stylist; multi-provider tip allocation is its own wave.
-- **Refund/void flow post-settle** — separate doctrine; this wave covers pre-settle negotiation only.
-- **Manager approval flow** (PIN-prompt for high-value waives over a threshold) — gating works via permissions for v1; PIN-prompt UX is a Phase 3 polish.
-
-## Files to create
-1. `src/hooks/useCheckoutCart.ts`
-2. `src/components/dashboard/schedule/checkout/CheckoutLineItems.tsx`
-3. `src/components/dashboard/schedule/checkout/AddServiceDialog.tsx`
-4. `src/components/dashboard/schedule/checkout/LineDiscountPopover.tsx`
-5. `src/components/dashboard/schedule/checkout/CartDiscountSection.tsx`
-
-## Files to modify
-1. `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — wire cart, swap static block for `<CheckoutLineItems>`, add diff banner, recompute totals, add catalog price resolver (Wave 1)
-2. `src/lib/audit-event-types.ts` — add the 5 new audit event types
+## File to modify
+1. `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — add gated prompt block under Checkout Total row, attach scroll ref to `NextVisitRecommendation` container, dim total value when gated
 
