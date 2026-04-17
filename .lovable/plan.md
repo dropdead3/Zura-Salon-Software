@@ -1,48 +1,50 @@
 
 
-## Diagnosis — root cause found
+## Diagnosis — root cause
 
-`HospitalityBlock.tsx` lines 49–51:
+The `appointment_notes` insert fails with "Missing appointment ID" because:
 
+1. `useAppointmentNotes` is called with `appointment?.phorest_id || null` (`AppointmentDetailSheet.tsx:781`)
+2. The appointment object comes from the `v_all_appointments` view, which **does not have a `phorest_id` column** (only `id` UUID) — confirmed via DB schema inspection
+3. So `phorest_id` is always `undefined` → hook receives `null` → mutation throws
+
+This is a Phorest-decoupling artifact. The view was migrated to Zura-native but the hook wiring wasn't updated.
+
+**Sister code already handles this correctly.** `Schedule.tsx:800` uses the canonical fallback:
 ```ts
-useEffect(() => {
-  if (isEmpty && userExpanded) setUserExpanded(false);
-}, [isEmpty, userExpanded]);
+phorest_appointment_id: selectedAppointment.phorest_id || selectedAppointment.id
 ```
 
-**The bug**: When user clicks "Add personal context" on a client with no facts/callbacks:
-1. `userExpanded → true`
-2. `isEmpty` is still `true` (no data has been added yet)
-3. Effect immediately fires → snaps `userExpanded` back to `false`
-4. UI never expands. Click appears dead.
+The `appointment_notes.phorest_appointment_id` column is `text` (despite the misleading name), so it accepts UUIDs. The `useClientAppointmentNotes` join already keys on `visit.id` (UUIDs), so notes inserted with the UUID will appear correctly in the All-Visits view.
 
-The effect's *intent* was to re-collapse after the user removes their last fact/callback. But it can't distinguish "never had data" from "drained all data" — so it kills the open intent.
+## Fix — Wave 22.33: Resolve appointment ID for notes
 
-## Fix — Wave 22.32: Allow expansion on empty clients
+One-line change in `AppointmentDetailSheet.tsx`. Apply the same `phorest_id || id` fallback to all four call sites that pass an appointment ID into the notes/views hooks.
 
-### Change
-Remove the auto-collapse effect entirely. Two reasons:
-1. **It blocks the primary CTA** (the bug we're fixing).
-2. **It's not needed** — once the user expands and adds a fact, the block stays expanded (correct). If they later delete all facts, leaving it expanded shows the empty `ClientAboutCard` placeholder copy ("Capture the personal details…") + an Add button — which is actually *more* useful than snapping back to the dashed CTA. No harm done.
+### Changes — `AppointmentDetailSheet.tsx`
 
-If we ever want to restore the snap-back behavior, the correct gate is "track whether user ever had data this session" — but that's premature complexity. Defer.
+Replace `appointment?.phorest_id` with `appointment?.phorest_id || appointment?.id` at:
 
-### Code change
-`src/components/dashboard/clients/HospitalityBlock.tsx`:
-- Remove the `useEffect` on lines 49–51
-- Remove the unused `useEffect` import if no longer needed
+1. **Line 781** — `useAppointmentNotes(...)` (the actual bug)
+2. **Line 788** — `useUnviewedAppointmentNotes(...)` (so unread badge stays consistent)
+3. **Line 798 + 801** — `useEffect` that calls `markTabViewed.mutate({ appointmentId })` (so view-tracking writes to the same key)
+
+Optional cleanup: introduce a local `const notesAppointmentId = appointment?.phorest_id || appointment?.id || null;` at the top of the data-hooks block and reuse — keeps the four sites in sync if one changes later.
 
 ## Files
-- `src/components/dashboard/clients/HospitalityBlock.tsx`
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
 ## Acceptance
-1. Clicking "Add personal context" on a client with no facts/callbacks expands the block and shows `ClientAboutCard` + `ClientCallbacksPanel` in compact mode
-2. The "Add" button inside `ClientAboutCard` opens the inline form
-3. Saving a fact persists it and the block stays expanded
-4. Deleting all facts leaves the block expanded (showing the empty-state copy) — no regression on existing data flows
-5. Initial render on a client with no data still shows the collapsed dashed CTA (the gate is `!userExpanded`, untouched)
+1. Adding a note on a Zura-native appointment (no Phorest ID) succeeds — toast shows "Note added"
+2. The note renders immediately in the Appointment Notes list
+3. Re-opening the sheet reloads the note from DB (the read query also uses the UUID, so this works)
+4. The All-Visits scope (`useClientAppointmentNotes`) shows the new note in the client's longitudinal ledger
+5. Unread badge clears when opening the Notes tab (markTabViewed uses the same ID)
+6. No regression on legacy Phorest-sourced appointments (those still have `phorest_id` populated, so `||` short-circuits to it)
 
 ## Deferred
-- **P3** Persist `userExpanded` per-client so refreshing the sheet doesn't re-collapse (low priority — current session-scoped state is fine).
-- **P3** Track "had-data-this-session" if we want true snap-back UX after the user drains all facts. Trigger: if operators ask for it.
+
+- **P3** Rename `appointment_notes.phorest_appointment_id` → `appointment_id` to match Zura-native semantics. Trigger: when Phorest decoupling Stage 3 ships and types regenerate. Requires a migration + audit of all 8 reader files; not urgent because the column is `text` and accepts UUIDs.
+- **P3** Add a `dev`-mode warning in `useAppointmentNotes` when both `phorest_id` and `id` are missing (true contract violation, vs. today's silent fail). Trigger: if more "Missing ID" reports appear from other surfaces.
+- **P3** Centralize the `phorest_id || id` resolution in a `getAppointmentNotesKey(apt)` util to prevent the same bug recurring in other components. Trigger: when a third surface needs notes wiring.
 
