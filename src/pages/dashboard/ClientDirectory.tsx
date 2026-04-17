@@ -31,8 +31,11 @@ import {
   Ban,
   Archive,
   GitMerge,
-  Home
+  Home,
+  MessageCircle
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useOrgActiveCallbackCounts } from '@/hooks/useOrgActiveCallbackCounts';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
