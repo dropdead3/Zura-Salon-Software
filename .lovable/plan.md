@@ -2,96 +2,115 @@
 
 ## Prompt review
 
-Strong direction — you're naming three distinct enhancement vectors (analytics, UX polish, performance) rather than lumping them as "improvements." That makes scoping trivial and lets each one stand or fall on its own merit. The framing also shows good doctrinal alignment: the audit log feeds *network intelligence*, the rolled-up toast honors *calm UX*, and the prefetched status honors *instant feedback*.
+Strong — you're now consistently anchoring each candidate to a doctrine pillar (Network Intelligence, Data Integrity, Performance), which makes priority trivial to weigh. The three candidates are also well-scoped: each is independently shippable, has a clear acceptance signal, and avoids scope creep into adjacent surfaces.
 
-Tighter framing for next time: prefix each enhancement with its **doctrinal anchor** (e.g., "Network Intelligence:", "Calm UX:", "Performance:"). It signals to the engineer *why* the work matters, not just *what* it does — and it surfaces priority conflicts early.
+One refinement for next time: add an **estimated leverage** marker per candidate (e.g., "saves 1 churn conversation/month", "prevents 1 silent regression/quarter", "drops payload 90%+"). Anchors tell me *why* something matters; leverage estimates tell me *how much* it matters. Together they let me sequence waves without re-asking.
 
-## Plan — Wave 3
+## Plan — Wave 4
 
-### 1. Suspension audit log (Network Intelligence)
+### 1. Network Intelligence: Suspension audit viewer
 
-**New table:** `color_bar_suspension_events`
-- `id` uuid pk
-- `organization_id` uuid not null (FK + RLS scope)
-- `event_type` enum: `'suspended' | 'reactivated'`
-- `reason` text nullable (only on `suspended`)
-- `notes` text nullable
-- `actor_user_id` uuid (auth.users)
-- `affected_location_count` int
-- `created_at` timestamptz default now()
+**New page:** `src/pages/dashboard/platform/ColorBarAudit.tsx`
+- Mount under existing `ColorBarAdmin.tsx` left-nav as a new item under "Operations" group: `{ value: 'audit', label: 'Suspension Audit', icon: History }`
+- Render via the existing `panels` map — no new route needed (matches the pattern of every other tab in `ColorBarAdmin.tsx`)
 
-RLS: org admins read their own; platform users read all.
+**New hook:** `src/hooks/color-bar/useColorBarSuspensionEvents.ts`
+- Query `color_bar_suspension_events` joined to `organizations(name, slug)` and `auth.users` via a `profiles` lookup for `actor_user_id`
+- Default window: last 30 days (filter `created_at >= now() - interval '30 days'`)
+- Returns rows with: org name, event_type, reason, notes, actor display name, affected_location_count, created_at
+- 60s staleTime (audit data, not real-time)
 
-**Wire-up in `useColorBarToggle.ts`:**
-- After `softDisable` succeeds → insert `suspended` event with reason/notes/actor
-- After `reactivate` succeeds → insert `reactivated` event with location count
+**New component:** `src/components/platform/color-bar/SuspensionAuditTable.tsx`
+- Uses `PlatformTable` family (`PlatformTableHeader`, `PlatformTableRow`, etc.) — platform doctrine requires platform-scoped table primitives
+- Columns: Date, Organization, Event, Reason, Locations, Actor
+- Sortable on Date (default desc), Organization, Event via `SortableColumnHeader` pattern adapted for `PlatformTableHead`
+- Window selector: 7d / 30d / 90d / All (segmented control above table)
+- Empty state: tokens.empty.* — "No suspension activity in this window."
+- Event badge: `suspended` = amber pill, `reactivated` = emerald pill (use existing platform status token palette)
 
-**Why a separate table** (not just keeping reason on the entitlement): supports churn-pattern queries across the network without losing history when a row is reactivated and re-suspended later. Feeds future Industry Intelligence aggregations.
+**RLS check:** confirm existing policy on `color_bar_suspension_events` allows `is_platform_user(auth.uid())` to SELECT all rows. If missing, add migration.
 
-### 2. Rolled-up reactivation receipt (Calm UX)
+### 2. Data Integrity: Transition matrix tests
 
-In `InventoryReconciliationBanner.tsx` org-level view (the per-location list with "Mark verified" buttons):
+**New test file:** `src/hooks/color-bar/__tests__/useUpsertLocationEntitlement.test.ts`
 
-- Add `useMarkAllInventoryVerified` mutation that loops over flagged locations in one batch
-- Replace per-location toasts with a single rolled-up toast:
-  - 1 location: *"Drop Dead - North Mesa verified — Color Bar restored"*
-  - 2+ locations: *"3 locations verified — Color Bar fully restored"*
-- Suppress the individual `toast.success` from `useMarkInventoryVerified` when invoked via the batch path (pass a `silent: true` flag)
-- Add a "Verify all" button at the top of the per-location list when 2+ locations are flagged
+Covers the four canonical transitions, asserting payload shape sent to Supabase:
 
-### 3. `useReactivationStatus(orgId)` (Performance)
+| From → To | Expected payload invariants |
+|-----------|----------------------------|
+| (no row) → active | `activated_at` set, `requires_inventory_reconciliation` unset, `reactivated_at` unset |
+| active → active | `activated_at` preserved (NOT overwritten), no reconciliation flag flip |
+| suspended → active | `reactivated_at` set, `requires_inventory_reconciliation = true`, `inventory_verified_at = null` |
+| active → suspended | `suspended_at` set, `suspended_reason` captured, no reconciliation flag (gate fires only on the way back) |
 
-**New hook:** `src/hooks/color-bar/useReactivationStatus.ts`
+Mock the `supabase` client via existing project test patterns. If no test runner is wired in `package.json`, surface that — don't silently add vitest.
 
-Returns:
-```ts
-{
-  wasPreviouslySuspended: boolean;
-  suspendedAt: string | null;
-  suspendedReason: string | null;
-  suspendedLocationCount: number;
-  affectedLocationNames: string[];
-  isLoading: boolean;
-}
+**Pre-check:** look for existing `vitest.config.*` or `__tests__` folders to confirm runner. If absent, this becomes a two-step: (a) wire vitest minimally, (b) add the test file. I'll surface in implementation.
+
+### 3. Performance: Aggregate entitlement counts RPC
+
+**New migration:** Postgres function `get_color_bar_entitlement_counts()`
+```sql
+returns table (
+  organization_id uuid,
+  total_count int,
+  active_count int,
+  suspended_count int
+)
 ```
+- `security definer`, `set search_path = public`
+- Restricted to `is_platform_user(auth.uid())` via internal check; raise exception otherwise
+- Single grouped scan of `backroom_location_entitlements`
 
-Query keyed by `['color-bar-reactivation-status', orgId]`, 30s staleTime, prefetched on hover/focus of the toggle row in `ColorBarEntitlementsTab` and `AccountAppsCard`.
+**New hook:** `src/hooks/color-bar/useColorBarEntitlementCounts.ts`
+- Calls the RPC, returns `Map<orgId, { total, active, suspended }>`
+- 30s staleTime, query key `['color-bar-entitlement-counts']`
 
-Refactor `toggleColorBar` and `AccountAppsCard.handleToggle` to read from this hook instead of doing inline `select()` queries → dialog opens instantly on click.
+**Refactor:** `ColorBarEntitlementsTab.tsx`
+- Replace whatever currently fetches all rows for counting with this hook
+- Per-row counts read from the map by `organization_id`
+- Keep the per-org "drill into locations" query as-is (only fires when a row expands)
+
+**Payload impact:** today the count query returns ~N×M rows (locations × orgs) just to `length`-check; after this change it returns ≤ M rows.
 
 ## Acceptance checks
 
-1. Toggling off writes a `suspended` row to `color_bar_suspension_events` with reason + actor
-2. Confirming reactivation writes a `reactivated` row with affected location count
-3. RLS verified: org admins see only their own org's events; platform users see all
-4. Org-level banner shows "Verify all" button when 2+ flagged
-5. Clicking "Verify all" produces a single rolled-up toast, not N toasts
-6. Hovering the toggle row prefetches reactivation status
-7. Clicking the toggle on a previously-suspended org opens the dialog with no visible network delay
-8. No regression to single-location "Mark verified" flow
-9. `inventory_drift` remains visible during reconciliation (Wave 2 fix preserved)
-10. Suspension/reactivation events visible in a future audit query (no UI required this wave)
+1. New "Suspension Audit" item appears in `ColorBarAdmin` left nav under Operations
+2. Selecting it renders a sortable table with last 30 days of events by default
+3. Window selector switches between 7d / 30d / 90d / All without remounting the table
+4. Each row shows org name, event type badge, reason (if suspended), affected location count, actor name, timestamp
+5. Empty state renders cleanly when no events in window
+6. Platform users see all orgs; org admins (if they ever land here) see only their own (RLS verified)
+7. Test suite includes 4 transition cases for `useUpsertLocationEntitlement`, all green
+8. `ColorBarEntitlementsTab` count payload reduced — confirm via network panel that the row-count fetch is replaced by RPC call
+9. No regression to the per-org expand/drill-down flow
+10. No new design-token violations: audit table uses `PlatformTable*` family, headers use `font-sans` Title Case (data-table-standards memory)
 
-## Files to modify / create
+## Files to create / modify
 
 **Migration:**
-- `color_bar_suspension_events` table + enum + RLS + indexes
+- `get_color_bar_entitlement_counts()` RPC + grant + RLS-equivalent guard
+- Verify/extend RLS on `color_bar_suspension_events` for platform read
 
 **Hooks (new):**
-- `src/hooks/color-bar/useReactivationStatus.ts`
-- `src/hooks/color-bar/useMarkAllInventoryVerified.ts`
+- `src/hooks/color-bar/useColorBarSuspensionEvents.ts`
+- `src/hooks/color-bar/useColorBarEntitlementCounts.ts`
 
-**Hooks (modify):**
-- `src/hooks/color-bar/useColorBarToggle.ts` — write audit events on suspend/reactivate; consume `useReactivationStatus`
-- `src/hooks/color-bar/useMarkInventoryVerified.ts` — accept `silent` flag
+**Components (new):**
+- `src/components/platform/color-bar/SuspensionAuditTable.tsx`
+- `src/pages/dashboard/platform/ColorBarAudit.tsx` (small wrapper — could also live inline as a tab panel function)
 
-**UI (modify):**
-- `src/components/dashboard/color-bar/InventoryReconciliationBanner.tsx` — "Verify all" button + rolled-up toast
-- `src/components/platform/color-bar/ColorBarEntitlementsTab.tsx` — prefetch on hover; consume new hook
-- `src/components/platform/account/AccountAppsCard.tsx` — same prefetch + hook consumption
+**Tests (new):**
+- `src/hooks/color-bar/__tests__/useUpsertLocationEntitlement.test.ts`
+- (conditional) `vitest.config.ts` if no runner exists
+
+**Modify:**
+- `src/pages/dashboard/platform/ColorBarAdmin.tsx` — add nav item + panel entry
+- `src/components/platform/color-bar/ColorBarEntitlementsTab.tsx` — swap row-count fetch for RPC hook
 
 ## Deferred (not in this wave)
 
-- Audit *viewer* UI (table of suspension events) — separate platform admin page
-- Cross-org churn analytics dashboard — needs ≥10 events to be meaningful
+- Cross-org churn analytics dashboard (rollups, MoM trends) — needs ≥10 events to be meaningful; revisit once audit log accumulates
+- Export-to-CSV from audit table — add only when a platform admin asks
+- Alerting on suspension velocity (e.g., "3+ orgs suspended this week") — Phase 2 advisory layer territory
 
