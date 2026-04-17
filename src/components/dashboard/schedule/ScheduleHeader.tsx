@@ -496,8 +496,7 @@ export function ScheduleHeader({
               </SelectContent>
             </Select>
             
-            {/* Staff Multi-Select — hidden in week view (single-stylist dropdown handles it) */}
-            {view !== 'week' && (
+            {/* Staff Multi-Select */}
             <Popover open={staffPopoverOpen} onOpenChange={setStaffPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button 
@@ -605,7 +604,6 @@ export function ScheduleHeader({
                 </div>
               </PopoverContent>
             </Popover>
-            )}
           </div>
         </div>
         </div>
