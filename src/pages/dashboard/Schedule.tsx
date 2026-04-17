@@ -131,8 +131,8 @@ export default function Schedule() {
     if (!stored || stored === 'auto') return 'auto';
     const n = parseInt(stored, 10);
     if (!Number.isFinite(n)) return 'auto';
-    // Clamp to valid range: floor 200px, ceiling 600px.
-    return Math.min(600, Math.max(200, n));
+    // Clamp to valid range: floor 200px, ceiling 900px.
+    return Math.min(900, Math.max(200, n));
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
