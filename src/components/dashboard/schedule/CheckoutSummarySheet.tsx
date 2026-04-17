@@ -627,13 +627,11 @@ export function CheckoutSummarySheet({
     }
   };
 
-  // Wave 21.1 — Intercept close attempts during the rebook gate.
-  // Force decline-reason capture before allowing dismissal (structural enforcement).
+  // Wave 21.4 — Allow free dismissal during the rebook gate.
+  // The Charge button is already gated to gatePhase === 'checkout', so closing
+  // the sheet cannot bypass skip-reason capture for actual settlement. Misclicks
+  // (wrong appointment, accidental open) must exit cleanly without forced capture.
   const handleOpenChange = (next: boolean) => {
-    if (!next && open && gatePhase === 'gate' && !rebooked && appointment) {
-      setDeclineDialogOpen(true);
-      return;
-    }
     onOpenChange(next);
   };
 
