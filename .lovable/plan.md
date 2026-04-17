@@ -1,60 +1,94 @@
 
 
-## Prompt review
+## Diagnosis — Why Jamie isn't showing at North Mesa
 
-Strong, open-ended audit prompt — exactly the right cadence after shipping three back-to-back waves (18.2, 19, 21). Sharper next time: scope the audit dimension you care about most ("audit *security*", "audit *Wave 21 behavior*", "audit *unrelated regressions*"), and name the pri threshold you want surfaced ("only P0/P1, defer P2"). Without that, I default to a full-stack pass which can include noise. I've ranked findings by leverage and explicitly anchored each to a doctrine clause so you can decide what ships.
+**Root cause:** The booking popover queries `v_calendar_stylists` filtered by a single `location_id`. That view (and its parent `v_all_staff`) returns only **`employee_profiles.location_id`** (the singular "primary" location), and ignores the **`location_ids[]`** array (the "also works at" list).
 
-## Audit — Build state after Waves 18.2 / 19 / 21
+**Jamie's record:**
+- `location_id` = `val-vista-lakes` (primary)
+- `location_ids` = `['val-vista-lakes', 'north-mesa']` (multi-location)
 
-**Health baseline:** TypeScript clean (no errors). Dev server stable (HMR warnings only — `getDateRange` Fast Refresh export shape, pre-existing). Supabase linter shows pre-existing infra warnings, no new findings from Wave 21.
+So when the popover filters `WHERE location_id = 'north-mesa'`, Jamie is excluded — even though her profile says she works at both.
 
-### P0 — Behavioral gap in the rebook gate (the wave you just shipped)
-
-| # | Finding | Doctrine anchor | Leverage |
+**This is a systemic issue, not a Jamie issue.** Same bug affects every multi-location stylist:
+| Stylist | Primary | Also works at | Currently invisible at |
 |---|---|---|---|
-| 1 | **Sheet-close bypasses the gate.** `PremiumFloatingPanel`'s built-in close button (×) calls `onOpenChange(false)` — staff can dismiss `CheckoutSummarySheet` while still in `gatePhase === 'gate'` without picking rebook OR a decline reason. That's the exact "implicit skip" loophole flagged as the open question in the Wave 21 plan and never closed. Fix: when `gatePhase === 'gate'` and the user attempts to close, intercept → open `RebookDeclineReasonDialog` first; only allow close after reason captured (or after rebook completed). | structural-enforcement-gates | high |
-| 2 | **`onBookInterval` discards the chosen interval.** In `CheckoutSummarySheet.tsx` L694–699, the callback receives `interval: RebookInterval` but only calls `onScheduleNext(appointment)` — the staff's tap on "+4 weeks" vs "+6 weeks" is thrown away. The schedule-next flow opens with no preselected date, so the one-tap UX is cosmetic. Fix: extend `onScheduleNext` signature to `(apt, interval?)` and prefill the booking date in `Schedule.tsx` handler. | UX Canon (one primary lever, expandable logic) | high |
-| 3 | **Rebook completion never advances `gatePhase`.** Tapping a quick-book interval calls `onScheduleNext` but does NOT set `setGatePhase('checkout')` or `setRebooked(true)`. Staff are stuck in the gate UI until they manually trigger the `rebookCompleted` prop round-trip from parent — and that prop only flips after the schedule-next flow completes asynchronously. If the parent flow is cancelled, the gate is permanently stuck. Fix: optimistically advance to `checkout` phase on interval tap; let `rebookCompleted` confirm the boolean for `onConfirm`. | UX Canon (calm/executive, no dead ends) | high |
+| Jamie Vieira | val-vista-lakes | north-mesa | **North Mesa** |
+| Lex Feddern | val-vista-lakes | north-mesa | **North Mesa** |
+| Eric Day | north-mesa | val-vista-lakes | **Val Vista Lakes** |
 
-### P1 — Data integrity & analytics gaps
+North Mesa shows 5 stylists in `v_calendar_stylists` but should show 7 (the 5 + Jamie + Lex). Val Vista Lakes shows 13 but should show 14 (Eric is missing there too).
 
-| # | Finding | Doctrine anchor | Leverage |
-|---|---|---|---|
-| 4 | **Decline reason is logged twice with mismatched semantics.** `useLogRebookDeclineReason` writes to `rebook_decline_reasons` table AND mirrors to `appointment_audit_log` with `REBOOK_DECLINED`. Then `handleConfirm` *also* passes `finalReason` through `onConfirm` → `Schedule.tsx` writes the same reason as a free-text string to `appointments.rebook_declined_reason`. Three writes, three formats (structured row, audit metadata, free-text column) — drift risk for analytics. Fix: keep the structured table as system of record; treat `rebook_declined_reason` column as a denormalized cache (write the `reason_code`, not the human label). | analytics-data-integrity | medium |
-| 5 | **Analytics card has no drill-down.** Plan called for "click bar → list of appointments with that reason (link to drawer)". Card renders bars but they're not interactive. Fix: wrap each bar in a button → opens a `Sheet` listing `appointment_id`s with that reason for the date range, each linking to `AppointmentDetailSheet`. | leverage-doctrine (one primary lever, drill-down logic) | medium |
-| 6 | **`location_id` foreign key mismatch.** Migration declares `location_id TEXT REFERENCES public.locations(id)`. Confirm `locations.id` is `text` (slug) per `location-identity-and-slugs` doctrine — if it's `uuid` in this project, the FK fails. (Likely fine given the doctrine, but worth a one-query verification before this bites silently.) | location-identity-and-slugs | low |
-| 7 | **Reason `staff_id` is always null in practice.** Code reads `(appointment as any).staff_user_id` which doesn't exist on `PhorestAppointment` — should be `staff_member_id` or resolved via `phorest_staff_id → employee_profiles`. Result: per-stylist decline analytics are blind. Fix: resolve staff via the same path used by `useStaffAttribution`, or fall back to `appointment.stylist_profile?.id`. | staff-mapping-constraints | high (kills per-stylist coaching) |
+**Doctrine anchor:** `enterprise-multi-location-governance` — the `location_ids[]` array IS the system of record for multi-location staffing; the singular `location_id` is a denormalized "primary" hint. Reads must respect the array.
 
-### P2 — UI polish (defer with explicit triggers)
+## Plan — Wave 22: Multi-Location Stylist Visibility Fix
 
-| # | Finding | Trigger to revisit |
-|---|---|---|
-| 8 | `RebookDeclineReasonDialog` uses `font-medium` + `font-medium` for both title AND each radio label — no hierarchy. Should use `font-display` for the title per UI Canon (Termina uppercase). | First user feedback that the dialog feels flat |
-| 9 | `Sparkles` icon used both for the dialog header AND the `NextVisitRecommendation` header — two sparkles in a row when both render. Differentiate. | Visual QA round |
-| 10 | `RebookDeclineReasonsCard` lives only in `OperationsTabContent` — not pinnable to Command Center. Plan called for `PinnableCard` wrapping. | When an operator pins it from elsewhere or asks |
-| 11 | "Other" textarea has no character cap — could store novels. Add `maxLength={500}`. | First abuse / when surfaced in coaching reviews |
-| 12 | Bar chart has no x-axis scale or "biggest lever" callout on the bar itself (only in headline). Could highlight the `never_asked` bar with an inline label. | Operator feedback round |
+### Fix (single migration + zero app code change)
 
-### Recommended ship order
+Update `v_all_staff` view to **emit one row per location_id in `location_ids`** (with fallback to singular `location_id` when the array is null/empty). `v_calendar_stylists` inherits the fix automatically since it selects from `v_all_staff`.
 
-**Wave 21.1 (this revise):** Fix P0 #1, #2, #3 + P1 #7. These are the gate's structural integrity — without them the wave doesn't deliver its promise (force the ask). Single PR, ~80–120 LOC across 3 files.
+```sql
+CREATE OR REPLACE VIEW v_all_staff AS
+-- Phorest-mapped staff: explode location_ids
+SELECT
+  ep.user_id,
+  psm.phorest_staff_id,
+  psm.phorest_staff_name,
+  COALESCE(ep.display_name, ep.full_name, psm.phorest_staff_name, 'Unknown') AS display_name,
+  ep.full_name,
+  ep.photo_url,
+  COALESCE(ep.is_active, true) AS is_active,
+  COALESCE(psm.show_on_calendar, true) AS show_on_calendar,
+  loc_id AS location_id,
+  'phorest' AS source
+FROM phorest_staff_mapping psm
+LEFT JOIN employee_profiles ep ON ep.user_id = psm.user_id
+CROSS JOIN LATERAL unnest(
+  COALESCE(
+    NULLIF(ep.location_ids, '{}'),
+    ARRAY[ep.location_id]::text[]
+  )
+) AS loc_id
+WHERE psm.user_id IS NOT NULL AND loc_id IS NOT NULL
 
-**Wave 21.2 (next):** P1 #4, #5, #6. Analytics integrity + drill-down. Separate PR because it touches the Schedule.tsx write path and needs a small data migration to normalize the `rebook_declined_reason` column.
+UNION ALL
 
-**Defer:** All P2 to a future polish wave with stated triggers.
+-- Zura-only staff: same explosion
+SELECT
+  ep.user_id,
+  NULL, NULL,
+  COALESCE(ep.display_name, ep.full_name, 'Unknown'),
+  ep.full_name, ep.photo_url,
+  COALESCE(ep.is_active, true),
+  true,
+  loc_id, 'zura'
+FROM employee_profiles ep
+CROSS JOIN LATERAL unnest(
+  COALESCE(NULLIF(ep.location_ids, '{}'), ARRAY[ep.location_id]::text[])
+) AS loc_id
+WHERE NOT EXISTS (SELECT 1 FROM phorest_staff_mapping psm WHERE psm.user_id = ep.user_id)
+  AND loc_id IS NOT NULL;
+```
 
-### Files Wave 21.1 would touch
+`v_calendar_stylists` already does `DISTINCT ON (user_id, location_id)`, so duplicates collapse cleanly.
 
-- `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — intercept close in `gate` phase; advance phase on interval tap; pass interval through
-- `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — pass interval up cleanly (already does)
-- `src/pages/dashboard/Schedule.tsx` — accept optional `interval` from `onScheduleNext`, preselect booking date
-- `src/hooks/useRebookDeclineReasons.ts` — fix `staffId` resolution (or do it at call site in CheckoutSummarySheet using `stylist_profile?.id`)
+### Acceptance checks
 
-### Acceptance checks for 21.1
+1. `SELECT * FROM v_calendar_stylists WHERE location_id = 'north-mesa'` returns Jamie + Lex (was 5 rows, now 7)
+2. `SELECT * FROM v_calendar_stylists WHERE location_id = 'val-vista-lakes'` includes Eric (was 13 rows, now 14)
+3. Open New Booking popover at North Mesa → Jamie appears in Available Stylists
+4. Open at Val Vista Lakes → Eric appears
+5. No regression: single-location stylists still appear exactly once at their location
+6. Other consumers of the view (`useChairAssignments`, `WalkInDialog`, scheduler grid) get the expanded set — verify in Wave 22.1 if any surface needs to suppress duplicates differently
 
-1. Close × in gate phase opens decline dialog; cannot dismiss sheet until reason captured OR rebook completed
-2. Tap "+4 weeks" → schedule-next opens with that date prefilled, gate optimistically advances to checkout phase
-3. If schedule-next is cancelled, staff returns to checkout phase with `rebooked=false` (not stuck in gate)
-4. `rebook_decline_reasons.staff_id` populated for non-anonymous bookings
-5. TS clean, tests still passing
+### Files
+
+- New migration: `update v_all_staff to explode location_ids[]`
+- No app code changes required
+
+### Deferred
+
+- **P2** UI badge in stylist picker showing "Also at: Val Vista Lakes" so staff know the stylist's home base — trigger: when staff confusion surfaces about which stylist belongs where
+- **P2** Audit `useChairAssignments`, `useStylistAvailability`, scheduler column-builder for any singular-`location_id` assumptions still lurking — trigger: spot-check after the view fix lands
+- **P2** Backfill consistency check: should `location_ids[]` always include `location_id`? Currently Jamie's array does, Eric's does. Add a constraint or trigger to guarantee — trigger: when a profile is found violating it
 
