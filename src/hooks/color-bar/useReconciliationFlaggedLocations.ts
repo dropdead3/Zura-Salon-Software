@@ -9,27 +9,36 @@
  */
 
 import { useMemo } from 'react';
-import { useColorBarLocationEntitlements } from './useColorBarLocationEntitlements';
+import {
+  useColorBarLocationEntitlements,
+  type ColorBarLocationEntitlement,
+} from './useColorBarLocationEntitlements';
 import { useColorBarOrgId } from './useColorBarOrgId';
 
 export function useReconciliationFlaggedLocations() {
   const orgId = useColorBarOrgId();
   const { entitlements, isLoading } = useColorBarLocationEntitlements(orgId);
 
-  const flaggedSet = useMemo<Set<string>>(() => {
-    return new Set(
-      entitlements
-        .filter((e) => e.requires_inventory_reconciliation)
-        .map((e) => e.location_id),
-    );
-  }, [entitlements]);
+  const flagged = useMemo<ColorBarLocationEntitlement[]>(
+    () => entitlements.filter((e) => e.requires_inventory_reconciliation),
+    [entitlements],
+  );
 
+  const flaggedSet = useMemo<Set<string>>(
+    () => new Set(flagged.map((e) => e.location_id)),
+    [flagged],
+  );
+
+  /** Strict-typed; pass `null`/`undefined` to short-circuit safely. */
   const isFlagged = (locationId?: string | null): boolean => {
     if (!locationId) return false;
     return flaggedSet.has(locationId);
   };
 
   return {
+    /** Full entitlement rows currently flagged for reconciliation. */
+    flagged,
+    /** Set of location IDs only — handy for filter operations. */
     flaggedLocationIds: flaggedSet,
     isFlagged,
     hasAnyFlagged: flaggedSet.size > 0,
