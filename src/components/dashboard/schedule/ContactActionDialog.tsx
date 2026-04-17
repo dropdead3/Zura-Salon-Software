@@ -203,7 +203,7 @@ export function ContactActionDialog({
                 <span
                   className={cn(
                     "text-[10px] font-sans tabular-nums",
-                    charCount > 160 ? "text-amber-600" : "text-muted-foreground",
+                    charCount > 160 ? "text-warning" : "text-muted-foreground",
                   )}
                 >
                   {charCount} / 160

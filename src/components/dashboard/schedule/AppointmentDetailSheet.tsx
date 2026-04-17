@@ -1531,11 +1531,14 @@ export function AppointmentDetailSheet({
                         {showCall && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="sm" className={commBtn} asChild>
-                                <a href={`tel:${phone}`}>
-                                  <Phone className="h-3.5 w-3.5 sm:mr-1.5" />
-                                  <span className="hidden sm:inline">Call</span>
-                                </a>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={commBtn}
+                                onClick={() => setCallDialogOpen(true)}
+                              >
+                                <Phone className="h-3.5 w-3.5 sm:mr-1.5" />
+                                <span className="hidden sm:inline">Call</span>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Call {phone}</TooltipContent>
@@ -1545,11 +1548,14 @@ export function AppointmentDetailSheet({
                         {showText && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="sm" className={commBtn} asChild>
-                                <a href={`sms:${phone}`}>
-                                  <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
-                                  <span className="hidden sm:inline">Text</span>
-                                </a>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={commBtn}
+                                onClick={() => setTextDialogOpen(true)}
+                              >
+                                <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
+                                <span className="hidden sm:inline">Text</span>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Text {phone}</TooltipContent>
