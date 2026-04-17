@@ -807,6 +807,11 @@ export function AppointmentDetailSheet({
     appointment?.phorest_client_id,
     { enabled: historyEnabled },
   );
+  const { data: clientAptNotes = [], isLoading: clientAptNotesLoading } = useClientAppointmentNotes(
+    appointment?.phorest_client_id,
+    { enabled: notesEnabled },
+  );
+  const [notesScope, setNotesScope] = useState<'this' | 'all'>('this');
   const { data: serviceLookup } = useServiceLookup();
   const { assignmentMap, upsertAssignments } = useServiceAssignments(appointment?.id || null);
   const updateServicesMutation = useUpdateAppointmentServices();
