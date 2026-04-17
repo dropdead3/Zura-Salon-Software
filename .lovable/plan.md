@@ -2,103 +2,203 @@
 
 ## Prompt review
 
-Sharp instinct — this is the difference between treating an appointment as a *transaction* vs. treating it as a *touchpoint in a longitudinal client relationship*. A stylist opening a client mid-day shouldn't have to navigate to a separate Client Profile to see "what did Sarah say about her color last visit?" The Notes tab as-is is appointment-scoped (one row in `appointment_notes` filtered by `phorest_appointment_id`), which is data-architecturally clean but operator-hostile.
+Sharp instinct — this is the **hospitality moat**. Generic "client notes" become a junk drawer ("dye allergy," "cancelled twice," "wants bangs," "kids named Max and Lila") because they mix three different intents: *clinical* (allergies, formula), *behavioral* (cancels, no-shows, prefers AM), and *personal* (Italy trip, dating, marathon training). When all three live in one stream, the personal stuff drowns and stylists stop bothering to capture it. Sharper next time: name the *outcome* you want — "I want stylists to greet clients with one personal callback per visit" — that frames the spec as a behavior change, not a UI add. You did this implicitly with the Italy/movie/date examples; clear enough.
 
-Sharper next time: name the three dimensions you want surfaced — (a) note source (appointment vs client-level), (b) temporal context (which past visit), (c) outcome context (did that visit complete, no-show, cancel) — so the spec is unambiguous. You implied all three; clear enough.
+But here's the strategic trap I want to flag: **adding a fourth notes surface ("About Client") on top of the existing three (Appointment Notes, Client Notes, Booking Assistant Notes) makes the junk drawer worse.** The right move is to *separate by intent*, not stack by surface. We already have "Client Notes" (cross-visit, persistent). What's missing is a **typed, time-decayed personal memory layer** that surfaces *one curated callback* on the appointment card and detail sheet — not another freeform textarea.
 
-## Diagnosis
+## Diagnosis — current notes surfaces
 
-Current behavior in `AppointmentDetailSheet.tsx` Notes tab (L2321–2438):
+| Surface | Hook | Scope | Intent | Junk-drawer risk |
+|---|---|---|---|---|
+| **Appointment Notes** | `useAppointmentNotes` | Per-appointment | Stylist scratchpad for *this* visit | Low (now ledger via Wave 22.24) |
+| **Client Notes** | `useClientNotes` | Cross-visit, persistent | Catch-all client info | **HIGH** — currently mixes allergies + birthday wishes + cancellation patterns |
+| **Notes From Booking Assistant** | `appointment.notes` field | Per-appointment | Booker's intake note | Low (single source) |
+| **`phorest_clients.notes`** | embedded in client row | Cross-visit | Legacy catch-all | High (no structure) |
 
-1. **Appointment Notes** (L2325–2371) — `useAppointmentNotes(appointment.id)` fetches notes scoped to *only this appointment's* `phorest_appointment_id`. This is the bug surface.
-2. **Client Notes** (L2375–2425) — `useClientNotes(phorest_client_id)` already shows all client-level notes (correct, persistent).
-3. **Notes From Booking Assistant** (L2428–2437) — only the current appointment's `appointment.notes` field.
+The user's request — "Italy trip, movie, date" — belongs in **none** of these. Those notes are *episodic personal threads* that need to surface as a **callback prompt at the next visit** ("Ask how Italy was"), then archive themselves once acknowledged.
 
-Data we already have to build the unified view:
-- `useClientVisitHistory(phorest_client_id)` returns every past visit with `id`, `appointment_date`, `service_name`, `stylist_name`, `status` (completed/cancelled/no_show/etc), `total_price`, and the booking-time `notes` field (the "Notes From Booking Assistant" content per visit).
-- `appointment_notes` table is keyed by `phorest_appointment_id` (text) — so given a list of visit IDs, we can fetch all stylist-added notes across all of them in one query.
+## Plan — Wave 22.25: Hospitality Memory Layer ("About Client" + Callback Prompts)
 
-Gap: no hook today returns "all `appointment_notes` rows for all of this client's past appointments, joined to the appointment's date/status/service." That's the new building block.
+### Strategic shape
 
-## Plan — Wave 22.24: Notes tab becomes a unified client notes ledger
+Two layers, one new concept:
 
-### New hook: `src/hooks/useClientAppointmentNotes.ts`
+1. **About Client (durable personal facts)** — kids, partner, pets, profession, hobbies, dietary restrictions, pronouns. Things that persist for years and don't expire. Lives at the top of the Client Detail sheet as a structured "About" card with typed slots, NOT a freeform note list.
 
-Returns every `appointment_notes` row where `phorest_appointment_id` matches any appointment belonging to this client, joined with the appointment's date, service, stylist, and status.
+2. **Callbacks (episodic threads to follow up on)** — "Going to Italy in March," "First date Saturday," "Trying out for community theater." Things with a *trigger date* or *next visit* horizon. Surface as a calm prompt on the appointment card and at the top of the appointment detail sheet: *"Ask how the Italy trip went."* One acknowledgment archives it.
 
-```ts
-// Pseudocode of the query shape
-SELECT 
-  an.id, an.note, an.is_private, an.created_at, an.author_id,
-  author: employee_profiles(display_name, full_name, photo_url),
-  appointment: v_all_appointments(id, appointment_date, service_name, status, stylist_name)
-FROM appointment_notes an
-WHERE an.phorest_appointment_id IN (
-  SELECT id FROM v_all_appointments WHERE phorest_client_id = ?
-)
-ORDER BY an.created_at DESC
-```
+### Layer 1 — "About Client" structured card
 
-Implementation: two-step in the hook (fetch visit IDs from `useClientVisitHistory`, then `appointment_notes.in('phorest_appointment_id', ids)` with author join, then merge appointment context client-side).
+**Where it lives:**
+- **Client Detail Sheet** (`ClientDetailSheet.tsx`): new "About" section at the top of the Overview tab, above visit history. Always-visible, scannable in 2 seconds.
+- **Appointment Detail Sheet** (`AppointmentDetailSheet.tsx`): same compact "About" block in the Details tab, above Client Notes Preview (replaces nothing — additive).
+- **Booking flow client profile** (`ClientProfileView.tsx`): same compact block.
 
-### Edit: `AppointmentDetailSheet.tsx` Notes tab restructure
-
-Replace the "Appointment Notes" section header/list (L2325–2353) with a unified ledger:
+**Structure (typed slots, not freeform):**
 
 ```
-NOTES                                                     [This Appointment | All Visits]
+ABOUT ERIC
+─────────────────────────────────────────
+Pronouns        he/him
+Family          Wife Sarah · Kids Max (8), Lila (5)
+Pets            Golden retriever named Cooper
+Profession      ER nurse · works night shifts
+Hobbies         Marathon running · woodworking
+Dietary         Gluten-free
+Sensitivities   Allergic to ammonia
+─────────────────────────────────────────
+[+ Add a fact]
+```
+
+Each slot is optional. Empty slots hidden. One-click inline edit per slot. Stylists can add custom slots ("Always orders oat milk latte").
+
+**Why typed slots beat freeform:**
+- Forces information *architecture* — stylists learn what's worth capturing
+- Scannable in seconds (no reading paragraphs)
+- AI/automation can later use structured data ("flag clients with kids during back-to-school season")
+- No duplication — "wife Sarah" gets captured once, not in 4 different notes
+
+**Schema (new table):**
+
+```sql
+CREATE TABLE public.client_about_facts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  client_id uuid NOT NULL REFERENCES phorest_clients(id) ON DELETE CASCADE,
+  category text NOT NULL CHECK (category IN ('pronouns','family','pets','profession','hobbies','dietary','sensitivities','custom')),
+  label text,           -- only used when category = 'custom'
+  value text NOT NULL,
+  created_by uuid NOT NULL REFERENCES auth.users(id),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+-- RLS: is_org_member for select, is_org_member for insert/update/delete
+-- Index on (organization_id, client_id)
+```
+
+### Layer 2 — Callbacks (episodic prompts)
+
+**Where it lives:**
+- **Appointment card on the Schedule grid** (`AppointmentCardContent.tsx`): single-line yellow chip *if* a callback exists for this client: *"💬 Ask about Italy trip"* (truncated, full text on hover).
+- **Appointment Detail Sheet** Details tab: dedicated "Follow up" block at the very top, above contact info — impossible to miss when opening the appointment.
+- **Client Detail Sheet**: "Open threads" section listing all unacknowledged callbacks for this client.
+
+**UI (Appointment Detail Sheet — top of Details tab):**
+
+```
+FOLLOW UP                                          [Mark heard ✓]
 ─────────────────────────────────────────────────────────────────
-[Avatar] Jenna B.            Apr 17, 2026 · 9:14 AM
-Client wants to go shorter next time. Trying bangs.
-↳ From: Combo Cut · Apr 17, 2026 · ●  Unconfirmed
-
-[Avatar] Marcus T.           Mar 02, 2026 · 2:45 PM     [Private 🔒]
-Allergic reaction to bleach — no lift services.
-↳ From: Color & Cut · Mar 02, 2026 · ✓ Completed
-
-[Avatar] Jenna B.            Jan 18, 2026 · 11:20 AM
-Client cancelled day-of, family emergency.
-↳ From: Combo Cut · Jan 18, 2026 · ✕ Cancelled
+💬  Ask how Italy was — set Mar 02 by Jenna B.
+💬  First date Saturday — set Apr 10 by Marcus T.
+─────────────────────────────────────────────────────────────────
 ```
 
-Each note row shows:
-1. **Author + relative timestamp** — "Apr 17, 2026 · 9:14 AM" (already in data)
-2. **Note body**
-3. **Outcome footer** — "From: {service_name} · {date} · {status badge}" using the existing `APPOINTMENT_STATUS_BADGE` token map for color-coded status pills (Completed / Cancelled / No-show / Unconfirmed / etc.)
-4. **Privacy indicator** — existing `Lock` icon when `is_private`
+**Capture flow:**
+- "+ Add follow-up" button on Client Detail sheet *and* on Appointment Notes ledger (Wave 22.24)
+- Single textarea: "What should we ask about next time?"
+- Optional date picker: "Trigger by [date]" (defaults to "next visit")
+- Saves to `client_callbacks` table
 
-Filter toggle (top right): **"This Appointment"** (default — current behavior, alert-fatigue safe) vs **"All Visits"** (unified ledger). Default to "This Appointment" so existing operators aren't surprised; the toggle reveals history on demand.
+**Acknowledgment flow:**
+- "Mark heard" button on the prompt → sets `acknowledged_at` and `acknowledged_by`
+- Acknowledged callbacks disappear from active prompts but stay in client history ("Past follow-ups" expandable section)
+- Honors alert-fatigue: if a callback is more than 90 days past trigger, auto-archive with a "stale — never asked" tag
 
-When current appointment has no notes but past notes exist, show a calm hint: *"No notes on this visit. {N} notes from past visits — view all"* as a one-click jump.
+**Schema (new table):**
 
-### Keep unchanged
-- **Client Notes** section (already cross-visit, persistent). Stays as-is.
-- **Notes From Booking Assistant** — current appointment only (it's literally the booker's note for *this* booking). Could later add "previous bookings' booker notes" but defer.
-- Add-note flow still writes to *current* `appointment_notes` (one source of truth — notes always belong to a specific appointment).
+```sql
+CREATE TABLE public.client_callbacks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  client_id uuid NOT NULL REFERENCES phorest_clients(id) ON DELETE CASCADE,
+  prompt text NOT NULL,                              -- "Ask how Italy was"
+  trigger_date date,                                  -- when it becomes active (null = next visit)
+  created_by uuid NOT NULL REFERENCES auth.users(id),
+  created_at timestamptz DEFAULT now(),
+  acknowledged_at timestamptz,
+  acknowledged_by uuid REFERENCES auth.users(id),
+  outcome_note text,                                  -- optional: "She loved it, going back next year"
+  archived_reason text                                -- 'acknowledged' | 'stale' | 'manual'
+);
+-- RLS: is_org_member for all ops
+-- Index on (organization_id, client_id, acknowledged_at) for fast "active callbacks" lookup
+```
+
+### How this reads on the appointment card
+
+Currently appointment cards show name, service, time, status. New: **one** subtle yellow chip when an active callback exists, capped at one chip per card to honor alert-fatigue doctrine:
+
+```
+ERIC DAY                              9:00 AM
+Combo Cut · Jenna B.                  ●  Confirmed
+💬  Ask about Italy trip
+```
+
+If multiple callbacks: show count *"💬 2 follow-ups"* — full list in detail sheet.
+
+### How this reads in Client Directory
+
+In the directory list row, a small `💬 N` indicator next to clients with active callbacks. Hover tooltip: *"3 open follow-ups."* Single-click into the detail sheet.
+
+### Onboarding copy (the "easy and understandable" part)
+
+The first time a stylist opens a client with no About facts, show a calm one-liner above the empty section:
+
+> *"Capture the personal details that make Eric feel known — kids' names, pets, hobbies, what he's working on. We'll surface them next time he books."*
+
+The first time a stylist captures a callback, show a tooltip:
+
+> *"We'll remind you to ask about this at Eric's next appointment. Mark it heard once you've followed up."*
+
+No videos, no walkthroughs. The tooltip teaches the loop in one sentence.
 
 ### Acceptance checks
 
-1. Eric Day's Notes tab default view shows only this appointment's notes (current behavior preserved)
-2. Toggling "All Visits" shows every `appointment_notes` row across his entire visit history, newest first
-3. Each note row shows the appointment date, service name, and a color-coded status pill (Completed / Cancelled / No-show / etc.)
-4. Cancelled and no-show visits' notes are visible (so stylists see "client cancelled — family emergency" history)
-5. Private notes still respect privacy logic (only author sees in unified view too — RLS-enforced)
-6. Empty state when no notes exist on any visit: "No notes yet for {client name}"
-7. New notes still write to the *current* appointment, then appear in the unified ledger
-8. No regression on Client Notes (cross-visit notes) section below
+1. New "About" card on Client Detail sheet shows typed slots; empty state guides first capture
+2. Stylist can add/edit/delete About facts inline; each slot edits independently
+3. New "Add follow-up" CTA on Client Detail sheet captures callbacks with optional trigger date
+4. Callback prompt appears at the *top* of the Appointment Detail sheet Details tab (above contact)
+5. Single yellow chip ("💬 Ask about Italy") appears on the Schedule grid card when an active callback exists
+6. "Mark heard" button archives the callback with optional outcome note
+7. Acknowledged callbacks move to "Past follow-ups" expandable section
+8. Callbacks 90+ days past trigger auto-archive with `archived_reason = 'stale'`
+9. About facts and callbacks both scoped by `organization_id` with `is_org_member` RLS
+10. Multi-callback case shows count chip, not stacked chips (alert-fatigue)
 
 ### Files
 
-- **NEW** `src/hooks/useClientAppointmentNotes.ts` — unified-history notes hook
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — Notes tab restructure (L2325–2371) + add filter toggle state + import new hook + import `APPOINTMENT_STATUS_BADGE`
+**New (database migration):**
+- `client_about_facts` table + RLS
+- `client_callbacks` table + RLS
+- Optional cron/edge to mark stale callbacks (or just compute client-side via `trigger_date < now() - 90 days`)
 
-### Open question
+**New (hooks):**
+- `src/hooks/useClientAboutFacts.ts` — read + upsert + delete
+- `src/hooks/useClientCallbacks.ts` — read active + acknowledge + create + archive
 
-Should the **default** view be "This Appointment" (current behavior, requires one click to see history) or "All Visits" (full ledger up-front)? I'm planning **"This Appointment" default** to respect alert-fatigue doctrine — past notes are valuable but not always relevant. Tell me if you want "All Visits" as default.
+**New (components):**
+- `src/components/dashboard/clients/ClientAboutCard.tsx` — structured slot card
+- `src/components/dashboard/clients/ClientCallbacksPanel.tsx` — active callback prompts + add form
+- `src/components/dashboard/clients/CallbackChip.tsx` — single-line chip for appointment cards
+
+**Edits:**
+- `src/components/dashboard/ClientDetailSheet.tsx` — render `<ClientAboutCard>` + `<ClientCallbacksPanel>` at top of Overview
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — render compact About block + Callbacks at top of Details tab
+- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — render `<CallbackChip>` when active callback exists
+- `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — render compact About block
+- `src/pages/dashboard/ClientDirectory.tsx` — `💬 N` indicator in list rows
+
+### Open questions (need your call)
+
+1. **Should "About" facts be visible to assistants and front desk, or stylist-only?** Going with **org-wide visible** (no privacy flag) since they're hospitality cues, not clinical data. Tell me if you want a private flag.
+2. **Should callbacks auto-create from booking-assistant intent?** E.g., booker captures "client mentioned going to Italy" → auto-suggests a callback. Defer (P3) unless you want it now.
+3. **Should we migrate existing freeform `client_notes` into typed About slots?** Defer (P3) — stylists can re-capture as they encounter clients. Auto-migration would mis-categorize.
 
 ### Deferred
 
-- **P3** Apply the same unified-history pattern to **Notes From Booking Assistant** — show all past booking-time notes inline (e.g., "Apr 17: Client wants simple cut" / "Jan 18: Wants to try bangs"). Trigger: after operators confirm the appointment-notes ledger feels right.
-- **P3** Add a search/filter input to the unified ledger (search note text, filter by author/status). Trigger: when a client accumulates 20+ notes and scanning becomes friction.
-- **P3** Surface unread-notes badge on the Notes tab in the same client-history scope (not just current appointment) — so a stylist sees "3 unread notes from past visits." Trigger: after the unread-notes feature ships and feels stable on the per-appointment scope.
+- **P2** AI-assisted callback drafting: when a stylist adds an Appointment Note containing a personal mention ("she's going to Italy in March"), suggest *"Create follow-up: Ask how Italy went"* with one-click accept. Trigger: after this layer ships and stylists actively use callbacks.
+- **P3** "Hospitality score" on client cards — % of visits with an acknowledged callback. Surfaces operators who are building real relationships vs. transactional ones. Trigger: after 90 days of callback data accumulates.
+- **P3** Birthday/anniversary auto-callbacks — "Wish Sarah happy birthday" auto-generated from `phorest_clients.birthday`. Trigger: after manual callbacks prove the workflow.
+- **P3** Cross-staff callback ownership — "Marcus captured this; he should follow up." Today any stylist on the appointment can mark heard. Trigger: if multi-stylist orgs report ownership confusion.
+- **P3** Callback templates ("Ask about [trip] · [event] · [project]") to speed capture. Trigger: after observing what stylists actually type.
 
