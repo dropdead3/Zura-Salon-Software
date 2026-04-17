@@ -67,22 +67,23 @@ export function NextVisitRecommendation({
     <div className="space-y-5">
       {/* Verbal Script Card — elevated as the centerpiece of the rebook flow */}
       <div className="space-y-1.5">
-        <div className="relative rounded-lg border border-primary/30 border-l-2 border-l-primary/50 bg-gradient-to-br from-primary/[0.06] to-primary/[0.02] p-5 shadow-sm">
-          <Quote className="absolute top-3 left-3 h-5 w-5 text-primary/40" />
-          <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider text-primary/60 font-display">
-            Suggested Script
+        <div className="relative rounded-lg border border-amber-500/40 border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-500/[0.10] to-amber-500/[0.04] p-5 shadow-[0_0_0_1px_rgba(245,158,11,0.15),0_4px_12px_-2px_rgba(245,158,11,0.15)]">
+          <Quote className="absolute top-3 left-3 h-5 w-5 text-amber-500/60" />
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-amber-500 font-display">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+            Say This
           </span>
           <p className="font-sans text-base text-foreground leading-relaxed pl-7 pr-2 pt-4 italic">
             "I'd like to see you back in{' '}
-            <span className="not-italic text-primary font-medium">
+            <span className="not-italic text-amber-500 font-medium">
               {selectedWeeks} {weekLabel}
             </span>
             . How does{' '}
-            <span className="not-italic text-primary font-medium">{dayLabel}</span>
+            <span className="not-italic text-amber-500 font-medium">{dayLabel}</span>
             {timeLabel && (
               <>
                 {' '}at{' '}
-                <span className="not-italic text-primary font-medium">{timeLabel}</span>
+                <span className="not-italic text-amber-500 font-medium">{timeLabel}</span>
               </>
             )}
             {' '}work?"
