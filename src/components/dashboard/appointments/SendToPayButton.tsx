@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Send, Loader2, Smartphone, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { SplitPaymentDialog } from './SplitPaymentDialog';
@@ -37,6 +38,7 @@ export function SendToPayButton({
   const [isSending, setIsSending] = useState(false);
   const [showSplitDialog, setShowSplitDialog] = useState(false);
 
+  const hasContact = !!(clientEmail?.trim() || clientPhone?.trim());
   const needsSplit = afterpayEnabled && totalAmountCents > AFTERPAY_MAX_CENTS;
 
   const handleSendToPayDirect = async (amountCents?: number) => {
@@ -119,25 +121,45 @@ export function SendToPayButton({
     }
   };
 
+  const isDisabled = disabled || isSending || !hasContact;
+
+  const button = (
+    <Button
+      variant="outline"
+      onClick={handleClick}
+      disabled={isDisabled}
+      className="gap-2"
+    >
+      {isSending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Send className="h-4 w-4" />
+      )}
+      {afterpayEnabled
+        ? afterpaySurchargeEnabled
+          ? `Send to Pay (Afterpay + ${parseFloat(((afterpaySurchargeRate ?? 0.06) * 100).toFixed(2))}% fee)`
+          : 'Send to Pay / Afterpay'
+        : 'Send Payment Link'}
+    </Button>
+  );
+
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={handleClick}
-        disabled={disabled || isSending}
-        className="gap-2"
-      >
-        {isSending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Send className="h-4 w-4" />
-        )}
-        {afterpayEnabled
-          ? afterpaySurchargeEnabled
-            ? `Send to Pay (Afterpay + ${parseFloat(((afterpaySurchargeRate ?? 0.06) * 100).toFixed(2))}% fee)`
-            : 'Send to Pay / Afterpay'
-          : 'Send Payment Link'}
-      </Button>
+      {!hasContact ? (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {/* span wrapper required so tooltip captures hover on disabled button */}
+              <span tabIndex={0}>{button}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Add a phone number or email to the client profile to send a payment link.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        button
+      )}
 
       {needsSplit && (
         <SplitPaymentDialog
