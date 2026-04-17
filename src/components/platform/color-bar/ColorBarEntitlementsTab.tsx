@@ -45,8 +45,11 @@ import { useUpdateOrgFeatureFlag, useDeleteOrgFeatureFlag } from '@/hooks/useOrg
 import {
   useUpsertLocationEntitlement,
   useDeleteLocationEntitlement,
+  useBulkSuspendLocationEntitlements,
+  useBulkReactivateLocationEntitlements,
   type ColorBarLocationEntitlement,
 } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
 
