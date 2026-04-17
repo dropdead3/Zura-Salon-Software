@@ -2349,8 +2349,8 @@ export function QuickBookingPopover({
               <div className="bg-card border border-border rounded-lg p-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <RotateCcw className="h-3.5 w-3.5 text-muted-foreground" />
-                    <Label className="text-xs font-medium cursor-pointer" htmlFor="redo-toggle">
+                    <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium cursor-pointer" htmlFor="redo-toggle">
                       Redo / Adjustment
                     </Label>
                   </div>
@@ -2365,7 +2365,6 @@ export function QuickBookingPopover({
                         setRedoPriceOverride(null);
                       }
                     }}
-                    className="scale-90"
                   />
                 </div>
                 {isRedo && (
