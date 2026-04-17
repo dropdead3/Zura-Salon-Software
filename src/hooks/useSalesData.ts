@@ -421,6 +421,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
 export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
     queryKey: ['sales-by-stylist-from-transactions', dateFrom, dateTo, locationId],
+    staleTime: 60_000, // Wave 14: 1m cache
     queryFn: async () => {
       // Get staff mappings with photos
       const { data: mappings } = await supabase
