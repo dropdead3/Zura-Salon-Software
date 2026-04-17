@@ -82,7 +82,7 @@ export function RebookDeclineReasonDialog({
 
         <div className="space-y-4">
           <RadioGroup
-            value={reasonCode}
+            value={reasonCode ?? ''}
             onValueChange={(v) => setReasonCode(v as RebookDeclineReasonCode)}
             className="space-y-2"
           >
