@@ -1,6 +1,20 @@
 # Debug Log
 
-Last updated: 2026-02-12 (Wave 1 in progress)
+Last updated: 2026-04-17 (Wave 16.1 hotfix)
+
+## Wave 16.1 — Appointments hub `_source` regression hotfix (P0)
+
+**Doctrine anchor:** `phorest-decoupling-and-zura-native-operations`
+**Leverage marker:** Appointments tab rendered "No appointments found" because the narrowed SELECT in `useAppointmentsHub.ts` referenced `_source` (column does not exist on `v_all_appointments`) plus three other columns absent from the view (`client_id`, `client_email`, `created_by`). PostgREST returned 400 → empty result set → empty table.
+
+**Fix:**
+- `src/hooks/useAppointmentsHub.ts`:
+  - Renamed `_source` → `source` in `APPT_COLUMNS`
+  - Removed `client_id`, `client_email`, `created_by` from SELECT (not present on view; only on underlying `appointments` table). Enrichment tolerates undefined.
+  - Updated three downstream `a._source === 'phorest' | 'local'` references to `a.source`
+
+**Follow-up trigger:** Before any future SELECT-narrowing pass on union views, verify columns against `information_schema.columns` for the live view.
+
 
 ## Baseline
 
