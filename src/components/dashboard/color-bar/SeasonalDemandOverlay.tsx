@@ -13,6 +13,7 @@ import { Calendar } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 interface SeasonalDataPoint {
   productName: string;
@@ -74,7 +75,15 @@ export function SeasonalDemandOverlay({ locationId }: { locationId?: string }) {
     staleTime: 10 * 60_000,
   });
 
-  if (isLoading || !data?.length) return null;
+  // Visibility Contract: needs prior-year data to make a YoY comparison meaningful.
+  if (isLoading || !data?.length) {
+    const reason = isLoading ? 'loading' : !data ? 'no-prior-year-data' : 'no-overlap';
+    reportVisibilitySuppression('seasonal-demand-overlay', reason, {
+      pointCount: data?.length ?? 0,
+      requiresPriorYearData: true,
+    });
+    return null;
+  }
 
   return (
     <Card className={cn(tokens.card.wrapper)}>
