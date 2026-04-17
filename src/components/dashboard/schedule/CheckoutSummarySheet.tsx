@@ -423,7 +423,7 @@ export function CheckoutSummarySheet({
       });
     }
 
-    // Reset state for next use
+  // Reset state for next use
     setTipAmount(0);
     setCustomTip('');
     setRebooked(false);
@@ -431,12 +431,37 @@ export function CheckoutSummarySheet({
     setGatePhase('gate');
     setDeclineReason('');
     setDeclineOtherText('');
+    setDeclineDialogOpen(false);
     setPaymentMethod('cash');
     terminalFlow.reset();
   };
 
-  const handleDeclineConfirm = () => {
+  const handleDeclineDialogConfirm = async (
+    code: RebookDeclineReasonCode,
+    notes: string | null,
+  ) => {
+    if (!appointment || !organizationId) return;
+    try {
+      await logDeclineReason.mutateAsync({
+        organizationId,
+        appointmentId: appointment.id,
+        reasonCode: code,
+        reasonNotes: notes,
+        locationId: locationId ?? null,
+        clientId: appointment.client_id ?? null,
+        staffId: appointment.staff_user_id ?? null,
+      });
+    } catch (e) {
+      console.error('Failed to log decline reason', e);
+      toast.error('Could not save reason — please try again');
+      return;
+    }
+    // Persist label for the legacy onConfirm path (writes to phorest appointment)
+    const label = notes ? `${getReasonLabel(code)}: ${notes}` : getReasonLabel(code);
+    setDeclineReason(label);
+    setDeclineOtherText('');
     setRebooked(false);
+    setDeclineDialogOpen(false);
     setGatePhase('checkout');
   };
 
@@ -445,8 +470,6 @@ export function CheckoutSummarySheet({
       onScheduleNext(appointment);
     }
   };
-
-  const isDeclineValid = declineReason !== '' && (declineReason !== 'Other' || declineOtherText.trim().length >= 3);
 
   return (
     <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="560px">
