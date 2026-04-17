@@ -609,6 +609,7 @@ export interface ServiceMixItem {
 export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
     queryKey: ['service-mix', dateFrom, dateTo, locationId],
+    staleTime: 5 * 60_000, // Wave 14: 5m cache
     queryFn: async (): Promise<ServiceMixItem[]> => {
       const data = await fetchAllBatched<{
         service_category: string | null;
