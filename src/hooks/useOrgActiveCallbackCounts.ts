@@ -16,13 +16,24 @@ export function useOrgActiveCallbacks(orgId: string | null | undefined) {
     enabled: !!orgId,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<string, ClientCallback[]>> => {
+      // Scale guard: cap payload at 2k rows. An org with thousands of
+      // unacknowledged callbacks would payload-bomb every schedule mount —
+      // see `high-concurrency-scalability` doctrine.
+      const CAP = 2000;
       const { data, error } = await supabase
         .from('client_callbacks')
         .select('*')
         .eq('organization_id', orgId!)
-        .is('acknowledged_at', null);
+        .is('acknowledged_at', null)
+        .limit(CAP);
 
       if (error) throw error;
+
+      if (data?.length === CAP) {
+        console.warn(
+          `[CallbackLookup] hit ${CAP}-row cap for org ${orgId}. Some active callbacks may be missing — consider archiving stale follow-ups.`,
+        );
+      }
 
       const map = new Map<string, ClientCallback[]>();
       for (const row of (data ?? []) as ClientCallback[]) {

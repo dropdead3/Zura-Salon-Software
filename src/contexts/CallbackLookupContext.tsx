@@ -3,8 +3,14 @@ import { useOrgActiveCallbacks } from '@/hooks/useOrgActiveCallbackCounts';
 import type { ClientCallback } from '@/hooks/useClientCallbacks';
 
 interface CallbackLookupValue {
-  getCallbacks: (clientId: string | null | undefined) => ClientCallback[];
-  getCount: (clientId: string | null | undefined) => number;
+  /**
+   * Returns ACTIVE (unacknowledged, non-stale) callbacks for a client key.
+   * Empty array if none. Honors the `getHospitalityClientKey` resolver —
+   * pass either a Phorest ID or a Zura UUID.
+   */
+  getActiveCallbacks: (clientKey: string | null | undefined) => ClientCallback[];
+  /** Convenience: count of active callbacks (alias for getActiveCallbacks().length). */
+  getCount: (clientKey: string | null | undefined) => number;
   isLoaded: boolean;
 }
 
@@ -16,18 +22,23 @@ interface CallbackLookupProviderProps {
 }
 
 /**
- * Single org-wide callback fetch — feeds CallbackChip across the schedule grid
- * to avoid N+1 (per-card) queries. Falls back gracefully: components that read
- * via useCallbackLookup() outside a provider will get null and can fall back
- * to per-client hooks.
+ * Single org-wide ACTIVE callback fetch — feeds CallbackChip and
+ * ClientCallbacksPanel across the schedule grid to avoid N+1 (per-card)
+ * queries. Falls back gracefully: components that read via useCallbackLookup()
+ * outside a provider will get null and can fall back to per-client hooks.
+ *
+ * Active = unacknowledged AND not stale (90d). Archived/past callbacks remain
+ * a per-client cold-path query (see ClientCallbacksPanel `archived` set).
  */
 export function CallbackLookupProvider({ orgId, children }: CallbackLookupProviderProps) {
   const { data: lookup } = useOrgActiveCallbacks(orgId);
 
   const value = useMemo<CallbackLookupValue>(
     () => ({
-      getCallbacks: (clientId) => (clientId ? lookup?.get(clientId) ?? [] : []),
-      getCount: (clientId) => (clientId ? lookup?.get(clientId)?.length ?? 0 : 0),
+      getActiveCallbacks: (clientKey) =>
+        clientKey ? lookup?.get(clientKey) ?? [] : [],
+      getCount: (clientKey) =>
+        clientKey ? lookup?.get(clientKey)?.length ?? 0 : 0,
       isLoaded: !!lookup,
     }),
     [lookup],

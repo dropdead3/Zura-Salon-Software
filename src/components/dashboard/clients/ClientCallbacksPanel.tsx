@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { MessageCircle, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import {
@@ -7,6 +7,8 @@ import {
   useAcknowledgeCallback,
   useDeleteCallback,
 } from '@/hooks/useClientCallbacks';
+import { useCallbackLookup } from '@/contexts/CallbackLookupContext';
+import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -23,6 +25,21 @@ interface ClientCallbacksPanelProps {
   hidePast?: boolean;
 }
 
+/**
+ * Render an author name as "First L." (first name + last initial) so multiple
+ * "Jenna"s on a team are disambiguated. Falls back to first name only if no
+ * last name available.
+ */
+function formatAuthor(fullName: string | null | undefined): string | null {
+  if (!fullName) return null;
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) return null;
+  const first = parts[0];
+  const last = parts[1];
+  if (!last) return first;
+  return `${first} ${last[0].toUpperCase()}.`;
+}
+
 export function ClientCallbacksPanel({
   organizationId,
   clientId,
@@ -30,8 +47,35 @@ export function ClientCallbacksPanel({
   compact = false,
   hidePast = false,
 }: ClientCallbacksPanelProps) {
-  const { data: active = [], isLoading } = useClientCallbacks(clientId);
+  // Context-driven active set: when mounted under CallbackLookupProvider
+  // (schedule grid), reuse the org-wide query instead of firing per-client.
+  const lookup = useCallbackLookup();
+  const { data: hookActive = [], isLoading: hookLoading } = useClientCallbacks(
+    lookup ? null : clientId,
+  );
+  const active = lookup ? lookup.getActiveCallbacks(clientId) : hookActive;
+  const isLoading = lookup ? !lookup.isLoaded : hookLoading;
+
+  // Archived list stays per-client (cold path — only fetched when user expands).
   const { data: archived = [] } = useClientCallbacks(clientId, { includeArchived: true });
+
+  // Team directory powers "added by / heard by" attribution. Cached 5m so
+  // this is effectively free across the dashboard session.
+  const { data: team = [] } = useTeamDirectory(undefined, {
+    organizationId: organizationId || undefined,
+  });
+  const authorById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const member of team) {
+      if (member.user_id && member.full_name) {
+        map.set(member.user_id, member.full_name);
+      }
+    }
+    return map;
+  }, [team]);
+  const authorLabel = (userId: string | null | undefined) =>
+    userId ? formatAuthor(authorById.get(userId)) : null;
+
   const create = useCreateCallback();
   const ack = useAcknowledgeCallback();
   const remove = useDeleteCallback();
@@ -110,107 +154,111 @@ export function ClientCallbacksPanel({
         </p>
       ) : (
         <ul className="space-y-2">
-          {active.map((cb) => (
-            <li
-              key={cb.id}
-              className={cn(
-                'flex items-start gap-2 p-2 rounded-lg border',
-                'bg-amber-50/40 border-amber-200/60 dark:bg-amber-950/20 dark:border-amber-900/40',
-              )}
-            >
-              <MessageCircle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground">{cb.prompt}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {cb.trigger_date
-                    ? `Trigger ${format(parseISO(cb.trigger_date), 'MMM d, yyyy')}`
-                    : 'Next visit'}
-                </p>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <Popover
-                  open={hearingId === cb.id}
-                  onOpenChange={(open) => {
-                    if (open) {
-                      setHearingId(cb.id);
-                      setOutcomeNote('');
-                    } else {
-                      setHearingId(null);
-                      setOutcomeNote('');
-                    }
-                  }}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      title="Mark heard"
-                    >
-                      <Check className="w-3 h-3 mr-1" />
-                      Heard
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="top"
-                    align="end"
-                    className="w-72 p-3 space-y-2"
+          {active.map((cb) => {
+            const by = authorLabel(cb.created_by);
+            return (
+              <li
+                key={cb.id}
+                className={cn(
+                  'flex items-start gap-2 p-2 rounded-lg border cursor-default',
+                  'bg-amber-50/40 border-amber-200/60 dark:bg-amber-950/20 dark:border-amber-900/40',
+                )}
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground">{cb.prompt}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {cb.trigger_date
+                      ? `Trigger ${format(parseISO(cb.trigger_date), 'MMM d, yyyy')}`
+                      : 'Next visit'}
+                    {by && <span className="opacity-70"> · by {by}</span>}
+                  </p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Popover
+                    open={hearingId === cb.id}
+                    onOpenChange={(open) => {
+                      if (open) {
+                        setHearingId(cb.id);
+                        setOutcomeNote('');
+                      } else {
+                        setHearingId(null);
+                        setOutcomeNote('');
+                      }
+                    }}
                   >
-                    <div className="space-y-1">
-                      <p className="text-xs font-display tracking-wide uppercase text-muted-foreground">
-                        How did it go?
-                      </p>
-                      <p className="text-[11px] text-muted-foreground italic">
-                        Optional — capture the moment so it shows up later.
-                      </p>
-                    </div>
-                    <Input
-                      value={outcomeNote}
-                      onChange={(e) => setOutcomeNote(e.target.value)}
-                      placeholder="e.g. Loved Italy — going back next year"
-                      className="h-8 text-xs"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleHeard(cb.id);
-                        if (e.key === 'Escape') {
-                          setHearingId(null);
-                          setOutcomeNote('');
-                        }
-                      }}
-                    />
-                    <div className="flex justify-end gap-2 pt-1">
+                    <PopoverTrigger asChild>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          setHearingId(null);
-                          setOutcomeNote('');
+                        className="h-7 text-xs"
+                        title="Mark heard"
+                      >
+                        <Check className="w-3 h-3 mr-1" />
+                        Heard
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="top"
+                      align="end"
+                      className="w-72 p-3 space-y-2"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-xs font-display tracking-wide uppercase text-muted-foreground">
+                          How did it go?
+                        </p>
+                        <p className="text-[11px] text-muted-foreground italic">
+                          Optional — capture the moment so it shows up later.
+                        </p>
+                      </div>
+                      <Input
+                        value={outcomeNote}
+                        onChange={(e) => setOutcomeNote(e.target.value)}
+                        placeholder="e.g. Loved Italy — going back next year"
+                        className="h-8 text-xs"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleHeard(cb.id);
+                          if (e.key === 'Escape') {
+                            setHearingId(null);
+                            setOutcomeNote('');
+                          }
                         }}
-                        className="h-7 text-xs"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleHeard(cb.id)}
-                        disabled={ack.isPending}
-                        className="h-7 text-xs"
-                      >
-                        Mark heard
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <button
-                  onClick={() => remove.mutate({ id: cb.id, client_id: clientId })}
-                  className="text-xs text-muted-foreground hover:text-foreground px-1"
-                  title="Delete"
-                >
-                  ×
-                </button>
-              </div>
-            </li>
-          ))}
+                      />
+                      <div className="flex justify-end gap-2 pt-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setHearingId(null);
+                            setOutcomeNote('');
+                          }}
+                          className="h-7 text-xs"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleHeard(cb.id)}
+                          disabled={ack.isPending}
+                          className="h-7 text-xs"
+                        >
+                          Mark heard
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <button
+                    onClick={() => remove.mutate({ id: cb.id, client_id: clientId })}
+                    className="text-xs text-muted-foreground hover:text-foreground px-1"
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -291,25 +339,29 @@ export function ClientCallbacksPanel({
           </button>
           {showPast && (
             <ul className="mt-2 space-y-1.5">
-              {past.map((cb) => (
-                <li
-                  key={cb.id}
-                  className="text-xs text-muted-foreground flex items-start gap-2"
-                >
-                  <Check className="w-3 h-3 mt-0.5 shrink-0 text-emerald-600" />
-                  <div>
-                    <span className="line-through opacity-70">{cb.prompt}</span>
-                    {cb.acknowledged_at && (
-                      <span className="ml-2 opacity-60">
-                        {format(parseISO(cb.acknowledged_at), 'MMM d, yyyy')}
-                      </span>
-                    )}
-                    {cb.outcome_note && (
-                      <p className="mt-0.5 not-italic opacity-80">{cb.outcome_note}</p>
-                    )}
-                  </div>
-                </li>
-              ))}
+              {past.map((cb) => {
+                const heardBy = authorLabel(cb.acknowledged_by);
+                return (
+                  <li
+                    key={cb.id}
+                    className="text-xs text-muted-foreground flex items-start gap-2"
+                  >
+                    <Check className="w-3 h-3 mt-0.5 shrink-0 text-emerald-600" />
+                    <div>
+                      <span className="line-through opacity-70">{cb.prompt}</span>
+                      {cb.acknowledged_at && (
+                        <span className="ml-2 opacity-60">
+                          {format(parseISO(cb.acknowledged_at), 'MMM d, yyyy')}
+                        </span>
+                      )}
+                      {heardBy && <span className="ml-2 opacity-60">· heard by {heardBy}</span>}
+                      {cb.outcome_note && (
+                        <p className="mt-0.5 not-italic opacity-80">{cb.outcome_note}</p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

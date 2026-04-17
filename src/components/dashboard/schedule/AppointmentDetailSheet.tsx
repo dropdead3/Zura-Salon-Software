@@ -40,6 +40,7 @@ import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFo
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
+import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
@@ -1601,7 +1602,7 @@ export function AppointmentDetailSheet({
                     {/* Hospitality Memory Layer — collapses to single CTA when empty (alert-fatigue safe) */}
                     <HospitalityBlock
                       organizationId={effectiveOrganization?.id}
-                      phorestClientId={appointment.phorest_client_id}
+                      clientKey={getHospitalityClientKey(appointment)}
                       firstName={appointment.client_name?.split(' ')[0]}
                     />
 

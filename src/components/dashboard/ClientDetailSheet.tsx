@@ -58,6 +58,7 @@ import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferred
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { ClientNotesSection } from './ClientNotesSection';
 import { HospitalityBlock } from './clients/HospitalityBlock';
+import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { TransformationTimeline } from './clients/TransformationTimeline';
 import { BannedClientAlert } from './clients/BannedClientAlert';
@@ -1322,7 +1323,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           {/* Hospitality Memory Layer — About + active follow-ups */}
           <HospitalityBlock
             organizationId={selectedOrganization?.id}
-            phorestClientId={client.phorest_client_id}
+            clientKey={getHospitalityClientKey(client)}
             firstName={client.first_name || client.name?.split(' ')[0]}
           />
 
