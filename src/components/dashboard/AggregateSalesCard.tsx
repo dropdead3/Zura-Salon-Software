@@ -268,14 +268,16 @@ export function AggregateSalesCard({
     }
   })();
 
-  const { data: metrics, isLoading: metricsLoading } = useSalesMetrics(dateFilters);
+  const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({ ...dateFilters, locationId: filterContext?.locationId });
   // Wave 14: Skip location aggregation query when a single location is selected (table is hidden)
   const isAllLocationsSelected = !filterContext?.locationId || filterContext.locationId === 'all';
   const { data: locationData, isLoading: locationLoading } = useSalesByLocation(dateFilters.dateFrom, dateFilters.dateTo, { enabled: isAllLocationsSelected });
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFilters.dateFrom, dateFilters.dateTo, filterContext?.locationId);
-  const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFilters.dateFrom, dateFilters.dateTo);
-  const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo);
-  const { data: tomorrowData } = useTomorrowRevenue(filterContext?.locationId);
+  const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFilters.dateFrom, dateFilters.dateTo, filterContext?.locationId);
+  const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo, filterContext?.locationId);
+  // Wave 15: Tomorrow card only shown in closed/no-data states; gate fetch to today range
+  const isTodayRange = dateRange === 'today';
+  const { data: tomorrowData } = useTomorrowRevenue(filterContext?.locationId, isTodayRange);
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
   const rangeIncludesToday = dateFilters.dateTo === format(new Date(), 'yyyy-MM-dd');
@@ -285,24 +287,28 @@ export function AggregateSalesCard({
     dateTo: dateFilters.dateTo,
     locationId: filterContext?.locationId,
   });
-  // Retail breakdown — Products / Merch / Extensions
+  // Retail breakdown — Products / Merch / Extensions (Wave 15: defer until expanded)
   const { data: retailBreakdown } = useRetailBreakdown(
     dateFilters.dateFrom,
     dateFilters.dateTo,
-    true,
+    retailExpanded,
     filterContext?.locationId
   );
-  // Service category breakdown (deduped by react-query)
+  // Service category breakdown — Wave 15: only fetch when service breakdown is expanded
   const { data: serviceCategoryData } = useRevenueByCategoryDrilldown({
     dateFrom: dateFilters.dateFrom,
     dateTo: dateFilters.dateTo,
     locationId: filterContext?.locationId,
+    enabled: servicesExpanded,
   });
 
+  // Wave 15: Defer tips drilldown until the Tips card is expanded.
+  // The collapsed-state "Average Tip Rate" stat will show once the user opens it.
   const { byTotalTips: tipsByTotal } = useTipsDrilldown({
     dateFrom: dateFilters.dateFrom,
     dateTo: dateFilters.dateTo,
     locationId: filterContext?.locationId,
+    enabled: tipsCardExpanded,
   });
   const tipAttachRate = useMemo(() => {
     if (!tipsByTotal?.length) return null;
@@ -582,7 +588,8 @@ export function AggregateSalesCard({
   };
 
   // Live session awareness — prevents "all complete" while stylists are still in service
-  const liveSession = useLiveSessionSnapshot(filterContext?.locationId);
+  // Wave 15: only fetch when viewing today (only consumer is allAppointmentsComplete)
+  const liveSession = useLiveSessionSnapshot(filterContext?.locationId, isToday);
 
   // Determine if all revenue is finalized (operating hours passed OR last appointment ended)
   const allAppointmentsComplete = useMemo(() => {

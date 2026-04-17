@@ -17,9 +17,10 @@ function getPeriodStart(period: GoalPeriod): Date {
   }
 }
 
-export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string) {
+export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['goal-period-revenue', period, locationId],
+    enabled,
     queryFn: async () => {
       const dateFrom = format(getPeriodStart(period), 'yyyy-MM-dd');
       const dateTo = format(new Date(), 'yyyy-MM-dd');

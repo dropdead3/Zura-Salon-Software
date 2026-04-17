@@ -280,7 +280,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments' as any)
-          .select('id, total_price, tip_amount, service_name, staff_user_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
+          .select('id, total_price, tip_amount, service_name, stylist_user_id, phorest_staff_id, phorest_client_id, location_id, appointment_date, start_time, end_time')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
@@ -782,7 +782,7 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments' as any)
-          .select('staff_user_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
+          .select('phorest_staff_id, stylist_user_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
           .not('phorest_staff_id', 'is', null)
           .not('total_price', 'is', null)
           .range(from, to);

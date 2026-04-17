@@ -59,18 +59,20 @@ interface UseTipsDrilldownParams {
   dateTo: string;
   locationId?: string;
   minAppointments?: number;
+  enabled?: boolean;
 }
 
-export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments = 10 }: UseTipsDrilldownParams): TipsDrilldownData {
+export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments = 10, enabled = true }: UseTipsDrilldownParams): TipsDrilldownData {
 
   // Fetch appointments with tips data
   const { data: appointments, isLoading: aptsLoading, error: aptsError } = useQuery({
     queryKey: ['tips-drilldown-appointments', dateFrom, dateTo, locationId],
+    enabled: !!dateFrom && !!dateTo,
     queryFn: async () => {
       return fetchAllBatched<any>((from, to) => {
         let q = supabase
           .from('v_all_appointments' as any)
-          .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, staff_user_id, start_time')
+          .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id, start_time')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
