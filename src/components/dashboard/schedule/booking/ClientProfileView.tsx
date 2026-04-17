@@ -24,6 +24,7 @@ import { ClientNotesSection } from '@/components/dashboard/ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { ClientAffinityBadges } from '@/components/dashboard/clients/ClientAffinityBadges';
 import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
+import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface ExtendedPhorestClient {

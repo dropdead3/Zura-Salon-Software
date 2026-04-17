@@ -40,6 +40,7 @@ import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFo
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
+import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
