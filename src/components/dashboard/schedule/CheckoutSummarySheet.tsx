@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare } from 'lucide-react';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -39,6 +39,13 @@ import { useBusinessName } from '@/hooks/useBusinessSettings';
 import { printReceiptFromData, buildReceiptHtml } from '@/components/dashboard/transactions/ReceiptPrintView';
 import type { ReceiptBusinessInfo } from '@/components/dashboard/transactions/ReceiptPrintView';
 import { checkoutToReceiptData } from '@/components/dashboard/transactions/receiptData';
+import { useCheckoutCart, computeLineNet, computeLineDiscountAmount } from '@/hooks/useCheckoutCart';
+import { CheckoutLineItems } from '@/components/dashboard/schedule/checkout/CheckoutLineItems';
+import { AddServiceDialog } from '@/components/dashboard/schedule/checkout/AddServiceDialog';
+import { CartDiscountSection, type ManagerOrderDiscount } from '@/components/dashboard/schedule/checkout/CartDiscountSection';
+import { usePermission } from '@/hooks/usePermission';
+import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
+import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
