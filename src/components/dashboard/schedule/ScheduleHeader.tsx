@@ -575,7 +575,12 @@ export function ScheduleHeader({
                           className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
                         >
                           <Checkbox
-                            checked={selectedStaffIds.includes(s.user_id)}
+                            checked={
+                              selectedStaffIds.includes(s.user_id) ||
+                              (view === 'week' &&
+                                selectedStaffIds.length === 0 &&
+                                weekViewStylistId === s.user_id)
+                            }
                             className="pointer-events-none"
                           />
                           <span className="flex-1 text-left truncate">
