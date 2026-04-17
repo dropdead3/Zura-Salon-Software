@@ -29,9 +29,7 @@ import {
   Sparkles,
   ClipboardCheck,
   Clock,
-  StretchHorizontal,
 } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import {
