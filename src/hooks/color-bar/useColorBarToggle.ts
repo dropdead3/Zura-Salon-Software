@@ -248,6 +248,15 @@ export function useColorBarToggle() {
         const reactivated = await bulkReactivate.mutateAsync({
           organization_id: args.organizationId,
         });
+        await logSuspensionEvent({
+          organization_id: args.organizationId,
+          event_type: 'reactivated',
+          affected_location_count: reactivated.length,
+        });
+        // Cached reactivation status is now stale — invalidate
+        queryClient.invalidateQueries({
+          queryKey: ['color-bar-reactivation-status', args.organizationId],
+        });
         advisory.dismiss();
         toast.success(
           `Color Bar reactivated for ${args.organizationName} — ${reactivated.length} location${
