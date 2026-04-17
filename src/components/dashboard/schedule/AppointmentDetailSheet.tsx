@@ -1419,13 +1419,13 @@ export function AppointmentDetailSheet({
 
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-                <div className="mx-6 overflow-x-auto scrollbar-none">
-                  <TabsList className="mb-0 shrink-0 w-max">
-                    <TabsTrigger value="details" className="font-sans">Details</TabsTrigger>
-                    <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
-                    <TabsTrigger value="photos" className="font-sans">Photos</TabsTrigger>
-                    <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
-                    <TabsTrigger value="color-bar" className="font-sans gap-1.5">
+                <div className="mx-6">
+                  <TabsList className="mb-0 shrink-0 w-full grid grid-cols-5 gap-1">
+                    <TabsTrigger value="details" className="font-sans w-full">Details</TabsTrigger>
+                    <TabsTrigger value="history" className="font-sans w-full">History</TabsTrigger>
+                    <TabsTrigger value="photos" className="font-sans w-full">Photos</TabsTrigger>
+                    <TabsTrigger value="notes" className="font-sans w-full">Notes</TabsTrigger>
+                    <TabsTrigger value="color-bar" className="font-sans gap-1.5 w-full">
                       <Beaker className="w-3.5 h-3.5" />
                       Color Bar
                     </TabsTrigger>
