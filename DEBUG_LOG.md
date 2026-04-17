@@ -162,3 +162,44 @@ Two compounding factors caused the 1100 → 4322 error spike:
 4. Legacy items (Waves 2-5): silent data fallbacks, loading/error UI, route lazy loading, permission guard regression gates — re-prioritize explicitly.
 5. Remaining 204 lint errors: trigger explicit zero-errors doctrine decision.
 6. **Wave 15:** scheduled multi-axis audit pass.
+
+---
+
+## Wave 14 — Sales Overview Performance (P0)
+
+**Doctrine anchor:** `high-concurrency-scalability` + `analytics-intelligence-and-data-integrity-standards`
+
+### Findings (ranked)
+
+| # | Finding | Priority | Status |
+|---|---|---|---|
+| 1 | `useSalesMetrics` + `useSalesComparison` duplicate scans of `v_all_transaction_items` | P0 | Mitigated via staleTime |
+| 2 | No `staleTime` on 4 main Sales Overview hooks → refetch on every remount | P0 | **Fixed** |
+| 3 | `useSalesByStylist` 3-query waterfall (mappings → names → photos) | P1 | Deferred → Wave 15 |
+| 4 | `useSalesComparison` paginates two full periods sequentially | P1 | Deferred → Wave 15 |
+| 5 | `useSalesByLocation` duplicates `v_all_appointments` scan from `useSalesMetrics` | P2 | Deferred (3rd-instance trigger) |
+
+### Fix applied
+
+- `useSalesMetrics`: `staleTime: 60_000` (1m)
+- `useSalesByStylist`: `staleTime: 60_000` (1m)
+- `useSalesByLocation`: `staleTime: 60_000` + `enabled` flag (skips entirely on single-location dashboards)
+- `useSalesTrend`: `staleTime: 5 * 60_000` (5m)
+- `useSalesComparison`: `staleTime: 5 * 60_000` (5m)
+- `useServiceMix`: `staleTime: 5 * 60_000` (5m)
+- `AggregateSalesCard`: passes `enabled: isAllLocationsSelected` to `useSalesByLocation`
+
+### Leverage marker
+
+Cuts perceived load on dashboard remount, tab switch, and date-range toggles within stale window to ~0ms. On single-location dashboards, eliminates one full `v_all_appointments` paginated scan entirely.
+
+### Deferred register
+
+- P1 #3 — `useSalesByStylist` waterfall → trigger: Wave 15 OR if leaderboard remains slowest segment
+- P1 #4 — `useSalesComparison` sequential pagination → trigger: Wave 15
+- P2 #5 — Dedup `useSalesByLocation` against `useSalesMetrics` → trigger: 3rd duplicate scan identified
+- P1 — Tooltip ref warning in `SupplyLibraryTab.tsx:94` → trigger: next color-bar work
+- ESLint taxonomy rule → trigger: 3rd domain adopts the bus
+- `VisibilityContractAuditPanel` UI → trigger: ≥1 non-color-bar adopter
+- CI audit-comment grep → trigger: 3rd undocumented audit query
+- Multi-axis audit pass → trigger: Wave 15
