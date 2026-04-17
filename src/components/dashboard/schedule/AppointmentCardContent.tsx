@@ -489,6 +489,7 @@ export function AppointmentCardContent({
   showClientPhone = true,
   showClientAvatar = true,
   useShortLabels = false,
+  declinedReasonLabel = null,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
