@@ -1,70 +1,72 @@
+<final-text>## Prompt review
 
+Good prompt: you named the exact card and the exact symptom. That makes this much easier to audit than “dashboard is slow.”
 
-## Prompt review
+Better next time: include:
+- which range (`today`, `7d`, `30d`, `ytd`)
+- whether it’s slow on first load, repeat load, or filter switch
+- rough delay (“~3s before numbers appear”)
 
-Sharp, focused prompt — you named the exact card and the exact problem. Better than "schedule loads slowly." One enhancement: include **what date range you're on when it's slow**. The `today` view fans out fewer queries than `30d`/`ytd`. Knowing the range lets me tell you whether to fix the slowest range first (high leverage) or the most-used range (high frequency).
+That gives a leverage marker, not just a symptom.
 
-For next time: "Sales Overview is slow on `today` view, ~3s before numbers appear" gives a leverage marker.
+## Plan — Wave 15: Sales Overview Cold-Load Performance (P0)
 
-## Wave 14: Sales Overview Performance — P0 Fix
-
-**Doctrine anchor:** `high-concurrency-scalability` + `analytics-intelligence-and-data-integrity-standards`
+Wave 14 improved warm-cache reloads. What’s still slow is the first cold load.
 
 ### What I found
 
-The `AggregateSalesCard` fans out **~12 parallel hooks** on mount. Bottlenecks:
-
 | # | Finding | Priority |
 |---|---|---|
-| 1 | `useSalesMetrics` and `useSalesComparison` **each** paginate the full `v_all_transaction_items` table for the date range — duplicated scans of the same data | **P0** |
-| 2 | `useSalesMetrics`, `useSalesByStylist`, `useSalesByLocation`, `useSalesTrend` have **no `staleTime`** → every remount/navigation refetches everything | **P0** |
-| 3 | `useSalesByStylist` does **3 sequential queries** (staff mappings → resolveStaffNames → photos) before the main scan — serial waterfall | **P1** |
-| 4 | `useSalesComparison` paginates **two full periods** sequentially via `Promise.all` but each is a paginated loop — doubles the slowest query | **P1** |
-| 5 | `useSalesByLocation` scans `v_all_appointments` separately even though `useSalesMetrics` already pulls the same rows | **P2** (dedup opportunity) |
+| 1 | Some Sales Overview hooks are still hitting `v_all_appointments.staff_user_id`, which does not exist. Network logs show repeated 400s/retries. | P0 |
+| 2 | The card still mounts several heavyweight queries before the user needs them: tips drilldown data, service category breakdown, goal-period revenue, and some today-only helpers. | P0 |
+| 3 | `AggregateSalesCard` is not passing `locationId` into `useSalesMetrics`, `useSalesTrend`, or `useSalesComparison`, so single-location dashboards still scan org-wide data. | P0 |
+| 4 | Cold load still fans out multiple separate scans of `v_all_transaction_items`; caching only helps after the first visit. | P1 |
 
-### Recommended fix (P0 only — Wave 14)
+### Implementation plan
 
-**Fix #1 — Add `staleTime` to all 4 main Sales Overview queries:**
-- `useSalesMetrics`: `60_000` (1m) — heaviest query, most reused
-- `useSalesByStylist`: `60_000` (1m)
-- `useSalesByLocation`: `60_000` (1m)
-- `useSalesTrend`: `5 * 60_000` (5m) — trend lines change slowly
-- `useSalesComparison`: `5 * 60_000` (5m) — historical comparison rarely changes
-- `useServiceMix`: `5 * 60_000` (5m) — already has `enabled` guard
+1. Fix the failing appointment queries
+- Replace invalid `staff_user_id` selects with fields that actually exist on `v_all_appointments`
+- Remove the 400/retry churn from Sales Overview startup
 
-This **alone** cuts perceived load to ~0ms on dashboard remount, tab switch, and date-range toggles within the stale window.
+2. Properly scope core hooks by location
+- Pass `filterContext?.locationId` into:
+  - `useSalesMetrics`
+  - `useSalesTrend`
+  - `useSalesComparison`
+- This improves both speed and correctness for single-location views
 
-**Fix #2 — Defer comparison + trend until needed:**
-- `useSalesComparison` is only used for **trend arrows** in KPIs. Add `staleTime` (above) — no need to defer.
-- `useSalesTrend` only feeds sparkline/location-trend rendering. Already not blocking.
+3. Defer non-critical queries until needed
+- `useTipsDrilldown`: only fetch when the Tips card expands
+- `useRevenueByCategoryDrilldown`: only fetch when service breakdown expands / opens
+- `useGoalPeriodRevenue`: only fetch when the goal section is visible or expanded
+- `useLiveSessionSnapshot`: only run for `today`
+- `useTomorrowRevenue`: only run when the closed/no-data state actually needs it
 
-**Fix #3 — Skip the duplicate `useSalesByLocation` query when a single location is selected:**
-- When `filterContext?.locationId` is set and not `'all'`, the location table is hidden. Pass `enabled: isAllLocations` to skip the query entirely on single-location dashboards.
+4. Keep first paint focused on visible KPIs
+- Load the hero metrics first
+- Let deeper drilldowns and below-the-fold sections load after interaction/visibility
 
 ### Acceptance checks
 
-1. All 5 hooks (`useSalesMetrics`, `useSalesByStylist`, `useSalesByLocation`, `useSalesTrend`, `useSalesComparison`) have explicit `staleTime` values
-2. `useSalesByLocation` is `enabled: false` when a single location is selected
-3. No production behavior changes — caching and conditional fetching only
-4. `npm test` still 111/111
-5. Subjective: dashboard remount on `today` should feel instant after first load
-6. Logged in `DEBUG_LOG.md` with doctrine anchor + leverage marker
+1. No initial Sales Overview requests return 400
+2. Single-location dashboards send location-scoped metrics/comparison/trend queries
+3. Collapsed tips/services/goals sections do not fetch heavy data on mount
+4. Cold-load dashboard render is materially faster
+5. Expanded drilldowns still work correctly when opened
+6. Findings are logged in `DEBUG_LOG.md` with doctrine anchor + leverage marker
 
-### Files to modify
+### Files likely touched
 
-- `src/hooks/useSalesData.ts` — add `staleTime` to 4 hooks; add `enabled` flag to `useSalesByLocation`
-- `src/hooks/useSalesComparison.ts` — add `staleTime`
-- `src/components/dashboard/AggregateSalesCard.tsx` — pass `enabled` flag to `useSalesByLocation` based on `isAllLocations`
-- `DEBUG_LOG.md` — Wave 14 findings + ranked register
+- `src/components/dashboard/AggregateSalesCard.tsx`
+- `src/hooks/useSalesData.ts`
+- `src/hooks/useTipsDrilldown.ts`
+- `src/hooks/useGoalPeriodRevenue.ts`
+- `src/hooks/useLiveSessionSnapshot.ts`
+- `src/hooks/useTomorrowRevenue.ts`
+- `src/hooks/useRevenueByCategoryDrilldown.ts`
+- `DEBUG_LOG.md`
 
-### Deferred (carried forward with trigger conditions)
+### Deferred
 
-- **P1 #3** (`useSalesByStylist` 3-query waterfall) — **trigger: Wave 15 multi-axis audit OR if stylist leaderboard load remains the slowest segment after staleTime fix**
-- **P1 #4** (`useSalesComparison` sequential pagination) — **trigger: Wave 15 OR if comparison query dominates after caching**
-- **P2 #5** (dedup `useSalesByLocation` against `useSalesMetrics`) — **trigger: requires hook refactor + shared cache layer; defer until 3rd duplicate scan identified**
-- **P1: Tooltip ref warning in `SupplyLibraryTab.tsx:94`** — **trigger: next color-bar work**
-- ESLint taxonomy rule — **trigger: 3rd domain adopts the bus**
-- `VisibilityContractAuditPanel` UI — **trigger: ≥1 non-color-bar adopter**
-- CI audit-comment grep — **trigger: 3rd undocumented audit query**
-- Multi-axis audit pass — **trigger: Wave 15** (one wave away)
-
+- Shared aggregate/fan-in sales query to replace repeated POS scans across the whole card — trigger if cold load is still slow after this P0 pass
+- Larger sales analytics data-layer consolidation — trigger after the cold-load pass is verified</final-text>
