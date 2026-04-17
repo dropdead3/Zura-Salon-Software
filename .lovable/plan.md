@@ -1,46 +1,43 @@
 
 ## Prompt review
 
-Sharp structural observation — you're recognizing that "All Stylists" and "Only Stylists With Appointments" are multi-select affordances that are structurally incompatible with week view's single-stylist constraint. Removing them isn't just cleanup; it's enforcing the architectural truth in the UI.
+Clear visual-affordance instruction — you're using color as a structural signal: amber = "this filter is doing real work right now, pay attention." Good instinct, since week view's single-stylist constraint is easy to forget once the dropdown is closed.
 
-Tighter framing for next time: clarify whether the dropdown should also become a *radio* (single-select, click-to-switch) in week view vs. staying a checkbox list. I'll infer **radio behavior** since multi-select is structurally impossible.
+Tighter framing for next time: specify amber *intensity* (subtle tint vs. solid fill) and *which states* (trigger only, or also dropdown rows). I'll infer the cleanest path: **amber-tinted trigger** (border + text + chevron) — visible but not alarming, since this is a structural state, not an error.
 
 ## Diagnosis
 
-In `ScheduleHeader.tsx`, the stylist filter dropdown contains:
-1. "All Stylists That Work This Day" row — clears `selectedStaffIds` (multi-select clear).
-2. "Only Stylists With Appointments" row — bulk-selects stylists with appointments.
-3. Stylist rows with `<Checkbox>` — toggle into/out of `selectedStaffIds` (additive multi-select).
-
-In week view, the grid can only render one stylist. Multi-select and "all" are dead affordances.
+The stylist filter trigger in `ScheduleHeader.tsx` (around line ~475) is a `<Button variant="outline">` with neutral border/text. In week view it always reflects a single stylist (manual or auto-resolved), but visually it looks identical to day view's neutral multi-select state. No color signal differentiates the two modes.
 
 ## Plan
 
-**1. Hide the two top filter rows in week view**
-- In `ScheduleHeader.tsx`, wrap the "All Stylists That Work This Day" and "Only Stylists With Appointments" rows (plus their separator) in `{view !== 'week' && (...)}`.
-- Day view: unchanged (both rows visible).
+**1. Apply amber styling to the trigger when `view === 'week'`**
+- In `ScheduleHeader.tsx`, add conditional classes to the stylist filter `<Button>`:
+  - Border: `border-amber-500/60`
+  - Text: `text-amber-600 dark:text-amber-400`
+  - Hover: `hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-300`
+  - Chevron icon inherits via `text-amber-600` (or explicit class on the icon)
+- Day view: unchanged (default outline styling).
 
-**2. Convert stylist rows to radio behavior in week view**
-- Replace `<Checkbox>` with a visual radio indicator (filled dot when selected) when `view === 'week'`.
-- Clicking a stylist row in week view: `setSelectedStaffIds([stylistId])` (replace, not toggle).
-- Day view: unchanged (checkbox toggle/multi-select).
+**2. Keep `(week default)` muted suffix as-is**
+- Suffix stays `text-muted-foreground` so it doesn't compete with the amber. The amber on the trigger itself is the primary signal; the suffix is the secondary explanation.
 
-**3. Keep `(week default)` suffix logic**
-- Still shows on auto-resolved stylist when `selectedStaffIds.length === 0`.
-- Once user clicks a stylist in week view, `selectedStaffIds = [thatId]` and the suffix disappears (matches existing acceptance check: explicit selection = no suffix).
+**3. Dropdown content unchanged**
+- Don't tint dropdown rows amber — the trigger is the at-a-glance signal; the open dropdown is already in an active interaction state where color cues add noise.
 
-**4. Dropdown stays open vs. closes on selection?**
-- Day view: stays open (existing multi-select behavior).
-- Week view: closes on selection (single-select pattern, matches user expectation for radio).
+**4. Token discipline**
+- Use Tailwind amber utilities directly (no token exists for "structural-attention" state yet). If this pattern repeats elsewhere, we can promote it to a token later.
+- Stay inside design system: `font-sans`, no font-bold, no uppercase additions.
 
 ## Acceptance checks
 
-1. Week view dropdown opened → no "All Stylists" or "Only Stylists With Appointments" rows visible.
-2. Week view dropdown shows only the stylist list with radio-style indicators.
-3. Clicking a stylist in week view → grid switches to that stylist, dropdown closes, trigger updates.
-4. Week view with no manual selection → first stylist shows `(week default)` suffix in trigger and list.
-5. Day view dropdown unchanged — both top rows visible, checkboxes for multi-select.
-6. Switching from week → day preserves any explicit single selection; "All" reappears as an option.
+1. Week view → stylist filter trigger shows amber border, amber text, amber chevron.
+2. Day view → stylist filter trigger remains neutral (default outline).
+3. Switching from day → week → trigger flips to amber immediately.
+4. Switching from week → day → trigger reverts to neutral.
+5. `(week default)` suffix remains muted gray, not amber — preserves visual hierarchy.
+6. Hover state in week view shows subtle amber-tinted background, not neutral muted.
+7. Other filters (location, status) remain unchanged.
 
 **Files to modify:**
 - `src/components/dashboard/schedule/ScheduleHeader.tsx`
