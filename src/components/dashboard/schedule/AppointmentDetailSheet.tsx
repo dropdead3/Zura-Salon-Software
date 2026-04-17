@@ -38,6 +38,7 @@ import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
+import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
 import { useUnviewedInspirationPhotos } from '@/hooks/useUnviewedInspirationPhotos';
