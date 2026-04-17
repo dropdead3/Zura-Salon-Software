@@ -2,92 +2,103 @@
 
 ## Prompt review
 
-Strong continuation — three candidates, each with a clear leverage marker and doctrinal anchor. The Wave 8 sweep is the right next move: ship the mechanical coverage now, while the bus API and reason taxonomy are fresh, before adopter drift sets in. The "self-validating audits" suggestion is particularly mature — it formalizes a discipline you're already practicing (Wave 7's inline comment) before it becomes informal tribal knowledge.
+Sharp continuation — three candidates, each with a clear leverage marker, doctrinal anchor, and a *deferral threshold* (the ESLint rule "consider when a 3rd domain ships"; the audit-comment grep "premature today"). That deferral discipline is the meta-pattern worth naming: every wave now carries forward an explicit "not yet, but here's the trigger condition" register. Prevents premature infrastructure.
 
-One refinement: the kebab-case taxonomy table should also include a **tier** column (e.g., `loading` is universal, `no-data` is common, `insufficient-points` is contract-specific). Without tiers, every adopter invents its own contract-specific reasons and the taxonomy bloats. Group by tier so future adopters know which reasons to reuse vs which to extend.
+One refinement: candidate #1 (cross-domain grep) is structured as a *discovery* task, but its outcome bifurcates the wave — if zero surfaces qualify, the panel stays deferred and #1 produces only a documented finding; if ≥1 qualifies, the wave expands to include adoption *and* the panel ships. Worth declaring the branch upfront so we don't accidentally over-scope. I'll bake the bifurcation into the plan below.
 
-## Plan — Wave 8
+## Plan — Wave 9
 
-Three independent, doctrinally-anchored fixes:
+Three independent fixes, each anchored + leverage-marked + deferral-aware:
 
-### 1. Network Intelligence: Sweep 7 candidates onto the bus *(leverage: completes the doctrinal grep in <30 min, locks in coverage before drift)*
+### 1. Network Intelligence: Cross-domain Visibility Contract discovery *(leverage: gates the devtool panel decision on real evidence, not speculation)*
 
-Read each of the 7 documented future candidates from `mem://architecture/visibility-contracts.md`, identify their suppression branch (`return null` after a threshold/empty check), and add a single `reportVisibilitySuppression(...)` call.
+**Read-only grep pass** across non-color-bar domains:
+- `src/components/dashboard/payments/**`
+- `src/components/dashboard/schedule/**` (and `src/components/schedule/**` if separate)
+- `src/components/dashboard/payroll/**`
 
-**Mechanical contract for each adopter:**
-- Source: kebab-case component name (e.g. `blueprint-checklist`, `exception-badge`)
-- Reason: drawn from the canonical taxonomy (see #2)
-- Payload: the *actual numbers* that drove the suppression (count, threshold, etc.) — never abstract booleans
+**Search pattern:** `return null` immediately following a count, length, threshold, or empty-data check. Use `code--search_files` with regex like `if \([^)]*(length|count|< \d|=== 0)[^)]*\)\s*\{?\s*return null` scoped to those dirs.
 
-**Candidates** (per memory file):
-- `BlueprintChecklist` → `blueprint-checklist`
-- `ExceptionBadge` → `exception-badge`
-- (5 others documented in `mem://architecture/visibility-contracts.md` Known Adopters / Future Candidates section — read first to confirm exact list before sweeping)
+**For each match, classify:**
+- **Visibility Contract** (intentional silence based on materiality) → eligible adopter
+- **Loading guard** (waiting for data) → not a contract, skip
+- **Error fallback** (defensive null) → not a contract, skip
+- **Bug** (should render something) → flag in summary, do not fix
 
-**Pre-step:** `code--view mem://architecture/visibility-contracts.md` to read the exact candidate list and current Known Adopters section. Then `code--search_files` for each to locate the `return null` line.
+**Branching outcome:**
 
-**Scope guard:** marking pass only. No logic changes, no UI changes, no new dependencies. If a candidate's suppression branch is *not* a Visibility Contract on inspection (e.g., it's actually a loading bug), skip it and flag in the wave summary.
+| Result | Action |
+|---|---|
+| 0 contracts found | Document finding in `mem://architecture/visibility-contracts.md` under "Cross-domain scan: <date>". Devtool panel stays deferred. Wave 9 #1 ends. |
+| ≥1 contract found | Adopt onto bus (additive `reportVisibilitySuppression` calls only, canonical taxonomy). Then ship the devtool panel — see #1b below. |
 
-### 2. Convention: Reason taxonomy table in memory *(leverage: prevents drift like `noData` vs `no-data` vs `empty`)*
+**#1b (conditional):** If ≥1 cross-domain adopter is found, build a minimal devtool panel:
+- New file: `src/components/dev/VisibilityContractAuditPanel.tsx`
+- Renders only in `import.meta.env.DEV`
+- Uses the existing `useVisibilityContractAudit()` hook
+- Lists suppression events: `[timestamp] source · reason · payload (collapsible)`
+- Mounted into a dev-only corner of the platform shell (or behind a `?devtools=1` query flag — decide during execution based on existing patterns)
+- No styling beyond minimum legibility — this is diagnostic UI, not product UI
 
-**Modify:** `mem://architecture/visibility-contracts.md`
+**Scope guard:** if 0 contracts found, do NOT build the panel speculatively. The deferral exists for a reason.
 
-Add a "Reason Taxonomy" section with a tiered kebab-case table:
+### 2. Convention: Deferral Register doctrine *(leverage: makes "not yet" decisions auditable instead of forgotten)*
 
-| Tier | Reason | When to use |
-|---|---|---|
-| Universal | `loading` | Data still fetching |
-| Universal | `no-data` | Query returned empty / null |
-| Universal | `error` | Fetch failed (rare in suppressions, but reserved) |
-| Common | `below-threshold` | Single-value gate unmet (e.g., total < N) |
-| Common | `no-trigger-window` | Time-bucketed gate unmet (e.g., no week ≥ N) |
-| Common | `insufficient-points` | Series-based gate unmet (e.g., < N data points) |
-| Contract-specific | `<custom>` | When none of the above fit; document in the adopter's source comment |
+**Modify:** `mem://architecture/visibility-contracts.md` (or a new `mem://architecture/deferral-register.md` if scope justifies — decide during execution)
 
-**Rules added to memory:**
-- Always kebab-case (`no-data`, never `noData` or `no_data`)
-- Always reuse Universal/Common reasons before inventing
-- Contract-specific reasons must be commented at the call site explaining why no Common tier reason applied
+Capture the meta-pattern Waves 6-9 have been practicing informally: every deferred infrastructure decision should carry a **trigger condition** for revisiting, not just a "not yet."
 
-### 3. Doctrine: Self-validating audits *(leverage: every future audit query is interpretable without tribal context)*
+Add a section:
 
-**Modify:** `mem://architecture/visibility-contracts.md` (or new file if scope warrants — decide during execution)
-
-Add a "Self-Validating Audits" subsection capturing the discipline from Wave 7:
-
-> Every read-only audit query that flags suspect rows must declare its false-positive filter inline as a SQL comment. The comment must answer: *why is a flagged row probably drift, not just possibly drift?*
+> **Deferral Register**: When a wave defers infrastructure (lint rules, devtool panels, CI checks, backfills), the deferral must declare its trigger condition. Examples:
+> - "ESLint taxonomy rule — defer until 3rd domain ships"
+> - "Devtool panel — defer until 2nd non-color-bar adopter"
+> - "Historical backfill — defer until audit findings >0 rows"
 >
-> Example (from Wave 7): `-- Only flag rows where the org has *any* entitlement activity now — a recorded_count=0 with current activity is almost certainly a write-time omission, not legitimate "zero locations affected."`
->
-> Without this comment, audit findings are unfalsifiable claims. With it, reviewers can challenge or trust the filter logic without re-deriving it.
+> Without trigger conditions, deferrals decay into permanent gaps. With them, future waves can mechanically check whether the gate has cleared.
 
-**Update:** `mem://index.md` — extend the existing Visibility Contracts core rule, or add a tight one-liner: "Audit queries must document their false-positive filter inline."
+**Update:** `mem://index.md` — add a tight Core one-liner: "Deferred infrastructure must declare its revisit trigger condition."
+
+### 3. Pre-flight: Audit-comment enforcement reconnaissance *(leverage: scopes the eventual CI rule before it's needed)*
+
+**No code changes this wave.** Pure reconnaissance:
+
+- `code--search_files` for existing audit queries in the codebase (likely sparse — Wave 7's was the first formal one)
+- Catalog: file path, query purpose, whether it has a `-- rationale:` or `-- false-positive filter:` comment
+- Document findings inline in `mem://architecture/visibility-contracts.md` under a new "Audit Inventory" subsection
+
+**Outcome:** confirms or invalidates the "premature today" assumption. If ≥3 audit queries already exist undocumented, the CI rule moves from deferred to next-wave candidate. If ≤1 exists (likely), confirm the deferral with the trigger condition from #2.
 
 ## Acceptance checks
 
-1. All 7 documented future candidates emit to the bus (or are explicitly flagged as not-actually-contracts in the wave summary)
-2. Each new bus call uses a reason from the canonical taxonomy, or includes a source comment explaining the contract-specific extension
-3. `mem://architecture/visibility-contracts.md` contains the tiered Reason Taxonomy table
-4. `mem://architecture/visibility-contracts.md` contains the Self-Validating Audits subsection with the Wave 7 example
-5. `mem://index.md` reflects the audit-comment rule (extended or new line)
-6. No behavior change to any swept component — only additive instrumentation
-7. Existing adopters (`SuspensionVelocityCard`, `ChemicalCostTrendCard`, `SeasonalDemandOverlay`) re-checked for taxonomy compliance; if any used a non-canonical reason, normalize it
-8. No production console output from the bus (existing safety net preserved)
+1. Cross-domain grep executed across payments/schedule/payroll; results classified into contract / loading / error / bug
+2. If 0 contracts found: documented finding in memory, panel remains deferred — wave is complete with research outcome
+3. If ≥1 contract found: each adopted onto bus with canonical taxonomy; devtool panel built and mounted dev-only
+4. Devtool panel (if built) emits no production output, uses no new dependencies
+5. Deferral Register section exists in memory; index Core rule added
+6. Audit Inventory section exists in memory with current count of audit queries and their documentation status
+7. No behavior change to any existing Visibility Contract surface
+8. No new product UI — devtool panel is diagnostic-only, not user-facing
 
 ## Files to create / modify
 
-**Modify:**
-- 7 candidate components (additive `reportVisibilitySuppression(...)` calls only) — exact list confirmed via `mem://architecture/visibility-contracts.md` pre-read
-- `mem://architecture/visibility-contracts.md` — add Reason Taxonomy + Self-Validating Audits sections + update Known Adopters
-- `mem://index.md` — extend or add the audit-comment core rule
-- Possibly `SuspensionVelocityCard.tsx` / `ChemicalCostTrendCard.tsx` / `SeasonalDemandOverlay.tsx` if their existing reasons drift from the new taxonomy (e.g., `no-trigger-week` → `no-trigger-window`)
+**Conditional (depending on Wave 9 #1 outcome):**
+- N cross-domain components (additive bus calls only) — only if contracts found
+- `src/components/dev/VisibilityContractAuditPanel.tsx` — only if ≥1 cross-domain adopter
+- Mount point edit in platform shell — only if panel ships
 
-**New:**
-- None (taxonomy + audit doctrine fold into existing memory file)
+**Always:**
+- `mem://architecture/visibility-contracts.md` — Cross-domain Scan, Deferral Register, Audit Inventory sections
+- `mem://index.md` — Deferral Register Core rule
 
-## Deferred (not in this wave)
+**Read-only:**
+- Grep passes across `src/components/dashboard/{payments,schedule,payroll}/**`
+- Grep pass for existing audit queries
 
-- Devtool panel UI consuming `useVisibilityContractAudit` — still gated on a second non-color-bar adopter
-- Linting/CI enforcement of taxonomy (e.g., ESLint rule rejecting `noData`) — premature at 10 adopters; revisit at 25+
-- Backfilling reason payloads for events that fired before the bus existed — impossible by definition, document as known gap
+## Deferred (carried forward with trigger conditions)
+
+- ESLint taxonomy rule (`reportVisibilitySuppression` reason must be kebab-case) — **trigger: 3rd domain adopts the bus**
+- CI grep enforcing `-- rationale:` adjacent to audit queries — **trigger: 3rd undocumented audit query exists, OR after lint rule ships (whichever first)**
+- Devtool panel UI — **trigger: ≥1 non-color-bar adopter (resolved this wave or stays deferred)**
+- Historical backfill of pre-bus suppression events — **trigger: never (impossible by definition; documented as permanent gap)**
 
