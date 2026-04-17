@@ -86,8 +86,8 @@ export function SuspensionVelocityCard() {
     const reason = isLoading
       ? 'loading'
       : !events || totalSuspensions === 0
-        ? 'no-events'
-        : 'no-trigger-week';
+        ? 'no-data'
+        : 'no-trigger-window';
     reportVisibilitySuppression('velocity-card', reason, {
       totalEvents: totalSuspensions,
       maxWeekCount,

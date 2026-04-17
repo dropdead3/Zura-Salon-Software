@@ -13,6 +13,7 @@ import { History, Copy, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-rea
 import { format } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import type { ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 interface FormulaClonePanelProps {
   clientId: string;
@@ -27,7 +28,15 @@ export function FormulaClonePanel({ clientId, bowlId }: FormulaClonePanelProps) 
   // Only show actual formulas (not refined) for cloning
   const actualFormulas = formulas.filter((f) => f.formula_type === 'actual');
 
-  if (isLoading || actualFormulas.length === 0) return null;
+  // Visibility Contract: no actual (non-refined) formulas in client history to clone.
+  if (isLoading || actualFormulas.length === 0) {
+    const reason = isLoading ? 'loading' : 'no-data';
+    reportVisibilitySuppression('formula-clone-panel', reason, {
+      totalFormulas: formulas.length,
+      actualFormulaCount: actualFormulas.length,
+    });
+    return null;
+  }
 
   const latestFormula = actualFormulas[0];
   const olderFormulas = actualFormulas.slice(1, 5);

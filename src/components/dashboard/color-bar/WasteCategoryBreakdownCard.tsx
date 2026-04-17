@@ -11,6 +11,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { WASTE_CATEGORY_LABELS } from '@/hooks/color-bar/useWasteEvents';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 interface WasteCategoryBreakdownCardProps {
   wasteByCategory: Record<string, number>;
@@ -40,7 +41,14 @@ export function WasteCategoryBreakdownCard({ wasteByCategory, totalWasteQty }: W
       .sort((a, b) => b.value - a.value);
   }, [wasteByCategory, totalWasteQty]);
 
-  if (chartData.length === 0) return null;
+  // Visibility Contract: no waste categories with non-zero quantities.
+  if (chartData.length === 0) {
+    reportVisibilitySuppression('waste-category-breakdown', 'no-data', {
+      categoryCount: 0,
+      totalWasteQty,
+    });
+    return null;
+  }
 
   return (
     <Card className={cn(tokens.card.wrapper)}>
