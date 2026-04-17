@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Send, Loader2, Smartphone, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { SplitPaymentDialog } from './SplitPaymentDialog';
