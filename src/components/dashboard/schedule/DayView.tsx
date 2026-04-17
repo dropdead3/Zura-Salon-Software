@@ -12,6 +12,7 @@ import { MeetingGridCard } from './meetings/MeetingCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { useAppointmentDeclinedReasons } from '@/hooks/useAppointmentDeclinedReasons';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
@@ -193,6 +194,7 @@ interface AppointmentCardProps {
   slotInterval?: number;
   zoomLevel?: number;
   useShortLabels?: boolean;
+  declinedReasonLabel?: string | null;
 }
 
 function AppointmentCard({
@@ -214,6 +216,7 @@ function AppointmentCard({
   slotInterval = 15,
   zoomLevel = 0,
   useShortLabels = false,
+  declinedReasonLabel = null,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -317,6 +320,7 @@ function AppointmentCard({
         categoryColors={categoryColors}
         
         useShortLabels={useShortLabels}
+        declinedReasonLabel={declinedReasonLabel}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
