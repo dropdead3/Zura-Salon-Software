@@ -999,7 +999,7 @@ export default function Schedule() {
                 appointments={appointments}
                 hoursStart={preferences.hours_start}
                 hoursEnd={preferences.hours_end}
-              </ScheduleHeader-placeholder-strip>
+              />
               />
         </div>
 
