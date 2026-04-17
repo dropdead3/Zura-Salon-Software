@@ -1321,18 +1321,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           <ClientAffinityBadges phorestClientId={client.phorest_client_id} className="mt-1" />
 
           {/* Hospitality Memory Layer — About + active follow-ups */}
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <ClientAboutCard
-              organizationId={selectedOrganization?.id}
-              clientId={client.phorest_client_id}
-              clientFirstName={client.first_name || client.name?.split(' ')[0]}
-            />
-            <ClientCallbacksPanel
-              organizationId={selectedOrganization?.id}
-              clientId={client.phorest_client_id}
-              clientFirstName={client.first_name || client.name?.split(' ')[0]}
-            />
-          </div>
+          <HospitalityBlock
+            organizationId={selectedOrganization?.id}
+            phorestClientId={client.phorest_client_id}
+            firstName={client.first_name || client.name?.split(' ')[0]}
+          />
 
           {/* Tabs for History, Notes, Transactions, and Redos */}
           <Tabs defaultValue="history" className="mt-4">
