@@ -1062,6 +1062,16 @@ export function CheckoutSummarySheet({
                 );
               })()}
 
+              {/* Wave 21.3 Layer 3 — Inline coaching nudge for elevated skip rate */}
+              {declinedReason && skipRateSignal?.isElevated && (
+                <div className="flex items-center gap-2 px-3 pb-2 font-sans text-xs text-warning">
+                  <TrendingDown className="h-3.5 w-3.5 shrink-0" />
+                  <span className="min-w-0 truncate">
+                    Skip rate this month: {Math.round(skipRateSignal.skipRate)}% — review with stylist
+                  </span>
+                </div>
+              )}
+
               {cart.hasUnsetPrice && (
                 <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/[0.06] p-2 text-xs text-warning">
                   <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
