@@ -614,16 +614,6 @@ export function ColorBarEntitlementsTab() {
         )}
       </PlatformCardContent>
 
-      {/* Reactivation confirmation — shown when toggling on an org that was previously suspended */}
-      <ReactivationConfirmDialog
-        open={!!colorBarToggle.reactivationTarget}
-        onOpenChange={(open) => {
-          if (!open) colorBarToggle.cancelReactivation();
-        }}
-        orgName={colorBarToggle.reactivationTarget?.organizationName ?? ''}
-        suspendedAt={colorBarToggle.reactivationTarget?.suspendedAt ?? null}
-        affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
-        isPending={colorBarToggle.isPending}
       {/* Cancel-reason capture — fires before soft-disabling so the platform records WHY */}
       <CancelReasonDialog
         open={!!colorBarToggle.suspensionTarget}
