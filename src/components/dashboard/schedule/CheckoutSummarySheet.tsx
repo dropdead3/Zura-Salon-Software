@@ -1165,7 +1165,7 @@ export function CheckoutSummarySheet({
             ) : (
               <Button 
                 onClick={handleConfirm} 
-                disabled={isUpdating || (paymentMethod === 'card_reader' && !activeReader) || ['creating_intent', 'displaying_cart', 'awaiting_tap', 'processing'].includes(terminalFlow.flowState)}
+                disabled={isUpdating || chargeBlocked || (paymentMethod === 'card_reader' && !activeReader) || ['creating_intent', 'displaying_cart', 'awaiting_tap', 'processing'].includes(terminalFlow.flowState)}
                 className="w-full font-medium shadow-lg shadow-primary/20"
                 size="lg"
               >
