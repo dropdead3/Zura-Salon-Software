@@ -383,6 +383,14 @@ export function DayView({
   const [activeId, setActiveId] = useState<string | null>(null);
   const { data: stylistLevels = [] } = useStylistLevels();
 
+  // Wave 21.3 Layer 2 — bulk-fetch decline reasons for completed appointments
+  // so the calendar can render the muted "rebook skipped" dot inline.
+  const completedAppointmentIds = useMemo(
+    () => appointments.filter((a) => a.status === 'completed').map((a) => a.id),
+    [appointments],
+  );
+  const { data: declinedReasonMap } = useAppointmentDeclinedReasons(completedAppointmentIds);
+
   // Build slug→label map for level badges
   const levelLabelMap = useMemo(() => {
     const m = new Map<string, { label: string; shortLabel: string; index: number }>();
@@ -874,6 +882,7 @@ export function DayView({
                            slotInterval={slotInterval}
                            zoomLevel={zoomLevel}
                            useShortLabels={sortedStylists.length >= 3}
+                           declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
                          />
                        );
                      })}
