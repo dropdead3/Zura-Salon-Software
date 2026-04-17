@@ -1,59 +1,78 @@
 
 ## Prompt review
 
-Strong observation — you spotted two distinct issues in one screenshot: (1) **redundant signaling** (two "first visit" messages stacked) and (2) **layout overflow** (tabs spilling on both edges). Both are real polish gaps that erode the "executive, calm" feel of the panel.
+Solid consolidation instinct — both tabs serve the same operator mental model ("what's happening with this client's color?"), so collapsing them into one branded surface reduces tab count from 6 → 5, eliminates the overflow risk entirely, and reinforces the "Zura Color Bar" as a single product surface inside the appointment context.
 
-Tighter framing for next time: when you see overflow, mention whether you want the container to **grow** or the contents to **shrink/scroll**. Different fix paths. I'll propose growing the panel modestly + giving tabs a horizontal scroll fallback, since cramming 6 tabs into smaller text would degrade readability.
+Tighter framing for next time: clarify (a) *which* sub-tab opens by default, (b) whether the inner navigation should be horizontal sub-tabs vs. vertical sections, and (c) what the unified label should be — you said "Zura Color Bar" but in cramped UI we may want just "Color Bar" with the Beaker icon for compactness. I'll propose defaults with rationale below — flag if you want differently.
 
 ## Findings
 
-**Issue 1 — Redundant first-visit messaging**
-Two separate components both render "first visit" empty states for the same condition:
-- `ClientMemoryPanel` (line 41-49): renders `"First visit — no history yet"` when `data.isFirstVisit` is true.
-- `AppointmentDetailSheet` (line 1469-1476): renders `"First-time client — no prior service history on file."` banner when `visitStats.visitCount === 0`.
+Two tabs in `AppointmentDetailSheet.tsx` (lines 1424-1428):
+- **`formulas`** → renders `<ClientFormulaHistoryTab>` (versioned formula history per client)
+- **`color-bar`** → renders `<ColorBarTab>` (the active mix session / chemical usage for *this appointment*)
 
-Both fire on the same client state. The green banner adds no information beyond what the dashed memory panel already says, and visually competes with it.
+Both are color-bar-domain. Currently they're peers, which forces operators to context-switch between "what did we mix today" and "what have we mixed historically."
 
-**Issue 2 — Tab overflow**
-- `PremiumFloatingPanel` default `maxWidth = '440px'`.
-- `AppointmentDetailSheet` does NOT pass a `maxWidth` override → uses 440px.
-- Tabs (`TabsList` with `mx-6`) gets ~392px to render 6 triggers: Details, History, Photos, Notes, Formulas (with icon), Color Bar. The screenshot confirms this overflows: "etails" cut on left, "Color B" cut on right.
+## Proposed change
 
-The other large detail panels in the codebase (`ClientDetailSheet`, etc.) also use the 440px default but have fewer/shorter tab labels.
+**Single tab: `Color Bar`** (with `Beaker` icon, matches Color Bar brand)
+- Default sub-view: **Today's Mix** (the active `ColorBarTab` — operationally most relevant during/after appointment)
+- Secondary sub-view: **Formula History** (the `ClientFormulaHistoryTab` — reference layer)
+
+**Inner navigation: `SubTabsList` / `SubTabsTrigger`** (underline style, already in `tabs.tsx`)
+- Calmer than nesting full TabsList inside TabsList
+- Matches existing patterns elsewhere in the platform per the canon
+
+Net result: tabs go from 6 → 5 (Details, History, Photos, Notes, **Color Bar**), Beaker icon now signals the unified Color Bar surface, no more horizontal scroll pressure.
 
 ## Plan
 
-### 1. Eliminate redundant first-visit banner
+**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (lines 1469-1476)
-- Delete the green `"First-time client — no prior service history on file."` banner block entirely.
-- Keep the `ClientMemoryPanel`'s dashed `"First visit — no history yet"` indicator as the single source of truth — it's already the right placement (top of Details tab) and uses the calmer dashed-border treatment that fits the panel's executive tone.
+1. **TabsList (lines 1420-1428)** — replace the two triggers with one:
+   ```tsx
+   <TabsTrigger value="color-bar" className="font-sans gap-1.5">
+     <Beaker className="w-3.5 h-3.5" />
+     Color Bar
+   </TabsTrigger>
+   ```
+   Remove the `formulas` trigger entirely.
 
-Net result: one clear first-visit signal instead of two competing ones.
+2. **TabsContent (lines 2173-2184)** — collapse the two `TabsContent` blocks into one `value="color-bar"` block containing a nested `<Tabs>` with `SubTabsList`:
+   ```tsx
+   <TabsContent value="color-bar" className="p-6 pt-4 mt-0">
+     <Tabs defaultValue="today" className="w-full">
+       <SubTabsList>
+         <SubTabsTrigger value="today">Today's Mix</SubTabsTrigger>
+         <SubTabsTrigger value="history">Formula History</SubTabsTrigger>
+       </SubTabsList>
+       <TabsContent value="today" className="mt-4">
+         <ColorBarTab appointment={appointment} organizationId={effectiveOrganization?.id ?? ''} />
+       </TabsContent>
+       <TabsContent value="history" className="mt-4">
+         <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
+       </TabsContent>
+     </Tabs>
+   </TabsContent>
+   ```
 
-### 2. Fix tab overflow — widen panel + scrollable tab fallback
+3. **Imports** — add `SubTabsList`, `SubTabsTrigger` to the existing `@/components/ui/tabs` import. `Beaker` is already imported.
 
-**File A:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (line 1213)
-- Pass `maxWidth="520px"` to `<PremiumFloatingPanel>`. Matches the wider variant already used by `ApplicantDetailSheet` (proven precedent in codebase). Adds ~80px → all 6 tabs fit comfortably.
+4. **State migration** — if `activeTab` is ever set to `"formulas"` programmatically anywhere (deep-links, external triggers), redirect to `"color-bar"`. Quick search needed; if found, map old value → new value in the `setActiveTab` setter or in a `useEffect`.
 
-**File B:** Same file, lines 1417-1428 (TabsList wrapper)
-- Wrap `<TabsList>` in a horizontally scrollable container so any future tab additions (or large translations / longer labels) degrade gracefully instead of clipping:
-  - Container: `mx-6 overflow-x-auto scrollbar-none`
-  - TabsList itself: remove `mx-6`, keep `mb-0 shrink-0 w-max` so it sizes to content and scrolls if needed.
-- This is a defensive measure; with the wider panel, scrolling shouldn't be needed in normal use.
-
-### 3. (No DB / RLS changes — purely UI.)
+5. **No DB / RLS / API changes** — purely UI consolidation.
 
 ## Acceptance checks
 
-1. First-visit clients see exactly one indicator: the dashed `"First visit — no history yet"` panel inside the Details tab. The green banner is gone.
-2. Returning clients see no first-visit messaging anywhere (current behavior preserved — banner deletion doesn't affect non-first-visit logic).
-3. With the panel at 520px, all 6 tab labels (Details, History, Photos, Notes, Formulas with icon, Color Bar) render fully without horizontal clipping at desktop widths.
-4. Tab labels do not overflow the panel edges on either side.
-5. If labels ever exceed the container (longer translations, added tab), the TabsList scrolls horizontally with no scrollbar visible, instead of clipping.
-6. Mobile behavior unchanged (panel still goes full-screen via `PremiumFloatingPanel`'s mobile branch).
-7. Header, status pills, lifecycle bar, all tab content (Details / History / Photos / Notes / Formulas / Color Bar) render unchanged in the slightly wider panel.
-8. No regression to the `ClientMemoryPanel` empty state, returning-client memory cards, or any other detail-sheet feature.
+1. Tab bar shows 5 tabs: Details, History, Photos, Notes, Color Bar (with Beaker icon). No "Formulas" tab.
+2. Clicking "Color Bar" opens the unified surface with two sub-tabs: "Today's Mix" (default, active) and "Formula History".
+3. "Today's Mix" sub-tab renders the existing `ColorBarTab` content unchanged (active mix session, chemical usage for this appointment).
+4. "Formula History" sub-tab renders the existing `ClientFormulaHistoryTab` content unchanged (versioned formula list).
+5. Sub-tab styling uses underline `SubTabsList` (calm, secondary), not the raised pill `TabsList` (avoids tabs-inside-tabs visual clutter).
+6. No horizontal scroll on the parent tab strip at 520px panel width — confirmed since we're removing a tab.
+7. If any deep-link or external code sets `activeTab="formulas"`, it gracefully resolves to `activeTab="color-bar"` (or the formula history sub-tab).
+8. Mobile layout: parent tabs and sub-tabs both render cleanly in the full-screen panel branch.
+9. No regression to other tabs (Details, History, Photos, Notes) or to the inner `ColorBarTab` / `ClientFormulaHistoryTab` components themselves.
 
 **Files to modify:**
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (remove redundant banner; add `maxWidth="520px"`; wrap TabsList in scroll-safe container)
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (merge two tabs into one with nested sub-tabs; add `SubTabsList`/`SubTabsTrigger` imports; optional `activeTab` legacy mapping)
