@@ -135,14 +135,24 @@ Deno.serve(async (req) => {
 
     // ---- process_payment: Collect payment on reader ----
     if (action === "process_payment") {
-      const { payment_intent_id } = body;
+      const { payment_intent_id, tip_eligible_amount } = body;
       if (!payment_intent_id) {
         return jsonResponse({ error: "payment_intent_id is required" }, 400);
       }
 
+      // When `tip_eligible_amount` (cents) is supplied, configure native
+      // on-reader tipping. The S710 prompts the client for a tip computed
+      // off the eligible base, then updates the PaymentIntent amount.
+      const processArgs: Record<string, unknown> = { payment_intent: payment_intent_id };
+      if (typeof tip_eligible_amount === "number" && tip_eligible_amount > 0) {
+        processArgs.process_config = {
+          tipping: { amount_eligible: tip_eligible_amount },
+        };
+      }
+
       const readerAction = await stripe.terminal.readers.processPaymentIntent(
         reader_id,
-        { payment_intent: payment_intent_id },
+        processArgs as { payment_intent: string },
         stripeOpts
       );
 
