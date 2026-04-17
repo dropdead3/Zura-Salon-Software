@@ -457,7 +457,7 @@ export function QuickBookingPopover({
     if (open && initialDraftData) {
       if (initialDraftData.locationId) setSelectedLocation(initialDraftData.locationId);
       if (initialDraftData.selectedServices?.length) setSelectedServices(initialDraftData.selectedServices);
-      if (initialDraftData.notes) { setBookingNotes(initialDraftData.notes); setShowNotes(true); }
+      if (initialDraftData.notes) { setBookingNotes(initialDraftData.notes); }
       if (initialDraftData.isRedo) setIsRedo(true);
       if (initialDraftData.staffUserId) setSelectedStylist(initialDraftData.staffUserId);
       // Jump to the furthest step reached
