@@ -130,7 +130,9 @@ export default function Schedule() {
     const stored = window.localStorage.getItem('schedule.weekDayWidth');
     if (!stored || stored === 'auto') return 'auto';
     const n = parseInt(stored, 10);
-    return Number.isFinite(n) ? n : 'auto';
+    if (!Number.isFinite(n)) return 'auto';
+    // Clamp legacy values below the new floor (200px) up to the floor.
+    return Math.max(200, n);
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
