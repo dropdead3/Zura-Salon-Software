@@ -2,203 +2,106 @@
 
 ## Prompt review
 
-Sharp instinct — this is the **hospitality moat**. Generic "client notes" become a junk drawer ("dye allergy," "cancelled twice," "wants bangs," "kids named Max and Lila") because they mix three different intents: *clinical* (allergies, formula), *behavioral* (cancels, no-shows, prefers AM), and *personal* (Italy trip, dating, marathon training). When all three live in one stream, the personal stuff drowns and stylists stop bothering to capture it. Sharper next time: name the *outcome* you want — "I want stylists to greet clients with one personal callback per visit" — that frames the spec as a behavior change, not a UI add. You did this implicitly with the Italy/movie/date examples; clear enough.
+Sharp call on "analyze for any gaps, bugs or improvements" — that framing invites a real audit instead of a narrow build-error patch. Sharper next time: tell me whether you want **(a) ship-blocker bugs only, fast cycle** or **(b) full audit including polish/UX gaps**. I'm planning (a) + the most material polish gaps; deferring decorative ones.
 
-But here's the strategic trap I want to flag: **adding a fourth notes surface ("About Client") on top of the existing three (Appointment Notes, Client Notes, Booking Assistant Notes) makes the junk drawer worse.** The right move is to *separate by intent*, not stack by surface. We already have "Client Notes" (cross-visit, persistent). What's missing is a **typed, time-decayed personal memory layer** that surfaces *one curated callback* on the appointment card and detail sheet — not another freeform textarea.
+## Diagnosis — three real bugs, one missed integration
 
-## Diagnosis — current notes surfaces
+### Bug 1 (BLOCKING — build error)
+`AppointmentDetailSheet.tsx` L791 references `appointment.staff_user_id`. The `PhorestAppointment` type aliases this column to `stylist_user_id` (the calendar hook normalizes the DB column name). One-character fix.
 
-| Surface | Hook | Scope | Intent | Junk-drawer risk |
-|---|---|---|---|---|
-| **Appointment Notes** | `useAppointmentNotes` | Per-appointment | Stylist scratchpad for *this* visit | Low (now ledger via Wave 22.24) |
-| **Client Notes** | `useClientNotes` | Cross-visit, persistent | Catch-all client info | **HIGH** — currently mixes allergies + birthday wishes + cancellation patterns |
-| **Notes From Booking Assistant** | `appointment.notes` field | Per-appointment | Booker's intake note | Low (single source) |
-| **`phorest_clients.notes`** | embedded in client row | Cross-visit | Legacy catch-all | High (no structure) |
+### Bug 2 (BLOCKING — silent data corruption / empty queries)
+The migration created `client_about_facts.client_id UUID REFERENCES phorest_clients(id)` and same for `client_callbacks.client_id`. Both are **UUID FKs to `phorest_clients.id`** (the local UUID).
 
-The user's request — "Italy trip, movie, date" — belongs in **none** of these. Those notes are *episodic personal threads* that need to surface as a **callback prompt at the next visit** ("Ask how Italy was"), then archive themselves once acknowledged.
+But every UI integration passes the **wrong value**:
+- `ClientDetailSheet.tsx` L1327, L1332: passes `client.phorest_client_id` (text external Phorest ID) 
+- `ClientProfileView.tsx` L135, L142: same
+- `AppointmentCardContent.tsx` L393: passes `appointment.phorest_client_id` (text external Phorest ID)
+- `AppointmentDetailSheet.tsx` (callbacks block): same
+- `useClientCallbacks` / `useClientAboutFacts`: query by the wrong field
 
-## Plan — Wave 22.25: Hospitality Memory Layer ("About Client" + Callback Prompts)
+DB query confirms: `appointments.phorest_client_id` is a **text** field that joins to `phorest_clients.phorest_client_id` (text), NOT to `phorest_clients.id` (UUID). 0 rows match the UUID join; 282 rows match the text join.
 
-### Strategic shape
+**Effect when shipped**: 
+- Inserts throw `invalid input syntax for type uuid: "AauYiWV3_W0RffVIayPx3w"` 
+- Queries return empty arrays silently
+- The whole feature appears broken on every client
 
-Two layers, one new concept:
+**Fix shape**: Change the FK target. Local Phorest ID is the wrong join axis because it requires UI callers to do an extra lookup. The right pivot: store the **text Phorest external ID** as `client_id` so it matches what every UI surface and the appointments table already carries. Migration to swap column type from `uuid` to `text` and drop the FK (since `phorest_clients.phorest_client_id` is not unique/PK either — but we already filter by `organization_id` so identity collision is bounded per tenant).
 
-1. **About Client (durable personal facts)** — kids, partner, pets, profession, hobbies, dietary restrictions, pronouns. Things that persist for years and don't expire. Lives at the top of the Client Detail sheet as a structured "About" card with typed slots, NOT a freeform note list.
+Alternative considered: keep UUID, resolve text→UUID in every caller. Rejected — adds a roundtrip query to every appointment card render (bad for the schedule grid hot path) and triples the surface area of the fix.
 
-2. **Callbacks (episodic threads to follow up on)** — "Going to Italy in March," "First date Saturday," "Trying out for community theater." Things with a *trigger date* or *next visit* horizon. Surface as a calm prompt on the appointment card and at the top of the appointment detail sheet: *"Ask how the Italy trip went."* One acknowledgment archives it.
+### Bug 3 (functional gap — specced but not implemented)
+The plan called for a `💬 N` indicator on Client Directory rows. Not wired. `src/pages/dashboard/ClientDirectory.tsx` has zero references to callbacks. Low blast radius — the chip already exists, just needs to be dropped into the row.
 
-### Layer 1 — "About Client" structured card
+### Improvement 1 (UX polish — alert-fatigue compliance)
+Currently `ClientDetailSheet.tsx` renders BOTH `<ClientAboutCard>` and `<ClientCallbacksPanel>` always-visible at the top in a 2-col grid (L1324). When a client has zero facts AND zero callbacks, this becomes two empty-state panels stacked side-by-side — visual noise that violates "silence is valid output." Should collapse to a single subtle "+ Add personal context" affordance until the operator engages.
 
-**Where it lives:**
-- **Client Detail Sheet** (`ClientDetailSheet.tsx`): new "About" section at the top of the Overview tab, above visit history. Always-visible, scannable in 2 seconds.
-- **Appointment Detail Sheet** (`AppointmentDetailSheet.tsx`): same compact "About" block in the Details tab, above Client Notes Preview (replaces nothing — additive).
-- **Booking flow client profile** (`ClientProfileView.tsx`): same compact block.
+### Improvement 2 (capture friction)
+The `ClientCallbacksPanel` "Add" flow uses a date input but the plan said the default should be **"next visit"** (no date). The current UI works but doesn't visually anchor "next visit" as the default — operators may default to typing a date out of habit. Add a small "Next visit (default)" hint when the date field is empty.
 
-**Structure (typed slots, not freeform):**
+### Non-issues confirmed
+- Migration RLS, indexes, triggers — clean
+- `CallbackChip` correctly returns `null` when no callbacks (alert-fatigue compliant)
+- `useClientAppointmentNotes` hook (Wave 22.24) is correctly scoped — no bug
+- `AppointmentDetailSheet` callback block placement is correct (top of Details tab)
 
-```
-ABOUT ERIC
-─────────────────────────────────────────
-Pronouns        he/him
-Family          Wife Sarah · Kids Max (8), Lila (5)
-Pets            Golden retriever named Cooper
-Profession      ER nurse · works night shifts
-Hobbies         Marathon running · woodworking
-Dietary         Gluten-free
-Sensitivities   Allergic to ammonia
-─────────────────────────────────────────
-[+ Add a fact]
-```
+## Plan — Wave 22.26: Hospitality Memory Layer fixes + ClientDirectory wiring
 
-Each slot is optional. Empty slots hidden. One-click inline edit per slot. Stylists can add custom slots ("Always orders oat milk latte").
+### 1. Fix build error (1 line)
+`AppointmentDetailSheet.tsx` L791: `staff_user_id` → `stylist_user_id`.
 
-**Why typed slots beat freeform:**
-- Forces information *architecture* — stylists learn what's worth capturing
-- Scannable in seconds (no reading paragraphs)
-- AI/automation can later use structured data ("flag clients with kids during back-to-school season")
-- No duplication — "wife Sarah" gets captured once, not in 4 different notes
+### 2. Fix the UUID/text mismatch (data architecture)
+**Migration**: `ALTER TABLE client_about_facts` and `ALTER TABLE client_callbacks` to:
+- Drop FK on `client_id`
+- Change `client_id` from `UUID` to `TEXT`
+- Re-add a softer constraint via index `(organization_id, client_id)` — no FK because `phorest_clients.phorest_client_id` lacks a unique constraint
+- Drop tables and recreate cleanly is acceptable since no production data exists yet (just migrated this session)
 
-**Schema (new table):**
+Hooks unchanged in shape — they already pass `client_id` as a string, so the type fix flows through `Database` types regen automatically.
 
-```sql
-CREATE TABLE public.client_about_facts (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  client_id uuid NOT NULL REFERENCES phorest_clients(id) ON DELETE CASCADE,
-  category text NOT NULL CHECK (category IN ('pronouns','family','pets','profession','hobbies','dietary','sensitivities','custom')),
-  label text,           -- only used when category = 'custom'
-  value text NOT NULL,
-  created_by uuid NOT NULL REFERENCES auth.users(id),
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
--- RLS: is_org_member for select, is_org_member for insert/update/delete
--- Index on (organization_id, client_id)
-```
+### 3. Wire ClientDirectory `💬 N` indicator
+- New small hook `useOrgActiveCallbackCounts(orgId)` — single query: `SELECT client_id, COUNT(*) FROM client_callbacks WHERE organization_id = ? AND acknowledged_at IS NULL GROUP BY client_id` (with the same 90-day stale filter as the per-client hook)
+- In `ClientDirectory.tsx` row render, look up by `client.phorest_client_id` and render `<MessageCircle /> {count}` chip with tooltip "N open follow-ups"
+- One query for the whole directory page, not N+1
 
-### Layer 2 — Callbacks (episodic prompts)
+### 4. Collapse empty Hospitality block on ClientDetailSheet
+When both `facts.length === 0` AND `callbacks.length === 0` (active), render a single neutral one-liner with a "+ Add personal context" button instead of two side-by-side empty panels. First click expands the appropriate panel.
 
-**Where it lives:**
-- **Appointment card on the Schedule grid** (`AppointmentCardContent.tsx`): single-line yellow chip *if* a callback exists for this client: *"💬 Ask about Italy trip"* (truncated, full text on hover).
-- **Appointment Detail Sheet** Details tab: dedicated "Follow up" block at the very top, above contact info — impossible to miss when opening the appointment.
-- **Client Detail Sheet**: "Open threads" section listing all unacknowledged callbacks for this client.
+### 5. Anchor "Next visit" as default in callback capture
+In `ClientCallbacksPanel`, change the date row to: `[ ] Trigger by specific date — defaults to next visit`. Checkbox reveals the date picker. Reduces cognitive load.
 
-**UI (Appointment Detail Sheet — top of Details tab):**
+## Acceptance checks
 
-```
-FOLLOW UP                                          [Mark heard ✓]
-─────────────────────────────────────────────────────────────────
-💬  Ask how Italy was — set Mar 02 by Jenna B.
-💬  First date Saturday — set Apr 10 by Marcus T.
-─────────────────────────────────────────────────────────────────
-```
+1. Build succeeds (no TS error on L791)
+2. Creating an About fact or Callback on Eric Day persists and re-renders without error
+3. `CallbackChip` appears on Eric Day's appointment card after capturing a callback
+4. ClientDirectory rows show `💬 N` next to clients with active callbacks; tooltip shows count
+5. Opening a brand-new client (no facts, no callbacks) shows a single calm "+ Add personal context" prompt — not two empty panels
+6. Capturing a callback without setting a date shows "Next visit" as the trigger label in the active list
+7. Stale callbacks (90+ days past trigger) still hidden via existing client-side filter
+8. No regression on Wave 22.24 unified notes ledger
 
-**Capture flow:**
-- "+ Add follow-up" button on Client Detail sheet *and* on Appointment Notes ledger (Wave 22.24)
-- Single textarea: "What should we ask about next time?"
-- Optional date picker: "Trigger by [date]" (defaults to "next visit")
-- Saves to `client_callbacks` table
+## Files
 
-**Acknowledgment flow:**
-- "Mark heard" button on the prompt → sets `acknowledged_at` and `acknowledged_by`
-- Acknowledged callbacks disappear from active prompts but stay in client history ("Past follow-ups" expandable section)
-- Honors alert-fatigue: if a callback is more than 90 days past trigger, auto-archive with a "stale — never asked" tag
+**Migration:**
+- New `supabase/migrations/{ts}_{uuid}.sql` — drop+recreate the two tables with `client_id TEXT`
 
-**Schema (new table):**
-
-```sql
-CREATE TABLE public.client_callbacks (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  client_id uuid NOT NULL REFERENCES phorest_clients(id) ON DELETE CASCADE,
-  prompt text NOT NULL,                              -- "Ask how Italy was"
-  trigger_date date,                                  -- when it becomes active (null = next visit)
-  created_by uuid NOT NULL REFERENCES auth.users(id),
-  created_at timestamptz DEFAULT now(),
-  acknowledged_at timestamptz,
-  acknowledged_by uuid REFERENCES auth.users(id),
-  outcome_note text,                                  -- optional: "She loved it, going back next year"
-  archived_reason text                                -- 'acknowledged' | 'stale' | 'manual'
-);
--- RLS: is_org_member for all ops
--- Index on (organization_id, client_id, acknowledged_at) for fast "active callbacks" lookup
-```
-
-### How this reads on the appointment card
-
-Currently appointment cards show name, service, time, status. New: **one** subtle yellow chip when an active callback exists, capped at one chip per card to honor alert-fatigue doctrine:
-
-```
-ERIC DAY                              9:00 AM
-Combo Cut · Jenna B.                  ●  Confirmed
-💬  Ask about Italy trip
-```
-
-If multiple callbacks: show count *"💬 2 follow-ups"* — full list in detail sheet.
-
-### How this reads in Client Directory
-
-In the directory list row, a small `💬 N` indicator next to clients with active callbacks. Hover tooltip: *"3 open follow-ups."* Single-click into the detail sheet.
-
-### Onboarding copy (the "easy and understandable" part)
-
-The first time a stylist opens a client with no About facts, show a calm one-liner above the empty section:
-
-> *"Capture the personal details that make Eric feel known — kids' names, pets, hobbies, what he's working on. We'll surface them next time he books."*
-
-The first time a stylist captures a callback, show a tooltip:
-
-> *"We'll remind you to ask about this at Eric's next appointment. Mark it heard once you've followed up."*
-
-No videos, no walkthroughs. The tooltip teaches the loop in one sentence.
-
-### Acceptance checks
-
-1. New "About" card on Client Detail sheet shows typed slots; empty state guides first capture
-2. Stylist can add/edit/delete About facts inline; each slot edits independently
-3. New "Add follow-up" CTA on Client Detail sheet captures callbacks with optional trigger date
-4. Callback prompt appears at the *top* of the Appointment Detail sheet Details tab (above contact)
-5. Single yellow chip ("💬 Ask about Italy") appears on the Schedule grid card when an active callback exists
-6. "Mark heard" button archives the callback with optional outcome note
-7. Acknowledged callbacks move to "Past follow-ups" expandable section
-8. Callbacks 90+ days past trigger auto-archive with `archived_reason = 'stale'`
-9. About facts and callbacks both scoped by `organization_id` with `is_org_member` RLS
-10. Multi-callback case shows count chip, not stacked chips (alert-fatigue)
-
-### Files
-
-**New (database migration):**
-- `client_about_facts` table + RLS
-- `client_callbacks` table + RLS
-- Optional cron/edge to mark stale callbacks (or just compute client-side via `trigger_date < now() - 90 days`)
-
-**New (hooks):**
-- `src/hooks/useClientAboutFacts.ts` — read + upsert + delete
-- `src/hooks/useClientCallbacks.ts` — read active + acknowledge + create + archive
-
-**New (components):**
-- `src/components/dashboard/clients/ClientAboutCard.tsx` — structured slot card
-- `src/components/dashboard/clients/ClientCallbacksPanel.tsx` — active callback prompts + add form
-- `src/components/dashboard/clients/CallbackChip.tsx` — single-line chip for appointment cards
+**New hook:**
+- `src/hooks/useOrgActiveCallbackCounts.ts` — directory-wide count map
 
 **Edits:**
-- `src/components/dashboard/ClientDetailSheet.tsx` — render `<ClientAboutCard>` + `<ClientCallbacksPanel>` at top of Overview
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — render compact About block + Callbacks at top of Details tab
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — render `<CallbackChip>` when active callback exists
-- `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — render compact About block
-- `src/pages/dashboard/ClientDirectory.tsx` — `💬 N` indicator in list rows
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — L791 typo fix
+- `src/components/dashboard/ClientDetailSheet.tsx` — collapse empty hospitality block
+- `src/components/dashboard/clients/ClientCallbacksPanel.tsx` — anchor "Next visit" default with checkbox-revealed date
+- `src/pages/dashboard/ClientDirectory.tsx` — render callback count chip per row
 
-### Open questions (need your call)
+## Open question
 
-1. **Should "About" facts be visible to assistants and front desk, or stylist-only?** Going with **org-wide visible** (no privacy flag) since they're hospitality cues, not clinical data. Tell me if you want a private flag.
-2. **Should callbacks auto-create from booking-assistant intent?** E.g., booker captures "client mentioned going to Italy" → auto-suggests a callback. Defer (P3) unless you want it now.
-3. **Should we migrate existing freeform `client_notes` into typed About slots?** Defer (P3) — stylists can re-capture as they encounter clients. Auto-migration would mis-categorize.
+Should the ClientDirectory chip be **clickable** (jumps to detail sheet, opens callbacks panel scrolled into view) or **read-only**? Going **read-only** for this wave — the row itself opens the detail sheet which already shows callbacks at the top. Tell me if you want auto-scroll/highlight.
 
-### Deferred
+## Deferred
 
-- **P2** AI-assisted callback drafting: when a stylist adds an Appointment Note containing a personal mention ("she's going to Italy in March"), suggest *"Create follow-up: Ask how Italy went"* with one-click accept. Trigger: after this layer ships and stylists actively use callbacks.
-- **P3** "Hospitality score" on client cards — % of visits with an acknowledged callback. Surfaces operators who are building real relationships vs. transactional ones. Trigger: after 90 days of callback data accumulates.
-- **P3** Birthday/anniversary auto-callbacks — "Wish Sarah happy birthday" auto-generated from `phorest_clients.birthday`. Trigger: after manual callbacks prove the workflow.
-- **P3** Cross-staff callback ownership — "Marcus captured this; he should follow up." Today any stylist on the appointment can mark heard. Trigger: if multi-stylist orgs report ownership confusion.
-- **P3** Callback templates ("Ask about [trip] · [event] · [project]") to speed capture. Trigger: after observing what stylists actually type.
+- **P3** Add a unique constraint on `phorest_clients(organization_id, phorest_client_id)` so we can re-add a real FK on the hospitality tables. Trigger: after confirming no duplicate `phorest_client_id` rows exist per org.
+- **P3** Add a typed-counter return on the directory hook so we can render priority dots (red if any callback >30 days past trigger). Trigger: after operators report missed follow-ups.
+- **P3** Backfill: detect personal-content keywords in existing `client_notes` ("Italy", "wedding", "marathon") and suggest extracting them into Callbacks. Trigger: after manual capture proves the workflow.
 
