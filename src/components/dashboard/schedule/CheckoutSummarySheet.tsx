@@ -675,46 +675,8 @@ export function CheckoutSummarySheet({
                       }
                     }}
                     onScheduleManually={handleScheduleNextClick}
-                    onDecline={() => setGatePhase('declining')}
+                    onDecline={() => setDeclineDialogOpen(true)}
                   />
-                )}
-
-                {gatePhase === 'declining' && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <div className="space-y-3">
-                      <Label>Why did they decline?</Label>
-                      <RadioGroup value={declineReason} onValueChange={setDeclineReason}>
-                        {DECLINE_REASONS.map((reason) => (
-                          <div key={reason} className="flex items-center space-x-2">
-                            <RadioGroupItem value={reason} id={reason} />
-                            <Label htmlFor={reason} className="font-normal cursor-pointer">{reason}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                      
-                      {declineReason === 'Other' && (
-                        <Textarea 
-                          placeholder="Please specify reason..."
-                          value={declineOtherText}
-                          onChange={(e) => setDeclineOtherText(e.target.value)}
-                          className="mt-2"
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button variant="ghost" onClick={() => setGatePhase('gate')} className="flex-1">
-                        Back
-                      </Button>
-                      <Button 
-                        onClick={handleDeclineConfirm} 
-                        disabled={!isDeclineValid}
-                        className="flex-1"
-                      >
-                        Continue to Tip
-                      </Button>
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
