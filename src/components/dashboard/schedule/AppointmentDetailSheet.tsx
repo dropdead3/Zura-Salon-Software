@@ -1901,7 +1901,6 @@ export function AppointmentDetailSheet({
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-sm">{bookedName}</span>
-                              <Badge variant="outline" className="text-[10px]">Booked</Badge>
                               {isSameAsPreferred && (
                                 <Badge variant="outline" className="text-[10px] text-green-700 dark:text-green-300 border-green-300 gap-0.5">
                                   <Star className="h-2.5 w-2.5" /> Preferred
