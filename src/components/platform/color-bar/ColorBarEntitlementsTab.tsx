@@ -185,64 +185,178 @@ export function ColorBarEntitlementsTab() {
   const deleteFlag = useDeleteOrgFeatureFlag();
   const upsertLocEnt = useUpsertLocationEntitlement();
   const deleteLocEnt = useDeleteLocationEntitlement();
+  const bulkSuspend = useBulkSuspendLocationEntitlements();
+  const bulkReactivate = useBulkReactivateLocationEntitlements();
   const sendSetupLink = useSendPaymentSetupLink();
 
-
-  const toggleColorBar = (org: OrgWithColorBar) => {
-    if (org.backroom_enabled && org.override_id) {
-      deleteFlag.mutate(
-        { organizationId: org.id, flagKey: 'backroom_enabled' },
-        { onSuccess: () => toast.success(`Color Bar disabled for ${org.name}`) }
-      );
-    } else {
-      updateFlag.mutate(
-        {
-          organizationId: org.id,
-          flagKey: 'backroom_enabled',
-          isEnabled: true,
-          reason: 'Enabled via Platform Color Bar Admin',
-        },
-        {
-          onSuccess: async () => {
-            try {
-              // Fetch all active locations for this org
-              const { data: locs } = await supabase
-                .from('locations')
-                .select('id')
-                .eq('organization_id', org.id)
-                .eq('is_active', true);
-
-              if (locs && locs.length > 0) {
-                // Upsert active entitlements for all locations
-                    await supabase
-                      .from('backroom_location_entitlements')
-                      .upsert(
-                        locs.map((l) => ({
-                          organization_id: org.id,
-                          location_id: l.id,
-                          plan_tier: 'standard',
-                          scale_count: 0,
-                          status: 'active',
-                          billing_interval: 'monthly',
-                          activated_at: new Date().toISOString(),
-                        })),
-                        { onConflict: 'organization_id,location_id' }
-                      );
-
-                queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
-                toast.success(`Color Bar enabled for ${org.name} — all locations activated`);
-              } else {
-                toast.success(`Color Bar enabled for ${org.name}`);
-              }
-            } catch {
-              // Org flag was set successfully; location entitlements failed silently
-              queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
-              toast.success(`Color Bar enabled for ${org.name}`);
-            }
-          },
-        }
+  /**
+   * Optimistically flip the org's backroom_enabled in the table cache so the
+   * UI feels instant. Returns a rollback fn.
+   */
+  const optimisticallyFlip = (orgId: string, nextEnabled: boolean) => {
+    const prev = queryClient.getQueryData<OrgWithColorBar[]>([
+      'platform-color-bar-entitlements',
+    ]);
+    if (prev) {
+      queryClient.setQueryData<OrgWithColorBar[]>(
+        ['platform-color-bar-entitlements'],
+        prev.map((o) => (o.id === orgId ? { ...o, backroom_enabled: nextEnabled } : o)),
       );
     }
+    return () => {
+      if (prev) {
+        queryClient.setQueryData(['platform-color-bar-entitlements'], prev);
+      }
+    };
+  };
+
+  /**
+   * Schedule an advisory toast if the operation hasn't completed within 800ms.
+   * Returns { dismiss } so we can clear the timer + dismiss the toast on
+   * settle.
+   */
+  const scheduleAdvisoryToast = (message: string) => {
+    let toastId: string | number | undefined;
+    const timer = window.setTimeout(() => {
+      toastId = toast.loading(message);
+    }, 800);
+    return {
+      dismiss: () => {
+        window.clearTimeout(timer);
+        if (toastId !== undefined) toast.dismiss(toastId);
+      },
+    };
+  };
+
+  /** Soft-disable: preserve flag row + suspend all active location entitlements. */
+  const softDisableColorBar = async (org: OrgWithColorBar) => {
+    const rollback = optimisticallyFlip(org.id, false);
+    const advisory = scheduleAdvisoryToast(
+      `Suspending Color Bar across ${org.name}'s locations…`,
+    );
+    try {
+      // Set is_enabled=false on the org flag (preserve override row + history)
+      await updateFlag.mutateAsync({
+        organizationId: org.id,
+        flagKey: 'backroom_enabled',
+        isEnabled: false,
+        reason: 'Suspended via Platform Color Bar Admin',
+      });
+      // Bulk-suspend all active location entitlements
+      await bulkSuspend.mutateAsync({ organization_id: org.id });
+      advisory.dismiss();
+      toast.success(`Color Bar suspended for ${org.name} — data preserved`);
+    } catch (err: any) {
+      advisory.dismiss();
+      rollback();
+      toast.error('Could not suspend Color Bar: ' + (err?.message ?? 'unknown error'));
+    }
+  };
+
+  /** First-time enable: flag on + activate all locations (no reconciliation). */
+  const firstTimeEnableColorBar = async (org: OrgWithColorBar) => {
+    const rollback = optimisticallyFlip(org.id, true);
+    const advisory = scheduleAdvisoryToast(
+      `Activating Color Bar across ${org.name}'s locations…`,
+    );
+    try {
+      await updateFlag.mutateAsync({
+        organizationId: org.id,
+        flagKey: 'backroom_enabled',
+        isEnabled: true,
+        reason: 'Enabled via Platform Color Bar Admin',
+      });
+      const { data: locs } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('organization_id', org.id)
+        .eq('is_active', true);
+      if (locs && locs.length > 0) {
+        await supabase.from('backroom_location_entitlements').upsert(
+          locs.map((l) => ({
+            organization_id: org.id,
+            location_id: l.id,
+            plan_tier: 'standard',
+            scale_count: 0,
+            status: 'active',
+            billing_interval: 'monthly',
+            activated_at: new Date().toISOString(),
+          })),
+          { onConflict: 'organization_id,location_id' },
+        );
+        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-all-entitlement-counts'] });
+        advisory.dismiss();
+        toast.success(`Color Bar enabled for ${org.name} — all locations activated`);
+      } else {
+        advisory.dismiss();
+        toast.success(`Color Bar enabled for ${org.name}`);
+      }
+    } catch (err: any) {
+      advisory.dismiss();
+      rollback();
+      toast.error('Could not enable Color Bar: ' + (err?.message ?? 'unknown error'));
+    }
+  };
+
+  /** Reactivation from a previous suspension: flips flag + sets reconciliation flag. */
+  const reactivateColorBar = async (org: OrgWithColorBar) => {
+    const rollback = optimisticallyFlip(org.id, true);
+    const advisory = scheduleAdvisoryToast(
+      `Reactivating Color Bar across ${org.name}'s locations…`,
+    );
+    try {
+      await updateFlag.mutateAsync({
+        organizationId: org.id,
+        flagKey: 'backroom_enabled',
+        isEnabled: true,
+        reason: 'Reactivated via Platform Color Bar Admin',
+      });
+      const reactivated = await bulkReactivate.mutateAsync({ organization_id: org.id });
+      advisory.dismiss();
+      toast.success(
+        `Color Bar reactivated for ${org.name} — ${reactivated.length} location${
+          reactivated.length === 1 ? '' : 's'
+        } require inventory verification`,
+      );
+    } catch (err: any) {
+      advisory.dismiss();
+      rollback();
+      toast.error('Could not reactivate Color Bar: ' + (err?.message ?? 'unknown error'));
+    }
+  };
+
+  const toggleColorBar = async (org: OrgWithColorBar) => {
+    if (org.backroom_enabled) {
+      // Toggle OFF: soft-suspend
+      await softDisableColorBar(org);
+      return;
+    }
+    // Toggle ON: check whether any locations are currently 'suspended'
+    // (indicates a prior suspension → require reconciliation acknowledgment).
+    const { data: suspendedRows } = await supabase
+      .from('backroom_location_entitlements')
+      .select('location_id, suspended_at')
+      .eq('organization_id', org.id)
+      .eq('status', 'suspended')
+      .order('suspended_at', { ascending: false });
+
+    if (suspendedRows && suspendedRows.length > 0) {
+      // Fetch location names for the dialog
+      const locIds = suspendedRows.map((r: any) => r.location_id);
+      const { data: locs } = await supabase
+        .from('locations')
+        .select('id, name')
+        .in('id', locIds);
+      const nameMap = new Map((locs ?? []).map((l: any) => [l.id, l.name]));
+      const locationNames = locIds.map((id: string) => nameMap.get(id) ?? 'Unknown location');
+      const mostRecentSuspendedAt = (suspendedRows[0] as any).suspended_at as string | null;
+      setReactivationTarget({ org, suspendedAt: mostRecentSuspendedAt, locationNames });
+      return;
+    }
+
+    // No prior suspension → first-time activation flow
+    await firstTimeEnableColorBar(org);
   };
 
   const toggleLocationEntitlement = (orgId: string, locationId: string) => {
