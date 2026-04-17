@@ -5218,6 +5218,75 @@ export type Database = {
           },
         ]
       }
+      client_communications: {
+        Row: {
+          appointment_id: string | null
+          body: string | null
+          channel: string
+          client_id: string | null
+          created_at: string
+          direction: string
+          error_message: string | null
+          from_phone: string | null
+          id: string
+          organization_id: string
+          sent_by_user_id: string | null
+          status: string
+          template_key: string | null
+          to_phone: string | null
+          twilio_sid: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          body?: string | null
+          channel: string
+          client_id?: string | null
+          created_at?: string
+          direction?: string
+          error_message?: string | null
+          from_phone?: string | null
+          id?: string
+          organization_id: string
+          sent_by_user_id?: string | null
+          status?: string
+          template_key?: string | null
+          to_phone?: string | null
+          twilio_sid?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          body?: string | null
+          channel?: string
+          client_id?: string | null
+          created_at?: string
+          direction?: string
+          error_message?: string | null
+          from_phone?: string | null
+          id?: string
+          organization_id?: string
+          sent_by_user_id?: string | null
+          status?: string
+          template_key?: string | null
+          to_phone?: string | null
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_communications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_communications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_email_preferences: {
         Row: {
           client_id: string

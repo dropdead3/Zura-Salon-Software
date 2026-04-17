@@ -38,6 +38,7 @@ import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
+import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
 import { useUnviewedInspirationPhotos } from '@/hooks/useUnviewedInspirationPhotos';
@@ -703,6 +704,9 @@ export function AppointmentDetailSheet({
   const [clientNotesExpanded, setClientNotesExpanded] = useState(false);
   // Tab state -- resets to "details" when appointment changes (#10)
   const [activeTab, setActiveTab] = useState('details');
+  // Wave 22.5 — Zura-native call/text dialogs
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [textDialogOpen, setTextDialogOpen] = useState(false);
 
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r)) || isPrimaryOwner;
@@ -1531,11 +1535,14 @@ export function AppointmentDetailSheet({
                         {showCall && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="sm" className={commBtn} asChild>
-                                <a href={`tel:${phone}`}>
-                                  <Phone className="h-3.5 w-3.5 sm:mr-1.5" />
-                                  <span className="hidden sm:inline">Call</span>
-                                </a>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={commBtn}
+                                onClick={() => setCallDialogOpen(true)}
+                              >
+                                <Phone className="h-3.5 w-3.5 sm:mr-1.5" />
+                                <span className="hidden sm:inline">Call</span>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Call {phone}</TooltipContent>
@@ -1545,11 +1552,14 @@ export function AppointmentDetailSheet({
                         {showText && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="sm" className={commBtn} asChild>
-                                <a href={`sms:${phone}`}>
-                                  <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
-                                  <span className="hidden sm:inline">Text</span>
-                                </a>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={commBtn}
+                                onClick={() => setTextDialogOpen(true)}
+                              >
+                                <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
+                                <span className="hidden sm:inline">Text</span>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Text {phone}</TooltipContent>
@@ -2550,6 +2560,32 @@ export function AppointmentDetailSheet({
                 </div>
               )}
             </PremiumFloatingPanel>
+
+      {/* Wave 22.5 — Zura-native call/text dialogs */}
+      {appointment.client_phone && resolvedOrgId && (
+        <>
+          <ContactActionDialog
+            mode="call"
+            open={callDialogOpen}
+            onOpenChange={setCallDialogOpen}
+            clientName={appointment.client_name || 'Client'}
+            phone={appointment.client_phone}
+            organizationId={resolvedOrgId}
+            clientId={clientRecord?.id ?? null}
+            appointmentId={appointment.id ?? null}
+          />
+          <ContactActionDialog
+            mode="text"
+            open={textDialogOpen}
+            onOpenChange={setTextDialogOpen}
+            clientName={appointment.client_name || 'Client'}
+            phone={appointment.client_phone}
+            organizationId={resolvedOrgId}
+            clientId={clientRecord?.id ?? null}
+            appointmentId={appointment.id ?? null}
+          />
+        </>
+      )}
 
       {/* Confirmation Dialog (Cancel / No Show) */}
       <div>
