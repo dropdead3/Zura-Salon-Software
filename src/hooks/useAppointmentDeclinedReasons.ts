@@ -40,10 +40,11 @@ export function useAppointmentDeclinedReasons(appointmentIds: string[]) {
 
       // Dedupe — first occurrence per appointment (already sorted DESC by created_at)
       const map = new Map<string, AppointmentDeclinedReason>();
-      for (const row of (data || []) as Array<{
+      const rows = (data ?? []) as unknown as Array<{
         appointment_id: string | null;
         reason_code: string;
-      }>) {
+      }>;
+      for (const row of rows) {
         if (!row.appointment_id) continue;
         if (map.has(row.appointment_id)) continue;
         map.set(row.appointment_id, {
