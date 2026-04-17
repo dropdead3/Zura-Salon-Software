@@ -134,7 +134,7 @@ export function CheckoutSummarySheet({
   const { data: reviewSettings } = useReviewThresholdSettings();
   const orgName = useBusinessName();
 
-  type GatePhase = 'gate' | 'checkout';
+  type GatePhase = 'gate' | 'checkout' | 'confirmation';
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
   const rebookGateRef = useRef<HTMLDivElement | null>(null);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
@@ -146,6 +146,22 @@ export function CheckoutSummarySheet({
     notes: string | null;
   } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('cash');
+  // Wave 23 — tip mode persisted per location (operator preference)
+  const tipModeStorageKey = locationId ? `zura_tip_mode_${locationId}` : null;
+  const [tipMode, setTipMode] = useState<'app' | 'reader'>(() => {
+    if (!tipModeStorageKey) return 'app';
+    try {
+      return (localStorage.getItem(tipModeStorageKey) as 'app' | 'reader') || 'app';
+    } catch {
+      return 'app';
+    }
+  });
+  // Wave 22 — post-charge confirmation state
+  const [successState, setSuccessState] = useState<{
+    amount: number;
+    method: CheckoutPaymentMethod;
+    receiptStatus: 'sent' | 'pending' | 'none';
+  } | null>(null);
   const logDeclineReason = useLogRebookDeclineReason();
 
   // Terminal reader + checkout flow
@@ -182,9 +198,23 @@ export function CheckoutSummarySheet({
       setDeclinedReason(null);
       setRebooked(false);
       setPaymentMethod('cash');
+      setSuccessState(null);
       terminalFlow.reset();
     }
   }, [open]);
+
+  // Persist tipMode per location
+  useEffect(() => {
+    if (!tipModeStorageKey) return;
+    try { localStorage.setItem(tipModeStorageKey, tipMode); } catch { /* noop */ }
+  }, [tipMode, tipModeStorageKey]);
+
+  // Auto-dismiss the confirmation panel after 4s
+  useEffect(() => {
+    if (gatePhase !== 'confirmation') return;
+    const timer = setTimeout(() => onOpenChange(false), 4000);
+    return () => clearTimeout(timer);
+  }, [gatePhase, onOpenChange]);
 
   useEffect(() => {
     if (rebookCompleted && open) {
