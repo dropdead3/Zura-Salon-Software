@@ -476,12 +476,23 @@ export function ScheduleHeader({
                   className="h-7 w-[220px] @lg/schedhdr:w-[280px] px-4 text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   <span className="flex-1 text-left truncate">
-                    {selectedStaffIds.length === 0 
-                      ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
-                      : selectedStaffIds.length === 1
-                        ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
-                        : `${selectedStaffIds.length} selected`
-                    }
+                    {(() => {
+                      // Week view with no manual selection → reflect the auto-resolved stylist
+                      if (view === 'week' && selectedStaffIds.length === 0 && weekViewStylistId) {
+                        const s = stylists.find(s => s.user_id === weekViewStylistId);
+                        if (s) return formatFullDisplayName(s.full_name, s.display_name);
+                      }
+                      if (selectedStaffIds.length === 0) {
+                        return staffFilterMode === 'with-appointments'
+                          ? 'Only Stylists With Appointments'
+                          : 'All Stylists That Work This Day';
+                      }
+                      if (selectedStaffIds.length === 1) {
+                        const s = stylists.find(s => s.user_id === selectedStaffIds[0]);
+                        return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected';
+                      }
+                      return `${selectedStaffIds.length} selected`;
+                    })()}
                   </span>
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
                 </Button>
