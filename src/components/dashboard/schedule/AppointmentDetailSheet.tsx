@@ -578,6 +578,8 @@ export function AppointmentDetailSheet({
   initialTab,
 }: AppointmentDetailSheetProps) {
   const { dashPath } = useOrgDashboardPath();
+  const { isEntitled: colorBarEntitled, isPendingActivation: isColorBarPendingActivation } =
+    useColorBarEntitlement(appointment.location_id ?? undefined);
   const { user, hasPermission, roles } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { formatCurrency } = useFormatCurrency();
