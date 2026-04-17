@@ -111,6 +111,7 @@ export function ScheduleHeader({
   setView,
   selectedStaffIds,
   onStaffToggle,
+  onStaffSelectOnly,
   stylists,
   selectedLocation,
   onLocationChange,
