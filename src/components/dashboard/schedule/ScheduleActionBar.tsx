@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { CalendarDays, CalendarClock, ZoomIn, ZoomOut, Plus, Users, FileText, PlayCircle, Clock, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ interface ScheduleActionBarProps {
   onOpenDrafts?: () => void;
   draftCount?: number;
   view?: 'day' | 'week' | 'agenda';
+  /** The currently viewed date in the calendar (used to determine if pills are temporally relevant). */
+  currentDate?: Date;
 }
 
 const MAX_RESULTS = 6;
@@ -68,6 +71,7 @@ export function ScheduleActionBar({
   onOpenDrafts,
   draftCount = 0,
   view,
+  currentDate,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
   const { todayStr } = useOrgNow();
@@ -88,6 +92,23 @@ export function ScheduleActionBar({
   );
 
   const searchPool = searchAppointments ?? appointments;
+
+  // Determine if we're viewing today (for conditional rendering of temporally-bound pills)
+  const isViewingToday = useMemo(() => {
+    if (!currentDate) return true;
+    return format(currentDate, 'yyyy-MM-dd') === todayStr;
+  }, [currentDate, todayStr]);
+
+  // Count of appointments on the currently viewed date (for non-today day view)
+  const viewedDateCount = useMemo(() => {
+    if (!currentDate || isViewingToday) return 0;
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    return searchPool.filter(
+      a => a.appointment_date === dateStr && !['cancelled', 'no_show'].includes(a.status)
+    ).length;
+  }, [currentDate, isViewingToday, searchPool]);
+
+  const displayedApptCount = view === 'day' && !isViewingToday ? viewedDateCount : todayAppointmentCount;
 
   const results = useMemo(() => {
     const q = debounced.trim().toLowerCase();
@@ -174,17 +195,17 @@ export function ScheduleActionBar({
         </Button>
       )}
 
-      {/* Appointment count */}
+      {/* Appointment count — reflects viewed date in day view, today otherwise */}
       <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
         <CalendarDays className="h-4 w-4" />
         <span>
-          <span className="font-medium text-foreground">{todayAppointmentCount}</span>
-          {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
+          <span className="font-medium text-foreground">{displayedApptCount}</span>
+          {' '}appt{displayedApptCount !== 1 ? 's' : ''}
         </span>
       </div>
 
-      {/* Day view only: in-session + remaining counts */}
-      {view === 'day' && (
+      {/* Day view + viewing today only: in-session + remaining counts (temporally bound to "now") */}
+      {view === 'day' && isViewingToday && (
         <>
           <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
             <PlayCircle className="h-4 w-4" />
