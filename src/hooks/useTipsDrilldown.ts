@@ -59,9 +59,10 @@ interface UseTipsDrilldownParams {
   dateTo: string;
   locationId?: string;
   minAppointments?: number;
+  enabled?: boolean;
 }
 
-export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments = 10 }: UseTipsDrilldownParams): TipsDrilldownData {
+export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments = 10, enabled = true }: UseTipsDrilldownParams): TipsDrilldownData {
 
   // Fetch appointments with tips data
   const { data: appointments, isLoading: aptsLoading, error: aptsError } = useQuery({

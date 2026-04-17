@@ -37,6 +37,7 @@ export function useRevenueByCategoryDrilldown({
 }: UseRevenueByCategoryDrilldownOptions) {
   return useQuery({
     queryKey: ['revenue-by-category-drilldown', dateFrom, dateTo, locationId || 'all'],
+    enabled: enabled && !!dateFrom && !!dateTo,
     queryFn: async (): Promise<CategoryBreakdownData[]> => {
       // Fetch transaction items for accurate POS revenue
       const allItems: any[] = [];

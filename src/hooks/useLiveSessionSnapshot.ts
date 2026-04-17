@@ -34,9 +34,10 @@ interface LiveSessionSnapshot {
   isLoading: boolean;
 }
 
-export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot {
+export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = true): LiveSessionSnapshot {
   const { data, isLoading } = useQuery({
     queryKey: ['live-session-snapshot', locationId ?? 'all'],
+    enabled,
     queryFn: async () => {
       const today = format(new Date(), 'yyyy-MM-dd');
       const now = format(new Date(), 'HH:mm:ss');

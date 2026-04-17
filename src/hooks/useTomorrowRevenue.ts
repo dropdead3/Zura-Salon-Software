@@ -3,12 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
 import { isAllLocations } from '@/lib/locationFilter';
 
-export function useTomorrowRevenue(locationId?: string) {
+export function useTomorrowRevenue(locationId?: string, enabled: boolean = true) {
   const tomorrow = addDays(new Date(), 1);
   const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
 
   return useQuery({
     queryKey: ['tomorrow-revenue', tomorrowStr, locationId ?? 'all'],
+    enabled,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       // Future-dated: use appointments with tip-adjusted price
       let query = supabase
