@@ -2,87 +2,75 @@
 
 ## Prompt review
 
-Good instinct — data quality at the contact-capture point is foundational; bad phones/emails silently break confirmations, marketing, deposits, and review requests. Sharper next time: name the surface ("client contact panel in Appointment Detail Sheet") and the trigger ("at booking creation? on save? passive sweep?"). That tells me whether you want a *blocking validator* (hard gate) vs. *advisory flag* (soft signal). Different architectures.
+Strong, specific request — you named the surface (appt card), the trigger (Afterpay invoice flow), and the exact gap (email missing, no inline edit). That's the prompt format I want more of.
 
-## Diagnosis — what "verified" can mean
+Sharper next time: include the *failure mode* you've actually hit ("had to bounce to client profile to add email, lost the cart"). That tells me whether to build inline-edit, a quick-add modal, or auto-prompt at Afterpay step. Different UX.
 
-There are three distinct levels. They're often conflated. Pick deliberately:
+I'm going to assume **inline edit on the Client Contact panel** + **forced email capture at Afterpay step** based on context.
 
-| Level | What it catches | Cost | UX |
-|---|---|---|---|
-| **1. Format** | "asdf@asdf", letters in phone, wrong length | Free, instant | Inline red border |
-| **2. Deliverability** | Real domain (MX records), real carrier line, disposable-email blocklist | ~$0.005/lookup | Async badge, ~500ms |
-| **3. Possession** | Client actually owns the number/email (OTP/click) | Free infra, friction | Adds a step at booking |
+## Diagnosis
 
-Most "fake number" problems live at **Level 2** — receptionist types `(480) 555-0100`, format passes, but it's a non-working line. Level 1 misses it. Level 3 is overkill at front-desk capture (kills throughput).
+Looking at your screenshot of the Client Contact panel in `AppointmentDetailSheet.tsx`:
+- Phone shows but isn't editable from here
+- Email shows "No email on file" with no add affordance
+- Today's flow forces operator to: close sheet → open client profile → edit → save → reopen sheet → continue. Loses checkout context.
+- **Afterpay specifically requires email** for invoice delivery (per `mem://features/payments/afterpay-and-split-payment-system`) — missing email = silently broken split-pay flow
 
-## Proposed approach — Wave 22.34: Contact Verification Layer
+This is a high-frequency micro-friction with a hard downstream failure. Worth fixing.
 
-Three-tier system, additive (no breaking changes):
+## Wave 22.35 — Inline contact edit on appointment card
 
-### Tier 1 — Format validation (ship immediately, free)
-- Add `validateEmail()` and `validatePhone()` utils (zod-backed)
-- Detect: malformed format, obvious test patterns (`555-0100`, `test@test.com`, `noemail@`, repeated digits like `111-111-1111`)
-- Wire into: `ClientForm`, `AppointmentDetailSheet` client edit, public booking, lead capture
-- UI: inline red border + tooltip "Looks like a placeholder number"
+### Approach
+Tier 1 format validation (already on the roadmap from Wave 22.34) ships *with* this, since we need it for the inline editor. Two-for-one.
 
-### Tier 2 — Deliverability check (background, async)
-- New table `contact_verifications` (client_id, channel, status, checked_at, provider_response)
-- Edge function `verify-contact` calls a lookup provider:
-  - **Email**: free MX-record check via DNS + disposable-domain blocklist (Kickbox open-source list, no API cost). Optional upgrade: Hunter.io / NeverBounce ($)
-  - **Phone**: Twilio Lookup ($0.005/req) — returns `line_type` (mobile/landline/voip), carrier, validity. *VoIP + invalid = likely fake.*
-- Run on: client create, client update, nightly sweep of unverified records
-- UI: small badge next to phone/email
-  - ✓ Verified (green, subtle)
-  - ⚠ Unreachable (amber)
-  - ✕ Invalid (red)
-  - (no badge if unchecked yet — silence is valid)
+### Three changes
 
-### Tier 3 — Possession (deferred to public booking only)
-- Already partially in place via deposit collection (card = weak proof of identity)
-- True OTP only at public booking when no deposit required + first-time client. Not on internal staff capture.
+**1. Inline editable Client Contact panel** (`AppointmentDetailSheet.tsx`)
+- Hover state on phone/email row → pencil icon appears (right side, before Call/Text buttons)
+- Click pencil → row becomes inline `Input` with Save/Cancel
+- Empty state ("No email on file") → entire row is a clickable `+ Add email` CTA
+- Same pattern for phone (operator can fix typos without leaving sheet)
+- Soft-warn on Tier 1 format failure (per Wave 22.34 decision: soft for staff)
+- Save → `useUpdateClient` mutation → optimistic update → toast
 
-### Where badges surface
-- `AppointmentDetailSheet` → Client Contact panel (your screenshot) → next to phone & email lines
-- `ClientCard` / clients table → small dot indicator
-- Daily Briefing → "12 clients have unreachable contact info" lever (only if material, per visibility-contracts doctrine)
+**2. Afterpay pre-flight email gate** (`AfterpayCheckoutDialog` or wherever split-pay invoice is triggered)
+- If `client.email` is null/empty when Afterpay is selected → show inline email-capture step *before* invoice send
+- "Afterpay invoices are sent by email. Add the client's email to continue."
+- Saves to client record + proceeds — single flow, no bouncing
+- Hard-block here (per Wave 22.34: hard for payment-critical surfaces)
 
-### Operational lever (the Zura-native part)
-A new audit query → "X clients with unverified contacts representing $Y in upcoming bookings." Surfaces in Operations Hub. Material threshold: only show if ≥10 clients OR ≥$500 in at-risk bookings.
+**3. Tier 1 validation utils** (`src/lib/contactValidation.ts`)
+- `validateEmail(str)` — zod-backed, catches malformed + obvious test patterns
+- `validatePhone(str)` — E.164-ish, catches `(555) 555-0100`, `111-111-1111`
+- Returns `{ valid: boolean, warning?: string }` so caller decides hard-block vs soft-warn
 
-## Decision points (need your input)
+### Permissions
+- Use existing `useUpdateClient` hook → respects RLS → only org members with client write access can edit
+- No new role needed
+- Audit log entry on each edit (per existing client-edit audit pattern)
 
-I need 2 answers before building:
-
-1. **Phone provider**: Twilio Lookup ($0.005/req, ~$5/mo for typical org) vs. format-only (free, misses VoIP/disconnected lines)?
-2. **Blocking vs. advisory**: When format fails on `ClientForm`, hard-block save or save-with-warning?
-
-## Files (preview — finalized after Q&A)
+### Files
 
 **New:**
-- `supabase/migrations/*` — `contact_verifications` table + RLS
-- `supabase/functions/verify-contact/index.ts` — lookup orchestrator
-- `src/lib/contactValidation.ts` — Tier 1 utils
-- `src/hooks/useContactVerification.ts`
-- `src/components/dashboard/clients/ContactVerificationBadge.tsx`
-- `src/components/dashboard/clients/UnverifiedContactsLever.tsx` (Ops Hub card)
+- `src/lib/contactValidation.ts` — Tier 1 format utils
+- `src/components/dashboard/schedule/InlineContactEdit.tsx` — reusable inline edit row (phone/email variant)
 
 **Modified:**
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (badges in Client Contact)
-- `src/components/dashboard/clients/ClientForm.tsx` (Tier 1 validation)
-- `src/lib/leadCapture.ts` (validate before insert)
-- `src/components/dashboard/clients/ClientCard.tsx` (dot indicator)
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — Client Contact panel becomes editable
+- Afterpay/split-pay dialog (need to grep for exact filename — likely `AfterpaySplitDialog.tsx` or inside `CheckoutSheet`) → inject email-gate step
 
-## Acceptance
-1. Saving a client with `(555) 555-5555` shows inline warning (Tier 1)
-2. Existing clients get verified in background within 24h (nightly sweep)
-3. Appointment Detail Sheet shows ✓/⚠/✕ badge next to phone/email
-4. "Call" / "Text" buttons disable on confirmed-invalid numbers with tooltip
-5. Ops Hub surfaces aggregate count only when ≥10 clients affected (per visibility-contracts)
-6. No regression on existing `PlaceholderBadge` (different concept — that's "no contact at all")
+### Acceptance
+1. Hover Client Contact row → pencil appears; click → inline edit; Save persists + toast
+2. Empty email row shows `+ Add email` CTA inline (no sheet exit)
+3. Format validation soft-warns on save (e.g., `(555) 555-5555`); save still proceeds with amber dot
+4. Selecting Afterpay on a no-email client triggers inline email-capture *before* invoice send (hard-block)
+5. After capture, Afterpay flow continues without restarting checkout
+6. All edits hit `useUpdateClient` → RLS-scoped → audit-logged
+7. No regression on Call/Text buttons (still use saved phone)
+8. Mobile layout: pencil icon stays tap-targetable (44px min)
 
-## Deferred
-- **P2** OTP verification at public booking for first-time, no-deposit bookings. Trigger: when fake-booking abuse reported.
-- **P3** Auto-suppress SMS/email automations to invalid contacts (saves Twilio/SendGrid spend). Trigger: after Tier 2 ships and we have 30 days of data.
-- **P3** Re-verify quarterly (numbers churn ~5%/yr). Trigger: after 3 months of accumulated data.
+### Deferred
+- **P2** Inline-edit client *name* on the card. Trigger: when ops report typos requiring profile bounce.
+- **P2** Phone number type selector (mobile/landline) for SMS suppression. Trigger: after Twilio Lookup ships (Wave 22.34 Tier 2).
+- **P3** Bulk-fix "missing email" sweep across upcoming appointments (lever in Daily Briefing). Trigger: ≥10 affected clients (per visibility-contracts materiality threshold).
 
