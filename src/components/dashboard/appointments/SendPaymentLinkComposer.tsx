@@ -31,6 +31,8 @@ interface SendPaymentLinkComposerProps {
   clientName?: string | null;
   clientEmail?: string | null;
   clientPhone?: string | null;
+  /** Phorest client id — required to persist a captured email back to the client record */
+  phorestClientId?: string | null;
   afterpayEnabled: boolean;
   afterpaySurchargeEnabled?: boolean;
   afterpaySurchargeRate?: number;
@@ -47,15 +49,25 @@ export function SendPaymentLinkComposer({
   clientName,
   clientEmail,
   clientPhone,
+  phorestClientId,
   afterpayEnabled,
   afterpaySurchargeEnabled,
   afterpaySurchargeRate = 0.06,
   onPaymentLinkSent,
 }: SendPaymentLinkComposerProps) {
   const { formatCurrency } = useFormatCurrency();
+  const queryClient = useQueryClient();
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
+
+  // ─── Wave 22.35: Inline email capture for Afterpay flow ──────────
+  // Afterpay invoices are emailed; if no email on file, capture it before send.
+  const [capturedEmail, setCapturedEmail] = useState<string>('');
+  const [emailWarning, setEmailWarning] = useState<string | null>(null);
+  const [savingEmail, setSavingEmail] = useState(false);
+  // Effective email = captured (if just added) OR pre-existing
+  const effectiveEmail = capturedEmail.trim() || clientEmail || '';
 
   // Auto-detect default channel
   const defaultChannel: Channel = useMemo(() => {
