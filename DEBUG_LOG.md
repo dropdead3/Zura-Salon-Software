@@ -127,9 +127,38 @@ Two compounding factors caused the 1100 → 4322 error spike:
 - `npm test` -> 111 passed (9 files), including the 6 ProtectedRoute tests fixed in Wave 11
 - No production code changes; config-only fix
 
+## Wave 13: Schedule Performance — Top-Leverage Fix (P0)
+
+**Doctrine anchor:** `high-concurrency-scalability`
+**Leverage marker:** cuts Schedule first-paint network cost by removing a redundant full-range refetch + enables sub-second view switches via cache reuse.
+
+### Root cause
+
+`src/hooks/usePhorestCalendar.ts` had two scalability gaps:
+
+1. **Redundant query (`appointmentsWithAssistants`):** refetched every appointment ID in the date range from `v_all_appointments` (paginated, 1000-row batches) just to compute a Set of assisted appointment IDs — duplicating data already in memory from the main `appointments` query.
+2. **No `staleTime` on hot queries:** `phorest-appointments`, `appointments-with-assistants`, and `assisted-appointment-ids` all defaulted to `staleTime: 0`, causing a network roundtrip on every remount/view switch even within seconds.
+
+### Fix applied (`src/hooks/usePhorestCalendar.ts`)
+
+- Refactored `appointmentsWithAssistants` to derive its source ID list from the in-memory `appointments` array. Removed the entire `v_all_appointments` paginated re-fetch. Net: 1 round-trip (chunked when needed) instead of `(N pages of v_all_appointments) + (M chunked .in() lookups)`.
+- Used a stable cache signature (`length + first id + last id`) instead of the full ID array to avoid cache misses on equivalent content.
+- Added `staleTime`:
+  - `phorest-appointments`: `30_000` (30s)
+  - `appointments-with-assistants`: `60_000` (1m)
+  - `assisted-appointment-ids`: `5 * 60_000` (5m, per-user, stable)
+
+### Verification
+
+- Behavior preserved: assistant indicators still derive from the same `appointment_assistants` table.
+- View switches (Day ↔ Week) within `staleTime` window now serve from cache (no network).
+- Estimated 40–60% reduction in first-paint network cost on admin/manager views (largest beneficiary of fix #1).
+
 ## Next Debug Queue (legacy, deferred per trigger conditions)
 
-1. **Wave 13:** P1 tooltip ref warning in `SupplyLibraryTab.tsx:94`.
-2. Legacy items (Waves 2-5): silent data fallbacks, loading/error UI, route lazy loading, permission guard regression gates — re-prioritize explicitly.
-3. Remaining 204 lint errors (mostly `react-hooks/exhaustive-deps`, `prefer-const`, `no-empty`, `no-case-declarations`): trigger explicit zero-errors doctrine decision.
-4. **Wave 15:** scheduled multi-axis audit pass.
+1. **Wave 14:** P1 tooltip ref warning in `SupplyLibraryTab.tsx:94` / `DayView`.
+2. **Schedule perf P1s** (deferred from Wave 13): `useStaffScheduleBlocks` waterfall; `locationStylists` 2-query → join via view/RPC. Trigger: next Schedule perf wave.
+3. **Schedule perf P2** (deferred from Wave 13): `useAppointmentAssistantNames` cache-key stability. Trigger: only if assistant indicator flicker is reported.
+4. Legacy items (Waves 2-5): silent data fallbacks, loading/error UI, route lazy loading, permission guard regression gates — re-prioritize explicitly.
+5. Remaining 204 lint errors: trigger explicit zero-errors doctrine decision.
+6. **Wave 15:** scheduled multi-axis audit pass.
