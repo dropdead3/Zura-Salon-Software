@@ -108,6 +108,7 @@ export function SendToPayButton({
         clientName={clientName}
         clientEmail={clientEmail}
         clientPhone={clientPhone}
+        phorestClientId={phorestClientId}
         afterpayEnabled={afterpayEnabled}
         afterpaySurchargeEnabled={afterpaySurchargeEnabled}
         afterpaySurchargeRate={afterpaySurchargeRate}
