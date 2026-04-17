@@ -1000,7 +1000,6 @@ export default function Schedule() {
                 hoursStart={preferences.hours_start}
                 hoursEnd={preferences.hours_end}
               />
-              />
         </div>
 
         {/* Main Content Area */}
