@@ -98,6 +98,8 @@ interface ScheduleHeaderProps {
   appointments?: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
+  /** Resolved single stylist for week view (null in day view or none available) */
+  weekViewStylistId?: string | null;
 }
 
 export function ScheduleHeader({
