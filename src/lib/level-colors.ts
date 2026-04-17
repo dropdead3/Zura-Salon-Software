@@ -5,8 +5,8 @@
  */
 
 const COLOR_STOPS = [
-  { bg: 'bg-muted', text: 'text-muted-foreground' },
-  { bg: 'bg-secondary', text: 'text-secondary-foreground' },
+  { bg: 'bg-primary/10 dark:bg-primary/15', text: 'text-primary dark:text-primary-foreground/90' },
+  { bg: 'bg-primary/15 dark:bg-primary/20', text: 'text-primary dark:text-primary-foreground' },
   { bg: 'bg-amber-100 dark:bg-amber-950/60', text: 'text-amber-800 dark:text-amber-300' },
   { bg: 'bg-amber-200 dark:bg-amber-900/60', text: 'text-amber-900 dark:text-amber-200' },
   { bg: 'bg-amber-300 dark:bg-amber-800/70', text: 'text-amber-900 dark:text-amber-100' },
