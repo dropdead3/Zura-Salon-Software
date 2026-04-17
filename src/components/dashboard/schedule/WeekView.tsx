@@ -360,20 +360,20 @@ export function WeekView({
     return slots;
   }, [hoursStart, hoursEnd, slotInterval]);
 
-  // Group appointments by date
+  // Group (already-stylist-filtered) appointments by date
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, PhorestAppointment[]>();
     weekDays.forEach(day => map.set(format(day, 'yyyy-MM-dd'), []));
-    
-    appointments.forEach(apt => {
+
+    stylistAppointments.forEach(apt => {
       const dateKey = apt.appointment_date;
       if (map.has(dateKey)) {
         map.get(dateKey)!.push(apt);
       }
     });
-    
+
     return map;
-  }, [appointments, weekDays]);
+  }, [stylistAppointments, weekDays]);
 
   // Current time indicator
   const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
@@ -473,12 +473,7 @@ export function WeekView({
           {/* Time Grid */}
           <div className="grid relative" style={{ gridTemplateColumns: gridTemplate }}>
             {/* Time Labels Column */}
-            <div
-              className={cn(
-                'relative bg-sidebar',
-                isStretched && 'sticky left-0 z-[15]',
-              )}
-            >
+            <div className="relative bg-sidebar">
               {timeSlots.map((slot, index) => (
                 <div 
                   key={`${slot.hour}-${slot.minute}`}
