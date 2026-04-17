@@ -100,8 +100,8 @@ export function TransformationTimeline({ clientId, phorestClientId }: Transforma
     return (
       <div className={tokens.empty.container}>
         <Camera className={tokens.empty.icon} />
-        <h3 className={tokens.empty.heading}>No transformations yet</h3>
-        <p className={tokens.empty.description}>Add before and after photos to build a visual history of this client's hair journey.</p>
+        <h3 className={tokens.empty.heading}>No photos yet</h3>
+        <p className={tokens.empty.description}>No inspiration, consultation, or transformation photos have been added yet. Build a visual history of this client's hair journey by capturing before-and-after shots.</p>
         <Button onClick={() => setShowAddForm(true)} className="mt-4 gap-2">
           <Plus className="w-4 h-4" />
           Add First Transformation
