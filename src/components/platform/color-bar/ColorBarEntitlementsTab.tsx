@@ -328,22 +328,13 @@ export function ColorBarEntitlementsTab() {
     return true; // Will be refined when we have all entitlements
   });
 
-  // For backfill: fetch all location entitlements counts
-  const { data: allEntitlementCounts = [] } = useQuery({
-    queryKey: ['platform-color-bar-all-entitlement-counts'],
-    queryFn: async () => {
-      const enabledOrgIds = orgs.filter((o) => o.backroom_enabled).map((o) => o.id);
-      if (enabledOrgIds.length === 0) return [];
-      const { data } = await supabase
-        .from('backroom_location_entitlements')
-        .select('organization_id')
-        .in('organization_id', enabledOrgIds);
-      return data || [];
-    },
-    enabled: orgs.length > 0,
-  });
+  // Performance: aggregate counts via RPC instead of fetching every entitlement row.
+  // Drops payload from O(locations × orgs) to O(orgs).
+  const { data: entitlementCountMap } = useColorBarEntitlementCounts();
 
-  const orgsWithEntitlements = new Set(allEntitlementCounts.map((e: any) => e.organization_id));
+  const orgsWithEntitlements = new Set(
+    Array.from(entitlementCountMap?.keys() ?? [])
+  );
   const orphanCount = orgs.filter((o) => o.backroom_enabled && !orgsWithEntitlements.has(o.id)).length;
 
   const handleBackfillAll = async () => {

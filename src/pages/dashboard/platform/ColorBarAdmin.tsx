@@ -12,10 +12,11 @@ import { CoachPerformanceTab } from '@/components/platform/color-bar/CoachPerfor
 import { RefundHistoryTab } from '@/components/platform/color-bar/RefundHistoryTab';
 import { DockAppTab } from '@/components/platform/color-bar/DockAppTab';
 import { SupplyChainDashboard } from '@/components/dashboard/vertical-integration/SupplyChainDashboard';
+import ColorBarAudit from '@/pages/dashboard/platform/ColorBarAudit';
 import { cn } from '@/lib/utils';
 import {
   ClipboardList, Database, Building2, Package, BarChart3,
-  CreditCard, Users2, ReceiptText, BoxIcon, Tablet, Link2,
+  CreditCard, Users2, ReceiptText, BoxIcon, Tablet, Link2, History,
   type LucideIcon,
 } from 'lucide-react';
 import { PageExplainer } from '@/components/ui/PageExplainer';
@@ -55,6 +56,7 @@ const navGroups: NavGroup[] = [
       { value: 'refund-history', label: 'Refund History', icon: ReceiptText },
       { value: 'hardware-orders', label: 'Hardware Orders', icon: BoxIcon },
       { value: 'supply-chain', label: 'Supply Chain', icon: Link2 },
+      { value: 'audit', label: 'Suspension Audit', icon: History },
     ],
   },
   {
@@ -77,6 +79,7 @@ const panels: Record<string, React.ReactNode> = {
   'hardware-orders': <HardwareOrdersTab />,
   'dock-app': <DockAppTab />,
   'supply-chain': <SupplyChainDashboard organizationId={undefined} />,
+  audit: <ColorBarAudit />,
 };
 
 export default function ColorBarAdmin() {
