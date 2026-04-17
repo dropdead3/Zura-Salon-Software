@@ -100,6 +100,7 @@ import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 import { Pencil, Send } from 'lucide-react';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
+import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/PaymentLinkStatusCard';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { ColorBarUpsellInline } from '@/components/color-bar/ColorBarUpsellInline';
@@ -594,6 +595,28 @@ export function AppointmentDetailSheet({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const logAuditEvent = useLogAuditEvent();
+
+  // Org afterpay settings — drives Quick Actions label and composer behavior
+  const { data: orgAfterpaySettings } = useQuery({
+    queryKey: ['org-afterpay-enabled', effectiveOrganization?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('organizations')
+        .select('afterpay_enabled, afterpay_surcharge_enabled, afterpay_surcharge_rate')
+        .eq('id', effectiveOrganization!.id)
+        .maybeSingle();
+      return {
+        enabled: data?.afterpay_enabled ?? false,
+        surchargeEnabled: data?.afterpay_surcharge_enabled ?? false,
+        surchargeRate: Number(data?.afterpay_surcharge_rate ?? 0.06),
+      };
+    },
+    enabled: !!effectiveOrganization?.id && open,
+    staleTime: 60_000,
+  });
+  const orgAfterpayEnabled = orgAfterpaySettings?.enabled ?? false;
+  const orgSurchargeEnabled = orgAfterpaySettings?.surchargeEnabled ?? false;
+  const orgSurchargeRate = orgAfterpaySettings?.surchargeRate ?? 0.06;
 
   // Realtime subscription for payment link status auto-updates (B1: listen on `appointments` table where payment columns live)
   useEffect(() => {
@@ -1452,6 +1475,30 @@ export function AppointmentDetailSheet({
                 )}
               </div>
 
+              {/* ─── Active Payment Link Status (Wave 19) ───────── */}
+              {appointment.payment_link_sent_at && resolvedOrgId && (
+                <div className="px-6 pb-3">
+                  <PaymentLinkStatusCard
+                    appointmentId={appointment.id}
+                    organizationId={resolvedOrgId}
+                    totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                    paymentLinkSentAt={appointment.payment_link_sent_at}
+                    paymentLinkUrl={appointment.payment_link_url}
+                    paymentLinkExpiresAt={appointment.payment_link_expires_at}
+                    paymentStatus={appointment.payment_status}
+                    paidAt={appointment.paid_at}
+                    splitPaymentTerminalIntentId={appointment.split_payment_terminal_intent_id}
+                    splitPaymentLinkIntentId={appointment.split_payment_link_intent_id}
+                    clientName={appointment.client_name}
+                    clientEmail={appointment.client_email}
+                    clientPhone={appointment.client_phone}
+                    afterpaySurchargeEnabled={orgSurchargeEnabled}
+                    afterpaySurchargeRate={orgSurchargeRate}
+                    onChanged={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                  />
+                </div>
+              )}
+
               {/* ─── Quick Actions Row (Wave 18.1) ──────────────── */}
               {(() => {
                 const phone = appointment.client_phone?.trim();
@@ -1543,10 +1590,13 @@ export function AppointmentDetailSheet({
                             appointmentId={appointment.id}
                             organizationId={resolvedOrgId!}
                             totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                            serviceName={appointment.service_name}
                             clientName={appointment.client_name}
                             clientEmail={email}
                             clientPhone={phone}
-                            afterpayEnabled={false}
+                            afterpayEnabled={orgAfterpayEnabled}
+                            afterpaySurchargeEnabled={orgSurchargeEnabled}
+                            afterpaySurchargeRate={orgSurchargeRate}
                             onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
                           />
                         )}

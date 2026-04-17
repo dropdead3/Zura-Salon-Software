@@ -228,11 +228,11 @@ export function SplitPaymentDialog({
                 Afterpay link sent for {formatCurrency(afterpayTotalCents / 100)}
               </p>
               <p className="text-xs text-muted-foreground">
-                Now process {formatCurrency(immediateAmountCents / 100)} on the terminal to complete checkout.
+                Charge {formatCurrency(immediateAmountCents / 100)} on the terminal to complete checkout. Track status in the appointment drawer.
               </p>
             </div>
             <DialogFooter className="justify-center">
-              <Button onClick={handleClose}>Done</Button>
+              <Button onClick={handleClose}>Got it</Button>
             </DialogFooter>
           </div>
         )}
