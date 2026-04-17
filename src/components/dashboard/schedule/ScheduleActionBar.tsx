@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { CalendarDays, CalendarClock, ZoomIn, ZoomOut, Plus, Users, FileText, PlayCircle, Clock, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
