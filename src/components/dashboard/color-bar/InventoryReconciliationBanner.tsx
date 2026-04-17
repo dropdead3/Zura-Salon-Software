@@ -15,10 +15,11 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Check } from 'lucide-react';
+import { AlertTriangle, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useMarkInventoryVerified } from '@/hooks/color-bar/useMarkInventoryVerified';
+import { useMarkAllInventoryVerified } from '@/hooks/color-bar/useMarkAllInventoryVerified';
 import { formatRelativeTime } from '@/lib/format';
 import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +37,7 @@ export function InventoryReconciliationBanner({ locationId, className, onBegin }
   const orgId = useColorBarOrgId();
   const { entitlements } = useColorBarLocationEntitlements(orgId);
   const markVerified = useMarkInventoryVerified();
+  const markAllVerified = useMarkAllInventoryVerified();
 
   // Filter to locations that need reconciliation
   const flagged = entitlements.filter((e) => {
