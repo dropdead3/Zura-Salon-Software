@@ -1,72 +1,107 @@
 
 
-## Where you are vs. seamless checkout
+## Goal
+Finish the seamless checkout wave: reader picker, post-charge confirmation, tip-on-reader, plus two visibility enhancements that surface Connect status on the calendar surface and auto-sync status changes into open checkout sheets.
 
-Your checkout pipeline is **architecturally complete**. The Charge button works end-to-end: cart → terminal payment intent → S710 reader → poll → capture deposit → audit log → receipt. Connect onboarding, multi-LLC routing, offline queue, deposit holds, Send-to-Pay, Afterpay, refunds, webhooks, dispute auto-ban — all live.
+## Wave 2 — Reader picker + post-charge confirmation (`CheckoutSummarySheet.tsx`)
 
-What remains to start taking real payments is **operational + 4 small product gaps** — not foundational work.
+### Gap 2 — Reader picker
+`useActiveTerminalReader` already returns `readers[]`, `selectedReaderId`, `selectReader`, and persists last-used per location to localStorage. UI just needs to surface the picker.
 
-## Operational gates (you, not code)
+- In the payment panel, when `paymentMethod === 'card_reader'` AND `readers.length > 1`, render a small `<Select>` above the Charge button:
+  - Label: "Reader" 
+  - Options: `readers.filter(r => r.location === locationId).map(r => ({ value: r.id, label: r.label }))`
+  - Status indicator (online/offline dot) on each option
+  - Disabled when `terminalFlow.state` is mid-charge
+- Single-reader case: show muted `font-sans text-xs` line "Reader: {name}" (no picker)
+- Zero-reader case: existing `hasReaders` branch already handles this
 
-These are the only blockers between you and a real charge today:
+### Gap 4 — Post-charge confirmation state
+Today the sheet closes on success. Replace with a 3-second in-sheet confirmation.
 
-1. **Stripe Connect onboarding for at least one location** — the Activation Checklist (`/dashboard/admin/settings?category=terminals`) walks through it. Each location needs `stripe_status === 'active'` and `stripe_payments_enabled === true`.
-2. **At least one S710 reader paired** to that location (Fleet tab).
-3. **`STRIPE_WEBHOOK_SECRET` set** in edge function secrets — currently the `stripe-webhook` function logs a warning and skips signature verification when missing. This is fine for testing, **must be set before live**.
-4. **First test transaction** — the checklist's "First Transaction" step uses the existing test-cart flow on the Fleet tab.
+- Add new local state: `successState: { amount: number; method: string; last4?: string; receiptStatus: 'sent' | 'pending' | 'none' } | null`
+- On terminal flow completion (`terminalFlow.state === 'succeeded'`) and on cash/other settlement success, set `successState` and switch to a new `gatePhase === 'confirmation'` block instead of immediate `onOpenChange(false)`.
+- Confirmation panel (replaces payment panel content):
+  - Large checkmark icon (`CheckCircle2`, `text-success`)
+  - `font-display tracking-wide text-base`: "Paid {formatCurrency(amount)}"
+  - Muted line: payment method + last 4 if card
+  - Receipt status line: "✓ Receipt emailed to {email}" or "Send receipt" CTA
+  - "Done" button (`tokens.button.cardAction`) → closes sheet
+- Auto-dismiss timer: `setTimeout(() => onOpenChange(false), 4000)` on entering confirmation phase, cleared if operator clicks Done sooner or reopens the receipt CTA.
 
-Once those four are done, charges work. Everything below is polish to make it feel seamless.
+## Wave 3 — Tip-on-reader (Gap 3)
 
-## Product gaps for "seamless" (ranked by impact)
+### Frontend (`CheckoutSummarySheet.tsx` + `useTerminalCheckoutFlow.ts`)
+- Add toggle `tipMode: 'app' | 'reader'` in payment panel (TogglePill component, defaults to `'app'` for parity with current behavior; persisted per location to localStorage)
+- When `tipMode === 'reader'`: hide in-app tip selector, pass `collectTipOnReader: true` into `terminalFlow.start({...})`
+- After PI succeeds, read final tip amount from PI metadata (`tip_amount` returned by edge function in completion payload), use it for audit log + payroll tip distribution
 
-### Gap 1 — Pre-checkout connection guard *(highest leverage)*
-Today, if a stylist opens checkout for a location whose Stripe Connect isn't active, the Charge button calls `create-terminal-payment-intent` and fails with a backend error. Should be caught earlier with a clear message + deep link to finish onboarding.
+### Edge function (`supabase/functions/create-terminal-payment-intent/index.ts`)
+- Accept `collect_tip_on_reader: boolean` in request body
+- When true, configure PaymentIntent:
+  ```ts
+  payment_method_options: {
+    card_present: {
+      request_extended_authorization: 'if_available',
+    },
+  },
+  // Stripe Terminal tipping config on the reader process_payment_intent call
+  ```
+- The reader-side tipping is configured via `terminal.readers.processPaymentIntent` with `process_config: { tipping: { amount_eligible: <subtotal_in_cents> } }`. This lives in the existing reader-process call (likely inside `terminalFlow` polling start). Add the param plumb-through.
+- Return final `tip_amount` from the captured PI back to the client on terminal completion poll
 
-**Surface:** `CheckoutSummarySheet.tsx` — render an `EnforcementGateBanner` above payment method selection when `location.stripe_status !== 'active'`. Disable Charge button. Banner CTA → activation checklist.
+## Enhancement A — Connect-status pill on appointment cards
 
-### Gap 2 — Reader selection when multiple readers exist
-`useActiveTerminalReader` returns one reader. If a location has 2+ S710s (front desk + color bar), there's no UI to pick which one. Today it picks the first.
+### New hook: `src/hooks/useLocationStripeStatuses.ts`
+Bulk-fetches Stripe status for all visible locations in a single query (mirrors `useAppointmentDeclinedReasons` pattern):
+```ts
+useLocationStripeStatuses(locationIds: string[])
+  → Map<locationId, { active: boolean; status: string }>
+```
+- Single query: `select('id, stripe_status, stripe_payments_enabled').in('id', locationIds)`
+- `staleTime: 60_000`
+- `enabled: locationIds.length > 0`
 
-**Surface:** Reader picker dropdown in payment method panel when `paymentMethod === 'card_reader'` AND multiple readers exist. Persist last-used per stylist in localStorage.
+### New component: `src/components/dashboard/schedule/ConnectStatusPill.tsx`
+- Tiny pill: `font-sans text-[10px] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/30`
+- Label: "Setup needed" with optional tooltip "Card payments unavailable — finish Stripe Connect onboarding"
+- Renders nothing when location is active (silence is valid output)
 
-### Gap 3 — Tip-on-reader prompt vs. tip-in-app reconciliation
-Currently the operator selects tip in the sheet, then it's pushed to the reader as a line item. Stripe S710 also supports native tip-on-reader prompts. Right now operators must either (a) collect tip verbally before tapping or (b) skip tip entirely. The path of least friction — let the client tap their tip on the reader — isn't wired.
+### Integration
+- `DayView.tsx`: collect unique `locationId`s from `appointments`, call `useLocationStripeStatuses(locationIds)`, pass `connectInactive` boolean per appointment to `AppointmentCardContent`
+- `WeekView.tsx` + `AgendaView.tsx`: same threading
+- `AppointmentCardContent.tsx`: new optional prop `connectInactive?: boolean`. Render `<ConnectStatusPill />` next to the existing indicator cluster (alongside `RebookSkippedDot`) — but only when `appointment.status` is `'scheduled' | 'confirmed' | 'checked_in' | 'in_progress'` (pre-checkout states). Hide on completed (no longer actionable).
 
-**Surface:** Toggle in `CheckoutSummarySheet` payment panel: "Prompt for tip on reader" vs "Set tip here". When reader-prompt mode is on, skip the in-app tip selector and use Stripe's `collect_inputs` / tipping config on the PaymentIntent. Capture the final tip from the completed PI before writing the audit row.
+## Enhancement B — Auto-invalidate Connect status on activation
 
-### Gap 4 — Post-charge confirmation modal
-After successful charge, the sheet closes immediately and reverts to the calendar. There's no "✓ Paid $XXX · Receipt sent to client@email" confirmation. Operators don't know if email/SMS receipt actually fired.
+Add `['location-stripe-status']` invalidation to every mutation that can change `locations.stripe_status` or `stripe_payments_enabled`:
 
-**Surface:** Replace immediate close with a 3-second success state inside the sheet showing: amount charged, payment method (last 4 if card), receipt delivery status (✓ emailed / ✓ printed / "Send receipt" CTA), and "Done" button. Auto-dismisses or operator clicks Done.
+- `src/hooks/useZuraPayConnect.ts`:
+  - `useVerifyZuraPayConnection.onSuccess` — add `queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] })` (broad invalidation since multiple locations may flip)
+  - `useConnectLocation.onSuccess` — add same invalidation
+  - `useResetZuraPayAccount.onSuccess` — add same invalidation
+- Realtime channel: `useStripePaymentsHealth.ts` already subscribes to relevant tables; add a sibling listener (or extend its existing one) on the `locations` table for `stripe_status` updates that calls `queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] })`. This catches webhook-driven status flips without requiring a manual click.
 
-## Optional polish (post-launch)
+## Out of scope
+- Split tender, inline card-on-file in checkout, pre-auth on appointment open (already noted as post-launch polish)
+- Connect-status pill on past/completed appointments (no actionability)
+- Persisting reader picker selection to backend (localStorage is sufficient — reader choice is device-ergonomic, not policy)
 
-- **Inline card-on-file charge** — already supported via `charge-card-on-file` function but not surfaced in checkout (only in no-show fee flow). Could add a third payment method option for clients with saved cards.
-- **Split tender** — partial cash + partial card in one checkout. Stripe supports it; UI doesn't.
-- **Pre-auth on appointment open** — for high-ticket services, hold deposit when stylist starts the appointment, not just at booking. Reduces walk-out risk.
+## Files to create
+1. `src/hooks/useLocationStripeStatuses.ts`
+2. `src/components/dashboard/schedule/ConnectStatusPill.tsx`
 
-## Files for implementation wave
+## Files to modify
+1. `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — reader picker, confirmation phase, tip-mode toggle
+2. `src/hooks/useTerminalCheckoutFlow.ts` — accept `tipMode`, pass through, return final tip from PI
+3. `supabase/functions/create-terminal-payment-intent/index.ts` — accept `collect_tip_on_reader`, configure tipping on reader process call
+4. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — `connectInactive` prop, render pill in indicator cluster
+5. `src/components/dashboard/schedule/DayView.tsx` — call `useLocationStripeStatuses`, thread map down
+6. `src/components/dashboard/schedule/WeekView.tsx` — same threading
+7. `src/components/dashboard/schedule/AgendaView.tsx` — same threading
+8. `src/hooks/useZuraPayConnect.ts` — add `['location-stripe-status']` invalidation to 3 mutation hooks
+9. `src/hooks/useStripePaymentsHealth.ts` — extend realtime listener to invalidate `['location-stripe-status']` on `locations` row updates
 
-| File | Change |
-|---|---|
-| `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Add Connect-status gate banner (Gap 1), reader picker (Gap 2), tip-on-reader toggle (Gap 3), post-success confirmation state (Gap 4) |
-| `src/hooks/useActiveTerminalReader.ts` | Return all readers, not just one (Gap 2) |
-| `src/hooks/useTerminalCheckoutFlow.ts` | Accept `tipMode: 'app' \| 'reader'`, configure PI accordingly, read final tip from PI on success (Gap 3) |
-| `supabase/functions/create-terminal-payment-intent/index.ts` | Accept `collect_tip_on_reader` flag, set `payment_method_options.card_present.request_extended_authorization` + tipping config (Gap 3) |
-
-## What I'd ship first
-
-**Wave 1 (1 file, ~40 LOC):** Gap 1 — pre-checkout Connect guard. Highest return for least code. Eliminates the most common "why didn't it charge?" support ticket before it exists.
-
-**Wave 2:** Gaps 2 + 4 together. Both touch `CheckoutSummarySheet`, both improve confidence at the moment of payment.
-
-**Wave 3:** Gap 3 (tip-on-reader). Touches the edge function, deserves its own deploy.
-
-## Prompt feedback
-
-**What worked:** Question was scoped (one outcome: seamless checkout) and open-ended enough to surface gaps you hadn't named — that's exactly when AI inventory is most valuable.
-
-**What would sharpen it:** Adding the success criteria — e.g., *"a stylist on Day 1 can charge a real client without calling support"* — would let me prioritize by friction-elimination, not feature-completeness. The two are different lists.
-
-**Next-level framing:** *"Walk me from the current state to the first real $ charged. List blockers in execution order, separating operator tasks from product gaps."* That phrasing forces a sequenced delivery plan rather than a feature inventory.
+## Ship order
+**Wave 2 first** (single file, highest operator-confidence return) → **Enhancement A + B together** (visibility loop closes both directions: pill warns before open, invalidation refreshes if mid-open) → **Wave 3 last** (touches edge function, deserves isolated deploy).
 
