@@ -1994,11 +1994,11 @@ export function AppointmentDetailSheet({
 
                     <Separator />
 
-                    {/* Client Contact */}
+                    {/* Client Contact (Wave 18: completeness) */}
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Client Contact</h4>
                       <div className="space-y-1.5">
-                        {appointment.client_phone && (
+                        {appointment.client_phone ? (
                           <div className="flex items-center justify-between">
                             <a href={`tel:${appointment.client_phone}`} className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
                               <Phone className="h-3.5 w-3.5 text-muted-foreground" />
@@ -2006,23 +2006,56 @@ export function AppointmentDetailSheet({
                             </a>
                             <CopyButton onCopy={handleCopyPhone} />
                           </div>
-                        )}
-                        {clientRecordLoading && (
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-40" />
+                        ) : (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Phone className="h-3.5 w-3.5" />
+                            <span>No phone on file</span>
                           </div>
                         )}
-                        {!clientRecordLoading && clientRecord?.email && (
-                          <div className="flex items-center justify-between">
-                            <a href={`mailto:${clientRecord.email}`} className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
-                              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                              {clientRecord.email}
-                            </a>
-                            <CopyButton onCopy={handleCopyEmail} />
+                        {clientRecordLoading && (
+                          <Skeleton className="h-4 w-40" />
+                        )}
+                        {!clientRecordLoading && clientRecord?.email && (() => {
+                          const isPlaceholder = /^(na|none|noemail|test|n\/a)@/i.test(clientRecord.email) || !clientRecord.email.includes('@');
+                          return (
+                            <div className="flex items-center justify-between">
+                              <a href={`mailto:${clientRecord.email}`} className={cn('flex items-center gap-2 text-sm hover:text-primary transition-colors', isPlaceholder && 'text-muted-foreground italic')}>
+                                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                                {clientRecord.email}
+                                {isPlaceholder && (
+                                  <Badge variant="outline" className="text-[9px] text-amber-700 dark:text-amber-300 border-amber-300 ml-1">Placeholder</Badge>
+                                )}
+                              </a>
+                              <CopyButton onCopy={handleCopyEmail} />
+                            </div>
+                          );
+                        })()}
+                        {!clientRecordLoading && !clientRecord?.email && !isWalkIn && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Mail className="h-3.5 w-3.5" />
+                            <span>No email on file</span>
+                          </div>
+                        )}
+                        {!isWalkIn && (lastVisitDate || visitStats.visitCount > 0) && (
+                          <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
+                            {lastVisitDate && (
+                              <span className="flex items-center gap-1.5">
+                                <Calendar className="h-3 w-3" />
+                                Last visit {formatDate(parseISO(lastVisitDate), 'MMM d, yyyy')}
+                              </span>
+                            )}
+                            {visitStats.visitCount > 0 && (
+                              <span className="flex items-center gap-1.5">
+                                <TrendingUp className="h-3 w-3" />
+                                {visitStats.visitCount} visit{visitStats.visitCount === 1 ? '' : 's'}
+                              </span>
+                            )}
                           </div>
                         )}
                         {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
-                          <p className="text-xs text-muted-foreground">No contact info available</p>
+                          <p className="text-xs text-muted-foreground pt-1">
+                            No contact info — Add details in client profile
+                          </p>
                         )}
                       </div>
                     </motion.div>
@@ -2219,7 +2252,7 @@ export function AppointmentDetailSheet({
                       {historyLoading ? (
                         <DashboardLoader size="sm" className="py-6" />
                       ) : visitHistory.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4 text-center">No visit history</p>
+                        <p className="text-sm text-muted-foreground py-4 text-center">First visit with you — no history yet</p>
                       ) : (
                         <div className="space-y-2 max-h-[400px] overflow-y-auto">
                           {visitHistory.slice(0, 20).map(visit => (
