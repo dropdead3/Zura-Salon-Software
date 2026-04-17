@@ -1210,7 +1210,7 @@ export function AppointmentDetailSheet({
   // ─── Render ───────────────────────────────────────────────────
   return (
     <>
-      <PremiumFloatingPanel open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
+      <PremiumFloatingPanel open={open} onOpenChange={(v) => { if (!v) handleClose(); }} maxWidth="520px">
 
               {/* ─── Header ────────────────────────────────────── */}
               <div className="p-6 pb-4">
@@ -1415,17 +1415,19 @@ export function AppointmentDetailSheet({
 
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-                <TabsList className="mx-6 mb-0 shrink-0">
-                  <TabsTrigger value="details" className="font-sans">Details</TabsTrigger>
-                  <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
-                  <TabsTrigger value="photos" className="font-sans">Photos</TabsTrigger>
-                  <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
-                  <TabsTrigger value="formulas" className="font-sans gap-1">
-                    <Beaker className="w-3.5 h-3.5" />
-                    Formulas
-                  </TabsTrigger>
-                  <TabsTrigger value="color-bar" className="font-sans">Color Bar</TabsTrigger>
-                </TabsList>
+                <div className="mx-6 overflow-x-auto scrollbar-none">
+                  <TabsList className="mb-0 shrink-0 w-max">
+                    <TabsTrigger value="details" className="font-sans">Details</TabsTrigger>
+                    <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
+                    <TabsTrigger value="photos" className="font-sans">Photos</TabsTrigger>
+                    <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
+                    <TabsTrigger value="formulas" className="font-sans gap-1">
+                      <Beaker className="w-3.5 h-3.5" />
+                      Formulas
+                    </TabsTrigger>
+                    <TabsTrigger value="color-bar" className="font-sans">Color Bar</TabsTrigger>
+                  </TabsList>
+                </div>
 
                 <ScrollArea className="flex-1">
                   {/* ─── TAB: Details ──────────────────────────── */}
@@ -1462,16 +1464,6 @@ export function AppointmentDetailSheet({
                         <span className="text-sm text-blue-700 dark:text-blue-300">
                           Redo scheduled: {linkedRedos[0].service_name || 'Service'} on {linkedRedos[0].appointment_date}
                           {linkedRedos[0].staff_name && ` with ${linkedRedos[0].staff_name}`}
-                        </span>
-                      </motion.div>
-                    )}
-
-                    {/* First-time client banner */}
-                    {!isWalkIn && !!appointment.phorest_client_id && !historyLoading && visitStats.visitCount === 0 && (
-                      <motion.div variants={staggerItem} className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3 py-2 border border-emerald-200 dark:border-emerald-800">
-                        <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="text-sm text-emerald-700 dark:text-emerald-300">
-                          First-time client — no prior service history on file.
                         </span>
                       </motion.div>
                     )}
