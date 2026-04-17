@@ -2125,7 +2125,7 @@ export function QuickBookingPopover({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium text-foreground truncate">{displayName}</span>
+                          <span className="text-base font-medium text-foreground truncate">{displayName}</span>
                           {!stylistFirstMode && isPreviousStylist && (
                             <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-normal bg-accent/50 text-accent-foreground border-accent shrink-0">
                               Previously Seen
