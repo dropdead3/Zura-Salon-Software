@@ -2,100 +2,84 @@
 
 ## Prompt review
 
-Good instinct — periodic audit passes prevent technical debt from compounding. However, "any gaps, errors, bugs and enhancements" is too broad to action well. A 50K-line codebase will surface hundreds of findings at that scope, and without ranking criteria the audit becomes noise.
+Sharp meta-feedback — all three suggestions are operational improvements to the *audit ritual itself*, not just findings. The "triage P0s individually" point is the most actionable: it directly addresses the trap where Wave 10's P0 #2 (lint regression: 1100 → 4322 errors) could swallow a week of investigation while P0 #1 (test regression) sits unfixed and blocks CI confidence on every subsequent wave.
 
-**Better framing for next time:** anchor audits to a specific axis with a leverage marker. Examples:
-- "Audit for P0/P1 bugs blocking user flows" (correctness)
-- "Audit recent waves (6-9) for regressions or doctrinal drift" (consistency)
-- "Audit for security/RLS gaps in newly-touched tables" (risk)
-- "Audit for the top 5 highest-leverage enhancements given current adopter count" (forward motion)
+The "doctrine anchor column" suggestion is the highest-leverage long-term: it makes audit findings *re-rankable* as doctrine evolves. A finding tagged `doctrine: visibility-contracts` becomes automatically re-prioritizable when that doctrine shifts.
 
-Each produces a tighter, more decision-ready output. I'll structure this audit using all four axes in parallel, with explicit ranking, so you get the breadth you asked for without losing actionability.
+The "wave-N-audit cadence" is correct but should be encoded as a Deferral Register entry itself (meta: the register tracks its own review cadence) — otherwise it becomes another well-intentioned ritual that decays.
 
-## Plan — Wave 10: Multi-Axis Audit Pass
+## Plan — Wave 11: Triage P0 #1 (Test Regression) + Codify Audit Discipline
 
-**Read-only this wave.** Output is a ranked findings register, not code changes. Each finding gets a leverage marker + recommended wave assignment so you can approve them individually.
+Two independent fixes, sequenced to unblock CI before tackling the lint rabbit hole:
 
-### Phase 1: Baseline health checks *(leverage: catches regressions before they become incidents)*
+### 1. Fix P0 #1: `ProtectedRoute.test.tsx` regression *(leverage: restores test confidence for all subsequent waves; ~15 min scope)*
 
-1. **Lint baseline delta** — re-run mental grep against `DEBUG_LOG.md` baseline (1199 problems, 1100 errors). Has Wave 1-9 work moved the needle? Sample 3-4 recently-touched files for new lint introductions.
-2. **Test suite scope** — `DEBUG_LOG.md` shows `2 files, 7 tests`. Catalog what's tested vs what's been added since Wave 3 (Visibility Contract bus, audit hook, 10 adopter components). Identify highest-risk untested surfaces.
-3. **Build artifact check** — review `code--read_console_logs` and dev-server log for current warnings/errors.
+**Root cause** (from Wave 10 findings): `ProtectedRoute` now consumes `useOrgDashboardPath()` which requires `OrganizationProvider`. The 6 failing tests don't wrap the component in that provider.
 
-### Phase 2: Doctrinal consistency sweep *(leverage: locks in waves 4-9 doctrine before drift)*
+**Fix approach** — minimum viable:
+- Read `src/components/auth/ProtectedRoute.test.tsx` to confirm current render setup
+- Read `src/contexts/OrganizationContext.tsx` to identify the minimum mock shape
+- Read `src/hooks/useOrgDashboardPath.ts` to confirm what it actually needs from the context
+- Add a lightweight test wrapper that provides:
+  - `OrganizationProvider` with a mocked organization (or a minimal `OrganizationContext.Provider` if mocking the full provider is heavy)
+  - Existing `AuthContext`, `ViewAsContext`, `MemoryRouter` wrappers preserved
+- Re-run tests to confirm 7/7 pass
 
-4. **Visibility Contract adopter audit** — re-grep all 10 adopters against the Wave 8 taxonomy. Verify:
-   - Reasons are kebab-case from canonical taxonomy
-   - Payloads contain actual numbers (not booleans)
-   - Source strings match component names in kebab-case
-5. **Deferral Register status check** — for each Wave 9 deferral (ESLint rule, devtool panel, audit-comment grep), check whether the trigger condition has cleared since documentation.
-6. **Memory/code drift** — spot-check 2-3 high-traffic memory files (e.g., `mem://architecture/visibility-contracts.md`, `mem://tech-decisions/high-concurrency-scalability.md`) against actual code patterns.
+**Scope guard:** if `OrganizationContext` requires a Supabase client mock or complex setup, fall back to mocking `useOrgDashboardPath` directly via `vi.mock('@/hooks/useOrgDashboardPath')`. That's the smaller blast radius.
 
-### Phase 3: Bug & gap reconnaissance *(leverage: surfaces P0/P1 issues invisible from preview)*
+**No behavior change** to `ProtectedRoute` itself — this is a test-infrastructure fix only.
 
-7. **`DEBUG_LOG.md` open queue review** — Waves 2-5 in the "Next Debug Queue" section were never executed:
-   - Wave 2: silent data fallbacks in points services
-   - Wave 3: loading/error UI in `ManagementHub`, `Stats`, leaderboard
-   - Wave 4 (debug doc): route-level lazy loading
-   - Wave 5 (debug doc): expanded permission guard tests
-   Confirm whether these are still valid or superseded.
-8. **High-traffic surface inspection** — read `App.tsx`, `OrganizationContext.tsx`, `AuthContext.tsx` for any TODO/FIXME, suspicious `as any` casts, or auth race patterns.
-9. **Edge function smoke check** — list `supabase/functions/` directory; flag any function without a corresponding test or with stale `deno.lock` issues per the troubleshooting context.
+### 2. Codify audit discipline in memory *(leverage: every future audit produces re-rankable findings; doctrine-anchored)*
 
-### Phase 4: Enhancement candidates *(leverage: forward motion options ranked by ROI)*
+**Modify:** `mem://architecture/visibility-contracts.md` (or new `mem://architecture/audit-discipline.md` if it grows past one section — decide during execution)
 
-10. **Top 5 enhancements** identified during phases 1-3, each with:
-    - Leverage marker
-    - Doctrinal anchor (which doctrine it serves)
-    - Estimated scope
-    - Deferral trigger if not chosen now
+Add a **"Audit Output Contract"** section capturing the three meta-improvements from this prompt:
 
-## Output format
+> **Every audit wave must produce findings with three mandatory columns:**
+> 1. **Priority** (P0/P1/P2) — based on ship-blocking severity
+> 2. **Doctrine anchor** — name the doctrine the finding serves or violates (e.g., `visibility-contracts`, `tenant-isolation`, `alert-governance`). Findings without an anchor are downgraded to P2 by default.
+> 3. **Leverage marker** — the ROI sentence (e.g., "unblocks CI for all subsequent waves")
+>
+> **P0 triage rule:** P0 findings are addressed in *separate waves*, never bundled. Bundling risks one P0 (e.g., a lint rabbit hole) blocking another (e.g., a 15-minute test fix).
+>
+> **Cadence:** A multi-axis audit pass runs every 5 waves. The cadence is itself a Deferral Register entry with trigger condition: `current_wave % 5 == 0`.
 
-A single ranked findings register with this structure:
+**Update:** `mem://index.md` — add Core one-liner: "Audit findings require priority + doctrine anchor + leverage marker. P0s ship in separate waves."
 
-```
-## P0 (block ship)
-- [finding] · [leverage] · [recommended wave]
-
-## P1 (ship-blocking within 3 waves)
-- ...
-
-## P2 (enhancement candidates, defer-trackable)
-- ...
-
-## Confirmed clean (no action)
-- ...
-```
-
-Each finding includes file path(s) so the next wave can act mechanically.
+**Update:** Deferral Register table in `mem://architecture/visibility-contracts.md` — add row:
+| Item | Trigger Condition | Status |
+|---|---|---|
+| Multi-axis audit pass | `current_wave % 5 == 0` (next: Wave 15) | Pending |
 
 ## Acceptance checks
 
-1. All 4 phases executed; no phase skipped silently
-2. Each finding has a P0/P1/P2 ranking with explicit leverage marker
-3. Memory/code drift findings cite both the memory file and the code file
-4. Open `DEBUG_LOG.md` queue items are explicitly resolved (still valid / superseded / done)
-5. Top 5 enhancement candidates each carry a deferral trigger condition
-6. Output fits in one register — no separate documents
-7. No code changes this wave — pure research output
+1. `src/components/auth/ProtectedRoute.test.tsx` — 7/7 tests pass after fix
+2. No production code changes to `ProtectedRoute.tsx` itself
+3. `mem://architecture/visibility-contracts.md` contains "Audit Output Contract" section with all three mandatory columns
+4. `mem://index.md` Core rule reflects the audit discipline
+5. Deferral Register includes the Wave 15 cadence trigger
+6. P0 #2 (lint regression) explicitly *not* touched this wave — preserved for Wave 12 with full bandwidth
+7. No new dependencies, no behavior changes outside the test wrapper
 
-## Files to read (read-only)
+## Files to modify
 
-- `DEBUG_LOG.md` (full)
-- `mem://architecture/visibility-contracts.md`, `mem://index.md`
-- `src/App.tsx`, `src/contexts/AuthContext.tsx`, `src/contexts/OrganizationContext.tsx`
-- `src/components/auth/ProtectedRoute.tsx` and its test file
-- All 10 Visibility Contract adopter components (re-verify post-Wave 8)
-- `src/lib/dev/visibility-contract-bus.ts`, `src/hooks/dev/useVisibilityContractAudit.ts`
-- `supabase/functions/` directory listing
-- Dev-server log tail (`/tmp/dev-server-logs/dev-server.log`)
-- `code--read_console_logs` for runtime errors
+- `src/components/auth/ProtectedRoute.test.tsx` — add test wrapper providing `OrganizationProvider` (or mock `useOrgDashboardPath`)
+- `mem://architecture/visibility-contracts.md` — Audit Output Contract section + Deferral Register row
+- `mem://index.md` — Core rule for audit discipline
+
+## Files to read (pre-fix)
+
+- `src/components/auth/ProtectedRoute.test.tsx`
+- `src/contexts/OrganizationContext.tsx`
+- `src/hooks/useOrgDashboardPath.ts`
 
 ## Deferred (carried forward with trigger conditions)
 
-- ESLint taxonomy rule — **trigger: 3rd domain adopts the bus** (unchanged from Wave 9)
+- **P0 #2: Lint regression diagnosis (1100 → 4322 errors)** — **trigger: Wave 12, dedicated wave**. Reason for separation: bundling with the test fix risks scope creep into ESLint config archaeology.
+- **P1: Tooltip ref warning in `SupplyLibraryTab.tsx:94`** — **trigger: Wave 13 or alongside next color-bar work**
+- **P1: Legacy `DEBUG_LOG.md` queue (Waves 2-5)** — **trigger: explicit re-prioritization; some items may now be superseded**
+- ESLint taxonomy rule — **trigger: 3rd domain adopts the bus** (unchanged)
 - `VisibilityContractAuditPanel` UI — **trigger: ≥1 non-color-bar adopter** (unchanged)
 - CI audit-comment grep — **trigger: 3rd undocumented audit query** (unchanged)
-- Acting on any P1/P2 finding from this audit — **trigger: explicit approval per-finding next wave**
+- Multi-axis audit pass — **trigger: Wave 15** (new)
 
