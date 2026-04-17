@@ -39,6 +39,7 @@ import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFo
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
+import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -2160,10 +2161,13 @@ export function AppointmentDetailSheet({
                   {/* ─── TAB: Photos ──────────────────────────── */}
                   <TabsContent value="photos" className="p-6 pt-4 mt-0">
                     {appointment.phorest_client_id ? (
-                      <TransformationTimeline
-                        clientId={appointment.phorest_client_id}
-                        phorestClientId={appointment.phorest_client_id}
-                      />
+                      <>
+                        <InspirationPhotosSection clientId={appointment.phorest_client_id} />
+                        <TransformationTimeline
+                          clientId={appointment.phorest_client_id}
+                          phorestClientId={appointment.phorest_client_id}
+                        />
+                      </>
                     ) : (
                       <div className={tokens.empty.container}>
                         <Camera className={tokens.empty.icon} />
