@@ -1,26 +1,48 @@
 
 
-## Diagnosis
+## Diagnosis — root cause found
 
-In `AppointmentDetailSheet.tsx` (line 1904), the Stylist row renders a static `<Badge variant="outline">Booked</Badge>` next to the stylist name. It's hardcoded — it does NOT reflect the appointment status (the same badge shows whether the appointment is Booked, Confirmed, Checked In, or Completed). It conflicts with the actual status badge shown in the sheet header. Pure noise.
+`HospitalityBlock.tsx` lines 49–51:
 
-The `Preferred` badge alongside it is meaningful (flags preferred-stylist match) — keep it.
+```ts
+useEffect(() => {
+  if (isEmpty && userExpanded) setUserExpanded(false);
+}, [isEmpty, userExpanded]);
+```
 
-## Fix — Wave 22.31: Remove redundant "Booked" badge
+**The bug**: When user clicks "Add personal context" on a client with no facts/callbacks:
+1. `userExpanded → true`
+2. `isEmpty` is still `true` (no data has been added yet)
+3. Effect immediately fires → snaps `userExpanded` back to `false`
+4. UI never expands. Click appears dead.
 
-One line removal.
+The effect's *intent* was to re-collapse after the user removes their last fact/callback. But it can't distinguish "never had data" from "drained all data" — so it kills the open intent.
+
+## Fix — Wave 22.32: Allow expansion on empty clients
 
 ### Change
-- `AppointmentDetailSheet.tsx` line 1904: delete the `<Badge variant="outline" className="text-[10px]">Booked</Badge>` line.
+Remove the auto-collapse effect entirely. Two reasons:
+1. **It blocks the primary CTA** (the bug we're fixing).
+2. **It's not needed** — once the user expands and adds a fact, the block stays expanded (correct). If they later delete all facts, leaving it expanded shows the empty `ClientAboutCard` placeholder copy ("Capture the personal details…") + an Add button — which is actually *more* useful than snapping back to the dashed CTA. No harm done.
+
+If we ever want to restore the snap-back behavior, the correct gate is "track whether user ever had data this session" — but that's premature complexity. Defer.
+
+### Code change
+`src/components/dashboard/clients/HospitalityBlock.tsx`:
+- Remove the `useEffect` on lines 49–51
+- Remove the unused `useEffect` import if no longer needed
 
 ## Files
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+- `src/components/dashboard/clients/HospitalityBlock.tsx`
 
 ## Acceptance
-1. Stylist row shows: avatar + name + (optional) Preferred badge — no "Booked" pill
-2. Preferred-mismatch logic untouched
-3. No regression on appointment status badge in the sheet header
+1. Clicking "Add personal context" on a client with no facts/callbacks expands the block and shows `ClientAboutCard` + `ClientCallbacksPanel` in compact mode
+2. The "Add" button inside `ClientAboutCard` opens the inline form
+3. Saving a fact persists it and the block stays expanded
+4. Deleting all facts leaves the block expanded (showing the empty-state copy) — no regression on existing data flows
+5. Initial render on a client with no data still shows the collapsed dashed CTA (the gate is `!userExpanded`, untouched)
 
-## Note on Visual Edits
-For one-element removals like this, the **Visual Edits tool** (pencil icon, bottom-left of chat) lets you click the badge and delete it directly — free and instant. Worth knowing for the next micro-tweak.
+## Deferred
+- **P3** Persist `userExpanded` per-client so refreshing the sheet doesn't re-collapse (low priority — current session-scoped state is fine).
+- **P3** Track "had-data-this-session" if we want true snap-back UX after the user drains all facts. Trigger: if operators ask for it.
 
