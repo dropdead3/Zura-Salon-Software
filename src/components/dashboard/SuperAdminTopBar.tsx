@@ -151,17 +151,19 @@ export function SuperAdminTopBar({
   return (
     <div
       className={cn(
-        "dashboard-top-bar hidden lg:block z-30 px-3 pt-3 pb-3",
+        "dashboard-top-bar hidden lg:block z-30 pt-3 pb-3 pr-3",
+        // Left offset must clear the fixed sidebar (collapsed: 16 + 3 + 5 spacing; expanded: 80 + 3 + 5)
+        sidebarCollapsed ? "pl-24" : "pl-[340px]",
+        "transition-[padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
         hideFooter
           ? cn(
-              "fixed right-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
+              "fixed right-0 left-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
               isImpersonating ? "top-[44px]" : "top-0",
               headerHovered ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-full opacity-0 pointer-events-none"
             )
           : cn("sticky", isImpersonating ? "top-[44px]" : "top-0"),
         hideFooter && "shrink-0"
       )}
-      style={hideFooter ? { left: sidebarCollapsed ? '88px' : '344px' } : undefined}
       onMouseLeave={onHeaderHoverEnd}
     >
       {/* Extended blur zone */}
