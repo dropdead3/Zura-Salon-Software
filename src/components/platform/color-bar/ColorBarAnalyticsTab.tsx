@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CoachingHistoryDrawer } from './CoachingHistoryDrawer';
 import { useCoachAssignments, useAssignCoach, useUnassignCoach } from '@/hooks/platform/useCoachAssignments';
 import { usePlatformTeam } from '@/hooks/usePlatformRoles';
+import { SuspensionVelocityCard } from './SuspensionVelocityCard';
 
 function KPICard({ icon: Icon, label, value, subtitle }: { icon: any; label: string; value: string; subtitle?: string }) {
   return (
@@ -135,6 +136,9 @@ export function ColorBarAnalyticsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Network Intelligence: surfaces only when ≥1 week ≥3 suspensions */}
+      <SuspensionVelocityCard />
+
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard
