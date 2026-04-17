@@ -25,6 +25,8 @@ export interface ColorBarLocationEntitlement {
   prior_refund_count: number;
   // Suspension lifecycle
   suspended_at: string | null;
+  suspended_reason: string | null;
+  suspended_by: string | null;
   reactivated_at: string | null;
   requires_inventory_reconciliation: boolean;
   inventory_verified_at: string | null;
@@ -186,12 +188,22 @@ export function useBulkSuspendLocationEntitlements() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { organization_id: string }) => {
+    mutationFn: async (params: {
+      organization_id: string;
+      reason?: string;
+      notes?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const reasonText = params.notes
+        ? `${params.reason ?? 'unspecified'}: ${params.notes}`
+        : (params.reason ?? null);
       const { data, error } = await supabase
         .from('backroom_location_entitlements')
         .update({
           status: 'suspended',
           suspended_at: new Date().toISOString(),
+          suspended_reason: reasonText,
+          suspended_by: user?.id ?? null,
         } as any)
         .eq('organization_id', params.organization_id as any)
         .eq('status', 'active' as any)
