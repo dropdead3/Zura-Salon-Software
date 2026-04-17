@@ -57,6 +57,7 @@ import { SupplierSettingsSection } from '@/components/dashboard/color-bar-settin
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecommendations';
 import { ColorBarSavingsSection } from '@/components/dashboard/color-bar-settings/ColorBarSavingsSection';
+import { InventoryReconciliationBanner } from '@/components/dashboard/color-bar/InventoryReconciliationBanner';
 
 
 type ColorBarSection =
@@ -278,6 +279,9 @@ export default function ColorBarSettings() {
   return (
     <DashboardLayout>
       <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
+        {/* Inventory reconciliation banner — shown when any location requires recount after suspension */}
+        <InventoryReconciliationBanner />
+
         {/* Setup Banner — persistent across all sections */}
         <ColorBarSetupBanner
           setupHealth={bannerHealth}
