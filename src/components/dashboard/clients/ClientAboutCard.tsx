@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, X, Pencil, Heart } from 'lucide-react';
 import {
   useClientAboutFacts,
@@ -9,6 +9,7 @@ import {
   type AboutCategory,
   type ClientAboutFact,
 } from '@/hooks/useClientAboutFacts';
+import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,6 +20,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+
+function formatAuthor(fullName: string | null | undefined): string | null {
+  if (!fullName) return null;
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) return null;
+  const first = parts[0];
+  const last = parts[1];
+  if (!last) return first;
+  return `${first} ${last[0].toUpperCase()}.`;
+}
 
 interface ClientAboutCardProps {
   organizationId: string | null | undefined;
