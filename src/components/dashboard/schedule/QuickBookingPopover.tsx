@@ -1034,7 +1034,7 @@ export function QuickBookingPopover({
     setAutoSelectReason(null);
     setViewingClientProfile(null);
     setBookingNotes('');
-    setShowNotes(false);
+    
     setShowBreakForm(false);
     setRequestAssistant(false);
     // Reset redo state
