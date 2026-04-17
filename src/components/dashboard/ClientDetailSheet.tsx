@@ -57,6 +57,8 @@ import { VisitHistoryTimeline } from './VisitHistoryTimeline';
 import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { ClientNotesSection } from './ClientNotesSection';
+import { ClientAboutCard } from './clients/ClientAboutCard';
+import { ClientCallbacksPanel } from './clients/ClientCallbacksPanel';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { TransformationTimeline } from './clients/TransformationTimeline';
 import { BannedClientAlert } from './clients/BannedClientAlert';
@@ -1318,8 +1320,22 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
           {/* Client Product Affinity */}
           <ClientAffinityBadges phorestClientId={client.phorest_client_id} className="mt-1" />
 
+          {/* Hospitality Memory Layer — About + active follow-ups */}
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <ClientAboutCard
+              organizationId={selectedOrganization?.id}
+              clientId={client.phorest_client_id}
+              clientFirstName={client.first_name || client.name?.split(' ')[0]}
+            />
+            <ClientCallbacksPanel
+              organizationId={selectedOrganization?.id}
+              clientId={client.phorest_client_id}
+              clientFirstName={client.first_name || client.name?.split(' ')[0]}
+            />
+          </div>
+
           {/* Tabs for History, Notes, Transactions, and Redos */}
-          <Tabs defaultValue="history" className="mt-0">
+          <Tabs defaultValue="history" className="mt-4">
             <TabsList className="w-full rounded-xl">
               <TabsTrigger value="history" className="flex-1">Visit History</TabsTrigger>
               <TabsTrigger value="transformations" className="flex-1 gap-1">

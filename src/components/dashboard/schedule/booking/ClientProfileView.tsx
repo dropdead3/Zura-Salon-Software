@@ -121,6 +121,23 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
         <ClientAffinityBadges phorestClientId={client.phorest_client_id} compact />
       </div>
 
+      {/* Hospitality: callbacks + about */}
+      <div className="px-4 py-3 border-b border-border space-y-3">
+        <ClientCallbacksPanel
+          organizationId={organizationId}
+          clientId={client.phorest_client_id}
+          clientFirstName={client.first_name}
+          hidePast
+          compact
+        />
+        <ClientAboutCard
+          organizationId={organizationId}
+          clientId={client.phorest_client_id}
+          clientFirstName={client.first_name}
+          compact
+        />
+      </div>
+
       {/* Last Visit & Personal Info */}
       {(lastVisit || client.birthday || client.client_since) && (
         <div className="px-4 py-2 border-b border-border bg-muted/20">
