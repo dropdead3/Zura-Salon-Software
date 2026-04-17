@@ -2,106 +2,113 @@
 
 ## Prompt review
 
-Sharp call on "analyze for any gaps, bugs or improvements" — that framing invites a real audit instead of a narrow build-error patch. Sharper next time: tell me whether you want **(a) ship-blocker bugs only, fast cycle** or **(b) full audit including polish/UX gaps**. I'm planning (a) + the most material polish gaps; deferring decorative ones.
+Sharp instinct on running another audit pass — feature waves accumulate residue, and a third look usually catches what the prior two missed once integration is real. Sharper next time: name the **lens** ("look for security/RLS gaps" vs "look for UX friction" vs "look for data plumbing bugs") so I can rank findings by your actual concern. I'm running a full lens here and ranking findings P0/P1/P2.
 
-## Diagnosis — three real bugs, one missed integration
+## Diagnosis — findings ranked by impact
 
-### Bug 1 (BLOCKING — build error)
-`AppointmentDetailSheet.tsx` L791 references `appointment.staff_user_id`. The `PhorestAppointment` type aliases this column to `stylist_user_id` (the calendar hook normalizes the DB column name). One-character fix.
+### P0 — Functional bugs
 
-### Bug 2 (BLOCKING — silent data corruption / empty queries)
-The migration created `client_about_facts.client_id UUID REFERENCES phorest_clients(id)` and same for `client_callbacks.client_id`. Both are **UUID FKs to `phorest_clients.id`** (the local UUID).
+**1. `directoryOrgId` derived from first client row is fragile.** `ClientDirectory.tsx` L383: `const directoryOrgId = (clients?.[0] as any)?.organization_id ?? null;`. If `clients` is empty (new tenant, filter wipes all rows, slow load), the callback-counts query never enables. Worse: if a duplicate-merge surfaces a row from a different org first (cross-tenant exposure is RLS-blocked, but ordering is not guaranteed), the count map would be wrong. Should use `useOrganizationContext().selectedOrganization.id` directly — same source the row queries already use.
 
-But every UI integration passes the **wrong value**:
-- `ClientDetailSheet.tsx` L1327, L1332: passes `client.phorest_client_id` (text external Phorest ID) 
-- `ClientProfileView.tsx` L135, L142: same
-- `AppointmentCardContent.tsx` L393: passes `appointment.phorest_client_id` (text external Phorest ID)
-- `AppointmentDetailSheet.tsx` (callbacks block): same
-- `useClientCallbacks` / `useClientAboutFacts`: query by the wrong field
+**2. `HospitalityBlock` collapsed-empty state silently disappears once the user expands then deletes everything.** When `expanded === true` and the user deletes their last fact + acknowledges their last callback, `isEmpty` becomes true again but `expanded` stays true → renders two empty panels (the exact noise we collapsed away). Need to reset `expanded` to false when `isEmpty` flips back to true, OR drop the local `expanded` state entirely and let the panels' own internal "Add" affordances handle expansion.
 
-DB query confirms: `appointments.phorest_client_id` is a **text** field that joins to `phorest_clients.phorest_client_id` (text), NOT to `phorest_clients.id` (UUID). 0 rows match the UUID join; 282 rows match the text join.
+**3. `ClientDetailSheet` has dead imports.** L60–61 still import `ClientAboutCard` and `ClientCallbacksPanel` directly even though only `HospitalityBlock` is used. Not a runtime bug but a TS lint warning and confusing for future maintainers.
 
-**Effect when shipped**: 
-- Inserts throw `invalid input syntax for type uuid: "AauYiWV3_W0RffVIayPx3w"` 
-- Queries return empty arrays silently
-- The whole feature appears broken on every client
+### P1 — UX gaps
 
-**Fix shape**: Change the FK target. Local Phorest ID is the wrong join axis because it requires UI callers to do an extra lookup. The right pivot: store the **text Phorest external ID** as `client_id` so it matches what every UI surface and the appointments table already carries. Migration to swap column type from `uuid` to `text` and drop the FK (since `phorest_clients.phorest_client_id` is not unique/PK either — but we already filter by `organization_id` so identity collision is bounded per tenant).
+**4. AppointmentDetailSheet does NOT use `HospitalityBlock` — it stacks `ClientCallbacksPanel` + `ClientAboutCard` raw (L1602–1618).** Same empty-state noise problem: opening any appointment for a client with no facts/callbacks shows two empty panels at the top of the Details tab. Should swap to `HospitalityBlock` for consistency with `ClientDetailSheet`.
 
-Alternative considered: keep UUID, resolve text→UUID in every caller. Rejected — adds a roundtrip query to every appointment card render (bad for the schedule grid hot path) and triples the surface area of the fix.
+**5. `ClientProfileView` (booking flow) also stacks raw — same fix needed (L132–146).** Three surfaces, three different empty-state behaviors today.
 
-### Bug 3 (functional gap — specced but not implemented)
-The plan called for a `💬 N` indicator on Client Directory rows. Not wired. `src/pages/dashboard/ClientDirectory.tsx` has zero references to callbacks. Low blast radius — the chip already exists, just needs to be dropped into the row.
+**6. CallbackChip on appointment cards triggers a query *per appointment card on screen*.** `useClientCallbacks(clientId)` fires once per card. On a busy schedule day (50+ cards), that's 50+ separate queries, each with their own RLS roundtrip. The org-wide hook `useOrgActiveCallbackCounts` already exists and could feed a `Map<clientId, ClientCallback[]>` (or count) to the chip via context — single query for the whole grid. This violates the high-concurrency-scalability doctrine.
 
-### Improvement 1 (UX polish — alert-fatigue compliance)
-Currently `ClientDetailSheet.tsx` renders BOTH `<ClientAboutCard>` and `<ClientCallbacksPanel>` always-visible at the top in a 2-col grid (L1324). When a client has zero facts AND zero callbacks, this becomes two empty-state panels stacked side-by-side — visual noise that violates "silence is valid output." Should collapse to a single subtle "+ Add personal context" affordance until the operator engages.
+**7. Callback "Heard" button has no outcome capture flow.** The DB schema has `outcome_note TEXT` and the plan called for "optional outcome note." UI just calls `ack.mutate({ id, client_id })` with no note — the field exists but is unreachable. Either wire a small inline textarea on click, or remove the column promise from the UI affordance. Recommend wire it: a tiny popover with an optional one-liner ("She loved it, going back next year") then Heard.
 
-### Improvement 2 (capture friction)
-The `ClientCallbacksPanel` "Add" flow uses a date input but the plan said the default should be **"next visit"** (no date). The current UI works but doesn't visually anchor "next visit" as the default — operators may default to typing a date out of habit. Add a small "Next visit (default)" hint when the date field is empty.
+### P2 — Polish / doctrine compliance
+
+**8. The 90-day stale filter runs client-side in BOTH `useClientCallbacks` and `useOrgActiveCallbackCounts` — duplicated logic, drift risk.** Should live in one place (a SQL view or a shared `isCallbackStale(cb)` util). Also: visibility-contracts doctrine says "audit queries must document their false-positive filter inline as a SQL comment" — the filter is in TS, so inline TS comments suffice but a `// FILTER: trigger_date < now() - 90d hidden as stale (alert-fatigue)` near both call sites would satisfy the doctrine.
+
+**9. `useClientCallbacks` count chip on directory rows has no priority signal.** A callback set 89 days ago looks identical to one set yesterday. Doctrine says "rank impact" — a small color shift (amber → red border) when any callback is >30 days past trigger would surface "you're about to lose this hospitality moment." Already noted as deferred in Wave 22.26 — confirming it should stay deferred until operators ask, but flagging.
+
+**10. No keyboard shortcut to capture a callback from the Schedule grid.** Stylists open a card, click Add, type, save — 4 actions. Could be 1: `K` while hovering a card opens a quick-capture popover. Defer until usage data shows.
 
 ### Non-issues confirmed
-- Migration RLS, indexes, triggers — clean
-- `CallbackChip` correctly returns `null` when no callbacks (alert-fatigue compliant)
-- `useClientAppointmentNotes` hook (Wave 22.24) is correctly scoped — no bug
-- `AppointmentDetailSheet` callback block placement is correct (top of Details tab)
 
-## Plan — Wave 22.26: Hospitality Memory Layer fixes + ClientDirectory wiring
+- Migration RLS policies — clean, all 4 ops covered with `is_org_member`
+- `client_id TEXT` matches every UI caller (audited grep) — no UUID mismatch residue
+- `CallbackChip` correctly returns null when empty — alert-fatigue compliant
+- DB has 0 rows currently — feature is wired but unused; finding #6 only matters once data exists
+- Build error from Wave 22.26 (`stylist_user_id`) confirmed fixed
 
-### 1. Fix build error (1 line)
-`AppointmentDetailSheet.tsx` L791: `staff_user_id` → `stylist_user_id`.
+## Plan — Wave 22.27: Hospitality residue cleanup + scale fix
 
-### 2. Fix the UUID/text mismatch (data architecture)
-**Migration**: `ALTER TABLE client_about_facts` and `ALTER TABLE client_callbacks` to:
-- Drop FK on `client_id`
-- Change `client_id` from `UUID` to `TEXT`
-- Re-add a softer constraint via index `(organization_id, client_id)` — no FK because `phorest_clients.phorest_client_id` lacks a unique constraint
-- Drop tables and recreate cleanly is acceptable since no production data exists yet (just migrated this session)
+### 1. Fix `directoryOrgId` derivation
+`ClientDirectory.tsx`: replace `(clients?.[0] as any)?.organization_id` with `useOrganizationContext().selectedOrganization?.id`. Match the rest of the codebase.
 
-Hooks unchanged in shape — they already pass `client_id` as a string, so the type fix flows through `Database` types regen automatically.
+### 2. Fix `HospitalityBlock` re-collapse
+Drop local `expanded` state. Always render the two-panel grid when `!isEmpty`, render the collapsed CTA when `isEmpty`. The CTA's "Add personal context" button calls a new `onExpand` callback that opens `ClientCallbacksPanel` in adding-mode (or just renders the panels — the panels themselves have Add buttons). Simpler: when user clicks "Add personal context," force-render the panels (uncontrolled), and the next render with empty state collapses again only when both lists are empty AND no panel is mid-add. Use a derived `forceShow` flag from a ref that resets when both panels return to clean-empty state.
 
-### 3. Wire ClientDirectory `💬 N` indicator
-- New small hook `useOrgActiveCallbackCounts(orgId)` — single query: `SELECT client_id, COUNT(*) FROM client_callbacks WHERE organization_id = ? AND acknowledged_at IS NULL GROUP BY client_id` (with the same 90-day stale filter as the per-client hook)
-- In `ClientDirectory.tsx` row render, look up by `client.phorest_client_id` and render `<MessageCircle /> {count}` chip with tooltip "N open follow-ups"
-- One query for the whole directory page, not N+1
+Cleanest: pass a `defaultAdding` prop into `ClientAboutCard` so the CTA opens directly into the add form. Skip the "expanded" middle state entirely.
 
-### 4. Collapse empty Hospitality block on ClientDetailSheet
-When both `facts.length === 0` AND `callbacks.length === 0` (active), render a single neutral one-liner with a "+ Add personal context" button instead of two side-by-side empty panels. First click expands the appropriate panel.
+### 3. Remove dead imports
+`ClientDetailSheet.tsx` L60–61: drop `ClientAboutCard` and `ClientCallbacksPanel` imports.
 
-### 5. Anchor "Next visit" as default in callback capture
-In `ClientCallbacksPanel`, change the date row to: `[ ] Trigger by specific date — defaults to next visit`. Checkbox reveals the date picker. Reduces cognitive load.
+### 4. Swap raw stacks for `HospitalityBlock`
+- `AppointmentDetailSheet.tsx` L1602–1618 → replace with `<HospitalityBlock />`
+- `ClientProfileView.tsx` L132–146 → replace with `<HospitalityBlock />` (compact variant — add a `compact` prop to HospitalityBlock that passes through to children)
+
+### 5. Scale fix — single query for CallbackChip across the grid
+- New `CallbackContext` (or extend an existing schedule-day context) that fetches `useOrgActiveCallbackCounts` once per Schedule mount and exposes a `getCallbacksFor(clientId): ClientCallback[]` lookup
+- `CallbackChip` reads from context instead of firing its own query
+- Falls back to `useClientCallbacks` when no context provider (preserves Client Detail sheet behavior)
+
+Trade-off: org-wide query returns counts only today, not full prompt text. Need to extend `useOrgActiveCallbackCounts` to return `Map<clientId, ClientCallback[]>` (full rows, not just count) so the chip can show "Ask about Italy" not just "💬 1". Adds maybe 2KB of payload for an org with 50 active callbacks — worth it.
+
+### 6. Wire outcome note on "Heard"
+`ClientCallbacksPanel`: convert "Heard" button into a small popover with an optional one-line input + "Mark heard" submit. Empty input still acknowledges (no friction). Outcome note saved to existing `outcome_note` column.
+
+### 7. Centralize stale filter
+New `src/lib/callback-utils.ts` exporting `STALE_DAYS = 90` and `isCallbackStale(cb): boolean`. Both hooks import from it. One source of truth.
 
 ## Acceptance checks
 
-1. Build succeeds (no TS error on L791)
-2. Creating an About fact or Callback on Eric Day persists and re-renders without error
-3. `CallbackChip` appears on Eric Day's appointment card after capturing a callback
-4. ClientDirectory rows show `💬 N` next to clients with active callbacks; tooltip shows count
-5. Opening a brand-new client (no facts, no callbacks) shows a single calm "+ Add personal context" prompt — not two empty panels
-6. Capturing a callback without setting a date shows "Next visit" as the trigger label in the active list
-7. Stale callbacks (90+ days past trigger) still hidden via existing client-side filter
-8. No regression on Wave 22.24 unified notes ledger
+1. ClientDirectory callback chip appears even when first client row is on a different org or empty
+2. Adding then deleting all hospitality data on a client returns to the single-CTA collapsed state (no double-empty flash)
+3. AppointmentDetailSheet and ClientProfileView use the same collapsed-empty pattern as ClientDetailSheet
+4. Schedule grid with 50+ appointments fires 1 callback query, not 50
+5. "Heard" flow optionally captures an outcome note; empty submit still works
+6. Stale filter constant lives in one file; both hooks import it
+7. No regression on Wave 22.26 fixes (typo, UUID/text mismatch)
+8. No dead imports in `ClientDetailSheet.tsx`
 
 ## Files
 
-**Migration:**
-- New `supabase/migrations/{ts}_{uuid}.sql` — drop+recreate the two tables with `client_id TEXT`
-
-**New hook:**
-- `src/hooks/useOrgActiveCallbackCounts.ts` — directory-wide count map
+**New:**
+- `src/lib/callback-utils.ts` — `STALE_DAYS`, `isCallbackStale`
+- `src/contexts/CallbackLookupContext.tsx` — provider + `useCallbackLookup()` hook for grid-wide single query
 
 **Edits:**
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — L791 typo fix
-- `src/components/dashboard/ClientDetailSheet.tsx` — collapse empty hospitality block
-- `src/components/dashboard/clients/ClientCallbacksPanel.tsx` — anchor "Next visit" default with checkbox-revealed date
-- `src/pages/dashboard/ClientDirectory.tsx` — render callback count chip per row
+- `src/pages/dashboard/ClientDirectory.tsx` — use `useOrganizationContext` for org id
+- `src/components/dashboard/clients/HospitalityBlock.tsx` — drop `expanded` state, derive purely from data
+- `src/components/dashboard/clients/ClientCallbacksPanel.tsx` — popover with optional outcome note on Heard
+- `src/components/dashboard/clients/CallbackChip.tsx` — read from context first, fall back to per-client hook
+- `src/components/dashboard/ClientDetailSheet.tsx` — drop dead imports
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — swap raw stack for `HospitalityBlock`
+- `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — same swap (compact variant)
+- `src/hooks/useOrgActiveCallbackCounts.ts` — return full rows keyed by client_id, not just counts (rename to `useOrgActiveCallbacks`)
+- `src/hooks/useClientCallbacks.ts` — import `STALE_DAYS`/`isCallbackStale` from shared util
+- Wrap Schedule grid root in `<CallbackLookupProvider orgId={...}>`
 
-## Open question
+## Open questions
 
-Should the ClientDirectory chip be **clickable** (jumps to detail sheet, opens callbacks panel scrolled into view) or **read-only**? Going **read-only** for this wave — the row itself opens the detail sheet which already shows callbacks at the top. Tell me if you want auto-scroll/highlight.
+1. **Outcome note: required or optional?** Going **optional** (empty submit still acknowledges) — required would add friction and operators would just type "ok" to dismiss.
+2. **Should the org-wide hook still expose a count-only Map for non-grid callers?** Going yes — keep both `getCount(clientId)` and `getCallbacks(clientId)` on the context for ergonomic callers.
 
 ## Deferred
 
-- **P3** Add a unique constraint on `phorest_clients(organization_id, phorest_client_id)` so we can re-add a real FK on the hospitality tables. Trigger: after confirming no duplicate `phorest_client_id` rows exist per org.
-- **P3** Add a typed-counter return on the directory hook so we can render priority dots (red if any callback >30 days past trigger). Trigger: after operators report missed follow-ups.
-- **P3** Backfill: detect personal-content keywords in existing `client_notes` ("Italy", "wedding", "marathon") and suggest extracting them into Callbacks. Trigger: after manual capture proves the workflow.
+- **P2** Priority dot on directory chip (red border when any callback >30 days past trigger). Trigger: after operators report missed follow-ups.
+- **P3** Keyboard quick-capture (`K` on hover). Trigger: after capture data shows operators want speed.
+- **P3** Undo on accidental "Heard" tap (5-second toast with Undo). Trigger: if operators report mis-acks.
+- **P3** Surface acknowledged outcome notes in client history timeline ("Mar 02 · Heard about Italy: 'She loved it'"). Trigger: after outcome notes accumulate.
+- **P3** Realtime sync on `client_callbacks` (so a callback added on one device appears on another instantly). Trigger: when multi-stylist orgs report sync lag.
 
