@@ -252,6 +252,37 @@ export function ScheduleHeader({
                 Week
               </button>
             </div>
+            {/* Shifts View Toggle — mirrors Day/Week pill UI */}
+            {onToggleShiftsView && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onToggleShiftsView}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
+                      showShiftsView
+                        ? 'text-[hsl(var(--sidebar-foreground))] bg-[hsl(var(--sidebar-accent))]'
+                        : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
+                    )}
+                  >
+                    {showShiftsView ? (
+                      <>
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        <span className="hidden @lg/schedhdr:inline">Appointments</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-3.5 w-3.5" />
+                        <span className="hidden @lg/schedhdr:inline">Shifts</span>
+                      </>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
 
           {/* Center: Date Display — absolutely centered at @md+, inline at narrow */}
