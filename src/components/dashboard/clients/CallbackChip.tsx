@@ -27,7 +27,7 @@ export function CallbackChip({ clientId, className, maxLength = 40 }: CallbackCh
   const { data: hookCallbacks = [] } = useClientCallbacks(lookup ? null : clientId);
 
   const callbacks: ClientCallback[] = lookup
-    ? lookup.getCallbacks(clientId)
+    ? lookup.getActiveCallbacks(clientId)
     : hookCallbacks;
 
   if (callbacks.length === 0) return null;

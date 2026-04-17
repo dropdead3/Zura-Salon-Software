@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useClientAboutFacts } from '@/hooks/useClientAboutFacts';
 import { useClientCallbacks } from '@/hooks/useClientCallbacks';
+import { useCallbackLookup } from '@/contexts/CallbackLookupContext';
 import { ClientAboutCard } from './ClientAboutCard';
 import { ClientCallbacksPanel } from './ClientCallbacksPanel';
 
 interface HospitalityBlockProps {
   organizationId: string | null | undefined;
-  phorestClientId: string | null | undefined;
+  /**
+   * Universal hospitality client key — resolved via `getHospitalityClientKey`.
+   * Accepts a Phorest ID (legacy) or a Zura `clients.id` UUID. Renamed from
+   * `phorestClientId` to reflect that hospitality data is Phorest-agnostic.
+   */
+  clientKey: string | null | undefined;
   firstName?: string | null;
   /** Compact mode for narrow surfaces (booking flow). */
   compact?: boolean;
@@ -19,31 +25,32 @@ interface HospitalityBlockProps {
  * when the client has no facts AND no active callbacks — honors the
  * "silence is valid output" doctrine (alert-fatigue compliance).
  *
- * Empty state derives purely from data; clicking the CTA expands until the
- * user adds content. If the user later deletes everything, the block
- * automatically re-collapses (see `userExpanded` reset on isEmpty).
+ * Active callbacks count is sourced from `CallbackLookupContext` when mounted
+ * inside a provider (schedule grid) — avoids an extra per-client query. Falls
+ * back to a per-client hook outside the provider (Client Detail Sheet).
  */
 export function HospitalityBlock({
   organizationId,
-  phorestClientId,
+  clientKey,
   firstName,
   compact = false,
 }: HospitalityBlockProps) {
-  const { data: facts = [] } = useClientAboutFacts(phorestClientId);
-  const { data: callbacks = [] } = useClientCallbacks(phorestClientId);
-  const [userExpanded, setUserExpanded] = useState(false);
+  const { data: facts = [] } = useClientAboutFacts(clientKey);
+  const lookup = useCallbackLookup();
+  // Only fire per-client query when no provider is mounted (cold path).
+  const { data: hookCallbacks = [] } = useClientCallbacks(lookup ? null : clientKey);
+  const callbacks = lookup ? lookup.getActiveCallbacks(clientKey) : hookCallbacks;
 
+  const [userExpanded, setUserExpanded] = useState(false);
   const isEmpty = facts.length === 0 && callbacks.length === 0;
 
-  if (!organizationId || !phorestClientId) return null;
+  // Render-safe re-collapse: when the user drains all data, snap back to
+  // the collapsed CTA without a setState-during-render warning.
+  useEffect(() => {
+    if (isEmpty && userExpanded) setUserExpanded(false);
+  }, [isEmpty, userExpanded]);
 
-  // Auto-reset expansion intent once data drains back to empty —
-  // prevents the "two empty panels" flash after delete-all.
-  if (!isEmpty && userExpanded) {
-    // no-op: rendering panels anyway
-  } else if (isEmpty && userExpanded === false) {
-    // collapsed CTA path below
-  }
+  if (!organizationId || !clientKey) return null;
 
   // Collapsed empty state (no data and user hasn't asked to expand)
   if (isEmpty && !userExpanded) {
@@ -68,25 +75,17 @@ export function HospitalityBlock({
     );
   }
 
-  // If expanded but the user has now drained all data, snap back to collapsed
-  // on next interaction by resetting the flag — done via render-time check.
-  // (Inline state derivation; React batches the next render.)
-  if (isEmpty && userExpanded) {
-    // Reset so subsequent renders show CTA again unless re-expanded.
-    queueMicrotask(() => setUserExpanded(false));
-  }
-
   return (
     <div className={compact ? 'space-y-3' : 'mt-3 grid gap-3 md:grid-cols-2'}>
       <ClientAboutCard
         organizationId={organizationId}
-        clientId={phorestClientId}
+        clientId={clientKey}
         clientFirstName={firstName}
         compact={compact}
       />
       <ClientCallbacksPanel
         organizationId={organizationId}
-        clientId={phorestClientId}
+        clientId={clientKey}
         clientFirstName={firstName}
         compact={compact}
         hidePast={compact}
