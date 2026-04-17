@@ -74,9 +74,31 @@ export function SuspensionVelocityCard() {
 
   const totalSuspensions = useMemo(() => buckets.reduce((s, b) => s + b.count, 0), [buckets]);
   const hasTriggerWeek = useMemo(() => buckets.some((b) => b.isTrigger), [buckets]);
+  const maxWeekCount = useMemo(
+    () => buckets.reduce((m, b) => (b.count > m ? b.count : m), 0),
+    [buckets],
+  );
 
   // Alert-fatigue gate: silence unless pattern is real.
-  if (isLoading || !events || totalSuspensions === 0 || !hasTriggerWeek) return null;
+  // Quantify the silence (dev-only): emit a structured suppression reason so we
+  // can distinguish "working correctly + silent" from "broken + silent".
+  if (isLoading || !events || totalSuspensions === 0 || !hasTriggerWeek) {
+    if (import.meta.env.DEV) {
+      const reason = isLoading
+        ? 'loading'
+        : !events || totalSuspensions === 0
+          ? 'no-events'
+          : 'no-trigger-week';
+      // eslint-disable-next-line no-console
+      console.debug('[velocity-card] suppressed:', {
+        reason,
+        totalEvents: totalSuspensions,
+        maxWeekCount,
+        threshold: TRIGGER_THRESHOLD,
+      });
+    }
+    return null;
+  }
 
   return (
     <TooltipProvider>
