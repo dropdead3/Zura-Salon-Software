@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Send, Loader2, CheckCircle2, CreditCard, MessageSquare, Mail, Smartphone } from 'lucide-react';
+import { Send, Loader2, CheckCircle2, CreditCard, MessageSquare, Mail, Smartphone, AlertCircle } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -13,6 +14,8 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AfterpayLogo } from '@/components/icons/AfterpayLogo';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
+import { validateEmail } from '@/lib/contactValidation';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AFTERPAY_MAX_CENTS = 400000;
 
