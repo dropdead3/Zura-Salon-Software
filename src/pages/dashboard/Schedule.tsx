@@ -939,7 +939,7 @@ export default function Schedule() {
     <DashboardLayout hideFooter>
       <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
         {/* Header */}
-        <div className="shrink-0 px-4 pt-2">
+        <div className="shrink-0 pl-2 pr-4 pt-2">
           <ScheduleHeader
                 currentDate={currentDate}
                 setCurrentDate={setCurrentDate}
@@ -980,7 +980,7 @@ export default function Schedule() {
           </div>
         ) : (
           <>
-            <div className={cn("flex flex-1 min-h-0 flex-col overflow-hidden p-4")}>
+            <div className={cn("flex flex-1 min-h-0 flex-col overflow-hidden pl-2 pr-4 py-4")}>
               {copilotOpen && !isMobile ? (
                 <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
                   <ResizablePanel defaultSize={75} minSize={50}>
@@ -1008,7 +1008,7 @@ export default function Schedule() {
             </div>
 
             {(view === 'day' || view === 'week' || view === 'agenda') && (
-              <div className="shrink-0 px-4 pr-20 pb-0 pt-1">
+              <div className="shrink-0 pl-2 pr-20 pb-0 pt-1">
                 <div className="flex items-center gap-2">
                   <ScheduleActionBar
                     appointments={allAppointments.filter(apt => 
