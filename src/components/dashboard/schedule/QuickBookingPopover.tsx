@@ -1646,7 +1646,7 @@ export function QuickBookingPopover({
                         return (
                           <button
                             key={category}
-                            className="w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4 py-3 hover:bg-muted/60"
+                            className="w-full flex items-center gap-3 text-left transition-all px-3 py-3 rounded-xl hover:bg-muted/60"
                             onClick={() => setSelectedCategory(category)}
                           >
                             <div 
@@ -1676,7 +1676,7 @@ export function QuickBookingPopover({
                           return (
                             <button
                               key={ADDONS_CATEGORY}
-                              className="w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4 py-3 hover:bg-muted/60"
+                              className="w-full flex items-center gap-3 text-left transition-all px-3 py-3 rounded-xl hover:bg-muted/60"
                               onClick={() => setSelectedCategory(ADDONS_CATEGORY)}
                             >
                               <div 
