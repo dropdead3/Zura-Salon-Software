@@ -296,6 +296,50 @@ export function SendPaymentLinkComposer({
                 )}
               </div>
 
+              {/* Wave 22.35: Inline email capture for Afterpay flow */}
+              {afterpayEligible && !clientEmail && (
+                <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium">Email required for Afterpay</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Afterpay invoices and receipts are sent by email. Add the client's email to continue.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="email"
+                      autoCapitalize="none"
+                      placeholder="client@email.com"
+                      value={capturedEmail}
+                      onChange={(e) => {
+                        setCapturedEmail(e.target.value);
+                        if (emailWarning) setEmailWarning(null);
+                      }}
+                      className="h-8 text-sm rounded-md flex-1"
+                      disabled={savingEmail}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleSaveCapturedEmail}
+                      disabled={savingEmail || !capturedEmail.trim()}
+                      className="h-8 px-3"
+                    >
+                      {savingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
+                    </Button>
+                  </div>
+                  {emailWarning && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 pl-1">
+                      {emailWarning}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Delivery channel */}
               <div className="space-y-2">
                 <Label className="text-xs font-display tracking-wide uppercase text-muted-foreground">
@@ -317,7 +361,7 @@ export function SendPaymentLinkComposer({
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="email"
-                    disabled={!clientEmail}
+                    disabled={!effectiveEmail}
                     className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border border-border rounded-lg h-auto py-2 flex flex-col items-center gap-1"
                   >
                     <Mail className="h-4 w-4" />
@@ -325,7 +369,7 @@ export function SendPaymentLinkComposer({
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="both"
-                    disabled={!clientPhone || !clientEmail}
+                    disabled={!clientPhone || !effectiveEmail}
                     className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border border-border rounded-lg h-auto py-2 flex flex-col items-center gap-1"
                   >
                     <div className="flex items-center gap-0.5">
@@ -339,8 +383,8 @@ export function SendPaymentLinkComposer({
                   {(channel === 'sms' || channel === 'both') && clientPhone && (
                     <p>SMS to {formatPhoneDisplay(clientPhone)}</p>
                   )}
-                  {(channel === 'email' || channel === 'both') && clientEmail && (
-                    <p>Email to {clientEmail}</p>
+                  {(channel === 'email' || channel === 'both') && effectiveEmail && (
+                    <p>Email to {effectiveEmail}</p>
                   )}
                 </div>
               </div>
