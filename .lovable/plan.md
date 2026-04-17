@@ -2,52 +2,42 @@
 
 ## Prompt review
 
-Clear and focused — names the surface (quick actions), the UI concern, and the conditional logic. Even sharper next time: hint at the visual direction you want ("more compact", "icon-only on mobile", "match the lifecycle bar style") so I don't guess at aesthetics. Right now the screenshot tells me the issue (Call/Text look disabled/ghosted, Send Payment Link wraps to its own row awkwardly), but a one-line preference saves a round-trip.
+Tight, specific prompt — names the exact button and the exact condition. Good. Even sharper: state the desired UX when disabled ("show tooltip explaining why" vs "just grey out"). I'll assume tooltip-on-hover since that matches the pattern we just used for Call/Text.
 
-## Plan — Wave 18.1: Quick Actions UI Polish
+## Plan — Wave 18.2: Send Payment Link disabled state
 
-**Doctrine anchor:** UI Canon (button tokens, spacing, calm/executive aesthetic).
+**Doctrine anchor:** UI Canon (calm/executive, explain why structure protects).
 
-### What's wrong now (from screenshot)
+### What's wrong
 
-1. **Call** and **Text** render as muted/disabled-looking pills even when they're actionable — the disabled visual state is leaking, or they always render and just look dead when no phone exists
-2. **Send Payment Link** wraps to its own line awkwardly, breaking the row rhythm
-3. Mixed button widths (Call/Text are tight, Email/Rebook are wider, Send Payment Link is widest) → ragged layout
-4. No visual grouping — communication actions (Call/Text/Email) and transactional actions (Rebook/Send Payment) feel equal weight
+`SendToPayButton` only checks for missing email/phone *after* the user clicks (toast error). The button always looks active — misleading affordance. When neither contact channel exists, clicking it just throws a toast.
 
 ### Fix
 
-**Conditional rendering (hard rule):**
-- Render `Call` only if `clientPhone` exists (drop entirely otherwise — no disabled state)
-- Render `Text` only if `clientPhone` exists
-- Render `Email` only if `clientEmail` exists AND it's not a placeholder (`/^(na|none|noemail|test)@/i`)
-- Render `Rebook` always (no data dependency)
-- Render `Send Payment Link` always (handles its own internal validation)
+In `src/components/dashboard/appointments/SendToPayButton.tsx`:
 
-**Visual cleanup:**
-- Single horizontal flex row, `gap-2`, `flex-wrap` for narrow widths
-- All buttons use `tokens.button.cardAction` (h-9, px-4, rounded-full) for consistent pill height
-- Communication actions (Call, Text, Email) use `variant="outline"` — secondary weight
-- Transactional actions (Rebook, Send Payment Link) use `variant="default"` — primary emphasis
-- Icon-only on very narrow widths (< 380px drawer) using responsive label hiding (`<span className="hidden sm:inline">`)
-- If **no actions render at all** (rare: no phone, no email, send-pay disabled), hide the row entirely — silence is valid output
+1. Compute `hasContact = !!(clientEmail || clientPhone)` at the top of the component
+2. Pass `disabled={disabled || isSending || !hasContact}` to the `<Button>` (existing `disabled` prop already wired — just OR in `!hasContact`)
+3. Wrap the button in a `<Tooltip>` when `!hasContact` to explain: *"Add a phone number or email to the client profile to send a payment link."*
+4. Keep the existing toast error as a defensive fallback (in case `disabled` is bypassed)
 
-**Empty/edge cases:**
-- If only Rebook + Send Payment Link render, they sit left-aligned, not stretched
-- Tooltip on each communication button shows the actual value (e.g., "Call (555) 123-4567")
+In `AppointmentDetailSheet.tsx` quick-actions row:
+
+- The `<SendToPayButton>` already receives `clientEmail` / `clientPhone` props — no change needed there. The disabled state will propagate naturally.
+- The placeholder-email check (`isPlaceholderEmail`) currently hides the Email button but still passes the placeholder email through to `SendToPayButton`. Update the prop pass to send `null` when email is a placeholder, so Send Payment Link correctly disables when phone is also missing and email is `na@gmail.com`.
 
 ### Acceptance checks
 
-1. No phone → no Call/Text buttons (not disabled, just absent)
-2. No email or placeholder email → no Email button
-3. All rendered buttons same height (h-9), consistent radius (rounded-full)
-4. No awkward wrapping at standard drawer width (480px)
-5. Communication vs transactional visual hierarchy clear
-6. Tests still 111/111
+1. No phone AND no real email → Send Payment Link visually disabled (50% opacity per existing `disabled:opacity-50`) + tooltip on hover explains why
+2. Has phone OR has real (non-placeholder) email → button active as today
+3. Placeholder email + no phone → button disabled (placeholder doesn't count as deliverable)
+4. Click on disabled button does nothing (no toast, no fetch)
+5. No regression to split-payment flow (Afterpay > $4k still opens dialog when contact exists)
 
 ### Files touched
 
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — quick actions row only (the section added in Wave 18)
+- `src/components/dashboard/appointments/SendToPayButton.tsx` — disabled logic + tooltip wrap
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — pass `null` for placeholder emails to SendToPayButton
 
 ### Deferred (unchanged)
 
