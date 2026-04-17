@@ -2181,7 +2181,7 @@ export function QuickBookingPopover({
               </div>
             )}
             <Button
-              className="w-full h-10"
+              className="w-full h-11 text-base"
               disabled={stylistFirstMode ? !preSelectedStylistId : !selectedStylist}
               onClick={() => {
                 if (stylistFirstMode) {
