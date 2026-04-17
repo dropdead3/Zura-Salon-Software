@@ -2425,12 +2425,12 @@ export function AppointmentDetailSheet({
                     </motion.div>
                     )}
 
-                    {/* POS Booking Notes -- canonical location (#11) */}
+                    {/* Notes From Booking Assistant -- canonical location (#11) */}
                     {appointment.notes && (
                       <motion.div variants={staggerItem}>
                         <Separator className="mb-5" />
                         <div className="space-y-1">
-                          <h4 className={tokens.heading.subsection}>POS Booking Notes</h4>
+                          <h4 className={tokens.heading.subsection}>Notes From Booking Assistant</h4>
                           <p className="text-sm text-muted-foreground">{appointment.notes}</p>
                         </div>
                       </motion.div>
