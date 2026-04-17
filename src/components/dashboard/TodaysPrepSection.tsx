@@ -83,6 +83,17 @@ export function TodaysPrepSection() {
   const { data: appointments, isLoading } = useTodayPrep();
   const navigate = useNavigate();
   const today = format(new Date(), 'yyyy-MM-dd');
+  const { user } = useAuth();
+
+  // Coaching nudge — 30-day rebook rate vs org. Hook returns null if sample <10
+  // (visibility contract). Nudge surfaces only on material gap (>15pp lag).
+  const dateFrom = useMemo(() => format(subDays(new Date(), 30), 'yyyy-MM-dd'), []);
+  const dateTo = today;
+  const { data: rebookSignal } = useStylistRebookRate(user?.id, dateFrom, dateTo);
+  const showRebookNudge =
+    rebookSignal !== null &&
+    rebookSignal !== undefined &&
+    rebookSignal.deltaVsOrg <= -REBOOK_COACHING_GAP_PP;
 
   const temporalTags = useMemo(() => {
     if (!appointments) return new Map<number, TemporalTag>();
