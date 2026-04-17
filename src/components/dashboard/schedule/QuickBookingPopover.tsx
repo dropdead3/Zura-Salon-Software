@@ -1295,13 +1295,13 @@ export function QuickBookingPopover({
             <div>
               {viewingClientProfile ? (
                 <>
-                  <h2 className="font-medium text-sm truncate max-w-[180px]">{viewingClientProfile.name}</h2>
-                  <p className="text-xs text-muted-foreground">Client Profile</p>
+                  <h2 className="font-medium text-base truncate max-w-[180px]">{viewingClientProfile.name}</h2>
+                  <p className="text-sm text-muted-foreground">Client Profile</p>
                 </>
               ) : (
                 <>
-                  <h2 className="font-medium text-sm">New Booking</h2>
-                  <p className="text-xs text-muted-foreground">
+                  <h2 className="font-medium text-base">New Booking</h2>
+                  <p className="text-sm text-muted-foreground">
                     {formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}
                   </p>
                 </>
@@ -1459,20 +1459,20 @@ export function QuickBookingPopover({
           {stylistFirstMode && preSelectedStylistId && !selectedCategory && (
             <div className="px-3 pt-3 pb-0">
               <div className="flex items-center gap-2.5 p-2 rounded-lg bg-accent/50 border border-accent">
-                <Avatar className="h-8 w-8 shrink-0">
+                <Avatar className="h-10 w-10 shrink-0">
                   <AvatarImage src={preSelectedStylistPhoto || undefined} />
-                  <AvatarFallback className="bg-muted text-xs font-medium">
+                  <AvatarFallback className="bg-muted text-sm font-medium">
                     {preSelectedStylistName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 flex items-center gap-2">
-                  <div className="text-sm font-medium truncate">{preSelectedStylistName}</div>
+                  <div className="text-base font-medium truncate">{preSelectedStylistName}</div>
                   {(() => {
                     const levelNum = getLevelNumber(preSelectedStylistLevel);
                     return levelNum ? (
-                      <Badge variant="secondary" className="shrink-0 text-[10px] px-2 py-0.5">Level {levelNum}</Badge>
+                      <Badge variant="secondary" className="shrink-0 text-xs px-2 py-0.5">Level {levelNum}</Badge>
                     ) : (
-                      <Badge variant="outline" className="shrink-0 text-[10px] px-2 py-0.5">Unranked</Badge>
+                      <Badge variant="outline" className="shrink-0 text-xs px-2 py-0.5">Unranked</Badge>
                     );
                   })()}
                 </div>
@@ -1695,7 +1695,7 @@ export function QuickBookingPopover({
               ) : selectedCategory === ADDONS_CATEGORY ? (
                 <>
                   <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
-                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
+                    <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                       Add-Ons & Extras
                     </h4>
                   </div>
@@ -1739,7 +1739,7 @@ export function QuickBookingPopover({
               ) : (
                 <>
                   <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
-                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
+                    <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                       {selectedCategory}
                     </h4>
                   </div>
@@ -2125,7 +2125,7 @@ export function QuickBookingPopover({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium text-foreground truncate">{displayName}</span>
+                          <span className="text-base font-medium text-foreground truncate">{displayName}</span>
                           {!stylistFirstMode && isPreviousStylist && (
                             <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-normal bg-accent/50 text-accent-foreground border-accent shrink-0">
                               Previously Seen
@@ -2181,7 +2181,7 @@ export function QuickBookingPopover({
               </div>
             )}
             <Button
-              className="w-full h-10"
+              className="w-full h-11 text-base"
               disabled={stylistFirstMode ? !preSelectedStylistId : !selectedStylist}
               onClick={() => {
                 if (stylistFirstMode) {
@@ -2201,7 +2201,7 @@ export function QuickBookingPopover({
       {step === 'confirm' && (
         <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
-            <div className="p-3 space-y-3">
+            <div className="p-4 space-y-4">
               <div className="bg-muted/50 rounded-lg p-3">
                 <div className="flex items-center gap-2.5">
                   <Avatar className="h-10 w-10">
@@ -2210,94 +2210,94 @@ export function QuickBookingPopover({
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium text-sm">{selectedClient?.name}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="font-medium text-base">{selectedClient?.name}</div>
+                    <div className="text-sm text-muted-foreground">
                       {selectedClient?.phone || selectedClient?.email}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="bg-card border border-border rounded-lg divide-y divide-border">
-                <div className="flex items-center gap-2.5 p-2.5">
-                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 p-3">
+                  <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-muted-foreground">Location</div>
-                    <div className="font-medium text-xs">{locations.find(l => l.id === selectedLocation)?.name}</div>
+                    <div className="text-xs text-muted-foreground">Location</div>
+                    <div className="font-medium text-sm">{locations.find(l => l.id === selectedLocation)?.name}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 p-2.5">
-                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                    <CalendarPlus className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 p-3">
+                  <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                    <CalendarPlus className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-muted-foreground">Date & Time</div>
-                    <div className="font-medium text-xs">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
+                    <div className="text-xs text-muted-foreground">Date & Time</div>
+                    <div className="font-medium text-sm">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 p-2.5">
-                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 p-3">
+                  <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-muted-foreground">Duration</div>
-                    <div className="font-medium text-xs">{totalDuration} minutes</div>
+                    <div className="text-xs text-muted-foreground">Duration</div>
+                    <div className="font-medium text-sm">{totalDuration} minutes</div>
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Services</h4>
+                <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Services</h4>
                 <div className="bg-card border border-border rounded-lg divide-y divide-border">
                   {selectedServiceDetails.map((service) => (
-                    <div key={service.id} className="flex items-center justify-between p-2.5">
+                    <div key={service.id} className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                          <Scissors className="h-3 w-3 text-primary" />
+                        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+                          <Scissors className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <div className="font-medium text-xs">{service.name}</div>
-                          <div className="text-[10px] text-muted-foreground">{service.duration_minutes}m</div>
+                          <div className="font-medium text-sm">{service.name}</div>
+                          <div className="text-xs text-muted-foreground">{service.duration_minutes}m</div>
                         </div>
                       </div>
                       {service.price !== null && (
-                        <span className="font-medium text-xs">{formatCurrencyWhole(service.price)}</span>
+                        <span className="font-medium text-sm">{formatCurrencyWhole(service.price)}</span>
                       )}
                     </div>
                   ))}
                   {selectedAddonDetails.map((addon) => (
-                    <div key={addon.id} className="flex items-center justify-between p-2.5">
+                    <div key={addon.id} className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-accent/30 flex items-center justify-center">
-                          <Sparkles className="h-3 w-3 text-accent-foreground" />
+                        <div className="w-8 h-8 rounded-md bg-accent/30 flex items-center justify-center">
+                          <Sparkles className="h-4 w-4 text-accent-foreground" />
                         </div>
                         <div>
-                          <div className="font-medium text-xs">{addon.name}</div>
-                          <div className="text-[10px] text-muted-foreground">
+                          <div className="font-medium text-sm">{addon.name}</div>
+                          <div className="text-xs text-muted-foreground">
                             {addon.duration_minutes ? `+${addon.duration_minutes}m` : 'Add-on'}
                           </div>
                         </div>
                       </div>
-                      <span className="font-medium text-xs">{formatCurrencyWhole(addon.price)}</span>
+                      <span className="font-medium text-sm">{formatCurrencyWhole(addon.price)}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Stylist</h4>
-                <div className="bg-card border border-border rounded-lg p-2.5">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
+                <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Stylist</h4>
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar className="h-10 w-10">
                       <AvatarImage src={
                         preSelectedStylistPhoto || 
                         stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.photo_url || 
                         undefined
                       } />
-                      <AvatarFallback className="bg-muted text-xs">
+                      <AvatarFallback className="bg-muted text-sm">
                         {getStylistName().slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium text-sm">{getStylistName()}</span>
+                    <span className="font-medium text-base">{getStylistName()}</span>
                   </div>
                 </div>
               </div>
@@ -2349,8 +2349,8 @@ export function QuickBookingPopover({
               <div className="bg-card border border-border rounded-lg p-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <RotateCcw className="h-3.5 w-3.5 text-muted-foreground" />
-                    <Label className="text-xs font-medium cursor-pointer" htmlFor="redo-toggle">
+                    <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium cursor-pointer" htmlFor="redo-toggle">
                       Redo / Adjustment
                     </Label>
                   </div>
@@ -2365,23 +2365,22 @@ export function QuickBookingPopover({
                         setRedoPriceOverride(null);
                       }
                     }}
-                    className="scale-90"
                   />
                 </div>
                 {isRedo && (
                   <div className="space-y-2.5 pt-1">
                     {/* Reason */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground font-display uppercase tracking-wider">
+                      <Label className="text-xs text-muted-foreground font-display uppercase tracking-wider">
                         Reason {redoPolicy?.redo_reason_required && <span className="text-destructive">*</span>}
                       </Label>
                       <Select value={redoReason} onValueChange={setRedoReason}>
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger className="h-9 text-sm">
                           <SelectValue placeholder="Select reason..." />
                         </SelectTrigger>
                         <SelectContent>
                           {REDO_REASONS.map(r => (
-                            <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>
+                            <SelectItem key={r} value={r} className="text-sm">{r}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -2390,7 +2389,7 @@ export function QuickBookingPopover({
                           placeholder="Describe the reason..."
                           value={redoCustomReason}
                           onChange={(e) => setRedoCustomReason(e.target.value)}
-                          className="h-8 text-xs"
+                          className="h-9 text-sm"
                         />
                       )}
                     </div>
@@ -2470,7 +2469,7 @@ export function QuickBookingPopover({
                     {/* Manager override */}
                     {isManagerOrAdmin && (
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-muted-foreground font-display uppercase tracking-wider">
+                        <Label className="text-xs text-muted-foreground font-display uppercase tracking-wider">
                           Price Override (optional)
                         </Label>
                         <Input
@@ -2479,7 +2478,7 @@ export function QuickBookingPopover({
                           placeholder="Leave empty to use policy"
                           value={redoPriceOverride ?? ''}
                           onChange={(e) => setRedoPriceOverride(e.target.value ? parseFloat(e.target.value) : null)}
-                          className="h-8 text-xs"
+                          className="h-9 text-sm"
                         />
                       </div>
                     )}
@@ -2499,19 +2498,19 @@ export function QuickBookingPopover({
                 {!showNotes ? (
                   <button
                     type="button"
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => setShowNotes(true)}
                   >
                     + Add special notes
                   </button>
                 ) : (
                   <div className="space-y-1.5">
-                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">Notes</h4>
+                    <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Notes</h4>
                     <Textarea
                       placeholder="Special instructions, pricing notes, promo codes..."
                       value={bookingNotes}
                       onChange={(e) => setBookingNotes(e.target.value)}
-                      className="min-h-[60px] text-xs resize-none"
+                      className="min-h-[60px] text-sm resize-none"
                     />
                   </div>
                 )}
@@ -2523,9 +2522,9 @@ export function QuickBookingPopover({
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <Label htmlFor="request-assistant" className="text-xs cursor-pointer">Request Assistant Coverage</Label>
+                      <Label htmlFor="request-assistant" className="text-sm cursor-pointer">Request Assistant Coverage</Label>
                       {requestAssistant && (
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           An assistant time block will be created for this appointment's duration.
                         </p>
                       )}
@@ -2541,11 +2540,11 @@ export function QuickBookingPopover({
               </div>
             </div>
           </ScrollArea>
-          <div className="p-3 border-t border-border bg-card space-y-2">
-            <div className="flex items-center justify-between text-sm">
+          <div className="p-4 border-t border-border bg-card space-y-2">
+            <div className="flex items-center justify-between text-base">
               <span className="text-muted-foreground">Total</span>
               {(() => {
-                if (!isRedo) return <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>;
+                if (!isRedo) return <span className="text-xl font-medium">{formatCurrency(totalPrice)}</span>;
                 // Calculate redo-adjusted price
                 const origPrice = originalAppointmentData?.total_price;
                 let computedRedoPrice: number | null = null;
@@ -2560,17 +2559,17 @@ export function QuickBookingPopover({
                     {finalPrice !== totalPrice && (
                       <span className="text-sm text-muted-foreground line-through">{formatCurrency(totalPrice)}</span>
                     )}
-                    <span className="text-lg font-medium text-amber-600 dark:text-amber-400">{formatCurrency(finalPrice)}</span>
+                    <span className="text-xl font-medium text-amber-600 dark:text-amber-400">{formatCurrency(finalPrice)}</span>
                   </div>
                 );
               })()}
             </div>
             <div className="space-y-0.5">
-              <p className="text-[10px] text-muted-foreground/70">
+              <p className="text-xs text-muted-foreground/70">
                 Any discounts or promotions will be calculated at checkout.
               </p>
               <div className="flex items-center gap-1">
-                <p className="text-[10px] text-muted-foreground/70">
+                <p className="text-xs text-muted-foreground/70">
                   Exact price may vary after overages & adjustments.
                 </p>
                 <Tooltip>
@@ -2586,7 +2585,7 @@ export function QuickBookingPopover({
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="flex-1 h-10 gap-2"
+                className="flex-1 h-11 gap-2 text-base"
                 disabled={saveDraft.isPending || createBooking.isPending}
                 onClick={() => {
                   if (!effectiveOrganization?.id) return;
@@ -2623,7 +2622,7 @@ export function QuickBookingPopover({
                 Save for Later
               </Button>
               <Button
-                className="flex-1 h-10 font-medium"
+                className="flex-1 h-11 font-medium text-base"
                 disabled={!canBook || createBooking.isPending}
                 onClick={() => createBooking.mutate()}
               >
@@ -2695,7 +2694,7 @@ export function QuickBookingPopover({
                 aria-hidden="true"
               />
               <motion.div
-                className="fixed z-50 right-3 bottom-3 w-full sm:max-w-md rounded-xl bg-card/80 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden"
+                className="fixed z-50 right-3 bottom-3 w-full sm:max-w-lg rounded-xl bg-card/80 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden"
                 style={{ top: godModeOffset + 12 }}
                 initial={{ x: '100%', opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
