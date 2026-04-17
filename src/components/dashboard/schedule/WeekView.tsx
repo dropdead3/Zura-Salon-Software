@@ -43,6 +43,8 @@ interface WeekViewProps {
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
   scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
+  /** Day-column width: 'auto' (fit) or pixel number. Enables horizontal scroll when set. */
+  weekDayWidth?: 'auto' | number;
 }
 
 // Use consolidated status colors from design tokens
@@ -280,6 +282,7 @@ export function WeekView({
   assistantProfilesMap,
   assistantTimeBlocks = [],
   scheduleBlocks = [],
+  weekDayWidth = 'auto',
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -376,22 +379,36 @@ export function WeekView({
   const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
     getCurrentTimeRenderMetrics(wkNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
+  const isStretched = weekDayWidth !== 'auto';
+  const gridTemplate = isStretched
+    ? `70px repeat(7, ${weekDayWidth}px)`
+    : '70px repeat(7, 1fr)';
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden border border-border rounded-lg bg-card">
-        <div>
+      <div
+        ref={scrollRef}
+        className={cn(
+          'flex-1 min-h-0 overflow-y-auto border border-border rounded-lg bg-card',
+          isStretched ? 'overflow-x-auto' : 'overflow-x-hidden',
+        )}
+      >
+        <div className={isStretched ? 'inline-block min-w-full' : ''}>
           {/* Day Headers with luxury blur effect */}
           <div className="sticky top-0 z-20">
             {/* Main header with frosted glass effect */}
             <div 
-              className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border/50"
+              className="grid border-b border-border/50"
               style={{
+                gridTemplateColumns: gridTemplate,
                 background: 'hsl(var(--muted) / 0.95)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
               }}
             >
-              <div className="p-2" /> {/* Time column spacer */}
+              <div
+                className={cn('p-2', isStretched && 'sticky left-0 z-[21] bg-muted')}
+              /> {/* Time column spacer */}
               {weekDays.map((day) => {
                 const dayIsToday = isOrgToday(day);
                 const dayIsTomorrow = isOrgTomorrow(day);
@@ -441,9 +458,14 @@ export function WeekView({
           </div>
 
           {/* Time Grid */}
-          <div className="grid grid-cols-[70px_repeat(7,1fr)] relative">
+          <div className="grid relative" style={{ gridTemplateColumns: gridTemplate }}>
             {/* Time Labels Column */}
-            <div className="relative bg-sidebar">
+            <div
+              className={cn(
+                'relative bg-sidebar',
+                isStretched && 'sticky left-0 z-[15]',
+              )}
+            >
               {timeSlots.map((slot, index) => (
                 <div 
                   key={`${slot.hour}-${slot.minute}`}

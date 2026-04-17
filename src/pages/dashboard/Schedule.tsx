@@ -123,6 +123,19 @@ export default function Schedule() {
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [zoomLevel, setZoomLevel] = useState(1);
+
+  // Week view day-column width: 'auto' (fit) or pixel number. Persisted to localStorage.
+  const [weekDayWidth, setWeekDayWidth] = useState<'auto' | number>(() => {
+    if (typeof window === 'undefined') return 'auto';
+    const stored = window.localStorage.getItem('schedule.weekDayWidth');
+    if (!stored || stored === 'auto') return 'auto';
+    const n = parseInt(stored, 10);
+    return Number.isFinite(n) ? n : 'auto';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('schedule.weekDayWidth', weekDayWidth === 'auto' ? 'auto' : String(weekDayWidth));
+  }, [weekDayWidth]);
   const locationTimezone = useLocationTimezone(selectedLocation || null);
 
   // Fetch assistant time blocks for the current date/location
@@ -894,12 +907,13 @@ export default function Schedule() {
               locationHolidayClosures={selectedLocationData?.holiday_closures}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
-              colorBy="service"
+               colorBy="service"
               serviceLookup={serviceLookup}
               assistantNamesMap={assistantNamesMap}
               assistantProfilesMap={assistantProfilesMap}
                zoomLevel={zoomLevel}
                scheduleBlocks={scheduleBlocks}
+               weekDayWidth={weekDayWidth}
             />
           )}
           
@@ -968,6 +982,8 @@ export default function Schedule() {
                 appointments={appointments}
                 hoursStart={preferences.hours_start}
                 hoursEnd={preferences.hours_end}
+                weekDayWidth={weekDayWidth}
+                onWeekDayWidthChange={setWeekDayWidth}
               />
         </div>
 

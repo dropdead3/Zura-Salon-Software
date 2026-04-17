@@ -29,7 +29,9 @@ import {
   Sparkles,
   ClipboardCheck,
   Clock,
+  StretchHorizontal,
 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import {
@@ -98,6 +100,9 @@ interface ScheduleHeaderProps {
   appointments?: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
+  /** Week-view day column width: 'auto' (fit) or pixel number (120-400). */
+  weekDayWidth?: 'auto' | number;
+  onWeekDayWidthChange?: (width: 'auto' | number) => void;
 }
 
 export function ScheduleHeader({
@@ -130,6 +135,8 @@ export function ScheduleHeader({
   appointments = [],
   hoursStart = 9,
   hoursEnd = 18,
+  weekDayWidth = 'auto',
+  onWeekDayWidthChange,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
@@ -280,6 +287,34 @@ export function ScheduleHeader({
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
                   <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Week-view Day Width slider — only when in week view */}
+            {view === 'week' && onWeekDayWidthChange && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="hidden @md/schedhdr:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--sidebar-accent))]">
+                    <StretchHorizontal className="h-3.5 w-3.5 text-[hsl(var(--sidebar-foreground))]/70 shrink-0" />
+                    <Slider
+                      value={[weekDayWidth === 'auto' ? 100 : weekDayWidth]}
+                      min={100}
+                      max={400}
+                      step={20}
+                      onValueChange={([v]) => {
+                        // 100 = 'auto' (Fit). >100 = fixed pixel width.
+                        onWeekDayWidthChange(v <= 100 ? 'auto' : v);
+                      }}
+                      className="w-[88px] @lg/schedhdr:w-[120px]"
+                    />
+                    <span className="text-[10px] font-display tracking-wider uppercase text-[hsl(var(--sidebar-foreground))]/70 tabular-nums w-8 text-right">
+                      {weekDayWidth === 'auto' ? 'Fit' : `${weekDayWidth}`}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Day column width — slide right to widen, scroll horizontally to view all days</p>
                 </TooltipContent>
               </Tooltip>
             )}
