@@ -3,9 +3,11 @@
  * Surfaces a verbal commitment script for the stylist to read aloud, plus
  * 1/2/3/4/6/8/10/12 week options. Pre-selects the recommended interval based
  * on service category but allows override.
+ *
+ * Risk-scaled amber alert: visual intensity scales with overdue drift.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { CalendarPlus, CalendarCheck, XCircle, Quote, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -18,6 +20,8 @@ import {
   type RebookInterval,
 } from '@/lib/scheduling/rebook-recommender';
 
+type DriftTier = 'on-cadence' | 'drifting' | 'overdue';
+
 interface NextVisitRecommendationProps {
   serviceName: string | null | undefined;
   serviceCategory: string | null | undefined;
@@ -25,16 +29,64 @@ interface NextVisitRecommendationProps {
   /** Optional HH:mm of the source appointment. When provided, the verbal
    * script reads "...at 2:00 PM work?" — materially more committal language. */
   appointmentStartTime?: string | null;
+  /** Optional drift signals — when provided, scale the alert intensity. */
+  daysSinceLastVisit?: number | null;
+  recommendedIntervalDays?: number | null;
   onBookInterval: (interval: RebookInterval) => void;
   onScheduleManually: () => void;
   onDecline: () => void;
 }
+
+function resolveDriftTier(
+  daysSinceLastVisit?: number | null,
+  recommendedIntervalDays?: number | null,
+): DriftTier {
+  // No data → default to current visual baseline (no regression).
+  if (
+    daysSinceLastVisit == null ||
+    recommendedIntervalDays == null ||
+    recommendedIntervalDays <= 0
+  ) {
+    return 'drifting';
+  }
+  const ratio = daysSinceLastVisit / recommendedIntervalDays;
+  if (ratio > 1.5) return 'overdue';
+  if (ratio > 1.0) return 'drifting';
+  return 'on-cadence';
+}
+
+const TIER_STYLES: Record<DriftTier, {
+  container: string;
+  dot: string;
+  eyebrow: string;
+}> = {
+  'on-cadence': {
+    container:
+      'border-warning/25 border-l-4 border-l-warning/60 bg-gradient-to-br from-warning/[0.05] to-warning/[0.02]',
+    dot: 'h-1.5 w-1.5 rounded-full bg-warning/70',
+    eyebrow: 'Say This',
+  },
+  drifting: {
+    container:
+      'border-warning/40 border-l-4 border-l-warning bg-gradient-to-br from-warning/[0.10] to-warning/[0.04] shadow-[0_0_0_1px_hsl(var(--warning)/0.15),0_4px_12px_-2px_hsl(var(--warning)/0.15)]',
+    dot: 'h-1.5 w-1.5 rounded-full bg-warning animate-pulse',
+    eyebrow: 'Say This — Drifting',
+  },
+  overdue: {
+    container:
+      'border-warning/60 border-l-4 border-l-warning bg-gradient-to-br from-warning/[0.16] to-warning/[0.06] shadow-[0_0_0_1px_hsl(var(--warning)/0.25),0_4px_16px_-2px_hsl(var(--warning)/0.25)]',
+    dot: 'h-1.5 w-1.5 rounded-full bg-warning animate-pulse ring-1 ring-warning/40',
+    eyebrow: 'Say This — Overdue',
+  },
+};
 
 export function NextVisitRecommendation({
   serviceName,
   serviceCategory,
   appointmentDate,
   appointmentStartTime,
+  daysSinceLastVisit,
+  recommendedIntervalDays,
   onBookInterval,
   onScheduleManually,
   onDecline,
@@ -63,27 +115,50 @@ export function NextVisitRecommendation({
     return format(d, 'h:mm a');
   }, [appointmentStartTime]);
 
+  // Drift tier — deterministic three-step intensity
+  const tier = useMemo(
+    () => resolveDriftTier(daysSinceLastVisit, recommendedIntervalDays),
+    [daysSinceLastVisit, recommendedIntervalDays],
+  );
+  const tierStyles = TIER_STYLES[tier];
+
+  // One-shot entrance animation: fires once per mount, never re-fires on
+  // re-render (interval toggle clicks). New checkout sheet open = new mount.
+  const hasAnimated = useRef(false);
+  const [animateIn, setAnimateIn] = useState(!hasAnimated.current);
+  useEffect(() => {
+    hasAnimated.current = true;
+    const t = setTimeout(() => setAnimateIn(false), 300);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="space-y-5">
-      {/* Verbal Script Card — elevated as the centerpiece of the rebook flow */}
+      {/* Verbal Script Card — risk-scaled amber alert, centerpiece of the rebook flow */}
       <div className="space-y-1.5">
-        <div className="relative rounded-lg border border-amber-500/40 border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-500/[0.10] to-amber-500/[0.04] p-5 shadow-[0_0_0_1px_rgba(245,158,11,0.15),0_4px_12px_-2px_rgba(245,158,11,0.15)]">
-          <Quote className="absolute top-3 left-3 h-5 w-5 text-amber-500/60" />
-          <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-amber-500 font-display">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Say This
+        <div
+          className={cn(
+            'relative rounded-lg border p-5',
+            tierStyles.container,
+            animateIn && 'animate-[fade-in_0.25s_ease-out,scale-in_0.2s_ease-out]',
+          )}
+        >
+          <Quote className="absolute top-3 left-3 h-5 w-5 text-warning/60" />
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-warning font-display">
+            <span className={tierStyles.dot} />
+            {tierStyles.eyebrow}
           </span>
           <p className="font-sans text-base text-foreground leading-relaxed pl-7 pr-2 pt-4 italic">
             "I'd like to see you back in{' '}
-            <span className="not-italic text-amber-500 font-medium">
+            <span className="not-italic text-warning font-medium">
               {selectedWeeks} {weekLabel}
             </span>
             . How does{' '}
-            <span className="not-italic text-amber-500 font-medium">{dayLabel}</span>
+            <span className="not-italic text-warning font-medium">{dayLabel}</span>
             {timeLabel && (
               <>
                 {' '}at{' '}
-                <span className="not-italic text-amber-500 font-medium">{timeLabel}</span>
+                <span className="not-italic text-warning font-medium">{timeLabel}</span>
               </>
             )}
             {' '}work?"
