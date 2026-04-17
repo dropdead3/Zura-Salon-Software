@@ -29,7 +29,9 @@ import {
   Sparkles,
   ClipboardCheck,
   Clock,
+  StretchHorizontal,
 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import {
@@ -98,6 +100,9 @@ interface ScheduleHeaderProps {
   appointments?: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
+  /** Week-view day column width: 'auto' (fit) or pixel number (120-400). */
+  weekDayWidth?: 'auto' | number;
+  onWeekDayWidthChange?: (width: 'auto' | number) => void;
 }
 
 export function ScheduleHeader({
@@ -130,6 +135,8 @@ export function ScheduleHeader({
   appointments = [],
   hoursStart = 9,
   hoursEnd = 18,
+  weekDayWidth = 'auto',
+  onWeekDayWidthChange,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
