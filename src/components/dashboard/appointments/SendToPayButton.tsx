@@ -38,6 +38,7 @@ export function SendToPayButton({
   const [isSending, setIsSending] = useState(false);
   const [showSplitDialog, setShowSplitDialog] = useState(false);
 
+  const hasContact = !!(clientEmail?.trim() || clientPhone?.trim());
   const needsSplit = afterpayEnabled && totalAmountCents > AFTERPAY_MAX_CENTS;
 
   const handleSendToPayDirect = async (amountCents?: number) => {
