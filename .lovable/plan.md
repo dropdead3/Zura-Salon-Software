@@ -2,73 +2,108 @@
 
 ## Prompt review
 
-Sharp ask — names the element ("Appointment Notes card"), the destination ("underneath services, above stylist"), and is unambiguous. Sharper next time: tell me whether the relocation is for **scan order** (operator's eye should hit notes before assigning the stylist, since notes often inform stylist choice) or **information density** (group "what's happening" with "what to know" before "who's doing it"). Both lead to the same fix here, but the *why* would let me also flag whether the Stylist Notes pattern in `DockNewBookingSheet` deserves the same reorder. I'll assume the operational logic: notes inform stylist assignment, so they should sit immediately after the service list.
+Sharp and visual — names the element ("Level 2 badge"), the destination (right side, left of X), and uses the screenshot to anchor exactly which surface (the pre-selected stylist card on the booking wizard service-step). Sharper next time: tell me whether the badge upgrade is for **prominence** (operator should immediately see what tier is being booked = pricing implications) or **polish** (current pill looks generic against the violet card chrome). I'll design for both since they point the same direction: stronger visual presence + level-tier color coding to match the existing `getLevelColor` system used elsewhere on the platform.
 
 ## Diagnosis
 
-In `QuickBookingPopover.tsx` confirm step (`step === 'confirm'`), the current vertical order is:
+In `QuickBookingPopover.tsx` L1459–1488, the pre-selected stylist card renders:
 
 ```
-1. Client header card           (L2205)
-2. Location / Date / Duration   (L2220)
-3. Services                     (L2249–2285)
-4. Stylist                      (L2286–2303)
-5. Estimated Product Cost       (L2304)
-6. Redo / Adjustment            (L2348)
-7. Appointment Notes  ← here    (L2497–2519)
-8. Request Assistant Coverage   (L2521)
+[Avatar] [Name + Level Badge inline] ········· [X button]
 ```
 
-The Notes card was dropped at the end of the confirm stack in Wave 22.8 because it was previously a hidden toggle. Now that it's a primary input, its position should reflect operational scan order: **see what's being booked → write context for it → see who's assigned**.
+Two issues:
+1. **Position**: Badge sits crammed next to the name in the same flex group, fighting for space when names are long
+2. **Visual**: Plain `secondary` shadcn badge — generic muted background, no tier signaling, no relationship to the platform's stylist-level color system (`getLevelColor` from `@/lib/level-colors.ts`) used in the directory and team hub
 
-## Plan — Wave 22.11: Reorder Notes between Services and Stylist
+## Plan — Wave 22.12: Reposition + restyle Level badge
 
 ### Behavior
 
-Move the entire Notes card block (L2497–2519, ~23 lines) to slot in between the Services block (ends L2285) and the Stylist block (starts L2286). New vertical order on the confirm step:
+Move the `Level N` badge from the name cluster (left side) to a dedicated slot on the right side, immediately to the left of the X button. Upgrade visual treatment to match platform tier-color conventions and project a stronger "this matters for pricing" signal.
+
+### Layout shift
 
 ```
-1. Client header
-2. Location / Date / Duration
-3. Services
-4. Appointment Notes        ← moved here
-5. Stylist
-6. Estimated Product Cost
-7. Redo / Adjustment
-8. Request Assistant Coverage
+Before:  [Avatar] [Name · Level 2] ········· [X]
+After:   [Avatar] [Name           ] [Level 2] [X]
 ```
 
-### Fix shape
+### Visual upgrades
 
-In `src/components/dashboard/schedule/QuickBookingPopover.tsx`:
+- **Tier-aware color**: Use `getLevelColor(levelNum - 1, 7)` from `@/lib/level-colors.ts` to pull the canonical stone→gold gradient color matching the org's 7-tier ladder (Level 2 = early stone tone, Level 7 = gold)
+- **Subtle ring + tinted bg**: Replace flat `secondary` variant with a custom badge: tier color at low opacity for bg, tier color at higher opacity for border ring, full tier color for text — matches the platform's "calm, executive" UI doctrine
+- **Typography**: Use `font-display tracking-wider uppercase` for the "LEVEL N" text — aligns with platform UI canon (Termina for stat-style labels, never `font-bold`)
+- **Sizing**: Slightly larger than current (`h-6 px-2.5`) for presence, but still subordinate to the name
+- **"Unranked" fallback**: Keep but soften to a neutral muted outline so it visually de-prioritizes vs. ranked badges
 
-1. **Cut** the Notes card div (L2497–2519) — the entire `{/* Stylist Notes — always visible, operationally critical */}` block including its wrapping `<div className="rounded-lg border border-border/60 p-3 space-y-2">`
-2. **Update the comment** to `{/* Appointment Notes — internal staff context */}` to match the post-Wave 22.10 framing
-3. **Paste** it immediately after the Services block's closing `</div>` (after L2285) and before the Stylist `<div>` opens (L2286)
-4. Keep all internal markup (FileText icon, Recommended badge, textarea, helper text) **unchanged** — copy, sizing, fill indicator, and behavior are correct as-is
+### Implementation
 
-No state, prop, or submit-flow changes. Pure DOM reordering.
+In `src/components/dashboard/schedule/QuickBookingPopover.tsx` L1459–1488:
+
+1. Remove the badge from inside the name flex group (L1468–1478) — restore that group to just the name
+2. Add a new badge slot in the outer flex row, positioned between the name container and the X button
+3. Build the badge inline using the tier color palette (since shadcn `Badge` variants don't natively support arbitrary HSL tier colors); use a styled `<div>` or `<span>` with className that applies the tier hue
+4. Import `getLevelColor` from `@/lib/level-colors.ts` if not already imported in this file
+
+Final structure:
+
+```tsx
+<div className="flex-1 min-w-0">
+  <div className="text-base font-medium truncate">{preSelectedStylistName}</div>
+</div>
+
+{/* New: tier-colored level pill, right-aligned */}
+{(() => {
+  const levelNum = getLevelNumber(preSelectedStylistLevel);
+  if (!levelNum) {
+    return (
+      <span className="shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border border-border/60 text-muted-foreground bg-muted/40">
+        Unranked
+      </span>
+    );
+  }
+  const tier = getLevelColor(levelNum - 1, 7);  // 0-indexed
+  return (
+    <span
+      className="shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border"
+      style={{
+        backgroundColor: `${tier}1A`,   // ~10% opacity bg
+        borderColor: `${tier}66`,        // ~40% opacity ring
+        color: tier,
+      }}
+    >
+      Level {levelNum}
+    </span>
+  );
+})()}
+
+<Button variant="ghost" size="icon" ...>
+  <X className="h-3 w-3" />
+</Button>
+```
 
 ### Acceptance checks
 
-1. On the confirm step, the Notes card renders directly below the Services list and directly above the Stylist card
-2. Card visual weight, copy ("Appointment notes" / "Internal note —" / "Recommended" badge) is unchanged
-3. `bookingNotes` state still binds correctly and submits with the booking
-4. Estimated Product Cost, Redo/Adjustment, and Request Assistant Coverage remain in their current positions below the Stylist card
-5. No regression on the inline fill indicator (icon turns primary when notes typed)
-6. No orphan comment or stray div from the cut
+1. On the service-selection step with a pre-selected stylist, the level badge renders to the right side of the card, directly to the left of the X close button
+2. Badge for Jamie Vieira (Level 2) shows the tier-2 stone color at low-opacity bg with matching ring and text
+3. Badge typography uses `font-display tracking-wider uppercase` (Termina) — no `font-bold` or `font-semibold`
+4. Long stylist names truncate cleanly without colliding with the badge (badge stays right-aligned via `shrink-0` + flex)
+5. Stylists with no level (Eric Day, Alex Day, Mallori Schwab, Julia Gross) show the softened "Unranked" pill in the same right-side slot
+6. Clear (X) button still works and remains the rightmost element
+7. Higher tiers (Level 5, 6, 7) render with progressively warmer/gold tones, matching the rest of the platform's tier-color usage (Stylist Directory, Team Hub)
 
 ### Files
 
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — relocate the Notes card (~23-line move, no other changes)
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — restructure pre-selected stylist card (L1459–1488), add `getLevelColor` import
 
 ### Open question
 
-None — pure structural reorder.
+None — visual + structural intent is clear from the screenshot.
 
 ### Deferred
 
-- **P2** Apply the same Services → Notes → Stylist scan order to `DockNewBookingSheet` confirm step — trigger: when Dock booking surface is reviewed for parity with the schedule popover
-- **P2** Persist last-used notes per client and surface a "Use last notes" suggestion above the textarea — trigger: when staff repeatedly retype similar handoff notes for returning clients
-- **P3** Make the Notes card slot configurable via a tenant-level "confirm step layout" setting if multi-org feedback diverges on optimal scan order — trigger: only if 2+ orgs request different orderings
+- **P2** Apply the same tier-colored level badge to the stylist picker step (L2286+) and the confirm step's stylist card for consistent tier signaling across the wizard — trigger: this PR's badge ships and feels right
+- **P2** Add a hover tooltip on the badge showing the full `client_label` ("Studio Artist · Level 2") and the level's hourly/service price multiplier — trigger: when staff need quick price-tier context without leaving the booking flow
+- **P3** Migrate the level badge into a shared `<StylistLevelBadge>` component used everywhere (Directory, Team Hub, booking wizard, schedule) — trigger: when the same tier-colored pill is duplicated in 3+ surfaces
 
