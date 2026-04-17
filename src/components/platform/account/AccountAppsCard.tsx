@@ -104,12 +104,15 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
   /**
    * Color Bar uses the shared toggle hook so this surface gets the same
    * soft-disable + reconciliation flow as the Platform admin tab.
+   * The optimistic patch makes the Switch flip instantly on suspend/enable
+   * (P0 fix — without it, suspension visibly lagged until the cascade settled).
    */
   const handleColorBarToggle = () =>
     colorBarToggle.toggle({
       organizationId,
       organizationName: organizationName ?? 'this organization',
       currentlyEnabled: isColorBarEnabled,
+      optimisticPatch: optimisticallyFlipColorBar,
     });
 
   return (
@@ -120,15 +123,7 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
       <PlatformCardContent>
         <div className="divide-y divide-slate-700/50">
           {/* Zura Color Bar */}
-          <div
-            className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-            onMouseEnter={() => {
-              if (!isColorBarEnabled) prefetchReactivation(organizationId);
-            }}
-            onFocus={() => {
-              if (!isColorBarEnabled) prefetchReactivation(organizationId);
-            }}
-          >
+          <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-slate-700/50">
                 <Package className="h-4 w-4 text-violet-400" />
@@ -153,6 +148,12 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
               <Switch
                 checked={isColorBarEnabled}
                 onCheckedChange={handleColorBarToggle}
+                onMouseEnter={() => {
+                  if (!isColorBarEnabled) prefetchReactivation(organizationId);
+                }}
+                onFocus={() => {
+                  if (!isColorBarEnabled) prefetchReactivation(organizationId);
+                }}
                 disabled={
                   colorBarToggle.isPending ||
                   !!colorBarToggle.reactivationTarget ||
@@ -239,7 +240,7 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
         suspendedReason={colorBarToggle.reactivationTarget?.suspendedReason ?? null}
         affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
         isPending={colorBarToggle.isPending}
-        onConfirm={() => colorBarToggle.confirmReactivation()}
+        onConfirm={() => colorBarToggle.confirmReactivation(optimisticallyFlipColorBar)}
       />
     </PlatformCard>
   );
