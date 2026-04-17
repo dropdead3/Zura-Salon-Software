@@ -2499,7 +2499,7 @@ export function QuickBookingPopover({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className={cn("h-4 w-4 transition-colors", bookingNotes.trim() ? "text-primary" : "text-muted-foreground")} />
-                    <Label htmlFor="booking-notes" className="text-sm cursor-pointer">Notes for the stylist</Label>
+                    <Label htmlFor="booking-notes" className="text-sm cursor-pointer">Appointment notes</Label>
                     {bookingNotes.trim() && (
                       <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                     )}
@@ -2508,13 +2508,13 @@ export function QuickBookingPopover({
                 </div>
                 <Textarea
                   id="booking-notes"
-                  placeholder="What should your stylist know? Formula notes, client preferences, allergies, special requests..."
+                  placeholder="Add context for the stylist — formula details, client preferences, allergies, prep instructions, special requests..."
                   value={bookingNotes}
                   onChange={(e) => setBookingNotes(e.target.value)}
                   className="min-h-[80px] text-sm resize-none"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Visible to your stylist before the appointment.
+                  Internal note — visible to the assigned stylist and staff.
                 </p>
               </div>
 
