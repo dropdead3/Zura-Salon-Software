@@ -499,6 +499,49 @@ export default function Schedule() {
     [allStylists, headerUtilization],
   );
 
+  // Stylists sorted by display name — canonical order for week-view stylist selection.
+  const sortedStylistsForWeek = useMemo(() => {
+    return [...allStylists].sort((a, b) => {
+      const an = (a.display_name || a.full_name || '').toLowerCase();
+      const bn = (b.display_name || b.full_name || '').toLowerCase();
+      return an.localeCompare(bn);
+    });
+  }, [allStylists]);
+
+  // localStorage key scoped per location
+  const weekStylistStorageKey = selectedLocation
+    ? `schedule.weekStylistId.${selectedLocation}`
+    : null;
+
+  // Hydrate selected week stylist from localStorage when location changes.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !weekStylistStorageKey) return;
+    const stored = window.localStorage.getItem(weekStylistStorageKey);
+    setSelectedWeekStylistId(stored || null);
+  }, [weekStylistStorageKey]);
+
+  // Persist selected week stylist per location.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !weekStylistStorageKey) return;
+    if (selectedWeekStylistId) {
+      window.localStorage.setItem(weekStylistStorageKey, selectedWeekStylistId);
+    }
+  }, [selectedWeekStylistId, weekStylistStorageKey]);
+
+  // Auto-select the first stylist when:
+  // - entering week view with no selection, OR
+  // - the current selection isn't in the (location-filtered) stylist list.
+  useEffect(() => {
+    if (view !== 'week') return;
+    if (sortedStylistsForWeek.length === 0) return;
+    const isValid = selectedWeekStylistId &&
+      sortedStylistsForWeek.some((s) => s.user_id === selectedWeekStylistId);
+    if (!isValid) {
+      setSelectedWeekStylistId(sortedStylistsForWeek[0].user_id);
+    }
+  }, [view, sortedStylistsForWeek, selectedWeekStylistId]);
+
+
   // Auto-switch to agenda view on mobile
   useEffect(() => {
     if (isMobile && view !== 'agenda') {
