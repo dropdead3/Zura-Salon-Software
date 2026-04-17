@@ -176,6 +176,7 @@ function GridContent({
   showClientPhone,
   showClientAvatar,
   useShortLabels,
+  declinedReasonLabel,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -190,6 +191,7 @@ function GridContent({
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
   useShortLabels?: boolean;
+  declinedReasonLabel?: string | null;
 }) {
   if (size === 'compact') {
     return (
