@@ -2201,7 +2201,7 @@ export function QuickBookingPopover({
       {step === 'confirm' && (
         <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           <ScrollArea className="flex-1">
-            <div className="p-3 space-y-3">
+            <div className="p-4 space-y-4">
               <div className="bg-muted/50 rounded-lg p-3">
                 <div className="flex items-center gap-2.5">
                   <Avatar className="h-10 w-10">
@@ -2210,94 +2210,94 @@ export function QuickBookingPopover({
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium text-sm">{selectedClient?.name}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="font-medium text-base">{selectedClient?.name}</div>
+                    <div className="text-sm text-muted-foreground">
                       {selectedClient?.phone || selectedClient?.email}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="bg-card border border-border rounded-lg divide-y divide-border">
-                <div className="flex items-center gap-2.5 p-2.5">
-                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 p-3">
+                  <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-muted-foreground">Location</div>
-                    <div className="font-medium text-xs">{locations.find(l => l.id === selectedLocation)?.name}</div>
+                    <div className="text-xs text-muted-foreground">Location</div>
+                    <div className="font-medium text-sm">{locations.find(l => l.id === selectedLocation)?.name}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 p-2.5">
-                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                    <CalendarPlus className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 p-3">
+                  <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                    <CalendarPlus className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-muted-foreground">Date & Time</div>
-                    <div className="font-medium text-xs">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
+                    <div className="text-xs text-muted-foreground">Date & Time</div>
+                    <div className="font-medium text-sm">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 p-2.5">
-                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 p-3">
+                  <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-muted-foreground">Duration</div>
-                    <div className="font-medium text-xs">{totalDuration} minutes</div>
+                    <div className="text-xs text-muted-foreground">Duration</div>
+                    <div className="font-medium text-sm">{totalDuration} minutes</div>
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Services</h4>
+                <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Services</h4>
                 <div className="bg-card border border-border rounded-lg divide-y divide-border">
                   {selectedServiceDetails.map((service) => (
-                    <div key={service.id} className="flex items-center justify-between p-2.5">
+                    <div key={service.id} className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                          <Scissors className="h-3 w-3 text-primary" />
+                        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+                          <Scissors className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <div className="font-medium text-xs">{service.name}</div>
-                          <div className="text-[10px] text-muted-foreground">{service.duration_minutes}m</div>
+                          <div className="font-medium text-sm">{service.name}</div>
+                          <div className="text-xs text-muted-foreground">{service.duration_minutes}m</div>
                         </div>
                       </div>
                       {service.price !== null && (
-                        <span className="font-medium text-xs">{formatCurrencyWhole(service.price)}</span>
+                        <span className="font-medium text-sm">{formatCurrencyWhole(service.price)}</span>
                       )}
                     </div>
                   ))}
                   {selectedAddonDetails.map((addon) => (
-                    <div key={addon.id} className="flex items-center justify-between p-2.5">
+                    <div key={addon.id} className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-accent/30 flex items-center justify-center">
-                          <Sparkles className="h-3 w-3 text-accent-foreground" />
+                        <div className="w-8 h-8 rounded-md bg-accent/30 flex items-center justify-center">
+                          <Sparkles className="h-4 w-4 text-accent-foreground" />
                         </div>
                         <div>
-                          <div className="font-medium text-xs">{addon.name}</div>
-                          <div className="text-[10px] text-muted-foreground">
+                          <div className="font-medium text-sm">{addon.name}</div>
+                          <div className="text-xs text-muted-foreground">
                             {addon.duration_minutes ? `+${addon.duration_minutes}m` : 'Add-on'}
                           </div>
                         </div>
                       </div>
-                      <span className="font-medium text-xs">{formatCurrencyWhole(addon.price)}</span>
+                      <span className="font-medium text-sm">{formatCurrencyWhole(addon.price)}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Stylist</h4>
-                <div className="bg-card border border-border rounded-lg p-2.5">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
+                <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Stylist</h4>
+                <div className="bg-card border border-border rounded-lg p-3">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar className="h-10 w-10">
                       <AvatarImage src={
                         preSelectedStylistPhoto || 
                         stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.photo_url || 
                         undefined
                       } />
-                      <AvatarFallback className="bg-muted text-xs">
+                      <AvatarFallback className="bg-muted text-sm">
                         {getStylistName().slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium text-sm">{getStylistName()}</span>
+                    <span className="font-medium text-base">{getStylistName()}</span>
                   </div>
                 </div>
               </div>
