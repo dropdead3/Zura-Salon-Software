@@ -1,78 +1,57 @@
 
+
 ## Prompt review
 
-Solid consolidation instinct — both tabs serve the same operator mental model ("what's happening with this client's color?"), so collapsing them into one branded surface reduces tab count from 6 → 5, eliminates the overflow risk entirely, and reinforces the "Zura Color Bar" as a single product surface inside the appointment context.
+Good pivot — you correctly recognized that hiding the tab entirely loses a discovery/growth opportunity. Showing a locked tab with an upsell turns every unentitled appointment view into a passive marketing surface for Color Bar. This matches the platform's growth doctrine (Apps marketplace + entitlement gates with upsell paths).
 
-Tighter framing for next time: clarify (a) *which* sub-tab opens by default, (b) whether the inner navigation should be horizontal sub-tabs vs. vertical sections, and (c) what the unified label should be — you said "Zura Color Bar" but in cramped UI we may want just "Color Bar" with the Beaker icon for compactness. I'll propose defaults with rationale below — flag if you want differently.
-
-## Findings
-
-Two tabs in `AppointmentDetailSheet.tsx` (lines 1424-1428):
-- **`formulas`** → renders `<ClientFormulaHistoryTab>` (versioned formula history per client)
-- **`color-bar`** → renders `<ColorBarTab>` (the active mix session / chemical usage for *this appointment*)
-
-Both are color-bar-domain. Currently they're peers, which forces operators to context-switch between "what did we mix today" and "what have we mixed historically."
-
-## Proposed change
-
-**Single tab: `Color Bar`** (with `Beaker` icon, matches Color Bar brand)
-- Default sub-view: **Today's Mix** (the active `ColorBarTab` — operationally most relevant during/after appointment)
-- Secondary sub-view: **Formula History** (the `ClientFormulaHistoryTab` — reference layer)
-
-**Inner navigation: `SubTabsList` / `SubTabsTrigger`** (underline style, already in `tabs.tsx`)
-- Calmer than nesting full TabsList inside TabsList
-- Matches existing patterns elsewhere in the platform per the canon
-
-Net result: tabs go from 6 → 5 (Details, History, Photos, Notes, **Color Bar**), Beaker icon now signals the unified Color Bar surface, no more horizontal scroll pressure.
+Tighter framing for next time: clarify the upsell *destination* — should the CTA route to (a) the Zura Apps marketplace (`/dashboard/apps`), (b) a "Contact Sales" action like Connect/Payroll gates, or (c) a Color Bar product detail page? I'll propose routing to the Apps marketplace since Color Bar is a self-serve activation per the entitlement governance canon (unlike Connect/Payroll which require sales contact). Flag if you want different.
 
 ## Plan
 
 **File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-1. **TabsList (lines 1420-1428)** — replace the two triggers with one:
+1. **Keep the Color Bar tab visible for everyone.** Do not gate the `TabsTrigger`. The tab remains in the strip for all orgs (5 tabs total).
+
+2. **Gate the *content*, not the tab.** Inside `<TabsContent value="color-bar">`, branch on `colorBarEntitled`:
+   - **Entitled** → render the existing nested sub-tabs (Today's Mix + Formula History) unchanged.
+   - **Not entitled** → render a new `<ColorBarUpsell>` inline component (calm, advisory, in-panel — not a modal).
+
+3. **Add entitlement hook** near other hooks (~line 670):
    ```tsx
-   <TabsTrigger value="color-bar" className="font-sans gap-1.5">
-     <Beaker className="w-3.5 h-3.5" />
-     Color Bar
-   </TabsTrigger>
+   const { isEntitled: colorBarEntitled, isPendingActivation } = 
+     useColorBarEntitlement(appointment.location_id ?? undefined);
    ```
-   Remove the `formulas` trigger entirely.
+   Import: `useColorBarEntitlement` from `@/hooks/color-bar/useColorBarEntitlement`.
 
-2. **TabsContent (lines 2173-2184)** — collapse the two `TabsContent` blocks into one `value="color-bar"` block containing a nested `<Tabs>` with `SubTabsList`:
-   ```tsx
-   <TabsContent value="color-bar" className="p-6 pt-4 mt-0">
-     <Tabs defaultValue="today" className="w-full">
-       <SubTabsList>
-         <SubTabsTrigger value="today">Today's Mix</SubTabsTrigger>
-         <SubTabsTrigger value="history">Formula History</SubTabsTrigger>
-       </SubTabsList>
-       <TabsContent value="today" className="mt-4">
-         <ColorBarTab appointment={appointment} organizationId={effectiveOrganization?.id ?? ''} />
-       </TabsContent>
-       <TabsContent value="history" className="mt-4">
-         <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
-       </TabsContent>
-     </Tabs>
-   </TabsContent>
-   ```
+4. **Create the inline upsell** (new lightweight component or inline JSX inside the TabsContent block). Structure mirrors the executive tone of `ConnectSubscriptionGate` but compact for in-panel use:
+   - **Icon block**: `Beaker` in a tinted square (`bg-primary/10`, `rounded-xl`)
+   - **Header**: "Zura Color Bar" (`font-display text-base tracking-wide`)
+   - **Body** (advisory-first, brand-voice compliant):
+     > "Engineered chemical service infrastructure. Track formulas, manage stock at the location level, and propagate chemical costs into checkout — all from inside every appointment."
+   - **Three compact feature lines** (icon + label):
+     - Formula history per client
+     - Per-location stock and cost tracking
+     - Dock-to-checkout chemical cost propagation
+   - **Primary CTA**: "Activate Zura Color Bar" → `navigate(dashPath('/dashboard/apps'))` (uses existing `dashPath` helper already in the file)
+   - **If `isPendingActivation`** (org flag on, but no location entitled): swap CTA copy to "Activate for this location" and route to color-bar settings instead. Calm hint: "Color Bar is enabled for your organization. Activate it for this location to begin."
 
-3. **Imports** — add `SubTabsList`, `SubTabsTrigger` to the existing `@/components/ui/tabs` import. `Beaker` is already imported.
+5. **No state-reset effect needed** — the tab is always present; no `activeTab` fallback required.
 
-4. **State migration** — if `activeTab` is ever set to `"formulas"` programmatically anywhere (deep-links, external triggers), redirect to `"color-bar"`. Quick search needed; if found, map old value → new value in the `setActiveTab` setter or in a `useEffect`.
-
-5. **No DB / RLS / API changes** — purely UI consolidation.
+6. **No DB / RLS / hook changes.**
 
 ## Acceptance checks
 
-1. Tab bar shows 5 tabs: Details, History, Photos, Notes, Color Bar (with Beaker icon). No "Formulas" tab.
-2. Clicking "Color Bar" opens the unified surface with two sub-tabs: "Today's Mix" (default, active) and "Formula History".
-3. "Today's Mix" sub-tab renders the existing `ColorBarTab` content unchanged (active mix session, chemical usage for this appointment).
-4. "Formula History" sub-tab renders the existing `ClientFormulaHistoryTab` content unchanged (versioned formula list).
-5. Sub-tab styling uses underline `SubTabsList` (calm, secondary), not the raised pill `TabsList` (avoids tabs-inside-tabs visual clutter).
-6. No horizontal scroll on the parent tab strip at 520px panel width — confirmed since we're removing a tab.
-7. If any deep-link or external code sets `activeTab="formulas"`, it gracefully resolves to `activeTab="color-bar"` (or the formula history sub-tab).
-8. Mobile layout: parent tabs and sub-tabs both render cleanly in the full-screen panel branch.
-9. No regression to other tabs (Details, History, Photos, Notes) or to the inner `ColorBarTab` / `ClientFormulaHistoryTab` components themselves.
+1. All orgs see 5 tabs including Color Bar (with Beaker icon). No tab hidden.
+2. Entitled orgs (org flag ON + location entitled) see the existing Today's Mix / Formula History sub-tabs, unchanged behavior.
+3. Unentitled orgs see the inline upsell card inside the Color Bar tab — no sub-tabs, no empty data fetches.
+4. CTA "Activate Zura Color Bar" routes to `/dashboard/apps` via `dashPath` (preserves multi-tenant URL).
+5. `isPendingActivation` state (org enabled, location not yet activated) shows the per-location activation variant routing to color-bar settings.
+6. Upsell copy is brand-voice compliant: no hype, no emojis, no "revolutionary," advisory tone.
+7. Upsell layout fits inside the 520px panel cleanly, mobile and desktop.
+8. No data fetches fire from `ColorBarTab` / `ClientFormulaHistoryTab` for unentitled orgs (they aren't mounted).
+9. Dark mode + light mode both render correctly.
+10. No regression to the other 4 tabs.
 
 **Files to modify:**
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (merge two tabs into one with nested sub-tabs; add `SubTabsList`/`SubTabsTrigger` imports; optional `activeTab` legacy mapping)
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (add entitlement hook; conditional content branch with inline upsell + CTA routing)
+
