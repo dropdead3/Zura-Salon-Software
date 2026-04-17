@@ -182,7 +182,6 @@ export function ColorBarEntitlementsTab() {
   const { paymentMethods, isLoading: pmLoading } = useBatchPaymentMethods(stripeMappings);
 
   const updateFlag = useUpdateOrgFeatureFlag();
-  const deleteFlag = useDeleteOrgFeatureFlag();
   const upsertLocEnt = useUpsertLocationEntitlement();
   const deleteLocEnt = useDeleteLocationEntitlement();
   const bulkSuspend = useBulkSuspendLocationEntitlements();
