@@ -1452,6 +1452,112 @@ export function AppointmentDetailSheet({
                 )}
               </div>
 
+              {/* ─── Quick Actions Row (Wave 18) ──────────────── */}
+              <div className="px-6 pb-3">
+                <TooltipProvider delayDuration={200}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-4 rounded-full font-sans text-xs"
+                            disabled={!appointment.client_phone}
+                            asChild={!!appointment.client_phone}
+                          >
+                            {appointment.client_phone ? (
+                              <a href={`tel:${appointment.client_phone}`}>
+                                <Phone className="h-3.5 w-3.5 mr-1.5" /> Call
+                              </a>
+                            ) : (
+                              <span><Phone className="h-3.5 w-3.5 mr-1.5" /> Call</span>
+                            )}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!appointment.client_phone && (
+                        <TooltipContent>No phone on file</TooltipContent>
+                      )}
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-4 rounded-full font-sans text-xs"
+                            disabled={!appointment.client_phone}
+                            asChild={!!appointment.client_phone}
+                          >
+                            {appointment.client_phone ? (
+                              <a href={`sms:${appointment.client_phone}`}>
+                                <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Text
+                              </a>
+                            ) : (
+                              <span><MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Text</span>
+                            )}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!appointment.client_phone && (
+                        <TooltipContent>No phone on file</TooltipContent>
+                      )}
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-4 rounded-full font-sans text-xs"
+                            disabled={!clientRecord?.email}
+                            asChild={!!clientRecord?.email}
+                          >
+                            {clientRecord?.email ? (
+                              <a href={`mailto:${clientRecord.email}`}>
+                                <Mail className="h-3.5 w-3.5 mr-1.5" /> Email
+                              </a>
+                            ) : (
+                              <span><Mail className="h-3.5 w-3.5 mr-1.5" /> Email</span>
+                            )}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!clientRecord?.email && (
+                        <TooltipContent>No email on file</TooltipContent>
+                      )}
+                    </Tooltip>
+
+                    {onRebook && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 px-4 rounded-full font-sans text-xs"
+                        onClick={() => onRebook(appointment)}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Rebook
+                      </Button>
+                    )}
+
+                    {appointment.id && resolvedOrgId && appointment.total_price != null && appointment.total_price > 0 && (
+                      <SendToPayButton
+                        appointmentId={appointment.id}
+                        organizationId={resolvedOrgId}
+                        totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                        clientName={appointment.client_name}
+                        clientEmail={clientRecord?.email || null}
+                        clientPhone={appointment.client_phone}
+                        afterpayEnabled={false}
+                        onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                      />
+                    )}
+                  </div>
+                </TooltipProvider>
+              </div>
+
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
                 <div className="mx-6">
