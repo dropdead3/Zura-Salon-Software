@@ -195,17 +195,17 @@ export function ScheduleActionBar({
         </Button>
       )}
 
-      {/* Appointment count */}
+      {/* Appointment count — reflects viewed date in day view, today otherwise */}
       <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
         <CalendarDays className="h-4 w-4" />
         <span>
-          <span className="font-medium text-foreground">{todayAppointmentCount}</span>
-          {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
+          <span className="font-medium text-foreground">{displayedApptCount}</span>
+          {' '}appt{displayedApptCount !== 1 ? 's' : ''}
         </span>
       </div>
 
-      {/* Day view only: in-session + remaining counts */}
-      {view === 'day' && (
+      {/* Day view + viewing today only: in-session + remaining counts (temporally bound to "now") */}
+      {view === 'day' && isViewingToday && (
         <>
           <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
             <PlayCircle className="h-4 w-4" />
