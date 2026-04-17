@@ -223,6 +223,9 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {declinedReasonLabel && appointment.status === 'completed' && (
+                <RebookSkippedDot label={declinedReasonLabel} />
+              )}
               <span className={cn(
                 'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
                 badge.bg, badge.text, badge.border
@@ -264,6 +267,9 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {declinedReasonLabel && appointment.status === 'completed' && (
+                <RebookSkippedDot label={declinedReasonLabel} />
+              )}
               <span className={cn(
                 'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
                 badge.bg, badge.text, badge.border
