@@ -50,6 +50,7 @@ import {
   type ColorBarLocationEntitlement,
 } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
+import { usePrefetchReactivationStatus } from '@/hooks/color-bar/useReactivationStatus';
 import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
 import { CancelReasonDialog } from '@/components/platform/color-bar/CancelReasonDialog';
 import { toast } from 'sonner';
@@ -99,6 +100,7 @@ export function ColorBarEntitlementsTab() {
   const [backfilling, setBackfilling] = useState(false);
   const queryClient = useQueryClient();
   const colorBarToggle = useColorBarToggle();
+  const prefetchReactivation = usePrefetchReactivationStatus();
 
   // Fetch all orgs with their color bar flag
   const { data: orgs = [], isLoading: orgsLoading } = useQuery({
@@ -487,7 +489,15 @@ export function ColorBarEntitlementsTab() {
                   >
                     <>
                       <CollapsibleTrigger asChild>
-                        <TableRow className="cursor-pointer border-slate-700/30 hover:bg-slate-800/30">
+                        <TableRow
+                          className="cursor-pointer border-slate-700/30 hover:bg-slate-800/30"
+                          onMouseEnter={() => {
+                            if (!org.backroom_enabled) prefetchReactivation(org.id);
+                          }}
+                          onFocus={() => {
+                            if (!org.backroom_enabled) prefetchReactivation(org.id);
+                          }}
+                        >
                           <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selected.has(org.id)}
