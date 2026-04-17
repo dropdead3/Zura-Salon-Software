@@ -2,92 +2,103 @@
 
 ## Prompt review
 
-Sharp bug report — names the surface (Platform Overview), the trigger (entered Alexis Heasley's profile via View As → clicked Exit View), the symptom (still shows "Alexis" in platform identity), and the second-order observation (Alexis's profile rendered *your* super-admin command center, suggesting the impersonation isn't actually scoping data either). That last clue is critical — it tells me View As may be visually swapping identity but not isolating the data view. Sharper next time: tell me *where* "Exit View" was clicked from (the violet GodMode bar at the top? the ViewAsPopover? Esc key?) — there are three exit paths and they hit different code. I'll diagnose all three.
+Sharp correction — and a critical doctrine clarification. You're right: **God Mode user impersonation is a full-fidelity simulation**, not a hybrid view. The whole point is "see exactly what they see, exactly how they see it" — if the chrome shows YOUR avatar and YOUR greeting while the data shows Alexis's, the simulation is broken in the most dangerous way: you'd debug a stylist's UX issue and get false confidence because YOUR identity bled into the chrome. The only acceptable identity-leak is the God Mode bar itself (audit + exit).
 
-## Diagnosis
+Sharper next time: when you reject a plan, the framing you used ("everything must be exactly as the user sees it, nothing else") is exactly the doctrine I should have anchored to from the start. I had it in `mem://features/god-mode-governance` but read it as "data simulation" instead of "complete UX simulation." That's on me — the doctrine extends to chrome.
 
-Two independent bugs are colliding here.
+## Doctrine correction (to be saved to memory)
 
-### Bug 1: "Exit View" button on Platform routes is the WRONG exit
+**God Mode user-impersonation = complete UX simulation.** When `viewAsUser` is set:
 
-The screenshot shows you on `/platform/overview`. The exit affordances visible there are:
+- Avatar, greeting, profile menu, role badges, sidebar identity → ALL show the impersonated user
+- Permission gates, role-based widget visibility, leadership checks → ALL evaluate against impersonated user's roles
+- Data queries → already scoped to impersonated user via `useEffectiveUserId()`
+- The ONLY identity-leak surface is the God Mode bar at the top (audit log + Exit View)
 
-- **`GodModeBar` "Exit View"** (`src/components/dashboard/GodModeBar.tsx` L22–25) — only calls `clearSelection()` from `OrganizationContext`. This clears the **org impersonation** but does NOT touch `ViewAsContext` (the user-impersonation state).
-- **`PlatformContextBanner` "Exit View"** (`src/components/platform/PlatformContextBanner.tsx` L47–50) — same bug: calls `clearSelection()` only.
+Platform routes (`/platform/*`) are a separate concern — they're super-admin-only territory, so impersonation context doesn't logically apply there. Wave 22.13's platform-chrome fix stays correct. But dashboard chrome is the impersonated surface and must reflect the impersonated identity completely.
 
-Meanwhile, the actual "view as Alexis" state lives in `ViewAsContext.viewAsUser` — set by `setViewAsUser({ id, full_name, roles })` from `ViewAsPopover.tsx` L223. Neither exit button calls `clearViewAs()`.
+## Diagnosis (revised)
 
-**Result:** clicking "Exit View" from a platform surface clears org-level impersonation but leaves user-level impersonation (`viewAsUser = Alexis`) fully active. Every hook downstream that reads `useEffectiveUserId()` continues to return Alexis's UUID.
+The actual bugs in dashboard chrome under impersonation:
 
-### Bug 2: Platform surfaces are reading the impersonated identity
+### Bug 1 (P0): `DashboardHome` leadership check uses raw `useAuth().roles`
 
-`useEmployeeProfile()` (`src/hooks/useEmployeeProfile.ts` L17–18) is built on `useEffectiveUserId()` — which intentionally returns `viewAsUser.id` when `isViewingAsUser` is true. That's correct *for dashboard surfaces* (which is the whole point of stylist impersonation).
+`src/pages/dashboard/DashboardHome.tsx` L194–198 reads `roles` from `useAuth()` — YOUR roles — even in the `isViewingAs` branch. Result: viewing as Alexis (stylist), `isLeadership = true` because YOU are super_admin → leadership command center renders instead of stylist dashboard. This is the user-reported bug.
 
-But `Platform Overview` uses the same hook for the greeting (`Overview.tsx` L56–60: `firstName = profile.full_name.split(' ')[0]`). The platform sidebar (`PlatformSidebar.tsx` L41) and platform header (`PlatformHeader.tsx` L37) do the same thing.
+Same gap on L201, L204, L207 (`hasStylistRole`, `isReceptionist`, `isFrontDesk`).
 
-**Result:** even when a user IS validly impersonating someone for testing, the platform identity chrome (sidebar avatar, header pill, greeting) lies about *who is logged in*. Platform routes should always show the actual super-admin identity — impersonation is an organization-scoped concept and should never bleed into platform chrome.
+### Bug 2 (P0): `DashboardLayout` greeting uses raw roles + actual first name
 
-### Why Alexis's profile showed YOUR super-admin command center
+`src/components/dashboard/DashboardLayout.tsx` L349–352:
+- `firstName` reads from `user.user_metadata` (YOUR name) → greeting says "Welcome back, [YourName]" while viewing Alexis's dashboard
+- `isLeadershipUser` reads `actualRoles` (YOUR roles) → wrong greeting pool selected
+- `(employeeProfile as any)?.is_super_admin` IS the impersonated profile's flag → that part's correct, but it's OR'd with `actualRoles` which leaks YOUR super_admin status
 
-This is the same Bug 1 in reverse. When you entered Alexis's profile via View As, the page read `useEffectiveUserId() → Alexis.id` for *some* hooks but `useAuth().user.id → your.id` for others (e.g., role checks, super-admin gates, dashboard widget visibility flags). Many command-center widgets bypass `useEffectiveUserId` and check raw `useAuth()` roles or `is_super_admin` directly. So Alexis's "view" rendered your widgets because the impersonation simulation is incomplete — it swaps profile identity but doesn't simulate role downgrade.
+### Bug 3 (P0): Top bar avatar uses `useEmployeeProfile()` — actually CORRECT for dashboard, but needs verification
 
-This is a known anti-pattern (see `mem://features/god-mode-governance`) and warrants a separate audit, but it's not what we'll fix in this wave.
+`SuperAdminTopBar.tsx` L140 reads `useEmployeeProfile()` which IS the impersonated profile (via `useEffectiveUserId`). This is doctrinally correct for dashboard — top bar should show Alexis's photo when viewing Alexis. **Wave 22.13's plan to swap this to `useActualEmployeeProfile` was wrong** and should NOT ship for dashboard surfaces (it stays correct for `PlatformSidebar`/`PlatformHeader`/`PlatformOverview` since those are platform routes).
 
-## Plan — Wave 22.13: Fix View As exit + isolate platform identity from impersonation
+The only legitimate "show actual identity" chrome on dashboard is the God Mode bar itself (which already does this correctly).
 
-Two surgical fixes. Both are P0 (silent identity leak + broken exit affordance).
+## Plan — Wave 22.14 (revised): Complete the impersonation simulation on dashboard chrome
 
-### Fix 1: Exit buttons on platform/god-mode surfaces must clear BOTH contexts
+### Fix 1: `DashboardHome` — use effective roles everywhere
 
-Make every "Exit View" button call BOTH `clearSelection()` (org) AND `clearViewAs()` (user/role). Belt-and-suspenders: a platform user exiting impersonation should leave a clean slate regardless of which type of impersonation they entered.
+`src/pages/dashboard/DashboardHome.tsx`
+- Already imports `useEffectiveRoles` (L6) — currently unused for the leadership check
+- Replace L194–198 leadership check:
+  ```ts
+  const effectiveRoles = useEffectiveRoles();
+  const isLeadership = isGodMode
+    ? true
+    : effectiveRoles.includes('super_admin')
+      || effectiveRoles.includes('admin')
+      || effectiveRoles.includes('manager');
+  ```
+- The `profile?.is_super_admin` clause: `profile` here comes from `useEmployeeProfile` which IS the impersonated profile → that flag is correctly Alexis's `false`, so it can stay OR'd in (it correctly contributes nothing when impersonating Alexis). But to keep the logic clean and match doctrine, drop it — `effectiveRoles` already includes `super_admin` when the impersonated user has that role.
+- Replace L201, L204, L207 to use `effectiveRoles` instead of `roles`
 
-**Files:**
+### Fix 2: `DashboardLayout` — greeting reflects impersonated identity
 
-- `src/components/dashboard/GodModeBar.tsx` — `handleExit` calls `clearSelection()` AND `clearViewAs()` from `useViewAs()`. Also call `clearViewAs` when navigating to `/platform/overview` so route-change cleanup is automatic.
-- `src/components/platform/PlatformContextBanner.tsx` — same: import `useViewAs`, call `clearViewAs()` alongside `clearSelection()`.
+`src/components/dashboard/DashboardLayout.tsx`
+- Add `useEffectiveRoles` import
+- L349 `firstName`: prefer `employeeProfile?.full_name?.split(' ')[0]` (impersonated profile) over `user.user_metadata` so greeting says "Welcome back, Alexis"
+- L350–352: replace `actualRoles` with `effectiveRoles` from `useEffectiveRoles()`
+- Drop `(employeeProfile as any)?.is_super_admin` clause — `effectiveRoles.includes('super_admin')` is the canonical signal
 
-### Fix 2: Platform routes must show the ACTUAL signed-in user, never the impersonated user
+### Fix 3: Revert Wave 22.13's incorrect dashboard-chrome change (if any)
 
-Platform chrome (sidebar, header, overview greeting) is a super-admin surface. It must always reflect the real account. Two approaches considered:
+Verify Wave 22.13 only swapped hooks on platform-side files (`PlatformSidebar`, `PlatformHeader`, `Overview`). Per the diff history shown, that's what landed — `SuperAdminTopBar.tsx` was NOT touched. Good. No revert needed; just confirm we don't propose changing it now.
 
-- **Option A:** Add a `useActualEmployeeProfile()` hook that ignores `viewAsUser` and use it on platform surfaces. Surgical, no behavior change for dashboard.
-- **Option B:** Auto-clear `ViewAsContext` whenever the route changes from `/dashboard/*` to `/platform/*`. Cleaner conceptually but more invasive.
+`SuperAdminTopBar.tsx` stays on `useEmployeeProfile()` so the avatar reflects the impersonated user. The God Mode bar above it remains the only chrome that identifies YOU.
 
-Going with **Option A** — it's the minimum-change, lowest-risk fix and respects the doctrine that platform context is architecturally isolated from organization context (`mem://architecture/public-vs-private-route-isolation`, `mem://tech-decisions/platform-theme-isolation`).
+### Memory update
 
-**New hook:** `src/hooks/useActualEmployeeProfile.ts`
-- Identical to `useEmployeeProfile()` but reads `useAuth().user.id` directly, never `useEffectiveUserId()`. Uses cache key `['employee-profile-actual', user.id]` to avoid colliding with the impersonated cache.
-
-**Swap call sites (3 files):**
-
-- `src/pages/dashboard/platform/Overview.tsx` L19, L56 — swap `useEmployeeProfile` → `useActualEmployeeProfile`
-- `src/components/platform/layout/PlatformSidebar.tsx` L18, L41 — same swap
-- `src/components/platform/layout/PlatformHeader.tsx` L3, L37 — same swap
+Update `mem://features/god-mode-governance` to make the doctrine explicit: "User-impersonation is a complete UX simulation. ALL dashboard chrome (avatar, greeting, menus, role badges, gates) MUST reflect the impersonated user. The only identity-leak surface is the God Mode bar (audit + exit). Platform routes are exempt because they are super-admin-only territory."
 
 ### Acceptance checks
 
-1. Enter View As → Alexis Heasley from a dashboard surface. Verify dashboard now shows Alexis's view (working as designed).
-2. Click "Exit View" from any surface (GodModeBar, PlatformContextBanner, ViewAsPopover). Verify both `viewAsUser` AND `selectedOrganization` are cleared — the `View As` chip in ViewAsPopover should reset to "View As" (no active state).
-3. Navigate to `/platform/overview` while impersonating Alexis. Verify the greeting reads "Good morning, [your-actual-first-name]" — NOT "Alexis". Verify the platform sidebar bottom-left avatar+name shows YOUR identity. Verify the platform header top-right pill shows YOUR identity and platform role badge.
-4. Verify dashboard surfaces still correctly show Alexis when impersonating — no regression to the legitimate use of `useEffectiveUserId()`.
-5. Verify that exiting View As from `/platform/overview` keeps you on `/platform/overview` and the page chrome immediately reflects your real identity (no stale cache — Tanstack Query keys differ between actual and effective).
+1. View As → Alexis (stylist) from `/dashboard`. Page renders **stylist** layout (Quick Actions, Today's Queue) — NOT leadership command center.
+2. Top-right avatar shows **Alexis's** photo. Profile menu shows **Alexis's** name and role badges. Sidebar identity reflects **Alexis**.
+3. Greeting reads "Welcome back, Alexis" with **stylist-pool** subtitle.
+4. God Mode bar at top remains visible with "Viewing as: Alexis Heasley" and Exit View button (the only chrome that identifies YOU).
+5. Exit View → all chrome instantly reverts to YOUR super-admin identity, leadership layout returns.
+6. Platform routes (`/platform/overview` etc.) — unchanged from Wave 22.13: always show YOUR identity regardless of impersonation.
 
 ### Files
 
-- `src/hooks/useActualEmployeeProfile.ts` (new, ~30 lines)
-- `src/components/dashboard/GodModeBar.tsx` (add `useViewAs` import, call `clearViewAs()` in `handleExit`)
-- `src/components/platform/PlatformContextBanner.tsx` (add `useViewAs` import, call `clearViewAs()` in exit handler)
-- `src/pages/dashboard/platform/Overview.tsx` (swap hook)
-- `src/components/platform/layout/PlatformSidebar.tsx` (swap hook)
-- `src/components/platform/layout/PlatformHeader.tsx` (swap hook)
+- `src/pages/dashboard/DashboardHome.tsx` — swap to `useEffectiveRoles` for leadership/role gates
+- `src/components/dashboard/DashboardLayout.tsx` — swap to `useEffectiveRoles` + impersonated `firstName`
+- `mem://features/god-mode-governance` — codify "complete UX simulation" doctrine
 
 ### Open question
 
-None — bug is fully isolated and the fix doesn't introduce architectural debate.
+None — doctrine is now explicit and the fix scope is constrained to two files plus a memory update.
 
 ### Deferred
 
-- **P1** Audit Alexis's command center actually rendering YOUR super-admin widgets — this is a separate impersonation simulation gap. Many widgets check `useAuth().roles` or `is_super_admin` directly instead of `useEffectiveRoles()`, so impersonation doesn't downgrade visibility. Trigger: this wave ships, then run a targeted audit of `WidgetsSection`, `CommandCenterAnalytics`, and any component reading `is_super_admin` to convert them to `useEffectiveRoles()` / `useEffectivePermissions()`. Tracked under `mem://features/god-mode-governance`.
-- **P2** Add a route-change effect to `ViewAsProvider` that auto-clears `viewAsUser` and `viewAsRole` when navigating from a `/dashboard/*` path to a `/platform/*` path. Belt-and-suspenders defense even if a future "Exit View" button forgets to call `clearViewAs()`. Trigger: if Bug 1 reappears in any new exit-affordance surface.
-- **P3** Add a Vitest assertion in `ProtectedRoute.test.tsx` (already mocks `useViewAs`) that platform routes never resolve identity through `useEffectiveUserId`. Trigger: when adding ESLint rules to enforce hook usage by route prefix.
+- **P1** Audit other dashboard surfaces with the same `useAuth().roles` leak: `pages/dashboard/AssistantSchedule.tsx` (L394), `Stats.tsx` (L46), `Training.tsx` (L43), `OnboardingTracker.tsx` (L152), `WidgetsSection`, `CommandCenterAnalytics`. Trigger: this wave ships clean.
+- **P2** Add a `useEffectiveSuperAdmin()` helper canonicalizing `effectiveRoles.includes('super_admin') || effectiveProfile?.is_super_admin`. Trigger: when 3+ files repeat this boolean.
+- **P2** Route-change effect in `ViewAsProvider` to auto-clear `viewAsUser` when navigating from `/dashboard/*` to `/platform/*`. Belt-and-suspenders behind Wave 22.13's exit-button fixes.
+- **P3** Vitest assertion enforcing dashboard surfaces use `useEffectiveRoles`/`useEffectivePermissions` and platform surfaces use `useActualEmployeeProfile`/raw `useAuth`.
 
