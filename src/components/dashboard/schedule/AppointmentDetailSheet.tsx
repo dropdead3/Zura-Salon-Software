@@ -95,6 +95,8 @@ import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpda
 import { Pencil, Send } from 'lucide-react';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { ColorBarUpsellInline } from '@/components/color-bar/ColorBarUpsellInline';
 
 
 // ─── Cancellation Fee Section sub-component ─────────────────────
@@ -2171,21 +2173,34 @@ export function AppointmentDetailSheet({
 
                   {/* ─── TAB: Color Bar (unified) ──────────────── */}
                   <TabsContent value="color-bar" className="p-6 pt-4 mt-0">
-                    <Tabs defaultValue="today" className="w-full">
-                      <SubTabsList>
-                        <SubTabsTrigger value="today">Today's Mix</SubTabsTrigger>
-                        <SubTabsTrigger value="history">Formula History</SubTabsTrigger>
-                      </SubTabsList>
-                      <TabsContent value="today" className="mt-4">
-                        <ColorBarTab
-                          appointment={appointment}
-                          organizationId={effectiveOrganization?.id ?? ''}
-                        />
-                      </TabsContent>
-                      <TabsContent value="history" className="mt-4">
-                        <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
-                      </TabsContent>
-                    </Tabs>
+                    {colorBarEntitled ? (
+                      <Tabs defaultValue="today" className="w-full">
+                        <SubTabsList>
+                          <SubTabsTrigger value="today">Today's Mix</SubTabsTrigger>
+                          <SubTabsTrigger value="history">Formula History</SubTabsTrigger>
+                        </SubTabsList>
+                        <TabsContent value="today" className="mt-4">
+                          <ColorBarTab
+                            appointment={appointment}
+                            organizationId={effectiveOrganization?.id ?? ''}
+                          />
+                        </TabsContent>
+                        <TabsContent value="history" className="mt-4">
+                          <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
+                        </TabsContent>
+                      </Tabs>
+                    ) : (
+                      <ColorBarUpsellInline
+                        isPendingActivation={isColorBarPendingActivation}
+                        onActivate={() =>
+                          navigate(
+                            isColorBarPendingActivation
+                              ? dashPath('/admin/color-bar-settings')
+                              : dashPath('/apps'),
+                          )
+                        }
+                      />
+                    )}
                   </TabsContent>
                 </ScrollArea>
               </Tabs>
