@@ -15,6 +15,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
 import { useClientNotes, useAddClientNote, useDeleteClientNote } from '@/hooks/useClientNotes';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
+import { useClientAppointmentNotes } from '@/hooks/useClientAppointmentNotes';
 import { useHouseholdByPhorestClientId } from '@/hooks/useHouseholds';
 import { useAppointmentAssistants } from '@/hooks/useAppointmentAssistants';
 import { useAssistantConflictCheck } from '@/hooks/useAssistantConflictCheck';
@@ -88,7 +89,7 @@ import {
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
 import { isCardExpired } from '@/lib/card-utils';
-import { tokens } from '@/lib/design-tokens';
+import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getClientInitials, getAvatarColor } from '@/lib/appointment-card-utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { formatRelativeTime } from '@/lib/format';
