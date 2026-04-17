@@ -1,52 +1,38 @@
 
 ## Prompt review
 
-Sharp refinement — you spotted that "in session" and "remaining" are *temporally bound to right now*. They only make sense for today. Showing "0 in session" when viewing next Tuesday is meaningless noise. Good operator instinct.
+Clear, specific visual fix — you've identified an exact element, the current state (purple fill + amber text), and the desired state (amber ghost). Good operator eye for the contrast issue.
 
-Tighter framing for next time: clarify what "total appts" should reflect when viewing a non-today day — appts *for that viewed date* (most useful) vs. still today's count (confusing). I'll go with the first since it matches the visible calendar.
+Tighter framing for next time: "amber ghost" can mean a few things — (a) transparent/no fill with amber border + amber text, (b) low-opacity amber tint with amber border + amber text, or (c) amber border only with default text color. I'll assume (b) since the current state already has a tinted fill (just the wrong color) and that matches the screenshot's existing visual weight. Flag if you want pure transparent.
 
-## Current behavior
+Also: this toggle's "week default" amber state is likely shared logic — I'll verify it's only used on the week view filter (not other surfaces) before changing it.
 
-In `ScheduleActionBar.tsx`:
-- `todayAppointmentCount` is passed in from `Schedule.tsx` and always reflects *today's* count regardless of which day is viewed.
-- `inSessionCount` and `remainingCount` are computed from the `appointments` prop and shown whenever `view === 'day'`.
+## Investigation plan
 
-## Proposed behavior
+1. Locate the stylist filter toggle component on the schedule (likely `StylistFilter.tsx` or similar under `src/components/dashboard/schedule/`).
+2. Find where the "week default" / amber-text styling is applied — identify the active-state classes (currently `bg-purple-*` or `bg-primary` + `text-amber-*`).
+3. Confirm scope — is this styling conditional on `view === 'week'` only, or shared across views?
+4. Plan the swap to amber-tinted fill + amber border + amber text.
 
-When in day view:
-- **Viewing today**: show all three (📅 N appts · ▶ N in session · ⏱ N remaining) — unchanged.
-- **Viewing any other day**: show only 📅 N appts, where N = appointments scheduled *for the viewed date* (excluding cancelled/no_show). Hide "in session" and "remaining" entirely.
+## Proposed change
 
-When in week/agenda view: unchanged (only total appts shown, as today).
+When the stylist filter shows the "(week default)" amber-text state on week view:
+- **Background**: swap purple fill → `bg-amber-500/10` (low-opacity amber tint, matches "ghost" weight)
+- **Border**: `border-amber-500/40` (subtle amber outline for definition)
+- **Text**: keep current `text-amber-500` (or equivalent token)
+- **Chevron icon**: inherit amber via `text-amber-500`
 
-## Plan
-
-**1. Pass `currentDate` (the viewed date) to `ScheduleActionBar`**
-- `Schedule.tsx` (line ~1046): add `currentDate={currentDate}` prop. Already in scope from the page state.
-
-**2. Compute "is viewing today" + viewed-date count in the action bar**
-- Add `currentDate?: Date` to `ScheduleActionBar` props.
-- Derive `isViewingToday = isSameDay(currentDate, new Date())` using `date-fns`.
-- When `view === 'day'` and `!isViewingToday`:
-  - Compute `viewedDateCount` from the `appointments` prop, filtered by `appointment_date === format(currentDate, 'yyyy-MM-dd')` and excluding `cancelled` / `no_show`.
-  - Render only the 📅 pill with this count + label "appts" (or "appt" if 1).
-  - Skip rendering the in-session and remaining pills.
-- When `view === 'day'` and `isViewingToday`: existing behavior (all three pills, total uses `todayAppointmentCount`).
-
-**3. No change to `todayAppointmentCount` semantics**
-- Keep the existing prop for the today-case. Add a parallel computed value for non-today days inside the component — cleaner than reshaping the parent prop.
+Net effect: cohesive amber ghost pill instead of clashing purple + amber combo.
 
 ## Acceptance checks
 
-1. Day view, viewing today: shows 📅 N appts · ▶ N in session · ⏱ N remaining (unchanged).
-2. Day view, viewing any other date (past or future): shows only 📅 N appts, where N reflects appointments on *that* viewed date.
-3. "In session" and "remaining" pills are completely hidden (not just zeroed) when viewing a non-today day.
-4. Week and agenda views: unchanged behavior.
-5. Navigating between days updates the count live.
-6. Singular vs. plural label ("1 appt" vs. "2 appts") — keep current "appts" plural for simplicity unless already pluralized.
-7. No layout shift on the FAB or right-side controls.
-8. Cancelled and no-show appointments are excluded from the viewed-date count (consistent with the "remaining" definition).
+1. On week view, the stylist filter toggle (when in "week default" state) renders with amber tinted background, amber border, amber text — no purple.
+2. On day view, the same toggle's styling is unchanged (no regression).
+3. Hover state remains visible (slight amber intensity bump).
+4. Other dropdowns/filters on the page (location, view switcher) are untouched.
+5. Light + dark mode both look balanced — amber `/10` opacity reads on both backgrounds.
+6. No layout shift; padding/border-width identical to current.
 
-**Files to modify:**
-- `src/pages/dashboard/Schedule.tsx` (pass `currentDate` prop)
-- `src/components/dashboard/schedule/ScheduleActionBar.tsx` (compute viewed-date count, conditionally render pills based on `isSameDay(currentDate, today)`)
+**Files to investigate & likely modify:**
+- `src/components/dashboard/schedule/StylistFilter.tsx` (or wherever the stylist selector trigger lives)
+- Possibly a shared token file if the amber state is centralized
