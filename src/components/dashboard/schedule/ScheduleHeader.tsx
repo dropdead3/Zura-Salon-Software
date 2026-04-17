@@ -132,6 +132,7 @@ export function ScheduleHeader({
   appointments = [],
   hoursStart = 9,
   hoursEnd = 18,
+  weekViewStylistId = null,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
