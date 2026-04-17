@@ -20,6 +20,34 @@ import {
   useBulkSuspendLocationEntitlements,
   useBulkReactivateLocationEntitlements,
 } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { fetchReactivationStatus } from '@/hooks/color-bar/useReactivationStatus';
+
+/**
+ * Best-effort audit log writer — never blocks the toggle flow if the audit
+ * insert fails. Network Intelligence: feeds churn-pattern aggregations.
+ */
+async function logSuspensionEvent(params: {
+  organization_id: string;
+  event_type: 'suspended' | 'reactivated';
+  reason?: string | null;
+  notes?: string | null;
+  affected_location_count: number;
+}) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('color_bar_suspension_events').insert({
+      organization_id: params.organization_id,
+      event_type: params.event_type,
+      reason: params.reason ?? null,
+      notes: params.notes ?? null,
+      actor_user_id: user?.id ?? null,
+      affected_location_count: params.affected_location_count,
+    } as any);
+  } catch (err) {
+    // Non-blocking — log to console only
+    console.warn('[color-bar] failed to write suspension audit event', err);
+  }
+}
 
 export interface ReactivationTarget {
   organizationId: string;
@@ -95,10 +123,23 @@ export function useColorBarToggle() {
               ? `Suspended (${meta.reason})${meta.notes ? `: ${meta.notes}` : ''}`
               : 'Suspended via Color Bar admin',
         });
-        await bulkSuspend.mutateAsync({
+        const suspendedRows = await bulkSuspend.mutateAsync({
           organization_id: args.organizationId,
           reason: meta?.reason,
           notes: meta?.notes,
+        });
+        await logSuspensionEvent({
+          organization_id: args.organizationId,
+          event_type: 'suspended',
+          reason: meta?.reason ?? null,
+          notes: meta?.notes ?? null,
+          affected_location_count: Array.isArray(suspendedRows)
+            ? suspendedRows.length
+            : 0,
+        });
+        // Invalidate cached reactivation status so next toggle reads fresh data
+        queryClient.invalidateQueries({
+          queryKey: ['color-bar-reactivation-status', args.organizationId],
         });
         advisory.dismiss();
         toast.success(
@@ -112,7 +153,7 @@ export function useColorBarToggle() {
         );
       }
     },
-    [updateFlag, bulkSuspend],
+    [updateFlag, bulkSuspend, queryClient],
   );
 
   const firstTimeEnable = useCallback(
@@ -207,6 +248,15 @@ export function useColorBarToggle() {
         const reactivated = await bulkReactivate.mutateAsync({
           organization_id: args.organizationId,
         });
+        await logSuspensionEvent({
+          organization_id: args.organizationId,
+          event_type: 'reactivated',
+          affected_location_count: reactivated.length,
+        });
+        // Cached reactivation status is now stale — invalidate
+        queryClient.invalidateQueries({
+          queryKey: ['color-bar-reactivation-status', args.organizationId],
+        });
         advisory.dismiss();
         toast.success(
           `Color Bar reactivated for ${args.organizationName} — ${reactivated.length} location${
@@ -221,7 +271,7 @@ export function useColorBarToggle() {
         );
       }
     },
-    [updateFlag, bulkReactivate],
+    [updateFlag, bulkReactivate, queryClient],
   );
 
   /**
@@ -240,30 +290,21 @@ export function useColorBarToggle() {
         });
         return;
       }
-      // Currently OFF → check for prior suspension
-      const { data: suspendedRows } = await supabase
-        .from('backroom_location_entitlements')
-        .select('location_id, suspended_at, suspended_reason')
-        .eq('organization_id', args.organizationId)
-        .eq('status', 'suspended')
-        .order('suspended_at', { ascending: false });
+      // Currently OFF → check for prior suspension via cached query.
+      // If status was prefetched on hover, this resolves synchronously.
+      const status = await queryClient.fetchQuery({
+        queryKey: ['color-bar-reactivation-status', args.organizationId],
+        queryFn: () => fetchReactivationStatus(args.organizationId),
+        staleTime: 30_000,
+      });
 
-      if (suspendedRows && suspendedRows.length > 0) {
-        const locIds = suspendedRows.map((r: any) => r.location_id);
-        const { data: locs } = await supabase
-          .from('locations')
-          .select('id, name')
-          .in('id', locIds);
-        const nameMap = new Map((locs ?? []).map((l: any) => [l.id, l.name]));
+      if (status.wasPreviouslySuspended) {
         setReactivationTarget({
           organizationId: args.organizationId,
           organizationName: args.organizationName,
-          suspendedAt: (suspendedRows[0] as any).suspended_at as string | null,
-          suspendedReason:
-            (suspendedRows[0] as any).suspended_reason as string | null,
-          locationNames: locIds.map(
-            (id: string) => nameMap.get(id) ?? 'Unknown location',
-          ),
+          suspendedAt: status.suspendedAt,
+          suspendedReason: status.suspendedReason,
+          locationNames: status.affectedLocationNames,
         });
         // Caller's optimistic patch must NOT have run yet — keep switch OFF
         // until the user confirms.
@@ -272,7 +313,7 @@ export function useColorBarToggle() {
 
       await firstTimeEnable(args);
     },
-    [firstTimeEnable],
+    [firstTimeEnable, queryClient],
   );
 
   /** Confirm callback for the reactivation dialog. */

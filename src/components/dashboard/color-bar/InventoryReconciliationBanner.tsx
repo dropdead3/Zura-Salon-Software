@@ -15,10 +15,11 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Check } from 'lucide-react';
+import { AlertTriangle, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useMarkInventoryVerified } from '@/hooks/color-bar/useMarkInventoryVerified';
+import { useMarkAllInventoryVerified } from '@/hooks/color-bar/useMarkAllInventoryVerified';
 import { formatRelativeTime } from '@/lib/format';
 import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +37,7 @@ export function InventoryReconciliationBanner({ locationId, className, onBegin }
   const orgId = useColorBarOrgId();
   const { entitlements } = useColorBarLocationEntitlements(orgId);
   const markVerified = useMarkInventoryVerified();
+  const markAllVerified = useMarkAllInventoryVerified();
 
   // Filter to locations that need reconciliation
   const flagged = entitlements.filter((e) => {
@@ -134,44 +136,70 @@ export function InventoryReconciliationBanner({ locationId, className, onBegin }
 
       {/* Per-location verify list — shown only on org-level surfaces */}
       {isAggregate && orgId && (
-        <ul className="mt-3 pl-11 space-y-1.5">
-          {flagged.map((ent) => {
-            const name = locationNameMap[ent.location_id] ?? 'Location';
-            const since = ent.suspended_at
-              ? formatRelativeTime(new Date(ent.suspended_at))
-              : null;
-            return (
-              <li
-                key={ent.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border/40 bg-background/40 px-3 py-1.5"
+        <div className="mt-3 pl-11 space-y-2">
+          {flagged.length >= 2 && (
+            <div className="flex items-center justify-between">
+              <p className="font-sans text-[11px] text-muted-foreground uppercase tracking-wide">
+                {flagged.length} locations flagged
+              </p>
+              <Button
+                size="sm"
+                className="font-sans text-xs h-7 bg-amber-500 hover:bg-amber-600 text-white"
+                onClick={() =>
+                  markAllVerified.mutate({
+                    organization_id: orgId,
+                    locations: flagged.map((f) => ({
+                      location_id: f.location_id,
+                      name: locationNameMap[f.location_id],
+                    })),
+                  })
+                }
+                disabled={markAllVerified.isPending || markVerified.isPending}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="font-sans text-sm text-foreground truncate">{name}</p>
-                  {since && (
-                    <p className="font-sans text-[11px] text-muted-foreground">
-                      Tracking off for {since}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="font-sans text-xs h-7 shrink-0"
-                  onClick={() =>
-                    markVerified.mutate({
-                      organization_id: orgId,
-                      location_id: ent.location_id,
-                    })
-                  }
-                  disabled={markVerified.isPending}
+                <CheckCheck className="w-3.5 h-3.5 mr-1" />
+                Verify all
+              </Button>
+            </div>
+          )}
+          <ul className="space-y-1.5">
+            {flagged.map((ent) => {
+              const name = locationNameMap[ent.location_id] ?? 'Location';
+              const since = ent.suspended_at
+                ? formatRelativeTime(new Date(ent.suspended_at))
+                : null;
+              return (
+                <li
+                  key={ent.id}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border/40 bg-background/40 px-3 py-1.5"
                 >
-                  <Check className="w-3.5 h-3.5 mr-1" />
-                  Mark verified
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-sans text-sm text-foreground truncate">{name}</p>
+                    {since && (
+                      <p className="font-sans text-[11px] text-muted-foreground">
+                        Tracking off for {since}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="font-sans text-xs h-7 shrink-0"
+                    onClick={() =>
+                      markVerified.mutate({
+                        organization_id: orgId,
+                        location_id: ent.location_id,
+                      })
+                    }
+                    disabled={markVerified.isPending || markAllVerified.isPending}
+                  >
+                    <Check className="w-3.5 h-3.5 mr-1" />
+                    Mark verified
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </div>
   );

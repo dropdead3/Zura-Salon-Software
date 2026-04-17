@@ -11,6 +11,7 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { useOrganizationFeatureFlags, useUpdateOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
+import { usePrefetchReactivationStatus } from '@/hooks/color-bar/useReactivationStatus';
 import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
 import { CancelReasonDialog } from '@/components/platform/color-bar/CancelReasonDialog';
 
@@ -24,6 +25,7 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
   const { entitlements, isLoading: entitlementsLoading } = useColorBarLocationEntitlements(organizationId);
   const updateFlag = useUpdateOrgFeatureFlag();
   const colorBarToggle = useColorBarToggle();
+  const prefetchReactivation = usePrefetchReactivationStatus();
 
   const isLoading = flagsLoading || entitlementsLoading;
 
@@ -92,7 +94,15 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
       <PlatformCardContent>
         <div className="divide-y divide-slate-700/50">
           {/* Zura Color Bar */}
-          <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+          <div
+            className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+            onMouseEnter={() => {
+              if (!isColorBarEnabled) prefetchReactivation(organizationId);
+            }}
+            onFocus={() => {
+              if (!isColorBarEnabled) prefetchReactivation(organizationId);
+            }}
+          >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-slate-700/50">
                 <Package className="h-4 w-4 text-violet-400" />
