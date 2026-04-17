@@ -2622,7 +2622,7 @@ export function QuickBookingPopover({
                 Save for Later
               </Button>
               <Button
-                className="flex-1 h-10 font-medium"
+                className="flex-1 h-11 font-medium text-base"
                 disabled={!canBook || createBooking.isPending}
                 onClick={() => createBooking.mutate()}
               >
