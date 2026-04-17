@@ -290,30 +290,21 @@ export function useColorBarToggle() {
         });
         return;
       }
-      // Currently OFF → check for prior suspension
-      const { data: suspendedRows } = await supabase
-        .from('backroom_location_entitlements')
-        .select('location_id, suspended_at, suspended_reason')
-        .eq('organization_id', args.organizationId)
-        .eq('status', 'suspended')
-        .order('suspended_at', { ascending: false });
+      // Currently OFF → check for prior suspension via cached query.
+      // If status was prefetched on hover, this resolves synchronously.
+      const status = await queryClient.fetchQuery({
+        queryKey: ['color-bar-reactivation-status', args.organizationId],
+        queryFn: () => fetchReactivationStatus(args.organizationId),
+        staleTime: 30_000,
+      });
 
-      if (suspendedRows && suspendedRows.length > 0) {
-        const locIds = suspendedRows.map((r: any) => r.location_id);
-        const { data: locs } = await supabase
-          .from('locations')
-          .select('id, name')
-          .in('id', locIds);
-        const nameMap = new Map((locs ?? []).map((l: any) => [l.id, l.name]));
+      if (status.wasPreviouslySuspended) {
         setReactivationTarget({
           organizationId: args.organizationId,
           organizationName: args.organizationName,
-          suspendedAt: (suspendedRows[0] as any).suspended_at as string | null,
-          suspendedReason:
-            (suspendedRows[0] as any).suspended_reason as string | null,
-          locationNames: locIds.map(
-            (id: string) => nameMap.get(id) ?? 'Unknown location',
-          ),
+          suspendedAt: status.suspendedAt,
+          suspendedReason: status.suspendedReason,
+          locationNames: status.affectedLocationNames,
         });
         // Caller's optimistic patch must NOT have run yet — keep switch OFF
         // until the user confirms.
@@ -322,7 +313,7 @@ export function useColorBarToggle() {
 
       await firstTimeEnable(args);
     },
-    [firstTimeEnable],
+    [firstTimeEnable, queryClient],
   );
 
   /** Confirm callback for the reactivation dialog. */
