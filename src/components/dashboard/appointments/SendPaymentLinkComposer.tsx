@@ -424,7 +424,7 @@ export function SendPaymentLinkComposer({
                     ? 'Sent via SMS and Email'
                     : channel === 'sms'
                       ? `SMS to ${clientPhone ? formatPhoneDisplay(clientPhone) : ''}`
-                      : `Email to ${clientEmail}`}
+                      : `Email to ${effectiveEmail}`}
                 </p>
               </div>
             </div>
@@ -441,7 +441,7 @@ export function SendPaymentLinkComposer({
               <Button
                 size="sm"
                 onClick={handleSend}
-                disabled={isSending}
+                disabled={isSending || blockedByMissingEmail}
                 className="gap-2"
               >
                 {isSending ? (

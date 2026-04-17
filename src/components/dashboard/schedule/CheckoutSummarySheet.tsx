@@ -818,6 +818,7 @@ export function CheckoutSummarySheet({
                   clientName={appointment.client_name}
                   clientEmail={appointment.client_email}
                   clientPhone={appointment.client_phone}
+                  phorestClientId={appointment.phorest_client_id}
                   afterpayEnabled={orgAfterpayEnabled}
                   afterpaySurchargeEnabled={orgSurchargeEnabled}
                   afterpaySurchargeRate={orgSurchargeRate}

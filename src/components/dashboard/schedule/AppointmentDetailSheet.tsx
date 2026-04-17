@@ -1604,6 +1604,7 @@ export function AppointmentDetailSheet({
                         clientName={appointment.client_name}
                         clientEmail={email}
                         clientPhone={phone}
+                        phorestClientId={appointment.phorest_client_id}
                         afterpayEnabled={orgAfterpayEnabled}
                         afterpaySurchargeEnabled={orgSurchargeEnabled}
                         afterpaySurchargeRate={orgSurchargeRate}
