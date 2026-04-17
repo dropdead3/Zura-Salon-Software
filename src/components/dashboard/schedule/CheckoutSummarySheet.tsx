@@ -964,7 +964,7 @@ export function CheckoutSummarySheet({
                 <span className={cn(gatePhase === 'gate' && 'text-muted-foreground')}>{formatCurrency(checkoutTotal)}</span>
               </div>
 
-              {gatePhase === 'gate' && (
+              {gatePhase === 'gate' && !declinedReason && (
                 <div className="rounded-md border border-warning/40 bg-warning/[0.06] p-3 space-y-2">
                   <div className="flex items-start gap-2">
                     <CalendarPlus className="h-4 w-4 mt-0.5 shrink-0 text-warning" />
@@ -999,6 +999,26 @@ export function CheckoutSummarySheet({
                   </div>
                 </div>
               )}
+
+              {declinedReason && (() => {
+                // Trim "Client declined — " style prefix for a quieter receipt
+                const fullLabel = getReasonLabel(declinedReason.code);
+                const dashIdx = fullLabel.indexOf('—');
+                const shortLabel = dashIdx >= 0 ? fullLabel.slice(dashIdx + 1).trim() : fullLabel;
+                const noteSuffix =
+                  declinedReason.code === 'other' && declinedReason.notes
+                    ? ` · "${declinedReason.notes.slice(0, 40)}${declinedReason.notes.length > 40 ? '…' : ''}"`
+                    : '';
+                return (
+                  <div className="flex items-center gap-2 px-3 py-2 font-sans text-xs text-muted-foreground">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+                    <span className="min-w-0 truncate">
+                      Rebook skipped — reason: {shortLabel}
+                      {noteSuffix} · logged to staff report
+                    </span>
+                  </div>
+                );
+              })()}
 
               {cart.hasUnsetPrice && (
                 <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/[0.06] p-2 text-xs text-warning">
