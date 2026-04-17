@@ -1,5 +1,6 @@
 import { MessageCircle } from 'lucide-react';
-import { useClientCallbacks } from '@/hooks/useClientCallbacks';
+import { useClientCallbacks, type ClientCallback } from '@/hooks/useClientCallbacks';
+import { useCallbackLookup } from '@/contexts/CallbackLookupContext';
 import { cn } from '@/lib/utils';
 
 interface CallbackChipProps {
@@ -14,10 +15,20 @@ interface CallbackChipProps {
  * active (unacknowledged) callbacks. Shows the first prompt; if multiple,
  * shows a count instead.
  *
+ * Reads from CallbackLookupContext when available (single org-wide query for
+ * the whole grid — see high-concurrency-scalability doctrine). Falls back to
+ * per-client hook outside of a provider (e.g. ClientDetailSheet).
+ *
  * Returns null if no active callbacks — honors alert-fatigue doctrine.
  */
 export function CallbackChip({ clientId, className, maxLength = 40 }: CallbackChipProps) {
-  const { data: callbacks = [] } = useClientCallbacks(clientId);
+  const lookup = useCallbackLookup();
+  // Only fire per-client query when no provider is mounted.
+  const { data: hookCallbacks = [] } = useClientCallbacks(lookup ? null : clientId);
+
+  const callbacks: ClientCallback[] = lookup
+    ? lookup.getCallbacks(clientId)
+    : hookCallbacks;
 
   if (callbacks.length === 0) return null;
 
