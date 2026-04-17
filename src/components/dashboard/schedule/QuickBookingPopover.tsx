@@ -1465,11 +1465,16 @@ export function QuickBookingPopover({
                     {preSelectedStylistName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex items-center gap-2">
                   <div className="text-sm font-medium truncate">{preSelectedStylistName}</div>
-                  {preSelectedStylistLevel && (
-                    <div className="text-[10px] text-muted-foreground">{preSelectedStylistLevel}</div>
-                  )}
+                  {(() => {
+                    const levelNum = getLevelNumber(preSelectedStylistLevel);
+                    return levelNum ? (
+                      <Badge variant="secondary" className="shrink-0 text-[10px] px-2 py-0.5">Level {levelNum}</Badge>
+                    ) : (
+                      <Badge variant="outline" className="shrink-0 text-[10px] px-2 py-0.5">Unranked</Badge>
+                    );
+                  })()}
                 </div>
                 <Button
                   variant="ghost"
