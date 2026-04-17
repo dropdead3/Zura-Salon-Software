@@ -450,12 +450,13 @@ export function CheckoutSummarySheet({
     if (paymentMethod === 'card_reader' && activeReader && organizationId && appointment) {
       try {
         // G5: Include tip as a line item so reader display total matches grandTotal
+        // Use the negotiated cart (post-discount) — never the stale appointment.total_price
         const lineItems = [
-          {
-            description: appointment.service_name || 'Service',
-            amount: Math.round((appointment.total_price || 0) * 100),
-            quantity: 1,
-          },
+          ...cart.lines.map((l) => ({
+            description: l.name,
+            amount: Math.round(computeLineNet(l) * 100),
+            quantity: l.quantity,
+          })),
           ...addonEvents.map((e) => ({
             description: e.addon_name,
             amount: Math.round(e.addon_price * 100),
