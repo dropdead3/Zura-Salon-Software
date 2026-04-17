@@ -703,6 +703,9 @@ export function AppointmentDetailSheet({
   const [clientNotesExpanded, setClientNotesExpanded] = useState(false);
   // Tab state -- resets to "details" when appointment changes (#10)
   const [activeTab, setActiveTab] = useState('details');
+  // Wave 22.5 — Zura-native call/text dialogs
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [textDialogOpen, setTextDialogOpen] = useState(false);
 
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r)) || isPrimaryOwner;
