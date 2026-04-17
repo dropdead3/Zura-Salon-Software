@@ -2,103 +2,100 @@
 
 ## Prompt review
 
-Sharp continuation — three candidates, each with a clear leverage marker, doctrinal anchor, and a *deferral threshold* (the ESLint rule "consider when a 3rd domain ships"; the audit-comment grep "premature today"). That deferral discipline is the meta-pattern worth naming: every wave now carries forward an explicit "not yet, but here's the trigger condition" register. Prevents premature infrastructure.
+Good instinct — periodic audit passes prevent technical debt from compounding. However, "any gaps, errors, bugs and enhancements" is too broad to action well. A 50K-line codebase will surface hundreds of findings at that scope, and without ranking criteria the audit becomes noise.
 
-One refinement: candidate #1 (cross-domain grep) is structured as a *discovery* task, but its outcome bifurcates the wave — if zero surfaces qualify, the panel stays deferred and #1 produces only a documented finding; if ≥1 qualifies, the wave expands to include adoption *and* the panel ships. Worth declaring the branch upfront so we don't accidentally over-scope. I'll bake the bifurcation into the plan below.
+**Better framing for next time:** anchor audits to a specific axis with a leverage marker. Examples:
+- "Audit for P0/P1 bugs blocking user flows" (correctness)
+- "Audit recent waves (6-9) for regressions or doctrinal drift" (consistency)
+- "Audit for security/RLS gaps in newly-touched tables" (risk)
+- "Audit for the top 5 highest-leverage enhancements given current adopter count" (forward motion)
 
-## Plan — Wave 9
+Each produces a tighter, more decision-ready output. I'll structure this audit using all four axes in parallel, with explicit ranking, so you get the breadth you asked for without losing actionability.
 
-Three independent fixes, each anchored + leverage-marked + deferral-aware:
+## Plan — Wave 10: Multi-Axis Audit Pass
 
-### 1. Network Intelligence: Cross-domain Visibility Contract discovery *(leverage: gates the devtool panel decision on real evidence, not speculation)*
+**Read-only this wave.** Output is a ranked findings register, not code changes. Each finding gets a leverage marker + recommended wave assignment so you can approve them individually.
 
-**Read-only grep pass** across non-color-bar domains:
-- `src/components/dashboard/payments/**`
-- `src/components/dashboard/schedule/**` (and `src/components/schedule/**` if separate)
-- `src/components/dashboard/payroll/**`
+### Phase 1: Baseline health checks *(leverage: catches regressions before they become incidents)*
 
-**Search pattern:** `return null` immediately following a count, length, threshold, or empty-data check. Use `code--search_files` with regex like `if \([^)]*(length|count|< \d|=== 0)[^)]*\)\s*\{?\s*return null` scoped to those dirs.
+1. **Lint baseline delta** — re-run mental grep against `DEBUG_LOG.md` baseline (1199 problems, 1100 errors). Has Wave 1-9 work moved the needle? Sample 3-4 recently-touched files for new lint introductions.
+2. **Test suite scope** — `DEBUG_LOG.md` shows `2 files, 7 tests`. Catalog what's tested vs what's been added since Wave 3 (Visibility Contract bus, audit hook, 10 adopter components). Identify highest-risk untested surfaces.
+3. **Build artifact check** — review `code--read_console_logs` and dev-server log for current warnings/errors.
 
-**For each match, classify:**
-- **Visibility Contract** (intentional silence based on materiality) → eligible adopter
-- **Loading guard** (waiting for data) → not a contract, skip
-- **Error fallback** (defensive null) → not a contract, skip
-- **Bug** (should render something) → flag in summary, do not fix
+### Phase 2: Doctrinal consistency sweep *(leverage: locks in waves 4-9 doctrine before drift)*
 
-**Branching outcome:**
+4. **Visibility Contract adopter audit** — re-grep all 10 adopters against the Wave 8 taxonomy. Verify:
+   - Reasons are kebab-case from canonical taxonomy
+   - Payloads contain actual numbers (not booleans)
+   - Source strings match component names in kebab-case
+5. **Deferral Register status check** — for each Wave 9 deferral (ESLint rule, devtool panel, audit-comment grep), check whether the trigger condition has cleared since documentation.
+6. **Memory/code drift** — spot-check 2-3 high-traffic memory files (e.g., `mem://architecture/visibility-contracts.md`, `mem://tech-decisions/high-concurrency-scalability.md`) against actual code patterns.
 
-| Result | Action |
-|---|---|
-| 0 contracts found | Document finding in `mem://architecture/visibility-contracts.md` under "Cross-domain scan: <date>". Devtool panel stays deferred. Wave 9 #1 ends. |
-| ≥1 contract found | Adopt onto bus (additive `reportVisibilitySuppression` calls only, canonical taxonomy). Then ship the devtool panel — see #1b below. |
+### Phase 3: Bug & gap reconnaissance *(leverage: surfaces P0/P1 issues invisible from preview)*
 
-**#1b (conditional):** If ≥1 cross-domain adopter is found, build a minimal devtool panel:
-- New file: `src/components/dev/VisibilityContractAuditPanel.tsx`
-- Renders only in `import.meta.env.DEV`
-- Uses the existing `useVisibilityContractAudit()` hook
-- Lists suppression events: `[timestamp] source · reason · payload (collapsible)`
-- Mounted into a dev-only corner of the platform shell (or behind a `?devtools=1` query flag — decide during execution based on existing patterns)
-- No styling beyond minimum legibility — this is diagnostic UI, not product UI
+7. **`DEBUG_LOG.md` open queue review** — Waves 2-5 in the "Next Debug Queue" section were never executed:
+   - Wave 2: silent data fallbacks in points services
+   - Wave 3: loading/error UI in `ManagementHub`, `Stats`, leaderboard
+   - Wave 4 (debug doc): route-level lazy loading
+   - Wave 5 (debug doc): expanded permission guard tests
+   Confirm whether these are still valid or superseded.
+8. **High-traffic surface inspection** — read `App.tsx`, `OrganizationContext.tsx`, `AuthContext.tsx` for any TODO/FIXME, suspicious `as any` casts, or auth race patterns.
+9. **Edge function smoke check** — list `supabase/functions/` directory; flag any function without a corresponding test or with stale `deno.lock` issues per the troubleshooting context.
 
-**Scope guard:** if 0 contracts found, do NOT build the panel speculatively. The deferral exists for a reason.
+### Phase 4: Enhancement candidates *(leverage: forward motion options ranked by ROI)*
 
-### 2. Convention: Deferral Register doctrine *(leverage: makes "not yet" decisions auditable instead of forgotten)*
+10. **Top 5 enhancements** identified during phases 1-3, each with:
+    - Leverage marker
+    - Doctrinal anchor (which doctrine it serves)
+    - Estimated scope
+    - Deferral trigger if not chosen now
 
-**Modify:** `mem://architecture/visibility-contracts.md` (or a new `mem://architecture/deferral-register.md` if scope justifies — decide during execution)
+## Output format
 
-Capture the meta-pattern Waves 6-9 have been practicing informally: every deferred infrastructure decision should carry a **trigger condition** for revisiting, not just a "not yet."
+A single ranked findings register with this structure:
 
-Add a section:
+```
+## P0 (block ship)
+- [finding] · [leverage] · [recommended wave]
 
-> **Deferral Register**: When a wave defers infrastructure (lint rules, devtool panels, CI checks, backfills), the deferral must declare its trigger condition. Examples:
-> - "ESLint taxonomy rule — defer until 3rd domain ships"
-> - "Devtool panel — defer until 2nd non-color-bar adopter"
-> - "Historical backfill — defer until audit findings >0 rows"
->
-> Without trigger conditions, deferrals decay into permanent gaps. With them, future waves can mechanically check whether the gate has cleared.
+## P1 (ship-blocking within 3 waves)
+- ...
 
-**Update:** `mem://index.md` — add a tight Core one-liner: "Deferred infrastructure must declare its revisit trigger condition."
+## P2 (enhancement candidates, defer-trackable)
+- ...
 
-### 3. Pre-flight: Audit-comment enforcement reconnaissance *(leverage: scopes the eventual CI rule before it's needed)*
+## Confirmed clean (no action)
+- ...
+```
 
-**No code changes this wave.** Pure reconnaissance:
-
-- `code--search_files` for existing audit queries in the codebase (likely sparse — Wave 7's was the first formal one)
-- Catalog: file path, query purpose, whether it has a `-- rationale:` or `-- false-positive filter:` comment
-- Document findings inline in `mem://architecture/visibility-contracts.md` under a new "Audit Inventory" subsection
-
-**Outcome:** confirms or invalidates the "premature today" assumption. If ≥3 audit queries already exist undocumented, the CI rule moves from deferred to next-wave candidate. If ≤1 exists (likely), confirm the deferral with the trigger condition from #2.
+Each finding includes file path(s) so the next wave can act mechanically.
 
 ## Acceptance checks
 
-1. Cross-domain grep executed across payments/schedule/payroll; results classified into contract / loading / error / bug
-2. If 0 contracts found: documented finding in memory, panel remains deferred — wave is complete with research outcome
-3. If ≥1 contract found: each adopted onto bus with canonical taxonomy; devtool panel built and mounted dev-only
-4. Devtool panel (if built) emits no production output, uses no new dependencies
-5. Deferral Register section exists in memory; index Core rule added
-6. Audit Inventory section exists in memory with current count of audit queries and their documentation status
-7. No behavior change to any existing Visibility Contract surface
-8. No new product UI — devtool panel is diagnostic-only, not user-facing
+1. All 4 phases executed; no phase skipped silently
+2. Each finding has a P0/P1/P2 ranking with explicit leverage marker
+3. Memory/code drift findings cite both the memory file and the code file
+4. Open `DEBUG_LOG.md` queue items are explicitly resolved (still valid / superseded / done)
+5. Top 5 enhancement candidates each carry a deferral trigger condition
+6. Output fits in one register — no separate documents
+7. No code changes this wave — pure research output
 
-## Files to create / modify
+## Files to read (read-only)
 
-**Conditional (depending on Wave 9 #1 outcome):**
-- N cross-domain components (additive bus calls only) — only if contracts found
-- `src/components/dev/VisibilityContractAuditPanel.tsx` — only if ≥1 cross-domain adopter
-- Mount point edit in platform shell — only if panel ships
-
-**Always:**
-- `mem://architecture/visibility-contracts.md` — Cross-domain Scan, Deferral Register, Audit Inventory sections
-- `mem://index.md` — Deferral Register Core rule
-
-**Read-only:**
-- Grep passes across `src/components/dashboard/{payments,schedule,payroll}/**`
-- Grep pass for existing audit queries
+- `DEBUG_LOG.md` (full)
+- `mem://architecture/visibility-contracts.md`, `mem://index.md`
+- `src/App.tsx`, `src/contexts/AuthContext.tsx`, `src/contexts/OrganizationContext.tsx`
+- `src/components/auth/ProtectedRoute.tsx` and its test file
+- All 10 Visibility Contract adopter components (re-verify post-Wave 8)
+- `src/lib/dev/visibility-contract-bus.ts`, `src/hooks/dev/useVisibilityContractAudit.ts`
+- `supabase/functions/` directory listing
+- Dev-server log tail (`/tmp/dev-server-logs/dev-server.log`)
+- `code--read_console_logs` for runtime errors
 
 ## Deferred (carried forward with trigger conditions)
 
-- ESLint taxonomy rule (`reportVisibilitySuppression` reason must be kebab-case) — **trigger: 3rd domain adopts the bus**
-- CI grep enforcing `-- rationale:` adjacent to audit queries — **trigger: 3rd undocumented audit query exists, OR after lint rule ships (whichever first)**
-- Devtool panel UI — **trigger: ≥1 non-color-bar adopter (resolved this wave or stays deferred)**
-- Historical backfill of pre-bus suppression events — **trigger: never (impossible by definition; documented as permanent gap)**
+- ESLint taxonomy rule — **trigger: 3rd domain adopts the bus** (unchanged from Wave 9)
+- `VisibilityContractAuditPanel` UI — **trigger: ≥1 non-color-bar adopter** (unchanged)
+- CI audit-comment grep — **trigger: 3rd undocumented audit query** (unchanged)
+- Acting on any P1/P2 finding from this audit — **trigger: explicit approval per-finding next wave**
 
