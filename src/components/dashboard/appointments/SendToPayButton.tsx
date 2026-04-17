@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Send, Loader2, Smartphone, CreditCard } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { AfterpayLogo } from '@/components/icons/AfterpayLogo';
 import { SplitPaymentDialog } from './SplitPaymentDialog';
+import { SendPaymentLinkComposer } from './SendPaymentLinkComposer';
 
 const AFTERPAY_MAX_CENTS = 400000; // $4,000
 
@@ -12,6 +12,7 @@ interface SendToPayButtonProps {
   appointmentId: string;
   organizationId: string;
   totalAmountCents: number;
+  serviceName?: string | null;
   clientName?: string | null;
   clientEmail?: string | null;
   clientPhone?: string | null;
@@ -26,6 +27,7 @@ export function SendToPayButton({
   appointmentId,
   organizationId,
   totalAmountCents,
+  serviceName,
   clientName,
   clientEmail,
   clientPhone,
@@ -35,93 +37,31 @@ export function SendToPayButton({
   onPaymentLinkSent,
   disabled,
 }: SendToPayButtonProps) {
-  const [isSending, setIsSending] = useState(false);
   const [showSplitDialog, setShowSplitDialog] = useState(false);
+  const [showComposer, setShowComposer] = useState(false);
 
   const hasContact = !!(clientEmail?.trim() || clientPhone?.trim());
   const needsSplit = afterpayEnabled && totalAmountCents > AFTERPAY_MAX_CENTS;
-
-  const handleSendToPayDirect = async (amountCents?: number) => {
-    const sendAmount = amountCents ?? totalAmountCents;
-    
-    if (!clientEmail && !clientPhone) {
-      toast.error('Client email or phone is required to send a payment link.');
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      // Step 1: Create the checkout payment link
-      const { data: linkData, error: linkError } = await supabase.functions.invoke(
-        'create-checkout-payment-link',
-        {
-           body: {
-            organization_id: organizationId,
-            appointment_id: appointmentId,
-            amount_cents: sendAmount,
-            original_amount_cents: totalAmountCents,
-            client_email: clientEmail,
-            client_phone: clientPhone,
-            client_name: clientName,
-          },
-        }
-      );
-
-      if (linkError) throw new Error(linkError.message);
-      if (!linkData?.checkout_url) throw new Error('Failed to create payment link');
-
-      // Calculate surcharge for display
-      const surchargeAmountCents = afterpaySurchargeEnabled && afterpaySurchargeRate
-        ? Math.round(sendAmount * afterpaySurchargeRate)
-        : 0;
-
-      // Step 2: Send the link via SMS/email
-      const { error: sendError } = await supabase.functions.invoke(
-        'send-payment-link',
-        {
-          body: {
-            organization_id: organizationId,
-            appointment_id: appointmentId,
-            checkout_url: linkData.checkout_url,
-            client_name: clientName,
-            client_email: clientEmail,
-            client_phone: clientPhone,
-            amount_display: `$${(sendAmount / 100).toFixed(2)}`,
-            surcharge_display: surchargeAmountCents > 0
-              ? `$${(surchargeAmountCents / 100).toFixed(2)}`
-              : undefined,
-          },
-        }
-      );
-
-      if (sendError) {
-        console.error('Send error (link still created):', sendError);
-      }
-
-      const deliveryMethod = clientPhone ? 'SMS' : 'email';
-      const afterpayNote = linkData.afterpay_available
-        ? linkData.surcharge_amount_cents
-          ? ` (Afterpay only — $${(linkData.surcharge_amount_cents / 100).toFixed(2)} fee included)`
-          : ' (Afterpay available)'
-        : '';
-      toast.success(`Payment link sent via ${deliveryMethod}${afterpayNote}`);
-      onPaymentLinkSent?.();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to send payment link');
-    } finally {
-      setIsSending(false);
-    }
-  };
+  const afterpayEligible = afterpayEnabled && totalAmountCents <= AFTERPAY_MAX_CENTS;
 
   const handleClick = () => {
     if (needsSplit) {
       setShowSplitDialog(true);
     } else {
-      handleSendToPayDirect();
+      setShowComposer(true);
     }
   };
 
-  const isDisabled = disabled || isSending || !hasContact;
+  const isDisabled = disabled || !hasContact;
+
+  // Adaptive label
+  const buttonLabel = needsSplit
+    ? 'Send Payment Link · Split'
+    : afterpayEligible
+      ? afterpaySurchargeEnabled
+        ? `Send Payment Link · Afterpay (+${parseFloat(((afterpaySurchargeRate ?? 0.06) * 100).toFixed(2))}%)`
+        : 'Send Payment Link · Afterpay'
+      : 'Send Payment Link';
 
   const button = (
     <Button
@@ -130,16 +70,11 @@ export function SendToPayButton({
       disabled={isDisabled}
       className="gap-2"
     >
-      {isSending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Send className="h-4 w-4" />
+      <Send className="h-4 w-4" />
+      {afterpayEligible && (
+        <AfterpayLogo className="w-3.5 h-3.5" color="currentColor" />
       )}
-      {afterpayEnabled
-        ? afterpaySurchargeEnabled
-          ? `Send to Pay (Afterpay + ${parseFloat(((afterpaySurchargeRate ?? 0.06) * 100).toFixed(2))}% fee)`
-          : 'Send to Pay / Afterpay'
-        : 'Send Payment Link'}
+      {buttonLabel}
     </Button>
   );
 
@@ -149,7 +84,6 @@ export function SendToPayButton({
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              {/* span wrapper required so tooltip captures hover on disabled button */}
               <span tabIndex={0}>{button}</span>
             </TooltipTrigger>
             <TooltipContent>
@@ -160,6 +94,22 @@ export function SendToPayButton({
       ) : (
         button
       )}
+
+      <SendPaymentLinkComposer
+        open={showComposer}
+        onOpenChange={setShowComposer}
+        appointmentId={appointmentId}
+        organizationId={organizationId}
+        totalAmountCents={totalAmountCents}
+        serviceName={serviceName}
+        clientName={clientName}
+        clientEmail={clientEmail}
+        clientPhone={clientPhone}
+        afterpayEnabled={afterpayEnabled}
+        afterpaySurchargeEnabled={afterpaySurchargeEnabled}
+        afterpaySurchargeRate={afterpaySurchargeRate}
+        onPaymentLinkSent={onPaymentLinkSent}
+      />
 
       {needsSplit && (
         <SplitPaymentDialog
