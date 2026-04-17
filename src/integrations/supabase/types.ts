@@ -17998,6 +17998,60 @@ export type Database = {
         }
         Relationships: []
       }
+      rebook_decline_reasons: {
+        Row: {
+          appointment_id: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          location_id: string | null
+          organization_id: string
+          reason_code: string
+          reason_notes: string | null
+          staff_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          reason_code: string
+          reason_notes?: string | null
+          staff_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          reason_code?: string
+          reason_notes?: string | null
+          staff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rebook_decline_reasons_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rebook_decline_reasons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       receiving_record_lines: {
         Row: {
           created_at: string

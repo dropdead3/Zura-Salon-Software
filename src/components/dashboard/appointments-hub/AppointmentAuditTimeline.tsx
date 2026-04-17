@@ -21,6 +21,8 @@ const EVENT_ICONS: Record<string, React.ElementType> = {
   cancelled: XCircle,
   no_show: AlertTriangle,
   note_added: MessageSquare,
+  rebook_declined: XCircle,
+  rebook_completed_at_checkout: CheckCircle,
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -36,6 +38,8 @@ const EVENT_LABELS: Record<string, string> = {
   cancelled: 'Cancelled',
   no_show: 'No Show',
   note_added: 'Note Added',
+  rebook_declined: 'Rebook Declined',
+  rebook_completed_at_checkout: 'Rebooked at Checkout',
 };
 
 function formatChange(entry: AuditLogEntry): string | null {
@@ -46,6 +50,11 @@ function formatChange(entry: AuditLogEntry): string | null {
   }
   if (entry.event_type === 'status_changed' && entry.previous_value && entry.new_value) {
     return `${entry.previous_value.status || '?'} → ${entry.new_value.status || '?'}`;
+  }
+  if (entry.event_type === 'rebook_declined' && entry.metadata) {
+    const label = (entry.metadata as any).reason_label || (entry.metadata as any).reason_code;
+    const notes = (entry.metadata as any).reason_notes;
+    if (label) return notes ? `${label} — ${notes}` : String(label);
   }
   return null;
 }

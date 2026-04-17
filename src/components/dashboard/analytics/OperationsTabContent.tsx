@@ -15,6 +15,7 @@ import { StaffingContent } from '@/components/dashboard/analytics/StaffingConten
 import { StaffUtilizationContent } from '@/components/dashboard/analytics/StaffUtilizationContent';
 import { BookingPipelineContent } from '@/components/dashboard/analytics/BookingPipelineContent';
 import { AssistantUtilizationCard } from '@/components/dashboard/analytics/AssistantUtilizationCard';
+import { RebookDeclineReasonsCard } from '@/components/dashboard/analytics/RebookDeclineReasonsCard';
 import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
 import { HealthDashboard } from '@/components/dashboard/health-engine/HealthDashboard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
@@ -163,12 +164,24 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
         </TabsContent>
 
         <TabsContent value="clients" className="mt-6">
-          <ClientsContent 
-            retention={retention}
-            isLoading={isLoading}
-            dateRange={filters.dateRange}
-            locationName={selectedLocationName}
-          />
+          <div className="space-y-6">
+            <ClientsContent 
+              retention={retention}
+              isLoading={isLoading}
+              dateRange={filters.dateRange}
+              locationName={selectedLocationName}
+            />
+            <RebookDeclineReasonsCard
+              organizationId={organizationId}
+              locationId={filters.locationId}
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              filterContext={{
+                locationId: filters.locationId,
+                dateRange: filters.dateRange,
+              }}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="staffing" className="mt-6">

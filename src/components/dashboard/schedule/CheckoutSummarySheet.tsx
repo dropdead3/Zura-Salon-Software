@@ -24,6 +24,8 @@ import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
 import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVisitRecommendation';
+import { RebookDeclineReasonDialog } from '@/components/dashboard/schedule/RebookDeclineReasonDialog';
+import { useLogRebookDeclineReason, getReasonLabel, type RebookDeclineReasonCode } from '@/hooks/useRebookDeclineReasons';
 import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
 import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
@@ -45,13 +47,8 @@ const formatAddress = (address: any) => {
   return `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
 };
 
-const DECLINE_REASONS = [
-  'Wants to check their schedule first',
-  'Prefers to book online later',
-  'Budget concerns',
-  'Trying a different salon',
-  'Other',
-] as const;
+// Legacy free-text reasons retained only for backward compat with downstream
+// onConfirm signature; new captures use RebookDeclineReasonCode via the dialog.
 
 interface CheckoutSummarySheetProps {
   appointment: PhorestAppointment | null;
@@ -129,11 +126,13 @@ export function CheckoutSummarySheet({
   const { data: reviewSettings } = useReviewThresholdSettings();
   const orgName = useBusinessName();
 
-  type GatePhase = 'gate' | 'declining' | 'checkout';
+  type GatePhase = 'gate' | 'checkout';
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
+  const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState<string>('');
   const [declineOtherText, setDeclineOtherText] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('cash');
+  const logDeclineReason = useLogRebookDeclineReason();
 
   // Terminal reader + checkout flow
   const { activeReader, readers, selectedReaderId, selectReader, hasReaders, isLoading: readersLoading } =
@@ -143,6 +142,7 @@ export function CheckoutSummarySheet({
   useEffect(() => {
     if (open) {
       setGatePhase('gate');
+      setDeclineDialogOpen(false);
       setDeclineReason('');
       setDeclineOtherText('');
       setRebooked(false);
@@ -423,7 +423,7 @@ export function CheckoutSummarySheet({
       });
     }
 
-    // Reset state for next use
+  // Reset state for next use
     setTipAmount(0);
     setCustomTip('');
     setRebooked(false);
@@ -431,12 +431,37 @@ export function CheckoutSummarySheet({
     setGatePhase('gate');
     setDeclineReason('');
     setDeclineOtherText('');
+    setDeclineDialogOpen(false);
     setPaymentMethod('cash');
     terminalFlow.reset();
   };
 
-  const handleDeclineConfirm = () => {
+  const handleDeclineDialogConfirm = async (
+    code: RebookDeclineReasonCode,
+    notes: string | null,
+  ) => {
+    if (!appointment || !organizationId) return;
+    try {
+      await logDeclineReason.mutateAsync({
+        organizationId,
+        appointmentId: appointment.id,
+        reasonCode: code,
+        reasonNotes: notes,
+        locationId: locationId ?? null,
+        clientId: (appointment as any).client_id ?? appointment.phorest_client_id ?? null,
+        staffId: (appointment as any).staff_user_id ?? null,
+      });
+    } catch (e) {
+      console.error('Failed to log decline reason', e);
+      toast.error('Could not save reason — please try again');
+      return;
+    }
+    // Persist label for the legacy onConfirm path (writes to phorest appointment)
+    const label = notes ? `${getReasonLabel(code)}: ${notes}` : getReasonLabel(code);
+    setDeclineReason(label);
+    setDeclineOtherText('');
     setRebooked(false);
+    setDeclineDialogOpen(false);
     setGatePhase('checkout');
   };
 
@@ -445,8 +470,6 @@ export function CheckoutSummarySheet({
       onScheduleNext(appointment);
     }
   };
-
-  const isDeclineValid = declineReason !== '' && (declineReason !== 'Other' || declineOtherText.trim().length >= 3);
 
   return (
     <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="560px">
@@ -675,46 +698,8 @@ export function CheckoutSummarySheet({
                       }
                     }}
                     onScheduleManually={handleScheduleNextClick}
-                    onDecline={() => setGatePhase('declining')}
+                    onDecline={() => setDeclineDialogOpen(true)}
                   />
-                )}
-
-                {gatePhase === 'declining' && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <div className="space-y-3">
-                      <Label>Why did they decline?</Label>
-                      <RadioGroup value={declineReason} onValueChange={setDeclineReason}>
-                        {DECLINE_REASONS.map((reason) => (
-                          <div key={reason} className="flex items-center space-x-2">
-                            <RadioGroupItem value={reason} id={reason} />
-                            <Label htmlFor={reason} className="font-normal cursor-pointer">{reason}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                      
-                      {declineReason === 'Other' && (
-                        <Textarea 
-                          placeholder="Please specify reason..."
-                          value={declineOtherText}
-                          onChange={(e) => setDeclineOtherText(e.target.value)}
-                          className="mt-2"
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button variant="ghost" onClick={() => setGatePhase('gate')} className="flex-1">
-                        Back
-                      </Button>
-                      <Button 
-                        onClick={handleDeclineConfirm} 
-                        disabled={!isDeclineValid}
-                        className="flex-1"
-                      >
-                        Continue to Tip
-                      </Button>
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
@@ -943,6 +928,12 @@ export function CheckoutSummarySheet({
           </div>
         </div>
       )}
+      <RebookDeclineReasonDialog
+        open={declineDialogOpen}
+        isSubmitting={logDeclineReason.isPending}
+        onConfirm={handleDeclineDialogConfirm}
+        onBack={() => setDeclineDialogOpen(false)}
+      />
     </PremiumFloatingPanel>
   );
 }
