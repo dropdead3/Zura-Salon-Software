@@ -1696,14 +1696,61 @@ export function AppointmentDetailSheet({
                           );
                         })}
                       </div>
-                      {appointment.total_price != null && (
-                        <div className="flex items-center justify-between pt-2 border-t border-dashed">
-                          <span className="text-sm text-muted-foreground">Total</span>
-                          <span className="font-display text-sm font-medium">
-                            <BlurredAmount>{formatCurrency(appointment.total_price)}</BlurredAmount>
-                          </span>
-                        </div>
-                      )}
+                      {appointment.total_price != null && (() => {
+                        const subtotal = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
+                        const total = appointment.total_price ?? 0;
+                        const discount = (appointment as any).discount_amount ?? null;
+                        const tip = (appointment as any).tip_amount ?? null;
+                        const original = (appointment as any).original_price ?? null;
+                        const delta = subtotal > 0 ? Math.abs(subtotal - total) : 0;
+                        const hasBreakdown = (discount && discount > 0) || (tip && tip > 0) || (original && original !== total);
+                        const showBreakdown = subtotal > 0 && (delta > 0.01 || hasBreakdown);
+
+                        return (
+                          <div className="pt-2 border-t border-dashed space-y-1">
+                            {showBreakdown && (
+                              <>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>Subtotal</span>
+                                  <span><BlurredAmount>{formatCurrency(subtotal)}</BlurredAmount></span>
+                                </div>
+                                {discount && discount > 0 && (
+                                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                                    <span>Discount</span>
+                                    <span>−<BlurredAmount>{formatCurrency(discount)}</BlurredAmount></span>
+                                  </div>
+                                )}
+                                {tip && tip > 0 && (
+                                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>Tip</span>
+                                    <span>+<BlurredAmount>{formatCurrency(tip)}</BlurredAmount></span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm text-muted-foreground">Total</span>
+                                {!showBreakdown && subtotal > 0 && delta > 0.01 && (
+                                  <TooltipProvider delayDuration={150}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Info className="h-3 w-3 text-muted-foreground/70 cursor-help" />
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs">
+                                        Total reflects POS-applied discounts or tax. Open in POS for full breakdown.
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
+                              <span className="font-display text-sm font-medium">
+                                <BlurredAmount>{formatCurrency(total)}</BlurredAmount>
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {/* Deposit Status */}
                       {appointment.deposit_required && (
                         <div className="flex items-center justify-between pt-2 border-t border-dashed">
