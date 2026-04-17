@@ -271,7 +271,7 @@ export function useColorBarToggle() {
         );
       }
     },
-    [updateFlag, bulkReactivate],
+    [updateFlag, bulkReactivate, queryClient],
   );
 
   /**
