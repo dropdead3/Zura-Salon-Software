@@ -2371,16 +2371,16 @@ export function QuickBookingPopover({
                   <div className="space-y-2.5 pt-1">
                     {/* Reason */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground font-display uppercase tracking-wider">
+                      <Label className="text-xs text-muted-foreground font-display uppercase tracking-wider">
                         Reason {redoPolicy?.redo_reason_required && <span className="text-destructive">*</span>}
                       </Label>
                       <Select value={redoReason} onValueChange={setRedoReason}>
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger className="h-9 text-sm">
                           <SelectValue placeholder="Select reason..." />
                         </SelectTrigger>
                         <SelectContent>
                           {REDO_REASONS.map(r => (
-                            <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>
+                            <SelectItem key={r} value={r} className="text-sm">{r}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -2389,7 +2389,7 @@ export function QuickBookingPopover({
                           placeholder="Describe the reason..."
                           value={redoCustomReason}
                           onChange={(e) => setRedoCustomReason(e.target.value)}
-                          className="h-8 text-xs"
+                          className="h-9 text-sm"
                         />
                       )}
                     </div>
