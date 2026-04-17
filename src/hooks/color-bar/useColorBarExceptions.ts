@@ -8,6 +8,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { resolveException } from '@/lib/color-bar/services/exception-service';
+import { useReconciliationFlaggedLocations } from './useReconciliationFlaggedLocations';
+
+/**
+ * Exception types that depend on trustworthy inventory or formula-cost data.
+ * These are suppressed for any location currently flagged
+ * `requires_inventory_reconciliation = true` per platform doctrine.
+ */
+const RECONCILIATION_SUPPRESSED_TYPES = new Set([
+  'supply_low',
+  'stockout_risk',
+  'formula_cost_drift',
+  'margin_drift',
+  'inventory_drift',
+]);
 
 export interface ColorBarException {
   id: string;
@@ -42,9 +56,10 @@ export interface ExceptionFilters {
 export function useColorBarExceptions(filters?: ExceptionFilters) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const { isFlagged, flaggedLocationIds } = useReconciliationFlaggedLocations();
 
   return useQuery({
-    queryKey: ['color-bar-exceptions', orgId, filters],
+    queryKey: ['color-bar-exceptions', orgId, filters, Array.from(flaggedLocationIds).sort().join(',')],
     queryFn: async (): Promise<ColorBarException[]> => {
       let query = supabase
         .from('backroom_exceptions' as any)
@@ -62,7 +77,16 @@ export function useColorBarExceptions(filters?: ExceptionFilters) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as unknown as ColorBarException[];
+      const rows = (data ?? []) as unknown as ColorBarException[];
+
+      // Doctrine: suppress recommendations when data integrity is low.
+      // Drop inventory/formula-cost exceptions for any location currently
+      // flagged for reconciliation.
+      if (flaggedLocationIds.size === 0) return rows;
+      return rows.filter((e) => {
+        if (!RECONCILIATION_SUPPRESSED_TYPES.has(e.exception_type)) return true;
+        return !e.location_id || !isFlagged(e.location_id);
+      });
     },
     enabled: !!orgId,
     staleTime: 60_000,
