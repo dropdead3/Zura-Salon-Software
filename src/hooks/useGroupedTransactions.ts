@@ -63,9 +63,13 @@ export interface GroupedTransactionFilters {
   clientSearch?: string;
 }
 
-export function useGroupedTransactions(filters: GroupedTransactionFilters) {
+export function useGroupedTransactions(
+  filters: GroupedTransactionFilters,
+  options: { enabled?: boolean } = {},
+) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const callerEnabled = options.enabled !== false;
 
   return useQuery({
     queryKey: ['grouped-transactions', filters, orgId],
@@ -247,7 +251,7 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
       result.sort((a, b) => (a.clientName || '').localeCompare(b.clientName || ''));
       return result;
     },
-    enabled: !!orgId,
+    enabled: !!orgId && callerEnabled,
     staleTime: 2 * 60 * 1000,
   });
 }
