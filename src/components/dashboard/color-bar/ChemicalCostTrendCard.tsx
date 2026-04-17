@@ -10,6 +10,7 @@ import { useChemicalCostTrend } from '@/hooks/color-bar/useChemicalCostTrend';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { ResponsiveContainer, LineChart, Line, YAxis } from 'recharts';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 interface ChemicalCostTrendCardProps {
   days?: number;
@@ -24,7 +25,16 @@ const TREND_ICONS = {
 export function ChemicalCostTrendCard({ days = 28 }: ChemicalCostTrendCardProps) {
   const { data: trend, isLoading } = useChemicalCostTrend(days);
 
-  if (isLoading || !trend || trend.points.length < 3) return null;
+  // Visibility Contract: needs ≥3 points to render a meaningful trend.
+  if (isLoading || !trend || trend.points.length < 3) {
+    const reason = isLoading ? 'loading' : !trend ? 'no-data' : 'insufficient-points';
+    reportVisibilitySuppression('chemical-cost-trend', reason, {
+      pointCount: trend?.points.length ?? 0,
+      threshold: 3,
+      windowDays: days,
+    });
+    return null;
+  }
 
   const TrendIcon = TREND_ICONS[trend.trendDirection];
 
