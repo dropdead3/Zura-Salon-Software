@@ -30,6 +30,8 @@ interface ScheduleActionBarProps {
   onOpenDrafts?: () => void;
   draftCount?: number;
   view?: 'day' | 'week' | 'agenda';
+  /** The currently viewed date in the calendar (used to determine if pills are temporally relevant). */
+  currentDate?: Date;
 }
 
 const MAX_RESULTS = 6;
