@@ -476,7 +476,12 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 w-[220px] @lg/schedhdr:w-[280px] px-4 text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  className={cn(
+                    "h-7 w-[220px] @lg/schedhdr:w-[280px] px-4 text-xs justify-between",
+                    view === 'week'
+                      ? "bg-[hsl(var(--sidebar-accent))] border-amber-500/60 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-300 hover:border-amber-500/80"
+                      : "bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
+                  )}
                 >
                   <span className="flex-1 text-left truncate">
                     {(() => {
