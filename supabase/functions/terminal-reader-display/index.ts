@@ -198,6 +198,14 @@ Deno.serve(async (req) => {
         stripeOpts
       );
 
+      // Final tip (in cents) — populated by Stripe when on-reader tipping was used.
+      const tipFromMetadata = Number(pi.metadata?.tip_amount ?? 0);
+      const tipFromAmountDetails =
+        ((pi as unknown as { amount_details?: { tip?: { amount?: number } } })
+          .amount_details?.tip?.amount) ?? null;
+      const finalTipAmount =
+        typeof tipFromAmountDetails === "number" ? tipFromAmountDetails : tipFromMetadata;
+
       return jsonResponse({
         success: true,
         payment_intent: {
@@ -205,6 +213,10 @@ Deno.serve(async (req) => {
           status: pi.status,
           amount: pi.amount,
           amount_received: pi.amount_received,
+          tip_amount: finalTipAmount,
+          tip_mode: (pi.metadata?.tip_mode as string | undefined) ?? "app",
+          payment_method_id:
+            (pi.payment_method as string | null) ?? null,
         },
       });
     }
