@@ -100,6 +100,7 @@ import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
 import { Pencil, Send } from 'lucide-react';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
+import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/PaymentLinkStatusCard';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { ColorBarUpsellInline } from '@/components/color-bar/ColorBarUpsellInline';
@@ -1473,6 +1474,30 @@ export function AppointmentDetailSheet({
                   <div className="mt-4 h-1.5 rounded-full bg-destructive/30" />
                 )}
               </div>
+
+              {/* ─── Active Payment Link Status (Wave 19) ───────── */}
+              {appointment.payment_link_sent_at && resolvedOrgId && (
+                <div className="px-6 pb-3">
+                  <PaymentLinkStatusCard
+                    appointmentId={appointment.id}
+                    organizationId={resolvedOrgId}
+                    totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                    paymentLinkSentAt={appointment.payment_link_sent_at}
+                    paymentLinkUrl={appointment.payment_link_url}
+                    paymentLinkExpiresAt={appointment.payment_link_expires_at}
+                    paymentStatus={appointment.payment_status}
+                    paidAt={appointment.paid_at}
+                    splitPaymentTerminalIntentId={appointment.split_payment_terminal_intent_id}
+                    splitPaymentLinkIntentId={appointment.split_payment_link_intent_id}
+                    clientName={appointment.client_name}
+                    clientEmail={appointment.client_email}
+                    clientPhone={appointment.client_phone}
+                    afterpaySurchargeEnabled={orgSurchargeEnabled}
+                    afterpaySurchargeRate={orgSurchargeRate}
+                    onChanged={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                  />
+                </div>
+              )}
 
               {/* ─── Quick Actions Row (Wave 18.1) ──────────────── */}
               {(() => {
