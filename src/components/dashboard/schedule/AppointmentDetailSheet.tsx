@@ -1503,7 +1503,7 @@ export function AppointmentDetailSheet({
                 </div>
               )}
 
-              {/* ─── Quick Actions Row (Wave 18.1) ──────────────── */}
+              {/* ─── Quick Actions Row (Wave 22.6: Rebook + SendPay only — Call/Text moved into Client Contact row) ──────────────── */}
               {(() => {
                 const phone = appointment.client_phone?.trim();
                 const rawEmail = clientRecord?.email?.trim();
@@ -1511,9 +1511,6 @@ export function AppointmentDetailSheet({
                   ? /^(na|none|noemail|test|n\/a)@/i.test(rawEmail) || !/@.+\..+/.test(rawEmail)
                   : true;
                 const email = rawEmail && !isPlaceholderEmail ? rawEmail : null;
-                const showCall = !!phone;
-                const showText = !!phone;
-                const showEmail = !!email;
                 const showRebook = !!onRebook;
                 const showSendPay =
                   !!appointment.id &&
@@ -1521,97 +1518,42 @@ export function AppointmentDetailSheet({
                   appointment.total_price != null &&
                   appointment.total_price > 0;
 
-                if (!showCall && !showText && !showEmail && !showRebook && !showSendPay) {
+                if (!showRebook && !showSendPay) {
                   return null;
                 }
 
-                const commBtn = "h-9 px-4 rounded-full font-sans text-xs";
                 const primaryBtn = "h-9 px-4 rounded-full font-sans text-xs";
 
                 return (
                   <div className="px-6 pb-3">
-                    <TooltipProvider delayDuration={200}>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {showCall && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className={commBtn}
-                                onClick={() => setCallDialogOpen(true)}
-                              >
-                                <Phone className="h-3.5 w-3.5 sm:mr-1.5" />
-                                <span className="hidden sm:inline">Call</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Call {phone}</TooltipContent>
-                          </Tooltip>
-                        )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {showRebook && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className={primaryBtn}
+                          onClick={() => onRebook!(appointment)}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Rebook
+                        </Button>
+                      )}
 
-                        {showText && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className={commBtn}
-                                onClick={() => setTextDialogOpen(true)}
-                              >
-                                <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
-                                <span className="hidden sm:inline">Text</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Text {phone}</TooltipContent>
-                          </Tooltip>
-                        )}
-
-                        {showEmail && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="sm" className={commBtn} asChild>
-                                <a href={`mailto:${email}`}>
-                                  <Mail className="h-3.5 w-3.5 sm:mr-1.5" />
-                                  <span className="hidden sm:inline">Email</span>
-                                </a>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Email {email}</TooltipContent>
-                          </Tooltip>
-                        )}
-
-                        {(showCall || showText || showEmail) && (showRebook || showSendPay) && (
-                          <div className="h-6 w-px bg-border mx-1" aria-hidden />
-                        )}
-
-                        {showRebook && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className={primaryBtn}
-                            onClick={() => onRebook!(appointment)}
-                          >
-                            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Rebook
-                          </Button>
-                        )}
-
-                        {showSendPay && (
-                          <SendToPayButton
-                            appointmentId={appointment.id}
-                            organizationId={resolvedOrgId!}
-                            totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
-                            serviceName={appointment.service_name}
-                            clientName={appointment.client_name}
-                            clientEmail={email}
-                            clientPhone={phone}
-                            afterpayEnabled={orgAfterpayEnabled}
-                            afterpaySurchargeEnabled={orgSurchargeEnabled}
-                            afterpaySurchargeRate={orgSurchargeRate}
-                            onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
-                          />
-                        )}
-                      </div>
-                    </TooltipProvider>
+                      {showSendPay && (
+                        <SendToPayButton
+                          appointmentId={appointment.id}
+                          organizationId={resolvedOrgId!}
+                          totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                          serviceName={appointment.service_name}
+                          clientName={appointment.client_name}
+                          clientEmail={email}
+                          clientPhone={phone}
+                          afterpayEnabled={orgAfterpayEnabled}
+                          afterpaySurchargeEnabled={orgSurchargeEnabled}
+                          afterpaySurchargeRate={orgSurchargeRate}
+                          onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                        />
+                      )}
+                    </div>
                   </div>
                 );
               })()}
