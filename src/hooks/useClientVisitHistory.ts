@@ -15,7 +15,10 @@ export interface ClientVisit {
   notes: string | null;
 }
 
-export function useClientVisitHistory(phorestClientId: string | null | undefined) {
+export function useClientVisitHistory(
+  phorestClientId: string | null | undefined,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ['client-visit-history', phorestClientId],
     queryFn: async () => {
@@ -63,6 +66,7 @@ export function useClientVisitHistory(phorestClientId: string | null | undefined
         notes: apt.notes,
       })) as ClientVisit[];
     },
-    enabled: !!phorestClientId,
+    enabled: !!phorestClientId && (options?.enabled ?? true),
+    staleTime: 60_000,
   });
 }
