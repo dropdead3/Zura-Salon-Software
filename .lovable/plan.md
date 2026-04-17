@@ -2,113 +2,103 @@
 
 ## Prompt review
 
-Direct, scope-setting prompt — and the screenshot shows the exact surface (in-drawer Quick Actions row, Send Payment Link button). Even sharper next time: distinguish "what staff sees" vs "what the client sees" up front. Your context answer (front desk + terminal) tells me you're solving for **staff orchestrating Afterpay**, not clients self-checking-out. That reframes "checkout UI" — it's a staff handoff surface, not a public storefront.
+Strong prompt — names the surface (checkout), the audience (stylist/front desk), the behavior (require reason on "no"), the cultural goal (force the ask), and even gives one critical reason verbatim ("I never asked"). Sharper next time: specify *when* in the checkout flow it should fire (before payment? after?) and whether it should block other staff from skipping (PIN gate?). I'll propose the cleanest placement and flag the PIN question.
 
-## Plan — Wave 19: Afterpay + Checkout Staff Handoff UI
+## Discovery
 
-**Doctrine anchor:** `payments/afterpay-and-split-payment-system` + `payments/point-of-sale-terminal-checkout-integration`.
+Existing rebook architecture (already in place):
+- `NextVisitRecommendation.tsx` — shown inside `CheckoutSummarySheet` rebooking gate (one-tap interval buttons)
+- `AUDIT_EVENTS.REBOOK_DECLINED` and `REBOOK_COMPLETED_AT_CHECKOUT` already defined
+- `useRebookingRate` hook tracks `rebooked_at_checkout` boolean on appointments
+- `appointment_audit_log` table receives lifecycle events
 
-### Context reframe
+What's missing: when staff clicks "Skip" on `NextVisitRecommendation`, it logs `REBOOK_DECLINED` but captures **no reason**. That's the gap — and where coaching pressure lives.
 
-You picked all four surfaces but the primary context is **front desk → terminal**. That means:
-- Staff drives everything from the dashboard
-- Afterpay is a *fallback* (split overflow >$4k, OR client wants installments)
-- Public-facing pages (checkout link, receipt) are infrastructure that the link points to — staff doesn't see them
+## Plan — Wave 21: Rebook Decline Reason Gate + Analytics
 
-Wave 19 focuses on **the in-drawer staff handoff** (highest leverage, fastest impact). Public checkout page + branded receipt page are scoped as **Wave 20** (deferred with explicit trigger).
+**Doctrine anchor:** structural enforcement (force the ask), brand-voice (no shame language, explain why structure protects), analytics-data-integrity.
 
-### What's wrong now (from screenshot + code audit)
+### What gets built
 
-| # | Finding | Pri |
-|---|---|---|
-| 1 | "Send Payment Link" in Quick Actions is opaque — staff can't tell what client will see (Card vs Afterpay vs both, with/without surcharge) before sending | **P0** |
-| 2 | Afterpay flow only triggers from `SendToPayButton` deep in the drawer footer — no visibility from Quick Actions row | **P0** |
-| 3 | When total > $4k, `SplitPaymentDialog` opens but staff has no in-drawer **summary** of the split they just sent (Afterpay link sent for $X, terminal still owes $Y) | **P0** |
-| 4 | Surcharge preview (`CheckoutSummarySheet` ~L823-848) is buried in the checkout footer — staff doesn't see it from the appointment drawer Quick Actions | **P1** |
-| 5 | No "link sent" status reflected in the appointment drawer — staff has to refresh / cross-reference Transactions tab to confirm delivery | **P1** |
-| 6 | No way to **resend** or **cancel** an active payment link from the drawer if client lost SMS or changed mind | **P1** |
-| 7 | Public checkout page is Stripe-hosted (no branding, no salon logo, no Afterpay education for first-time users) | **P2** (Wave 20) |
-| 8 | Receipt is HTML email + print — no branded post-payment confirmation page client can revisit | **P2** (Wave 20) |
+**1. Decline reason modal (blocking gate)**
 
-### Wave 19 implementation
+When staff clicks "Skip" in `NextVisitRecommendation`, instead of immediate decline:
+- Open `RebookDeclineReasonDialog` — modal that **must** be answered to proceed
+- Single-select radio list of reasons (with "Other" → free text)
+- Cannot be dismissed without selecting (no X close, no overlay-click escape)
+- Confirm button writes reason → audit log → closes modal → proceeds with checkout
+- Helper copy at top: *"Quick coaching moment — capturing why helps the team improve rebook rate. No judgment."*
 
-**Fix #1 — Send Payment Link composer modal (new):**
+**Reason options (in order, "I never asked" first as the cultural anchor):**
+1. **I never asked** (the honest one — this is the lever)
+2. Client declined — traveling / out of town
+3. Client declined — wants to call later
+4. Client declined — price concern
+5. Client declined — schedule uncertainty
+6. Service doesn't need rebook (e.g., one-off)
+7. Other (free text, required if selected)
 
-New component: `src/components/dashboard/appointments/SendPaymentLinkComposer.tsx`
+**2. Data layer**
 
-Replaces the direct-fire from `SendToPayButton`. When staff clicks "Send Payment Link" in Quick Actions:
-- Opens a focused composer (not a heavy dialog — `PremiumFloatingPanel` for consistency with drawer)
-- **Preview card** shows exactly what client will see:
-  - Service name + amount
-  - Payment options client will have: "Card" badge always; "Afterpay (Pay in 4)" badge when `orgAfterpayEnabled && total ≤ $4000`; "Afterpay only" badge when surcharge enabled
-  - Surcharge breakdown if applicable (use existing logic from CheckoutSummarySheet L823-848 — extract into shared component `<AfterpaySurchargePreview />`)
-  - Installment preview: "$X.XX every 2 weeks" (4 installments)
-- **Delivery channel selector**: SMS / Email / Both (auto-detected from available client data, staff can override)
-- **Optional message** textarea (prepended to default body — passed via `send-payment-link` edge function)
-- **Send** button → fires existing `create-checkout-payment-link` + `send-payment-link` chain, then advances to "sent" state inside the composer
+New table `rebook_decline_reasons`:
+- `id`, `organization_id`, `location_id`, `appointment_id`, `client_id`, `staff_id`
+- `reason_code` (text, enum-like: `never_asked`, `client_traveling`, `client_call_later`, `client_price`, `client_schedule_unsure`, `not_applicable`, `other`)
+- `reason_notes` (text, nullable — free text for "Other" or supplemental)
+- `created_at`, `created_by`
+- RLS: `is_org_member` for select, `is_org_member` for insert (staff log their own)
 
-**Fix #2 — Quick Actions: visual hierarchy for Afterpay-eligible amounts:**
+Also write to existing `appointment_audit_log` with `REBOOK_DECLINED` + reason in metadata for backward compat with existing rebook audit queries.
 
-In `AppointmentDetailSheet.tsx` Quick Actions row:
-- When `orgAfterpayEnabled && total ≤ $4000`: button label becomes **"Send Payment Link · Afterpay"** with the existing AfterpayLogo icon next to Send icon
-- When `total > $4000` && Afterpay enabled: label is **"Send Payment Link · Split"** to telegraph the split flow
-- When Afterpay disabled or total ineligible: stays plain "Send Payment Link"
-- All variants open the same composer (composer adapts to context)
+**3. Analytics surface**
 
-**Fix #3 — Active payment link status block (new in drawer):**
+New card in **Operations Hub → Rebooking** section: `RebookDeclineReasonsCard.tsx`
+- Horizontal bar chart: reason → count + % of total declines
+- Date range picker (inherits Hub filter)
+- Drill-down: click bar → list of appointments with that reason (link to drawer)
+- Headline insight at top: *"X% of declines were 'I never asked' — biggest lever this period"*
+- Empty state: *"No decline reasons recorded yet. Reasons capture starts at checkout."*
+- Wrapped in `PinnableCard` for Command Center pinning
 
-When the appointment has `payment_link_status = 'sent' | 'viewed' | 'paid'` (already tracked per `PaymentLinkStatusBadge`):
-- New section above Quick Actions: **"Payment Link Active"** card showing:
-  - Status timeline (Sent → Viewed → Paid) using existing `PaymentLinkStatusBadge` styling
-  - Channel sent (SMS to ###-###-####, Email to xxx@yyy.com)
-  - Amount + surcharge breakdown
-  - **Resend** button (re-fires `send-payment-link` with same checkout_url)
-  - **Cancel link** button (marks status `cancelled`, voids checkout session via new edge function update)
-  - **View receipt** link if paid (opens existing TransactionDetailSheet)
+**4. Drawer surfacing (closing the loop)**
 
-**Fix #4 — Split payment summary card (after split sent):**
+In `AppointmentDetailSheet` audit/timeline tab:
+- Decline reason renders inline next to `REBOOK_DECLINED` event (not just "rebook declined" — "rebook declined: I never asked")
+- Lets managers spot patterns per stylist without leaving the appointment
 
-Modify `SplitPaymentDialog.tsx` to NOT just show "Done" — instead:
-- After link sent, dialog closes AND a persistent banner appears in the appointment drawer:
-  - **"Split payment in progress"** card with two rows:
-    - ✓ Afterpay link sent for $X.XX (link to status block)
-    - ⏱ Pending terminal payment: $Y.YY (CTA: "Charge on terminal" → opens CheckoutSummarySheet pre-filled with remainder)
-- Drives staff to complete the in-person half without ambiguity
-
-**Fix #5 — Shared component extraction:**
-
-New: `src/components/dashboard/payments/AfterpaySurchargePreview.tsx`
-- Pulls the surcharge math currently inlined in CheckoutSummarySheet L823-848
-- Reusable in: composer preview, drawer status block, CheckoutSummarySheet footer
-- Prop: `amountCents`, `surchargeRate`, `compact?: boolean`
-
-### Files to create / modify
+### Files
 
 **New:**
-- `src/components/dashboard/appointments/SendPaymentLinkComposer.tsx`
-- `src/components/dashboard/payments/AfterpaySurchargePreview.tsx`
-- `src/components/dashboard/appointments/PaymentLinkStatusCard.tsx` (drawer status block)
+- `src/components/dashboard/schedule/RebookDeclineReasonDialog.tsx`
+- `src/components/dashboard/analytics/RebookDeclineReasonsCard.tsx`
+- `src/hooks/useRebookDeclineReasons.ts` (insert + query)
+- Migration: `rebook_decline_reasons` table + RLS
 
 **Modify:**
-- `src/components/dashboard/appointments/SendToPayButton.tsx` — open composer instead of firing directly; keep prop API
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — Quick Actions label adapts to Afterpay context; mount PaymentLinkStatusCard above Quick Actions
-- `src/components/dashboard/appointments/SplitPaymentDialog.tsx` — replace "Done" success state with in-drawer hand-off
-- `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — replace inlined surcharge preview with shared component
-- `DEBUG_LOG.md` — Wave 19 entry with leverage marker
+- `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — Skip button opens dialog instead of firing `onDecline` directly
+- `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — wire dialog into rebook gate flow; only proceed when reason captured
+- `src/lib/audit-event-types.ts` — add reason metadata convention comment
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — audit timeline displays reason
+- `src/pages/dashboard/admin/operations-hub` (or analytics hub rebooking subtab) — mount new card
+- `src/config/dashboardNav.ts` — only if new analytics route added (likely just lives under existing Rebooking tab)
 
 ### Acceptance checks
 
-1. Click "Send Payment Link" from Quick Actions → composer opens with full preview of what client will see (payment options, surcharge if any, installment math)
-2. After send, drawer shows persistent **Payment Link Active** card with sent timestamp, channel, status; staff can resend or cancel
-3. For totals > $4k, split dialog confirms then drawer shows split-pending banner directing staff to terminal for remainder
-4. Quick Actions label reflects Afterpay context: "Send Payment Link · Afterpay" / "· Split" / "Send Payment Link"
-5. Surcharge preview component renders identically across composer / drawer status / CheckoutSummarySheet
-6. Tests still 111/111
+1. Click "Skip" in rebook gate → dialog opens, cannot dismiss without selecting a reason
+2. "Other" requires free-text before Confirm enables
+3. Confirm writes to `rebook_decline_reasons` + `appointment_audit_log`, then proceeds with checkout
+4. Analytics card shows reason breakdown with "I never asked" callout
+5. Drawer audit timeline shows reason inline with decline event
+6. Reason data scoped by `organization_id` (RLS enforced)
+7. No regression to one-tap rebook flow (only "Skip" path is gated)
 
-### Deferred (Wave 20 — public surfaces)
+### Open question (worth confirming after approval)
 
-- **P2 #7** Branded public checkout page (`/checkout/:token`) — trigger: when first non-Afterpay-eligible client complains about Stripe-hosted checkout looking generic, OR when we add salon-branding for white-label rollout
-- **P2 #8** Branded receipt/confirmation page — trigger: paired with #7
-- **P2** Composer "schedule send" (queue link to send at specific time, e.g., morning of appointment) — trigger: requested by ≥2 operators
-- **P2** Bulk resend for stale links (24h+ unviewed) — trigger: ops requests it
+Should this gate also fire when staff closes `CheckoutSummarySheet` without selecting either rebook OR a decline reason? (i.e., closing = implicit skip = should still capture reason.) Default: yes, treat sheet-close-without-rebook as decline → modal blocks close. Tell me if you want a softer flow.
+
+### Deferred
+
+- **P2** PIN-gate the "I never asked" reason (manager-only override) — trigger: when staff start gaming the field
+- **P2** Per-stylist decline reason leaderboard — trigger: when 3+ owners ask for it
+- **P2** Auto-coaching nudge in stylist profile when "I never asked" exceeds threshold (e.g., >40% of their declines) — trigger: after 30 days of baseline data
+- **P2** Public/client-facing version (text-back link asking "want to rebook?") — trigger: when in-person ask rate stabilizes >70%
 
