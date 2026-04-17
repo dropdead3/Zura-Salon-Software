@@ -2,57 +2,54 @@
 
 ## Prompt review
 
-Sharp visual catch — you spotted that the Level 2 badge's stone/slate tones don't belong to the Zura violet palette. Sharper next time: tell me whether you want the badge to (a) inherit the active color theme so it shifts per Zura/Cream/Rose/etc, or (b) always use semantic neutral tokens (`muted`, `secondary`) that auto-adapt. I'll plan for (b) since it's the platform-correct answer, but flag (a) as an alternative.
+Sharp visual catch — the hover state on category rows currently extends edge-to-edge (see "Haircuts" row in your screenshot), which fights the bento-card aesthetic established everywhere else in the booking wizard. Sharper next time: when reporting a "make it bento" fix, mention the radius you want (e.g., "rounded-xl to match cards" vs "rounded-lg for tighter inline rows") so I don't have to infer. I'll plan for `rounded-xl` since it matches the bento card radius standard.
 
 ## Diagnosis
 
-In Wave 22.15 I replaced the muted opacity-based color stops with hardcoded Tailwind palette colors (`bg-slate-200 dark:bg-slate-800`, `bg-stone-200 dark:bg-stone-800`). Those slate/stone hues are **palette-fixed** — they don't read from CSS variables, so they ignore the active theme. Against the Zura theme (violet-tinted dark surfaces), the cool slate badge reads like it was lifted from the Cream theme's neutral palette. Visual mismatch confirmed.
+`src/components/dashboard/schedule/QuickBookingPopover.tsx` L1649 (and the duplicate Add-Ons branch at L1679):
 
-The fix: low tiers (Level 1, 2) should use **semantic theme tokens** (`bg-muted`, `bg-secondary`) that resolve through the active theme's CSS variables. Mid/high tiers (Levels 3–6+) keep the warm amber/gold treatment because gold IS the universal "tier elevation" signal across all themes — that's intentional cross-theme consistency, not a bug.
-
-## Plan — Wave 22.16: Theme-aware low-tier level badges
-
-### Fix: Replace hardcoded slate/stone with semantic tokens
-
-`src/lib/level-colors.ts` — update the first two COLOR_STOPS:
-
-```ts
-const COLOR_STOPS = [
-  { bg: 'bg-muted',      text: 'text-muted-foreground' },        // Level 1 — softest neutral
-  { bg: 'bg-secondary',  text: 'text-secondary-foreground' },    // Level 2 — slightly more present
-  { bg: 'bg-amber-100 dark:bg-amber-950/60', text: 'text-amber-800 dark:text-amber-300' },  // Level 3
-  { bg: 'bg-amber-200 dark:bg-amber-900/60', text: 'text-amber-900 dark:text-amber-200' },  // Level 4
-  { bg: 'bg-amber-300 dark:bg-amber-800/70', text: 'text-amber-900 dark:text-amber-100' },  // Level 5
-  { bg: 'bg-amber-500 dark:bg-amber-600',    text: 'text-white dark:text-amber-50' },       // Level 6+
-] as const;
+```tsx
+className="w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4 py-3 hover:bg-muted/60"
 ```
 
-Why `bg-muted` and `bg-secondary`:
-- Both are theme-bound CSS variables defined per theme in `index.css`
-- In Zura dark mode, `--muted` resolves to violet-tinted dark gray → badge tints violet, matching the card surface
-- In Cream theme, they'll resolve to warm neutrals — same legibility, different hue
-- Both have paired `-foreground` tokens, so contrast is guaranteed by the design system
-- `bg-secondary` for Level 2 sits one step above `bg-muted` (Level 1) — preserves the subtle progression
+The `-mx-3 w-[calc(100%+1.5rem)]` pattern intentionally bleeds the row outward by 12px on each side to consume the parent's `p-3` padding. Combined with no `rounded-*` class, the hover renders as a full-width edge-to-edge band. That's the visual problem — it reads as "list selection" rather than "bento tile."
+
+## Plan — Wave 22.17: Bento-style category hover
+
+### Fix
+
+`src/components/dashboard/schedule/QuickBookingPopover.tsx` — both category buttons (L1647–1669 and L1677–1696):
+
+- Remove negative-margin bleed: drop `-mx-3 w-[calc(100%+1.5rem)] px-4`
+- Add bento radius + inset padding: use `px-3 py-3 rounded-xl`
+- Keep `hover:bg-muted/60` and `transition-all`
+- Preserve existing flex/gap layout
+
+Resulting className:
+```tsx
+"w-full flex items-center gap-3 text-left transition-all px-3 py-3 rounded-xl hover:bg-muted/60"
+```
+
+This lets the parent's `p-3` container remain the visual gutter, and the hover state becomes a contained rounded tile that respects the bento rhythm — matches the selected-stylist card and service tiles already in the same wizard.
 
 ### Acceptance checks
 
-1. On Zura dark theme: Level 2 badge reads as a violet-tinted neutral that visually belongs with the card surface
-2. Switch to Cream theme: same badge re-tints to a warm neutral, still legible
-3. Switch to Rose / Sage / Ocean / Ember / Noir: badge always inherits the theme's neutral palette — never looks foreign
-4. Level 1 (softest) and Level 2 (slightly more present) remain visually distinguishable
-5. Levels 3–6+ unchanged — warm amber/gold progression preserved as the universal "tier elevation" signal
-6. Selected stylist card in booking wizard renders correctly across all themes
-7. Stylist Directory and Team Hub also benefit (positive global side effect)
+1. Hovering a category row (Haircuts, Blonding, etc.) shows a rounded-xl highlight that does NOT touch the popover's left/right edges
+2. There's visible breathing room (12px) between the hover edge and the popover frame on both sides
+3. The Add-Ons & Extras virtual category receives the same treatment
+4. Selected-state styling (selectedCount badge) continues to render correctly
+5. No layout shift between hover/non-hover states
+6. Light + dark mode both render the contained hover correctly
 
 ### Files
 
-- `src/lib/level-colors.ts` — swap Level 1 + Level 2 stops to semantic tokens
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — two button className updates (L1649, L1679)
 
 ### Open question
 
-None — semantic tokens are the doctrinally correct answer per the design token system.
+None.
 
 ### Deferred
 
-- **P3** Eventually move ALL level color stops to theme tokens (define `--level-1`...`--level-6` per theme) so even the gold tiers can re-tint per palette if a future theme wants it. Trigger: when a theme launches that needs to override the gold treatment (e.g., Noir wanting silver-toned high tiers).
+- **P3** Apply the same bento-hover treatment to the search-results service rows (L1557, L1600) — they already use `rounded-lg` so they're closer, but worth standardizing on `rounded-xl` for visual consistency across the wizard. Trigger: after this ships and you confirm the radius feels right.
 
