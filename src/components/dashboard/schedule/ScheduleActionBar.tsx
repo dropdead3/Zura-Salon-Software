@@ -1,30 +1,25 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useOrgNow } from '@/hooks/useOrgNow';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut, Plus, Users, FileText, PlayCircle, Clock } from 'lucide-react';
+import { CalendarDays, CalendarClock, ZoomIn, ZoomOut, Plus, Users, FileText, PlayCircle, Clock, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useOrgNow } from '@/hooks/useOrgNow';
 import { ScheduleLegend } from './ScheduleLegend';
 import { NavBadge } from '@/components/dashboard/NavBadge';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
-
-type UrgencyLevel = 'overdue' | 'nearing';
-
-interface QueueItem {
-  appointment: PhorestAppointment;
-  urgency: UrgencyLevel;
-  /** Positive = minutes overdue; negative = minutes until end */
-  overdueMinutes: number;
-}
-
 interface ScheduleActionBarProps {
   appointments: PhorestAppointment[];
+  /** All loaded appointments — used for the search index (defaults to `appointments`). */
+  searchAppointments?: PhorestAppointment[];
   onSelectAppointment: (apt: PhorestAppointment) => void;
+  /** Called when search result is chosen — should jump calendar to that date in day view + open detail. */
+  onJumpToAppointment?: (apt: PhorestAppointment) => void;
   todayAppointmentCount?: number;
   zoomLevel?: number;
   onZoomIn?: () => void;
@@ -37,40 +32,32 @@ interface ScheduleActionBarProps {
   view?: 'day' | 'week' | 'agenda';
 }
 
-function getFirstName(fullName: string): string {
-  return fullName.split(' ')[0] || fullName;
+const MAX_RESULTS = 6;
+
+function formatTime12h(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${m.toString().padStart(2, '0')} ${period}`;
 }
 
-function buildPaymentQueue(appointments: PhorestAppointment[], nowMinutes: number): QueueItem[] {
-  const queue: QueueItem[] = [];
-
-  for (const apt of appointments) {
-    if (apt.status !== 'checked_in') continue;
-
-    // Parse end_time (HH:MM) into minutes
-    const [h, m] = apt.end_time.split(':').map(Number);
-    const endMinutes = h * 60 + m;
-
-    const diffMin = nowMinutes - endMinutes;
-
-    if (diffMin >= 0) {
-      // Past end time — overdue
-      queue.push({ appointment: apt, urgency: 'overdue', overdueMinutes: diffMin });
-    } else if (diffMin >= -15) {
-      // Within 15 min of end — nearing checkout
-      queue.push({ appointment: apt, urgency: 'nearing', overdueMinutes: diffMin });
-    }
-  }
-
-  // Sort: overdue first (most overdue at front), then nearing
-  queue.sort((a, b) => b.overdueMinutes - a.overdueMinutes);
-
-  return queue;
+function formatDateLabel(dateStr: string, todayStr: string): string {
+  if (dateStr === todayStr) return 'Today';
+  // Compute "Tomorrow" relative to todayStr (YYYY-MM-DD)
+  const today = new Date(todayStr + 'T00:00:00');
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+  if (dateStr === tomorrowStr) return 'Tomorrow';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export function ScheduleActionBar({
   appointments,
+  searchAppointments,
   onSelectAppointment,
+  onJumpToAppointment,
   todayAppointmentCount = 0,
   zoomLevel = 0,
   onZoomIn,
@@ -83,9 +70,12 @@ export function ScheduleActionBar({
   view,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
-  const { nowMinutes } = useOrgNow();
-
-  const queue = useMemo(() => buildPaymentQueue(appointments, nowMinutes), [appointments, nowMinutes]);
+  const { todayStr } = useOrgNow();
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounced = useDebounce(query, 200);
 
   const inSessionCount = useMemo(
     () => appointments.filter(a => a.status === 'checked_in').length,
@@ -96,6 +86,76 @@ export function ScheduleActionBar({
     () => appointments.filter(a => ['confirmed', 'pending', 'booked'].includes(a.status)).length,
     [appointments]
   );
+
+  const searchPool = searchAppointments ?? appointments;
+
+  const results = useMemo(() => {
+    const q = debounced.trim().toLowerCase();
+    if (q.length < 2) return [] as PhorestAppointment[];
+    const matches = searchPool.filter(a => a.client_name?.toLowerCase().includes(q));
+
+    // Rank: today first (asc by time), then future (chronological), then past (reverse chronological)
+    const today: PhorestAppointment[] = [];
+    const future: PhorestAppointment[] = [];
+    const past: PhorestAppointment[] = [];
+    for (const a of matches) {
+      if (a.appointment_date === todayStr) today.push(a);
+      else if (a.appointment_date > todayStr) future.push(a);
+      else past.push(a);
+    }
+    today.sort((a, b) => a.start_time.localeCompare(b.start_time));
+    future.sort((a, b) =>
+      a.appointment_date.localeCompare(b.appointment_date) || a.start_time.localeCompare(b.start_time)
+    );
+    past.sort((a, b) =>
+      b.appointment_date.localeCompare(a.appointment_date) || b.start_time.localeCompare(a.start_time)
+    );
+    return [...today, ...future, ...past];
+  }, [debounced, searchPool, todayStr]);
+
+  const visibleResults = results.slice(0, MAX_RESULTS);
+  const overflowCount = Math.max(0, results.length - MAX_RESULTS);
+  const showDropdown = open && debounced.trim().length >= 2;
+
+  useEffect(() => {
+    setHighlight(0);
+  }, [debounced]);
+
+  const handleSelect = useCallback(
+    (apt: PhorestAppointment) => {
+      if (onJumpToAppointment) onJumpToAppointment(apt);
+      else onSelectAppointment(apt);
+      setQuery('');
+      setOpen(false);
+      inputRef.current?.blur();
+    },
+    [onJumpToAppointment, onSelectAppointment]
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown || visibleResults.length === 0) {
+      if (e.key === 'Escape') {
+        setQuery('');
+        setOpen(false);
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight(h => Math.min(h + 1, visibleResults.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight(h => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const apt = visibleResults[highlight];
+      if (apt) handleSelect(apt);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setQuery('');
+      setOpen(false);
+    }
+  };
 
   return (
     <div
@@ -143,51 +203,87 @@ export function ScheduleActionBar({
         </>
       )}
 
-      {/* Center: Payment queue bubbles */}
-      <div className="flex-1 min-w-0">
-        {queue.length === 0 ? (
-          <div className={cn('flex items-center justify-center gap-1.5 py-0.5', tokens.body.muted)}>
-            <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-            <span className="text-xs">All clear</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3 w-3 text-muted-foreground/60 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[220px] text-xs">
-                This queue shows clients who are nearing checkout or overdue for payment. When it's empty, all checked-in clients are on track.
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        ) : (
-          <ScrollArea className="w-full">
-            <div className="flex items-center gap-1.5 px-1">
-              {queue.map((item) => (
-                <Button
-                  key={item.appointment.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onSelectAppointment(item.appointment)}
-                  className={cn(
-                    'rounded-full h-7 px-3 text-xs shrink-0 gap-1',
-                    item.urgency === 'overdue' &&
-                      'border-destructive/60 text-destructive hover:bg-destructive/10 dark:border-destructive/40',
-                    item.urgency === 'nearing' &&
-                      'border-amber-500/60 text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950 dark:border-amber-500/40'
-                  )}
+      {/* Center: Client search */}
+      <div className="flex-1 min-w-0 flex justify-center">
+        <Popover open={showDropdown} onOpenChange={(o) => { if (!o) setOpen(false); }}>
+          <PopoverAnchor asChild>
+            <div className="relative w-full max-w-[320px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70 pointer-events-none" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+                onFocus={() => { if (query.trim().length >= 2) setOpen(true); }}
+                onKeyDown={handleKeyDown}
+                placeholder="Search client..."
+                className={cn(
+                  'h-8 w-full rounded-full bg-muted/60 border border-border/60 pl-8 pr-8 text-sm font-sans',
+                  'placeholder:text-muted-foreground/70',
+                  'focus-visible:outline-none focus-visible:border-foreground/30 focus-visible:bg-background',
+                  'transition-colors'
+                )}
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => { setQuery(''); setOpen(false); inputRef.current?.focus(); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground"
+                  aria-label="Clear search"
                 >
-                  <span
-                    className={cn(
-                      'w-1.5 h-1.5 rounded-full shrink-0',
-                      item.urgency === 'overdue' ? 'bg-destructive' : 'bg-amber-500'
-                    )}
-                  />
-                  {getFirstName(item.appointment.client_name)}
-                </Button>
-              ))}
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        )}
+          </PopoverAnchor>
+          <PopoverContent
+            align="center"
+            sideOffset={8}
+            className="w-[360px] p-1"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            {visibleResults.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No appointments found for "{debounced.trim()}"
+              </div>
+            ) : (
+              <div className="max-h-[320px] overflow-y-auto">
+                {visibleResults.map((apt, idx) => {
+                  const dateLabel = formatDateLabel(apt.appointment_date, todayStr);
+                  return (
+                    <button
+                      key={apt.id}
+                      type="button"
+                      onClick={() => handleSelect(apt)}
+                      onMouseEnter={() => setHighlight(idx)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 rounded-md flex flex-col gap-0.5 transition-colors',
+                        highlight === idx ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-sm truncate">{apt.client_name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {dateLabel} · {formatTime12h(apt.start_time)}
+                        </span>
+                      </div>
+                      {apt.service_name && (
+                        <span className="text-xs text-muted-foreground truncate">
+                          {apt.service_name}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                {overflowCount > 0 && (
+                  <div className="px-3 py-2 text-xs text-muted-foreground text-center border-t border-border mt-1">
+                    +{overflowCount} more — refine your search
+                  </div>
+                )}
+              </div>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Assistant Blocks */}
