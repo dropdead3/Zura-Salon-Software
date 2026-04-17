@@ -268,6 +268,7 @@ import { isVishServiceCharge } from '@/utils/serviceCategorization';
 export function useSalesMetrics(filters: SalesFilters = {}) {
   return useQuery({
     queryKey: ['sales-metrics-from-appointments', filters],
+    staleTime: 60_000, // Wave 14: 1m cache to prevent refetch on remount/navigation
     queryFn: async () => {
       // Build appointment query with batch fetching
       const data = await fetchAllBatched<{
