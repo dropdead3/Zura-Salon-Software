@@ -1,41 +1,41 @@
 
 ## Prompt review
 
-Clear correction — you flipped my earlier inference. The screenshot confirms: keep the right-side staff filter (under the location toggle), remove the left-side "Alexis Heasley" dropdown sitting next to the Shifts button.
+Tight, observation-driven prompt — you spotted a UX truth-vs-display mismatch (the grid is showing Alexis but the filter trigger says "All Stylists That Work This Day"). Good catch.
 
-Tighter framing for next time: this was already crisp. The screenshot + explicit "do not remove X" left zero ambiguity. Good prompt.
+Tighter framing for next time: name the desired behavior when the user *actively* picks "All" in week view — should the trigger say "Alexis (auto)", just "Alexis", or stay "All" with a subtle indicator? I'll infer the cleanest path: **the trigger label simply reflects the resolved week stylist**, since in week view "All" is structurally impossible.
 
 ## Diagnosis
 
-The left-side dropdown is the `selectedWeekStylistId` selector I added in the previous step (in `ScheduleHeader.tsx`, conditionally rendered when `view === 'week'`, positioned next to the Day/Week toggle and Shifts button). The right-side staff filter is the pre-existing one and stays.
+In `ScheduleHeader.tsx` (line ~475), the dropdown trigger label is computed from `selectedStaffIds` only:
+- `length === 0` → "All Stylists That Work This Day"
+- `length === 1` → that stylist's name
 
-But — the week view grid still needs a single stylist to render. So we can't just delete the state; we need the grid to derive its stylist from the **right-side staff filter** instead.
+In `Schedule.tsx`, week view derives `selectedWeekStylistId` from `selectedStaffIds` — falling back to the first stylist when nothing is selected. The grid uses the resolved value, but the header trigger does not know about the fallback, so it still shows "All".
 
 ## Plan
 
-**1. Remove the left-side stylist dropdown UI**
-- In `ScheduleHeader.tsx`, delete the conditional `<Select>` block (and its props: `weekStylists`, `selectedWeekStylistId`, `onWeekStylistChange`) that renders next to the Day/Week toggle.
+**1. Pass the resolved week stylist into the header**
+- In `Schedule.tsx`, pass two new props to `<ScheduleHeader>`:
+  - `weekViewStylistId: string | null` — the resolved `selectedWeekStylistId`
+  - (stylist name lookup already available via existing `stylists` prop, no need for a separate name prop)
 
-**2. Drive week view from the existing right-side staff filter**
-- In `Schedule.tsx`, remove `selectedWeekStylistId` state, its localStorage persistence, and the auto-select effect.
-- Derive the week-view stylist from the existing `staffFilter` value:
-  - If `staffFilter` is a specific stylist ID → use that stylist for the week grid.
-  - If `staffFilter` is `"all"` (or equivalent default) → auto-fall-back to the **first stylist of the current location** (preserving the "always show one stylist" guarantee).
-- Pass the resolved stylist ID down to `WeekView` as before.
+**2. Update the trigger label logic**
+- In `ScheduleHeader.tsx`, when `view === 'week'` AND `selectedStaffIds.length === 0` AND `weekViewStylistId` exists:
+  - Show that stylist's name in the trigger (resolved from `stylists` array).
+- All other view/state combinations: unchanged.
 
-**3. WeekView unchanged**
-- `WeekView.tsx` keeps its current single-stylist rendering logic; only the source of `selectedStylistId` changes upstream.
+**3. Update the dropdown's "All Stylists" checkmark logic**
+- In week view, the "All Stylists That Work This Day" row should *not* show a checkmark when a stylist is auto-resolved — because functionally, one stylist *is* selected.
+- Show the checkmark instead next to the auto-resolved stylist's row in the list (so the dropdown visually matches the trigger).
 
-**4. Header behavior**
-- Right-side staff filter remains visible in both Day and Week views (reverting my earlier "hide in week view" suggestion — you've now clarified it stays).
-- In week view, selecting a stylist from the right-side filter switches the visible stylist in the grid.
-- Selecting "All" in week view falls back to the first stylist (since multi-stylist week grid is gone by design).
+**4. No state changes**
+- `selectedStaffIds` stays as-is; we're only fixing the *display* layer to reflect the *resolved* selection.
 
 ## Acceptance checks
 
-1. Left-side stylist dropdown (next to Shifts) is gone.
-2. Right-side staff filter (under location selector) remains visible in both views.
-3. Week view renders one stylist, sourced from the right-side staff filter.
-4. Selecting a specific stylist in the right-side filter while in week view updates the grid.
-5. Selecting "All Stylists" in week view falls back to the first stylist of the current location.
-6. Day view behavior unchanged.
+1. Week view with no manual selection → trigger shows "Alexis Heasley" (the auto-resolved stylist).
+2. Week view dropdown opened → checkmark appears next to Alexis, not next to "All Stylists".
+3. User picks a different stylist in week view → trigger updates to that stylist (existing behavior).
+4. Day view → trigger and dropdown behavior unchanged ("All Stylists That Work This Day" still shows when none selected).
+5. Switching from week → day → header reverts to "All Stylists That Work This Day" if nothing was manually selected.
