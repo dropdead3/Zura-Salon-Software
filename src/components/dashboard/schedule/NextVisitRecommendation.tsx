@@ -7,7 +7,7 @@
 
 import { useState, useMemo } from 'react';
 import { CalendarPlus, CalendarCheck, XCircle, Quote } from 'lucide-react';
-import { format, addWeeks } from 'date-fns';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
