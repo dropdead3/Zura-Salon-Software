@@ -51,6 +51,7 @@ import {
 } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
 import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
+import { CancelReasonDialog } from '@/components/platform/color-bar/CancelReasonDialog';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
 
@@ -572,7 +573,11 @@ export function ColorBarEntitlementsTab() {
                             <Switch
                               checked={org.backroom_enabled}
                               onCheckedChange={() => toggleColorBar(org)}
-                              disabled={!!colorBarToggle.reactivationTarget || colorBarToggle.isPending}
+                              disabled={
+                                !!colorBarToggle.reactivationTarget ||
+                                !!colorBarToggle.suspensionTarget ||
+                                colorBarToggle.isPending
+                              }
                             />
                           </TableCell>
                         </TableRow>
@@ -617,6 +622,28 @@ export function ColorBarEntitlementsTab() {
         }}
         orgName={colorBarToggle.reactivationTarget?.organizationName ?? ''}
         suspendedAt={colorBarToggle.reactivationTarget?.suspendedAt ?? null}
+        affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
+        isPending={colorBarToggle.isPending}
+      {/* Cancel-reason capture — fires before soft-disabling so the platform records WHY */}
+      <CancelReasonDialog
+        open={!!colorBarToggle.suspensionTarget}
+        onOpenChange={(open) => {
+          if (!open) colorBarToggle.cancelSuspension();
+        }}
+        orgName={colorBarToggle.suspensionTarget?.organizationName ?? ''}
+        isPending={colorBarToggle.isPending}
+        onConfirm={(payload) => colorBarToggle.confirmSuspension(payload)}
+      />
+
+      {/* Reactivation confirmation — shown when toggling on an org that was previously suspended */}
+      <ReactivationConfirmDialog
+        open={!!colorBarToggle.reactivationTarget}
+        onOpenChange={(open) => {
+          if (!open) colorBarToggle.cancelReactivation();
+        }}
+        orgName={colorBarToggle.reactivationTarget?.organizationName ?? ''}
+        suspendedAt={colorBarToggle.reactivationTarget?.suspendedAt ?? null}
+        suspendedReason={colorBarToggle.reactivationTarget?.suspendedReason ?? null}
         affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
         isPending={colorBarToggle.isPending}
         onConfirm={() => {
