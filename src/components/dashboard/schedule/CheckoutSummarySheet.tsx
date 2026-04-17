@@ -24,6 +24,8 @@ import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
 import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVisitRecommendation';
+import { RebookDeclineReasonDialog } from '@/components/dashboard/schedule/RebookDeclineReasonDialog';
+import { useLogRebookDeclineReason, getReasonLabel, type RebookDeclineReasonCode } from '@/hooks/useRebookDeclineReasons';
 import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
 import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
@@ -45,13 +47,8 @@ const formatAddress = (address: any) => {
   return `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
 };
 
-const DECLINE_REASONS = [
-  'Wants to check their schedule first',
-  'Prefers to book online later',
-  'Budget concerns',
-  'Trying a different salon',
-  'Other',
-] as const;
+// Legacy free-text reasons retained only for backward compat with downstream
+// onConfirm signature; new captures use RebookDeclineReasonCode via the dialog.
 
 interface CheckoutSummarySheetProps {
   appointment: PhorestAppointment | null;
