@@ -71,10 +71,10 @@ export function SendPaymentLinkComposer({
 
   // Auto-detect default channel
   const defaultChannel: Channel = useMemo(() => {
-    if (clientPhone && clientEmail) return 'both';
+    if (clientPhone && effectiveEmail) return 'both';
     if (clientPhone) return 'sms';
     return 'email';
-  }, [clientPhone, clientEmail]);
+  }, [clientPhone, effectiveEmail]);
   const [channel, setChannel] = useState<Channel>(defaultChannel);
 
   useEffect(() => {
@@ -82,6 +82,8 @@ export function SendPaymentLinkComposer({
       setChannel(defaultChannel);
       setIsSent(false);
       setCustomMessage('');
+      setCapturedEmail('');
+      setEmailWarning(null);
     }
   }, [open, defaultChannel]);
 
@@ -89,11 +91,53 @@ export function SendPaymentLinkComposer({
   const exceedsAfterpayMax = afterpayEnabled && totalAmountCents > AFTERPAY_MAX_CENTS;
   const installmentCents = Math.round(totalAmountCents / 4);
 
+  // Hard-block per Wave 22.34: Afterpay-only (no phone) requires email.
+  // When eligible AND no phone, the only channel is email — block send if missing.
+  const requiresEmail = afterpayEligible && !clientPhone;
+  const blockedByMissingEmail = requiresEmail && !effectiveEmail;
+
+  const handleSaveCapturedEmail = async () => {
+    const next = capturedEmail.trim();
+    const result = validateEmail(next);
+    if (!result.valid) {
+      setEmailWarning(result.warning ?? 'Invalid email');
+      return;
+    }
+    if (!phorestClientId) {
+      // No client record to update — keep email in-memory only for this send
+      toast.success('Email captured for this send');
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      // Try phorest_clients first, then fall back to clients
+      const { data: pc } = await supabase
+        .from('phorest_clients')
+        .update({ email: next })
+        .eq('phorest_client_id', phorestClientId)
+        .select('id')
+        .maybeSingle();
+      if (!pc) {
+        await supabase
+          .from('clients')
+          .update({ email: next })
+          .eq('phorest_client_id', phorestClientId);
+      }
+      queryClient.invalidateQueries({ queryKey: ['client-record-for-panel', phorestClientId] });
+      queryClient.invalidateQueries({ queryKey: ['clients-data'] });
+      toast.success('Email saved to client');
+    } catch (err: any) {
+      toast.error(`Could not save email: ${err.message}`);
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
   const handleSend = async () => {
     setIsSending(true);
     try {
       // Decide which contact info to pass based on channel
-      const sendEmail = channel === 'email' || channel === 'both' ? clientEmail : null;
+      const sendEmail = channel === 'email' || channel === 'both' ? effectiveEmail || null : null;
       const sendPhone = channel === 'sms' || channel === 'both' ? clientPhone : null;
 
       const { data: linkData, error: linkError } = await supabase.functions.invoke(
