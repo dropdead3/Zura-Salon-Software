@@ -1616,7 +1616,7 @@ export function AppointmentDetailSheet({
                     <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
                     {/* Notes From Booking Assistant — surfaced from Notes tab for at-a-glance client intent */}
                     {appointment.notes && (
-                      <motion.div variants={staggerItem} className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                      <motion.div variants={staggerItem} className="mt-3 space-y-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
                         <div className="flex items-center gap-2">
                           <MessageSquare className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
                           <h4 className={tokens.heading.subsection}>Notes From Booking Assistant</h4>
