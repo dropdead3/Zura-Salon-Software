@@ -788,7 +788,7 @@ export function AppointmentDetailSheet({
     appointment?.phorest_id ?? null,
     notes,
   );
-  const isAssignedStylist = !!user?.id && appointment?.staff_user_id === user.id;
+  const isAssignedStylist = !!user?.id && appointment?.stylist_user_id === user.id;
   const isAssistant = !!user?.id && assistants.some((a) => a.assistant_user_id === user.id);
   const isWorkingThisAppointment = isAssignedStylist || isAssistant;
   useEffect(() => {

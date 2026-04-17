@@ -5045,13 +5045,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "client_about_facts_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "phorest_clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "client_about_facts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -5253,13 +5246,6 @@ export type Database = {
           trigger_date?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "client_callbacks_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "phorest_clients"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "client_callbacks_organization_id_fkey"
             columns: ["organization_id"]

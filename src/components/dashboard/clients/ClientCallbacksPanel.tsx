@@ -38,6 +38,7 @@ export function ClientCallbacksPanel({
   const [adding, setAdding] = useState(false);
   const [draftPrompt, setDraftPrompt] = useState('');
   const [draftDate, setDraftDate] = useState('');
+  const [useCustomDate, setUseCustomDate] = useState(false);
   const [showPast, setShowPast] = useState(false);
 
   if (!clientId || !organizationId) return null;
@@ -50,10 +51,11 @@ export function ClientCallbacksPanel({
       organization_id: organizationId,
       client_id: clientId,
       prompt: draftPrompt.trim(),
-      trigger_date: draftDate || null,
+      trigger_date: useCustomDate && draftDate ? draftDate : null,
     });
     setDraftPrompt('');
     setDraftDate('');
+    setUseCustomDate(false);
     setAdding(false);
   };
 
@@ -145,14 +147,32 @@ export function ClientCallbacksPanel({
             className="text-xs min-h-[60px]"
             autoFocus
           />
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground shrink-0">Trigger by</label>
-            <Input
-              type="date"
-              value={draftDate}
-              onChange={(e) => setDraftDate(e.target.value)}
-              className="h-8 text-xs"
-            />
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useCustomDate}
+                onChange={(e) => {
+                  setUseCustomDate(e.target.checked);
+                  if (!e.target.checked) setDraftDate('');
+                }}
+                className="h-3 w-3"
+              />
+              <span>
+                Trigger by specific date
+                {!useCustomDate && (
+                  <span className="ml-1 italic">— defaults to next visit</span>
+                )}
+              </span>
+            </label>
+            {useCustomDate && (
+              <Input
+                type="date"
+                value={draftDate}
+                onChange={(e) => setDraftDate(e.target.value)}
+                className="h-8 text-xs"
+              />
+            )}
           </div>
           <p className="text-[11px] text-muted-foreground italic">
             We'll remind you at {clientFirstName || "this client's"} next appointment.
@@ -166,6 +186,7 @@ export function ClientCallbacksPanel({
                 setAdding(false);
                 setDraftPrompt('');
                 setDraftDate('');
+                setUseCustomDate(false);
               }}
               className="h-7 text-xs"
             >
