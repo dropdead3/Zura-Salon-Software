@@ -204,6 +204,15 @@ export function useColorBarToggle() {
           );
         }
 
+        // Audit: first-time enables also belong in the lifecycle log so
+        // churn-pattern queries see the full enable→suspend→reactivate arc.
+        await logSuspensionEvent({
+          organization_id: args.organizationId,
+          event_type: 'reactivated',
+          notes: 'first-time enable',
+          affected_location_count: toInsert.length,
+        });
+
         queryClient.invalidateQueries({
           queryKey: ['platform-color-bar-entitlements'],
         });

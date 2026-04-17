@@ -43,8 +43,12 @@ const REASON_LABELS: Record<string, string> = {
 
 function formatReason(raw: string | null | undefined) {
   if (!raw) return null;
-  const [code, ...rest] = raw.split(':');
-  const label = REASON_LABELS[code.trim()] ?? code.trim();
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const [codeRaw, ...rest] = trimmed.split(':');
+  const code = (codeRaw ?? '').trim();
+  if (!code) return null;
+  const label = REASON_LABELS[code] ?? code;
   const note = rest.join(':').trim();
   return note ? `${label} — ${note}` : label;
 }

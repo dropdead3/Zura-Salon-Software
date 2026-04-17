@@ -28,29 +28,24 @@ const EMPTY: ReactivationStatus = {
 };
 
 async function fetchReactivationStatus(orgId: string): Promise<ReactivationStatus> {
+  // Single round-trip: join locations on the suspended entitlement rows so
+  // we resolve names without a second query.
   const { data: suspendedRows } = await supabase
     .from('backroom_location_entitlements')
-    .select('location_id, suspended_at, suspended_reason')
+    .select('location_id, suspended_at, suspended_reason, locations:locations(name)')
     .eq('organization_id', orgId as any)
     .eq('status', 'suspended' as any)
     .order('suspended_at', { ascending: false });
 
   if (!suspendedRows || suspendedRows.length === 0) return EMPTY;
 
-  const locIds = suspendedRows.map((r: any) => r.location_id);
-  const { data: locs } = await supabase
-    .from('locations')
-    .select('id, name')
-    .in('id', locIds);
-
-  const nameMap = new Map((locs ?? []).map((l: any) => [l.id, l.name]));
   return {
     wasPreviouslySuspended: true,
     suspendedAt: (suspendedRows[0] as any).suspended_at as string | null,
     suspendedReason: (suspendedRows[0] as any).suspended_reason as string | null,
     suspendedLocationCount: suspendedRows.length,
-    affectedLocationNames: locIds.map(
-      (id: string) => nameMap.get(id) ?? 'Unknown location',
+    affectedLocationNames: suspendedRows.map(
+      (r: any) => r.locations?.name ?? 'Unknown location',
     ),
   };
 }

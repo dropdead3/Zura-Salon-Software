@@ -489,15 +489,7 @@ export function ColorBarEntitlementsTab() {
                   >
                     <>
                       <CollapsibleTrigger asChild>
-                        <TableRow
-                          className="cursor-pointer border-slate-700/30 hover:bg-slate-800/30"
-                          onMouseEnter={() => {
-                            if (!org.backroom_enabled) prefetchReactivation(org.id);
-                          }}
-                          onFocus={() => {
-                            if (!org.backroom_enabled) prefetchReactivation(org.id);
-                          }}
-                        >
+                        <TableRow className="cursor-pointer border-slate-700/30 hover:bg-slate-800/30">
                           <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selected.has(org.id)}
@@ -583,6 +575,12 @@ export function ColorBarEntitlementsTab() {
                             <Switch
                               checked={org.backroom_enabled}
                               onCheckedChange={() => toggleColorBar(org)}
+                              onMouseEnter={() => {
+                                if (!org.backroom_enabled) prefetchReactivation(org.id);
+                              }}
+                              onFocus={() => {
+                                if (!org.backroom_enabled) prefetchReactivation(org.id);
+                              }}
                               disabled={
                                 !!colorBarToggle.reactivationTarget ||
                                 !!colorBarToggle.suspensionTarget ||
