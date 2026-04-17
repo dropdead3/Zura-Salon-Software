@@ -28,6 +28,7 @@ import {
   type AssistantPrepStepMetadata,
 } from '@/lib/color-bar/blueprint-engine';
 import { useServiceBlueprint } from '@/hooks/color-bar/useServiceBlueprints';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 const STEP_ICONS: Record<BlueprintStepType, React.ReactNode> = {
   mix_step: <Beaker className="w-3.5 h-3.5" />,
@@ -70,10 +71,23 @@ export function BlueprintChecklist({ serviceId, className }: BlueprintChecklistP
         </div>
       );
     }
+    // Visibility Contract: no service selected → no blueprint to render.
+    // Reason 'no-service-id' is contract-specific: this is upstream-prop absence,
+    // distinct from 'no-data' (which means the query ran and returned empty).
+    reportVisibilitySuppression('blueprint-checklist', 'no-service-id', {
+      hasServiceId: false,
+    });
     return null;
   }
 
-  if (steps.length === 0) return null;
+  if (steps.length === 0) {
+    // Visibility Contract: blueprint exists but has zero steps.
+    reportVisibilitySuppression('blueprint-checklist', 'no-data', {
+      stepCount: 0,
+      serviceId,
+    });
+    return null;
+  }
 
   return (
     <Card className={`rounded-xl bg-card/80 backdrop-blur-xl border-border ${className ?? ''}`}>

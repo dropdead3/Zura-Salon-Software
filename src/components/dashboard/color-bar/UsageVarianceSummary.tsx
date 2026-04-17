@@ -9,6 +9,7 @@ import { Loader2, TrendingUp, TrendingDown, AlertTriangle, Check, HelpCircle } f
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useUsageVariance, type UsageVariance } from '@/hooks/inventory/useUsageVariance';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 const STATUS_CONFIG: Record<UsageVariance['status'], {
   label: string;
@@ -50,13 +51,30 @@ interface UsageVarianceSummaryProps {
 export function UsageVarianceSummary({ sessionId, serviceId }: UsageVarianceSummaryProps) {
   const { data: variances, isLoading } = useUsageVariance(sessionId, serviceId);
 
-  if (!serviceId) return null;
+  if (!serviceId) {
+    // Visibility Contract: no service → no formula baseline → no variance possible.
+    // Reason 'no-service-id' is contract-specific: upstream-prop absence,
+    // distinct from 'no-data' (query ran and returned empty).
+    reportVisibilitySuppression('usage-variance-summary', 'no-service-id', {
+      hasServiceId: false,
+      sessionId,
+    });
+    return null;
+  }
 
   if (isLoading) {
     return <DashboardLoader size="sm" className="py-4" />;
   }
 
-  if (!variances?.length) return null;
+  if (!variances?.length) {
+    // Visibility Contract: no variance rows computed for this session.
+    reportVisibilitySuppression('usage-variance-summary', 'no-data', {
+      varianceCount: 0,
+      sessionId,
+      serviceId,
+    });
+    return null;
+  }
 
   const hasIssues = variances.some((v) => v.status !== 'within_tolerance');
 

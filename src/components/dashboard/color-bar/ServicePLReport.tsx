@@ -14,6 +14,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
 import type { ServiceMarginRanking } from '@/lib/color-bar/appointment-profit-engine';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 interface ServicePLReportProps {
   startDate: string;
@@ -75,7 +76,16 @@ export function ServicePLReport({ startDate, endDate, locationId }: ServicePLRep
     URL.revokeObjectURL(url);
   }, [rankings, totals, startDate, endDate]);
 
-  if (isLoading || !rankings.length) return null;
+  // Visibility Contract: no service rankings to render a P&L breakdown.
+  if (isLoading || !rankings.length) {
+    const reason = isLoading ? 'loading' : 'no-data';
+    reportVisibilitySuppression('service-pl-report', reason, {
+      rankingCount: rankings.length,
+      startDate,
+      endDate,
+    });
+    return null;
+  }
 
   return (
     <Card className={cn(tokens.card.wrapper)}>

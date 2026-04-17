@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 interface BrandValuation {
   brand: string;
@@ -117,7 +118,14 @@ export function ColorBarInventoryValuationCard({ locationId }: { locationId?: st
     URL.revokeObjectURL(url);
   }, [data]);
 
-  if (isLoading || !data?.length) return null;
+  // Visibility Contract: no professional inventory with on-hand value to surface.
+  if (isLoading || !data?.length) {
+    const reason = isLoading ? 'loading' : 'no-data';
+    reportVisibilitySuppression('color-bar-inventory-valuation', reason, {
+      brandCount: data?.length ?? 0,
+    });
+    return null;
+  }
 
   return (
     <Card className={cn(tokens.card.wrapper)}>
