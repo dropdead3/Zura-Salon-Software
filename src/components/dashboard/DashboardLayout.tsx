@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -346,10 +347,19 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   };
   const { roles: dbRoles, roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
 
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
-  const isLeadershipUser = isImpersonating || actualRoles.includes('super_admin') || actualRoles.includes('manager') || (employeeProfile as any)?.is_super_admin;
-  const hasStylistRoleForGreeting = actualRoles.includes('stylist') || actualRoles.includes('stylist_assistant') || actualRoles.includes('booth_renter');
-  const isFrontDeskForGreeting = actualRoles.includes('receptionist');
+  // Greeting + role gates must reflect the IMPERSONATED identity (complete UX
+  // simulation doctrine — see mem://features/god-mode-governance). The only
+  // chrome that should ever leak the real identity is the God Mode bar.
+  const effectiveRolesForGreeting = useEffectiveRoles();
+  const firstName = (employeeProfile?.full_name?.split(' ')[0])
+    || user?.user_metadata?.full_name?.split(' ')[0]
+    || 'there';
+  const isLeadershipUser = isImpersonating
+    || effectiveRolesForGreeting.includes('super_admin')
+    || effectiveRolesForGreeting.includes('admin')
+    || effectiveRolesForGreeting.includes('manager');
+  const hasStylistRoleForGreeting = effectiveRolesForGreeting.includes('stylist') || effectiveRolesForGreeting.includes('stylist_assistant') || effectiveRolesForGreeting.includes('booth_renter');
+  const isFrontDeskForGreeting = effectiveRolesForGreeting.includes('receptionist');
   
   const greetingPool = useMemo(() => {
     const ROLE_MESSAGES = {
