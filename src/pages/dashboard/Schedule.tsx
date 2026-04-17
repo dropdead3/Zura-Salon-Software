@@ -946,7 +946,14 @@ export default function Schedule() {
               assistantProfilesMap={assistantProfilesMap}
                zoomLevel={zoomLevel}
                scheduleBlocks={scheduleBlocks}
-               weekDayWidth={weekDayWidth}
+               selectedStylistId={selectedWeekStylistId}
+               selectedStylistName={
+                 sortedStylistsForWeek.find((s) => s.user_id === selectedWeekStylistId)
+                   ?.display_name ||
+                 sortedStylistsForWeek.find((s) => s.user_id === selectedWeekStylistId)
+                   ?.full_name ||
+                 null
+               }
             />
           )}
           
@@ -1015,8 +1022,9 @@ export default function Schedule() {
                 appointments={appointments}
                 hoursStart={preferences.hours_start}
                 hoursEnd={preferences.hours_end}
-                weekDayWidth={weekDayWidth}
-                onWeekDayWidthChange={setWeekDayWidth}
+                weekStylists={sortedStylistsForWeek}
+                selectedWeekStylistId={selectedWeekStylistId}
+                onSelectedWeekStylistChange={setSelectedWeekStylistId}
               />
         </div>
 
