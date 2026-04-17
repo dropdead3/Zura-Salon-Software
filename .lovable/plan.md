@@ -2,107 +2,58 @@
 
 ## Prompt review
 
-Sharp question — names the surface (booking wizard), the symptom ("Unranked" badge), and the contradiction (you *know* every stylist has a level + level-based pricing works). That last bit is the gold — it told me the data exists and the problem is in how the UI parses it. Sharper next time: include a stylist's name from the screenshot ("e.g., Jamie Vieira") so I can grep the DB for that exact record on the first pass. You actually did this implicitly via the screenshot — I was able to confirm against `Jamie Vieira → studio-artist`.
+Sharp catch — you flagged a copy/context mismatch between the surface (internal staff-facing booking wizard inside `/dashboard/schedule`) and the language ("Visible to your stylist before the appointment" reads like client-facing copy). Sharper next time: tell me whether the notes are meant for the **stylist performing the service** (handoff intel) or the **front desk team** (operational notes) — that distinction shapes the label. I'll assume **stylist handoff** based on the prior wave's stated intent.
 
-## Diagnosis (root cause confirmed)
+## Diagnosis
 
-**The UI is parsing the wrong format.**
+The notes card was promoted in Wave 22.8 with copy borrowed from a client-facing pattern:
 
-- **DB stores:** `stylist_level` as a **slug** like `studio-artist`, `emerging`, `lead`, `senior`, `signature`, `icon`, `new-talent` (confirmed: Jamie Vieira's row = `studio-artist`)
-- **UI parses:** Looks for the legacy string format `"LEVEL 3 STYLIST"` via regex `/LEVEL\s*(\d+)/i`
+- Label: "Notes for the stylist" — fine, but ambiguous when staff is the author
+- Placeholder: "What should your stylist know? Formula notes, client preferences, allergies, special requests..." — uses second-person possessive ("your stylist") which only makes sense if the *client* were typing
+- Helper: "Visible to your stylist before the appointment." — same second-person framing; also redundant since the staff user IS the stylist or works alongside them
 
-In `src/utils/levelPricing.ts`:
+This is internal staff context. The author is front-desk/staff booking on behalf of a client. The reader is the assigned stylist (and anyone else with appointment access).
 
-```ts
-export function getLevelNumber(stylistLevel) {
-  const match = stylistLevel.match(/LEVEL\s*(\d+)/i);   // ← never matches "studio-artist"
-  if (!match) return null;                              // ← returns null → "Unranked"
-  return parseInt(match[1], 10);
-}
-```
-
-So `getLevelNumber('studio-artist')` → `null` → badge falls through to "Unranked". Same root cause for `getLevelSlug` — it also runs the same regex and returns `null` instead of just passing the slug through.
-
-**Why pricing still works:** `useServiceLevelPricing` joins `stylist_levels` by `slug` directly (it doesn't go through the broken regex helpers for that path), so service prices resolve correctly even though the badge can't render.
-
-**The DB ground truth** (canonical 7-tier ladder, per `stylist_levels` table):
-
-| display_order | slug | label | client_label |
-|---|---|---|---|
-| 0 | new-talent | New Talent | Level 1 |
-| 1 | studio-artist | Studio Artist | Level 2 |
-| 2 | emerging | Core Artist | Level 3 |
-| 3 | lead | Lead Artist | Level 4 |
-| 4 | senior | Senior Artist | Level 5 |
-| 5 | signature | Signature Artist | Level 6 |
-| 6 | icon | Icon Artist | Level 7 |
-
-Note: legacy `levelNumberToSlug` map in `levelPricing.ts` is also stale — it maps `2: 'emerging'` and `3: 'emerging'` (duplicate), and is missing `studio-artist` entirely. This map predates the org's current 7-tier ladder.
-
-## Plan — Wave 22.9: Fix slug-aware level resolution
+## Plan — Wave 22.10: Reframe notes copy for internal staff context
 
 ### Behavior
 
-Make `getLevelNumber` and `getLevelSlug` slug-native (the DB's actual storage format) while staying backward-compatible with the legacy `"LEVEL N STYLIST"` string format. Badge will render the correct `client_label` ("Level 2") for Jamie Vieira and every other stylist.
+Rewrite the three copy elements to reflect internal staff-to-stylist handoff. Keep the structural promotion (always-visible card, Recommended badge, FileText icon, fill indicator) — only the language changes.
 
-### Fix shape
+### Copy shifts
 
-**1. Replace the static `levelNumberToSlug` map with a slug-aware resolver in `src/utils/levelPricing.ts`:**
+| Element | Before | After |
+|---|---|---|
+| Card label | "Notes for the stylist" | "Appointment notes" |
+| Placeholder | "What should your stylist know? Formula notes, client preferences, allergies, special requests..." | "Add context for the stylist — formula details, client preferences, allergies, prep instructions, special requests..." |
+| Helper text | "Visible to your stylist before the appointment." | "Internal note — visible to the assigned stylist and staff." |
+| Badge | "Recommended" | "Recommended" (unchanged) |
 
-- Add a `slugToLevelNumber` map matching the DB's `display_order + 1`:
-  ```ts
-  const slugToLevelNumber: Record<string, number> = {
-    'new-talent': 1,
-    'studio-artist': 2,
-    'emerging': 3,
-    'lead': 4,
-    'senior': 5,
-    'signature': 6,
-    'icon': 7,
-  };
-  ```
-- `getLevelSlug(value)`:
-  1. If `value` is already a known slug → return it as-is
-  2. Else fall back to legacy regex `/LEVEL\s*(\d+)/i` for old-format strings
-  3. Else return `null`
-- `getLevelNumber(value)`:
-  1. If `value` is a known slug → return its mapped number
-  2. Else fall back to legacy regex parse
-  3. Else return `null`
+### Why these shifts
 
-**2. Source the slug→number map dynamically (defensive future-proofing)**
-
-Since orgs can reconfigure the level ladder via `useStylistLevels`, the static map will drift. Two options:
-
-- **Option A (ship now, low risk):** Keep the static map matching today's 7-tier canonical ladder. Works for every current org since they all use the same default slugs.
-- **Option B (deferred, P2):** Replace static map with a `useResolvedLevel` hook that joins against `stylist_levels` and returns `{ slug, number, label, client_label }`. More correct, but requires touching every call site and adding loading-state UI per the stack-overflow pattern flagged.
-
-Recommendation: **Ship Option A now** to stop the bleeding (Jamie + every other stylist shows correct badge), defer Option B until an org actually customizes their ladder slugs.
-
-**3. Use `client_label` for the badge text (optional polish)**
-
-The current badge renders `Level {levelNum}` — that already matches the DB's `client_label` format ("Level 1"…"Level 7"), so no change needed. The fix above is enough.
+- **"Appointment notes"** is neutral, accurate, and doesn't presume author identity. Works whether the author is the stylist booking themselves, a front-desk team member, or a manager.
+- **Placeholder** drops second-person ("your stylist") in favor of imperative voice ("Add context for the stylist"). Reinforces that the author is staff writing *for* the stylist, not the client writing *to* the stylist.
+- **Helper text** adds the word "Internal" upfront — disambiguates from any client-visible field, and clarifies the reader scope ("assigned stylist and staff") without overpromising visibility rules.
 
 ### Files
 
-- `src/utils/levelPricing.ts` — replace `levelNumberToSlug` with `slugToLevelNumber`; rewrite `getLevelSlug` and `getLevelNumber` to be slug-native with legacy-string fallback
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — update label, placeholder, and helper text inside the notes card (~3 string changes, no structural changes)
 
 ### Acceptance checks
 
-1. Open booking wizard → preselected stylist (e.g., Jamie Vieira) shows `Level 2` badge instead of `Unranked`
-2. Stylist picker step shows correct `Level N` badge for every stylist with a slug in `employee_profiles.stylist_level`
-3. Stylists with empty `stylist_level` (Eric Day, Alex Day, Mallori Schwab, Julia Gross per the DB) still correctly show `Unranked` — that's accurate, they have no level assigned
-4. Sort by level (`level-asc` / `level-desc`) in the stylist picker now sorts correctly across the 7 tiers
-5. Service price computation still resolves (regression check — `getLevelSlug` still returns valid slugs for `findLevelPrice`)
-6. Legacy `"LEVEL 3 STYLIST"` strings (if any old data exists) still parse via fallback
+1. Notes card label reads "Appointment notes"
+2. Placeholder uses imperative voice and lists internal-relevant context (formula, prefs, allergies, prep, requests)
+3. Helper text begins with "Internal note —" and clarifies reader scope
+4. No second-person ("your stylist") language remains in the card
+5. Recommended badge, icon, fill indicator, and card structure unchanged
+6. No regression to `bookingNotes` state or submit flow
 
 ### Open question
 
-None — fix shape is unambiguous.
+None — copy fix is unambiguous given the internal-only scoping you confirmed.
 
 ### Deferred
 
-- **P2** Migrate `getLevelNumber`/`getLevelSlug` callers to a hook (`useResolvedLevel`) that reads from `stylist_levels` directly — trigger: when an org customizes their ladder slugs and the static map drifts
-- **P2** Backfill `stylist_level` for the 4 staff with NULL (Eric Day, Alex Day, Mallori Schwab, Julia Gross) — trigger: confirm with ops whether these are actual stylists vs. admin/non-service roles
-- **P2** Audit other surfaces (`StylistDirectory`, `TeamHub`, `useStylistIncomeForecast`) for the same slug-vs-string bug — trigger: if "Unranked" appears anywhere outside the booking wizard
+- **P2** Audit other booking surfaces (`DockNewBookingSheet`, public `/book/:orgSlug` flow) for the inverse problem — public surfaces should explicitly use *client-authored* framing — trigger: when reviewing public booking surface copy
+- **P2** Add a `note_visibility` enum (`internal` | `client_visible`) to `appointment_notes` if/when client-portal note replies become a feature — trigger: when client-facing portal scope is approved
 
