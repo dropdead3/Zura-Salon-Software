@@ -1048,13 +1048,13 @@ export function CheckoutSummarySheet({
               ))}
             </div>
 
-            {/* Send Payment Link (Afterpay) — B3: use org's real afterpay_enabled, G3: wire onPaymentLinkSent */}
+            {/* Send Payment Link (Afterpay) — uses negotiated cart total */}
             {organizationId && appointment && (
               <div className="pt-1">
                 <SendToPayButton
                   appointmentId={appointment.id}
                   organizationId={organizationId}
-                  totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                  totalAmountCents={Math.round(checkoutTotal * 100)}
                   clientName={appointment.client_name}
                   clientEmail={appointment.client_email}
                   clientPhone={appointment.client_phone}
@@ -1062,7 +1062,7 @@ export function CheckoutSummarySheet({
                   afterpayEnabled={orgAfterpayEnabled}
                   afterpaySurchargeEnabled={orgSurchargeEnabled}
                   afterpaySurchargeRate={orgSurchargeRate}
-                  disabled={isUpdating}
+                  disabled={isUpdating || chargeBlocked}
                   onPaymentLinkSent={() => {
                     queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
                   }}
@@ -1071,7 +1071,7 @@ export function CheckoutSummarySheet({
                 {orgAfterpayEnabled && orgSurchargeEnabled && (
                   <div className="mt-2">
                     <AfterpaySurchargePreview
-                      amountCents={Math.round((appointment.total_price || 0) * 100)}
+                      amountCents={Math.round(checkoutTotal * 100)}
                       surchargeRate={orgSurchargeRate}
                     />
                   </div>
