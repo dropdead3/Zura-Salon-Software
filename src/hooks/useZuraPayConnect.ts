@@ -162,6 +162,10 @@ export function useVerifyZuraPayConnection() {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
       queryClient.invalidateQueries({ queryKey: ['org-bank-last4', vars.organizationId] });
+      // Wave 22.2 — broad invalidation: location stripe_status may flip for
+      // any location under this org, so any open checkout sheets pick up
+      // the change without a refresh.
+      queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] });
       if (data.auto_connected_location_id) {
         toast.success('Point Of Sale is active and your location has been automatically connected!');
       } else if (data.status === 'active') {
@@ -196,6 +200,7 @@ export function useResetZuraPayAccount() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
+      queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] });
       toast.success('Point Of Sale account has been reset. You can start fresh.');
     },
     onError: (error) => {
@@ -231,6 +236,7 @@ export function useConnectLocation() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['zura-pay-locations'] });
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] });
       toast.success('Location connected to Point Of Sale');
     },
     onError: (error) => {
@@ -268,6 +274,7 @@ export function useDisconnectLocation() {
       queryClient.invalidateQueries({ queryKey: ['org-connect-status', vars.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['terminal-locations'] });
       queryClient.invalidateQueries({ queryKey: ['terminal-readers'] });
+      queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] });
       toast.success('Location disconnected from Point Of Sale');
     },
     onError: (error) => {
