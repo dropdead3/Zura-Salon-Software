@@ -32,25 +32,25 @@ export function RebookDeclineReasonDialog({
   onConfirm,
   onBack,
 }: RebookDeclineReasonDialogProps) {
-  const [reasonCode, setReasonCode] = useState<RebookDeclineReasonCode | ''>('');
+  const [reasonCode, setReasonCode] = useState<RebookDeclineReasonCode | null>(null);
   const [otherText, setOtherText] = useState('');
 
   // Reset when reopened
   useEffect(() => {
     if (open) {
-      setReasonCode('');
+      setReasonCode(null);
       setOtherText('');
     }
   }, [open]);
 
   const isOther = reasonCode === 'other';
   const isValid =
-    reasonCode !== '' && (!isOther || otherText.trim().length >= 3);
+    reasonCode !== null && (!isOther || otherText.trim().length >= 3);
 
   const handleConfirm = () => {
-    if (!isValid || reasonCode === '') return;
+    if (!isValid || !reasonCode) return;
     const notes = isOther ? otherText.trim() : null;
-    onConfirm(reasonCode as RebookDeclineReasonCode, notes);
+    onConfirm(reasonCode, notes);
   };
 
   return (
