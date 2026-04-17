@@ -2,29 +2,25 @@
 
 ## Diagnosis
 
-Both cards in screenshot use `rounded-xl` (12px). User wants tighter corners — closer to `rounded-lg` (8px) which reads as more refined/executive at this card size.
+In `AppointmentDetailSheet.tsx` (line 1904), the Stylist row renders a static `<Badge variant="outline">Booked</Badge>` next to the stylist name. It's hardcoded — it does NOT reflect the appointment status (the same badge shows whether the appointment is Booked, Confirmed, Checked In, or Completed). It conflicts with the actual status badge shown in the sheet header. Pure noise.
 
-Per UI Canon, `rounded-xl` is the bento standard for primary containers, but these are **inline info cards inside a sheet** (secondary surfaces), so dropping a tier is consistent with the platform-bento radius doctrine: child cards should be 4–8px smaller than parents.
+The `Preferred` badge alongside it is meaningful (flags preferred-stylist match) — keep it.
 
-## Fix — Wave 22.30: Tighten hospitality stack radius
+## Fix — Wave 22.31: Remove redundant "Booked" badge
 
-One file, two class swaps.
+One line removal.
 
 ### Change
-- `HospitalityBlock.tsx` collapsed CTA: `rounded-xl` → `rounded-lg`
-- `AppointmentDetailSheet.tsx` Notes from Booking Assistant block: `rounded-xl` → `rounded-lg`
-
-Both move from 12px → 8px. Padding stays at `px-4 py-3` (already matched in Wave 22.29).
+- `AppointmentDetailSheet.tsx` line 1904: delete the `<Badge variant="outline" className="text-[10px]">Booked</Badge>` line.
 
 ## Files
-- `src/components/dashboard/clients/HospitalityBlock.tsx`
 - `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
 ## Acceptance
-1. Both cards share `rounded-lg` (tighter, less pill-like)
-2. Spacing/padding from Wave 22.29 unchanged
-3. No regression on expanded `HospitalityBlock` (which uses child component radii, not affected)
+1. Stylist row shows: avatar + name + (optional) Preferred badge — no "Booked" pill
+2. Preferred-mismatch logic untouched
+3. No regression on appointment status badge in the sheet header
 
 ## Note on Visual Edits
-Tiny visual tweaks like radius/color/text on static elements can be done **free** via the Visual Edits tool (pencil icon, bottom-left of chat) — faster than an AI round-trip for one-class changes.
+For one-element removals like this, the **Visual Edits tool** (pencil icon, bottom-left of chat) lets you click the badge and delete it directly — free and instant. Worth knowing for the next micro-tweak.
 
