@@ -1213,8 +1213,8 @@ export function CheckoutSummarySheet({
               ))}
             </div>
 
-            {/* Send Payment Link (Afterpay) — uses negotiated cart total */}
-            {organizationId && appointment && (
+            {/* Send Payment Link (Afterpay) — uses negotiated cart total. Requires Connect active. */}
+            {organizationId && appointment && stripeConnectActive && (
               <div className="pt-1">
                 <SendToPayButton
                   appointmentId={appointment.id}
