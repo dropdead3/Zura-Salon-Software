@@ -1459,20 +1459,20 @@ export function QuickBookingPopover({
           {stylistFirstMode && preSelectedStylistId && !selectedCategory && (
             <div className="px-3 pt-3 pb-0">
               <div className="flex items-center gap-2.5 p-2 rounded-lg bg-accent/50 border border-accent">
-                <Avatar className="h-8 w-8 shrink-0">
+                <Avatar className="h-10 w-10 shrink-0">
                   <AvatarImage src={preSelectedStylistPhoto || undefined} />
-                  <AvatarFallback className="bg-muted text-xs font-medium">
+                  <AvatarFallback className="bg-muted text-sm font-medium">
                     {preSelectedStylistName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 flex items-center gap-2">
-                  <div className="text-sm font-medium truncate">{preSelectedStylistName}</div>
+                  <div className="text-base font-medium truncate">{preSelectedStylistName}</div>
                   {(() => {
                     const levelNum = getLevelNumber(preSelectedStylistLevel);
                     return levelNum ? (
-                      <Badge variant="secondary" className="shrink-0 text-[10px] px-2 py-0.5">Level {levelNum}</Badge>
+                      <Badge variant="secondary" className="shrink-0 text-xs px-2 py-0.5">Level {levelNum}</Badge>
                     ) : (
-                      <Badge variant="outline" className="shrink-0 text-[10px] px-2 py-0.5">Unranked</Badge>
+                      <Badge variant="outline" className="shrink-0 text-xs px-2 py-0.5">Unranked</Badge>
                     );
                   })()}
                 </div>
