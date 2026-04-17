@@ -16,7 +16,10 @@ export interface AuditLogEntry {
   created_at: string;
 }
 
-export function useAuditLog(appointmentId: string | null) {
+export function useAuditLog(
+  appointmentId: string | null,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ['appointment-audit-log', appointmentId],
     queryFn: async () => {
@@ -28,7 +31,7 @@ export function useAuditLog(appointmentId: string | null) {
       if (error) throw error;
       return (data || []) as unknown as AuditLogEntry[];
     },
-    enabled: !!appointmentId,
+    enabled: !!appointmentId && (options?.enabled ?? true),
     staleTime: 30_000,
   });
 }

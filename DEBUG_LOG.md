@@ -1,6 +1,33 @@
 # Debug Log
 
-Last updated: 2026-04-17 (Wave 16.1 hotfix)
+Last updated: 2026-04-17 (Wave 18)
+
+## Wave 18 — Appointment Detail Drawer cleanup (P0/P1) ⚡ leverage
+
+**Doctrine:** `phorest-decoupling-and-zura-native-operations` + `high-concurrency-scalability`.
+
+### Findings & fixes
+1. **Stylist duplication** — Drawer rendered booked + preferred as two rows for the same person. Collapsed into a single row with dual badges (`Booked` + `Preferred`) when `preferredStylist?.user_id === appointment.stylist_user_id` (with name-match fallback). Mismatch row only renders when truly different.
+2. **Total opacity** — Total often differed from services subtotal with no explanation. Added breakdown rows (Subtotal / Discount / Tip / Total) when `discount_amount`/`tip_amount`/`original_price` present or when subtotal ≠ total. Falls back to a single Total + tooltip ("Total reflects POS-applied discounts or tax. Open in POS for full breakdown.") when no breakdown data exists.
+3. **Client Contact completeness** — Now shows phone, email (with placeholder detection regex `/^(na|none|noemail|test|n\/a)@/i` → muted + "Placeholder" badge), last-visit date, and visit count in a single block. Empty states explicit.
+4. **Quick actions row** — New pill-button bar between header and tabs: Call (tel:), Text (sms:), Email (mailto:), Rebook, Send to Pay (mounts `<SendToPayButton>` inline). Disabled states tooltip-explained.
+5. **Lazy tab queries (perf)** — `useClientVisitHistory`, `useAuditLog`, `useAppointmentNotes` now accept `{ enabled }`. Drawer gates them via `activeTab` (`details`/`history`/`notes`), reducing cold-open query fan-out from ~12 to ~7. Added `staleTime` (60s) to `linkedRedos`. Default `staleTime` (30–60s) baked into the hooks themselves.
+6. **History empty state** — "First visit with you — no history yet" replaces generic "No visit history".
+
+### Files touched
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+- `src/hooks/useClientVisitHistory.ts` (added `enabled` option + 60s `staleTime`)
+- `src/hooks/useAppointmentAuditLog.ts` (added `enabled` option)
+- `src/hooks/useAppointmentNotes.ts` (added `enabled` option + 30s `staleTime`)
+
+### Deferred (with triggers)
+- Shared `<NoteCard>` component (3× duplication) — trigger: next note feature (mentions, edit-in-place).
+- Split `AppointmentDetailSheet.tsx` (now ~2,840 LOC) into per-tab files — trigger: file crosses 3,000 LOC OR a 6th tab is added.
+- Replace 4-segment lifecycle bar with rich timeline using `auditEntries` timestamps — trigger: when audit log surfaces feel under-utilized.
+
+---
+
+## Wave 16.1 — Appointments hub `_source` regression hotfix (P0)
 
 ## Wave 16.1 — Appointments hub `_source` regression hotfix (P0)
 

@@ -37,10 +37,14 @@ function saveDemoNotes(appointmentId: string, notes: AppointmentNote[]) {
   sessionStorage.setItem(getDemoStorageKey(appointmentId), JSON.stringify(notes));
 }
 
-export function useAppointmentNotes(appointmentId: string | null) {
+export function useAppointmentNotes(
+  appointmentId: string | null,
+  options?: { enabled?: boolean },
+) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const isDemo = isDemoId(appointmentId);
+  const queryEnabled = options?.enabled ?? true;
 
   // Demo mode: sessionStorage-backed notes
   const [demoNotes, setDemoNotes] = useState<AppointmentNote[]>(() =>
@@ -64,7 +68,8 @@ export function useAppointmentNotes(appointmentId: string | null) {
   // Real mode query
   const { data: realNotes = [], isLoading: realLoading } = useQuery({
     queryKey: ['appointment-notes', appointmentId],
-    enabled: !!appointmentId && !isDemo,
+    enabled: !!appointmentId && !isDemo && queryEnabled,
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('appointment_notes')

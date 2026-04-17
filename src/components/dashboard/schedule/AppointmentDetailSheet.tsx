@@ -45,6 +45,7 @@ import { useMarkAppointmentTabViewed } from '@/hooks/useMarkAppointmentTabViewed
 import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,6 +81,7 @@ import {
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
   UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera, Beaker,
+  MessageCircle, Info,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -739,13 +741,23 @@ export function AppointmentDetailSheet({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, onOpenChange]);
 
-  // ─── Data Hooks ────────────────────────────────────────────────
-  const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(appointment?.phorest_id || null);
+  // ─── Data Hooks (Wave 18: lazy-gated by activeTab) ────────────
+  const notesEnabled = activeTab === 'notes' || activeTab === 'details';
+  const historyEnabled = activeTab === 'history' || activeTab === 'details';
+  const auditEnabled = activeTab === 'history' || activeTab === 'details';
+
+  const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(
+    appointment?.phorest_id || null,
+    { enabled: notesEnabled },
+  );
   const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
   const { data: clientNotes = [], isLoading: clientNotesLoading } = useClientNotes(appointment?.phorest_client_id || undefined);
   const addClientNote = useAddClientNote();
   const deleteClientNote = useDeleteClientNote();
-  const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(appointment?.phorest_client_id);
+  const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(
+    appointment?.phorest_client_id,
+    { enabled: historyEnabled },
+  );
   const { data: serviceLookup } = useServiceLookup();
   const { assignmentMap, upsertAssignments } = useServiceAssignments(appointment?.id || null);
   const updateServicesMutation = useUpdateAppointmentServices();
@@ -816,6 +828,7 @@ export function AppointmentDetailSheet({
       return results;
     },
     enabled: !!appointment?.id && open,
+    staleTime: 60_000,
   });
 
   // Redo mutations
@@ -985,8 +998,8 @@ export function AppointmentDetailSheet({
 
   const resolvedClientId = appointment?.phorest_client_id || matchedClient;
 
-  // ─── Confirmation source from audit log ──────────────────────
-  const { data: auditEntries = [] } = useAuditLog(appointment?.id || null);
+  // ─── Confirmation source from audit log (gated) ──────────────
+  const { data: auditEntries = [] } = useAuditLog(appointment?.id || null, { enabled: auditEnabled });
   const confirmationSource = useMemo(() => {
     const event = auditEntries.find(
       e => e.event_type === 'status_changed' && (e.new_value as any)?.status === 'confirmed'
@@ -1439,6 +1452,112 @@ export function AppointmentDetailSheet({
                 )}
               </div>
 
+              {/* ─── Quick Actions Row (Wave 18) ──────────────── */}
+              <div className="px-6 pb-3">
+                <TooltipProvider delayDuration={200}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-4 rounded-full font-sans text-xs"
+                            disabled={!appointment.client_phone}
+                            asChild={!!appointment.client_phone}
+                          >
+                            {appointment.client_phone ? (
+                              <a href={`tel:${appointment.client_phone}`}>
+                                <Phone className="h-3.5 w-3.5 mr-1.5" /> Call
+                              </a>
+                            ) : (
+                              <span><Phone className="h-3.5 w-3.5 mr-1.5" /> Call</span>
+                            )}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!appointment.client_phone && (
+                        <TooltipContent>No phone on file</TooltipContent>
+                      )}
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-4 rounded-full font-sans text-xs"
+                            disabled={!appointment.client_phone}
+                            asChild={!!appointment.client_phone}
+                          >
+                            {appointment.client_phone ? (
+                              <a href={`sms:${appointment.client_phone}`}>
+                                <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Text
+                              </a>
+                            ) : (
+                              <span><MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Text</span>
+                            )}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!appointment.client_phone && (
+                        <TooltipContent>No phone on file</TooltipContent>
+                      )}
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-4 rounded-full font-sans text-xs"
+                            disabled={!clientRecord?.email}
+                            asChild={!!clientRecord?.email}
+                          >
+                            {clientRecord?.email ? (
+                              <a href={`mailto:${clientRecord.email}`}>
+                                <Mail className="h-3.5 w-3.5 mr-1.5" /> Email
+                              </a>
+                            ) : (
+                              <span><Mail className="h-3.5 w-3.5 mr-1.5" /> Email</span>
+                            )}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!clientRecord?.email && (
+                        <TooltipContent>No email on file</TooltipContent>
+                      )}
+                    </Tooltip>
+
+                    {onRebook && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 px-4 rounded-full font-sans text-xs"
+                        onClick={() => onRebook(appointment)}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Rebook
+                      </Button>
+                    )}
+
+                    {appointment.id && resolvedOrgId && appointment.total_price != null && appointment.total_price > 0 && (
+                      <SendToPayButton
+                        appointmentId={appointment.id}
+                        organizationId={resolvedOrgId}
+                        totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                        clientName={appointment.client_name}
+                        clientEmail={clientRecord?.email || null}
+                        clientPhone={appointment.client_phone}
+                        afterpayEnabled={false}
+                        onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                      />
+                    )}
+                  </div>
+                </TooltipProvider>
+              </div>
+
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
                 <div className="mx-6">
@@ -1577,14 +1696,61 @@ export function AppointmentDetailSheet({
                           );
                         })}
                       </div>
-                      {appointment.total_price != null && (
-                        <div className="flex items-center justify-between pt-2 border-t border-dashed">
-                          <span className="text-sm text-muted-foreground">Total</span>
-                          <span className="font-display text-sm font-medium">
-                            <BlurredAmount>{formatCurrency(appointment.total_price)}</BlurredAmount>
-                          </span>
-                        </div>
-                      )}
+                      {appointment.total_price != null && (() => {
+                        const subtotal = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
+                        const total = appointment.total_price ?? 0;
+                        const discount = (appointment as any).discount_amount ?? null;
+                        const tip = (appointment as any).tip_amount ?? null;
+                        const original = (appointment as any).original_price ?? null;
+                        const delta = subtotal > 0 ? Math.abs(subtotal - total) : 0;
+                        const hasBreakdown = (discount && discount > 0) || (tip && tip > 0) || (original && original !== total);
+                        const showBreakdown = subtotal > 0 && (delta > 0.01 || hasBreakdown);
+
+                        return (
+                          <div className="pt-2 border-t border-dashed space-y-1">
+                            {showBreakdown && (
+                              <>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>Subtotal</span>
+                                  <span><BlurredAmount>{formatCurrency(subtotal)}</BlurredAmount></span>
+                                </div>
+                                {discount && discount > 0 && (
+                                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                                    <span>Discount</span>
+                                    <span>−<BlurredAmount>{formatCurrency(discount)}</BlurredAmount></span>
+                                  </div>
+                                )}
+                                {tip && tip > 0 && (
+                                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>Tip</span>
+                                    <span>+<BlurredAmount>{formatCurrency(tip)}</BlurredAmount></span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm text-muted-foreground">Total</span>
+                                {!showBreakdown && subtotal > 0 && delta > 0.01 && (
+                                  <TooltipProvider delayDuration={150}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Info className="h-3 w-3 text-muted-foreground/70 cursor-help" />
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs">
+                                        Total reflects POS-applied discounts or tax. Open in POS for full breakdown.
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
+                              <span className="font-display text-sm font-medium">
+                                <BlurredAmount>{formatCurrency(total)}</BlurredAmount>
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {/* Deposit Status */}
                       {appointment.deposit_required && (
                         <div className="flex items-center justify-between pt-2 border-t border-dashed">
@@ -1674,36 +1840,53 @@ export function AppointmentDetailSheet({
 
                     <Separator />
 
-                    {/* Stylist + Preferred Comparison */}
+                    {/* Stylist + Preferred Comparison (Wave 18: identity-collapse) */}
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Stylist</h4>
-                      {appointment.stylist_profile && (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={appointment.stylist_profile.photo_url || undefined} />
-                            <AvatarFallback className="text-[10px]">
-                              {(appointment.stylist_profile.display_name || appointment.stylist_profile.full_name).slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">{appointment.stylist_profile.display_name || appointment.stylist_profile.full_name}</span>
-                          <Badge variant="outline" className="text-[10px]">Booked</Badge>
-                        </div>
-                      )}
-                      {clientRecord?.preferred_stylist_id && preferredStylist && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
-                            <Star className="w-3.5 h-3.5 text-muted-foreground" />
-                          </div>
-                          <span className="text-sm text-muted-foreground">{getStylistDisplayName(preferredStylist)}</span>
-                          {preferredStylistMismatch ? (
-                            <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300">
-                              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Mismatch
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] text-green-700 dark:text-green-300 border-green-300">Preferred</Badge>
-                          )}
-                        </div>
-                      )}
+                      {(() => {
+                        const hasPreferred = !!(clientRecord?.preferred_stylist_id && preferredStylist);
+                        const bookedName = appointment.stylist_profile?.display_name || appointment.stylist_profile?.full_name || '';
+                        const preferredName = preferredStylist
+                          ? (preferredStylist.display_name || preferredStylist.full_name || '')
+                          : '';
+                        const isSameAsPreferred = hasPreferred && (
+                          preferredStylist?.user_id === appointment.stylist_user_id ||
+                          (bookedName && preferredName && bookedName.trim().toLowerCase() === preferredName.trim().toLowerCase())
+                        );
+
+                        if (!appointment.stylist_profile) return null;
+
+                        return (
+                          <>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={appointment.stylist_profile.photo_url || undefined} />
+                                <AvatarFallback className="text-[10px]">
+                                  {(appointment.stylist_profile.display_name || appointment.stylist_profile.full_name).slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm">{bookedName}</span>
+                              <Badge variant="outline" className="text-[10px]">Booked</Badge>
+                              {isSameAsPreferred && (
+                                <Badge variant="outline" className="text-[10px] text-green-700 dark:text-green-300 border-green-300 gap-0.5">
+                                  <Star className="h-2.5 w-2.5" /> Preferred
+                                </Badge>
+                              )}
+                            </div>
+                            {hasPreferred && !isSameAsPreferred && (
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+                                  <Star className="w-3.5 h-3.5 text-muted-foreground" />
+                                </div>
+                                <span className="text-sm text-muted-foreground">{getStylistDisplayName(preferredStylist)}</span>
+                                <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300">
+                                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Preferred — Mismatch
+                                </Badge>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
 
                       {/* Assistants */}
                       <div className="mt-3">
@@ -1811,11 +1994,11 @@ export function AppointmentDetailSheet({
 
                     <Separator />
 
-                    {/* Client Contact */}
+                    {/* Client Contact (Wave 18: completeness) */}
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Client Contact</h4>
                       <div className="space-y-1.5">
-                        {appointment.client_phone && (
+                        {appointment.client_phone ? (
                           <div className="flex items-center justify-between">
                             <a href={`tel:${appointment.client_phone}`} className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
                               <Phone className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1823,23 +2006,56 @@ export function AppointmentDetailSheet({
                             </a>
                             <CopyButton onCopy={handleCopyPhone} />
                           </div>
-                        )}
-                        {clientRecordLoading && (
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-40" />
+                        ) : (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Phone className="h-3.5 w-3.5" />
+                            <span>No phone on file</span>
                           </div>
                         )}
-                        {!clientRecordLoading && clientRecord?.email && (
-                          <div className="flex items-center justify-between">
-                            <a href={`mailto:${clientRecord.email}`} className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
-                              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                              {clientRecord.email}
-                            </a>
-                            <CopyButton onCopy={handleCopyEmail} />
+                        {clientRecordLoading && (
+                          <Skeleton className="h-4 w-40" />
+                        )}
+                        {!clientRecordLoading && clientRecord?.email && (() => {
+                          const isPlaceholder = /^(na|none|noemail|test|n\/a)@/i.test(clientRecord.email) || !clientRecord.email.includes('@');
+                          return (
+                            <div className="flex items-center justify-between">
+                              <a href={`mailto:${clientRecord.email}`} className={cn('flex items-center gap-2 text-sm hover:text-primary transition-colors', isPlaceholder && 'text-muted-foreground italic')}>
+                                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                                {clientRecord.email}
+                                {isPlaceholder && (
+                                  <Badge variant="outline" className="text-[9px] text-amber-700 dark:text-amber-300 border-amber-300 ml-1">Placeholder</Badge>
+                                )}
+                              </a>
+                              <CopyButton onCopy={handleCopyEmail} />
+                            </div>
+                          );
+                        })()}
+                        {!clientRecordLoading && !clientRecord?.email && !isWalkIn && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Mail className="h-3.5 w-3.5" />
+                            <span>No email on file</span>
+                          </div>
+                        )}
+                        {!isWalkIn && (lastVisitDate || visitStats.visitCount > 0) && (
+                          <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
+                            {lastVisitDate && (
+                              <span className="flex items-center gap-1.5">
+                                <Calendar className="h-3 w-3" />
+                                Last visit {formatDate(parseISO(lastVisitDate), 'MMM d, yyyy')}
+                              </span>
+                            )}
+                            {visitStats.visitCount > 0 && (
+                              <span className="flex items-center gap-1.5">
+                                <TrendingUp className="h-3 w-3" />
+                                {visitStats.visitCount} visit{visitStats.visitCount === 1 ? '' : 's'}
+                              </span>
+                            )}
                           </div>
                         )}
                         {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
-                          <p className="text-xs text-muted-foreground">No contact info available</p>
+                          <p className="text-xs text-muted-foreground pt-1">
+                            No contact info — Add details in client profile
+                          </p>
                         )}
                       </div>
                     </motion.div>
@@ -2036,7 +2252,7 @@ export function AppointmentDetailSheet({
                       {historyLoading ? (
                         <DashboardLoader size="sm" className="py-6" />
                       ) : visitHistory.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4 text-center">No visit history</p>
+                        <p className="text-sm text-muted-foreground py-4 text-center">First visit with you — no history yet</p>
                       ) : (
                         <div className="space-y-2 max-h-[400px] overflow-y-auto">
                           {visitHistory.slice(0, 20).map(visit => (
