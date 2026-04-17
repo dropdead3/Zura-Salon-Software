@@ -2329,39 +2329,129 @@ export function AppointmentDetailSheet({
                     <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
                     {/* Appointment Notes */}
                     <motion.div variants={staggerItem} className="space-y-2">
-                      <h4 className={tokens.heading.subsection}>Appointment Notes</h4>
-                      {notes.length > 0 ? (
-                        <div className="space-y-2">
-                          {notes.map(note => (
-                            <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                  <Avatar className="h-5 w-5">
-                                    <AvatarImage src={note.author?.photo_url || undefined} />
-                                    <AvatarFallback className="text-[8px]">{(note.author?.display_name || note.author?.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
-                                  </Avatar>
-                                  <span className="font-medium text-sm">{note.author?.display_name || note.author?.full_name}</span>
-                                  {note.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className={tokens.heading.subsection}>
+                          {notesScope === 'this' ? 'Appointment Notes' : 'Client Note History'}
+                        </h4>
+                        {appointment.phorest_client_id && (
+                          <ToggleGroup
+                            type="single"
+                            value={notesScope}
+                            onValueChange={(v) => v && setNotesScope(v as 'this' | 'all')}
+                            size="sm"
+                            className="h-7"
+                          >
+                            <ToggleGroupItem value="this" className="h-7 px-2 text-xs">
+                              This Appointment
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="all" className="h-7 px-2 text-xs">
+                              All Visits
+                              {clientAptNotes.length > 0 && (
+                                <span className="ml-1.5 text-[10px] text-muted-foreground">
+                                  {clientAptNotes.length}
+                                </span>
+                              )}
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                        )}
+                      </div>
+
+                      {notesScope === 'this' ? (
+                        <>
+                          {notes.length > 0 ? (
+                            <div className="space-y-2">
+                              {notes.map(note => (
+                                <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed')}>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <Avatar className="h-5 w-5">
+                                        <AvatarImage src={note.author?.photo_url || undefined} />
+                                        <AvatarFallback className="text-[8px]">{(note.author?.display_name || note.author?.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="font-medium text-sm">{note.author?.display_name || note.author?.full_name}</span>
+                                      {note.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
+                                    </div>
+                                    {note.author_id === user?.id && (
+                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteNote(note.id)}>
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <p className="mt-1">{note.note}</p>
+                                  <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, yyyy · h:mm a')}</p>
                                 </div>
-                                {note.author_id === user?.id && (
-                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteNote(note.id)}>
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
-                              <p className="mt-1">{note.note}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">{formatDate(new Date(note.created_at), 'MMM d, h:mm a')}</p>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground">No notes on this appointment</p>
+                              {appointment.phorest_client_id && clientAptNotes.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setNotesScope('all')}
+                                  className="text-xs text-primary hover:underline"
+                                >
+                                  {clientAptNotes.length} {clientAptNotes.length === 1 ? 'note' : 'notes'} from past visits — view all
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </>
                       ) : (
-                        <p className="text-xs text-muted-foreground">No appointment notes</p>
+                        <>
+                          {clientAptNotesLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          ) : clientAptNotes.length > 0 ? (
+                            <div className="space-y-2">
+                              {clientAptNotes.map(note => {
+                                const statusKey = (note.appointment?.status?.toLowerCase() ?? 'pending') as keyof typeof APPOINTMENT_STATUS_BADGE;
+                                const statusCfg = APPOINTMENT_STATUS_BADGE[statusKey] ?? APPOINTMENT_STATUS_BADGE.pending;
+                                const isCurrentApt = note.phorest_appointment_id === appointment.phorest_id;
+                                return (
+                                  <div key={note.id} className={cn('p-3 rounded-lg border text-sm', note.is_private && 'bg-muted/50 border-dashed', isCurrentApt && 'ring-1 ring-primary/40')}>
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <Avatar className="h-5 w-5">
+                                          <AvatarImage src={note.author?.photo_url || undefined} />
+                                          <AvatarFallback className="text-[8px]">{(note.author?.display_name || note.author?.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-medium text-sm">{note.author?.display_name || note.author?.full_name}</span>
+                                        {note.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
+                                        {isCurrentApt && (
+                                          <span className="text-[10px] uppercase tracking-wide text-primary font-medium">This Visit</span>
+                                        )}
+                                      </div>
+                                      <span className="text-xs text-muted-foreground shrink-0">
+                                        {formatDate(new Date(note.created_at), 'MMM d, yyyy · h:mm a')}
+                                      </span>
+                                    </div>
+                                    <p className="mt-1">{note.note}</p>
+                                    {note.appointment && (
+                                      <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                                        <span>From:</span>
+                                        <span className="font-medium text-foreground">{note.appointment.service_name}</span>
+                                        <span>·</span>
+                                        <span>{formatDate(parseISO(note.appointment.appointment_date), 'MMM d, yyyy')}</span>
+                                        <span>·</span>
+                                        <span className={cn('px-1.5 py-0.5 rounded border text-[10px] font-medium', statusCfg.bg, statusCfg.text, statusCfg.border)}>
+                                          {statusCfg.label}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">No notes yet for this client</p>
+                          )}
+                        </>
                       )}
 
-                      {/* Add Appointment Note */}
+                      {/* Add Appointment Note (always writes to current appointment) */}
                       {canAddNotes && (
                         <div className="space-y-2 mt-3">
-                          <Textarea placeholder="Add appointment note..." value={newNote} onChange={e => setNewNote(e.target.value)} rows={2} />
+                          <Textarea placeholder="Add note to this appointment..." value={newNote} onChange={e => setNewNote(e.target.value)} rows={2} />
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Switch id="apt-private" checked={isPrivateNote} onCheckedChange={setIsPrivateNote} />
