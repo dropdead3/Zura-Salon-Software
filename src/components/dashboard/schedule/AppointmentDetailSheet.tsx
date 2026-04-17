@@ -42,6 +42,7 @@ import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryP
 import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
 import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
+import { InlineContactEdit } from '@/components/dashboard/schedule/InlineContactEdit';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
 import { useUnviewedInspirationPhotos } from '@/hooks/useUnviewedInspirationPhotos';
