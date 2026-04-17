@@ -999,9 +999,7 @@ export default function Schedule() {
                 appointments={appointments}
                 hoursStart={preferences.hours_start}
                 hoursEnd={preferences.hours_end}
-                weekStylists={sortedStylistsForWeek}
-                selectedWeekStylistId={selectedWeekStylistId}
-                onSelectedWeekStylistChange={setSelectedWeekStylistId}
+              </ScheduleHeader-placeholder-strip>
               />
         </div>
 
