@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useActualEmployeeProfile } from '@/hooks/useActualEmployeeProfile';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { OnlineIndicator } from '../ui/OnlineIndicator';
@@ -38,7 +38,7 @@ export function PlatformSidebar() {
   const navigate = useNavigate();
   const { user, hasPlatformRoleOrHigher, platformRoles } = useAuth();
   const { resolvedTheme } = usePlatformTheme();
-  const { data: profile } = useEmployeeProfile();
+  const { data: profile } = useActualEmployeeProfile();
   const { isConnected } = usePlatformPresenceContext();
   
   const primaryRole = platformRoles[0] as PlatformRole | undefined;

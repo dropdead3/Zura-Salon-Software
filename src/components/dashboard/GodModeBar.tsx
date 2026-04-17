@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ExternalLink, X } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -10,6 +11,7 @@ const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8
 
 export function GodModeBar() {
   const { selectedOrganization, isImpersonating, clearSelection } = useOrganizationContext();
+  const { clearViewAs } = useViewAs();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -20,7 +22,10 @@ export function GodModeBar() {
   };
 
   const handleExit = () => {
+    // Clear BOTH org-level impersonation AND user/role-level View As
+    // so platform chrome resets to the actual signed-in identity.
     clearSelection();
+    clearViewAs();
     navigate('/platform/overview');
   };
 

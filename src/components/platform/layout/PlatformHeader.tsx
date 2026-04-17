@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useActualEmployeeProfile } from '@/hooks/useActualEmployeeProfile';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 import { cn } from '@/lib/utils';
@@ -34,7 +34,7 @@ const roleConfig: Record<PlatformRole, { label: string; icon: React.ComponentTyp
 export function PlatformHeader() {
   const navigate = useNavigate();
   const { user, signOut, platformRoles } = useAuth();
-  const { data: profile } = useEmployeeProfile();
+  const { data: profile } = useActualEmployeeProfile();
   const { resolvedTheme } = usePlatformTheme();
   const { isConnected, onlineUsers, onlineCount } = usePlatformPresenceContext();
 

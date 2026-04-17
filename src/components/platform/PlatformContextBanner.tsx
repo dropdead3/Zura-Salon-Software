@@ -2,11 +2,13 @@ import React from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Building2, X, ExternalLink } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useNavigate } from 'react-router-dom';
 import { PlatformButton } from './ui/PlatformButton';
 
 export function PlatformContextBanner() {
   const { selectedOrganization, isImpersonating, clearSelection } = useOrganizationContext();
+  const { clearViewAs } = useViewAs();
   const navigate = useNavigate();
 
   if (!isImpersonating || !selectedOrganization) {
@@ -45,7 +47,9 @@ export function PlatformContextBanner() {
             variant="ghost"
             size={tokens.button.inline}
             onClick={() => {
+              // Clear BOTH org-level and user/role-level impersonation
               clearSelection();
+              clearViewAs();
               navigate('/platform/overview');
             }}
             className="h-7 text-xs gap-1 hover:bg-red-500/20 hover:text-red-400"
