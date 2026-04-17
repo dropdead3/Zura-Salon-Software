@@ -2431,6 +2431,8 @@ export type Database = {
           status: string
           stripe_subscription_id: string | null
           suspended_at: string | null
+          suspended_by: string | null
+          suspended_reason: string | null
           trial_end_date: string | null
           updated_at: string
         }
@@ -2456,6 +2458,8 @@ export type Database = {
           status?: string
           stripe_subscription_id?: string | null
           suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_reason?: string | null
           trial_end_date?: string | null
           updated_at?: string
         }
@@ -2481,6 +2485,8 @@ export type Database = {
           status?: string
           stripe_subscription_id?: string | null
           suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_reason?: string | null
           trial_end_date?: string | null
           updated_at?: string
         }

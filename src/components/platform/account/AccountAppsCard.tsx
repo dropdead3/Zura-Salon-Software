@@ -12,6 +12,7 @@ import { useOrganizationFeatureFlags, useUpdateOrgFeatureFlag } from '@/hooks/us
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
 import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
+import { CancelReasonDialog } from '@/components/platform/color-bar/CancelReasonDialog';
 
 interface AccountAppsCardProps {
   organizationId: string;
@@ -117,7 +118,9 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
                 checked={isColorBarEnabled}
                 onCheckedChange={handleColorBarToggle}
                 disabled={
-                  colorBarToggle.isPending || !!colorBarToggle.reactivationTarget
+                  colorBarToggle.isPending ||
+                  !!colorBarToggle.reactivationTarget ||
+                  !!colorBarToggle.suspensionTarget
                 }
                 className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-slate-600"
               />
@@ -178,6 +181,17 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
         </div>
       </PlatformCardContent>
 
+      {/* Cancel-reason capture — fires before soft-disabling */}
+      <CancelReasonDialog
+        open={!!colorBarToggle.suspensionTarget}
+        onOpenChange={(open) => {
+          if (!open) colorBarToggle.cancelSuspension();
+        }}
+        orgName={colorBarToggle.suspensionTarget?.organizationName ?? ''}
+        isPending={colorBarToggle.isPending}
+        onConfirm={(payload) => colorBarToggle.confirmSuspension(payload)}
+      />
+
       {/* Reactivation confirmation — fires when re-enabling an org that was previously suspended */}
       <ReactivationConfirmDialog
         open={!!colorBarToggle.reactivationTarget}
@@ -186,6 +200,7 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
         }}
         orgName={colorBarToggle.reactivationTarget?.organizationName ?? ''}
         suspendedAt={colorBarToggle.reactivationTarget?.suspendedAt ?? null}
+        suspendedReason={colorBarToggle.reactivationTarget?.suspendedReason ?? null}
         affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
         isPending={colorBarToggle.isPending}
         onConfirm={() => colorBarToggle.confirmReactivation()}

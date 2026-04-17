@@ -25,10 +25,28 @@ interface Props {
   orgName: string;
   /** ISO timestamp of the most recent suspension (used to compute duration). */
   suspendedAt: string | null;
+  /** Captured cancel reason from the suspension dialog (e.g. "non_payment: ..."). */
+  suspendedReason?: string | null;
   /** Names of locations that will require inventory reconciliation. */
   affectedLocations: string[];
   isPending?: boolean;
   onConfirm: () => void;
+}
+
+const REASON_LABELS: Record<string, string> = {
+  non_payment: 'Non-payment',
+  trial_ended: 'Trial ended',
+  paused_operations: 'Paused operations',
+  churned: 'Churned',
+  other: 'Other',
+};
+
+function formatReason(raw: string | null | undefined) {
+  if (!raw) return null;
+  const [code, ...rest] = raw.split(':');
+  const label = REASON_LABELS[code.trim()] ?? code.trim();
+  const note = rest.join(':').trim();
+  return note ? `${label} — ${note}` : label;
 }
 
 export function ReactivationConfirmDialog({
@@ -36,12 +54,14 @@ export function ReactivationConfirmDialog({
   onOpenChange,
   orgName,
   suspendedAt,
+  suspendedReason,
   affectedLocations,
   isPending,
   onConfirm,
 }: Props) {
   const duration = suspendedAt ? formatRelativeTime(new Date(suspendedAt)) : 'an unknown period';
   const suspendedDate = suspendedAt ? new Date(suspendedAt).toLocaleDateString() : null;
+  const reasonText = formatReason(suspendedReason);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -62,6 +82,14 @@ export function ReactivationConfirmDialog({
               levels recorded before the pause cannot be trusted — products may
               have been used, restocked, or wasted without tracking.
             </span>
+            {reasonText && (
+              <span className="block rounded-md border border-border/60 bg-muted/40 px-3 py-2">
+                <span className="text-muted-foreground text-xs uppercase tracking-wide font-display">
+                  Suspension reason
+                </span>
+                <span className="block text-foreground mt-0.5">{reasonText}</span>
+              </span>
+            )}
             <span className="block">
               Reactivating <strong>{orgName}</strong> will require each location
               to perform a physical count and update quantities before formula
