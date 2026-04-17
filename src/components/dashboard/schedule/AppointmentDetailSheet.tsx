@@ -1601,7 +1601,7 @@ export function AppointmentDetailSheet({
                     {/* Hospitality Memory Layer — collapses to single CTA when empty (alert-fatigue safe) */}
                     <HospitalityBlock
                       organizationId={effectiveOrganization?.id}
-                      phorestClientId={appointment.phorest_client_id}
+                      clientKey={getHospitalityClientKey(appointment)}
                       firstName={appointment.client_name?.split(' ')[0]}
                     />
 
