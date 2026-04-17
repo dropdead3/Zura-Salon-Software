@@ -763,9 +763,10 @@ export default function Schedule() {
   };
 
   // Triggered from CheckoutSummarySheet "Schedule Next" button
-  const handleCheckoutScheduleNext = (apt: PhorestAppointment) => {
-    // Pre-fill rebook data and open the booking popover
-    setBookingDefaults({ date: currentDate, stylistId: apt.stylist_user_id || undefined });
+  // Wave 21.1 — accept optional rebook interval to pre-fill the booking date
+  const handleCheckoutScheduleNext = (apt: PhorestAppointment, interval?: { date: Date }) => {
+    const prefillDate = interval?.date ?? currentDate;
+    setBookingDefaults({ date: prefillDate, stylistId: apt.stylist_user_id || undefined });
     setActiveDraft(null);
     setRebookData({
       clientId: apt.phorest_client_id || undefined,
