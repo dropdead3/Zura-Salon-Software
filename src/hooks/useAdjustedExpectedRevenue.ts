@@ -153,7 +153,7 @@ export function useAdjustedExpectedRevenue(
       };
     },
     enabled,
-    staleTime: 30 * 1000, // 30s — real-time-ish
-    refetchInterval: 60 * 1000, // Auto-refresh every minute
+    staleTime: 90 * 1000, // 90s — balanced freshness vs Cloud cost
+    refetchInterval: 3 * 60 * 1000, // Auto-refresh every 3 minutes (was 1min — Wave 22.36 cost optimization)
   });
 }

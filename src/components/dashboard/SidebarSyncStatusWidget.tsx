@@ -61,8 +61,8 @@ export function SidebarSyncStatusWidget({
       
       return statuses;
     },
-    refetchInterval: 60000, // Refresh every minute
-    staleTime: 30000,
+    refetchInterval: 120000, // Refresh every 2 minutes (was 1min — Wave 22.36)
+    staleTime: 60000,
   });
 
   // Calculate overall health
@@ -72,11 +72,11 @@ export function SidebarSyncStatusWidget({
     const appointmentSync = syncStatuses.appointments;
     const salesSync = syncStatuses.sales;
     
-    // Check if appointments synced in last 10 minutes
+    // Check if appointments synced in last 25 minutes (sync runs every 15min — Wave 22.36)
     if (appointmentSync?.completed_at) {
       const lastSync = new Date(appointmentSync.completed_at);
-      const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
-      if (lastSync < tenMinsAgo) return 'stale';
+      const staleCutoff = new Date(Date.now() - 25 * 60 * 1000);
+      if (lastSync < staleCutoff) return 'stale';
     }
     
     // Check for any failures (no_data is not a failure)

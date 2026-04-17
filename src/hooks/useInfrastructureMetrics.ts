@@ -105,8 +105,8 @@ export function useInfrastructureMetrics() {
         },
       };
     },
-    staleTime: 5 * 60_000, // 5 minutes
-    refetchInterval: 5 * 60_000,
+    staleTime: 15 * 60_000, // 15 minutes (matches monitor-infrastructure cron — Wave 22.36)
+    refetchInterval: 15 * 60_000,
   });
 }
 
