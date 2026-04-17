@@ -588,7 +588,8 @@ export function AggregateSalesCard({
   };
 
   // Live session awareness — prevents "all complete" while stylists are still in service
-  const liveSession = useLiveSessionSnapshot(filterContext?.locationId);
+  // Wave 15: only fetch when viewing today (only consumer is allAppointmentsComplete)
+  const liveSession = useLiveSessionSnapshot(filterContext?.locationId, isToday);
 
   // Determine if all revenue is finalized (operating hours passed OR last appointment ended)
   const allAppointmentsComplete = useMemo(() => {
