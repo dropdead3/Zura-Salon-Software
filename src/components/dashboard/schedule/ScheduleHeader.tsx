@@ -100,7 +100,7 @@ interface ScheduleHeaderProps {
   appointments?: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
-  /** Week-view day column width: 'auto' (fit) or pixel number (120-400). */
+  /** Week-view day column width: 'auto' (fit) or pixel number (200-600). */
   weekDayWidth?: 'auto' | number;
   onWeekDayWidthChange?: (width: 'auto' | number) => void;
 }
@@ -300,7 +300,7 @@ export function ScheduleHeader({
                     <Slider
                       value={[weekDayWidth === 'auto' ? 200 : weekDayWidth]}
                       min={200}
-                      max={400}
+                      max={600}
                       step={20}
                       onValueChange={([v]) => {
                         // 200 = 'auto' (Fit). >200 = fixed pixel width.
