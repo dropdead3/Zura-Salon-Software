@@ -49,6 +49,22 @@ export function ClientAboutCard({
   const upsert = useUpsertAboutFact();
   const remove = useDeleteAboutFact();
 
+  // Team directory powers "added by" attribution on hover.
+  const { data: team = [] } = useTeamDirectory(undefined, {
+    organizationId: organizationId || undefined,
+  });
+  const authorById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const member of team) {
+      if (member.user_id && member.full_name) {
+        map.set(member.user_id, member.full_name);
+      }
+    }
+    return map;
+  }, [team]);
+  const authorLabel = (userId: string | null | undefined) =>
+    userId ? formatAuthor(authorById.get(userId)) : null;
+
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftCategory, setDraftCategory] = useState<AboutCategory>('family');
@@ -128,35 +144,46 @@ export function ClientAboutCard({
         </p>
       ) : (
         <dl className="space-y-1.5">
-          {sortedFacts.map((fact) => (
-            <div
-              key={fact.id}
-              className="grid grid-cols-[110px_1fr_auto] gap-2 items-start text-sm group"
-            >
-              <dt className="text-xs text-muted-foreground pt-0.5">
-                {fact.category === 'custom'
-                  ? fact.label || 'Note'
-                  : ABOUT_CATEGORY_LABELS[fact.category]}
-              </dt>
-              <dd className="text-foreground">{fact.value}</dd>
-              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => startEdit(fact)}
-                  className="p-1 hover:bg-muted rounded"
-                  aria-label="Edit"
-                >
-                  <Pencil className="w-3 h-3 text-muted-foreground" />
-                </button>
-                <button
-                  onClick={() => remove.mutate({ id: fact.id, client_id: clientId })}
-                  className="p-1 hover:bg-muted rounded"
-                  aria-label="Delete"
-                >
-                  <X className="w-3 h-3 text-muted-foreground" />
-                </button>
+          {sortedFacts.map((fact) => {
+            const by = authorLabel(fact.created_by);
+            return (
+              <div
+                key={fact.id}
+                className="grid grid-cols-[110px_1fr_auto] gap-2 items-start text-sm group"
+                title={by ? `Added by ${by}` : undefined}
+              >
+                <dt className="text-xs text-muted-foreground pt-0.5">
+                  {fact.category === 'custom'
+                    ? fact.label || 'Note'
+                    : ABOUT_CATEGORY_LABELS[fact.category]}
+                </dt>
+                <dd className="text-foreground">
+                  {fact.value}
+                  {by && (
+                    <span className="ml-2 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-70 transition-opacity">
+                      · {by}
+                    </span>
+                  )}
+                </dd>
+                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => startEdit(fact)}
+                    className="p-1 hover:bg-muted rounded"
+                    aria-label="Edit"
+                  >
+                    <Pencil className="w-3 h-3 text-muted-foreground" />
+                  </button>
+                  <button
+                    onClick={() => remove.mutate({ id: fact.id, client_id: clientId })}
+                    className="p-1 hover:bg-muted rounded"
+                    aria-label="Delete"
+                  >
+                    <X className="w-3 h-3 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </dl>
       )}
 
