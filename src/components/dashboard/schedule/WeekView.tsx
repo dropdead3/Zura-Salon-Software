@@ -360,6 +360,14 @@ export function WeekView({
     return slots;
   }, [hoursStart, hoursEnd, slotInterval]);
 
+  // Filter to single selected stylist for week view (single-stylist personal calendar)
+  const stylistAppointments = useMemo(() => {
+    if (!selectedStylistId) return [] as PhorestAppointment[];
+    return appointments.filter(
+      (a: any) => (a.stylist_user_id || a.staff_user_id) === selectedStylistId,
+    );
+  }, [appointments, selectedStylistId]);
+
   // Group (already-stylist-filtered) appointments by date
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, PhorestAppointment[]>();
@@ -383,14 +391,6 @@ export function WeekView({
     getCurrentTimeRenderMetrics(wkNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
   const gridTemplate = '70px repeat(7, 1fr)';
-
-  // Filter to single selected stylist for week view (single-stylist personal calendar)
-  const stylistAppointments = useMemo(() => {
-    if (!selectedStylistId) return [] as PhorestAppointment[];
-    return appointments.filter(
-      (a: any) => (a.stylist_user_id || a.staff_user_id) === selectedStylistId,
-    );
-  }, [appointments, selectedStylistId]);
 
   if (!selectedStylistId) {
     return (
