@@ -41,7 +41,7 @@ import {
 } from '@/components/platform/ui/PlatformDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useUpdateOrgFeatureFlag, useDeleteOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
+import { useUpdateOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
 import {
   useUpsertLocationEntitlement,
   useDeleteLocationEntitlement,
@@ -719,6 +719,24 @@ export function ColorBarEntitlementsTab() {
           </Table>
         )}
       </PlatformCardContent>
+
+      {/* Reactivation confirmation — shown when toggling on an org that was previously suspended */}
+      <ReactivationConfirmDialog
+        open={!!reactivationTarget}
+        onOpenChange={(open) => {
+          if (!open) setReactivationTarget(null);
+        }}
+        orgName={reactivationTarget?.org.name ?? ''}
+        suspendedAt={reactivationTarget?.suspendedAt ?? null}
+        affectedLocations={reactivationTarget?.locationNames ?? []}
+        isPending={updateFlag.isPending || bulkReactivate.isPending}
+        onConfirm={async () => {
+          if (!reactivationTarget) return;
+          const target = reactivationTarget;
+          setReactivationTarget(null);
+          await reactivateColorBar(target.org);
+        }}
+      />
     </PlatformCard>
   );
 }
