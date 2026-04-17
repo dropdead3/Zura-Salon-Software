@@ -74,6 +74,8 @@ export interface SalonInquiry {
   converted_at: string | null;
   first_service_revenue: number | null;
   phorest_client_id: string | null;
+  match_method: 'auto_email' | 'auto_phone' | 'auto_both' | 'manual' | 'unmatched' | null;
+  match_confidence: 'high' | 'medium' | 'ambiguous' | 'none' | null;
   utm_source: string | null;
   utm_medium: string | null;
   utm_campaign: string | null;

@@ -10,6 +10,7 @@ import {
 import { LeadWithAssignee } from '@/hooks/useLeadInbox';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadSourceBadge } from './LeadSourceBadge';
+import { MatchConfidenceBadge } from './MatchConfidenceBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -61,9 +62,14 @@ export function LeadInboxRow({
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span className="font-medium truncate">{lead.name}</span>
           <LeadStatusBadge status={lead.status} />
+          <MatchConfidenceBadge
+            matchMethod={lead.match_method}
+            matchConfidence={lead.match_confidence}
+            hasContactInfo={!!(lead.email || lead.phone)}
+          />
         </div>
         
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
