@@ -471,34 +471,8 @@ export function QuickBookingPopover({
     }
   }, [open, defaultLocationId, initialDraftData]);
 
-  // Apply defaultStylistId (from clicked column) when popover opens.
-  // Activates stylist-first mode so the dedicated "Available Stylists" step is skipped —
-  // the staff click into a stylist's column already answered "which stylist?".
-  // Skips activation if a draft is being resumed (draft state owns the flow).
-  useEffect(() => {
-    if (!open || !defaultStylistId) return;
-    if (initialDraftData?.staffUserId) return;
-    if (preSelectedStylistId === defaultStylistId) return; // already activated this open
-
-    // Look up the stylist record (location-scoped list is already loaded since
-    // defaultLocationId seeds selectedLocation on open).
-    const record = stylists.find(s => s.user_id === defaultStylistId);
-    if (!record) return; // wait for stylists query to hydrate
-
-    const fullName = record.employee_profiles
-      ? formatDisplayName(record.employee_profiles.full_name || '', record.employee_profiles.display_name)
-      : 'Unknown';
-
-    setStylistFirstMode(true);
-    setPreSelectedStylistId(record.user_id);
-    setPreSelectedStylistPhorestId(record.phorest_staff_id ?? null);
-    setPreSelectedStylistName(fullName);
-    setPreSelectedStylistPhoto(record.employee_profiles?.photo_url || null);
-    setPreSelectedStylistLevel(record.employee_profiles?.stylist_level || null);
-    setSelectedStylist(record.user_id);
-    setAutoSelectReason('self');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, defaultStylistId, stylists, initialDraftData?.staffUserId]);
+  // Activation effect for defaultStylistId moved below the `stylists` query
+  // (declared further down) — see "Apply defaultStylistId" effect after uniqueStylists.
 
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
