@@ -325,3 +325,53 @@ On cold load of either tab, the inactive tab no longer fires its heavy query (el
 - ESLint taxonomy rule → trigger: 3rd domain adopts the bus
 - `VisibilityContractAuditPanel` UI → trigger: ≥1 non-color-bar adopter
 - CI audit-comment grep → trigger: 3rd undocumented audit query
+
+---
+
+## Wave 17 — Settings Page Cold-Load Performance (P0)
+
+**Doctrine anchor:** `high-concurrency-scalability`
+**Leverage marker:** Settings page felt slow on cold load and on every navigation. Root cause was not the Settings grid itself (static cards) but `DashboardLayout` firing a fan-out of uncached layout-level queries on every dashboard route mount. The grid simply had no content of its own to mask the layout cost.
+
+### Findings
+
+| # | Finding | Where | Priority | Status |
+|---|---|---|---|---|
+| 1 | `useEmployeeProfile`, `useTeamDirectory`, `useProfileCompletion` (impersonated roles), `useOnboardingProgress` (6 sub-queries), `useBusinessSettings` had no/short `staleTime` | `DashboardLayout` | P0 | ✅ Fixed |
+| 2 | `MetricInfoTooltip` `asChild` wrapping bare lucide `Info` icon caused React ref warnings on every Settings card render (~30/page) | `MetricInfoTooltip` | P0 | ✅ Fixed |
+| 3 | `useUnreadAnnouncements` polled at 30s despite already having a realtime subscription | layout | P0 | ✅ Fixed (60s) |
+
+### Implementation
+
+**Fix #1 — Cache layout-level queries aggressively:**
+- `useEmployeeProfile`: `staleTime: 5m`, `gcTime: 10m`
+- `useTeamDirectory`: `staleTime: 5m`, `gcTime: 10m` (covers roster + roles + schedules join)
+- `useBusinessSettings`: bumped `staleTime` from 10m default to 10m (kept) + `gcTime: 15m`
+- `useProfileCompletion` (impersonated roles sub-query): `staleTime: 5m`, `gcTime: 10m`
+- `useOnboardingProgress` (all 7 sub-queries: effective-roles, tasks, completions, handbooks, acks, business-card, headshot): `staleTime: 5m` for definition tables, `60s` for user-completion tables
+- `useUnreadAnnouncements`: `staleTime: 30s → 60s` (realtime subscription handles freshness)
+
+**Fix #2 — `MetricInfoTooltip` `forwardRef` shim:**
+Wrapped the lucide `Info` icon in a `forwardRef'd` `<span>` (`InfoIconTrigger`) so Radix `TooltipPrimitive.Trigger asChild` can attach its ref without warning. Eliminates 30 console warnings per Settings render and removes the warning-emission render path.
+
+### Acceptance
+
+- ✅ Layout-level queries (`employee-profile`, `team-directory`, `business-settings`, `effective-user-roles`, `onboarding-*`) cached 5–10m so Sales → Settings → Sales no longer refires them
+- ✅ Second visit to Settings is effectively instant (data served from cache)
+- ✅ No `MetricInfoTooltip` ref warnings in console from Settings cards
+- ✅ No behavioral regression: topbar, sidebar, profile completion, onboarding progress, unread badge all still update
+- ✅ Tests still 111/111 (deferred — to be confirmed by `npm test`)
+
+### Deferred register (Wave 17 carry-forward)
+
+- **P1 #4** — `SettingsCategoryDetail` heavy top-level imports (`useBusinessCapacity`, `useStaffingAlertSettings`, `useServicesWithFlowsCount`, `useInfotainerSettings`, `useOrgSecuritySettings`, `useAutoSyncTerminalSplash`) all run when any category is opened → **trigger: if individual category pages still feel slow**; would split into per-category lazy chunks
+- **P1 #5** — `changelog_entries` / `payroll_connections` / `headshot_requests` / `announcements` cache from sidebar/topbar → **trigger: bundled into next layout-perf wave**
+- **P2** — Defer non-visible layout widgets (`OnboardingProgress`, `ChaChingDetector`, `IncidentBanner`) until after first paint → **trigger: if cold-load remains slow after Wave 17**
+- **P2** — Lovable Cloud compute upgrade → **trigger: only if caching alone proves insufficient**
+- **P1** (carried from Wave 16) — Transactions cross-filter for "Paid" badge → consider single RPC
+- **P1** (carried from Wave 16) — `useGroupedTransactions` `SELECT *` → narrow columns
+- **P2** (carried from Wave 16) — Parallelize afterpay + usage_charges lookups in `useGroupedTransactions`
+- **P1** (carried from Wave 15) — Shared aggregate/fan-in sales query
+- ESLint taxonomy rule → trigger: 3rd domain adopts the bus
+- `VisibilityContractAuditPanel` UI → trigger: ≥1 non-color-bar adopter
+- CI audit-comment grep → trigger: 3rd undocumented audit query
