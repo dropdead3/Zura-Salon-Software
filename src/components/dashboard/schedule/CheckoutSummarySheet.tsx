@@ -497,6 +497,46 @@ export function CheckoutSummarySheet({
 
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-6 p-5">
+          {/* Rebooking Gate UI — surfaced first so the script is the entry point */}
+          {gatePhase === 'gate' && (
+            <div className="border rounded-xl overflow-hidden bg-card shadow-sm">
+              <div className="bg-primary/5 p-4 border-b border-border/50">
+                <h3 className="font-medium flex items-center gap-2 text-primary">
+                  <CalendarPlus className="h-4 w-4" />
+                  Next Visit Recommendation
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Book the next appointment in seconds
+                </p>
+              </div>
+
+              <div className="p-4 space-y-4">
+                <NextVisitRecommendation
+                  serviceName={appointment.service_name}
+                  serviceCategory={appointment.service_category}
+                  appointmentDate={appointment.appointment_date}
+                  appointmentStartTime={appointment.start_time}
+                  onBookInterval={(interval: RebookInterval) => {
+                    if (onScheduleNext && appointment) {
+                      supabase
+                        .from('appointments')
+                        .update({ rebooked_at_weeks: interval.weeks })
+                        .eq('id', appointment.id)
+                        .then(({ error }) => {
+                          if (error) console.error('Failed to record rebooked_at_weeks:', error);
+                        });
+                      onScheduleNext(appointment, interval);
+                      setRebooked(true);
+                      setGatePhase('checkout');
+                    }
+                  }}
+                  onScheduleManually={handleScheduleNextClick}
+                  onDecline={() => setDeclineDialogOpen(true)}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Client Info */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Client</h3>
@@ -687,57 +727,8 @@ export function CheckoutSummarySheet({
             </div>
           </div>
 
-          {/* Rebooking Gate UI */}
-          {gatePhase !== 'checkout' ? (
-            <div className="border rounded-xl overflow-hidden bg-card shadow-sm">
-              <div className="bg-primary/5 p-4 border-b border-border/50">
-                <h3 className="font-medium flex items-center gap-2 text-primary">
-                  <CalendarPlus className="h-4 w-4" />
-                  Next Visit Recommendation
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Book the next appointment in seconds
-                </p>
-              </div>
-              
-              <div className="p-4 space-y-4">
-                {gatePhase === 'gate' && (
-                  <NextVisitRecommendation
-                    serviceName={appointment.service_name}
-                    serviceCategory={appointment.service_category}
-                    appointmentDate={appointment.appointment_date}
-                    appointmentStartTime={appointment.start_time}
-                    onBookInterval={(interval: RebookInterval) => {
-                      // Wave 21.1 — pass chosen interval upward so the booking
-                      // popover can pre-select the date. Optimistically advance
-                      // gate → checkout so staff aren't stuck if the parent
-                      // schedule flow is cancelled (rebookCompleted prop will
-                      // confirm the boolean asynchronously when booking lands).
-                      if (onScheduleNext && appointment) {
-                        // Enhancement 1 — record which interval was accepted on
-                        // the SOURCE appointment so we can learn smarter defaults
-                        // per service category over time. Fire-and-forget; the
-                        // booking flow continues regardless.
-                        supabase
-                          .from('appointments')
-                          .update({ rebooked_at_weeks: interval.weeks })
-                          .eq('id', appointment.id)
-                          .then(({ error }) => {
-                            if (error) console.error('Failed to record rebooked_at_weeks:', error);
-                          });
-                        onScheduleNext(appointment, interval);
-                        setRebooked(true);
-                        setGatePhase('checkout');
-                      }
-                    }}
-                    onScheduleManually={handleScheduleNextClick}
-                    onDecline={() => setDeclineDialogOpen(true)}
-                  />
-                )}
-              </div>
-            </div>
-          ) : (
-            /* Tip Selection - Only shown in checkout phase */
+          {/* Tip Selection - Only shown in checkout phase (gate-phase rebook card moved to top) */}
+          {gatePhase === 'checkout' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Separator />
               <div className="space-y-3">
