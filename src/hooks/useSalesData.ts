@@ -268,6 +268,7 @@ import { isVishServiceCharge } from '@/utils/serviceCategorization';
 export function useSalesMetrics(filters: SalesFilters = {}) {
   return useQuery({
     queryKey: ['sales-metrics-from-appointments', filters],
+    staleTime: 60_000, // Wave 14: 1m cache to prevent refetch on remount/navigation
     queryFn: async () => {
       // Build appointment query with batch fetching
       const data = await fetchAllBatched<{
@@ -420,6 +421,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
 export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
     queryKey: ['sales-by-stylist-from-transactions', dateFrom, dateTo, locationId],
+    staleTime: 60_000, // Wave 14: 1m cache
     queryFn: async () => {
       // Get staff mappings with photos
       const { data: mappings } = await supabase
@@ -527,9 +529,11 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
 }
 
 // Get sales by location (from appointments)
-export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
+export function useSalesByLocation(dateFrom?: string, dateTo?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['sales-by-location-from-appointments', dateFrom, dateTo],
+    staleTime: 60_000, // Wave 14: 1m cache
+    enabled: options?.enabled !== false,
     queryFn: async () => {
       // First fetch locations to map IDs to names
       const { data: locations } = await supabase
@@ -605,6 +609,7 @@ export interface ServiceMixItem {
 export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
     queryKey: ['service-mix', dateFrom, dateTo, locationId],
+    staleTime: 5 * 60_000, // Wave 14: 5m cache
     queryFn: async (): Promise<ServiceMixItem[]> => {
       const data = await fetchAllBatched<{
         service_category: string | null;
@@ -650,6 +655,7 @@ export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: s
 export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
     queryKey: ['sales-trend-from-appointments', dateFrom, dateTo, locationId],
+    staleTime: 5 * 60_000, // Wave 14: 5m cache — trend lines change slowly
     queryFn: async () => {
       const data = await fetchAllBatched<{
         appointment_date: string | null;

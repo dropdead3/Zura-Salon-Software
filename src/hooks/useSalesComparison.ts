@@ -70,6 +70,7 @@ async function fetchPeriodRevenue(dateFrom: string, dateTo: string, locationId?:
 export function useSalesComparison(dateFrom: string, dateTo: string, locationId?: string) {
   return useQuery({
     queryKey: ['sales-comparison', dateFrom, dateTo, locationId],
+    staleTime: 5 * 60_000, // Wave 14: 5m cache — historical comparison rarely changes
     queryFn: async (): Promise<ComparisonData> => {
       const currentFrom = new Date(dateFrom);
       const currentTo = new Date(dateTo);
