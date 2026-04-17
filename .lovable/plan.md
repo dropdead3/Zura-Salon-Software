@@ -2,70 +2,69 @@
 
 ## Prompt review
 
-Clear two-part prompt — names the surface, the new control (sort by price), and a missing element (level labels). Sharper next time: tell me the **default sort** you want (low→high or by relevance/qualification?), and whether sort should persist across bookings or reset each open. I'll propose defaults and flag.
+Sharp bug report — names the surface (stylist-first picker), the symptom (all stylists across org), the expected scope (current location only), and the active context (North Mesa). Sharper next time: tell me whether the same scoping should apply when the calendar is in **multi-location view** (e.g., "All Locations") — does it then show all, or still filter? I'll propose: respect whatever the calendar is currently showing.
 
 ## Diagnosis
 
-**Level labels:** The component already renders `<Badge>Level {N}</Badge>` (lines 2052–2056) — but the screenshot shows none. Root cause: those stylists have no `employee_profiles.stylist_level` value set, so `getLevelNumber()` returns null and the badge is suppressed. This is a **data gap**, not a UI bug. The fix is two-fold:
+Two stylist lists exist in `QuickBookingPopover`:
 
-1. **Render a fallback** ("Unranked" or hide gracefully) so the row shape is consistent
-2. **Surface the data gap** so admins know to assign levels in Operations Hub
+1. **`filteredStylists`** (service-first flow) — already filtered by `selectedLocationId` because availability is location-scoped
+2. **`uniqueAllStylists`** (stylist-first flow, the one shown in the screenshot) — built from `v_calendar_stylists` but **not filtered by the current calendar location**, so it returns every stylist in the org
 
-**Sort by price:** The price column already computes per-stylist (`stylistTotalPrice`, line 2006–2011) using level-based service pricing. Adding sort is purely client-side reordering of `filteredStylists` — no new queries.
+The screenshot confirms it: "ALL STYLISTS" header with Sarina, Chelsea, Savannah, Kitty, Leslei, Kylie, Alexis — that's the org-wide roster, not North Mesa's 7.
 
-## Plan — Wave 22.2: Stylist picker sort + level visibility
+Root cause: when stylist-first mode kicks in (either user-initiated or via Wave 22.1's column-click auto-activation), the query that hydrates `uniqueAllStylists` doesn't apply `.eq('location_id', currentLocationId)`. After Wave 22's view fix, that filter would now correctly return all 7 North Mesa stylists (including Jamie + Lex via the exploded `location_ids`).
 
-### 1. Sort control (top-right of "Available Stylists" header)
+## Plan — Wave 22.3: Scope stylist-first picker to current location
 
-Add a compact dropdown/segmented control next to the section heading:
-- **Recommended** (default — current order: previous stylist first, then qualified, then alphabetical)
-- **Price: Low → High**
-- **Price: High → Low**
-- **Level: Low → High**
-- **Level: High → Low**
+### Behavior
 
-Implementation: `useState<SortMode>('recommended')` inside the popover; sort `filteredStylists` (and `uniqueAllStylists` for stylist-first mode) via `useMemo`. Sort resets to default each time the popover opens.
+- When calendar is viewing a **single location** (e.g., North Mesa) → "All Stylists" list shows only stylists assigned to that location (via the exploded `v_calendar_stylists` view)
+- When calendar is in **multi-location / "All" view** → list shows all stylists across the visible locations (current behavior preserved for that case)
+- Header label adapts: `"ALL STYLISTS"` → `"STYLISTS AT NORTH MESA"` when location-scoped, so staff understand the filter
 
-UI: `Select` component (shadcn) with `tokens.label` styling, sized `h-8`, placed inline-right of the "AVAILABLE STYLISTS" heading using `flex justify-between`.
+### Fix shape
 
-Hidden when `selectedServices.length === 0` (no price to sort by) — falls back to Level sort options only in that case.
+In `src/components/dashboard/schedule/QuickBookingPopover.tsx`:
 
-### 2. Level badge — always visible
+1. **Locate the query/memo** that builds `uniqueAllStylists` from `v_calendar_stylists` (or wherever the org-wide list comes from)
+2. **Apply location filter** when `selectedLocationId` (or the calendar's active location) is a single ID:
+   ```ts
+   const scopedStylists = useMemo(() => {
+     if (!currentLocationId || currentLocationId === 'all') return uniqueAllStylists;
+     return uniqueAllStylists.filter(s => s.location_id === currentLocationId);
+   }, [uniqueAllStylists, currentLocationId]);
+   ```
+3. **Deduplicate by `user_id`** after filtering (a stylist exploded across multiple locations would otherwise still be unique here since we filter to one location, but keep the `dedupeBy(user_id)` guard for the "all" case)
+4. **Update the header label** in the stylist-first step to reflect scope:
+   ```tsx
+   {currentLocationId && currentLocationId !== 'all'
+     ? `STYLISTS AT ${locationName.toUpperCase()}`
+     : 'ALL STYLISTS'}
+   ```
+5. **Empty state**: if zero stylists match, show "No stylists assigned to {locationName}. Add one in Operations Hub → Team."
 
-Change behavior:
-- If `stylistLevelNum` exists → render `Level {N}` badge as today
-- If null → render `Unranked` badge with `variant="outline"` and muted text (signals data gap without breaking layout)
+### Files to read first
 
-Optionally: in dev mode, log a warning so admins see the missing-level list in console.
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — find the `uniqueAllStylists` source (around the stylist-first mode section)
+- `src/pages/dashboard/Schedule.tsx` — confirm how the active calendar location is exposed and how it propagates into the popover (likely via `defaultLocationId` or a prop already wired)
 
-### 3. Acceptance checks
+### Acceptance checks
 
-1. Sort dropdown appears top-right of "Available Stylists" header; defaults to "Recommended"
-2. Switching to "Price: Low → High" reorders rows by `stylistTotalPrice` ascending
-3. Switching to "Level: High → Low" puts Level 4 first, Unranked last
-4. Stylists without a `stylist_level` show an "Unranked" badge (not blank)
-5. Sort resets to "Recommended" when popover reopens
-6. Stylist-first mode: same sort works against `uniqueAllStylists`
-7. No regression to previous-stylist auto-pin (still wins in "Recommended" mode)
+1. Calendar pinned to North Mesa → click empty cell to open new booking → "All Stylists" shows only the 7 North Mesa stylists (post-Wave 22 view fix)
+2. Header reads "STYLISTS AT NORTH MESA" (not "ALL STYLISTS")
+3. Switch calendar to Val Vista Lakes → reopen booking → list shows the 14 VVL stylists (including Eric)
+4. Calendar in "All Locations" view → list shows org-wide roster, header reads "ALL STYLISTS"
+5. Sort dropdown (Wave 22.2) still works against the scoped list
+6. Wave 22.1 column-click auto-skip still works (Jamie preselected, picker bypassed)
+7. No regression to service-first flow (`filteredStylists` already location-scoped via availability)
 
 ### Files
 
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — add sort state, sort memo, Select control in stylist step header, fallback "Unranked" badge
-
-### Open question (worth flagging)
-
-**Why are levels blank?** This screenshot shows 7 stylists at North Mesa, none with a level. Either (a) admins haven't assigned levels in Operations Hub → Stylist Levels, or (b) the `stylist_level` field isn't being read from the right column. Worth a one-query verification:
-
-```sql
-SELECT user_id, full_name, stylist_level FROM employee_profiles 
-WHERE user_id IN (<the 7 stylist ids>);
-```
-
-If it's (b), Wave 22.3 fixes the read path; if (a), the "Unranked" badge is the right outcome and Operations Hub gets a nudge.
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — scope `uniqueAllStylists` by current location, update header label, empty state
 
 ### Deferred
 
-- **P2** Persist last-used sort per user (localStorage) — trigger: when staff request "remember my preference"
-- **P2** Show level price tier ($, $$, $$$) instead of "Level N" for client-facing booking surfaces — trigger: not applicable here (staff-facing), revisit if booking widget reuses this UI
-- **P2** "Filter by level" multi-select chips above the list — trigger: when a salon with 20+ stylists across many levels needs it
+- **P2** Show a "Working at: North Mesa, Val Vista Lakes" subtext on multi-location stylist cards so staff know that stylist also works elsewhere — trigger: when staff confusion arises about where a stylist is "based"
+- **P2** Toggle inside the picker: "Show stylists from all locations" for edge cases where staff want to book a visiting stylist — trigger: when a multi-location org requests cross-booking workflows
 
