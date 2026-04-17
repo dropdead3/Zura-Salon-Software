@@ -105,17 +105,18 @@ export function useUpsertLocationEntitlement() {
       // reporting and breaks audit trails.
       const { data: existing } = await supabase
         .from('backroom_location_entitlements')
-        .select('id, activated_at')
+        .select('id, activated_at, status')
         .eq('organization_id', params.organization_id as any)
         .eq('location_id', params.location_id as any)
         .maybeSingle();
 
+      const nextStatus = params.status ?? 'active';
       const payload: Record<string, any> = {
         organization_id: params.organization_id,
         location_id: params.location_id,
         plan_tier: params.plan_tier ?? 'starter',
         scale_count: params.scale_count ?? 0,
-        status: params.status ?? 'active',
+        status: nextStatus,
         trial_end_date: params.trial_end_date ?? null,
         billing_interval: params.billing_interval ?? 'monthly',
         notes: params.notes ?? null,
@@ -123,6 +124,16 @@ export function useUpsertLocationEntitlement() {
       // Only set activated_at on first insert.
       if (!existing) {
         payload.activated_at = new Date().toISOString();
+      }
+      // P1 fix: when transitioning from suspended → active via the per-location
+      // path (bypassing useBulkReactivateLocationEntitlements), apply the same
+      // reconciliation gate the bulk hook applies. Without this, supply-low
+      // alerts resume on stale quantities after a tracking gap.
+      if (existing && (existing as any).status === 'suspended' && nextStatus === 'active') {
+        payload.reactivated_at = new Date().toISOString();
+        payload.requires_inventory_reconciliation = true;
+        payload.inventory_verified_at = null;
+        payload.inventory_verified_by = null;
       }
 
       const { data, error } = await supabase
