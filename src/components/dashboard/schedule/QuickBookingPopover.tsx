@@ -2540,11 +2540,11 @@ export function QuickBookingPopover({
               </div>
             </div>
           </ScrollArea>
-          <div className="p-3 border-t border-border bg-card space-y-2">
-            <div className="flex items-center justify-between text-sm">
+          <div className="p-4 border-t border-border bg-card space-y-2">
+            <div className="flex items-center justify-between text-base">
               <span className="text-muted-foreground">Total</span>
               {(() => {
-                if (!isRedo) return <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>;
+                if (!isRedo) return <span className="text-xl font-medium">{formatCurrency(totalPrice)}</span>;
                 // Calculate redo-adjusted price
                 const origPrice = originalAppointmentData?.total_price;
                 let computedRedoPrice: number | null = null;
@@ -2559,17 +2559,17 @@ export function QuickBookingPopover({
                     {finalPrice !== totalPrice && (
                       <span className="text-sm text-muted-foreground line-through">{formatCurrency(totalPrice)}</span>
                     )}
-                    <span className="text-lg font-medium text-amber-600 dark:text-amber-400">{formatCurrency(finalPrice)}</span>
+                    <span className="text-xl font-medium text-amber-600 dark:text-amber-400">{formatCurrency(finalPrice)}</span>
                   </div>
                 );
               })()}
             </div>
             <div className="space-y-0.5">
-              <p className="text-[10px] text-muted-foreground/70">
+              <p className="text-xs text-muted-foreground/70">
                 Any discounts or promotions will be calculated at checkout.
               </p>
               <div className="flex items-center gap-1">
-                <p className="text-[10px] text-muted-foreground/70">
+                <p className="text-xs text-muted-foreground/70">
                   Exact price may vary after overages & adjustments.
                 </p>
                 <Tooltip>
