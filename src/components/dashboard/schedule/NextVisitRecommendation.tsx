@@ -21,6 +21,9 @@ interface NextVisitRecommendationProps {
   serviceName: string | null | undefined;
   serviceCategory: string | null | undefined;
   appointmentDate: string; // ISO date
+  /** Optional HH:mm of the source appointment. When provided, the verbal
+   * script reads "...at 2:00 PM work?" — materially more committal language. */
+  appointmentStartTime?: string | null;
   onBookInterval: (interval: RebookInterval) => void;
   onScheduleManually: () => void;
   onDecline: () => void;
@@ -30,6 +33,7 @@ export function NextVisitRecommendation({
   serviceName,
   serviceCategory,
   appointmentDate,
+  appointmentStartTime,
   onBookInterval,
   onScheduleManually,
   onDecline,
@@ -48,6 +52,16 @@ export function NextVisitRecommendation({
   const weekLabel = selectedWeeks === 1 ? 'week' : 'weeks';
   const dayLabel = format(selectedDate, 'EEEE, MMM d');
 
+  // Time-aware script: parse HH:mm and format as h:mm a (e.g., "2:00 PM")
+  const timeLabel = useMemo(() => {
+    if (!appointmentStartTime) return null;
+    const [h, m] = appointmentStartTime.split(':').map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return format(d, 'h:mm a');
+  }, [appointmentStartTime]);
+
   return (
     <div className="space-y-5">
       {/* Verbal Script Card */}
@@ -59,8 +73,14 @@ export function NextVisitRecommendation({
             {selectedWeeks} {weekLabel}
           </span>
           . How does{' '}
-          <span className="not-italic text-foreground font-medium">{dayLabel}</span>{' '}
-          work?"
+          <span className="not-italic text-foreground font-medium">{dayLabel}</span>
+          {timeLabel && (
+            <>
+              {' '}at{' '}
+              <span className="not-italic text-foreground font-medium">{timeLabel}</span>
+            </>
+          )}
+          {' '}work?"
         </p>
         <p className="mt-2 pl-6 text-[11px] uppercase tracking-wider text-muted-foreground/70 font-display">
           Suggested Script

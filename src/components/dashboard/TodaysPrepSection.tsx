@@ -4,14 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, ChevronRight, UserPlus, Phone, Star, StickyNote, CalendarDays } from 'lucide-react';
+import { ClipboardCheck, ChevronRight, UserPlus, Phone, Star, StickyNote, CalendarDays, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { VisibilityGate } from '@/components/visibility';
 import { useTodayPrep } from '@/hooks/useTodayPrep';
 import { CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
 import { useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useAuth } from '@/contexts/AuthContext';
+import { useStylistRebookRate } from '@/hooks/useStylistRebookRate';
+
+/** Material gap (percentage points) below org average that triggers coaching nudge. */
+const REBOOK_COACHING_GAP_PP = 15;
 
 
 const NEEDS_CONFIRM = new Set(['booked', 'pending']);
@@ -78,6 +83,17 @@ export function TodaysPrepSection() {
   const { data: appointments, isLoading } = useTodayPrep();
   const navigate = useNavigate();
   const today = format(new Date(), 'yyyy-MM-dd');
+  const { user } = useAuth();
+
+  // Coaching nudge — 30-day rebook rate vs org. Hook returns null if sample <10
+  // (visibility contract). Nudge surfaces only on material gap (>15pp lag).
+  const dateFrom = useMemo(() => format(subDays(new Date(), 30), 'yyyy-MM-dd'), []);
+  const dateTo = today;
+  const { data: rebookSignal } = useStylistRebookRate(user?.id, dateFrom, dateTo);
+  const showRebookNudge =
+    rebookSignal !== null &&
+    rebookSignal !== undefined &&
+    rebookSignal.deltaVsOrg <= -REBOOK_COACHING_GAP_PP;
 
   const temporalTags = useMemo(() => {
     if (!appointments) return new Map<number, TemporalTag>();
@@ -110,6 +126,23 @@ export function TodaysPrepSection() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
+          {/* Coaching nudge — surfaces only on material rebook gap (>15pp lag, ≥10 sample) */}
+          {showRebookNudge && rebookSignal && (
+            <div className="mb-3 flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/40 p-3">
+              <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-sans text-sm text-foreground leading-snug">
+                  Your rebook rate is{' '}
+                  <span className="font-medium">{rebookSignal.rebookRate.toFixed(0)}%</span>
+                  {' '}— team average is{' '}
+                  <span className="font-medium">{rebookSignal.orgRebookRate.toFixed(0)}%</span>.
+                </p>
+                <p className="font-sans text-xs text-muted-foreground mt-0.5">
+                  Try the new commitment script at checkout: <span className="italic">"I'd like to see you back in X weeks. How does [date] at [time] work?"</span>
+                </p>
+              </div>
+            </div>
+          )}
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
