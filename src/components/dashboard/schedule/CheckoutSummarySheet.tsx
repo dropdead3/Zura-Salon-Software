@@ -63,7 +63,7 @@ interface CheckoutSummarySheetProps {
   locationPhone?: string;
   organizationId?: string;
   locationId?: string;
-  onScheduleNext?: (apt: PhorestAppointment) => void;
+  onScheduleNext?: (apt: PhorestAppointment, interval?: RebookInterval) => void;
   rebookCompleted?: boolean;
 }
 
@@ -449,7 +449,12 @@ export function CheckoutSummarySheet({
         reasonNotes: notes,
         locationId: locationId ?? null,
         clientId: (appointment as any).client_id ?? appointment.phorest_client_id ?? null,
-        staffId: (appointment as any).staff_user_id ?? null,
+        // Wave 21.1 — resolve staff via the canonical PhorestAppointment field
+        // (stylist_user_id), with stylist_profile fallback for safety.
+        staffId:
+          appointment.stylist_user_id ??
+          (appointment.stylist_profile as any)?.id ??
+          null,
       });
     } catch (e) {
       console.error('Failed to log decline reason', e);
@@ -471,8 +476,18 @@ export function CheckoutSummarySheet({
     }
   };
 
+  // Wave 21.1 — Intercept close attempts during the rebook gate.
+  // Force decline-reason capture before allowing dismissal (structural enforcement).
+  const handleOpenChange = (next: boolean) => {
+    if (!next && open && gatePhase === 'gate' && !rebooked && appointment) {
+      setDeclineDialogOpen(true);
+      return;
+    }
+    onOpenChange(next);
+  };
+
   return (
-    <PremiumFloatingPanel open={open} onOpenChange={onOpenChange} maxWidth="560px">
+    <PremiumFloatingPanel open={open} onOpenChange={handleOpenChange} maxWidth="560px">
       <div className="p-5 pb-3 border-b border-border/40">
         <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
@@ -692,9 +707,15 @@ export function CheckoutSummarySheet({
                     serviceCategory={appointment.service_category}
                     appointmentDate={appointment.appointment_date}
                     onBookInterval={(interval: RebookInterval) => {
-                      // Trigger the schedule-next flow with pre-filled date
+                      // Wave 21.1 — pass chosen interval upward so the booking
+                      // popover can pre-select the date. Optimistically advance
+                      // gate → checkout so staff aren't stuck if the parent
+                      // schedule flow is cancelled (rebookCompleted prop will
+                      // confirm the boolean asynchronously when booking lands).
                       if (onScheduleNext && appointment) {
-                        onScheduleNext(appointment);
+                        onScheduleNext(appointment, interval);
+                        setRebooked(true);
+                        setGatePhase('checkout');
                       }
                     }}
                     onScheduleManually={handleScheduleNextClick}
