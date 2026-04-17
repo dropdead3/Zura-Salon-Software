@@ -751,6 +751,7 @@ export function CheckoutSummarySheet({
                 staffId: appointment.stylist_user_id ?? null,
                 unitPrice,
                 quantity: 1,
+                discount: null,
                 isOriginal: false,
                 priceSource,
               });
