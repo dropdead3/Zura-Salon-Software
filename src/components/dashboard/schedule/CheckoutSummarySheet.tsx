@@ -729,6 +729,7 @@ export function CheckoutSummarySheet({
 
           {/* Tip Selection - Only shown in checkout phase (gate-phase rebook card moved to top) */}
           {gatePhase === 'checkout' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Separator />
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
