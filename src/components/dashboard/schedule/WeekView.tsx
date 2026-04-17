@@ -438,7 +438,15 @@ export function WeekView({
                       dayIsToday && 'bg-primary/10',
                       dayHoursInfo.isClosed && 'bg-muted/40'
                     )}
-                    onDoubleClick={() => onDayDoubleClick?.(day)}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onDayDoubleClick?.(day)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onDayDoubleClick?.(day);
+                      }
+                    }}
                   >
                     <div className={cn(
                       'text-[10px] font-display uppercase tracking-wider font-medium',
