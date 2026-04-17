@@ -95,6 +95,11 @@ export function ColorBarEntitlementsTab() {
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
   const [showBackfillDialog, setShowBackfillDialog] = useState(false);
   const [backfilling, setBackfilling] = useState(false);
+  const [reactivationTarget, setReactivationTarget] = useState<{
+    org: OrgWithColorBar;
+    suspendedAt: string | null;
+    locationNames: string[];
+  } | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch all orgs with their color bar flag
