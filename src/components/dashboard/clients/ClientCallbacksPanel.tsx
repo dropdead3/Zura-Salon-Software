@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 interface ClientCallbacksPanelProps {
@@ -40,6 +41,8 @@ export function ClientCallbacksPanel({
   const [draftDate, setDraftDate] = useState('');
   const [useCustomDate, setUseCustomDate] = useState(false);
   const [showPast, setShowPast] = useState(false);
+  const [hearingId, setHearingId] = useState<string | null>(null);
+  const [outcomeNote, setOutcomeNote] = useState('');
 
   if (!clientId || !organizationId) return null;
 
@@ -57,6 +60,16 @@ export function ClientCallbacksPanel({
     setDraftDate('');
     setUseCustomDate(false);
     setAdding(false);
+  };
+
+  const handleHeard = async (id: string) => {
+    await ack.mutateAsync({
+      id,
+      client_id: clientId,
+      outcome_note: outcomeNote.trim() || undefined,
+    });
+    setHearingId(null);
+    setOutcomeNote('');
   };
 
   const wrapperCls = compact
@@ -115,16 +128,79 @@ export function ClientCallbacksPanel({
                 </p>
               </div>
               <div className="flex gap-1 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => ack.mutate({ id: cb.id, client_id: clientId })}
-                  className="h-7 text-xs"
-                  title="Mark heard"
+                <Popover
+                  open={hearingId === cb.id}
+                  onOpenChange={(open) => {
+                    if (open) {
+                      setHearingId(cb.id);
+                      setOutcomeNote('');
+                    } else {
+                      setHearingId(null);
+                      setOutcomeNote('');
+                    }
+                  }}
                 >
-                  <Check className="w-3 h-3 mr-1" />
-                  Heard
-                </Button>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      title="Mark heard"
+                    >
+                      <Check className="w-3 h-3 mr-1" />
+                      Heard
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="top"
+                    align="end"
+                    className="w-72 p-3 space-y-2"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-xs font-display tracking-wide uppercase text-muted-foreground">
+                        How did it go?
+                      </p>
+                      <p className="text-[11px] text-muted-foreground italic">
+                        Optional — capture the moment so it shows up later.
+                      </p>
+                    </div>
+                    <Input
+                      value={outcomeNote}
+                      onChange={(e) => setOutcomeNote(e.target.value)}
+                      placeholder="e.g. Loved Italy — going back next year"
+                      className="h-8 text-xs"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleHeard(cb.id);
+                        if (e.key === 'Escape') {
+                          setHearingId(null);
+                          setOutcomeNote('');
+                        }
+                      }}
+                    />
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setHearingId(null);
+                          setOutcomeNote('');
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleHeard(cb.id)}
+                        disabled={ack.isPending}
+                        className="h-7 text-xs"
+                      >
+                        Mark heard
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <button
                   onClick={() => remove.mutate({ id: cb.id, client_id: clientId })}
                   className="text-xs text-muted-foreground hover:text-foreground px-1"
@@ -227,6 +303,9 @@ export function ClientCallbacksPanel({
                       <span className="ml-2 opacity-60">
                         {format(parseISO(cb.acknowledged_at), 'MMM d, yyyy')}
                       </span>
+                    )}
+                    {cb.outcome_note && (
+                      <p className="mt-0.5 not-italic opacity-80">{cb.outcome_note}</p>
                     )}
                   </div>
                 </li>

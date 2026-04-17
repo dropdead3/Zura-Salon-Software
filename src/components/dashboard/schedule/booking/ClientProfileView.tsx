@@ -23,8 +23,7 @@ import { VisitHistoryTimeline } from '@/components/dashboard/VisitHistoryTimelin
 import { ClientNotesSection } from '@/components/dashboard/ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { ClientAffinityBadges } from '@/components/dashboard/clients/ClientAffinityBadges';
-import { ClientAboutCard } from '@/components/dashboard/clients/ClientAboutCard';
-import { ClientCallbacksPanel } from '@/components/dashboard/clients/ClientCallbacksPanel';
+import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface ExtendedPhorestClient {
@@ -128,19 +127,12 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
         <ClientAffinityBadges phorestClientId={client.phorest_client_id} compact />
       </div>
 
-      {/* Hospitality: callbacks + about */}
-      <div className="px-4 py-3 border-b border-border space-y-3">
-        <ClientCallbacksPanel
+      {/* Hospitality Memory Layer — collapses to single CTA when empty */}
+      <div className="px-4 py-3 border-b border-border">
+        <HospitalityBlock
           organizationId={organizationId}
-          clientId={client.phorest_client_id}
-          clientFirstName={clientFirstName}
-          hidePast
-          compact
-        />
-        <ClientAboutCard
-          organizationId={organizationId}
-          clientId={client.phorest_client_id}
-          clientFirstName={clientFirstName}
+          phorestClientId={client.phorest_client_id}
+          firstName={clientFirstName}
           compact
         />
       </div>

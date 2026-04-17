@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { LocationTimezoneProvider } from '@/contexts/LocationTimezoneContext';
+import { CallbackLookupProvider } from '@/contexts/CallbackLookupContext';
 import { useLocationTimezone } from '@/hooks/useLocationTimezone';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
@@ -968,6 +969,7 @@ export default function Schedule() {
 
   return (
     <LocationTimezoneProvider timezone={locationTimezone}>
+    <CallbackLookupProvider orgId={orgId}>
     <DashboardLayout hideFooter>
       <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
         {/* Header */}
@@ -1318,6 +1320,7 @@ export default function Schedule() {
         }}
       />
     </DashboardLayout>
+    </CallbackLookupProvider>
     </LocationTimezoneProvider>
   );
 }

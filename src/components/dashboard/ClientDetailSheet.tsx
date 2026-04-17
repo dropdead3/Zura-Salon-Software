@@ -57,8 +57,6 @@ import { VisitHistoryTimeline } from './VisitHistoryTimeline';
 import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { ClientNotesSection } from './ClientNotesSection';
-import { ClientAboutCard } from './clients/ClientAboutCard';
-import { ClientCallbacksPanel } from './clients/ClientCallbacksPanel';
 import { HospitalityBlock } from './clients/HospitalityBlock';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { TransformationTimeline } from './clients/TransformationTimeline';
