@@ -56,7 +56,10 @@ export function useUnreadAnnouncements() {
       return unreadAnnouncementCount + (unreadNotificationCount || 0);
     },
     enabled: !!user?.id,
-    staleTime: 30000,
+    // Wave 17 (high-concurrency-scalability): bumped 30s → 60s. Realtime subscription
+    // below already invalidates on changes, so polling cadence can be relaxed.
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
 
   // Realtime subscription replaces polling

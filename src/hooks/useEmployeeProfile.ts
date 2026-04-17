@@ -30,6 +30,10 @@ export function useEmployeeProfile() {
       return data as unknown as EmployeeProfile | null;
     },
     enabled: !!effectiveUserId,
+    // Wave 17 (high-concurrency-scalability): cache 5m so dashboard route navigation
+    // doesn't refire this on every mount. Layout hook — fires on every page.
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 }
 
@@ -82,6 +86,10 @@ export function useTeamDirectory(locationFilter?: string, options?: { includeTes
     queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts, roles.join(','), orgId],
     // Don't run query until auth is loaded AND roles are available (when needed for test accounts)
     enabled: !authLoading && !(options?.includeTestAccounts && roles.length === 0),
+    // Wave 17 (high-concurrency-scalability): cache 5m — roster + roles + schedules
+    // are pulled by the topbar avatar list on every dashboard route mount.
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
     queryFn: async () => {
       let query = supabase
         .from('employee_profiles')
