@@ -16,6 +16,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useDockDemo } from '@/contexts/DockDemoContext';
 import { DockMyStatsPanel } from './DockMyStatsPanel';
 import { DockTeamCompliancePanel } from './DockTeamCompliancePanel';
+import { InventoryReconciliationBanner } from '@/components/dashboard/color-bar/InventoryReconciliationBanner';
 
 interface DockSettingsTabProps {
   staff: DockStaffSession;
@@ -79,6 +80,9 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+      {/* Inventory reconciliation banner — shown only when this station's location is flagged */}
+      <InventoryReconciliationBanner locationId={staff.locationId} />
+
       {/* Staff profile card */}
       <div className="flex items-center gap-4 p-4 rounded-2xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)]">
         <div className="w-12 h-12 rounded-full bg-violet-600/20 flex items-center justify-center">

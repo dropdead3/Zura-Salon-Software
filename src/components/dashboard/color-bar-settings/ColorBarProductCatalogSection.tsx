@@ -61,6 +61,7 @@ import {
   type SupplyLibraryItem,
 } from '@/data/professional-supply-library';
 import { useSupplyLibraryItemsByBrand } from '@/hooks/platform/useSupplyLibrary';
+import { InventoryReconciliationBanner } from '@/components/dashboard/color-bar/InventoryReconciliationBanner';
 
 /* ====== Inline Edit Cell ====== */
 function InlineEditCell({
@@ -783,6 +784,8 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
   return (
     <div className="space-y-4">
       <PageExplainer pageId="color-bar-products" />
+
+      <InventoryReconciliationBanner locationId={effectiveLocationId} />
 
       <Card>
         <CardHeader>
