@@ -647,15 +647,24 @@ export function QuickBookingPopover({
     enabled: open && !!selectedLocation,
   });
 
-  // Fetch ALL stylists across all locations (stylist-first mode)
+  // Fetch stylists for stylist-first mode.
+  // Scope to current calendar location when one is active so the picker matches
+  // what the user is already viewing. When no location is selected (rare — "All
+  // Locations" or pre-seed), fall back to the org-wide roster.
   const { data: allStylists = [] } = useQuery({
-    queryKey: ['booking-stylists-all-v2'],
+    queryKey: ['booking-stylists-all-v2', selectedLocation || 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('v_calendar_stylists' as any)
         .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true);
+
+      if (selectedLocation) {
+        q = q.eq('location_id', selectedLocation);
+      }
+
+      const { data, error } = await q;
 
       if (error) {
         console.error('[QuickBookingPopover] Failed to load all stylists:', error);
@@ -1994,7 +2003,11 @@ export function QuickBookingPopover({
               )}
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider">
-                  {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
+                  {stylistFirstMode
+                    ? (selectedLocation
+                        ? `Stylists at ${(locations.find(l => l.id === selectedLocation)?.name) || 'this location'}`
+                        : 'All Stylists')
+                    : 'Available Stylists'}
                   {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
                     <span className="text-xs font-normal text-muted-foreground ml-2">
                       ({filteredStylists.length} qualified)
@@ -2019,6 +2032,16 @@ export function QuickBookingPopover({
                 </Select>
               </div>
               <div className="flex flex-col gap-3">
+                {stylistFirstMode && uniqueAllStylists.length === 0 && selectedLocation && (
+                  <div className="text-center py-8 px-4 rounded-xl bg-muted/30 border border-border">
+                    <p className="text-sm text-foreground font-medium">
+                      No stylists assigned to {(locations.find(l => l.id === selectedLocation)?.name) || 'this location'}.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Add one in Operations Hub → Team.
+                    </p>
+                  </div>
+                )}
                 {(() => {
                   const baseList = stylistFirstMode ? uniqueAllStylists : filteredStylists;
                   const computePrice = (s: any) => {
