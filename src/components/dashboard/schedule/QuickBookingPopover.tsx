@@ -2003,7 +2003,11 @@ export function QuickBookingPopover({
               )}
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider">
-                  {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
+                  {stylistFirstMode
+                    ? (selectedLocation
+                        ? `Stylists at ${(locations.find(l => l.id === selectedLocation)?.name) || 'this location'}`
+                        : 'All Stylists')
+                    : 'Available Stylists'}
                   {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
                     <span className="text-xs font-normal text-muted-foreground ml-2">
                       ({filteredStylists.length} qualified)
