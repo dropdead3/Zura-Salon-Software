@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, ArrowUpRight, AlertCircle, X } from "lucide-react";
 import { captureWebsiteLead } from "@/lib/leadCapture";
+import { InspirationPhotoUploader } from "@/components/InspirationPhotoUploader";
 
 interface ConsultationFormDialogProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface ConsultationFormDialogProps {
 export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inspirationFiles, setInspirationFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -52,6 +54,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
       stylist: formData.stylist,
       referralSource: formData.referralSource,
       message: formData.message,
+      inspirationFiles,
     });
 
     if (result.success) {
@@ -78,6 +81,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
       referralSource: "",
       message: "",
     });
+    setInspirationFiles([]);
     setIsSubmitting(false);
     onOpenChange(false);
   };
@@ -361,6 +365,9 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
               placeholder="What are you looking to achieve?"
             />
           </div>
+
+          <InspirationPhotoUploader files={inspirationFiles} onChange={setInspirationFiles} />
+
 
           <button
             type="submit"

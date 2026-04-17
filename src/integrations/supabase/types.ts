@@ -9787,6 +9787,50 @@ export type Database = {
           },
         ]
       }
+      inquiry_inspiration_photos: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size_bytes: number | null
+          id: string
+          inquiry_id: string
+          mime_type: string | null
+          uploaded_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size_bytes?: number | null
+          id?: string
+          inquiry_id: string
+          mime_type?: string | null
+          uploaded_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size_bytes?: number | null
+          id?: string
+          inquiry_id?: string
+          mime_type?: string | null
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_inspiration_photos_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "salon_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_alert_settings: {
         Row: {
           alert_channels: string[]
@@ -19993,6 +20037,8 @@ export type Database = {
           email: string | null
           first_service_revenue: number | null
           id: string
+          match_confidence: string | null
+          match_method: string | null
           message: string | null
           name: string
           phone: string | null
@@ -20019,6 +20065,8 @@ export type Database = {
           email?: string | null
           first_service_revenue?: number | null
           id?: string
+          match_confidence?: string | null
+          match_method?: string | null
           message?: string | null
           name: string
           phone?: string | null
@@ -20045,6 +20093,8 @@ export type Database = {
           email?: string | null
           first_service_revenue?: number | null
           id?: string
+          match_confidence?: string | null
+          match_method?: string | null
           message?: string | null
           name?: string
           phone?: string | null
@@ -28669,6 +28719,14 @@ export type Database = {
         Returns: {
           error_message: string
           success: boolean
+        }[]
+      }
+      resolve_inquiry_identity: {
+        Args: { p_inquiry_id: string }
+        Returns: {
+          match_confidence: string
+          match_method: string
+          matched_phorest_client_id: string
         }[]
       }
       revert_price_recommendation: {

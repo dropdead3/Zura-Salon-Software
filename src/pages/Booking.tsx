@@ -7,6 +7,7 @@ import { formatPhoneNumber } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Clock, Mail, Phone, ArrowUpRight, ChevronDown, AlertCircle } from "lucide-react";
 import { captureWebsiteLead } from "@/lib/leadCapture";
+import { InspirationPhotoUploader } from "@/components/InspirationPhotoUploader";
 import { useActiveLocations, formatHoursForDisplay, getClosedDays } from "@/hooks/useLocations";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 
@@ -15,6 +16,7 @@ export default function Booking() {
   const { data: dbLocations = [] } = useActiveLocations();
   const { data: businessSettings } = useBusinessSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inspirationFiles, setInspirationFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -53,6 +55,7 @@ export default function Booking() {
       stylist: formData.stylist,
       referralSource: formData.referralSource,
       message: formData.message,
+      inspirationFiles,
     });
 
     if (result.success) {
@@ -78,6 +81,7 @@ export default function Booking() {
       referralSource: "",
       message: "",
     });
+    setInspirationFiles([]);
     setIsSubmitting(false);
   };
 
@@ -387,6 +391,8 @@ export default function Booking() {
                   placeholder="Tell us about your hair goals..."
                 />
               </div>
+
+              <InspirationPhotoUploader files={inspirationFiles} onChange={setInspirationFiles} />
 
               <button
                 type="submit"
