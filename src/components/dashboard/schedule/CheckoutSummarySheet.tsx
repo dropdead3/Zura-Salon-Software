@@ -1155,12 +1155,42 @@ export function CheckoutSummarySheet({
 
       {gatePhase === 'checkout' && (
         <div className="p-5 pt-0 space-y-3 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          {/* Wave 22.1 — Connect status advisory */}
+          {locationId && !stripeConnectActive && (
+            <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600" />
+                <div className="flex-1 space-y-2">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Card payments unavailable for this location
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Stripe Connect onboarding is incomplete. Cash and Other are still available; complete onboarding to accept card-present and Send-to-Pay charges.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => {
+                      window.open('/dashboard/admin/settings?category=terminals', '_blank');
+                    }}
+                  >
+                    Complete Setup
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Payment Method Selector */}
           <div className="space-y-2 pt-2">
             <Label className="text-xs text-muted-foreground">Payment Method</Label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { value: 'card_reader' as const, label: 'Card', icon: CreditCard, disabled: !hasReaders },
+                { value: 'card_reader' as const, label: 'Card', icon: CreditCard, disabled: !hasReaders || !stripeConnectActive },
                 { value: 'cash' as const, label: 'Cash', icon: Banknote, disabled: false },
                 { value: 'other' as const, label: 'Other', icon: Wallet, disabled: false },
               ].map((m) => (
