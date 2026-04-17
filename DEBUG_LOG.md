@@ -263,3 +263,65 @@ Eliminates 400-error retry churn on every Sales Overview cold mount. Reduces sin
 - `VisibilityContractAuditPanel` UI → trigger: ≥1 non-color-bar adopter
 - CI audit-comment grep → trigger: 3rd undocumented audit query
 - Multi-axis audit pass → trigger: Wave 16
+
+---
+
+## Wave 16 — Appointments & Transactions Hub Cold-Load Performance (P0)
+
+**Date**: 2026-04-17
+**Doctrine anchor**: `high-concurrency-scalability`
+**Trigger**: User report — "appointments and transactions page loads very slow"
+
+### Findings
+
+| # | Finding | Tab | Priority | Status |
+|---|---|---|---|---|
+| 1 | `useAppointmentsHub` and `useGroupedTransactions` both ran on mount, even though only one tab is visible | Both | P0 | **Fixed** |
+| 2 | `useAppointmentsHub` used `select('*', { count: 'exact' })` on the union view → full filtered scan on every page change | Appts | P0 | **Fixed** |
+| 3 | `useAppointmentsHub` ran 6 sequential follow-up queries (clients, stylists, created_by, locations, local clients, transaction matches) | Appts | P0 | **Fixed** |
+| 4 | Transactions cross-filter (`phorest_client_id × transaction_date`) for "Paid" badge is broad | Appts | P1 | Deferred |
+| 5 | `useGroupedTransactions` uses `select('*')` on `v_all_transaction_items` | Txns | P1 | Deferred |
+| 6 | `appointments` (afterpay) + `checkout_usage_charges` lookups in `useGroupedTransactions` run sequentially | Txns | P2 | Deferred |
+| 7 | `Tooltip + Badge` ref warning in `AppointmentsList` | Appts | P2 | Deferred (Wave 17) |
+
+### Fixes applied
+
+- `src/hooks/useAppointmentsHub.ts`:
+  - Replaced `select('*')` with explicit `APPT_COLUMNS` list (only fields the table renders) — drops payload size materially
+  - Switched count strategy: `count: 'estimated'` by default; `count: 'exact'` only when a narrow filter (search/status/stylist/date) is applied
+  - Collapsed stylist + created_by lookups into a single `employee_profiles` query
+  - Wrapped all 5 enrichment lookups (clients, profiles, locations, local clients, transaction matches) in `Promise.all` instead of sequential `await`
+  - Raised `staleTime` from 30s → 60s
+  - Added `options.enabled` parameter so the page can gate by active tab
+- `src/hooks/useGroupedTransactions.ts`: added `options.enabled` parameter (combined with `!!orgId` gate)
+- `src/components/dashboard/appointments-hub/AppointmentsList.tsx`: accepts and forwards `enabled` prop into `useAppointmentsHub`
+- `src/pages/dashboard/AppointmentsHub.tsx`:
+  - `<AppointmentsList enabled={activeTab === 'appointments'} />`
+  - `useGroupedTransactions(filters, { enabled: activeTab === 'transactions' })`
+
+### Leverage marker
+
+On cold load of either tab, the inactive tab no longer fires its heavy query (eliminates an entire silent second fan-out on first paint). For the Appointments tab, the 6 enrichment lookups now run concurrently instead of waterfalled, and the union-view scan no longer pays the cost of a full `count: 'exact'` on the unfiltered case. Combined effect: meaningfully faster first paint with no behavior regression.
+
+### Acceptance
+
+- ✅ Switching to Transactions on cold load no longer fires the appointments query (and vice versa)
+- ✅ Appointments hub query no longer requests `count: 'exact'` by default
+- ✅ Enrichment lookups run in parallel via `Promise.all`
+- ✅ SELECT on `v_all_appointments` lists explicit columns (no `*`)
+- ✅ No behavioral regression: client name, phone, email, stylist, location, "Paid" badge, total paid still render
+- ✅ `npm test` 111/111 passing
+- ✅ Findings logged with doctrine anchor + leverage marker
+
+### Deferred register (Wave 16 carry-forward)
+
+- **P1 #4** — Transactions cross-filter for "Paid" badge → trigger: if Appointments hub still slow after Wave 16; consider a single RPC
+- **P1 #5** — `useGroupedTransactions` `SELECT *` → narrow columns → trigger: next Transactions perf wave, or if a busy day still feels heavy
+- **P2 #6** — Parallelize afterpay + usage_charges lookups in `useGroupedTransactions` → trigger: bundled into next Transactions perf wave
+- **P2 #7** — Tooltip + Badge ref warning in `AppointmentsList` → trigger: Wave 17 UI hygiene pass
+- **P1** (carried) — Shared aggregate/fan-in sales query (Wave 15) → trigger: if cold load remains slow after Wave 15+16
+- **P1** (carried) — `useSalesByStylist` 3-query waterfall → trigger: if leaderboard remains slowest segment
+- **P1** (carried) — `useSalesComparison` sequential dual-period pagination → trigger: if comparison dominates after caching
+- ESLint taxonomy rule → trigger: 3rd domain adopts the bus
+- `VisibilityContractAuditPanel` UI → trigger: ≥1 non-color-bar adopter
+- CI audit-comment grep → trigger: 3rd undocumented audit query

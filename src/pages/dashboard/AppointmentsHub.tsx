@@ -70,7 +70,9 @@ export default function AppointmentsHub() {
     clientSearch: debouncedSearch || undefined,
   };
 
-  const { data: transactions = [], isLoading: txnLoading, refetch } = useGroupedTransactions(filters);
+  const { data: transactions = [], isLoading: txnLoading, refetch } = useGroupedTransactions(filters, {
+    enabled: activeTab === 'transactions',
+  });
   const { formatCurrency } = useFormatCurrency();
 
   const handleSelectTransaction = (txn: GroupedTransaction) => {
@@ -136,7 +138,7 @@ export default function AppointmentsHub() {
 
           {/* ── Appointments Tab ── */}
           <TabsContent value="appointments">
-            <AppointmentsList search={search} onSearchChange={setSearch} />
+            <AppointmentsList search={search} onSearchChange={setSearch} enabled={activeTab === 'appointments'} />
           </TabsContent>
 
           {/* ── Transactions Tab ── */}
