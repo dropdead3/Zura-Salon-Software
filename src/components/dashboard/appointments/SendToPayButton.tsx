@@ -16,6 +16,8 @@ interface SendToPayButtonProps {
   clientName?: string | null;
   clientEmail?: string | null;
   clientPhone?: string | null;
+  /** Phorest client id — enables inline email capture for Afterpay flow */
+  phorestClientId?: string | null;
   afterpayEnabled: boolean;
   afterpaySurchargeEnabled?: boolean;
   afterpaySurchargeRate?: number;
@@ -31,6 +33,7 @@ export function SendToPayButton({
   clientName,
   clientEmail,
   clientPhone,
+  phorestClientId,
   afterpayEnabled,
   afterpaySurchargeEnabled,
   afterpaySurchargeRate,
