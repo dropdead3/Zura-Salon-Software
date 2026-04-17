@@ -190,7 +190,6 @@ export function useRevenueByCategoryDrilldown({
 
       return result;
     },
-    enabled: enabled && !!dateFrom && !!dateTo,
     staleTime: 5 * 60 * 1000,
   });
 }
