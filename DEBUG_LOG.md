@@ -203,3 +203,63 @@ Cuts perceived load on dashboard remount, tab switch, and date-range toggles wit
 - `VisibilityContractAuditPanel` UI → trigger: ≥1 non-color-bar adopter
 - CI audit-comment grep → trigger: 3rd undocumented audit query
 - Multi-axis audit pass → trigger: Wave 15
+
+---
+
+## Wave 15 — Sales Overview Cold-Load Performance (P0)
+
+**Doctrine anchor:** `high-concurrency-scalability` + `analytics-intelligence-and-data-integrity-standards`
+
+### Findings (ranked)
+
+| # | Finding | Priority | Status |
+|---|---|---|---|
+| 1 | Multiple Sales hooks selected non-existent `staff_user_id` from `v_all_appointments` → 400 errors + retry churn on every cold load | P0 | **Fixed** |
+| 2 | `AggregateSalesCard` did not pass `filterContext.locationId` to `useSalesMetrics`, `useSalesTrend`, `useSalesComparison` → single-location dashboards scanned org-wide | P0 | **Fixed** |
+| 3 | Heavyweight queries (`useTipsDrilldown`, `useRevenueByCategoryDrilldown`, `useRetailBreakdown`) ran on mount before user interaction | P0 | **Fixed** (now gated on expansion) |
+| 4 | `useLiveSessionSnapshot` and `useTomorrowRevenue` ran on every range, but only consumed for `today` view | P1 | **Fixed** (gated to today) |
+| 5 | Cold load still fans out repeated POS scans (no shared aggregate query) | P1 | Deferred — trigger: if cold load remains slow after this pass |
+
+### Fixes applied
+
+- `src/hooks/useSalesData.ts`:
+  - `useSalesMetrics`: replaced `staff_user_id` select on `v_all_appointments` with `stylist_user_id, phorest_staff_id`
+  - `useSalesByPhorestStaff`: replaced `staff_user_id` with `phorest_staff_id, stylist_user_id`
+- `src/hooks/useTipsDrilldown.ts`: replaced `staff_user_id` with `phorest_staff_id`; added `enabled` flag
+- `src/hooks/useGoalPeriodRevenue.ts`: added `enabled` parameter (default `true` preserves callers)
+- `src/hooks/useLiveSessionSnapshot.ts`: added `enabled` parameter
+- `src/hooks/useTomorrowRevenue.ts`: added `enabled` parameter + 5m staleTime
+- `src/hooks/useRevenueByCategoryDrilldown.ts`: removed duplicate `enabled` key
+- `src/components/dashboard/AggregateSalesCard.tsx`:
+  - `useSalesMetrics({ ...dateFilters, locationId: filterContext?.locationId })`
+  - `useSalesTrend(..., filterContext?.locationId)`
+  - `useSalesComparison(..., filterContext?.locationId)`
+  - `useTipsDrilldown(..., enabled: tipsCardExpanded)`
+  - `useRevenueByCategoryDrilldown(..., enabled: servicesExpanded)`
+  - `useRetailBreakdown(..., retailExpanded, ...)` (was hard-coded `true`)
+  - `useTomorrowRevenue(..., isTodayRange)`
+  - `useLiveSessionSnapshot(..., isToday)`
+
+### Leverage marker
+
+Eliminates 400-error retry churn on every Sales Overview cold mount. Reduces single-location dashboard query volume by scoping metrics/trend/comparison to one location instead of org-wide. Defers ~5 heavyweight scans (tips, service categories, retail breakdown, live session, tomorrow revenue) until the user actually opens those sections or is on `today` view.
+
+### Acceptance
+
+- ✅ TypeScript build clean
+- ✅ `npm test` 111/111 passing
+- ✅ All Sales Overview `staff_user_id`-on-`v_all_appointments` selects removed
+- ✅ Single-location dashboards now scope all 3 core hooks
+- ✅ Collapsed sections do not fetch heavy data on mount
+
+### Deferred register (carried forward)
+
+- P1 #5 — Shared aggregate/fan-in sales query to replace repeated POS scans → trigger: if cold load is still slow after Wave 15
+- P1 — `useSalesByStylist` 3-query waterfall (mappings → names → photos) → trigger: Wave 16 OR if leaderboard remains slowest segment
+- P1 — `useSalesComparison` sequential dual-period pagination → trigger: Wave 16 OR if comparison dominates after caching
+- P2 — Dedup `useSalesByLocation` vs `useSalesMetrics` → trigger: 3rd duplicate scan identified
+- P1 — Tooltip ref warning in `DayView` / `SupplyLibraryTab.tsx:94` → trigger: next color-bar work
+- ESLint taxonomy rule → trigger: 3rd domain adopts the bus
+- `VisibilityContractAuditPanel` UI → trigger: ≥1 non-color-bar adopter
+- CI audit-comment grep → trigger: 3rd undocumented audit query
+- Multi-axis audit pass → trigger: Wave 16
