@@ -666,6 +666,7 @@ export function AppointmentCardContent({
         showClientPhone={showClientPhone}
         showClientAvatar={showClientAvatar}
         useShortLabels={useShortLabels}
+        declinedReasonLabel={declinedReasonLabel}
       />
     </div>
   );
