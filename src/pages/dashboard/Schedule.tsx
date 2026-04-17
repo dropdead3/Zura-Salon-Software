@@ -124,20 +124,8 @@ export default function Schedule() {
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Week view day-column width: 'auto' (fit) or pixel number. Persisted to localStorage.
-  const [weekDayWidth, setWeekDayWidth] = useState<'auto' | number>(() => {
-    if (typeof window === 'undefined') return 'auto';
-    const stored = window.localStorage.getItem('schedule.weekDayWidth');
-    if (!stored || stored === 'auto') return 'auto';
-    const n = parseInt(stored, 10);
-    if (!Number.isFinite(n)) return 'auto';
-    // Clamp to valid range: floor 200px, ceiling 900px.
-    return Math.min(900, Math.max(200, n));
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('schedule.weekDayWidth', weekDayWidth === 'auto' ? 'auto' : String(weekDayWidth));
-  }, [weekDayWidth]);
+  // Week view: single selected stylist (persisted per location).
+  const [selectedWeekStylistId, setSelectedWeekStylistId] = useState<string | null>(null);
   const locationTimezone = useLocationTimezone(selectedLocation || null);
 
   // Fetch assistant time blocks for the current date/location
