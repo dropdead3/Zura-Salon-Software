@@ -2440,19 +2440,29 @@ export function AppointmentDetailSheet({
 
                   {/* ─── TAB: Photos ──────────────────────────── */}
                   <TabsContent value="photos" className="p-6 pt-4 mt-0">
-                    {appointment.phorest_client_id ? (
+                    {resolvedClientId ? (
                       <>
-                        <InspirationPhotosSection clientId={appointment.phorest_client_id} />
+                        <InspirationPhotosSection clientId={resolvedClientId} />
                         <TransformationTimeline
-                          clientId={appointment.phorest_client_id}
-                          phorestClientId={appointment.phorest_client_id}
+                          clientId={resolvedClientId}
+                          phorestClientId={resolvedClientId}
                         />
                       </>
+                    ) : appointment.client_name ? (
+                      <div className={tokens.empty.container}>
+                        <Camera className={tokens.empty.icon} />
+                        <h3 className={tokens.empty.heading}>{appointment.client_name} isn't in your client list yet</h3>
+                        <p className={tokens.empty.description}>
+                          Add {appointment.client_name.split(' ')[0]} as a client to start tracking transformation photos.
+                        </p>
+                      </div>
                     ) : (
                       <div className={tokens.empty.container}>
                         <Camera className={tokens.empty.icon} />
-                        <h3 className={tokens.empty.heading}>No client linked</h3>
-                        <p className={tokens.empty.description}>Link a client to this appointment to add transformation photos.</p>
+                        <h3 className={tokens.empty.heading}>Walk-in appointment</h3>
+                        <p className={tokens.empty.description}>
+                          Add client details to this appointment to track transformation photos.
+                        </p>
                       </div>
                     )}
                   </TabsContent>
