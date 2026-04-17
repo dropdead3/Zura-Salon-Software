@@ -126,11 +126,13 @@ export function CheckoutSummarySheet({
   const { data: reviewSettings } = useReviewThresholdSettings();
   const orgName = useBusinessName();
 
-  type GatePhase = 'gate' | 'declining' | 'checkout';
+  type GatePhase = 'gate' | 'checkout';
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
+  const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState<string>('');
   const [declineOtherText, setDeclineOtherText] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('cash');
+  const logDeclineReason = useLogRebookDeclineReason();
 
   // Terminal reader + checkout flow
   const { activeReader, readers, selectedReaderId, selectReader, hasReaders, isLoading: readersLoading } =
@@ -140,6 +142,7 @@ export function CheckoutSummarySheet({
   useEffect(() => {
     if (open) {
       setGatePhase('gate');
+      setDeclineDialogOpen(false);
       setDeclineReason('');
       setDeclineOtherText('');
       setRebooked(false);
