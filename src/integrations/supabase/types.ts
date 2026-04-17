@@ -6124,6 +6124,47 @@ export type Database = {
           },
         ]
       }
+      color_bar_suspension_events: {
+        Row: {
+          actor_user_id: string | null
+          affected_location_count: number
+          created_at: string
+          event_type: Database["public"]["Enums"]["color_bar_suspension_event_type"]
+          id: string
+          notes: string | null
+          organization_id: string
+          reason: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          affected_location_count?: number
+          created_at?: string
+          event_type: Database["public"]["Enums"]["color_bar_suspension_event_type"]
+          id?: string
+          notes?: string | null
+          organization_id: string
+          reason?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          affected_location_count?: number
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["color_bar_suspension_event_type"]
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "color_bar_suspension_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       command_audit_log: {
         Row: {
           command_name: string
@@ -28850,6 +28891,7 @@ export type Database = {
       chat_channel_type: "public" | "private" | "dm" | "group_dm" | "location"
       chat_member_role: "owner" | "admin" | "member"
       chat_user_status_type: "available" | "busy" | "dnd" | "away"
+      color_bar_suspension_event_type: "suspended" | "reactivated"
       color_type: "permanent" | "demi_permanent" | "semi_permanent"
       container_type: "bowl" | "bottle"
       day_rate_booking_status:
@@ -29219,6 +29261,7 @@ export const Constants = {
       chat_channel_type: ["public", "private", "dm", "group_dm", "location"],
       chat_member_role: ["owner", "admin", "member"],
       chat_user_status_type: ["available", "busy", "dnd", "away"],
+      color_bar_suspension_event_type: ["suspended", "reactivated"],
       color_type: ["permanent", "demi_permanent", "semi_permanent"],
       container_type: ["bowl", "bottle"],
       day_rate_booking_status: [
