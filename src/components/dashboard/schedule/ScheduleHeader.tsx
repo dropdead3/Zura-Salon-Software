@@ -298,13 +298,13 @@ export function ScheduleHeader({
                   <div className="hidden @md/schedhdr:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--sidebar-accent))]">
                     <StretchHorizontal className="h-3.5 w-3.5 text-[hsl(var(--sidebar-foreground))]/70 shrink-0" />
                     <Slider
-                      value={[weekDayWidth === 'auto' ? 100 : weekDayWidth]}
-                      min={100}
+                      value={[weekDayWidth === 'auto' ? 200 : weekDayWidth]}
+                      min={200}
                       max={400}
                       step={20}
                       onValueChange={([v]) => {
-                        // 100 = 'auto' (Fit). >100 = fixed pixel width.
-                        onWeekDayWidthChange(v <= 100 ? 'auto' : v);
+                        // 200 = 'auto' (Fit). >200 = fixed pixel width.
+                        onWeekDayWidthChange(v <= 200 ? 'auto' : v);
                       }}
                       className="w-[88px] @lg/schedhdr:w-[120px]"
                     />
