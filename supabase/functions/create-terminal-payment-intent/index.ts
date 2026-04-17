@@ -25,6 +25,13 @@ const CreatePaymentIntentSchema = z.object({
   appointment_id: z.string().uuid().optional(),
   description: z.string().max(500).optional(),
   metadata: z.record(z.string()).optional(),
+  /**
+   * When true, configure the PaymentIntent so the S710 reader prompts the
+   * client for a tip on-device (Stripe-native tipping). The supplied
+   * `amount` should be the pre-tip subtotal in cents — the reader UI
+   * computes percentages off `amount_eligible`.
+   */
+  collect_tip_on_reader: z.boolean().optional().default(false),
 });
 
 /**
