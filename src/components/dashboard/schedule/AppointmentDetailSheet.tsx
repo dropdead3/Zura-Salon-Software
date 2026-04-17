@@ -1503,7 +1503,7 @@ export function AppointmentDetailSheet({
                 </div>
               )}
 
-              {/* ─── Quick Actions Row (Wave 22.6: Rebook + SendPay only — Call/Text moved into Client Contact row) ──────────────── */}
+              {/* ─── Quick Actions Row (SendPay only — Rebook moved to overflow menu, Call/Text in Client Contact row) ──────────────── */}
               {(() => {
                 const phone = appointment.client_phone?.trim();
                 const rawEmail = clientRecord?.email?.trim();
@@ -1511,48 +1511,32 @@ export function AppointmentDetailSheet({
                   ? /^(na|none|noemail|test|n\/a)@/i.test(rawEmail) || !/@.+\..+/.test(rawEmail)
                   : true;
                 const email = rawEmail && !isPlaceholderEmail ? rawEmail : null;
-                const showRebook = !!onRebook;
                 const showSendPay =
                   !!appointment.id &&
                   !!resolvedOrgId &&
                   appointment.total_price != null &&
                   appointment.total_price > 0;
 
-                if (!showRebook && !showSendPay) {
+                if (!showSendPay) {
                   return null;
                 }
-
-                const primaryBtn = "h-9 px-4 rounded-full font-sans text-xs";
 
                 return (
                   <div className="px-6 pb-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      {showRebook && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className={primaryBtn}
-                          onClick={() => onRebook!(appointment)}
-                        >
-                          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Rebook
-                        </Button>
-                      )}
-
-                      {showSendPay && (
-                        <SendToPayButton
-                          appointmentId={appointment.id}
-                          organizationId={resolvedOrgId!}
-                          totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
-                          serviceName={appointment.service_name}
-                          clientName={appointment.client_name}
-                          clientEmail={email}
-                          clientPhone={phone}
-                          afterpayEnabled={orgAfterpayEnabled}
-                          afterpaySurchargeEnabled={orgSurchargeEnabled}
-                          afterpaySurchargeRate={orgSurchargeRate}
-                          onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
-                        />
-                      )}
+                      <SendToPayButton
+                        appointmentId={appointment.id}
+                        organizationId={resolvedOrgId!}
+                        totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                        serviceName={appointment.service_name}
+                        clientName={appointment.client_name}
+                        clientEmail={email}
+                        clientPhone={phone}
+                        afterpayEnabled={orgAfterpayEnabled}
+                        afterpaySurchargeEnabled={orgSurchargeEnabled}
+                        afterpaySurchargeRate={orgSurchargeRate}
+                        onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                      />
                     </div>
                   </div>
                 );
