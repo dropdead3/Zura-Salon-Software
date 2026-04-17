@@ -524,6 +524,8 @@ export function ScheduleHeader({
                       selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' && !weekAutoActive;
                     const allWithApptsActive =
                       selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && !weekAutoActive;
+                    // Week view: single-select only — hide "All" / "With Appointments" rows.
+                    if (view === 'week') return null;
                     return (
                       <>
                         <button
@@ -555,7 +557,7 @@ export function ScheduleHeader({
                       </>
                     );
                   })()}
-                  <div className="h-px bg-border my-1" />
+                  {view !== 'week' && <div className="h-px bg-border my-1" />}
                   {[...stylists]
                     .sort((a, b) =>
                       formatFullDisplayName(a.full_name, a.display_name).localeCompare(
@@ -579,31 +581,55 @@ export function ScheduleHeader({
                           ? getLevelColor(levelIdx, activeLevels.length)
                           : null;
                       const util = s.utilization ?? 0;
+                      const isWeek = view === 'week';
+                      const isAutoResolved =
+                        isWeek && selectedStaffIds.length === 0 && weekViewStylistId === s.user_id;
+                      const isSelected =
+                        selectedStaffIds.includes(s.user_id) || isAutoResolved;
 
                       return (
                         <button
                           key={s.user_id}
-                          onClick={() => onStaffToggle(s.user_id)}
+                          onClick={() => {
+                            if (isWeek) {
+                              if (onStaffSelectOnly) {
+                                onStaffSelectOnly(s.user_id);
+                              } else {
+                                // Fallback: clear then add via toggle
+                                onStaffToggle('all');
+                                onStaffToggle(s.user_id);
+                              }
+                              setStaffPopoverOpen(false);
+                            } else {
+                              onStaffToggle(s.user_id);
+                            }
+                          }}
                           className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
                         >
-                          <Checkbox
-                            checked={
-                              selectedStaffIds.includes(s.user_id) ||
-                              (view === 'week' &&
-                                selectedStaffIds.length === 0 &&
-                                weekViewStylistId === s.user_id)
-                            }
-                            className="pointer-events-none"
-                          />
+                          {isWeek ? (
+                            <span
+                              className={cn(
+                                'h-4 w-4 rounded-full border border-primary flex items-center justify-center shrink-0',
+                                isSelected && 'bg-primary'
+                              )}
+                            >
+                              {isSelected && (
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+                              )}
+                            </span>
+                          ) : (
+                            <Checkbox
+                              checked={isSelected}
+                              className="pointer-events-none"
+                            />
+                          )}
                           <span className="flex-1 text-left truncate">
                             {formatFullDisplayName(s.full_name, s.display_name)}
-                            {view === 'week' &&
-                              selectedStaffIds.length === 0 &&
-                              weekViewStylistId === s.user_id && (
-                                <span className="ml-1.5 text-[10px] text-muted-foreground font-sans normal-case">
-                                  (week default)
-                                </span>
-                              )}
+                            {isAutoResolved && (
+                              <span className="ml-1.5 text-[10px] text-muted-foreground font-sans normal-case">
+                                (week default)
+                              </span>
+                            )}
                           </span>
                           {levelLabel && (
                             <span
