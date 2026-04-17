@@ -2,108 +2,92 @@
 
 ## Prompt review
 
-Sharp and visual — names the element ("Level 2 badge"), the destination (right side, left of X), and uses the screenshot to anchor exactly which surface (the pre-selected stylist card on the booking wizard service-step). Sharper next time: tell me whether the badge upgrade is for **prominence** (operator should immediately see what tier is being booked = pricing implications) or **polish** (current pill looks generic against the violet card chrome). I'll design for both since they point the same direction: stronger visual presence + level-tier color coding to match the existing `getLevelColor` system used elsewhere on the platform.
+Sharp bug report — names the surface (Platform Overview), the trigger (entered Alexis Heasley's profile via View As → clicked Exit View), the symptom (still shows "Alexis" in platform identity), and the second-order observation (Alexis's profile rendered *your* super-admin command center, suggesting the impersonation isn't actually scoping data either). That last clue is critical — it tells me View As may be visually swapping identity but not isolating the data view. Sharper next time: tell me *where* "Exit View" was clicked from (the violet GodMode bar at the top? the ViewAsPopover? Esc key?) — there are three exit paths and they hit different code. I'll diagnose all three.
 
 ## Diagnosis
 
-In `QuickBookingPopover.tsx` L1459–1488, the pre-selected stylist card renders:
+Two independent bugs are colliding here.
 
-```
-[Avatar] [Name + Level Badge inline] ········· [X button]
-```
+### Bug 1: "Exit View" button on Platform routes is the WRONG exit
 
-Two issues:
-1. **Position**: Badge sits crammed next to the name in the same flex group, fighting for space when names are long
-2. **Visual**: Plain `secondary` shadcn badge — generic muted background, no tier signaling, no relationship to the platform's stylist-level color system (`getLevelColor` from `@/lib/level-colors.ts`) used in the directory and team hub
+The screenshot shows you on `/platform/overview`. The exit affordances visible there are:
 
-## Plan — Wave 22.12: Reposition + restyle Level badge
+- **`GodModeBar` "Exit View"** (`src/components/dashboard/GodModeBar.tsx` L22–25) — only calls `clearSelection()` from `OrganizationContext`. This clears the **org impersonation** but does NOT touch `ViewAsContext` (the user-impersonation state).
+- **`PlatformContextBanner` "Exit View"** (`src/components/platform/PlatformContextBanner.tsx` L47–50) — same bug: calls `clearSelection()` only.
 
-### Behavior
+Meanwhile, the actual "view as Alexis" state lives in `ViewAsContext.viewAsUser` — set by `setViewAsUser({ id, full_name, roles })` from `ViewAsPopover.tsx` L223. Neither exit button calls `clearViewAs()`.
 
-Move the `Level N` badge from the name cluster (left side) to a dedicated slot on the right side, immediately to the left of the X button. Upgrade visual treatment to match platform tier-color conventions and project a stronger "this matters for pricing" signal.
+**Result:** clicking "Exit View" from a platform surface clears org-level impersonation but leaves user-level impersonation (`viewAsUser = Alexis`) fully active. Every hook downstream that reads `useEffectiveUserId()` continues to return Alexis's UUID.
 
-### Layout shift
+### Bug 2: Platform surfaces are reading the impersonated identity
 
-```
-Before:  [Avatar] [Name · Level 2] ········· [X]
-After:   [Avatar] [Name           ] [Level 2] [X]
-```
+`useEmployeeProfile()` (`src/hooks/useEmployeeProfile.ts` L17–18) is built on `useEffectiveUserId()` — which intentionally returns `viewAsUser.id` when `isViewingAsUser` is true. That's correct *for dashboard surfaces* (which is the whole point of stylist impersonation).
 
-### Visual upgrades
+But `Platform Overview` uses the same hook for the greeting (`Overview.tsx` L56–60: `firstName = profile.full_name.split(' ')[0]`). The platform sidebar (`PlatformSidebar.tsx` L41) and platform header (`PlatformHeader.tsx` L37) do the same thing.
 
-- **Tier-aware color**: Use `getLevelColor(levelNum - 1, 7)` from `@/lib/level-colors.ts` to pull the canonical stone→gold gradient color matching the org's 7-tier ladder (Level 2 = early stone tone, Level 7 = gold)
-- **Subtle ring + tinted bg**: Replace flat `secondary` variant with a custom badge: tier color at low opacity for bg, tier color at higher opacity for border ring, full tier color for text — matches the platform's "calm, executive" UI doctrine
-- **Typography**: Use `font-display tracking-wider uppercase` for the "LEVEL N" text — aligns with platform UI canon (Termina for stat-style labels, never `font-bold`)
-- **Sizing**: Slightly larger than current (`h-6 px-2.5`) for presence, but still subordinate to the name
-- **"Unranked" fallback**: Keep but soften to a neutral muted outline so it visually de-prioritizes vs. ranked badges
+**Result:** even when a user IS validly impersonating someone for testing, the platform identity chrome (sidebar avatar, header pill, greeting) lies about *who is logged in*. Platform routes should always show the actual super-admin identity — impersonation is an organization-scoped concept and should never bleed into platform chrome.
 
-### Implementation
+### Why Alexis's profile showed YOUR super-admin command center
 
-In `src/components/dashboard/schedule/QuickBookingPopover.tsx` L1459–1488:
+This is the same Bug 1 in reverse. When you entered Alexis's profile via View As, the page read `useEffectiveUserId() → Alexis.id` for *some* hooks but `useAuth().user.id → your.id` for others (e.g., role checks, super-admin gates, dashboard widget visibility flags). Many command-center widgets bypass `useEffectiveUserId` and check raw `useAuth()` roles or `is_super_admin` directly. So Alexis's "view" rendered your widgets because the impersonation simulation is incomplete — it swaps profile identity but doesn't simulate role downgrade.
 
-1. Remove the badge from inside the name flex group (L1468–1478) — restore that group to just the name
-2. Add a new badge slot in the outer flex row, positioned between the name container and the X button
-3. Build the badge inline using the tier color palette (since shadcn `Badge` variants don't natively support arbitrary HSL tier colors); use a styled `<div>` or `<span>` with className that applies the tier hue
-4. Import `getLevelColor` from `@/lib/level-colors.ts` if not already imported in this file
+This is a known anti-pattern (see `mem://features/god-mode-governance`) and warrants a separate audit, but it's not what we'll fix in this wave.
 
-Final structure:
+## Plan — Wave 22.13: Fix View As exit + isolate platform identity from impersonation
 
-```tsx
-<div className="flex-1 min-w-0">
-  <div className="text-base font-medium truncate">{preSelectedStylistName}</div>
-</div>
+Two surgical fixes. Both are P0 (silent identity leak + broken exit affordance).
 
-{/* New: tier-colored level pill, right-aligned */}
-{(() => {
-  const levelNum = getLevelNumber(preSelectedStylistLevel);
-  if (!levelNum) {
-    return (
-      <span className="shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border border-border/60 text-muted-foreground bg-muted/40">
-        Unranked
-      </span>
-    );
-  }
-  const tier = getLevelColor(levelNum - 1, 7);  // 0-indexed
-  return (
-    <span
-      className="shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border"
-      style={{
-        backgroundColor: `${tier}1A`,   // ~10% opacity bg
-        borderColor: `${tier}66`,        // ~40% opacity ring
-        color: tier,
-      }}
-    >
-      Level {levelNum}
-    </span>
-  );
-})()}
+### Fix 1: Exit buttons on platform/god-mode surfaces must clear BOTH contexts
 
-<Button variant="ghost" size="icon" ...>
-  <X className="h-3 w-3" />
-</Button>
-```
+Make every "Exit View" button call BOTH `clearSelection()` (org) AND `clearViewAs()` (user/role). Belt-and-suspenders: a platform user exiting impersonation should leave a clean slate regardless of which type of impersonation they entered.
+
+**Files:**
+
+- `src/components/dashboard/GodModeBar.tsx` — `handleExit` calls `clearSelection()` AND `clearViewAs()` from `useViewAs()`. Also call `clearViewAs` when navigating to `/platform/overview` so route-change cleanup is automatic.
+- `src/components/platform/PlatformContextBanner.tsx` — same: import `useViewAs`, call `clearViewAs()` alongside `clearSelection()`.
+
+### Fix 2: Platform routes must show the ACTUAL signed-in user, never the impersonated user
+
+Platform chrome (sidebar, header, overview greeting) is a super-admin surface. It must always reflect the real account. Two approaches considered:
+
+- **Option A:** Add a `useActualEmployeeProfile()` hook that ignores `viewAsUser` and use it on platform surfaces. Surgical, no behavior change for dashboard.
+- **Option B:** Auto-clear `ViewAsContext` whenever the route changes from `/dashboard/*` to `/platform/*`. Cleaner conceptually but more invasive.
+
+Going with **Option A** — it's the minimum-change, lowest-risk fix and respects the doctrine that platform context is architecturally isolated from organization context (`mem://architecture/public-vs-private-route-isolation`, `mem://tech-decisions/platform-theme-isolation`).
+
+**New hook:** `src/hooks/useActualEmployeeProfile.ts`
+- Identical to `useEmployeeProfile()` but reads `useAuth().user.id` directly, never `useEffectiveUserId()`. Uses cache key `['employee-profile-actual', user.id]` to avoid colliding with the impersonated cache.
+
+**Swap call sites (3 files):**
+
+- `src/pages/dashboard/platform/Overview.tsx` L19, L56 — swap `useEmployeeProfile` → `useActualEmployeeProfile`
+- `src/components/platform/layout/PlatformSidebar.tsx` L18, L41 — same swap
+- `src/components/platform/layout/PlatformHeader.tsx` L3, L37 — same swap
 
 ### Acceptance checks
 
-1. On the service-selection step with a pre-selected stylist, the level badge renders to the right side of the card, directly to the left of the X close button
-2. Badge for Jamie Vieira (Level 2) shows the tier-2 stone color at low-opacity bg with matching ring and text
-3. Badge typography uses `font-display tracking-wider uppercase` (Termina) — no `font-bold` or `font-semibold`
-4. Long stylist names truncate cleanly without colliding with the badge (badge stays right-aligned via `shrink-0` + flex)
-5. Stylists with no level (Eric Day, Alex Day, Mallori Schwab, Julia Gross) show the softened "Unranked" pill in the same right-side slot
-6. Clear (X) button still works and remains the rightmost element
-7. Higher tiers (Level 5, 6, 7) render with progressively warmer/gold tones, matching the rest of the platform's tier-color usage (Stylist Directory, Team Hub)
+1. Enter View As → Alexis Heasley from a dashboard surface. Verify dashboard now shows Alexis's view (working as designed).
+2. Click "Exit View" from any surface (GodModeBar, PlatformContextBanner, ViewAsPopover). Verify both `viewAsUser` AND `selectedOrganization` are cleared — the `View As` chip in ViewAsPopover should reset to "View As" (no active state).
+3. Navigate to `/platform/overview` while impersonating Alexis. Verify the greeting reads "Good morning, [your-actual-first-name]" — NOT "Alexis". Verify the platform sidebar bottom-left avatar+name shows YOUR identity. Verify the platform header top-right pill shows YOUR identity and platform role badge.
+4. Verify dashboard surfaces still correctly show Alexis when impersonating — no regression to the legitimate use of `useEffectiveUserId()`.
+5. Verify that exiting View As from `/platform/overview` keeps you on `/platform/overview` and the page chrome immediately reflects your real identity (no stale cache — Tanstack Query keys differ between actual and effective).
 
 ### Files
 
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — restructure pre-selected stylist card (L1459–1488), add `getLevelColor` import
+- `src/hooks/useActualEmployeeProfile.ts` (new, ~30 lines)
+- `src/components/dashboard/GodModeBar.tsx` (add `useViewAs` import, call `clearViewAs()` in `handleExit`)
+- `src/components/platform/PlatformContextBanner.tsx` (add `useViewAs` import, call `clearViewAs()` in exit handler)
+- `src/pages/dashboard/platform/Overview.tsx` (swap hook)
+- `src/components/platform/layout/PlatformSidebar.tsx` (swap hook)
+- `src/components/platform/layout/PlatformHeader.tsx` (swap hook)
 
 ### Open question
 
-None — visual + structural intent is clear from the screenshot.
+None — bug is fully isolated and the fix doesn't introduce architectural debate.
 
 ### Deferred
 
-- **P2** Apply the same tier-colored level badge to the stylist picker step (L2286+) and the confirm step's stylist card for consistent tier signaling across the wizard — trigger: this PR's badge ships and feels right
-- **P2** Add a hover tooltip on the badge showing the full `client_label` ("Studio Artist · Level 2") and the level's hourly/service price multiplier — trigger: when staff need quick price-tier context without leaving the booking flow
-- **P3** Migrate the level badge into a shared `<StylistLevelBadge>` component used everywhere (Directory, Team Hub, booking wizard, schedule) — trigger: when the same tier-colored pill is duplicated in 3+ surfaces
+- **P1** Audit Alexis's command center actually rendering YOUR super-admin widgets — this is a separate impersonation simulation gap. Many widgets check `useAuth().roles` or `is_super_admin` directly instead of `useEffectiveRoles()`, so impersonation doesn't downgrade visibility. Trigger: this wave ships, then run a targeted audit of `WidgetsSection`, `CommandCenterAnalytics`, and any component reading `is_super_admin` to convert them to `useEffectiveRoles()` / `useEffectivePermissions()`. Tracked under `mem://features/god-mode-governance`.
+- **P2** Add a route-change effect to `ViewAsProvider` that auto-clears `viewAsUser` and `viewAsRole` when navigating from a `/dashboard/*` path to a `/platform/*` path. Belt-and-suspenders defense even if a future "Exit View" button forgets to call `clearViewAs()`. Trigger: if Bug 1 reappears in any new exit-affordance surface.
+- **P3** Add a Vitest assertion in `ProtectedRoute.test.tsx` (already mocks `useViewAs`) that platform routes never resolve identity through `useEffectiveUserId`. Trigger: when adding ESLint rules to enforce hook usage by route prefix.
 
