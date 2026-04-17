@@ -907,10 +907,11 @@ export function CheckoutSummarySheet({
               {/* Order-level manager discount */}
               {organizationId && (
                 <CartDiscountSection
-                  netServiceSubtotal={netServiceSubtotal}
-                  discount={orderDiscount}
-                  onChange={setOrderDiscount}
-                  canManage={canOverridePrice}
+                  baseSubtotal={netServiceSubtotal}
+                  current={orderDiscount}
+                  canApply={canOverridePrice}
+                  onApply={setOrderDiscount}
+                  onClear={() => setOrderDiscount(null)}
                 />
               )}
               {orderDiscount && orderDiscountAmount > 0 && (
