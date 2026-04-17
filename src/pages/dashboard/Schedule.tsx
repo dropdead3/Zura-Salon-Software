@@ -1071,6 +1071,7 @@ export default function Schedule() {
                     onOpenDrafts={() => setDraftsSheetOpen(true)}
                     draftCount={drafts.length}
                     view={view}
+                    currentDate={currentDate}
                   />
                 </div>
               </div>
