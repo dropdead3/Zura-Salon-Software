@@ -133,14 +133,14 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
         <ClientCallbacksPanel
           organizationId={organizationId}
           clientId={client.phorest_client_id}
-          clientFirstName={client.first_name}
+          clientFirstName={clientFirstName}
           hidePast
           compact
         />
         <ClientAboutCard
           organizationId={organizationId}
           clientId={client.phorest_client_id}
-          clientFirstName={client.first_name}
+          clientFirstName={clientFirstName}
           compact
         />
       </div>
