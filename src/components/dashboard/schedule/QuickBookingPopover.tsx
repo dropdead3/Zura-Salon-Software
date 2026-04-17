@@ -47,6 +47,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { getLevelSlug, getLevelNumber } from '@/utils/levelPricing';
+import { getLevelColor } from '@/lib/level-colors';
 import { useBookingLevelPricing } from '@/hooks/useServiceLevelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications';
@@ -1465,17 +1466,31 @@ export function QuickBookingPopover({
                     {preSelectedStylistName.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="flex-1 min-w-0">
                   <div className="text-base font-medium truncate">{preSelectedStylistName}</div>
-                  {(() => {
-                    const levelNum = getLevelNumber(preSelectedStylistLevel);
-                    return levelNum ? (
-                      <Badge variant="secondary" className="shrink-0 text-xs px-2 py-0.5">Level {levelNum}</Badge>
-                    ) : (
-                      <Badge variant="outline" className="shrink-0 text-xs px-2 py-0.5">Unranked</Badge>
-                    );
-                  })()}
                 </div>
+                {(() => {
+                  const levelNum = getLevelNumber(preSelectedStylistLevel);
+                  if (!levelNum) {
+                    return (
+                      <span className="shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border border-border/60 text-muted-foreground bg-muted/40">
+                        Unranked
+                      </span>
+                    );
+                  }
+                  const tier = getLevelColor(levelNum - 1, 7);
+                  return (
+                    <span
+                      className={cn(
+                        'shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border border-border/40',
+                        tier.bg,
+                        tier.text,
+                      )}
+                    >
+                      Level {levelNum}
+                    </span>
+                  );
+                })()}
                 <Button
                   variant="ghost"
                   size="icon"
