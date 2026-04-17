@@ -325,32 +325,36 @@ export function usePhorestCalendar() {
       return new Set(((data || []) as any[]).map((a: any) => a.appointment_id));
     },
     enabled: !!effectiveUserId,
+    staleTime: 5 * 60_000,
   });
 
-  // For admin/manager views: track ALL appointments that have assistants assigned
+  // For admin/manager views: track which appointments (in current view) have assistants assigned.
+  // Wave 13 perf: derive from `appointments` already in memory instead of refetching the
+  // entire date range from v_all_appointments + chunked .in() lookups.
+  const appointmentIdsInView = useMemo(
+    () => appointments.map(a => a.id),
+    [appointments],
+  );
+
   const { data: appointmentsWithAssistants = new Set<string>() } = useQuery({
-    queryKey: ['appointments-with-assistants', dateRange, canViewAll || canViewTeam],
+    queryKey: [
+      'appointments-with-assistants',
+      canViewAll || canViewTeam,
+      // Use length + first/last id as a stable signature to avoid cache misses
+      // every time the array reference changes but content is equivalent.
+      appointmentIdsInView.length,
+      appointmentIdsInView[0] ?? null,
+      appointmentIdsInView[appointmentIdsInView.length - 1] ?? null,
+    ],
     queryFn: async () => {
       if (!canViewAll && !canViewTeam) return new Set<string>();
-      // Get appointment IDs in date range that have assistants (paginated)
-      const apptIds = await fetchAllBatched<any>((from, to) =>
-        supabase
-          .from('v_all_appointments' as any)
-          .select('id')
-          .gte('appointment_date', dateRange.start)
-          .lte('appointment_date', dateRange.end)
-          .eq('is_demo', false)
-          .range(from, to)
-      );
+      if (appointmentIdsInView.length === 0) return new Set<string>();
 
-      if (apptIds.length === 0) return new Set<string>();
-
-      const ids = apptIds.map(a => a.id);
       // Chunk .in() calls to avoid query-string limits
       const CHUNK = 500;
       const allAssistants: any[] = [];
-      for (let i = 0; i < ids.length; i += CHUNK) {
-        const chunk = ids.slice(i, i + CHUNK);
+      for (let i = 0; i < appointmentIdsInView.length; i += CHUNK) {
+        const chunk = appointmentIdsInView.slice(i, i + CHUNK);
         const { data } = await supabase
           .from('appointment_assistants')
           .select('appointment_id')
@@ -360,7 +364,8 @@ export function usePhorestCalendar() {
 
       return new Set(allAssistants.map(a => a.appointment_id));
     },
-    enabled: canViewAll || canViewTeam,
+    enabled: (canViewAll || canViewTeam) && appointmentIdsInView.length > 0,
+    staleTime: 60_000,
   });
 
   // Group appointments by date
