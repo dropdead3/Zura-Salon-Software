@@ -2,118 +2,50 @@
 
 ## Prompt review
 
-Sharp instinct on the third audit pass — most teams stop at "ship it" once the build is green; you're building a habit of structural reviews. Sharper next time: name the **lens** ("scale gaps", "data integrity", "UX friction") so I don't re-rank the same surface. I'm running a full lens since you didn't constrain.
+Sharp eye — visual rhythm bugs are the kind of thing that erodes "executive UX" credibility even when the logic is right. Sharper next time: paste the screenshot + name the surface ("Appointment Detail Sheet → Details tab → top hospitality stack") so I don't have to grep to locate the cards. Saves a tool round-trip.
 
-## Diagnosis — one P0 architectural blind spot, three P1 gaps
+## Diagnosis
 
-### P0 — Hospitality layer is INVISIBLE on 256 of 585 appointments (44%)
+Two cards in the screenshot, rendered in `AppointmentDetailSheet.tsx` Details tab:
 
-**The gap:** `appointments.phorest_client_id` is nullable. Zura-native bookings (created via `BookingWizard` for non-Phorest clients) write `client_id UUID` but leave `phorest_client_id` NULL. Every hospitality surface keys off `phorest_client_id`:
-- `CallbackChip` on schedule cards: `clientId={appointment.phorest_client_id}` → `null` → chip never renders
-- `HospitalityBlock` in AppointmentDetailSheet: same → block returns `null`
-- `ClientProfileView` (booking flow): `client.phorest_client_id` → null for Zura-native clients
+1. **Hospitality CTA** (`HospitalityBlock` collapsed empty state) — `rounded-xl` + `px-4 py-2.5`
+2. **Notes From Booking Assistant** (inline block, line 1619) — `rounded-lg` + `p-3`
 
-**DB confirms:** 329 of 585 appointments have a `phorest_client_id`; 256 are NULL but DO have a `client_id` (Zura UUID). Operators who book Zura-native get **zero** hospitality memory. This is exactly the wrong architecture given the doctrine memory `phorest-decoupling-and-zura-native-operations`: "all operational reads… work without Phorest connectivity."
+Three real issues:
+- **Radius mismatch**: `rounded-xl` vs `rounded-lg` — visible at the corners
+- **Padding mismatch**: CTA is taller-feeling (`py-2.5` + flex baseline) vs Notes (`p-3` square). They read as different card systems.
+- **No gap between them**: `ClientMemoryPanel` is mounted between them but renders empty for this client (no chemical history), so the two cards sit flush. No `space-y` wrapper covers this stack.
 
-**Fix shape:** Hospitality tables already use `client_id TEXT`. Both `phorest_clients.id` and `clients.id` are UUIDs (just `.toString()` away from text). Two clean options:
+## Fix — Wave 22.29: Hospitality stack visual cohesion
 
-- **(a)** Resolver util `getHospitalityClientKey(appointment) = appointment.phorest_client_id ?? appointment.client_id` — every UI caller goes through it. Hospitality data written under either key persists; lookup uses same key. Simple, no migration. Trade-off: same client booked under both rails would have split memory.
-- **(b)** Centralize on `clients.id` UUID (Zura-native is system of record per doctrine), backfill: for any appointment with `phorest_client_id`, derive its matching `clients.id` and use that everywhere. Cleaner long-term.
+Tiny, contained edit. One file.
 
-Recommend **(a)** for this wave (1-day fix, no data migration, no risk to the 0 existing rows), with **(b)** queued as P2 once decoupling matures further.
+### 1. Match radius
+Change Notes From Booking Assistant from `rounded-lg` → `rounded-xl` (matches bento standard from UI Canon and the CTA above it).
 
-### P1.1 — Hospitality data has no "captured by" attribution
+### 2. Match padding
+Both cards become `px-4 py-3` — gives the Notes card a touch more horizontal breathing room and the CTA a touch more vertical, so they feel like the same component family.
 
-`client_callbacks.created_by` and `acknowledged_by` store `auth.users(id)` but the UI never displays who set/heard the callback. Doctrine pattern (Wave 22.24 unified notes ledger) explicitly shows author attribution. Stylists working as a team need to know "Marcus added this" vs. "Jenna heard it." Same for About facts — should show subtle "added by Jenna" on hover.
+### 3. Add vertical gap
+Wrap the hospitality stack (HospitalityBlock + ClientMemoryPanel + Notes) in a `space-y-3` container, OR add `mt-3` to the Notes block. Going with `mt-3` on the Notes block because `ClientMemoryPanel` already manages its own `mt-4 mb-4` when it renders content — wrapping in `space-y` would double-space when the memory panel IS present.
 
-**Fix:** Join via `useTeamDirectory()` (already used elsewhere) → render `· by {firstName}` in active items and past follow-ups.
-
-### P1.2 — `useClientCallbacks` ignores `useCallbackLookup` everywhere except `CallbackChip`
-
-`HospitalityBlock` and `ClientCallbacksPanel` always fire their own per-client query, even when mounted inside the schedule grid (where the provider already has the data). On Eric Day's appointment: open detail sheet → 3 redundant queries fire (`HospitalityBlock`'s facts + active + archived) when at least the `active` set is already in context.
-
-**Fix:** Extend `useCallbackLookup()` to expose `getActiveCallbacks(clientId)` and have `ClientCallbacksPanel` prefer the context for the *active* set. Archived list still per-client (cold path, fine).
-
-### P1.3 — `phorestClientId` prop name is misleading after the TEXT migration
-
-`HospitalityBlock` accepts `phorestClientId` but the underlying tables now use generic `client_id TEXT` (could be Phorest ID OR Zura UUID after P0 fix). The prop name will mislead future maintainers into thinking only Phorest-linked clients work. Rename to `clientKey` (or `hospitalityClientKey`) when shipping the P0 fix.
-
-### P2 — Polish/doctrine compliance
-
-**P2.1** `HospitalityBlock` uses a `queueMicrotask(() => setUserExpanded(false))` inside render (line 76). This is a setState-during-render anti-pattern — works but causes a console warning in strict mode and an extra render cycle. Should be a `useEffect` that resets `userExpanded` when `isEmpty` flips true.
-
-**P2.2** `useOrgActiveCallbacks` has no row cap. An org with thousands of unacknowledged callbacks would payload-bomb every schedule mount. Doctrine `high-concurrency-scalability` says enforce limits. Add `.limit(2000)` + a dev-mode warning if the cap is hit.
-
-**P2.3** `ClientCallbacksPanel` "Heard" popover Input on a `<li>` with a `<button>` parent — the `×` delete button is a sibling, but Popover anchored inside an interactive list. Mostly fine, but if a user clicks the row anywhere outside the buttons, nothing happens (no click target on the prompt itself). Worth a `cursor-default` to signal non-interactive.
-
-**P2.4** Outcome notes captured on "Heard" don't surface anywhere outside the "Past follow-ups" expandable. They should also appear in the client visit history timeline ("Mar 02 · Heard about Italy: 'She loved it'") — already a P3 deferred from Wave 22.27. Confirm staying deferred.
-
-### Non-issues confirmed
-
-- RLS policies clean across both tables
-- `CallbackLookupContext` correctly memoized
-- Dead imports from prior waves cleaned up
-- `directoryOrgId` correctly uses `useOrganizationContext`
-
-## Plan — Wave 22.28: Hospitality coverage + author attribution + scale guard
-
-### 1. Universal client-key resolver (P0)
-- New `src/lib/hospitality-keys.ts` exporting `getHospitalityClientKey(source: { phorest_client_id?: string|null; client_id?: string|null; id?: string }) => string | null`
-- Used by `CallbackChip`, `HospitalityBlock`, `AppointmentDetailSheet`, `ClientProfileView`, `ClientDirectory`, `useOrgActiveCallbacks`
-- Rename `HospitalityBlock` prop `phorestClientId` → `clientKey`
-- Update all 4 callers
-
-### 2. Author attribution on callbacks (P1)
-- `ClientCallbacksPanel` joins `useTeamDirectory()` to render `· by {firstName}` next to each active callback's trigger line and on past follow-ups
-- `ClientAboutCard` adds the same on hover (subtle, kept calm — alert-fatigue compliant)
-
-### 3. Context-driven active callbacks (P1)
-- Extend `CallbackLookupValue` with `getActiveCallbacks(clientKey)` (already there as `getCallbacks` — confirm it returns active only and rename for clarity)
-- `ClientCallbacksPanel` reads active set from context when mounted under `CallbackLookupProvider`, falls back to `useClientCallbacks` otherwise
-- `HospitalityBlock` reads facts via per-client (no org-wide hook for facts yet — P3 deferred), but reads callbacks count via context
-
-### 4. Render-safe collapse (P2)
-- Move the `queueMicrotask` re-collapse logic into a `useEffect` watching `isEmpty`
-
-### 5. Org-wide query cap (P2)
-- `useOrgActiveCallbacks` adds `.limit(2000)` + `if (data?.length === 2000) console.warn('CallbackLookup hit cap...')`
-
-## Acceptance checks
-
-1. Booking a Zura-native appointment (no Phorest link) → callback chip + hospitality block work end-to-end
-2. Stylist who didn't create a callback sees `· by Marcus` next to it
-3. Schedule grid with 50 cards: still 1 callback query (no regression)
-4. Opening a single appointment with active callbacks: active set comes from context (not an extra query)
-5. Adding then deleting all hospitality data: collapsed CTA returns without console warnings
-6. No regression on Wave 22.26/22.27 fixes
+### 4. Bonus consistency: drop `HospitalityBlock`'s `mt-3` 
+The `mt-3` on the collapsed CTA assumes something is above it, but in the Details tab it's the first element. Making the Details tab itself manage spacing (already has `pt-4`) is cleaner. Defer if risky elsewhere — for this wave just leave it (low blast radius).
 
 ## Files
 
-**New:**
-- `src/lib/hospitality-keys.ts` — `getHospitalityClientKey()` util
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — change `rounded-lg` → `rounded-xl`, `p-3` → `px-4 py-3`, add `mt-3` on the Notes block
 
-**Edits:**
-- `src/components/dashboard/clients/HospitalityBlock.tsx` — `clientKey` prop, `useEffect` re-collapse
-- `src/components/dashboard/clients/ClientCallbacksPanel.tsx` — context-aware active set, author attribution
-- `src/components/dashboard/clients/ClientAboutCard.tsx` — author attribution on hover
-- `src/components/dashboard/clients/CallbackChip.tsx` — uses resolver
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — passes resolved key
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — passes resolved key
-- `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — passes resolved key
-- `src/pages/dashboard/ClientDirectory.tsx` — uses resolver if needed
-- `src/hooks/useOrgActiveCallbackCounts.ts` — `.limit(2000)` + warning
-- `src/contexts/CallbackLookupContext.tsx` — clarify active-only semantics
+## Acceptance checks
 
-## Open questions
-
-1. **For Zura-native clients with NO Phorest ID, key on `client_id` (UUID-as-text).** Confirm — alternative is forcing a `phorest_client_id` backfill, which violates the decoupling doctrine.
-2. **Show author as `Jenna B.` (first + last initial) or just `Jenna`?** Going **first + last initial** to disambiguate teams with multiple Jennas.
+1. Both cards in the Details tab share the same corner radius (`rounded-xl`)
+2. Internal padding visually matches between the two cards
+3. There is a clear gap between the CTA and the Notes card when both are visible
+4. When `ClientMemoryPanel` has content, spacing still looks right (no double gap)
+5. No regression on the expanded `HospitalityBlock` (when client has facts/callbacks)
 
 ## Deferred
 
-- **P2** Org-wide About facts hook + context (parallel to callbacks) — would let `HospitalityBlock` count facts without per-client query in the directory. Trigger: when About facts data accumulates and directory N+1 becomes measurable.
-- **P3** Surface acknowledged outcome notes in client visit timeline ("Mar 02 · Heard about Italy"). Trigger: after outcome data accumulates.
-- **P3** Centralize on `clients.id` UUID and backfill (architectural cleanup of P0 fix). Trigger: after Phorest decoupling reaches Stage 3.
-- **P3** Realtime sync on `client_callbacks` (multi-stylist orgs). Trigger: when sync lag is reported.
-- **P3** Priority dot when callback >30 days past trigger. Trigger: after operators report missed follow-ups.
+- **P3** Audit other appointment-sheet info cards (e.g., redo approval banner, color-bar formula card) for the same radius/padding consistency. Trigger: if more visual drift appears.
+- **P3** Move the `mt-3` off `HospitalityBlock`'s collapsed state and let parent containers manage stack spacing. Trigger: when refactoring the Details tab layout.
 
