@@ -23,6 +23,16 @@ vi.mock('@/hooks/useEffectivePermissions', () => ({
   useEffectivePermissions: vi.fn(),
 }));
 
+vi.mock('@/hooks/useOrgDashboardPath', () => ({
+  useOrgDashboardPath: () => ({
+    dashPath: (subpath: string = '') => {
+      const clean = subpath.startsWith('/') ? subpath : `/${subpath}`;
+      return `/dashboard${clean}`;
+    },
+    orgSlug: '',
+  }),
+}));
+
 vi.mock('./AccessDeniedView', () => ({
   AccessDeniedView: () => <div>Access Denied View</div>,
 }));
