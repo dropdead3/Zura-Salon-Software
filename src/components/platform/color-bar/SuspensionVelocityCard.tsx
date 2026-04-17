@@ -21,6 +21,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from 'recharts';
 import { useColorBarSuspensionEvents } from '@/hooks/color-bar/useColorBarSuspensionEvents';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const TRIGGER_THRESHOLD = 3;
@@ -80,23 +81,18 @@ export function SuspensionVelocityCard() {
   );
 
   // Alert-fatigue gate: silence unless pattern is real.
-  // Quantify the silence (dev-only): emit a structured suppression reason so we
-  // can distinguish "working correctly + silent" from "broken + silent".
+  // Quantify the silence via the Visibility Contract bus (dev-only no-op in prod).
   if (isLoading || !events || totalSuspensions === 0 || !hasTriggerWeek) {
-    if (import.meta.env.DEV) {
-      const reason = isLoading
-        ? 'loading'
-        : !events || totalSuspensions === 0
-          ? 'no-events'
-          : 'no-trigger-week';
-      // eslint-disable-next-line no-console
-      console.debug('[velocity-card] suppressed:', {
-        reason,
-        totalEvents: totalSuspensions,
-        maxWeekCount,
-        threshold: TRIGGER_THRESHOLD,
-      });
-    }
+    const reason = isLoading
+      ? 'loading'
+      : !events || totalSuspensions === 0
+        ? 'no-events'
+        : 'no-trigger-week';
+    reportVisibilitySuppression('velocity-card', reason, {
+      totalEvents: totalSuspensions,
+      maxWeekCount,
+      threshold: TRIGGER_THRESHOLD,
+    });
     return null;
   }
 
