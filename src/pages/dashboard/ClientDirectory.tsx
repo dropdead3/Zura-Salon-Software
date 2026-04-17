@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOrgActiveCallbackCounts } from '@/hooks/useOrgActiveCallbackCounts';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
@@ -379,8 +380,10 @@ export default function ClientDirectory() {
     enabled: !!user?.id,
   });
 
-  // Active follow-up counts for all clients in this org (single query, no N+1)
-  const directoryOrgId = (clients?.[0] as any)?.organization_id ?? null;
+  // Active follow-up counts for all clients in this org (single query, no N+1).
+  // Use org context directly — deriving from clients[0] is fragile (empty list, ordering).
+  const { effectiveOrganization } = useOrganizationContext();
+  const directoryOrgId = effectiveOrganization?.id ?? null;
   const { data: callbackCounts } = useOrgActiveCallbackCounts(directoryOrgId);
 
   // Process clients with derived fields

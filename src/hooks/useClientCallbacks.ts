@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { isCallbackStale } from '@/lib/callback-utils';
 
 export interface ClientCallback {
   id: string;
@@ -18,11 +19,8 @@ export interface ClientCallback {
 
 const isDemoId = (id: string | null | undefined) => id?.startsWith('demo-') ?? false;
 
-const STALE_DAYS = 90;
-
 /**
- * Active callbacks = unacknowledged AND not stale (trigger_date within last 90 days
- * or in the future or null).
+ * Active callbacks = unacknowledged AND not stale (see callback-utils — 90d cutoff).
  */
 export function useClientCallbacks(
   clientId: string | null | undefined,
@@ -52,13 +50,8 @@ export function useClientCallbacks(
 
       if (options.includeArchived) return all;
 
-      // Client-side stale filter (alert-fatigue: hide callbacks 90+ days past trigger)
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - STALE_DAYS);
-      return all.filter((cb) => {
-        if (!cb.trigger_date) return true;
-        return new Date(cb.trigger_date) >= cutoff;
-      });
+      // FILTER: trigger_date < now() - 90d hidden as stale (alert-fatigue)
+      return all.filter((cb) => !isCallbackStale(cb));
     },
   });
 }
@@ -92,6 +85,7 @@ export function useCreateCallback() {
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['client-callbacks', vars.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['org-active-callbacks', vars.organization_id] });
       toast.success('Follow-up saved');
     },
     onError: (error) => {
@@ -113,7 +107,7 @@ export function useAcknowledgeCallback() {
         .update({
           acknowledged_at: new Date().toISOString(),
           acknowledged_by: user.id,
-          outcome_note: input.outcome_note ?? null,
+          outcome_note: input.outcome_note?.trim() || null,
           archived_reason: 'acknowledged',
         })
         .eq('id', input.id)
@@ -122,8 +116,11 @@ export function useAcknowledgeCallback() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_data, vars) => {
+    onSuccess: (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['client-callbacks', vars.client_id] });
+      if (data?.organization_id) {
+        queryClient.invalidateQueries({ queryKey: ['org-active-callbacks', data.organization_id] });
+      }
       toast.success('Marked heard');
     },
     onError: (error) => {
@@ -142,6 +139,7 @@ export function useDeleteCallback() {
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['client-callbacks', vars.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['org-active-callbacks'] });
     },
     onError: (error) => {
       toast.error('Failed to delete: ' + (error as Error).message);
