@@ -2,103 +2,59 @@
 
 ## Prompt review
 
-Strong prompt — names the surface (checkout), the audience (stylist/front desk), the behavior (require reason on "no"), the cultural goal (force the ask), and even gives one critical reason verbatim ("I never asked"). Sharper next time: specify *when* in the checkout flow it should fire (before payment? after?) and whether it should block other staff from skipping (PIN gate?). I'll propose the cleanest placement and flag the PIN question.
+Strong, open-ended audit prompt — exactly the right cadence after shipping three back-to-back waves (18.2, 19, 21). Sharper next time: scope the audit dimension you care about most ("audit *security*", "audit *Wave 21 behavior*", "audit *unrelated regressions*"), and name the pri threshold you want surfaced ("only P0/P1, defer P2"). Without that, I default to a full-stack pass which can include noise. I've ranked findings by leverage and explicitly anchored each to a doctrine clause so you can decide what ships.
 
-## Discovery
+## Audit — Build state after Waves 18.2 / 19 / 21
 
-Existing rebook architecture (already in place):
-- `NextVisitRecommendation.tsx` — shown inside `CheckoutSummarySheet` rebooking gate (one-tap interval buttons)
-- `AUDIT_EVENTS.REBOOK_DECLINED` and `REBOOK_COMPLETED_AT_CHECKOUT` already defined
-- `useRebookingRate` hook tracks `rebooked_at_checkout` boolean on appointments
-- `appointment_audit_log` table receives lifecycle events
+**Health baseline:** TypeScript clean (no errors). Dev server stable (HMR warnings only — `getDateRange` Fast Refresh export shape, pre-existing). Supabase linter shows pre-existing infra warnings, no new findings from Wave 21.
 
-What's missing: when staff clicks "Skip" on `NextVisitRecommendation`, it logs `REBOOK_DECLINED` but captures **no reason**. That's the gap — and where coaching pressure lives.
+### P0 — Behavioral gap in the rebook gate (the wave you just shipped)
 
-## Plan — Wave 21: Rebook Decline Reason Gate + Analytics
+| # | Finding | Doctrine anchor | Leverage |
+|---|---|---|---|
+| 1 | **Sheet-close bypasses the gate.** `PremiumFloatingPanel`'s built-in close button (×) calls `onOpenChange(false)` — staff can dismiss `CheckoutSummarySheet` while still in `gatePhase === 'gate'` without picking rebook OR a decline reason. That's the exact "implicit skip" loophole flagged as the open question in the Wave 21 plan and never closed. Fix: when `gatePhase === 'gate'` and the user attempts to close, intercept → open `RebookDeclineReasonDialog` first; only allow close after reason captured (or after rebook completed). | structural-enforcement-gates | high |
+| 2 | **`onBookInterval` discards the chosen interval.** In `CheckoutSummarySheet.tsx` L694–699, the callback receives `interval: RebookInterval` but only calls `onScheduleNext(appointment)` — the staff's tap on "+4 weeks" vs "+6 weeks" is thrown away. The schedule-next flow opens with no preselected date, so the one-tap UX is cosmetic. Fix: extend `onScheduleNext` signature to `(apt, interval?)` and prefill the booking date in `Schedule.tsx` handler. | UX Canon (one primary lever, expandable logic) | high |
+| 3 | **Rebook completion never advances `gatePhase`.** Tapping a quick-book interval calls `onScheduleNext` but does NOT set `setGatePhase('checkout')` or `setRebooked(true)`. Staff are stuck in the gate UI until they manually trigger the `rebookCompleted` prop round-trip from parent — and that prop only flips after the schedule-next flow completes asynchronously. If the parent flow is cancelled, the gate is permanently stuck. Fix: optimistically advance to `checkout` phase on interval tap; let `rebookCompleted` confirm the boolean for `onConfirm`. | UX Canon (calm/executive, no dead ends) | high |
 
-**Doctrine anchor:** structural enforcement (force the ask), brand-voice (no shame language, explain why structure protects), analytics-data-integrity.
+### P1 — Data integrity & analytics gaps
 
-### What gets built
+| # | Finding | Doctrine anchor | Leverage |
+|---|---|---|---|
+| 4 | **Decline reason is logged twice with mismatched semantics.** `useLogRebookDeclineReason` writes to `rebook_decline_reasons` table AND mirrors to `appointment_audit_log` with `REBOOK_DECLINED`. Then `handleConfirm` *also* passes `finalReason` through `onConfirm` → `Schedule.tsx` writes the same reason as a free-text string to `appointments.rebook_declined_reason`. Three writes, three formats (structured row, audit metadata, free-text column) — drift risk for analytics. Fix: keep the structured table as system of record; treat `rebook_declined_reason` column as a denormalized cache (write the `reason_code`, not the human label). | analytics-data-integrity | medium |
+| 5 | **Analytics card has no drill-down.** Plan called for "click bar → list of appointments with that reason (link to drawer)". Card renders bars but they're not interactive. Fix: wrap each bar in a button → opens a `Sheet` listing `appointment_id`s with that reason for the date range, each linking to `AppointmentDetailSheet`. | leverage-doctrine (one primary lever, drill-down logic) | medium |
+| 6 | **`location_id` foreign key mismatch.** Migration declares `location_id TEXT REFERENCES public.locations(id)`. Confirm `locations.id` is `text` (slug) per `location-identity-and-slugs` doctrine — if it's `uuid` in this project, the FK fails. (Likely fine given the doctrine, but worth a one-query verification before this bites silently.) | location-identity-and-slugs | low |
+| 7 | **Reason `staff_id` is always null in practice.** Code reads `(appointment as any).staff_user_id` which doesn't exist on `PhorestAppointment` — should be `staff_member_id` or resolved via `phorest_staff_id → employee_profiles`. Result: per-stylist decline analytics are blind. Fix: resolve staff via the same path used by `useStaffAttribution`, or fall back to `appointment.stylist_profile?.id`. | staff-mapping-constraints | high (kills per-stylist coaching) |
 
-**1. Decline reason modal (blocking gate)**
+### P2 — UI polish (defer with explicit triggers)
 
-When staff clicks "Skip" in `NextVisitRecommendation`, instead of immediate decline:
-- Open `RebookDeclineReasonDialog` — modal that **must** be answered to proceed
-- Single-select radio list of reasons (with "Other" → free text)
-- Cannot be dismissed without selecting (no X close, no overlay-click escape)
-- Confirm button writes reason → audit log → closes modal → proceeds with checkout
-- Helper copy at top: *"Quick coaching moment — capturing why helps the team improve rebook rate. No judgment."*
+| # | Finding | Trigger to revisit |
+|---|---|---|
+| 8 | `RebookDeclineReasonDialog` uses `font-medium` + `font-medium` for both title AND each radio label — no hierarchy. Should use `font-display` for the title per UI Canon (Termina uppercase). | First user feedback that the dialog feels flat |
+| 9 | `Sparkles` icon used both for the dialog header AND the `NextVisitRecommendation` header — two sparkles in a row when both render. Differentiate. | Visual QA round |
+| 10 | `RebookDeclineReasonsCard` lives only in `OperationsTabContent` — not pinnable to Command Center. Plan called for `PinnableCard` wrapping. | When an operator pins it from elsewhere or asks |
+| 11 | "Other" textarea has no character cap — could store novels. Add `maxLength={500}`. | First abuse / when surfaced in coaching reviews |
+| 12 | Bar chart has no x-axis scale or "biggest lever" callout on the bar itself (only in headline). Could highlight the `never_asked` bar with an inline label. | Operator feedback round |
 
-**Reason options (in order, "I never asked" first as the cultural anchor):**
-1. **I never asked** (the honest one — this is the lever)
-2. Client declined — traveling / out of town
-3. Client declined — wants to call later
-4. Client declined — price concern
-5. Client declined — schedule uncertainty
-6. Service doesn't need rebook (e.g., one-off)
-7. Other (free text, required if selected)
+### Recommended ship order
 
-**2. Data layer**
+**Wave 21.1 (this revise):** Fix P0 #1, #2, #3 + P1 #7. These are the gate's structural integrity — without them the wave doesn't deliver its promise (force the ask). Single PR, ~80–120 LOC across 3 files.
 
-New table `rebook_decline_reasons`:
-- `id`, `organization_id`, `location_id`, `appointment_id`, `client_id`, `staff_id`
-- `reason_code` (text, enum-like: `never_asked`, `client_traveling`, `client_call_later`, `client_price`, `client_schedule_unsure`, `not_applicable`, `other`)
-- `reason_notes` (text, nullable — free text for "Other" or supplemental)
-- `created_at`, `created_by`
-- RLS: `is_org_member` for select, `is_org_member` for insert (staff log their own)
+**Wave 21.2 (next):** P1 #4, #5, #6. Analytics integrity + drill-down. Separate PR because it touches the Schedule.tsx write path and needs a small data migration to normalize the `rebook_declined_reason` column.
 
-Also write to existing `appointment_audit_log` with `REBOOK_DECLINED` + reason in metadata for backward compat with existing rebook audit queries.
+**Defer:** All P2 to a future polish wave with stated triggers.
 
-**3. Analytics surface**
+### Files Wave 21.1 would touch
 
-New card in **Operations Hub → Rebooking** section: `RebookDeclineReasonsCard.tsx`
-- Horizontal bar chart: reason → count + % of total declines
-- Date range picker (inherits Hub filter)
-- Drill-down: click bar → list of appointments with that reason (link to drawer)
-- Headline insight at top: *"X% of declines were 'I never asked' — biggest lever this period"*
-- Empty state: *"No decline reasons recorded yet. Reasons capture starts at checkout."*
-- Wrapped in `PinnableCard` for Command Center pinning
+- `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — intercept close in `gate` phase; advance phase on interval tap; pass interval through
+- `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — pass interval up cleanly (already does)
+- `src/pages/dashboard/Schedule.tsx` — accept optional `interval` from `onScheduleNext`, preselect booking date
+- `src/hooks/useRebookDeclineReasons.ts` — fix `staffId` resolution (or do it at call site in CheckoutSummarySheet using `stylist_profile?.id`)
 
-**4. Drawer surfacing (closing the loop)**
+### Acceptance checks for 21.1
 
-In `AppointmentDetailSheet` audit/timeline tab:
-- Decline reason renders inline next to `REBOOK_DECLINED` event (not just "rebook declined" — "rebook declined: I never asked")
-- Lets managers spot patterns per stylist without leaving the appointment
-
-### Files
-
-**New:**
-- `src/components/dashboard/schedule/RebookDeclineReasonDialog.tsx`
-- `src/components/dashboard/analytics/RebookDeclineReasonsCard.tsx`
-- `src/hooks/useRebookDeclineReasons.ts` (insert + query)
-- Migration: `rebook_decline_reasons` table + RLS
-
-**Modify:**
-- `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — Skip button opens dialog instead of firing `onDecline` directly
-- `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — wire dialog into rebook gate flow; only proceed when reason captured
-- `src/lib/audit-event-types.ts` — add reason metadata convention comment
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — audit timeline displays reason
-- `src/pages/dashboard/admin/operations-hub` (or analytics hub rebooking subtab) — mount new card
-- `src/config/dashboardNav.ts` — only if new analytics route added (likely just lives under existing Rebooking tab)
-
-### Acceptance checks
-
-1. Click "Skip" in rebook gate → dialog opens, cannot dismiss without selecting a reason
-2. "Other" requires free-text before Confirm enables
-3. Confirm writes to `rebook_decline_reasons` + `appointment_audit_log`, then proceeds with checkout
-4. Analytics card shows reason breakdown with "I never asked" callout
-5. Drawer audit timeline shows reason inline with decline event
-6. Reason data scoped by `organization_id` (RLS enforced)
-7. No regression to one-tap rebook flow (only "Skip" path is gated)
-
-### Open question (worth confirming after approval)
-
-Should this gate also fire when staff closes `CheckoutSummarySheet` without selecting either rebook OR a decline reason? (i.e., closing = implicit skip = should still capture reason.) Default: yes, treat sheet-close-without-rebook as decline → modal blocks close. Tell me if you want a softer flow.
-
-### Deferred
-
-- **P2** PIN-gate the "I never asked" reason (manager-only override) — trigger: when staff start gaming the field
-- **P2** Per-stylist decline reason leaderboard — trigger: when 3+ owners ask for it
-- **P2** Auto-coaching nudge in stylist profile when "I never asked" exceeds threshold (e.g., >40% of their declines) — trigger: after 30 days of baseline data
-- **P2** Public/client-facing version (text-back link asking "want to rebook?") — trigger: when in-person ask rate stabilizes >70%
+1. Close × in gate phase opens decline dialog; cannot dismiss sheet until reason captured OR rebook completed
+2. Tap "+4 weeks" → schedule-next opens with that date prefilled, gate optimistically advances to checkout phase
+3. If schedule-next is cancelled, staff returns to checkout phase with `rebooked=false` (not stuck in gate)
+4. `rebook_decline_reasons.staff_id` populated for non-anonymous bookings
+5. TS clean, tests still passing
 
