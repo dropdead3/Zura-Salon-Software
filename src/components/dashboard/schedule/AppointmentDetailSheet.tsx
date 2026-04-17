@@ -2561,6 +2561,32 @@ export function AppointmentDetailSheet({
               )}
             </PremiumFloatingPanel>
 
+      {/* Wave 22.5 — Zura-native call/text dialogs */}
+      {appointment.client_phone && resolvedOrgId && (
+        <>
+          <ContactActionDialog
+            mode="call"
+            open={callDialogOpen}
+            onOpenChange={setCallDialogOpen}
+            clientName={appointment.client_name || 'Client'}
+            phone={appointment.client_phone}
+            organizationId={resolvedOrgId}
+            clientId={appointment.client_id ?? null}
+            appointmentId={appointment.id ?? null}
+          />
+          <ContactActionDialog
+            mode="text"
+            open={textDialogOpen}
+            onOpenChange={setTextDialogOpen}
+            clientName={appointment.client_name || 'Client'}
+            phone={appointment.client_phone}
+            organizationId={resolvedOrgId}
+            clientId={appointment.client_id ?? null}
+            appointmentId={appointment.id ?? null}
+          />
+        </>
+      )}
+
       {/* Confirmation Dialog (Cancel / No Show) */}
       <div>
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) { setConfirmAction(null); setCancelReason(''); } }}>
