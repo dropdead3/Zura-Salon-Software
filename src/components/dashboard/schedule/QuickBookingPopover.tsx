@@ -2494,26 +2494,28 @@ export function QuickBookingPopover({
                 )}
               </div>
 
-              <div>
-                {!showNotes ? (
-                  <button
-                    type="button"
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => setShowNotes(true)}
-                  >
-                    + Add special notes
-                  </button>
-                ) : (
-                  <div className="space-y-1.5">
-                    <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Notes</h4>
-                    <Textarea
-                      placeholder="Special instructions, pricing notes, promo codes..."
-                      value={bookingNotes}
-                      onChange={(e) => setBookingNotes(e.target.value)}
-                      className="min-h-[60px] text-sm resize-none"
-                    />
+              {/* Stylist Notes — always visible, operationally critical */}
+              <div className="rounded-lg border border-border/60 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className={cn("h-4 w-4 transition-colors", bookingNotes.trim() ? "text-primary" : "text-muted-foreground")} />
+                    <Label htmlFor="booking-notes" className="text-sm cursor-pointer">Notes for the stylist</Label>
+                    {bookingNotes.trim() && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    )}
                   </div>
-                )}
+                  <Badge variant="secondary" className="text-[10px] font-normal h-5 px-2">Recommended</Badge>
+                </div>
+                <Textarea
+                  id="booking-notes"
+                  placeholder="What should your stylist know? Formula notes, client preferences, allergies, special requests..."
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  className="min-h-[80px] text-sm resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Visible to your stylist before the appointment.
+                </p>
               </div>
 
               {/* Request Assistant Coverage toggle */}
