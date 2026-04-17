@@ -1,64 +1,43 @@
 
 
 ## Goal
-Layer three enhancements onto the rebook flow to make it learn from behavior, coachable, and more committal in language.
+Elevate the suggested-script card so it reads as the centerpiece of the rebook flow, and add a "What not to say" anti-pattern reference with a hover tooltip showing the failure mode language.
 
-## Enhancement 1 — Track Interval Acceptance
-**Why:** Learn which week intervals clients actually commit to per service category, so defaults get smarter over time per organization.
+## Design
 
-**Schema change** (migration):
-- Add column `rebooked_at_weeks INTEGER` on `appointments` table (nullable)
-- Populated when stylist confirms a rebook from the script — captures the toggle value selected (1, 2, 3, 4, 6, 8, 10, 12)
-- Index on `(organization_id, service_category, rebooked_at_weeks)` for aggregation queries
+### 1. Elevate the script card
+- Promote from muted subcard to a primary surface:
+  - Border: `border-primary/30` (vs current `border-border/60`)
+  - Background: subtle gradient `bg-gradient-to-br from-primary/[0.06] to-primary/[0.02]`
+  - Padding bumped from `p-4` → `p-5`
+  - Inset accent stripe on the left edge (`before:` pseudo or a `border-l-2 border-l-primary/40`) to draw the eye
+- Quote glyph: enlarged from `h-3.5 w-3.5` opacity 50 → `h-5 w-5` `text-primary/40`, tucked top-left
+- Script text: bump from `text-sm` → `text-base`, keep italic, keep `leading-relaxed`
+- Bound values (weeks / day / time): currently `font-medium` foreground — promote to `text-primary` (still no `font-bold`) so the variables visually pop as the levers being adjusted
+- "Suggested Script" eyebrow: keep Termina uppercase, but lighten contrast slightly and move to top-right of the card (acts as a quiet label, not a footer) — OR keep at bottom and add the new "What not to say" link beside it
 
-**Wiring:**
-- `CheckoutSummarySheet` already calls `onBookInterval(interval)`. Extend the downstream booking handler to write `rebooked_at_weeks: interval.weeks` to the **source** appointment (not the new one).
-- Future: a nightly job can compute median accepted interval per service category per org and feed back into `rebook-recommender.ts` via a `learned_intervals` table. (Out of scope for this wave — schema only.)
+### 2. "What not to say" anti-pattern button
+- Subscript-style ghost link rendered **below** the script card (own row, right-aligned)
+- Visual: small chevron-suffixed link `What not to say ›` — `text-xs` `text-muted-foreground` with `hover:text-destructive` transition
+- Wrapped in shadcn `Tooltip` (already in project at `src/components/ui/tooltip.tsx`)
+- Tooltip content (max-w-xs) shows the rejected language with an X marker and a brief "why":
 
-## Enhancement 2 — Stylist-Level Rebook Rate KPI
-**Why:** Turns the script from a UI feature into a coachable behavior. Surfaces who is converting and who needs coaching.
+  > ✗ "Want to rebook? Or do you want me to text you?"
+  >
+  > Optional + deferred = no commitment. Always anchor to a specific week and time.
 
-**Implementation:**
-- New hook: `src/hooks/useStylistRebookRate.ts` — mirrors `useRebookingRate.ts` but groups by `staff_id` over a date range
-- Surface as a tile in **Staff Reports** (`StaffPerformanceCard` / stylist scorecard)
-- Format: `68% rebook rate` with delta vs org average
-- Honors the visibility contract: returns `null` if completed appointments < 10 in window (insufficient sample)
-- Reuses `v_all_appointments` view + existing `rebooked_at_checkout` boolean — no schema change needed
+- Tooltip uses `side="top"` `align="end"` so it floats above the link without being clipped by the sheet
+- `TooltipProvider` is already mounted globally in `App.tsx` (standard shadcn setup) — verify by inspection; if not, wrap locally
 
-**Coaching surface:**
-- Add to `TodaysPrepSection` coach script when stylist's 30-day rebook rate < org median by >15 pts: "Your rebook rate is X% — try the new commitment script today."
-
-## Enhancement 3 — Time-Aware Verbal Script
-**Why:** "How does Tuesday May 27 at 2:00 PM work?" is materially more committal than date-only.
-
-**Implementation:**
-- `CheckoutSummarySheet` passes `appointmentStartTime` (HH:mm) prop into `NextVisitRecommendation`
-- Update script template:
-  - With time: `"...How does {dayLabel} at {timeLabel} work?"`
-  - Without time (fallback): `"...How does {dayLabel} work?"`
-- Same time-of-day is the default suggestion (assumes client prefers consistent slot). If stylist wants different time, they use **Pick a Date** for full picker.
-- `format(date, 'h:mm a')` for time label
+### 3. Token compliance
+- All new typography stays within canon: `font-display` + uppercase only on the eyebrow; `font-sans` everywhere else; max weight `font-medium`
+- Primary tint via `text-primary` / `bg-primary/[0.06]` — uses existing theme tokens, no hardcoded hex
+- No `font-bold`, no `font-semibold` introduced
 
 ## Files to change
-1. **New migration** — add `rebooked_at_weeks` column + index on `appointments`
-2. `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — pass `appointmentStartTime`, persist `rebooked_at_weeks` on confirm
-3. `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — accept optional `startTime` prop, render time in script
-4. **New file** `src/hooks/useStylistRebookRate.ts` — per-stylist rebook rate with sample-size gate
-5. **Edit** `src/components/dashboard/staff/StaffPerformanceCard.tsx` (or equivalent stylist scorecard) — surface KPI tile
-6. `src/components/dashboard/schedule/TodaysPrepSection.tsx` — conditional coaching script when rebook rate lags
+1. `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — restyle the script card, add the anti-pattern tooltip link below it. Single-file change.
 
-## Doctrine compliance
-- **Visibility contract:** stylist KPI returns `null` if sample <10; coach script appears only on material gap
-- **Tenant isolation:** all queries scoped via existing `v_all_appointments` view (already org-scoped)
-- **Phorest write-back:** `rebooked_at_weeks` is Zura-native only, never synced back to Phorest
-- **Tokens:** new KPI tile uses `tokens.kpi.label` / `tokens.kpi.value`, no `font-bold`
-- **Privacy:** no monetary values, no `BlurredAmount` needed
-
-## Open question
-Stylist scorecard placement — surface the rebook rate KPI on the **Staff Performance Card** (existing card grid) or as a new dedicated tile in **Today's Prep** for the logged-in stylist's self-view? Or both?
-
-## Out of scope (future wave)
-- Smart defaults learned from `rebooked_at_weeks` aggregation
-- Org-wide rebook rate leaderboard
-- Rebook rate trend sparkline
+## Out of scope
+- Logging which stylists hover the anti-pattern (could be a future coaching telemetry signal — noting for the deferral register, not implementing now)
+- Adding more anti-pattern variants (single example is the strongest teaching unit)
 
