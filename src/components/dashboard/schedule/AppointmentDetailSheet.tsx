@@ -33,7 +33,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
@@ -1421,11 +1421,10 @@ export function AppointmentDetailSheet({
                     <TabsTrigger value="history" className="font-sans">History</TabsTrigger>
                     <TabsTrigger value="photos" className="font-sans">Photos</TabsTrigger>
                     <TabsTrigger value="notes" className="font-sans">Notes</TabsTrigger>
-                    <TabsTrigger value="formulas" className="font-sans gap-1">
+                    <TabsTrigger value="color-bar" className="font-sans gap-1.5">
                       <Beaker className="w-3.5 h-3.5" />
-                      Formulas
+                      Color Bar
                     </TabsTrigger>
-                    <TabsTrigger value="color-bar" className="font-sans">Color Bar</TabsTrigger>
                   </TabsList>
                 </div>
 
@@ -2170,17 +2169,23 @@ export function AppointmentDetailSheet({
                     )}
                   </TabsContent>
 
-                  {/* ─── TAB: Formulas ────────────────────────── */}
-                  <TabsContent value="formulas" className="p-6 pt-4 mt-0">
-                    <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
-                  </TabsContent>
-
-                  {/* ─── TAB: Color Bar ─────────────────────────── */}
+                  {/* ─── TAB: Color Bar (unified) ──────────────── */}
                   <TabsContent value="color-bar" className="p-6 pt-4 mt-0">
-                    <ColorBarTab
-                      appointment={appointment}
-                      organizationId={effectiveOrganization?.id ?? ''}
-                    />
+                    <Tabs defaultValue="today" className="w-full">
+                      <SubTabsList>
+                        <SubTabsTrigger value="today">Today's Mix</SubTabsTrigger>
+                        <SubTabsTrigger value="history">Formula History</SubTabsTrigger>
+                      </SubTabsList>
+                      <TabsContent value="today" className="mt-4">
+                        <ColorBarTab
+                          appointment={appointment}
+                          organizationId={effectiveOrganization?.id ?? ''}
+                        />
+                      </TabsContent>
+                      <TabsContent value="history" className="mt-4">
+                        <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
+                      </TabsContent>
+                    </Tabs>
                   </TabsContent>
                 </ScrollArea>
               </Tabs>
