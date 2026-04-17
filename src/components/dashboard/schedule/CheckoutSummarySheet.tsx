@@ -714,6 +714,17 @@ export function CheckoutSummarySheet({
                       // schedule flow is cancelled (rebookCompleted prop will
                       // confirm the boolean asynchronously when booking lands).
                       if (onScheduleNext && appointment) {
+                        // Enhancement 1 — record which interval was accepted on
+                        // the SOURCE appointment so we can learn smarter defaults
+                        // per service category over time. Fire-and-forget; the
+                        // booking flow continues regardless.
+                        supabase
+                          .from('appointments')
+                          .update({ rebooked_at_weeks: interval.weeks })
+                          .eq('id', appointment.id)
+                          .then(({ error }) => {
+                            if (error) console.error('Failed to record rebooked_at_weeks:', error);
+                          });
                         onScheduleNext(appointment, interval);
                         setRebooked(true);
                         setGatePhase('checkout');
