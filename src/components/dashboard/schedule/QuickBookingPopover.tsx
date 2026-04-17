@@ -647,15 +647,24 @@ export function QuickBookingPopover({
     enabled: open && !!selectedLocation,
   });
 
-  // Fetch ALL stylists across all locations (stylist-first mode)
+  // Fetch stylists for stylist-first mode.
+  // Scope to current calendar location when one is active so the picker matches
+  // what the user is already viewing. When no location is selected (rare — "All
+  // Locations" or pre-seed), fall back to the org-wide roster.
   const { data: allStylists = [] } = useQuery({
-    queryKey: ['booking-stylists-all-v2'],
+    queryKey: ['booking-stylists-all-v2', selectedLocation || 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('v_calendar_stylists' as any)
         .select('phorest_staff_id, user_id, location_id, display_name, full_name, photo_url, show_on_calendar')
         .eq('is_active', true)
         .eq('show_on_calendar', true);
+
+      if (selectedLocation) {
+        q = q.eq('location_id', selectedLocation);
+      }
+
+      const { data, error } = await q;
 
       if (error) {
         console.error('[QuickBookingPopover] Failed to load all stylists:', error);
