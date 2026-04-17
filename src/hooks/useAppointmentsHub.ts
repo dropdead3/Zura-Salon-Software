@@ -92,7 +92,7 @@ export function useAppointmentsHub(filters: HubFilters, options: { enabled?: boo
       const createdByIds = [...new Set(paged.map((a: any) => a.created_by).filter(Boolean))] as string[];
       const locationIds = [...new Set(paged.map((a: any) => a.location_id).filter(Boolean))] as string[];
       const localClientIds = [
-        ...new Set(paged.filter((a: any) => a._source === 'local' && a.client_id).map((a: any) => a.client_id)),
+        ...new Set(paged.filter((a: any) => a.source === 'local' && a.client_id).map((a: any) => a.client_id)),
       ] as string[];
       const appointmentDates = [...new Set(paged.map((a: any) => a.appointment_date).filter(Boolean))] as string[];
 
@@ -175,7 +175,7 @@ export function useAppointmentsHub(filters: HubFilters, options: { enabled?: boo
       // ── Enrich ──
       const enriched = paged.map((a: any) => {
         const clientInfo = clientInfoMap[a.phorest_client_id] || {};
-        const customerNumber = a._source === 'phorest'
+        const customerNumber = a.source === 'phorest'
           ? (clientInfo.customer_number || null)
           : (a.client_id ? localClientMap[a.client_id] || null : null);
         return {
@@ -187,7 +187,7 @@ export function useAppointmentsHub(filters: HubFilters, options: { enabled?: boo
           stylist_name: profileMap[a.stylist_user_id] || a.staff_name || null,
           created_by_name: a.created_by
             ? profileMap[a.created_by] || 'Unknown'
-            : a._source === 'phorest'
+            : a.source === 'phorest'
               ? 'Phorest Sync'
               : null,
           location_name: locationMap[a.location_id] || null,
