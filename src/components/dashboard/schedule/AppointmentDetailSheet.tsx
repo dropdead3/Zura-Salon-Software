@@ -45,6 +45,7 @@ import { useMarkAppointmentTabViewed } from '@/hooks/useMarkAppointmentTabViewed
 import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,6 +81,7 @@ import {
   MessageSquare, Lock, Trash2, Loader2, UserPlus, X, Repeat, RotateCcw,
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
   UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera, Beaker,
+  MessageCircle, Info,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
