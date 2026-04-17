@@ -1840,36 +1840,53 @@ export function AppointmentDetailSheet({
 
                     <Separator />
 
-                    {/* Stylist + Preferred Comparison */}
+                    {/* Stylist + Preferred Comparison (Wave 18: identity-collapse) */}
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Stylist</h4>
-                      {appointment.stylist_profile && (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={appointment.stylist_profile.photo_url || undefined} />
-                            <AvatarFallback className="text-[10px]">
-                              {(appointment.stylist_profile.display_name || appointment.stylist_profile.full_name).slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">{appointment.stylist_profile.display_name || appointment.stylist_profile.full_name}</span>
-                          <Badge variant="outline" className="text-[10px]">Booked</Badge>
-                        </div>
-                      )}
-                      {clientRecord?.preferred_stylist_id && preferredStylist && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
-                            <Star className="w-3.5 h-3.5 text-muted-foreground" />
-                          </div>
-                          <span className="text-sm text-muted-foreground">{getStylistDisplayName(preferredStylist)}</span>
-                          {preferredStylistMismatch ? (
-                            <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300">
-                              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Mismatch
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] text-green-700 dark:text-green-300 border-green-300">Preferred</Badge>
-                          )}
-                        </div>
-                      )}
+                      {(() => {
+                        const hasPreferred = !!(clientRecord?.preferred_stylist_id && preferredStylist);
+                        const bookedName = appointment.stylist_profile?.display_name || appointment.stylist_profile?.full_name || '';
+                        const preferredName = preferredStylist
+                          ? (preferredStylist.display_name || preferredStylist.full_name || '')
+                          : '';
+                        const isSameAsPreferred = hasPreferred && (
+                          preferredStylist?.user_id === appointment.stylist_user_id ||
+                          (bookedName && preferredName && bookedName.trim().toLowerCase() === preferredName.trim().toLowerCase())
+                        );
+
+                        if (!appointment.stylist_profile) return null;
+
+                        return (
+                          <>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={appointment.stylist_profile.photo_url || undefined} />
+                                <AvatarFallback className="text-[10px]">
+                                  {(appointment.stylist_profile.display_name || appointment.stylist_profile.full_name).slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm">{bookedName}</span>
+                              <Badge variant="outline" className="text-[10px]">Booked</Badge>
+                              {isSameAsPreferred && (
+                                <Badge variant="outline" className="text-[10px] text-green-700 dark:text-green-300 border-green-300 gap-0.5">
+                                  <Star className="h-2.5 w-2.5" /> Preferred
+                                </Badge>
+                              )}
+                            </div>
+                            {hasPreferred && !isSameAsPreferred && (
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+                                  <Star className="w-3.5 h-3.5 text-muted-foreground" />
+                                </div>
+                                <span className="text-sm text-muted-foreground">{getStylistDisplayName(preferredStylist)}</span>
+                                <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300">
+                                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Preferred — Mismatch
+                                </Badge>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
 
                       {/* Assistants */}
                       <div className="mt-3">
