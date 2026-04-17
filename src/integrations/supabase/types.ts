@@ -28616,6 +28616,15 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_color_bar_entitlement_counts: {
+        Args: never
+        Returns: {
+          active_count: number
+          organization_id: string
+          suspended_count: number
+          total_count: number
+        }[]
+      }
       get_db_connection_stats: { Args: never; Returns: Json }
       get_kiosk_settings: {
         Args: { p_location_id?: string; p_organization_id: string }
