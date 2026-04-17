@@ -409,6 +409,13 @@ export function QuickBookingPopover({
   const [preSelectedStylistPhoto, setPreSelectedStylistPhoto] = useState<string | null>(null);
   const [preSelectedStylistLevel, setPreSelectedStylistLevel] = useState<string | null>(null);
 
+  // Stylist picker sort mode (resets each time the popover opens)
+  type StylistSortMode = 'recommended' | 'price-asc' | 'price-desc' | 'level-asc' | 'level-desc';
+  const [stylistSortMode, setStylistSortMode] = useState<StylistSortMode>('recommended');
+  useEffect(() => {
+    if (open) setStylistSortMode('recommended');
+  }, [open]);
+
   // Check if a step has valid input (for forward navigation)
   const isStepCompleted = (stepName: Step): boolean => {
     switch (stepName) {
