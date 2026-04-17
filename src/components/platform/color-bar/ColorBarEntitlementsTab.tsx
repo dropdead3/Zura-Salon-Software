@@ -247,18 +247,32 @@ export function ColorBarEntitlementsTab() {
     }
   };
 
-  const handleBatchEnable = () => {
+  const handleBatchEnable = async () => {
     const toEnable = orgs.filter((o) => selected.has(o.id) && !o.backroom_enabled);
-    toEnable.forEach((org) => {
-      updateFlag.mutate({
-        organizationId: org.id,
-        flagKey: 'backroom_enabled',
-        isEnabled: true,
-        reason: 'Batch enabled via Platform Color Bar Admin',
-      });
-    });
-    toast.success(`Enabling color bar for ${toEnable.length} organizations`);
-    setSelected(new Set());
+    if (toEnable.length === 0) return;
+    const advisory = scheduleAdvisoryToast(
+      `Enabling Color Bar for ${toEnable.length} organizations…`,
+    );
+    try {
+      // Cascade through the shared toggle hook so each org gets the correct
+      // first-time-enable vs reactivation flow + per-location entitlements.
+      // Note: orgs with prior suspensions will open the dialog one at a time;
+      // we surface a single rolled-up advisory toast for the batch.
+      for (const org of toEnable) {
+        await colorBarToggle.toggle({
+          organizationId: org.id,
+          organizationName: org.name,
+          currentlyEnabled: false,
+          optimisticPatch: (next) => optimisticallyFlip(org.id, next),
+        });
+      }
+      advisory.dismiss();
+    } catch (err: any) {
+      advisory.dismiss();
+      toast.error('Batch enable failed: ' + (err?.message ?? 'unknown error'));
+    } finally {
+      setSelected(new Set());
+    }
   };
 
   const handleBatchDisable = async () => {
@@ -558,6 +572,7 @@ export function ColorBarEntitlementsTab() {
                             <Switch
                               checked={org.backroom_enabled}
                               onCheckedChange={() => toggleColorBar(org)}
+                              disabled={!!colorBarToggle.reactivationTarget || colorBarToggle.isPending}
                             />
                           </TableCell>
                         </TableRow>
@@ -596,19 +611,20 @@ export function ColorBarEntitlementsTab() {
 
       {/* Reactivation confirmation — shown when toggling on an org that was previously suspended */}
       <ReactivationConfirmDialog
-        open={!!reactivationTarget}
+        open={!!colorBarToggle.reactivationTarget}
         onOpenChange={(open) => {
-          if (!open) setReactivationTarget(null);
+          if (!open) colorBarToggle.cancelReactivation();
         }}
-        orgName={reactivationTarget?.org.name ?? ''}
-        suspendedAt={reactivationTarget?.suspendedAt ?? null}
-        affectedLocations={reactivationTarget?.locationNames ?? []}
-        isPending={updateFlag.isPending || bulkReactivate.isPending}
-        onConfirm={async () => {
-          if (!reactivationTarget) return;
-          const target = reactivationTarget;
-          setReactivationTarget(null);
-          await reactivateColorBar(target.org);
+        orgName={colorBarToggle.reactivationTarget?.organizationName ?? ''}
+        suspendedAt={colorBarToggle.reactivationTarget?.suspendedAt ?? null}
+        affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
+        isPending={colorBarToggle.isPending}
+        onConfirm={() => {
+          const target = colorBarToggle.reactivationTarget;
+          if (!target) return;
+          colorBarToggle.confirmReactivation((next) =>
+            optimisticallyFlip(target.organizationId, next),
+          );
         }}
       />
     </PlatformCard>
