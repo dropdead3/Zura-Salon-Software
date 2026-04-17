@@ -1137,7 +1137,10 @@ export default function ClientDirectory() {
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-medium truncate">{client.name}</p>
                             {(() => {
-                              const cbCount = callbackCounts?.get(client.phorest_client_id) ?? 0;
+                              // Resolve hospitality key — handles Zura-native clients
+                              // (no Phorest ID) by falling back to clients.id UUID.
+                              const cbKey = client.phorest_client_id || client.id;
+                              const cbCount = callbackCounts?.get(cbKey) ?? 0;
                               if (cbCount === 0) return null;
                               return (
                                 <Tooltip>
