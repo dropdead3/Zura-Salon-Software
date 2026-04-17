@@ -188,14 +188,16 @@ export default function DashboardHome() {
   const { isViewingAs } = useViewAs();
   const { isImpersonating: isGodMode } = useOrganizationContext();
   
-  // Leadership team: super admin, admin, and manager
-  // God Mode (platform impersonation) = full leadership access
-  // When viewing as another role, only use effective roles (ignore profile.is_super_admin)
+  // Leadership team: super admin, admin, and manager.
+  // God Mode (platform/org impersonation) = full leadership access.
+  // Otherwise rely solely on effective roles so user-impersonation produces a
+  // complete UX simulation (a super-admin viewing as a stylist must NOT see
+  // leadership chrome).
   const isLeadership = isGodMode
     ? true
-    : isViewingAs 
-      ? roles.includes('super_admin') || roles.includes('admin') || roles.includes('manager')
-      : profile?.is_super_admin || roles.includes('super_admin') || roles.includes('admin') || roles.includes('manager');
+    : roles.includes('super_admin')
+      || roles.includes('admin')
+      || roles.includes('manager');
   
   // Check if user has stylist, stylist_assistant, or booth_renter roles (for Quick Actions visibility)
   const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant') || roles.includes('booth_renter');
