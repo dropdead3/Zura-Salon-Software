@@ -529,9 +529,11 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
 }
 
 // Get sales by location (from appointments)
-export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
+export function useSalesByLocation(dateFrom?: string, dateTo?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['sales-by-location-from-appointments', dateFrom, dateTo],
+    staleTime: 60_000, // Wave 14: 1m cache
+    enabled: options?.enabled !== false,
     queryFn: async () => {
       // First fetch locations to map IDs to names
       const { data: locations } = await supabase
