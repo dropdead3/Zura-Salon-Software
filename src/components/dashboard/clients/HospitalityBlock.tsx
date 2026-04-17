@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useClientAboutFacts } from '@/hooks/useClientAboutFacts';
