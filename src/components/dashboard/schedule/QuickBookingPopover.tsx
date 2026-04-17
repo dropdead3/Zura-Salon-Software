@@ -34,6 +34,7 @@ import {
   Sparkles,
   Users,
   FileText,
+  Plus,
 } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
