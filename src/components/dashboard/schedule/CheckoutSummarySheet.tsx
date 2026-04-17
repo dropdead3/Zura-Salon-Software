@@ -706,6 +706,7 @@ export function CheckoutSummarySheet({
                     serviceName={appointment.service_name}
                     serviceCategory={appointment.service_category}
                     appointmentDate={appointment.appointment_date}
+                    appointmentStartTime={appointment.start_time}
                     onBookInterval={(interval: RebookInterval) => {
                       // Wave 21.1 — pass chosen interval upward so the booking
                       // popover can pre-select the date. Optimistically advance
