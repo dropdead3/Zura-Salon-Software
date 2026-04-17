@@ -1,107 +1,85 @@
 
 
 ## Goal
-Layer three refinements onto the amber rebook alert: (1) risk-scaled amber intensity based on overdue drift, (2) one-shot entrance animation per checkout, (3) promote amber to a semantic `--warning` token.
+Build a checkout that mirrors how appointments actually unfold: pre-priced from catalog, then **fully editable at the register** — add/swap/remove services, apply discounts, waive fees — before settling. This is the "negotiated phase" Phorest gets right.
 
-## Why this matters
-Aligns with doctrine: alerts intervene rarely, scale with materiality, and use semantic tokens — not palette literals. Right now amber is a flat literal applied uniformly regardless of risk; this makes it a tunable, theme-aware warning surface.
+## Scope (two waves, shipped together)
 
----
+### Wave 1 — Catalog price fallback (the $0 bug)
+**File:** `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`
 
-## Change 1 — Semantic `--warning` token
+Resolution chain when `appointment.total_price` is null/0:
+1. `service_location_prices.price` (per-location override)
+2. `services.price` (org default)
+3. NULL → `text-warning` "Price not set" + Charge CTAs disabled
 
-**File:** `src/index.css`
+Show subtle `tokens.body` muted subtitle: `"Catalog price · POS price not yet stamped"` when falling back.
 
-Add HSL warning variables alongside `--destructive` / `--success` (both light + dark + each theme block):
-```css
---warning: 38 92% 50%;              /* amber-500 baseline */
---warning-foreground: 0 0% 100%;
---warning-soft: 38 92% 50%;         /* same hue, opacity applied at usage */
-```
+### Wave 2 — Editable line-item cart at checkout
+Convert the static service summary into an editable line-item table — the heart of the negotiated phase.
 
-**File:** `tailwind.config.ts`
-
-Register in the `colors` extend:
+**New file:** `src/hooks/useCheckoutCart.ts`
+Local state cart (mirrors `useRegisterCart` pattern), seeded from the appointment's resolved services on mount. Shape per line item:
 ```ts
-warning: {
-  DEFAULT: 'hsl(var(--warning))',
-  foreground: 'hsl(var(--warning-foreground))',
-}
+{ id, type: 'service' | 'addon' | 'product', name, staffId, unitPrice, quantity, discount: { type: 'pct'|'amt'|'waive', value, reason? }, isOriginal: boolean }
 ```
+Methods: `addLine`, `removeLine`, `updateLine`, `applyDiscount`, `waiveLine`, `swapService`, `reset`.
 
-This gives us `text-warning`, `bg-warning`, `border-warning/40`, etc. — theme-aware and replaceable per palette in the future.
+**New components in `src/components/dashboard/schedule/checkout/`:**
 
----
+1. `CheckoutLineItems.tsx` — editable table replacing current static service block:
+   - Per-row inline controls: quantity stepper, price field (click-to-edit, audit-logged on change), staff picker (existing), discount popover, remove button
+   - "Original" lines visually distinct (subtle `border-l-2 border-l-primary/40`); "Added at checkout" lines plain
+   - Empty state: "Add a service to begin"
 
-## Change 2 — Risk-scaled amber intensity
+2. `AddServiceDialog.tsx` — searchable command palette over `services` (org-scoped, location price-aware). Reuses `useServices` + `useServiceLocationPrices`. Adds line as `{ type: 'service', isOriginal: false }`.
 
-**File:** `src/components/dashboard/schedule/NextVisitRecommendation.tsx`
+3. `LineDiscountPopover.tsx` — three modes:
+   - Percent off (0–100)
+   - Amount off ($)
+   - **Waive** (sets price to $0, requires `reason` from a small enum: `Comp`, `Service Recovery`, `Manager Comp`, `Other`)
+   - All discounts captured with `applied_by_user_id`, `reason`, timestamp → written to audit log on settle
 
-Accept (or derive) a `daysSinceLastVisit` + `recommendedIntervalDays` from existing recommender output. Compute a `driftRatio`:
-```
-driftRatio = daysSinceLastVisit / recommendedIntervalDays
-```
+4. `CartDiscountSection.tsx` — order-level discount (existing promo code field stays; add a manual "Manager Discount" line with reason)
 
-Map to three intensity tiers (no continuous scale — keep it deterministic, three steps reads as decisive):
+**Modify:** `CheckoutSummarySheet.tsx`
+- Replace static service display with `<CheckoutLineItems>`
+- Subtotal, tax, total recompute from cart (not from `appointment.total_price`)
+- "Add Service" button in section header → opens `AddServiceDialog`
+- Diff banner when cart differs from original: `"3 changes from original appointment"` (expandable to show added/removed/repriced/discounted)
 
-| Tier | driftRatio | Border | Background gradient | Pulse dot |
-|------|------------|--------|---------------------|-----------|
-| `on-cadence` | ≤ 1.0 | `border-warning/25 border-l-warning/60` | `from-warning/[0.05] to-warning/[0.02]` | static |
-| `drifting` | 1.0–1.5 | `border-warning/40 border-l-warning` | `from-warning/[0.10] to-warning/[0.04]` | `animate-pulse` |
-| `overdue` | > 1.5 | `border-warning/60 border-l-warning` + `shadow-[0_0_0_1px_hsl(var(--warning)/0.25),0_4px_16px_-2px_hsl(var(--warning)/0.25)]` | `from-warning/[0.16] to-warning/[0.06]` | `animate-pulse` + `ring-1 ring-warning/40` around dot |
+**Audit & integrity** (doctrine: commission/margin protection):
+- Every price override, waive, and discount writes to `appointment_audit_log` (existing pattern from `useAppointmentAuditLog`) with: `event_type`, `previous_value`, `new_value`, `reason`, `applied_by`
+- On settle, the **negotiated cart** writes to Zura-native transaction items (existing `transaction_items` schema) — these become the immutable revenue record. Phorest is never written to (`phorest-write-back-safety-gate`).
+- Discount events: `LINE_PRICE_OVERRIDDEN`, `LINE_WAIVED`, `LINE_DISCOUNTED`, `SERVICE_ADDED_AT_CHECKOUT`, `SERVICE_REMOVED_AT_CHECKOUT` — added to `AUDIT_EVENTS` enum
 
-Eyebrow copy adapts:
-- on-cadence → `Say This`
-- drifting → `Say This — Drifting`
-- overdue → `Say This — Overdue`
+**Permissions** (waive/override are sensitive):
+- Line price override + waive gated behind `permissions.checkout.override_price` (use `usePermission` / `VisibilityGate`)
+- Stylists: can add services, apply preset discounts (≤20%)
+- Managers/Owners: can waive, apply unlimited discount, override prices
+- Below threshold → controls hidden (silence is valid output); above threshold + no permission → disabled with tooltip "Manager approval required"
 
-Variables (`{selectedWeeks}`, `{dayLabel}`, `{timeLabel}`) stay `text-warning font-medium` across all tiers.
+**Visual structure** (no new tokens, all existing):
+- Line items use `tokens.table.columnHeader` for column labels (Title Case, `font-sans`)
+- Prices wrapped in `BlurredAmount`
+- Discount badges use `text-warning` for waives, muted for percentage discounts
+- "Add Service" button: `tokens.button.cardAction` (pill, h-9)
+- Diff banner: `border-warning/40 bg-warning/[0.06]` — uses the semantic `--warning` token already shipped
 
-If drift data is missing, default to `drifting` (current visual baseline — no regression).
+## Out of scope (logged for next wave)
+- **Estimate vs final separation** in DB schema (`estimated_total` + `final_total` columns) — structurally correct but requires migration + analytics rewrite. Revisit trigger: when native scheduling ships end-to-end without Phorest dependency on booking creation.
+- **Tip splitting across multiple service providers** — current tip selection assumes one stylist; multi-provider tip allocation is its own wave.
+- **Refund/void flow post-settle** — separate doctrine; this wave covers pre-settle negotiation only.
+- **Manager approval flow** (PIN-prompt for high-value waives over a threshold) — gating works via permissions for v1; PIN-prompt UX is a Phase 3 polish.
 
----
+## Files to create
+1. `src/hooks/useCheckoutCart.ts`
+2. `src/components/dashboard/schedule/checkout/CheckoutLineItems.tsx`
+3. `src/components/dashboard/schedule/checkout/AddServiceDialog.tsx`
+4. `src/components/dashboard/schedule/checkout/LineDiscountPopover.tsx`
+5. `src/components/dashboard/schedule/checkout/CartDiscountSection.tsx`
 
-## Change 3 — One-shot entrance animation
-
-**File:** `src/components/dashboard/schedule/NextVisitRecommendation.tsx`
-
-Add a `useRef<boolean>(false)` flag + `useState` to gate animation to first mount only:
-```tsx
-const hasAnimated = useRef(false);
-const [animateIn, setAnimateIn] = useState(!hasAnimated.current);
-
-useEffect(() => {
-  hasAnimated.current = true;
-  const t = setTimeout(() => setAnimateIn(false), 300);
-  return () => clearTimeout(t);
-}, []);
-```
-
-Apply Tailwind's existing animation utilities (already in `tailwind.config.ts` per useful-context):
-```tsx
-className={cn(
-  "...amber styles...",
-  animateIn && "animate-[fade-in_0.25s_ease-out,scale-in_0.2s_ease-out]"
-)}
-```
-
-Re-renders (interval toggle clicks) won't retrigger because the ref persists across renders within the same mount. New checkout sheet open = new mount = animation fires once.
-
----
-
-## Token compliance
-- `text-warning` / `bg-warning/X` are semantic tokens — no palette literals leak into JSX
-- All weights ≤ `font-medium`
-- Eyebrow stays `font-display` uppercase + tracking
-- Shadow uses `hsl(var(--warning) / 0.25)` — theme-aware
-
-## Files to change
-1. `src/index.css` — add `--warning` HSL vars to `:root`, `.dark`, and each theme block
-2. `tailwind.config.ts` — register `warning` color
-3. `src/components/dashboard/schedule/NextVisitRecommendation.tsx` — drift tiering, swap amber-500 literals → `warning` token, one-shot entrance animation
-
-## Out of scope
-- Adding a 4th `critical` tier (>2.5x drift) — three tiers is enough signal; can add later if telemetry shows clustering above 2.5
-- Per-stylist drift baselines (currently service-category baseline; personalization is a future wave)
-- Logging which tier fired — telemetry hook can come with the rebook acceptance tracking already deferred
+## Files to modify
+1. `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — wire cart, swap static block for `<CheckoutLineItems>`, add diff banner, recompute totals, add catalog price resolver (Wave 1)
+2. `src/lib/audit-event-types.ts` — add the 5 new audit event types
 
