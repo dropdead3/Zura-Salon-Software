@@ -38,6 +38,7 @@ export function ClientCallbacksPanel({
   const [adding, setAdding] = useState(false);
   const [draftPrompt, setDraftPrompt] = useState('');
   const [draftDate, setDraftDate] = useState('');
+  const [useCustomDate, setUseCustomDate] = useState(false);
   const [showPast, setShowPast] = useState(false);
 
   if (!clientId || !organizationId) return null;
