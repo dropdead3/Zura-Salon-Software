@@ -2571,17 +2571,7 @@ export function AppointmentDetailSheet({
             clientName={appointment.client_name || 'Client'}
             phone={appointment.client_phone}
             organizationId={resolvedOrgId}
-            clientId={appointment.client_id ?? null}
-            appointmentId={appointment.id ?? null}
-          />
-          <ContactActionDialog
-            mode="text"
-            open={textDialogOpen}
-            onOpenChange={setTextDialogOpen}
-            clientName={appointment.client_name || 'Client'}
-            phone={appointment.client_phone}
-            organizationId={resolvedOrgId}
-            clientId={appointment.client_id ?? null}
+            clientId={clientRecord?.id ?? null}
             appointmentId={appointment.id ?? null}
           />
         </>
