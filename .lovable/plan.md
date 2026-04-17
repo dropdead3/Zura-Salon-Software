@@ -1,35 +1,49 @@
 
 ## Prompt review
 
-Clean spatial instruction with measurable constraints (15px gap, flush alignment) — easy to execute precisely. Good observation that the FAB and action bar were drifting apart in dead space.
+Clear, specific request — three discrete metrics with implied placement. Good instinct to scope to day view only, since week view's broader date range makes "in session" / "remaining today" less meaningful at a glance.
 
-Tighter framing for next time: the two constraints in your prompt actually conflict slightly with "move FAB left." The FAB is *already* flush with the scheduler table's right edge (both use 16px from viewport). What's actually moving is the **action bar** — it shrinks rightward to close the gap. Reframing as "tighten the action bar so it sits 15px to the left of the FAB" would have been even crisper. I'll execute the intent: FAB stays put, action bar's right padding tightens.
+Tighter framing for next time: explicitly define each metric's data definition. "In session" could mean `checked_in` only, or `checked_in` + `in_service`. "Remaining" could mean `confirmed` + `pending` (not yet started) or everything not in a terminal state. I'll use the most operationally useful definitions and call them out in acceptance checks so you can flag if they don't match your mental model.
 
-## Diagnosis
+## Definitions (proposed)
 
-In `Schedule.tsx`:
-- Scheduler table wrapper: `pl-2 pr-4` → right edge at 16px from viewport.
-- FAB (`HelpFAB.tsx`, schedule branch): `fixed bottom-4 right-4` → right edge at 16px, width 56px → left edge at 72px from viewport right.
-- Action bar wrapper: `pl-2 pr-20` → right edge at 80px from viewport, leaving a ~64px gap to the FAB's left edge.
+Out of today's appointments at the selected location:
+- **Total**: existing `todayAppointmentCount` (already shown as "7 appts").
+- **In session**: status === `checked_in` (client is physically in the chair).
+- **Remaining**: status ∈ {`confirmed`, `pending`, `booked`} — booked but not yet checked in, not cancelled, not no-show, not completed.
 
-To produce a 15px gap: action bar right padding must equal FAB-width (56px) + FAB-right-offset (16px) + gap (15px) = **87px**.
+Cancelled / no-show / completed are excluded from "remaining" since they're resolved.
 
 ## Plan
 
-**1. Tighten action bar right padding** (`src/pages/dashboard/Schedule.tsx`, line 1044)
-- Change `pr-20` → `pr-[87px]` on the action bar wrapper.
-- Result: action bar right edge sits exactly 15px to the left of the FAB's left edge.
+**1. Pass view mode + computed counts to `ScheduleActionBar`**
+- `src/pages/dashboard/Schedule.tsx` (line 1046): add `view={view}` prop. The component already receives the filtered today's appointments, so it can compute the two new counts internally — no need to pass them separately.
 
-**2. Leave FAB as-is** (`src/components/dashboard/HelpFAB.tsx`)
-- `bottom-4 right-4` already places the FAB's right edge flush with the scheduler table's right edge (both at 16px from viewport). No change needed.
+**2. Add view-aware count display in `ScheduleActionBar.tsx`**
+- Add `view?: 'day' | 'week' | 'agenda'` to props.
+- Compute `inSessionCount` and `remainingCount` via `useMemo` from the existing `appointments` prop using the status definitions above.
+- Render two new inline pills next to the existing "N appts" indicator, **only when `view === 'day'`**:
+  - `<PlayCircle /> {inSessionCount} in session`
+  - `<Clock /> {remainingCount} remaining`
+- Match the existing muted style (`tokens.body.muted`, `h-4 w-4` icons, `font-medium text-foreground` for the number).
+- Hide gracefully when count is 0? → No, show `0` so operators see "all checked out" state explicitly.
+
+**3. Visual treatment**
+- Same `flex items-center gap-2 shrink-0` pattern as the existing appt count.
+- Separator: a subtle `·` dot or just `gap-4` between the three indicators — use `gap-4` for cleaner look, no dots.
+- Icons: `PlayCircle` (in session) and `Clock` (remaining) from lucide-react, both `h-4 w-4`.
 
 ## Acceptance checks
 
-1. FAB's right edge is flush with the scheduler table's right edge (both 16px from viewport).
-2. Exactly 15px of empty space between the action bar pill's right edge and the FAB's left edge.
-3. Vertical alignment of FAB and action bar unchanged.
-4. Other pages (non-schedule) FAB position untouched.
-5. No layout shift on different viewport widths — both elements anchor to the right edge.
+1. **Day view only**: the two new indicators appear in day view; hidden in week and agenda views.
+2. **Total appts**: unchanged behavior (uses existing `todayAppointmentCount`).
+3. **In session**: counts only `checked_in` appointments for today at the selected location.
+4. **Remaining**: counts `confirmed` + `pending` + `booked` (not started, not resolved). Excludes `cancelled`, `no_show`, `completed`, `checked_in`.
+5. Numbers update live as statuses change (driven by existing query invalidation).
+6. Visual hierarchy matches existing "7 appts" indicator — muted icon, foreground number, muted label.
+7. No layout shift when counts go to 0 — labels still show.
+8. No change to FAB position or action bar right padding.
 
 **Files to modify:**
-- `src/pages/dashboard/Schedule.tsx` (action bar wrapper padding)
+- `src/components/dashboard/schedule/ScheduleActionBar.tsx` (add view prop, compute counts, render conditionally)
+- `src/pages/dashboard/Schedule.tsx` (pass `view` prop)
