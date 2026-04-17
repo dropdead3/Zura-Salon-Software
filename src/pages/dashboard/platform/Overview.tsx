@@ -16,7 +16,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useOrganizationStats } from '@/hooks/useOrganizationStats';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useActualEmployeeProfile } from '@/hooks/useActualEmployeeProfile';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformActivityFeed } from '@/components/platform/overview/PlatformActivityFeed';
@@ -53,7 +53,7 @@ function getContextualMessage() {
 export default function PlatformOverview() {
   const navigate = useNavigate();
   const { data: stats, isLoading } = useOrganizationStats();
-  const { data: profile } = useEmployeeProfile();
+  const { data: profile } = useActualEmployeeProfile();
   const greeting = useMemo(() => getGreeting(), []);
   const contextualMessage = useMemo(() => getContextualMessage(), []);
   
