@@ -15,13 +15,15 @@ import { toast } from 'sonner';
 interface MarkVerifiedParams {
   organization_id: string;
   location_id: string;
+  /** When true, suppresses the success toast (used by batch verify flows). */
+  silent?: boolean;
 }
 
 export function useMarkInventoryVerified() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ organization_id, location_id }: MarkVerifiedParams) => {
+    mutationFn: async ({ organization_id, location_id, silent }: MarkVerifiedParams) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -36,16 +38,18 @@ export function useMarkInventoryVerified() {
         .eq('location_id', location_id as any);
 
       if (error) throw error;
-      return { organization_id, location_id };
+      return { organization_id, location_id, silent: !!silent };
     },
-    onSuccess: ({ organization_id }) => {
+    onSuccess: ({ organization_id, silent }) => {
       queryClient.invalidateQueries({
         queryKey: ['color-bar-location-entitlements', organization_id],
       });
       queryClient.invalidateQueries({
         queryKey: ['platform-color-bar-entitlements'],
       });
-      toast.success('Inventory verified — alerts re-enabled for this location');
+      if (!silent) {
+        toast.success('Inventory verified — alerts re-enabled for this location');
+      }
     },
     onError: (error: any) => {
       toast.error('Could not mark inventory verified: ' + (error?.message ?? 'unknown error'));
