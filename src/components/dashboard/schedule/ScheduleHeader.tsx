@@ -300,7 +300,7 @@ export function ScheduleHeader({
                     <Slider
                       value={[weekDayWidth === 'auto' ? 200 : weekDayWidth]}
                       min={200}
-                      max={600}
+                      max={900}
                       step={20}
                       onValueChange={([v]) => {
                         // 200 = 'auto' (Fit). >200 = fixed pixel width.
