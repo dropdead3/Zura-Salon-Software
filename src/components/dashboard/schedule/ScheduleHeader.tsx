@@ -68,6 +68,8 @@ interface ScheduleHeaderProps {
   setView: (view: CalendarView) => void;
   selectedStaffIds: string[];
   onStaffToggle: (staffId: string) => void;
+  /** Replace selection with a single stylist (used for week view radio behavior) */
+  onStaffSelectOnly?: (staffId: string) => void;
   stylists: Array<{
     user_id: string;
     display_name: string | null;
