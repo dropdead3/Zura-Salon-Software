@@ -29,6 +29,13 @@ export const AUDIT_EVENTS = {
 
   // Service edits
   SERVICES_UPDATED: 'services_updated',
+
+  // Checkout cart negotiation (Wave 2)
+  LINE_PRICE_OVERRIDDEN: 'line_price_overridden',
+  LINE_WAIVED: 'line_waived',
+  LINE_DISCOUNTED: 'line_discounted',
+  SERVICE_ADDED_AT_CHECKOUT: 'service_added_at_checkout',
+  SERVICE_REMOVED_AT_CHECKOUT: 'service_removed_at_checkout',
 } as const;
 
 export type AuditEventType = (typeof AUDIT_EVENTS)[keyof typeof AUDIT_EVENTS];
