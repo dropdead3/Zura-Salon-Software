@@ -2585,7 +2585,7 @@ export function QuickBookingPopover({
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="flex-1 h-10 gap-2"
+                className="flex-1 h-11 gap-2 text-base"
                 disabled={saveDraft.isPending || createBooking.isPending}
                 onClick={() => {
                   if (!effectiveOrganization?.id) return;
