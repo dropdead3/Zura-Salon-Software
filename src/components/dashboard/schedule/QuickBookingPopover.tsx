@@ -1695,7 +1695,7 @@ export function QuickBookingPopover({
               ) : selectedCategory === ADDONS_CATEGORY ? (
                 <>
                   <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
-                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
+                    <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                       Add-Ons & Extras
                     </h4>
                   </div>
