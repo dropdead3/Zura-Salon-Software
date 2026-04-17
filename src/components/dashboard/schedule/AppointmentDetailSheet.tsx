@@ -2702,10 +2702,10 @@ export function AppointmentDetailSheet({
                         <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
                       </Button>
                     )}
-                    {/* Pay / Checkout */}
+                    {/* Checkout */}
                     {availableTransitions.includes('completed') && onPay && (
                       <Button size={tokens.button.card} onClick={() => onPay(appointment)} disabled={isUpdating} className="flex-1">
-                        <CreditCard className="h-3.5 w-3.5 mr-1" /> Pay
+                        <CreditCard className="h-3.5 w-3.5 mr-1" /> Checkout
                       </Button>
                     )}
                     {/* Complete (if no pay handler) */}
