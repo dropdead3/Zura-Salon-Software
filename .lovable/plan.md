@@ -2,92 +2,107 @@
 
 ## Prompt review
 
-Sharp ask — names the element (`+ Add special notes`), the surface (booking wizard confirm step), and the *why* (notes are nearly always added, they're operationally critical for stylist handoff). The "why" is the strongest part of this prompt — it tells me this isn't a styling tweak, it's a workflow priority shift. Sharper next time: tell me whether notes should become **required** (block confirm until added or explicitly skipped) or just **prominent** (visible by default, easy to fill). I'll propose: prominent + always-expanded by default, with a clear visual treatment that signals importance without blocking.
+Sharp question — names the surface (booking wizard), the symptom ("Unranked" badge), and the contradiction (you *know* every stylist has a level + level-based pricing works). That last bit is the gold — it told me the data exists and the problem is in how the UI parses it. Sharper next time: include a stylist's name from the screenshot ("e.g., Jamie Vieira") so I can grep the DB for that exact record on the first pass. You actually did this implicitly via the screenshot — I was able to confirm against `Jamie Vieira → studio-artist`.
 
-## Diagnosis
+## Diagnosis (root cause confirmed)
 
-Current state (from screenshot + code at lines 2498–2518 of `QuickBookingPopover.tsx`):
+**The UI is parsing the wrong format.**
 
-```tsx
-{!showNotes ? (
-  <button className="text-sm text-muted-foreground hover:text-foreground">
-    + Add special notes
-  </button>
-) : (
-  <Textarea ... />
-)}
+- **DB stores:** `stylist_level` as a **slug** like `studio-artist`, `emerging`, `lead`, `senior`, `signature`, `icon`, `new-talent` (confirmed: Jamie Vieira's row = `studio-artist`)
+- **UI parses:** Looks for the legacy string format `"LEVEL 3 STYLIST"` via regex `/LEVEL\s*(\d+)/i`
+
+In `src/utils/levelPricing.ts`:
+
+```ts
+export function getLevelNumber(stylistLevel) {
+  const match = stylistLevel.match(/LEVEL\s*(\d+)/i);   // ← never matches "studio-artist"
+  if (!match) return null;                              // ← returns null → "Unranked"
+  return parseInt(match[1], 10);
+}
 ```
 
-Problem: the trigger is a muted, low-contrast text link tucked between two bordered cards (Redo toggle above, Assistant toggle below). Visually it reads as a tertiary action — but operationally it's used on nearly every booking.
+So `getLevelNumber('studio-artist')` → `null` → badge falls through to "Unranked". Same root cause for `getLevelSlug` — it also runs the same regex and returns `null` instead of just passing the slug through.
 
-## Plan — Wave 22.8: Promote Add Notes to a primary booking input
+**Why pricing still works:** `useServiceLevelPricing` joins `stylist_levels` by `slug` directly (it doesn't go through the broken regex helpers for that path), so service prices resolve correctly even though the badge can't render.
+
+**The DB ground truth** (canonical 7-tier ladder, per `stylist_levels` table):
+
+| display_order | slug | label | client_label |
+|---|---|---|---|
+| 0 | new-talent | New Talent | Level 1 |
+| 1 | studio-artist | Studio Artist | Level 2 |
+| 2 | emerging | Core Artist | Level 3 |
+| 3 | lead | Lead Artist | Level 4 |
+| 4 | senior | Senior Artist | Level 5 |
+| 5 | signature | Signature Artist | Level 6 |
+| 6 | icon | Icon Artist | Level 7 |
+
+Note: legacy `levelNumberToSlug` map in `levelPricing.ts` is also stale — it maps `2: 'emerging'` and `3: 'emerging'` (duplicate), and is missing `studio-artist` entirely. This map predates the org's current 7-tier ladder.
+
+## Plan — Wave 22.9: Fix slug-aware level resolution
 
 ### Behavior
 
-Replace the muted text link with an **always-visible textarea card** that matches the visual weight of the Redo/Assistant rows. No more hide/show toggle — the textarea is rendered by default, with placeholder copy that signals what to write.
-
-**Before:**
-```
-[Redo / Adjustment ........ toggle]
-+ Add special notes              ← muted text, easy to miss
-[Request Assistant Coverage  toggle]
-```
-
-**After:**
-```
-[Redo / Adjustment ........ toggle]
-┌─ STYLIST NOTES ──────────────────┐
-│ 📝  Notes for the stylist        │
-│ ┌────────────────────────────┐   │
-│ │ What should your stylist   │   │
-│ │ know? (formula, prefs,     │   │
-│ │ allergies, special req...) │   │
-│ └────────────────────────────┘   │
-│ Visible to stylist before appt   │
-└──────────────────────────────────┘
-[Request Assistant Coverage  toggle]
-```
+Make `getLevelNumber` and `getLevelSlug` slug-native (the DB's actual storage format) while staying backward-compatible with the legacy `"LEVEL N STYLIST"` string format. Badge will render the correct `client_label` ("Level 2") for Jamie Vieira and every other stylist.
 
 ### Fix shape
 
-In `src/components/dashboard/schedule/QuickBookingPopover.tsx` (~lines 2498–2518):
+**1. Replace the static `levelNumberToSlug` map with a slug-aware resolver in `src/utils/levelPricing.ts`:**
 
-1. **Remove the `showNotes` state branch** — textarea always rendered
-2. **Wrap in a bordered card** matching the Redo/Assistant row treatment (`rounded-lg border border-border/60 p-3 space-y-2`)
-3. **Add an icon + label header** inside the card:
-   - `StickyNote` (or `MessageSquareText`) icon, `h-4 w-4 text-muted-foreground`
-   - Label "Notes for the stylist" at `text-sm font-medium`
-4. **Upgrade the textarea**:
-   - `min-h-[80px]` (up from 60px) so it visually invites typing
-   - Placeholder: "What should your stylist know? Formula notes, client preferences, allergies, special requests..."
-   - `text-sm`
-5. **Add a helper line** below the textarea: "Visible to your stylist before the appointment" at `text-xs text-muted-foreground`
-6. **Optional fill indicator**: When notes contain text, swap the icon to `text-primary` and add a subtle "•" filled dot — gives the user a sense the field has been engaged
-7. **Remove the `showNotes`/`setShowNotes` state declarations** entirely (search file for orphan references and clean up)
+- Add a `slugToLevelNumber` map matching the DB's `display_order + 1`:
+  ```ts
+  const slugToLevelNumber: Record<string, number> = {
+    'new-talent': 1,
+    'studio-artist': 2,
+    'emerging': 3,
+    'lead': 4,
+    'senior': 5,
+    'signature': 6,
+    'icon': 7,
+  };
+  ```
+- `getLevelSlug(value)`:
+  1. If `value` is already a known slug → return it as-is
+  2. Else fall back to legacy regex `/LEVEL\s*(\d+)/i` for old-format strings
+  3. Else return `null`
+- `getLevelNumber(value)`:
+  1. If `value` is a known slug → return its mapped number
+  2. Else fall back to legacy regex parse
+  3. Else return `null`
 
-### Acceptance checks
+**2. Source the slug→number map dynamically (defensive future-proofing)**
 
-1. The Notes section renders by default on the confirm step (no click-to-expand)
-2. The card visually matches Redo/Adjustment and Request Assistant Coverage rows in weight, padding, and border
-3. The textarea has a clear placeholder that signals what to write
-4. The label "Notes for the stylist" reads at `text-sm font-medium` with an icon
-5. Helper text "Visible to your stylist before the appointment" appears below
-6. When user types, the icon shifts to primary color (subtle engagement signal)
-7. No orphan `showNotes` state remains in the file
-8. No regression to the booking submit flow — `bookingNotes` still submits correctly
-9. Mobile: card stays full-width, textarea remains tappable
+Since orgs can reconfigure the level ladder via `useStylistLevels`, the static map will drift. Two options:
+
+- **Option A (ship now, low risk):** Keep the static map matching today's 7-tier canonical ladder. Works for every current org since they all use the same default slugs.
+- **Option B (deferred, P2):** Replace static map with a `useResolvedLevel` hook that joins against `stylist_levels` and returns `{ slug, number, label, client_label }`. More correct, but requires touching every call site and adding loading-state UI per the stack-overflow pattern flagged.
+
+Recommendation: **Ship Option A now** to stop the bleeding (Jamie + every other stylist shows correct badge), defer Option B until an org actually customizes their ladder slugs.
+
+**3. Use `client_label` for the badge text (optional polish)**
+
+The current badge renders `Level {levelNum}` — that already matches the DB's `client_label` format ("Level 1"…"Level 7"), so no change needed. The fix above is enough.
 
 ### Files
 
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — replace muted text trigger with always-visible bordered card containing icon + label + textarea + helper text; remove `showNotes` state
+- `src/utils/levelPricing.ts` — replace `levelNumberToSlug` with `slugToLevelNumber`; rewrite `getLevelSlug` and `getLevelNumber` to be slug-native with legacy-string fallback
+
+### Acceptance checks
+
+1. Open booking wizard → preselected stylist (e.g., Jamie Vieira) shows `Level 2` badge instead of `Unranked`
+2. Stylist picker step shows correct `Level N` badge for every stylist with a slug in `employee_profiles.stylist_level`
+3. Stylists with empty `stylist_level` (Eric Day, Alex Day, Mallori Schwab, Julia Gross per the DB) still correctly show `Unranked` — that's accurate, they have no level assigned
+4. Sort by level (`level-asc` / `level-desc`) in the stylist picker now sorts correctly across the 7 tiers
+5. Service price computation still resolves (regression check — `getLevelSlug` still returns valid slugs for `findLevelPrice`)
+6. Legacy `"LEVEL 3 STYLIST"` strings (if any old data exists) still parse via fallback
 
 ### Open question
 
-Want notes to become **soft-required** (a small "Recommended" badge on the card header) or stay fully optional with no nudge? My recommendation: **add the "Recommended" badge** — given your statement that notes are "almost always added," a tiny pill reinforces the norm without blocking submit.
+None — fix shape is unambiguous.
 
 ### Deferred
 
-- **P2** Quick-template chips above the textarea ("Color formula", "Running late", "Allergy alert", "First-time client") — trigger: when staff request faster note entry for repeat scenarios
-- **P2** Persist last-used notes per client and offer a "Use last notes" suggestion — trigger: when staff repeatedly type similar notes for returning clients
-- **P2** Notes character minimum + soft-block confirm with a "Skip notes?" confirmation dialog if empty — trigger: if staff start submitting empty notes and stylists complain
+- **P2** Migrate `getLevelNumber`/`getLevelSlug` callers to a hook (`useResolvedLevel`) that reads from `stylist_levels` directly — trigger: when an org customizes their ladder slugs and the static map drifts
+- **P2** Backfill `stylist_level` for the 4 staff with NULL (Eric Day, Alex Day, Mallori Schwab, Julia Gross) — trigger: confirm with ops whether these are actual stylists vs. admin/non-service roles
+- **P2** Audit other surfaces (`StylistDirectory`, `TeamHub`, `useStylistIncomeForecast`) for the same slug-vs-string bug — trigger: if "Unranked" appears anywhere outside the booking wizard
 
