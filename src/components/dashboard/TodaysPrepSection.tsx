@@ -4,14 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, ChevronRight, UserPlus, Phone, Star, StickyNote, CalendarDays } from 'lucide-react';
+import { ClipboardCheck, ChevronRight, UserPlus, Phone, Star, StickyNote, CalendarDays, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { VisibilityGate } from '@/components/visibility';
 import { useTodayPrep } from '@/hooks/useTodayPrep';
 import { CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
 import { useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useAuth } from '@/contexts/AuthContext';
+import { useStylistRebookRate } from '@/hooks/useStylistRebookRate';
+
+/** Material gap (percentage points) below org average that triggers coaching nudge. */
+const REBOOK_COACHING_GAP_PP = 15;
 
 
 const NEEDS_CONFIRM = new Set(['booked', 'pending']);
