@@ -23,6 +23,16 @@ vi.mock('@/hooks/useEffectivePermissions', () => ({
   useEffectivePermissions: vi.fn(),
 }));
 
+vi.mock('@/hooks/useOrgDashboardPath', () => ({
+  useOrgDashboardPath: () => ({
+    dashPath: (subpath: string = '') => {
+      const clean = subpath.startsWith('/') ? subpath : `/${subpath}`;
+      return `/dashboard${clean}`;
+    },
+    orgSlug: '',
+  }),
+}));
+
 vi.mock('./AccessDeniedView', () => ({
   AccessDeniedView: () => <div>Access Denied View</div>,
 }));
@@ -116,7 +126,7 @@ describe('ProtectedRoute', () => {
     });
   });
 
-  it('redirects unauthenticated users to staff login for non-platform routes', () => {
+  it('redirects unauthenticated users to login for non-platform routes', () => {
     mockedUseAuth.mockReturnValue(
       makeAuthMock({
         user: null,
@@ -126,10 +136,10 @@ describe('ProtectedRoute', () => {
 
     renderProtectedRoute();
 
-    expect(screen.getByText('Staff Login Page')).toBeInTheDocument();
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
   });
 
-  it('redirects unauthenticated users to platform login for platform routes', () => {
+  it('redirects unauthenticated users to login for platform routes', () => {
     mockedUseAuth.mockReturnValue(
       makeAuthMock({
         user: null,
@@ -143,7 +153,7 @@ describe('ProtectedRoute', () => {
       requiredPermission: undefined,
     });
 
-    expect(screen.getByText('Platform Login Page')).toBeInTheDocument();
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
   });
 
   it('shows spinner while effective permissions are loading for required permission routes', () => {
