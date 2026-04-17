@@ -19,6 +19,7 @@ import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import { IndicatorCluster, type IndicatorFlags } from './appointment-card-indicators';
+import { RebookSkippedDot } from './RebookSkippedDot';
 import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -65,6 +66,8 @@ export interface AppointmentCardContentProps {
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
   useShortLabels?: boolean;
+  /** Wave 21.3 Layer 2 — when set on a completed appointment, render a muted "rebook skipped" dot */
+  declinedReasonLabel?: string | null;
   onClick: () => void;
 }
 
