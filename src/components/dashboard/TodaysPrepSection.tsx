@@ -126,6 +126,23 @@ export function TodaysPrepSection() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
+          {/* Coaching nudge — surfaces only on material rebook gap (>15pp lag, ≥10 sample) */}
+          {showRebookNudge && rebookSignal && (
+            <div className="mb-3 flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/40 p-3">
+              <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-sans text-sm text-foreground leading-snug">
+                  Your rebook rate is{' '}
+                  <span className="font-medium">{rebookSignal.rebookRate.toFixed(0)}%</span>
+                  {' '}— team average is{' '}
+                  <span className="font-medium">{rebookSignal.orgRebookRate.toFixed(0)}%</span>.
+                </p>
+                <p className="font-sans text-xs text-muted-foreground mt-0.5">
+                  Try the new commitment script at checkout: <span className="italic">"I'd like to see you back in X weeks. How does [date] at [time] work?"</span>
+                </p>
+              </div>
+            </div>
+          )}
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
