@@ -15,17 +15,18 @@ export interface HubFilters {
 
 // Narrow column list — only fields the table actually renders.
 // Drops payload size materially vs SELECT *.
+// NOTE: v_all_appointments does NOT expose client_id, client_email, or created_by.
+// Those live on the underlying `appointments` table only. Keep this list in sync with
+// the actual view schema — including a non-existent column 400s the entire query.
 const APPT_COLUMNS = [
   'id',
-  '_source',
+  'source',
   'deleted_at',
   'appointment_date',
   'start_time',
   'end_time',
-  'client_id',
   'client_name',
   'client_phone',
-  'client_email',
   'phorest_client_id',
   'service_name',
   'stylist_user_id',
@@ -33,7 +34,6 @@ const APPT_COLUMNS = [
   'status',
   'total_price',
   'location_id',
-  'created_by',
   'created_at',
 ].join(',');
 
