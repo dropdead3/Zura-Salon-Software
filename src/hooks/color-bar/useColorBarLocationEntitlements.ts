@@ -23,6 +23,12 @@ export interface ColorBarLocationEntitlement {
   refunded_at: string | null;
   refunded_by: string | null;
   prior_refund_count: number;
+  // Suspension lifecycle
+  suspended_at: string | null;
+  reactivated_at: string | null;
+  requires_inventory_reconciliation: boolean;
+  inventory_verified_at: string | null;
+  inventory_verified_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -155,6 +161,88 @@ export function useDeleteLocationEntitlement() {
     },
     onError: (error) => {
       toast.error('Failed to remove location entitlement: ' + error.message);
+    },
+  });
+}
+
+/**
+ * Bulk-suspend all active location entitlements for an org.
+ * Soft-disable: preserves rows + history; sets status='suspended' + suspended_at=now().
+ * Used when the org-level Color Bar master switch is turned off.
+ */
+export function useBulkSuspendLocationEntitlements() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { organization_id: string }) => {
+      const { data, error } = await supabase
+        .from('backroom_location_entitlements')
+        .update({
+          status: 'suspended',
+          suspended_at: new Date().toISOString(),
+        } as any)
+        .eq('organization_id', params.organization_id as any)
+        .eq('status', 'active' as any)
+        .select('id, location_id');
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: ['color-bar-location-entitlements', vars.organization_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['platform-color-bar-entitlements'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['platform-color-bar-all-entitlement-counts'],
+      });
+    },
+  });
+}
+
+/**
+ * Bulk-reactivate all suspended location entitlements for an org.
+ * Sets status='active', stamps reactivated_at, AND raises
+ * requires_inventory_reconciliation=true since tracked quantities can no
+ * longer be trusted after a tracking gap.
+ *
+ * Returns the list of reactivated location_ids so callers can confirm
+ * how many locations now require physical reconciliation.
+ */
+export function useBulkReactivateLocationEntitlements() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { organization_id: string }) => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('backroom_location_entitlements')
+        .update({
+          status: 'active',
+          reactivated_at: now,
+          requires_inventory_reconciliation: true,
+          inventory_verified_at: null,
+          inventory_verified_by: null,
+        } as any)
+        .eq('organization_id', params.organization_id as any)
+        .eq('status', 'suspended' as any)
+        .select('id, location_id');
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: ['color-bar-location-entitlements', vars.organization_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['platform-color-bar-entitlements'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['platform-color-bar-all-entitlement-counts'],
+      });
     },
   });
 }
