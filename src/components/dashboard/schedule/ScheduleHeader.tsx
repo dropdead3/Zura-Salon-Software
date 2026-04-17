@@ -503,32 +503,46 @@ export function ScheduleHeader({
                 onMouseLeave={() => setStaffPopoverOpen(false)}
               >
                 <div className="space-y-1">
-                  <button
-                    onClick={() => {
-                      if (onStaffFilterModeChange) onStaffFilterModeChange('work-this-day');
-                      onStaffToggle('all');
-                    }}
-                    className={cn(
-                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
-                      selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' && 'bg-accent'
-                    )}
-                  >
-                    {selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
-                    All Stylists That Work This Day
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (onStaffFilterModeChange) onStaffFilterModeChange('with-appointments');
-                      onStaffToggle('all');
-                    }}
-                    className={cn(
-                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
-                      selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && 'bg-accent'
-                    )}
-                  >
-                    {selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
-                    Only Stylists With Appointments
-                  </button>
+                  {(() => {
+                    // In week view with no manual selection, the auto-resolved stylist
+                    // is functionally selected — suppress the "All" checkmark and show it on the stylist row instead.
+                    const weekAutoActive =
+                      view === 'week' && selectedStaffIds.length === 0 && !!weekViewStylistId;
+                    const allWorkActive =
+                      selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' && !weekAutoActive;
+                    const allWithApptsActive =
+                      selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && !weekAutoActive;
+                    return (
+                      <>
+                        <button
+                          onClick={() => {
+                            if (onStaffFilterModeChange) onStaffFilterModeChange('work-this-day');
+                            onStaffToggle('all');
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
+                            allWorkActive && 'bg-accent'
+                          )}
+                        >
+                          {allWorkActive ? <Check className="h-4 w-4" /> : <div className="w-4" />}
+                          All Stylists That Work This Day
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (onStaffFilterModeChange) onStaffFilterModeChange('with-appointments');
+                            onStaffToggle('all');
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
+                            allWithApptsActive && 'bg-accent'
+                          )}
+                        >
+                          {allWithApptsActive ? <Check className="h-4 w-4" /> : <div className="w-4" />}
+                          Only Stylists With Appointments
+                        </button>
+                      </>
+                    );
+                  })()}
                   <div className="h-px bg-border my-1" />
                   {[...stylists]
                     .sort((a, b) =>
