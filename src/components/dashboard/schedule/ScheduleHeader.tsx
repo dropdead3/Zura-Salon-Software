@@ -98,6 +98,8 @@ interface ScheduleHeaderProps {
   appointments?: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
+  /** Resolved single stylist for week view (null in day view or none available) */
+  weekViewStylistId?: string | null;
 }
 
 export function ScheduleHeader({
@@ -130,6 +132,7 @@ export function ScheduleHeader({
   appointments = [],
   hoursStart = 9,
   hoursEnd = 18,
+  weekViewStylistId = null,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
@@ -473,12 +476,23 @@ export function ScheduleHeader({
                   className="h-7 w-[220px] @lg/schedhdr:w-[280px] px-4 text-xs justify-between bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)] hover:text-[hsl(var(--sidebar-foreground))]"
                 >
                   <span className="flex-1 text-left truncate">
-                    {selectedStaffIds.length === 0 
-                      ? (staffFilterMode === 'with-appointments' ? 'Only Stylists With Appointments' : 'All Stylists That Work This Day')
-                      : selectedStaffIds.length === 1
-                        ? (() => { const s = stylists.find(s => s.user_id === selectedStaffIds[0]); return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected'; })()
-                        : `${selectedStaffIds.length} selected`
-                    }
+                    {(() => {
+                      // Week view with no manual selection → reflect the auto-resolved stylist
+                      if (view === 'week' && selectedStaffIds.length === 0 && weekViewStylistId) {
+                        const s = stylists.find(s => s.user_id === weekViewStylistId);
+                        if (s) return formatFullDisplayName(s.full_name, s.display_name);
+                      }
+                      if (selectedStaffIds.length === 0) {
+                        return staffFilterMode === 'with-appointments'
+                          ? 'Only Stylists With Appointments'
+                          : 'All Stylists That Work This Day';
+                      }
+                      if (selectedStaffIds.length === 1) {
+                        const s = stylists.find(s => s.user_id === selectedStaffIds[0]);
+                        return s ? formatFullDisplayName(s.full_name, s.display_name) : '1 selected';
+                      }
+                      return `${selectedStaffIds.length} selected`;
+                    })()}
                   </span>
                   <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
                 </Button>
@@ -489,32 +503,46 @@ export function ScheduleHeader({
                 onMouseLeave={() => setStaffPopoverOpen(false)}
               >
                 <div className="space-y-1">
-                  <button
-                    onClick={() => {
-                      if (onStaffFilterModeChange) onStaffFilterModeChange('work-this-day');
-                      onStaffToggle('all');
-                    }}
-                    className={cn(
-                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
-                      selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' && 'bg-accent'
-                    )}
-                  >
-                    {selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
-                    All Stylists That Work This Day
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (onStaffFilterModeChange) onStaffFilterModeChange('with-appointments');
-                      onStaffToggle('all');
-                    }}
-                    className={cn(
-                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
-                      selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && 'bg-accent'
-                    )}
-                  >
-                    {selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' ? <Check className="h-4 w-4" /> : <div className="w-4" />}
-                    Only Stylists With Appointments
-                  </button>
+                  {(() => {
+                    // In week view with no manual selection, the auto-resolved stylist
+                    // is functionally selected — suppress the "All" checkmark and show it on the stylist row instead.
+                    const weekAutoActive =
+                      view === 'week' && selectedStaffIds.length === 0 && !!weekViewStylistId;
+                    const allWorkActive =
+                      selectedStaffIds.length === 0 && staffFilterMode === 'work-this-day' && !weekAutoActive;
+                    const allWithApptsActive =
+                      selectedStaffIds.length === 0 && staffFilterMode === 'with-appointments' && !weekAutoActive;
+                    return (
+                      <>
+                        <button
+                          onClick={() => {
+                            if (onStaffFilterModeChange) onStaffFilterModeChange('work-this-day');
+                            onStaffToggle('all');
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
+                            allWorkActive && 'bg-accent'
+                          )}
+                        >
+                          {allWorkActive ? <Check className="h-4 w-4" /> : <div className="w-4" />}
+                          All Stylists That Work This Day
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (onStaffFilterModeChange) onStaffFilterModeChange('with-appointments');
+                            onStaffToggle('all');
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
+                            allWithApptsActive && 'bg-accent'
+                          )}
+                        >
+                          {allWithApptsActive ? <Check className="h-4 w-4" /> : <div className="w-4" />}
+                          Only Stylists With Appointments
+                        </button>
+                      </>
+                    );
+                  })()}
                   <div className="h-px bg-border my-1" />
                   {[...stylists]
                     .sort((a, b) =>
@@ -547,7 +575,12 @@ export function ScheduleHeader({
                           className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
                         >
                           <Checkbox
-                            checked={selectedStaffIds.includes(s.user_id)}
+                            checked={
+                              selectedStaffIds.includes(s.user_id) ||
+                              (view === 'week' &&
+                                selectedStaffIds.length === 0 &&
+                                weekViewStylistId === s.user_id)
+                            }
                             className="pointer-events-none"
                           />
                           <span className="flex-1 text-left truncate">

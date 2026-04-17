@@ -999,6 +999,7 @@ export default function Schedule() {
                 appointments={appointments}
                 hoursStart={preferences.hours_start}
                 hoursEnd={preferences.hours_end}
+                weekViewStylistId={view === 'week' ? selectedWeekStylistId : null}
               />
         </div>
 
