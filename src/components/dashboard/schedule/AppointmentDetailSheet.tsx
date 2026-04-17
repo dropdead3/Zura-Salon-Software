@@ -741,13 +741,23 @@ export function AppointmentDetailSheet({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, onOpenChange]);
 
-  // ─── Data Hooks ────────────────────────────────────────────────
-  const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(appointment?.phorest_id || null);
+  // ─── Data Hooks (Wave 18: lazy-gated by activeTab) ────────────
+  const notesEnabled = activeTab === 'notes' || activeTab === 'details';
+  const historyEnabled = activeTab === 'history' || activeTab === 'details';
+  const auditEnabled = activeTab === 'history' || activeTab === 'details';
+
+  const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(
+    appointment?.phorest_id || null,
+    { enabled: notesEnabled },
+  );
   const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
   const { data: clientNotes = [], isLoading: clientNotesLoading } = useClientNotes(appointment?.phorest_client_id || undefined);
   const addClientNote = useAddClientNote();
   const deleteClientNote = useDeleteClientNote();
-  const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(appointment?.phorest_client_id);
+  const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(
+    appointment?.phorest_client_id,
+    { enabled: historyEnabled },
+  );
   const { data: serviceLookup } = useServiceLookup();
   const { assignmentMap, upsertAssignments } = useServiceAssignments(appointment?.id || null);
   const updateServicesMutation = useUpdateAppointmentServices();
@@ -818,6 +828,7 @@ export function AppointmentDetailSheet({
       return results;
     },
     enabled: !!appointment?.id && open,
+    staleTime: 60_000,
   });
 
   // Redo mutations
@@ -987,8 +998,8 @@ export function AppointmentDetailSheet({
 
   const resolvedClientId = appointment?.phorest_client_id || matchedClient;
 
-  // ─── Confirmation source from audit log ──────────────────────
-  const { data: auditEntries = [] } = useAuditLog(appointment?.id || null);
+  // ─── Confirmation source from audit log (gated) ──────────────
+  const { data: auditEntries = [] } = useAuditLog(appointment?.id || null, { enabled: auditEnabled });
   const confirmationSource = useMemo(() => {
     const event = auditEntries.find(
       e => e.event_type === 'status_changed' && (e.new_value as any)?.status === 'confirmed'
