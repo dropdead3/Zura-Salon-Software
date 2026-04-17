@@ -1295,13 +1295,13 @@ export function QuickBookingPopover({
             <div>
               {viewingClientProfile ? (
                 <>
-                  <h2 className="font-medium text-sm truncate max-w-[180px]">{viewingClientProfile.name}</h2>
-                  <p className="text-xs text-muted-foreground">Client Profile</p>
+                  <h2 className="font-medium text-base truncate max-w-[180px]">{viewingClientProfile.name}</h2>
+                  <p className="text-sm text-muted-foreground">Client Profile</p>
                 </>
               ) : (
                 <>
-                  <h2 className="font-medium text-sm">New Booking</h2>
-                  <p className="text-xs text-muted-foreground">
+                  <h2 className="font-medium text-base">New Booking</h2>
+                  <p className="text-sm text-muted-foreground">
                     {formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}
                   </p>
                 </>
