@@ -409,6 +409,13 @@ export function QuickBookingPopover({
   const [preSelectedStylistPhoto, setPreSelectedStylistPhoto] = useState<string | null>(null);
   const [preSelectedStylistLevel, setPreSelectedStylistLevel] = useState<string | null>(null);
 
+  // Stylist picker sort mode (resets each time the popover opens)
+  type StylistSortMode = 'recommended' | 'price-asc' | 'price-desc' | 'level-asc' | 'level-desc';
+  const [stylistSortMode, setStylistSortMode] = useState<StylistSortMode>('recommended');
+  useEffect(() => {
+    if (open) setStylistSortMode('recommended');
+  }, [open]);
+
   // Check if a step has valid input (for forward navigation)
   const isStepCompleted = (stepName: Step): boolean => {
     switch (stepName) {
@@ -1985,16 +1992,66 @@ export function QuickBookingPopover({
                   <span>Select your stylist first — we'll filter locations and services for you</span>
                 </div>
               )}
-              <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
-                {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
-                {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
-                  <span className="text-xs font-normal text-muted-foreground ml-2">
-                    ({filteredStylists.length} qualified)
-                  </span>
-                )}
-              </h4>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider">
+                  {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
+                  {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
+                    <span className="text-xs font-normal text-muted-foreground ml-2">
+                      ({filteredStylists.length} qualified)
+                    </span>
+                  )}
+                </h4>
+                <Select value={stylistSortMode} onValueChange={(v) => setStylistSortMode(v as StylistSortMode)}>
+                  <SelectTrigger className="h-8 w-[180px] text-xs">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recommended">Recommended</SelectItem>
+                    {!stylistFirstMode && selectedServices.length > 0 && (
+                      <>
+                        <SelectItem value="price-asc">Price: Low → High</SelectItem>
+                        <SelectItem value="price-desc">Price: High → Low</SelectItem>
+                      </>
+                    )}
+                    <SelectItem value="level-asc">Level: Low → High</SelectItem>
+                    <SelectItem value="level-desc">Level: High → Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex flex-col gap-3">
-                {(stylistFirstMode ? uniqueAllStylists : filteredStylists).map((stylist) => {
+                {(() => {
+                  const baseList = stylistFirstMode ? uniqueAllStylists : filteredStylists;
+                  const computePrice = (s: any) => {
+                    const slug = getLevelSlug(s.employee_profiles?.stylist_level);
+                    if (!slug || stylistFirstMode || selectedServices.length === 0) return totalPrice;
+                    return selectedServiceDetails.reduce((sum, service) => {
+                      const lp = getLevelPrice(service.id, slug);
+                      return sum + (lp ?? service.price ?? 0);
+                    }, 0);
+                  };
+                  const sorted = [...baseList].sort((a, b) => {
+                    if (stylistSortMode === 'recommended') return 0; // preserve incoming order
+                    const levelA = getLevelNumber(a.employee_profiles?.stylist_level);
+                    const levelB = getLevelNumber(b.employee_profiles?.stylist_level);
+                    if (stylistSortMode === 'level-asc') {
+                      // Unranked (null) sorts last
+                      if (levelA == null && levelB == null) return 0;
+                      if (levelA == null) return 1;
+                      if (levelB == null) return -1;
+                      return levelA - levelB;
+                    }
+                    if (stylistSortMode === 'level-desc') {
+                      if (levelA == null && levelB == null) return 0;
+                      if (levelA == null) return 1;
+                      if (levelB == null) return -1;
+                      return levelB - levelA;
+                    }
+                    if (stylistSortMode === 'price-asc') return computePrice(a) - computePrice(b);
+                    if (stylistSortMode === 'price-desc') return computePrice(b) - computePrice(a);
+                    return 0;
+                  });
+                  return sorted;
+                })().map((stylist) => {
                   const fullName = stylist.employee_profiles?.full_name || stylist.employee_profiles?.display_name || 'Unknown';
                   const displayName = fullName;
                   const isSelected = stylistFirstMode 
@@ -2049,9 +2106,13 @@ export function QuickBookingPopover({
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 pr-2 justify-end">
-                        {stylistLevelNum && (
+                        {stylistLevelNum ? (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal whitespace-nowrap">
                             Level {stylistLevelNum}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal whitespace-nowrap text-muted-foreground">
+                            Unranked
                           </Badge>
                         )}
                         {!stylistFirstMode && selectedServices.length > 0 && (
