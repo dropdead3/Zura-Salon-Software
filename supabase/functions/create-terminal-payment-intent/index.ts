@@ -79,8 +79,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { organization_id, location_id, amount, currency, tip_amount, appointment_id, description, metadata } =
-      parsed.data;
+    const {
+      organization_id,
+      location_id,
+      amount,
+      currency,
+      tip_amount,
+      appointment_id,
+      description,
+      metadata,
+      collect_tip_on_reader,
+    } = parsed.data;
 
     // Look up client email for receipt and resolve location from appointment
     let receiptEmail: string | null = null;
@@ -117,7 +126,10 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
-    const totalAmount = amount + tip_amount;
+    // When tipping is collected on-reader, the PaymentIntent is created with
+    // the pre-tip subtotal; the reader updates `amount` after the client
+    // selects a tip and the captured PI reflects the final total.
+    const totalAmount = collect_tip_on_reader ? amount : amount + tip_amount;
 
     // Create PaymentIntent on the Connected Account
     const paymentIntent = await stripe.paymentIntents.create(
@@ -131,7 +143,8 @@ Deno.serve(async (req) => {
         metadata: {
           ...metadata,
           ...(appointment_id ? { appointment_id } : {}),
-          tip_amount: String(tip_amount),
+          tip_amount: String(collect_tip_on_reader ? 0 : tip_amount),
+          tip_mode: collect_tip_on_reader ? "reader" : "app",
           created_by: user.id,
           source: "zura_scheduler",
         },
@@ -145,6 +158,10 @@ Deno.serve(async (req) => {
       client_secret: paymentIntent.client_secret,
       amount: paymentIntent.amount,
       status: paymentIntent.status,
+      collect_tip_on_reader,
+      // Surface the pre-tip subtotal so the caller can pass it as
+      // `amount_eligible` into terminal-reader-display when tipping on reader.
+      tip_eligible_amount: collect_tip_on_reader ? amount : 0,
     });
   } catch (error) {
     console.error("create-terminal-payment-intent error:", error);
