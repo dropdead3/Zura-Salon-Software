@@ -1048,7 +1048,16 @@ export default function Schedule() {
                       apt.appointment_date === orgToday &&
                       apt.location_id === selectedLocation
                     )}
+                    searchAppointments={selectedLocation
+                      ? allAppointments.filter(apt => apt.location_id === selectedLocation)
+                      : allAppointments}
                     onSelectAppointment={(apt) => {
+                      setSelectedAppointment(apt);
+                      setDetailOpen(true);
+                    }}
+                    onJumpToAppointment={(apt) => {
+                      setCurrentDate(parseISO(apt.appointment_date));
+                      if (!isMobile) setView('day');
                       setSelectedAppointment(apt);
                       setDetailOpen(true);
                     }}
