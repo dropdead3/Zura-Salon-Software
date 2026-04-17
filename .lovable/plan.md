@@ -2,93 +2,103 @@
 
 ## Prompt review
 
-Sharp instinct — "No transformations yet" frames the empty state as if photos *should* exist post-service, but the Photos tab actually holds two distinct categories: (1) inspiration photos the client uploaded at booking time, and (2) consultation/transformation photos the stylist takes during/after the appointment. The current copy collapses both into one. Sharper next time: name the two photo types you want surfaced (inspiration vs consultation vs transformation) so I don't have to infer from your example. You implied it with "inspiration or consultation" — clear enough.
+Sharp instinct — this is the difference between treating an appointment as a *transaction* vs. treating it as a *touchpoint in a longitudinal client relationship*. A stylist opening a client mid-day shouldn't have to navigate to a separate Client Profile to see "what did Sarah say about her color last visit?" The Notes tab as-is is appointment-scoped (one row in `appointment_notes` filtered by `phorest_appointment_id`), which is data-architecturally clean but operator-hostile.
+
+Sharper next time: name the three dimensions you want surfaced — (a) note source (appointment vs client-level), (b) temporal context (which past visit), (c) outcome context (did that visit complete, no-show, cancel) — so the spec is unambiguous. You implied all three; clear enough.
 
 ## Diagnosis
 
-Need to read the current Photos tab empty state in `AppointmentDetailSheet.tsx` and `InspirationPhotosSection.tsx` to see how the two photo sources are composed and where the "No transformations yet" copy lives.
+Current behavior in `AppointmentDetailSheet.tsx` Notes tab (L2321–2438):
 
-Photo categories on this tab:
-1. **Inspiration photos** — uploaded by client during booking inquiry (private `inquiry-inspiration` bucket, surfaced via `useClientInspirationPhotos`)
-2. **Transformation/consultation photos** — taken by stylist (the `TransformationTimeline` component with the "Add First Transformation" CTA shown in the screenshot)
+1. **Appointment Notes** (L2325–2371) — `useAppointmentNotes(appointment.id)` fetches notes scoped to *only this appointment's* `phorest_appointment_id`. This is the bug surface.
+2. **Client Notes** (L2375–2425) — `useClientNotes(phorest_client_id)` already shows all client-level notes (correct, persistent).
+3. **Notes From Booking Assistant** (L2428–2437) — only the current appointment's `appointment.notes` field.
 
-The screenshot shows only the transformation empty state. The inspiration section likely renders separately above it (or is also empty and silently hidden). Need to verify rendering order and whether inspiration has its own empty state.
-<lov-tool-use id="toolu_vrtx_01Ni4Ku3Kk8xPKqFni7r8kbu" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/schedule/AppointmentDetailSheet.tsx\", \"lines\": \"2430-2490\"}">
-</lov-tool-use>
+Data we already have to build the unified view:
+- `useClientVisitHistory(phorest_client_id)` returns every past visit with `id`, `appointment_date`, `service_name`, `stylist_name`, `status` (completed/cancelled/no_show/etc), `total_price`, and the booking-time `notes` field (the "Notes From Booking Assistant" content per visit).
+- `appointment_notes` table is keyed by `phorest_appointment_id` (text) — so given a list of visit IDs, we can fetch all stylist-added notes across all of them in one query.
 
-<lov-tool-use id="toolu_vrtx_01U79MsPvdxFRyUJTNbTCneu" name="code--search_files" integration-id="code" data="{\"query\": \"No transformations yet|Add First Transformation|InspirationPhotosSection\", \"include_patterns\": \"src/**/*.tsx\"}">
-</lov-tool-use>
+Gap: no hook today returns "all `appointment_notes` rows for all of this client's past appointments, joined to the appointment's date/status/service." That's the new building block.
 
-<lov-tool-use id="toolu_vrtx_0128Xh4D5NkbLVwmEV59qxUr" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/schedule/AppointmentDetailSheet.tsx\", \"lines\": \"2430-2500\"}">
-</lov-tool-use>
+## Plan — Wave 22.24: Notes tab becomes a unified client notes ledger
 
-<lov-tool-use id="toolu_vrtx_01UHPmoyPpvkCVoCf16fxgj4" name="code--search_files" integration-id="code" data="{\"query\": \"No transformations yet|Add First Transformation\", \"include_patterns\": \"src/**/*.tsx\"}">
-</lov-tool-use>
+### New hook: `src/hooks/useClientAppointmentNotes.ts`
 
-<lov-tool-use id="toolu_vrtx_01Ek6WuqEoN2aTVK6yhQw3iP" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/clients/TransformationTimeline.tsx\", \"lines\": \"1-130\"}">
-</lov-tool-use>
+Returns every `appointment_notes` row where `phorest_appointment_id` matches any appointment belonging to this client, joined with the appointment's date, service, stylist, and status.
 
-<lov-tool-use id="toolu_vrtx_01BGePUdWtRGmVDVr19ymV6Y" name="code--search_files" integration-id="code" data="{\"include_patterns\": \"src/**/*.tsx\", \"query\": \"InspirationPhotosSection\"}">
-</lov-tool-use>
-
-<lov-tool-use id="toolu_vrtx_016xid8kWjghZAh44suUMo2w" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/clients/InspirationPhotosSection.tsx\"}">
-</lov-tool-use>
-Now I have full context. The screenshot shows the "No transformations yet" state from `TransformationTimeline` rendering — which only mentions "before and after photos." The user wants the empty copy to also acknowledge inspiration/consultation photos as a possible source. Since `InspirationPhotosSection` returns null when empty, the empty state on the Photos tab is currently only `TransformationTimeline`'s.
-
-<lov-plan>
-
-## Prompt review
-
-Sharp instinct — the current empty copy ("Add before and after photos to build a visual history") is technically accurate for the TransformationTimeline component but ignores the *other* photo type that lives on this tab: inspiration photos from the booking inquiry. From the operator's perspective, "Photos" is the noun on the tab, not "Transformations" — so the empty state should speak the operator's language. Sharper next time: tell me whether you want the copy to (a) explicitly name both photo types, (b) genericize to "no photos yet," or (c) prioritize one as primary. I'll plan for **(a) — explicit, since naming both types educates stylists on what the tab actually surfaces**.
-
-## Diagnosis
-
-The screenshot empty state ("NO TRANSFORMATIONS YET / Add before and after photos…") is rendered by `TransformationTimeline.tsx` L99–110. `InspirationPhotosSection` silently returns null when empty (L23), so the tab shows only the transformation empty state.
-
-Two choices for fix scope:
-- **Narrow**: Edit `TransformationTimeline` empty copy to mention inspiration photos. Risk: that component is also used in other surfaces (client profile?), so the copy might get weird out of context.
-- **Wide**: Lift the empty state up into the Photos tab itself (in `AppointmentDetailSheet.tsx`), gated on "both `photos.length === 0` AND `transformations.length === 0`." Cleaner separation but adds wiring (need to expose counts up).
-
-Going **narrow** — the copy change is universally true (transformations build on consultation/inspiration context), and `TransformationTimeline` is the canonical "photos" empty state in client-facing surfaces. Touches one file.
-
-## Plan — Wave 22.23: Photos empty-state copy unifies inspiration + transformation context
-
-### Edit: `src/components/dashboard/clients/TransformationTimeline.tsx` L99–110
-
-Update heading and description to acknowledge that the Photos tab spans inspiration photos (from booking), consultation photos, and transformation before/afters. Keep the CTA action language ("Add First Transformation") since that's still what the button does.
-
-```tsx
-<div className={tokens.empty.container}>
-  <Camera className={tokens.empty.icon} />
-  <h3 className={tokens.empty.heading}>No photos yet</h3>
-  <p className={tokens.empty.description}>
-    No inspiration, consultation, or transformation photos have been added yet. Build a visual history of this client's hair journey by capturing before-and-after shots.
-  </p>
-  <Button onClick={() => setShowAddForm(true)} className="mt-4 gap-2">
-    <Plus className="w-4 h-4" />
-    Add First Transformation
-  </Button>
-</div>
+```ts
+// Pseudocode of the query shape
+SELECT 
+  an.id, an.note, an.is_private, an.created_at, an.author_id,
+  author: employee_profiles(display_name, full_name, photo_url),
+  appointment: v_all_appointments(id, appointment_date, service_name, status, stylist_name)
+FROM appointment_notes an
+WHERE an.phorest_appointment_id IN (
+  SELECT id FROM v_all_appointments WHERE phorest_client_id = ?
+)
+ORDER BY an.created_at DESC
 ```
+
+Implementation: two-step in the hook (fetch visit IDs from `useClientVisitHistory`, then `appointment_notes.in('phorest_appointment_id', ids)` with author join, then merge appointment context client-side).
+
+### Edit: `AppointmentDetailSheet.tsx` Notes tab restructure
+
+Replace the "Appointment Notes" section header/list (L2325–2353) with a unified ledger:
+
+```
+NOTES                                                     [This Appointment | All Visits]
+─────────────────────────────────────────────────────────────────
+[Avatar] Jenna B.            Apr 17, 2026 · 9:14 AM
+Client wants to go shorter next time. Trying bangs.
+↳ From: Combo Cut · Apr 17, 2026 · ●  Unconfirmed
+
+[Avatar] Marcus T.           Mar 02, 2026 · 2:45 PM     [Private 🔒]
+Allergic reaction to bleach — no lift services.
+↳ From: Color & Cut · Mar 02, 2026 · ✓ Completed
+
+[Avatar] Jenna B.            Jan 18, 2026 · 11:20 AM
+Client cancelled day-of, family emergency.
+↳ From: Combo Cut · Jan 18, 2026 · ✕ Cancelled
+```
+
+Each note row shows:
+1. **Author + relative timestamp** — "Apr 17, 2026 · 9:14 AM" (already in data)
+2. **Note body**
+3. **Outcome footer** — "From: {service_name} · {date} · {status badge}" using the existing `APPOINTMENT_STATUS_BADGE` token map for color-coded status pills (Completed / Cancelled / No-show / Unconfirmed / etc.)
+4. **Privacy indicator** — existing `Lock` icon when `is_private`
+
+Filter toggle (top right): **"This Appointment"** (default — current behavior, alert-fatigue safe) vs **"All Visits"** (unified ledger). Default to "This Appointment" so existing operators aren't surprised; the toggle reveals history on demand.
+
+When current appointment has no notes but past notes exist, show a calm hint: *"No notes on this visit. {N} notes from past visits — view all"* as a one-click jump.
+
+### Keep unchanged
+- **Client Notes** section (already cross-visit, persistent). Stays as-is.
+- **Notes From Booking Assistant** — current appointment only (it's literally the booker's note for *this* booking). Could later add "previous bookings' booker notes" but defer.
+- Add-note flow still writes to *current* `appointment_notes` (one source of truth — notes always belong to a specific appointment).
 
 ### Acceptance checks
 
-1. Eric Day's Photos tab shows "NO PHOTOS YET" instead of "NO TRANSFORMATIONS YET"
-2. Description names all three photo sources (inspiration, consultation, transformation) so stylists understand the tab's full scope
-3. CTA button language unchanged (still "Add First Transformation" — that's the action it performs)
-4. When inspiration photos exist for a client, they render above this empty state (existing behavior preserved — `InspirationPhotosSection` still returns null when truly empty, renders when present)
-5. No regressions on other surfaces using `TransformationTimeline` — copy is generic enough to apply anywhere
+1. Eric Day's Notes tab default view shows only this appointment's notes (current behavior preserved)
+2. Toggling "All Visits" shows every `appointment_notes` row across his entire visit history, newest first
+3. Each note row shows the appointment date, service name, and a color-coded status pill (Completed / Cancelled / No-show / etc.)
+4. Cancelled and no-show visits' notes are visible (so stylists see "client cancelled — family emergency" history)
+5. Private notes still respect privacy logic (only author sees in unified view too — RLS-enforced)
+6. Empty state when no notes exist on any visit: "No notes yet for {client name}"
+7. New notes still write to the *current* appointment, then appear in the unified ledger
+8. No regression on Client Notes (cross-visit notes) section below
 
 ### Files
 
-- `src/components/dashboard/clients/TransformationTimeline.tsx` — single block edit at L99–110
+- **NEW** `src/hooks/useClientAppointmentNotes.ts` — unified-history notes hook
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — Notes tab restructure (L2325–2371) + add filter toggle state + import new hook + import `APPOINTMENT_STATUS_BADGE`
 
 ### Open question
 
-None — going with explicit naming of all three photo types. Tell me if you want the heading to stay "No transformations yet" with only the description expanded.
+Should the **default** view be "This Appointment" (current behavior, requires one click to see history) or "All Visits" (full ledger up-front)? I'm planning **"This Appointment" default** to respect alert-fatigue doctrine — past notes are valuable but not always relevant. Tell me if you want "All Visits" as default.
 
 ### Deferred
 
-- **P3** Add a "Add Consultation Photo" CTA distinct from "Add First Transformation" if/when consultation photos become a first-class capture flow (currently they live in the booking inquiry pipeline, not stylist-side). Trigger: when stylists ask to attach mid-appointment reference shots not tied to before/after pairs.
-- **P3** Consider lifting the empty state up into the Photos tab in `AppointmentDetailSheet.tsx` if more photo sources get added (e.g., portfolio uploads, social tags). Trigger: when a third+ photo source lands on this tab.
+- **P3** Apply the same unified-history pattern to **Notes From Booking Assistant** — show all past booking-time notes inline (e.g., "Apr 17: Client wants simple cut" / "Jan 18: Wants to try bangs"). Trigger: after operators confirm the appointment-notes ledger feels right.
+- **P3** Add a search/filter input to the unified ledger (search note text, filter by author/status). Trigger: when a client accumulates 20+ notes and scanning becomes friction.
+- **P3** Surface unread-notes badge on the Notes tab in the same client-history scope (not just current appointment) — so a stylist sees "3 unread notes from past visits." Trigger: after the unread-notes feature ships and feels stable on the per-appointment scope.
 
