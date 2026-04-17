@@ -59,6 +59,7 @@ import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { ClientNotesSection } from './ClientNotesSection';
 import { ClientAboutCard } from './clients/ClientAboutCard';
 import { ClientCallbacksPanel } from './clients/ClientCallbacksPanel';
+import { HospitalityBlock } from './clients/HospitalityBlock';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { TransformationTimeline } from './clients/TransformationTimeline';
 import { BannedClientAlert } from './clients/BannedClientAlert';
