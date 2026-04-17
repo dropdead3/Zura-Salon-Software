@@ -158,6 +158,7 @@ export function CheckoutSummarySheet({
       setDeclineDialogOpen(false);
       setDeclineReason('');
       setDeclineOtherText('');
+      setDeclinedReason(null);
       setRebooked(false);
       setPaymentMethod('cash');
       terminalFlow.reset();
@@ -538,6 +539,7 @@ export function CheckoutSummarySheet({
     setDeclineReason('');
     setDeclineOtherText('');
     setDeclineDialogOpen(false);
+    setDeclinedReason(null);
     setPaymentMethod('cash');
     terminalFlow.reset();
   };
@@ -571,6 +573,7 @@ export function CheckoutSummarySheet({
     const label = notes ? `${getReasonLabel(code)}: ${notes}` : getReasonLabel(code);
     setDeclineReason(label);
     setDeclineOtherText('');
+    setDeclinedReason({ code, notes });
     setRebooked(false);
     setDeclineDialogOpen(false);
     setGatePhase('checkout');
