@@ -33,17 +33,27 @@ interface CheckoutParams {
   organizationId: string;
   readerId: string;
   amount: number; // cents (pre-tip checkout total)
-  tipAmount?: number; // cents
+  tipAmount?: number; // cents — used only when tipMode === 'app'
   currency?: string;
   appointmentId?: string;
   lineItems: LineItem[];
   tax?: number; // cents
+  /**
+   * 'app'    — operator selects tip in the sheet (current default behavior).
+   * 'reader' — S710 prompts the client for a tip on-device. Final tip is
+   *            returned in the result via `tipAmount` after capture.
+   */
+  tipMode?: 'app' | 'reader';
 }
 
 interface CheckoutResult {
   paymentIntentId: string;
-  amount: number;
+  amount: number; // total captured cents (subtotal + final tip)
   status: string;
+  /** Final tip in cents — equals `tipAmount` for 'app' mode, or whatever
+   *  the client selected on the reader for 'reader' mode. */
+  tipAmount: number;
+  tipMode: 'app' | 'reader';
 }
 
 const POLL_INTERVAL = 2000;
@@ -81,7 +91,11 @@ export function useTerminalCheckoutFlow() {
     readerId: string,
     organizationId: string,
     paymentIntentId: string
-  ): Promise<'succeeded' | 'failed'> => {
+  ): Promise<{
+    status: 'succeeded' | 'failed';
+    amount: number;
+    tipAmount: number;
+  }> => {
     const { data, error } = await supabase.functions.invoke('terminal-reader-display', {
       body: {
         action: 'check_payment_intent',
@@ -91,15 +105,19 @@ export function useTerminalCheckoutFlow() {
       },
     });
     if (error) throw error;
-    const piStatus = data?.payment_intent?.status;
-    if (piStatus === 'succeeded') return 'succeeded';
-    return 'failed';
+    const pi = data?.payment_intent;
+    const piStatus = pi?.status;
+    return {
+      status: piStatus === 'succeeded' ? 'succeeded' : 'failed',
+      amount: typeof pi?.amount === 'number' ? pi.amount : 0,
+      tipAmount: typeof pi?.tip_amount === 'number' ? pi.tip_amount : 0,
+    };
   };
 
   const pollReaderStatus = async (
     readerId: string,
     organizationId: string
-  ): Promise<'succeeded' | 'failed'> => {
+  ): Promise<{ status: 'succeeded' | 'failed'; amount: number; tipAmount: number }> => {
     const start = Date.now();
     while (Date.now() - start < POLL_TIMEOUT) {
       if (cancelledRef.current) throw new Error('cancelled');
@@ -117,8 +135,14 @@ export function useTerminalCheckoutFlow() {
       const reader = data?.reader;
       const actionStatus = reader?.action?.status;
 
-      if (actionStatus === 'succeeded') return 'succeeded';
-      if (actionStatus === 'failed') return 'failed';
+      // For both terminal states we still verify the PI directly so we get
+      // the final captured amount + tip (especially for tip-on-reader).
+      if (actionStatus === 'succeeded' || actionStatus === 'failed') {
+        if (paymentIntentIdRef.current) {
+          return await verifyPaymentIntent(readerId, organizationId, paymentIntentIdRef.current);
+        }
+        return { status: actionStatus, amount: 0, tipAmount: 0 };
+      }
 
       // B4 fix: If reader has no active action, verify PI status directly
       // instead of assuming success (reader clears action on both success AND failure)
@@ -126,7 +150,7 @@ export function useTerminalCheckoutFlow() {
         if (paymentIntentIdRef.current) {
           return await verifyPaymentIntent(readerId, organizationId, paymentIntentIdRef.current);
         }
-        return 'failed'; // No PI to verify — treat as failed
+        return { status: 'failed', amount: 0, tipAmount: 0 };
       }
 
       await new Promise((r) => setTimeout(r, POLL_INTERVAL));
@@ -145,10 +169,13 @@ export function useTerminalCheckoutFlow() {
         appointmentId,
         lineItems,
         tax = 0,
+        tipMode = 'app',
       } = params;
 
       cancelledRef.current = false;
       setError(null);
+
+      const collectTipOnReader = tipMode === 'reader';
 
       try {
         // Step 1: Create PaymentIntent
@@ -159,10 +186,11 @@ export function useTerminalCheckoutFlow() {
             body: {
               organization_id: organizationId,
               amount,
-              tip_amount: tipAmount,
+              tip_amount: collectTipOnReader ? 0 : tipAmount,
               currency,
               appointment_id: appointmentId,
               description: lineItems.map((li) => li.description).join(', '),
+              collect_tip_on_reader: collectTipOnReader,
             },
           }
         );
@@ -172,6 +200,8 @@ export function useTerminalCheckoutFlow() {
 
         const paymentIntentId = piData.payment_intent_id;
         paymentIntentIdRef.current = paymentIntentId;
+        const tipEligibleAmount: number =
+          typeof piData.tip_eligible_amount === 'number' ? piData.tip_eligible_amount : 0;
 
         if (cancelledRef.current) throw new Error('cancelled');
 
@@ -185,13 +215,16 @@ export function useTerminalCheckoutFlow() {
 
         if (cancelledRef.current) throw new Error('cancelled');
 
-        // Step 3: Process payment on reader
+        // Step 3: Process payment on reader (with tipping config when on-reader mode)
         setFlowState('awaiting_tap');
         await invokeReaderAction('process_payment', readerId, organizationId, {
           payment_intent_id: paymentIntentId,
+          ...(collectTipOnReader && tipEligibleAmount > 0
+            ? { tip_eligible_amount: tipEligibleAmount }
+            : {}),
         });
 
-        // Step 4: Poll for completion
+        // Step 4: Poll for completion (returns final tip + captured amount)
         setFlowState('processing');
         const result = await pollReaderStatus(readerId, organizationId);
 
@@ -202,9 +235,18 @@ export function useTerminalCheckoutFlow() {
           // Non-critical
         }
 
-        if (result === 'succeeded') {
+        if (result.status === 'succeeded') {
           setFlowState('succeeded');
-          return { paymentIntentId, amount: amount + tipAmount, status: 'succeeded' };
+          // Prefer the on-reader tip when in 'reader' mode; fall back to
+          // the operator-entered tip otherwise.
+          const finalTip = collectTipOnReader ? result.tipAmount : tipAmount;
+          return {
+            paymentIntentId,
+            amount: result.amount || amount + finalTip,
+            status: 'succeeded',
+            tipAmount: finalTip,
+            tipMode,
+          };
         } else {
           setFlowState('failed');
           throw new Error('Payment was declined');
