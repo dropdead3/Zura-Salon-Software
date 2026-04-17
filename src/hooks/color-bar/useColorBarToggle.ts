@@ -220,13 +220,18 @@ export function useColorBarToggle() {
   const toggle = useCallback(
     async (args: ToggleArgs) => {
       if (args.currentlyEnabled) {
-        await softDisable(args);
+        // Capture cancel reason BEFORE running the cascade.
+        setSuspensionTarget({
+          organizationId: args.organizationId,
+          organizationName: args.organizationName,
+          optimisticPatch: args.optimisticPatch,
+        });
         return;
       }
       // Currently OFF → check for prior suspension
       const { data: suspendedRows } = await supabase
         .from('backroom_location_entitlements')
-        .select('location_id, suspended_at')
+        .select('location_id, suspended_at, suspended_reason')
         .eq('organization_id', args.organizationId)
         .eq('status', 'suspended')
         .order('suspended_at', { ascending: false });
@@ -242,6 +247,8 @@ export function useColorBarToggle() {
           organizationId: args.organizationId,
           organizationName: args.organizationName,
           suspendedAt: (suspendedRows[0] as any).suspended_at as string | null,
+          suspendedReason:
+            (suspendedRows[0] as any).suspended_reason as string | null,
           locationNames: locIds.map(
             (id: string) => nameMap.get(id) ?? 'Unknown location',
           ),
@@ -253,7 +260,7 @@ export function useColorBarToggle() {
 
       await firstTimeEnable(args);
     },
-    [softDisable, firstTimeEnable],
+    [firstTimeEnable],
   );
 
   /** Confirm callback for the reactivation dialog. */
@@ -276,11 +283,37 @@ export function useColorBarToggle() {
     setReactivationTarget(null);
   }, []);
 
+  /** Confirm callback for the cancel-reason (suspension) dialog. */
+  const confirmSuspension = useCallback(
+    async (meta: { reason: string; notes: string }) => {
+      if (!suspensionTarget) return;
+      const target = suspensionTarget;
+      setSuspensionTarget(null);
+      await softDisable(
+        {
+          organizationId: target.organizationId,
+          organizationName: target.organizationName,
+          currentlyEnabled: true,
+          optimisticPatch: target.optimisticPatch,
+        },
+        meta,
+      );
+    },
+    [suspensionTarget, softDisable],
+  );
+
+  const cancelSuspension = useCallback(() => {
+    setSuspensionTarget(null);
+  }, []);
+
   return {
     toggle,
     reactivationTarget,
     confirmReactivation,
     cancelReactivation,
+    suspensionTarget,
+    confirmSuspension,
+    cancelSuspension,
     isPending,
     /** Direct primitives if a caller needs them (batch ops, etc.). */
     softDisable,
