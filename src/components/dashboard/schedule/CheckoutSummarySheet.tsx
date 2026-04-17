@@ -173,6 +173,47 @@ export function CheckoutSummarySheet({
     }
   }, [rebookCompleted, open]);
 
+  // Wave 21.3 Layer 1 — Audit-log rehydration so the "skipped" receipt
+  // persists across sheet remounts (close/reopen mid-checkout).
+  const { data: priorDecline } = useQuery({
+    queryKey: ['rebook-decline-receipt', appointment?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('appointment_audit_log')
+        .select('metadata, created_at')
+        .eq('appointment_id', appointment!.id)
+        .eq('event_type', AUDIT_EVENTS.REBOOK_DECLINED)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!appointment?.id && open,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (priorDecline?.metadata && !declinedReason) {
+      const meta = priorDecline.metadata as { reason_code?: string; reason_notes?: string | null };
+      if (meta.reason_code) {
+        setDeclinedReason({
+          code: meta.reason_code as RebookDeclineReasonCode,
+          notes: meta.reason_notes ?? null,
+        });
+        // Skip the warning block on remount — operator already captured a reason
+        setGatePhase('checkout');
+      }
+    }
+  }, [priorDecline, declinedReason]);
+
+  // Wave 21.3 Layer 3 — Inline coaching nudge when stylist's 30-day skip rate
+  // breaches the elevated threshold. Honors visibility contract: returns null
+  // for healthy operators or insufficient sample.
+  const { data: skipRateSignal } = useStylistSkipRate(
+    appointment?.stylist_user_id ?? null,
+    locationId ?? null,
+  );
+
   const { data: addonEvents = [] } = useQuery({
     queryKey: ['checkout-addon-events', appointment?.id],
     queryFn: async () => {
