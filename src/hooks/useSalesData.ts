@@ -654,6 +654,7 @@ export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: s
 export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
     queryKey: ['sales-trend-from-appointments', dateFrom, dateTo, locationId],
+    staleTime: 5 * 60_000, // Wave 14: 5m cache — trend lines change slowly
     queryFn: async () => {
       const data = await fetchAllBatched<{
         appointment_date: string | null;
