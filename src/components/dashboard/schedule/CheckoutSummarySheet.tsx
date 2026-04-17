@@ -139,6 +139,11 @@ export function CheckoutSummarySheet({
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState<string>('');
   const [declineOtherText, setDeclineOtherText] = useState<string>('');
+  // Wave 21.2 — local receipt of skipped-rebook for the muted confirmation line
+  const [declinedReason, setDeclinedReason] = useState<{
+    code: RebookDeclineReasonCode;
+    notes: string | null;
+  } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('cash');
   const logDeclineReason = useLogRebookDeclineReason();
 
