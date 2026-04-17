@@ -40,6 +40,7 @@ import {
   DialogTrigger,
 } from '@/components/platform/ui/PlatformDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useColorBarEntitlementCounts } from '@/hooks/color-bar/useColorBarEntitlementCounts';
 import { supabase } from '@/integrations/supabase/client';
 import { useUpdateOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
 import {

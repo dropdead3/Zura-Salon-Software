@@ -37,7 +37,9 @@ export function useColorBarSuspensionEvents(window: SuspensionEventWindow = '30d
   return useQuery({
     queryKey: ['color-bar-suspension-events', window],
     queryFn: async (): Promise<SuspensionEventRow[]> => {
-      let query = supabase
+      // Cast through `any` — the joined select shape outruns the generated types
+      // and the embedded organizations join produces an excessively deep instantiation.
+      let query: any = (supabase as any)
         .from('color_bar_suspension_events')
         .select(
           `
@@ -66,19 +68,19 @@ export function useColorBarSuspensionEvents(window: SuspensionEventWindow = '30d
 
       const rows = (data ?? []) as any[];
 
-      // Resolve actor display names in a single batched lookup.
+      // Resolve actor display names in a single batched lookup against employee_profiles.
       const actorIds = Array.from(
-        new Set(rows.map((r) => r.actor_user_id).filter((id): id is string => !!id))
+        new Set(rows.map((r) => r.actor_user_id).filter((id: any): id is string => !!id))
       );
 
       const actorMap = new Map<string, string>();
       if (actorIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', actorIds);
+        const { data: profiles } = await (supabase as any)
+          .from('employee_profiles')
+          .select('user_id, full_name, email')
+          .in('user_id', actorIds);
         for (const p of (profiles ?? []) as any[]) {
-          actorMap.set(p.id, p.full_name || p.email || 'Unknown');
+          actorMap.set(p.user_id, p.full_name || p.email || 'Unknown');
         }
       }
 
