@@ -70,6 +70,7 @@ export function ScheduleActionBar({
   onOpenDrafts,
   draftCount = 0,
   view,
+  currentDate,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
   const { todayStr } = useOrgNow();
