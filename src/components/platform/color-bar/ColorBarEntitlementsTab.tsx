@@ -49,6 +49,7 @@ import {
   useBulkReactivateLocationEntitlements,
   type ColorBarLocationEntitlement,
 } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
 import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
@@ -95,12 +96,8 @@ export function ColorBarEntitlementsTab() {
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
   const [showBackfillDialog, setShowBackfillDialog] = useState(false);
   const [backfilling, setBackfilling] = useState(false);
-  const [reactivationTarget, setReactivationTarget] = useState<{
-    org: OrgWithColorBar;
-    suspendedAt: string | null;
-    locationNames: string[];
-  } | null>(null);
   const queryClient = useQueryClient();
+  const colorBarToggle = useColorBarToggle();
 
   // Fetch all orgs with their color bar flag
   const { data: orgs = [], isLoading: orgsLoading } = useQuery({
@@ -212,7 +209,7 @@ export function ColorBarEntitlementsTab() {
   /**
    * Schedule an advisory toast if the operation hasn't completed within 800ms.
    * Returns { dismiss } so we can clear the timer + dismiss the toast on
-   * settle.
+   * settle. (Used by batch ops; single-org toggles route through useColorBarToggle.)
    */
   const scheduleAdvisoryToast = (message: string) => {
     let toastId: string | number | undefined;
@@ -227,136 +224,13 @@ export function ColorBarEntitlementsTab() {
     };
   };
 
-  /** Soft-disable: preserve flag row + suspend all active location entitlements. */
-  const softDisableColorBar = async (org: OrgWithColorBar) => {
-    const rollback = optimisticallyFlip(org.id, false);
-    const advisory = scheduleAdvisoryToast(
-      `Suspending Color Bar across ${org.name}'s locations…`,
-    );
-    try {
-      // Set is_enabled=false on the org flag (preserve override row + history)
-      await updateFlag.mutateAsync({
-        organizationId: org.id,
-        flagKey: 'backroom_enabled',
-        isEnabled: false,
-        reason: 'Suspended via Platform Color Bar Admin',
-      });
-      // Bulk-suspend all active location entitlements
-      await bulkSuspend.mutateAsync({ organization_id: org.id });
-      advisory.dismiss();
-      toast.success(`Color Bar suspended for ${org.name} — data preserved`);
-    } catch (err: any) {
-      advisory.dismiss();
-      rollback();
-      toast.error('Could not suspend Color Bar: ' + (err?.message ?? 'unknown error'));
-    }
-  };
-
-  /** First-time enable: flag on + activate all locations (no reconciliation). */
-  const firstTimeEnableColorBar = async (org: OrgWithColorBar) => {
-    const rollback = optimisticallyFlip(org.id, true);
-    const advisory = scheduleAdvisoryToast(
-      `Activating Color Bar across ${org.name}'s locations…`,
-    );
-    try {
-      await updateFlag.mutateAsync({
-        organizationId: org.id,
-        flagKey: 'backroom_enabled',
-        isEnabled: true,
-        reason: 'Enabled via Platform Color Bar Admin',
-      });
-      const { data: locs } = await supabase
-        .from('locations')
-        .select('id')
-        .eq('organization_id', org.id)
-        .eq('is_active', true);
-      if (locs && locs.length > 0) {
-        await supabase.from('backroom_location_entitlements').upsert(
-          locs.map((l) => ({
-            organization_id: org.id,
-            location_id: l.id,
-            plan_tier: 'standard',
-            scale_count: 0,
-            status: 'active',
-            billing_interval: 'monthly',
-            activated_at: new Date().toISOString(),
-          })),
-          { onConflict: 'organization_id,location_id' },
-        );
-        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
-        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-all-entitlement-counts'] });
-        advisory.dismiss();
-        toast.success(`Color Bar enabled for ${org.name} — all locations activated`);
-      } else {
-        advisory.dismiss();
-        toast.success(`Color Bar enabled for ${org.name}`);
-      }
-    } catch (err: any) {
-      advisory.dismiss();
-      rollback();
-      toast.error('Could not enable Color Bar: ' + (err?.message ?? 'unknown error'));
-    }
-  };
-
-  /** Reactivation from a previous suspension: flips flag + sets reconciliation flag. */
-  const reactivateColorBar = async (org: OrgWithColorBar) => {
-    const rollback = optimisticallyFlip(org.id, true);
-    const advisory = scheduleAdvisoryToast(
-      `Reactivating Color Bar across ${org.name}'s locations…`,
-    );
-    try {
-      await updateFlag.mutateAsync({
-        organizationId: org.id,
-        flagKey: 'backroom_enabled',
-        isEnabled: true,
-        reason: 'Reactivated via Platform Color Bar Admin',
-      });
-      const reactivated = await bulkReactivate.mutateAsync({ organization_id: org.id });
-      advisory.dismiss();
-      toast.success(
-        `Color Bar reactivated for ${org.name} — ${reactivated.length} location${
-          reactivated.length === 1 ? '' : 's'
-        } require inventory verification`,
-      );
-    } catch (err: any) {
-      advisory.dismiss();
-      rollback();
-      toast.error('Could not reactivate Color Bar: ' + (err?.message ?? 'unknown error'));
-    }
-  };
-
-  const toggleColorBar = async (org: OrgWithColorBar) => {
-    if (org.backroom_enabled) {
-      // Toggle OFF: soft-suspend
-      await softDisableColorBar(org);
-      return;
-    }
-    // Toggle ON: check whether any locations are currently 'suspended'
-    // (indicates a prior suspension → require reconciliation acknowledgment).
-    const { data: suspendedRows } = await supabase
-      .from('backroom_location_entitlements')
-      .select('location_id, suspended_at')
-      .eq('organization_id', org.id)
-      .eq('status', 'suspended')
-      .order('suspended_at', { ascending: false });
-
-    if (suspendedRows && suspendedRows.length > 0) {
-      // Fetch location names for the dialog
-      const locIds = suspendedRows.map((r: any) => r.location_id);
-      const { data: locs } = await supabase
-        .from('locations')
-        .select('id, name')
-        .in('id', locIds);
-      const nameMap = new Map((locs ?? []).map((l: any) => [l.id, l.name]));
-      const locationNames = locIds.map((id: string) => nameMap.get(id) ?? 'Unknown location');
-      const mostRecentSuspendedAt = (suspendedRows[0] as any).suspended_at as string | null;
-      setReactivationTarget({ org, suspendedAt: mostRecentSuspendedAt, locationNames });
-      return;
-    }
-
-    // No prior suspension → first-time activation flow
-    await firstTimeEnableColorBar(org);
-  };
+  const toggleColorBar = (org: OrgWithColorBar) =>
+    colorBarToggle.toggle({
+      organizationId: org.id,
+      organizationName: org.name,
+      currentlyEnabled: org.backroom_enabled,
+      optimisticPatch: (next) => optimisticallyFlip(org.id, next),
+    });
 
   const toggleLocationEntitlement = (orgId: string, locationId: string) => {
     const existing = entitlementMap.get(locationId);
@@ -373,18 +247,32 @@ export function ColorBarEntitlementsTab() {
     }
   };
 
-  const handleBatchEnable = () => {
+  const handleBatchEnable = async () => {
     const toEnable = orgs.filter((o) => selected.has(o.id) && !o.backroom_enabled);
-    toEnable.forEach((org) => {
-      updateFlag.mutate({
-        organizationId: org.id,
-        flagKey: 'backroom_enabled',
-        isEnabled: true,
-        reason: 'Batch enabled via Platform Color Bar Admin',
-      });
-    });
-    toast.success(`Enabling color bar for ${toEnable.length} organizations`);
-    setSelected(new Set());
+    if (toEnable.length === 0) return;
+    const advisory = scheduleAdvisoryToast(
+      `Enabling Color Bar for ${toEnable.length} organizations…`,
+    );
+    try {
+      // Cascade through the shared toggle hook so each org gets the correct
+      // first-time-enable vs reactivation flow + per-location entitlements.
+      // Note: orgs with prior suspensions will open the dialog one at a time;
+      // we surface a single rolled-up advisory toast for the batch.
+      for (const org of toEnable) {
+        await colorBarToggle.toggle({
+          organizationId: org.id,
+          organizationName: org.name,
+          currentlyEnabled: false,
+          optimisticPatch: (next) => optimisticallyFlip(org.id, next),
+        });
+      }
+      advisory.dismiss();
+    } catch (err: any) {
+      advisory.dismiss();
+      toast.error('Batch enable failed: ' + (err?.message ?? 'unknown error'));
+    } finally {
+      setSelected(new Set());
+    }
   };
 
   const handleBatchDisable = async () => {
@@ -684,6 +572,7 @@ export function ColorBarEntitlementsTab() {
                             <Switch
                               checked={org.backroom_enabled}
                               onCheckedChange={() => toggleColorBar(org)}
+                              disabled={!!colorBarToggle.reactivationTarget || colorBarToggle.isPending}
                             />
                           </TableCell>
                         </TableRow>
@@ -722,19 +611,20 @@ export function ColorBarEntitlementsTab() {
 
       {/* Reactivation confirmation — shown when toggling on an org that was previously suspended */}
       <ReactivationConfirmDialog
-        open={!!reactivationTarget}
+        open={!!colorBarToggle.reactivationTarget}
         onOpenChange={(open) => {
-          if (!open) setReactivationTarget(null);
+          if (!open) colorBarToggle.cancelReactivation();
         }}
-        orgName={reactivationTarget?.org.name ?? ''}
-        suspendedAt={reactivationTarget?.suspendedAt ?? null}
-        affectedLocations={reactivationTarget?.locationNames ?? []}
-        isPending={updateFlag.isPending || bulkReactivate.isPending}
-        onConfirm={async () => {
-          if (!reactivationTarget) return;
-          const target = reactivationTarget;
-          setReactivationTarget(null);
-          await reactivateColorBar(target.org);
+        orgName={colorBarToggle.reactivationTarget?.organizationName ?? ''}
+        suspendedAt={colorBarToggle.reactivationTarget?.suspendedAt ?? null}
+        affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
+        isPending={colorBarToggle.isPending}
+        onConfirm={() => {
+          const target = colorBarToggle.reactivationTarget;
+          if (!target) return;
+          colorBarToggle.confirmReactivation((next) =>
+            optimisticallyFlip(target.organizationId, next),
+          );
         }}
       />
     </PlatformCard>

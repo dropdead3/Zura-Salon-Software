@@ -10,15 +10,19 @@ import {
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { useOrganizationFeatureFlags, useUpdateOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
+import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
 
 interface AccountAppsCardProps {
   organizationId: string;
+  organizationName?: string;
 }
 
-export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
+export function AccountAppsCard({ organizationId, organizationName }: AccountAppsCardProps) {
   const { data: flags, isLoading: flagsLoading } = useOrganizationFeatureFlags(organizationId);
   const { entitlements, isLoading: entitlementsLoading } = useColorBarLocationEntitlements(organizationId);
   const updateFlag = useUpdateOrgFeatureFlag();
+  const colorBarToggle = useColorBarToggle();
 
   const isLoading = flagsLoading || entitlementsLoading;
 
@@ -26,6 +30,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
     window.open(`/dock?demo=${organizationId}`, '_blank');
   };
 
+  /** Generic toggle for non-Color-Bar flags (Connect, Payroll). */
   const handleToggleFlag = (flagKey: string, currentValue: boolean) => {
     updateFlag.mutate({
       organizationId,
@@ -67,6 +72,17 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
   const payrollFlag = flags?.find((f) => f.flag_key === 'payroll_enabled');
   const isPayrollEnabled = payrollFlag?.org_enabled ?? false;
 
+  /**
+   * Color Bar uses the shared toggle hook so this surface gets the same
+   * soft-disable + reconciliation flow as the Platform admin tab.
+   */
+  const handleColorBarToggle = () =>
+    colorBarToggle.toggle({
+      organizationId,
+      organizationName: organizationName ?? 'this organization',
+      currentlyEnabled: isColorBarEnabled,
+    });
+
   return (
     <PlatformCard variant="glass">
       <PlatformCardHeader>
@@ -99,8 +115,10 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
               </button>
               <Switch
                 checked={isColorBarEnabled}
-                onCheckedChange={() => handleToggleFlag('backroom_enabled', isColorBarEnabled)}
-                disabled={updateFlag.isPending}
+                onCheckedChange={handleColorBarToggle}
+                disabled={
+                  colorBarToggle.isPending || !!colorBarToggle.reactivationTarget
+                }
                 className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-slate-600"
               />
             </div>
@@ -157,9 +175,21 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
               />
             </div>
           </div>
-
         </div>
       </PlatformCardContent>
+
+      {/* Reactivation confirmation — fires when re-enabling an org that was previously suspended */}
+      <ReactivationConfirmDialog
+        open={!!colorBarToggle.reactivationTarget}
+        onOpenChange={(open) => {
+          if (!open) colorBarToggle.cancelReactivation();
+        }}
+        orgName={colorBarToggle.reactivationTarget?.organizationName ?? ''}
+        suspendedAt={colorBarToggle.reactivationTarget?.suspendedAt ?? null}
+        affectedLocations={colorBarToggle.reactivationTarget?.locationNames ?? []}
+        isPending={colorBarToggle.isPending}
+        onConfirm={() => colorBarToggle.confirmReactivation()}
+      />
     </PlatformCard>
   );
 }

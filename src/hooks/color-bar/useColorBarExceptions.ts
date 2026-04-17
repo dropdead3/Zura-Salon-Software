@@ -14,13 +14,15 @@ import { useReconciliationFlaggedLocations } from './useReconciliationFlaggedLoc
  * Exception types that depend on trustworthy inventory or formula-cost data.
  * These are suppressed for any location currently flagged
  * `requires_inventory_reconciliation = true` per platform doctrine.
+ *
+ * Note: `inventory_drift` is intentionally NOT suppressed — drift signals
+ * help guide the operator's physical recount during reconciliation.
  */
 const RECONCILIATION_SUPPRESSED_TYPES = new Set([
   'supply_low',
   'stockout_risk',
   'formula_cost_drift',
   'margin_drift',
-  'inventory_drift',
 ]);
 
 export interface ColorBarException {

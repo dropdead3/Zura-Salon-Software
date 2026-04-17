@@ -421,7 +421,7 @@ export default function AccountDetail() {
           <AccountIntegrationsCard organizationId={organization.id} />
 
           {/* Apps in Use Card */}
-          <AccountAppsCard organizationId={organization.id} />
+          <AccountAppsCard organizationId={organization.id} organizationName={organization.name} />
         </TabsContent>
 
         <Suspense fallback={<DashboardLoader size="lg" className="h-64" />}>

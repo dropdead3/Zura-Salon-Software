@@ -16,7 +16,7 @@ export function useReconciliationFlaggedLocations() {
   const orgId = useColorBarOrgId();
   const { entitlements, isLoading } = useColorBarLocationEntitlements(orgId);
 
-  const flaggedSet = useMemo(() => {
+  const flaggedSet = useMemo<Set<string>>(() => {
     return new Set(
       entitlements
         .filter((e) => e.requires_inventory_reconciliation)
@@ -24,7 +24,7 @@ export function useReconciliationFlaggedLocations() {
     );
   }, [entitlements]);
 
-  const isFlagged = (locationId?: string | null) => {
+  const isFlagged = (locationId?: string | null): boolean => {
     if (!locationId) return false;
     return flaggedSet.has(locationId);
   };
