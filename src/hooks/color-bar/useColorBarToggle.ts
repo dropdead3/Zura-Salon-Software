@@ -123,10 +123,23 @@ export function useColorBarToggle() {
               ? `Suspended (${meta.reason})${meta.notes ? `: ${meta.notes}` : ''}`
               : 'Suspended via Color Bar admin',
         });
-        await bulkSuspend.mutateAsync({
+        const suspendedRows = await bulkSuspend.mutateAsync({
           organization_id: args.organizationId,
           reason: meta?.reason,
           notes: meta?.notes,
+        });
+        await logSuspensionEvent({
+          organization_id: args.organizationId,
+          event_type: 'suspended',
+          reason: meta?.reason ?? null,
+          notes: meta?.notes ?? null,
+          affected_location_count: Array.isArray(suspendedRows)
+            ? suspendedRows.length
+            : 0,
+        });
+        // Invalidate cached reactivation status so next toggle reads fresh data
+        queryClient.invalidateQueries({
+          queryKey: ['color-bar-reactivation-status', args.organizationId],
         });
         advisory.dismiss();
         toast.success(
