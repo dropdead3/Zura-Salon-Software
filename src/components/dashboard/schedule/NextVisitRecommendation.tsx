@@ -6,10 +6,11 @@
  */
 
 import { useState, useMemo } from 'react';
-import { CalendarPlus, CalendarCheck, XCircle, Quote } from 'lucide-react';
+import { CalendarPlus, CalendarCheck, XCircle, Quote, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import {
   getAllRebookIntervals,
@@ -64,27 +65,53 @@ export function NextVisitRecommendation({
 
   return (
     <div className="space-y-5">
-      {/* Verbal Script Card */}
-      <div className="relative rounded-lg border border-border/60 bg-muted/30 p-4">
-        <Quote className="absolute top-3 left-3 h-3.5 w-3.5 text-muted-foreground/50" />
-        <p className="font-sans text-sm text-foreground leading-relaxed pl-6 italic">
-          "I'd like to see you back in{' '}
-          <span className="not-italic text-foreground font-medium">
-            {selectedWeeks} {weekLabel}
+      {/* Verbal Script Card — elevated as the centerpiece of the rebook flow */}
+      <div className="space-y-1.5">
+        <div className="relative rounded-lg border border-primary/30 border-l-2 border-l-primary/50 bg-gradient-to-br from-primary/[0.06] to-primary/[0.02] p-5 shadow-sm">
+          <Quote className="absolute top-3 left-3 h-5 w-5 text-primary/40" />
+          <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider text-primary/60 font-display">
+            Suggested Script
           </span>
-          . How does{' '}
-          <span className="not-italic text-foreground font-medium">{dayLabel}</span>
-          {timeLabel && (
-            <>
-              {' '}at{' '}
-              <span className="not-italic text-foreground font-medium">{timeLabel}</span>
-            </>
-          )}
-          {' '}work?"
-        </p>
-        <p className="mt-2 pl-6 text-[11px] uppercase tracking-wider text-muted-foreground/70 font-display">
-          Suggested Script
-        </p>
+          <p className="font-sans text-base text-foreground leading-relaxed pl-7 pr-2 pt-4 italic">
+            "I'd like to see you back in{' '}
+            <span className="not-italic text-primary font-medium">
+              {selectedWeeks} {weekLabel}
+            </span>
+            . How does{' '}
+            <span className="not-italic text-primary font-medium">{dayLabel}</span>
+            {timeLabel && (
+              <>
+                {' '}at{' '}
+                <span className="not-italic text-primary font-medium">{timeLabel}</span>
+              </>
+            )}
+            {' '}work?"
+          </p>
+        </div>
+
+        {/* Anti-pattern reference link */}
+        <div className="flex justify-end pr-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="font-sans text-xs text-muted-foreground hover:text-destructive transition-colors inline-flex items-center gap-0.5 cursor-help"
+              >
+                What not to say
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="end" className="max-w-xs p-3">
+              <p className="font-sans text-xs text-foreground leading-relaxed">
+                <span className="text-destructive">✗</span>{' '}
+                <span className="italic">"Want to rebook? Or do you want me to text you?"</span>
+              </p>
+              <p className="font-sans text-xs text-muted-foreground leading-relaxed mt-2">
+                Optional + deferred = no commitment. Always anchor to a specific week and time.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Interval toggle */}
