@@ -82,7 +82,7 @@ export function SidebarAnnouncementsWidget({
       return (data || []) as Announcement[];
     },
     enabled: !!user?.id,
-    refetchInterval: 30000,
+    refetchInterval: 90000, // 90s (was 30s — Wave 22.36 cost optimization)
   });
 
   // Auto-expand when new announcement is detected
