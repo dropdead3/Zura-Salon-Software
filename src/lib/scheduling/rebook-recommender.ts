@@ -44,6 +44,8 @@ const SERVICE_NAME_PATTERNS: [RegExp, IntervalConfig][] = [
 
 const DEFAULT_INTERVAL: IntervalConfig = { weeks: [4, 6], label: 'Next Visit' };
 
+export const REBOOK_INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 10, 12] as const;
+
 function resolveInterval(
   serviceName: string | null | undefined,
   serviceCategory: string | null | undefined,
