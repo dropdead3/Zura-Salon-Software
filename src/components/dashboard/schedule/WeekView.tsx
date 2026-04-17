@@ -382,21 +382,33 @@ export function WeekView({
   const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
     getCurrentTimeRenderMetrics(wkNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
 
-  const isStretched = weekDayWidth !== 'auto';
-  const gridTemplate = isStretched
-    ? `70px repeat(7, ${weekDayWidth}px)`
-    : '70px repeat(7, 1fr)';
+  const gridTemplate = '70px repeat(7, 1fr)';
+
+  // Filter to single selected stylist for week view (single-stylist personal calendar)
+  const stylistAppointments = useMemo(() => {
+    if (!selectedStylistId) return [] as PhorestAppointment[];
+    return appointments.filter(
+      (a: any) => (a.stylist_user_id || a.staff_user_id) === selectedStylistId,
+    );
+  }, [appointments, selectedStylistId]);
+
+  if (!selectedStylistId) {
+    return (
+      <div className="flex h-full min-h-0 flex-col items-center justify-center border border-border rounded-lg bg-card p-8">
+        <p className="text-sm text-muted-foreground">
+          Select a stylist to view their week.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div
         ref={scrollRef}
-        className={cn(
-          'flex-1 min-h-0 overflow-y-auto border border-border rounded-lg bg-card',
-          isStretched ? 'overflow-x-auto' : 'overflow-x-hidden',
-        )}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden border border-border rounded-lg bg-card"
       >
-        <div className={isStretched ? 'inline-block min-w-full' : ''}>
+        <div>
           {/* Day Headers with luxury blur effect */}
           <div className="sticky top-0 z-20">
             {/* Main header with frosted glass effect */}
@@ -409,9 +421,7 @@ export function WeekView({
                 WebkitBackdropFilter: 'blur(12px)',
               }}
             >
-              <div
-                className={cn('p-2', isStretched && 'sticky left-0 z-[21] bg-muted')}
-              /> {/* Time column spacer */}
+              <div className="p-2" /> {/* Time column spacer */}
               {weekDays.map((day) => {
                 const dayIsToday = isOrgToday(day);
                 const dayIsTomorrow = isOrgTomorrow(day);
