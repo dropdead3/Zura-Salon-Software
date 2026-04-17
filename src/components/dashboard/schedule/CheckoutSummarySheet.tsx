@@ -448,8 +448,8 @@ export function CheckoutSummarySheet({
         reasonCode: code,
         reasonNotes: notes,
         locationId: locationId ?? null,
-        clientId: appointment.client_id ?? null,
-        staffId: appointment.staff_user_id ?? null,
+        clientId: (appointment as any).client_id ?? appointment.phorest_client_id ?? null,
+        staffId: (appointment as any).staff_user_id ?? null,
       });
     } catch (e) {
       console.error('Failed to log decline reason', e);
