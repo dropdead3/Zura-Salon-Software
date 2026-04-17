@@ -14,6 +14,7 @@ import { Phone, ChevronRight, ArrowRightLeft, Users } from 'lucide-react';
 
 import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
 import { StylistBadge } from './StylistBadge';
+import { CallbackChip } from '@/components/dashboard/clients/CallbackChip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import { IndicatorCluster, type IndicatorFlags } from './appointment-card-indicators';
@@ -389,6 +390,7 @@ function AgendaContent({
                   <p className="text-sm text-muted-foreground">
                     {formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}
                   </p>
+                  <CallbackChip clientId={(appointment as any).phorest_client_id} className="mt-1" />
                   {(appointment as any).rescheduled_at && (appointment as any).rescheduled_from_time && (
                     <p className="text-xs text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-0.5">
                       <ArrowRightLeft className="h-3 w-3 shrink-0" />

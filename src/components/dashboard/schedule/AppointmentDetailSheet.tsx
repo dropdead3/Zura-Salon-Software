@@ -39,6 +39,8 @@ import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
+import { ClientCallbacksPanel } from '@/components/dashboard/clients/ClientCallbacksPanel';
+import { ClientAboutCard } from '@/components/dashboard/clients/ClientAboutCard';
 import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
@@ -1597,12 +1599,30 @@ export function AppointmentDetailSheet({
                 <ScrollArea className="flex-1">
                   {/* ─── TAB: Details ──────────────────────────── */}
                   <TabsContent value="details" className="p-6 pt-4 mt-0">
+                    {/* Hospitality: follow-up callbacks (alert-fatigue safe — only renders if active) */}
+                    <ClientCallbacksPanel
+                      organizationId={effectiveOrganization?.id}
+                      clientId={appointment.phorest_client_id}
+                      clientFirstName={appointment.client_name?.split(' ')[0]}
+                      hidePast
+                      compact={false}
+                    />
+
+                    {/* Hospitality: structured About Client facts */}
+                    <div className="mt-3">
+                      <ClientAboutCard
+                        organizationId={effectiveOrganization?.id}
+                        clientId={appointment.phorest_client_id}
+                        clientFirstName={appointment.client_name?.split(' ')[0]}
+                      />
+                    </div>
+
                     {/* Client Memory Panel */}
                     <ClientMemoryPanel
                       clientId={appointment.phorest_client_id}
                       serviceName={appointment.service_name}
                       orgId={resolvedOrgId}
-                      className="-mx-4 -mt-2 mb-4 border-b border-border/40 pb-4"
+                      className="-mx-4 mt-4 mb-4 border-y border-border/40 py-4"
                     />
                     <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
                     {/* Notes From Booking Assistant — surfaced from Notes tab for at-a-glance client intent */}

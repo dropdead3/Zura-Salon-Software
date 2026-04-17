@@ -5009,6 +5009,57 @@ export type Database = {
           },
         ]
       }
+      client_about_facts: {
+        Row: {
+          category: string
+          client_id: string
+          created_at: string
+          created_by: string
+          id: string
+          label: string | null
+          organization_id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          category: string
+          client_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          label?: string | null
+          organization_id: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          category?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string | null
+          organization_id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_about_facts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_about_facts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_automation_log: {
         Row: {
           channel: string | null
@@ -5154,6 +5205,63 @@ export type Database = {
           },
           {
             foreignKeyName: "client_balances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_callbacks: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          archived_reason: string | null
+          client_id: string
+          created_at: string
+          created_by: string
+          id: string
+          organization_id: string
+          outcome_note: string | null
+          prompt: string
+          trigger_date: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          archived_reason?: string | null
+          client_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          organization_id: string
+          outcome_note?: string | null
+          prompt: string
+          trigger_date?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          archived_reason?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          organization_id?: string
+          outcome_note?: string | null
+          prompt?: string
+          trigger_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_callbacks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_callbacks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
