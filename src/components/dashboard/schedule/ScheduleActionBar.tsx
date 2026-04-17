@@ -34,6 +34,7 @@ interface ScheduleActionBarProps {
   pendingBlockCount?: number;
   onOpenDrafts?: () => void;
   draftCount?: number;
+  view?: 'day' | 'week' | 'agenda';
 }
 
 function getFirstName(fullName: string): string {
