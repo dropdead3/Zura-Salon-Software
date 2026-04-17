@@ -1,34 +1,29 @@
 
 
 ## Goal
-Move the **Next Visit Recommendation** rebook card to the very top of the `CheckoutSummarySheet` body, above Client Info, so the rebook script is the first thing the stylist sees.
-
-## Why this works
-- The rebook gate is already structurally first in the flow (`gatePhase === 'gate'` blocks checkout). Putting it visually first matches the actual flow and removes the awkward scroll-past-everything-to-rebook pattern.
-- Once the stylist completes/declines the rebook, the card disappears (replaced by the tip block lower down in checkout phase), so client + service + payment summary slide up naturally.
+Restyle the "Suggested Script" card to read as an **amber alert** — high-attention, warning-tinted surface that demands the stylist's eye.
 
 ## Change
+**File:** `src/components/dashboard/schedule/NextVisitRecommendation.tsx` (lines 70–90)
 
-**File:** `src/components/dashboard/schedule/CheckoutSummarySheet.tsx`
+### Style swap (primary → amber)
+- Container border: `border-primary/30 border-l-2 border-l-primary/50` → `border-amber-500/40 border-l-4 border-l-amber-500`
+- Background gradient: `from-primary/[0.06] to-primary/[0.02]` → `from-amber-500/[0.10] to-amber-500/[0.04]`
+- Add subtle amber glow: `shadow-sm` → `shadow-[0_0_0_1px_rgba(245,158,11,0.15),0_4px_12px_-2px_rgba(245,158,11,0.15)]`
+- Quote glyph color: `text-primary/40` → `text-amber-500/60`
+- Eyebrow label: `text-primary/60` → `text-amber-500` (and rename copy from "Suggested Script" → "Say This")
+- Bound variables (`{selectedWeeks}`, `{dayLabel}`, `{timeLabel}`): `text-primary` → `text-amber-500` (still `font-medium`, no bold)
+- Add a small `AlertTriangle` (or keep `Quote`) — sticking with `Quote` keeps semantic intent (it IS a script), amber color carries the alert weight
 
-Reorder the `<div className="space-y-6 p-5">` body so the conditional `gatePhase === 'gate'` rebook card renders **first**, before the Client Info block. The tip-selection branch (`gatePhase === 'checkout'`) stays in its current position (after Payment Summary) — only the **gate-phase** card moves to the top.
+### Optional micro-detail
+- Add a subtle pulsing dot next to "Say This" eyebrow (`h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse`) to reinforce attention without being noisy
 
-### Structural edit
-- Extract the rebook card JSX (currently lines ~691–738) and render it conditionally at the top of the scroll container when `gatePhase === 'gate'`.
-- Leave the tip-selection block (the `else` branch) where it is, after Payment Summary, because it's a checkout-phase concern that should follow totals.
-- Remove the now-empty rebook slot from its old mid-flow position.
-
-### Result (top → bottom of sheet body)
-1. **Next Visit Recommendation** (gate phase only) ← moved here
-2. Client Info
-3. Service Details
-4. Add-Ons (if any)
-5. Product Usage Charges (if any)
-6. Payment Summary
-7. Tip Selection (checkout phase only)
+### Token compliance
+- Amber is a Tailwind palette color — used here as a semantic **warning/attention** state, not a brand swap. Consistent with `text-destructive` usage pattern already in the anti-pattern tooltip.
+- All weights stay ≤ `font-medium`. Eyebrow keeps `font-display` uppercase + tracking.
+- No `font-bold`, no hex codes outside the shadow rgba (which mirrors amber-500).
 
 ## Out of scope
-- No copy changes
-- No styling changes to the rebook card itself
-- No changes to gate-enforcement logic in `handleOpenChange`
+- No changes to interval toggle, CTAs, or anti-pattern tooltip
+- No changes to the underlying primary button (stays brand-tinted — the card is the alert, the action is the brand)
 
