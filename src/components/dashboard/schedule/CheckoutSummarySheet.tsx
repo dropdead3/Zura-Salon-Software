@@ -134,7 +134,7 @@ export function CheckoutSummarySheet({
   const { data: reviewSettings } = useReviewThresholdSettings();
   const orgName = useBusinessName();
 
-  type GatePhase = 'gate' | 'checkout';
+  type GatePhase = 'gate' | 'checkout' | 'confirmation';
   const [gatePhase, setGatePhase] = useState<GatePhase>('gate');
   const rebookGateRef = useRef<HTMLDivElement | null>(null);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
@@ -146,6 +146,22 @@ export function CheckoutSummarySheet({
     notes: string | null;
   } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('cash');
+  // Wave 23 — tip mode persisted per location (operator preference)
+  const tipModeStorageKey = locationId ? `zura_tip_mode_${locationId}` : null;
+  const [tipMode, setTipMode] = useState<'app' | 'reader'>(() => {
+    if (!tipModeStorageKey) return 'app';
+    try {
+      return (localStorage.getItem(tipModeStorageKey) as 'app' | 'reader') || 'app';
+    } catch {
+      return 'app';
+    }
+  });
+  // Wave 22 — post-charge confirmation state
+  const [successState, setSuccessState] = useState<{
+    amount: number;
+    method: CheckoutPaymentMethod;
+    receiptStatus: 'sent' | 'pending' | 'none';
+  } | null>(null);
   const logDeclineReason = useLogRebookDeclineReason();
 
   // Terminal reader + checkout flow
@@ -182,9 +198,23 @@ export function CheckoutSummarySheet({
       setDeclinedReason(null);
       setRebooked(false);
       setPaymentMethod('cash');
+      setSuccessState(null);
       terminalFlow.reset();
     }
   }, [open]);
+
+  // Persist tipMode per location
+  useEffect(() => {
+    if (!tipModeStorageKey) return;
+    try { localStorage.setItem(tipModeStorageKey, tipMode); } catch { /* noop */ }
+  }, [tipMode, tipModeStorageKey]);
+
+  // Auto-dismiss the confirmation panel after 4s
+  useEffect(() => {
+    if (gatePhase !== 'confirmation') return;
+    const timer = setTimeout(() => onOpenChange(false), 4000);
+    return () => clearTimeout(timer);
+  }, [gatePhase, onOpenChange]);
 
   useEffect(() => {
     if (rebookCompleted && open) {
@@ -518,8 +548,6 @@ export function CheckoutSummarySheet({
     // If card reader selected, run terminal checkout flow
     if (paymentMethod === 'card_reader' && activeReader && organizationId && appointment) {
       try {
-        // G5: Include tip as a line item so reader display total matches grandTotal
-        // Use the negotiated cart (post-discount) — never the stale appointment.total_price
         const lineItems = [
           ...cart.lines.map((l) => ({
             description: l.name,
@@ -533,8 +561,8 @@ export function CheckoutSummarySheet({
           })),
         ];
 
-        // Add tip as a visible line item on the reader if present
-        if (tipAmount > 0) {
+        // Add tip as a visible line item only when in 'app' tip mode
+        if (tipMode === 'app' && tipAmount > 0) {
           lineItems.push({
             description: 'Tip',
             amount: Math.round(tipAmount * 100),
@@ -545,15 +573,18 @@ export function CheckoutSummarySheet({
         const result = await terminalFlow.startCheckout({
           organizationId,
           readerId: activeReader.id,
-          amount: Math.round(amountDueAfterDeposit * 100), // Charge only remaining after deposit
+          amount: Math.round(amountDueAfterDeposit * 100),
           tipAmount: Math.round(tipAmount * 100),
           appointmentId: appointment.id,
           lineItems,
           tax: Math.round(tax * 100),
+          tipMode,
         });
 
-        // E2: Auto-capture held deposit after successful card payment
-        // G2: Wrap in try/catch with expired-hold fallback
+        // Reflect on-reader tip back into the local total for receipts/audit
+        const finalTipDollars = result.tipAmount / 100;
+        if (tipMode === 'reader') setTipAmount(finalTipDollars);
+
         if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
           try {
             await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
@@ -565,18 +596,22 @@ export function CheckoutSummarySheet({
           }
         }
 
-        onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
+        onConfirm(finalTipDollars, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
           method: 'card_reader',
           stripe_payment_intent_id: result.paymentIntentId,
         });
+
+        // Wave 22 — surface confirmation panel instead of immediate close
+        setSuccessState({
+          amount: result.amount / 100,
+          method: 'card_reader',
+          receiptStatus: appointment.client_email ? 'sent' : 'none',
+        });
+        setGatePhase('confirmation');
       } catch {
-        // Error handled in hook — don't close sheet
         return;
       }
     } else {
-      // Cash or Other — behave as before
-      // E2: Auto-capture deposit for non-card payments too
-      // G2: Wrap in try/catch with expired-hold fallback
       if (depositHeld > 0 && appointment.deposit_stripe_payment_id && organizationId) {
         try {
           await captureDeposit(organizationId, appointment.deposit_stripe_payment_id);
@@ -590,20 +625,14 @@ export function CheckoutSummarySheet({
       onConfirm(tipAmount, rebooked, appliedPromo, rebooked ? undefined : finalReason || undefined, {
         method: paymentMethod,
       });
-    }
 
-  // Reset state for next use
-    setTipAmount(0);
-    setCustomTip('');
-    setRebooked(false);
-    setAppliedPromo(null);
-    setGatePhase('gate');
-    setDeclineReason('');
-    setDeclineOtherText('');
-    setDeclineDialogOpen(false);
-    setDeclinedReason(null);
-    setPaymentMethod('cash');
-    terminalFlow.reset();
+      setSuccessState({
+        amount: grandTotal,
+        method: paymentMethod,
+        receiptStatus: 'none',
+      });
+      setGatePhase('confirmation');
+    }
   };
 
   const handleDeclineDialogConfirm = async (

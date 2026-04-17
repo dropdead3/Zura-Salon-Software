@@ -235,6 +235,9 @@ export function useStripePaymentsHealth() {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['stripe-payments-health'] });
+          // Wave 22.2 — webhook-driven Connect status flips refresh any
+          // open checkout sheets via the bulk-fetch hook key.
+          queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] });
         }
       )
       .subscribe();
