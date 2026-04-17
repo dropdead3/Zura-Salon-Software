@@ -1459,7 +1459,7 @@ export function QuickBookingPopover({
             <>
           {stylistFirstMode && preSelectedStylistId && !selectedCategory && (
             <div className="px-3 pt-3 pb-0">
-              <div className="flex items-center gap-2.5 p-2 rounded-lg bg-accent/50 border border-accent">
+              <div className="flex items-center gap-2.5 p-3 rounded-lg bg-accent/50 border border-accent">
                 <Avatar className="h-10 w-10 shrink-0">
                   <AvatarImage src={preSelectedStylistPhoto || undefined} />
                   <AvatarFallback className="bg-muted text-sm font-medium">
@@ -1473,7 +1473,7 @@ export function QuickBookingPopover({
                   const levelNum = getLevelNumber(preSelectedStylistLevel);
                   if (!levelNum) {
                     return (
-                      <span className="shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border border-border/60 text-muted-foreground bg-muted/40">
+                      <span className="shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-xs font-sans border border-border/60 text-muted-foreground bg-muted/40">
                         Unranked
                       </span>
                     );
@@ -1482,7 +1482,7 @@ export function QuickBookingPopover({
                   return (
                     <span
                       className={cn(
-                        'shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-[10px] font-display tracking-wider uppercase border border-border/40',
+                        'shrink-0 inline-flex items-center h-6 px-2.5 rounded-full text-xs font-sans border border-border/40',
                         tier.bg,
                         tier.text,
                       )}
