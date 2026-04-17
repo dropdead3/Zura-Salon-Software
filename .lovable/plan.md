@@ -2,76 +2,89 @@
 
 ## Prompt review
 
-Sharp instinct — surfacing unread inspiration photos as a badge on the Photos tab closes the awareness loop. Without it, stylists won't know new pre-visit context arrived. This is exactly the kind of "calm but unmissable" signal the platform should provide: silent until there's something material, then clearly flagged.
+Excellent operator instinct — you're thinking like a CFO, not just a UX designer. Inventory drift during a suspension period is exactly the kind of silent margin erosion that the platform exists to prevent. If a salon turns Color Bar off for 6 weeks, comes back, and the system trusts the old quantities, the first week of usage reports will be garbage and every formula cost will be wrong. Forcing a reconciliation gate is the correct doctrinal move.
 
-Tighter framing for next time: when asking for a notification, specify (a) the *trigger* (new photo uploaded vs photo never viewed), (b) the *audience* (per-user vs per-org), and (c) the *clear signal* (auto-clear on tab open vs manual dismiss). I'll propose sensible defaults below — flag if you want different.
+Tighter framing for next time: when you spot a state-restoration risk, name the *trust boundary* — i.e., "the system can no longer trust X because Y happened." That phrasing makes it crisp for any engineer or operator reading later. You did this implicitly here ("inventory would have changed during non-use of tracking") — making it explicit ("system can't trust quantities recorded before the suspension date") sharpens it further.
 
-**Proposed defaults:**
-- **Trigger**: photo exists for this client and the current user has never opened the Photos tab for this appointment
-- **Audience**: per-user (each staff member sees the badge until they personally view)
-- **Clear signal**: auto-clear when the user opens the Photos tab on this appointment
+## Plan additions to Phase 1
 
-## Findings
+### A. Track suspension lifecycle
 
-- Photos tab is rendered inside `AppointmentDetailSheet.tsx` (`TabsTrigger value="photos"`).
-- `useClientInspirationPhotos(clientId)` already returns photos with `uploaded_at` — perfect for "newest photo timestamp" comparison.
-- `NavBadge.tsx` exists as a destructive-styled count badge — matches the platform's notification visual language.
-- No existing per-user "viewed appointment artifact" tracking table.
+Add to `backroom_location_entitlements`:
+- `suspended_at` (timestamptz, nullable) — set when status flips to `suspended`
+- `requires_inventory_reconciliation` (boolean, default false) — set true when reactivating from a previous suspension
 
-## Plan
+Set on toggle off: `suspended_at = now()`, `status = 'suspended'`.
+Set on toggle on (only if previously suspended): `requires_inventory_reconciliation = true`, preserve `suspended_at` for the banner.
 
-### 1. Database — track per-user views (lightweight)
+### B. Reactivation confirmation dialog
 
-New table `appointment_tab_views` (per-user, per-appointment, per-tab):
-- `id`, `user_id`, `appointment_id`, `tab_key` (e.g. `'photos'`), `last_viewed_at`, `created_at`
-- Unique constraint on `(user_id, appointment_id, tab_key)`
-- RLS: users can only see/upsert their own rows
+When the platform admin (or org admin) toggles Color Bar back **on** for an org that was previously suspended:
 
-### 2. Hook — `useUnviewedInspirationPhotos`
+1. Open a confirmation dialog **before** the mutation fires.
+2. Dialog content:
+   - Headline: *"Confirm inventory reconciliation required"*
+   - Body: *"Color Bar tracking has been off for {duration}. Inventory levels recorded before {suspended_at} cannot be trusted. Each location must perform a physical count and update quantities before formula costs and supply alerts will resume accuracy."*
+   - Lists affected locations.
+   - Primary action: *"Reactivate and require reconciliation"*
+   - Secondary: *"Cancel"*
+3. On confirm: proceed with reactivation, set `requires_inventory_reconciliation = true` per location.
 
-Returns `{ unviewedCount: number }` for a given appointment + client.
-- Query inspiration photos for the client (reuse existing hook)
-- Query the user's last view timestamp from `appointment_tab_views` for this appointment + `'photos'` tab
-- Count photos where `uploaded_at > last_viewed_at` (or all photos if never viewed)
+### C. Persistent banner on Color Bar surfaces
 
-### 3. Hook — `useMarkAppointmentTabViewed`
+Add a non-dismissible advisory banner (calm, amber-toned, not destructive) on:
+- Each location's Color Bar settings page (`/dashboard/admin/color-bar-settings`)
+- The Supply Library tab
+- The Zura Dock app for that location
 
-Mutation that upserts `appointment_tab_views` with `last_viewed_at = now()`. Called when the Photos tab is opened.
+Banner content:
+- *"Inventory reconciliation required — last tracked {suspended_at}. Counts may be inaccurate until each item is physically verified."*
+- CTA: *"Begin reconciliation"* → routes to Supply Library in a guided "verify each item" mode (Phase 2 — for Phase 1 the banner can simply link to the Supply Library).
 
-### 4. UI — badge on Photos tab + auto-clear
+### D. Clearing the flag
 
-In `AppointmentDetailSheet.tsx`:
-- Render a small count badge (using `NavBadge` styling) on the Photos `TabsTrigger` when `unviewedCount > 0`
-- When `activeTab === 'photos'` (via `onValueChange` or effect), call the mark-viewed mutation
-- Invalidate the unviewed-count query after marking
+The flag clears per-location when **all** active supply items have been touched (quantity confirmed or updated) since the reactivation timestamp. Tracked via existing `updated_at` on `location_products` ≥ reactivation timestamp.
 
-### 5. Visual treatment
+For Phase 1: provide a manual *"Mark inventory verified"* button on the banner that flips `requires_inventory_reconciliation = false` for that location, with an audit log entry.
 
-- Small destructive-pink dot or count chip aligned to the top-right of the Photos tab pill
-- Uses existing `NavBadge` pattern — calm, not flashy
-- Disappears immediately on tab open (optimistic update)
+### E. Suppress intelligence during reconciliation
 
-## Acceptance checks
+While `requires_inventory_reconciliation = true` for a location:
+- Suppress supply-low alerts for that location
+- Suppress formula-cost-drift alerts
+- Add a small "Reconciliation pending" badge on any Color Bar KPI tiles for that location
 
-1. New client uploads inspiration photos → badge appears on Photos tab for all staff who haven't viewed it
-2. Staff opens Photos tab → badge clears for that user only (other staff still see it until they view)
-3. No badge when client has zero inspiration photos
-4. No badge when user has already viewed the tab and no new photos have been added since
-5. New photo uploaded after a user previously viewed → badge reappears with count of new photos only
-6. Badge count caps visually at "9+"
-7. RLS prevents cross-user view tracking leakage
-8. No regression to other tabs or existing tab behavior
-9. Light + dark mode render the badge cleanly
+This honors the doctrine: *"If data integrity is low, suppress recommendations."*
+
+## Acceptance checks (additions)
+
+1. Toggling off sets `suspended_at` per location and `status = 'suspended'`.
+2. Toggling on for a previously-suspended org opens the reconciliation confirmation dialog **before** the mutation fires.
+3. On confirm, reactivation proceeds and `requires_inventory_reconciliation = true` per affected location.
+4. Color Bar settings, Supply Library, and Dock surfaces show the calm advisory banner per affected location.
+5. Supply-low alerts and formula-cost-drift alerts are suppressed for locations with the flag set.
+6. "Mark inventory verified" clears the flag and writes an audit log entry.
+7. Re-suspending and re-reactivating refreshes `suspended_at` and re-arms the flag.
+8. First-time activations (never previously suspended) do **not** trigger the dialog or banner.
+9. Banner copy includes the actual `suspended_at` date and time-since duration.
+10. No regression to existing Backfill, Batch Enable/Disable, or AdminActivateDialog flows.
 
 ## Files to modify / create
 
-**Database (migration):**
-- New table `appointment_tab_views` + RLS policies + indexes
+**Database migration:**
+- Add columns `suspended_at`, `requires_inventory_reconciliation` to `backroom_location_entitlements`
+- Add audit log entry type for inventory reconciliation events
 
-**Hooks (new):**
-- `src/hooks/useUnviewedInspirationPhotos.ts`
-- `src/hooks/useMarkAppointmentTabViewed.ts`
+**UI (new):**
+- `src/components/platform/color-bar/ReactivationConfirmDialog.tsx`
+- `src/components/dashboard/color-bar/InventoryReconciliationBanner.tsx`
 
-**UI:**
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — render badge on Photos `TabsTrigger`; mark viewed when tab opens
+**UI (modify):**
+- `src/components/platform/color-bar/ColorBarEntitlementsTab.tsx` — wire up dialog before reactivation; pass suspension metadata
+- `src/hooks/color-bar/useColorBarLocationEntitlements.ts` — bulk suspend/reactivate helpers now write `suspended_at` and `requires_inventory_reconciliation`
+- Color Bar settings page, Supply Library tab, Dock app surfaces — render banner when flag is set
+- Alert/intelligence hooks for Color Bar — suppress when flag is set
+
+**Hook (new):**
+- `src/hooks/color-bar/useMarkInventoryVerified.ts` — clears the flag + writes audit log
 
