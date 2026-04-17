@@ -2106,9 +2106,13 @@ export function QuickBookingPopover({
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 pr-2 justify-end">
-                        {stylistLevelNum && (
+                        {stylistLevelNum ? (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal whitespace-nowrap">
                             Level {stylistLevelNum}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal whitespace-nowrap text-muted-foreground">
+                            Unranked
                           </Badge>
                         )}
                         {!stylistFirstMode && selectedServices.length > 0 && (
