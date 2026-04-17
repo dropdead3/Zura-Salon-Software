@@ -43,8 +43,10 @@ interface WeekViewProps {
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   assistantTimeBlocks?: AssistantTimeBlock[];
   scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
-  /** Day-column width: 'auto' (fit) or pixel number. Enables horizontal scroll when set. */
-  weekDayWidth?: 'auto' | number;
+  /** Single stylist user_id whose 7-day week is rendered. */
+  selectedStylistId?: string | null;
+  /** Display name shown in empty state when no stylist is selected. */
+  selectedStylistName?: string | null;
 }
 
 // Use consolidated status colors from design tokens
