@@ -40,6 +40,9 @@ import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutC
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
+import { useUnviewedInspirationPhotos } from '@/hooks/useUnviewedInspirationPhotos';
+import { useMarkAppointmentTabViewed } from '@/hooks/useMarkAppointmentTabViewed';
+import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -707,6 +710,24 @@ export function AppointmentDetailSheet({
       setActiveTab(initialTab);
     }
   }, [initialTab, open]);
+
+  // ─── Inspiration Photos: unread badge + auto-clear on tab open ───
+  const { unviewedCount: unviewedPhotosCount } = useUnviewedInspirationPhotos(
+    appointment?.id ?? null,
+    appointment?.phorest_client_id ?? null,
+  );
+  const markTabViewed = useMarkAppointmentTabViewed();
+  useEffect(() => {
+    if (
+      open &&
+      activeTab === 'photos' &&
+      appointment?.id &&
+      unviewedPhotosCount > 0
+    ) {
+      markTabViewed.mutate({ appointmentId: appointment.id, tabKey: 'photos' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeTab, appointment?.id, unviewedPhotosCount]);
 
   // ─── Escape Key Handler ─────────────────────────────────────
   useEffect(() => {
@@ -1424,7 +1445,12 @@ export function AppointmentDetailSheet({
                   <TabsList className="mb-0 shrink-0 w-full grid grid-cols-5 gap-1">
                     <TabsTrigger value="details" className="font-sans w-full">Details</TabsTrigger>
                     <TabsTrigger value="history" className="font-sans w-full">History</TabsTrigger>
-                    <TabsTrigger value="photos" className="font-sans w-full">Photos</TabsTrigger>
+                    <TabsTrigger value="photos" className="font-sans w-full relative gap-1.5">
+                      <span>Photos</span>
+                      {unviewedPhotosCount > 0 && activeTab !== 'photos' && (
+                        <NavBadge count={unviewedPhotosCount} />
+                      )}
+                    </TabsTrigger>
                     <TabsTrigger value="notes" className="font-sans w-full">Notes</TabsTrigger>
                     <TabsTrigger value="color-bar" className="font-sans gap-1.5 w-full">
                       <Beaker className="w-3.5 h-3.5" />

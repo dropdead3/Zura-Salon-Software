@@ -1171,6 +1171,33 @@ export type Database = {
           },
         ]
       }
+      appointment_tab_views: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          id: string
+          last_viewed_at: string
+          tab_key: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          id?: string
+          last_viewed_at?: string
+          tab_key: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          id?: string
+          last_viewed_at?: string
+          tab_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           afterpay_surcharge_amount: number | null
