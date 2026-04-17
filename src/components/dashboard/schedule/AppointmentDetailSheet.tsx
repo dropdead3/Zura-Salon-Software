@@ -595,6 +595,28 @@ export function AppointmentDetailSheet({
   const navigate = useNavigate();
   const logAuditEvent = useLogAuditEvent();
 
+  // Org afterpay settings — drives Quick Actions label and composer behavior
+  const { data: orgAfterpaySettings } = useQuery({
+    queryKey: ['org-afterpay-enabled', effectiveOrganization?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('organizations')
+        .select('afterpay_enabled, afterpay_surcharge_enabled, afterpay_surcharge_rate')
+        .eq('id', effectiveOrganization!.id)
+        .maybeSingle();
+      return {
+        enabled: data?.afterpay_enabled ?? false,
+        surchargeEnabled: data?.afterpay_surcharge_enabled ?? false,
+        surchargeRate: Number(data?.afterpay_surcharge_rate ?? 0.06),
+      };
+    },
+    enabled: !!effectiveOrganization?.id && open,
+    staleTime: 60_000,
+  });
+  const orgAfterpayEnabled = orgAfterpaySettings?.enabled ?? false;
+  const orgSurchargeEnabled = orgAfterpaySettings?.surchargeEnabled ?? false;
+  const orgSurchargeRate = orgAfterpaySettings?.surchargeRate ?? 0.06;
+
   // Realtime subscription for payment link status auto-updates (B1: listen on `appointments` table where payment columns live)
   useEffect(() => {
     if (!appointment?.id || !open) return;
