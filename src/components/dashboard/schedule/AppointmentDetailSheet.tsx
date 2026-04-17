@@ -42,6 +42,7 @@ import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActi
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
 import { useUnviewedInspirationPhotos } from '@/hooks/useUnviewedInspirationPhotos';
+import { useUnviewedAppointmentNotes } from '@/hooks/useUnviewedAppointmentNotes';
 import { useMarkAppointmentTabViewed } from '@/hooks/useMarkAppointmentTabViewed';
 import { NavBadge } from '@/components/dashboard/NavBadge';
 import { Separator } from '@/components/ui/separator';
@@ -778,6 +779,26 @@ export function AppointmentDetailSheet({
     { enabled: notesEnabled },
   );
   const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
+
+  // ─── Notes: unread badge + auto-clear on tab open ───
+  const { unviewedCount: unviewedNotesCount } = useUnviewedAppointmentNotes(
+    appointment?.phorest_id ?? null,
+    notes,
+  );
+  const isAssignedStylist = !!user?.id && appointment?.staff_user_id === user.id;
+  const isAssistant = !!user?.id && assistants.some((a) => a.assistant_user_id === user.id);
+  const isWorkingThisAppointment = isAssignedStylist || isAssistant;
+  useEffect(() => {
+    if (
+      open &&
+      activeTab === 'notes' &&
+      appointment?.phorest_id &&
+      unviewedNotesCount > 0
+    ) {
+      markTabViewed.mutate({ appointmentId: appointment.phorest_id, tabKey: 'notes' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeTab, appointment?.phorest_id, unviewedNotesCount]);
   const { data: clientNotes = [], isLoading: clientNotesLoading } = useClientNotes(appointment?.phorest_client_id || undefined);
   const addClientNote = useAddClientNote();
   const deleteClientNote = useDeleteClientNote();
@@ -1554,7 +1575,12 @@ export function AppointmentDetailSheet({
                         <NavBadge count={unviewedPhotosCount} />
                       )}
                     </TabsTrigger>
-                    <TabsTrigger value="notes" className="font-sans w-full">Notes</TabsTrigger>
+                    <TabsTrigger value="notes" className="font-sans w-full relative gap-1.5">
+                      <span>Notes</span>
+                      {unviewedNotesCount > 0 && activeTab !== 'notes' && isWorkingThisAppointment && (
+                        <NavBadge count={unviewedNotesCount} />
+                      )}
+                    </TabsTrigger>
                     <TabsTrigger value="color-bar" className="font-sans gap-1.5 w-full">
                       <Beaker className="w-3.5 h-3.5" />
                       Color Bar
