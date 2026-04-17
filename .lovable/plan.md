@@ -1,94 +1,78 @@
 
 
-## Diagnosis — Why Jamie isn't showing at North Mesa
+## Prompt review
 
-**Root cause:** The booking popover queries `v_calendar_stylists` filtered by a single `location_id`. That view (and its parent `v_all_staff`) returns only **`employee_profiles.location_id`** (the singular "primary" location), and ignores the **`location_ids[]`** array (the "also works at" list).
+Crisp prompt — names the bug (no auto-select), the trigger (clicked Jamie's column), and the expected behavior (preselect her). Sharper next time: tell me whether preselection should also **skip** the stylist step entirely or just highlight her so staff can confirm. I'll propose the cleaner default (skip when context is unambiguous) and flag it.
 
-**Jamie's record:**
-- `location_id` = `val-vista-lakes` (primary)
-- `location_ids` = `['val-vista-lakes', 'north-mesa']` (multi-location)
+## Diagnosis
 
-So when the popover filters `WHERE location_id = 'north-mesa'`, Jamie is excluded — even though her profile says she works at both.
+When staff clicks a stylist column header in the schedule grid to start a booking, the click handler opens the booking popover but doesn't pass the column's `stylistId` as a default. The wizard lands on "Available Stylists" with nothing preselected — defeating the whole point of clicking *into* Jamie's column.
 
-**This is a systemic issue, not a Jamie issue.** Same bug affects every multi-location stylist:
-| Stylist | Primary | Also works at | Currently invisible at |
-|---|---|---|---|
-| Jamie Vieira | val-vista-lakes | north-mesa | **North Mesa** |
-| Lex Feddern | val-vista-lakes | north-mesa | **North Mesa** |
-| Eric Day | north-mesa | val-vista-lakes | **Val Vista Lakes** |
+Root cause is one of two patterns (need to confirm by reading `Schedule.tsx`):
 
-North Mesa shows 5 stylists in `v_calendar_stylists` but should show 7 (the 5 + Jamie + Lex). Val Vista Lakes shows 13 but should show 14 (Eric is missing there too).
+1. The column-click handler calls `setBookingOpen(true)` but doesn't call `setBookingDefaults({ stylistId })`, OR
+2. It does set the default, but `BookingPopover` / the stylist step doesn't read `defaultStylistId` from props/state to seed `selectedStylist`
 
-**Doctrine anchor:** `enterprise-multi-location-governance` — the `location_ids[]` array IS the system of record for multi-location staffing; the singular `location_id` is a denormalized "primary" hint. Reads must respect the array.
+Wave 21.1 already wired `setBookingDefaults({ stylistId })` for the rebook-interval path — that pattern just needs to extend to the column-click entry point.
 
-## Plan — Wave 22: Multi-Location Stylist Visibility Fix
+## Plan — Wave 22.1: Auto-select stylist from column-click entry
 
-### Fix (single migration + zero app code change)
+### Behavior
 
-Update `v_all_staff` view to **emit one row per location_id in `location_ids`** (with fallback to singular `location_id` when the array is null/empty). `v_calendar_stylists` inherits the fix automatically since it selects from `v_all_staff`.
+When booking is initiated from a stylist column (column-header click, empty-slot click, or any context where a stylist is implicit):
 
-```sql
-CREATE OR REPLACE VIEW v_all_staff AS
--- Phorest-mapped staff: explode location_ids
-SELECT
-  ep.user_id,
-  psm.phorest_staff_id,
-  psm.phorest_staff_name,
-  COALESCE(ep.display_name, ep.full_name, psm.phorest_staff_name, 'Unknown') AS display_name,
-  ep.full_name,
-  ep.photo_url,
-  COALESCE(ep.is_active, true) AS is_active,
-  COALESCE(psm.show_on_calendar, true) AS show_on_calendar,
-  loc_id AS location_id,
-  'phorest' AS source
-FROM phorest_staff_mapping psm
-LEFT JOIN employee_profiles ep ON ep.user_id = psm.user_id
-CROSS JOIN LATERAL unnest(
-  COALESCE(
-    NULLIF(ep.location_ids, '{}'),
-    ARRAY[ep.location_id]::text[]
-  )
-) AS loc_id
-WHERE psm.user_id IS NOT NULL AND loc_id IS NOT NULL
+1. **Preselect that stylist** in the booking session state (`selectedStylist = stylistId`)
+2. **Skip the "Available Stylists" step entirely** — advance directly to the next step in the flow (likely Service or DateTime depending on flow template)
+3. Staff can still go **Back** to change stylist if needed (the back button in the wizard already supports this)
 
-UNION ALL
+This matches the doctrine: *"If context is unambiguous, don't ask again."* Clicking Jamie's column IS the answer to "which stylist?".
 
--- Zura-only staff: same explosion
-SELECT
-  ep.user_id,
-  NULL, NULL,
-  COALESCE(ep.display_name, ep.full_name, 'Unknown'),
-  ep.full_name, ep.photo_url,
-  COALESCE(ep.is_active, true),
-  true,
-  loc_id, 'zura'
-FROM employee_profiles ep
-CROSS JOIN LATERAL unnest(
-  COALESCE(NULLIF(ep.location_ids, '{}'), ARRAY[ep.location_id]::text[])
-) AS loc_id
-WHERE NOT EXISTS (SELECT 1 FROM phorest_staff_mapping psm WHERE psm.user_id = ep.user_id)
-  AND loc_id IS NOT NULL;
+### Files to read first (to confirm the exact wiring)
+
+- `src/pages/dashboard/Schedule.tsx` — find the column-click / empty-slot click handler that opens the booking popover; confirm whether `setBookingDefaults` is called with `stylistId`
+- `src/components/booking-surface/` (or wherever the wizard lives) — confirm how `selectedStylist` is seeded from defaults and whether the stylist step auto-skips when preselected
+- `src/hooks/useBookingSession.ts` — already accepts `deepLinks.stylist` as initial state; need to verify it advances past the stylist step when preselected
+
+### Fix shape
+
+**1. `Schedule.tsx`** — column-click handler must pass `stylistId`:
+```ts
+setBookingDefaults({ date: clickedDate, stylistId: column.stylistId, time: clickedTime });
+setBookingOpen(true);
 ```
 
-`v_calendar_stylists` already does `DISTINCT ON (user_id, location_id)`, so duplicates collapse cleanly.
+**2. Booking wizard / `useBookingSession`** — when initial `selectedStylist` is set AND current step is `stylist`, auto-advance one step on mount:
+```ts
+useEffect(() => {
+  if (state.selectedStylist && currentStep === 'stylist' && currentStepIdx === 0) {
+    goNext();
+  }
+}, []); // mount-only
+```
+
+**3. Edge case** — if the preselected stylist isn't in the eligible list for the chosen service (e.g., service-stylist mismatch), fall back to showing the picker with a soft notice: *"Jamie isn't available for this service — pick another."*
 
 ### Acceptance checks
 
-1. `SELECT * FROM v_calendar_stylists WHERE location_id = 'north-mesa'` returns Jamie + Lex (was 5 rows, now 7)
-2. `SELECT * FROM v_calendar_stylists WHERE location_id = 'val-vista-lakes'` includes Eric (was 13 rows, now 14)
-3. Open New Booking popover at North Mesa → Jamie appears in Available Stylists
-4. Open at Val Vista Lakes → Eric appears
-5. No regression: single-location stylists still appear exactly once at their location
-6. Other consumers of the view (`useChairAssignments`, `WalkInDialog`, scheduler grid) get the expanded set — verify in Wave 22.1 if any surface needs to suppress duplicates differently
+1. Click Jamie's column header → booking popover opens with Jamie preselected; wizard skips stylist step
+2. Same for any empty-slot click in any stylist's column
+3. Tap Back in the wizard → returns to stylist picker with Jamie still highlighted (changeable)
+4. If service is later changed to one Jamie can't perform → soft notice + force back to stylist step
+5. Booking from a non-stylist context (e.g., FAB button, command palette) → stylist step still shown normally
+6. No regression to the rebook-interval entry point (which also seeds stylistId)
+
+### Open question (worth confirming)
+
+Should clicking a column also preselect the **time slot** the column-click hit (e.g., 4:15 PM cell → time = 4:15)? Default: yes, mirror Wave 21.1's date-prefill pattern. Tell me if you want time picker to stay manual.
 
 ### Files
 
-- New migration: `update v_all_staff to explode location_ids[]`
-- No app code changes required
+- `src/pages/dashboard/Schedule.tsx` — column-click handler
+- `src/hooks/useBookingSession.ts` OR booking wizard component — auto-advance when stylist preseeded
+- Possibly `BookingPopover` / step orchestrator — propagate `defaultStylistId` correctly
 
 ### Deferred
 
-- **P2** UI badge in stylist picker showing "Also at: Val Vista Lakes" so staff know the stylist's home base — trigger: when staff confusion surfaces about which stylist belongs where
-- **P2** Audit `useChairAssignments`, `useStylistAvailability`, scheduler column-builder for any singular-`location_id` assumptions still lurking — trigger: spot-check after the view fix lands
-- **P2** Backfill consistency check: should `location_ids[]` always include `location_id`? Currently Jamie's array does, Eric's does. Add a constraint or trigger to guarantee — trigger: when a profile is found violating it
+- **P2** Visual breadcrumb showing "Booking with Jamie" at top of wizard so staff know context was preserved — trigger: when staff confusion arises about why stylist step was skipped
+- **P2** Same auto-advance pattern for service step when entering from a service-card click elsewhere in the app — trigger: when a similar entry point ships
 
