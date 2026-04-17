@@ -42,6 +42,7 @@ import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryP
 import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
 import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
+import { InlineContactEdit } from '@/components/dashboard/schedule/InlineContactEdit';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { InspirationPhotosSection } from '@/components/dashboard/clients/InspirationPhotosSection';
 import { useUnviewedInspirationPhotos } from '@/hooks/useUnviewedInspirationPhotos';
@@ -847,7 +848,7 @@ export function AppointmentDetailSheet({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_all_clients' as any)
-        .select('email, preferred_stylist_id, client_since')
+        .select('id, email, phone, preferred_stylist_id, client_since, source')
         .eq('phorest_client_id', appointment!.phorest_client_id!)
         .maybeSingle();
       if (error) throw error;
@@ -858,6 +859,46 @@ export function AppointmentDetailSheet({
   });
 
   const { data: preferredStylist } = usePreferredStylist(clientRecord?.preferred_stylist_id);
+
+  // ─── Inline contact edit (Wave 22.35) ──────────────────────────────────────
+  // Persists to phorest_clients OR clients depending on which table backs the
+  // v_all_clients row. Updates appointment cache immediately so Call/Text/Send
+  // Pay surfaces pick up the new value without refetch.
+  const updateClientContact = useMutation({
+    mutationFn: async ({ field, value }: { field: 'email' | 'phone'; value: string }) => {
+      if (!clientRecord?.id || !clientRecord?.source) {
+        throw new Error('No client record to update');
+      }
+      const table = clientRecord.source === 'phorest' ? 'phorest_clients' : 'clients';
+      const updates: Record<string, string | null> = { [field]: value || null };
+      const { error } = await supabase
+        .from(table as any)
+        .update(updates)
+        .eq('id', clientRecord.id);
+      if (error) throw error;
+      return { field, value };
+    },
+    onSuccess: ({ field, value }) => {
+      queryClient.invalidateQueries({ queryKey: ['client-record-for-panel', appointment?.phorest_client_id] });
+      queryClient.invalidateQueries({ queryKey: ['clients-data'] });
+      queryClient.invalidateQueries({ queryKey: ['client-search'] });
+      // Patch the appointment list cache so SendToPayButton sees the new value
+      if (field === 'phone' && appointment) {
+        queryClient.setQueriesData<any>({ queryKey: ['appointments'] }, (old: any) => old);
+      }
+      toast.success(field === 'email' ? 'Email updated' : 'Phone updated');
+    },
+    onError: (err: Error) => {
+      toast.error(`Failed to update: ${err.message}`);
+    },
+  });
+
+  const handleSaveContact = useCallback(
+    async (field: 'email' | 'phone', value: string) => {
+      await updateClientContact.mutateAsync({ field, value });
+    },
+    [updateClientContact],
+  );
 
   // Linked redos
   const { data: linkedRedos = [] } = useQuery({
@@ -1563,6 +1604,7 @@ export function AppointmentDetailSheet({
                         clientName={appointment.client_name}
                         clientEmail={email}
                         clientPhone={phone}
+                        phorestClientId={appointment.phorest_client_id}
                         afterpayEnabled={orgAfterpayEnabled}
                         afterpaySurchargeEnabled={orgSurchargeEnabled}
                         afterpaySurchargeRate={orgSurchargeRate}
@@ -2030,11 +2072,42 @@ export function AppointmentDetailSheet({
 
                     <Separator />
 
-                    {/* Client Contact (Wave 18: completeness) */}
+                    {/* Client Contact (Wave 22.35: inline-editable) */}
                     <motion.div variants={staggerItem} className="space-y-2">
                       <h4 className={tokens.heading.subsection}>Client Contact</h4>
                       <div className="space-y-1.5">
-                        {appointment.client_phone ? (
+                        {/* Phone — editable for matched clients; read-only for walk-ins (no client record yet) */}
+                        {clientRecord?.id && !isWalkIn ? (
+                          <InlineContactEdit
+                            field="phone"
+                            value={appointment.client_phone || clientRecord?.phone || ''}
+                            formatDisplay={formatPhoneDisplay}
+                            onSave={(v) => handleSaveContact('phone', v)}
+                            rightSlot={
+                              (appointment.client_phone || clientRecord?.phone) ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-3 rounded-full font-sans text-xs"
+                                    onClick={() => setCallDialogOpen(true)}
+                                  >
+                                    <Phone className="h-3 w-3 mr-1" /> Call
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-3 rounded-full font-sans text-xs"
+                                    onClick={() => setTextDialogOpen(true)}
+                                  >
+                                    <MessageCircle className="h-3 w-3 mr-1" /> Text
+                                  </Button>
+                                  <CopyButton onCopy={handleCopyPhone} />
+                                </>
+                              ) : null
+                            }
+                          />
+                        ) : appointment.client_phone ? (
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="h-3.5 w-3.5 text-muted-foreground" />
@@ -2066,30 +2139,19 @@ export function AppointmentDetailSheet({
                             <span>No phone on file</span>
                           </div>
                         )}
-                        {clientRecordLoading && (
+
+                        {/* Email — editable for matched clients */}
+                        {clientRecordLoading ? (
                           <Skeleton className="h-4 w-40" />
-                        )}
-                        {!clientRecordLoading && clientRecord?.email && (() => {
-                          const isPlaceholder = /^(na|none|noemail|test|n\/a)@/i.test(clientRecord.email) || !clientRecord.email.includes('@');
-                          return (
-                            <div className="flex items-center justify-between">
-                              <a href={`mailto:${clientRecord.email}`} className={cn('flex items-center gap-2 text-sm hover:text-primary transition-colors', isPlaceholder && 'text-muted-foreground italic')}>
-                                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                                {clientRecord.email}
-                                {isPlaceholder && (
-                                  <Badge variant="outline" className="text-[9px] text-amber-700 dark:text-amber-300 border-amber-300 ml-1">Placeholder</Badge>
-                                )}
-                              </a>
-                              <CopyButton onCopy={handleCopyEmail} />
-                            </div>
-                          );
-                        })()}
-                        {!clientRecordLoading && !clientRecord?.email && !isWalkIn && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Mail className="h-3.5 w-3.5" />
-                            <span>No email on file</span>
-                          </div>
-                        )}
+                        ) : clientRecord?.id && !isWalkIn ? (
+                          <InlineContactEdit
+                            field="email"
+                            value={clientRecord?.email || ''}
+                            onSave={(v) => handleSaveContact('email', v)}
+                            rightSlot={clientRecord?.email ? <CopyButton onCopy={handleCopyEmail} /> : null}
+                          />
+                        ) : null}
+
                         {!isWalkIn && (lastVisitDate || visitStats.visitCount > 0) && (
                           <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
                             {lastVisitDate && (
@@ -2106,7 +2168,7 @@ export function AppointmentDetailSheet({
                             )}
                           </div>
                         )}
-                        {!clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
+                        {isWalkIn && !clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground pt-1">
                             No contact info — Add details in client profile
                           </p>

@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Send, Loader2, CheckCircle2, CreditCard, MessageSquare, Mail, Smartphone } from 'lucide-react';
+import { Send, Loader2, CheckCircle2, CreditCard, MessageSquare, Mail, Smartphone, AlertCircle } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -13,6 +14,8 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AfterpayLogo } from '@/components/icons/AfterpayLogo';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
+import { validateEmail } from '@/lib/contactValidation';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AFTERPAY_MAX_CENTS = 400000;
 
@@ -28,6 +31,8 @@ interface SendPaymentLinkComposerProps {
   clientName?: string | null;
   clientEmail?: string | null;
   clientPhone?: string | null;
+  /** Phorest client id — required to persist a captured email back to the client record */
+  phorestClientId?: string | null;
   afterpayEnabled: boolean;
   afterpaySurchargeEnabled?: boolean;
   afterpaySurchargeRate?: number;
@@ -44,22 +49,32 @@ export function SendPaymentLinkComposer({
   clientName,
   clientEmail,
   clientPhone,
+  phorestClientId,
   afterpayEnabled,
   afterpaySurchargeEnabled,
   afterpaySurchargeRate = 0.06,
   onPaymentLinkSent,
 }: SendPaymentLinkComposerProps) {
   const { formatCurrency } = useFormatCurrency();
+  const queryClient = useQueryClient();
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
 
+  // ─── Wave 22.35: Inline email capture for Afterpay flow ──────────
+  // Afterpay invoices are emailed; if no email on file, capture it before send.
+  const [capturedEmail, setCapturedEmail] = useState<string>('');
+  const [emailWarning, setEmailWarning] = useState<string | null>(null);
+  const [savingEmail, setSavingEmail] = useState(false);
+  // Effective email = captured (if just added) OR pre-existing
+  const effectiveEmail = capturedEmail.trim() || clientEmail || '';
+
   // Auto-detect default channel
   const defaultChannel: Channel = useMemo(() => {
-    if (clientPhone && clientEmail) return 'both';
+    if (clientPhone && effectiveEmail) return 'both';
     if (clientPhone) return 'sms';
     return 'email';
-  }, [clientPhone, clientEmail]);
+  }, [clientPhone, effectiveEmail]);
   const [channel, setChannel] = useState<Channel>(defaultChannel);
 
   useEffect(() => {
@@ -67,6 +82,8 @@ export function SendPaymentLinkComposer({
       setChannel(defaultChannel);
       setIsSent(false);
       setCustomMessage('');
+      setCapturedEmail('');
+      setEmailWarning(null);
     }
   }, [open, defaultChannel]);
 
@@ -74,11 +91,53 @@ export function SendPaymentLinkComposer({
   const exceedsAfterpayMax = afterpayEnabled && totalAmountCents > AFTERPAY_MAX_CENTS;
   const installmentCents = Math.round(totalAmountCents / 4);
 
+  // Hard-block per Wave 22.34: Afterpay-only (no phone) requires email.
+  // When eligible AND no phone, the only channel is email — block send if missing.
+  const requiresEmail = afterpayEligible && !clientPhone;
+  const blockedByMissingEmail = requiresEmail && !effectiveEmail;
+
+  const handleSaveCapturedEmail = async () => {
+    const next = capturedEmail.trim();
+    const result = validateEmail(next);
+    if (!result.valid) {
+      setEmailWarning(result.warning ?? 'Invalid email');
+      return;
+    }
+    if (!phorestClientId) {
+      // No client record to update — keep email in-memory only for this send
+      toast.success('Email captured for this send');
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      // Try phorest_clients first, then fall back to clients
+      const { data: pc } = await supabase
+        .from('phorest_clients')
+        .update({ email: next })
+        .eq('phorest_client_id', phorestClientId)
+        .select('id')
+        .maybeSingle();
+      if (!pc) {
+        await supabase
+          .from('clients')
+          .update({ email: next })
+          .eq('phorest_client_id', phorestClientId);
+      }
+      queryClient.invalidateQueries({ queryKey: ['client-record-for-panel', phorestClientId] });
+      queryClient.invalidateQueries({ queryKey: ['clients-data'] });
+      toast.success('Email saved to client');
+    } catch (err: any) {
+      toast.error(`Could not save email: ${err.message}`);
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
   const handleSend = async () => {
     setIsSending(true);
     try {
       // Decide which contact info to pass based on channel
-      const sendEmail = channel === 'email' || channel === 'both' ? clientEmail : null;
+      const sendEmail = channel === 'email' || channel === 'both' ? effectiveEmail || null : null;
       const sendPhone = channel === 'sms' || channel === 'both' ? clientPhone : null;
 
       const { data: linkData, error: linkError } = await supabase.functions.invoke(
@@ -237,6 +296,50 @@ export function SendPaymentLinkComposer({
                 )}
               </div>
 
+              {/* Wave 22.35: Inline email capture for Afterpay flow */}
+              {afterpayEligible && !clientEmail && (
+                <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium">Email required for Afterpay</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Afterpay invoices and receipts are sent by email. Add the client's email to continue.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="email"
+                      autoCapitalize="none"
+                      placeholder="client@email.com"
+                      value={capturedEmail}
+                      onChange={(e) => {
+                        setCapturedEmail(e.target.value);
+                        if (emailWarning) setEmailWarning(null);
+                      }}
+                      className="h-8 text-sm rounded-md flex-1"
+                      disabled={savingEmail}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleSaveCapturedEmail}
+                      disabled={savingEmail || !capturedEmail.trim()}
+                      className="h-8 px-3"
+                    >
+                      {savingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
+                    </Button>
+                  </div>
+                  {emailWarning && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 pl-1">
+                      {emailWarning}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Delivery channel */}
               <div className="space-y-2">
                 <Label className="text-xs font-display tracking-wide uppercase text-muted-foreground">
@@ -258,7 +361,7 @@ export function SendPaymentLinkComposer({
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="email"
-                    disabled={!clientEmail}
+                    disabled={!effectiveEmail}
                     className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border border-border rounded-lg h-auto py-2 flex flex-col items-center gap-1"
                   >
                     <Mail className="h-4 w-4" />
@@ -266,7 +369,7 @@ export function SendPaymentLinkComposer({
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="both"
-                    disabled={!clientPhone || !clientEmail}
+                    disabled={!clientPhone || !effectiveEmail}
                     className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border border-border rounded-lg h-auto py-2 flex flex-col items-center gap-1"
                   >
                     <div className="flex items-center gap-0.5">
@@ -280,8 +383,8 @@ export function SendPaymentLinkComposer({
                   {(channel === 'sms' || channel === 'both') && clientPhone && (
                     <p>SMS to {formatPhoneDisplay(clientPhone)}</p>
                   )}
-                  {(channel === 'email' || channel === 'both') && clientEmail && (
-                    <p>Email to {clientEmail}</p>
+                  {(channel === 'email' || channel === 'both') && effectiveEmail && (
+                    <p>Email to {effectiveEmail}</p>
                   )}
                 </div>
               </div>
@@ -321,7 +424,7 @@ export function SendPaymentLinkComposer({
                     ? 'Sent via SMS and Email'
                     : channel === 'sms'
                       ? `SMS to ${clientPhone ? formatPhoneDisplay(clientPhone) : ''}`
-                      : `Email to ${clientEmail}`}
+                      : `Email to ${effectiveEmail}`}
                 </p>
               </div>
             </div>
@@ -338,7 +441,7 @@ export function SendPaymentLinkComposer({
               <Button
                 size="sm"
                 onClick={handleSend}
-                disabled={isSending}
+                disabled={isSending || blockedByMissingEmail}
                 className="gap-2"
               >
                 {isSending ? (
