@@ -422,40 +422,8 @@ export function ScheduleHeader({
           </div>
           {/* End filter icons group */}
 
-          {/* Shifts toggle (ghost pill) + Location & Staff selector stack — horizontal cluster */}
+          {/* Location & Staff selector stack */}
           <div className="flex flex-row items-center gap-3">
-            {/* Shifts View Toggle — mirrors Date pill UI on the left of the selector stack */}
-            {onToggleShiftsView && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onToggleShiftsView}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200',
-                      showShiftsView
-                        ? 'text-[hsl(var(--sidebar-foreground))] bg-[hsl(var(--sidebar-accent))]'
-                        : 'text-[hsl(var(--sidebar-foreground))]/50 hover:text-[hsl(var(--sidebar-foreground))]/80 hover:bg-[hsl(var(--sidebar-accent))]'
-                    )}
-                  >
-                    {showShiftsView ? (
-                      <>
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        <span className="hidden @lg/schedhdr:inline">Appointments</span>
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="h-3.5 w-3.5" />
-                        <span className="hidden @lg/schedhdr:inline">Shifts</span>
-                      </>
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{showShiftsView ? 'Hide shift schedule' : 'View support staff shifts'}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
             {/* Location & Staff Selectors — stacked vertically */}
             <div className="flex flex-col gap-2 items-stretch">
 
