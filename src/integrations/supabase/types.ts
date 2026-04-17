@@ -2415,17 +2415,22 @@ export type Database = {
           billing_interval: string | null
           created_at: string
           id: string
+          inventory_verified_at: string | null
+          inventory_verified_by: string | null
           location_id: string
           notes: string | null
           organization_id: string
           plan_tier: string
           prior_refund_count: number
+          reactivated_at: string | null
           refund_eligible_until: string | null
           refunded_at: string | null
           refunded_by: string | null
+          requires_inventory_reconciliation: boolean
           scale_count: number
           status: string
           stripe_subscription_id: string | null
+          suspended_at: string | null
           trial_end_date: string | null
           updated_at: string
         }
@@ -2435,17 +2440,22 @@ export type Database = {
           billing_interval?: string | null
           created_at?: string
           id?: string
+          inventory_verified_at?: string | null
+          inventory_verified_by?: string | null
           location_id: string
           notes?: string | null
           organization_id: string
           plan_tier?: string
           prior_refund_count?: number
+          reactivated_at?: string | null
           refund_eligible_until?: string | null
           refunded_at?: string | null
           refunded_by?: string | null
+          requires_inventory_reconciliation?: boolean
           scale_count?: number
           status?: string
           stripe_subscription_id?: string | null
+          suspended_at?: string | null
           trial_end_date?: string | null
           updated_at?: string
         }
@@ -2455,17 +2465,22 @@ export type Database = {
           billing_interval?: string | null
           created_at?: string
           id?: string
+          inventory_verified_at?: string | null
+          inventory_verified_by?: string | null
           location_id?: string
           notes?: string | null
           organization_id?: string
           plan_tier?: string
           prior_refund_count?: number
+          reactivated_at?: string | null
           refund_eligible_until?: string | null
           refunded_at?: string | null
           refunded_by?: string | null
+          requires_inventory_reconciliation?: boolean
           scale_count?: number
           status?: string
           stripe_subscription_id?: string | null
+          suspended_at?: string | null
           trial_end_date?: string | null
           updated_at?: string
         }

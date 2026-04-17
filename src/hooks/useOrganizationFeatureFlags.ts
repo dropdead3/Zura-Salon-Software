@@ -114,6 +114,13 @@ export function useUpdateOrgFeatureFlag() {
       queryClient.invalidateQueries({ 
         queryKey: ['organization-feature-flags', variables.organizationId] 
       });
+      // Cross-key invalidation: Color Bar surfaces watch different cache keys
+      if (variables.flagKey === 'backroom_enabled') {
+        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-all-entitlement-counts'] });
+        queryClient.invalidateQueries({ queryKey: ['color-bar-org-flag', variables.organizationId] });
+        queryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements', variables.organizationId] });
+      }
     },
   });
 }
@@ -138,6 +145,13 @@ export function useDeleteOrgFeatureFlag() {
       queryClient.invalidateQueries({ 
         queryKey: ['organization-feature-flags', variables.organizationId] 
       });
+      // Cross-key invalidation: Color Bar surfaces watch different cache keys
+      if (variables.flagKey === 'backroom_enabled') {
+        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+        queryClient.invalidateQueries({ queryKey: ['platform-color-bar-all-entitlement-counts'] });
+        queryClient.invalidateQueries({ queryKey: ['color-bar-org-flag', variables.organizationId] });
+        queryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements', variables.organizationId] });
+      }
     },
   });
 }
