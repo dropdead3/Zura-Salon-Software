@@ -258,6 +258,7 @@ export function usePhorestCalendar() {
         return apt;
       });
     },
+    staleTime: 30_000,
   });
 
   // Get last sync time (only when a POS integration is connected)
