@@ -25,7 +25,14 @@ export interface ReactivationTarget {
   organizationId: string;
   organizationName: string;
   suspendedAt: string | null;
+  suspendedReason: string | null;
   locationNames: string[];
+}
+
+export interface SuspensionTarget {
+  organizationId: string;
+  organizationName: string;
+  optimisticPatch?: (next: boolean) => () => void;
 }
 
 interface ToggleArgs {
