@@ -388,15 +388,33 @@ export function ColorBarEntitlementsTab() {
     setSelected(new Set());
   };
 
-  const handleBatchDisable = () => {
-    const toDisable = orgs.filter(
-      (o) => selected.has(o.id) && o.backroom_enabled && o.override_id
+  const handleBatchDisable = async () => {
+    const toDisable = orgs.filter((o) => selected.has(o.id) && o.backroom_enabled);
+    if (toDisable.length === 0) return;
+    const advisory = scheduleAdvisoryToast(
+      `Suspending Color Bar for ${toDisable.length} organizations…`,
     );
-    toDisable.forEach((org) => {
-      deleteFlag.mutate({ organizationId: org.id, flagKey: 'backroom_enabled' });
-    });
-    toast.success(`Disabling color bar for ${toDisable.length} organizations`);
-    setSelected(new Set());
+    try {
+      // Soft-suspend each org sequentially (preserves data; cascades to locations)
+      for (const org of toDisable) {
+        optimisticallyFlip(org.id, false);
+        await updateFlag.mutateAsync({
+          organizationId: org.id,
+          flagKey: 'backroom_enabled',
+          isEnabled: false,
+          reason: 'Batch suspended via Platform Color Bar Admin',
+        });
+        await bulkSuspend.mutateAsync({ organization_id: org.id });
+      }
+      advisory.dismiss();
+      toast.success(`Suspended Color Bar for ${toDisable.length} organizations — data preserved`);
+    } catch (err: any) {
+      advisory.dismiss();
+      toast.error('Batch suspend failed: ' + (err?.message ?? 'unknown error'));
+      queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+    } finally {
+      setSelected(new Set());
+    }
   };
 
   const toggleSelect = (id: string) => {
