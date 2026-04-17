@@ -2469,7 +2469,7 @@ export function QuickBookingPopover({
                     {/* Manager override */}
                     {isManagerOrAdmin && (
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-muted-foreground font-display uppercase tracking-wider">
+                        <Label className="text-xs text-muted-foreground font-display uppercase tracking-wider">
                           Price Override (optional)
                         </Label>
                         <Input
@@ -2478,7 +2478,7 @@ export function QuickBookingPopover({
                           placeholder="Leave empty to use policy"
                           value={redoPriceOverride ?? ''}
                           onChange={(e) => setRedoPriceOverride(e.target.value ? parseFloat(e.target.value) : null)}
-                          className="h-8 text-xs"
+                          className="h-9 text-sm"
                         />
                       </div>
                     )}
