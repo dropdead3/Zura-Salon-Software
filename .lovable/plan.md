@@ -2,68 +2,61 @@
 
 ## Prompt review
 
-Sharp visual catch — the dashed muted button reads as "disabled" rather than "actionable secondary." Sharper next time: tell me whether you want it to (a) match the primary "Continue" violet (loud), (b) become a solid secondary tile (medium), or (c) keep the dashed-outline pattern but bump contrast (subtle). I'll plan for (c) since it preserves the visual hierarchy below the primary "Continue" CTA — a louder treatment would compete with it.
+Sharp call — POS booking notes (client intent at booking time) is high-signal context that operators currently have to dig two tabs deep to see. Surfacing it on Details respects the "high signal, low noise" doctrine. Sharper next time: tell me where on Details you want it (top, after Appointment block, or bottom) so I don't have to choose. I'll plan for **top of Details** since intent should be the first thing read — same reasoning as why the Client Memory Panel sits at the top.
 
 ## Diagnosis
 
-`src/components/dashboard/schedule/QuickBookingPopover.tsx` L1899–1907:
+`src/components/dashboard/schedule/AppointmentDetailSheet.tsx`:
+- **Notes tab** (L2392) currently has the only render of `appointment.notes` under the heading "POS Booking Notes"
+- **Details tab** (L1567) opens with Client Memory Panel → Appointment info → Services. No surfacing of `appointment.notes`.
 
+The POS Booking Notes block in the Notes tab uses:
 ```tsx
-<Button
-  variant="ghost"
-  className="w-full h-9 text-xs text-muted-foreground border border-dashed border-border hover:bg-muted/50 hover:text-foreground"
-  ...
->
-  + Add service from another category
-</Button>
+<h4 className={tokens.heading.subsection}>POS Booking Notes</h4>
+<p className="text-sm text-muted-foreground">{appointment.notes}</p>
 ```
 
-Three subtlety problems compounding:
-1. `text-xs` (12px) — smaller than other interior text
-2. `text-muted-foreground` + `border-border` — both fade into the popover surface in dark mode
-3. `h-9` — short button next to the prominent `Continue` primary
-
-## Plan — Wave 22.19: Promote "+ Add service from another category" affordance
+## Plan — Wave 22.20: Surface POS Booking Notes on Details tab
 
 ### Fix
 
-`src/components/dashboard/schedule/QuickBookingPopover.tsx` L1899–1907:
+`src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — insert a new motion block on the Details tab between the Client Memory Panel (L1574) and the redo/appointment blocks (L1577), conditional on `appointment.notes`.
 
-- Bump text size: `text-xs` → `text-sm`
-- Strengthen text color: `text-muted-foreground` → `text-foreground/80` (legible in both modes, still secondary to Continue)
-- Strengthen border: `border-border` → `border-primary/30` (ghost-violet hint, ties to brand without competing)
-- Bump button height: `h-9` → `h-10` (matches Continue's vertical rhythm one step down)
-- Add icon: import `Plus` from lucide-react and use `<Plus className="h-4 w-4 mr-1.5" />` — replaces the literal `+ ` glyph for crisper rendering and clearer affordance
-- Strengthen hover: `hover:bg-muted/50 hover:text-foreground` → `hover:bg-primary/10 hover:text-foreground hover:border-primary/50` — confirms it's a real action when hovered
-- Keep `variant="ghost"`, `border border-dashed`, `w-full`, and `rounded-md` (default) so it still reads as "secondary add-more" not "primary CTA"
-
-Resulting markup:
+New block:
 ```tsx
-<Button
-  variant="ghost"
-  className="w-full h-10 text-sm text-foreground/80 border border-dashed border-primary/30 hover:bg-primary/10 hover:text-foreground hover:border-primary/50 transition-colors"
-  onClick={() => setSelectedCategory(null)}
->
-  <Plus className="h-4 w-4 mr-1.5" />
-  Add service from another category
-</Button>
+{appointment.notes && (
+  <motion.div variants={staggerItem} className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+    <div className="flex items-center gap-2">
+      <MessageSquare className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+      <h4 className={tokens.heading.subsection}>POS Booking Notes</h4>
+    </div>
+    <p className="text-sm text-foreground/90 leading-relaxed">{appointment.notes}</p>
+  </motion.div>
+)}
 ```
 
-Plus add `Plus` to the existing `lucide-react` import at the top of the file (already imports `X`, `Sparkles`, `Coffee` etc., so just append).
+Design rationale:
+- **Subtle amber tint** (border + bg @ low opacity) — flags this as "client intent / pre-arrival context" without competing with status pills. Amber matches the existing "Unconfirmed" warning palette so it reads as related context, not a separate system.
+- **MessageSquare icon** — already imported in this file (used elsewhere); signals "client said this"
+- **`text-foreground/90`** instead of `text-muted-foreground` — Notes tab muted them, but on Details they're a primary signal so they earn higher contrast
+- **Placed after Client Memory Panel, before Redo/Appointment** — sits in the "context preamble" zone, not the operational zone
+
+### Keep notes on Notes tab too?
+
+**Yes** — leave the existing render at L2392 untouched. The Notes tab is the canonical "all notes in one place" surface (Appointment Notes + Client Notes + POS Booking Notes per the screenshot). Removing it would break that completeness. Duplication here is intentional: Details = quick scan, Notes = full review.
 
 ### Acceptance checks
 
-1. Button is clearly visible against the popover background in dark mode (Zura theme)
-2. Button visibly reads as "secondary action" — does not compete with the primary violet "Continue" CTA
-3. Hover state tints violet to confirm interactivity
-4. Text is comfortably legible at standard reading distance (no squinting)
-5. Button height aligns better with surrounding 40px rhythm
-6. Plus icon renders crisply (no font-glyph artifacts)
-7. Light-mode rendering also improves (not just dark)
+1. POS Booking Notes appear at the top of the Details tab (below Client Memory Panel) when `appointment.notes` is non-empty
+2. Amber-tinted card visually distinguishes it from the neutral Appointment/Services blocks below
+3. When `appointment.notes` is empty/null, no empty card renders (Details tab unchanged)
+4. Notes tab still shows POS Booking Notes in its existing location (no removal)
+5. Light + dark mode both render the amber tint legibly
+6. Long notes wrap correctly inside the card (no overflow)
 
 ### Files
 
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — single button update at L1899–1907 + add `Plus` to lucide-react import
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` — single insertion after L1574 (Client Memory Panel close), before L1576 (motion.div container — actually inside the staggerContainer at L1575, so insert as the first staggerItem child)
 
 ### Open question
 
@@ -71,5 +64,5 @@ None.
 
 ### Deferred
 
-- **P3** Standardize a shared `<DashedAddMoreButton>` component if this pattern appears elsewhere (e.g., add-on selectors, multi-stylist booking). Trigger: when the same dashed-add affordance shows up in 3+ surfaces.
+- **P3** Make the POS Notes card collapsible if length exceeds ~3 lines, with a "Show more" affordance. Trigger: when an operator complains about long notes pushing the Appointment block below the fold.
 
