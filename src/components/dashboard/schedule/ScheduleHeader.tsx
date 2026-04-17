@@ -594,6 +594,13 @@ export function ScheduleHeader({
                           />
                           <span className="flex-1 text-left truncate">
                             {formatFullDisplayName(s.full_name, s.display_name)}
+                            {view === 'week' &&
+                              selectedStaffIds.length === 0 &&
+                              weekViewStylistId === s.user_id && (
+                                <span className="ml-1.5 text-[10px] text-muted-foreground font-sans normal-case">
+                                  (week default)
+                                </span>
+                              )}
                           </span>
                           {levelLabel && (
                             <span
