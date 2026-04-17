@@ -1999,12 +1999,30 @@ export function AppointmentDetailSheet({
                       <h4 className={tokens.heading.subsection}>Client Contact</h4>
                       <div className="space-y-1.5">
                         {appointment.client_phone ? (
-                          <div className="flex items-center justify-between">
-                            <a href={`tel:${appointment.client_phone}`} className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-sm">
                               <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                              {formatPhoneDisplay(appointment.client_phone)}
-                            </a>
-                            <CopyButton onCopy={handleCopyPhone} />
+                              <span>{formatPhoneDisplay(appointment.client_phone)}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-3 rounded-full font-sans text-xs"
+                                onClick={() => setCallDialogOpen(true)}
+                              >
+                                <Phone className="h-3 w-3 mr-1" /> Call
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-3 rounded-full font-sans text-xs"
+                                onClick={() => setTextDialogOpen(true)}
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" /> Text
+                              </Button>
+                              <CopyButton onCopy={handleCopyPhone} />
+                            </div>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
