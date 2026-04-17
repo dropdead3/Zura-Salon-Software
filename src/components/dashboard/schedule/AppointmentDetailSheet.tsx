@@ -1573,6 +1573,16 @@ export function AppointmentDetailSheet({
                       className="-mx-4 -mt-2 mb-4 border-b border-border/40 pb-4"
                     />
                     <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
+                    {/* POS Booking Notes — surfaced from Notes tab for at-a-glance client intent */}
+                    {appointment.notes && (
+                      <motion.div variants={staggerItem} className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                          <h4 className={tokens.heading.subsection}>POS Booking Notes</h4>
+                        </div>
+                        <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">{appointment.notes}</p>
+                      </motion.div>
+                    )}
                     {/* Redo approval actions */}
                     {appointment.is_redo && appointment.status === 'pending' && isManagerOrAdmin && (
                       <motion.div variants={staggerItem} className="flex items-center gap-2">
