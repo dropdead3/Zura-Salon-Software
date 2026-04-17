@@ -379,6 +379,10 @@ export default function ClientDirectory() {
     enabled: !!user?.id,
   });
 
+  // Active follow-up counts for all clients in this org (single query, no N+1)
+  const directoryOrgId = (clients?.[0] as any)?.organization_id ?? null;
+  const { data: callbackCounts } = useOrgActiveCallbackCounts(directoryOrgId);
+
   // Process clients with derived fields
   const processedClients = useMemo(() => {
     if (!clients) return [];
@@ -1129,6 +1133,26 @@ export default function ClientDirectory() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-medium truncate">{client.name}</p>
+                            {(() => {
+                              const cbCount = callbackCounts?.get(client.phorest_client_id) ?? 0;
+                              if (cbCount === 0) return null;
+                              return (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      className="inline-flex items-center gap-0.5 rounded-md border border-amber-200/80 bg-amber-100/70 px-1.5 py-0.5 text-[11px] font-medium leading-none text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MessageCircle className="h-2.5 w-2.5" />
+                                      {cbCount}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    {cbCount} open follow-{cbCount === 1 ? 'up' : 'ups'}
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })()}
                             {client.is_archived && (
                               <Badge variant="secondary" className="text-xs">
                                 <Archive className="w-3 h-3 mr-1" /> Archived
