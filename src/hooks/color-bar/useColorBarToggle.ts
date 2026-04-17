@@ -153,7 +153,7 @@ export function useColorBarToggle() {
         );
       }
     },
-    [updateFlag, bulkSuspend],
+    [updateFlag, bulkSuspend, queryClient],
   );
 
   const firstTimeEnable = useCallback(
