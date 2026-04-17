@@ -663,16 +663,84 @@ export function CheckoutSummarySheet({
 
           <Separator />
 
-          {/* Service Details */}
+          {/* Editable cart — Wave 2 */}
+          <CheckoutLineItems
+            lines={cart.lines}
+            canOverridePrice={canOverridePrice}
+            canWaive={canWaive}
+            maxDiscountPercent={maxDiscountPercent}
+            onAddService={() => setAddServiceOpen(true)}
+            onRemove={(id) => {
+              const line = cart.lines.find((l) => l.id === id);
+              cart.removeLine(id);
+              if (line && organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: AUDIT_EVENTS.SERVICE_REMOVED_AT_CHECKOUT,
+                  previousValue: { name: line.name, unitPrice: line.unitPrice },
+                  newValue: null,
+                });
+              }
+            }}
+            onQuantityChange={(id, qty) => cart.updateLine(id, { quantity: qty })}
+            onPriceChange={(id, unitPrice) => {
+              const line = cart.lines.find((l) => l.id === id);
+              cart.updateLine(id, { unitPrice });
+              if (line && organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: AUDIT_EVENTS.LINE_PRICE_OVERRIDDEN,
+                  previousValue: { name: line.name, unitPrice: line.unitPrice },
+                  newValue: { name: line.name, unitPrice },
+                });
+              }
+            }}
+            onApplyDiscount={(id, d) => {
+              const line = cart.lines.find((l) => l.id === id);
+              cart.applyDiscount(id, d);
+              if (line && organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: d.type === 'waive' ? AUDIT_EVENTS.LINE_WAIVED : AUDIT_EVENTS.LINE_DISCOUNTED,
+                  previousValue: { name: line.name, discount: line.discount },
+                  newValue: { name: line.name, discount: d },
+                  metadata: { reason: d.reason ?? null },
+                });
+              }
+            }}
+            onClearDiscount={(id) => cart.clearDiscount(id)}
+          />
+
+          {/* Diff banner — appears when cart differs from original */}
+          {cart.diff.total > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowDiff((v) => !v)}
+              className="w-full flex items-center justify-between rounded-md border border-warning/40 bg-warning/[0.06] px-3 py-2 text-left transition-colors hover:bg-warning/[0.10]"
+            >
+              <span className="flex items-center gap-2 text-xs">
+                <GitCompare className="h-3.5 w-3.5 text-warning" />
+                <span className="font-medium">{cart.diff.total} {cart.diff.total === 1 ? 'change' : 'changes'} from original</span>
+              </span>
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', showDiff && 'rotate-180')} />
+            </button>
+          )}
+          {showDiff && cart.diff.total > 0 && (
+            <div className="text-xs text-muted-foreground space-y-1 px-3">
+              {cart.diff.added > 0 && <div>+ {cart.diff.added} service{cart.diff.added > 1 ? 's' : ''} added</div>}
+              {cart.diff.removed > 0 && <div>− {cart.diff.removed} removed</div>}
+              {cart.diff.repriced > 0 && <div>~ {cart.diff.repriced} repriced</div>}
+              {cart.diff.discounted > 0 && <div>% {cart.diff.discounted} discounted/waived</div>}
+            </div>
+          )}
+
+          {/* Static appointment metadata (date/time/stylist) */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">Service Details</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Service</span>
-                <span className="font-medium text-right max-w-[60%]">
-                  {appointment.service_name || 'Service'}
-                </span>
-              </div>
+            <h3 className="text-sm font-medium text-muted-foreground">Appointment</h3>
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Stylist</span>
                 <span className="font-medium">{stylistName}</span>
