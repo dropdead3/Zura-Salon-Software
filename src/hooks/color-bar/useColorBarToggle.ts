@@ -56,6 +56,8 @@ export function useColorBarToggle() {
 
   const [reactivationTarget, setReactivationTarget] =
     useState<ReactivationTarget | null>(null);
+  const [suspensionTarget, setSuspensionTarget] =
+    useState<SuspensionTarget | null>(null);
 
   const isPending =
     updateFlag.isPending || bulkSuspend.isPending || bulkReactivate.isPending;
@@ -75,7 +77,10 @@ export function useColorBarToggle() {
   };
 
   const softDisable = useCallback(
-    async (args: ToggleArgs) => {
+    async (
+      args: ToggleArgs,
+      meta?: { reason?: string; notes?: string },
+    ) => {
       const rollback = args.optimisticPatch?.(false);
       const advisory = scheduleAdvisoryToast(
         `Suspending Color Bar across ${args.organizationName}'s locations…`,
@@ -85,9 +90,16 @@ export function useColorBarToggle() {
           organizationId: args.organizationId,
           flagKey: 'backroom_enabled',
           isEnabled: false,
-          reason: 'Suspended via Color Bar admin',
+          reason:
+            meta?.reason
+              ? `Suspended (${meta.reason})${meta.notes ? `: ${meta.notes}` : ''}`
+              : 'Suspended via Color Bar admin',
         });
-        await bulkSuspend.mutateAsync({ organization_id: args.organizationId });
+        await bulkSuspend.mutateAsync({
+          organization_id: args.organizationId,
+          reason: meta?.reason,
+          notes: meta?.notes,
+        });
         advisory.dismiss();
         toast.success(
           `Color Bar suspended for ${args.organizationName} — data preserved`,
