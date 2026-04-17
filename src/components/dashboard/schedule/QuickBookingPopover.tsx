@@ -297,7 +297,7 @@ export function QuickBookingPopover({
   const [viewingClientProfile, setViewingClientProfile] = useState<PhorestClient | null>(null);
   const [pendingBannedClient, setPendingBannedClient] = useState<PhorestClient | null>(null);
   const [bookingNotes, setBookingNotes] = useState('');
-  const [showNotes, setShowNotes] = useState(false);
+  
   const [showBreakForm, setShowBreakForm] = useState(false);
   const [requestAssistant, setRequestAssistant] = useState(false);
 
