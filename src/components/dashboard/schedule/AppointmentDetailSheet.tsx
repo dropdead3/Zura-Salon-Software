@@ -1452,111 +1452,109 @@ export function AppointmentDetailSheet({
                 )}
               </div>
 
-              {/* ─── Quick Actions Row (Wave 18) ──────────────── */}
-              <div className="px-6 pb-3">
-                <TooltipProvider delayDuration={200}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
+              {/* ─── Quick Actions Row (Wave 18.1) ──────────────── */}
+              {(() => {
+                const phone = appointment.client_phone?.trim();
+                const rawEmail = clientRecord?.email?.trim();
+                const isPlaceholderEmail = rawEmail
+                  ? /^(na|none|noemail|test|n\/a)@/i.test(rawEmail) || !/@.+\..+/.test(rawEmail)
+                  : true;
+                const email = rawEmail && !isPlaceholderEmail ? rawEmail : null;
+                const showCall = !!phone;
+                const showText = !!phone;
+                const showEmail = !!email;
+                const showRebook = !!onRebook;
+                const showSendPay =
+                  !!appointment.id &&
+                  !!resolvedOrgId &&
+                  appointment.total_price != null &&
+                  appointment.total_price > 0;
+
+                if (!showCall && !showText && !showEmail && !showRebook && !showSendPay) {
+                  return null;
+                }
+
+                const commBtn = "h-9 px-4 rounded-full font-sans text-xs";
+                const primaryBtn = "h-9 px-4 rounded-full font-sans text-xs";
+
+                return (
+                  <div className="px-6 pb-3">
+                    <TooltipProvider delayDuration={200}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {showCall && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="sm" className={commBtn} asChild>
+                                <a href={`tel:${phone}`}>
+                                  <Phone className="h-3.5 w-3.5 sm:mr-1.5" />
+                                  <span className="hidden sm:inline">Call</span>
+                                </a>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Call {phone}</TooltipContent>
+                          </Tooltip>
+                        )}
+
+                        {showText && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="sm" className={commBtn} asChild>
+                                <a href={`sms:${phone}`}>
+                                  <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
+                                  <span className="hidden sm:inline">Text</span>
+                                </a>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Text {phone}</TooltipContent>
+                          </Tooltip>
+                        )}
+
+                        {showEmail && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="sm" className={commBtn} asChild>
+                                <a href={`mailto:${email}`}>
+                                  <Mail className="h-3.5 w-3.5 sm:mr-1.5" />
+                                  <span className="hidden sm:inline">Email</span>
+                                </a>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Email {email}</TooltipContent>
+                          </Tooltip>
+                        )}
+
+                        {(showCall || showText || showEmail) && (showRebook || showSendPay) && (
+                          <div className="h-6 w-px bg-border mx-1" aria-hidden />
+                        )}
+
+                        {showRebook && (
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
-                            className="h-9 px-4 rounded-full font-sans text-xs"
-                            disabled={!appointment.client_phone}
-                            asChild={!!appointment.client_phone}
+                            className={primaryBtn}
+                            onClick={() => onRebook!(appointment)}
                           >
-                            {appointment.client_phone ? (
-                              <a href={`tel:${appointment.client_phone}`}>
-                                <Phone className="h-3.5 w-3.5 mr-1.5" /> Call
-                              </a>
-                            ) : (
-                              <span><Phone className="h-3.5 w-3.5 mr-1.5" /> Call</span>
-                            )}
+                            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Rebook
                           </Button>
-                        </span>
-                      </TooltipTrigger>
-                      {!appointment.client_phone && (
-                        <TooltipContent>No phone on file</TooltipContent>
-                      )}
-                    </Tooltip>
+                        )}
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 px-4 rounded-full font-sans text-xs"
-                            disabled={!appointment.client_phone}
-                            asChild={!!appointment.client_phone}
-                          >
-                            {appointment.client_phone ? (
-                              <a href={`sms:${appointment.client_phone}`}>
-                                <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Text
-                              </a>
-                            ) : (
-                              <span><MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Text</span>
-                            )}
-                          </Button>
-                        </span>
-                      </TooltipTrigger>
-                      {!appointment.client_phone && (
-                        <TooltipContent>No phone on file</TooltipContent>
-                      )}
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 px-4 rounded-full font-sans text-xs"
-                            disabled={!clientRecord?.email}
-                            asChild={!!clientRecord?.email}
-                          >
-                            {clientRecord?.email ? (
-                              <a href={`mailto:${clientRecord.email}`}>
-                                <Mail className="h-3.5 w-3.5 mr-1.5" /> Email
-                              </a>
-                            ) : (
-                              <span><Mail className="h-3.5 w-3.5 mr-1.5" /> Email</span>
-                            )}
-                          </Button>
-                        </span>
-                      </TooltipTrigger>
-                      {!clientRecord?.email && (
-                        <TooltipContent>No email on file</TooltipContent>
-                      )}
-                    </Tooltip>
-
-                    {onRebook && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 px-4 rounded-full font-sans text-xs"
-                        onClick={() => onRebook(appointment)}
-                      >
-                        <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Rebook
-                      </Button>
-                    )}
-
-                    {appointment.id && resolvedOrgId && appointment.total_price != null && appointment.total_price > 0 && (
-                      <SendToPayButton
-                        appointmentId={appointment.id}
-                        organizationId={resolvedOrgId}
-                        totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
-                        clientName={appointment.client_name}
-                        clientEmail={clientRecord?.email || null}
-                        clientPhone={appointment.client_phone}
-                        afterpayEnabled={false}
-                        onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
-                      />
-                    )}
+                        {showSendPay && (
+                          <SendToPayButton
+                            appointmentId={appointment.id}
+                            organizationId={resolvedOrgId!}
+                            totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                            clientName={appointment.client_name}
+                            clientEmail={email}
+                            clientPhone={phone}
+                            afterpayEnabled={false}
+                            onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                          />
+                        )}
+                      </div>
+                    </TooltipProvider>
                   </div>
-                </TooltipProvider>
-              </div>
+                );
+              })()}
 
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
