@@ -47,6 +47,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { getLevelSlug, getLevelNumber } from '@/utils/levelPricing';
+import { getLevelColor } from '@/lib/level-colors';
 import { useBookingLevelPricing } from '@/hooks/useServiceLevelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications';
