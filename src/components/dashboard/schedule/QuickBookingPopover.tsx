@@ -2498,19 +2498,19 @@ export function QuickBookingPopover({
                 {!showNotes ? (
                   <button
                     type="button"
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => setShowNotes(true)}
                   >
                     + Add special notes
                   </button>
                 ) : (
                   <div className="space-y-1.5">
-                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">Notes</h4>
+                    <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Notes</h4>
                     <Textarea
                       placeholder="Special instructions, pricing notes, promo codes..."
                       value={bookingNotes}
                       onChange={(e) => setBookingNotes(e.target.value)}
-                      className="min-h-[60px] text-xs resize-none"
+                      className="min-h-[60px] text-sm resize-none"
                     />
                   </div>
                 )}
@@ -2522,9 +2522,9 @@ export function QuickBookingPopover({
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <Label htmlFor="request-assistant" className="text-xs cursor-pointer">Request Assistant Coverage</Label>
+                      <Label htmlFor="request-assistant" className="text-sm cursor-pointer">Request Assistant Coverage</Label>
                       {requestAssistant && (
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           An assistant time block will be created for this appointment's duration.
                         </p>
                       )}
