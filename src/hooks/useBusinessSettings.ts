@@ -50,7 +50,10 @@ export function useBusinessSettings() {
         sidebar_layout: data.sidebar_layout as unknown as SidebarLayoutConfig | null,
       } as BusinessSettings;
     },
-    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+    // Wave 17 (high-concurrency-scalability): keep 10m cache; pulled by Header,
+    // Footer, SidebarNavContent on every route mount.
+    staleTime: 10 * 60_000,
+    gcTime: 15 * 60_000,
   });
 }
 
