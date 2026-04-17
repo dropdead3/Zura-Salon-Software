@@ -92,6 +92,23 @@ export function ScheduleActionBar({
 
   const searchPool = searchAppointments ?? appointments;
 
+  // Determine if we're viewing today (for conditional rendering of temporally-bound pills)
+  const isViewingToday = useMemo(() => {
+    if (!currentDate) return true;
+    return format(currentDate, 'yyyy-MM-dd') === todayStr;
+  }, [currentDate, todayStr]);
+
+  // Count of appointments on the currently viewed date (for non-today day view)
+  const viewedDateCount = useMemo(() => {
+    if (!currentDate || isViewingToday) return 0;
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    return searchPool.filter(
+      a => a.appointment_date === dateStr && !['cancelled', 'no_show'].includes(a.status)
+    ).length;
+  }, [currentDate, isViewingToday, searchPool]);
+
+  const displayedApptCount = view === 'day' && !isViewingToday ? viewedDateCount : todayAppointmentCount;
+
   const results = useMemo(() => {
     const q = debounced.trim().toLowerCase();
     if (q.length < 2) return [] as PhorestAppointment[];
