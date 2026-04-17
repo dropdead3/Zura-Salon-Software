@@ -1061,6 +1061,7 @@ export default function Schedule() {
                     pendingBlockCount={pendingCount}
                     onOpenDrafts={() => setDraftsSheetOpen(true)}
                     draftCount={drafts.length}
+                    view={view}
                   />
                 </div>
               </div>

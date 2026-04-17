@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut, Plus, Users, FileText } from 'lucide-react';
+import { CalendarDays, CalendarClock, CheckCircle2, Info, ZoomIn, ZoomOut, Plus, Users, FileText, PlayCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -34,6 +34,7 @@ interface ScheduleActionBarProps {
   pendingBlockCount?: number;
   onOpenDrafts?: () => void;
   draftCount?: number;
+  view?: 'day' | 'week' | 'agenda';
 }
 
 function getFirstName(fullName: string): string {
@@ -79,11 +80,22 @@ export function ScheduleActionBar({
   pendingBlockCount = 0,
   onOpenDrafts,
   draftCount = 0,
+  view,
 }: ScheduleActionBarProps) {
   const { dashPath } = useOrgDashboardPath();
   const { nowMinutes } = useOrgNow();
 
   const queue = useMemo(() => buildPaymentQueue(appointments, nowMinutes), [appointments, nowMinutes]);
+
+  const inSessionCount = useMemo(
+    () => appointments.filter(a => a.status === 'checked_in').length,
+    [appointments]
+  );
+
+  const remainingCount = useMemo(
+    () => appointments.filter(a => ['confirmed', 'pending', 'booked'].includes(a.status)).length,
+    [appointments]
+  );
 
   return (
     <div
@@ -110,6 +122,26 @@ export function ScheduleActionBar({
           {' '}appt{todayAppointmentCount !== 1 ? 's' : ''}
         </span>
       </div>
+
+      {/* Day view only: in-session + remaining counts */}
+      {view === 'day' && (
+        <>
+          <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
+            <PlayCircle className="h-4 w-4" />
+            <span>
+              <span className="font-medium text-foreground">{inSessionCount}</span>
+              {' '}in session
+            </span>
+          </div>
+          <div className={cn('flex items-center gap-2 shrink-0', tokens.body.muted)}>
+            <Clock className="h-4 w-4" />
+            <span>
+              <span className="font-medium text-foreground">{remainingCount}</span>
+              {' '}remaining
+            </span>
+          </div>
+        </>
+      )}
 
       {/* Center: Payment queue bubbles */}
       <div className="flex-1 min-w-0">
