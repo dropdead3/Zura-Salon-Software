@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare, TrendingDown } from 'lucide-react';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +46,7 @@ import { CartDiscountSection, type ManagerOrderDiscount } from '@/components/das
 import { usePermission } from '@/hooks/usePermission';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { AUDIT_EVENTS } from '@/lib/audit-event-types';
+import { useStylistSkipRate } from '@/hooks/useStylistSkipRate';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
