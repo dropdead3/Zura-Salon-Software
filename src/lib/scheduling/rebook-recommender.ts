@@ -90,3 +90,27 @@ export function getRebookServiceLabel(
 ): string {
   return resolveInterval(serviceName, serviceCategory).label;
 }
+
+export function getAllRebookIntervals(fromDate: Date = new Date()): RebookInterval[] {
+  return REBOOK_INTERVAL_OPTIONS.map(weeks => {
+    const date = addWeeks(fromDate, weeks);
+    return {
+      weeks,
+      label: `${weeks} ${weeks === 1 ? 'Week' : 'Weeks'}`,
+      date,
+      dateLabel: format(date, 'MMM d'),
+    };
+  });
+}
+
+export function getRecommendedWeeks(
+  serviceName: string | null | undefined,
+  serviceCategory: string | null | undefined,
+): number {
+  const config = resolveInterval(serviceName, serviceCategory);
+  // Snap to the nearest available option
+  const target = config.weeks[0];
+  return REBOOK_INTERVAL_OPTIONS.reduce((best, w) =>
+    Math.abs(w - target) < Math.abs(best - target) ? w : best
+  , REBOOK_INTERVAL_OPTIONS[0]);
+}
