@@ -8,10 +8,11 @@ import {
   PlatformCardTitle,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { useOrganizationFeatureFlags, useUpdateOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
+import { useOrganizationFeatureFlags, useUpdateOrgFeatureFlag, type OrganizationFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
 import { usePrefetchReactivationStatus } from '@/hooks/color-bar/useReactivationStatus';
+import { useQueryClient } from '@tanstack/react-query';
 import { ReactivationConfirmDialog } from '@/components/platform/color-bar/ReactivationConfirmDialog';
 import { CancelReasonDialog } from '@/components/platform/color-bar/CancelReasonDialog';
 
