@@ -847,7 +847,7 @@ export function AppointmentDetailSheet({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_all_clients' as any)
-        .select('email, preferred_stylist_id, client_since')
+        .select('id, email, phone, preferred_stylist_id, client_since, source')
         .eq('phorest_client_id', appointment!.phorest_client_id!)
         .maybeSingle();
       if (error) throw error;
@@ -858,6 +858,46 @@ export function AppointmentDetailSheet({
   });
 
   const { data: preferredStylist } = usePreferredStylist(clientRecord?.preferred_stylist_id);
+
+  // ─── Inline contact edit (Wave 22.35) ──────────────────────────────────────
+  // Persists to phorest_clients OR clients depending on which table backs the
+  // v_all_clients row. Updates appointment cache immediately so Call/Text/Send
+  // Pay surfaces pick up the new value without refetch.
+  const updateClientContact = useMutation({
+    mutationFn: async ({ field, value }: { field: 'email' | 'phone'; value: string }) => {
+      if (!clientRecord?.id || !clientRecord?.source) {
+        throw new Error('No client record to update');
+      }
+      const table = clientRecord.source === 'phorest' ? 'phorest_clients' : 'clients';
+      const updates: Record<string, string | null> = { [field]: value || null };
+      const { error } = await supabase
+        .from(table as any)
+        .update(updates)
+        .eq('id', clientRecord.id);
+      if (error) throw error;
+      return { field, value };
+    },
+    onSuccess: ({ field, value }) => {
+      queryClient.invalidateQueries({ queryKey: ['client-record-for-panel', appointment?.phorest_client_id] });
+      queryClient.invalidateQueries({ queryKey: ['clients-data'] });
+      queryClient.invalidateQueries({ queryKey: ['client-search'] });
+      // Patch the appointment list cache so SendToPayButton sees the new value
+      if (field === 'phone' && appointment) {
+        queryClient.setQueriesData<any>({ queryKey: ['appointments'] }, (old: any) => old);
+      }
+      toast.success(field === 'email' ? 'Email updated' : 'Phone updated');
+    },
+    onError: (err: Error) => {
+      toast.error(`Failed to update: ${err.message}`);
+    },
+  });
+
+  const handleSaveContact = useCallback(
+    async (field: 'email' | 'phone', value: string) => {
+      await updateClientContact.mutateAsync({ field, value });
+    },
+    [updateClientContact],
+  );
 
   // Linked redos
   const { data: linkedRedos = [] } = useQuery({
