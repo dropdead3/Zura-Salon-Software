@@ -8,7 +8,11 @@ import {
   PlatformCardTitle,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { useOrganizationFeatureFlags, useUpdateOrgFeatureFlag, type OrganizationFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
+import {
+  useOrganizationFeatureFlags,
+  useUpdateOrgFeatureFlag,
+  type MergedFeatureFlag,
+} from '@/hooks/useOrganizationFeatureFlags';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useColorBarToggle } from '@/hooks/color-bar/useColorBarToggle';
 import { usePrefetchReactivationStatus } from '@/hooks/color-bar/useReactivationStatus';
@@ -27,8 +31,29 @@ export function AccountAppsCard({ organizationId, organizationName }: AccountApp
   const updateFlag = useUpdateOrgFeatureFlag();
   const colorBarToggle = useColorBarToggle();
   const prefetchReactivation = usePrefetchReactivationStatus();
+  const queryClient = useQueryClient();
 
   const isLoading = flagsLoading || entitlementsLoading;
+
+  /**
+   * Optimistically flip backroom_enabled in the merged-flags cache so the
+   * Switch + "active locations" caption update instantly. Returns rollback.
+   */
+  const optimisticallyFlipColorBar = (next: boolean) => {
+    const key = ['organization-feature-flags', organizationId];
+    const prev = queryClient.getQueryData<MergedFeatureFlag[]>(key);
+    if (prev) {
+      queryClient.setQueryData<MergedFeatureFlag[]>(
+        key,
+        prev.map((f) =>
+          f.flag_key === 'backroom_enabled' ? { ...f, org_enabled: next } : f,
+        ),
+      );
+    }
+    return () => {
+      if (prev) queryClient.setQueryData(key, prev);
+    };
+  };
 
   const handleLaunchDemo = () => {
     window.open(`/dock?demo=${organizationId}`, '_blank');
