@@ -2,58 +2,73 @@
 
 ## Prompt review
 
-Sharp catch — you flagged a copy/context mismatch between the surface (internal staff-facing booking wizard inside `/dashboard/schedule`) and the language ("Visible to your stylist before the appointment" reads like client-facing copy). Sharper next time: tell me whether the notes are meant for the **stylist performing the service** (handoff intel) or the **front desk team** (operational notes) — that distinction shapes the label. I'll assume **stylist handoff** based on the prior wave's stated intent.
+Sharp ask — names the element ("Appointment Notes card"), the destination ("underneath services, above stylist"), and is unambiguous. Sharper next time: tell me whether the relocation is for **scan order** (operator's eye should hit notes before assigning the stylist, since notes often inform stylist choice) or **information density** (group "what's happening" with "what to know" before "who's doing it"). Both lead to the same fix here, but the *why* would let me also flag whether the Stylist Notes pattern in `DockNewBookingSheet` deserves the same reorder. I'll assume the operational logic: notes inform stylist assignment, so they should sit immediately after the service list.
 
 ## Diagnosis
 
-The notes card was promoted in Wave 22.8 with copy borrowed from a client-facing pattern:
+In `QuickBookingPopover.tsx` confirm step (`step === 'confirm'`), the current vertical order is:
 
-- Label: "Notes for the stylist" — fine, but ambiguous when staff is the author
-- Placeholder: "What should your stylist know? Formula notes, client preferences, allergies, special requests..." — uses second-person possessive ("your stylist") which only makes sense if the *client* were typing
-- Helper: "Visible to your stylist before the appointment." — same second-person framing; also redundant since the staff user IS the stylist or works alongside them
+```
+1. Client header card           (L2205)
+2. Location / Date / Duration   (L2220)
+3. Services                     (L2249–2285)
+4. Stylist                      (L2286–2303)
+5. Estimated Product Cost       (L2304)
+6. Redo / Adjustment            (L2348)
+7. Appointment Notes  ← here    (L2497–2519)
+8. Request Assistant Coverage   (L2521)
+```
 
-This is internal staff context. The author is front-desk/staff booking on behalf of a client. The reader is the assigned stylist (and anyone else with appointment access).
+The Notes card was dropped at the end of the confirm stack in Wave 22.8 because it was previously a hidden toggle. Now that it's a primary input, its position should reflect operational scan order: **see what's being booked → write context for it → see who's assigned**.
 
-## Plan — Wave 22.10: Reframe notes copy for internal staff context
+## Plan — Wave 22.11: Reorder Notes between Services and Stylist
 
 ### Behavior
 
-Rewrite the three copy elements to reflect internal staff-to-stylist handoff. Keep the structural promotion (always-visible card, Recommended badge, FileText icon, fill indicator) — only the language changes.
+Move the entire Notes card block (L2497–2519, ~23 lines) to slot in between the Services block (ends L2285) and the Stylist block (starts L2286). New vertical order on the confirm step:
 
-### Copy shifts
+```
+1. Client header
+2. Location / Date / Duration
+3. Services
+4. Appointment Notes        ← moved here
+5. Stylist
+6. Estimated Product Cost
+7. Redo / Adjustment
+8. Request Assistant Coverage
+```
 
-| Element | Before | After |
-|---|---|---|
-| Card label | "Notes for the stylist" | "Appointment notes" |
-| Placeholder | "What should your stylist know? Formula notes, client preferences, allergies, special requests..." | "Add context for the stylist — formula details, client preferences, allergies, prep instructions, special requests..." |
-| Helper text | "Visible to your stylist before the appointment." | "Internal note — visible to the assigned stylist and staff." |
-| Badge | "Recommended" | "Recommended" (unchanged) |
+### Fix shape
 
-### Why these shifts
+In `src/components/dashboard/schedule/QuickBookingPopover.tsx`:
 
-- **"Appointment notes"** is neutral, accurate, and doesn't presume author identity. Works whether the author is the stylist booking themselves, a front-desk team member, or a manager.
-- **Placeholder** drops second-person ("your stylist") in favor of imperative voice ("Add context for the stylist"). Reinforces that the author is staff writing *for* the stylist, not the client writing *to* the stylist.
-- **Helper text** adds the word "Internal" upfront — disambiguates from any client-visible field, and clarifies the reader scope ("assigned stylist and staff") without overpromising visibility rules.
+1. **Cut** the Notes card div (L2497–2519) — the entire `{/* Stylist Notes — always visible, operationally critical */}` block including its wrapping `<div className="rounded-lg border border-border/60 p-3 space-y-2">`
+2. **Update the comment** to `{/* Appointment Notes — internal staff context */}` to match the post-Wave 22.10 framing
+3. **Paste** it immediately after the Services block's closing `</div>` (after L2285) and before the Stylist `<div>` opens (L2286)
+4. Keep all internal markup (FileText icon, Recommended badge, textarea, helper text) **unchanged** — copy, sizing, fill indicator, and behavior are correct as-is
 
-### Files
-
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — update label, placeholder, and helper text inside the notes card (~3 string changes, no structural changes)
+No state, prop, or submit-flow changes. Pure DOM reordering.
 
 ### Acceptance checks
 
-1. Notes card label reads "Appointment notes"
-2. Placeholder uses imperative voice and lists internal-relevant context (formula, prefs, allergies, prep, requests)
-3. Helper text begins with "Internal note —" and clarifies reader scope
-4. No second-person ("your stylist") language remains in the card
-5. Recommended badge, icon, fill indicator, and card structure unchanged
-6. No regression to `bookingNotes` state or submit flow
+1. On the confirm step, the Notes card renders directly below the Services list and directly above the Stylist card
+2. Card visual weight, copy ("Appointment notes" / "Internal note —" / "Recommended" badge) is unchanged
+3. `bookingNotes` state still binds correctly and submits with the booking
+4. Estimated Product Cost, Redo/Adjustment, and Request Assistant Coverage remain in their current positions below the Stylist card
+5. No regression on the inline fill indicator (icon turns primary when notes typed)
+6. No orphan comment or stray div from the cut
+
+### Files
+
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — relocate the Notes card (~23-line move, no other changes)
 
 ### Open question
 
-None — copy fix is unambiguous given the internal-only scoping you confirmed.
+None — pure structural reorder.
 
 ### Deferred
 
-- **P2** Audit other booking surfaces (`DockNewBookingSheet`, public `/book/:orgSlug` flow) for the inverse problem — public surfaces should explicitly use *client-authored* framing — trigger: when reviewing public booking surface copy
-- **P2** Add a `note_visibility` enum (`internal` | `client_visible`) to `appointment_notes` if/when client-portal note replies become a feature — trigger: when client-facing portal scope is approved
+- **P2** Apply the same Services → Notes → Stylist scan order to `DockNewBookingSheet` confirm step — trigger: when Dock booking surface is reviewed for parity with the schedule popover
+- **P2** Persist last-used notes per client and surface a "Use last notes" suggestion above the textarea — trigger: when staff repeatedly retype similar handoff notes for returning clients
+- **P3** Make the Notes card slot configurable via a tenant-level "confirm step layout" setting if multi-org feedback diverges on optimal scan order — trigger: only if 2+ orgs request different orderings
 
