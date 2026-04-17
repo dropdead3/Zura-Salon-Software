@@ -457,6 +457,32 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       {/* God Mode Bar — system-level layer above everything */}
       <GodModeBar />
 
+      {/* Command Surface (⌘K) */}
+      <ZuraCommandSurface open={commandOpen} onOpenChange={setCommandOpen} />
+
+      {/* Dashboard Top Bar — search, nav arrows, account, view toggles */}
+      {!hideTopBar && (
+        <SuperAdminTopBar
+          sidebarCollapsed={sidebarCollapsed}
+          hideFooter={hideFooter}
+          headerHovered={headerHovered}
+          onHeaderHoverEnd={() => setHeaderHovered(false)}
+          filterNavItems={filterNavItems}
+          ViewAsToggle={ViewAsToggle}
+          HideNumbersToggle={HideNumbersToggle}
+          roleBadges={roleBadges}
+          onSearchClick={() => setCommandOpen(true)}
+          isSearchOpen={commandOpen}
+          searchBarRef={searchBarRef}
+          isAdmin={isAdmin}
+          isPlatformUser={isPlatformUser}
+          isStylistRole={roles.includes('stylist') || roles.includes('booth_renter')}
+          isStylistAssistantRole={roles.includes('stylist_assistant')}
+          isViewingAsUser={isViewingAsUser}
+          viewAsUser={viewAsUser as any}
+        />
+      )}
+
       {!hideSidebar && (
       <aside 
         className={cn(
