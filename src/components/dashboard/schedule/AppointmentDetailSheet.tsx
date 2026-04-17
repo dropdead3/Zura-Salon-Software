@@ -779,6 +779,26 @@ export function AppointmentDetailSheet({
     { enabled: notesEnabled },
   );
   const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
+
+  // ─── Notes: unread badge + auto-clear on tab open ───
+  const { unviewedCount: unviewedNotesCount } = useUnviewedAppointmentNotes(
+    appointment?.phorest_id ?? null,
+    notes,
+  );
+  const isAssignedStylist = !!user?.id && appointment?.staff_user_id === user.id;
+  const isAssistant = !!user?.id && assistants.some((a) => a.assistant_user_id === user.id);
+  const isWorkingThisAppointment = isAssignedStylist || isAssistant;
+  useEffect(() => {
+    if (
+      open &&
+      activeTab === 'notes' &&
+      appointment?.phorest_id &&
+      unviewedNotesCount > 0
+    ) {
+      markTabViewed.mutate({ appointmentId: appointment.phorest_id, tabKey: 'notes' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeTab, appointment?.phorest_id, unviewedNotesCount]);
   const { data: clientNotes = [], isLoading: clientNotesLoading } = useClientNotes(appointment?.phorest_client_id || undefined);
   const addClientNote = useAddClientNote();
   const deleteClientNote = useDeleteClientNote();
