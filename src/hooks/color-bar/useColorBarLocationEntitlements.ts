@@ -98,22 +98,34 @@ export function useUpsertLocationEntitlement() {
       billing_interval?: string;
       notes?: string;
     }) => {
+      // Check if a row already exists — only stamp activated_at on first
+      // insert. Overwriting it on every update destroys "active for X days"
+      // reporting and breaks audit trails.
+      const { data: existing } = await supabase
+        .from('backroom_location_entitlements')
+        .select('id, activated_at')
+        .eq('organization_id', params.organization_id as any)
+        .eq('location_id', params.location_id as any)
+        .maybeSingle();
+
+      const payload: Record<string, any> = {
+        organization_id: params.organization_id,
+        location_id: params.location_id,
+        plan_tier: params.plan_tier ?? 'starter',
+        scale_count: params.scale_count ?? 0,
+        status: params.status ?? 'active',
+        trial_end_date: params.trial_end_date ?? null,
+        billing_interval: params.billing_interval ?? 'monthly',
+        notes: params.notes ?? null,
+      };
+      // Only set activated_at on first insert.
+      if (!existing) {
+        payload.activated_at = new Date().toISOString();
+      }
+
       const { data, error } = await supabase
         .from('backroom_location_entitlements')
-        .upsert(
-          {
-            organization_id: params.organization_id,
-            location_id: params.location_id,
-            plan_tier: params.plan_tier ?? 'starter',
-            scale_count: params.scale_count ?? 0,
-            status: params.status ?? 'active',
-            trial_end_date: params.trial_end_date ?? null,
-            billing_interval: params.billing_interval ?? 'monthly',
-            notes: params.notes ?? null,
-            activated_at: new Date().toISOString(),
-          } as any,
-          { onConflict: 'organization_id,location_id' }
-        )
+        .upsert(payload as any, { onConflict: 'organization_id,location_id' })
         .select()
         .single();
 
