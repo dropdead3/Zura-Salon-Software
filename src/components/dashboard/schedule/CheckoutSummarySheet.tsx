@@ -928,6 +928,12 @@ export function CheckoutSummarySheet({
           </div>
         </div>
       )}
+      <RebookDeclineReasonDialog
+        open={declineDialogOpen}
+        isSubmitting={logDeclineReason.isPending}
+        onConfirm={handleDeclineDialogConfirm}
+        onBack={() => setDeclineDialogOpen(false)}
+      />
     </PremiumFloatingPanel>
   );
 }
