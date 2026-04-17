@@ -98,14 +98,6 @@ interface ScheduleHeaderProps {
   appointments?: PhorestAppointment[];
   hoursStart?: number;
   hoursEnd?: number;
-  /** Stylists list (sorted) for the week-view single-stylist selector. */
-  weekStylists?: Array<{
-    user_id: string;
-    display_name: string | null;
-    full_name: string;
-  }>;
-  selectedWeekStylistId?: string | null;
-  onSelectedWeekStylistChange?: (id: string) => void;
 }
 
 export function ScheduleHeader({
@@ -138,9 +130,6 @@ export function ScheduleHeader({
   appointments = [],
   hoursStart = 9,
   hoursEnd = 18,
-  weekStylists = [],
-  selectedWeekStylistId = null,
-  onSelectedWeekStylistChange,
 }: ScheduleHeaderProps) {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
@@ -295,26 +284,6 @@ export function ScheduleHeader({
               </Tooltip>
             )}
 
-            {/* Week-view stylist selector — only when in week view */}
-            {view === 'week' && onSelectedWeekStylistChange && (
-              <Select
-                value={selectedWeekStylistId ?? undefined}
-                onValueChange={(v) => onSelectedWeekStylistChange(v)}
-              >
-                <SelectTrigger
-                  className="h-8 w-[180px] @lg/schedhdr:w-[220px] text-xs bg-[hsl(var(--sidebar-accent))] border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent-foreground)/.15)]"
-                >
-                  <SelectValue placeholder="Select stylist" />
-                </SelectTrigger>
-                <SelectContent>
-                  {weekStylists.map((s) => (
-                    <SelectItem key={s.user_id} value={s.user_id}>
-                      {formatFullDisplayName(s.full_name, s.display_name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
           </div>
 
           {/* Center: Date Display — absolutely centered at @md+, inline at narrow */}
