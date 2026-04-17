@@ -39,6 +39,8 @@ export function useOnboardingProgress(): OnboardingProgress {
       return data?.map(r => r.role) || actualRoles;
     },
     enabled: !!effectiveUserId,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   const roles = isViewingAsUser ? effectiveRoles : (viewAsRole ? [viewAsRole] : actualRoles);
@@ -60,6 +62,9 @@ export function useOnboardingProgress(): OnboardingProgress {
       );
     },
     enabled: roles.length > 0,
+    // Wave 17: tasks list rarely changes within a session.
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   // Fetch user's task completions
@@ -77,6 +82,8 @@ export function useOnboardingProgress(): OnboardingProgress {
       return data || [];
     },
     enabled: !!effectiveUserId,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
 
   // Fetch handbooks visible to user's roles
@@ -96,6 +103,8 @@ export function useOnboardingProgress(): OnboardingProgress {
       );
     },
     enabled: roles.length > 0,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   // Fetch user's handbook acknowledgments
@@ -113,6 +122,8 @@ export function useOnboardingProgress(): OnboardingProgress {
       return data || [];
     },
     enabled: !!effectiveUserId,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
 
   // Fetch business card request
@@ -132,6 +143,8 @@ export function useOnboardingProgress(): OnboardingProgress {
       return data;
     },
     enabled: !!effectiveUserId,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   // Fetch headshot request
@@ -151,6 +164,8 @@ export function useOnboardingProgress(): OnboardingProgress {
       return data;
     },
     enabled: !!effectiveUserId,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   const isLoading = tasksLoading || completionsLoading || handbooksLoading || ackLoading || bcLoading || hsLoading;

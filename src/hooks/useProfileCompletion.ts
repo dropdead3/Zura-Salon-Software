@@ -27,6 +27,9 @@ export function useProfileCompletion() {
       return data?.map(r => r.role) || [];
     },
     enabled: isViewingAsUser && !!effectiveUserId,
+    // Wave 17: roles change rarely; cache 5m to avoid refire on every route.
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 
   // Determine effective roles: impersonated user's roles, viewAs role, or actual roles
