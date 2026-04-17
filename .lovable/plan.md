@@ -2,77 +2,70 @@
 
 ## Prompt review
 
-Crisp prompt — names the bug (no auto-select), the trigger (clicked Jamie's column), and the expected behavior (preselect her). Sharper next time: tell me whether preselection should also **skip** the stylist step entirely or just highlight her so staff can confirm. I'll propose the cleaner default (skip when context is unambiguous) and flag it.
+Clear two-part prompt — names the surface, the new control (sort by price), and a missing element (level labels). Sharper next time: tell me the **default sort** you want (low→high or by relevance/qualification?), and whether sort should persist across bookings or reset each open. I'll propose defaults and flag.
 
 ## Diagnosis
 
-When staff clicks a stylist column header in the schedule grid to start a booking, the click handler opens the booking popover but doesn't pass the column's `stylistId` as a default. The wizard lands on "Available Stylists" with nothing preselected — defeating the whole point of clicking *into* Jamie's column.
+**Level labels:** The component already renders `<Badge>Level {N}</Badge>` (lines 2052–2056) — but the screenshot shows none. Root cause: those stylists have no `employee_profiles.stylist_level` value set, so `getLevelNumber()` returns null and the badge is suppressed. This is a **data gap**, not a UI bug. The fix is two-fold:
 
-Root cause is one of two patterns (need to confirm by reading `Schedule.tsx`):
+1. **Render a fallback** ("Unranked" or hide gracefully) so the row shape is consistent
+2. **Surface the data gap** so admins know to assign levels in Operations Hub
 
-1. The column-click handler calls `setBookingOpen(true)` but doesn't call `setBookingDefaults({ stylistId })`, OR
-2. It does set the default, but `BookingPopover` / the stylist step doesn't read `defaultStylistId` from props/state to seed `selectedStylist`
+**Sort by price:** The price column already computes per-stylist (`stylistTotalPrice`, line 2006–2011) using level-based service pricing. Adding sort is purely client-side reordering of `filteredStylists` — no new queries.
 
-Wave 21.1 already wired `setBookingDefaults({ stylistId })` for the rebook-interval path — that pattern just needs to extend to the column-click entry point.
+## Plan — Wave 22.2: Stylist picker sort + level visibility
 
-## Plan — Wave 22.1: Auto-select stylist from column-click entry
+### 1. Sort control (top-right of "Available Stylists" header)
 
-### Behavior
+Add a compact dropdown/segmented control next to the section heading:
+- **Recommended** (default — current order: previous stylist first, then qualified, then alphabetical)
+- **Price: Low → High**
+- **Price: High → Low**
+- **Level: Low → High**
+- **Level: High → Low**
 
-When booking is initiated from a stylist column (column-header click, empty-slot click, or any context where a stylist is implicit):
+Implementation: `useState<SortMode>('recommended')` inside the popover; sort `filteredStylists` (and `uniqueAllStylists` for stylist-first mode) via `useMemo`. Sort resets to default each time the popover opens.
 
-1. **Preselect that stylist** in the booking session state (`selectedStylist = stylistId`)
-2. **Skip the "Available Stylists" step entirely** — advance directly to the next step in the flow (likely Service or DateTime depending on flow template)
-3. Staff can still go **Back** to change stylist if needed (the back button in the wizard already supports this)
+UI: `Select` component (shadcn) with `tokens.label` styling, sized `h-8`, placed inline-right of the "AVAILABLE STYLISTS" heading using `flex justify-between`.
 
-This matches the doctrine: *"If context is unambiguous, don't ask again."* Clicking Jamie's column IS the answer to "which stylist?".
+Hidden when `selectedServices.length === 0` (no price to sort by) — falls back to Level sort options only in that case.
 
-### Files to read first (to confirm the exact wiring)
+### 2. Level badge — always visible
 
-- `src/pages/dashboard/Schedule.tsx` — find the column-click / empty-slot click handler that opens the booking popover; confirm whether `setBookingDefaults` is called with `stylistId`
-- `src/components/booking-surface/` (or wherever the wizard lives) — confirm how `selectedStylist` is seeded from defaults and whether the stylist step auto-skips when preselected
-- `src/hooks/useBookingSession.ts` — already accepts `deepLinks.stylist` as initial state; need to verify it advances past the stylist step when preselected
+Change behavior:
+- If `stylistLevelNum` exists → render `Level {N}` badge as today
+- If null → render `Unranked` badge with `variant="outline"` and muted text (signals data gap without breaking layout)
 
-### Fix shape
+Optionally: in dev mode, log a warning so admins see the missing-level list in console.
 
-**1. `Schedule.tsx`** — column-click handler must pass `stylistId`:
-```ts
-setBookingDefaults({ date: clickedDate, stylistId: column.stylistId, time: clickedTime });
-setBookingOpen(true);
-```
+### 3. Acceptance checks
 
-**2. Booking wizard / `useBookingSession`** — when initial `selectedStylist` is set AND current step is `stylist`, auto-advance one step on mount:
-```ts
-useEffect(() => {
-  if (state.selectedStylist && currentStep === 'stylist' && currentStepIdx === 0) {
-    goNext();
-  }
-}, []); // mount-only
-```
-
-**3. Edge case** — if the preselected stylist isn't in the eligible list for the chosen service (e.g., service-stylist mismatch), fall back to showing the picker with a soft notice: *"Jamie isn't available for this service — pick another."*
-
-### Acceptance checks
-
-1. Click Jamie's column header → booking popover opens with Jamie preselected; wizard skips stylist step
-2. Same for any empty-slot click in any stylist's column
-3. Tap Back in the wizard → returns to stylist picker with Jamie still highlighted (changeable)
-4. If service is later changed to one Jamie can't perform → soft notice + force back to stylist step
-5. Booking from a non-stylist context (e.g., FAB button, command palette) → stylist step still shown normally
-6. No regression to the rebook-interval entry point (which also seeds stylistId)
-
-### Open question (worth confirming)
-
-Should clicking a column also preselect the **time slot** the column-click hit (e.g., 4:15 PM cell → time = 4:15)? Default: yes, mirror Wave 21.1's date-prefill pattern. Tell me if you want time picker to stay manual.
+1. Sort dropdown appears top-right of "Available Stylists" header; defaults to "Recommended"
+2. Switching to "Price: Low → High" reorders rows by `stylistTotalPrice` ascending
+3. Switching to "Level: High → Low" puts Level 4 first, Unranked last
+4. Stylists without a `stylist_level` show an "Unranked" badge (not blank)
+5. Sort resets to "Recommended" when popover reopens
+6. Stylist-first mode: same sort works against `uniqueAllStylists`
+7. No regression to previous-stylist auto-pin (still wins in "Recommended" mode)
 
 ### Files
 
-- `src/pages/dashboard/Schedule.tsx` — column-click handler
-- `src/hooks/useBookingSession.ts` OR booking wizard component — auto-advance when stylist preseeded
-- Possibly `BookingPopover` / step orchestrator — propagate `defaultStylistId` correctly
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — add sort state, sort memo, Select control in stylist step header, fallback "Unranked" badge
+
+### Open question (worth flagging)
+
+**Why are levels blank?** This screenshot shows 7 stylists at North Mesa, none with a level. Either (a) admins haven't assigned levels in Operations Hub → Stylist Levels, or (b) the `stylist_level` field isn't being read from the right column. Worth a one-query verification:
+
+```sql
+SELECT user_id, full_name, stylist_level FROM employee_profiles 
+WHERE user_id IN (<the 7 stylist ids>);
+```
+
+If it's (b), Wave 22.3 fixes the read path; if (a), the "Unranked" badge is the right outcome and Operations Hub gets a nudge.
 
 ### Deferred
 
-- **P2** Visual breadcrumb showing "Booking with Jamie" at top of wizard so staff know context was preserved — trigger: when staff confusion arises about why stylist step was skipped
-- **P2** Same auto-advance pattern for service step when entering from a service-card click elsewhere in the app — trigger: when a similar entry point ships
+- **P2** Persist last-used sort per user (localStorage) — trigger: when staff request "remember my preference"
+- **P2** Show level price tier ($, $$, $$$) instead of "Level N" for client-facing booking surfaces — trigger: not applicable here (staff-facing), revisit if booking widget reuses this UI
+- **P2** "Filter by level" multi-select chips above the list — trigger: when a salon with 20+ stylists across many levels needs it
 
