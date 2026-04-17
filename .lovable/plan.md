@@ -1,53 +1,35 @@
 
 ## Prompt review
 
-Sharp visual catch — the screenshot clearly shows the top bar (search, Account Owner, View As, etc.) overlapping/colliding with the collapsed sidebar's `DD°` logo and grid icon. The top bar is sitting *over* the sidebar instead of starting to its right. Good observation.
+Clean spatial instruction with measurable constraints (15px gap, flush alignment) — easy to execute precisely. Good observation that the FAB and action bar were drifting apart in dead space.
 
-Tighter framing for next time: mention whether this happened right after the previous fix (restoring `SuperAdminTopBar`) — that pinpoints the regression to that change rather than a pre-existing layout bug. I'll assume it's tied to the restore.
+Tighter framing for next time: the two constraints in your prompt actually conflict slightly with "move FAB left." The FAB is *already* flush with the scheduler table's right edge (both use 16px from viewport). What's actually moving is the **action bar** — it shrinks rightward to close the gap. Reframing as "tighten the action bar so it sits 15px to the left of the FAB" would have been even crisper. I'll execute the intent: FAB stays put, action bar's right padding tightens.
 
 ## Diagnosis
 
-In the previous turn I re-mounted `SuperAdminTopBar` inside `DashboardLayout.tsx`, but I likely placed it at the wrong level in the flex tree — outside the main content column, so it spans the full viewport width instead of being constrained to the area right of the sidebar.
+In `Schedule.tsx`:
+- Scheduler table wrapper: `pl-2 pr-4` → right edge at 16px from viewport.
+- FAB (`HelpFAB.tsx`, schedule branch): `fixed bottom-4 right-4` → right edge at 16px, width 56px → left edge at 72px from viewport right.
+- Action bar wrapper: `pl-2 pr-20` → right edge at 80px from viewport, leaving a ~64px gap to the FAB's left edge.
 
-Standard dashboard layout pattern:
-```
-<div flex>
-  <Sidebar />               ← fixed width column
-  <div flex-1 flex-col>     ← main column
-    <SuperAdminTopBar />    ← lives HERE, inside main column
-    <main>{children}</main>
-  </div>
-</div>
-```
-
-If `SuperAdminTopBar` is mounted as a sibling of the outer flex (or before the sidebar), it will render full-width and visually overlap the sidebar — exactly what the screenshot shows.
-
-## Investigation needed
-
-1. Read `src/components/dashboard/DashboardLayout.tsx` to confirm where `SuperAdminTopBar` was placed.
-2. Confirm sidebar width / container structure so the top bar can be re-nested correctly.
+To produce a 15px gap: action bar right padding must equal FAB-width (56px) + FAB-right-offset (16px) + gap (15px) = **87px**.
 
 ## Plan
 
-**1. Re-nest `SuperAdminTopBar` inside the main content column**
-- Move the `<SuperAdminTopBar />` JSX so it's a sibling of `<main>` *inside* the flex-1 main column, not at the layout root.
-- `ZuraCommandSurface` (the ⌘K palette) is a portal/dialog and can stay at the root — it doesn't affect layout flow.
+**1. Tighten action bar right padding** (`src/pages/dashboard/Schedule.tsx`, line 1044)
+- Change `pr-20` → `pr-[87px]` on the action bar wrapper.
+- Result: action bar right edge sits exactly 15px to the left of the FAB's left edge.
 
-**2. Verify no duplicate top bar instance**
-- Make sure another component (e.g., a parent wrapper, a route layout) isn't already rendering its own `SuperAdminTopBar`. If so, remove the duplicate from `DashboardLayout` to avoid two bars stacking.
-
-**3. Confirm sticky/positioning**
-- If `SuperAdminTopBar` uses `sticky top-0` or `fixed`, ensure its container has correct width constraints (i.e., is inside the main column, not the root flex).
+**2. Leave FAB as-is** (`src/components/dashboard/HelpFAB.tsx`)
+- `bottom-4 right-4` already places the FAB's right edge flush with the scheduler table's right edge (both at 16px from viewport). No change needed.
 
 ## Acceptance checks
 
-1. Top bar starts immediately to the right of the sidebar — no visual overlap with `DD°` logo or sidebar icons.
-2. Sidebar collapse/expand still works; top bar width adjusts accordingly.
-3. Search bar (⌘K) still opens the command palette.
-4. God Mode bar remains pinned at the very top above everything.
-5. No duplicate top bar rendered.
-6. Mobile viewport: top bar still spans full width when sidebar is hidden/drawer.
+1. FAB's right edge is flush with the scheduler table's right edge (both 16px from viewport).
+2. Exactly 15px of empty space between the action bar pill's right edge and the FAB's left edge.
+3. Vertical alignment of FAB and action bar unchanged.
+4. Other pages (non-schedule) FAB position untouched.
+5. No layout shift on different viewport widths — both elements anchor to the right edge.
 
-**Files to investigate & likely modify:**
-- `src/components/dashboard/DashboardLayout.tsx` (re-nest top bar inside main column)
-- Possibly check parent route components if a duplicate exists
+**Files to modify:**
+- `src/pages/dashboard/Schedule.tsx` (action bar wrapper padding)
