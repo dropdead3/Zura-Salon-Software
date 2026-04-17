@@ -737,6 +737,35 @@ export function CheckoutSummarySheet({
             </div>
           )}
 
+          {/* Add Service Dialog */}
+          <AddServiceDialog
+            open={addServiceOpen}
+            onOpenChange={setAddServiceOpen}
+            organizationId={organizationId}
+            locationId={locationId}
+            onAdd={({ serviceId, name, unitPrice, priceSource }) => {
+              cart.addLine({
+                type: 'service',
+                name,
+                serviceId,
+                staffId: appointment.stylist_user_id ?? null,
+                unitPrice,
+                quantity: 1,
+                isOriginal: false,
+                priceSource,
+              });
+              if (organizationId) {
+                logAudit.mutate({
+                  appointmentId: appointment.id,
+                  organizationId,
+                  eventType: AUDIT_EVENTS.SERVICE_ADDED_AT_CHECKOUT,
+                  previousValue: null,
+                  newValue: { name, unitPrice, priceSource },
+                });
+              }
+            }}
+          />
+
           {/* Static appointment metadata (date/time/stylist) */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Appointment</h3>
