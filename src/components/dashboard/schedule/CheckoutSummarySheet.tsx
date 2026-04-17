@@ -152,6 +152,26 @@ export function CheckoutSummarySheet({
   const { activeReader, readers, selectedReaderId, selectReader, hasReaders, isLoading: readersLoading } =
     useActiveTerminalReader(organizationId, locationId);
   const terminalFlow = useTerminalCheckoutFlow();
+
+  // Wave 22.1 — Pre-checkout Connect status guard. Surfaces a clear advisory
+  // when the location's Stripe Connect account isn't active, before the operator
+  // taps Charge and hits a backend error.
+  const { data: locationStripeStatus } = useQuery({
+    queryKey: ['location-stripe-status', locationId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('locations')
+        .select('stripe_status, stripe_payments_enabled')
+        .eq('id', locationId!)
+        .maybeSingle();
+      return data as { stripe_status: string | null; stripe_payments_enabled: boolean | null } | null;
+    },
+    enabled: !!locationId && open,
+    staleTime: 60_000,
+  });
+  const stripeConnectActive =
+    locationStripeStatus?.stripe_status === 'active' &&
+    locationStripeStatus?.stripe_payments_enabled === true;
   const { captureDeposit } = useTerminalDeposit();
   useEffect(() => {
     if (open) {
