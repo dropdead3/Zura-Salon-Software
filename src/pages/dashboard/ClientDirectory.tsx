@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOrgActiveCallbackCounts } from '@/hooks/useOrgActiveCallbackCounts';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { DuplicateDrilldown } from '@/components/dashboard/clients/DuplicateDrilldown';
