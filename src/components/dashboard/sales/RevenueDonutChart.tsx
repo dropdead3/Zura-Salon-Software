@@ -189,15 +189,17 @@ export function RevenueDonutChart({
             </div>
           </div>
         </div>
-        <div className="border-t border-border/40 pt-4 mt-4">
-          <RetailPerformanceAlert
-            trueRetailPercent={trueRetailPercent}
-            retailAttachmentRate={retailAttachmentRate}
-            total={total}
-            hasBreakdown={!!hasBreakdown}
-            embedded
-          />
-        </div>
+        {hasBreakdown && (
+          <div className="border-t border-border/40 pt-4 mt-4">
+            <RetailPerformanceAlert
+              trueRetailPercent={trueRetailPercent}
+              retailAttachmentRate={retailAttachmentRate}
+              total={total}
+              hasBreakdown={true}
+              embedded
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
