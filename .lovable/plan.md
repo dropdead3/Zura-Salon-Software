@@ -1,107 +1,100 @@
 
 
 ## Goal
-Finish the seamless checkout wave: reader picker, post-charge confirmation, tip-on-reader, plus two visibility enhancements that surface Connect status on the calendar surface and auto-sync status changes into open checkout sheets.
+Unify the loading experience across the app. Eliminate flashes between light/black/white, ensure every loader respects the active theme (light/dark), and downsize the ZuraLoader so it stops dominating mid-page loads.
 
-## Wave 2 — Reader picker + post-charge confirmation (`CheckoutSummarySheet.tsx`)
+## Investigation needed before plan finalizes
 
-### Gap 2 — Reader picker
-`useActiveTerminalReader` already returns `readers[]`, `selectedReaderId`, `selectReader`, and persists last-used per location to localStorage. UI just needs to surface the picker.
+I need to confirm a few things before writing the patch list. Let me list what I already know vs. what I'll verify in implementation mode:
 
-- In the payment panel, when `paymentMethod === 'card_reader'` AND `readers.length > 1`, render a small `<Select>` above the Charge button:
-  - Label: "Reader" 
-  - Options: `readers.filter(r => r.location === locationId).map(r => ({ value: r.id, label: r.label }))`
-  - Status indicator (online/offline dot) on each option
-  - Disabled when `terminalFlow.state` is mid-charge
-- Single-reader case: show muted `font-sans text-xs` line "Reader: {name}" (no picker)
-- Zero-reader case: existing `hasReaders` branch already handles this
+**Known from current context:**
+- `ZuraLoader` (the "disco Z") has sizes `sm | md | lg | xl` and a `platformColors` flag (violet shimmer) for bootstrap
+- `DashboardLoader` reads platform branding to pick a loader style + size, defaults to `lg`
+- `main.tsx` `BootstrapFallback` uses `bg-background` — but before React mounts, the HTML root may flash whatever color `index.html` paints first
+- `DashboardThemeProvider` only applies `dark` class when zone is `org-dashboard` — so platform routes, public routes, and the bootstrap window won't get the user's saved theme
+- Three other loader styles exist (`SpinnerLoader`, `DotsLoader`, `BarLoader`) all using `text-foreground/X` — these already respect theme via CSS vars
 
-### Gap 4 — Post-charge confirmation state
-Today the sheet closes on success. Replace with a 3-second in-sheet confirmation.
+**Need to verify in implementation mode:**
+- `index.html` initial `<body>` background color (source of pre-React flash)
+- Whether a theme-init script runs before React (to set `dark` class on `<html>` from localStorage)
+- All `<Loader2>` usages and ad-hoc loading states across the app (likely 30+ call sites)
+- `DashboardLoader` default size usage — is `lg` being passed everywhere or just the default?
 
-- Add new local state: `successState: { amount: number; method: string; last4?: string; receiptStatus: 'sent' | 'pending' | 'none' } | null`
-- On terminal flow completion (`terminalFlow.state === 'succeeded'`) and on cash/other settlement success, set `successState` and switch to a new `gatePhase === 'confirmation'` block instead of immediate `onOpenChange(false)`.
-- Confirmation panel (replaces payment panel content):
-  - Large checkmark icon (`CheckCircle2`, `text-success`)
-  - `font-display tracking-wide text-base`: "Paid {formatCurrency(amount)}"
-  - Muted line: payment method + last 4 if card
-  - Receipt status line: "✓ Receipt emailed to {email}" or "Send receipt" CTA
-  - "Done" button (`tokens.button.cardAction`) → closes sheet
-- Auto-dismiss timer: `setTimeout(() => onOpenChange(false), 4000)` on entering confirmation phase, cleared if operator clicks Done sooner or reopens the receipt CTA.
+## Root causes of the chaos
 
-## Wave 3 — Tip-on-reader (Gap 3)
+1. **Pre-React flash (white→black or black→white):** No inline theme-init script in `index.html`. Browser paints body background before React reads localStorage and applies `dark` class. Bootstrap fallback then renders with `bg-background`, which resolves differently depending on whether `dark` class is set yet.
 
-### Frontend (`CheckoutSummarySheet.tsx` + `useTerminalCheckoutFlow.ts`)
-- Add toggle `tipMode: 'app' | 'reader'` in payment panel (TogglePill component, defaults to `'app'` for parity with current behavior; persisted per location to localStorage)
-- When `tipMode === 'reader'`: hide in-app tip selector, pass `collectTipOnReader: true` into `terminalFlow.start({...})`
-- After PI succeeds, read final tip amount from PI metadata (`tip_amount` returned by edge function in completion payload), use it for audit log + payroll tip distribution
+2. **Theme scope is too narrow:** `DashboardThemeProvider` only applies `dark` to `<html>` when `zone === 'org-dashboard'`. Public routes, login, platform routes, and the bootstrap window all render in light mode regardless of user preference — so navigating between zones causes visible theme flips.
 
-### Edge function (`supabase/functions/create-terminal-payment-intent/index.ts`)
-- Accept `collect_tip_on_reader: boolean` in request body
-- When true, configure PaymentIntent:
-  ```ts
-  payment_method_options: {
-    card_present: {
-      request_extended_authorization: 'if_available',
-    },
-  },
-  // Stripe Terminal tipping config on the reader process_payment_intent call
-  ```
-- The reader-side tipping is configured via `terminal.readers.processPaymentIntent` with `process_config: { tipping: { amount_eligible: <subtotal_in_cents> } }`. This lives in the existing reader-process call (likely inside `terminalFlow` polling start). Add the param plumb-through.
-- Return final `tip_amount` from the captured PI back to the client on terminal completion poll
+3. **Loader size inflation:** `DashboardLoader` defaults to `size="lg"` and is used as a full-page loader inside cards/sections too. The Z-grid at `lg` (3.5×3.5 cells × 7 cols + gaps) is ~32px wide — visually heavy for inline section loads.
 
-## Enhancement A — Connect-status pill on appointment cards
+4. **Inconsistent loader vocabulary:** Mix of raw `<Loader2>` (lucide spinner, theme-agnostic via `text-muted-foreground`), `DashboardLoader` (config-aware), and `ZuraLoader` directly. No clear rule on which to use where.
 
-### New hook: `src/hooks/useLocationStripeStatuses.ts`
-Bulk-fetches Stripe status for all visible locations in a single query (mirrors `useAppointmentDeclinedReasons` pattern):
-```ts
-useLocationStripeStatuses(locationIds: string[])
-  → Map<locationId, { active: boolean; status: string }>
-```
-- Single query: `select('id, stripe_status, stripe_payments_enabled').in('id', locationIds)`
-- `staleTime: 60_000`
-- `enabled: locationIds.length > 0`
+## Proposed fix (4 layers)
 
-### New component: `src/components/dashboard/schedule/ConnectStatusPill.tsx`
-- Tiny pill: `font-sans text-[10px] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/30`
-- Label: "Setup needed" with optional tooltip "Card payments unavailable — finish Stripe Connect onboarding"
-- Renders nothing when location is active (silence is valid output)
+### Layer 1 — Kill the pre-React flash (highest impact, smallest code)
 
-### Integration
-- `DayView.tsx`: collect unique `locationId`s from `appointments`, call `useLocationStripeStatuses(locationIds)`, pass `connectInactive` boolean per appointment to `AppointmentCardContent`
-- `WeekView.tsx` + `AgendaView.tsx`: same threading
-- `AppointmentCardContent.tsx`: new optional prop `connectInactive?: boolean`. Render `<ConnectStatusPill />` next to the existing indicator cluster (alongside `RebookSkippedDot`) — but only when `appointment.status` is `'scheduled' | 'confirmed' | 'checked_in' | 'in_progress'` (pre-checkout states). Hide on completed (no longer actionable).
+**`index.html`** — add inline blocking script in `<head>` (before any paint) that:
+- Reads `dashboard-theme` from localStorage
+- If `dark` (or `system` + `prefers-color-scheme: dark`), adds `dark` class to `<html>` immediately
+- Sets `<html>` background-color via inline style to match the resolved theme's `--background` token (hardcode the two HSL values to avoid CSS-var dependency before stylesheet loads)
 
-## Enhancement B — Auto-invalidate Connect status on activation
+This eliminates the white→dark flash for returning dark-mode users and the dark→light flash for light-mode users. ~15 LOC, no React dependency.
 
-Add `['location-stripe-status']` invalidation to every mutation that can change `locations.stripe_status` or `stripe_payments_enabled`:
+### Layer 2 — Broaden theme application scope
 
-- `src/hooks/useZuraPayConnect.ts`:
-  - `useVerifyZuraPayConnection.onSuccess` — add `queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] })` (broad invalidation since multiple locations may flip)
-  - `useConnectLocation.onSuccess` — add same invalidation
-  - `useResetZuraPayAccount.onSuccess` — add same invalidation
-- Realtime channel: `useStripePaymentsHealth.ts` already subscribes to relevant tables; add a sibling listener (or extend its existing one) on the `locations` table for `stripe_status` updates that calls `queryClient.invalidateQueries({ queryKey: ['location-stripe-status'] })`. This catches webhook-driven status flips without requiring a manual click.
+**`src/contexts/DashboardThemeContext.tsx`** — remove the `zone === 'org-dashboard'` guard around the `dark` class application. The user's chosen theme should apply globally: bootstrap, login, platform, public org pages, and dashboard. Keep the platform-color isolation (`.platform-theme` class scoping for branding tokens) — that's separate from dark/light mode.
+
+Edge case: marketing/public routes that have hardcoded designs may need an opt-out wrapper class (`force-light-theme`) on their root. Will audit during implementation; if any exist, add a one-liner override in `index.css`.
+
+### Layer 3 — Right-size the ZuraLoader
+
+**`src/components/ui/ZuraLoader.tsx`** — no API change, but recalibrate the size scale:
+- `sm`: keep current (already small, good for inline)
+- `md`: shrink slightly (currently 2.5px cells → 2px) — this becomes the new section/card default
+- `lg`: keep current (page-level loads)
+- `xl`: keep current (bootstrap only)
+
+**`src/components/dashboard/DashboardLoader.tsx`** — change default `size` from `lg` to `md`. Page-level loaders that need larger explicitly pass `size="lg"`.
+
+This reduces visual weight in ~80% of usage (section/card loads) while preserving the bootstrap presence.
+
+### Layer 4 — Standardize loader usage
+
+Two-rule convention, documented at the top of `DashboardLoader.tsx`:
+
+1. **Section/page loads inside the dashboard:** use `<DashboardLoader />` (config-aware, respects branding choice).
+2. **Inline/button/inline-text loads:** use `<Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />` — small, theme-aware via `text-muted-foreground`, never replaces the Z grid for tiny spots.
+
+**Bootstrap fallback (`main.tsx`):** keep `ZuraLoader size="xl" platformColors` — this is the brand moment, not a generic loader. But ensure the fallback container uses `bg-background` and inherits the dark class from Layer 1's inline script.
+
+**Audit pass:** scan for direct `<ZuraLoader size="lg" />` usage outside of bootstrap and `DashboardLoader`. Replace with `<DashboardLoader />` so branding config takes effect.
 
 ## Out of scope
-- Split tender, inline card-on-file in checkout, pre-auth on appointment open (already noted as post-launch polish)
-- Connect-status pill on past/completed appointments (no actionability)
-- Persisting reader picker selection to backend (localStorage is sufficient — reader choice is device-ergonomic, not policy)
-
-## Files to create
-1. `src/hooks/useLocationStripeStatuses.ts`
-2. `src/components/dashboard/schedule/ConnectStatusPill.tsx`
+- Replacing all `<Loader2>` usages with `DashboardLoader` (too aggressive — small inline spinners are fine)
+- Adding a new loader style
+- Touching the platform-side branding picker UI
+- Marketing site visual redesign (just confirming dark-mode opt-out works there)
 
 ## Files to modify
-1. `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — reader picker, confirmation phase, tip-mode toggle
-2. `src/hooks/useTerminalCheckoutFlow.ts` — accept `tipMode`, pass through, return final tip from PI
-3. `supabase/functions/create-terminal-payment-intent/index.ts` — accept `collect_tip_on_reader`, configure tipping on reader process call
-4. `src/components/dashboard/schedule/AppointmentCardContent.tsx` — `connectInactive` prop, render pill in indicator cluster
-5. `src/components/dashboard/schedule/DayView.tsx` — call `useLocationStripeStatuses`, thread map down
-6. `src/components/dashboard/schedule/WeekView.tsx` — same threading
-7. `src/components/dashboard/schedule/AgendaView.tsx` — same threading
-8. `src/hooks/useZuraPayConnect.ts` — add `['location-stripe-status']` invalidation to 3 mutation hooks
-9. `src/hooks/useStripePaymentsHealth.ts` — extend realtime listener to invalidate `['location-stripe-status']` on `locations` row updates
+
+| File | Change |
+|---|---|
+| `index.html` | Add inline `<head>` script: read theme from localStorage, apply `dark` class + inline `<html>` background before paint |
+| `src/contexts/DashboardThemeContext.tsx` | Remove `zone === 'org-dashboard'` guard; apply `dark` class globally based on resolved theme |
+| `src/components/ui/ZuraLoader.tsx` | Recalibrate `md` size down; document size guidance in JSDoc |
+| `src/components/dashboard/DashboardLoader.tsx` | Default `size` from `lg` → `md`; add usage convention comment |
+| `src/index.css` | (If audit finds public/marketing pages with hardcoded light design) add `.force-light-theme { color-scheme: light; }` opt-out class |
+| Up to ~5 call sites | Replace direct `<ZuraLoader size="lg" />` mid-page with `<DashboardLoader />` (final list determined during audit) |
 
 ## Ship order
-**Wave 2 first** (single file, highest operator-confidence return) → **Enhancement A + B together** (visibility loop closes both directions: pill warns before open, invalidation refreshes if mid-open) → **Wave 3 last** (touches edge function, deserves isolated deploy).
+1. Layer 1 first (inline theme-init in `index.html`) — eliminates the most visible flash with the least risk
+2. Layer 2 + 3 + 4 together — they're a single coherent UX wave
+3. Audit pass — find and patch any rogue direct ZuraLoader usages
+
+## Verification signal
+- Hard-refresh the app in dark mode → no white flash before React mounts
+- Navigate from login → dashboard → platform admin → public org page → no theme flips
+- Section loaders (e.g., Schedule, Analytics) show smaller, less dominant Z grid
+- Inline loaders in buttons/cards remain small spinners (unchanged)
 
