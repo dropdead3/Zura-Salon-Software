@@ -2,35 +2,44 @@
 
 ## Diagnosis
 
-The Tips card content is short (~60px), but it's rendering ~150px tall because of how it sits in the dashboard grid:
+The tooltip content is rendering far to the left of the info icon because the `MetricInfoTooltip` is positioned `absolute top-3 right-3` on the Tips card, but the tooltip's default `side="top"` with center alignment causes it to anchor center-to-center on the trigger. Combined with the trigger being a tiny `w-3 h-3` icon at the far right edge of the card, Radix's collision detection is shifting the popover leftward to keep it inside the viewport/container.
 
-- Outer grid (line 773): `grid xl:grid-cols-3 gap-6` with the left column set to `xl:col-span-2 flex flex-col h-full`.
-- Right "sidebar" column (line 1519): `flex flex-col gap-6` — no `h-full`, but CSS Grid stretches it to match the left column's tall height by default (`align-items: stretch`).
-- Inside the sidebar, `TopPerformersCard` is `Card className="... h-full flex flex-col"`. The `h-full` propagates the stretched parent height into TopPerformers, and the column's vertical distribution leaves the Tips `Card` getting stretched too (Card has no `align-self`, so it defaults to `stretch` on the cross-axis of the column — but the column's main-axis is vertical, so stretch applies horizontally only; however, the Tips card's natural height is small, and what we're actually seeing is **the column itself being taller than its natural content + the Tips card sitting at its natural height with the icon row vertically centered by the inner CardHeader's `flex flex-col` + space-y not pinning it to top**).
+Looking at the screenshot: the tooltip content is appearing near the top-left of the card area, while the cursor is on the icon at the top-right. This is classic Radix collision-avoidance kicking in because:
 
-Combining: the Tips card has been getting auto-vertical-centering via its absolute-positioned info icon (which doesn't take layout space), giving the impression of empty top space.
+1. The tooltip is wide (`max-w-[280px]`) relative to available space above the icon.
+2. With `side="top"` (default), Radix tries to center the 280px popover above a 12px icon sitting near the right edge — it can't, so it slides left.
+3. There may also be a `Portal` + transform-origin issue making it look detached.
 
-Re-reading the screenshot: the "TIPS" row IS sitting in the lower portion of a tall card border. That confirms the **Card itself is taller than its content**. The cause is that `Card` with `bg-card/80 backdrop-blur-xl border-border/40` plus the column stretching renders the card with extra vertical space.
+## Fix
 
-The fix is to **stop the Tips card from stretching vertically** when collapsed.
+In `src/components/dashboard/AggregateSalesCard.tsx`, pass `side="left"` (or `side="bottom"` with an `align="end"`) to the `MetricInfoTooltip` for the Tips card so the tooltip anchors adjacent to the icon instead of trying to center above it.
+
+Best option: `side="left"` — the tooltip will appear directly to the left of the info icon, immediately adjacent to where the cursor is hovering. This matches the visual mental model of "tooltip belongs to this icon."
+
+### Alternative considered
+`side="bottom" align="end"` would drop the tooltip directly below the icon, right-aligned. Also valid but feels less connected to a top-right corner icon.
 
 ## Change
 
-File: `src/components/dashboard/AggregateSalesCard.tsx` (Tips card, ~line 1541)
+File: `src/components/dashboard/AggregateSalesCard.tsx`
 
-Add `self-start` to the Tips `Card` className so it never stretches taller than its own content within the flex-col sidebar:
+Locate the `MetricInfoTooltip` placed in the top-right of the Tips card and add `side="left"`:
 
 ```tsx
-<Card className="relative self-start bg-card/80 backdrop-blur-xl border-border/40">
+<MetricInfoTooltip
+  description="..."
+  side="left"
+  className="absolute top-3 right-3 z-10"
+/>
 ```
 
-That single class pins the card to its natural height. The sidebar column can remain stretched by the grid, but the Tips card will hug its header content (~60px collapsed, taller when expanded).
+`MetricInfoTooltip` already accepts a `side` prop (verified in `src/components/ui/MetricInfoTooltip.tsx`), so no component changes are needed.
 
 ## Out of scope
-- Restructuring the outer grid or removing `h-full` from the left column (would affect Top Staff + Donut layout).
-- Changing TopPerformersCard's `h-full` (it intentionally fills sidebar height).
-- Re-laying out the header / icon / label.
+- Changing the `MetricInfoTooltip` component default
+- Adjusting tooltip width, content, or other cards' tooltip placements
+- Restyling the icon position itself
 
 ## Files
-- **Modify**: `src/components/dashboard/AggregateSalesCard.tsx` — add `self-start` to the Tips `Card` wrapper.
+- **Modify**: `src/components/dashboard/AggregateSalesCard.tsx` — add `side="left"` to the Tips card's top-right `MetricInfoTooltip`.
 
