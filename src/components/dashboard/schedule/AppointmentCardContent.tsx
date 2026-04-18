@@ -363,6 +363,7 @@ function AgendaContent({
   serviceLookup,
   assistantNamesMap,
   hasAssistants,
+  connectInactive,
   onClick,
 }: {
   appointment: PhorestAppointment;
@@ -370,11 +371,13 @@ function AgendaContent({
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   hasAssistants: boolean;
+  connectInactive?: boolean;
   onClick: () => void;
 }) {
   const statusConfig = APPOINTMENT_STATUS_BADGE[appointment.status];
   const isCancelledOrNoShow = appointment.status === 'cancelled' || appointment.status === 'no_show';
   const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
+  const showConnectPill = !!connectInactive && PRE_CHECKOUT_STATUSES.has(appointment.status || '');
 
   return (
     <Card
@@ -410,9 +413,10 @@ function AgendaContent({
                   {getClientInitials(appointment.client_name)}
                 </span>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="font-medium text-base">{appointment.client_name}</h4>
                     <IndicatorCluster flags={indicatorFlags} size="full" />
+                    {showConnectPill && <ConnectStatusPill active={false} />}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}
