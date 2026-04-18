@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
+import { getOrgToday, toOrgDayBounds } from '@/lib/orgTime';
 
 interface TodayActualRevenueData {
   actualRevenue: number;
@@ -24,7 +25,9 @@ interface LocationActualData {
 }
 
 export function useTodayActualRevenue(enabled: boolean) {
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const { timezone } = useOrgDefaults();
+  const today = getOrgToday(timezone);
+  const { startUtc, endUtc } = toOrgDayBounds(today, today, timezone);
   const queryClient = useQueryClient();
 
 
@@ -57,7 +60,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
   // Today's service hours from appointments
   const serviceHoursQuery = useQuery({
-    queryKey: ['today-service-hours', today],
+    queryKey: ['today-service-hours', today, timezone],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_all_appointments' as any)
@@ -83,13 +86,13 @@ export function useTodayActualRevenue(enabled: boolean) {
 
   // Primary: POS transaction items (live data, single source of truth)
   const actualRevenueQuery = useQuery({
-    queryKey: ['today-actual-revenue', today],
+    queryKey: ['today-actual-revenue', today, timezone],
     queryFn: async () => {
       const { data: txnData, error: txnError } = await supabase
         .from('v_all_transaction_items' as any)
         .select('item_type, total_amount, tax_amount, phorest_client_id')
-        .gte('transaction_date', `${today}T00:00:00`)
-        .lte('transaction_date', `${today}T23:59:59`);
+        .gte('transaction_date', startUtc)
+        .lte('transaction_date', endUtc);
 
       if (txnError) throw txnError;
 
@@ -132,7 +135,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
 
   const lastAppointmentQuery = useQuery({
-    queryKey: ['today-last-appointment', today],
+    queryKey: ['today-last-appointment', today, timezone],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_all_appointments' as any)
@@ -150,7 +153,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
   // Per-location actual revenue (from transaction items)
   const locationActualRevenueQuery = useQuery({
-    queryKey: ['today-actual-revenue-by-location', today],
+    queryKey: ['today-actual-revenue-by-location', today, timezone],
     queryFn: async () => {
       // Fetch location mapping: phorest_branch_id → app location id
       const { data: locations } = await supabase
@@ -172,8 +175,8 @@ export function useTodayActualRevenue(enabled: boolean) {
       const { data: txnData, error: txnError } = await supabase
         .from('v_all_transaction_items' as any)
         .select('location_id, item_type, total_amount, tax_amount, phorest_client_id')
-        .gte('transaction_date', `${today}T00:00:00`)
-        .lte('transaction_date', `${today}T23:59:59`);
+        .gte('transaction_date', startUtc)
+        .lte('transaction_date', endUtc);
 
       if (txnError) throw txnError;
       if (!txnData || txnData.length === 0) return {};
@@ -211,7 +214,7 @@ export function useTodayActualRevenue(enabled: boolean) {
 
   // Per-location last appointment end time
   const locationLastApptQuery = useQuery({
-    queryKey: ['today-last-appointment-by-location', today],
+    queryKey: ['today-last-appointment-by-location', today, timezone],
     queryFn: async () => {
       // Fetch location mapping for consistency
       const { data: locations } = await supabase
