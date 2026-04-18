@@ -103,7 +103,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
         <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
           <Trophy className="w-5 h-5 text-primary" />
         </div>
-        <CardTitle className="font-display text-sm tracking-wide">TOP PERFORMERS</CardTitle>
+        <CardTitle className="font-display text-sm tracking-wide">TOP STAFF</CardTitle>
       </div>
       <div className="flex items-center gap-2">
         <FilterTabsList>
