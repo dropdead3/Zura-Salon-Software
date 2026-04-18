@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 
-export type LoaderStyleOption = 'zura' | 'spinner' | 'dots' | 'bar';
+export type LoaderStyleOption = 'luxe' | 'zura' | 'spinner' | 'dots' | 'bar';
 
 export interface PlatformBranding {
   primary_logo_url: string | null;
@@ -25,7 +25,7 @@ const DEFAULT_BRANDING: PlatformBranding = {
   login_logo_url: null,
   theme_colors: {},
   typography: {},
-  loader_style: 'zura',
+  loader_style: 'luxe',
   use_skeleton_loaders: false,
 };
 
@@ -75,7 +75,7 @@ export function usePlatformBranding() {
         login_logo_url: (value.login_logo_url as string | null) ?? null,
         theme_colors: (value.theme_colors as Record<string, string>) ?? {},
         typography: (value.typography as Record<string, string>) ?? {},
-        loader_style: (value.loader_style as LoaderStyleOption) ?? 'zura',
+        loader_style: (value.loader_style as LoaderStyleOption) ?? 'luxe',
         use_skeleton_loaders: (value.use_skeleton_loaders as boolean) ?? false,
       };
     },
