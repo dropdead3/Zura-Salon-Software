@@ -102,15 +102,18 @@ export function InsightsNudgeBanner({
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isNeverChecked
-                ? `${PLATFORM_NAME} has personalized performance data and growth tips ready for you — let's grow! 🌱`
-                : `${PLATFORM_NAME} has fresh performance data and growth tips waiting for you — let's grow! 🌱`}
+                ? `${PLATFORM_NAME} has personalized performance data and growth tips ready for you.`
+                : `${PLATFORM_NAME} has fresh performance data and growth tips waiting for you.`}
             </p>
           </div>
-          <Link to={dashPath('/')}>
-            <Button size={tokens.button.card} variant="outline" className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
-              View Insights
-            </Button>
-          </Link>
+          <Button
+            size={tokens.button.card}
+            variant="outline"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-insights-panel'))}
+            className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
+          >
+            View Insights
+          </Button>
           <button
             onClick={() => setDismissed(true)}
             className="flex-shrink-0 p-1 rounded-full hover:bg-muted transition-colors"

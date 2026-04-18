@@ -94,6 +94,18 @@ export function CommandCenterControlRow({
     setActivePanel(null);
   }, []);
 
+  // Allow other surfaces (e.g., InsightsNudgeBanner) to open the Insights drawer
+  useEffect(() => {
+    const handler = () => {
+      setActivePanel('insights');
+      requestAnimationFrame(() => {
+        containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    };
+    window.addEventListener('open-insights-panel', handler);
+    return () => window.removeEventListener('open-insights-panel', handler);
+  }, []);
+
   return (
     <div ref={containerRef} className="pt-6 pb-2">
       {/* Controls Row — stable, never shifts */}
