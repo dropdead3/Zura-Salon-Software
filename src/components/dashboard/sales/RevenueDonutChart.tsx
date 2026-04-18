@@ -6,6 +6,8 @@ import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { getRetailPerformanceVerdict } from '@/lib/retailPerformance';
+import { cn } from '@/lib/utils';
 
 interface RetailBreakdownData {
   productOnlyRevenue?: number;
