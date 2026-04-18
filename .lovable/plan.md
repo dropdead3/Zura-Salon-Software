@@ -1,74 +1,50 @@
 
 
-## Two parallel tracks: loader leak fix (urgent) + test hardening (nice-to-have)
+## Bug: "Stylist 5" appears in Happening Now because a Phorest staff is unmapped
 
-The user reports the **Z disco loader (ZuraLoader)** still appears during schedule load despite the unification work. That's the priority — the test refinements are secondary.
+### Root cause (confirmed via DB inspection)
 
-### Track A — Hunt down the remaining ZuraLoader leak (PRIORITY)
+The user's hypothesis is partially right and partially wrong:
+- **Wrong:** these are not the same appointment shown twice. They are two genuinely separate Phorest appointments — different staff IDs, different locations, slightly different end times (17:30 vs 17:00).
+- **Right:** something IS broken. The "Stylist 5" appointment at North Mesa belongs to Phorest staff ID `LTAp-jlMGDKgre8YqAf9Fg` who has **zero rows** in `phorest_staff_mapping` (and therefore in `v_all_staff`). With no name available, `useLiveSessionSnapshot` falls all the way through its waterfall and lands on the generic `Stylist ${fallbackIndex}` placeholder.
 
-The unified loader chain says: `BootLuxeLoader` for boot/Suspense/auth, `DashboardLoader` for in-app sections. `ZuraLoader` should ONLY appear if a platform admin explicitly selected "zura" in `useLoaderConfig`. Yet the user sees it on schedule load.
+This Phorest staff has **14 appointments** in the DB — they are an active stylist who has never been synced to Zura's mapping table. Same root cause that the [Staff Mapping Constraints](mem://constraints/project-specific-staff-mapping) memory documents.
 
-Three possible root causes — investigation needed before plan execution:
+### What's actually happening in the code
 
-1. **Direct `<ZuraLoader />` import** somewhere in the schedule load path (route shell, ProtectedRoute, OrganizationContext bootstrap, schedule route component, or a child mounted during load). Bypasses the unified chain entirely.
-2. **`useLoaderConfig` defaulting wrong** — if `branding.loader_style` resolves to `'zura'` for this org's platform branding, then `DashboardLoader` is correctly rendering Zura per config. Either (a) the branding is genuinely set to zura and that's a config issue, or (b) there's a fallback path that picks zura when branding hasn't loaded yet.
-3. **Stacking sequence** — `BootLuxeLoader` paints during auth/Suspense, then `DashboardLoader` mounts with zura config, and the user perceives both as "two different loaders" even though both are correct.
+In `useLiveSessionSnapshot.ts` (lines 150–157 and again 209–216) the name resolution waterfall is:
+1. Mapped employee profile → use `formatFullDisplayName(...)`
+2. Else mapped Phorest name from `v_all_staff` → use that
+3. Else → `Stylist ${fallbackIndex}` ← **this is the leak**
 
-**Investigation plan (read-only, before execution plan):**
-- `grep -rn "ZuraLoader" src/` — find every direct import outside `DashboardLoader.tsx` and the loaders barrel.
-- `grep -rn "from '@/components/ui/ZuraLoader'" src/` — direct primitive imports.
-- Read schedule route entry, `ProtectedRoute`, `OrganizationContext`, and any Suspense boundary in the schedule load chain.
-- Check `usePlatformBranding` to see what `loader_style` returns when branding hasn't loaded yet (likely undefined → falls through to `'luxe'` default, but verify).
-- Verify the schedule page's loading skeletons aren't using `ZuraLoader` directly.
+The fallback was designed for missing data, but in production it surfaces as anonymous "Stylist N" labels that look like bugs to operators. Worse, the `fallbackIndex` is order-dependent — the same unmapped staff can appear as "Stylist 3" on Monday and "Stylist 7" on Tuesday depending on iteration order, which destroys recognizability.
 
-**Execution plan (after investigation):**
-- Replace any direct `ZuraLoader` imports in the schedule load path with `DashboardLoader` (which respects branding config and defaults to luxe).
-- If `useLoaderConfig` has a race where `branding.loader_style` momentarily returns `'zura'` before the real value loads, force a luxe fallback during the unloaded state.
-- Confirm only one loader element renders from cold-load to first paint.
+### The fix (two layers)
 
-### Track B — Test refinements (after Track A lands)
+#### Layer 1 — runtime: stop emitting "Stylist N"
+Replace the generic fallback in both name resolution sites (lines 155 and 215) with a single more useful label:
+- Use `phorestName` if present (already covered).
+- If neither profile nor phorestName exists, fall back to `Unmapped Stylist` (singular, no index) plus the truncated staff ID for support traceability — e.g. `Unmapped (LTAp-jlMG…)`. Operators can then immediately see "this is a sync issue" rather than thinking it's a duplicate ghost.
+- Bonus: lookup the staff name directly from `phorest_staff_mapping` even when `v_all_staff` doesn't return them (the v_all_staff view may be filtering on `is_active` or org scoping; need to verify why this Phorest staff isn't surfacing despite having 14 appointments). Investigate the view definition; if it's a filter issue, the right fix is a left-join fallback in the hook.
 
-#### B1. Isolate selector in snapshot
-Change `expect(config.rules['no-restricted-syntax']).toMatchSnapshot()` to `expect(config.rules['no-restricted-syntax'][1].selector).toMatchSnapshot()`. Severity change in Wave 2 won't trigger noisy diff; only selector regressions will.
-
-Update `src/test/__snapshots__/lint-rule-loader2.test.ts.snap` accordingly (regenerate by deleting the existing snapshot block).
-
-#### B2. Negative escape-hatch test
-Create `src/test/lint-fixtures/loader2-wrong-disable.tsx`:
-```tsx
-import { Loader2 } from 'lucide-react';
-export function WrongDisableLoader() {
-  return (
-    <div>
-      {/* eslint-disable-next-line @typescript-eslint/no-unused-vars -- wrong rule name */}
-      <Loader2 className="w-4 h-4 animate-spin" />
-    </div>
-  );
-}
-```
-Add a fifth test asserting the `no-restricted-syntax` violation **still fires** despite the unrelated disable comment. Confirms ESLint's directive is rule-scoped.
-
-#### B3. CODEOWNERS gate on snapshot file
-Add to `.github/CODEOWNERS` (create if absent):
-```
-src/test/__snapshots__/lint-rule-loader2.test.ts.snap @<user-handle>
-eslint.config.js @<user-handle>
-```
-**Blocker:** I don't know the user's GitHub handle or whether CODEOWNERS is already in use. Will need to ask before writing.
-
-### Sequencing
-1. **Now (Track A only):** investigate + fix the ZuraLoader leak. This is the visible regression.
-2. **Next plan (Track B):** test refinements — bundle B1 + B2; defer B3 pending CODEOWNERS clarification.
+#### Layer 2 — visibility contract: surface the sync gap
+"Unmapped Stylist" is still a soft signal. Per the Visibility Contracts doctrine, this is exactly the kind of structural drift that should produce a real alert, not a silent label. Add a small inline warning chip on the row (`AlertTriangle` icon + "Sync needed" tooltip) so the operator knows to action it from the Operations Hub → Staff Mapping page. Keep it dev-friendly: clicking the chip routes them to the mapping fix-up screen filtered to that staff ID.
 
 ### Out of scope for this plan
-- Wave 2 sweep itself (still its own future plan).
-- Any change to loader visual primitives or cooldown timing.
-- Telemetry hook (still deferred).
+- Fixing the actual mapping for `LTAp-jlMGDKgre8YqAf9Fg` (operator/support task — not code).
+- Auditing why `v_all_staff` excludes this staff record (may be a separate plan if the view turns out to be over-filtering — I'll inspect the view definition during execution and report back if it needs its own fix).
+- Any backfill of historic anonymous labels in cached queries (cache TTL handles it).
+
+### Files touched
+- `src/hooks/useLiveSessionSnapshot.ts` — replace fallback label, add unmapped flag to `StylistDetail`.
+- `src/components/dashboard/LiveSessionDrilldown.tsx` — render the "Sync needed" chip on unmapped rows.
 
 ### Verification
-- Track A: cold-reload `/org/drop-dead-salons/dashboard/schedule` with throttled network. Only one loader element appears from auth gate through first paint. No Z disco grid unless platform branding explicitly selects "zura".
-- Track B (next plan): snapshot file shows only the selector string. Negative fixture produces 1 lint error. CODEOWNERS file requires review on snapshot changes.
+- Open Happening Now on the org with the unmapped staff. The North Mesa row should now read "Unmapped (LTAp-jlMG…)" with a small warning chip, not "Stylist 5". Hover the chip → tooltip explains the sync gap. Gavin Eagan's separate appointment at Val Vista Lakes is unchanged.
+- Confirm count math is unaffected: still 6 appointments, 6 stylists working (the unmapped one IS a real stylist serving a real client).
 
 ### Prompt feedback
-Strong prompt — three sharp test refinements PLUS a critical bug report bundled together. The bundling is fine here because the bug is in the *same domain* (loaders) the test refinements protect. But for future prompts: when a user-visible regression and infrastructure polish land in the same message, lead with the regression so I prioritize correctly. You did this implicitly by putting the loader complaint last (most recent = most important), but explicit framing ("priority: still seeing Z loader. also: three test polish ideas") makes the ordering unambiguous and prevents me from spending the first half of the plan on snapshots while the visible bug sits.
+Strong bug report — you included a screenshot, your hypothesis ("same appointment twice"), and your reasoning ("Stylist 5 is Gavin Eagan"). The hypothesis turned out to be wrong but the screenshot + reasoning was exactly enough for me to find the real cause in three queries. That's the gold standard: lead with what you see, follow with what you think, leave room for the diagnosis to differ.
+
+One refinement: when you suspect duplication, including the precise visual difference you'd expect to see if it WERE a duplicate ("both should show ~7:00 PM" — they actually do, coincidentally) helps me falsify faster. In this case the wrap-up times happened to match, which reinforced your hypothesis but masked the underlying location/end-time difference. Adding "I'd expect them to differ if separate" would have prompted me to lead with the diff check instead of the mapping check.
 
