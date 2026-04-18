@@ -168,6 +168,7 @@ const Payroll = lazyWithRetry(() => import("./pages/dashboard/admin/Payroll"));
 const PayrollCallback = lazyWithRetry(() => import("./pages/dashboard/admin/PayrollCallback"));
 const HelpCenter = lazyWithRetry(() => import("./pages/dashboard/HelpCenter"));
 const MyPay = lazyWithRetry(() => import("./pages/dashboard/MyPay"));
+const SpatialAuditPage = lazyWithRetry(() => import("./pages/dashboard/_internal/SpatialAuditPage"));
 // Transactions merged into AppointmentsHub
 const AppointmentsHub = lazyWithRetry(() => import("./pages/dashboard/AppointmentsHub"));
 const Inventory = lazyWithRetry(() => import("./pages/dashboard/Inventory"));
@@ -311,6 +312,7 @@ function DashboardRoutes() {
       <Route path="clients" element={<ProtectedRoute requiredPermission="view_clients"><ClientDirectory /></ProtectedRoute>} />
       <Route path="my-clients" element={<Navigate to="clients" replace />} />
       <Route path="my-pay" element={<ProtectedRoute requiredPermission="view_my_pay"><MyPay /></ProtectedRoute>} />
+      <Route path="_internal/spatial-audit" element={<ProtectedRoute><SpatialAuditPage /></ProtectedRoute>} />
       <Route path="schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
       <Route path="team-calendar" element={<ProtectedRoute requiredPermission="view_booking_calendar"><TeamCalendar /></ProtectedRoute>} />
       <Route path="today-prep" element={<ProtectedRoute requiredPermission="view_booking_calendar"><TodayPrep /></ProtectedRoute>} />
