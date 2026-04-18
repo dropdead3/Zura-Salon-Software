@@ -1538,25 +1538,26 @@ export function AggregateSalesCard({
           />
 
           {/* Tips Summary Card */}
-          <Card className="bg-card/80 backdrop-blur-xl border-border/40">
+          <Card className="relative bg-card/80 backdrop-blur-xl border-border/40">
+            <MetricInfoTooltip
+              description="Total gratuities (staff tips) recorded across all completed appointments. Not included in total revenue. Click for stylist breakdown."
+              className="absolute top-3 right-3 z-10"
+            />
             <CardHeader className={tipsCardExpanded ? "pb-3" : "pb-6"}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <div className="flex items-center justify-between gap-2 pr-6">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
                     <DollarSign className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="font-display text-base tracking-wide">TIPS</CardTitle>
-                    <MetricInfoTooltip description="Total gratuities (staff tips) recorded across all completed appointments. Not included in total revenue. Click for stylist breakdown." />
-                  </div>
+                  <CardTitle className="font-display text-base tracking-wide">TIPS</CardTitle>
                 </div>
                 <div
-                  className="flex items-center gap-2 cursor-pointer select-none"
+                  className="flex items-center gap-2 cursor-pointer select-none min-w-0"
                   onClick={handleTipsCardToggle}
                 >
                   {!tipsCardExpanded && (
-                    <span className="flex items-center gap-2 text-sm">
-                      <span className="font-sans text-muted-foreground">Average Tip Rate</span>
+                    <span className="flex items-center gap-2 text-sm min-w-0">
+                      <span className="font-sans text-muted-foreground hidden xl:inline truncate whitespace-nowrap">Average Tip Rate</span>
                       <span className="font-display tabular-nums text-foreground">
                         {(() => {
                           const tipDenominator = isToday && todayActual?.hasActualData
