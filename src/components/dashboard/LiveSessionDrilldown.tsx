@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock, MapPin, AlertTriangle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { LocationSelect } from '@/components/ui/location-select';
 import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
 import { isAllLocations } from '@/lib/locationFilter';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 import type { StylistDetail } from '@/hooks/useLiveSessionSnapshot';
 
@@ -85,75 +88,78 @@ export function LiveSessionDrilldown({
   }, [details, showGrouped]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
-        {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
-            <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
+    <TooltipProvider delayDuration={200}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
+          {/* Header */}
+          <DialogHeader className="px-5 pt-5 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              </span>
+              <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-muted-foreground mt-1.5">
+              {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : ''}` : ''} working
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Location filter */}
+          <div className="px-5 pb-3">
+            <LocationSelect
+              value={drilldownLocationId}
+              onValueChange={setDrilldownLocationId}
+              includeAll
+              allLabel="All Locations"
+              triggerClassName="h-8 text-xs"
+            />
           </div>
-          <DialogDescription className="text-xs text-muted-foreground mt-1.5">
-            {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : ''}` : ''} working
-          </DialogDescription>
-        </DialogHeader>
 
-        {/* Location filter */}
-        <div className="px-5 pb-3">
-          <LocationSelect
-            value={drilldownLocationId}
-            onValueChange={setDrilldownLocationId}
-            includeAll
-            allLabel="All Locations"
-            triggerClassName="h-8 text-xs"
-          />
-        </div>
+          {/* Gradient divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        {/* Gradient divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-        {/* Stylist list */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="py-1">
-            {showGrouped && groupedDetails ? (
-              groupedDetails.map(([locationName, stylists]) => (
-                <div key={locationName}>
-                  {/* Location section header */}
-                  <div className="sticky top-0 z-10 flex items-center gap-2 px-5 py-2 bg-muted/60 backdrop-blur-sm border-b border-border/50">
-                    <MapPin className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs font-medium text-foreground">{locationName}</span>
-                    <span className="text-[10px] text-muted-foreground">· {stylists.length} stylist{stylists.length !== 1 ? 's' : ''}</span>
-                    {(() => {
-                      const latestEnd = stylists.reduce((latest, s) => s.lastEndTime > latest ? s.lastEndTime : latest, '');
-                      if (!latestEnd) return null;
-                      const [h, m] = latestEnd.split(':').map(Number);
-                      const d = new Date(); d.setHours(h, m, 0, 0);
-                      const formatted = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                      return <span className="ml-auto text-[10px] text-muted-foreground">Last appointment finishes at ~{formatted}</span>;
-                    })()}
+          {/* Stylist list */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="py-1">
+              {showGrouped && groupedDetails ? (
+                groupedDetails.map(([locationName, stylists]) => (
+                  <div key={locationName}>
+                    {/* Location section header */}
+                    <div className="sticky top-0 z-10 flex items-center gap-2 px-5 py-2 bg-muted/60 backdrop-blur-sm border-b border-border/50">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs font-medium text-foreground">{locationName}</span>
+                      <span className="text-[10px] text-muted-foreground">· {stylists.length} stylist{stylists.length !== 1 ? 's' : ''}</span>
+                      {(() => {
+                        const latestEnd = stylists.reduce((latest, s) => s.lastEndTime > latest ? s.lastEndTime : latest, '');
+                        if (!latestEnd) return null;
+                        const [h, m] = latestEnd.split(':').map(Number);
+                        const d = new Date(); d.setHours(h, m, 0, 0);
+                        const formatted = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                        return <span className="ml-auto text-[10px] text-muted-foreground">Last appointment finishes at ~{formatted}</span>;
+                      })()}
+                    </div>
+                    {stylists.map((stylist, i) => (
+                      <StylistRow key={i} stylist={stylist} />
+                    ))}
                   </div>
-                  {stylists.map((stylist, i) => (
-                    <StylistRow key={i} stylist={stylist} />
-                  ))}
-                </div>
-              ))
-            ) : (
-              details.map((stylist, i) => (
-                <StylistRow key={i} stylist={stylist} />
-              ))
-            )}
+                ))
+              ) : (
+                details.map((stylist, i) => (
+                  <StylistRow key={i} stylist={stylist} />
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 }
 
 /** Single stylist row — extracted to avoid duplication between grouped/flat modes */
 function StylistRow({ stylist }: { stylist: StylistDetail }) {
+  const { dashPath } = useOrgDashboardPath();
   const progress = stylist.totalAppts > 0
     ? (stylist.currentApptIndex / stylist.totalAppts) * 100
     : 0;
@@ -171,7 +177,39 @@ function StylistRow({ stylist }: { stylist: StylistDetail }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-foreground truncate">{formatNameWithPeriod(stylist.name)}</p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p className={cn(
+              "text-sm font-medium truncate",
+              stylist.isUnmapped ? "text-muted-foreground italic" : "text-foreground"
+            )}>
+              {formatNameWithPeriod(stylist.name)}
+            </p>
+            {stylist.isUnmapped && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to={dashPath('/admin/settings/staff-mapping')}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 transition-colors text-[10px] font-medium shrink-0"
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    <span>Sync needed</span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-medium">Unmapped staff</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    This stylist exists in Phorest but isn't linked to a Zura profile yet.
+                    Click to open Staff Mapping.
+                  </p>
+                  {stylist.phorestStaffId && (
+                    <p className="text-muted-foreground/70 text-[10px] mt-1 font-mono">
+                      ID: {stylist.phorestStaffId}
+                    </p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
           {stylist.assistedBy.length > 0 && (
             <span className="bg-muted/60 text-muted-foreground/80 text-[10px] px-2 py-0.5 rounded-full italic whitespace-nowrap">
               Assisted by {stylist.assistedBy.map(formatNameWithPeriod).join(', ')}

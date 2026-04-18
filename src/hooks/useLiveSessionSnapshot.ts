@@ -21,6 +21,18 @@ export interface StylistDetail {
   clientName: string | null;
   locationId: string | null;
   locationName: string | null;
+  isUnmapped?: boolean;
+  phorestStaffId?: string | null;
+}
+
+/** Truncate a Phorest staff ID to a recognizable prefix for support traceability. */
+function truncateStaffId(staffId: string): string {
+  if (!staffId) return '';
+  return staffId.length > 10 ? `${staffId.slice(0, 8)}…` : staffId;
+}
+
+function unmappedLabel(staffId: string): string {
+  return `Unmapped (${truncateStaffId(staffId)})`;
 }
 
 interface LiveSessionSnapshot {
@@ -146,13 +158,13 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
       }
 
       // Build stylists array using name waterfall
-      let fallbackIndex = 0;
       const stylists: ActiveStylist[] = uniqueStaffIds.map(staffId => {
         const userId = staffToUser.get(staffId);
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
-        fallbackIndex++;
-        const name = profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? phorestName : `Stylist ${fallbackIndex}`);
+        const name = profile
+          ? formatFullDisplayName(profile.full_name || '', profile.display_name)
+          : (phorestName ? phorestName : unmappedLabel(staffId));
         return { name, photoUrl: profile?.photo_url || null };
       });
 
@@ -206,13 +218,14 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
       // Build per-stylist details
       const stylistDetailsMap = new Map<string, StylistDetail>();
 
-      let detailFallbackIndex = 0;
       for (const staffId of uniqueStaffIds) {
-        detailFallbackIndex++;
         const userId = staffToUser.get(staffId);
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
-        const name = profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? phorestName : `Stylist ${detailFallbackIndex}`);
+        const isUnmapped = !profile && !phorestName;
+        const name = profile
+          ? formatFullDisplayName(profile.full_name || '', profile.display_name)
+          : (phorestName ? phorestName : unmappedLabel(staffId));
         const photoUrl = profile?.photo_url || null;
 
         // All appointments for this staff today, sorted chronologically
@@ -253,6 +266,8 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
           clientName: (current as any)?.client_name || null,
           locationId: apptLocationId,
           locationName: apptLocationId ? (locationNameMap.get(apptLocationId) || null) : null,
+          isUnmapped,
+          phorestStaffId: staffId,
         });
       }
 
