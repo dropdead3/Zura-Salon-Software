@@ -1,30 +1,53 @@
 
 
 ## Goal
-Move the `RetailPerformanceAlert` from a sibling card beneath `RevenueDonutChart` into the bottom of the Revenue Breakdown card itself, so it reads as part of the same surface.
+Collapse the alert by default to show only the headline ("RETAIL HEALTH · CRITICAL"), let the user expand it to reveal the advisory copy, and reinforce the critical tier with a stronger red ghost treatment.
 
-## Approach
-1. **`RevenueDonutChart.tsx`** — accept the verdict inputs it already computes internally (`trueRetailPercent`, `retailAttachmentRate`, `total`, `hasBreakdown`) and render `<RetailPerformanceAlert>` inside `CardContent`, after the donut+metrics row, separated by a top border (`border-t border-border/40 pt-4 mt-2`). The alert component's existing `null` return preserves the silence doctrine — no empty space when sub-materiality.
+## Behavior
+- **Collapsed (default)**: single row — icon + tier label only + chevron on the right
+- **Expanded**: same row + advisory copy revealed below in same container
+- Click anywhere on the row toggles expand/collapse
+- State held locally with `useState`
+- Chevron rotates (`ChevronDown` → 180°) on expand, with smooth transition
 
-2. **`RetailPerformanceAlert.tsx`** — add an `embedded` prop (default `false`). When `embedded`, render without the outer `<Card>` wrapper — just the inner `flex items-start gap-3` row plus the tier-tinted left border rail (`border-l-4` on the row itself) and background wash. This avoids a card-inside-a-card visual.
+## Visual enhancements (critical "red ghost")
+Tier-aware ghost intensity. Critical gets the strongest treatment; others stay calm.
 
-3. **Parent components** — remove the now-redundant `<RetailPerformanceAlert>` mounted below the donut in:
-   - `src/components/dashboard/AggregateSalesCard.tsx`
-   - `src/components/dashboard/CommandCenterAnalytics.tsx`
-   - `src/components/dashboard/PinnedAnalyticsCard.tsx`
-   
-   Also remove the wrapping `<div className="flex flex-col gap-3">` if it's no longer needed.
+| Tier | Border-l | Wash | Icon wrap | Label color |
+|---|---|---|---|---|
+| **critical** | `border-l-red-500` (full opacity, 4px) + subtle `ring-1 ring-red-500/20` | `bg-red-500/[0.07]` + `hover:bg-red-500/10` | `bg-red-500/15 ring-1 ring-red-500/30` | `text-red-500/90` (was muted) |
+| soft | unchanged amber | unchanged | unchanged | unchanged |
+| healthy | unchanged | unchanged | unchanged | unchanged |
+| strong | unchanged emerald | unchanged | unchanged | unchanged |
 
-## Visual result
-The Revenue Breakdown card grows by one row at the bottom (only when material). Color-coded left rail + icon + tier label + advisory copy live inside the same card border as the donut and metrics — one cohesive surface.
+The label "RETAIL HEALTH · CRITICAL" gets `text-red-500/90` only on critical tier so it reads as a notice, not muted background text. Other tiers keep `text-muted-foreground`.
+
+## Interaction polish
+- Row gets `cursor-pointer hover:bg-{tier}/[wash+0.03]` for affordance
+- `aria-expanded` and `role="button"` + `tabIndex={0}` + Enter/Space keyboard handler for accessibility
+- Expanded copy uses `animate-in fade-in slide-in-from-top-1 duration-200`
+- Padding compresses when collapsed (`py-3` collapsed vs `p-4` expanded) to feel like a proper notice strip
+
+## Layout sketch
+```text
+Collapsed:
+┌─[red rail]─────────────────────────────────────┐
+│  [⊘]  RETAIL HEALTH · CRITICAL          ⌄     │
+└────────────────────────────────────────────────┘
+
+Expanded:
+┌─[red rail]─────────────────────────────────────┐
+│  [⊘]  RETAIL HEALTH · CRITICAL          ⌃     │
+│       Retail is a margin leak. Audit the       │
+│       recommendation step in the service flow. │
+└────────────────────────────────────────────────┘
+```
 
 ## Out of scope
-- Tier thresholds or copy
-- Materiality gate
-- Tooltip/icon changes
+- Persisting expand state across navigations
+- Per-tier default expand behavior (e.g., "critical opens by default") — keep collapsed default for all tiers; user discovers via headline
+- Changing tier thresholds or copy
 
 ## Files
-- **Modify**: `src/components/dashboard/sales/RevenueDonutChart.tsx` — render embedded alert inside CardContent
-- **Modify**: `src/components/dashboard/sales/RetailPerformanceAlert.tsx` — add `embedded` variant
-- **Modify**: `AggregateSalesCard.tsx`, `CommandCenterAnalytics.tsx`, `PinnedAnalyticsCard.tsx` — remove sibling alert mount
+- **Modify**: `src/components/dashboard/sales/RetailPerformanceAlert.tsx` — add `useState` collapse, chevron, ghost treatment for critical, click/keyboard handlers
 
