@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock, MapPin, AlertTriangle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { LocationSelect } from '@/components/ui/location-select';
 import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
 import { isAllLocations } from '@/lib/locationFilter';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 import type { StylistDetail } from '@/hooks/useLiveSessionSnapshot';
 
