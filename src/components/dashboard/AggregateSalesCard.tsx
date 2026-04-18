@@ -1141,6 +1141,7 @@ export function AggregateSalesCard({
                         value={svcRevenue}
                         currency={currency}
                         className="text-xl sm:text-2xl font-display tabular-nums"
+                        animationKey="cc-services-revenue"
                       />
                       <p className="text-xs text-muted-foreground/70 mt-1">{svcPct}%</p>
                     </div>
@@ -1203,6 +1204,7 @@ export function AggregateSalesCard({
                         value={retailDisplayRevenue}
                         currency={currency}
                         className="text-xl sm:text-2xl font-display tabular-nums"
+                        animationKey="cc-retail-revenue"
                       />
                       <p className="text-xs text-muted-foreground/70 mt-1">{prodPct}%</p>
                     </div>
