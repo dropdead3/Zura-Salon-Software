@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { usePlatformBranding, PlatformBranding, LoaderStyleOption } from '@/hooks/usePlatformBranding';
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
-import { SpinnerLoader, DotsLoader, BarLoader } from '@/components/ui/loaders';
+import { SpinnerLoader, DotsLoader, BarLoader, LuxeLoader } from '@/components/ui/loaders';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -362,8 +362,9 @@ export function PlatformAppearanceTab() {
           {/* Loader Style Picker */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">Loader Style</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {([
+                { id: 'luxe' as LoaderStyleOption, label: 'Luxe (Default)', Component: LuxeLoader },
                 { id: 'zura' as LoaderStyleOption, label: 'Zura Grid', Component: ZuraLoader },
                 { id: 'spinner' as LoaderStyleOption, label: 'Spinner', Component: SpinnerLoader },
                 { id: 'dots' as LoaderStyleOption, label: 'Dots', Component: DotsLoader },
@@ -427,12 +428,13 @@ export function PlatformAppearanceTab() {
               ) : (
                 (() => {
                   const PreviewMap: Record<LoaderStyleOption, React.ComponentType<{ size?: 'sm' | 'md' | 'lg' | 'xl' }>> = {
+                    luxe: LuxeLoader,
                     zura: ZuraLoader,
                     spinner: SpinnerLoader,
                     dots: DotsLoader,
                     bar: BarLoader,
                   };
-                  const Preview = PreviewMap[localBranding.loader_style] || ZuraLoader;
+                  const Preview = PreviewMap[localBranding.loader_style] || LuxeLoader;
                   return (
                     <div className="flex items-center gap-8">
                       <div className="flex flex-col items-center gap-1.5">

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
-import { SpinnerLoader, DotsLoader, BarLoader } from '@/components/ui/loaders';
+import { SpinnerLoader, DotsLoader, BarLoader, LuxeLoader } from '@/components/ui/loaders';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLoaderConfig, LoaderStyle } from '@/hooks/useLoaderConfig';
 
@@ -10,6 +10,7 @@ interface DashboardLoaderProps {
 }
 
 const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }>> = {
+  luxe: LuxeLoader,
   zura: ZuraLoader,
   spinner: SpinnerLoader,
   dots: DotsLoader,
@@ -41,7 +42,7 @@ export function DashboardLoader({ size = 'md', className }: DashboardLoaderProps
     );
   }
 
-  const LoaderComponent = LOADER_MAP[loaderStyle] || ZuraLoader;
+  const LoaderComponent = LOADER_MAP[loaderStyle] || LuxeLoader;
 
   const hasHeightClass = className?.includes('min-h-') || className?.includes('h-');
 
