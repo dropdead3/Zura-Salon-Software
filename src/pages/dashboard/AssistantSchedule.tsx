@@ -592,9 +592,7 @@ export default function AssistantSchedule() {
             {isAdmin && (
               <TabsContent value="overview" className="space-y-6">
                 {loadingAll ? (
-                  <div className="flex items-center justify-center h-64">
-                    <ZuraLoader size="lg" />
-                  </div>
+                  <DashboardLoader className="h-64" />
                 ) : (
                   <>
                     {/* Stats Grid */}
@@ -793,9 +791,7 @@ export default function AssistantSchedule() {
                   </CardHeader>
                   <CardContent>
                     {loadingAll ? (
-                      <div className="flex items-center justify-center h-64">
-                        <ZuraLoader size="lg" />
-                      </div>
+                      <DashboardLoader className="h-64" />
                     ) : allRequests.length === 0 ? (
                       <EmptyState icon={Inbox} title="No requests yet" description="Assistant requests will appear here as they're created." />
                     ) : (
@@ -838,9 +834,7 @@ export default function AssistantSchedule() {
                   </CardHeader>
                   <CardContent>
                     {loadingMyRequests ? (
-                      <div className="flex items-center justify-center h-64">
-                        <ZuraLoader size="lg" />
-                      </div>
+                      <DashboardLoader className="h-64" />
                     ) : (
                       <RequestsList requests={filterActive(myRequests)} isStylistView={true} />
                     )}
@@ -884,9 +878,7 @@ export default function AssistantSchedule() {
                   </CardHeader>
                   <CardContent>
                     {loadingMyAssignments ? (
-                      <div className="flex items-center justify-center h-64">
-                        <ZuraLoader size="lg" />
-                      </div>
+                      <DashboardLoader className="h-64" />
                     ) : (
                       <RequestsList requests={filterActive(myAssignments)} isStylistView={false} />
                     )}
