@@ -47,6 +47,8 @@ interface WeekViewProps {
   selectedStylistId?: string | null;
   /** Display name shown in empty state when no stylist is selected. */
   selectedStylistName?: string | null;
+  /** Wave 22.2 — Stripe Connect inactive location IDs; surfaces "Setup needed" pill on cards. */
+  inactiveConnectLocationIds?: Set<string>;
 }
 
 // Use consolidated status colors from design tokens
@@ -144,6 +146,7 @@ function WeekAppointmentCard({
   assistantProfilesMap,
   columnIndex = 0,
   totalOverlapping = 1,
+  connectInactive = false,
 }: {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -159,6 +162,7 @@ function WeekAppointmentCard({
   assistantProfilesMap?: Map<string, AssistantProfile[]>;
   columnIndex?: number;
   totalOverlapping?: number;
+  connectInactive?: boolean;
 }) {
   const [isHoveredRight, setIsHoveredRight] = useState(false);
   const hoverBoundsRef = useRef<DOMRect | null>(null);
@@ -249,6 +253,7 @@ function WeekAppointmentCard({
         showClientPhone={false}
         showClientAvatar={false}
         useShortLabels
+        connectInactive={connectInactive}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
