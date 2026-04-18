@@ -20,6 +20,11 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import { IndicatorCluster, type IndicatorFlags } from './appointment-card-indicators';
 import { RebookSkippedDot } from './RebookSkippedDot';
+import { ConnectStatusPill } from './ConnectStatusPill';
+
+// Pre-checkout statuses where Stripe Connect setup is still actionable.
+// Once an appointment is completed/cancelled/no-show, the pill has no value.
+const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
 import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -68,6 +73,10 @@ export interface AppointmentCardContentProps {
   useShortLabels?: boolean;
   /** Wave 21.3 Layer 2 — when set on a completed appointment, render a muted "rebook skipped" dot */
   declinedReasonLabel?: string | null;
+  /** Wave 22.2 — surfaces a "Setup needed" pill for pre-checkout appointments
+   * when the location's Stripe Connect onboarding is incomplete. Renders nothing
+   * for completed/cancelled/no-show statuses (no longer actionable). */
+  connectInactive?: boolean;
   onClick: () => void;
 }
 
