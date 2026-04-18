@@ -1,32 +1,44 @@
 
 
 ## Goal
-Two refinements to the **Tips** card on the dashboard:
-1. Move the `MetricInfoTooltip` (circle "i") from inline next to the title to the **top-right corner** of the card.
-2. Hide the "Average Tip Rate" subtitle when it would crowd the value or wrap to a second line.
+Two fixes to the Tips card (`AggregateSalesCard`):
+1. **Reduce card height** — currently rendering as a tall block with lots of vertical whitespace. Tighten padding so the collapsed row hugs the content.
+2. **Replace truncation with adaptive label swap** — instead of `truncate` ellipsis on "Average Tip R...", swap label by breakpoint:
+   - Wide: `Average Tip Rate`
+   - Medium: `Avg. Rate`
+   - Narrow: hidden entirely
 
-## Investigation needed
-Need to locate the Tips card component. Likely under `src/components/dashboard/` — candidates: `TipsCard.tsx`, `AverageTipRateCard.tsx`, or similar. Will search for the literal "TIPS" + "Average Tip Rate" strings.
+## Investigation
+Need to inspect `src/components/dashboard/AggregateSalesCard.tsx` to confirm:
+- Current `CardHeader` / `CardContent` padding tokens
+- Where the icon-box height drives the row height (likely `w-10 h-10` icon box + default `p-6` card padding = ~88px tall)
+- The current subtitle wrapper to swap the responsive logic
 
 ## Change
 
-### 1. Tooltip relocation (mirror Top Staff card pattern)
-- Add `relative` to the outer `Card`.
-- Place `MetricInfoTooltip` as `absolute top-3 right-3 z-10`.
-- Remove inline tooltip from the header row.
-- Add `pr-6` to the header content container so the value/chevron don't collide with the absolute icon.
+### 1. Height reduction
+- Tighten `CardHeader` / `CardContent` padding (e.g. `py-3 px-4` instead of default `p-6`).
+- Optionally shrink the icon box from `w-10 h-10` → `w-9 h-9` to match the visual density of sibling cards now that this card is collapsed-row-only in this state.
+- Ensure the row uses `items-center` (no extra `gap-y` from `space-y-1.5` in `CardHeader`).
 
-### 2. Adaptive subtitle hiding
-"Average Tip Rate" currently wraps to two lines at this width because it sits between the "TIPS" label and the "15.1%" value. Hide it responsively:
-- Wrap subtitle in `hidden lg:inline` (or `xl:` depending on actual breakpoint where it wraps — verify against screenshot at 1394px viewport).
-- Add `truncate whitespace-nowrap` so even when shown, it won't break to a second line — it will simply ellipsize, then disappear at narrower breakpoints.
-- Combined: `hidden xl:inline truncate whitespace-nowrap` keeps it visible only when there's real horizontal room.
+### 2. Adaptive label
+Replace the single `<span>` with two mutually-exclusive spans:
+```tsx
+<span className="font-sans text-muted-foreground hidden xl:inline whitespace-nowrap">
+  Average Tip Rate
+</span>
+<span className="font-sans text-muted-foreground hidden md:inline xl:hidden whitespace-nowrap">
+  Avg. Rate
+</span>
+```
+- Drop `truncate` everywhere — labels are now nowrap and either fit or hide.
+- Below `md`: nothing renders (clean header with just `$` icon + `TIPS` + value).
 
 ## Out of scope
-- Changing the "15.1%" value, source hook, or expand/collapse behavior
-- Restyling the `$` icon box (that's the canonical `tokens.card.iconBox` — keep it)
-- Renaming "TIPS" or the subtitle copy
+- Value formatting, expand/collapse animation, info tooltip position (already top-right from prior change)
+- Icon-box token redesign across other cards
+- Renaming "TIPS"
 
 ## Files
-- **Locate & modify**: the Tips card component (search target: `TIPS` + `Average Tip Rate`) — likely `src/components/dashboard/sales/TipsCard.tsx` or under `dashboard/analytics/`.
+- **Modify**: `src/components/dashboard/AggregateSalesCard.tsx` — header padding, icon-box size, replace truncated subtitle with two breakpoint-gated labels.
 
