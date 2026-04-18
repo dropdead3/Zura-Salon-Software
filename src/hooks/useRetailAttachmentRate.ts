@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { isExtensionProduct, isVishServiceCharge } from '@/utils/serviceCategorization';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
+import { toOrgDayBounds } from '@/lib/orgTime';
 
 export interface RetailAttachmentData {
   /** Total distinct client-visit combos that included at least one service */
@@ -36,9 +38,11 @@ async function fetchAllPages(
 }
 
 export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRetailAttachmentRateOptions) {
+  const { timezone } = useOrgDefaults();
   return useQuery({
-    queryKey: ['retail-attachment-rate', dateFrom, dateTo, locationId || 'all'],
+    queryKey: ['retail-attachment-rate', dateFrom, dateTo, locationId || 'all', timezone],
     queryFn: async (): Promise<RetailAttachmentData> => {
+      const { startUtc, endUtc } = toOrgDayBounds(dateFrom, dateTo, timezone);
       const buildLocationFilter = (q: any) => {
         if (locationId && locationId !== 'all') {
           const ids = locationId.split(',').filter(Boolean);
@@ -52,8 +56,8 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
         let q = supabase
           .from('v_all_transaction_items' as any)
           .select('phorest_client_id, transaction_date')
-          .gte('transaction_date', dateFrom)
-          .lte('transaction_date', dateTo)
+          .gte('transaction_date', startUtc)
+          .lte('transaction_date', endUtc)
           .not('phorest_client_id', 'is', null)
           .in('item_type', ['Service', 'service', 'SERVICE'])
           .range(offset, offset + PAGE_SIZE - 1);
@@ -64,8 +68,8 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
         let q = supabase
           .from('v_all_transaction_items' as any)
           .select('phorest_client_id, transaction_date, item_name')
-          .gte('transaction_date', dateFrom)
-          .lte('transaction_date', dateTo)
+          .gte('transaction_date', startUtc)
+          .lte('transaction_date', endUtc)
           .not('phorest_client_id', 'is', null)
           .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL'])
           .range(offset, offset + PAGE_SIZE - 1);
