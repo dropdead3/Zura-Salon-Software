@@ -1,45 +1,55 @@
 
 
 ## Diagnosis
+The Tips card sits in the right sidebar column of `xl:grid-cols-3`. At viewport ≥1280px (`xl`), the global Tailwind `xl:inline` gate fires and shows "Average Tip Rate" — but the **card itself** is only ~440px wide, not 1280px. So the label overflows and overlaps the "TIPS" title (visible in screenshot as "TIP$verage Tip Rate 15.1%").
 
-The tooltip content is rendering far to the left of the info icon because the `MetricInfoTooltip` is positioned `absolute top-3 right-3` on the Tips card, but the tooltip's default `side="top"` with center alignment causes it to anchor center-to-center on the trigger. Combined with the trigger being a tiny `w-3 h-3` icon at the far right edge of the card, Radix's collision detection is shifting the popover leftward to keep it inside the viewport/container.
-
-Looking at the screenshot: the tooltip content is appearing near the top-left of the card area, while the cursor is on the icon at the top-right. This is classic Radix collision-avoidance kicking in because:
-
-1. The tooltip is wide (`max-w-[280px]`) relative to available space above the icon.
-2. With `side="top"` (default), Radix tries to center the 280px popover above a 12px icon sitting near the right edge — it can't, so it slides left.
-3. There may also be a `Portal` + transform-origin issue making it look detached.
+Viewport breakpoints are the wrong tool — the card's width is what matters, not the window's. The fix is **container queries**, which respond to the card's own width.
 
 ## Fix
+Convert the Tips card header to container-query-aware:
 
-In `src/components/dashboard/AggregateSalesCard.tsx`, pass `side="left"` (or `side="bottom"` with an `align="end"`) to the `MetricInfoTooltip` for the Tips card so the tooltip anchors adjacent to the icon instead of trying to center above it.
+1. Add `@container` to the `Card` (or `CardHeader`).
+2. Replace `hidden md:inline xl:hidden` / `hidden xl:inline` with container-scoped variants:
+   - `@[420px]:inline @[520px]:hidden` → "Avg. Rate"
+   - `@[520px]:inline` → "Average Tip Rate"
+   - Below 420px container width → both hidden, only "15.1%" + chevron remain.
+3. Keep `whitespace-nowrap` so neither label wraps.
+4. Keep tooltip `side="left"` and the current padding/icon sizing.
 
-Best option: `side="left"` — the tooltip will appear directly to the left of the info icon, immediately adjacent to where the cursor is hovering. This matches the visual mental model of "tooltip belongs to this icon."
+## Tailwind container query syntax
+Tailwind v3 supports `@container` via the official `@tailwindcss/container-queries` plugin. Need to verify it's installed; if not, fall back to a CSS approach using `@container` directly in a small style block or use arbitrary `[@container]` syntax.
 
-### Alternative considered
-`side="bottom" align="end"` would drop the tooltip directly below the icon, right-aligned. Also valid but feels less connected to a top-right corner icon.
+If the plugin is missing, install `@tailwindcss/container-queries` and add it to `tailwind.config.ts`. Then the classes `@container`, `@[420px]:inline`, `@[520px]:hidden`, `@[520px]:inline` work.
 
 ## Change
 
-File: `src/components/dashboard/AggregateSalesCard.tsx`
-
-Locate the `MetricInfoTooltip` placed in the top-right of the Tips card and add `side="left"`:
+`src/components/dashboard/AggregateSalesCard.tsx` (~line 1541):
 
 ```tsx
-<MetricInfoTooltip
-  description="..."
-  side="left"
-  className="absolute top-3 right-3 z-10"
-/>
+<Card className="@container relative self-start bg-card/80 backdrop-blur-xl border-border/40">
+  ...
+  {!tipsCardExpanded && (
+    <span className="flex items-center gap-2 text-sm min-w-0">
+      <span className="font-sans text-muted-foreground hidden @[520px]:inline whitespace-nowrap">
+        Average Tip Rate
+      </span>
+      <span className="font-sans text-muted-foreground hidden @[420px]:inline @[520px]:hidden whitespace-nowrap">
+        Avg. Rate
+      </span>
+      <span className="font-display tabular-nums text-foreground">…%</span>
+    </span>
+  )}
 ```
 
-`MetricInfoTooltip` already accepts a `side` prop (verified in `src/components/ui/MetricInfoTooltip.tsx`), so no component changes are needed.
+Plus, if needed:
+- Verify/install `@tailwindcss/container-queries` and register in `tailwind.config.ts`.
 
 ## Out of scope
-- Changing the `MetricInfoTooltip` component default
-- Adjusting tooltip width, content, or other cards' tooltip placements
-- Restyling the icon position itself
+- Other cards' label behavior
+- Expand/collapse logic, value formatting, tooltip position
+- Icon-box size, padding tokens
 
 ## Files
-- **Modify**: `src/components/dashboard/AggregateSalesCard.tsx` — add `side="left"` to the Tips card's top-right `MetricInfoTooltip`.
+- **Modify**: `src/components/dashboard/AggregateSalesCard.tsx` — add `@container` to Tips Card, swap viewport breakpoints for container breakpoints on the rate labels.
+- **Conditionally modify**: `tailwind.config.ts` + `package.json` — install container-queries plugin if not present.
 
