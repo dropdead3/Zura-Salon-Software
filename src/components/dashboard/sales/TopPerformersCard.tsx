@@ -98,7 +98,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const modeNoun = sortMode === 'retail' ? 'retail sales' : 'service revenue';
 
   const headerContent = (
-    <div className="flex flex-wrap items-center justify-between gap-2 w-full">
+    <div className="flex flex-wrap items-center justify-between gap-2 w-full pr-6">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
           <Trophy className="w-5 h-5 text-primary" />
@@ -116,7 +116,6 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
             dateRange={filterContext.dateRange} 
           />
         )}
-        <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period. Amounts are rounded to the nearest dollar for a cleaner read." />
       </div>
     </div>
   );
