@@ -55,8 +55,11 @@ const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' |
  */
 export function DashboardLoader({ size = 'md', className, caption, fullPage, fillParent, delay = 200 }: DashboardLoaderProps) {
   const { loaderStyle, useSkeletons } = useLoaderConfig();
-  const visible = useDelayedRender(delay);
-  if (!visible) return null;
+  const { mounted, visible } = useDelayedRender(delay);
+  if (!mounted) return null;
+
+  const fadeClass = 'opacity-0 transition-opacity duration-150 data-[loader-fade=in]:opacity-100';
+  const fadeState = visible ? 'in' : 'out';
 
   const hasHeightClass = className?.includes('min-h-') || className?.includes('h-[') || className?.includes('h-64') || className?.includes('h-screen');
 
@@ -73,7 +76,7 @@ export function DashboardLoader({ size = 'md', className, caption, fullPage, fil
 
   if (useSkeletons) {
     return (
-      <div className={cn('flex flex-col items-center justify-center gap-3', wrapperClass, className)}>
+      <div data-loader-fade={fadeState} className={cn('flex flex-col items-center justify-center gap-3', fadeClass, wrapperClass, className)}>
         <Skeleton className="h-4 w-48 rounded" />
         <Skeleton className="h-3 w-32 rounded" />
         <Skeleton className="h-3 w-40 rounded" />
@@ -86,7 +89,7 @@ export function DashboardLoader({ size = 'md', className, caption, fullPage, fil
   const supportsCaption = LoaderComponent === LuxeLoader;
 
   return (
-    <div className={cn('flex items-center justify-center', wrapperClass, className)}>
+    <div data-loader-fade={fadeState} className={cn('flex items-center justify-center', fadeClass, wrapperClass, className)}>
       {supportsCaption
         ? <LuxeLoader size={size} caption={caption} />
         : <LoaderComponent size={size} />}

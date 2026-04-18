@@ -15,11 +15,14 @@
 import { useDelayedRender } from '@/hooks/useDelayedRender';
 
 export function BootLuxeLoader({ fullScreen = false, delay = 200 }: { fullScreen?: boolean; delay?: number }) {
-  const visible = useDelayedRender(delay);
-  if (!visible) return null;
+  const { mounted, visible } = useDelayedRender(delay);
+  if (!mounted) return null;
+
+  const fadeState = visible ? 'in' : 'out';
+  const fadeClass = 'opacity-0 transition-opacity duration-150 data-[loader-fade=in]:opacity-100';
 
   const inner = (
-    <div className="flex flex-col items-center justify-center gap-3" role="status" aria-label="Loading">
+    <div data-loader-fade={fadeState} className={`flex flex-col items-center justify-center gap-3 ${fadeClass}`} role="status" aria-label="Loading">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 134.15 133.16"

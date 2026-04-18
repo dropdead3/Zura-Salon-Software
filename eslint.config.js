@@ -43,7 +43,12 @@ export default tseslint.config(
       "no-restricted-syntax": [
         "warn",
         {
-          selector: "JSXElement[openingElement.name.name='Loader2']:not(:has(JSXElement)):not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
+          // Flag <Loader2 /> usages NOT nested inside a Button-like ancestor.
+          // The two `:not(... descendant ...)` clauses exclude Loader2 elements
+          // that appear inside <button>, <Button>, or any <*Button> JSX.
+          // Note: do NOT add `:not(:has(JSXElement))` — esquery's `:has()`
+          // walks the whole subtree and false-negatives self-closing Loader2.
+          selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
           message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
         },
       ],
