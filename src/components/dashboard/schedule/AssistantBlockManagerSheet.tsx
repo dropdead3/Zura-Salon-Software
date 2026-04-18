@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Users, Clock, Trash2, Loader2 } from 'lucide-react';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -333,9 +333,7 @@ export function AssistantBlockManagerSheet({
 
         <ScrollArea className="flex-1 px-5 py-4">
           {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <ZuraLoader />
-            </div>
+            <DashboardLoader className="h-32" delay={0} />
           ) : (
             <>
               <TabsContent value="requests" className="mt-0 space-y-3">
