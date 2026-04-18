@@ -694,7 +694,62 @@ export function CheckoutSummarySheet({
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      {/* Wave 22 — Post-charge confirmation panel.
+          Replaces immediate sheet close with a calm 4-second confirmation so the
+          operator sees proof of settlement before the surface disappears. */}
+      {gatePhase === 'confirmation' && successState && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col items-center justify-center text-center p-10 space-y-5 animate-in fade-in zoom-in-95 duration-300">
+            <div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center">
+              <CheckCircle2 className="h-9 w-9 text-success" />
+            </div>
+            <div className="space-y-1">
+              <p className="font-display text-base tracking-wide uppercase">
+                Paid {formatCurrency(successState.amount)}
+              </p>
+              <p className="font-sans text-xs text-muted-foreground">
+                {successState.method === 'card_reader'
+                  ? 'Card · Terminal'
+                  : successState.method === 'cash'
+                    ? 'Cash'
+                    : 'Other tender'}
+                {appointment?.client_name ? ` · ${appointment.client_name}` : ''}
+              </p>
+            </div>
+            <div className="font-sans text-xs">
+              {successState.receiptStatus === 'sent' && appointment?.client_email && (
+                <span className="inline-flex items-center gap-1.5 text-success">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Receipt emailed to {appointment.client_email}
+                </span>
+              )}
+              {successState.receiptStatus !== 'sent' && (
+                <button
+                  type="button"
+                  onClick={handleEmailReceipt}
+                  className="text-primary hover:underline inline-flex items-center gap-1.5"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Send receipt
+                </button>
+              )}
+            </div>
+            <Button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className={tokens.button.cardAction}
+            >
+              Done
+            </Button>
+            <p className="font-sans text-[10px] text-muted-foreground/70">
+              This panel closes automatically.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {gatePhase !== 'confirmation' && (
+      <div className="flex-1 overflow-y-auto">{/* checkout body wrapper */}
         <div className="space-y-6 p-5">
           {/* Rebooking Gate UI — surfaced first so the script is the entry point */}
           {gatePhase === 'gate' && (
