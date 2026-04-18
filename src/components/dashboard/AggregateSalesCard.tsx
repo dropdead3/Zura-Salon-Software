@@ -86,6 +86,8 @@ import { Progress } from '@/components/ui/progress';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useTranslation } from 'react-i18next';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
+import { getOrgToday } from '@/lib/orgTime';
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'lastMonth' | 'ytd' | 'lastYear' | 'last365';
 
@@ -287,7 +289,7 @@ export function AggregateSalesCard({
   const { data: tomorrowData } = useTomorrowRevenue(filterContext?.locationId, isTodayRange);
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
-  const rangeIncludesToday = dateFilters.dateTo === format(new Date(), 'yyyy-MM-dd');
+  const rangeIncludesToday = dateFilters.dateTo === orgTodayStr;
   const { data: todayActual, locationActuals, isLoading: todayActualLoading, dataUpdatedAt: todayDataUpdatedAt } = useTodayActualRevenue(dateRange === 'today' || rangeIncludesToday);
   const { data: attachmentData, isLoading: attachmentLoading } = useRetailAttachmentRate({
     dateFrom: dateFilters.dateFrom,
@@ -332,10 +334,12 @@ export function AggregateSalesCard({
   // For ranges that include today (7d, thisWeek, mtd, ytd, last365), exclude today
   // from the POS query so we don't get stale/missing data for the current day.
   // Today's live POS data is already handled by useTodayActualRevenue.
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayStr = orgTodayStr;
   const pastRangeIncludesToday = isPastRange && dateFilters.dateTo === todayStr;
+  const [py, pm, pd] = todayStr.split('-').map(Number);
+  const orgTodayNoon = new Date(py, (pm ?? 1) - 1, pd ?? 1, 12, 0, 0);
   const pastActualDateTo = pastRangeIncludesToday
-    ? format(subDays(new Date(), 1), 'yyyy-MM-dd')
+    ? format(subDays(orgTodayNoon, 1), 'yyyy-MM-dd')
     : dateFilters.dateTo;
 
   // Actual POS revenue for past date ranges (with location filter + pagination)
