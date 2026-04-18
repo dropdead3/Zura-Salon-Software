@@ -1,65 +1,30 @@
 
 
 ## Goal
-Lift the retail performance verdict out of the cramped right column inside the donut card and surface it as its own **alert-style card** directly below the Revenue Breakdown card.
+Move the `RetailPerformanceAlert` from a sibling card beneath `RevenueDonutChart` into the bottom of the Revenue Breakdown card itself, so it reads as part of the same surface.
 
-## What's wrong with current UI
-The verdict currently lives inside the metrics column next to the donut chart (lines 189–210). That column is narrow at the current viewport, which forces the copy to wrap into 4 lines beside a tall vertical rail — visually cramped, looks like an afterthought, fights for attention with the metric rows.
+## Approach
+1. **`RevenueDonutChart.tsx`** — accept the verdict inputs it already computes internally (`trueRetailPercent`, `retailAttachmentRate`, `total`, `hasBreakdown`) and render `<RetailPerformanceAlert>` inside `CardContent`, after the donut+metrics row, separated by a top border (`border-t border-border/40 pt-4 mt-2`). The alert component's existing `null` return preserves the silence doctrine — no empty space when sub-materiality.
 
-## Fix — two parts
+2. **`RetailPerformanceAlert.tsx`** — add an `embedded` prop (default `false`). When `embedded`, render without the outer `<Card>` wrapper — just the inner `flex items-start gap-3` row plus the tier-tinted left border rail (`border-l-4` on the row itself) and background wash. This avoids a card-inside-a-card visual.
 
-### Part 1: Remove from RevenueDonutChart
-Strip lines 189–210 (the verdict block) from `src/components/dashboard/sales/RevenueDonutChart.tsx`. The donut card returns to being a clean numbers surface.
+3. **Parent components** — remove the now-redundant `<RetailPerformanceAlert>` mounted below the donut in:
+   - `src/components/dashboard/AggregateSalesCard.tsx`
+   - `src/components/dashboard/CommandCenterAnalytics.tsx`
+   - `src/components/dashboard/PinnedAnalyticsCard.tsx`
+   
+   Also remove the wrapping `<div className="flex flex-col gap-3">` if it's no longer needed.
 
-Also clean up the stray nested `</div>` and remove the now-unused `cn` and `getRetailPerformanceVerdict` imports from this file.
-
-### Part 2: New `RetailPerformanceAlert` component
-Create `src/components/dashboard/sales/RetailPerformanceAlert.tsx`:
-
-```tsx
-interface Props {
-  trueRetailPercent: number | undefined;
-  retailAttachmentRate: number | undefined;
-  total: number;
-  hasBreakdown: boolean;
-  filterContext?: FilterContext;
-}
-```
-
-Returns `null` if `!hasBreakdown` or verdict is null (preserves materiality gate / silence doctrine).
-
-**Visual treatment** — alert card pattern, calm executive aesthetic:
-
-- Wrapper: `<Card>` with `overflow-hidden border-l-4` and tier-tinted left border + subtle tier-tinted background wash (`bg-{tier}/5`)
-- Two-column flex layout, `p-4`:
-  - **Left**: small icon container (w-9 h-9 rounded-lg) holding tier-appropriate Lucide icon (TrendingUp / Activity / AlertTriangle / AlertOctagon)
-  - **Right (flex-1)**: 
-    - Tier label in `font-display text-xs tracking-wide uppercase` (e.g. "RETAIL HEALTH · CRITICAL")
-    - Verdict copy in `text-sm text-foreground/90 leading-relaxed mt-1`
-- No CardHeader — single self-contained alert row
-- No emoji, no exclamation
-
-**Tier styling map** (tokens-based, no raw hex):
-| Tier | Border | Bg wash | Icon | Icon color |
-|---|---|---|---|---|
-| strong | `border-l-emerald-500/60` | `bg-emerald-500/5` | TrendingUp | `text-emerald-500` |
-| healthy | `border-l-foreground/30` | `bg-muted/30` | Activity | `text-foreground/70` |
-| soft | `border-l-amber-500/60` | `bg-amber-500/5` | AlertTriangle | `text-amber-500` |
-| critical | `border-l-red-500/60` | `bg-red-500/5` | AlertOctagon | `text-red-500` |
-
-### Part 3: Mount it in the parent
-Find the parent that renders `<RevenueDonutChart>` (Sales hub page) and place `<RetailPerformanceAlert>` immediately below it in the same grid cell / column so they read as a paired unit. Pass through the same `trueRetailPercent`, `retailAttachmentRate`, `total`, `hasBreakdown` already computed.
-
-## Materiality / silence
-Component returns `null` when `getRetailPerformanceVerdict` returns null (under $500 total, missing attach rate, missing breakdown). No empty card placeholder.
+## Visual result
+The Revenue Breakdown card grows by one row at the bottom (only when material). Color-coded left rail + icon + tier label + advisory copy live inside the same card border as the donut and metrics — one cohesive surface.
 
 ## Out of scope
-- Animations or hover states on the alert card
-- Per-tier action buttons (Phase 2 advisory layer)
-- Threshold customization
+- Tier thresholds or copy
+- Materiality gate
+- Tooltip/icon changes
 
 ## Files
-- **Modify**: `src/components/dashboard/sales/RevenueDonutChart.tsx` — remove verdict block + stray div + unused imports
-- **Create**: `src/components/dashboard/sales/RetailPerformanceAlert.tsx`
-- **Modify**: parent of `RevenueDonutChart` (Sales hub) — mount the new alert card directly below it
+- **Modify**: `src/components/dashboard/sales/RevenueDonutChart.tsx` — render embedded alert inside CardContent
+- **Modify**: `src/components/dashboard/sales/RetailPerformanceAlert.tsx` — add `embedded` variant
+- **Modify**: `AggregateSalesCard.tsx`, `CommandCenterAnalytics.tsx`, `PinnedAnalyticsCard.tsx` — remove sibling alert mount
 
