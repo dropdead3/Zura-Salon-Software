@@ -239,6 +239,13 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
             </AnimatePresence>
           </div>
         </ScrollArea>
+        )}
+
+        {sorted.length > 0 && sorted.length < INITIAL_COUNT && (
+          <p className="mt-3 text-center text-[11px] text-muted-foreground">
+            No other staff had {modeNoun}.
+          </p>
+        )}
 
         {/* View all toggle */}
         {hasMore && (
