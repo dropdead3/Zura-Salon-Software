@@ -58,34 +58,6 @@ export function formatCurrency(
     signDisplay,
   }: FormatCurrencyOptions = {}
 ): string {
-  // Implementation continues below.
-  return formatCurrencyImpl(value, { currency, locale, decimals, compact, noCents, signDisplay });
-}
-
-/**
- * Format a number rounded to the nearest whole unit of currency (no cents).
- * Use for dashboards, KPIs, and ranking cards where pennies are noise.
- *
- *   formatCurrencyRounded(582.73)  // "$583"
- */
-export function formatCurrencyRounded(
-  value: number | null | undefined,
-  options: Omit<FormatCurrencyOptions, 'decimals' | 'noCents'> = {}
-): string {
-  return formatCurrency(value, { ...options, noCents: true });
-}
-
-function formatCurrencyImpl(
-  value: number | null | undefined,
-  {
-    currency = 'USD',
-    locale,
-    decimals = 'auto',
-    compact = false,
-    noCents = false,
-    signDisplay,
-  }: FormatCurrencyOptions = {}
-): string {
   if (value === null || value === undefined) return '—';
   const num = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(num)) return '—';
@@ -105,6 +77,19 @@ function formatCurrencyImpl(
     ...(maximumFractionDigits === undefined ? null : { maximumFractionDigits }),
     ...(signDisplay ? { signDisplay } : null),
   }).format(num);
+}
+
+/**
+ * Format a number rounded to the nearest whole unit of currency (no cents).
+ * Use for dashboards, KPIs, and ranking cards where pennies are noise.
+ *
+ *   formatCurrencyRounded(582.73)  // "$583"
+ */
+export function formatCurrencyRounded(
+  value: number | null | undefined,
+  options: Omit<FormatCurrencyOptions, 'decimals' | 'noCents'> = {}
+): string {
+  return formatCurrency(value, { ...options, noCents: true });
 }
 
 function toDate(input: Date | string | number | null | undefined): Date | null {
