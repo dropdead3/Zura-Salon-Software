@@ -49,7 +49,7 @@ export function HospitalityBlock({
   // Collapsed empty state (no data and user hasn't asked to expand)
   if (isEmpty && !userExpanded) {
     return (
-      <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-dashed border-border/60 bg-muted/30 px-4 py-3">
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-border/60 bg-muted/30 px-4 py-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-primary/70" />
           <span>
@@ -70,7 +70,7 @@ export function HospitalityBlock({
   }
 
   return (
-    <div className={compact ? 'space-y-3' : 'mt-3 grid gap-3 md:grid-cols-2'}>
+    <div className={compact ? 'space-y-3' : 'grid gap-3 md:grid-cols-2'}>
       <ClientAboutCard
         organizationId={organizationId}
         clientId={clientKey}
