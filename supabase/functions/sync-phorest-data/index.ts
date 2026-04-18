@@ -1785,13 +1785,19 @@ async function logSync(
   metadata?: any,
   apiEndpoint?: string,
   responseSample?: string,
-  retryCount?: number
+  retryCount?: number,
+  startedAt?: Date,
 ) {
+  // Ensure started_at <= completed_at. If caller didn't pass startedAt,
+  // fall back to "now minus 1ms" so the row still has a coherent ordering.
+  const completed = new Date();
+  const started = startedAt ?? new Date(completed.getTime() - 1);
   await supabase.from("phorest_sync_log").insert({
     sync_type: syncType,
     status,
     records_synced: recordsSynced,
-    completed_at: new Date().toISOString(),
+    started_at: started.toISOString(),
+    completed_at: completed.toISOString(),
     error_message: errorMessage,
     metadata: metadata || {},
     api_endpoint: apiEndpoint,
