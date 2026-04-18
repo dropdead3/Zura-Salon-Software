@@ -118,3 +118,75 @@ export function getOrgDayOffset(date: Date | string, timezone: string): number {
   const msPerDay = 24 * 60 * 60 * 1000;
   return Math.round((target.getTime() - orgTodayNoon.getTime()) / msPerDay);
 }
+
+/**
+ * Converts an org-local YYYY-MM-DD date + HH:mm:ss.SSS time of day
+ * into the corresponding UTC instant (ISO string).
+ *
+ * Uses Intl.DateTimeFormat to derive the timezone offset for the given date
+ * (DST-correct). Avoids pulling in date-fns-tz.
+ */
+function zonedDayTimeToUtcIso(ymd: string, hms: string, timezone: string): string {
+  const [Y, M, D] = ymd.split('-').map(Number);
+  const [h, m, sFull] = hms.split(':');
+  const [secStr, msStr] = (sFull ?? '0').split('.');
+  const H = Number(h);
+  const Mi = Number(m);
+  const S = Number(secStr) || 0;
+  const Ms = Number(msStr ?? 0) || 0;
+
+  // Treat the wall-clock time as if it were UTC, then correct by the tz offset
+  // for that exact instant. Two-pass to handle DST cleanly at midnight boundaries.
+  const guess = Date.UTC(Y, (M ?? 1) - 1, D ?? 1, H, Mi, S, Ms);
+  const offset1 = getTimezoneOffsetMs(timezone, new Date(guess));
+  const adjusted = guess - offset1;
+  const offset2 = getTimezoneOffsetMs(timezone, new Date(adjusted));
+  return new Date(guess - offset2).toISOString();
+}
+
+/**
+ * Returns the timezone's offset from UTC (in ms) at the given instant.
+ * Positive when the zone is ahead of UTC.
+ */
+function getTimezoneOffsetMs(timezone: string, instant: Date): number {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const parts = Object.fromEntries(
+    dtf.formatToParts(instant).map(({ type, value }) => [type, value])
+  );
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour) % 24,
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  return asUtc - instant.getTime();
+}
+
+/**
+ * Returns the UTC ISO bounds of an org-local date range.
+ * `dateFrom` and `dateTo` are YYYY-MM-DD strings interpreted in the org timezone.
+ *
+ * Use these bounds when filtering `timestamptz` columns (e.g. `transaction_date`)
+ * so that yesterday-evening UTC drift cannot leak into today's window.
+ */
+export function toOrgDayBounds(
+  dateFrom: string,
+  dateTo: string,
+  timezone: string,
+): { startUtc: string; endUtc: string } {
+  return {
+    startUtc: zonedDayTimeToUtcIso(dateFrom.slice(0, 10), '00:00:00.000', timezone),
+    endUtc: zonedDayTimeToUtcIso(dateTo.slice(0, 10), '23:59:59.999', timezone),
+  };
+}
