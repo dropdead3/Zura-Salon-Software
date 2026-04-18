@@ -34,6 +34,19 @@ export default tseslint.config(
       // usage in adapter/edge boundaries while still surfacing it for
       // future cleanup. Was the dominant error source (4104 of 4322).
       "@typescript-eslint/no-explicit-any": "warn",
+      // Loader2 governance — ban Loader2 JSX outside button-like ancestors.
+      // Doctrine: <DashboardLoader /> for sections, <BootLuxeLoader /> for
+      // boot/Suspense gates, <Loader2 /> only inside <Button>, <button>, or
+      // any component whose name ends in `Button` / `IconButton`.
+      // Severity is `warn` until the Wave 2 sweep clears existing leaks;
+      // promote to `error` after the sweep lands.
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "JSXElement[openingElement.name.name='Loader2']:not(:has(JSXElement)):not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
+          message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
+        },
+      ],
     },
   },
 );

@@ -3,6 +3,7 @@ import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { SpinnerLoader, DotsLoader, BarLoader, LuxeLoader } from '@/components/ui/loaders';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLoaderConfig, LoaderStyle } from '@/hooks/useLoaderConfig';
+import { useDelayedRender } from '@/hooks/useDelayedRender';
 
 interface DashboardLoaderProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -18,6 +19,12 @@ interface DashboardLoaderProps {
    * Use for card / section loaders where the parent already has a defined height.
    */
   fillParent?: boolean;
+  /**
+   * Delay in ms before the loader paints. Suppresses flicker on fast loads.
+   * Defaults to 200ms (below human flicker-perception threshold). Pass `0` to
+   * render immediately for user-triggered "Refreshing…" actions.
+   */
+  delay?: number;
 }
 
 const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }>> = {
@@ -46,8 +53,10 @@ const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' |
  *
  * Always theme-aware via foreground tokens; never hardcode colors.
  */
-export function DashboardLoader({ size = 'md', className, caption, fullPage, fillParent }: DashboardLoaderProps) {
+export function DashboardLoader({ size = 'md', className, caption, fullPage, fillParent, delay = 200 }: DashboardLoaderProps) {
   const { loaderStyle, useSkeletons } = useLoaderConfig();
+  const visible = useDelayedRender(delay);
+  if (!visible) return null;
 
   const hasHeightClass = className?.includes('min-h-') || className?.includes('h-[') || className?.includes('h-64') || className?.includes('h-screen');
 

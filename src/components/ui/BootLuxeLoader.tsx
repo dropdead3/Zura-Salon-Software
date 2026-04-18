@@ -12,7 +12,12 @@
  * For in-app section/page loads (after providers mount), use <DashboardLoader />.
  * For inline button spinners, use <Loader2 className="w-4 h-4 animate-spin" />.
  */
-export function BootLuxeLoader({ fullScreen = false }: { fullScreen?: boolean }) {
+import { useDelayedRender } from '@/hooks/useDelayedRender';
+
+export function BootLuxeLoader({ fullScreen = false, delay = 200 }: { fullScreen?: boolean; delay?: number }) {
+  const visible = useDelayedRender(delay);
+  if (!visible) return null;
+
   const inner = (
     <div className="flex flex-col items-center justify-center gap-3" role="status" aria-label="Loading">
       <svg
