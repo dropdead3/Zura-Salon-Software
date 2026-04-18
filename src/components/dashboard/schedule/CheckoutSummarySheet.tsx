@@ -1201,36 +1201,64 @@ export function CheckoutSummarySheet({
                     </span>
                   )}
                 </div>
-                
-                <div className="grid grid-cols-4 gap-2">
-                  {TIP_PRESETS.map((preset) => (
-                    <Button
-                      key={preset.label}
-                      variant={Math.abs(tipAmount - Number((subtotal * preset.multiplier).toFixed(2))) < 0.01 ? "default" : "outline"}
-                      className="text-xs h-9"
-                      onClick={() => handleTipPreset(preset.multiplier)}
-                    >
-                      {preset.label}
-                    </Button>
-                  ))}
-                </div>
 
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    type="number"
-                    value={customTip}
-                    onChange={(e) => handleCustomTipChange(e.target.value)}
-                    placeholder="Custom tip amount"
-                    className="pl-6"
-                  />
-                </div>
-
-                {tipAmount > 0 && (
-                  <div className="flex justify-between text-sm bg-muted/30 p-2 rounded">
-                    <span>Tip Amount:</span>
-                    <span className="font-medium">{formatCurrency(tipAmount)}</span>
+                {/* Wave 23 — Tip-on-reader toggle. Only meaningful when paying via card reader.
+                    Defaults to 'app' for parity with current behavior; persisted per location. */}
+                {paymentMethod === 'card_reader' && hasReaders && (
+                  <div className="flex items-center justify-between gap-3 pb-1">
+                    <span className="font-sans text-xs text-muted-foreground">Tip captured</span>
+                    <TogglePill
+                      size="sm"
+                      value={tipMode}
+                      onChange={(v) => setTipMode(v as 'app' | 'reader')}
+                      options={[
+                        { value: 'app', label: 'Here', icon: <Tablet className="h-3 w-3" />, tooltip: 'Set tip in this app' },
+                        { value: 'reader', label: 'On reader', icon: <Smartphone className="h-3 w-3" />, tooltip: 'Client selects tip on the terminal' },
+                      ]}
+                    />
                   </div>
+                )}
+
+                {/* In-app tip selector — hidden when client will tip on the reader */}
+                {!(paymentMethod === 'card_reader' && tipMode === 'reader') && (
+                  <>
+                    <div className="grid grid-cols-4 gap-2">
+                      {TIP_PRESETS.map((preset) => (
+                        <Button
+                          key={preset.label}
+                          variant={Math.abs(tipAmount - Number((subtotal * preset.multiplier).toFixed(2))) < 0.01 ? "default" : "outline"}
+                          className="text-xs h-9"
+                          onClick={() => handleTipPreset(preset.multiplier)}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        value={customTip}
+                        onChange={(e) => handleCustomTipChange(e.target.value)}
+                        placeholder="Custom tip amount"
+                        className="pl-6"
+                      />
+                    </div>
+
+                    {tipAmount > 0 && (
+                      <div className="flex justify-between text-sm bg-muted/30 p-2 rounded">
+                        <span>Tip Amount:</span>
+                        <span className="font-medium">{formatCurrency(tipAmount)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {paymentMethod === 'card_reader' && tipMode === 'reader' && (
+                  <p className="font-sans text-xs text-muted-foreground bg-muted/30 p-2.5 rounded">
+                    The client will be prompted to add a tip directly on the reader after tapping or inserting their card.
+                  </p>
                 )}
               </div>
             </div>
