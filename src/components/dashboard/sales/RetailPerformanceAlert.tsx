@@ -18,6 +18,12 @@ interface RetailPerformanceAlertProps {
   retailAttachmentRate: number | undefined;
   total: number;
   hasBreakdown: boolean;
+  /**
+   * When true, renders without the outer Card wrapper — for embedding inside
+   * another card (e.g., bottom of Revenue Breakdown). The tier-tinted left
+   * rail and background wash are applied directly to the alert row.
+   */
+  embedded?: boolean;
 }
 
 interface TierVisual {
