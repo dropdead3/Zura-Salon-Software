@@ -115,12 +115,12 @@ export function RetailPerformanceAlert({
   const visual = TIER_VISUALS[verdict.tier];
   const Icon = visual.icon;
 
-  const expand = () => setExpanded(true);
+  const toggle = () => setExpanded((v) => !v);
   const collapse = () => setExpanded(false);
   const handleKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      expand();
+      toggle();
     }
   };
 
@@ -129,15 +129,14 @@ export function RetailPerformanceAlert({
       role="button"
       tabIndex={0}
       aria-expanded={expanded}
-      onClick={expand}
+      onClick={toggle}
       onMouseLeave={collapse}
       onBlur={collapse}
       onKeyDown={handleKey}
       className={cn(
-        'cursor-pointer transition-colors outline-none',
+        'cursor-pointer transition-colors outline-none py-3 px-4',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         visual.washHover,
-        expanded ? 'p-4' : 'py-3 px-4',
       )}
     >
       <div className="flex items-center gap-3">
@@ -151,7 +150,7 @@ export function RetailPerformanceAlert({
         </div>
         <p
           className={cn(
-            'flex-1 min-w-0 font-display text-xs tracking-wide uppercase',
+            'flex-1 min-w-0 font-display text-[11px] tracking-wide uppercase',
             visual.labelColor,
           )}
         >
@@ -159,17 +158,24 @@ export function RetailPerformanceAlert({
         </p>
         <ChevronDown
           className={cn(
-            'w-4 h-4 shrink-0 transition-transform duration-200',
+            'w-4 h-4 shrink-0 transition-transform duration-300 ease-out',
             visual.labelColor,
             expanded && 'rotate-180',
           )}
         />
       </div>
-      {expanded && (
-        <p className="text-sm text-foreground/90 leading-relaxed mt-2 pl-12 animate-in fade-in slide-in-from-top-1 duration-200">
-          {verdict.copy}
-        </p>
-      )}
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none motion-reduce:duration-0',
+          expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+        )}
+      >
+        <div className="overflow-hidden">
+          <p className="text-sm text-foreground/90 leading-relaxed mt-2 pl-12">
+            {verdict.copy}
+          </p>
+        </div>
+      </div>
     </div>
   );
 
