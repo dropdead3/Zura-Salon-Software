@@ -88,70 +88,72 @@ export function LiveSessionDrilldown({
   }, [details, showGrouped]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
-        {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
-            <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
+    <TooltipProvider delayDuration={200}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
+          {/* Header */}
+          <DialogHeader className="px-5 pt-5 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              </span>
+              <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-muted-foreground mt-1.5">
+              {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : ''}` : ''} working
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Location filter */}
+          <div className="px-5 pb-3">
+            <LocationSelect
+              value={drilldownLocationId}
+              onValueChange={setDrilldownLocationId}
+              includeAll
+              allLabel="All Locations"
+              triggerClassName="h-8 text-xs"
+            />
           </div>
-          <DialogDescription className="text-xs text-muted-foreground mt-1.5">
-            {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : ''}` : ''} working
-          </DialogDescription>
-        </DialogHeader>
 
-        {/* Location filter */}
-        <div className="px-5 pb-3">
-          <LocationSelect
-            value={drilldownLocationId}
-            onValueChange={setDrilldownLocationId}
-            includeAll
-            allLabel="All Locations"
-            triggerClassName="h-8 text-xs"
-          />
-        </div>
+          {/* Gradient divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        {/* Gradient divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-        {/* Stylist list */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="py-1">
-            {showGrouped && groupedDetails ? (
-              groupedDetails.map(([locationName, stylists]) => (
-                <div key={locationName}>
-                  {/* Location section header */}
-                  <div className="sticky top-0 z-10 flex items-center gap-2 px-5 py-2 bg-muted/60 backdrop-blur-sm border-b border-border/50">
-                    <MapPin className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs font-medium text-foreground">{locationName}</span>
-                    <span className="text-[10px] text-muted-foreground">· {stylists.length} stylist{stylists.length !== 1 ? 's' : ''}</span>
-                    {(() => {
-                      const latestEnd = stylists.reduce((latest, s) => s.lastEndTime > latest ? s.lastEndTime : latest, '');
-                      if (!latestEnd) return null;
-                      const [h, m] = latestEnd.split(':').map(Number);
-                      const d = new Date(); d.setHours(h, m, 0, 0);
-                      const formatted = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                      return <span className="ml-auto text-[10px] text-muted-foreground">Last appointment finishes at ~{formatted}</span>;
-                    })()}
+          {/* Stylist list */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="py-1">
+              {showGrouped && groupedDetails ? (
+                groupedDetails.map(([locationName, stylists]) => (
+                  <div key={locationName}>
+                    {/* Location section header */}
+                    <div className="sticky top-0 z-10 flex items-center gap-2 px-5 py-2 bg-muted/60 backdrop-blur-sm border-b border-border/50">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs font-medium text-foreground">{locationName}</span>
+                      <span className="text-[10px] text-muted-foreground">· {stylists.length} stylist{stylists.length !== 1 ? 's' : ''}</span>
+                      {(() => {
+                        const latestEnd = stylists.reduce((latest, s) => s.lastEndTime > latest ? s.lastEndTime : latest, '');
+                        if (!latestEnd) return null;
+                        const [h, m] = latestEnd.split(':').map(Number);
+                        const d = new Date(); d.setHours(h, m, 0, 0);
+                        const formatted = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                        return <span className="ml-auto text-[10px] text-muted-foreground">Last appointment finishes at ~{formatted}</span>;
+                      })()}
+                    </div>
+                    {stylists.map((stylist, i) => (
+                      <StylistRow key={i} stylist={stylist} />
+                    ))}
                   </div>
-                  {stylists.map((stylist, i) => (
-                    <StylistRow key={i} stylist={stylist} />
-                  ))}
-                </div>
-              ))
-            ) : (
-              details.map((stylist, i) => (
-                <StylistRow key={i} stylist={stylist} />
-              ))
-            )}
+                ))
+              ) : (
+                details.map((stylist, i) => (
+                  <StylistRow key={i} stylist={stylist} />
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 }
 
