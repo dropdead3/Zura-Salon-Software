@@ -314,6 +314,24 @@ export default function Schedule() {
     }
   }, [appointments]);
 
+  // Wave 22.2 — Bulk-fetch Stripe Connect status for all locations visible in
+  // the current calendar slice. Builds a Set of locationIds whose Connect is
+  // *inactive* so cards can render a "Setup needed" pill *before* checkout opens.
+  const visibleLocationIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const apt of appointments) if (apt.location_id) ids.add(apt.location_id);
+    return Array.from(ids);
+  }, [appointments]);
+  const { data: stripeStatusMap } = useLocationStripeStatuses(visibleLocationIds);
+  const inactiveConnectLocationIds = useMemo(() => {
+    const set = new Set<string>();
+    if (!stripeStatusMap) return set;
+    for (const [id, status] of stripeStatusMap.entries()) {
+      if (!status.active) set.add(id);
+    }
+    return set;
+  }, [stripeStatusMap]);
+
   // Today's appointment count — respects ALL active filters (location, staff, client type, etc.)
   // so the action bar reflects whatever the user is currently viewing.
   const todayAppointmentCount = useMemo(() => {
@@ -877,6 +895,7 @@ export default function Schedule() {
                 onMeetingClick={handleMeetingClick}
                 zoomLevel={zoomLevel}
                 scheduleBlocks={scheduleBlocks}
+                inactiveConnectLocationIds={inactiveConnectLocationIds}
               />
             );
           })()}
@@ -903,6 +922,7 @@ export default function Schedule() {
                    onMeetingClick={handleMeetingClick}
                     zoomLevel={zoomLevel}
                     scheduleBlocks={scheduleBlocks}
+                    inactiveConnectLocationIds={inactiveConnectLocationIds}
                 />
           )}
           
@@ -934,6 +954,7 @@ export default function Schedule() {
                    ?.full_name ||
                  null
                }
+               inactiveConnectLocationIds={inactiveConnectLocationIds}
             />
           )}
           
@@ -960,6 +981,7 @@ export default function Schedule() {
               assistantTimeBlocks={rangeTimeBlocks}
               adminMeetings={adminMeetings}
               onMeetingClick={handleMeetingClick}
+              inactiveConnectLocationIds={inactiveConnectLocationIds}
             />
            )}
 
