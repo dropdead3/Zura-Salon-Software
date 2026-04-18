@@ -165,9 +165,9 @@ export function SuperAdminTopBar({
               headerHovered ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-full opacity-0 pointer-events-none"
             )
           : cn(
-              "sticky transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              "sticky transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
               isImpersonating ? "top-[44px]" : "top-0",
-              autoHidden && "-translate-y-[calc(100%+12px)] pointer-events-none"
+              autoHidden && "-translate-y-[calc(100%+12px)] opacity-0 pointer-events-none"
             ),
         hideFooter && "shrink-0"
       )}
