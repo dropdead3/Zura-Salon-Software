@@ -772,7 +772,7 @@ export function AggregateSalesCard({
       {/* Main Content Grid */}
       <div className="grid xl:grid-cols-3 gap-6 mb-6">
         {/* KPIs with Trends */}
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-2 flex flex-col h-full">
           {/* Hero: Total Revenue with Breakdown */}
            <div className="bg-card-inner rounded-xl p-4 sm:p-6 border border-border/40">
             {/* Header row: location label left, sync status right */}
@@ -1459,7 +1459,7 @@ export function AggregateSalesCard({
           />
 
           {/* Goal Progress */}
-          <div className="mt-6">
+          <div className="mt-auto mb-auto pt-6">
            {(() => {
               const selectedLoc = !isAllLocations
                 ? locations?.find(loc => loc.id === filterContext?.locationId)
