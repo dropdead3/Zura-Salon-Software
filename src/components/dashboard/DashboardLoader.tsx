@@ -76,7 +76,7 @@ export function DashboardLoader({ size = 'md', className, caption, fullPage, fil
 
   if (useSkeletons) {
     return (
-      <div className={cn('flex flex-col items-center justify-center gap-3', wrapperClass, className)}>
+      <div data-loader-fade={fadeState} className={cn('flex flex-col items-center justify-center gap-3', fadeClass, wrapperClass, className)}>
         <Skeleton className="h-4 w-48 rounded" />
         <Skeleton className="h-3 w-32 rounded" />
         <Skeleton className="h-3 w-40 rounded" />
@@ -89,7 +89,7 @@ export function DashboardLoader({ size = 'md', className, caption, fullPage, fil
   const supportsCaption = LoaderComponent === LuxeLoader;
 
   return (
-    <div className={cn('flex items-center justify-center', wrapperClass, className)}>
+    <div data-loader-fade={fadeState} className={cn('flex items-center justify-center', fadeClass, wrapperClass, className)}>
       {supportsCaption
         ? <LuxeLoader size={size} caption={caption} />
         : <LoaderComponent size={size} />}
