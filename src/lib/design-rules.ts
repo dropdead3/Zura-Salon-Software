@@ -117,6 +117,67 @@ export const TYPOGRAPHY_RULES = {
   },
 } as const;
 
+/**
+ * SPATIAL RULES — Container-Aware Responsiveness Doctrine
+ * Full doctrine: mem://style/container-aware-responsiveness.md
+ * Primitives: src/components/spatial/, hooks: src/lib/responsive/
+ */
+export const SPATIAL_RULES = {
+  PRINCIPLE: 'Components measure their own container (ResizeObserver), not the viewport. Build state machines, not breakpoint dumps.',
+
+  AUTHORED_STATES: ['default', 'compressed', 'compact', 'stacked'] as const,
+
+  COMPRESSION_PHASES: [
+    '1. Spacing (≥88% pressure): gap −12.5%, padding −8%',
+    '2. Typography (≥92%): secondary/labels −1 step, never shrink primary numerics',
+    '3. Truncation (≥95%): P3 → P2 → P1; never truncate money/time/percent',
+    '4. Condensation (≥98%): labeled actions → icons, secondaries → overflow',
+    '5. Structural shift: horizontal → hybrid → stacked. Never random wrap.',
+  ],
+
+  FLOORS: {
+    cardPadding: '12px (p-3) — never below',
+    controlGap: '8px (gap-2) — never below',
+    tapTarget: '44px',
+    textSupporting: '12px',
+    textPrimaryCard: '14px',
+    textMetadata: '11px',
+  },
+
+  CONTAINER_BREAKPOINTS: {
+    threeColumn: '560px container width (NOT viewport)',
+    twoColumn: '360px container width',
+    stacked: '<360px container width',
+  },
+
+  PROHIBITED: [
+    'sm:flex-row / md:grid-cols-2 on P0/P1 content without container measurement',
+    'gap-1 (4px) between adjacent controls — floor is gap-2 (8px)',
+    'Padding below p-3 (12px) on cards',
+    'hidden md:block on P0/P1 elements (uses viewport, not container)',
+    'Truncating money/time/percent values (use TruncatedText with kind="numeric")',
+    'Random flex-wrap on action rows — use <OverflowActions> instead',
+  ],
+
+  PRIMITIVES: [
+    '<AdaptiveCard density="large|standard|compact"> — measured wrapper with proportional padding/radius',
+    '<AdaptiveCardHeader icon title actions /> — canonical header with collision logic',
+    '<SpatialRow> — gap/wrap state machine',
+    '<SpatialColumns minColumnWidth={160}> — 3 → 2 → stacked by measured width',
+    '<OverflowActions actions={[{priority:"P0|P1|P2|P3"}]} /> — kebab collapse',
+    '<TruncatedText kind="name|identifier|numeric|description|label" /> — strategy by content type',
+    '<Priority level="P0|P1|P2|P3"> — visibility by container state',
+  ],
+
+  HOOKS: [
+    'useContainerSize() — rAF-throttled ResizeObserver',
+    'useSpatialState(density) — returns {ref, state, pressure, width}',
+  ],
+
+  AUDIT_WIDTHS: [1200, 960, 720, 560, 420, 320],
+  AUDIT_ROUTE: '/dashboard/_internal/spatial-audit',
+} as const;
+
 export function isProhibitedFontWeight(className: string): boolean {
   return TYPOGRAPHY_RULES.PROHIBITED_CLASSES.some(
     prohibited => className.includes(prohibited)
