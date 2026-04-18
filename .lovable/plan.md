@@ -1,83 +1,112 @@
 
 
 ## Goal
-Improve the Top Performers card row layout to:
-1. Round dollar amounts to the nearest whole dollar (no pennies)
-2. Use the available width: when the card is wide, place the dollar amount **to the right of the name** on the same line; when narrow, **stack** (current behavior) — with smooth container-query breakpoints, no overlap
+Two cleanup passes the user flagged after the Top Performers fix:
 
-## What's wrong today (`src/components/dashboard/sales/TopPerformersCard.tsx`)
+1. **Rename misnamed helper** so the next dev doesn't burn an hour on the same wire I just hit.
+2. **Apply the wide-row layout + whole-dollar rounding** to the sibling ranking cards in the Sales hub.
 
-- Lines 204-206: uses `formatCurrencyWhole(displayValue)` — but that helper is misnamed; it actually formats with **2 decimal places** (`$583.00`). Need to round to nearest dollar.
-- Lines 186-211: row is always a vertical stack (name on top, $ below, share% below). On wide cards (≥520px container width as in the screenshot), the right side is empty whitespace.
+---
 
-## Fix
+## Pass 1: Fix the misnamed currency helper
 
-### 1. Round to nearest dollar
-Replace `formatCurrencyWhole(displayValue)` with `formatCurrency(Math.round(displayValue), { maximumFractionDigits: 0 })`. Pull `formatCurrency` from the hook (already exported).
+### What's wrong
+`formatCurrencyWhole` (in both `src/lib/formatCurrency.ts` and `src/hooks/useFormatCurrency.ts`) routes to `formatCurrencyUnified(..., { decimals: 2 })`. The name promises "whole dollars," the implementation emits `$583.00`. Every consumer who trusts the name gets the wrong output.
 
-### 2. Responsive row layout (container-query driven, since card already has `@container`)
-
-Restructure the content zone so name + $ amount sit on one row when there's space, stack when not:
-
-```
-[rank] [avatar?]  Name ─────────────── $583
-                  14.9% of total service
+### Fix
+**`src/lib/format.ts`** — add a true whole-dollar shortcut:
+```ts
+export function formatCurrencyWhole(value, opts) {
+  return formatCurrency(value, { ...opts, decimals: 0 });
+}
 ```
 
-- Default (narrow, < ~340px container): keep current stacked layout — name above, $ below
-- `@[340px]` and up: name and $ on the same flex row with `justify-between`, $ right-aligned and `shrink-0`
-- Avatar visibility breakpoint stays at `@[400px]`
-- Share line (`14.9% of total service`) stays on its own row beneath
+**`src/lib/formatCurrency.ts`** — split into two correctly-named exports:
+- `formatCurrencyWhole(amount, currency?)` → 0 decimals (rounded, e.g. `$583`)
+- `formatCurrencyTwoDecimal(amount, currency?)` → 2 decimals (e.g. `$583.00`)
 
-This uses Tailwind container queries (`@container` already on the Card at line 155), so layout responds to the **card's** width, not the viewport — correct for a card that lives in flexible grid columns.
+Keep the old `formatCurrencyWhole` export as a **deprecated alias** that points to `formatCurrencyTwoDecimal` for one pass — this avoids a flash of broken displays in any consumer I miss. Mark with `@deprecated` JSDoc so it shows up in IDE strikethrough.
 
-### 3. Anti-overlap guarantees
-- `min-w-0` on the name container so truncation (`truncate`) actually triggers instead of pushing the dollar amount
-- `shrink-0` + `whitespace-nowrap` on the dollar element
-- `gap-3` between name and $ to guarantee breathing room
-- Below the breakpoint, fall back to stacked (no overlap risk)
+**`src/hooks/useFormatCurrency.ts`** — same treatment:
+- `formatCurrencyWhole` → returns 0-decimal rounded
+- Add `formatCurrencyTwoDecimal` → returns 2-decimal
+- Update existing callers in this file's exports
 
-## Code change (single file)
+### Audit existing call sites
+Run a search for `formatCurrencyWhole` across the codebase. For each consumer, decide:
+- If the surface clearly wants **whole dollars** (KPIs, ranking cards, dashboards) → leave on `formatCurrencyWhole` (now correctly 0 decimals)
+- If the surface clearly wants **cents precision** (invoices, transaction detail, payroll line items) → migrate to `formatCurrencyTwoDecimal`
 
-**`src/components/dashboard/sales/TopPerformersCard.tsx`** lines 200-211 (the content zone):
+I'll do a single pass through call sites and bucket each one. Anything ambiguous gets flagged in the response, not silently changed.
 
-```tsx
-{/* Content zone */}
-<div className="flex-1 min-w-0">
-  <div className="flex items-baseline gap-3 @[340px]:justify-between">
-    <p className="text-sm font-medium truncate min-w-0">{performer.name}</p>
-    <BlurredAmount
-      className={cn(
-        "font-display text-sm shrink-0 whitespace-nowrap mt-0.5 @[340px]:mt-0",
-        rank === 1 && "text-foreground"
-      )}
-    >
-      {formatCurrency(Math.round(displayValue), { maximumFractionDigits: 0 })}
-    </BlurredAmount>
-  </div>
-  <div className="text-[10px] text-muted-foreground mt-0.5">
-    <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
-    <span className="hidden @[320px]:inline"> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
-  </div>
-</div>
-```
+---
 
-Plus: change line 68 destructure from `formatCurrencyWhole` to `formatCurrency`.
+## Pass 2: Sweep ranking cards for layout + rounding parity
+
+### Targets
+Find sibling ranking cards in the Sales hub that share the "rank → name → amount" pattern. Likely candidates based on naming:
+- `TopServicesCard` (or equivalent)
+- `TopCategoriesCard` (or equivalent)
+- `TopProductsCard` / retail ranking variants
+- Any card under `src/components/dashboard/sales/` matching `Top*Card.tsx`
+
+I'll enumerate them via search before editing, not assume the file list.
+
+### Apply the same three changes per card
+1. **Container query layout**: `flex flex-col @[340px]:flex-row @[340px]:items-baseline @[340px]:justify-between @[340px]:gap-3` on the name+amount row
+2. **Anti-overlap guards**: `truncate min-w-0` on label, `shrink-0 whitespace-nowrap` on amount
+3. **Whole-dollar rounding**: switch to `formatCurrencyWhole` (now actually whole) or `formatCurrency(Math.round(v), { maximumFractionDigits: 0 })`
+
+Each card must already have `@container` on its outer Card (per the bento system). If a card doesn't, I'll add it — it's a one-class change and doesn't affect anything else.
+
+### Skip list
+- KPI tiles (different layout doctrine — value is the focal point, no name/amount pairing)
+- Tables (column headers + cell formatting are governed separately)
+- Drill-down dialogs (separate spacing rules per drilldown tokens)
+
+---
 
 ## Verification
-- Wide card (Command Center sidebar at ~520px wide, per screenshot): "Alexis Heasley" and "$583" on one line, share% below
-- Narrow card (e.g. mobile or tight grid column < 340px): stacks like before, no overlap
-- All amounts show whole dollars (`$583`, not `$583.00`)
-- Long names truncate with ellipsis, $ stays anchored right and never overlaps
-- BlurredAmount privacy still works (toggle hides numbers)
-- Rank 1 still gets emphasized foreground color
-- Animations (motion.div) and ranking visuals unchanged
+- Grep `formatCurrencyWhole` → all remaining call sites intentionally want whole dollars
+- Grep `formatCurrencyTwoDecimal` → only invoice/transaction-precision surfaces
+- Visual spot check on each migrated ranking card at:
+  - Wide (Command Center sidebar ~520px) → name + amount inline
+  - Narrow (mobile / tight column < 340px) → stacked, no overlap
+  - Very long names → truncate with ellipsis, amount stays anchored right
+- BlurredAmount privacy toggle still functions
+- No `$X.00` lingering on any ranking surface
+
+---
+
+## Files (estimate, will confirm during exploration)
+
+**Modify (helper rename)**:
+- `src/lib/format.ts` — add `formatCurrencyWhole` shortcut
+- `src/lib/formatCurrency.ts` — split into two correctly-named helpers + deprecation alias
+- `src/hooks/useFormatCurrency.ts` — split hook return into two correctly-named formatters
+
+**Modify (ranking card sweep)** — finalized after a `Top*Card.tsx` search:
+- `src/components/dashboard/sales/TopServicesCard.tsx` (if exists)
+- `src/components/dashboard/sales/TopCategoriesCard.tsx` (if exists)
+- `src/components/dashboard/sales/TopProductsCard.tsx` (if exists)
+- Other sibling ranking cards surfaced by the search
+
+---
 
 ## Out of scope
-- Renaming the misnamed `formatCurrencyWhole` helper (it's used in many places; separate audit pass)
-- Adjusting the avatar breakpoint (already responsive at `@[400px]`)
-- Other cards using the same misnamed helper (separate sweep)
+- Renaming `formatCurrencyCompact` (already accurately named)
+- Touching invoice / transaction surfaces unless they're already trusting the broken helper to mean whole dollars
+- Restyling KPI tiles or tables (different layout doctrine)
+- Cross-hub sweep (Operations, Marketing) — Sales hub only this pass; flag as next sweep if it lands clean
 
-## Files
-- **Modify**: `src/components/dashboard/sales/TopPerformersCard.tsx` (one hook destructure + content zone JSX)
+---
+
+## Prompt feedback
+
+Strong prompt — you carried forward the previous turn's enhancement suggestions verbatim and asked me to action them, which is exactly the right move when an AI offers follow-on work. Two refinements that would make this kind of follow-up land even tighter:
+
+- **Pin scope explicitly**: "Sales hub only, skip Operations/Marketing for this pass" would have saved me a clarifying decision. You scoped Sales implicitly via the previous context, but stating it removes ambiguity.
+- **Specify the deprecation posture**: For renames, telling me "keep a deprecated alias for one pass" vs "hard-rename, fix all callers now" changes the risk profile. Defaulting to "keep alias" is the safer call but worth stating.
+
+Otherwise, this is the prompt pattern I want to see more of: small, surgical, builds on prior context, no scope creep.
 
