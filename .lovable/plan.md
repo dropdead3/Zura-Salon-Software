@@ -1,53 +1,48 @@
 
 
 ## Goal
-Collapse the alert by default to show only the headline ("RETAIL HEALTH · CRITICAL"), let the user expand it to reveal the advisory copy, and reinforce the critical tier with a stronger red ghost treatment.
+On the sales card, vertically center the **Monthly Goal** block between the 3 KPI cards above it and the **By Location** section below it, so the empty space (caused by the taller right sidebar) is split evenly above and below the goal — instead of stacking at the bottom.
 
-## Behavior
-- **Collapsed (default)**: single row — icon + tier label only + chevron on the right
-- **Expanded**: same row + advisory copy revealed below in same container
-- Click anywhere on the row toggles expand/collapse
-- State held locally with `useState`
-- Chevron rotates (`ChevronDown` → 180°) on expand, with smooth transition
+## Why it looks off today
+The left column (`xl:col-span-2`) and right sidebar in the main grid (line 773) live in the same row of a CSS grid. The right sidebar (TopPerformers + RevenueDonutChart + RetailPerformanceAlert + Tips) is taller than the left column. Because the left column's children stack top-down with `mt-6` margins, the Monthly Goal lands directly under the KPI tiles and the rest of the row's height becomes a void at the bottom of the left column — visually orphaning the goal from "By Location" which sits in the next row.
 
-## Visual enhancements (critical "red ghost")
-Tier-aware ghost intensity. Critical gets the strongest treatment; others stay calm.
-
-| Tier | Border-l | Wash | Icon wrap | Label color |
-|---|---|---|---|---|
-| **critical** | `border-l-red-500` (full opacity, 4px) + subtle `ring-1 ring-red-500/20` | `bg-red-500/[0.07]` + `hover:bg-red-500/10` | `bg-red-500/15 ring-1 ring-red-500/30` | `text-red-500/90` (was muted) |
-| soft | unchanged amber | unchanged | unchanged | unchanged |
-| healthy | unchanged | unchanged | unchanged | unchanged |
-| strong | unchanged emerald | unchanged | unchanged | unchanged |
-
-The label "RETAIL HEALTH · CRITICAL" gets `text-red-500/90` only on critical tier so it reads as a notice, not muted background text. Other tiers keep `text-muted-foreground`.
-
-## Interaction polish
-- Row gets `cursor-pointer hover:bg-{tier}/[wash+0.03]` for affordance
-- `aria-expanded` and `role="button"` + `tabIndex={0}` + Enter/Space keyboard handler for accessibility
-- Expanded copy uses `animate-in fade-in slide-in-from-top-1 duration-200`
-- Padding compresses when collapsed (`py-3` collapsed vs `p-4` expanded) to feel like a proper notice strip
-
-## Layout sketch
 ```text
-Collapsed:
-┌─[red rail]─────────────────────────────────────┐
-│  [⊘]  RETAIL HEALTH · CRITICAL          ⌄     │
-└────────────────────────────────────────────────┘
+Today (top-aligned, asymmetric void):
+┌── KPI ─ KPI ─ KPI ──┐ ┌─ Top Performers ─┐
+│ ··· goal ··· ─ ── ─ │ │ ─ Donut + Alert ─│
+│                     │ │ ─ Tips           │
+│  (big void here)    │ │                  │
+└─────────────────────┘ └──────────────────┘
+[ By Location ── ── ── ── ── ── ── ── ── ── ]
 
-Expanded:
-┌─[red rail]─────────────────────────────────────┐
-│  [⊘]  RETAIL HEALTH · CRITICAL          ⌃     │
-│       Retail is a margin leak. Audit the       │
-│       recommendation step in the service flow. │
-└────────────────────────────────────────────────┘
+Target (goal centered in residual space):
+┌── KPI ─ KPI ─ KPI ──┐ ┌─ Top Performers ─┐
+│  (½ void)           │ │ ─ Donut + Alert ─│
+│ ··· goal ··· ─ ── ─ │ │ ─ Tips           │
+│  (½ void)           │ │                  │
+└─────────────────────┘ └──────────────────┘
+[ By Location ── ── ── ── ── ── ── ── ── ── ]
 ```
 
-## Out of scope
-- Persisting expand state across navigations
-- Per-tier default expand behavior (e.g., "critical opens by default") — keep collapsed default for all tiers; user discovers via headline
-- Changing tier thresholds or copy
+## Approach
+Make the left column a flex column that distributes residual vertical space around the Monthly Goal block. Two surgical edits in `src/components/dashboard/AggregateSalesCard.tsx`:
+
+1. **Left column wrapper (line 775)** — change from `<div className="xl:col-span-2">` to `<div className="xl:col-span-2 flex flex-col h-full">`. This makes the left column fill the row's height and stack children vertically.
+
+2. **Goal Progress wrapper (line 1462)** — change from `<div className="mt-6">` to `<div className="mt-auto mb-auto pt-6">`. The matched `mt-auto` + `mb-auto` push equal flex space above and below the goal block, vertically centering it within the residual whitespace. `pt-6` preserves the existing visual spacing from the KPIs when the column isn't taller than its content (no centering happens then — graceful fallback).
+
+That's it. No DOM restructure, no changes to drilldown placement (drilldowns sit between the KPI row and the goal — they remain inline before the `mt-auto` wrapper, so when expanded they push the goal down naturally).
+
+## Edge cases
+- **Short content (no centering needed)**: when the left column is naturally taller than the right (e.g., a drilldown is expanded), `mt-auto`/`mb-auto` collapse to zero — `pt-6` keeps the original spacing.
+- **Mobile / stacked layout (`< xl`)**: grid collapses to single column, `flex flex-col h-full` is harmless, and centering doesn't apply because there's no residual space.
+- **Drilldowns expanded between KPIs and goal**: drilldown panels render before the goal block, push it down; auto margins still distribute remaining space.
 
 ## Files
-- **Modify**: `src/components/dashboard/sales/RetailPerformanceAlert.tsx` — add `useState` collapse, chevron, ghost treatment for critical, click/keyboard handlers
+- **Modify**: `src/components/dashboard/AggregateSalesCard.tsx` — two className tweaks (lines 775 and 1462)
+
+## Out of scope
+- Changing the right sidebar order or composition
+- Refactoring the goal progress component itself
+- Centering on `< xl` viewports (no tall sidebar exists there)
 
