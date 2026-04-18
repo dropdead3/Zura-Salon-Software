@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Website section assets are publicly accessible" ON storage.objects;
