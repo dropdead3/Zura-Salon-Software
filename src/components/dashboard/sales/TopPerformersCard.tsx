@@ -183,38 +183,38 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                       styles.row
                     )}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start @[340px]:items-center gap-3">
                       {/* Rank badge */}
                       <span className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center font-display text-xs shrink-0 mt-0.5",
+                        "w-7 h-7 rounded-full flex items-center justify-center font-display text-xs shrink-0 mt-0.5 @[340px]:mt-0",
                         styles.badge
                       )}>
                         {rank}
                       </span>
 
                       {/* Avatar - hidden when card is narrow, shown at ≥400px */}
-                      <Avatar className="h-9 w-9 shrink-0 hidden @[400px]:flex mt-0.5">
+                      <Avatar className="h-9 w-9 shrink-0 hidden @[400px]:flex mt-0.5 @[400px]:mt-0">
                         <AvatarImage src={performer.photo_url} alt={performer.name} />
                         <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                       </Avatar>
 
                       {/* Content zone */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col @[340px]:flex-row @[340px]:items-baseline @[340px]:justify-between @[340px]:gap-3">
-                          <p className="text-sm font-medium truncate min-w-0">{performer.name}</p>
-                          <BlurredAmount
-                            className={cn(
-                              "font-display text-sm mt-0.5 @[340px]:mt-0 shrink-0 whitespace-nowrap",
-                              rank === 1 && "text-foreground"
-                            )}
-                          >
-                            {formatCurrency(Math.round(displayValue), { maximumFractionDigits: 0 })}
-                          </BlurredAmount>
+                      <div className="flex-1 min-w-0 flex flex-col @[340px]:flex-row @[340px]:items-center @[340px]:justify-between @[340px]:gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{performer.name}</p>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
+                            <span className="hidden @[320px]:inline"> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
+                          </div>
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                          <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
-                          <span className="hidden @[320px]:inline"> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
-                        </div>
+                        <BlurredAmount
+                          className={cn(
+                            "font-display text-sm mt-1 @[340px]:mt-0 shrink-0 whitespace-nowrap",
+                            rank === 1 && "text-foreground"
+                          )}
+                        >
+                          {formatCurrency(Math.round(displayValue), { maximumFractionDigits: 0 })}
+                        </BlurredAmount>
                       </div>
                     </div>
                   </motion.div>
