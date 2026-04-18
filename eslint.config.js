@@ -38,8 +38,10 @@ export default tseslint.config(
       // Doctrine: <DashboardLoader /> for sections, <BootLuxeLoader /> for
       // boot/Suspense gates, <Loader2 /> only inside <Button>, <button>, or
       // any component whose name ends in `Button` / `IconButton`.
-      // Severity is `warn` until the Wave 2 sweep clears existing leaks;
-      // promote to `error` after the sweep lands.
+      // TODO(wave-2): promote severity from 'warn' to 'error' once the
+      // Wave 2 Loader2 sweep clears existing leaks (~150 call sites).
+      // Trigger: `grep -rn 'Loader2' src/` returns only button-context hits.
+      // Tracked in mem://architecture/visibility-contracts.md Deferral Register.
       "no-restricted-syntax": [
         "warn",
         {
