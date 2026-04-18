@@ -28680,6 +28680,7 @@ export type Database = {
         }
         Returns: string
       }
+      archive_old_platform_notifications: { Args: never; Returns: Json }
       award_points: {
         Args: {
           _action_type: string
