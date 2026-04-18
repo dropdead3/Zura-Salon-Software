@@ -1543,10 +1543,10 @@ export function AggregateSalesCard({
               description="Total gratuities (staff tips) recorded across all completed appointments. Not included in total revenue. Click for stylist breakdown."
               className="absolute top-3 right-3 z-10"
             />
-            <CardHeader className={tipsCardExpanded ? "pb-3" : "pb-6"}>
+            <CardHeader className={cn("px-4", tipsCardExpanded ? "py-3" : "py-3")}>
               <div className="flex items-center justify-between gap-2 pr-6">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
+                  <div className="w-9 h-9 bg-muted flex items-center justify-center rounded-lg shrink-0">
                     <DollarSign className="w-5 h-5 text-primary" />
                   </div>
                   <CardTitle className="font-display text-base tracking-wide">TIPS</CardTitle>
@@ -1557,7 +1557,8 @@ export function AggregateSalesCard({
                 >
                   {!tipsCardExpanded && (
                     <span className="flex items-center gap-2 text-sm min-w-0">
-                      <span className="font-sans text-muted-foreground hidden xl:inline truncate whitespace-nowrap">Average Tip Rate</span>
+                      <span className="font-sans text-muted-foreground hidden xl:inline whitespace-nowrap">Average Tip Rate</span>
+                      <span className="font-sans text-muted-foreground hidden md:inline xl:hidden whitespace-nowrap">Avg. Rate</span>
                       <span className="font-display tabular-nums text-foreground">
                         {(() => {
                           const tipDenominator = isToday && todayActual?.hasActualData
