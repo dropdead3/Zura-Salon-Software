@@ -1,30 +1,30 @@
 
 
-## Clarify scope + remove HospitalityBlock from client-facing booking wizard
+## Add breathing room above APPOINTMENT section in Appointment Drawer
 
-### Confirming your mental model
-Yes — terminology check passes:
-- **Booking Wizard** = client-facing booking flow (public, unauthenticated clients booking themselves). Personal context / hospitality data is internal staff intelligence — does **not** belong here.
-- **Appointment Drawer** = staff-side popover when clicking an appointment on the schedule. This is where `HospitalityBlock` legitimately lives.
+### Diagnosis
+In `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`, the Details tab structure is:
+- `<HospitalityBlock />` (line 1647)
+- `<ClientMemoryPanel className="-mx-4 mt-4 mb-4 ..." />` (line 1654) — frequently renders nothing when no client memory exists
+- `<motion.div className="space-y-5">` (line 1660) — contains the "APPOINTMENT" subsection at line 1700–1701
 
-The previous edit touched `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — need to verify whether that file is the staff-side drawer profile view or the client-facing wizard. The `/booking/` path suggests wizard; the `/dashboard/schedule/` parent suggests staff. I'll confirm before ripping anything out.
+When `ClientMemoryPanel` returns null (the common case shown in the screenshot), there is **no top margin** on the `motion.div` wrapper, so "APPOINTMENT" collides visually with the hospitality cards above it.
 
-### Investigation needed (read-only)
-1. `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — confirm whether this renders inside the public booking wizard or the staff-facing new-appointment flow.
-2. Locate the actual appointment drawer (likely `src/components/dashboard/appointment-drawer/AppointmentDetailSheet.tsx` per earlier conversation) and confirm `HospitalityBlock` placement + spacing there.
-3. Check public booking entry (likely `/book/:orgSlug` route, `src/pages/PublicBooking.tsx` or similar) to verify `HospitalityBlock` isn't rendered on the public surface.
+### Fix
+Add `mt-5` to the `motion.div` at line 1660 so the APPOINTMENT block has consistent breathing room (20px) regardless of whether `ClientMemoryPanel` renders.
 
-### Likely fix (pending investigation)
-- **If** `ClientProfileView.tsx` is client-facing wizard → remove the `HospitalityBlock` block entirely from that file.
-- **Then** apply the spacing fix (parent `space-y-4`) to the actual staff appointment drawer instead.
+```tsx
+<motion.div variants={staggerContainer} initial={false} animate="show" className="mt-5 space-y-5">
+```
+
+This is safe because:
+- When `ClientMemoryPanel` renders, its own `mb-4` + new `mt-5` compose to ~36px (acceptable section break).
+- When `ClientMemoryPanel` is null, the new `mt-5` provides the missing gap.
 
 ### Out of scope
-- No changes to `HospitalityBlock` internals.
-- No changes to other booking wizard steps.
+- No changes to `HospitalityBlock`, `ClientMemoryPanel`, or the APPOINTMENT section internals.
+- No changes to other tabs (History, Photos, Notes, Color Bar).
 
 ### Verification
-- Open public booking wizard as a client → confirm no "Personal Context" card appears.
-- Open appointment drawer on schedule → confirm card present with symmetric 16px spacing above and below.
-
-Approve and I'll investigate, confirm which file is which, then ship the correct fix.
+Open an appointment for a client with no client memory → confirm "APPOINTMENT" label sits ~20px below the Hospitality cards (no longer crowded). Open an appointment for a client *with* client memory → confirm spacing still feels intentional.
 
