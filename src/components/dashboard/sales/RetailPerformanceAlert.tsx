@@ -75,6 +75,7 @@ export function RetailPerformanceAlert({
   retailAttachmentRate,
   total,
   hasBreakdown,
+  embedded = false,
 }: RetailPerformanceAlertProps) {
   if (!hasBreakdown) return null;
 
@@ -88,6 +89,41 @@ export function RetailPerformanceAlert({
   const visual = TIER_VISUALS[verdict.tier];
   const Icon = visual.icon;
 
+  const inner = (
+    <div className="flex items-start gap-3 p-4">
+      <div
+        className={cn(
+          'w-9 h-9 rounded-lg flex items-center justify-center shrink-0',
+          visual.iconWrap,
+        )}
+      >
+        <Icon className={cn('w-4 h-4', visual.iconColor)} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-display text-xs tracking-wide uppercase text-muted-foreground">
+          Retail Health · {visual.label}
+        </p>
+        <p className="text-sm text-foreground/90 leading-relaxed mt-1">
+          {verdict.copy}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div
+        className={cn(
+          'border-l-4 border-border/40 rounded-md overflow-hidden',
+          visual.border,
+          visual.wash,
+        )}
+      >
+        {inner}
+      </div>
+    );
+  }
+
   return (
     <Card
       className={cn(
@@ -96,24 +132,7 @@ export function RetailPerformanceAlert({
         visual.wash,
       )}
     >
-      <div className="flex items-start gap-3 p-4">
-        <div
-          className={cn(
-            'w-9 h-9 rounded-lg flex items-center justify-center shrink-0',
-            visual.iconWrap,
-          )}
-        >
-          <Icon className={cn('w-4 h-4', visual.iconColor)} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-display text-xs tracking-wide uppercase text-muted-foreground">
-            Retail Health · {visual.label}
-          </p>
-          <p className="text-sm text-foreground/90 leading-relaxed mt-1">
-            {verdict.copy}
-          </p>
-        </div>
-      </div>
+      {inner}
     </Card>
   );
 }
