@@ -46,7 +46,7 @@ export default function ColorBarSubscription() {
   if (entitlementLoading) {
     return (
       <DashboardLayout>
-        <DashboardLoader className="h-64" />
+        <DashboardLoader fullPage />
       </DashboardLayout>
     );
   }
@@ -90,7 +90,7 @@ export default function ColorBarSubscription() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <DashboardLoader className="h-64" />
+        <DashboardLoader fullPage />
       </DashboardLayout>
     );
   }

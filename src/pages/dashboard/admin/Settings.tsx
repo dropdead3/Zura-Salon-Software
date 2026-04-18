@@ -158,7 +158,7 @@ export default function Settings() {
   // Delegate to lazy detail view when a category is selected
   if (activeCategory) {
     return (
-      <Suspense fallback={<DashboardLayout><div className="p-6 lg:p-8"><DashboardLoader size="lg" className="h-64" /></div></DashboardLayout>}>
+      <Suspense fallback={<DashboardLayout><DashboardLoader size="lg" fullPage /></DashboardLayout>}>
         <SettingsCategoryDetail
           activeCategory={activeCategory}
           categoryLabel={categoriesMap[activeCategory]?.label ?? ''}

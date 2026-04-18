@@ -263,7 +263,7 @@ export default function ColorBarSettings() {
   if (entitlementLoading) {
     return (
       <DashboardLayout>
-        <DashboardLoader size="md" className="h-[60vh]" />
+        <DashboardLoader size="md" fullPage />
       </DashboardLayout>
     );
   }

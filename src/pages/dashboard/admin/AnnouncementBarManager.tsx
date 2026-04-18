@@ -48,7 +48,7 @@ export default function AnnouncementBarManager() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <DashboardLoader size="lg" className="h-64" />
+        <DashboardLoader size="lg" fullPage />
       </DashboardLayout>
     );
   }

@@ -195,7 +195,7 @@ export default function DashboardBuild() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <DashboardLoader size="lg" className="h-[50vh]" />
+        <DashboardLoader size="lg" fullPage />
       </DashboardLayout>
     );
   }

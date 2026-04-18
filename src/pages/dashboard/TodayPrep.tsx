@@ -239,11 +239,7 @@ export default function TodayPrep() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="px-8 py-8 max-w-[1600px] mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </div>
+        <DashboardLoader fullPage />
       </DashboardLayout>
     );
   }

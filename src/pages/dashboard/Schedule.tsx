@@ -861,7 +861,7 @@ export default function Schedule() {
   const calendarContent = (
     <>
       {isLoading ? (
-        <DashboardLoader size="lg" className="h-full" />
+        <div className="relative h-full"><DashboardLoader size="lg" fillParent /></div>
       ) : (
         <>
           {view === 'day' && selectedLocationData && (() => {

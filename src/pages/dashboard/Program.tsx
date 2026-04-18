@@ -244,9 +244,7 @@ export default function Program() {
   if (loading || hasEnrollment === null) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
-          <DashboardLoader size="md" />
-        </div>
+        <DashboardLoader size="md" fullPage />
       </DashboardLayout>
     );
   }
