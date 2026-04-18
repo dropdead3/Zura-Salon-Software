@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { useRouteZone } from '@/lib/route-utils';
 
 type Theme = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -50,21 +49,19 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     return theme;
   }, [theme, systemTheme]);
 
-  const zone = useRouteZone();
-
   useEffect(() => {
-    if (zone !== 'org-dashboard') {
-      document.documentElement.classList.remove('dark');
-      return;
-    }
-
     const root = document.documentElement;
     if (resolvedTheme === 'dark') {
       root.classList.add('dark');
+      root.style.colorScheme = 'dark';
     } else {
       root.classList.remove('dark');
+      root.style.colorScheme = 'light';
     }
-  }, [resolvedTheme, zone]);
+    // Clear any inline background set by the pre-paint init script
+    // so stylesheet tokens take over once React is mounted.
+    root.style.backgroundColor = '';
+  }, [resolvedTheme]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);

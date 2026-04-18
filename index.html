@@ -37,7 +37,26 @@
     
     <!-- Theme Color -->
     <meta name="theme-color" content="#1a1a1a" />
-    
+
+    <!-- Pre-paint theme init: prevents white/black flash before React mounts -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('dashboard-theme');
+          var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          if (isDark) {
+            root.classList.add('dark');
+            root.style.backgroundColor = 'hsl(0 0% 4%)';
+            root.style.colorScheme = 'dark';
+          } else {
+            root.style.backgroundColor = 'hsl(40 15% 82%)';
+            root.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Preload critical fonts -->
     <link rel="preload" href="/fonts/Termina-Medium.otf" as="font" type="font/opentype" crossorigin />
     <link rel="preload" href="/fonts/AeonikPro-Regular.otf" as="font" type="font/opentype" crossorigin />
@@ -50,15 +69,6 @@
   </head>
 
   <body>
-    <script>
-      // Instantly apply persisted theme to prevent flash of wrong mode
-      (function() {
-        var theme = localStorage.getItem('dashboard-theme');
-        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark');
-        }
-      })();
-    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
