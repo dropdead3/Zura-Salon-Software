@@ -93,9 +93,14 @@ export function InsightsNudgeBanner({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground">
-              {isNeverChecked
-                ? `You haven't explored your ${PLATFORM_NAME} Insights yet`
-                : `You haven't checked your insights in ${daysSinceLastCheck} days`}
+              {isNeverChecked ? (
+                `You haven't explored your ${PLATFORM_NAME} Insights yet`
+              ) : (
+                <>
+                  You haven't checked your insights in{' '}
+                  <span className="text-primary font-medium">{daysSinceLastCheck} days</span>
+                </>
+              )}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isNeverChecked
