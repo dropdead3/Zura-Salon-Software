@@ -213,32 +213,38 @@ export function AggregateSalesCard({
   // Use external if provided, otherwise internal
   const dateRange = externalDateRange ?? internalDateRange;
 
+  // Use org timezone for "today" anchoring so dashboard windows match the salon's day.
+  const { timezone: orgTz } = useOrgDefaults();
+  const orgTodayStr = getOrgToday(orgTz);
+
   const dateFilters = externalDateFilters ?? (() => {
-    const now = new Date();
+    // Build a Date anchored at noon on org-today (avoids DST edges) for date-fns math.
+    const [oy, om, od] = orgTodayStr.split('-').map(Number);
+    const now = new Date(oy, (om ?? 1) - 1, od ?? 1, 12, 0, 0);
     switch (dateRange) {
       case 'today':
-        return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: orgTodayStr, dateTo: orgTodayStr };
       case 'yesterday':
         const yesterday = subDays(now, 1);
         return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
       case '7d':
-        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: orgTodayStr };
       case '30d':
-        return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: orgTodayStr };
       case 'thisWeek':
-        return { 
-          dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       case 'mtd':
-        return { 
-          dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       case 'todayToEom':
-        return { 
-          dateFrom: format(now, 'yyyy-MM-dd'), 
-          dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
+        return {
+          dateFrom: orgTodayStr,
+          dateTo: format(endOfMonth(now), 'yyyy-MM-dd'),
         };
       case 'lastMonth': {
         const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -249,23 +255,23 @@ export function AggregateSalesCard({
         };
       }
       case 'ytd':
-        return { 
-          dateFrom: format(startOfYear(now), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfYear(now), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       case 'lastYear':
         const lastYearDate = subYears(now, 1);
-        return { 
-          dateFrom: format(startOfYear(lastYearDate), 'yyyy-MM-dd'), 
-          dateTo: format(endOfYear(lastYearDate), 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfYear(lastYearDate), 'yyyy-MM-dd'),
+          dateTo: format(endOfYear(lastYearDate), 'yyyy-MM-dd'),
         };
       case 'last365':
-        return { 
-          dateFrom: format(subDays(now, 365), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(subDays(now, 365), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       default:
-        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: orgTodayStr };
     }
   })();
 
