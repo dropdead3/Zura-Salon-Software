@@ -1237,6 +1237,7 @@ export function CheckoutSummarySheet({
           )}
         </div>
       </div>
+      )}
 
       {gatePhase === 'checkout' && (
         <div className="p-5 pt-0 space-y-3 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
