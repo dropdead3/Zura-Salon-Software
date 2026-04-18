@@ -1,66 +1,80 @@
 
-## Phase 2 — SECURITY DEFINER View Audit (Investigation Complete)
 
-### What I found
+## Restore Client Visibility — Backfill Orphaned Phorest Clients
 
-The 6 ERROR-level views from the linter are all `v_all_*` union views supporting the Phorest decoupling architecture (`mem://architecture/phorest-decoupling-and-zura-native-operations`):
+### Context recap
+After Phase 2 flipped `v_all_clients` to `security_invoker = true`, only 16 of 3,320+ clients are visible in Client Hub and the booking wizard. Root cause: every `phorest_clients` row has `location_id IS NULL`, so the org-scoped RLS on the underlying table now (correctly) hides them. The previous DEFINER view was masking this — meaning the data was previously leaking past RLS, not properly scoped.
 
-| View | Composition |
-|---|---|
-| `v_all_clients` | `phorest_clients ∪ clients` |
-| `v_all_sales_transactions` | `transaction_items ∪ phorest_sales_transactions` |
-| `v_all_services` | `services ∪ phorest_services` |
-| `v_all_staff` | (Phorest staff ∪ Zura employee_profiles) |
-| `v_all_staff_qualifications` | (Phorest qualifications ∪ Zura staff_qualifications) |
-| `v_calendar_stylists` | calendar-facing stylist union |
+### Verification before shipping
+Two quick read-only checks to confirm the fix targets the right data and the right destination:
 
-They became implicit `SECURITY DEFINER` simply because they're owned by `postgres` and have no `security_invoker` reloption set. The 3 sibling views (`v_all_appointments`, `v_all_transaction_items`, `products_public`) already have `security_invoker = on` and pass the linter — so this is a missed flag, not an architectural decision.
+1. Confirm scope of the orphaned rows:
+   ```sql
+   SELECT COUNT(*) FROM phorest_clients WHERE location_id IS NULL;
+   SELECT COUNT(*) FROM phorest_clients WHERE location_id IS NOT NULL;
+   ```
+2. Confirm the destination location exists and belongs to the right org:
+   ```sql
+   SELECT l.id, l.name, l.organization_id, o.name AS org_name
+   FROM locations l
+   JOIN organizations o ON o.id = l.organization_id
+   ORDER BY l.created_at ASC;
+   ```
 
-### Why this is unsafe
+If there are multiple orgs in this database, we **cannot** blindly assign all orphans to the first org's primary location — that would cross-tenant-leak Phorest data. The backfill must group by some signal already on `phorest_clients` (e.g. an `organization_id` column if present, or a creating org context).
 
-These views UNION public tables with no aggregation. There's no platform-admin or cross-tenant intent. Today they bypass RLS on the underlying tables — meaning a frontend query authenticated as Org A could in theory read Org B's clients, sales, staff, services, or qualifications via these views.
-
-### Verification underlying tables can carry the load
-
-All 7 underlying tables (`phorest_clients`, `clients`, `transaction_items`, `phorest_sales_transactions`, `services`, `phorest_services`, `phorest_staff`, `staff_qualifications`, `employee_profiles`) have RLS enabled with 2–8 policies each. Flipping the views to INVOKER pushes enforcement to those existing org-scoped policies — no new policies needed.
-
-### Frontend impact assessment
-
-Views are read by 72 files (sales cards, calendar, scheduler, today-prep, booking availability). All those queries already run as authenticated org members against tables with `is_org_member(auth.uid(), organization_id)` policies — so flipping to INVOKER returns the same row set the user is already entitled to see. No UI breakage expected.
-
-### Fix
-
-Single migration that does, for each of the 6 views:
+### The migration (single org case)
+If verification confirms only one organization owns these Phorest rows:
 
 ```sql
-ALTER VIEW public.v_all_clients SET (security_invoker = true);
-ALTER VIEW public.v_all_sales_transactions SET (security_invoker = true);
-ALTER VIEW public.v_all_services SET (security_invoker = true);
-ALTER VIEW public.v_all_staff SET (security_invoker = true);
-ALTER VIEW public.v_all_staff_qualifications SET (security_invoker = true);
-ALTER VIEW public.v_calendar_stylists SET (security_invoker = true);
+-- Backfill orphaned phorest_clients to the org's primary location
+UPDATE public.phorest_clients pc
+SET location_id = (
+  SELECT l.id FROM public.locations l
+  WHERE l.organization_id = '<verified-org-id>'
+  ORDER BY l.created_at ASC
+  LIMIT 1
+)
+WHERE pc.location_id IS NULL;
 ```
 
-No view definitions change — only the security mode flag.
+### The migration (multi-org case — safer default)
+If `phorest_clients` already carries `organization_id`:
+
+```sql
+UPDATE public.phorest_clients pc
+SET location_id = (
+  SELECT l.id FROM public.locations l
+  WHERE l.organization_id = pc.organization_id
+  ORDER BY l.created_at ASC
+  LIMIT 1
+)
+WHERE pc.location_id IS NULL;
+```
+
+This guarantees every orphaned client lands on a location owned by its own org — no cross-tenant exposure.
+
+### Permanent fix to the sync (separate, follow-up wave)
+The backfill restores today's visibility. The underlying bug lives in `sync-phorest-data` — it writes `location_id = NULL` because Phorest's `/client` endpoint is global. Follow-up:
+
+- Resolve `location_id` at sync time from the calling org's primary location (or first active location)
+- Or persist the resolution in `phorest_clients.organization_id` and let a generated/triggered column populate `location_id`
+
+I'll surface that as Phase 8 once visibility is restored.
 
 ### Verification after deploy
-
-1. Re-run `supabase--linter` — confirm 0 ERROR-level definer warnings remain.
-2. Smoke-test in preview: load `/dashboard/sales`, `/dashboard/schedule`, and `/dashboard/admin/team-hub` — confirm clients, sales chart, calendar stylists, and staff qualifications all still render.
-3. Spot-check by querying `v_all_clients` via psql as a non-org user — confirm zero rows returned.
-
-### Memory update
-
-Append to `mem://security/multi-tenant-isolation-and-hardening`: "Union views (`v_all_*`) must declare `security_invoker = true` so RLS on underlying tables governs access. Owner-default DEFINER mode is prohibited for tenant-scoped views."
-
-### Out of scope (this phase)
-
-- The 7 RLS-no-policy tables and the WARN-level `USING(true)` policies — those belong to Phase 3.
-- Any view definition rewrites — definitions are correct, only the security flag is wrong.
+1. `SELECT COUNT(*) FROM v_all_clients;` from a logged-in org session — should return ~3,320 + Zura-native clients.
+2. Reload `/dashboard/admin/clients` (Client Hub) — full list visible.
+3. Open the booking wizard client picker — full search returns expected matches.
+4. Spot-check: query `v_all_clients` as a non-org user — still returns zero rows (RLS still enforcing).
 
 ### Files
+- **New migration**: the `UPDATE` statement above (final version chosen after verification queries).
+- No code or memory changes in this wave.
 
-- **New migration**: `ALTER VIEW` x6 statements above.
-- **Memory update**: `mem://security/multi-tenant-isolation-and-hardening` — add union-view rule.
+### Out of scope (follow-up)
+- Hardening `sync-phorest-data` to populate `location_id` going forward — Phase 8.
+- Adding a NOT NULL constraint on `phorest_clients.location_id` once backfill + sync fix are in — Phase 8.
 
-Approve and I'll ship the migration, re-run the linter, then surface Phase 3's enumerated `USING(true)` policies for review.
+Approve and I'll run the verification queries first, then ship the targeted backfill migration.
+
