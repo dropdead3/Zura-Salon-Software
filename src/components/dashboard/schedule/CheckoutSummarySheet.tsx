@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare, TrendingDown } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare, TrendingDown, Smartphone, Tablet } from 'lucide-react';
+import { TogglePill } from '@/components/ui/toggle-pill';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -693,7 +694,62 @@ export function CheckoutSummarySheet({
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      {/* Wave 22 — Post-charge confirmation panel.
+          Replaces immediate sheet close with a calm 4-second confirmation so the
+          operator sees proof of settlement before the surface disappears. */}
+      {gatePhase === 'confirmation' && successState && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col items-center justify-center text-center p-10 space-y-5 animate-in fade-in zoom-in-95 duration-300">
+            <div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center">
+              <CheckCircle2 className="h-9 w-9 text-success" />
+            </div>
+            <div className="space-y-1">
+              <p className="font-display text-base tracking-wide uppercase">
+                Paid {formatCurrency(successState.amount)}
+              </p>
+              <p className="font-sans text-xs text-muted-foreground">
+                {successState.method === 'card_reader'
+                  ? 'Card · Terminal'
+                  : successState.method === 'cash'
+                    ? 'Cash'
+                    : 'Other tender'}
+                {appointment?.client_name ? ` · ${appointment.client_name}` : ''}
+              </p>
+            </div>
+            <div className="font-sans text-xs">
+              {successState.receiptStatus === 'sent' && appointment?.client_email && (
+                <span className="inline-flex items-center gap-1.5 text-success">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Receipt emailed to {appointment.client_email}
+                </span>
+              )}
+              {successState.receiptStatus !== 'sent' && (
+                <button
+                  type="button"
+                  onClick={handleEmailReceipt}
+                  className="text-primary hover:underline inline-flex items-center gap-1.5"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Send receipt
+                </button>
+              )}
+            </div>
+            <Button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className={tokens.button.cardAction}
+            >
+              Done
+            </Button>
+            <p className="font-sans text-[10px] text-muted-foreground/70">
+              This panel closes automatically.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {gatePhase !== 'confirmation' && (
+      <div className="flex-1 overflow-y-auto">{/* checkout body wrapper */}
         <div className="space-y-6 p-5">
           {/* Rebooking Gate UI — surfaced first so the script is the entry point */}
           {gatePhase === 'gate' && (
@@ -1145,42 +1201,71 @@ export function CheckoutSummarySheet({
                     </span>
                   )}
                 </div>
-                
-                <div className="grid grid-cols-4 gap-2">
-                  {TIP_PRESETS.map((preset) => (
-                    <Button
-                      key={preset.label}
-                      variant={Math.abs(tipAmount - Number((subtotal * preset.multiplier).toFixed(2))) < 0.01 ? "default" : "outline"}
-                      className="text-xs h-9"
-                      onClick={() => handleTipPreset(preset.multiplier)}
-                    >
-                      {preset.label}
-                    </Button>
-                  ))}
-                </div>
 
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    type="number"
-                    value={customTip}
-                    onChange={(e) => handleCustomTipChange(e.target.value)}
-                    placeholder="Custom tip amount"
-                    className="pl-6"
-                  />
-                </div>
-
-                {tipAmount > 0 && (
-                  <div className="flex justify-between text-sm bg-muted/30 p-2 rounded">
-                    <span>Tip Amount:</span>
-                    <span className="font-medium">{formatCurrency(tipAmount)}</span>
+                {/* Wave 23 — Tip-on-reader toggle. Only meaningful when paying via card reader.
+                    Defaults to 'app' for parity with current behavior; persisted per location. */}
+                {paymentMethod === 'card_reader' && hasReaders && (
+                  <div className="flex items-center justify-between gap-3 pb-1">
+                    <span className="font-sans text-xs text-muted-foreground">Tip captured</span>
+                    <TogglePill
+                      size="sm"
+                      value={tipMode}
+                      onChange={(v) => setTipMode(v as 'app' | 'reader')}
+                      options={[
+                        { value: 'app', label: 'Here', icon: <Tablet className="h-3 w-3" />, tooltip: 'Set tip in this app' },
+                        { value: 'reader', label: 'On reader', icon: <Smartphone className="h-3 w-3" />, tooltip: 'Client selects tip on the terminal' },
+                      ]}
+                    />
                   </div>
+                )}
+
+                {/* In-app tip selector — hidden when client will tip on the reader */}
+                {!(paymentMethod === 'card_reader' && tipMode === 'reader') && (
+                  <>
+                    <div className="grid grid-cols-4 gap-2">
+                      {TIP_PRESETS.map((preset) => (
+                        <Button
+                          key={preset.label}
+                          variant={Math.abs(tipAmount - Number((subtotal * preset.multiplier).toFixed(2))) < 0.01 ? "default" : "outline"}
+                          className="text-xs h-9"
+                          onClick={() => handleTipPreset(preset.multiplier)}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        value={customTip}
+                        onChange={(e) => handleCustomTipChange(e.target.value)}
+                        placeholder="Custom tip amount"
+                        className="pl-6"
+                      />
+                    </div>
+
+                    {tipAmount > 0 && (
+                      <div className="flex justify-between text-sm bg-muted/30 p-2 rounded">
+                        <span>Tip Amount:</span>
+                        <span className="font-medium">{formatCurrency(tipAmount)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {paymentMethod === 'card_reader' && tipMode === 'reader' && (
+                  <p className="font-sans text-xs text-muted-foreground bg-muted/30 p-2.5 rounded">
+                    The client will be prompted to add a tip directly on the reader after tapping or inserting their card.
+                  </p>
                 )}
               </div>
             </div>
           )}
         </div>
       </div>
+      )}
 
       {gatePhase === 'checkout' && (
         <div className="p-5 pt-0 space-y-3 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
