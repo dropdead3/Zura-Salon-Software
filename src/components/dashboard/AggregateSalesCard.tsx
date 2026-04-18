@@ -1538,7 +1538,7 @@ export function AggregateSalesCard({
           />
 
           {/* Tips Summary Card */}
-          <Card className="relative self-start bg-card/80 backdrop-blur-xl border-border/40">
+          <Card className="@container relative self-start bg-card/80 backdrop-blur-xl border-border/40">
             <MetricInfoTooltip
               description="Total gratuities (staff tips) recorded across all completed appointments. Not included in total revenue. Click for stylist breakdown."
               side="left"
@@ -1558,8 +1558,8 @@ export function AggregateSalesCard({
                 >
                   {!tipsCardExpanded && (
                     <span className="flex items-center gap-2 text-sm min-w-0">
-                      <span className="font-sans text-muted-foreground hidden xl:inline whitespace-nowrap">Average Tip Rate</span>
-                      <span className="font-sans text-muted-foreground hidden md:inline xl:hidden whitespace-nowrap">Avg. Rate</span>
+                      <span className="font-sans text-muted-foreground hidden @[520px]:inline whitespace-nowrap">Average Tip Rate</span>
+                      <span className="font-sans text-muted-foreground hidden @[420px]:inline @[520px]:hidden whitespace-nowrap">Avg. Rate</span>
                       <span className="font-display tabular-nums text-foreground">
                         {(() => {
                           const tipDenominator = isToday && todayActual?.hasActualData
