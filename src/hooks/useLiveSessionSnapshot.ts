@@ -158,13 +158,13 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
       }
 
       // Build stylists array using name waterfall
-      let fallbackIndex = 0;
       const stylists: ActiveStylist[] = uniqueStaffIds.map(staffId => {
         const userId = staffToUser.get(staffId);
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
-        fallbackIndex++;
-        const name = profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? phorestName : `Stylist ${fallbackIndex}`);
+        const name = profile
+          ? formatFullDisplayName(profile.full_name || '', profile.display_name)
+          : (phorestName ? phorestName : unmappedLabel(staffId));
         return { name, photoUrl: profile?.photo_url || null };
       });
 
