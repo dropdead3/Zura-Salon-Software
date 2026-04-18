@@ -2109,33 +2109,36 @@ serve(async (req) => {
     };
 
     if (sync_type === 'staff' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         results.staff = await syncStaff(supabase, businessId, username, password);
-        await logSync(supabase, 'staff', 'success', results.staff.mapped);
+        await logSync(supabase, 'staff', 'success', results.staff.mapped, undefined, undefined, undefined, undefined, undefined, startedAt);
       } catch (error: any) {
         results.staff = { error: error.message };
-        await logSync(supabase, 'staff', 'failed', 0, error.message);
+        await logSync(supabase, 'staff', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('staff', error.message);
       }
     }
 
     if (sync_type === 'appointments' || sync_type === 'all') {
+      const apptStartedAt = new Date();
       try {
         results.appointments = await syncAppointments(supabase, businessId, username, password, defaultFrom, defaultTo);
-        await logSync(supabase, 'appointments', 'success', results.appointments.synced);
+        await logSync(supabase, 'appointments', 'success', results.appointments.synced, undefined, undefined, undefined, undefined, undefined, apptStartedAt);
       } catch (error: any) {
         results.appointments = { error: error.message };
-        await logSync(supabase, 'appointments', 'failed', 0, error.message);
+        await logSync(supabase, 'appointments', 'failed', 0, error.message, undefined, undefined, undefined, undefined, apptStartedAt);
         notifyFailure('appointments', error.message);
       }
 
       // Also sync roster/breaks for the same date range
+      const rosterStartedAt = new Date();
       try {
         results.roster = await syncRoster(supabase, businessId, username, password, defaultFrom, defaultTo);
-        await logSync(supabase, 'roster', 'success', results.roster.synced);
+        await logSync(supabase, 'roster', 'success', results.roster.synced, undefined, undefined, undefined, undefined, undefined, rosterStartedAt);
       } catch (error: any) {
         results.roster = { error: error.message };
-        await logSync(supabase, 'roster', 'failed', 0, error.message);
+        await logSync(supabase, 'roster', 'failed', 0, error.message, undefined, undefined, undefined, undefined, rosterStartedAt);
         console.error('Roster sync failed:', error.message);
       }
     }
