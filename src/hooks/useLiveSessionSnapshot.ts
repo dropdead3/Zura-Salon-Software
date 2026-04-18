@@ -266,6 +266,8 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
           clientName: (current as any)?.client_name || null,
           locationId: apptLocationId,
           locationName: apptLocationId ? (locationNameMap.get(apptLocationId) || null) : null,
+          isUnmapped,
+          phorestStaffId: staffId,
         });
       }
 
