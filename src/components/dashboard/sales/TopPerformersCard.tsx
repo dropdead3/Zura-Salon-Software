@@ -147,7 +147,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   if (!performers.length) {
     return (
       <TabsPrimitive.Root value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-      <Card className="h-full flex flex-col overflow-hidden border-border/40">
+      <Card className="relative h-full flex flex-col overflow-hidden border-border/40">
+        <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period. Amounts are rounded to the nearest dollar for a cleaner read." className="absolute top-3 right-3 z-10" />
         <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1 flex items-center justify-center">
           <div className="text-center py-2 text-muted-foreground text-xs">
