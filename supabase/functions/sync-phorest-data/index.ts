@@ -288,7 +288,7 @@ async function syncAppointments(
   dateFrom: string,
   dateTo: string
 ) {
-  console.log(`Syncing appointments from ${dateFrom} to ${dateTo}...`);
+  console.log(`[SYNC WINDOW] Appointments: dateFrom=${dateFrom} dateTo=${dateTo}`);
 
   try {
     let allAppointments: any[] = [];
