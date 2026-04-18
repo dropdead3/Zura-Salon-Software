@@ -84,16 +84,23 @@ export function AnimatedNumber({
 
   return (
     <span ref={spanRef} className={className} style={{ display: 'inline-block' }}>
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="wait" initial={true}>
         {hasRevealed && (
           <motion.span
             key={display}
             initial={{ opacity: initialOpacity, y: initialOpacity === 1 ? 0 : 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -2 }}
-            transition={{
-              opacity: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
-              y: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+            animate={{
+              opacity: 1,
+              y: 0,
+              transition: {
+                opacity: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+                y: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+              },
+            }}
+            exit={{
+              opacity: 0,
+              y: 0,
+              transition: { opacity: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
             }}
             style={{ display: 'inline-block' }}
           >

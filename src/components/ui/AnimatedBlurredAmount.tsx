@@ -119,18 +119,29 @@ export function AnimatedBlurredAmount({
   // First-mount snap when session gate already fired (no initial fade); value changes still crossfade.
   const initialOpacity = hasMounted && !shouldAnimate ? 1 : 0;
 
+  // Track whether this is the very first reveal vs a value-change swap.
+  // First reveal includes a tiny y-translation; value-change swaps are pure opacity crossfades.
+  const isFirstReveal = !hasMounted || (initialOpacity === 0 && shouldAnimate);
+
   const inner = skipFade ? (
     <span style={{ display: 'inline-block' }}>{displayContent}</span>
   ) : (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait" initial={true}>
       <motion.span
         key={displayContent}
-        initial={{ opacity: initialOpacity, y: initialOpacity === 1 ? 0 : 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -2 }}
-        transition={{
-          opacity: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
-          y: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+        initial={{ opacity: initialOpacity, y: isFirstReveal && initialOpacity === 0 ? 4 : 0 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          transition: {
+            opacity: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+            y: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+          },
+        }}
+        exit={{
+          opacity: 0,
+          y: 0,
+          transition: { opacity: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
         }}
         style={{ display: 'inline-block' }}
       >
