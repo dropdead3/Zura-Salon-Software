@@ -19,6 +19,7 @@ import { useRefreshPayoutStatus } from '@/hooks/useStaffPayoutAccount';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { toast } from 'sonner';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface TipDistributionPolicy {
   enabled: boolean;

@@ -14,6 +14,7 @@ import { useStylistMixingDashboard } from '@/hooks/color-bar/useStylistMixingDas
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 // ─── Status badge helper ────────────────────────────────────────────────────
 

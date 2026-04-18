@@ -12,6 +12,7 @@ import { format, parseISO, isToday, isBefore } from 'date-fns';
 import { motion } from 'framer-motion';
 import { CLV_TIERS } from '@/lib/clv-calculator';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 function formatTime(timeStr: string | null): string {
   if (!timeStr) return '';
