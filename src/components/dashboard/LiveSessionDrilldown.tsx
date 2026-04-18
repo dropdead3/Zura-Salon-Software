@@ -159,6 +159,7 @@ export function LiveSessionDrilldown({
 
 /** Single stylist row — extracted to avoid duplication between grouped/flat modes */
 function StylistRow({ stylist }: { stylist: StylistDetail }) {
+  const { dashPath } = useOrgDashboardPath();
   const progress = stylist.totalAppts > 0
     ? (stylist.currentApptIndex / stylist.totalAppts) * 100
     : 0;
@@ -176,7 +177,39 @@ function StylistRow({ stylist }: { stylist: StylistDetail }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-foreground truncate">{formatNameWithPeriod(stylist.name)}</p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p className={cn(
+              "text-sm font-medium truncate",
+              stylist.isUnmapped ? "text-muted-foreground italic" : "text-foreground"
+            )}>
+              {formatNameWithPeriod(stylist.name)}
+            </p>
+            {stylist.isUnmapped && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to={dashPath('/admin/settings/staff-mapping')}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 transition-colors text-[10px] font-medium shrink-0"
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    <span>Sync needed</span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-medium">Unmapped staff</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    This stylist exists in Phorest but isn't linked to a Zura profile yet.
+                    Click to open Staff Mapping.
+                  </p>
+                  {stylist.phorestStaffId && (
+                    <p className="text-muted-foreground/70 text-[10px] mt-1 font-mono">
+                      ID: {stylist.phorestStaffId}
+                    </p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
           {stylist.assistedBy.length > 0 && (
             <span className="bg-muted/60 text-muted-foreground/80 text-[10px] px-2 py-0.5 rounded-full italic whitespace-nowrap">
               Assisted by {stylist.assistedBy.map(formatNameWithPeriod).join(', ')}
