@@ -59,4 +59,10 @@ export function LuxeLoader({ size = 'md', className, caption, fullPage, fillPare
       `}</style>
     </div>
   );
+
+  if (fullPage || fillParent) {
+    return <div className={cn(wrapperClass, className)}>{inner}</div>;
+  }
+
+  return inner;
 }
