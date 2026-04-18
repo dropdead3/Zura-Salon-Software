@@ -2171,24 +2171,25 @@ serve(async (req) => {
 
     if (sync_type === 'sales' || sync_type === 'all') {
       try {
-        // Quick mode: just today's sales
-        // Full mode: last 30 days for sales
+        // Quick mode: yesterday + today (late-finalized sales)
+        // Full mode: last 90 days (aligns with dashboard 90-day analytics window)
         let salesFrom: string;
         let salesTo: string;
-        
+
         if (quick) {
-          // Sync yesterday + today: yesterday's sales may finalize after midnight
           const yesterday = new Date(today);
           yesterday.setDate(yesterday.getDate() - 1);
           salesFrom = yesterday.toISOString().split('T')[0];
           salesTo = todayStr;
         } else {
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          salesFrom = date_from || thirtyDaysAgo.toISOString().split('T')[0];
-          salesTo = date_to || new Date().toISOString().split('T')[0];
+          const ninetyDaysAgo = new Date(today);
+          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+          salesFrom = date_from || ninetyDaysAgo.toISOString().split('T')[0];
+          salesTo = date_to || todayStr;
         }
-        
+
+        console.log(`[SYNC WINDOW] Sales: salesFrom=${salesFrom} salesTo=${salesTo}`);
+
         results.sales = await syncSalesTransactions(supabase, businessId, username, password, salesFrom, salesTo);
         const salesStatus = (results.sales.synced_items || 0) === 0 ? 'no_data' : 'success';
         await logSync(supabase, 'sales', salesStatus, results.sales.synced_items, 
