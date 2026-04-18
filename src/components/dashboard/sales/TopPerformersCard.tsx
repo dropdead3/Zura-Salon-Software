@@ -65,7 +65,7 @@ const INITIAL_COUNT = 3;
 export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('service');
   const [showAll, setShowAll] = useState(false);
-  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatCurrency } = useFormatCurrency();
 
   const sorted = useMemo(() => [...performers].sort((a, b) => {
     if (sortMode === 'retail') {
@@ -200,10 +200,17 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
                       {/* Content zone */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{performer.name}</p>
-                        <BlurredAmount className={cn("font-display text-sm mt-0.5", rank === 1 && "text-foreground")}>
-                          {formatCurrencyWhole(displayValue)}
-                        </BlurredAmount>
+                        <div className="flex flex-col @[340px]:flex-row @[340px]:items-baseline @[340px]:justify-between @[340px]:gap-3">
+                          <p className="text-sm font-medium truncate min-w-0">{performer.name}</p>
+                          <BlurredAmount
+                            className={cn(
+                              "font-display text-sm mt-0.5 @[340px]:mt-0 shrink-0 whitespace-nowrap",
+                              rank === 1 && "text-foreground"
+                            )}
+                          >
+                            {formatCurrency(Math.round(displayValue), { maximumFractionDigits: 0 })}
+                          </BlurredAmount>
+                        </div>
                         <div className="text-[10px] text-muted-foreground mt-0.5">
                           <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
                           <span className="hidden @[320px]:inline"> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
