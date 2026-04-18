@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare, TrendingDown } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles, CalendarPlus, XCircle, ChevronDown, MessageSquare, CheckCircle2, FlaskConical, Banknote, Wallet, Loader2, Wifi, Mail, Send, AlertTriangle, GitCompare, TrendingDown, Smartphone, Tablet } from 'lucide-react';
+import { TogglePill } from '@/components/ui/toggle-pill';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { AfterpaySurchargePreview } from '@/components/dashboard/payments/AfterpaySurchargePreview';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
