@@ -86,6 +86,8 @@ import { Progress } from '@/components/ui/progress';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useTranslation } from 'react-i18next';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
+import { getOrgToday } from '@/lib/orgTime';
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'lastMonth' | 'ytd' | 'lastYear' | 'last365';
 
@@ -213,32 +215,38 @@ export function AggregateSalesCard({
   // Use external if provided, otherwise internal
   const dateRange = externalDateRange ?? internalDateRange;
 
+  // Use org timezone for "today" anchoring so dashboard windows match the salon's day.
+  const { timezone: orgTz } = useOrgDefaults();
+  const orgTodayStr = getOrgToday(orgTz);
+
   const dateFilters = externalDateFilters ?? (() => {
-    const now = new Date();
+    // Build a Date anchored at noon on org-today (avoids DST edges) for date-fns math.
+    const [oy, om, od] = orgTodayStr.split('-').map(Number);
+    const now = new Date(oy, (om ?? 1) - 1, od ?? 1, 12, 0, 0);
     switch (dateRange) {
       case 'today':
-        return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: orgTodayStr, dateTo: orgTodayStr };
       case 'yesterday':
         const yesterday = subDays(now, 1);
         return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
       case '7d':
-        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: orgTodayStr };
       case '30d':
-        return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: orgTodayStr };
       case 'thisWeek':
-        return { 
-          dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       case 'mtd':
-        return { 
-          dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       case 'todayToEom':
-        return { 
-          dateFrom: format(now, 'yyyy-MM-dd'), 
-          dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
+        return {
+          dateFrom: orgTodayStr,
+          dateTo: format(endOfMonth(now), 'yyyy-MM-dd'),
         };
       case 'lastMonth': {
         const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -249,23 +257,23 @@ export function AggregateSalesCard({
         };
       }
       case 'ytd':
-        return { 
-          dateFrom: format(startOfYear(now), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfYear(now), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       case 'lastYear':
         const lastYearDate = subYears(now, 1);
-        return { 
-          dateFrom: format(startOfYear(lastYearDate), 'yyyy-MM-dd'), 
-          dateTo: format(endOfYear(lastYearDate), 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(startOfYear(lastYearDate), 'yyyy-MM-dd'),
+          dateTo: format(endOfYear(lastYearDate), 'yyyy-MM-dd'),
         };
       case 'last365':
-        return { 
-          dateFrom: format(subDays(now, 365), 'yyyy-MM-dd'), 
-          dateTo: format(now, 'yyyy-MM-dd') 
+        return {
+          dateFrom: format(subDays(now, 365), 'yyyy-MM-dd'),
+          dateTo: orgTodayStr,
         };
       default:
-        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+        return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: orgTodayStr };
     }
   })();
 
@@ -281,7 +289,7 @@ export function AggregateSalesCard({
   const { data: tomorrowData } = useTomorrowRevenue(filterContext?.locationId, isTodayRange);
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
-  const rangeIncludesToday = dateFilters.dateTo === format(new Date(), 'yyyy-MM-dd');
+  const rangeIncludesToday = dateFilters.dateTo === orgTodayStr;
   const { data: todayActual, locationActuals, isLoading: todayActualLoading, dataUpdatedAt: todayDataUpdatedAt } = useTodayActualRevenue(dateRange === 'today' || rangeIncludesToday);
   const { data: attachmentData, isLoading: attachmentLoading } = useRetailAttachmentRate({
     dateFrom: dateFilters.dateFrom,
@@ -326,10 +334,12 @@ export function AggregateSalesCard({
   // For ranges that include today (7d, thisWeek, mtd, ytd, last365), exclude today
   // from the POS query so we don't get stale/missing data for the current day.
   // Today's live POS data is already handled by useTodayActualRevenue.
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayStr = orgTodayStr;
   const pastRangeIncludesToday = isPastRange && dateFilters.dateTo === todayStr;
+  const [py, pm, pd] = todayStr.split('-').map(Number);
+  const orgTodayNoon = new Date(py, (pm ?? 1) - 1, pd ?? 1, 12, 0, 0);
   const pastActualDateTo = pastRangeIncludesToday
-    ? format(subDays(new Date(), 1), 'yyyy-MM-dd')
+    ? format(subDays(orgTodayNoon, 1), 'yyyy-MM-dd')
     : dateFilters.dateTo;
 
   // Actual POS revenue for past date ranges (with location filter + pagination)

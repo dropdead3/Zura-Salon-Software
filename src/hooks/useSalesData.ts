@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatDisplayName, formatFullDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
+import { toOrgDayBounds } from '@/lib/orgTime';
 
 export interface SalesTransaction {
   id: string;
@@ -266,10 +268,15 @@ import { isVishServiceCharge } from '@/utils/serviceCategorization';
 
 // Get aggregated sales metrics for dashboard from appointments (since sales API is not available)
 export function useSalesMetrics(filters: SalesFilters = {}) {
+  const { timezone } = useOrgDefaults();
   return useQuery({
-    queryKey: ['sales-metrics-from-appointments', filters],
+    queryKey: ['sales-metrics-from-appointments', filters, timezone],
     staleTime: 60_000, // Wave 14: 1m cache to prevent refetch on remount/navigation
     queryFn: async () => {
+      // For transaction_date (timestamptz), clamp using org-local day bounds in UTC
+      const txBounds = (filters.dateFrom && filters.dateTo)
+        ? toOrgDayBounds(filters.dateFrom, filters.dateTo, timezone)
+        : null;
       // Build appointment query with batch fetching
       const data = await fetchAllBatched<{
         id: string; total_price: number | null; tip_amount: number | null;
@@ -305,8 +312,12 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
           .not('total_amount', 'is', null)
           .range(from, to);
 
-        if (filters.dateFrom) q = q.gte('transaction_date', filters.dateFrom);
-        if (filters.dateTo) q = q.lte('transaction_date', filters.dateTo);
+        if (txBounds) {
+          q = q.gte('transaction_date', txBounds.startUtc).lte('transaction_date', txBounds.endUtc);
+        } else {
+          if (filters.dateFrom) q = q.gte('transaction_date', filters.dateFrom);
+          if (filters.dateTo) q = q.lte('transaction_date', filters.dateTo);
+        }
         if (filters.locationId && filters.locationId !== 'all') {
           const ids = filters.locationId.split(',').filter(Boolean);
           if (ids.length === 1) q = q.eq('location_id', ids[0]);
@@ -419,10 +430,14 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
 
 // Get sales by stylist for leaderboard (from actual POS transaction data)
 export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId?: string) {
+  const { timezone } = useOrgDefaults();
   return useQuery({
-    queryKey: ['sales-by-stylist-from-transactions', dateFrom, dateTo, locationId],
+    queryKey: ['sales-by-stylist-from-transactions', dateFrom, dateTo, locationId, timezone],
     staleTime: 60_000, // Wave 14: 1m cache
     queryFn: async () => {
+      const txBounds = (dateFrom && dateTo)
+        ? toOrgDayBounds(dateFrom, dateTo, timezone)
+        : null;
       // Get staff mappings with photos
       const { data: mappings } = await supabase
         .from('v_all_staff' as any)
@@ -472,8 +487,12 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
           .not('total_amount', 'is', null)
           .range(from, to);
 
-        if (dateFrom) q = q.gte('transaction_date', dateFrom);
-        if (dateTo) q = q.lte('transaction_date', dateTo);
+        if (txBounds) {
+          q = q.gte('transaction_date', txBounds.startUtc).lte('transaction_date', txBounds.endUtc);
+        } else {
+          if (dateFrom) q = q.gte('transaction_date', dateFrom);
+          if (dateTo) q = q.lte('transaction_date', dateTo);
+        }
         if (locationId && locationId !== 'all') {
           const ids = locationId.split(',').filter(Boolean);
           if (ids.length === 1) q = q.eq('location_id', ids[0]);
