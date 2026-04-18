@@ -21,6 +21,18 @@ export interface StylistDetail {
   clientName: string | null;
   locationId: string | null;
   locationName: string | null;
+  isUnmapped?: boolean;
+  phorestStaffId?: string | null;
+}
+
+/** Truncate a Phorest staff ID to a recognizable prefix for support traceability. */
+function truncateStaffId(staffId: string): string {
+  if (!staffId) return '';
+  return staffId.length > 10 ? `${staffId.slice(0, 8)}…` : staffId;
+}
+
+function unmappedLabel(staffId: string): string {
+  return `Unmapped (${truncateStaffId(staffId)})`;
 }
 
 interface LiveSessionSnapshot {
