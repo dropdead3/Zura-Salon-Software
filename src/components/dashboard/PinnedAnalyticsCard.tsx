@@ -26,6 +26,7 @@ import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUt
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
+import { RetailPerformanceAlert } from '@/components/dashboard/sales/RetailPerformanceAlert';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
@@ -742,28 +743,51 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     case 'revenue_breakdown':
       return (
         <VisibilityGate elementKey="revenue_breakdown">
-          <PinnableCard elementKey="revenue_breakdown" elementName="Revenue Breakdown" category="Command Center"
-            metricData={{
-              "Service Revenue": salesData?.serviceRevenue || 0,
-              "Product Revenue": salesData?.productRevenue || 0,
-            }}
-            dateRange={filters.dateRange}
-            locationName={selectedLocationName}
-          >
-            <RevenueDonutChart 
-              serviceRevenue={salesData?.serviceRevenue || 0}
-              productRevenue={salesData?.productRevenue || 0}
-              filterContext={filterContext}
-              retailAttachmentRate={attachmentData?.attachmentRate}
-              retailAttachmentLoading={isLoadingAttachment}
-              retailBreakdown={retailBreakdown ? {
-                productOnlyRevenue: retailBreakdown.productRevenue,
-                extensionRevenue: retailBreakdown.extensionRevenue,
-                merchRevenue: retailBreakdown.merchRevenue,
-                giftCardRevenue: retailBreakdown.giftCardRevenue,
-              } : undefined}
-            />
-          </PinnableCard>
+          <div className="flex flex-col gap-3">
+            <PinnableCard elementKey="revenue_breakdown" elementName="Revenue Breakdown" category="Command Center"
+              metricData={{
+                "Service Revenue": salesData?.serviceRevenue || 0,
+                "Product Revenue": salesData?.productRevenue || 0,
+              }}
+              dateRange={filters.dateRange}
+              locationName={selectedLocationName}
+            >
+              <RevenueDonutChart 
+                serviceRevenue={salesData?.serviceRevenue || 0}
+                productRevenue={salesData?.productRevenue || 0}
+                filterContext={filterContext}
+                retailAttachmentRate={attachmentData?.attachmentRate}
+                retailAttachmentLoading={isLoadingAttachment}
+                retailBreakdown={retailBreakdown ? {
+                  productOnlyRevenue: retailBreakdown.productRevenue,
+                  extensionRevenue: retailBreakdown.extensionRevenue,
+                  merchRevenue: retailBreakdown.merchRevenue,
+                  giftCardRevenue: retailBreakdown.giftCardRevenue,
+                } : undefined}
+              />
+            </PinnableCard>
+            {(() => {
+              const svc = salesData?.serviceRevenue || 0;
+              const prod = salesData?.productRevenue || 0;
+              const t = svc + prod;
+              const extRev = retailBreakdown?.extensionRevenue ?? 0;
+              const truePct = t > 0 ? Math.round(((prod - extRev) / t) * 100) : 0;
+              const hasBd = !!retailBreakdown && (
+                (retailBreakdown.productRevenue ?? 0) > 0 ||
+                (retailBreakdown.extensionRevenue ?? 0) > 0 ||
+                (retailBreakdown.merchRevenue ?? 0) > 0 ||
+                (retailBreakdown.giftCardRevenue ?? 0) > 0
+              );
+              return (
+                <RetailPerformanceAlert
+                  trueRetailPercent={truePct}
+                  retailAttachmentRate={attachmentData?.attachmentRate}
+                  total={t}
+                  hasBreakdown={hasBd}
+                />
+              );
+            })()}
+          </div>
         </VisibilityGate>
       );
     case 'client_health':
