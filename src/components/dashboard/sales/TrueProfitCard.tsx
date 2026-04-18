@@ -128,7 +128,7 @@ export function TrueProfitCard({ dateFrom, dateTo, locationId, className }: True
                     line.isProfit && getMarginHealthColor(avgMarginPct),
                     line.isCost && 'text-destructive',
                   )}>
-                    <AnimatedBlurredAmount value={line.value} currency="USD" decimals={2} />
+                    <AnimatedBlurredAmount value={line.value} currency="USD" decimals={2} animationKey={`cc-true-profit-${line.label.toLowerCase().replace(/\s+/g, '-')}`} />
                   </span>
                 </div>
               ))}

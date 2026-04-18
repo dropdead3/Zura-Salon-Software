@@ -26879,6 +26879,7 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          animation_intensity: string
           chat_layout: Json | null
           created_at: string
           custom_landing_page: string | null
@@ -26892,6 +26893,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          animation_intensity?: string
           chat_layout?: Json | null
           created_at?: string
           custom_landing_page?: string | null
@@ -26905,6 +26907,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          animation_intensity?: string
           chat_layout?: Json | null
           created_at?: string
           custom_landing_page?: string | null

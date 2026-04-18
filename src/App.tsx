@@ -19,6 +19,7 @@ import { SoundSettingsProvider } from "./contexts/SoundSettingsContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { CapitalFeatureGate } from "./components/features/CapitalFeatureGate";
 import { ThemeInitializer } from "./components/ThemeInitializer";
+import { AnimationIntensityInitializer } from "./components/AnimationIntensityInitializer";
 import { I18nLocaleSync } from "./components/I18nLocaleSync";
 import { DevContextBridge } from "./dev/DevContextBridge";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -446,6 +447,7 @@ const App = () => (
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <ThemeInitializer />
+              <AnimationIntensityInitializer />
               <TooltipProvider delayDuration={0}>
                 <Toaster />
                 <Sonner />

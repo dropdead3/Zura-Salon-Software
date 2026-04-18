@@ -8,6 +8,24 @@ html, body, #root {
   max-width: none;
 }
 
+/* Animation intensity preference (set by AnimationIntensityInitializer)
+   - animations-off: instant, accessibility / focus mode
+   - animations-calm: slower, gentler (counter components honor multiplier)
+   - animations-standard: default
+*/
+:root { --animation-intensity-multiplier: 1; }
+.animations-off,
+.animations-off *,
+.animations-off *::before,
+.animations-off *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
 /* Cream Editorial Luxury Design System
    Inspired by La Modé aesthetic
    All colors MUST be HSL.
