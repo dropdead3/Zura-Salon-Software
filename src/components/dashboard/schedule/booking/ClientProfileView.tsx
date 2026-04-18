@@ -129,7 +129,7 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
       </div>
 
       {/* Hospitality Memory Layer — collapses to single CTA when empty */}
-      <div className="px-4 py-3 border-b border-border">
+      <div className="px-4 py-4 border-b border-border">
         <HospitalityBlock
           organizationId={organizationId}
           clientKey={getHospitalityClientKey(client)}
