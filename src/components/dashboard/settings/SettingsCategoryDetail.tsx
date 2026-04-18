@@ -36,6 +36,8 @@ import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows'
 import { useInfotainerSettings } from '@/hooks/useInfotainers';
 import { useOrgSecuritySettings } from '@/hooks/useOrgSecuritySettings';
 import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
+import { useAnimationIntensity, type AnimationIntensity } from '@/hooks/useAnimationIntensity';
+import { Sparkles as SparklesIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useOrgDefaults } from '@/hooks/useOrgDefaults';
 import { useUpdateTimezone, TIMEZONES } from '@/hooks/useTimezoneSettings';
