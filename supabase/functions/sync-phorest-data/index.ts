@@ -10,7 +10,7 @@ interface SyncRequest {
   sync_type: 'staff' | 'appointments' | 'clients' | 'reports' | 'sales' | 'all';
   date_from?: string;
   date_to?: string;
-  quick?: boolean; // For lightweight syncs (e.g., appointments for next 7 days only)
+  quick?: boolean | 'far'; // 'far' = d+90 to d+180 hourly tail; true = d-1 to d+90 every 15min
 }
 
 // Phorest API configuration - Global endpoint works
