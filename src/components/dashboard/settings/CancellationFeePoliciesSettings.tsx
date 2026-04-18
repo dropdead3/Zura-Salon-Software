@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Plus, Trash2, ShieldAlert, FileText } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import {
   useCancellationFeePolicies,
   useUpsertCancellationFeePolicy,
@@ -118,9 +118,7 @@ export function CancellationFeePoliciesSettings() {
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-20">
-            <ZuraLoader size="sm" />
-          </div>
+          <DashboardLoader size="sm" className="h-20" delay={0} />
         ) : (
           <>
             {policies && policies.length > 0 ? (
