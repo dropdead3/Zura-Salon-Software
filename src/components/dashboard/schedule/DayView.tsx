@@ -370,6 +370,7 @@ export function DayView({
   onMeetingClick,
   zoomLevel = 0,
   scheduleBlocks = [],
+  inactiveConnectLocationIds,
 }: DayViewProps) {
   const ZOOM_CONFIG: Record<string, { interval: number }> = {
     '-3': { interval: 60 },
@@ -866,29 +867,30 @@ export function DayView({
                          (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
                        );
                        return (
-                         <AppointmentCard
-                           key={apt.id}
-                           appointment={apt}
-                           hoursStart={hoursStart}
-                           onClick={() => onAppointmentClick(apt)}
-                           isSelected={apt.id === selectedAppointmentId}
-                           columnIndex={columnIndex}
-                           totalOverlapping={totalOverlapping}
-                           categoryColors={categoryColors}
-                           isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                           hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                           colorBy={colorBy}
-                           serviceLookup={serviceLookup}
-                           assistantNamesMap={assistantNamesMap}
-                           assistantProfilesMap={assistantProfilesMap}
-                           hasCoverageScheduled={hasCoverage}
-                           date={date}
-                           rowHeight={ROW_HEIGHT}
-                           slotInterval={slotInterval}
-                           zoomLevel={zoomLevel}
-                           useShortLabels={sortedStylists.length >= 3}
-                           declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
-                         />
+                       <AppointmentCard
+                         key={apt.id}
+                         appointment={apt}
+                         hoursStart={hoursStart}
+                         onClick={() => onAppointmentClick(apt)}
+                         isSelected={apt.id === selectedAppointmentId}
+                         columnIndex={columnIndex}
+                         totalOverlapping={totalOverlapping}
+                         categoryColors={categoryColors}
+                         isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                         hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                         colorBy={colorBy}
+                         serviceLookup={serviceLookup}
+                         assistantNamesMap={assistantNamesMap}
+                         assistantProfilesMap={assistantProfilesMap}
+                         hasCoverageScheduled={hasCoverage}
+                         date={date}
+                         rowHeight={ROW_HEIGHT}
+                         slotInterval={slotInterval}
+                         zoomLevel={zoomLevel}
+                         useShortLabels={sortedStylists.length >= 3}
+                         declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
+                         connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
+                       />
                        );
                      })}
 
