@@ -24,7 +24,7 @@ import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUt
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
-import { RetailPerformanceAlert } from '@/components/dashboard/sales/RetailPerformanceAlert';
+
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
