@@ -2,9 +2,13 @@
  * Retail performance verdict — translates retail metrics into a single ranked
  * advisory line for operators. Pure function, no side effects.
  *
- * Tiers anchored to industry benchmarks (10–20% retail mix, 30–50% attach rate)
- * and the StylistLevelsEditor retail target. Worst-of logic between True Retail %
- * and Attach Rate prevents oversell when one metric is weak.
+ * Doctrine: Attach rate is the PRIMARY signal — it measures stylist behavior
+ * at checkout (the CTA itself). True retail % is downstream of attach rate,
+ * basket size, and assortment. We anchor on attach and use true retail % only
+ * as a downgrade gate when basket is materially hollow (≥2 tiers below attach).
+ *
+ * Sub-10% retail mix is treated as a forced critical: at that level the cause
+ * is almost always missing recommendations, not pricing or product mix.
  *
  * Materiality gate: returns null below $500 total revenue or when attach rate
  * is unavailable. Silence is valid output.
@@ -18,6 +22,7 @@ export interface RetailPerformanceVerdict {
 }
 
 const MATERIALITY_THRESHOLD = 500;
+const SUB_MATERIAL_RETAIL_PERCENT = 10;
 
 function tierForRetailPercent(pct: number): RetailPerformanceTier {
   if (pct >= 15) return 'strong';
@@ -41,10 +46,14 @@ const TIER_RANK: Record<RetailPerformanceTier, number> = {
 };
 
 const TIER_COPY: Record<RetailPerformanceTier, string> = {
-  strong: 'Retail is pulling its weight. Protect the merchandising routine.',
-  healthy: 'Retail is on benchmark. One coaching cycle could push to top quartile.',
-  soft: 'Retail is underperforming. The lever is attach rate at checkout, not assortment.',
-  critical: 'Retail is a margin leak. Audit the recommendation step in the service flow.',
+  strong:
+    'Stylists are consistently making the retail recommendation. Protect this routine.',
+  healthy:
+    'Stylists are recommending retail. One coaching cycle could push attach rate to top quartile.',
+  soft:
+    'Attach rate is slipping. Stylists are skipping the retail recommendation on too many tickets.',
+  critical:
+    'Your stylists are likely not selling and need some help. Retail attach is below the threshold where coaching is optional.',
 };
 
 export function getRetailPerformanceVerdict(
@@ -54,12 +63,28 @@ export function getRetailPerformanceVerdict(
 ): RetailPerformanceVerdict | null {
   if (total < MATERIALITY_THRESHOLD) return null;
   if (retailAttachmentRate === undefined) return null;
-  if (trueRetailPercent === undefined) return null;
 
-  const retailTier = tierForRetailPercent(trueRetailPercent);
   const attachTier = tierForAttachRate(retailAttachmentRate);
-  const tier: RetailPerformanceTier =
-    TIER_RANK[retailTier] <= TIER_RANK[attachTier] ? retailTier : attachTier;
+  let tier: RetailPerformanceTier = attachTier;
+
+  // Downgrade gate: if basket is materially hollow (retail % ≥2 tiers below
+  // attach), trust the weaker signal — the CTA may be happening but failing
+  // to convert into meaningful basket lift.
+  if (trueRetailPercent !== undefined) {
+    const retailTier = tierForRetailPercent(trueRetailPercent);
+    if (TIER_RANK[retailTier] <= TIER_RANK[attachTier] - 2) {
+      tier = retailTier;
+    }
+
+    // Sub-10% retail mix: force critical regardless of attach. At this level
+    // the lever is almost always missing recommendations.
+    if (
+      trueRetailPercent < SUB_MATERIAL_RETAIL_PERCENT &&
+      TIER_RANK[attachTier] <= TIER_RANK.soft
+    ) {
+      tier = 'critical';
+    }
+  }
 
   return { tier, copy: TIER_COPY[tier] };
 }
