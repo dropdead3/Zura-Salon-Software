@@ -24,7 +24,7 @@ import {
 import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Building2, Search, Loader2, ChevronDown, ChevronRight, MapPin, Weight, AlertTriangle, ShieldCheck, Undo2, CreditCard, Send } from 'lucide-react';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { LuxeLoader } from '@/components/ui/loaders';
 import { useBatchPaymentMethods, type PaymentMethodInfo } from '@/hooks/platform/useBatchPaymentMethods';
 import { useSendPaymentSetupLink } from '@/hooks/platform/useSendPaymentSetupLink';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -693,7 +693,7 @@ function LocationEntitlementPanel({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <ZuraLoader size="xl" platformColors />
+        <LuxeLoader size="lg" />
       </div>
     );
   }
