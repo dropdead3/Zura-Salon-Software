@@ -190,7 +190,7 @@ export function RevenueDonutChart({
             </div>
           </div>
         </div>
-        {hasBreakdown && (
+        {hasBreakdown && getRetailPerformanceVerdict(trueRetailPercent, retailAttachmentRate, total) && (
           <div className="border-t border-border/40 pt-4 mt-4">
             <RetailPerformanceAlert
               trueRetailPercent={trueRetailPercent}
