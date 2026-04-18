@@ -4,10 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Brain, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PLATFORM_NAME } from '@/lib/brand';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 interface InsightsNudgeBannerProps {
@@ -19,7 +17,6 @@ const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
 export function InsightsNudgeBanner({
   userId, isLeadership }: InsightsNudgeBannerProps) {
-  const { dashPath } = useOrgDashboardPath();
   const [dismissed, setDismissed] = useState(false);
 
   const { data: daysSinceLastCheck } = useQuery({
@@ -102,15 +99,18 @@ export function InsightsNudgeBanner({
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isNeverChecked
-                ? `${PLATFORM_NAME} has personalized performance data and growth tips ready for you — let's grow! 🌱`
-                : `${PLATFORM_NAME} has fresh performance data and growth tips waiting for you — let's grow! 🌱`}
+                ? `${PLATFORM_NAME} has personalized performance data and growth tips ready for you.`
+                : `${PLATFORM_NAME} has fresh performance data and growth tips waiting for you.`}
             </p>
           </div>
-          <Link to={dashPath('/')}>
-            <Button size={tokens.button.card} variant="outline" className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
-              View Insights
-            </Button>
-          </Link>
+          <Button
+            size={tokens.button.card}
+            variant="outline"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-insights-panel'))}
+            className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
+          >
+            View Insights
+          </Button>
           <button
             onClick={() => setDismissed(true)}
             className="flex-shrink-0 p-1 rounded-full hover:bg-muted transition-colors"
