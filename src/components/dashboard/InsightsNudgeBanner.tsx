@@ -4,10 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Brain, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PLATFORM_NAME } from '@/lib/brand';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 interface InsightsNudgeBannerProps {
@@ -19,7 +17,6 @@ const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
 export function InsightsNudgeBanner({
   userId, isLeadership }: InsightsNudgeBannerProps) {
-  const { dashPath } = useOrgDashboardPath();
   const [dismissed, setDismissed] = useState(false);
 
   const { data: daysSinceLastCheck } = useQuery({
