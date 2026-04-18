@@ -7,6 +7,17 @@ import { useLoaderConfig, LoaderStyle } from '@/hooks/useLoaderConfig';
 interface DashboardLoaderProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  caption?: string;
+  /**
+   * Fills viewport minus top nav + page header chrome and centers the loader.
+   * Use for full-page route loads where the loader is the only content.
+   */
+  fullPage?: boolean;
+  /**
+   * Absolutely fills the nearest positioned parent and centers the loader.
+   * Use for card / section loaders where the parent already has a defined height.
+   */
+  fillParent?: boolean;
 }
 
 const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }>> = {
@@ -22,33 +33,49 @@ const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' |
  * Reads platform admin's chosen loader style (or skeleton mode) from branding settings.
  *
  * Usage convention:
- *   - Section / card loads → <DashboardLoader /> (default size 'md')
- *   - Full-page route loads → <DashboardLoader size="lg" />
+ *   - Full-page route loads → <DashboardLoader fullPage />
+ *   - Card / section loaders inside a sized parent → <DashboardLoader fillParent />
+ *   - Section / card loads (default min-h-[60vh]) → <DashboardLoader />
  *   - Inline / button spinners → <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
  *   - Bootstrap / brand moments only → <ZuraLoader size="xl" platformColors />
  *
  * Always theme-aware via foreground tokens; never hardcode colors.
  */
-export function DashboardLoader({ size = 'md', className }: DashboardLoaderProps) {
+export function DashboardLoader({ size = 'md', className, caption, fullPage, fillParent }: DashboardLoaderProps) {
   const { loaderStyle, useSkeletons } = useLoaderConfig();
+
+  const hasHeightClass = className?.includes('min-h-') || className?.includes('h-[') || className?.includes('h-64') || className?.includes('h-screen');
+
+  // Account for top nav (~64px) + page header (~80px) = ~9rem of chrome.
+  const fullPageClass = 'min-h-[calc(100vh-9rem)]';
+  const fillParentClass = 'absolute inset-0';
+  const defaultClass = !hasHeightClass ? 'min-h-[60vh]' : undefined;
+
+  const wrapperClass = fillParent
+    ? fillParentClass
+    : fullPage
+      ? fullPageClass
+      : defaultClass;
 
   if (useSkeletons) {
     return (
-      <div className={cn('flex flex-col items-center justify-center gap-3', !(className?.includes('min-h-') || className?.includes('h-')) && 'min-h-[60vh]', className)}>
+      <div className={cn('flex flex-col items-center justify-center gap-3', wrapperClass, className)}>
         <Skeleton className="h-4 w-48 rounded" />
         <Skeleton className="h-3 w-32 rounded" />
         <Skeleton className="h-3 w-40 rounded" />
+        {caption && <span className="font-sans text-xs text-muted-foreground mt-2">{caption}</span>}
       </div>
     );
   }
 
   const LoaderComponent = LOADER_MAP[loaderStyle] || LuxeLoader;
-
-  const hasHeightClass = className?.includes('min-h-') || className?.includes('h-');
+  const supportsCaption = LoaderComponent === LuxeLoader;
 
   return (
-    <div className={cn('flex items-center justify-center', !hasHeightClass && 'min-h-[60vh]', className)}>
-      <LoaderComponent size={size} />
+    <div className={cn('flex items-center justify-center', wrapperClass, className)}>
+      {supportsCaption
+        ? <LuxeLoader size={size} caption={caption} />
+        : <LoaderComponent size={size} />}
     </div>
   );
 }

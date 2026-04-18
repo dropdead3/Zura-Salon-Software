@@ -12,6 +12,10 @@ interface LuxeLoaderProps {
   size?: keyof typeof SIZES;
   className?: string;
   caption?: string;
+  /** Fills viewport minus chrome (top nav + page header) and centers the loader. */
+  fullPage?: boolean;
+  /** Absolutely fills the nearest positioned parent and centers the loader. */
+  fillParent?: boolean;
 }
 
 /**
@@ -19,12 +23,18 @@ interface LuxeLoaderProps {
  * Static ZuraZIcon mark with a thin animated bar underneath.
  * Theme-aware via foreground tokens; renders identically in light and dark.
  */
-export function LuxeLoader({ size = 'md', className, caption }: LuxeLoaderProps) {
+export function LuxeLoader({ size = 'md', className, caption, fullPage, fillParent }: LuxeLoaderProps) {
   const { icon, bar, barHeight, gap } = SIZES[size];
 
-  return (
+  const wrapperClass = fillParent
+    ? 'absolute inset-0 flex items-center justify-center'
+    : fullPage
+      ? 'min-h-[calc(100vh-9rem)] flex items-center justify-center'
+      : '';
+
+  const inner = (
     <div
-      className={cn('flex flex-col items-center justify-center', gap, className)}
+      className={cn('flex flex-col items-center justify-center', gap, !fullPage && !fillParent && className)}
       role="status"
       aria-label={caption || 'Loading'}
     >
@@ -49,4 +59,10 @@ export function LuxeLoader({ size = 'md', className, caption }: LuxeLoaderProps)
       `}</style>
     </div>
   );
+
+  if (fullPage || fillParent) {
+    return <div className={cn(wrapperClass, className)}>{inner}</div>;
+  }
+
+  return inner;
 }

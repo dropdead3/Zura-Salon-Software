@@ -14,6 +14,7 @@ import { useStylistMixingDashboard } from '@/hooks/color-bar/useStylistMixingDas
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 // ─── Status badge helper ────────────────────────────────────────────────────
 
@@ -43,11 +44,7 @@ export default function StylistMixingDashboard() {
   }
 
   if (entitlementLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className={tokens.loading.spinner} />
-      </div>
-    );
+    return <DashboardLoader fullPage />;
   }
 
   // Derive performance stats
@@ -66,9 +63,7 @@ export default function StylistMixingDashboard() {
     return (
       <div className={tokens.layout.pageContainer}>
         <DashboardPageHeader title="My Mixing" />
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className={tokens.loading.spinner} />
-        </div>
+        <DashboardLoader fullPage />
       </div>
     );
   }

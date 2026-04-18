@@ -19,6 +19,7 @@ import { useRefreshPayoutStatus } from '@/hooks/useStaffPayoutAccount';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { toast } from 'sonner';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 interface TipDistributionPolicy {
   enabled: boolean;
@@ -75,11 +76,7 @@ export default function MyPay() {
   if (isLoading || entitlementLoading) {
     return (
       <DashboardLayout>
-        <div className="px-8 py-8 max-w-[1600px] mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </div>
+        <DashboardLoader fullPage />
       </DashboardLayout>
     );
   }

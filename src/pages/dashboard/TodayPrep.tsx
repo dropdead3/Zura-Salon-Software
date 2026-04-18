@@ -12,6 +12,7 @@ import { format, parseISO, isToday, isBefore } from 'date-fns';
 import { motion } from 'framer-motion';
 import { CLV_TIERS } from '@/lib/clv-calculator';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 function formatTime(timeStr: string | null): string {
   if (!timeStr) return '';
@@ -239,11 +240,7 @@ export default function TodayPrep() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="px-8 py-8 max-w-[1600px] mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </div>
+        <DashboardLoader fullPage />
       </DashboardLayout>
     );
   }
