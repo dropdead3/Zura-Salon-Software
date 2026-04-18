@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { editorTokens } from '../editor-tokens';
 import { CanvasHeader, type ViewportMode, type ZoomLevel, type CanvasMode } from './CanvasHeader';
 
@@ -226,7 +226,7 @@ export const CanvasPanel = memo(function CanvasPanel({
       {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <ZuraLoader size="lg" />
+          <DashboardLoader className="min-h-0" />
         </div>
       )}
     </div>

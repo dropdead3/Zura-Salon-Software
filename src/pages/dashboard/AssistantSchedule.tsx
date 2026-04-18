@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { parseISO, isToday, isTomorrow, isPast, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus, Inbox } from 'lucide-react';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';

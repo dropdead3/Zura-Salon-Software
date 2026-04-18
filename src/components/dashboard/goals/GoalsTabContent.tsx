@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Target, Plus } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useOrganizationGoals, useDeleteOrganizationGoal, type OrganizationGoal, type GoalCategory } from '@/hooks/useOrganizationGoals';
@@ -64,9 +64,7 @@ export function GoalsTabContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <ZuraLoader size="lg" />
-      </div>
+      <DashboardLoader className="h-64" />
     );
   }
 
