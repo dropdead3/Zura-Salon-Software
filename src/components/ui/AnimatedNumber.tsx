@@ -9,6 +9,8 @@ interface AnimatedNumberProps {
   suffix?: string;
   className?: string;
   formatOptions?: Intl.NumberFormatOptions;
+  /** When set, the 0→value mount animation only runs once per browser session for this key. */
+  animationKey?: string;
 }
 
 export function AnimatedNumber({
@@ -18,7 +20,8 @@ export function AnimatedNumber({
   prefix = '',
   suffix = '',
   className = '',
-  formatOptions
+  formatOptions,
+  animationKey,
 }: AnimatedNumberProps) {
   const reduceMotion = useReducedMotion();
   const [displayValue, setDisplayValue] = useState(0);
@@ -42,6 +45,21 @@ export function AnimatedNumber({
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
+
+          // Session-scoped first-mount gate
+          if (animationKey) {
+            const sessionKey = `counter-animated::${animationKey}`;
+            let alreadyAnimated = false;
+            try { alreadyAnimated = sessionStorage.getItem(sessionKey) === '1'; } catch { /* ignore */ }
+            if (alreadyAnimated) {
+              setDisplayValue(value);
+              previousValue.current = value;
+              observer.disconnect();
+              return;
+            }
+            try { sessionStorage.setItem(sessionKey, '1'); } catch { /* ignore */ }
+          }
+
           animateValue(0, value);
           previousValue.current = value;
           observer.disconnect();

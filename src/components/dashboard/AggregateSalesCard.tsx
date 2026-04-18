@@ -813,6 +813,7 @@ export function AggregateSalesCard({
                 value={isToday ? (todayActual?.actualRevenue ?? 0) : (isPastRange && pastActual?.hasActualData ? pastActual.actualRevenue : displayMetrics.totalRevenue)}
                 currency={currency}
                 className="text-3xl sm:text-4xl md:text-5xl font-display tabular-nums"
+                animationKey="cc-hero-revenue"
               />
               <div className="flex flex-col items-center mt-2">
                 <div className="flex items-center gap-1">
