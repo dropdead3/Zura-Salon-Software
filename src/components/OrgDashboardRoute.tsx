@@ -2,7 +2,7 @@ import { useParams, Outlet, Navigate } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { PLATFORM_NAME } from '@/lib/brand';
 import NotFound from '@/pages/NotFound';
 import { OrgAccessDenied } from '@/components/auth/OrgAccessDenied';
@@ -45,11 +45,7 @@ export function OrgDashboardRoute() {
   });
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-          <ZuraLoader size="lg" platformColors />
-        </div>
-    );
+    return <DashboardLoader fullPage />;
   }
 
   if (error || !organization || !orgSlug) {
@@ -59,11 +55,7 @@ export function OrgDashboardRoute() {
   // Platform users bypass membership check
   if (!isPlatformUser) {
     if (isMembershipLoading) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <ZuraLoader size="lg" platformColors />
-        </div>
-      );
+      return <DashboardLoader fullPage />;
     }
 
     if (!isMember) {
@@ -93,11 +85,7 @@ export function LegacyDashboardRedirect() {
 
   // Auth still resolving — show spinner
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-          <ZuraLoader size="lg" platformColors />
-        </div>
-    );
+    return <DashboardLoader fullPage />;
   }
 
   // Not authenticated — redirect to login
@@ -112,11 +100,7 @@ export function LegacyDashboardRedirect() {
 
   // Org context still loading — show spinner
   if (isOrgLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-          <ZuraLoader size="lg" platformColors />
-        </div>
-    );
+    return <DashboardLoader fullPage />;
   }
 
   // Authenticated but no organization found — redirect to login with message

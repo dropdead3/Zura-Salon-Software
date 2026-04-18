@@ -31,13 +31,18 @@ const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' |
 /**
  * Config-aware loader for org dashboard section/page loading states.
  * Reads platform admin's chosen loader style (or skeleton mode) from branding settings.
+ * Defaults to LuxeLoader — calm, executive, theme-aware.
  *
  * Usage convention:
  *   - Full-page route loads → <DashboardLoader fullPage />
  *   - Card / section loaders inside a sized parent → <DashboardLoader fillParent />
  *   - Section / card loads (default min-h-[60vh]) → <DashboardLoader />
  *   - Inline / button spinners → <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
- *   - Bootstrap / brand moments only → <ZuraLoader size="xl" platformColors />
+ *
+ * IMPORTANT: ZuraLoader (the disco Z grid) is OFF BY DEFAULT. It only renders
+ * when an operator explicitly selects "Zura" in branding settings. Never hardcode
+ * <ZuraLoader /> in bootstrap, route shells, or platform admin surfaces — those
+ * are system states and should remain calm regardless of branding preference.
  *
  * Always theme-aware via foreground tokens; never hardcode colors.
  */

@@ -39,7 +39,7 @@ import {
   Filter,
   Circle
 } from 'lucide-react';
-import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { LuxeLoader } from '@/components/ui/loaders';
 import { InvitePlatformUserDialog } from './InvitePlatformUserDialog';
 import { PendingInvitationsSection } from './PendingInvitationsSection';
 import {
@@ -133,7 +133,7 @@ export function PlatformTeamManager() {
     return (
       <PlatformCard variant="glass" size="container">
         <PlatformCardContent className="flex items-center justify-center py-12">
-          <ZuraLoader size="xl" platformColors />
+          <LuxeLoader size="lg" />
         </PlatformCardContent>
       </PlatformCard>
     );
