@@ -87,7 +87,7 @@ serve(async (req) => {
       if (targetStaff > 0) {
         const percentage = Math.round((currentStaff / targetStaff) * 100);
         if (percentage < settings.percentage) {
-          alertLocations.push({ name: location.name, currentStaff, targetStaff, percentage, organization_id: location.organization_id });
+          alertLocations.push({ id: location.id, name: location.name, currentStaff, targetStaff, percentage, organization_id: location.organization_id });
         }
       }
     }
@@ -116,13 +116,41 @@ serve(async (req) => {
     let emailsSent = 0;
 
     if (settings.in_app_enabled) {
+      // ── Dedup: 24h window per (location, recipient) to prevent cron-spam ──
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentAlerts } = await supabase
+        .from("notifications")
+        .select("user_id, metadata")
+        .eq("type", "staffing_alert")
+        .gte("created_at", oneDayAgo);
+
+      const alertedPairs = new Set(
+        (recentAlerts || [])
+          .map((n: any) => {
+            const locId = n.metadata?.location_id;
+            return locId ? `${n.user_id}:${locId}` : null;
+          })
+          .filter(Boolean)
+      );
+
       const notifications = alertLocations.flatMap((loc) =>
-        adminIds.map((userId) => ({
-          user_id: userId, type: "staffing_alert",
-          title: `⚠️ Staffing Alert: ${loc.name}`,
-          message: `${loc.name} is at ${loc.percentage}% staffing capacity (${loc.currentStaff}/${loc.targetStaff}). Consider prioritizing hiring.`,
-          link: "/dashboard/admin/operational-analytics", is_read: false,
-        }))
+        adminIds
+          .filter((userId) => !alertedPairs.has(`${userId}:${loc.id}`))
+          .map((userId) => ({
+            user_id: userId,
+            type: "staffing_alert",
+            title: `⚠️ Staffing Alert: ${loc.name}`,
+            message: `${loc.name} is at ${loc.percentage}% staffing capacity (${loc.currentStaff}/${loc.targetStaff}). Consider prioritizing hiring.`,
+            link: "/dashboard/admin/operational-analytics",
+            is_read: false,
+            metadata: {
+              location_id: loc.id,
+              organization_id: loc.organization_id,
+              percentage: loc.percentage,
+              current_staff: loc.currentStaff,
+              target_staff: loc.targetStaff,
+            },
+          }))
       );
       if (notifications.length > 0) {
         const { error: notifError } = await supabase.from("notifications").insert(notifications);
