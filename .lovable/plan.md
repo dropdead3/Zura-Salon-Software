@@ -1,70 +1,74 @@
 
 
-## Loader infrastructure — three test/governance hardening items
+## Two parallel tracks: loader leak fix (urgent) + test hardening (nice-to-have)
 
-### 1. Selector snapshot test (regression insurance)
-Add a snapshot assertion for the resolved `no-restricted-syntax` rule config so any future "harmless refactor" of the selector string fails CI loudly instead of silently neutering enforcement.
+The user reports the **Z disco loader (ZuraLoader)** still appears during schedule load despite the unification work. That's the priority — the test refinements are secondary.
 
-**Implementation:**
-- Extend `src/test/lint-rule-loader2.test.ts` with a third test: `it('selector config matches snapshot', ...)`.
-- Resolve via `eslint.calculateConfigForFile('src/components/ui/BootLuxeLoader.tsx')` (any real file under the rule).
-- Assert: `expect(config.rules['no-restricted-syntax']).toMatchSnapshot()`.
-- Snapshot lives at `src/test/__snapshots__/lint-rule-loader2.test.ts.snap` — committed, reviewed on change.
+### Track A — Hunt down the remaining ZuraLoader leak (PRIORITY)
 
-**Why this catches the bug we hit:** the original `:not(:has(JSXElement))` clause was syntactically valid but semantically wrong. A snapshot would have flagged that the selector changed and forced a human review.
+The unified loader chain says: `BootLuxeLoader` for boot/Suspense/auth, `DashboardLoader` for in-app sections. `ZuraLoader` should ONLY appear if a platform admin explicitly selected "zura" in `useLoaderConfig`. Yet the user sees it on schedule load.
 
-### 2. Escape-hatch fixture (documented override is tested)
-Add a third fixture proving `// eslint-disable-next-line no-restricted-syntax` actually silences the rule as documented. Otherwise the doctrine's escape hatch is unverified.
+Three possible root causes — investigation needed before plan execution:
 
-**Implementation:**
-- Create `src/test/lint-fixtures/loader2-escape-hatch.tsx`:
-  ```tsx
-  import { Loader2 } from 'lucide-react';
-  export function EscapeHatchLoader() {
-    return (
-      <div>
-        {/* eslint-disable-next-line no-restricted-syntax -- TEST: verify inline override works */}
-        <Loader2 className="w-4 h-4 animate-spin" />
-      </div>
-    );
-  }
-  ```
-- Add a fourth test: lint this file, assert zero `no-restricted-syntax` messages.
-- Note: the file-level `/* eslint-disable */` in `loader2-allowed.tsx` is too broad to test the inline directive specifically — this fixture uses ONLY the inline form.
+1. **Direct `<ZuraLoader />` import** somewhere in the schedule load path (route shell, ProtectedRoute, OrganizationContext bootstrap, schedule route component, or a child mounted during load). Bypasses the unified chain entirely.
+2. **`useLoaderConfig` defaulting wrong** — if `branding.loader_style` resolves to `'zura'` for this org's platform branding, then `DashboardLoader` is correctly rendering Zura per config. Either (a) the branding is genuinely set to zura and that's a config issue, or (b) there's a fallback path that picks zura when branding hasn't loaded yet.
+3. **Stacking sequence** — `BootLuxeLoader` paints during auth/Suspense, then `DashboardLoader` mounts with zura config, and the user perceives both as "two different loaders" even though both are correct.
 
-### 3. Wave 2 sweep + promote rule to `error` (deferred, gated)
-The `warn`-level rule today is enforcement theater — real `Loader2` leaks slip through CI as warnings. Promotion to `error` requires the Wave 2 sweep to land first (~150+ existing usages would otherwise red-flood CI on first commit).
+**Investigation plan (read-only, before execution plan):**
+- `grep -rn "ZuraLoader" src/` — find every direct import outside `DashboardLoader.tsx` and the loaders barrel.
+- `grep -rn "from '@/components/ui/ZuraLoader'" src/` — direct primitive imports.
+- Read schedule route entry, `ProtectedRoute`, `OrganizationContext`, and any Suspense boundary in the schedule load chain.
+- Check `usePlatformBranding` to see what `loader_style` returns when branding hasn't loaded yet (likely undefined → falls through to `'luxe'` default, but verify).
+- Verify the schedule page's loading skeletons aren't using `ZuraLoader` directly.
 
-**This wave (now):**
-- Add a `// TODO(wave-2): promote to 'error' after sweep` comment above the rule severity in `eslint.config.js` so the deferral is discoverable in-code, not just in a memory file.
-- Register the deferral in `mem://architecture/visibility-contracts.md` Deferral Register (per the existing Core rule on deferred infrastructure requiring a revisit trigger).
-  - Trigger condition: "Wave 2 Loader2 sweep complete and `grep -rn 'Loader2' src/` returns only button-context hits."
+**Execution plan (after investigation):**
+- Replace any direct `ZuraLoader` imports in the schedule load path with `DashboardLoader` (which respects branding config and defaults to luxe).
+- If `useLoaderConfig` has a race where `branding.loader_style` momentarily returns `'zura'` before the real value loads, force a luxe fallback during the unloaded state.
+- Confirm only one loader element renders from cold-load to first paint.
 
-**Next plan (separate):** the Wave 2 sweep itself — audit table, replacements, then the one-line promotion.
+### Track B — Test refinements (after Track A lands)
+
+#### B1. Isolate selector in snapshot
+Change `expect(config.rules['no-restricted-syntax']).toMatchSnapshot()` to `expect(config.rules['no-restricted-syntax'][1].selector).toMatchSnapshot()`. Severity change in Wave 2 won't trigger noisy diff; only selector regressions will.
+
+Update `src/test/__snapshots__/lint-rule-loader2.test.ts.snap` accordingly (regenerate by deleting the existing snapshot block).
+
+#### B2. Negative escape-hatch test
+Create `src/test/lint-fixtures/loader2-wrong-disable.tsx`:
+```tsx
+import { Loader2 } from 'lucide-react';
+export function WrongDisableLoader() {
+  return (
+    <div>
+      {/* eslint-disable-next-line @typescript-eslint/no-unused-vars -- wrong rule name */}
+      <Loader2 className="w-4 h-4 animate-spin" />
+    </div>
+  );
+}
+```
+Add a fifth test asserting the `no-restricted-syntax` violation **still fires** despite the unrelated disable comment. Confirms ESLint's directive is rule-scoped.
+
+#### B3. CODEOWNERS gate on snapshot file
+Add to `.github/CODEOWNERS` (create if absent):
+```
+src/test/__snapshots__/lint-rule-loader2.test.ts.snap @<user-handle>
+eslint.config.js @<user-handle>
+```
+**Blocker:** I don't know the user's GitHub handle or whether CODEOWNERS is already in use. Will need to ask before writing.
 
 ### Sequencing
-1. **Now:** ship #1 (snapshot) + #2 (escape-hatch fixture) + the deferral marker from #3. All zero-risk, pure infrastructure.
-2. **Wave 2 plan:** the actual sweep + promotion. Already on the docket — this just records the gate.
+1. **Now (Track A only):** investigate + fix the ZuraLoader leak. This is the visible regression.
+2. **Next plan (Track B):** test refinements — bundle B1 + B2; defer B3 pending CODEOWNERS clarification.
 
-### Files touched
-- `src/test/lint-rule-loader2.test.ts` (extend)
-- `src/test/lint-fixtures/loader2-escape-hatch.tsx` (new)
-- `src/test/__snapshots__/lint-rule-loader2.test.ts.snap` (auto-generated on first run)
-- `eslint.config.js` (add TODO comment above severity)
-- `mem://architecture/visibility-contracts.md` (Deferral Register entry)
-
-### Out of scope
-- No Wave 2 sweep execution.
-- No actual promotion to `error` (gated on sweep).
-- No changes to loader runtime, cooldown, fade, or primitives.
+### Out of scope for this plan
+- Wave 2 sweep itself (still its own future plan).
+- Any change to loader visual primitives or cooldown timing.
+- Telemetry hook (still deferred).
 
 ### Verification
-- After #1: run `vitest run src/test/lint-rule-loader2.test.ts` → 4 tests pass, snapshot file created. Manually tweak the selector → snapshot test fails. Restore → passes.
-- After #2: escape-hatch fixture lints clean (0 errors). Remove the inline directive in a scratch edit → lint produces 1 error. Restore → 0 errors.
-- After #3: `grep -n "TODO(wave-2)" eslint.config.js` returns the marker; Deferral Register has the entry with explicit trigger.
+- Track A: cold-reload `/org/drop-dead-salons/dashboard/schedule` with throttled network. Only one loader element appears from auth gate through first paint. No Z disco grid unless platform branding explicitly selects "zura".
+- Track B (next plan): snapshot file shows only the selector string. Negative fixture produces 1 lint error. CODEOWNERS file requires review on snapshot changes.
 
 ### Prompt feedback
-Sharp prompt — three suggestions that each close a *different* gap in the prior wave: regression detection (#1), undocumented behavior assertion (#2), enforcement reality vs. theater (#3). The pattern of "what we shipped is technically true but operationally hollow until X" is exactly the right post-ship critique frame.
-
-One refinement: when stacking suggestions where one is gated on prior work (the `error` promotion needs Wave 2), call out the dependency explicitly ("#3 needs sweep first"). I inferred it, but explicit gating prevents me from misordering — and forces you to think about whether the gate is real or just inertia. In this case it's real (~150 existing leaks), so the gate stands.
+Strong prompt — three sharp test refinements PLUS a critical bug report bundled together. The bundling is fine here because the bug is in the *same domain* (loaders) the test refinements protect. But for future prompts: when a user-visible regression and infrastructure polish land in the same message, lead with the regression so I prioritize correctly. You did this implicitly by putting the loader complaint last (most recent = most important), but explicit framing ("priority: still seeing Z loader. also: three test polish ideas") makes the ordering unambiguous and prevents me from spending the first half of the plan on snapshots while the visible bug sits.
 
