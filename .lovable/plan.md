@@ -1,73 +1,65 @@
 
 
 ## Goal
-Add a calm, advisory **performance indicator** at the bottom of the Revenue Breakdown card that translates the retail metrics (Retail %, True Retail %, Attach Rate) into one ranked verdict — embodying the doctrine "tell operators what to think about the numbers."
+Lift the retail performance verdict out of the cramped right column inside the donut card and surface it as its own **alert-style card** directly below the Revenue Breakdown card.
 
-## Why this fits doctrine
-- **Decision engine, not reporting** — the card already shows numbers; this adds the lever.
-- **High-confidence, advisory tone** — verdict only renders when totals are material; silence otherwise.
-- **No new data** — uses values already on the card, so zero query cost.
-- **Persona-safe** — single line, no enterprise complexity exposed.
+## What's wrong with current UI
+The verdict currently lives inside the metrics column next to the donut chart (lines 189–210). That column is narrow at the current viewport, which forces the copy to wrap into 4 lines beside a tall vertical rail — visually cramped, looks like an afterthought, fights for attention with the metric rows.
 
-## Where
-`src/components/dashboard/sales/RevenueDonutChart.tsx` — append a new block inside the metrics section (after the Attach Rate row, before closing `</div>` on line 188).
+## Fix — two parts
 
-## Logic — `getRetailPerformanceVerdict`
+### Part 1: Remove from RevenueDonutChart
+Strip lines 189–210 (the verdict block) from `src/components/dashboard/sales/RevenueDonutChart.tsx`. The donut card returns to being a clean numbers surface.
 
-Pure helper, defined in same file (or extracted to `src/lib/retailPerformance.ts` if reused later — recommend extracting now for the sibling cards that use the same metrics).
+Also clean up the stray nested `</div>` and remove the now-unused `cn` and `getRetailPerformanceVerdict` imports from this file.
 
-Inputs: `trueRetailPercent`, `retailAttachmentRate`, `total` (gate)
-
-Materiality gate: if `total < $500` OR `retailAttachmentRate === undefined` → **return null** (silence is valid output, per visibility-contracts doctrine).
-
-Tier thresholds (anchored to existing `StylistLevelsEditor` benchmark of 10–20% retail and industry attach rate norms of 30–50%):
-
-| Tier | True Retail % | Attach Rate | Verdict copy |
-|---|---|---|---|
-| **Strong** | ≥ 15% | ≥ 40% | "Retail is pulling its weight. Protect the merchandising routine." |
-| **Healthy** | 10–14% | 30–39% | "Retail is on benchmark. One coaching cycle could push to top quartile." |
-| **Soft** | 5–9% | 15–29% | "Retail is underperforming. The lever is attach rate at checkout, not assortment." |
-| **Critical** | < 5% | < 15% | "Retail is a margin leak. Audit the recommendation step in the service flow." |
-
-Tier = the **lower** of the two metric tiers (worst-of, so we don't oversell when one is weak).
-
-## UI — single advisory line
-
-Inside the `border-t` metrics section, after Attach Rate row:
+### Part 2: New `RetailPerformanceAlert` component
+Create `src/components/dashboard/sales/RetailPerformanceAlert.tsx`:
 
 ```tsx
-{verdict && (
-  <div className="pt-2 mt-1 flex items-start gap-2">
-    <div className={cn(
-      "w-1 self-stretch rounded-full shrink-0",
-      verdict.tier === 'strong' && "bg-emerald-500/50",
-      verdict.tier === 'healthy' && "bg-foreground/30",
-      verdict.tier === 'soft' && "bg-amber-500/50",
-      verdict.tier === 'critical' && "bg-red-500/50",
-    )} />
-    <p className="text-xs text-muted-foreground leading-relaxed">
-      {verdict.copy}
-    </p>
-  </div>
-)}
+interface Props {
+  trueRetailPercent: number | undefined;
+  retailAttachmentRate: number | undefined;
+  total: number;
+  hasBreakdown: boolean;
+  filterContext?: FilterContext;
+}
 ```
 
-- Vertical color rail (1px wide) instead of badge — matches calm executive aesthetic.
-- No emoji, no exclamation, no shame language ("underperforming" framed as a lever, not a failing).
-- Copy is advisory-first and tells operator **what to do next**, not just what's wrong.
+Returns `null` if `!hasBreakdown` or verdict is null (preserves materiality gate / silence doctrine).
 
-## Materiality / silence rules
-- Render nothing if revenue total < $500 (data integrity gate)
-- Render nothing if attach rate is loading or undefined
-- Render nothing if `hasBreakdown` is false (need True Retail % for accurate tiering)
+**Visual treatment** — alert card pattern, calm executive aesthetic:
+
+- Wrapper: `<Card>` with `overflow-hidden border-l-4` and tier-tinted left border + subtle tier-tinted background wash (`bg-{tier}/5`)
+- Two-column flex layout, `p-4`:
+  - **Left**: small icon container (w-9 h-9 rounded-lg) holding tier-appropriate Lucide icon (TrendingUp / Activity / AlertTriangle / AlertOctagon)
+  - **Right (flex-1)**: 
+    - Tier label in `font-display text-xs tracking-wide uppercase` (e.g. "RETAIL HEALTH · CRITICAL")
+    - Verdict copy in `text-sm text-foreground/90 leading-relaxed mt-1`
+- No CardHeader — single self-contained alert row
+- No emoji, no exclamation
+
+**Tier styling map** (tokens-based, no raw hex):
+| Tier | Border | Bg wash | Icon | Icon color |
+|---|---|---|---|---|
+| strong | `border-l-emerald-500/60` | `bg-emerald-500/5` | TrendingUp | `text-emerald-500` |
+| healthy | `border-l-foreground/30` | `bg-muted/30` | Activity | `text-foreground/70` |
+| soft | `border-l-amber-500/60` | `bg-amber-500/5` | AlertTriangle | `text-amber-500` |
+| critical | `border-l-red-500/60` | `bg-red-500/5` | AlertOctagon | `text-red-500` |
+
+### Part 3: Mount it in the parent
+Find the parent that renders `<RevenueDonutChart>` (Sales hub page) and place `<RetailPerformanceAlert>` immediately below it in the same grid cell / column so they read as a paired unit. Pass through the same `trueRetailPercent`, `retailAttachmentRate`, `total`, `hasBreakdown` already computed.
+
+## Materiality / silence
+Component returns `null` when `getRetailPerformanceVerdict` returns null (under $500 total, missing attach rate, missing breakdown). No empty card placeholder.
 
 ## Out of scope
-- Sweeping the same verdict to Top Performers or other cards
-- Persisting verdicts to alerts / weekly brief (that's Phase 2 advisory layer)
-- Making thresholds org-configurable (use platform defaults; revisit when stylist_levels exposes per-org retail target)
-- Changing the existing metric rows or donut
+- Animations or hover states on the alert card
+- Per-tier action buttons (Phase 2 advisory layer)
+- Threshold customization
 
 ## Files
-- **Modify**: `src/components/dashboard/sales/RevenueDonutChart.tsx` — add helper + verdict block
-- **Optional extract**: `src/lib/retailPerformance.ts` — pure tier function (recommended; sibling Sales hub cards likely want it next)
+- **Modify**: `src/components/dashboard/sales/RevenueDonutChart.tsx` — remove verdict block + stray div + unused imports
+- **Create**: `src/components/dashboard/sales/RetailPerformanceAlert.tsx`
+- **Modify**: parent of `RevenueDonutChart` (Sales hub) — mount the new alert card directly below it
 
