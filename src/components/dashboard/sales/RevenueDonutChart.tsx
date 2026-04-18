@@ -6,6 +6,8 @@ import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { RetailPerformanceAlert } from './RetailPerformanceAlert';
+import { getRetailPerformanceVerdict } from '@/lib/retailPerformance';
 
 interface RetailBreakdownData {
   productOnlyRevenue?: number;
@@ -188,6 +190,17 @@ export function RevenueDonutChart({
             </div>
           </div>
         </div>
+        {hasBreakdown && getRetailPerformanceVerdict(trueRetailPercent, retailAttachmentRate, total) && (
+          <div className="border-t border-border/40 pt-4 mt-4">
+            <RetailPerformanceAlert
+              trueRetailPercent={trueRetailPercent}
+              retailAttachmentRate={retailAttachmentRate}
+              total={total}
+              hasBreakdown={true}
+              embedded
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

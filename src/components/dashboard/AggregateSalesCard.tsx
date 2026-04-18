@@ -77,7 +77,7 @@ import { SalesTrendIndicator } from './sales/SalesTrendIndicator';
 import { TrendSparkline } from './TrendSparkline';
 import { TopPerformersCard } from './sales/TopPerformersCard';
 import { RevenueDonutChart } from './sales/RevenueDonutChart';
-import { RetailPerformanceAlert } from './sales/RetailPerformanceAlert';
+
 import { SalesGoalProgress } from './sales/SalesGoalProgress';
 
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -1536,27 +1536,6 @@ export function AggregateSalesCard({
               feesRevenue: retailBreakdown.feesRevenue,
             } : undefined}
           />
-          {(() => {
-            const svc = isToday ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0) : displayMetrics.serviceRevenue;
-            const prod = isToday ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0) : displayMetrics.productRevenue;
-            const t = svc + prod;
-            const extRev = retailBreakdown?.extensionRevenue ?? 0;
-            const truePct = t > 0 ? Math.round(((prod - extRev) / t) * 100) : 0;
-            const hasBd = !!retailBreakdown && (
-              (retailBreakdown.productRevenue ?? 0) > 0 ||
-              (retailBreakdown.extensionRevenue ?? 0) > 0 ||
-              (retailBreakdown.merchRevenue ?? 0) > 0 ||
-              (retailBreakdown.giftCardRevenue ?? 0) > 0
-            );
-            return (
-              <RetailPerformanceAlert
-                trueRetailPercent={truePct}
-                retailAttachmentRate={attachmentData?.attachmentRate}
-                total={t}
-                hasBreakdown={hasBd}
-              />
-            );
-          })()}
 
           {/* Tips Summary Card */}
           <Card className="bg-card/80 backdrop-blur-xl border-border/40">
