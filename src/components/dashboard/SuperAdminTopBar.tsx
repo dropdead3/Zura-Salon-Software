@@ -38,6 +38,7 @@ import {
   BookX,
 } from 'lucide-react';
 import { useInfotainerSettings } from '@/hooks/useInfotainers';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
