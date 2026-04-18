@@ -764,6 +764,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
                 giftCardRevenue: retailBreakdown.giftCardRevenue,
               } : undefined}
             />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'client_health':
