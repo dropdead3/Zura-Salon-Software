@@ -15,7 +15,7 @@ import {
 } from '@/hooks/useBookingSurfaceConfig';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 export function BookingSurfaceSettings() {
   const { data: config, isLoading } = useBookingSurfaceConfig();
@@ -37,11 +37,7 @@ export function BookingSurfaceSettings() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader />;
   }
 
   const showEmbed = effectiveConfig.mode === 'embed' || effectiveConfig.mode === 'both';

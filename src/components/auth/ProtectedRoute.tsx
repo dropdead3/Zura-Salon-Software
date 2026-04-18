@@ -4,7 +4,7 @@ import { useViewAs } from '@/contexts/ViewAsContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectivePermissions } from '@/hooks/useEffectivePermissions';
 import { AccessDeniedView } from './AccessDeniedView';
-import { Loader2 } from 'lucide-react';
+import { BootLuxeLoader } from '@/components/ui/BootLuxeLoader';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
@@ -40,11 +40,7 @@ export function ProtectedRoute({
     (requireSuperAdmin && profileLoading) ||
     (requiredPermission && !isPlatformUser && effectivePermissionsLoading);
   if (authOrPermissionsLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-foreground" />
-      </div>
-    );
+    return <BootLuxeLoader fullScreen />;
   }
 
   if (!user) {

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Loader2 } from 'lucide-react';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import type { CategoryBreakdown } from '@/hooks/useComparisonData';
 
 interface CategoryComparisonTableProps {
@@ -32,8 +32,8 @@ export function CategoryComparisonTable({
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="h-[300px] flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <CardContent className="h-[300px] relative">
+          <DashboardLoader fillParent />
         </CardContent>
       </Card>
     );

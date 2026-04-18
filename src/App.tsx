@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
+import { BootLuxeLoader } from "@/components/ui/BootLuxeLoader";
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
@@ -64,11 +65,7 @@ function AccessDeniedPreview() {
 // Platform Admin pages
 
 function RouteFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
-    </div>
-  );
+  return <BootLuxeLoader fullScreen />;
 }
 const Index = lazyWithRetry(() => import("./pages/Index"));
 const Services = lazyWithRetry(() => import("./pages/Services"));
