@@ -614,6 +614,7 @@ export function AppointmentCardContent({
         serviceLookup={serviceLookup}
         assistantNamesMap={assistantNamesMap}
         hasAssistants={hasAssistants}
+        connectInactive={connectInactive}
         onClick={onClick}
       />
     );
@@ -687,6 +688,7 @@ export function AppointmentCardContent({
         showClientAvatar={showClientAvatar}
         useShortLabels={useShortLabels}
         declinedReasonLabel={declinedReasonLabel}
+        connectInactive={connectInactive}
       />
     </div>
   );
