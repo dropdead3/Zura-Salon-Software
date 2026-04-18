@@ -1,30 +1,68 @@
 
 
-## Add breathing room above APPOINTMENT section in Appointment Drawer
+## Unify all loading states across the build
 
-### Diagnosis
-In `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`, the Details tab structure is:
-- `<HospitalityBlock />` (line 1647)
-- `<ClientMemoryPanel className="-mx-4 mt-4 mb-4 ..." />` (line 1654) — frequently renders nothing when no client memory exists
-- `<motion.div className="space-y-5">` (line 1660) — contains the "APPOINTMENT" subsection at line 1700–1701
+### The problem
+Schedule load currently shows a stacked sequence of loaders:
+- Purple spin wheel (likely raw `Loader2` with primary color)
+- White spin wheel (raw `Loader2 text-muted-foreground`)
+- Z + progress bar (LuxeLoader)
+- Z disco grid (ZuraLoader)
+- Possibly skeletons
 
-When `ClientMemoryPanel` returns null (the common case shown in the screenshot), there is **no top margin** on the `motion.div` wrapper, so "APPOINTMENT" collides visually with the hospitality cards above it.
+This happens because every component along the load chain owns its own loader implementation. The user perceives 4–5 different "loading" treatments in <2 seconds — visually chaotic, brand-incoherent, and violates UI canon (calm, executive, one signal).
 
-### Fix
-Add `mt-5` to the `motion.div` at line 1660 so the APPOINTMENT block has consistent breathing room (20px) regardless of whether `ClientMemoryPanel` renders.
+### Root cause
+Three legitimate loader systems exist in parallel:
+1. `DashboardLoader` (config-aware, reads branding) — the canonical one
+2. `LuxeLoader` / `ZuraLoader` / `SpinnerLoader` / `DotsLoader` / `BarLoader` — primitives
+3. Raw `Loader2` from lucide — sprinkled in dozens of files
 
-```tsx
-<motion.div variants={staggerContainer} initial={false} animate="show" className="mt-5 space-y-5">
-```
+The first two are governed. The third is the leak — and likely the dominant pattern in the schedule chain.
 
-This is safe because:
-- When `ClientMemoryPanel` renders, its own `mb-4` + new `mt-5` compose to ~36px (acceptable section break).
-- When `ClientMemoryPanel` is null, the new `mt-5` provides the missing gap.
+### Investigation needed (read-only)
+1. Trace the schedule load chain:
+   - `src/pages/Schedule.tsx` (or equivalent route)
+   - Schedule layout / provider components
+   - `OrganizationContext` loading state
+   - Any data-fetching gates (auth, org, location, schedule data)
+2. Grep for `Loader2` usage across the dashboard to quantify the cleanup surface.
+3. Confirm `DashboardLoader` is the canonical entry point and identify which props (`fullPage`, `fillParent`, `caption`) should be used where.
+
+### The fix (two waves)
+
+**Wave 1 — Schedule load chain (immediate)**
+Replace every loader in the schedule load path with a single `<DashboardLoader fullPage />` at the highest meaningful level (the route shell or schedule page root). All nested loaders during initial load become `null` (let the parent loader own the moment) — no double loaders.
+
+**Wave 2 — Global cleanup (sweep)**
+- Replace raw `Loader2` full-page/section uses with `DashboardLoader` (keep `Loader2` only for inline button spinners and tiny inline indicators — that's the documented exception).
+- Audit any remaining direct `<LuxeLoader />`, `<ZuraLoader />`, `<SpinnerLoader />` usage outside `DashboardLoader` and route through the config-aware wrapper.
+- Document the rule in `mem://style/loader-unification` so future components inherit it.
+
+### Doctrine to commit
+Single canonical loader rule:
+- **Section / page / route loads** → `<DashboardLoader />` (with `fullPage` or `fillParent` as appropriate)
+- **Inline button / tiny indicator** → `<Loader2 className="w-4 h-4 animate-spin" />` only
+- **Nothing else.** No direct primitive loader imports outside `DashboardLoader.tsx` itself.
 
 ### Out of scope
-- No changes to `HospitalityBlock`, `ClientMemoryPanel`, or the APPOINTMENT section internals.
-- No changes to other tabs (History, Photos, Notes, Color Bar).
+- No changes to the loader primitives themselves (LuxeLoader, ZuraLoader, etc.) — they remain as the rendering substrate.
+- No changes to skeleton mode toggle in branding settings.
+- No changes to button-internal `Loader2` spinners.
+
+### Pilot components
+1. Schedule route shell (the immediate complaint)
+2. `BookingSurfaceSettings` (currently raw `Loader2`)
+3. `CategoryComparisonTable` (currently raw `Loader2`)
+
+### Out of scope this wave
+- Skeleton mode behavior
+- Loader primitive internals
+- Inline button spinners
+
+### Done means
+Loading the schedule shows exactly one loader treatment from initial nav to first paint — no flashing between purple spinner, white spinner, Z bar, and Z grid. The same single loader is the only loading visual anywhere in the dashboard outside button spinners.
 
 ### Verification
-Open an appointment for a client with no client memory → confirm "APPOINTMENT" label sits ~20px below the Hospitality cards (no longer crowded). Open an appointment for a client *with* client memory → confirm spacing still feels intentional.
+Hard-reload `/org/drop-dead-salons/dashboard/schedule` with throttled network. Confirm only one loader appears for the entire load duration. Repeat on Sales, Clients, and a deep route to confirm consistency.
 
