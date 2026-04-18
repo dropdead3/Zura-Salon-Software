@@ -1,59 +1,55 @@
 
 
-## Loader infrastructure hardening — three enhancements
+## Loader infrastructure — three follow-on enhancements
 
-### 1. Lint rule: ban `Loader2` outside `<Button>` children
-Add a custom ESLint rule (or `no-restricted-syntax` config) that flags any `Loader2` JSX usage **not** nested inside a `<Button>`, `<button>`, or component name matching `/Button$/`. This converts the doctrine into infrastructure — future `Loader2` leaks fail CI before merge.
-
-**Implementation:**
-- Extend `eslint.config.js` with a `no-restricted-syntax` rule targeting `JSXElement[openingElement.name.name='Loader2']` with an AST ancestor check.
-- Allowlist: direct child of Button, button, or any component ending in `Button` / `IconButton`.
-- Severity: `error`. Message: `"Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates."`
-- Add an inline escape hatch (`// eslint-disable-next-line` with required comment explaining why) for the rare exception.
-
-**Risk:** existing Wave 2 leaks (~150+) will all flash red until swept. Mitigation: ship the rule as `warn` first, do Wave 2 sweep, then promote to `error`.
-
-### 2. Loader cooldown — 200ms delay before render
-Wrap `DashboardLoader` and `BootLuxeLoader` with a `useDelayedRender(200)` hook. If the parent stops loading before 200ms elapses, no loader ever paints. Fast queries (the majority) become flicker-free; only genuinely slow loads (>200ms) trigger the visual.
+### 1. Track-and-fade transition (perception polish)
+After the 200ms cooldown fires, fade the loader in over ~150ms instead of hard-painting. Removes the residual "pop" on borderline loads (200–400ms) where the cooldown saved the flicker but the hard-paint reintroduced one.
 
 **Implementation:**
-- Create `src/hooks/useDelayedRender.ts` — `useEffect` + `setTimeout(setVisible(true), delay)`, cleanup on unmount.
-- Apply inside `DashboardLoader` and `BootLuxeLoader` at the top: `if (!visible) return null;`.
-- Make delay overridable via prop (`delay?: number`, default `200`). Pass `delay={0}` for cases where instant feedback is required (rare — e.g. user-triggered "Refreshing…" actions).
+- Extend `useDelayedRender` to return a richer state: `{ visible: boolean, mounted: boolean }` — `mounted` flips true at the cooldown, `visible` flips true one frame later (via `requestAnimationFrame`) so a CSS transition has a starting state to animate from.
+- Add a `data-loader-fade` attribute on the loader root in both `BootLuxeLoader` and `DashboardLoader`, paired with Tailwind utilities: `opacity-0 transition-opacity duration-150 data-[loader-fade=in]:opacity-100`.
+- Backwards compatible: existing call sites inherit the new behavior, no API changes.
 
-**Why 200ms:** below the human flicker-perception threshold (~250ms). Aligns with Nielsen's response-time research — anything resolving under 200ms feels instant, and showing a loader for it actively degrades perceived performance.
+**Tradeoff:** adds one render cycle. Negligible cost; perception win is real.
 
-### 3. Wave 2 sweep — single approved batch with grep audit
-Run a comprehensive audit and ship all replacements in one approved wave so the leak closes permanently rather than dripping over weeks.
+### 2. Telemetry hook (data-driven Wave 3)
+Log every loader paint with `{ surface, durationMs, mountedAt, route }` so we learn which surfaces are genuinely slow vs. which were noisy and have already been silenced by the cooldown.
 
-**Audit step (read-only, before plan execution):**
-- `grep -rn "Loader2" src/` — full inventory.
-- Categorize each hit: (a) inline button spinner [keep], (b) section/page loader [replace with `DashboardLoader`], (c) tiny inline indicator inside a chip/badge [keep], (d) ambiguous [flag for review].
-- Also grep direct primitive imports: `LuxeLoader`, `ZuraLoader`, `SpinnerLoader`, `DotsLoader`, `BarLoader` outside `DashboardLoader.tsx` and the loaders barrel itself.
-- Produce a categorized table in the next plan: file path, line, category, proposed action.
+**Implementation:**
+- Add an optional `surface?: string` prop to `BootLuxeLoader` and `DashboardLoader` (e.g. `surface="schedule.route"`, `surface="booking-surface-settings.section"`).
+- When `useDelayedRender` flips `mounted` true, fire `telemetry.loaderPainted({ surface, route: window.location.pathname, mountedAtMs: performance.now() })`.
+- When the loader unmounts, fire `telemetry.loaderResolved({ surface, durationMs })` so we can compute paint→resolve duration.
+- Pipe to existing telemetry sink (check what we have — likely a lightweight `analytics` or `track()` helper; if none, log to a `loader_telemetry` table via a fire-and-forget edge function or just `console.debug` gated on a dev flag for now and add the sink as a separate plan).
+- Sample at 100% in dev, 10% in prod (configurable) so we don't flood the table.
 
-**Sweep execution (after audit approval):**
-- Replace category (b) with `<DashboardLoader />` + appropriate `fullPage` / `fillParent` prop.
-- Replace direct primitive imports with `<DashboardLoader />`.
-- Leave (a) and (c) untouched.
-- Promote ESLint rule from `warn` to `error` as the final commit in the wave.
+**Output:** after one week, a query like `select surface, avg(duration_ms), count(*) from loader_telemetry group by surface order by avg desc` becomes the Wave 3 backlog — empirical, not anecdotal.
+
+### 3. Storybook/CI lint smoke test (rule integrity)
+A silently broken lint rule is the worst-case scenario — the doctrine looks enforced but isn't. Add a tiny fixture-based assertion that the `no-restricted-syntax` rule fires on banned usage and stays silent on allowed usage.
+
+**Implementation:**
+- Create `src/test/lint-fixtures/loader2-banned.tsx` — `<Loader2 />` outside any button context. Should produce 1 lint error.
+- Create `src/test/lint-fixtures/loader2-allowed.tsx` — `<Button><Loader2 /></Button>` and `<MyIconButton><Loader2 /></MyIconButton>`. Should produce 0 lint errors.
+- Add a Vitest test `src/test/lint-rule-loader2.test.ts` that shells out to ESLint programmatically (via `new ESLint({ overrideConfigFile: 'eslint.config.js' }).lintFiles(...)`) and asserts the error counts.
+- Test runs as part of the existing Vitest suite — no new CI step needed since `vitest run` already executes in CI (verify in `package.json`).
+
+**Why fixture + Vitest over a Storybook story:** Storybook isn't currently configured in this project (verified by absence in earlier file scans), and adding it just for this is overkill. Vitest + ESLint programmatic API gives the same guarantee in ~30 lines.
 
 ### Sequencing
-1. **Now:** Ship hooks (cooldown) + ESLint rule as `warn` — zero behavior risk, immediate flicker reduction.
-2. **Next plan:** Audit results table for Wave 2 sweep approval.
-3. **Wave 2:** Execute sweep, promote rule to `error`.
+1. **Now (this wave):** ship #1 (fade) and #3 (lint smoke test) — both are pure infrastructure, zero behavior risk, immediate value.
+2. **Next plan:** scope #2 (telemetry) properly — needs a decision on sink (existing analytics helper vs. new table vs. console-only for v1) before I start writing it. I'll grep for existing telemetry patterns and present options.
 
 ### Out of scope
-- No changes to loader primitive internals (LuxeLoader, ZuraLoader rendering).
-- No changes to skeleton mode behavior.
-- No retroactive changes to `Loader2` instances confirmed as inline button spinners.
+- No changes to loader visual primitives.
+- No changes to the cooldown threshold (200ms stays).
+- No Wave 2 sweep — that's still its own approved plan.
 
 ### Verification
-- After step 1: schedule load shows zero loader on fast cached navs, single `BootLuxeLoader` on cold loads.
-- After step 3: `grep "Loader2" src/` returns only button-context hits; ESLint passes with rule at `error`.
+- After #1: borderline-load surfaces (induce with network throttling on schedule) show a smooth 150ms fade-in instead of a hard appearance.
+- After #3: intentionally weaken the lint rule in a scratch branch → smoke test fails. Restore → passes. Confirms the rule is actually live.
 
 ### Prompt feedback
-Strong prompt — three concrete, well-scoped enhancements with clear infrastructure thinking (lint = enforcement, cooldown = perception, sweep = closure). Each one has a different mechanism (compile-time, runtime, audit) which is exactly the right layered defense pattern.
+Excellent prompt — three enhancements that each address a *different failure mode* of the prior wave (perception gap, observability gap, enforcement gap). That's the layered-defense pattern again, applied recursively. You're now thinking in terms of "what could silently break what we just shipped?" which is the right post-ship instinct.
 
-One refinement for next time: when proposing multi-part enhancements, signal sequencing intent ("ship 1+2 now, gate 3 on audit" vs "all three in one wave"). I inferred the right sequence here, but explicit ordering removes ambiguity and lets me push back if the order has a hidden dependency.
+One refinement: when proposing telemetry, signal the sink decision upfront ("log to console" vs. "log to existing analytics" vs. "new table") because that choice gates implementation scope by 10x. I split it into its own plan above for that reason — but you could've front-loaded the constraint ("log via whatever we already use, don't add infra") and saved a round trip.
 
