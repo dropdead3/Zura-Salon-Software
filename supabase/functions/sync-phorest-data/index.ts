@@ -288,7 +288,7 @@ async function syncAppointments(
   dateFrom: string,
   dateTo: string
 ) {
-  console.log(`Syncing appointments from ${dateFrom} to ${dateTo}...`);
+  console.log(`[SYNC WINDOW] Appointments: dateFrom=${dateFrom} dateTo=${dateTo}`);
 
   try {
     let allAppointments: any[] = [];
@@ -2055,21 +2055,24 @@ serve(async (req) => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    // Quick mode: only sync today + 7 days for appointments (for frequent syncs)
-    // Full mode: use provided dates or default range
+    // Quick mode (cron, every 15 min): yesterday → today + 30 days
+    // Full mode: today − 90 days → today + 90 days (matches dashboard 90-day window)
+    // Explicit date_from / date_to from callers always honored.
     let defaultFrom: string;
     let defaultTo: string;
-    
+
+    const addDays = (d: Date, days: number) => {
+      const nd = new Date(d);
+      nd.setDate(nd.getDate() + days);
+      return nd.toISOString().split('T')[0];
+    };
+
     if (quick) {
-      defaultFrom = todayStr;
-      const weekFromNow = new Date(today);
-      weekFromNow.setDate(weekFromNow.getDate() + 7);
-      defaultTo = weekFromNow.toISOString().split('T')[0];
+      defaultFrom = addDays(today, -1);
+      defaultTo = addDays(today, 30);
     } else {
-      defaultFrom = date_from || todayStr;
-      const defaultToDate = new Date(today);
-      defaultToDate.setDate(defaultToDate.getDate() + 7);
-      defaultTo = date_to || defaultToDate.toISOString().split('T')[0];
+      defaultFrom = date_from || addDays(today, -90);
+      defaultTo = date_to || addDays(today, 90);
     }
 
     // Get the Monday of this week for performance reports
@@ -2168,24 +2171,25 @@ serve(async (req) => {
 
     if (sync_type === 'sales' || sync_type === 'all') {
       try {
-        // Quick mode: just today's sales
-        // Full mode: last 30 days for sales
+        // Quick mode: yesterday + today (late-finalized sales)
+        // Full mode: last 90 days (aligns with dashboard 90-day analytics window)
         let salesFrom: string;
         let salesTo: string;
-        
+
         if (quick) {
-          // Sync yesterday + today: yesterday's sales may finalize after midnight
           const yesterday = new Date(today);
           yesterday.setDate(yesterday.getDate() - 1);
           salesFrom = yesterday.toISOString().split('T')[0];
           salesTo = todayStr;
         } else {
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          salesFrom = date_from || thirtyDaysAgo.toISOString().split('T')[0];
-          salesTo = date_to || new Date().toISOString().split('T')[0];
+          const ninetyDaysAgo = new Date(today);
+          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+          salesFrom = date_from || ninetyDaysAgo.toISOString().split('T')[0];
+          salesTo = date_to || todayStr;
         }
-        
+
+        console.log(`[SYNC WINDOW] Sales: salesFrom=${salesFrom} salesTo=${salesTo}`);
+
         results.sales = await syncSalesTransactions(supabase, businessId, username, password, salesFrom, salesTo);
         const salesStatus = (results.sales.synced_items || 0) === 0 ? 'no_data' : 'success';
         await logSync(supabase, 'sales', salesStatus, results.sales.synced_items, 
