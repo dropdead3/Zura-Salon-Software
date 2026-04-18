@@ -65,7 +65,7 @@ const INITIAL_COUNT = 3;
 export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('service');
   const [showAll, setShowAll] = useState(false);
-  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatCurrency } = useFormatCurrency();
 
   const sorted = useMemo(() => [...performers].sort((a, b) => {
     if (sortMode === 'retail') {
