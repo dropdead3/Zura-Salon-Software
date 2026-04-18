@@ -2053,9 +2053,61 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { sync_type, date_from, date_to, quick }: SyncRequest = await req.json();
 
-    console.log(`Starting Phorest sync: ${sync_type}${quick ? ' (quick mode)' : ''}`);
+    // ── Input validation (Phase 7c) ──────────────────────────────────
+    // Guard against malformed/malicious bodies before any value reaches
+    // Phorest URLs or downstream queries. Untrusted input here previously
+    // bypassed any structural check.
+    let parsedBody: any;
+    try {
+      parsedBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const ALLOWED_SYNC_TYPES = new Set(['staff', 'appointments', 'clients', 'reports', 'sales', 'all']);
+    const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+    const rawSyncType = parsedBody?.sync_type;
+    if (typeof rawSyncType !== 'string' || !ALLOWED_SYNC_TYPES.has(rawSyncType)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid sync_type. Must be one of: ${[...ALLOWED_SYNC_TYPES].join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const rawDateFrom = parsedBody?.date_from;
+    const rawDateTo = parsedBody?.date_to;
+    if (rawDateFrom !== undefined && (typeof rawDateFrom !== 'string' || !ISO_DATE_RE.test(rawDateFrom))) {
+      return new Response(
+        JSON.stringify({ error: "date_from must be YYYY-MM-DD format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (rawDateTo !== undefined && (typeof rawDateTo !== 'string' || !ISO_DATE_RE.test(rawDateTo))) {
+      return new Response(
+        JSON.stringify({ error: "date_to must be YYYY-MM-DD format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const rawQuick = parsedBody?.quick;
+    if (rawQuick !== undefined && rawQuick !== true && rawQuick !== false && rawQuick !== 'far') {
+      return new Response(
+        JSON.stringify({ error: "quick must be true, false, or 'far'" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const sync_type = rawSyncType as SyncRequest['sync_type'];
+    const date_from = rawDateFrom as string | undefined;
+    const date_to = rawDateTo as string | undefined;
+    const quick = rawQuick as boolean | 'far' | undefined;
+
+    console.log(`Starting Phorest sync: ${sync_type}${quick ? ` (quick mode${quick === 'far' ? ': far' : ''})` : ''}`);
 
     // Default date range for appointments
     const today = new Date();
