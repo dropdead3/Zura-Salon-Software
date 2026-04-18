@@ -38,6 +38,7 @@ import {
   BookX,
 } from 'lucide-react';
 import { useInfotainerSettings } from '@/hooks/useInfotainers';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
@@ -144,6 +145,8 @@ export function SuperAdminTopBar({
   const { isImpersonating } = useOrganizationContext();
   const { showInfotainers, toggleInfotainers, isToggling } = useInfotainerSettings();
   const location = useLocation();
+  const { direction: scrollDir, isAtTop } = useScrollDirection();
+  const autoHidden = !hideFooter && !isAtTop && scrollDir === 'down';
 
   const showNextClient = isStylistRole || isStylistAssistantRole;
   const currentUserId = isViewingAsUser && viewAsUser ? viewAsUser.id : user?.id;
@@ -161,7 +164,11 @@ export function SuperAdminTopBar({
               isImpersonating ? "top-[44px]" : "top-0",
               headerHovered ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-full opacity-0 pointer-events-none"
             )
-          : cn("sticky", isImpersonating ? "top-[44px]" : "top-0"),
+          : cn(
+              "sticky transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              isImpersonating ? "top-[44px]" : "top-0",
+              autoHidden && "-translate-y-[calc(100%+12px)] pointer-events-none"
+            ),
         hideFooter && "shrink-0"
       )}
       onMouseLeave={onHeaderHoverEnd}
