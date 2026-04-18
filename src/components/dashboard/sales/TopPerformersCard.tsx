@@ -67,14 +67,22 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const [showAll, setShowAll] = useState(false);
   const { formatCurrency } = useFormatCurrency();
 
-  const sorted = useMemo(() => [...performers].sort((a, b) => {
-    if (sortMode === 'retail') {
-      return (b.productRevenue ?? 0) - (a.productRevenue ?? 0);
-    }
-    const aService = a.totalRevenue - (a.productRevenue ?? 0);
-    const bService = b.totalRevenue - (b.productRevenue ?? 0);
-    return bService - aService;
-  }), [performers, sortMode]);
+  const sorted = useMemo(() => {
+    const ranked = [...performers].sort((a, b) => {
+      if (sortMode === 'retail') {
+        return (b.productRevenue ?? 0) - (a.productRevenue ?? 0);
+      }
+      const aService = a.totalRevenue - (a.productRevenue ?? 0);
+      const bService = b.totalRevenue - (b.productRevenue ?? 0);
+      return bService - aService;
+    });
+    return ranked.filter(p => {
+      const value = sortMode === 'retail'
+        ? (p.productRevenue ?? 0)
+        : p.totalRevenue - (p.productRevenue ?? 0);
+      return value > 0;
+    });
+  }, [performers, sortMode]);
 
   const totalTeamRevenue = useMemo(() =>
     sorted.reduce((acc, p) => {
@@ -87,6 +95,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Service';
   const displayList = showAll ? sorted : sorted.slice(0, INITIAL_COUNT);
   const hasMore = sorted.length > INITIAL_COUNT;
+  const modeNoun = sortMode === 'retail' ? 'retail sales' : 'service revenue';
 
   const headerContent = (
     <div className="flex flex-wrap items-center justify-between gap-2 w-full">
