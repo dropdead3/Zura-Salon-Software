@@ -235,6 +235,52 @@ function RevenueDisplayModeCard() {
   );
 }
 
+function AnimationIntensityCard() {
+  const { intensity, setIntensity, isSaving } = useAnimationIntensity();
+  const options: { id: AnimationIntensity; label: string; description: string }[] = [
+    { id: 'calm', label: 'Calm', description: 'Slower, gentler counter sweeps' },
+    { id: 'standard', label: 'Standard', description: 'Default executive pacing' },
+    { id: 'off', label: 'Off', description: 'Instant — no animation' },
+  ];
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <SparklesIcon className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-lg">ANIMATIONS</CardTitle>
+        </div>
+        <CardDescription>Tune how counters and transitions move across the dashboard.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-3">
+          {options.map(opt => {
+            const isSelected = intensity === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                disabled={isSaving}
+                onClick={() => setIntensity(opt.id)}
+                className={cn(
+                  'flex flex-col items-start gap-1 p-4 rounded-lg border-2 text-left transition-all',
+                  isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
+                  isSaving && 'opacity-60 cursor-not-allowed',
+                )}
+              >
+                <div className="flex w-full items-center justify-between">
+                  <span className="text-sm font-medium">{opt.label}</span>
+                  {isSelected && <Check className="w-4 h-4 text-primary" />}
+                </div>
+                <span className="text-xs text-muted-foreground">{opt.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function InfotainerToggleCard() {
   const { showInfotainers, toggleInfotainers, isToggling } = useInfotainerSettings();
   return (
@@ -784,6 +830,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                 <SoundSettingsSection />
                 <CheckoutAlertsSection />
                 <RevenueDisplayModeCard />
+                <AnimationIntensityCard />
                 <InfotainerToggleCard />
                 <SecuritySettingsCard />
                 <UserPinSettings />
