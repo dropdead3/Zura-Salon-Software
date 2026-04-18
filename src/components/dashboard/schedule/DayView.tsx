@@ -72,6 +72,8 @@ interface DayViewProps {
   onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
   zoomLevel?: number;
   scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
+  /** Wave 22.2 — Stripe Connect inactive location IDs; surfaces "Setup needed" pill on cards. */
+  inactiveConnectLocationIds?: Set<string>;
 }
 
 // Use consolidated status colors from design tokens
@@ -195,6 +197,7 @@ interface AppointmentCardProps {
   zoomLevel?: number;
   useShortLabels?: boolean;
   declinedReasonLabel?: string | null;
+  connectInactive?: boolean;
 }
 
 function AppointmentCard({
@@ -217,6 +220,7 @@ function AppointmentCard({
   zoomLevel = 0,
   useShortLabels = false,
   declinedReasonLabel = null,
+  connectInactive = false,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -321,6 +325,7 @@ function AppointmentCard({
         
         useShortLabels={useShortLabels}
         declinedReasonLabel={declinedReasonLabel}
+        connectInactive={connectInactive}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
@@ -365,6 +370,7 @@ export function DayView({
   onMeetingClick,
   zoomLevel = 0,
   scheduleBlocks = [],
+  inactiveConnectLocationIds,
 }: DayViewProps) {
   const ZOOM_CONFIG: Record<string, { interval: number }> = {
     '-3': { interval: 60 },
@@ -861,29 +867,30 @@ export function DayView({
                          (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
                        );
                        return (
-                         <AppointmentCard
-                           key={apt.id}
-                           appointment={apt}
-                           hoursStart={hoursStart}
-                           onClick={() => onAppointmentClick(apt)}
-                           isSelected={apt.id === selectedAppointmentId}
-                           columnIndex={columnIndex}
-                           totalOverlapping={totalOverlapping}
-                           categoryColors={categoryColors}
-                           isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                           hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                           colorBy={colorBy}
-                           serviceLookup={serviceLookup}
-                           assistantNamesMap={assistantNamesMap}
-                           assistantProfilesMap={assistantProfilesMap}
-                           hasCoverageScheduled={hasCoverage}
-                           date={date}
-                           rowHeight={ROW_HEIGHT}
-                           slotInterval={slotInterval}
-                           zoomLevel={zoomLevel}
-                           useShortLabels={sortedStylists.length >= 3}
-                           declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
-                         />
+                       <AppointmentCard
+                         key={apt.id}
+                         appointment={apt}
+                         hoursStart={hoursStart}
+                         onClick={() => onAppointmentClick(apt)}
+                         isSelected={apt.id === selectedAppointmentId}
+                         columnIndex={columnIndex}
+                         totalOverlapping={totalOverlapping}
+                         categoryColors={categoryColors}
+                         isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                         hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                         colorBy={colorBy}
+                         serviceLookup={serviceLookup}
+                         assistantNamesMap={assistantNamesMap}
+                         assistantProfilesMap={assistantProfilesMap}
+                         hasCoverageScheduled={hasCoverage}
+                         date={date}
+                         rowHeight={ROW_HEIGHT}
+                         slotInterval={slotInterval}
+                         zoomLevel={zoomLevel}
+                         useShortLabels={sortedStylists.length >= 3}
+                         declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
+                         connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
+                       />
                        );
                      })}
 

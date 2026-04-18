@@ -28,6 +28,7 @@ import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/hooks/useLocations';
+import { useLocationStripeStatuses } from '@/hooks/useLocationStripeStatuses';
 import { ClosedDayWarningDialog } from '@/components/dashboard/schedule/ClosedDayWarningDialog';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useOrgNow } from '@/hooks/useOrgNow';

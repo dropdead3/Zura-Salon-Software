@@ -20,6 +20,11 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatRelativeTime } from '@/lib/format';
 import { IndicatorCluster, type IndicatorFlags } from './appointment-card-indicators';
 import { RebookSkippedDot } from './RebookSkippedDot';
+import { ConnectStatusPill } from './ConnectStatusPill';
+
+// Pre-checkout statuses where Stripe Connect setup is still actionable.
+// Once an appointment is completed/cancelled/no-show, the pill has no value.
+const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
 import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -68,6 +73,10 @@ export interface AppointmentCardContentProps {
   useShortLabels?: boolean;
   /** Wave 21.3 Layer 2 — when set on a completed appointment, render a muted "rebook skipped" dot */
   declinedReasonLabel?: string | null;
+  /** Wave 22.2 — surfaces a "Setup needed" pill for pre-checkout appointments
+   * when the location's Stripe Connect onboarding is incomplete. Renders nothing
+   * for completed/cancelled/no-show statuses (no longer actionable). */
+  connectInactive?: boolean;
   onClick: () => void;
 }
 
@@ -177,6 +186,7 @@ function GridContent({
   showClientAvatar,
   useShortLabels,
   declinedReasonLabel,
+  connectInactive,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -192,7 +202,10 @@ function GridContent({
   showClientAvatar?: boolean;
   useShortLabels?: boolean;
   declinedReasonLabel?: string | null;
+  connectInactive?: boolean;
 }) {
+  const showConnectPill = !!connectInactive && PRE_CHECKOUT_STATUSES.has(appointment.status || '');
+
   if (size === 'compact') {
     return (
       <div className="px-2 py-1 relative z-10 overflow-hidden">
@@ -223,6 +236,7 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {showConnectPill && <ConnectStatusPill active={false} />}
               {declinedReasonLabel && appointment.status === 'completed' && (
                 <RebookSkippedDot label={declinedReasonLabel} />
               )}
@@ -267,6 +281,7 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {showConnectPill && <ConnectStatusPill active={false} />}
               {declinedReasonLabel && appointment.status === 'completed' && (
                 <RebookSkippedDot label={declinedReasonLabel} />
               )}
@@ -348,6 +363,7 @@ function AgendaContent({
   serviceLookup,
   assistantNamesMap,
   hasAssistants,
+  connectInactive,
   onClick,
 }: {
   appointment: PhorestAppointment;
@@ -355,11 +371,13 @@ function AgendaContent({
   serviceLookup?: Map<string, ServiceLookupEntry>;
   assistantNamesMap?: Map<string, string[]>;
   hasAssistants: boolean;
+  connectInactive?: boolean;
   onClick: () => void;
 }) {
   const statusConfig = APPOINTMENT_STATUS_BADGE[appointment.status];
   const isCancelledOrNoShow = appointment.status === 'cancelled' || appointment.status === 'no_show';
   const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
+  const showConnectPill = !!connectInactive && PRE_CHECKOUT_STATUSES.has(appointment.status || '');
 
   return (
     <Card
@@ -395,9 +413,10 @@ function AgendaContent({
                   {getClientInitials(appointment.client_name)}
                 </span>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="font-medium text-base">{appointment.client_name}</h4>
                     <IndicatorCluster flags={indicatorFlags} size="full" />
+                    {showConnectPill && <ConnectStatusPill active={false} />}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {formatServicesWithDuration(appointment.service_name, serviceLookup) || appointment.service_name}
@@ -490,6 +509,7 @@ export function AppointmentCardContent({
   showClientAvatar = true,
   useShortLabels = false,
   declinedReasonLabel = null,
+  connectInactive = false,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
@@ -594,6 +614,7 @@ export function AppointmentCardContent({
         serviceLookup={serviceLookup}
         assistantNamesMap={assistantNamesMap}
         hasAssistants={hasAssistants}
+        connectInactive={connectInactive}
         onClick={onClick}
       />
     );
@@ -667,6 +688,7 @@ export function AppointmentCardContent({
         showClientAvatar={showClientAvatar}
         useShortLabels={useShortLabels}
         declinedReasonLabel={declinedReasonLabel}
+        connectInactive={connectInactive}
       />
     </div>
   );
