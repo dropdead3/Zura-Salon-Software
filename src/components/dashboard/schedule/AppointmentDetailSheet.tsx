@@ -1657,7 +1657,7 @@ export function AppointmentDetailSheet({
                       orgId={resolvedOrgId}
                       className="-mx-4 mt-4 mb-4 border-y border-border/40 py-4"
                     />
-                    <motion.div variants={staggerContainer} initial={false} animate="show" className="space-y-5">
+                    <motion.div variants={staggerContainer} initial={false} animate="show" className="mt-5 space-y-5">
                     {/* Notes From Booking Assistant — surfaced from Notes tab for at-a-glance client intent */}
                     {appointment.notes && (
                       <motion.div variants={staggerItem} className="mt-3 space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
