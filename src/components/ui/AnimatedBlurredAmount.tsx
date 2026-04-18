@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useFirstSessionAnimation } from '@/hooks/useFirstSessionAnimation';
 import { useIsAnimationsOff } from '@/hooks/useAnimationIntensity';
@@ -14,6 +14,7 @@ interface AnimatedBlurredAmountProps {
   currency?: string;
   prefix?: string;
   suffix?: string;
+  /** @deprecated Counter roll-up removed; fade timing is now centralized. Retained for API compat. */
   duration?: number;
   decimals?: number;
   className?: string;
@@ -21,17 +22,20 @@ interface AnimatedBlurredAmountProps {
   compact?: boolean;
   /** Auto-detect overflow and switch to compact. Defaults to true when currency is set. */
   autoCompact?: boolean;
-  /** When set, the 0→value mount animation only runs once per browser session for this key. Subsequent mounts snap to value. Value-change deltas still animate. */
+  /** When set, the initial fade-in only runs once per browser session for this key. Value-change crossfades still run. */
   animationKey?: string;
   children?: ReactNode;
 }
 
+/**
+ * Privacy-aware numeric display. Fades in on first reveal and crossfades on value change.
+ * No counter roll-up — analytics doctrine prefers calm reveals over animated counting.
+ */
 export function AnimatedBlurredAmount({
   value,
   currency,
   prefix = '',
   suffix = '',
-  duration = 1200,
   decimals,
   className = '',
   compact = false,
@@ -42,31 +46,30 @@ export function AnimatedBlurredAmount({
   const animationsOff = useIsAnimationsOff();
   const { shouldAnimate, markAnimated } = useFirstSessionAnimation(animationKey);
   const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
-  const [displayValue, setDisplayValue] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const [isAutoCompact, setIsAutoCompact] = useState(false);
-  const previousValue = useRef(0);
-  const animationRef = useRef<number>();
   const spanRef = useRef<HTMLSpanElement>(null);
 
   const shouldAutoCompact = autoCompact ?? !!currency;
   const useCompact = compact || isAutoCompact;
+  const skipFade = reduceMotion || animationsOff;
+
+  // Mark as mounted + fire session gate on first render
+  useEffect(() => {
+    setHasMounted(true);
+    if (!skipFade && shouldAnimate) markAnimated();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check overflow and toggle auto-compact
   const checkOverflow = useCallback(() => {
     const el = spanRef.current;
     if (!el || !shouldAutoCompact) return;
-    // Only compact values >= 1000
     if (Math.abs(value) < 1000) {
       setIsAutoCompact(false);
       return;
     }
-    // If already compact, check if we can un-compact by temporarily measuring full width
-    if (isAutoCompact) {
-      // Stay compact — we can't easily measure the non-compact width without flicker
-      return;
-    }
-    // Check if text overflows its container
+    if (isAutoCompact) return;
     if (el.scrollWidth > el.clientWidth + 1) {
       setIsAutoCompact(true);
     }
@@ -78,7 +81,6 @@ export function AnimatedBlurredAmount({
     if (!el || !shouldAutoCompact) return;
     let rafId: number;
     const ro = new ResizeObserver(() => {
-      // Defer check to next frame after layout
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => checkOverflow());
     });
@@ -86,91 +88,26 @@ export function AnimatedBlurredAmount({
     return () => { ro.disconnect(); cancelAnimationFrame(rafId); };
   }, [shouldAutoCompact, checkOverflow]);
 
-  // Check overflow after value settles
+  // Re-check overflow when value changes
   useEffect(() => {
-    if (hasAnimated) {
-      requestAnimationFrame(() => checkOverflow());
-    }
-  }, [displayValue, hasAnimated, checkOverflow]);
-
-  // Animate on mount (gated by sessionStorage when animationKey is provided)
-  useEffect(() => {
-    setHasAnimated(true);
-
-    // Reduced motion or animations-off: snap, never animate
-    if (reduceMotion || animationsOff) {
-      setDisplayValue(value);
-      previousValue.current = value;
-      return;
-    }
-
-    // Session-scoped first-mount gate: skip 0→value if we've already animated this session
-    if (!shouldAnimate) {
-      setDisplayValue(value);
-      previousValue.current = value;
-      return;
-    }
-    markAnimated();
-
-    animateValue(0, value);
-    previousValue.current = value;
-    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Animate on value change (real-time deltas always animate, regardless of session gate)
-  useEffect(() => {
-    if (!hasAnimated || value === previousValue.current) return;
-    if (reduceMotion || animationsOff) {
-      setDisplayValue(value);
-      previousValue.current = value;
-      return;
-    }
-    animateValue(previousValue.current, value);
-    previousValue.current = value;
-  }, [value, hasAnimated, reduceMotion, animationsOff]);
-
-  const animateValue = (from: number, to: number) => {
-    if (animationRef.current) cancelAnimationFrame(animationRef.current);
-
-    const startTime = performance.now();
-    const difference = to - from;
-
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Quint ease-out: fast at start, smooth dramatic deceleration to target. No overshoot.
-      const settle = 1 - Math.pow(1 - progress, 5);
-
-      setDisplayValue(from + difference * settle);
-
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(animate);
-      } else {
-        setDisplayValue(to);
-        previousValue.current = to;
-      }
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-  };
+    requestAnimationFrame(() => checkOverflow());
+  }, [value, checkOverflow]);
 
   const resolvedDecimals = decimals ?? (currency ? 2 : 0);
 
   const formattedValue = (() => {
     if (currency && useCompact) {
-      return formatCurrencyUnified(displayValue, { currency, compact: true, noCents: true });
+      return formatCurrencyUnified(value, { currency, compact: true, noCents: true });
     }
     if (currency) {
-      return formatCurrencyLegacy(displayValue, currency, { maximumFractionDigits: resolvedDecimals, minimumFractionDigits: resolvedDecimals });
+      return formatCurrencyLegacy(value, currency, { maximumFractionDigits: resolvedDecimals, minimumFractionDigits: resolvedDecimals });
     }
     if (useCompact) {
-      return new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }).format(displayValue);
+      return new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }).format(value);
     }
     return resolvedDecimals > 0
-      ? displayValue.toFixed(resolvedDecimals)
-      : Math.round(displayValue).toLocaleString();
+      ? value.toFixed(resolvedDecimals)
+      : Math.round(value).toLocaleString();
   })();
 
   const handleClick = () => { if (hideNumbers) requestUnhide(); };
@@ -178,6 +115,29 @@ export function AnimatedBlurredAmount({
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && hideNumbers) requestUnhide(); };
 
   const displayContent = currency ? formattedValue : `${prefix}${formattedValue}${suffix}`;
+
+  // First-mount snap when session gate already fired (no initial fade); value changes still crossfade.
+  const initialOpacity = hasMounted && !shouldAnimate ? 1 : 0;
+
+  const inner = skipFade ? (
+    <span style={{ display: 'inline-block' }}>{displayContent}</span>
+  ) : (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span
+        key={displayContent}
+        initial={{ opacity: initialOpacity, y: initialOpacity === 1 ? 0 : 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -2 }}
+        transition={{
+          opacity: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+          y: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+        }}
+        style={{ display: 'inline-block' }}
+      >
+        {displayContent}
+      </motion.span>
+    </AnimatePresence>
+  );
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -195,7 +155,7 @@ export function AnimatedBlurredAmount({
             onKeyDown={handleKeyDown}
             tabIndex={hideNumbers ? 0 : undefined}
           >
-            {displayContent}
+            {inner}
           </span>
         </TooltipTrigger>
         <TooltipContent>{hideNumbers ? 'Click to reveal' : 'Double-click to hide'}</TooltipContent>
