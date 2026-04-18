@@ -115,11 +115,12 @@ export function RetailPerformanceAlert({
   const visual = TIER_VISUALS[verdict.tier];
   const Icon = visual.icon;
 
-  const toggle = () => setExpanded((prev) => !prev);
+  const expand = () => setExpanded(true);
+  const collapse = () => setExpanded(false);
   const handleKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      toggle();
+      expand();
     }
   };
 
@@ -128,7 +129,9 @@ export function RetailPerformanceAlert({
       role="button"
       tabIndex={0}
       aria-expanded={expanded}
-      onClick={toggle}
+      onClick={expand}
+      onMouseLeave={collapse}
+      onBlur={collapse}
       onKeyDown={handleKey}
       className={cn(
         'cursor-pointer transition-colors outline-none',
