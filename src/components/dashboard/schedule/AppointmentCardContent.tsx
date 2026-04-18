@@ -236,6 +236,7 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {showConnectPill && <ConnectStatusPill active={false} />}
               {declinedReasonLabel && appointment.status === 'completed' && (
                 <RebookSkippedDot label={declinedReasonLabel} />
               )}
@@ -280,6 +281,7 @@ function GridContent({
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
+              {showConnectPill && <ConnectStatusPill active={false} />}
               {declinedReasonLabel && appointment.status === 'completed' && (
                 <RebookSkippedDot label={declinedReasonLabel} />
               )}
