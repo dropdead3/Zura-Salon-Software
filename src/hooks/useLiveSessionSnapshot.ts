@@ -218,13 +218,14 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
       // Build per-stylist details
       const stylistDetailsMap = new Map<string, StylistDetail>();
 
-      let detailFallbackIndex = 0;
       for (const staffId of uniqueStaffIds) {
-        detailFallbackIndex++;
         const userId = staffToUser.get(staffId);
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
-        const name = profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? phorestName : `Stylist ${detailFallbackIndex}`);
+        const isUnmapped = !profile && !phorestName;
+        const name = profile
+          ? formatFullDisplayName(profile.full_name || '', profile.display_name)
+          : (phorestName ? phorestName : unmappedLabel(staffId));
         const photoUrl = profile?.photo_url || null;
 
         // All appointments for this staff today, sorted chronologically
