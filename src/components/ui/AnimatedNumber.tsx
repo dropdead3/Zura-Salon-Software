@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useReducedMotion } from 'framer-motion';
+import { useFirstSessionAnimation } from '@/hooks/useFirstSessionAnimation';
+import { useIsAnimationsOff } from '@/hooks/useAnimationIntensity';
 
 interface AnimatedNumberProps {
   value: number;
@@ -24,6 +26,8 @@ export function AnimatedNumber({
   animationKey,
 }: AnimatedNumberProps) {
   const reduceMotion = useReducedMotion();
+  const animationsOff = useIsAnimationsOff();
+  const { shouldAnimate, markAnimated } = useFirstSessionAnimation(animationKey);
   const [displayValue, setDisplayValue] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const previousValue = useRef(0);
@@ -32,7 +36,7 @@ export function AnimatedNumber({
 
   // Trigger animation on first intersection
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion || animationsOff) {
       setDisplayValue(value);
       previousValue.current = value;
       return;
@@ -47,18 +51,13 @@ export function AnimatedNumber({
           setHasAnimated(true);
 
           // Session-scoped first-mount gate
-          if (animationKey) {
-            const sessionKey = `counter-animated::${animationKey}`;
-            let alreadyAnimated = false;
-            try { alreadyAnimated = sessionStorage.getItem(sessionKey) === '1'; } catch { /* ignore */ }
-            if (alreadyAnimated) {
-              setDisplayValue(value);
-              previousValue.current = value;
-              observer.disconnect();
-              return;
-            }
-            try { sessionStorage.setItem(sessionKey, '1'); } catch { /* ignore */ }
+          if (!shouldAnimate) {
+            setDisplayValue(value);
+            previousValue.current = value;
+            observer.disconnect();
+            return;
           }
+          markAnimated();
 
           animateValue(0, value);
           previousValue.current = value;
@@ -70,11 +69,12 @@ export function AnimatedNumber({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [value, reduceMotion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, reduceMotion, animationsOff]);
 
   // Animate on value change after initial animation
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion || animationsOff) {
       setDisplayValue(value);
       previousValue.current = value;
       return;
@@ -83,7 +83,7 @@ export function AnimatedNumber({
       animateValue(previousValue.current, value);
       previousValue.current = value;
     }
-  }, [value, hasAnimated, reduceMotion]);
+  }, [value, hasAnimated, reduceMotion, animationsOff]);
 
   const animateValue = (from: number, to: number) => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);

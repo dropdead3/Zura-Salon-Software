@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
+import { useFirstSessionAnimation } from '@/hooks/useFirstSessionAnimation';
+import { useIsAnimationsOff } from '@/hooks/useAnimationIntensity';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { formatCurrency as formatCurrencyLegacy } from '@/lib/formatCurrency';
@@ -37,6 +39,8 @@ export function AnimatedBlurredAmount({
   animationKey,
 }: AnimatedBlurredAmountProps) {
   const reduceMotion = useReducedMotion();
+  const animationsOff = useIsAnimationsOff();
+  const { shouldAnimate, markAnimated } = useFirstSessionAnimation(animationKey);
   const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
   const [displayValue, setDisplayValue] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -93,42 +97,38 @@ export function AnimatedBlurredAmount({
   useEffect(() => {
     setHasAnimated(true);
 
-    // Reduced motion: snap, never animate
-    if (reduceMotion) {
+    // Reduced motion or animations-off: snap, never animate
+    if (reduceMotion || animationsOff) {
       setDisplayValue(value);
       previousValue.current = value;
       return;
     }
 
     // Session-scoped first-mount gate: skip 0→value if we've already animated this session
-    if (animationKey) {
-      const sessionKey = `counter-animated::${animationKey}`;
-      let alreadyAnimated = false;
-      try { alreadyAnimated = sessionStorage.getItem(sessionKey) === '1'; } catch { /* ignore */ }
-      if (alreadyAnimated) {
-        setDisplayValue(value);
-        previousValue.current = value;
-        return;
-      }
-      try { sessionStorage.setItem(sessionKey, '1'); } catch { /* ignore */ }
+    if (!shouldAnimate) {
+      setDisplayValue(value);
+      previousValue.current = value;
+      return;
     }
+    markAnimated();
 
     animateValue(0, value);
     previousValue.current = value;
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Animate on value change (real-time deltas always animate, regardless of session gate)
   useEffect(() => {
     if (!hasAnimated || value === previousValue.current) return;
-    if (reduceMotion) {
+    if (reduceMotion || animationsOff) {
       setDisplayValue(value);
       previousValue.current = value;
       return;
     }
     animateValue(previousValue.current, value);
     previousValue.current = value;
-  }, [value, hasAnimated, reduceMotion]);
+  }, [value, hasAnimated, reduceMotion, animationsOff]);
 
   const animateValue = (from: number, to: number) => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
