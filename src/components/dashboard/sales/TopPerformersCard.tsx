@@ -67,14 +67,22 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const [showAll, setShowAll] = useState(false);
   const { formatCurrency } = useFormatCurrency();
 
-  const sorted = useMemo(() => [...performers].sort((a, b) => {
-    if (sortMode === 'retail') {
-      return (b.productRevenue ?? 0) - (a.productRevenue ?? 0);
-    }
-    const aService = a.totalRevenue - (a.productRevenue ?? 0);
-    const bService = b.totalRevenue - (b.productRevenue ?? 0);
-    return bService - aService;
-  }), [performers, sortMode]);
+  const sorted = useMemo(() => {
+    const ranked = [...performers].sort((a, b) => {
+      if (sortMode === 'retail') {
+        return (b.productRevenue ?? 0) - (a.productRevenue ?? 0);
+      }
+      const aService = a.totalRevenue - (a.productRevenue ?? 0);
+      const bService = b.totalRevenue - (b.productRevenue ?? 0);
+      return bService - aService;
+    });
+    return ranked.filter(p => {
+      const value = sortMode === 'retail'
+        ? (p.productRevenue ?? 0)
+        : p.totalRevenue - (p.productRevenue ?? 0);
+      return value > 0;
+    });
+  }, [performers, sortMode]);
 
   const totalTeamRevenue = useMemo(() =>
     sorted.reduce((acc, p) => {
@@ -87,6 +95,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Service';
   const displayList = showAll ? sorted : sorted.slice(0, INITIAL_COUNT);
   const hasMore = sorted.length > INITIAL_COUNT;
+  const modeNoun = sortMode === 'retail' ? 'retail sales' : 'service revenue';
 
   const headerContent = (
     <div className="flex flex-wrap items-center justify-between gap-2 w-full">
@@ -155,6 +164,13 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
     <Card className="@container h-full flex flex-col overflow-hidden border-border/40">
       <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
       <CardContent className="px-4 pb-3 pt-2 flex-1 flex flex-col">
+        {sorted.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-center py-2 text-muted-foreground text-xs">
+              No staff had {modeNoun} in this period.
+            </p>
+          </div>
+        ) : (
         <ScrollArea className={cn("flex-1", showAll && sorted.length > 6 && "max-h-[320px]")}>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -223,6 +239,13 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
             </AnimatePresence>
           </div>
         </ScrollArea>
+        )}
+
+        {sorted.length > 0 && sorted.length < INITIAL_COUNT && (
+          <p className="mt-3 text-center text-[11px] text-muted-foreground">
+            No other staff had {modeNoun}.
+          </p>
+        )}
 
         {/* View all toggle */}
         {hasMore && (
