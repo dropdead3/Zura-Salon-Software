@@ -467,7 +467,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
       }>((from, to) => {
         let q = supabase
           .from('v_all_transaction_items' as any)
-          .select('staff_user_id, total_amount, tax_amount, item_type, item_name')
+          .select('phorest_staff_id, total_amount, tax_amount, item_type, item_name')
           .not('phorest_staff_id', 'is', null)
           .not('total_amount', 'is', null)
           .range(from, to);
