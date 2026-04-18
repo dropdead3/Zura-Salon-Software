@@ -98,7 +98,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const modeNoun = sortMode === 'retail' ? 'retail sales' : 'service revenue';
 
   const headerContent = (
-    <div className="flex flex-wrap items-center justify-between gap-2 w-full">
+    <div className="flex flex-wrap items-center justify-between gap-2 w-full pr-6">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
           <Trophy className="w-5 h-5 text-primary" />
@@ -116,7 +116,6 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
             dateRange={filterContext.dateRange} 
           />
         )}
-        <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period. Amounts are rounded to the nearest dollar for a cleaner read." />
       </div>
     </div>
   );
@@ -124,7 +123,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   if (isLoading) {
     return (
       <TabsPrimitive.Root value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-      <Card className="h-full flex flex-col overflow-hidden border-border/40">
+      <Card className="relative h-full flex flex-col overflow-hidden border-border/40">
+        <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period. Amounts are rounded to the nearest dollar for a cleaner read." className="absolute top-3 right-3 z-10" />
         <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1">
           <div className="space-y-2">
@@ -147,7 +147,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   if (!performers.length) {
     return (
       <TabsPrimitive.Root value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-      <Card className="h-full flex flex-col overflow-hidden border-border/40">
+      <Card className="relative h-full flex flex-col overflow-hidden border-border/40">
+        <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period. Amounts are rounded to the nearest dollar for a cleaner read." className="absolute top-3 right-3 z-10" />
         <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1 flex items-center justify-center">
           <div className="text-center py-2 text-muted-foreground text-xs">
@@ -161,7 +162,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   return (
     <TabsPrimitive.Root value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-    <Card className="@container h-full flex flex-col overflow-hidden border-border/40">
+    <Card className="@container relative h-full flex flex-col overflow-hidden border-border/40">
+      <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period. Amounts are rounded to the nearest dollar for a cleaner read." className="absolute top-3 right-3 z-10" />
       <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
       <CardContent className="px-4 pb-3 pt-2 flex-1 flex flex-col">
         {sorted.length === 0 ? (
