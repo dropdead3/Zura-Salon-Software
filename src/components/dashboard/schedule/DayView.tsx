@@ -325,6 +325,7 @@ function AppointmentCard({
         
         useShortLabels={useShortLabels}
         declinedReasonLabel={declinedReasonLabel}
+        connectInactive={connectInactive}
         onClick={() => {}}
       />
       {/* Right-edge grip indicator */}
