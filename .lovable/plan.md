@@ -1,66 +1,37 @@
 
 
-## Diagnosis
+## Status: Backfill landed correctly — but with one nuance worth flagging
 
-The Phorest appointment sync is hard-capped to a tiny 8-day window (today → today + 7), with no historical backfill. Confirmed against the live database:
+### What's now in the database
+- **Total appointments**: 3,095 (was 151 before)
+- **Past**: 2,395 appointments back to **June 19, 2025** (~10 months of history)
+- **Future**: 700 appointments out to **July 14, 2026** (~3 months forward)
+- **Future weekly coverage** is healthy and tapers naturally (117 → 109 → 99 → 73 → 65 → 56 → 52 → 34 → 20 → 14 → 6 → 6 → 2)
 
-- Earliest appt in `phorest_appointments`: **2026-01-23**
-- Latest appt: **2026-04-25** (today + 7)
-- Recurring 15-min cron pulls **151 records** every cycle — the full today→+7 window
-- Anything beyond 7 days into the future never lands in the DB. Anything in the past that wasn't captured by an earlier one-off backfill never arrives either.
+That natural taper is the signal that we're seeing **all real bookings** — Phorest only has what clients have actually booked. The drop-off to 2 appointments in mid-July reflects reality, not a sync gap.
 
-This matches the screenshot exactly: only "Week of Apr 20" (which contains today + the next 7 days) has data. Apr 27, May 4, May 11, May 18 are empty because the sync has never asked Phorest for them.
+### About "recurring appointments"
+Phorest doesn't expose a true recurring/series concept in its appointments API — every appointment is a discrete row even when a client rebooks weekly. So the question "are recurring appts pulling over?" answers itself: **every individual booked instance** Phorest knows about within our window (today → +90 days) is now in the database. There is no separate "recurring template" object being missed.
 
-The cause is in `supabase/functions/sync-phorest-data/index.ts` lines **2058–2073**:
+### The one nuance
+The backfill pulled **today → +90 days** for the future side, capping at July 14, 2026. If a client has a booking further out than that (e.g., a wedding in October), it's not yet in the DB. Phorest allows arbitrarily-far-future bookings, but our default sync window stops at +90 days.
 
-```ts
-if (quick) {
-  defaultFrom = todayStr;
-  defaultTo  = today + 7 days;
-} else {
-  defaultFrom = date_from || todayStr;          // past defaults to TODAY, not back
-  defaultTo   = date_to   || (today + 7 days);  // forward only 7 days
-}
-```
+### Recommendation: extend forward window to +180 days
 
-Both modes default the past edge to today and the future edge to today + 7. The recurring cron (every 15 min) hits this with no `date_from`/`date_to`, so it only ever syncs the same 8-day rolling window. Phorest itself is fine — we're just never asking for the rest.
+For salons with destination-event clients (weddings, holidays), 90 days forward is tight. I'd propose:
 
-The function already supports `date_from` / `date_to` and chunks calls into 30-day windows internally, so the underlying engine is capable of much larger pulls. The defaults are the only thing limiting it.
+- **Quick mode (15-min cron)**: keep at today − 1 → today + 30 (cheap, covers operational reality)
+- **Full mode**: extend forward edge from +90 days to **+180 days** (today − 90 → today + 180)
+- Trigger one more backfill with `date_to = today + 365` to catch any far-future bookings already on the books
 
-## Fix
+This keeps the cron cheap (small window) while ensuring monthly full syncs catch anything booked up to 6 months out, and the one-time +365 sweep grabs the rare 7-12 month bookings that already exist.
 
-**Two coordinated changes:**
+### Out of scope
+- Phorest API "recurring booking" objects (don't exist in the API)
+- Cron frequency changes
+- Sales sync window (already fixed)
 
-### 1. Widen the default sync window in `sync-phorest-data/index.ts`
-
-For appointments, replace the today→+7 default with a meaningful operational window:
-
-- **Quick mode** (high-frequency cron): today − 1 day → today + 30 days. Keeps the cron cheap but covers the realistic operational horizon (next month of bookings + yesterday's stragglers for late-completed appts).
-- **Full / unspecified mode**: today − 90 days → today + 90 days. Matches what the dashboard/reports expect (90-day historical analytics + forward booking visibility). The internal 30-day chunker already handles this safely.
-- Continue to honor explicit `date_from` / `date_to` from callers (e.g., `usePhorestCalendar` already passes them).
-
-Apply the same pattern to the sales window so it matches actuals reporting:
-- Quick: yesterday → today (unchanged)
-- Full: today − 90 days → today (today's `30 days` is too narrow for the Sales card's 90-day filter)
-
-### 2. One-time historical backfill
-
-Trigger a single `sync-phorest-data` call with explicit `date_from` (e.g., 365 days ago) and `date_to` (e.g., today + 90 days) to seed everything missing past Jan 23 forward through summer. The function's existing 30-day chunking handles the volume safely. This is a one-shot operation, not a code change.
-
-### 3. Add a "Sync Window" log line
-
-Inside `syncAppointments`, log the resolved `dateFrom`/`dateTo` and the count of chunks fetched so future regressions are obvious in the edge function logs (we currently only log per-branch totals).
-
-## Out of scope
-
-- Phorest API rate limiting strategy (current per-branch / per-chunk pagination is already fine for a 6-month range)
-- Migrating cron schedule itself (frequency stays at 15 min)
-- Decoupling toward Zura-native appointments (separate doctrine track)
-- Sales sync window beyond the 90-day alignment fix above
-- Animation / UI work from previous loops
-
-## Files
-
-- **Modify**: `supabase/functions/sync-phorest-data/index.ts` — replace the default window block at lines 2058–2073 (appointments) and 2169–2193 (sales) with the wider quick/full defaults described above. Add a sync-window log line at the top of `syncAppointments`.
-- **Operational (no file change)**: trigger one manual `sync-phorest-data` invocation with `{ sync_type: 'appointments', date_from: '<365 days ago>', date_to: '<+90 days>' }` after deploy to backfill the gap.
+### Files
+- **Modify**: `supabase/functions/sync-phorest-data/index.ts` — change full-mode appointment `defaultTo` from +90 to +180 days
+- **Operational**: one manual `sync-phorest-data` call with `{ sync_type: 'appointments', date_from: '<today>', date_to: '<today + 365>' }` to sweep far-future bookings
 
