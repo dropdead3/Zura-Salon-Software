@@ -1,52 +1,71 @@
 
 
 ## Goal
-Reframe the retail performance verdict around **attach rate as the primary signal** (not the worst-of between true retail % and attach rate), and rewrite the critical-tier copy to name the root cause directly: stylists aren't making the CTA.
+Three refinements to `RetailPerformanceAlert`:
+1. **Smoother expand/collapse animation** — replace the current discrete mount/unmount (`{expanded && ...}`) with a height/opacity transition so the body slides open and closed instead of popping.
+2. **Click toggles** — clicking when expanded should collapse (currently `onClick={expand}` only opens; collapse only fires on `onMouseLeave`/`onBlur`).
+3. **Smaller headline** — reduce "RETAIL HEALTH · CRITICAL" from `text-xs` to `text-[11px]` (one notch down) to feel less shouty.
 
-## Why this matters
-Attach rate measures stylist behavior at checkout — the CTA itself. True retail % is downstream of attach rate, basket size, and assortment. Conflating the two with worst-of logic obscures the real lever. When retail mix is below 10%, the cause is almost always missing recommendations, not pricing or product mix.
+## Current behavior (file: `src/components/dashboard/sales/RetailPerformanceAlert.tsx`)
+- `onClick={expand}` — always sets true; clicking an open card is a no-op.
+- Body renders via `{expanded && <p>...</p>}` with `animate-in fade-in slide-in-from-top-1` — this only animates **in**; on close the element unmounts instantly with no exit animation.
+- Headline: `font-display text-xs tracking-wide uppercase`.
 
 ## Changes
 
-### 1. `src/lib/retailPerformance.ts` — primary signal + new copy
-**Tier logic shift**: Attach rate becomes the primary tier driver. True retail % only **downgrades** the verdict when it's materially weaker (≥2 tiers below attach), preventing oversell when basket is hollow. Remove symmetric worst-of.
-
-```ts
-// Pseudo
-const tier = attachTier;
-if (TIER_RANK[retailTier] <= TIER_RANK[attachTier] - 2) {
-  tier = retailTier; // hollow basket — downgrade
-}
+### 1. Click toggles (not just expands)
+Replace `expand`/`collapse` pair with a single `toggle`, keep `collapse` only for `onMouseLeave`/`onBlur`.
+```tsx
+const toggle = () => setExpanded((v) => !v);
+const collapse = () => setExpanded(false);
+// onClick={toggle}, onMouseLeave={collapse}, onBlur={collapse}
+// onKeyDown Enter/Space → toggle
 ```
 
-**Copy rewrite** — name the behavior, not the metric:
+### 2. Smooth expand/collapse animation
+Switch from conditional render to a CSS grid-rows trick (the standard Tailwind pattern for unknown-height accordion content — no JS measurement, GPU-friendly, works with multi-line copy).
 
-| Tier | New copy |
-|---|---|
-| strong | "Stylists are consistently making the retail recommendation. Protect this routine." |
-| healthy | "Stylists are recommending retail. One coaching cycle could push attach rate to top quartile." |
-| soft | "Attach rate is slipping. Stylists are skipping the retail recommendation on too many tickets." |
-| critical | "Your stylists are likely not selling and need some help. Retail attach is below the threshold where coaching is optional." |
+```tsx
+<div
+  className={cn(
+    'grid transition-[grid-template-rows,opacity] duration-300 ease-out',
+    expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+  )}
+>
+  <div className="overflow-hidden">
+    <p className="text-sm text-foreground/90 leading-relaxed mt-2 pl-12">
+      {verdict.copy}
+    </p>
+  </div>
+</div>
+```
+- `grid-rows-[0fr] → [1fr]` animates row height from 0 to content height with no measurement.
+- `overflow-hidden` on the inner wrapper clips content during transition.
+- Opacity co-animates so the text fades in/out as it expands/collapses.
+- Drop the `animate-in fade-in slide-in-from-top-1` classes — those are enter-only Tailwind Animate utilities and don't reverse.
 
-**Sub-10% retail special case**: When `trueRetailPercent < 10` AND attach is also weak, force tier to `critical` and use the explicit copy above. This honors the user's stated rule.
+### 3. Reduce padding shift jank
+Currently the row toggles between `py-3 px-4` (collapsed) and `p-4` (expanded), causing a 4px vertical jump. Unify to `py-3 px-4` always — the body block already provides its own `mt-2` so vertical rhythm stays clean and the container animates smoothly without parent-padding twitch.
 
-### 2. Optional: tier label adjustment
-Current label "Retail Health · Critical" stays — the body copy carries the new framing. No structural change to `RetailPerformanceAlert.tsx` needed.
-
-## Tier thresholds (unchanged but now attach-led)
-- Attach: ≥40 strong · ≥30 healthy · ≥15 soft · <15 critical
-- True retail % only matters as a downgrade gate (≥2 tier gap)
+### 4. Smaller headline
+```tsx
+// before
+'flex-1 min-w-0 font-display text-xs tracking-wide uppercase'
+// after
+'flex-1 min-w-0 font-display text-[11px] tracking-wide uppercase'
+```
+Honors typography canon (still `font-display`, uppercase, no synthetic bold).
 
 ## Edge cases
-- Materiality gate ($500 total) unchanged — silence still valid.
-- Missing attach rate → still returns null (attach is now mandatory anchor).
-- True retail % missing → falls back to attach-only tier (currently returns null; relax to allow attach-only verdict).
+- Touch devices: `mouseleave` doesn't fire — now click toggles, so users can tap-to-open and tap-to-close. Better than before.
+- Keyboard parity: Enter/Space toggles; `onBlur` still collapses when focus leaves the card.
+- Transition respects `prefers-reduced-motion` automatically (Tailwind's `transition-*` honors the media query via `motion-reduce:transition-none`? — not by default, but the 300ms duration is gentle. If we want strict compliance, add `motion-reduce:transition-none motion-reduce:duration-0`.) — including reduced-motion guard.
 
 ## Out of scope
-- Per-stylist attach rate breakdown (Phase 2 advisory)
-- Coaching script CTA inside the alert
-- Threshold customization UI
+- Tier copy / thresholds
+- Outside-click handler (collapse on mouse-leave + click-toggle covers it)
+- Animating the chevron rotation (already smooth via existing `transition-transform`)
 
 ## Files
-- **Modify**: `src/lib/retailPerformance.ts` — attach-led tier logic, sub-10% retail override, new copy
+- **Modify**: `src/components/dashboard/sales/RetailPerformanceAlert.tsx` — toggle handler, grid-rows transition wrapper, headline `text-[11px]`, unified padding, reduced-motion guard
 
