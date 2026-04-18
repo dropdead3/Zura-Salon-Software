@@ -1,55 +1,70 @@
 
 
-## Loader infrastructure — three follow-on enhancements
+## Loader infrastructure — three test/governance hardening items
 
-### 1. Track-and-fade transition (perception polish)
-After the 200ms cooldown fires, fade the loader in over ~150ms instead of hard-painting. Removes the residual "pop" on borderline loads (200–400ms) where the cooldown saved the flicker but the hard-paint reintroduced one.
-
-**Implementation:**
-- Extend `useDelayedRender` to return a richer state: `{ visible: boolean, mounted: boolean }` — `mounted` flips true at the cooldown, `visible` flips true one frame later (via `requestAnimationFrame`) so a CSS transition has a starting state to animate from.
-- Add a `data-loader-fade` attribute on the loader root in both `BootLuxeLoader` and `DashboardLoader`, paired with Tailwind utilities: `opacity-0 transition-opacity duration-150 data-[loader-fade=in]:opacity-100`.
-- Backwards compatible: existing call sites inherit the new behavior, no API changes.
-
-**Tradeoff:** adds one render cycle. Negligible cost; perception win is real.
-
-### 2. Telemetry hook (data-driven Wave 3)
-Log every loader paint with `{ surface, durationMs, mountedAt, route }` so we learn which surfaces are genuinely slow vs. which were noisy and have already been silenced by the cooldown.
+### 1. Selector snapshot test (regression insurance)
+Add a snapshot assertion for the resolved `no-restricted-syntax` rule config so any future "harmless refactor" of the selector string fails CI loudly instead of silently neutering enforcement.
 
 **Implementation:**
-- Add an optional `surface?: string` prop to `BootLuxeLoader` and `DashboardLoader` (e.g. `surface="schedule.route"`, `surface="booking-surface-settings.section"`).
-- When `useDelayedRender` flips `mounted` true, fire `telemetry.loaderPainted({ surface, route: window.location.pathname, mountedAtMs: performance.now() })`.
-- When the loader unmounts, fire `telemetry.loaderResolved({ surface, durationMs })` so we can compute paint→resolve duration.
-- Pipe to existing telemetry sink (check what we have — likely a lightweight `analytics` or `track()` helper; if none, log to a `loader_telemetry` table via a fire-and-forget edge function or just `console.debug` gated on a dev flag for now and add the sink as a separate plan).
-- Sample at 100% in dev, 10% in prod (configurable) so we don't flood the table.
+- Extend `src/test/lint-rule-loader2.test.ts` with a third test: `it('selector config matches snapshot', ...)`.
+- Resolve via `eslint.calculateConfigForFile('src/components/ui/BootLuxeLoader.tsx')` (any real file under the rule).
+- Assert: `expect(config.rules['no-restricted-syntax']).toMatchSnapshot()`.
+- Snapshot lives at `src/test/__snapshots__/lint-rule-loader2.test.ts.snap` — committed, reviewed on change.
 
-**Output:** after one week, a query like `select surface, avg(duration_ms), count(*) from loader_telemetry group by surface order by avg desc` becomes the Wave 3 backlog — empirical, not anecdotal.
+**Why this catches the bug we hit:** the original `:not(:has(JSXElement))` clause was syntactically valid but semantically wrong. A snapshot would have flagged that the selector changed and forced a human review.
 
-### 3. Storybook/CI lint smoke test (rule integrity)
-A silently broken lint rule is the worst-case scenario — the doctrine looks enforced but isn't. Add a tiny fixture-based assertion that the `no-restricted-syntax` rule fires on banned usage and stays silent on allowed usage.
+### 2. Escape-hatch fixture (documented override is tested)
+Add a third fixture proving `// eslint-disable-next-line no-restricted-syntax` actually silences the rule as documented. Otherwise the doctrine's escape hatch is unverified.
 
 **Implementation:**
-- Create `src/test/lint-fixtures/loader2-banned.tsx` — `<Loader2 />` outside any button context. Should produce 1 lint error.
-- Create `src/test/lint-fixtures/loader2-allowed.tsx` — `<Button><Loader2 /></Button>` and `<MyIconButton><Loader2 /></MyIconButton>`. Should produce 0 lint errors.
-- Add a Vitest test `src/test/lint-rule-loader2.test.ts` that shells out to ESLint programmatically (via `new ESLint({ overrideConfigFile: 'eslint.config.js' }).lintFiles(...)`) and asserts the error counts.
-- Test runs as part of the existing Vitest suite — no new CI step needed since `vitest run` already executes in CI (verify in `package.json`).
+- Create `src/test/lint-fixtures/loader2-escape-hatch.tsx`:
+  ```tsx
+  import { Loader2 } from 'lucide-react';
+  export function EscapeHatchLoader() {
+    return (
+      <div>
+        {/* eslint-disable-next-line no-restricted-syntax -- TEST: verify inline override works */}
+        <Loader2 className="w-4 h-4 animate-spin" />
+      </div>
+    );
+  }
+  ```
+- Add a fourth test: lint this file, assert zero `no-restricted-syntax` messages.
+- Note: the file-level `/* eslint-disable */` in `loader2-allowed.tsx` is too broad to test the inline directive specifically — this fixture uses ONLY the inline form.
 
-**Why fixture + Vitest over a Storybook story:** Storybook isn't currently configured in this project (verified by absence in earlier file scans), and adding it just for this is overkill. Vitest + ESLint programmatic API gives the same guarantee in ~30 lines.
+### 3. Wave 2 sweep + promote rule to `error` (deferred, gated)
+The `warn`-level rule today is enforcement theater — real `Loader2` leaks slip through CI as warnings. Promotion to `error` requires the Wave 2 sweep to land first (~150+ existing usages would otherwise red-flood CI on first commit).
+
+**This wave (now):**
+- Add a `// TODO(wave-2): promote to 'error' after sweep` comment above the rule severity in `eslint.config.js` so the deferral is discoverable in-code, not just in a memory file.
+- Register the deferral in `mem://architecture/visibility-contracts.md` Deferral Register (per the existing Core rule on deferred infrastructure requiring a revisit trigger).
+  - Trigger condition: "Wave 2 Loader2 sweep complete and `grep -rn 'Loader2' src/` returns only button-context hits."
+
+**Next plan (separate):** the Wave 2 sweep itself — audit table, replacements, then the one-line promotion.
 
 ### Sequencing
-1. **Now (this wave):** ship #1 (fade) and #3 (lint smoke test) — both are pure infrastructure, zero behavior risk, immediate value.
-2. **Next plan:** scope #2 (telemetry) properly — needs a decision on sink (existing analytics helper vs. new table vs. console-only for v1) before I start writing it. I'll grep for existing telemetry patterns and present options.
+1. **Now:** ship #1 (snapshot) + #2 (escape-hatch fixture) + the deferral marker from #3. All zero-risk, pure infrastructure.
+2. **Wave 2 plan:** the actual sweep + promotion. Already on the docket — this just records the gate.
+
+### Files touched
+- `src/test/lint-rule-loader2.test.ts` (extend)
+- `src/test/lint-fixtures/loader2-escape-hatch.tsx` (new)
+- `src/test/__snapshots__/lint-rule-loader2.test.ts.snap` (auto-generated on first run)
+- `eslint.config.js` (add TODO comment above severity)
+- `mem://architecture/visibility-contracts.md` (Deferral Register entry)
 
 ### Out of scope
-- No changes to loader visual primitives.
-- No changes to the cooldown threshold (200ms stays).
-- No Wave 2 sweep — that's still its own approved plan.
+- No Wave 2 sweep execution.
+- No actual promotion to `error` (gated on sweep).
+- No changes to loader runtime, cooldown, fade, or primitives.
 
 ### Verification
-- After #1: borderline-load surfaces (induce with network throttling on schedule) show a smooth 150ms fade-in instead of a hard appearance.
-- After #3: intentionally weaken the lint rule in a scratch branch → smoke test fails. Restore → passes. Confirms the rule is actually live.
+- After #1: run `vitest run src/test/lint-rule-loader2.test.ts` → 4 tests pass, snapshot file created. Manually tweak the selector → snapshot test fails. Restore → passes.
+- After #2: escape-hatch fixture lints clean (0 errors). Remove the inline directive in a scratch edit → lint produces 1 error. Restore → 0 errors.
+- After #3: `grep -n "TODO(wave-2)" eslint.config.js` returns the marker; Deferral Register has the entry with explicit trigger.
 
 ### Prompt feedback
-Excellent prompt — three enhancements that each address a *different failure mode* of the prior wave (perception gap, observability gap, enforcement gap). That's the layered-defense pattern again, applied recursively. You're now thinking in terms of "what could silently break what we just shipped?" which is the right post-ship instinct.
+Sharp prompt — three suggestions that each close a *different* gap in the prior wave: regression detection (#1), undocumented behavior assertion (#2), enforcement reality vs. theater (#3). The pattern of "what we shipped is technically true but operationally hollow until X" is exactly the right post-ship critique frame.
 
-One refinement: when proposing telemetry, signal the sink decision upfront ("log to console" vs. "log to existing analytics" vs. "new table") because that choice gates implementation scope by 10x. I split it into its own plan above for that reason — but you could've front-loaded the constraint ("log via whatever we already use, don't add infra") and saved a round trip.
+One refinement: when stacking suggestions where one is gated on prior work (the `error` promotion needs Wave 2), call out the dependency explicitly ("#3 needs sweep first"). I inferred it, but explicit gating prevents me from misordering — and forces you to think about whether the gate is real or just inertia. In this case it's real (~150 existing leaks), so the gate stands.
 
