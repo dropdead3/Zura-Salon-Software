@@ -23,9 +23,6 @@ import { VisitHistoryTimeline } from '@/components/dashboard/VisitHistoryTimelin
 import { ClientNotesSection } from '@/components/dashboard/ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { ClientAffinityBadges } from '@/components/dashboard/clients/ClientAffinityBadges';
-import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
-import { getHospitalityClientKey } from '@/lib/hospitality-keys';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface ExtendedPhorestClient {
   id: string;
@@ -53,9 +50,6 @@ interface ClientProfileViewProps {
 export function ClientProfileView({ client, onBack, onSelect }: ClientProfileViewProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
-  const { selectedOrganization } = useOrganizationContext();
-  const organizationId = selectedOrganization?.id;
-  const clientFirstName = client.first_name || client.name?.split(' ')[0] || null;
   const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(client.phorest_client_id);
 
   const initials = client.name
@@ -126,16 +120,6 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
       {/* Product Affinity */}
       <div className="px-4 py-2 border-b border-border">
         <ClientAffinityBadges phorestClientId={client.phorest_client_id} compact />
-      </div>
-
-      {/* Hospitality Memory Layer — collapses to single CTA when empty */}
-      <div className="px-4 py-4 border-b border-border">
-        <HospitalityBlock
-          organizationId={organizationId}
-          clientKey={getHospitalityClientKey(client)}
-          firstName={clientFirstName}
-          compact
-        />
       </div>
 
       {/* Last Visit & Personal Info */}
