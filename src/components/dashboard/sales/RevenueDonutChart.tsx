@@ -7,6 +7,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { RetailPerformanceAlert } from './RetailPerformanceAlert';
+import { getRetailPerformanceVerdict } from '@/lib/retailPerformance';
 
 interface RetailBreakdownData {
   productOnlyRevenue?: number;
