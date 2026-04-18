@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { useRouteZone } from '@/lib/route-utils';
 
 type Theme = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
