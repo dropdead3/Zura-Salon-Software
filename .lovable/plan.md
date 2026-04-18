@@ -1,79 +1,111 @@
 
 
 ## Goal
-Replace the busy "disco Z" grid as the dominant loader with a calmer, luxury composition: a small static Z mark with a thin animated bar underneath. Keep it theme-aware and consistent across light/dark.
+Center loaders to the visual center of their content area, not the top-left corner of the rendered surface. The loader should account for sidebar width, top nav, and any other chrome — so it appears "in the middle of where the content will be" rather than awkwardly near the top.
 
-## Investigation
-Let me confirm what's available before designing.
-<lov-tool-use id="toolu_vrtx_01JZtUrYjJgFe9oFxh9K2VF7" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/ui/loaders/BarLoader.tsx\"}">
-</lov-tool-use>
-<lov-plan>
+## Root cause
 
-## Goal
-Introduce a calmer, more luxurious default loader: a small static `ZuraZIcon` with a thin animated progress bar underneath. Replace the "disco Z" shimmer grid as the dominant section/page loader. Keep it strictly theme-aware (light + dark) and respect the operator's branding choice.
+Today most loader call sites use one of these patterns:
 
-## Design
+1. `<div className="flex items-center justify-center h-64">...</div>` — fixed `h-64` (256px) anchors the loader to the top of the page, ignoring viewport size
+2. `<DashboardLoader />` rendered bare — inherits whatever height its parent provides, often `auto`, so it collapses to ~40px and sits at the top of the section
+3. Page-level loading states that return `<DashboardLoader />` directly inside a `<DashboardLayout>` — no height constraint, so it pins to the top under the page header
 
-```text
-        ┌───┐
-        │ Z │     ← ZuraZIcon, ~20px, text-foreground/80
-        └───┘
-   ━━━━━━━━━━━━   ← 1px-tall bar, indeterminate slide
-   (subtle, brand-quiet)
-```
+The fix isn't per-call-site tuning. It's giving `DashboardLoader` (and `LuxeLoader`) a **fill-mode container** that:
+- Fills available vertical space (`min-h-[60vh]` for page-level, configurable)
+- Centers content with `flex items-center justify-center`
+- Accounts for layout chrome by computing height from viewport minus a known offset (top nav ~64px, page header ~80px when present)
 
-- Z mark: existing `ZuraZIcon` (pixel Z, vector) — static, no shimmer
-- Bar: ~96px wide, 1px tall, `bg-foreground/10` track, `bg-foreground/50` indicator sliding left→right on a 1.4s ease-in-out loop
-- Vertical gap: 12px between Z and bar
-- Centered, no card chrome
-- Optional caption slot (e.g. "Loading schedule…") in `font-sans text-xs text-muted-foreground` — off by default
+## Proposed solution
 
-This replaces visual *motion density* (49 pulsing cells) with *intentional cadence* (one icon, one quiet line). Reads as luxury rather than tech-demo.
+### Layer 1 — Add `fullPage` mode to `DashboardLoader`
 
-## New component
+Extend `DashboardLoader` API:
 
-**`src/components/ui/loaders/LuxeLoader.tsx`** — small composition: `ZuraZIcon` over a re-tuned bar.
-
-| Size | Z icon | Bar width | Bar height | Use case |
-|---|---|---|---|---|
-| `sm` | 16px | 64px | 1px | Inline / tight cards |
-| `md` | 20px | 96px | 1px | Section / card loads (new default) |
-| `lg` | 28px | 128px | 1.5px | Full-page route loads |
-| `xl` | 40px | 176px | 2px | Bootstrap / brand moments |
-
-Theme-aware via `text-foreground` + `bg-foreground/X` tokens — no hardcoded colors, works in light and dark identically.
-
-## Wiring
-
-**`src/hooks/useLoaderConfig.ts`** — extend `LoaderStyle` union:
 ```ts
-export type LoaderStyle = 'luxe' | 'zura' | 'spinner' | 'dots' | 'bar';
+interface DashboardLoaderProps {
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+  caption?: string;
+  fullPage?: boolean;  // NEW — fills viewport minus chrome, centers
+  fillParent?: boolean; // NEW — fills nearest positioned parent, centers
+}
 ```
-Default fallback in the hook flips from `'zura'` → `'luxe'`.
 
-**`src/components/dashboard/DashboardLoader.tsx`** — add `luxe: LuxeLoader` to `LOADER_MAP`. Default branding fallback becomes `LuxeLoader`. ZuraLoader stays available as an opt-in style for operators who prefer it.
+Behavior:
+- `fullPage` (default `true` when no parent height): wraps in `min-h-[calc(100vh-8rem)] flex items-center justify-center` — accounts for top nav + page header
+- `fillParent`: wraps in `absolute inset-0 flex items-center justify-center` — for cards/sections that already have defined height
+- Default (neither): inline mode — loader renders at natural size, centered horizontally only (current behavior, kept for compatibility)
 
-**`main.tsx` bootstrap fallback** — keep `ZuraLoader size="xl" platformColors`. Bootstrap is a brand moment; the disco Z earns its place there. Section/page loads get the new luxe treatment.
+### Layer 2 — Apply same logic to `LuxeLoader`
 
-**Platform branding picker** (where loader style is chosen) — surface "Luxe" as the new default option above "Zura". One-line label addition; no new UI surface needed.
+Mirror the API on `LuxeLoader` so the underlying component handles centering itself when used directly. This keeps both loaders symmetric.
 
-## Out of scope
-- Removing `ZuraLoader` (kept as an opt-in style + bootstrap moment)
-- Changing the bootstrap/brand-moment loader
-- Skeleton mode (already handled separately in `DashboardLoader`)
-- Caption text wiring across call sites (slot exists; adoption is per-page later)
+### Layer 3 — Convert known full-page call sites
 
-## Files to create
-1. `src/components/ui/loaders/LuxeLoader.tsx`
+Audit and update the highest-traffic loading screens:
+
+- `Schedule.tsx` — full-page loader before appointments resolve
+- Analytics pages — section loads before chart data arrives
+- Reports / Operations Hub / Team Hub — top-level dashboard route loads
+- Settings sub-pages — when settings data is fetching
+- Auth/login transitions — bootstrap-adjacent loaders
+
+Convert from:
+```tsx
+<div className="flex items-center justify-center h-64">
+  <DashboardLoader />
+</div>
+```
+to:
+```tsx
+<DashboardLoader fullPage />
+```
+
+For card-level loaders (e.g. inside an analytics card body):
+```tsx
+<DashboardLoader fillParent />
+```
+
+### Layer 4 — Sensible default
+
+`DashboardLoader` with no props inside a route page (no parent height) auto-defaults to `fullPage` behavior. This means even un-touched call sites benefit immediately. We do this by checking: if no `size` and no parent constraint via className, assume `fullPage`.
+
+Actually — safer: don't auto-detect. Make `fullPage` an explicit prop and document it. Auto-detection of parent height in React is unreliable and would cause layout shifts.
+
+**Revised approach:** keep `fullPage` explicit. Update the top ~10 highest-traffic page-level loader call sites in this pass. Document the convention so future loaders use it correctly.
 
 ## Files to modify
-1. `src/hooks/useLoaderConfig.ts` — add `'luxe'` to union, default to `'luxe'`
-2. `src/components/dashboard/DashboardLoader.tsx` — register `LuxeLoader` in map, default fallback
-3. Platform branding picker UI (TBD via search — likely `src/components/platform/branding/*`) — add "Luxe" option, mark as default
+
+| File | Change |
+|---|---|
+| `src/components/dashboard/DashboardLoader.tsx` | Add `fullPage` and `fillParent` props; render appropriate wrapper |
+| `src/components/ui/loaders/LuxeLoader.tsx` | Add same `fullPage` / `fillParent` props on the component itself |
+| Up to ~10 page-level loader call sites | Replace ad-hoc `h-64` wrappers with `<DashboardLoader fullPage />` |
+
+Highest-priority call sites to convert (will confirm during implementation via grep for `h-64` + `Loader` and direct `<DashboardLoader />` returns at top of page components):
+
+- `src/pages/dashboard/Schedule.tsx`
+- `src/pages/dashboard/Analytics*.tsx` family
+- `src/pages/dashboard/admin/*` top-level pages
+- `src/pages/dashboard/Reports*.tsx`
+- `src/pages/dashboard/CommandCenter.tsx`
+
+## Out of scope
+- Inline button spinners (`<Loader2 />` inside CTAs) — these are correctly small and inline
+- Skeleton loaders inside table/card bodies — different pattern, already handled
+- Bootstrap loader in `main.tsx` — already centered via `min-h-screen`
+- Replacing every single ad-hoc loader in the codebase — focus on the high-traffic pages users see most
 
 ## Verification signal
-- Section loads (Schedule, Analytics, Reports) show the small Z + thin sliding bar — calm, executive, brand-present without dominating
-- Dark + light modes render identically (no color drift, no flash)
-- Bootstrap still shows the full disco Z xl moment — brand intact at app entry
-- Operators who explicitly chose "Zura" loader in branding settings still get it (no forced override)
+- Hard-refresh `/dashboard/schedule` — loader appears in the visual center of the content area (not at top under the header)
+- Same for analytics pages, reports, command center
+- Sidebar collapse/expand doesn't shift loader off-center (flex centering handles it)
+- Mobile viewport — loader still vertically centered, accounting for mobile top bar
+- Card-level loaders (inside analytics cards) sit in the middle of the card, not at the top edge
+
+## Ship order
+1. Add `fullPage` / `fillParent` props to `DashboardLoader` and `LuxeLoader`
+2. Convert top ~10 page-level call sites in one sweep
+3. Document convention inline in `DashboardLoader.tsx` JSDoc
 
