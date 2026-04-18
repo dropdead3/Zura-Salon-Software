@@ -2144,9 +2144,10 @@ serve(async (req) => {
     }
 
     if (sync_type === 'clients' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         results.clients = await syncClients(supabase, businessId, username, password);
-        await logSync(supabase, 'clients', 'success', results.clients.synced);
+        await logSync(supabase, 'clients', 'success', results.clients.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
         
         // Auto-calculate preferred stylists after client sync
         try {
@@ -2162,23 +2163,25 @@ serve(async (req) => {
         }
       } catch (error: any) {
         results.clients = { error: error.message };
-        await logSync(supabase, 'clients', 'failed', 0, error.message);
+        await logSync(supabase, 'clients', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('clients', error.message);
       }
     }
 
     if (sync_type === 'reports' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         results.reports = await syncPerformanceReports(supabase, businessId, username, password, weekStart);
-        await logSync(supabase, 'reports', 'success', results.reports.synced);
+        await logSync(supabase, 'reports', 'success', results.reports.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
       } catch (error: any) {
         results.reports = { error: error.message };
-        await logSync(supabase, 'reports', 'failed', 0, error.message);
+        await logSync(supabase, 'reports', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('reports', error.message);
       }
     }
 
     if (sync_type === 'sales' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         // Quick mode: yesterday + today (late-finalized sales)
         // Full mode: last 90 days (aligns with dashboard 90-day analytics window)
@@ -2203,10 +2206,10 @@ serve(async (req) => {
         const salesStatus = (results.sales.synced_items || 0) === 0 ? 'no_data' : 'success';
         await logSync(supabase, 'sales', salesStatus, results.sales.synced_items, 
           salesStatus === 'no_data' ? 'All sales endpoints returned 0 records' : undefined, 
-          { quick });
+          { quick }, undefined, undefined, undefined, startedAt);
       } catch (error: any) {
         results.sales = { error: error.message };
-        await logSync(supabase, 'sales', 'failed', 0, error.message);
+        await logSync(supabase, 'sales', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('sales', error.message);
       }
     }
