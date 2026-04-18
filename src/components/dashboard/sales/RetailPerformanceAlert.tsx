@@ -140,14 +140,7 @@ export function RetailPerformanceAlert({
       )}
     >
       <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            'w-9 h-9 rounded-lg flex items-center justify-center shrink-0',
-            visual.iconWrap,
-          )}
-        >
-          <Icon className={cn('w-4 h-4', visual.iconColor)} />
-        </div>
+        <Icon className={cn('w-4 h-4 shrink-0', visual.iconColor)} />
         <p
           className={cn(
             'flex-1 min-w-0 font-display text-[11px] tracking-wide uppercase',
