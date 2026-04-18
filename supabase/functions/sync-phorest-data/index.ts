@@ -2073,9 +2073,18 @@ serve(async (req) => {
       return nd.toISOString().split('T')[0];
     };
 
-    if (quick) {
+    // Quick mode (cron, every 15 min): yesterday → today + 90 days
+    //   Extended from +30 to +90 to cover the dashboard's 90-day forward window
+    //   so far-future appointment edits propagate within 15 minutes (~700 records, cheap).
+    // Quick-far mode (cron, hourly): today + 90 days → today + 180 days
+    //   Separate cadence for the longer tail so 31–180 day window stays fresh.
+    // Full mode: today − 90 days → today + 180 days.
+    if (quick === 'far') {
+      defaultFrom = addDays(today, 90);
+      defaultTo = addDays(today, 180);
+    } else if (quick) {
       defaultFrom = addDays(today, -1);
-      defaultTo = addDays(today, 30);
+      defaultTo = addDays(today, 90);
     } else {
       defaultFrom = date_from || addDays(today, -90);
       defaultTo = date_to || addDays(today, 180);
@@ -2189,9 +2198,11 @@ serve(async (req) => {
         let salesTo: string;
 
         if (quick) {
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          salesFrom = yesterday.toISOString().split('T')[0];
+          // Extended from yesterday→today to last-7-days→today so late-finalized
+          // sales (commonly back-dated up to a week) propagate within 15 minutes.
+          const sevenDaysAgo = new Date(today);
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          salesFrom = sevenDaysAgo.toISOString().split('T')[0];
           salesTo = todayStr;
         } else {
           const ninetyDaysAgo = new Date(today);
