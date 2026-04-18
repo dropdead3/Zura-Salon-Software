@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -18,6 +19,8 @@ interface AnimatedBlurredAmountProps {
   compact?: boolean;
   /** Auto-detect overflow and switch to compact. Defaults to true when currency is set. */
   autoCompact?: boolean;
+  /** When set, the 0→value mount animation only runs once per browser session for this key. Subsequent mounts snap to value. Value-change deltas still animate. */
+  animationKey?: string;
   children?: ReactNode;
 }
 
@@ -31,7 +34,9 @@ export function AnimatedBlurredAmount({
   className = '',
   compact = false,
   autoCompact,
+  animationKey,
 }: AnimatedBlurredAmountProps) {
+  const reduceMotion = useReducedMotion();
   const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
   const [displayValue, setDisplayValue] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -84,21 +89,46 @@ export function AnimatedBlurredAmount({
     }
   }, [displayValue, hasAnimated, checkOverflow]);
 
-  // Animate on mount
+  // Animate on mount (gated by sessionStorage when animationKey is provided)
   useEffect(() => {
     setHasAnimated(true);
+
+    // Reduced motion: snap, never animate
+    if (reduceMotion) {
+      setDisplayValue(value);
+      previousValue.current = value;
+      return;
+    }
+
+    // Session-scoped first-mount gate: skip 0→value if we've already animated this session
+    if (animationKey) {
+      const sessionKey = `counter-animated::${animationKey}`;
+      let alreadyAnimated = false;
+      try { alreadyAnimated = sessionStorage.getItem(sessionKey) === '1'; } catch { /* ignore */ }
+      if (alreadyAnimated) {
+        setDisplayValue(value);
+        previousValue.current = value;
+        return;
+      }
+      try { sessionStorage.setItem(sessionKey, '1'); } catch { /* ignore */ }
+    }
+
     animateValue(0, value);
     previousValue.current = value;
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
   }, []);
 
-  // Animate on value change
+  // Animate on value change (real-time deltas always animate, regardless of session gate)
   useEffect(() => {
-    if (hasAnimated && value !== previousValue.current) {
-      animateValue(previousValue.current, value);
+    if (!hasAnimated || value === previousValue.current) return;
+    if (reduceMotion) {
+      setDisplayValue(value);
       previousValue.current = value;
+      return;
     }
-  }, [value, hasAnimated]);
+    animateValue(previousValue.current, value);
+    previousValue.current = value;
+  }, [value, hasAnimated, reduceMotion]);
 
   const animateValue = (from: number, to: number) => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -109,10 +139,10 @@ export function AnimatedBlurredAmount({
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
-      // Damped spring: overshoot ~5%, oscillate, settle
-      const settle = 1 - Math.exp(-6 * progress) * Math.cos(4 * Math.PI * progress);
-      
+
+      // Quint ease-out: fast at start, smooth dramatic deceleration to target. No overshoot.
+      const settle = 1 - Math.pow(1 - progress, 5);
+
       setDisplayValue(from + difference * settle);
 
       if (progress < 1) {

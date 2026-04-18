@@ -5,15 +5,25 @@ interface UseCounterAnimationProps {
   duration?: number;
   decimals?: number;
   startOnView?: boolean;
+  /** When set, the 0→end animation only runs once per browser session for this key. */
+  animationKey?: string;
 }
 
 export function useCounterAnimation({
   end,
   duration = 2000,
   decimals = 0,
-  startOnView = false
+  startOnView = false,
+  animationKey,
 }: UseCounterAnimationProps) {
-  const [count, setCount] = useState(0);
+  // If this counter has already animated this session, start at end value
+  const initialCount = (() => {
+    if (!animationKey) return 0;
+    try {
+      return sessionStorage.getItem(`counter-animated::${animationKey}`) === '1' ? end : 0;
+    } catch { return 0; }
+  })();
+  const [count, setCount] = useState(initialCount);
   const [hasStarted, setHasStarted] = useState(!startOnView);
   const elementRef = useRef<HTMLSpanElement>(null);
 
@@ -35,15 +45,26 @@ export function useCounterAnimation({
   useEffect(() => {
     if (!hasStarted) return;
 
+    // Session-scoped gate: snap to end if we've already animated this session
+    if (animationKey) {
+      try {
+        if (sessionStorage.getItem(`counter-animated::${animationKey}`) === '1') {
+          setCount(end);
+          return;
+        }
+        sessionStorage.setItem(`counter-animated::${animationKey}`, '1');
+      } catch { /* ignore */ }
+    }
+
     const startTime = performance.now();
-    
+
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
-      // Damped spring: overshoot ~5%, oscillate, settle
-      const settle = 1 - Math.exp(-6 * progress) * Math.cos(4 * Math.PI * progress);
-      
+
+      // Quint ease-out: fast at start, smooth dramatic deceleration. No overshoot.
+      const settle = 1 - Math.pow(1 - progress, 5);
+
       const currentCount = settle * end;
       setCount(currentCount);
 
@@ -55,7 +76,7 @@ export function useCounterAnimation({
     };
 
     requestAnimationFrame(animate);
-  }, [hasStarted, end, duration]);
+  }, [hasStarted, end, duration, animationKey]);
 
   const formattedCount = decimals > 0 
     ? count.toFixed(decimals) 
