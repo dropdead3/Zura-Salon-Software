@@ -77,7 +77,7 @@ import { SalesTrendIndicator } from './sales/SalesTrendIndicator';
 import { TrendSparkline } from './TrendSparkline';
 import { TopPerformersCard } from './sales/TopPerformersCard';
 import { RevenueDonutChart } from './sales/RevenueDonutChart';
-import { RetailPerformanceAlert } from './sales/RetailPerformanceAlert';
+
 import { SalesGoalProgress } from './sales/SalesGoalProgress';
 
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
