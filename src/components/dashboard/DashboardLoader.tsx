@@ -19,8 +19,16 @@ const LOADER_MAP: Record<LoaderStyle, React.ComponentType<{ size?: 'sm' | 'md' |
 /**
  * Config-aware loader for org dashboard section/page loading states.
  * Reads platform admin's chosen loader style (or skeleton mode) from branding settings.
+ *
+ * Usage convention:
+ *   - Section / card loads → <DashboardLoader /> (default size 'md')
+ *   - Full-page route loads → <DashboardLoader size="lg" />
+ *   - Inline / button spinners → <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+ *   - Bootstrap / brand moments only → <ZuraLoader size="xl" platformColors />
+ *
+ * Always theme-aware via foreground tokens; never hardcode colors.
  */
-export function DashboardLoader({ size = 'lg', className }: DashboardLoaderProps) {
+export function DashboardLoader({ size = 'md', className }: DashboardLoaderProps) {
   const { loaderStyle, useSkeletons } = useLoaderConfig();
 
   if (useSkeletons) {

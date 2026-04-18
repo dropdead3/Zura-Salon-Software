@@ -7,10 +7,17 @@ function seededRandom(seed: number) {
   return x - Math.floor(x);
 }
 
+/**
+ * Size guidance:
+ *   sm — inline / tiny indicators (rare; prefer Loader2 for inline)
+ *   md — section / card loads (default for DashboardLoader)
+ *   lg — full-page loads (route-level)
+ *   xl — bootstrap / brand moments only
+ */
 const SIZES = {
-  sm: { cell: 'h-2 w-2 rounded-[2px]', gap: 'gap-0.5' },
-  md: { cell: 'h-2.5 w-2.5 rounded-[3px]', gap: 'gap-0.5' },
-  lg: { cell: 'h-3.5 w-3.5 rounded-[4px]', gap: 'gap-1' },
+  sm: { cell: 'h-1.5 w-1.5 rounded-[2px]', gap: 'gap-0.5' },
+  md: { cell: 'h-2 w-2 rounded-[2px]', gap: 'gap-0.5' },
+  lg: { cell: 'h-3 w-3 rounded-[3px]', gap: 'gap-0.5' },
   xl: { cell: 'h-[13px] w-[13px] rounded-[3px]', gap: 'gap-0.5' },
 } as const;
 
