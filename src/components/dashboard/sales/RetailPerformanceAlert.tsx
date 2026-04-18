@@ -164,7 +164,7 @@ export function RetailPerformanceAlert({
         )}
       >
         <div className="overflow-hidden">
-          <p className="text-sm text-foreground/90 leading-relaxed mt-2 pl-12">
+          <p className="text-sm text-foreground/90 leading-relaxed mt-2 pl-7">
             {verdict.copy}
           </p>
         </div>
