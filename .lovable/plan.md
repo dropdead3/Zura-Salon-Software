@@ -1,111 +1,69 @@
 
 
 ## Goal
-Center loaders to the visual center of their content area, not the top-left corner of the rendered surface. The loader should account for sidebar width, top nav, and any other chrome — so it appears "in the middle of where the content will be" rather than awkwardly near the top.
+Fix the rubber-band counter on the Command Center hero ("$4,088.93 Revenue So Far Today") and make the count animation play **only on the first visit per browser session** — not every page mount/refocus/data refetch.
 
 ## Root cause
 
-Today most loader call sites use one of these patterns:
+Two compounding problems in `src/components/ui/AnimatedBlurredAmount.tsx`:
 
-1. `<div className="flex items-center justify-center h-64">...</div>` — fixed `h-64` (256px) anchors the loader to the top of the page, ignoring viewport size
-2. `<DashboardLoader />` rendered bare — inherits whatever height its parent provides, often `auto`, so it collapses to ~40px and sits at the top of the section
-3. Page-level loading states that return `<DashboardLoader />` directly inside a `<DashboardLayout>` — no height constraint, so it pins to the top under the page header
+1. **Wrong easing curve** — line 113-114 uses a damped-spring formula:
+   ```
+   settle = 1 - exp(-6p) * cos(4πp)
+   ```
+   The `cos(4π·p)` term oscillates between +1 and −1, causing the value to overshoot the target and snap back (the "rubber band"). This is *physics simulation* easing, not *information display* easing.
 
-The fix isn't per-call-site tuning. It's giving `DashboardLoader` (and `LuxeLoader`) a **fill-mode container** that:
-- Fills available vertical space (`min-h-[60vh]` for page-level, configurable)
-- Centers content with `flex items-center justify-center`
-- Accounts for layout chrome by computing height from viewport minus a known offset (top nav ~64px, page header ~80px when present)
+2. **Animates from 0 on every mount** — the `useEffect(() => { animateValue(0, value); }, [])` (line 88-93) fires every time the component mounts. Each navigation back to the Command Center, each tab switch that triggers a refetch, each parent rerender that unmounts/remounts the card → a fresh 0→value animation. Annoying.
 
-## Proposed solution
+Note: `AnimatedNumber.tsx` already uses quint ease-out (good, no overshoot). `useCounterAnimation.ts` has the same damped-spring bug but is less visible. We'll fix all three for consistency.
 
-### Layer 1 — Add `fullPage` mode to `DashboardLoader`
+## Fix
 
-Extend `DashboardLoader` API:
+### 1. Replace easing with quint ease-out (no overshoot, dramatic deceleration)
+Match what `AnimatedNumber` already does:
+```ts
+const settle = 1 - Math.pow(1 - progress, 5);
+```
+Fast at the start, slows dramatically at the end, lands exactly on target. Reads as confident and executive — never "boingy."
+
+### 2. Session-scoped first-mount gate
+Use `sessionStorage` (matches the pattern already used across the app — `IncidentBanner`, `ClockInPromptDialog`, `useBirthdayNotifications`) keyed per counter identity:
 
 ```ts
-interface DashboardLoaderProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  className?: string;
-  caption?: string;
-  fullPage?: boolean;  // NEW — fills viewport minus chrome, centers
-  fillParent?: boolean; // NEW — fills nearest positioned parent, centers
-}
+const sessionKey = `counter-animated::${animationKey}`;
+const hasAnimatedThisSession = sessionStorage.getItem(sessionKey) === '1';
 ```
 
-Behavior:
-- `fullPage` (default `true` when no parent height): wraps in `min-h-[calc(100vh-8rem)] flex items-center justify-center` — accounts for top nav + page header
-- `fillParent`: wraps in `absolute inset-0 flex items-center justify-center` — for cards/sections that already have defined height
-- Default (neither): inline mode — loader renders at natural size, centered horizontally only (current behavior, kept for compatibility)
+- **First visit this session:** animate 0 → value, then mark animated.
+- **Subsequent mounts this session:** snap to value instantly (no 0→value flash).
+- **Value changes after first animation:** still animate the *delta* (e.g., revenue ticks up by $42), because that's a meaningful real-time change, not a remount artifact.
+- **Session ends (browser/tab closed):** next visit re-animates once.
 
-### Layer 2 — Apply same logic to `LuxeLoader`
+Add an opt-in `animationKey?: string` prop. When omitted, fall back to current behavior (animate every mount) so we don't disrupt existing call sites that intentionally re-animate. The Command Center hero passes a stable key like `command-center-revenue-today`.
 
-Mirror the API on `LuxeLoader` so the underlying component handles centering itself when used directly. This keeps both loaders symmetric.
-
-### Layer 3 — Convert known full-page call sites
-
-Audit and update the highest-traffic loading screens:
-
-- `Schedule.tsx` — full-page loader before appointments resolve
-- Analytics pages — section loads before chart data arrives
-- Reports / Operations Hub / Team Hub — top-level dashboard route loads
-- Settings sub-pages — when settings data is fetching
-- Auth/login transitions — bootstrap-adjacent loaders
-
-Convert from:
-```tsx
-<div className="flex items-center justify-center h-64">
-  <DashboardLoader />
-</div>
-```
-to:
-```tsx
-<DashboardLoader fullPage />
-```
-
-For card-level loaders (e.g. inside an analytics card body):
-```tsx
-<DashboardLoader fillParent />
-```
-
-### Layer 4 — Sensible default
-
-`DashboardLoader` with no props inside a route page (no parent height) auto-defaults to `fullPage` behavior. This means even un-touched call sites benefit immediately. We do this by checking: if no `size` and no parent constraint via className, assume `fullPage`.
-
-Actually — safer: don't auto-detect. Make `fullPage` an explicit prop and document it. Auto-detection of parent height in React is unreliable and would cause layout shifts.
-
-**Revised approach:** keep `fullPage` explicit. Update the top ~10 highest-traffic page-level loader call sites in this pass. Document the convention so future loaders use it correctly.
+### 3. Respect `prefers-reduced-motion`
+Add `useReducedMotion()` check (already imported in `AnimatedNumber`). When set, snap directly to the value — no animation ever. Accessibility win + protects users who already opted out of motion.
 
 ## Files to modify
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/DashboardLoader.tsx` | Add `fullPage` and `fillParent` props; render appropriate wrapper |
-| `src/components/ui/loaders/LuxeLoader.tsx` | Add same `fullPage` / `fillParent` props on the component itself |
-| Up to ~10 page-level loader call sites | Replace ad-hoc `h-64` wrappers with `<DashboardLoader fullPage />` |
+| `src/components/ui/AnimatedBlurredAmount.tsx` | Replace damped-spring easing with quint ease-out; add `animationKey` prop + sessionStorage gate; honor `prefers-reduced-motion` |
+| `src/hooks/use-counter-animation.ts` | Same easing fix (quint ease-out); same session gate via optional `animationKey` |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Pass `animationKey="cc-hero-revenue"` (and similar stable keys) on the 8 hero/secondary KPI counters so they animate once per session |
 
-Highest-priority call sites to convert (will confirm during implementation via grep for `h-64` + `Loader` and direct `<DashboardLoader />` returns at top of page components):
-
-- `src/pages/dashboard/Schedule.tsx`
-- `src/pages/dashboard/Analytics*.tsx` family
-- `src/pages/dashboard/admin/*` top-level pages
-- `src/pages/dashboard/Reports*.tsx`
-- `src/pages/dashboard/CommandCenter.tsx`
+`AnimatedNumber.tsx` already uses quint ease-out — only needs the optional `animationKey` prop added for symmetry, and the sessionStorage gate. Will update for consistency.
 
 ## Out of scope
-- Inline button spinners (`<Loader2 />` inside CTAs) — these are correctly small and inline
-- Skeleton loaders inside table/card bodies — different pattern, already handled
-- Bootstrap loader in `main.tsx` — already centered via `min-h-screen`
-- Replacing every single ad-hoc loader in the codebase — focus on the high-traffic pages users see most
+- Removing animation entirely (the count-up is a nice executive touch on first land — just needs to not be annoying)
+- Re-tuning every counter site-wide in this pass (only the Command Center surfaces visible above the fold + the shared component fix; remaining call sites benefit automatically from the easing fix without per-site work)
+- New design tokens for animation duration (current 1200ms is fine post-easing fix)
 
 ## Verification signal
-- Hard-refresh `/dashboard/schedule` — loader appears in the visual center of the content area (not at top under the header)
-- Same for analytics pages, reports, command center
-- Sidebar collapse/expand doesn't shift loader off-center (flex centering handles it)
-- Mobile viewport — loader still vertically centered, accounting for mobile top bar
-- Card-level loaders (inside analytics cards) sit in the middle of the card, not at the top edge
-
-## Ship order
-1. Add `fullPage` / `fillParent` props to `DashboardLoader` and `LuxeLoader`
-2. Convert top ~10 page-level call sites in one sweep
-3. Document convention inline in `DashboardLoader.tsx` JSDoc
+- Hard refresh `/dashboard` → hero counter sweeps 0 → $4,088.93 with smooth deceleration, no overshoot, no rubber-band
+- Navigate to `/dashboard/admin/sales` and back → hero counter is **already at value**, no re-animation
+- Open a new tab to the dashboard → counter animates once (new session)
+- Real-time revenue tick during the day ($4,088 → $4,130) → animates the delta only, not from 0
+- With "reduce motion" enabled in OS → no animation at all, value just appears
+- Other counters (`SalesStatsCard`, coaching summary, etc.) still animate, but with the calmer easing curve
 
