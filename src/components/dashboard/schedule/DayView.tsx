@@ -72,6 +72,8 @@ interface DayViewProps {
   onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
   zoomLevel?: number;
   scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
+  /** Wave 22.2 — Stripe Connect inactive location IDs; surfaces "Setup needed" pill on cards. */
+  inactiveConnectLocationIds?: Set<string>;
 }
 
 // Use consolidated status colors from design tokens
@@ -195,6 +197,7 @@ interface AppointmentCardProps {
   zoomLevel?: number;
   useShortLabels?: boolean;
   declinedReasonLabel?: string | null;
+  connectInactive?: boolean;
 }
 
 function AppointmentCard({
@@ -217,6 +220,7 @@ function AppointmentCard({
   zoomLevel = 0,
   useShortLabels = false,
   declinedReasonLabel = null,
+  connectInactive = false,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
