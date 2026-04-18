@@ -1,69 +1,103 @@
 
 
 ## Goal
-Fix the rubber-band counter on the Command Center hero ("$4,088.93 Revenue So Far Today") and make the count animation play **only on the first visit per browser session** — not every page mount/refocus/data refetch.
+Promote the session-gate pattern into a reusable hook, add an operator-facing animation intensity toggle, and sweep remaining high-traffic counters with stable keys.
 
-## Root cause
+## Layer 1 — `useFirstSessionAnimation(key)` hook
 
-Two compounding problems in `src/components/ui/AnimatedBlurredAmount.tsx`:
-
-1. **Wrong easing curve** — line 113-114 uses a damped-spring formula:
-   ```
-   settle = 1 - exp(-6p) * cos(4πp)
-   ```
-   The `cos(4π·p)` term oscillates between +1 and −1, causing the value to overshoot the target and snap back (the "rubber band"). This is *physics simulation* easing, not *information display* easing.
-
-2. **Animates from 0 on every mount** — the `useEffect(() => { animateValue(0, value); }, [])` (line 88-93) fires every time the component mounts. Each navigation back to the Command Center, each tab switch that triggers a refetch, each parent rerender that unmounts/remounts the card → a fresh 0→value animation. Annoying.
-
-Note: `AnimatedNumber.tsx` already uses quint ease-out (good, no overshoot). `useCounterAnimation.ts` has the same damped-spring bug but is less visible. We'll fix all three for consistency.
-
-## Fix
-
-### 1. Replace easing with quint ease-out (no overshoot, dramatic deceleration)
-Match what `AnimatedNumber` already does:
-```ts
-const settle = 1 - Math.pow(1 - progress, 5);
-```
-Fast at the start, slows dramatically at the end, lands exactly on target. Reads as confident and executive — never "boingy."
-
-### 2. Session-scoped first-mount gate
-Use `sessionStorage` (matches the pattern already used across the app — `IncidentBanner`, `ClockInPromptDialog`, `useBirthdayNotifications`) keyed per counter identity:
+New file: `src/hooks/useFirstSessionAnimation.ts`
 
 ```ts
-const sessionKey = `counter-animated::${animationKey}`;
-const hasAnimatedThisSession = sessionStorage.getItem(sessionKey) === '1';
+export function useFirstSessionAnimation(key: string | undefined): {
+  shouldAnimate: boolean;  // true on first session mount, false after
+  markAnimated: () => void; // call when animation completes (or starts)
+}
 ```
 
-- **First visit this session:** animate 0 → value, then mark animated.
-- **Subsequent mounts this session:** snap to value instantly (no 0→value flash).
-- **Value changes after first animation:** still animate the *delta* (e.g., revenue ticks up by $42), because that's a meaningful real-time change, not a remount artifact.
-- **Session ends (browser/tab closed):** next visit re-animates once.
+Behavior:
+- No `key` → always returns `shouldAnimate: true` (current default)
+- With `key` → checks `sessionStorage.getItem(\`counter-animated::${key}\`)`. Returns `false` if already marked.
+- `markAnimated()` writes the flag (idempotent, try/catch wrapped)
 
-Add an opt-in `animationKey?: string` prop. When omitted, fall back to current behavior (animate every mount) so we don't disrupt existing call sites that intentionally re-animate. The Command Center hero passes a stable key like `command-center-revenue-today`.
+Refactor `AnimatedBlurredAmount`, `AnimatedNumber`, and `use-counter-animation` to use this hook instead of inline `sessionStorage` reads. Removes ~20 lines of duplicated logic across three files. Future counters opt in with one line:
+```tsx
+const { shouldAnimate, markAnimated } = useFirstSessionAnimation('cc-some-counter');
+```
 
-### 3. Respect `prefers-reduced-motion`
-Add `useReducedMotion()` check (already imported in `AnimatedNumber`). When set, snap directly to the value — no animation ever. Accessibility win + protects users who already opted out of motion.
+## Layer 2 — Global animation intensity toggle
+
+### Data
+Add to `user_preferences` table (already exists, holds `custom_theme`, `custom_typography`):
+- New column `animation_intensity text default 'standard'` — values: `'calm' | 'standard' | 'off'`
+
+### Hook
+New: `src/hooks/useAnimationIntensity.ts`
+- Reads from `user_preferences.animation_intensity`
+- Writes a CSS variable on `<html>`: `--animation-intensity-multiplier` (`0`, `1`, `1.5` for off/standard/calm)
+- Also sets a class on `<html>`: `animations-off | animations-calm | animations-standard`
+
+### CSS hook
+In `src/index.css` add:
+```css
+.animations-off *, .animations-off *::before, .animations-off *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+```
+For `'calm'`: counters honor the multiplier by reading the CSS var in JS (or simply respect `prefers-reduced-motion`-like behavior for `'off'`). Counter components check `intensity === 'off'` → snap to value (same code path as reduced-motion).
+
+### UI
+Add to **Account Settings → Preferences** (find existing settings page; likely `src/pages/dashboard/admin/Settings.tsx` or a profile preferences sub-page) a 3-button segmented control:
+- **Calm** — slower, subtler animations
+- **Standard** — default
+- **Off** — instant, no animation
+
+Persists immediately on change. Applies app-wide.
+
+### Initialization
+Mount logic in a small `<AnimationIntensityInitializer />` component (mirrors `ThemeInitializer` pattern). Loads on auth-ready, applies class to `<html>`, listens for `SIGNED_OUT` to reset.
+
+## Layer 3 — Sweep remaining call sites
+
+Audit all `AnimatedBlurredAmount` and `AnimatedNumber` usages. Add stable `animationKey` to ones that re-mount frequently (dashboard widgets, KPI cards). Confirmed/likely targets:
+
+| Component | Key |
+|---|---|
+| `TrueProfitCard` | `cc-true-profit` |
+| `GoalTrackerCard` (each metric) | `cc-goal-{metric-id}` |
+| `SalesStatsCard` (revenue/transactions) | `cc-sales-{metric}` |
+| `CoachingSummaryCard` numerals | `cc-coaching-{metric}` |
+| `TodaysPrepSection` value totals | `cc-prep-{metric}` |
+| Analytics Hub KPI tiles (if AnimatedBlurredAmount-based) | `analytics-{page}-{metric}` |
+
+Will discover the full list via grep during implementation. Key naming convention: `{surface}-{metric}` — stable across mounts, unique across the app.
+
+Out of scope: counters inside *modals/dialogs* (those mount on intentional user action — re-animation is fine), and counters where the same component renders many instances dynamically (e.g., per-row in a table — keys would collide).
+
+## Files to create
+1. `src/hooks/useFirstSessionAnimation.ts`
+2. `src/hooks/useAnimationIntensity.ts`
+3. `src/components/AnimationIntensityInitializer.tsx`
 
 ## Files to modify
-
-| File | Change |
-|---|---|
-| `src/components/ui/AnimatedBlurredAmount.tsx` | Replace damped-spring easing with quint ease-out; add `animationKey` prop + sessionStorage gate; honor `prefers-reduced-motion` |
-| `src/hooks/use-counter-animation.ts` | Same easing fix (quint ease-out); same session gate via optional `animationKey` |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Pass `animationKey="cc-hero-revenue"` (and similar stable keys) on the 8 hero/secondary KPI counters so they animate once per session |
-
-`AnimatedNumber.tsx` already uses quint ease-out — only needs the optional `animationKey` prop added for symmetry, and the sessionStorage gate. Will update for consistency.
-
-## Out of scope
-- Removing animation entirely (the count-up is a nice executive touch on first land — just needs to not be annoying)
-- Re-tuning every counter site-wide in this pass (only the Command Center surfaces visible above the fold + the shared component fix; remaining call sites benefit automatically from the easing fix without per-site work)
-- New design tokens for animation duration (current 1200ms is fine post-easing fix)
+1. `src/components/ui/AnimatedBlurredAmount.tsx` — adopt hook
+2. `src/components/ui/AnimatedNumber.tsx` — adopt hook
+3. `src/hooks/use-counter-animation.ts` — adopt hook
+4. `src/index.css` — `.animations-off` rule
+5. `src/main.tsx` or `App.tsx` — mount `AnimationIntensityInitializer`
+6. Account/preferences settings page — add intensity toggle UI
+7. ~6–10 counter call sites — add `animationKey` props
+8. Migration: add `animation_intensity` column to `user_preferences`
 
 ## Verification signal
-- Hard refresh `/dashboard` → hero counter sweeps 0 → $4,088.93 with smooth deceleration, no overshoot, no rubber-band
-- Navigate to `/dashboard/admin/sales` and back → hero counter is **already at value**, no re-animation
-- Open a new tab to the dashboard → counter animates once (new session)
-- Real-time revenue tick during the day ($4,088 → $4,130) → animates the delta only, not from 0
-- With "reduce motion" enabled in OS → no animation at all, value just appears
-- Other counters (`SalesStatsCard`, coaching summary, etc.) still animate, but with the calmer easing curve
+- New counter component using `useFirstSessionAnimation('foo')` animates once per session, snaps thereafter
+- Settings → Preferences → "Animations: Off" → all counters snap to value, page transitions are instant
+- Settings → "Calm" → counter durations feel slower/calmer
+- Setting persists across login/logout
+- All swept counters (TrueProfit, Goals, Sales, Coaching, Prep) animate only on first session land
+
+## Ship order
+1. Hook + counter refactor (low risk, removes duplication)
+2. Migration + intensity toggle backend + initializer
+3. Settings UI + sweep call sites
 
