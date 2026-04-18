@@ -1,85 +1,69 @@
 
 
-## Goal
-Hide the dashboard top bar when scrolling **down**, reveal it when scrolling **up**, always show it when at the top of the page — with a smooth transform animation. Apply only to standard dashboard routes (the `hideFooter` mode already has its own hover-based reveal pattern; we'll leave that alone).
+## What's broken
 
-## Where it lives
+1. **Emojis** in `InsightsNudgeBanner.tsx` lines 105 and 106 — the `🌱` violates the brand voice rule (no emojis in UI copy, ever).
+2. **View Insights button** (line 109): `<Link to={dashPath('/')}>` just navigates to the same dashboard page. The Insights drawer isn't a route — it's local state (`activePanel`) inside `CommandCenterControlRow` (line 79). Clicking the button reloads the same view; the drawer never opens.
 
-`src/components/dashboard/SuperAdminTopBar.tsx` — line 152-167. Currently:
+## Fix
 
-```tsx
-hideFooter
-  ? <fixed + hover-reveal logic>
-  : cn("sticky", isImpersonating ? "top-[44px]" : "top-0")
-```
-
-The non-`hideFooter` branch is what shows on every standard dashboard route (Command Center, Sales, etc.). It's `sticky` and never hides.
-
-## Approach
-
-### 1. New hook: `src/hooks/useScrollDirection.ts`
-Tracks scroll position on `window` (or a passed scroll target). Returns:
+### 1. Strip the emojis (`InsightsNudgeBanner.tsx` lines 105-106)
 ```ts
-{ direction: 'up' | 'down' | null, isAtTop: boolean }
+// before
+`...growth tips ready for you — let's grow! 🌱`
+`...growth tips waiting for you — let's grow! 🌱`
+
+// after
+`...growth tips ready for you.`
+`...growth tips waiting for you.`
 ```
 
-Implementation:
-- `useEffect` attaches a passive `scroll` listener
-- Uses `requestAnimationFrame` to throttle reads (no per-frame state thrash)
-- Compares `window.scrollY` against a ref-stored `lastY`
-- **Threshold of 8px** before flipping direction → ignores trackpad jitter / momentum bounces
-- `isAtTop = scrollY < 16` → forces visible near top
-- Returns `null` direction on first mount so we don't animate on page load
+Also retones away from "let's grow!" — exclamation-led marketing copy violates brand voice (calm, declarative, no exclamation-heavy copy per `.cursor/rules/brand-voice.mdc`).
 
-### 2. Visibility computation
-```ts
-const hidden = !isAtTop && direction === 'down';
-```
+### 2. Wire "View Insights" to actually open the drawer
 
-### 3. Wire into `SuperAdminTopBar`
-Update the non-`hideFooter` className branch (line 164):
+The drawer state is local to `CommandCenterControlRow`. Lifting it to a context just for one banner is overkill. Use a lightweight global event — same pattern already used in `src/lib/preview-utils.ts` (`triggerPreviewRefresh`).
 
+**a. Banner** (`InsightsNudgeBanner.tsx`): replace `<Link>` with a `<Button onClick>`:
 ```tsx
-cn(
-  "sticky transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-  isImpersonating ? "top-[44px]" : "top-0",
-  hidden && "-translate-y-[calc(100%+12px)]"  // +12px clears the pt-3 padding
-)
+<Button
+  size={tokens.button.card}
+  variant="outline"
+  onClick={() => window.dispatchEvent(new CustomEvent('open-insights-panel'))}
+  className="..."
+>
+  View Insights
+</Button>
 ```
 
-The `+12px` ensures the top padding zone also slides off so nothing peeks. Transform-based animation is GPU-cheap and won't reflow content below.
+**b. Listener** (`CommandCenterControlRow.tsx`): add a `useEffect` that listens for `open-insights-panel`, sets `activePanel = 'insights'`, then scrolls the expansion area into view:
+```ts
+useEffect(() => {
+  const handler = () => {
+    setActivePanel('insights');
+    requestAnimationFrame(() => {
+      containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+  window.addEventListener('open-insights-panel', handler);
+  return () => window.removeEventListener('open-insights-panel', handler);
+}, []);
+```
 
-### 4. Honor reduce-motion + animation intensity
-- `prefers-reduced-motion` → snap (no `transition-transform`)
-- Existing `.animations-off` class on `<html>` already nukes transitions globally → no extra work needed
-- "Calm" intensity → existing system applies; default `duration-300` already feels calm
+Smooth scroll respects `prefers-reduced-motion` natively in modern browsers; no extra work needed.
 
-### 5. Edge cases handled
-- **God Mode banner active** (`isImpersonating`): top offset stays `top-[44px]`. When hidden, the bar slides up past the banner correctly because `translate-y` is relative to its own height, not viewport.
-- **`hideFooter` routes** (Schedule, full-screen views): untouched — hover-reveal pattern preserved.
-- **Pointer events when hidden**: not strictly needed since the bar is offscreen, but we'll match the existing pattern's `pointer-events-none` when fully translated for safety with hovering tooltips.
-- **Scroll containers other than `window`**: dashboard scrolls on `window` (verified by `min-h-screen` in DashboardLayout) → window listener is correct.
-
-## Out of scope
-- Sidebar hide-on-scroll (separate fixed element, different UX expectations)
-- God Mode banner hide-on-scroll (it's an attention/system layer — should stay visible)
-- The `hideFooter` hover-reveal mode (already works as designed for full-screen Schedule view)
-
-## Verification signal
-- Scroll down on `/dashboard` → top bar slides up smoothly, content beneath gains the full viewport
-- Scroll up by any amount → top bar slides back down
-- At `scrollY < 16` → bar always visible, regardless of direction
-- Tiny trackpad jitters (< 8px) don't toggle the bar
-- Animation Intensity = "Off" → bar snaps instantly, no transition
-- God Mode banner visible → bar correctly tucks under the banner when hidden, reveals at `top-[44px]` when shown
-- Schedule (`hideFooter`) route → unchanged, still uses hover-reveal
+## Verification
+- Banner copy: no emoji, no exclamation, calm declarative tone
+- Click "View Insights" → page smooth-scrolls down to the control row → Insights drawer expands with personal/leadership content
+- Click again or click the drawer trigger → toggles closed (existing behavior preserved)
+- Works for both leadership (`AIInsightsPanel`) and non-leadership (`PersonalInsightsPanel`) since the event just flips `activePanel`
 
 ## Files
-- **Create**: `src/hooks/useScrollDirection.ts`
-- **Modify**: `src/components/dashboard/SuperAdminTopBar.tsx` (className branch on line 164 + import)
+- **Modify**: `src/components/dashboard/InsightsNudgeBanner.tsx` (copy + button)
+- **Modify**: `src/components/dashboard/CommandCenterControlRow.tsx` (event listener)
 
-## Ship order
-1. Create `useScrollDirection` hook
-2. Wire into `SuperAdminTopBar` non-`hideFooter` branch
-3. Manual scroll test on Command Center
+## Out of scope
+- Lifting `activePanel` into a context (over-engineering for one cross-component trigger)
+- Auto-scrolling to a specific insight category (banner is generic; opening the drawer is enough signal)
+- Sweeping other emoji uses in the codebase (separate audit pass)
 
