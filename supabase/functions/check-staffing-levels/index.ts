@@ -87,7 +87,7 @@ serve(async (req) => {
       if (targetStaff > 0) {
         const percentage = Math.round((currentStaff / targetStaff) * 100);
         if (percentage < settings.percentage) {
-          alertLocations.push({ name: location.name, currentStaff, targetStaff, percentage, organization_id: location.organization_id });
+          alertLocations.push({ id: location.id, name: location.name, currentStaff, targetStaff, percentage, organization_id: location.organization_id });
         }
       }
     }
