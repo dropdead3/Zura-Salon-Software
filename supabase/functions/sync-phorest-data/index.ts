@@ -1785,13 +1785,19 @@ async function logSync(
   metadata?: any,
   apiEndpoint?: string,
   responseSample?: string,
-  retryCount?: number
+  retryCount?: number,
+  startedAt?: Date,
 ) {
+  // Ensure started_at <= completed_at. If caller didn't pass startedAt,
+  // fall back to "now minus 1ms" so the row still has a coherent ordering.
+  const completed = new Date();
+  const started = startedAt ?? new Date(completed.getTime() - 1);
   await supabase.from("phorest_sync_log").insert({
     sync_type: syncType,
     status,
     records_synced: recordsSynced,
-    completed_at: new Date().toISOString(),
+    started_at: started.toISOString(),
+    completed_at: completed.toISOString(),
     error_message: errorMessage,
     metadata: metadata || {},
     api_endpoint: apiEndpoint,
@@ -2103,41 +2109,45 @@ serve(async (req) => {
     };
 
     if (sync_type === 'staff' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         results.staff = await syncStaff(supabase, businessId, username, password);
-        await logSync(supabase, 'staff', 'success', results.staff.mapped);
+        await logSync(supabase, 'staff', 'success', results.staff.mapped, undefined, undefined, undefined, undefined, undefined, startedAt);
       } catch (error: any) {
         results.staff = { error: error.message };
-        await logSync(supabase, 'staff', 'failed', 0, error.message);
+        await logSync(supabase, 'staff', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('staff', error.message);
       }
     }
 
     if (sync_type === 'appointments' || sync_type === 'all') {
+      const apptStartedAt = new Date();
       try {
         results.appointments = await syncAppointments(supabase, businessId, username, password, defaultFrom, defaultTo);
-        await logSync(supabase, 'appointments', 'success', results.appointments.synced);
+        await logSync(supabase, 'appointments', 'success', results.appointments.synced, undefined, undefined, undefined, undefined, undefined, apptStartedAt);
       } catch (error: any) {
         results.appointments = { error: error.message };
-        await logSync(supabase, 'appointments', 'failed', 0, error.message);
+        await logSync(supabase, 'appointments', 'failed', 0, error.message, undefined, undefined, undefined, undefined, apptStartedAt);
         notifyFailure('appointments', error.message);
       }
 
       // Also sync roster/breaks for the same date range
+      const rosterStartedAt = new Date();
       try {
         results.roster = await syncRoster(supabase, businessId, username, password, defaultFrom, defaultTo);
-        await logSync(supabase, 'roster', 'success', results.roster.synced);
+        await logSync(supabase, 'roster', 'success', results.roster.synced, undefined, undefined, undefined, undefined, undefined, rosterStartedAt);
       } catch (error: any) {
         results.roster = { error: error.message };
-        await logSync(supabase, 'roster', 'failed', 0, error.message);
+        await logSync(supabase, 'roster', 'failed', 0, error.message, undefined, undefined, undefined, undefined, rosterStartedAt);
         console.error('Roster sync failed:', error.message);
       }
     }
 
     if (sync_type === 'clients' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         results.clients = await syncClients(supabase, businessId, username, password);
-        await logSync(supabase, 'clients', 'success', results.clients.synced);
+        await logSync(supabase, 'clients', 'success', results.clients.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
         
         // Auto-calculate preferred stylists after client sync
         try {
@@ -2153,23 +2163,25 @@ serve(async (req) => {
         }
       } catch (error: any) {
         results.clients = { error: error.message };
-        await logSync(supabase, 'clients', 'failed', 0, error.message);
+        await logSync(supabase, 'clients', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('clients', error.message);
       }
     }
 
     if (sync_type === 'reports' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         results.reports = await syncPerformanceReports(supabase, businessId, username, password, weekStart);
-        await logSync(supabase, 'reports', 'success', results.reports.synced);
+        await logSync(supabase, 'reports', 'success', results.reports.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
       } catch (error: any) {
         results.reports = { error: error.message };
-        await logSync(supabase, 'reports', 'failed', 0, error.message);
+        await logSync(supabase, 'reports', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('reports', error.message);
       }
     }
 
     if (sync_type === 'sales' || sync_type === 'all') {
+      const startedAt = new Date();
       try {
         // Quick mode: yesterday + today (late-finalized sales)
         // Full mode: last 90 days (aligns with dashboard 90-day analytics window)
@@ -2194,10 +2206,10 @@ serve(async (req) => {
         const salesStatus = (results.sales.synced_items || 0) === 0 ? 'no_data' : 'success';
         await logSync(supabase, 'sales', salesStatus, results.sales.synced_items, 
           salesStatus === 'no_data' ? 'All sales endpoints returned 0 records' : undefined, 
-          { quick });
+          { quick }, undefined, undefined, undefined, startedAt);
       } catch (error: any) {
         results.sales = { error: error.message };
-        await logSync(supabase, 'sales', 'failed', 0, error.message);
+        await logSync(supabase, 'sales', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
         notifyFailure('sales', error.message);
       }
     }
