@@ -2072,7 +2072,7 @@ serve(async (req) => {
       defaultTo = addDays(today, 30);
     } else {
       defaultFrom = date_from || addDays(today, -90);
-      defaultTo = date_to || addDays(today, 90);
+      defaultTo = date_to || addDays(today, 180);
     }
 
     // Get the Monday of this week for performance reports
