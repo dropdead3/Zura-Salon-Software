@@ -27,6 +27,8 @@ interface AgendaViewProps {
   assistantTimeBlocks?: AssistantTimeBlock[];
   adminMeetings?: (AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] })[];
   onMeetingClick?: (meeting: AdminMeeting & { admin_meeting_attendees?: { user_id: string; rsvp_status: string }[] }) => void;
+  /** Wave 22.2 — Stripe Connect inactive location IDs; surfaces "Setup needed" pill on cards. */
+  inactiveConnectLocationIds?: Set<string>;
 }
 
 import { formatTime12h } from '@/lib/schedule-utils';
@@ -49,6 +51,7 @@ export function AgendaView({
   assistantTimeBlocks = [],
   adminMeetings = [],
   onMeetingClick,
+  inactiveConnectLocationIds,
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -127,6 +130,7 @@ export function AgendaView({
                     hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
                     serviceLookup={serviceLookup}
                     categoryColors={categoryColors}
+                    connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
                   />
                 );
               })}

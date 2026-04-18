@@ -291,6 +291,7 @@ export function WeekView({
   scheduleBlocks = [],
   selectedStylistId = null,
   selectedStylistName = null,
+  inactiveConnectLocationIds,
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -633,6 +634,7 @@ export function WeekView({
                         assistantProfilesMap={assistantProfilesMap}
                         columnIndex={columnIndex}
                         totalOverlapping={totalOverlapping}
+                        connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
                       />
                     );
                   })}
