@@ -1,27 +1,30 @@
 
 
-## Fix spacing below Personal Context card in Appointment drawer
+## Clarify scope + remove HospitalityBlock from client-facing booking wizard
 
-### Diagnosis from screenshot
-The dashed "Add personal context" card sits too close to the "APPOINTMENT" section below it. Top gap (tabs → card) looks ~16px; bottom gap (card → APPOINTMENT label) looks ~8px. Asymmetry needs to resolve to equal spacing on both sides.
+### Confirming your mental model
+Yes — terminology check passes:
+- **Booking Wizard** = client-facing booking flow (public, unauthenticated clients booking themselves). Personal context / hospitality data is internal staff intelligence — does **not** belong here.
+- **Appointment Drawer** = staff-side popover when clicking an appointment on the schedule. This is where `HospitalityBlock` legitimately lives.
 
-### Investigation needed
-Open `src/components/dashboard/appointment-drawer/AppointmentDetailSheet.tsx` (or sibling Details tab component) to confirm:
-- The wrapper around `<HospitalityBlock>` and the sibling `APPOINTMENT` section.
-- Whether the parent uses `space-y-*` (and if so, what value) vs. ad-hoc margins on the APPOINTMENT block.
-- Confirm last edit removed `mt-3` from `HospitalityBlock` — likely the APPOINTMENT section itself has no top margin, and parent gap is too tight.
+The previous edit touched `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — need to verify whether that file is the staff-side drawer profile view or the client-facing wizard. The `/booking/` path suggests wizard; the `/dashboard/schedule/` parent suggests staff. I'll confirm before ripping anything out.
 
-### Likely fix
-One of:
-- **A.** Parent container uses `space-y-3` (12px) — bump to `space-y-4` (16px) to match the top gap from `TabsContent pt-4`.
-- **B.** APPOINTMENT section has `mt-2` or no margin — add `mt-4` (or rely on parent `space-y-4`) so it sits 16px below the personal context card.
+### Investigation needed (read-only)
+1. `src/components/dashboard/schedule/booking/ClientProfileView.tsx` — confirm whether this renders inside the public booking wizard or the staff-facing new-appointment flow.
+2. Locate the actual appointment drawer (likely `src/components/dashboard/appointment-drawer/AppointmentDetailSheet.tsx` per earlier conversation) and confirm `HospitalityBlock` placement + spacing there.
+3. Check public booking entry (likely `/book/:orgSlug` route, `src/pages/PublicBooking.tsx` or similar) to verify `HospitalityBlock` isn't rendered on the public surface.
 
-Preferred: **option A** (parent-managed gap) — honors the canon rule "vertical gaps managed exclusively by parent containers" and keeps siblings consistent without per-section margins.
+### Likely fix (pending investigation)
+- **If** `ClientProfileView.tsx` is client-facing wizard → remove the `HospitalityBlock` block entirely from that file.
+- **Then** apply the spacing fix (parent `space-y-4`) to the actual staff appointment drawer instead.
 
 ### Out of scope
-- No changes to the personal context card itself, the tabs, or the APPOINTMENT section internals.
-- No changes to other tabs (History, Photos, Notes, Color Bar).
+- No changes to `HospitalityBlock` internals.
+- No changes to other booking wizard steps.
 
 ### Verification
-Reload the appointment drawer Details tab and visually confirm the gap above the personal context card equals the gap below it (both ~16px to APPOINTMENT label).
+- Open public booking wizard as a client → confirm no "Personal Context" card appears.
+- Open appointment drawer on schedule → confirm card present with symmetric 16px spacing above and below.
+
+Approve and I'll investigate, confirm which file is which, then ship the correct fix.
 
