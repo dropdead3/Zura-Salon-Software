@@ -186,6 +186,7 @@ function GridContent({
   showClientAvatar,
   useShortLabels,
   declinedReasonLabel,
+  connectInactive,
 }: {
   appointment: PhorestAppointment;
   size: CardSize;
@@ -201,7 +202,10 @@ function GridContent({
   showClientAvatar?: boolean;
   useShortLabels?: boolean;
   declinedReasonLabel?: string | null;
+  connectInactive?: boolean;
 }) {
+  const showConnectPill = !!connectInactive && PRE_CHECKOUT_STATUSES.has(appointment.status || '');
+
   if (size === 'compact') {
     return (
       <div className="px-2 py-1 relative z-10 overflow-hidden">
