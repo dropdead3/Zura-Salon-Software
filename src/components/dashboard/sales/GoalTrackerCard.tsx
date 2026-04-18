@@ -171,7 +171,7 @@ export function GoalTrackerCard() {
                     <div>
                       <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">Earned</p>
                       <p className="text-sm md:text-base font-medium">
-                        <AnimatedBlurredAmount value={orgMetrics.revenue} currency={currency} />
+                        <AnimatedBlurredAmount value={orgMetrics.revenue} currency={currency} animationKey={`cc-goal-${period}-revenue`} />
                       </p>
                     </div>
                     <div>
@@ -183,7 +183,7 @@ export function GoalTrackerCard() {
                     <div>
                       <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">Projected</p>
                       <p className={cn('text-sm md:text-base font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive')}>
-                        <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} currency={currency} />
+                        <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} currency={currency} animationKey={`cc-goal-${period}-projected`} />
                       </p>
                     </div>
                     <div>
