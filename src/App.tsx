@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
+import { BootLuxeLoader } from "@/components/ui/BootLuxeLoader";
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
