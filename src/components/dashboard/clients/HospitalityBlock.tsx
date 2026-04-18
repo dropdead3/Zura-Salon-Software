@@ -70,7 +70,7 @@ export function HospitalityBlock({
   }
 
   return (
-    <div className={compact ? 'space-y-3' : 'mt-3 grid gap-3 md:grid-cols-2'}>
+    <div className={compact ? 'space-y-3' : 'grid gap-3 md:grid-cols-2'}>
       <ClientAboutCard
         organizationId={organizationId}
         clientId={clientKey}
