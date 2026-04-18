@@ -185,8 +185,30 @@ export function RevenueDonutChart({
                   <span className="font-medium text-foreground tabular-nums">
                     {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—'}
                   </span>
-                </div>
               </div>
+              {(() => {
+                const verdict = hasBreakdown
+                  ? getRetailPerformanceVerdict(trueRetailPercent, retailAttachmentRate, total)
+                  : null;
+                if (!verdict) return null;
+                return (
+                  <div className="pt-2 mt-1 flex items-start gap-2">
+                    <div
+                      className={cn(
+                        'w-1 self-stretch rounded-full shrink-0',
+                        verdict.tier === 'strong' && 'bg-emerald-500/50',
+                        verdict.tier === 'healthy' && 'bg-foreground/30',
+                        verdict.tier === 'soft' && 'bg-amber-500/50',
+                        verdict.tier === 'critical' && 'bg-red-500/50',
+                      )}
+                    />
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {verdict.copy}
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
             </div>
           </div>
         </div>
