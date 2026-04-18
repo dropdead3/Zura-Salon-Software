@@ -1538,7 +1538,7 @@ export function AggregateSalesCard({
           />
 
           {/* Tips Summary Card */}
-          <Card className="relative bg-card/80 backdrop-blur-xl border-border/40">
+          <Card className="relative self-start bg-card/80 backdrop-blur-xl border-border/40">
             <MetricInfoTooltip
               description="Total gratuities (staff tips) recorded across all completed appointments. Not included in total revenue. Click for stylist breakdown."
               className="absolute top-3 right-3 z-10"
