@@ -30,16 +30,6 @@ export {
   type PipelineSummary,
 } from './ownership-engine';
 
-export {
-  isFinancingEligible,
-  computePostFinancingCashFlow,
-  computeRepaymentSchedule,
-  computeVariance,
-  type FinancingCandidate,
-  type EligibilityResult,
-  type PostFinancingCashFlow,
-  type RepaymentScheduleEntry,
-} from './financing-engine';
 
 export {
   computeStylistSPI,
