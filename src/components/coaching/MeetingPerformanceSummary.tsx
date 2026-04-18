@@ -191,7 +191,7 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
               teamUnit="$"
               trend={<TrendBadge current={revenue.total} prior={revenue.priorTotal} suffix="%" />}
             >
-              <AnimatedBlurredAmount value={revenue.total} currency="USD" decimals={0} />
+              <AnimatedBlurredAmount value={revenue.total} currency="USD" decimals={0} animationKey="cc-coaching-revenue-total" />
               <div className="flex flex-col gap-0.5 mt-1">
                 <span className="text-xs text-muted-foreground">
                   Services: <AnimatedBlurredAmount value={revenue.service} currency="USD" decimals={0} className="inline text-xs" />
@@ -212,7 +212,7 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
               teamAvg={teamAverages.avgTicket}
               teamUnit="$"
             >
-              <AnimatedBlurredAmount value={revenue.avgTicket} currency="USD" decimals={0} />
+              <AnimatedBlurredAmount value={revenue.avgTicket} currency="USD" decimals={0} animationKey="cc-coaching-avg-ticket" />
             </KpiTile>
 
             <KpiTile
@@ -228,7 +228,7 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
               label="Rev / Day"
               description="Average daily revenue over the 30-day period."
             >
-              <AnimatedBlurredAmount value={revenuePerDay} currency="USD" decimals={0} />
+              <AnimatedBlurredAmount value={revenuePerDay} currency="USD" decimals={0} animationKey="cc-coaching-revenue-per-day" />
             </KpiTile>
           </div>
         </div>
@@ -252,7 +252,7 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
               label="Avg Tip"
               description="Average tip amount per completed appointment."
             >
-              <AnimatedBlurredAmount value={avgTipDollar} currency="USD" decimals={2} />
+              <AnimatedBlurredAmount value={avgTipDollar} currency="USD" decimals={2} animationKey="cc-coaching-avg-tip" />
             </KpiTile>
 
             <KpiTile

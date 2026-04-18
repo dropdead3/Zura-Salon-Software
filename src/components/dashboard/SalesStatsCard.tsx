@@ -138,6 +138,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
               <AnimatedNumber
                 value={displayData.totalRevenue}
                 formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
+                animationKey="cc-sales-total-revenue"
               />
             </p>
           </div>
@@ -150,6 +151,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
               <AnimatedNumber
                 value={displayData.serviceRevenue}
                 formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
+                animationKey="cc-sales-service-revenue"
               />
             </p>
           </div>
@@ -162,6 +164,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
               <AnimatedNumber
                 value={displayData.productRevenue}
                 formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
+                animationKey="cc-sales-product-revenue"
               />
             </p>
           </div>
@@ -171,7 +174,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
           <div className="flex items-center justify-center gap-1 mb-1">
             <Receipt className="w-4 h-4 text-chart-5" />
             <p className="text-2xl font-display tabular-nums">
-              <AnimatedNumber value={displayData.totalTransactions} />
+              <AnimatedNumber value={displayData.totalTransactions} animationKey="cc-sales-transactions" />
             </p>
           </div>
           <p className="text-xs text-muted-foreground">Transactions</p>
@@ -183,6 +186,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
               <AnimatedNumber
                 value={Math.round(displayData.averageTicket)}
                 formatOptions={{ style: 'currency', currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }}
+                animationKey="cc-sales-avg-ticket"
               />
             </p>
           </div>
