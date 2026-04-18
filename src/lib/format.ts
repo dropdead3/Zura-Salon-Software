@@ -79,6 +79,19 @@ export function formatCurrency(
   }).format(num);
 }
 
+/**
+ * Format a number rounded to the nearest whole unit of currency (no cents).
+ * Use for dashboards, KPIs, and ranking cards where pennies are noise.
+ *
+ *   formatCurrencyRounded(582.73)  // "$583"
+ */
+export function formatCurrencyRounded(
+  value: number | null | undefined,
+  options: Omit<FormatCurrencyOptions, 'decimals' | 'noCents'> = {}
+): string {
+  return formatCurrency(value, { ...options, noCents: true });
+}
+
 function toDate(input: Date | string | number | null | undefined): Date | null {
   if (input === null || input === undefined) return null;
   const d = input instanceof Date ? input : new Date(input);
