@@ -1,23 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
-import { useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useFirstSessionAnimation } from '@/hooks/useFirstSessionAnimation';
 import { useIsAnimationsOff } from '@/hooks/useAnimationIntensity';
 
 interface AnimatedNumberProps {
   value: number;
+  /** @deprecated retained for API compat — fade timing is now centralized */
   duration?: number;
   decimals?: number;
   prefix?: string;
   suffix?: string;
   className?: string;
   formatOptions?: Intl.NumberFormatOptions;
-  /** When set, the 0→value mount animation only runs once per browser session for this key. */
+  /** When set, the initial fade-in only runs once per browser session for this key. */
   animationKey?: string;
 }
 
+/**
+ * Numeric display that fades on first reveal and crossfades on value change.
+ * No counter roll-up — analytics doctrine prefers calm reveals over animated counting.
+ */
 export function AnimatedNumber({
   value,
-  duration = 1200,
   decimals = 0,
   prefix = '',
   suffix = '',
@@ -28,17 +32,13 @@ export function AnimatedNumber({
   const reduceMotion = useReducedMotion();
   const animationsOff = useIsAnimationsOff();
   const { shouldAnimate, markAnimated } = useFirstSessionAnimation(animationKey);
-  const [displayValue, setDisplayValue] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const previousValue = useRef(0);
-  const animationRef = useRef<number>();
+  const [hasRevealed, setHasRevealed] = useState(false);
   const spanRef = useRef<HTMLSpanElement>(null);
 
-  // Trigger animation on first intersection
+  // Trigger first reveal on intersection (fade-in)
   useEffect(() => {
     if (reduceMotion || animationsOff) {
-      setDisplayValue(value);
-      previousValue.current = value;
+      setHasRevealed(true);
       return;
     }
 
@@ -47,20 +47,9 @@ export function AnimatedNumber({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-
-          // Session-scoped first-mount gate
-          if (!shouldAnimate) {
-            setDisplayValue(value);
-            previousValue.current = value;
-            observer.disconnect();
-            return;
-          }
-          markAnimated();
-
-          animateValue(0, value);
-          previousValue.current = value;
+        if (entry.isIntersecting && !hasRevealed) {
+          setHasRevealed(true);
+          if (shouldAnimate) markAnimated();
           observer.disconnect();
         }
       },
@@ -70,56 +59,48 @@ export function AnimatedNumber({
     observer.observe(el);
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, reduceMotion, animationsOff]);
-
-  // Animate on value change after initial animation
-  useEffect(() => {
-    if (reduceMotion || animationsOff) {
-      setDisplayValue(value);
-      previousValue.current = value;
-      return;
-    }
-    if (hasAnimated && value !== previousValue.current) {
-      animateValue(previousValue.current, value);
-      previousValue.current = value;
-    }
-  }, [value, hasAnimated, reduceMotion, animationsOff]);
-
-  const animateValue = (from: number, to: number) => {
-    if (animationRef.current) cancelAnimationFrame(animationRef.current);
-
-    const startTime = performance.now();
-    const difference = to - from;
-
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      
-      // Quint ease-out — dramatic deceleration at the end
-      const settle = 1 - Math.pow(1 - progress, 5);
-      
-      setDisplayValue(from + difference * settle);
-
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(animate);
-      } else {
-        setDisplayValue(to);
-        previousValue.current = to;
-      }
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-  };
+  }, [reduceMotion, animationsOff]);
 
   const formattedValue = formatOptions
-    ? displayValue.toLocaleString(undefined, formatOptions)
+    ? value.toLocaleString(undefined, formatOptions)
     : decimals > 0
-      ? displayValue.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
-      : Math.round(displayValue).toLocaleString();
+      ? value.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+      : Math.round(value).toLocaleString();
+
+  const display = `${prefix}${formattedValue}${suffix}`;
+
+  // Reduced-motion / animations off: snap, no fade.
+  if (reduceMotion || animationsOff) {
+    return (
+      <span ref={spanRef} className={className}>
+        {display}
+      </span>
+    );
+  }
+
+  // First-mount snap when session gate already fired (no initial fade), but
+  // value changes still crossfade.
+  const initialOpacity = hasRevealed && !shouldAnimate ? 1 : 0;
 
   return (
-    <span ref={spanRef} className={className}>
-      {prefix}{formattedValue}{suffix}
+    <span ref={spanRef} className={className} style={{ display: 'inline-block' }}>
+      <AnimatePresence mode="wait" initial={false}>
+        {hasRevealed && (
+          <motion.span
+            key={display}
+            initial={{ opacity: initialOpacity, y: initialOpacity === 1 ? 0 : 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -2 }}
+            transition={{
+              opacity: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+              y: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+            }}
+            style={{ display: 'inline-block' }}
+          >
+            {display}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </span>
   );
 }
