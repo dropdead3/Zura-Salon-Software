@@ -1067,6 +1067,16 @@ export function ServiceEditorDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex flex-col gap-2 pt-2 sm:flex-col sm:space-x-0">
+          <Button
+            variant="outline"
+            onClick={handleDiscard}
+            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            Discard Changes
+          </Button>
+          <AlertDialogCancel className="w-full mt-0 sm:mt-0">
+            Keep Editing
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleSaveAndClose}
             disabled={!name.trim() || isPending || hasErrors}
@@ -1075,16 +1085,6 @@ export function ServiceEditorDialog({
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Save &amp; Close
           </AlertDialogAction>
-          <AlertDialogCancel className="w-full mt-0 sm:mt-0">
-            Keep Editing
-          </AlertDialogCancel>
-          <Button
-            variant="outline"
-            onClick={handleDiscard}
-            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            Discard Changes
-          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
