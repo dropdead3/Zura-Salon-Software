@@ -409,6 +409,19 @@ export function ServicesSettingsContent() {
   }, [searchQuery, localOrder, filteredServicesByCategory]);
 
 
+  // Tab state synced to URL (?tab=catalog|addons|staff|policies)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab = ['catalog', 'addons', 'staff', 'policies'].includes(tabParam || '')
+    ? (tabParam as string)
+    : 'catalog';
+  const handleTabChange = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', next);
+    setSearchParams(params, { replace: true });
+  };
+  const [calendarAppearanceOpen, setCalendarAppearanceOpen] = useState(false);
+
   if (catsLoading || servicesLoading) {
     return <DashboardLoader size="md" className="py-12" />;
   }
@@ -416,7 +429,17 @@ export function ServicesSettingsContent() {
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList>
+            <TabsTrigger value="catalog">Catalog</TabsTrigger>
+            <TabsTrigger value="addons">Add-Ons</TabsTrigger>
+            <TabsTrigger value="staff">Staff Access</TabsTrigger>
+            <TabsTrigger value="policies">Policies</TabsTrigger>
+          </TabsList>
+
+          {/* ============ TAB 1: CATALOG ============ */}
+          <TabsContent value="catalog" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Categories Section */}
         <Card>
           <CardHeader>
