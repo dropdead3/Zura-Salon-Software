@@ -715,7 +715,11 @@ export function ServiceEditorDialog({
                       value={onlineDiscountPct}
                       onChange={e => setOnlineDiscountPct(e.target.value)}
                       placeholder="e.g. 10"
+                      aria-invalid={!!validationErrors.onlineDiscountPct}
                     />
+                    {validationErrors.onlineDiscountPct && (
+                      <p className="text-xs text-destructive">{validationErrors.onlineDiscountPct}</p>
+                    )}
                   </div>
                 </div>
               </form>
@@ -769,7 +773,11 @@ export function ServiceEditorDialog({
                       value={startUpMinutes}
                       onChange={e => setStartUpMinutes(e.target.value)}
                       placeholder="0"
+                      aria-invalid={!!validationErrors.startUpMinutes}
                     />
+                    {validationErrors.startUpMinutes && (
+                      <p className="text-xs text-destructive">{validationErrors.startUpMinutes}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="shutdown-min" className="flex items-center gap-1.5">
@@ -784,7 +792,11 @@ export function ServiceEditorDialog({
                       value={shutDownMinutes}
                       onChange={e => setShutDownMinutes(e.target.value)}
                       placeholder="0"
+                      aria-invalid={!!validationErrors.shutDownMinutes}
                     />
+                    {validationErrors.shutDownMinutes && (
+                      <p className="text-xs text-destructive">{validationErrors.shutDownMinutes}</p>
+                    )}
                   </div>
                 </div>
 
@@ -822,15 +834,19 @@ export function ServiceEditorDialog({
                   <div className="space-y-2">
                     <Label htmlFor="pos-hotkey" className="flex items-center gap-1.5">
                       POS Hotkey
-                      <MetricInfoTooltip description="Optional 1–8 character shortcut to add this service from the POS keypad. Speeds up high-volume checkout." />
+                      <MetricInfoTooltip description="Optional 1–8 character shortcut to add this service from the POS keypad. Speeds up high-volume checkout. Letters and numbers only." />
                     </Label>
                     <Input
                       id="pos-hotkey"
                       maxLength={8}
                       value={posHotkey}
-                      onChange={e => setPosHotkey(e.target.value)}
+                      onChange={e => setPosHotkey(e.target.value.toUpperCase())}
                       placeholder="e.g. CUT1"
+                      aria-invalid={!!validationErrors.posHotkey}
                     />
+                    {validationErrors.posHotkey && (
+                      <p className="text-xs text-destructive">{validationErrors.posHotkey}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="loyalty-override" className="flex items-center gap-1.5">
@@ -845,7 +861,11 @@ export function ServiceEditorDialog({
                       value={loyaltyPointsOverride}
                       onChange={e => setLoyaltyPointsOverride(e.target.value)}
                       placeholder="Default rule"
+                      aria-invalid={!!validationErrors.loyaltyPointsOverride}
                     />
+                    {validationErrors.loyaltyPointsOverride && (
+                      <p className="text-xs text-destructive">{validationErrors.loyaltyPointsOverride}</p>
+                    )}
                   </div>
                 </div>
               </form>
