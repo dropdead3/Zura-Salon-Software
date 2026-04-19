@@ -70,7 +70,7 @@ export function BookingServiceBrowser({
               const price = eligible?.price != null
                 ? `$${eligible.price}`
                 : priceKey ? item.prices[priceKey] : null;
-              const duration = eligible?.durationMinutes ?? null;
+              const duration = eligible?.durationMinutes ?? item.durationMinutes ?? null;
               const requiresConsultation = eligible?.requiresConsultation ?? false;
 
               return (
