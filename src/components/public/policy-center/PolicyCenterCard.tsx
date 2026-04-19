@@ -95,6 +95,15 @@ export function PolicyCenterCard({
     }
   }, [requiresAcknowledgment, identity]);
 
+  // 28.10.1: When the card is opened (collapsible expanded) and we still have
+  // no identity, prompt for it immediately so the signature/checkbox flow
+  // doesn't end with a surprise modal that overwrites their typed signature.
+  useEffect(() => {
+    if (open && requiresAcknowledgment && !alreadyAcknowledged && !identity && !identityOpen) {
+      setIdentityOpen(true);
+    }
+  }, [open, requiresAcknowledgment, alreadyAcknowledged, identity, identityOpen]);
+
   const acknowledged = alreadyAcknowledged || !!localAcked;
   const ackedAtDisplay = useMemo(() => {
     const iso = localAcked?.at ?? alreadyAcknowledgedAt;
@@ -102,6 +111,7 @@ export function PolicyCenterCard({
   }, [localAcked, alreadyAcknowledgedAt]);
 
   const submit = async (idForSubmit: AckIdentity) => {
+    if (record.isPending) return; // microtask-gap guard
     try {
       const result = await record.mutateAsync({
         policy_id: policy.policyId,
@@ -130,6 +140,7 @@ export function PolicyCenterCard({
   };
 
   const handleSubmit = () => {
+    if (record.isPending) return;
     if (!agreed) return;
     if (!signature.trim()) return;
     if (!identity) {
@@ -261,15 +272,18 @@ export function PolicyCenterCard({
         </div>
       </CollapsibleContent>
 
-      {/* Identity capture for first-time acknowledgers */}
+      {/* Identity capture for first-time acknowledgers (28.10.1: opens on
+          card expansion, not at submit time, so the user has identity context
+          before typing a signature). */}
       {requiresAcknowledgment && !acknowledged && (
         <AcknowledgeIdentityModal
           open={identityOpen}
           onOpenChange={setIdentityOpen}
           onConfirm={(id) => {
             setIdentity(id);
-            if (!signature.trim()) setSignature(id.name);
-            submit(id);
+            // Only seed the signature if the field is still blank — never overwrite
+            // a signature the user already typed.
+            setSignature((current) => current.trim() ? current : id.name);
           }}
         />
       )}

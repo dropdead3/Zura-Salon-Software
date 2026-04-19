@@ -17455,6 +17455,53 @@ export type Database = {
           },
         ]
       }
+      policy_change_log: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          new_value: Json | null
+          organization_id: string
+          policy_id: string | null
+          previous_value: Json | null
+          version_id: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          new_value?: Json | null
+          organization_id: string
+          policy_id?: string | null
+          previous_value?: Json | null
+          version_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          new_value?: Json | null
+          organization_id?: string
+          policy_id?: string | null
+          previous_value?: Json | null
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_change_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       policy_draft_jobs: {
         Row: {
           created_at: string

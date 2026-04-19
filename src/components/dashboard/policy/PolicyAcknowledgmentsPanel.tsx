@@ -36,7 +36,15 @@ export function PolicyAcknowledgmentsPanel({ policyId, policyTitle }: Props) {
 
   const handleExport = useMemo(() => {
     return () => {
-      const headers = ['Name', 'Email', 'Signature', 'Method', 'IP', 'Acknowledged at'];
+      const headers = [
+        'Name',
+        'Email',
+        'Signature',
+        'Method',
+        'IP',
+        'Acknowledged at',
+        'Version ID',
+      ];
       const body = rows.map((r) => [
         r.client_name,
         r.client_email,
@@ -44,6 +52,7 @@ export function PolicyAcknowledgmentsPanel({ policyId, policyTitle }: Props) {
         r.acknowledgment_method,
         r.ip_address ?? '',
         r.acknowledged_at,
+        r.policy_version_id,
       ]);
       const csv = buildCsvString([headers, ...body]);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });

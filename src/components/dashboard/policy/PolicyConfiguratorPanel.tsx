@@ -241,7 +241,7 @@ export function PolicyConfiguratorPanel({
           <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
             <Switch
               id="require-ack"
-              checked={!!(data as any).requiresAcknowledgment}
+              checked={!!data.requiresAcknowledgment}
               disabled={updateAckFlag.isPending}
               onCheckedChange={(checked) =>
                 updateAckFlag.mutate(
@@ -317,7 +317,7 @@ export function PolicyConfiguratorPanel({
                 </Badge>
               )}
             </TabsTrigger>
-            {!!(data as any)?.requiresAcknowledgment && (
+            {data?.policyId && (
               <TabsTrigger value="acknowledgments" className="font-sans">
                 <FileSignature className="w-3.5 h-3.5 mr-1.5" />
                 Acknowledgments
@@ -416,11 +416,13 @@ export function PolicyConfiguratorPanel({
             )}
           </TabsContent>
 
-          {/* ---- Acknowledgments tab (Wave 28.10) ---- */}
-          {!!(data as any)?.requiresAcknowledgment && (
+          {/* ---- Acknowledgments tab (Wave 28.10) — always render so historical
+                acks remain visible even after the require-ack toggle is turned off
+                (audit immutability per Wave 28.10.1). */}
+          {data?.policyId && (
             <TabsContent value="acknowledgments" className="mt-6">
               <PolicyAcknowledgmentsPanel
-                policyId={data?.policyId ?? null}
+                policyId={data.policyId}
                 policyTitle={entry.title}
               />
             </TabsContent>
