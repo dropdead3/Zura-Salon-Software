@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useSectionLibrary, useUpsertSelectedSections } from '@/hooks/handbook/useHandbookData';
+import { useHandbookPolicySections } from '@/hooks/handbook/useHandbookPolicySections';
 import { ROLE_OPTIONS } from '@/lib/handbook/brandTones';
 import { SectionLibraryCard } from '../SectionLibraryCard';
 import { ApplicabilityMatrix } from '../ApplicabilityMatrix';
+import { HandbookSectionEditor } from '../HandbookSectionEditor';
+import { sectionHasPolicyOption } from '@/lib/handbook/policySectionMap';
 
 interface Props {
   versionId: string;
