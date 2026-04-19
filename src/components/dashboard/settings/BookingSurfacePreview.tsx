@@ -1,5 +1,4 @@
 import { Globe, Sparkles } from 'lucide-react';
-import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 
 interface BookingSurfacePreviewProps {
@@ -63,7 +62,7 @@ export function BookingSurfacePreview({
     <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Globe className="w-4 h-4 text-primary" />
-        <span className={cn(tokens.label.section, 'text-xs')}>
+        <span className="font-display text-xs tracking-wide text-muted-foreground">
           Booking Surface Preview
         </span>
         {!bookableOnline && (
