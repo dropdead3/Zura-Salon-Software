@@ -265,6 +265,8 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
       if (updateError) throw updateError;
 
       // 2. Create check-in record
+      // Wave 7: if we entered via 'signing' state and reached completion, forms are signed.
+      const formsWereCompleted = state === 'signing';
       const { error: checkinError } = await supabase
         .from('appointment_check_ins')
         .insert({
@@ -277,6 +279,9 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
           check_in_method: 'kiosk',
           kiosk_session_id: session.sessionId,
           stylist_user_id: appointment.stylist_user_id,
+          forms_required: formsWereCompleted,
+          forms_completed: formsWereCompleted,
+          forms_completed_at: formsWereCompleted ? new Date().toISOString() : null,
         });
 
       if (checkinError) throw checkinError;
