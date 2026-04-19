@@ -199,6 +199,15 @@ export function ServiceEditorDialog({
       online_name: onlineName.trim() || null,
       online_duration_override: onlineDurationOverride ? parseInt(onlineDurationOverride) : null,
       online_discount_pct: onlineDiscountPct ? parseFloat(onlineDiscountPct) : null,
+      // Wave 2: Operational Guardrails
+      patch_test_required: patchTestRequired,
+      patch_test_validity_days: parseInt(patchTestValidityDays) || 180,
+      start_up_minutes: parseInt(startUpMinutes) || 0,
+      shut_down_minutes: parseInt(shutDownMinutes) || 0,
+      creation_prompt: creationPrompt.trim() || null,
+      checkin_prompt: checkinPrompt.trim() || null,
+      pos_hotkey: posHotkey.trim() || null,
+      loyalty_points_override: loyaltyPointsOverride ? parseInt(loyaltyPointsOverride) : null,
     } as Partial<Service>);
   };
 
