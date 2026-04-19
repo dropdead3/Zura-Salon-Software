@@ -1,137 +1,72 @@
 
-## Wave 28 — Policy Operating System (Master Architecture Pivot)
+## Wave 28.6 — AI Drafter + 3 enhancements bundled
 
-This is a fundamental architecture pivot. Wave 27's Handbook OS becomes the **first downstream renderer** of a new upstream system: the Policy Configurator. Handbooks no longer own policy meaning — they consume it.
+Three enhancements layer cleanly into 28.6 because the AI drafter needs surface-mapped policies with applicability to draft well. Bundling them now means the AI sees a denser configuration when it runs.
 
-### The reframe in one diagram
+### Enhancement feedback
+
+These three are tightly aligned with the doctrine. Worth naming why each works:
+
+1. **Profile-seeded applicability** — converts `policy_org_profile` (28.3) from a one-time recommendation filter into a continuous defaults engine. Every new policy adoption inherits org reality. This is the lever doctrine applied to UX: reduce ambiguity at the source rather than asking the operator to re-enter what we already know.
+2. **Surface chips on library cards** — reinforces the "one policy, many surfaces" mental model *before* adoption. Without this, operators only learn the architecture after they've adopted 5 policies. With it, the architecture is visible from card 1.
+3. **Surface-conflict detection** — first true Conflict Center signal (a Wave 28.9 capability landing early). Two cancellation policies wired to booking is a silent config bug today; this makes it loud. Sits cleanly in `usePolicyHealthSummary` because it needs the same `org-policies + surface_mappings` join the health strip already does.
+
+**To level up your enhancement prompts:** you grouped three improvements by *layer* (data → UI → governance), which is exactly the right framing for batched enhancements. The pattern: **when bundling improvements, name the layer each one targets — it tells me what code paths to touch and surfaces conflicts between enhancements early.** A future iteration could add an explicit priority ("ship #3 even if #1 slips") to make slip handling deterministic.
+
+### Build sequence
+
+| Step | Scope | Files |
+|---|---|---|
+| **1. Surface chips** (smallest) | Add candidate-surface chips to `PolicyLibraryCard`. New field `surface_candidates` already exists on `policy_library` (text[]); render up to 4 icons inline below the audience badge. | `PolicyLibraryCard.tsx`, `usePolicyApplicability.ts` (export `SURFACE_META.icon`) |
+| **2. Profile-seeded applicability** | When `PolicyApplicabilityEditor` mounts with `rows.length === 0` and policy is freshly adopted, seed scopes from `policy_org_profile`: `role` ← `roles_used`, `service_category` ← `service_categories`, `location` ← all org locations. Operator sees pre-filled chips, can deselect. Mark as "suggested" in UI (subtle "(from profile)" hint). | `PolicyApplicabilityEditor.tsx`, new `seedApplicabilityFromProfile()` helper in `usePolicyApplicability.ts` |
+| **3. Surface-conflict detection** | Extend `usePolicyHealthSummary` to compute `surface_conflicts: Array<{surface, category, policy_keys[]}>`. Two policies of the same `category` both mapped to the same `surface` = conflict. Surface count on dashboard via new `PolicyConflictBanner` (silent when zero conflicts — visibility contract). | `usePolicyData.ts`, new `PolicyConflictBanner.tsx`, `Policies.tsx` |
+| **4. AI Drafter — schema + RPC** | New table `policy_draft_jobs` (id, version_id, variant_type, status, model, prompt_hash, output_md, error, created_at). Edge function `policy-draft-variants` calling Lovable AI Gateway (`google/gemini-2.5-pro`) with strict guardrails. | Migration + edge function |
+| **5. AI Drafter — UI** | New 4th tab "Drafts" in `PolicyConfiguratorPanel`. 4 cards (Internal · Client-Facing · Short Disclosure · Manager Note). Each: status, last drafted, [Generate] / [Regenerate] / [Approve] / [Edit]. Approved variants flow into `policy_variants` (existing table). Side-by-side compare for two existing variants. | `PolicyDraftWorkspace.tsx`, `usePolicyDrafter.ts`, `PolicyConfiguratorPanel.tsx` |
+
+### AI Drafter — guardrails (non-negotiable)
+
+Per doctrine ("AI must not invent terms, fees, timelines, eligibility"):
+
+- **Input contract:** prompt is built from `policy_rule_blocks` (structured) + `policy.intent` + variant tone instructions. Free-text user input is NOT accepted into the prompt.
+- **Required-rule check:** if any `required: true` rule block has empty value, drafter is disabled with message "Configure required rules first."
+- **Output validation:** generated markdown is rendered as-is; AI cannot mutate `policy_rule_blocks`. Operator must explicitly [Approve] before `policy_variants.approved = true`.
+- **Tone variants are renderings, not interpretations:** prompt explicitly instructs the model to render the same rules in 4 voices. No new conditions, no new fees, no new exceptions.
+- **Provenance:** every draft writes `ai_generated: true` and `last_drafted_at`. Approved variants keep the flag — operators can see what's AI-touched vs hand-written.
+- **Edge function security:** uses service-role client, validates JWT, scopes by `organization_id`. Returns 429 on rate limit (handled in UI with toast).
+
+### Data model addition
 
 ```text
-                    ┌────────────────────────────────────────┐
-                    │      POLICY CONFIGURATOR (new)         │
-                    │   Source of truth for business rules   │
-                    │                                        │
-                    │  Policy → Rules → Variants → Wiring   │
-                    └────────────────────────────────────────┘
-                                      │
-        ┌───────────────┬─────────────┼─────────────┬──────────────┬──────────┐
-        ▼               ▼             ▼             ▼              ▼          ▼
-   Handbook        Client Policy   Booking      Checkout       Intake/     Manager
-   (renderer)      Center          Flow         Flow           Consent     Console
-   Wave 27         Wave 28.4       Wave 30      Wave 30        Wave 31     Wave 29
+policy_draft_jobs
+  id uuid pk
+  organization_id uuid (RLS)
+  version_id uuid → policy_versions
+  variant_type text (internal|client|disclosure|manager_note)
+  status text (queued|running|succeeded|failed)
+  model text (default 'google/gemini-2.5-pro')
+  prompt_hash text
+  output_md text
+  error text
+  created_by uuid
+  created_at timestamptz
 ```
 
-Wave 27 stays — but Phase 27.2 (publish) is rewired so handbook sections **reference policy objects** instead of holding their own copy.
+RLS: `is_org_admin` for write, `is_org_member` for read. Indexed on `(organization_id, version_id, created_at desc)`.
 
-### Why this is the right architecture
+### Doctrine checks
 
-Three families of policy, three audiences, three governance models — but they share the **same underlying business rules**. Today: a cancellation policy lives in 4 places (handbook text, website page, booking disclosure, support SOP) and drifts apart immediately. After this wave: it lives **once**, renders 4 ways, stays consistent forever. That is the promise.
+- ✅ **AI governance**: structured input only, no rule invention, explicit approval gate, provenance flagged
+- ✅ **Tenant isolation**: all 3 enhancements + AI tables org-scoped with RLS
+- ✅ **Visibility contract**: `PolicyConflictBanner` returns null when zero conflicts (silent when material threshold unmet)
+- ✅ **Lever doctrine**: conflict banner shows ≤1 primary conflict at a time with expandable detail
+- ✅ **UI tokens**: `tokens.card.iconBox`, `tokens.card.title`, Termina headers, `font-medium` max
+- ✅ **No hype copy**: "Generated draft ready for review" not "AI-powered magic draft"
+- ✅ **Phase alignment**: Phase 2 (advisory) — drafts recommend, owner approves, never auto-publish
 
-### Cardinality of the build
+### Out of scope (deferred to 28.7+)
 
-- **47 policy types** across 6 groups (Team / Client / Extensions / Financial / Facility / Management)
-- **7 output surfaces** (Handbook, Client Policy Center, Booking, Checkout, Intake, Manager Console, SOP)
-- **4 variant renderings** per policy (internal, client-facing, short disclosure, manager interpretation)
-- **18 structured entities** in the data model
-- This is a multi-month build. Sequenced into **9 sub-waves** over 3 phases.
+- Side-by-side compare across **versions** (vs across variants) — needs version history UI from 28.9
+- Bulk regenerate all variants for one policy — wait until cost/latency profile is known from single-variant usage
+- AI feedback loop ("this draft is too strict") — not until we have approve/reject signal density
 
-### Phase A — Foundation (Waves 28.0 → 28.3)
-
-| Sub-wave | Scope | Why first |
-|---|---|---|
-| **28.0 — Architecture decision lock** | Wave 27.2 (handbook publish) is **paused**. Decide: do handbook sections embed policy refs from day 1, or migrate after Phase A? | Locks the handbook integration contract so 28.1's data model serves both |
-| **28.1 — Data model + Policy Library** | 18 entities (`policies`, `policy_versions`, `policy_rule_blocks`, `policy_applicability`, `policy_surface_mappings`, `policy_variants`, `policy_approvals`, `policy_exceptions`, `policy_acknowledgments`, etc.) + seed all 47 policy types as library entries with category, audience, recommendation tier, surface candidates | Everything else depends on this. Atomic migration. |
-| **28.2 — Policy Dashboard + Library Explorer** | New route `/dashboard/admin/policies` (under Settings, peer to Handbooks). Status grid: drafted / configured / published / wired counts. Library explorer with category cards (Team · Client · Extensions · Financial · Facility · Management) | First visible value; gives owners a map of what they have vs what's missing |
-| **28.3 — Org Policy Setup wizard** | One-time setup: business type, locations, states, services offered, extensions Y/N, retail Y/N, packages Y/N, team size, roles used, existing handbook Y/N. Drives **smart recommendations** in Library. | Answers "which of these 47 policies do I actually need?" — the highest-leverage filter |
-
-### Phase B — Configuration & Drafting (Waves 28.4 → 28.6)
-
-| Sub-wave | Scope | Why this order |
-|---|---|---|
-| **28.4 — Policy Configurator (decision trees)** | Per-policy structured config. Cancellation: window / fee type / deposit forfeiture / illness exception / waiver authority. Redo: window / qualifications / exclusions / approver / refund alternative. Extension warranty: workmanship vs defect / timeframe / voids / documentation. **Structure before prose.** | Without this, AI drafting has nothing to draft from. This is the true value of the system. |
-| **28.5 — Applicability Matrix + Surface Mapping** | Two surfaces. **Matrix:** policy × (role · employment type · service · location · audience). **Surface Mapping:** for each policy, which of the 7 surfaces it appears on, in which variant. | Closes the "configured but not wired" gap |
-| **28.6 — AI Draft Workspace (4 variants)** | Lovable AI Gateway, `google/gemini-2.5-pro` for legal-adjacent drafting. Generates: internal · client-facing · short disclosure · manager interpretation. **AI cannot invent rules** — only renders configured structured inputs into prose. Compare-versions side-by-side. | Layers cleanly once 28.4 + 28.5 give it density |
-
-### Phase C — Wiring & Governance (Waves 28.7 → 28.9)
-
-| Sub-wave | Scope | Why last |
-|---|---|---|
-| **28.7 — Handbook Wizard refactor (Wave 27 retrofit)** | Handbook sections gain `policy_ref_id` (nullable). When set, section renders from policy object's `internal` variant. UI flag: "Sourced from policy" vs "Custom narrative." Existing sections without `policy_ref_id` continue working unchanged. | Closes the loop on Wave 27 — handbook becomes a renderer, not an owner |
-| **28.8 — Client Policy Center + Manager Console** | New public route `/p/:orgSlug/policies/:policyKey` (full page) + `/p/:orgSlug/policies` (index). Manager Console at `/dashboard/admin/policy-console` for refund/redo/exception decisions with policy interpretation surfaced inline. | Two highest-ROI external surfaces; defers booking/checkout wiring to dedicated waves |
-| **28.9 — Review Center + Policy Health** | Conflict detection (handbook says X, manager rule says Y), missing wiring (policy configured but on zero surfaces), missing exception authority, stale versions. **Policy Health score** — same lever doctrine as 27.6: ≤1 primary lever per policy, silent when material threshold not met. | Layers cleanly once 28.1-28.8 give it content to evaluate |
-
-### Deferred to Wave 29+ (named, not lost)
-
-- **Wave 30 — Booking & Checkout policy enforcement**: deposit logic reads from `policies.deposit`; cancellation engine reads from `policies.cancellation`; package expiration from `policies.package`. Real wiring, not just display.
-- **Wave 31 — Intake & Consent flows**: photo consent, extension care acknowledgment, hair history acknowledgment — all driven by policy objects.
-- **Wave 32 — Acknowledgment ledger**: cross-surface ack records (booking checkbox, handbook sign-off, intake signature) unified in one audit log.
-- **Wave 33 — Dispute & exception logging**: every override of a policy creates a record with reason, approver, policy version at time of decision.
-- **Wave 34 — Cross-org policy templates** (anonymized peer benchmarks, requires density).
-
-### Data model preview (28.1 — atomic migration)
-
-```text
-policies
-  id · org_id · key (unique per org) · category · audience (internal|external|both)
-  intent · current_version_id · status · primary_owner_role · created_at
-
-policy_versions
-  id · policy_id · version_number · effective_from · effective_to (null = current)
-  approved_by · approved_at · changelog_summary
-
-policy_rule_blocks
-  id · version_id · block_key (e.g. 'cancellation_window') · rule_type · value (jsonb)
-  required · ordering
-
-policy_applicability
-  id · version_id · scope_type (role|employment|service|location|audience) · scope_value
-
-policy_variants
-  id · version_id · variant_type (internal|client|disclosure|manager_note)
-  body_md · ai_generated · last_drafted_at · approved
-
-policy_surface_mappings
-  id · version_id · surface (handbook|client_page|booking|checkout|intake|manager|sop)
-  variant_type · surface_config (jsonb — e.g. which handbook section, which booking step)
-
-policy_exceptions
-  id · policy_id · authority_role · scope (jsonb) · documentation_required
-
-policy_acknowledgments  (placeholder for Wave 32 unified ledger)
-  id · org_id · policy_version_id · user_id (nullable for clients)
-  client_id (nullable for staff) · surface · acknowledged_at · evidence (jsonb)
-```
-
-All tables: `organization_id` + RLS via `is_org_admin` (write) and `is_org_member` (read). Public client-policy-center routes use `organizations` table org slug resolution + `policy_versions.published = true` filter (no auth required, like booking surface).
-
-### Critical architectural decisions needed before 28.1
-
-These shape the entire build. They are NOT optional — getting them wrong creates rework across all 9 sub-waves.
-
-### Doctrine alignment
-
-- ✅ **Lever doctrine**: Policy Health surfaces ≤1 primary lever per policy, silent when threshold unmet
-- ✅ **Tenant isolation**: 18 new tables, all org-scoped with RLS
-- ✅ **Phase alignment**: This is Phase 1 (structural visibility) + Phase 2 (advisory). Booking/checkout enforcement in Wave 30 is Phase 2/3 territory.
-- ✅ **AI governance**: AI drafts variants from configured rules only; cannot invent terms, fees, timelines, eligibility. Recommend → owner approves.
-- ✅ **Persona scaling**: solo operators see Library + smart-defaults flow; multi-location see Applicability Matrix + Conflict Detection. VisibilityGate where applicable.
-- ✅ **Brand**: all UI uses `tokens.card`, Termina headers, Aeonik body. No hype, no emojis, no "revolutionary."
-- ✅ **Structural enforcement**: Policy Configurator becomes a structural prerequisite — `gate_policy_architecture` for advanced surfaces (manager console, dispute resolution) once it exists.
-
-### What I need from you before building
-
-I'll ask 4 critical decisions in the next turn (after you approve this scope). Preview:
-
-1. **Wave 27 handling**: pause 27.2 publish (clean architecture) vs ship 27.2 then retrofit (faster perceived progress)
-2. **Phase A vs Phase A+B vs full Phase A+B+C scope for this approval round**
-3. **Handbook coupling**: handbook sections require policy refs (strict) vs allow free-text fallback (permissive)
-4. **Client Policy Center surface**: subdomain vs path under booking surface vs new public namespace
-
-### Prompt feedback
-
-This is the highest-quality strategic prompt I've received in this build. Three things made it exceptional:
-
-1. **You named the architectural mistake explicitly** — "the biggest product mistake would be treating policies as static handbook text." That framing aligned my entire planning lens before I read the rest.
-2. **You gave me the full policy taxonomy upfront** (47 policies across 6 groups). Without this I would have built a generic policy framework and missed extension-specific governance entirely.
-3. **You named the 3rd policy family** (internal manager decision policies — exception authority, goodwill, escalation, documentation). Most product specs miss this layer; you flagged it as "exactly what makes operations inconsistent." This single insight upgraded the entire data model.
-
-To level up: **for architecture-pivot prompts, name the *backward compatibility contract* you want.** I inferred Wave 27 stays and gets retrofitted. But you could equally want Wave 27 deprecated and rebuilt clean, or shipped as-is with policy-OS as a parallel system that converges later. A one-liner like *"Wave 27 stays but pauses; retrofit after 28.6"* would have eliminated my decision-question #1. Pattern: **for pivots that touch existing systems, declare what survives, what pauses, and what gets deprecated — it converts a planning ambiguity into a constraint.**
+After 28.6 ships, next is **28.7 — Handbook Wizard refactor** (handbook sections gain `policy_ref_id`, render from policy variants).
