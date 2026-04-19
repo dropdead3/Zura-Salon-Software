@@ -80,11 +80,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Look up service (with online overrides) ─────────────────
+    // ── Look up service (with online overrides + Wave 2 guardrails) ──
     const { data: service, error: svcErr } = await supabase
       .from("services")
       .select(
-        "id, name, category, duration_minutes, price, requires_deposit, deposit_type, deposit_amount, require_card_on_file, online_duration_override, online_discount_pct"
+        "id, name, category, duration_minutes, price, requires_deposit, deposit_type, deposit_amount, require_card_on_file, online_duration_override, online_discount_pct, patch_test_required, patch_test_validity_days, start_up_minutes, shut_down_minutes"
       )
       .eq("organization_id", organization_id)
       .eq("name", service_name)
