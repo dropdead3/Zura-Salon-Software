@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import type { FormTemplate } from './useFormTemplates';
 
 export interface ServiceFormRequirement {
@@ -25,21 +26,30 @@ export interface ServiceFormRequirementInsert {
  * Use this for catalog-level views (e.g. Forms admin showing what each form is
  * attached to). For "what does THIS service require" use `useRequiredFormsForService`.
  */
-export function useServiceFormRequirements() {
+export function useServiceFormRequirements(organizationId?: string | null) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId ?? effectiveOrganization?.id ?? null;
+
   return useQuery({
-    queryKey: ['service-form-requirements'],
+    queryKey: ['service-form-requirements', orgId],
     queryFn: async () => {
+      // Inner-join filter on services.organization_id enforces tenant scope at
+      // the query layer (defense-in-depth alongside RLS) and prevents the silent
+      // 1000-row truncation cap from masking cross-org rows.
       const { data, error } = await supabase
         .from('service_form_requirements')
         .select(`
           *,
-          form_template:form_templates(*)
+          form_template:form_templates(*),
+          services!inner(organization_id)
         `)
+        .eq('services.organization_id', orgId as string)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data as unknown as ServiceFormRequirement[];
     },
+    enabled: !!orgId,
   });
 }
 
