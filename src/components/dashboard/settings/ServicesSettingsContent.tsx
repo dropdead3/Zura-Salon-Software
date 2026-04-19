@@ -197,6 +197,9 @@ export function ServicesSettingsContent() {
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   // Wave 4: form-count map for the "forms attached" indicator on each row
   const { data: formCounts } = useServiceFormCounts(resolvedOrgId);
+  // Wave 15a: trailing-30d booking volumes per service for the volume column
+  // and zombie-service health chip.
+  const { data: serviceVolumes, isLoading: volumesLoading } = useServiceBookingVolumes(resolvedOrgId);
   const { formatCurrency } = useFormatCurrency();
   const showUndoToast = useUndoToast();
 
