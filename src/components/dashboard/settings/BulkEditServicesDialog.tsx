@@ -162,7 +162,10 @@ export function BulkEditServicesDialog({
 
   // Bug 2 fix: block Apply when category toggle is on but no destination picked
   const categoryInvalid = changeCategory && !newCategory;
-  const canApply = hasAnyChange && !categoryInvalid;
+  // Wave 6: block Apply when numeric inputs are toggled but unparseable
+  const priceInvalid = changePrice && !Number.isFinite(parseFloat(priceValue));
+  const durationInvalid = changeDuration && !Number.isFinite(parseInt(durationValue, 10));
+  const canApply = hasAnyChange && !categoryInvalid && !priceInvalid && !durationInvalid;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
