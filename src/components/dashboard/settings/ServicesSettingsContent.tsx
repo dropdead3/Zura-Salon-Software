@@ -124,7 +124,7 @@ function SortableCategoryRow({ category, children }: { category: ServiceCategory
 export function ServicesSettingsContent() {
   const { effectiveOrganization, userOrganizations } = useOrganizationContext();
   const resolvedOrgId = effectiveOrganization?.id || userOrganizations[0]?.id;
-  const { data: categories, isLoading: catsLoading } = useServiceCategoryColors();
+  const { data: categories, isLoading: catsLoading } = useServiceCategoryColors(resolvedOrgId);
   const { data: allServices, isLoading: servicesLoading } = useServicesData(undefined, resolvedOrgId);
   const updateColor = useUpdateCategoryColor();
   const reorderCategories = useReorderCategories();
@@ -133,7 +133,7 @@ export function ServicesSettingsContent() {
   const deleteCategory = useDeleteCategory();
   const archiveCategory = useArchiveCategory();
   const restoreCategory = useRestoreCategory();
-  const { data: archivedCategories } = useArchivedCategories();
+  const { data: archivedCategories } = useArchivedCategories(resolvedOrgId);
   const createService = useCreateService();
   const updateService = useUpdateService();
   const deleteService = useDeleteService();
@@ -345,14 +345,17 @@ export function ServicesSettingsContent() {
   };
 
   const handleArchiveCategory = () => {
-    if (!archiveCategoryId) return;
+    if (!archiveCategoryId || !resolvedOrgId) return;
     const catId = archiveCategoryId;
     const catName = archiveCategoryName;
-    archiveCategory.mutate({ categoryId: catId, categoryName: catName }, {
+    const orgId = resolvedOrgId;
+    archiveCategory.mutate({ categoryId: catId, categoryName: catName, organizationId: orgId }, {
       onSuccess: () => {
         setArchiveCategoryId(null);
         setArchiveCategoryName('');
-        showUndoToast(`Archived '${catName}'`, () => restoreCategory.mutate({ categoryId: catId, categoryName: catName }));
+        showUndoToast(`Archived '${catName}'`, () =>
+          restoreCategory.mutate({ categoryId: catId, categoryName: catName, organizationId: orgId }),
+        );
       },
     });
   };
@@ -394,8 +397,8 @@ export function ServicesSettingsContent() {
             // Undo: archive the freshly recreated category
             // We need to find it after invalidation — use name match
             const restored = localOrder.find(c => c.category_name === categoryName);
-            if (restored) {
-              archiveCategory.mutate({ categoryId: restored.id, categoryName });
+            if (restored && resolvedOrgId) {
+              archiveCategory.mutate({ categoryId: restored.id, categoryName, organizationId: resolvedOrgId });
             }
           });
         },
@@ -636,7 +639,8 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => {
-                            restoreCategory.mutate({ categoryId: cat.id, categoryName: cat.category_name });
+                            if (!resolvedOrgId) return;
+                            restoreCategory.mutate({ categoryId: cat.id, categoryName: cat.category_name, organizationId: resolvedOrgId });
                           }}>
                             <ArchiveRestore className="w-3 h-3" /> Restore
                           </Button>
