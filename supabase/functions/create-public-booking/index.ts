@@ -164,6 +164,79 @@ Deno.serve(async (req) => {
     const endMinutes = startMinutes + durationMinutes;
     const endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
 
+    // ── Wave 2: Operational guardrails ─────────────────────────
+    // Start-up / shut-down windows protect chemical & long services from booking
+    // in the first/last N minutes of the operating day.
+    const startUpMin = Number(service.start_up_minutes ?? 0);
+    const shutDownMin = Number(service.shut_down_minutes ?? 0);
+
+    if (startUpMin > 0 || shutDownMin > 0) {
+      // Resolve operating hours for the date — fall back to 09:00–20:00 if not configured.
+      const dayOfWeek = new Date(`${date}T12:00:00Z`).getUTCDay();
+      let openMin = 9 * 60;
+      let closeMin = 20 * 60;
+
+      if (location_id) {
+        const { data: hours } = await supabase
+          .from("location_hours")
+          .select("open_time, close_time, is_closed")
+          .eq("location_id", location_id)
+          .eq("day_of_week", dayOfWeek)
+          .maybeSingle();
+        if (hours && !hours.is_closed && hours.open_time && hours.close_time) {
+          const [oh, om] = String(hours.open_time).split(":").map(Number);
+          const [ch, cm] = String(hours.close_time).split(":").map(Number);
+          openMin = oh * 60 + (om || 0);
+          closeMin = ch * 60 + (cm || 0);
+        }
+      }
+
+      if (startMinutes < openMin + startUpMin) {
+        return jsonResponse(
+          {
+            error: `This service can't be booked in the first ${startUpMin} minutes of the day.`,
+            code: "START_UP_WINDOW",
+          },
+          422
+        );
+      }
+      if (endMinutes > closeMin - shutDownMin) {
+        return jsonResponse(
+          {
+            error: `This service can't be booked in the final ${shutDownMin} minutes of the day.`,
+            code: "SHUT_DOWN_WINDOW",
+          },
+          422
+        );
+      }
+    }
+
+    // Patch test gate — block if required and no valid test on file.
+    if (service.patch_test_required) {
+      const validityDays = Number(service.patch_test_validity_days ?? 180);
+      const cutoff = new Date(Date.now() - validityDays * 86400_000).toISOString();
+      const { data: tests } = await supabase
+        .from("client_patch_tests")
+        .select("id, performed_at, result")
+        .eq("organization_id", organization_id)
+        .eq("client_id", clientId)
+        .eq("result", "pass")
+        .gte("performed_at", cutoff)
+        .order("performed_at", { ascending: false })
+        .limit(1);
+
+      if (!tests || tests.length === 0) {
+        return jsonResponse(
+          {
+            error: "A valid patch test is required before booking this service. Please contact the salon to schedule one.",
+            code: "PATCH_TEST_REQUIRED",
+            patch_test_validity_days: validityDays,
+          },
+          422
+        );
+      }
+    }
+
     // ── Apply online discount if configured ─────────────────────
     const basePrice = service.price != null ? Number(service.price) : null;
     const discountPct = service.online_discount_pct != null
