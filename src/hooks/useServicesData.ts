@@ -105,31 +105,42 @@ export function useServicesByCategory(locationId?: string) {
 }
 
 /**
- * Get all services across all locations
+ * Get all services across all locations within the active organization.
+ * Wave 9: org-scoped explicitly (defense-in-depth on top of RLS); falls back
+ * to OrganizationContext when no override is supplied.
  */
-export function useAllServicesData() {
+export function useAllServicesData(organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId || effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['services-data-all'],
+    queryKey: ['services-data-all', orgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('services')
         .select('*')
         .eq('is_active', true)
         .eq('is_archived', false)
         .order('category')
         .order('name');
-      
+
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as unknown as Service[];
     },
+    enabled: !!orgId,
   });
 }
 
 /**
- * Get all services grouped by category (deduped by name)
+ * Get all services grouped by category (deduped by name) for the active org.
  */
-export function useAllServicesByCategory() {
-  const { data: services, ...rest } = useAllServicesData();
+export function useAllServicesByCategory(organizationId?: string) {
+  const { data: services, ...rest } = useAllServicesData(organizationId);
 
   const grouped = services?.reduce((acc, service) => {
     const category = service.category || 'Other';

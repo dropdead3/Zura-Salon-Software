@@ -95,23 +95,33 @@ export function useUpdateCategoryColor() {
   });
 }
 
-// Reorder categories by updating display_order values
+// Reorder categories by updating display_order values.
+// Wave 9: writes are sequential (deterministic on race) and explicitly
+// scoped to organizationId as defense-in-depth on top of RLS.
 export function useReorderCategories() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (orderedIds: string[]) => {
-      // Update each category's display_order based on array position
-      const updates = orderedIds.map((id, index) =>
-        supabase
+    mutationFn: async ({
+      orderedIds,
+      organizationId,
+    }: {
+      orderedIds: string[];
+      organizationId?: string | null;
+    }) => {
+      const nowIso = new Date().toISOString();
+      for (let i = 0; i < orderedIds.length; i++) {
+        const id = orderedIds[i];
+        let q = supabase
           .from('service_category_colors')
-          .update({ display_order: index + 1, updated_at: new Date().toISOString() })
-          .eq('id', id)
-      );
-      
-      const results = await Promise.all(updates);
-      const failed = results.find(r => r.error);
-      if (failed?.error) throw failed.error;
+          .update({ display_order: i + 1, updated_at: nowIso })
+          .eq('id', id);
+        if (organizationId) {
+          q = q.eq('organization_id', organizationId);
+        }
+        const { error } = await q;
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
