@@ -11,13 +11,14 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PolicyRuleField } from './PolicyRuleField';
 import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
