@@ -67,7 +67,7 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
       const activeQuery = applyLocationFilter(
         supabase
           .from('v_all_appointments' as any)
-          .select('id, phorest_staff_id, start_time, end_time, service_name, client_name, location_id')
+          .select('id, phorest_staff_id, phorest_client_id, start_time, end_time, service_name, client_name, location_id')
           .eq('appointment_date', today)
           .lte('start_time', now)
           .gt('end_time', now)
