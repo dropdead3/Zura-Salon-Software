@@ -52,7 +52,9 @@ export function BulkEditServicesDialog({
   onComplete,
 }: BulkEditServicesDialogProps) {
   const { formatCurrency } = useFormatCurrency();
-  const bulkUpdate = useBulkUpdateServices();
+  // Pass onComplete into the hook so selection clears AFTER cache invalidation
+  // resolves — prevents the "stale price flash" before the toolbar disappears.
+  const bulkUpdate = useBulkUpdateServices(onComplete);
 
   // Per-field "change this" toggles
   const [changePrice, setChangePrice] = useState(false);
@@ -146,8 +148,9 @@ export function BulkEditServicesDialog({
       { ids, patch: { shared, perId } },
       {
         onSuccess: () => {
+          // Note: cache invalidation + onComplete (clearSelection) are handled
+          // inside the hook's onSuccess so they sequence correctly.
           reset();
-          onComplete?.();
           onOpenChange(false);
         },
       },
@@ -208,7 +211,15 @@ export function BulkEditServicesDialog({
                     {formatCurrency(Math.abs(projectedMonthlyDelta))}/mo
                   </p>
                   <p className="text-muted-foreground mt-0.5">
-                    Based on {impact?.totalVolume ?? 0} bookings in the last 30 days. Excludes services with no recent volume.
+                    Based on {impact?.totalVolume ?? 0} bookings in the last 30 days.
+                    {(impact?.servicesWithoutVolume ?? 0) > 0 && (
+                      <>
+                        {' '}
+                        <span className="text-foreground/80">
+                          {impact?.servicesWithoutVolume} {impact?.servicesWithoutVolume === 1 ? 'service has' : 'services have'} no recent volume — impact for {impact?.servicesWithoutVolume === 1 ? 'it' : 'those'} isn't projected.
+                        </span>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
