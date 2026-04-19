@@ -11,7 +11,7 @@ import {
   GraduationCap, Layers, GripVertical, Pencil, X, Save, RotateCcw,
   Building2, MapPin, Armchair, MessageSquare, Sparkles, FileCheck,
   Gift, Trophy, TabletSmartphone, Scissors, ShoppingBag, Wallet, CreditCard,
-  Upload,
+  Upload, BookOpen,
 } from 'lucide-react';
 import { MessageSquareHeart } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -82,6 +82,7 @@ const categoriesMap: Record<string, { id: string; label: string; description: st
   'data-import': { id: 'data-import', label: 'Data Import', description: 'Migrate data from other salon software or import from CSV files.', icon: Upload },
   'zura-config': { id: 'zura-config', label: 'Zura Configuration', description: 'Customize AI personality, knowledge base, role rules, and behavioral guardrails.', icon: Sparkles },
   'terminals': { id: 'terminals', label: 'Point Of Sale', description: 'Configure your Point Of Sale hardware fleet, purchase readers, monitor connectivity, and preview checkout display.', icon: CreditCard },
+  'handbooks': { id: 'handbooks', label: 'Handbooks', description: 'Build role-aware handbooks with the wizard, or manage uploaded policy documents.', icon: BookOpen },
 };
 
 export default function Settings() {
@@ -129,6 +130,7 @@ export default function Settings() {
     else if (id === 'access-hub') navigate(dashPath('/admin/access-hub'));
     else if (id === 'data-import') navigate(dashPath('/admin/data-import'));
     else if (id === 'zura-config') navigate(dashPath('/admin/zura-config'));
+    else if (id === 'handbooks') navigate(dashPath('/admin/handbooks'));
     else setActiveCategory(id as SettingsCategory);
   };
 

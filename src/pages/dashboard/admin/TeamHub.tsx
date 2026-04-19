@@ -644,15 +644,6 @@ export default function TeamHub() {
               {...favProps('/admin/incidents', 'Incidents & Accountability', ShieldAlert)}
             />
           )}
-          {!isFavorited(dashPath('/admin/handbooks')) && (
-            <ManagementCard
-              href={dashPath('/admin/handbooks')}
-              icon={BookOpen}
-              title="Handbooks"
-              description="Build role-aware handbooks with the wizard, or upload existing policy documents"
-              {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
-            />
-          )}
           {!isFavorited(dashPath('/admin/documents')) && (
             <ManagementCard
               href={dashPath('/admin/documents')}
