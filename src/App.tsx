@@ -87,6 +87,7 @@ const WeeklyWins = lazyWithRetry(() => import("./pages/dashboard/WeeklyWins"));
 const TeamOverview = lazyWithRetry(() => import("./pages/dashboard/admin/TeamOverview"));
 const Handbooks = lazyWithRetry(() => import("./pages/dashboard/admin/Handbooks"));
 const AdminPolicies = lazyWithRetry(() => import("./pages/dashboard/admin/Policies"));
+const PolicyConflictCenter = lazyWithRetry(() => import("./pages/dashboard/admin/PolicyConflictCenter"));
 const HandbookDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookDashboard"));
 const HandbookWizard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookWizard"));
 const AdminSettings = lazyWithRetry(() => import("./pages/dashboard/admin/Settings"));
@@ -341,6 +342,7 @@ function DashboardRoutes() {
       <Route path="admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
       <Route path="admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
       <Route path="admin/policies" element={<ProtectedRoute requiredPermission="manage_handbooks"><AdminPolicies /></ProtectedRoute>} />
+      <Route path="admin/policy/conflicts" element={<ProtectedRoute requiredPermission="manage_handbooks"><PolicyConflictCenter /></ProtectedRoute>} />
       <Route path="admin/handbook-wizard" element={<Navigate to="../handbooks?tab=wizard" replace />} />
       <Route path="admin/handbook-wizard/:handbookId/edit" element={<ProtectedRoute requiredPermission="manage_handbooks"><HandbookWizard /></ProtectedRoute>} />
       <Route path="admin/handbook" element={<Navigate to="../handbooks?tab=wizard" replace />} />
