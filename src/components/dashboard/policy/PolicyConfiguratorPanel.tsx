@@ -235,6 +235,32 @@ export function PolicyConfiguratorPanel({
             </button>
           )}
         </div>
+
+        {/* Wave 28.10 — operator opt-in to require client acknowledgment */}
+        {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
+          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
+            <Switch
+              id="require-ack"
+              checked={!!(data as any).requiresAcknowledgment}
+              disabled={updateAckFlag.isPending}
+              onCheckedChange={(checked) =>
+                updateAckFlag.mutate(
+                  { policyId: data.policyId, requiresAcknowledgment: checked },
+                  { onSuccess: () => refetch() },
+                )
+              }
+            />
+            <label htmlFor="require-ack" className="flex-1 cursor-pointer space-y-0.5">
+              <p className="font-sans text-sm text-foreground">
+                Require client acknowledgment
+              </p>
+              <p className="font-sans text-xs text-muted-foreground">
+                Clients must type their name and check a confirmation on the public Policy
+                Center before the policy is considered acknowledged.
+              </p>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Version History side-sheet */}
