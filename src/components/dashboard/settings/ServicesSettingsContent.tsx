@@ -709,10 +709,22 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                   // Hide categories with no matching services when searching
                   if (searchQuery.trim() && services.length === 0) return null;
 
+                  const catServiceIds = (servicesByCategory[cat.category_name] ?? []).map((s) => s.id);
+                  const selectedInCat = catServiceIds.filter((id) => selectedServiceIds.has(id)).length;
+                  const allInCatSelected = catServiceIds.length > 0 && selectedInCat === catServiceIds.length;
+                  const someInCatSelected = selectedInCat > 0 && !allInCatSelected;
+
                   return (
                     <AccordionItem key={cat.id} value={cat.id} className="border rounded-lg mb-2 px-4">
                       <AccordionTrigger className="hover:no-underline py-4">
                         <div className="flex items-center gap-3">
+                          <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                            <Checkbox
+                              checked={allInCatSelected ? true : someInCatSelected ? 'indeterminate' : false}
+                              onCheckedChange={() => toggleCategorySelected(cat.category_name, allInCatSelected)}
+                              aria-label={`Select all in ${cat.category_name}`}
+                            />
+                          </div>
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0"
 style={gradient ? { background: gradient.background, color: gradient.textColor, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
