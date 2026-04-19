@@ -172,20 +172,21 @@ Deno.serve(async (req) => {
 
     if (startUpMin > 0 || shutDownMin > 0) {
       // Resolve operating hours for the date — fall back to 09:00–20:00 if not configured.
-      const dayOfWeek = new Date(`${date}T12:00:00Z`).getUTCDay();
+      const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayKey = dayNames[new Date(`${date}T12:00:00Z`).getUTCDay()];
       let openMin = 9 * 60;
       let closeMin = 20 * 60;
 
       if (location_id) {
-        const { data: hours } = await supabase
-          .from("location_hours")
-          .select("open_time, close_time, is_closed")
-          .eq("location_id", location_id)
-          .eq("day_of_week", dayOfWeek)
+        const { data: loc } = await supabase
+          .from("locations")
+          .select("hours_json")
+          .eq("id", location_id)
           .maybeSingle();
-        if (hours && !hours.is_closed && hours.open_time && hours.close_time) {
-          const [oh, om] = String(hours.open_time).split(":").map(Number);
-          const [ch, cm] = String(hours.close_time).split(":").map(Number);
+        const dayHours = (loc?.hours_json as Record<string, { open?: string; close?: string; closed?: boolean }> | null)?.[dayKey];
+        if (dayHours && !dayHours.closed && dayHours.open && dayHours.close) {
+          const [oh, om] = dayHours.open.split(":").map(Number);
+          const [ch, cm] = dayHours.close.split(":").map(Number);
           openMin = oh * 60 + (om || 0);
           closeMin = ch * 60 + (cm || 0);
         }
