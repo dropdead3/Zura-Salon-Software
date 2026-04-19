@@ -17632,6 +17632,7 @@ export type Database = {
       }
       policy_surface_mappings: {
         Row: {
+          auto_assigned_at: string | null
           created_at: string
           enabled: boolean
           id: string
@@ -17643,6 +17644,7 @@ export type Database = {
           version_id: string
         }
         Insert: {
+          auto_assigned_at?: string | null
           created_at?: string
           enabled?: boolean
           id?: string
@@ -17654,6 +17656,7 @@ export type Database = {
           version_id: string
         }
         Update: {
+          auto_assigned_at?: string | null
           created_at?: string
           enabled?: boolean
           id?: string
@@ -30385,8 +30388,16 @@ export type Database = {
         Args: { _recommendation_id: string; _user_id?: string }
         Returns: undefined
       }
+      save_policy_applicability: {
+        Args: { p_rows: Json; p_version_id: string }
+        Returns: undefined
+      }
       save_policy_rule_blocks: {
         Args: { p_blocks: Json; p_version_id: string }
+        Returns: undefined
+      }
+      save_policy_surface_mappings: {
+        Args: { p_rows: Json; p_version_id: string }
         Returns: undefined
       }
       set_employee_pin: {

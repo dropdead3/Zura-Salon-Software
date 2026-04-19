@@ -1,18 +1,26 @@
 /**
- * Policy Configurator panel (Wave 28.4)
+ * Policy Configurator panel (Wave 28.4 → expanded in 28.5)
  *
- * Schema-driven decision tree editor. One panel handles all 47 policies via
- * the configurator_schema_key on each library entry. Adopts the policy if
- * it hasn't been adopted yet, then loads existing rule blocks for editing.
+ * Three-tab editor:
+ *  - Rules: schema-driven decision tree (28.4)
+ *  - Applicability: who this policy applies to (28.5)
+ *  - Surfaces: where it renders + tone variant (28.5)
+ *
+ * One panel handles all 47 policies via the configurator_schema_key on each
+ * library entry. Adopts the policy if it hasn't been adopted yet, then loads
+ * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { PolicyRuleField } from './PolicyRuleField';
+import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
+import { PolicySurfaceEditor } from './PolicySurfaceEditor';
 import {
   getConfiguratorSchema,
   type RuleField,
@@ -22,6 +30,13 @@ import {
   usePolicyConfiguratorData,
   useSavePolicyRuleBlocks,
 } from '@/hooks/policy/usePolicyConfigurator';
+import {
+  usePolicyApplicability,
+  usePolicySurfaceMappings,
+  type ApplicabilityRow,
+  type SurfaceMappingRow,
+  SURFACE_META,
+} from '@/hooks/policy/usePolicyApplicability';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 import { POLICY_CATEGORY_META } from '@/hooks/policy/usePolicyData';
 
@@ -51,6 +66,7 @@ export function PolicyConfiguratorPanel({
 
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
+  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces'>('rules');
 
   // Auto-adopt if not yet adopted, so the configurator always has a draft version.
   useEffect(() => {
@@ -67,7 +83,6 @@ export function PolicyConfiguratorPanel({
     if (!data || hydrated) return;
     const fromBlocks: Record<string, unknown> = {};
     data.blocks.forEach((b) => {
-      // value column stores a jsonb; wrapper object { v: ... } or direct
       const v = b.value as { v?: unknown } | unknown;
       fromBlocks[b.block_key] = v && typeof v === 'object' && 'v' in (v as object)
         ? (v as { v: unknown }).v
@@ -82,7 +97,37 @@ export function PolicyConfiguratorPanel({
   const versionNumber = data?.versionNumber ?? 1;
   const ready = !isLoading && !!versionId && hydrated;
 
-  const handleSave = () => {
+  /* ---- Applicability state (28.5) ---- */
+  const { data: applicabilityRows = [] } = usePolicyApplicability(versionId);
+  const [applicability, setApplicability] = useState<ApplicabilityRow[] | null>(null);
+  useEffect(() => {
+    if (versionId && applicability === null) {
+      setApplicability(applicabilityRows);
+    }
+  }, [applicabilityRows, applicability, versionId]);
+
+  /* ---- Surface mapping state (28.5) ---- */
+  const { data: surfaceRows = [] } = usePolicySurfaceMappings(versionId);
+  const [surfaces, setSurfaces] = useState<SurfaceMappingRow[] | null>(null);
+  useEffect(() => {
+    if (!versionId) return;
+    if (surfaces !== null) return;
+    if (surfaceRows.length > 0) {
+      setSurfaces(surfaceRows);
+      return;
+    }
+    // Seed: pre-enable each candidate surface from the library entry with its
+    // default variant. Operator can toggle off before saving.
+    const seeded: SurfaceMappingRow[] = (entry.candidate_surfaces ?? []).map((s) => ({
+      surface: s,
+      variant_type: SURFACE_META[s].defaultVariant,
+      enabled: true,
+      surface_config: {},
+    }));
+    setSurfaces(seeded);
+  }, [surfaceRows, surfaces, versionId, entry.candidate_surfaces]);
+
+  const handleSaveRules = () => {
     if (!versionId) return;
     const blocks = allFields
       .map((f) => ({
@@ -92,10 +137,14 @@ export function PolicyConfiguratorPanel({
         required: !!f.required,
       }))
       .filter((b) => b.value.v !== null && b.value.v !== '');
-    save.mutate({ versionId, blocks }, { onSuccess: onClose });
+    save.mutate({ versionId, blocks }); // stay open so operator can move to Applicability tab
   };
 
   const categoryMeta = POLICY_CATEGORY_META[entry.category];
+
+  /* Counters for tab badges */
+  const applicabilityCount = applicability?.length ?? 0;
+  const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
 
   return (
     <div className="space-y-6">
@@ -106,7 +155,11 @@ export function PolicyConfiguratorPanel({
             {categoryMeta.label}
           </Badge>
           <Badge variant="secondary" className="font-sans text-xs">
-            {entry.audience === 'both' ? 'Internal + Client-facing' : entry.audience === 'external' ? 'Client-facing' : 'Internal'}
+            {entry.audience === 'both'
+              ? 'Internal + Client-facing'
+              : entry.audience === 'external'
+                ? 'Client-facing'
+                : 'Internal'}
           </Badge>
           {ready && (
             <Badge variant="outline" className="font-sans text-xs">
@@ -135,68 +188,129 @@ export function PolicyConfiguratorPanel({
 
       <Separator />
 
-      {/* Schema description */}
-      <div>
-        <h4 className="font-sans text-sm font-medium mb-1">{schema.label}</h4>
-        <p className="font-sans text-xs text-muted-foreground">{schema.description}</p>
-      </div>
-
-      {/* Form */}
       {!ready ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className={tokens.loading.spinner} />
         </div>
       ) : (
-        <div className="space-y-6">
-          {schema.sections.map((section) => (
-            <div key={section.title} className="space-y-4">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+          <TabsList className="bg-muted/50">
+            <TabsTrigger value="rules" className="font-sans">
+              <Settings className="w-3.5 h-3.5 mr-1.5" />
+              Rules
+            </TabsTrigger>
+            <TabsTrigger value="applicability" className="font-sans">
+              <Users className="w-3.5 h-3.5 mr-1.5" />
+              Applicability
+              {applicabilityCount > 0 && (
+                <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
+                  {applicabilityCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="surfaces" className="font-sans">
+              <MapPin className="w-3.5 h-3.5 mr-1.5" />
+              Surfaces
+              {surfacesActiveCount > 0 && (
+                <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
+                  {surfacesActiveCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ---- Rules tab ---- */}
+          <TabsContent value="rules" className="mt-6">
+            <div className="space-y-6">
               <div>
-                <h5 className="font-display text-xs tracking-wider uppercase text-foreground">
-                  {section.title}
-                </h5>
-                {section.description && (
-                  <p className="font-sans text-xs text-muted-foreground mt-1">{section.description}</p>
-                )}
+                <h4 className="font-sans text-sm font-medium mb-1">{schema.label}</h4>
+                <p className="font-sans text-xs text-muted-foreground">
+                  {schema.description}
+                </p>
               </div>
-              <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-                {section.fields.map((field) => (
-                  <PolicyRuleField
-                    key={field.key}
-                    field={field}
-                    value={values[field.key]}
-                    onChange={(v) => setValues((prev) => ({ ...prev, [field.key]: v }))}
-                  />
+
+              <div className="space-y-6">
+                {schema.sections.map((section) => (
+                  <div key={section.title} className="space-y-4">
+                    <div>
+                      <h5 className="font-display text-xs tracking-wider uppercase text-foreground">
+                        {section.title}
+                      </h5>
+                      {section.description && (
+                        <p className="font-sans text-xs text-muted-foreground mt-1">
+                          {section.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-4 rounded-xl border border-border bg-card p-4">
+                      {section.fields.map((field) => (
+                        <PolicyRuleField
+                          key={field.key}
+                          field={field}
+                          value={values[field.key]}
+                          onChange={(v) =>
+                            setValues((prev) => ({ ...prev, [field.key]: v }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
+
+              <Separator />
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-sans text-xs text-muted-foreground">
+                  After saving rules, define applicability and surfaces in the next tabs.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={handleSaveRules}
+                  disabled={save.isPending}
+                  className="font-sans"
+                >
+                  {save.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save rules
+                </Button>
+              </div>
             </div>
-          ))}
-        </div>
+          </TabsContent>
+
+          {/* ---- Applicability tab ---- */}
+          <TabsContent value="applicability" className="mt-6">
+            {versionId && applicability !== null && (
+              <PolicyApplicabilityEditor
+                versionId={versionId}
+                rows={applicability}
+                onChange={setApplicability}
+              />
+            )}
+          </TabsContent>
+
+          {/* ---- Surfaces tab ---- */}
+          <TabsContent value="surfaces" className="mt-6">
+            {versionId && surfaces !== null && (
+              <PolicySurfaceEditor
+                versionId={versionId}
+                candidateSurfaces={entry.candidate_surfaces ?? []}
+                rows={surfaces}
+                onChange={setSurfaces}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       )}
 
-      {/* Footer */}
+      {/* Footer close */}
       <Separator />
-      <div className="flex items-center justify-between gap-3">
-        <p className="font-sans text-xs text-muted-foreground">
-          Saving creates a draft. AI drafting and surface wiring come next.
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onClose} className="font-sans">
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!ready || save.isPending}
-            className="font-sans"
-          >
-            {save.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save rules
-          </Button>
-        </div>
+      <div className="flex items-center justify-end">
+        <Button variant="outline" size="sm" onClick={onClose} className="font-sans">
+          Close
+        </Button>
       </div>
     </div>
   );
