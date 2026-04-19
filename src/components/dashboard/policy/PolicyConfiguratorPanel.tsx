@@ -72,6 +72,7 @@ export function PolicyConfiguratorPanel({
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
   const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts'>('rules');
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Auto-adopt if not yet adopted, so the configurator always has a draft version.
   useEffect(() => {
