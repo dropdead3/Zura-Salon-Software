@@ -208,18 +208,44 @@ export function PolicyConfiguratorPanel({
             </div>
           </div>
         )}
-        {hasApprovedClientVariant && publicPolicyUrl && (
-          <a
-            href={publicPolicyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            View on public policy page
-          </a>
-        )}
+        <div className="flex items-center gap-4 flex-wrap">
+          {hasApprovedClientVariant && publicPolicyUrl && (
+            <a
+              href={publicPolicyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              View on public policy page
+            </a>
+          )}
+          {data?.policyId && (
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              className="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              Version history
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Version History side-sheet */}
+      <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle className={cn(tokens.heading.section)}>Version history</SheetTitle>
+            <SheetDescription className="font-sans">
+              Every saved version of {entry.title}, newest first. Expand any version to see
+              what changed.
+            </SheetDescription>
+          </SheetHeader>
+          <PolicyVersionHistoryPanel policyId={data?.policyId ?? null} />
+        </SheetContent>
+      </Sheet>
 
       <Separator />
 
