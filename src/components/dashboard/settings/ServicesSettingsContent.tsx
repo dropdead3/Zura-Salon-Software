@@ -273,6 +273,11 @@ export function ServicesSettingsContent() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Wave 15a: Catalog Health filter — chip on the health bar narrows the
+  // catalog view to services matching that defect class. Mutually exclusive
+  // with no filter (null = show all).
+  const [healthFilter, setHealthFilter] = useState<CatalogHealthFilter>(null);
+
   // Wave 14: Density toggle (persisted per-user)
   const [density, setDensityState] = useState<'comfortable' | 'compact'>(() => {
     if (typeof window === 'undefined') return 'comfortable';
