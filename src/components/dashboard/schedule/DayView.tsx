@@ -722,8 +722,8 @@ export function DayView({
                         {avatarEl}
                         <span
                           className={cn(
-                            'absolute -top-1 -right-1 w-3 h-3 rounded-full pointer-events-none z-10',
-                            'shadow-[0_0_0_2px_hsl(var(--sidebar-background)/0.95),0_1px_3px_rgba(0,0,0,0.4)]',
+                            'absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full pointer-events-none z-10',
+                            'shadow-[0_0_0_1.5px_hsl(var(--sidebar-background)/0.95),0_1px_3px_rgba(0,0,0,0.4)]',
                             'ring-1 ring-white/20',
                             acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
                           )}
