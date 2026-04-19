@@ -35,6 +35,7 @@ import {
 import { toast } from 'sonner';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useStylistExclusionSummaries } from '@/hooks/useStylistExclusions';
 
 interface DayViewProps {
   date: Date;
