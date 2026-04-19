@@ -4,8 +4,8 @@
  * Schema-light grid for picking who a policy applies to. Group by scope_type;
  * each scope is a multiselect. Empty = "applies to everyone in that scope".
  */
-import { useMemo } from 'react';
-import { Loader2, Save, Users } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
+import { Loader2, Save, Users, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -17,8 +17,10 @@ import {
   SCOPE_TYPE_META,
   DEFAULT_SCOPE_VALUES,
   useSavePolicyApplicability,
+  seedApplicabilityFromProfile,
 } from '@/hooks/policy/usePolicyApplicability';
 import { useLocations } from '@/hooks/useLocations';
+import { usePolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
 
 interface Props {
   versionId: string;
