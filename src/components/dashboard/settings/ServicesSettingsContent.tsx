@@ -698,6 +698,32 @@ export function ServicesSettingsContent() {
               )}
 
               <CardContent>
+                {/* Wave 15a: Uncategorized banner — promoted from a quiet
+                    bottom-of-card box to a top-of-card amber callout because
+                    orphaned services are a structural defect, not a footnote. */}
+                {uncategorizedServices.length > 0 && (
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+                      <span className={cn(tokens.body.emphasis, 'text-warning-foreground')}>
+                        {uncategorizedServices.length} service{uncategorizedServices.length === 1 ? '' : 's'} orphaned
+                      </span>
+                      <span className={tokens.body.muted}>
+                        — assign to a category or archive below
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Wave 15a: Catalog Health Bar — silent when clean */}
+                <CatalogHealthBar
+                  services={allServices ?? []}
+                  categories={localOrder}
+                  volumes={serviceVolumes}
+                  activeFilter={healthFilter}
+                  onFilterChange={setHealthFilter}
+                />
+
                 {/* Search match summary */}
                 {searchQuery.trim() && (
                   <p className={cn(tokens.body.muted, 'mb-3')}>
