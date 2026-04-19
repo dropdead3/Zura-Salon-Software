@@ -121,6 +121,56 @@ function SortableCategoryRow({ category, children }: { category: ServiceCategory
   );
 }
 
+/**
+ * Unified sortable + collapsible row used in the consolidated Service Catalog card.
+ * Wraps a single AccordionItem with dnd-kit sortable behavior. The drag handle
+ * lives at the row's left edge (header only) so expanded service lists remain
+ * scrollable without triggering reorder.
+ *
+ * TODO Wave 15: keyboard navigation (↑/↓ between rows, →/← expand/collapse)
+ *               and service-within-category drag.
+ */
+function UnifiedCategoryRow({
+  category,
+  density,
+  children,
+}: {
+  category: ServiceCategoryColor;
+  density: 'comfortable' | 'compact';
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    opacity: isDragging ? 0.9 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'border border-border/60 rounded-lg bg-card/40 hover:bg-card/60 transition-colors',
+        isDragging && 'shadow-lg ring-1 ring-primary/30'
+      )}
+    >
+      <div className={cn('flex items-stretch', density === 'compact' ? 'px-2' : 'px-3')}>
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex items-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none pr-2"
+          aria-label={`Drag to reorder ${category.category_name}`}
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 export function ServicesSettingsContent() {
   const { effectiveOrganization, userOrganizations } = useOrganizationContext();
   const resolvedOrgId = effectiveOrganization?.id || userOrganizations[0]?.id;
@@ -216,6 +266,25 @@ export function ServicesSettingsContent() {
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Wave 14: Density toggle (persisted per-user)
+  const [density, setDensityState] = useState<'comfortable' | 'compact'>(() => {
+    if (typeof window === 'undefined') return 'comfortable';
+    const stored = window.localStorage.getItem('service-catalog-density');
+    return stored === 'compact' ? 'compact' : 'comfortable';
+  });
+  const setDensity = (next: 'comfortable' | 'compact') => {
+    setDensityState(next);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('service-catalog-density', next);
+    }
+  };
+
+  // Wave 14: Manual accordion expansion state.
+  // - Search auto-expands the first matching category.
+  // - Expand-all toggle expands every category.
+  // - Otherwise tracks user clicks.
+  const [manualAccordionValue, setManualAccordionValue] = useState<string[]>([]);
 
   // Wave 3: Bulk selection
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
@@ -442,13 +511,43 @@ export function ServicesSettingsContent() {
     return filtered;
   }, [servicesByCategory, searchQuery]);
 
-  // Auto-expand accordion items when searching
-  const searchExpandedValues = useMemo(() => {
-    if (!searchQuery.trim()) return undefined;
-    return localOrder
-      .filter(cat => filteredServicesByCategory[cat.category_name]?.length)
-      .map(cat => cat.id);
+  // Wave 14: Search match summary (informs operator before they expand)
+  const { searchMatchCount, searchMatchCategoryCount, firstMatchCategoryId } = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return { searchMatchCount: 0, searchMatchCategoryCount: 0, firstMatchCategoryId: null as string | null };
+    }
+    let total = 0;
+    let cats = 0;
+    let first: string | null = null;
+    for (const cat of localOrder) {
+      const matches = filteredServicesByCategory[cat.category_name];
+      if (matches?.length) {
+        total += matches.length;
+        cats += 1;
+        if (!first) first = cat.id;
+      }
+    }
+    return { searchMatchCount: total, searchMatchCategoryCount: cats, firstMatchCategoryId: first };
   }, [searchQuery, localOrder, filteredServicesByCategory]);
+
+  // Wave 14: Resolved accordion value combining manual selections, search auto-expand,
+  // and the expand-all toggle.
+  const allCategoryIds = useMemo(() => localOrder.map(c => c.id), [localOrder]);
+  const allExpanded = manualAccordionValue.length > 0 && allCategoryIds.length > 0 && allCategoryIds.every(id => manualAccordionValue.includes(id));
+  const accordionValue = useMemo(() => {
+    if (searchQuery.trim()) {
+      // Auto-expand only the FIRST matching category (cuts the jumpy cascade).
+      // User can still manually expand more.
+      const set = new Set(manualAccordionValue);
+      if (firstMatchCategoryId) set.add(firstMatchCategoryId);
+      return Array.from(set);
+    }
+    return manualAccordionValue;
+  }, [searchQuery, firstMatchCategoryId, manualAccordionValue]);
+
+  const toggleExpandAll = () => {
+    setManualAccordionValue(allExpanded ? [] : allCategoryIds);
+  };
 
 
   // Tab state synced to URL (?tab=catalog|addons|staff|policies)
@@ -479,482 +578,521 @@ export function ServicesSettingsContent() {
             <TabsTrigger value="policies">Policies</TabsTrigger>
           </TabsList>
 
-          {/* ============ TAB 1: CATALOG ============ */}
+          {/* ============ TAB 1: CATALOG (UNIFIED) ============ */}
           <TabsContent value="catalog" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Categories Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Palette className="w-5 h-5 text-primary" />
-                <CardTitle className={tokens.heading.section}>SERVICE CATEGORIES</CardTitle>
-              </div>
-              <Button variant="outline" className={tokens.button.cardAction} onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
-                <Plus className="w-4 h-4 mr-1" /> Add Category
-              </Button>
-            </div>
-           <CardDescription>
-              Drag to reorder categories. Click the color badge to customize. This order is used across all booking flows.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {localOrder.length === 0 ? (
-              <div className={tokens.empty.container}>
-                <Scissors className={tokens.empty.icon} />
-                <h3 className={tokens.empty.heading}>No categories yet</h3>
-                <p className={tokens.empty.description}>Create your first service category to get started.</p>
-              </div>
-            ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={localOrder.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-2">
-                    {localOrder.map((cat) => {
-                      const abbr = getCategoryAbbreviation(cat.category_name);
-                      const hasGradient = isGradientMarker(cat.color_hex);
-                      const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
-                      const serviceCount = servicesByCategory[cat.category_name]?.length || 0;
-                      const isEmpty = serviceCount === 0;
-
-                      return (
-                        <SortableCategoryRow key={cat.id} category={cat}>
-                          {/* Color badge */}
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button
-                                className={cn(
-                                  "w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0 transition-transform hover:scale-105 ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50",
-                                  
-                                )}
-style={gradient ? { background: gradient.background, color: gradient.textColor, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
-                              >
-                                {abbr}
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-4" align="start">
-                              <div className="space-y-3">
-                                <p className={tokens.body.emphasis}>{cat.category_name}</p>
-                                <div className="space-y-1">
-                                  <p className={tokens.label.tiny}>Special Styles</p>
-                                  <div className="flex gap-2 flex-wrap">
-                                    {GRADIENT_OPTIONS.map(g => (
-                                      <Tooltip key={g.id}>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary')}
-                                            style={{ background: g.background }}
-                                            onClick={() => handleColorChange(cat.id, `gradient:${g.id}`)}
-                                          />
-                                        </TooltipTrigger>
-                                        <TooltipContent><p className="text-xs">{g.name}</p></TooltipContent>
-                                      </Tooltip>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="h-px bg-border" />
-                                <div className="space-y-1">
-                                  <p className={tokens.label.tiny}>Solid Colors</p>
-                                  <div className="grid grid-cols-6 gap-1.5">
-                                    {CATEGORY_PALETTE.map(c => (
-                                      <button
-                                        key={c}
-                                        className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
-                                        style={{ backgroundColor: c }}
-                                        onClick={() => handleColorChange(cat.id, c)}
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-
-                          {/* Name & service count */}
-                          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => {
-                            setCategoryDialogMode('rename');
-                            setEditingCategory(cat);
-                            setCategoryDialogOpen(true);
-                          }}>
-                            <p className={cn(tokens.body.emphasis, 'truncate', isEmpty && 'text-muted-foreground')}>{cat.category_name}</p>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {isEmpty 
-                                ? <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-destructive/15 text-destructive border border-destructive/25">No services</span>
-                                : <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
-                              }
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                              setCategoryDialogMode('rename');
-                              setEditingCategory(cat);
-                              setCategoryDialogOpen(true);
-                            }}>
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-600" onClick={() => {
-                              setArchiveCategoryId(cat.id);
-                              setArchiveCategoryName(cat.category_name);
-                            }}>
-                              <Archive className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </SortableCategoryRow>
-                      );
-                    })}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={tokens.card.iconBox}>
+                      <Palette className={tokens.card.icon} />
+                    </div>
+                    <div className="min-w-0">
+                      <CardTitle className={tokens.heading.section}>SERVICE CATALOG</CardTitle>
+                      <CardDescription>
+                        Drag categories to reorder · expand to manage services · click color to recolor
+                      </CardDescription>
+                    </div>
                   </div>
-                </SortableContext>
-              </DndContext>
-            )}
-
-            {/* Archived Categories */}
-            {(archivedCategories?.length || 0) > 0 && (
-              <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
-                <button
-                  className="flex items-center justify-between w-full px-4 py-3 text-left"
-                  onClick={() => setShowArchivedCategories(!showArchivedCategories)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Archive className="w-4 h-4 text-muted-foreground" />
-                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Categories</span>
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedCategories?.length}</Badge>
-                  </div>
-                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedCategories && 'rotate-180')} />
-                </button>
-                {showArchivedCategories && (
-                  <div className="px-4 pb-3 space-y-2">
-                    {archivedCategories?.map(cat => (
-                      <div key={cat.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30">
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium opacity-50"
-                          style={{ backgroundColor: cat.color_hex, color: cat.text_color_hex }}
-                        >
-                          {getCategoryAbbreviation(cat.category_name)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{cat.category_name}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => {
-                            restoreCategory.mutate({ categoryId: cat.id, categoryName: cat.category_name });
-                          }}>
-                            <ArchiveRestore className="w-3 h-3" /> Restore
-                          </Button>
-                          {isPrimaryOwner && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
-                              setDeleteCategoryId(cat.id);
-                              setDeleteCategoryName(cat.category_name);
-                            }}>
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(allServices?.length || 0) > 5 && (
+                      <div className="relative w-56">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search services..."
+                          value={searchQuery}
+                          onChange={e => setSearchQuery(e.target.value)}
+                          className={cn('pl-9 h-9', tokens.input.search)}
+                          autoCapitalize="off"
+                        />
                       </div>
-                    ))}
+                    )}
+                    <div className="flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setDensity('comfortable')}
+                        className={cn(
+                          'h-8 px-3 rounded-full text-xs font-sans font-medium transition-colors',
+                          density === 'comfortable' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        Comfortable
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDensity('compact')}
+                        className={cn(
+                          'h-8 px-3 rounded-full text-xs font-sans font-medium transition-colors',
+                          density === 'compact' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        Compact
+                      </button>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 rounded-full"
+                          onClick={toggleExpandAll}
+                          aria-label={allExpanded ? 'Collapse all categories' : 'Expand all categories'}
+                        >
+                          <ChevronDown className={cn('w-4 h-4 transition-transform', allExpanded && 'rotate-180')} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p className="text-xs">{allExpanded ? 'Collapse all' : 'Expand all'}</p></TooltipContent>
+                    </Tooltip>
+                    <Button variant="outline" className={tokens.button.cardAction} onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Category
+                    </Button>
+                    <Button className={tokens.button.cardAction} onClick={() => openCreateService()}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Service
+                    </Button>
                   </div>
+                </div>
+              </CardHeader>
+
+              {/* Sticky bulk-edit toolbar (appears when selections active) */}
+              {selectedServiceIds.size > 0 && (
+                <div className="sticky top-0 z-10 mx-6 mb-4 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 backdrop-blur-md px-3 py-2 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearSelection}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                    <span className={cn(tokens.body.emphasis)}>
+                      {selectedServiceIds.size} selected
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={() => setBulkEditOpen(true)}>
+                    <SlidersHorizontal className="w-4 h-4 mr-1.5" /> Bulk edit
+                  </Button>
+                </div>
+              )}
+
+              <CardContent>
+                {/* Search match summary */}
+                {searchQuery.trim() && (
+                  <p className={cn(tokens.body.muted, 'mb-3')}>
+                    {searchMatchCount === 0
+                      ? `No matches for "${searchQuery}"`
+                      : `${searchMatchCount} match${searchMatchCount === 1 ? '' : 'es'} in ${searchMatchCategoryCount} categor${searchMatchCategoryCount === 1 ? 'y' : 'ies'}`}
+                  </p>
                 )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Services Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Scissors className="w-5 h-5 text-primary" />
-                <CardTitle className={tokens.heading.section}>SERVICES</CardTitle>
-              </div>
-              <Button variant="outline" className={tokens.button.cardAction} onClick={() => openCreateService()}>
-                <Plus className="w-4 h-4 mr-1" /> Add Service
-              </Button>
-            </div>
-            <CardDescription>Manage individual services within each category. Select multiple to bulk-edit.</CardDescription>
-          </CardHeader>
+                {localOrder.length === 0 ? (
+                  <div className={tokens.empty.container}>
+                    <Scissors className={tokens.empty.icon} />
+                    <h3 className={tokens.empty.heading}>No categories yet</h3>
+                    <p className={tokens.empty.description}>Create your first category to start adding services.</p>
+                    <Button className="mt-4" onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Category
+                    </Button>
+                  </div>
+                ) : (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={localOrder.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                      <Accordion
+                        type="multiple"
+                        className="w-full space-y-2"
+                        value={accordionValue}
+                        onValueChange={setManualAccordionValue}
+                      >
+                        {localOrder.map((cat) => {
+                          const services = filteredServicesByCategory[cat.category_name] || [];
+                          const totalServices = servicesByCategory[cat.category_name]?.length || 0;
+                          const abbr = getCategoryAbbreviation(cat.category_name);
+                          const hasGradient = isGradientMarker(cat.color_hex);
+                          const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
+                          const isEmpty = totalServices === 0;
 
-          {/* Wave 3: Bulk selection toolbar */}
-          {selectedServiceIds.size > 0 && (
-            <div className="mx-6 mb-4 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/5 px-3 py-2">
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearSelection}>
-                  <X className="w-4 h-4" />
-                </Button>
-                <span className={cn(tokens.body.emphasis)}>
-                  {selectedServiceIds.size} selected
-                </span>
-              </div>
-              <Button size="sm" onClick={() => setBulkEditOpen(true)}>
-                <SlidersHorizontal className="w-4 h-4 mr-1.5" /> Bulk edit
-              </Button>
-            </div>
-          )}
-          <CardContent>
-            {/* Search */}
-            {(allServices?.length || 0) > 5 && (
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search services..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9"
-                  autoCapitalize="off"
-                />
-              </div>
-            )}
+                          // Hide categories with no matching services when searching
+                          if (searchQuery.trim() && services.length === 0) return null;
 
-            {localOrder.length === 0 ? (
-              <div className={tokens.empty.container}>
-                <Scissors className={tokens.empty.icon} />
-                <h3 className={tokens.empty.heading}>No services yet</h3>
-                <p className={tokens.empty.description}>Create categories first, then add services.</p>
-              </div>
-            ) : (
-              <Accordion
-                type="multiple"
-                className="w-full"
-                {...(searchExpandedValues ? { value: searchExpandedValues } : {})}
-              >
-                {localOrder.map((cat) => {
-                  const services = filteredServicesByCategory[cat.category_name] || [];
-                  const totalServices = servicesByCategory[cat.category_name]?.length || 0;
-                  const abbr = getCategoryAbbreviation(cat.category_name);
-                  const hasGradient = isGradientMarker(cat.color_hex);
-                  const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
+                          const catServiceIds = (servicesByCategory[cat.category_name] ?? []).map((s) => s.id);
+                          const selectedInCat = catServiceIds.filter((id) => selectedServiceIds.has(id)).length;
+                          const allInCatSelected = catServiceIds.length > 0 && selectedInCat === catServiceIds.length;
+                          const someInCatSelected = selectedInCat > 0 && !allInCatSelected;
 
-                  // Hide categories with no matching services when searching
-                  if (searchQuery.trim() && services.length === 0) return null;
-
-                  const catServiceIds = (servicesByCategory[cat.category_name] ?? []).map((s) => s.id);
-                  const selectedInCat = catServiceIds.filter((id) => selectedServiceIds.has(id)).length;
-                  const allInCatSelected = catServiceIds.length > 0 && selectedInCat === catServiceIds.length;
-                  const someInCatSelected = selectedInCat > 0 && !allInCatSelected;
-
-                  return (
-                    <AccordionItem key={cat.id} value={cat.id} className="border rounded-lg mb-2 px-4">
-                      <AccordionTrigger className="hover:no-underline py-4">
-                        <div className="flex items-center gap-3">
-                          <div onClick={(e) => e.stopPropagation()} className="flex items-center">
-                            <Checkbox
-                              checked={allInCatSelected ? true : someInCatSelected ? 'indeterminate' : false}
-                              onCheckedChange={() => toggleCategorySelected(cat.category_name, allInCatSelected)}
-                              aria-label={`Select all in ${cat.category_name}`}
-                            />
-                          </div>
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0"
-style={gradient ? { background: gradient.background, color: gradient.textColor, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
-                          >
-                            {abbr}
-                          </div>
-                          <span className={cn(tokens.body.emphasis, 'tracking-normal')}>{cat.category_name}</span>
-                          <span className={cn(tokens.body.muted, 'tracking-normal')}>
-                            ({searchQuery.trim() ? `${services.length}/${totalServices}` : totalServices})
-                          </span>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-1 pb-2">
-                          {services.length === 0 ? (
-                            <p className={cn(tokens.empty.description, 'text-center py-4')}>No services in this category</p>
-                          ) : (
-                            services.map(svc => {
-                              const margin = computeMargin(svc.price || 0, svc.cost);
-                              const isSelected = selectedServiceIds.has(svc.id);
-                              return (
-                                <div key={svc.id} className={cn('flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer', isSelected && 'bg-primary/5')} onClick={() => openEditService(svc)}>
+                          return (
+                            // TODO Wave 15: keyboard nav + service-within-category drag
+                            <UnifiedCategoryRow
+                              key={cat.id}
+                              category={cat}
+                              density={density}
+                            >
+                              <AccordionItem value={cat.id} className="border-0">
+                                <div className={cn(
+                                  'flex items-center gap-3',
+                                  density === 'compact' ? 'py-1.5' : 'py-2.5'
+                                )}>
+                                  {/* Bulk-select checkbox */}
                                   <div onClick={(e) => e.stopPropagation()} className="flex items-center">
                                     <Checkbox
-                                      checked={isSelected}
-                                      onCheckedChange={() => toggleServiceSelected(svc.id)}
-                                      aria-label={`Select ${svc.name}`}
+                                      checked={allInCatSelected ? true : someInCatSelected ? 'indeterminate' : false}
+                                      onCheckedChange={() => toggleCategorySelected(cat.category_name, allInCatSelected)}
+                                      aria-label={`Select all in ${cat.category_name}`}
                                     />
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
-                                    <div className={cn('flex items-center gap-3', tokens.body.muted)}>
-                                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
-                                      {svc.price != null && (
-                                        <span className="flex items-center gap-1">
-                                          <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
-                                        </span>
-                                      )}
-                                      <MarginBadge margin={margin} />
-                                      {(formCounts?.[svc.id] ?? 0) > 0 && (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span className="flex items-center gap-1 text-primary">
-                                              <FileText className="w-3 h-3" />
-                                              {formCounts?.[svc.id]}
-                                            </span>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p className="text-xs">{formCounts?.[svc.id]} required {formCounts?.[svc.id] === 1 ? 'form' : 'forms'} attached</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div onClick={e => e.stopPropagation()}>
-                                          <Switch
-                                            checked={svc.is_active !== false}
-                                            onCheckedChange={() => handleToggleActive(svc)}
-                                            className="scale-75"
-                                          />
+
+                                  {/* Color badge popover */}
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={cn(
+                                          'rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0 transition-transform hover:scale-105 ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50',
+                                          density === 'compact' ? 'w-8 h-8' : 'w-10 h-10'
+                                        )}
+                                        style={gradient ? { background: gradient.background, color: gradient.textColor, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
+                                      >
+                                        {abbr}
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-4" align="start" onClick={(e) => e.stopPropagation()}>
+                                      <div className="space-y-3">
+                                        <p className={tokens.body.emphasis}>{cat.category_name}</p>
+                                        <div className="space-y-1">
+                                          <p className={tokens.label.tiny}>Special Styles</p>
+                                          <div className="flex gap-2 flex-wrap">
+                                            {GRADIENT_OPTIONS.map(g => (
+                                              <Tooltip key={g.id}>
+                                                <TooltipTrigger asChild>
+                                                  <button
+                                                    className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary')}
+                                                    style={{ background: g.background }}
+                                                    onClick={() => handleColorChange(cat.id, `gradient:${g.id}`)}
+                                                  />
+                                                </TooltipTrigger>
+                                                <TooltipContent><p className="text-xs">{g.name}</p></TooltipContent>
+                                              </Tooltip>
+                                            ))}
+                                          </div>
                                         </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
-                                    </Tooltip>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
+                                        <div className="h-px bg-border" />
+                                        <div className="space-y-1">
+                                          <p className={tokens.label.tiny}>Solid Colors</p>
+                                          <div className="grid grid-cols-6 gap-1.5">
+                                            {CATEGORY_PALETTE.map(c => (
+                                              <button
+                                                key={c}
+                                                className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
+                                                style={{ backgroundColor: c }}
+                                                onClick={() => handleColorChange(cat.id, c)}
+                                              />
+                                            ))}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+
+                                  {/* Name + service count (click rename) */}
+                                  <div
+                                    className="flex-1 min-w-0 cursor-pointer"
+                                    onClick={(e) => {
                                       e.stopPropagation();
-                                      setArchiveServiceId(svc.id);
-                                      setArchiveServiceName(svc.name);
+                                      setCategoryDialogMode('rename');
+                                      setEditingCategory(cat);
+                                      setCategoryDialogOpen(true);
+                                    }}
+                                  >
+                                    <p className={cn(tokens.body.emphasis, 'truncate', isEmpty && 'text-muted-foreground')}>
+                                      {cat.category_name}
+                                    </p>
+                                    {density === 'comfortable' && (
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        {isEmpty
+                                          ? <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-destructive/15 text-destructive border border-destructive/25">No services</span>
+                                          : (
+                                            <p className={tokens.body.muted}>
+                                              {searchQuery.trim() ? `${services.length}/${totalServices}` : totalServices} service{(searchQuery.trim() ? services.length : totalServices) !== 1 ? 's' : ''}
+                                            </p>
+                                          )
+                                        }
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {density === 'compact' && (
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                      {searchQuery.trim() ? `${services.length}/${totalServices}` : totalServices}
+                                    </Badge>
+                                  )}
+
+                                  {/* Inline actions */}
+                                  <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCategoryDialogMode('rename');
+                                      setEditingCategory(cat);
+                                      setCategoryDialogOpen(true);
                                     }}>
-                                      <Archive className="w-3 h-3" />
+                                      <Pencil className="w-3.5 h-3.5" />
                                     </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-600" onClick={(e) => {
+                                      e.stopPropagation();
+                                      setArchiveCategoryId(cat.id);
+                                      setArchiveCategoryName(cat.category_name);
+                                    }}>
+                                      <Archive className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <AccordionTrigger
+                                      tabIndex={0}
+                                      className="h-8 w-8 p-0 hover:no-underline rounded-md hover:bg-muted/50 flex items-center justify-center [&>svg]:m-0"
+                                      aria-label={`Toggle ${cat.category_name} services`}
+                                    />
                                   </div>
                                 </div>
-                              );
-                            })
-                          )}
-                          <Button
-                            variant="ghost"
-                            size={tokens.button.inline}
-                            className="w-full mt-1 text-xs text-muted-foreground"
-                            onClick={() => openCreateService(cat.category_name)}
-                          >
-                            <Plus className="w-3 h-3 mr-1" /> Add service to {cat.category_name}
-                          </Button>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            )}
 
-            {/* Uncategorized services section */}
-            {uncategorizedServices.length > 0 && (
-              <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Uncategorized</span>
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{uncategorizedServices.length}</Badge>
-                  </div>
-                </div>
-                <div className="px-4 pb-3 space-y-1">
-                  {uncategorizedServices.map(svc => {
-                    const margin = computeMargin(svc.price || 0, svc.cost);
-                    return (
-                      <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
-                          <div className={cn('flex items-center gap-3', tokens.body.muted)}>
-                            {svc.category && (
-                              <span className="text-[10px] text-muted-foreground/60 italic">was: {svc.category}</span>
-                            )}
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
-                            {svc.price != null && (
-                              <span className="flex items-center gap-1">
-                                <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
-                              </span>
-                            )}
-                            <MarginBadge margin={margin} />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div onClick={e => e.stopPropagation()}>
-                                <Switch
-                                  checked={svc.is_active !== false}
-                                  onCheckedChange={() => handleToggleActive(svc)}
-                                  className="scale-75"
-                                />
+                                <AccordionContent>
+                                  <div className="space-y-1 pb-2 border-t border-border/40 pt-2">
+                                    {services.length > 0 && services.map(svc => {
+                                      const margin = computeMargin(svc.price || 0, svc.cost);
+                                      const isSelected = selectedServiceIds.has(svc.id);
+                                      return (
+                                        <div key={svc.id} className={cn('flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer', isSelected && 'bg-primary/5')} onClick={() => openEditService(svc)}>
+                                          <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                                            <Checkbox
+                                              checked={isSelected}
+                                              onCheckedChange={() => toggleServiceSelected(svc.id)}
+                                              aria-label={`Select ${svc.name}`}
+                                            />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
+                                            <div className={cn('flex items-center gap-3', tokens.body.muted)}>
+                                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
+                                              {svc.price != null && (
+                                                <span className="flex items-center gap-1">
+                                                  <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
+                                                </span>
+                                              )}
+                                              <MarginBadge margin={margin} />
+                                              {(formCounts?.[svc.id] ?? 0) > 0 && (
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <span className="flex items-center gap-1 text-primary">
+                                                      <FileText className="w-3 h-3" />
+                                                      {formCounts?.[svc.id]}
+                                                    </span>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    <p className="text-xs">{formCounts?.[svc.id]} required {formCounts?.[svc.id] === 1 ? 'form' : 'forms'} attached</p>
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <div onClick={e => e.stopPropagation()}>
+                                                  <Switch
+                                                    checked={svc.is_active !== false}
+                                                    onCheckedChange={() => handleToggleActive(svc)}
+                                                    className="scale-75"
+                                                  />
+                                                </div>
+                                              </TooltipTrigger>
+                                              <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
+                                            </Tooltip>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
+                                              e.stopPropagation();
+                                              setArchiveServiceId(svc.id);
+                                              setArchiveServiceName(svc.name);
+                                            }}>
+                                              <Archive className="w-3 h-3" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                    <Button
+                                      variant="ghost"
+                                      size={tokens.button.inline}
+                                      className="w-full mt-1 text-xs text-muted-foreground"
+                                      onClick={() => openCreateService(cat.category_name)}
+                                    >
+                                      <Plus className="w-3 h-3 mr-1" /> Add service to {cat.category_name}
+                                    </Button>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </UnifiedCategoryRow>
+                          );
+                        })}
+                      </Accordion>
+                    </SortableContext>
+                  </DndContext>
+                )}
+
+                {/* Uncategorized services section */}
+                {uncategorizedServices.length > 0 && (
+                  <div className="mt-6 border border-dashed border-muted-foreground/30 rounded-lg">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Uncategorized</span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{uncategorizedServices.length}</Badge>
+                      </div>
+                    </div>
+                    <div className="px-4 pb-3 space-y-1">
+                      {uncategorizedServices.map(svc => {
+                        const margin = computeMargin(svc.price || 0, svc.cost);
+                        return (
+                          <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
+                              <div className={cn('flex items-center gap-3', tokens.body.muted)}>
+                                {svc.category && (
+                                  <span className="text-[10px] text-muted-foreground/60 italic">was: {svc.category}</span>
+                                )}
+                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>
+                                {svc.price != null && (
+                                  <span className="flex items-center gap-1">
+                                    <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
+                                  </span>
+                                )}
+                                <MarginBadge margin={margin} />
                               </div>
-                            </TooltipTrigger>
-                            <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
-                          </Tooltip>
-                          {svc.category && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-emerald-600" onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRestoreToCategory(svc);
-                                }}>
-                                  <ArchiveRestore className="w-3 h-3" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent><p className="text-xs">Restore to {svc.category}</p></TooltipContent>
-                            </Tooltip>
-                          )}
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
-                            e.stopPropagation();
-                            setArchiveServiceId(svc.id);
-                            setArchiveServiceName(svc.name);
-                          }}>
-                            <Archive className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Archived Services */}
-            {(archivedServices?.length || 0) > 0 && (
-              <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
-                <button
-                  className="flex items-center justify-between w-full px-4 py-3 text-left"
-                  onClick={() => setShowArchivedServices(!showArchivedServices)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Archive className="w-4 h-4 text-muted-foreground" />
-                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Services</span>
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedServices?.length}</Badge>
-                  </div>
-                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedServices && 'rotate-180')} />
-                </button>
-                {showArchivedServices && (
-                  <div className="px-4 pb-3 space-y-1">
-                    {archivedServices?.map(svc => (
-                      <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30">
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{svc.name}</p>
-                          <div className={cn('flex items-center gap-3', tokens.body.muted)}>
-                            {svc.category && <span className="text-[10px] italic">was: {svc.category}</span>}
-                            {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>}
-                            {svc.price != null && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}</span>}
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div onClick={e => e.stopPropagation()}>
+                                    <Switch
+                                      checked={svc.is_active !== false}
+                                      onCheckedChange={() => handleToggleActive(svc)}
+                                      className="scale-75"
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
+                              </Tooltip>
+                              {svc.category && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-emerald-600" onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRestoreToCategory(svc);
+                                    }}>
+                                      <ArchiveRestore className="w-3 h-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p className="text-xs">Restore to {svc.category}</p></TooltipContent>
+                                </Tooltip>
+                              )}
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
+                                e.stopPropagation();
+                                setArchiveServiceId(svc.id);
+                                setArchiveServiceName(svc.name);
+                              }}>
+                                <Archive className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => restoreService.mutate(svc.id)}>
-                            <ArchiveRestore className="w-3 h-3" /> Restore
-                          </Button>
-                          {isPrimaryOwner && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
-                              setDeleteServiceId(svc.id);
-                              setDeleteServiceName(svc.name);
-                            }}>
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-            </div>{/* end catalog two-column grid */}
+                {/* Archived Categories */}
+                {(archivedCategories?.length || 0) > 0 && (
+                  <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
+                    <button
+                      className="flex items-center justify-between w-full px-4 py-3 text-left"
+                      onClick={() => setShowArchivedCategories(!showArchivedCategories)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Archive className="w-4 h-4 text-muted-foreground" />
+                        <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Categories</span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedCategories?.length}</Badge>
+                      </div>
+                      <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedCategories && 'rotate-180')} />
+                    </button>
+                    {showArchivedCategories && (
+                      <div className="px-4 pb-3 space-y-2">
+                        {archivedCategories?.map(cat => (
+                          <div key={cat.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30">
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium opacity-50"
+                              style={{ backgroundColor: cat.color_hex, color: cat.text_color_hex }}
+                            >
+                              {getCategoryAbbreviation(cat.category_name)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{cat.category_name}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => {
+                                restoreCategory.mutate({ categoryId: cat.id, categoryName: cat.category_name });
+                              }}>
+                                <ArchiveRestore className="w-3 h-3" /> Restore
+                              </Button>
+                              {isPrimaryOwner && (
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
+                                  setDeleteCategoryId(cat.id);
+                                  setDeleteCategoryName(cat.category_name);
+                                }}>
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Archived Services */}
+                {(archivedServices?.length || 0) > 0 && (
+                  <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
+                    <button
+                      className="flex items-center justify-between w-full px-4 py-3 text-left"
+                      onClick={() => setShowArchivedServices(!showArchivedServices)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Archive className="w-4 h-4 text-muted-foreground" />
+                        <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Services</span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedServices?.length}</Badge>
+                      </div>
+                      <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedServices && 'rotate-180')} />
+                    </button>
+                    {showArchivedServices && (
+                      <div className="px-4 pb-3 space-y-1">
+                        {archivedServices?.map(svc => (
+                          <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30">
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{svc.name}</p>
+                              <div className={cn('flex items-center gap-3', tokens.body.muted)}>
+                                {svc.category && <span className="text-[10px] italic">was: {svc.category}</span>}
+                                {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatMinutesToDuration(svc.duration_minutes)}</span>}
+                                {svc.price != null && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}</span>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => restoreService.mutate(svc.id)}>
+                                <ArchiveRestore className="w-3 h-3" /> Restore
+                              </Button>
+                              {isPrimaryOwner && (
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
+                                  setDeleteServiceId(svc.id);
+                                  setDeleteServiceName(svc.name);
+                                }}>
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Calendar Appearance — collapsible (Theme + Blocks + Preview) */}
             {categories && categories.length > 0 && (
