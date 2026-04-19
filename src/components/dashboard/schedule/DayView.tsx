@@ -657,10 +657,10 @@ export function DayView({
               {isMultiLocation && locationName ? (() => {
                 const longestWord = Math.max(...locationName.split(/\s+/).map(w => w.length));
                 const sizeClass =
-                  longestWord > 11 ? 'text-[7px]' :
-                  longestWord > 9  ? 'text-[8px]' :
-                  longestWord > 7  ? 'text-[9px]' :
-                                     'text-[10px]';
+                  longestWord > 11 ? 'text-[6px]' :
+                  longestWord > 9  ? 'text-[7px]' :
+                  longestWord > 7  ? 'text-[8px]' :
+                                     'text-[9px]';
                 return (
                   <div
                     className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center px-1 py-1 text-muted-foreground border-r"
