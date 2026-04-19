@@ -21,6 +21,7 @@ import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCa
 import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBanner';
 import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
 import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyConfiguratorPanel';
+import { PolicyConflictBanner } from '@/components/dashboard/policy/PolicyConflictBanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function Policies() {
@@ -97,7 +98,14 @@ export default function Policies() {
             <PolicySetupBanner onStart={() => setSetupOpen(true)} hasProfile={false} />
           )}
           <PolicyHealthStrip summary={summary} />
-
+          <PolicyConflictBanner
+            conflicts={summary.surface_conflicts}
+            onJumpToPolicy={(key) => {
+              const next = new URLSearchParams(searchParams);
+              next.set('policy', key);
+              setSearchParams(next, { replace: true });
+            }}
+          />
           <section className="space-y-4">
             <div className="flex items-end justify-between flex-wrap gap-2">
               <div>
