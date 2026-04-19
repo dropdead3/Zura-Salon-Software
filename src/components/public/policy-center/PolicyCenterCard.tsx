@@ -166,7 +166,7 @@ export function PolicyCenterCard({
               </span>
             )}
             {acknowledged && (
-              <span className="inline-flex items-center gap-1 font-sans text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 font-sans text-[10px] uppercase tracking-wider text-success">
                 <CheckCircle2 className="h-3 w-3" />
                 Acknowledged
               </span>
@@ -195,7 +195,7 @@ export function PolicyCenterCard({
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               {acknowledged ? (
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
                   <div className="space-y-0.5">
                     <p className="font-sans text-sm text-foreground">
                       You acknowledged this policy.
