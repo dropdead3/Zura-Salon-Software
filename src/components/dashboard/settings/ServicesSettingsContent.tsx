@@ -35,6 +35,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
 import { ServiceEditorDialog } from './ServiceEditorDialog';
 import { ServiceAddonsLibrary } from './ServiceAddonsLibrary';
+import { BulkEditServicesDialog } from './BulkEditServicesDialog';
 import { RedoPolicySettings } from './RedoPolicySettings';
 import { ServiceAddonAssignmentsCard } from './ServiceAddonAssignmentsCard';
 import { StaffServiceConfiguratorCard } from './StaffServiceConfiguratorCard';
