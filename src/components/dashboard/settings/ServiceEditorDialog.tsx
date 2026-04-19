@@ -614,14 +614,137 @@ export function ServiceEditorDialog({
               </form>
             </TabsContent>
 
-            <TabsContent value="levels" className="mt-0">
-              {serviceId && (
-                <LevelPricingContent
-                  serviceId={serviceId}
-                  basePrice={initialData?.price ?? null}
-                />
-              )}
+            <TabsContent value="advanced" className="mt-0 p-px">
+              <form id="service-advanced-form" onSubmit={handleDetailsSubmit} className="space-y-5">
+                {/* Patch Test */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className={tokens.body.emphasis}>Require Patch Test</p>
+                        <MetricInfoTooltip description="Block public booking unless the client has a valid patch test on file within the validity window. Recommended for color, lightener, and chemical services." />
+                      </div>
+                      <p className={tokens.body.muted}>Protects against allergic reactions on chemical services</p>
+                    </div>
+                    <Switch checked={patchTestRequired} onCheckedChange={setPatchTestRequired} />
+                  </div>
+                  {patchTestRequired && (
+                    <div className="pl-6 border-l-2 border-muted space-y-2">
+                      <Label htmlFor="patch-validity" className="flex items-center gap-1.5">
+                        Validity Window (days)
+                        <MetricInfoTooltip description="Number of days a patch test remains valid after performance. Industry standard is 180 days (6 months)." />
+                      </Label>
+                      <Input
+                        id="patch-validity"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={patchTestValidityDays}
+                        onChange={e => setPatchTestValidityDays(e.target.value)}
+                        className="max-w-[200px]"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Start-up / Shut-down windows */}
+                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/60">
+                  <div className="space-y-2">
+                    <Label htmlFor="startup-min" className="flex items-center gap-1.5">
+                      Start-Up Window (min)
+                      <MetricInfoTooltip description="Reserve N minutes at the start of the day where this service can't be booked. Useful for opening prep on chemical or long services." />
+                    </Label>
+                    <Input
+                      id="startup-min"
+                      type="number"
+                      min="0"
+                      step="5"
+                      value={startUpMinutes}
+                      onChange={e => setStartUpMinutes(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shutdown-min" className="flex items-center gap-1.5">
+                      Shut-Down Window (min)
+                      <MetricInfoTooltip description="Reserve N minutes at the end of the day where this service can't be booked. Protects closing time on services that can't run late." />
+                    </Label>
+                    <Input
+                      id="shutdown-min"
+                      type="number"
+                      min="0"
+                      step="5"
+                      value={shutDownMinutes}
+                      onChange={e => setShutDownMinutes(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Prompts */}
+                <div className="space-y-2 pt-3 border-t border-border/60">
+                  <Label htmlFor="creation-prompt" className="flex items-center gap-1.5">
+                    Creation Prompt
+                    <MetricInfoTooltip description="Surfaces in the appointment dialog when this service is added. Use for booking-time reminders (e.g. confirm color formula on file)." />
+                  </Label>
+                  <Textarea
+                    id="creation-prompt"
+                    value={creationPrompt}
+                    onChange={e => setCreationPrompt(e.target.value)}
+                    rows={2}
+                    placeholder="e.g. Confirm formula history before booking"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="checkin-prompt" className="flex items-center gap-1.5">
+                    Check-In Prompt
+                    <MetricInfoTooltip description="Surfaces in Zura Dock check-in flow. Use for arrival-time reminders (e.g. apply barrier cream, request consultation)." />
+                  </Label>
+                  <Textarea
+                    id="checkin-prompt"
+                    value={checkinPrompt}
+                    onChange={e => setCheckinPrompt(e.target.value)}
+                    rows={2}
+                    placeholder="e.g. Verify patch test result before mixing"
+                  />
+                </div>
+
+                {/* POS Hotkey + Loyalty */}
+                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/60">
+                  <div className="space-y-2">
+                    <Label htmlFor="pos-hotkey" className="flex items-center gap-1.5">
+                      POS Hotkey
+                      <MetricInfoTooltip description="Optional 1–8 character shortcut to add this service from the POS keypad. Speeds up high-volume checkout." />
+                    </Label>
+                    <Input
+                      id="pos-hotkey"
+                      maxLength={8}
+                      value={posHotkey}
+                      onChange={e => setPosHotkey(e.target.value)}
+                      placeholder="e.g. CUT1"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="loyalty-override" className="flex items-center gap-1.5">
+                      Loyalty Points Override
+                      <MetricInfoTooltip description="Optional fixed loyalty points awarded for this service, overriding the default points-per-dollar rule." />
+                    </Label>
+                    <Input
+                      id="loyalty-override"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={loyaltyPointsOverride}
+                      onChange={e => setLoyaltyPointsOverride(e.target.value)}
+                      placeholder="Default rule"
+                    />
+                  </div>
+                </div>
+              </form>
             </TabsContent>
+
+
 
             <TabsContent value="overrides" className="mt-0">
               {serviceId && (
