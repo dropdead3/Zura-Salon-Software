@@ -19,8 +19,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2, Lock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import type { Service } from '@/hooks/useServicesData';
@@ -343,14 +345,90 @@ export function ServiceEditorDialog({
     handleDetailsSubmit({ preventDefault: () => {} } as React.FormEvent);
   };
 
+  // Tab nav config — grouped for the side rail.
+  const NAV_GROUPS: Array<{
+    label: string;
+    items: Array<{ value: string; label: string; mobileLabel?: string; lockInCreate?: boolean }>;
+  }> = [
+    {
+      label: 'Core',
+      items: [
+        { value: 'details', label: 'Details' },
+        { value: 'online', label: 'Online & App' },
+        { value: 'advanced', label: 'Advanced' },
+      ],
+    },
+    {
+      label: 'Pricing',
+      items: [
+        { value: 'levels', label: 'Levels', mobileLabel: 'Level Pricing', lockInCreate: true },
+        { value: 'overrides', label: 'Stylists', mobileLabel: 'Stylist Overrides', lockInCreate: true },
+        { value: 'locations', label: 'Locations', mobileLabel: 'Location Pricing', lockInCreate: true },
+        { value: 'seasonal', label: 'Seasonal', lockInCreate: true },
+      ],
+    },
+    {
+      label: 'Operations',
+      items: [
+        { value: 'forms', label: 'Forms', lockInCreate: true },
+        { value: 'history', label: 'History', lockInCreate: true },
+      ],
+    },
+  ];
+
+  const renderRailButton = (
+    item: { value: string; label: string; lockInCreate?: boolean },
+  ) => {
+    const isDisabled = !!(item.lockInCreate && isCreateMode);
+    const isActive = activeTab === item.value;
+    const button = (
+      <button
+        key={item.value}
+        type="button"
+        disabled={isDisabled}
+        onClick={() => !isDisabled && setActiveTab(item.value)}
+        className={cn(
+          'w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-sans rounded-md transition-colors text-left',
+          'border-l-2 border-transparent',
+          isActive
+            ? 'bg-muted text-foreground border-l-primary'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+          isDisabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground',
+        )}
+      >
+        <span>{item.label}</span>
+        {isDisabled && <Lock className="w-3 h-3 shrink-0" />}
+      </button>
+    );
+
+    if (isDisabled) {
+      return (
+        <Tooltip key={item.value}>
+          <TooltipTrigger asChild>
+            <span className="block">{button}</span>
+          </TooltipTrigger>
+          <TooltipContent side="right">Available after creating the service</TooltipContent>
+        </Tooltip>
+      );
+    }
+    return button;
+  };
+
   return (
     <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            {isCreateMode ? 'Add Service' : `Edit ${initialData?.name || 'Service'}`}
-          </DialogTitle>
+      <DialogContent className="max-w-5xl max-h-[88vh] overflow-hidden flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <DialogTitle className="font-display tracking-wide">
+              {isCreateMode ? 'Add Service' : `Edit ${initialData?.name || 'Service'}`}
+            </DialogTitle>
+            {!isCreateMode && (
+              <span className="font-display text-[10px] tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                EDIT · {(initialData as any)?.is_active === false ? 'ARCHIVED' : 'ACTIVE'}
+              </span>
+            )}
+          </div>
           <DialogDescription>
             {isCreateMode
               ? 'Create a new service for your menu.'
@@ -358,39 +436,58 @@ export function ServiceEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <SubTabsList>
-            <SubTabsTrigger value="details">Details</SubTabsTrigger>
-            <SubTabsTrigger value="online">Online &amp; App</SubTabsTrigger>
-            <SubTabsTrigger value="advanced">Advanced</SubTabsTrigger>
-            <SubTabsTrigger value="levels" disabled={isCreateMode}>
-              Level Pricing
-            </SubTabsTrigger>
-            <SubTabsTrigger value="overrides" disabled={isCreateMode}>
-              Stylist Overrides
-            </SubTabsTrigger>
-            <SubTabsTrigger value="locations" disabled={isCreateMode}>
-              Location Pricing
-            </SubTabsTrigger>
-            <SubTabsTrigger value="seasonal" disabled={isCreateMode}>
-              Seasonal
-            </SubTabsTrigger>
-            <SubTabsTrigger value="forms" disabled={isCreateMode}>
-              Forms
-            </SubTabsTrigger>
-            <SubTabsTrigger value="history" disabled={isCreateMode}>
-              History
-            </SubTabsTrigger>
-          </SubTabsList>
+        <TooltipProvider delayDuration={200}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0">
+          {/* Side rail (desktop / tablet) */}
+          <aside className="hidden md:flex flex-col w-[200px] shrink-0 border-r border-border bg-muted/20 px-3 py-5 gap-5 overflow-y-auto">
+            {NAV_GROUPS.map(group => (
+              <div key={group.label} className="space-y-1">
+                <p className="font-display text-[10px] tracking-wider text-muted-foreground px-3 mb-1">
+                  {group.label}
+                </p>
+                <div className="space-y-0.5">
+                  {group.items.map(renderRailButton)}
+                </div>
+              </div>
+            ))}
+          </aside>
+
+          {/* Mobile horizontal scroll strip */}
+          <div className="md:hidden border-b border-border px-2 py-2 overflow-x-auto shrink-0">
+            <div className="inline-flex gap-1 min-w-max">
+              {NAV_GROUPS.flatMap(g => g.items).map(item => {
+                const isDisabled = !!(item.lockInCreate && isCreateMode);
+                const isActive = activeTab === item.value;
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => !isDisabled && setActiveTab(item.value)}
+                    className={cn(
+                      'whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-sans rounded-md transition-colors',
+                      isActive
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground hover:text-foreground',
+                      isDisabled && 'opacity-50 cursor-not-allowed',
+                    )}
+                  >
+                    {item.mobileLabel || item.label}
+                    {isDisabled && <Lock className="w-3 h-3" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/*
             Note: All three tab forms (details / online / advanced) share a single
-            `handleDetailsSubmit` handler that writes the FULL payload from React state
-            (price, duration, online overrides, prompts, etc). Different form IDs exist
-            only so the footer "Save Changes" button can target the active tab's form
-            element via `form={...}` — they do not partition the payload.
+            `handleDetailsSubmit` handler that writes the FULL payload from React state.
+            Different form IDs exist only so the footer "Save Changes" button can target
+            the active tab's form element via `form={...}`.
           */}
-          <div className="flex-1 overflow-y-auto mt-4 p-1 min-h-[480px]">
+          <div className="flex-1 overflow-y-auto px-6 py-5 min-h-0">
+            <div className="max-w-2xl mx-auto">
             <TabsContent value="details" className="mt-0 p-px">
               <form id="service-details-form" onSubmit={handleDetailsSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -921,11 +1018,13 @@ export function ServiceEditorDialog({
             <TabsContent value="history" className="mt-0 p-px">
               {serviceId && <ServiceAuditLogPanel serviceId={serviceId} />}
             </TabsContent>
+            </div>
           </div>
         </Tabs>
+        </TooltipProvider>
 
         {(activeTab === 'details' || activeTab === 'online' || activeTab === 'advanced') && (
-          <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-border flex-col sm:flex-row sm:items-center">
+          <DialogFooter className="gap-2 sm:gap-0 px-6 py-4 border-t border-border flex-col sm:flex-row sm:items-center shrink-0 bg-background">
             {hasErrors && (
               <p className="text-xs text-destructive sm:mr-auto">
                 {Object.values(errors)[0]}
@@ -950,7 +1049,7 @@ export function ServiceEditorDialog({
         )}
 
         {activeTab !== 'details' && activeTab !== 'online' && activeTab !== 'advanced' && (
-          <DialogFooter className="pt-4 border-t border-border">
+          <DialogFooter className="px-6 py-4 border-t border-border shrink-0 bg-background">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Done</Button>
           </DialogFooter>
         )}
