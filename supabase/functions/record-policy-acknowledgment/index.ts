@@ -159,7 +159,29 @@ Deno.serve(async (req) => {
     const ipAddress = getClientIp(req);
     const userAgent = req.headers.get("user-agent");
 
+    // ---- De-dupe: if ack already exists for (version, email), return it ----
+    const { data: existing } = await supabase
+      .from("policy_acknowledgments")
+      .select("id, acknowledged_at")
+      .eq("policy_version_id", policy.current_version_id)
+      .eq("client_email", clientEmail)
+      .maybeSingle();
+
+    if (existing) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          acknowledgment_id: existing.id,
+          acknowledged_at: existing.acknowledged_at,
+          deduped: true,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // ---- Insert acknowledgment ----
+    // NOTE: `surface` enum does not contain a "client_policy_center" literal;
+    // use the canonical `client_page` value (Wave 28.10.1 fix).
     const { data: ack, error: insErr } = await supabase
       .from("policy_acknowledgments")
       .insert({
@@ -167,12 +189,8 @@ Deno.serve(async (req) => {
         policy_id: policy.id,
         policy_version_id: policy.current_version_id,
         policy_variant_id: variant.id,
-        surface: "client_policy_center", // existing required column
-        evidence: {
-          source: "client_policy_center",
-          method,
-          signature_text: signatureText,
-        },
+        surface: "client_page",
+        evidence: { source: "client_policy_center" },
         client_email: clientEmail,
         client_name: clientName,
         signature_text: signatureText,
@@ -185,6 +203,26 @@ Deno.serve(async (req) => {
       .single();
 
     if (insErr) {
+      // Race-condition guard: if a parallel request inserted first, fetch and return.
+      if ((insErr as { code?: string }).code === "23505") {
+        const { data: raceRow } = await supabase
+          .from("policy_acknowledgments")
+          .select("id, acknowledged_at")
+          .eq("policy_version_id", policy.current_version_id)
+          .eq("client_email", clientEmail)
+          .maybeSingle();
+        if (raceRow) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              acknowledgment_id: raceRow.id,
+              acknowledged_at: raceRow.acknowledged_at,
+              deduped: true,
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
       console.error("Insert error:", insErr);
       throw insErr;
     }

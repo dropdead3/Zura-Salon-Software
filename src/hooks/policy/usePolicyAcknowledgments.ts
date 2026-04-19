@@ -66,13 +66,15 @@ export function useClientAcknowledgments(
     queryFn: async () => {
       if (!clientEmail || !orgId) return new Set<string>();
       const email = clientEmail.trim().toLowerCase();
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('policy_acknowledgments')
         .select('policy_id')
         .eq('organization_id', orgId)
-        .ilike('client_email', email);
+        .eq('client_email', email);
       if (error) throw error;
-      return new Set<string>((data ?? []).map((r: any) => r.policy_id).filter(Boolean));
+      return new Set<string>(
+        (data ?? []).map((r) => r.policy_id).filter((v): v is string => !!v),
+      );
     },
   });
 }
@@ -99,7 +101,7 @@ export function usePolicyAcknowledgmentList(policyId: string | null | undefined)
     staleTime: 30_000,
     queryFn: async (): Promise<PolicyAcknowledgmentRow[]> => {
       if (!policyId) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('policy_acknowledgments')
         .select(
           'id, client_name, client_email, signature_text, acknowledgment_method, ip_address, acknowledged_at, policy_version_id',
@@ -108,7 +110,18 @@ export function usePolicyAcknowledgmentList(policyId: string | null | undefined)
         .order('acknowledged_at', { ascending: false })
         .limit(500);
       if (error) throw error;
-      return (data ?? []).filter((r: any) => !!r.client_email && !!r.client_name);
+      return (data ?? [])
+        .filter((r) => !!r.client_email && !!r.client_name)
+        .map((r) => ({
+          id: r.id,
+          client_name: r.client_name as string,
+          client_email: r.client_email as string,
+          signature_text: (r.signature_text ?? '') as string,
+          acknowledgment_method: (r.acknowledgment_method ?? 'typed_signature') as string,
+          ip_address: (r.ip_address ?? null) as string | null,
+          acknowledged_at: r.acknowledged_at,
+          policy_version_id: r.policy_version_id,
+        }));
     },
   });
 }

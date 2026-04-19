@@ -30,6 +30,31 @@ export function useResolvePolicyConflict() {
         .eq('version_id', versionId)
         .eq('surface', surface);
       if (error) throw error;
+
+      // Wave 28.10.1 — audit trail for conflict resolutions.
+      if (orgId) {
+        const { data: userData } = await supabase.auth.getUser();
+        const actorId = userData?.user?.id;
+        // Resolve policy_id from the version for richer audit context.
+        const { data: versionRow } = await supabase
+          .from('policy_versions')
+          .select('policy_id')
+          .eq('id', versionId)
+          .maybeSingle();
+        if (actorId) {
+          await supabase.from('policy_change_log').insert({
+            organization_id: orgId,
+            policy_id: versionRow?.policy_id ?? null,
+            version_id: versionId,
+            actor_user_id: actorId,
+            event_type: 'surface_mapping_disabled',
+            previous_value: { enabled: true, surface },
+            new_value: { enabled: false, surface },
+            metadata: { reason: 'conflict_resolution' },
+          });
+        }
+      }
+
       return { versionId, surface };
     },
     onSuccess: (res) => {

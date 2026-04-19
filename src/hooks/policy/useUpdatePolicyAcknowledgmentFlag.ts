@@ -16,7 +16,8 @@ export function useUpdatePolicyAcknowledgmentFlag() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ policyId, requiresAcknowledgment }: Input) => {
-      const { error } = await (supabase as any)
+      // RLS-gated to is_org_admin(auth.uid(), organization_id) per Wave 28.10.1 audit.
+      const { error } = await supabase
         .from('policies')
         .update({ requires_acknowledgment: requiresAcknowledgment })
         .eq('id', policyId);
