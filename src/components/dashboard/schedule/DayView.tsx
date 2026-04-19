@@ -35,7 +35,6 @@ import {
 import { toast } from 'sonner';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useContainerSize } from '@/lib/responsive/useContainerSize';
 
 interface DayViewProps {
   date: Date;
@@ -681,22 +680,106 @@ export function DayView({
               
                {sortedStylists.map((stylist, idx) => {
                 const levelInfo = stylist.stylist_level ? levelLabelMap.get(stylist.stylist_level) : null;
+                const levelColor = levelInfo ? getLevelColor(levelInfo.index, stylistLevels.length) : null;
                 const pct = utilizationByStylist.get(stylist.user_id) ?? 0;
+                const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
                 const acceptingClients = stylist.is_booking !== false && stylist.lead_pool_eligible !== false;
 
+                const isCondensed = columnWidth < 120;
+                const isMedium = columnWidth < 200;
+
+                const fullName = formatDisplayName(stylist.full_name, stylist.display_name);
+                const condensedName = (() => {
+                  const parts = fullName.trim().split(' ');
+                  if (parts.length <= 1) return fullName;
+                  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+                })();
+
+                const displayName = isMedium ? condensedName : fullName;
+
+                // Status dot — absolute top-right in all modes
+                const statusDot = (
+                  <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1 cursor-default">
+                          <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
+                          {!isMedium && (
+                            <span className={cn("text-[10px] whitespace-nowrap", acceptingClients ? "text-emerald-500" : "text-destructive/70")}>
+                              {acceptingClients ? 'Booking' : 'Not Booking'}
+                            </span>
+                          )}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                );
+
+                const avatar = (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 shrink-0 rounded-[5px]')}>
+                        <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
+                        <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
+                          {fullName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                      {stylist.specialties && stylist.specialties.length > 0
+                        ? stylist.specialties.join(' · ')
+                        : 'No specialties listed'}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+
+                // Condensed (< 120px) — vertical stack
+                if (isCondensed) {
+                  return (
+                    <div
+                      key={stylist.user_id}
+                      className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                    >
+                      {statusDot}
+                      {avatar}
+                      <span className="text-xs font-medium leading-tight">{condensedName}</span>
+                      <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
+                      {levelInfo && (
+                        <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
+{levelInfo.shortLabel}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Normal + Medium — horizontal layout
                 return (
-                  <StylistHeaderCell
+                  <div
                     key={stylist.user_id}
-                    stylist={stylist}
-                    idx={idx}
-                    pct={pct}
-                    acceptingClients={acceptingClients}
-                    levelInfo={levelInfo}
-                  />
+                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                  >
+                    {statusDot}
+                    {avatar}
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-sm font-medium leading-tight truncate">{displayName}</span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className={cn('text-[11px]', pctColor)}>{pct}%</span>
+                        {levelInfo && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground">·</span>
+                            <span className="text-[10px] text-muted-foreground truncate">{levelInfo.shortLabel}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
-
 
             {/* Time Grid */}
             <div className="flex relative" style={{ minWidth: requiredGridWidth }}>
@@ -897,131 +980,3 @@ export function DayView({
     </DndContext>
   );
 }
-
-interface StylistHeaderCellProps {
-  stylist: {
-    user_id: string;
-    full_name: string;
-    display_name?: string | null;
-    photo_url: string | null;
-    specialties?: string[] | null;
-  };
-  idx: number;
-  pct: number;
-  acceptingClients: boolean;
-  levelInfo: { shortLabel: string; index: number } | null | undefined;
-}
-
-function StylistHeaderCell({ stylist, idx, pct, acceptingClients, levelInfo }: StylistHeaderCellProps) {
-  const { ref, width } = useContainerSize<HTMLDivElement>();
-  const tier: 'wide' | 'medium' | 'narrow' =
-    width === 0 ? 'medium' : width >= 240 ? 'wide' : width >= 170 ? 'medium' : 'narrow';
-
-  const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
-  const fullName = formatDisplayName(stylist.full_name, stylist.display_name);
-  const condensedName = (() => {
-    const parts = fullName.trim().split(' ');
-    if (parts.length <= 1) return fullName;
-    return `${parts[0]} ${parts[parts.length - 1][0]}.`;
-  })();
-
-  const avatar = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Avatar className="border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer h-10 w-10 shrink-0 rounded-[5px]">
-          <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
-          <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
-            {fullName.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-        {stylist.specialties && stylist.specialties.length > 0
-          ? stylist.specialties.join(' · ')
-          : 'No specialties listed'}
-      </TooltipContent>
-    </Tooltip>
-  );
-
-  const avatarWithDotOverlay = (
-    <div className="relative">
-      {avatar}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className={cn(
-            'absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[hsl(var(--sidebar-background))]',
-            acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70',
-          )} />
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">
-          {acceptingClients ? 'Accepting New Clients' : 'Not Accepting New Clients'}
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-
-  const containerBase = cn(
-    'relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0',
-    idx % 2 === 1 && 'bg-muted/15',
-  );
-
-  // WIDE: horizontal row — [avatar] [name + % · L2 stacked] [● Booking pill]
-  if (tier === 'wide') {
-    return (
-      <div ref={ref} data-tier={tier} className={cn(containerBase, 'flex items-center gap-2')}>
-        {avatar}
-        <div className="flex flex-col min-w-0 flex-1">
-          <span className="text-sm font-medium leading-tight truncate">{fullName}</span>
-          <div className="flex items-center gap-1 mt-0.5 min-w-0">
-            <span className={cn('text-[11px] shrink-0', pctColor)}>{pct}%</span>
-            {levelInfo && (
-              <>
-                <span className="text-[10px] text-muted-foreground shrink-0">·</span>
-                <span className="text-[10px] text-muted-foreground truncate">{levelInfo.shortLabel}</span>
-              </>
-            )}
-          </div>
-        </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="flex items-center gap-1 cursor-default shrink-0">
-              <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
-              <span className={cn('text-[10px] whitespace-nowrap', acceptingClients ? 'text-emerald-500' : 'text-destructive/70')}>
-                {acceptingClients ? 'Booking' : 'Not Booking'}
-              </span>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">
-            {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    );
-  }
-
-  // NARROW: minimal vertical — avatar (with dot) + condensed name + %
-  if (tier === 'narrow') {
-    return (
-      <div ref={ref} data-tier={tier} className={cn(containerBase, 'flex flex-col items-center text-center gap-1')}>
-        {avatarWithDotOverlay}
-        <span className="text-xs font-medium leading-tight truncate max-w-full">{condensedName}</span>
-        <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
-      </div>
-    );
-  }
-
-  // MEDIUM: vertical centered — avatar (with dot) + name + % + L2
-  return (
-    <div ref={ref} data-tier={tier} className={cn(containerBase, 'flex flex-col items-center text-center gap-1')}>
-      {avatarWithDotOverlay}
-      <span className="text-xs font-medium leading-tight truncate max-w-full">{condensedName}</span>
-      <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
-      {levelInfo && (
-        <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
-          {levelInfo.shortLabel}
-        </span>
-      )}
-    </div>
-  );
-}
-

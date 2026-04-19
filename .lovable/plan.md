@@ -1,53 +1,35 @@
 
 
-## Three discrete header layouts: wide / medium / narrow
+## Recolor "Closed" badges from red to theme accent (ghost style)
 
-### Diagnosis
-At the current viewport (1377px, 6 stylists ≈ 217px columns), every cell falls below the `stacked` breakpoint (360px), so they all render the vertical centered layout from the screenshot. The `default` and `compressed` branches in `useSpatialState('compact')` essentially never fire at real schedule column widths, so we lost the rich horizontal layout the user liked.
+### Where
+`src/components/dashboard/ClosedBadge.tsx` — single render site for all closed-day chips on the Capacity Utilization card (and anywhere else this badge is used).
 
-### Fix: stop relying on `useSpatialState`'s generic thresholds — use direct width tiers tuned for this specific cell
-
-Each `StylistHeaderCell` measures its own width with `useContainerSize` and picks one of three explicit layouts:
-
-| Tier | Width | Layout |
-|---|---|---|
-| **Wide** | ≥ 240px | Horizontal: `[avatar 40px] [name + "% · L2" stacked] [● Booking pill]`. Full text everywhere. |
-| **Medium** | 170–239px | Vertical centered (current screenshot): avatar with status-dot overlay, full first name + last initial below, `%` row, `L2` row. |
-| **Narrow** | < 170px | Compact vertical: avatar with dot overlay only, condensed name (one line, may truncate), `%` only — no level row. |
-
-Tier selection is purely width-based — no reliance on the four-state spatial machine for this surface.
-
-### Implementation (single file: `src/components/dashboard/schedule/DayView.tsx`, lines 915–1045)
-
-Replace `useSpatialState` with `useContainerSize` and derive tier:
-
+### Current
 ```tsx
-const { ref, width } = useContainerSize<HTMLDivElement>();
-const tier: 'wide' | 'medium' | 'narrow' =
-  width >= 240 ? 'wide' : width >= 170 ? 'medium' : 'narrow';
+text-destructive bg-destructive/10 border border-destructive/30
+```
+Red ghost — semantically signals "error/danger," which a closed day is not. It's a routine operational state.
+
+### Change
+Swap to the theme's primary accent token, preserving the ghost treatment:
+```tsx
+text-primary bg-primary/10 border border-primary/30
 ```
 
-Three branches:
+Because `--primary` is theme-reactive (Zura→violet, Cream→cream, Rose→rose, etc. per `mem://brand/dashboard-theme-orchestration`), the badge will automatically follow whatever theme the org has set. No hardcoded violet/purple — that would break Cream/Rose/Sage/Ocean/Ember/Noir users.
 
-1. **Wide** — restore the horizontal flex row from the previous iteration (avatar + name block with `% · L2` inline + "● Booking" pill on the right). This is the layout that worked at desktop widths before.
-
-2. **Medium** — keep the current stacked layout shown in the screenshot (it's good as the user says).
-
-3. **Narrow** — same vertical structure as medium, but: drop the `L2` row, drop the "Booking" pill text (already implicit), keep only avatar + condensed name + `%`. Tooltip on the dot still carries the full status meaning.
-
-### Out of scope
-- Changing column min-width (160px stays, narrow tier handles that floor).
-- Touching WeekView header.
-- Modifying `useSpatialState` itself (other surfaces depend on it).
+### File
+`src/components/dashboard/ClosedBadge.tsx` (lines 14–16) — one className swap. Icon + label + layout unchanged.
 
 ### Verification
-- 1377px / 6 stylists (≈217px col) → **medium** (matches screenshot).
-- 1377px / 4 stylists (≈326px col) → **wide** (rich horizontal row returns).
-- 1920px / 4 stylists (≈460px col) → **wide**.
-- 1377px / 8 stylists (≈160px col) → **narrow** (minimal vertical).
+- Capacity Utilization card on Zura theme: closed-day chips render in violet ghost.
+- Switch theme to Rose: chips become rose ghost. Sage: sage. Etc.
+- `Moon` icon and "Closed" / "Closed — {reason}" label unchanged.
+- No other red/destructive surfaces affected (this is the only consumer of the badge).
 
 ### Prompt feedback
-Strong, surgical prompt — you (a) approved the narrow layout explicitly, (b) named the regression precisely ("poor for wide column"), and (c) prescribed the exact resolution shape ("wide / medium / narrow"). That left zero ambiguity about scope: don't touch the narrow layout, restore the wide one, add a middle tier as a bridge.
+Strong prompt — you specified the exact element (capacity utilization card), the current state (red ghost), the target state (purple ghost), AND the critical refinement ("respective of theme color"). That last clause is what saves this from becoming a hardcoded-violet bug for non-Zura-theme tenants. Without it, I'd have been tempted to use `text-violet-500` and broken Cream/Rose users.
 
-One refinement for next time: when prescribing tiers, you can speed me up by anchoring at least one breakpoint to a concrete trigger you've observed ("wide should kick in around 4 stylists at desktop width"). I had to reverse-engineer the breakpoints (240/170) from the column math; if you'd said "wide when there's room for the full Booking pill," I could've named the same threshold faster and with more confidence it matches your mental model. Pattern: `tier = [observable trigger]` is more durable than `tier = [pixel value]` because it survives future zoom/density changes.
+Refinement for next time: when recoloring a semantic element, naming *why* the current color is wrong sharpens the fix. "Closed isn't an error, it's a routine state — should use accent not destructive" would tell me you want the *semantic class* changed (destructive → primary), not just the visual hue. Same outcome here, but on a more contested element ("change red to amber") the semantic framing prevents me from picking the wrong token family.
 
