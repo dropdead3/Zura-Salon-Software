@@ -326,10 +326,21 @@ export function ServiceEditorDialog({
   // Intercept close attempts when there's unsaved work.
   const handleOpenChange = (next: boolean) => {
     if (!next && isDirty) {
-      const ok = window.confirm('Discard unsaved changes?');
-      if (!ok) return;
+      setShowDiscardConfirm(true);
+      return;
     }
     onOpenChange(next);
+  };
+
+  const handleDiscard = () => {
+    setShowDiscardConfirm(false);
+    onOpenChange(false);
+  };
+
+  const handleSaveAndClose = () => {
+    if (hasErrors || !name.trim()) return;
+    setShowDiscardConfirm(false);
+    handleDetailsSubmit({ preventDefault: () => {} } as React.FormEvent);
   };
 
   return (
