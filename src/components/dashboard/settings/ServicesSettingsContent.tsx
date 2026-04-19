@@ -457,11 +457,6 @@ export function ServicesSettingsContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Theme Selector */}
-            <div className="mb-4">
-              <ThemeSelector currentColors={colorMap} />
-            </div>
-            <div className="h-px bg-border mb-4" />
             {localOrder.length === 0 ? (
               <div className={tokens.empty.container}>
                 <Scissors className={tokens.empty.icon} />
