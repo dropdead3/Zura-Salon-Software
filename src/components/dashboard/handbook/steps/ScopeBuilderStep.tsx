@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useSectionLibrary, useUpsertSelectedSections } from '@/hooks/handbook/useHandbookData';
+import { ROLE_OPTIONS } from '@/lib/handbook/brandTones';
 import { SectionLibraryCard } from '../SectionLibraryCard';
 import { ApplicabilityMatrix } from '../ApplicabilityMatrix';
 
@@ -12,17 +12,29 @@ interface Props {
   versionId: string;
   setup: any;
   selectedSections: any[];
+  primaryRole?: string | null;
 }
 
-export function ScopeBuilderStep({ versionId, setup, selectedSections }: Props) {
+export function ScopeBuilderStep({ versionId, setup, selectedSections, primaryRole }: Props) {
   const { data: library = [], isLoading } = useSectionLibrary();
   const upsert = useUpsertSelectedSections(versionId);
 
   const initialKeys = useMemo(() => {
     if (selectedSections.length > 0) return new Set(selectedSections.map((s) => s.library_section_key));
-    // Smart default: required + recommended
-    return new Set(library.filter((s: any) => s.recommendation !== 'optional').map((s: any) => s.key));
-  }, [library, selectedSections]);
+    // Smart default: required + recommended, role-filtered when primaryRole is set
+    return new Set(
+      library
+        .filter((s: any) => {
+          if (s.recommendation === 'optional') return false;
+          if (!primaryRole) return true;
+          const defaultRoles: string[] = s.default_roles || [];
+          // Empty default_roles = universal section; include for any role
+          if (defaultRoles.length === 0) return true;
+          return defaultRoles.includes(primaryRole);
+        })
+        .map((s: any) => s.key)
+    );
+  }, [library, selectedSections, primaryRole]);
 
   const [selected, setSelected] = useState<Set<string>>(initialKeys);
 
@@ -57,8 +69,11 @@ export function ScopeBuilderStep({ versionId, setup, selectedSections }: Props) 
     separation: 'Separation & Acknowledgment',
   };
 
-  const enabledRoles: string[] = setup?.roles_enabled || [];
+  const enabledRoles: string[] = primaryRole ? [primaryRole] : (setup?.roles_enabled || []);
   const enabledEmployment: string[] = Object.entries(setup?.classifications || {}).filter(([, v]) => v).map(([k]) => k);
+  const lockedRoleLabel = primaryRole
+    ? ROLE_OPTIONS.find((r) => r.key === primaryRole)?.label || primaryRole.replace(/_/g, ' ')
+    : null;
 
   // Build preview sections from current selection
   const previewSections = useMemo(() => {
@@ -69,11 +84,11 @@ export function ScopeBuilderStep({ versionId, setup, selectedSections }: Props) 
         title: s.title,
         applies_to: {
           employment_types: s.default_employment_types || [],
-          roles: s.default_roles || [],
+          roles: primaryRole ? [primaryRole] : (s.default_roles || []),
           locations: [],
         },
       }));
-  }, [library, selected]);
+  }, [library, selected, primaryRole]);
 
   if (isLoading) {
     return (
@@ -91,6 +106,14 @@ export function ScopeBuilderStep({ versionId, setup, selectedSections }: Props) 
           <p className="font-sans text-sm text-muted-foreground mt-1 max-w-2xl">
             Choose the sections your handbook should include. We've pre-selected required and recommended sections — adjust to match your operation.
           </p>
+          {primaryRole && (
+            <div className="flex items-center gap-2 mt-3 px-3 py-1.5 rounded-md bg-primary/5 border border-primary/20 max-w-fit">
+              <Lock className="w-3 h-3 text-primary" />
+              <span className="font-sans text-xs text-foreground">
+                Filtered for <span className="font-medium">{lockedRoleLabel}</span>
+              </span>
+            </div>
+          )}
         </div>
         <Button onClick={handleSave} disabled={upsert.isPending} className="font-sans">
           {upsert.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
@@ -113,7 +136,12 @@ export function ScopeBuilderStep({ versionId, setup, selectedSections }: Props) 
 
       <div className="pt-4">
         <h3 className="font-display text-xs tracking-widest text-muted-foreground uppercase mb-3">Applicability Preview</h3>
-        <ApplicabilityMatrix sections={previewSections} enabledRoles={enabledRoles} enabledEmploymentTypes={enabledEmployment} />
+        <ApplicabilityMatrix
+          sections={previewSections}
+          enabledRoles={enabledRoles}
+          enabledEmploymentTypes={enabledEmployment}
+          singleRole={primaryRole || undefined}
+        />
       </div>
     </div>
   );

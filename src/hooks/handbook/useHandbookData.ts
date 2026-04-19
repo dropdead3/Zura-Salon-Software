@@ -28,17 +28,39 @@ export function useHandbooks() {
   });
 }
 
+/**
+ * Returns a Map<roleKey, handbook> for role-first dashboard rendering.
+ * Only includes handbooks with primary_role set (legacy multi-role handbooks excluded).
+ */
+export function useHandbooksByRole() {
+  const { data: handbooks = [], isLoading } = useHandbooks();
+  const byRole = new Map<string, any>();
+  for (const h of handbooks as any[]) {
+    if (h.primary_role) {
+      // 1:1 enforced — last wins if duplicates somehow exist
+      byRole.set(h.primary_role, h);
+    }
+  }
+  return { byRole, allHandbooks: handbooks as any[], isLoading };
+}
+
 export function useCreateHandbook() {
   const { effectiveOrganization } = useOrganizationContext();
   const { user } = useAuth();
   const qc = useQueryClient();
   const orgId = effectiveOrganization?.id;
   return useMutation({
-    mutationFn: async (input: { name: string; description?: string }) => {
+    mutationFn: async (input: { name: string; description?: string; primaryRole?: string }) => {
       if (!orgId) throw new Error('No organization');
       const { data: handbook, error: hbErr } = await (supabase as any)
         .from(HANDBOOKS)
-        .insert({ organization_id: orgId, name: input.name, description: input.description, created_by: user?.id })
+        .insert({
+          organization_id: orgId,
+          name: input.name,
+          description: input.description,
+          created_by: user?.id,
+          primary_role: input.primaryRole || null,
+        })
         .select()
         .single();
       if (hbErr) throw hbErr;
@@ -52,14 +74,78 @@ export function useCreateHandbook() {
         .from(HANDBOOKS)
         .update({ current_version_id: version.id })
         .eq('id', handbook.id);
-      await (supabase as any)
-        .from(ORG_SETUP)
-        .insert({ handbook_version_id: version.id, organization_id: orgId });
+      // Seed org setup. If primaryRole provided, lock roles_enabled to it.
+      const setupSeed: Record<string, any> = {
+        handbook_version_id: version.id,
+        organization_id: orgId,
+      };
+      if (input.primaryRole) {
+        setupSeed.roles_enabled = [input.primaryRole];
+      }
+      await (supabase as any).from(ORG_SETUP).insert(setupSeed);
       return { handbook, version };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['handbooks', orgId] });
       toast.success('Handbook created');
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to create handbook'),
+  });
+}
+
+/**
+ * Convenience: create a handbook scoped to a single role.
+ * Enforces 1:1 — if a handbook for this role already exists, returns it instead.
+ */
+export function useCreateHandbookForRole() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const orgId = effectiveOrganization?.id;
+  return useMutation({
+    mutationFn: async (input: { primaryRole: string; roleLabel: string }) => {
+      if (!orgId) throw new Error('No organization');
+      // 1:1 guard — return existing if present
+      const { data: existing } = await (supabase as any)
+        .from(HANDBOOKS)
+        .select('*')
+        .eq('organization_id', orgId)
+        .eq('primary_role', input.primaryRole)
+        .maybeSingle();
+      if (existing) return { handbook: existing, version: null, existed: true };
+
+      const { data: handbook, error: hbErr } = await (supabase as any)
+        .from(HANDBOOKS)
+        .insert({
+          organization_id: orgId,
+          name: `${input.roleLabel} Handbook`,
+          description: `Scoped to ${input.roleLabel}.`,
+          created_by: user?.id,
+          primary_role: input.primaryRole,
+        })
+        .select()
+        .single();
+      if (hbErr) throw hbErr;
+      const { data: version, error: vErr } = await (supabase as any)
+        .from(VERSIONS)
+        .insert({ handbook_id: handbook.id, organization_id: orgId, created_by: user?.id })
+        .select()
+        .single();
+      if (vErr) throw vErr;
+      await (supabase as any)
+        .from(HANDBOOKS)
+        .update({ current_version_id: version.id })
+        .eq('id', handbook.id);
+      await (supabase as any).from(ORG_SETUP).insert({
+        handbook_version_id: version.id,
+        organization_id: orgId,
+        roles_enabled: [input.primaryRole],
+      });
+      return { handbook, version, existed: false };
+    },
+    onSuccess: (res: any) => {
+      qc.invalidateQueries({ queryKey: ['handbooks', orgId] });
+      if (!res.existed) toast.success('Role handbook created');
     },
     onError: (err: any) => toast.error(err?.message || 'Failed to create handbook'),
   });
@@ -168,5 +254,62 @@ export function useUpsertSelectedSections(versionId?: string) {
       toast.success('Sections saved');
     },
     onError: (err: any) => toast.error(err?.message || 'Failed to save sections'),
+  });
+}
+
+/**
+ * Acknowledgment counts for handbooks linked via legacy_handbook_id.
+ * Returns Map<handbookId, { acknowledged: number, total: number }>.
+ */
+export function useHandbookAckCounts() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  return useQuery({
+    queryKey: ['handbook-ack-counts', orgId],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data: handbooks } = await (supabase as any)
+        .from(HANDBOOKS)
+        .select('id, legacy_handbook_id, primary_role')
+        .eq('organization_id', orgId);
+
+      const legacyIds = (handbooks || [])
+        .map((h: any) => h.legacy_handbook_id)
+        .filter(Boolean);
+
+      // Total active staff in org
+      const { count: totalStaff } = await (supabase as any)
+        .from('employee_profiles')
+        .select('user_id', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
+        .eq('is_active', true)
+        .eq('is_approved', true);
+
+      const result = new Map<string, { acknowledged: number; total: number }>();
+      if (legacyIds.length === 0) {
+        for (const h of handbooks || []) {
+          result.set(h.id, { acknowledged: 0, total: totalStaff || 0 });
+        }
+        return result;
+      }
+
+      const { data: acks } = await (supabase as any)
+        .from('handbook_acknowledgments')
+        .select('handbook_id, user_id')
+        .in('handbook_id', legacyIds);
+
+      const ackByLegacy = new Map<string, Set<string>>();
+      for (const a of acks || []) {
+        if (!ackByLegacy.has(a.handbook_id)) ackByLegacy.set(a.handbook_id, new Set());
+        ackByLegacy.get(a.handbook_id)!.add(a.user_id);
+      }
+
+      for (const h of handbooks || []) {
+        const legacy = h.legacy_handbook_id;
+        const acked = legacy ? ackByLegacy.get(legacy)?.size || 0 : 0;
+        result.set(h.id, { acknowledged: acked, total: totalStaff || 0 });
+      }
+      return result;
+    },
   });
 }

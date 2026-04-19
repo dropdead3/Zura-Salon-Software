@@ -13587,6 +13587,118 @@ export type Database = {
           },
         ]
       }
+      org_handbook_block_refs: {
+        Row: {
+          created_at: string
+          display_order: number
+          handbook_id: string
+          id: string
+          is_forked: boolean
+          organization_id: string
+          overlay_body: string | null
+          policy_block_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          handbook_id: string
+          id?: string
+          is_forked?: boolean
+          organization_id: string
+          overlay_body?: string | null
+          policy_block_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          handbook_id?: string
+          id?: string
+          is_forked?: boolean
+          organization_id?: string
+          overlay_body?: string | null
+          policy_block_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbook_block_refs_handbook_id_fkey"
+            columns: ["handbook_id"]
+            isOneToOne: false
+            referencedRelation: "org_handbooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_block_refs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_block_refs_policy_block_id_fkey"
+            columns: ["policy_block_id"]
+            isOneToOne: false
+            referencedRelation: "org_policy_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_handbook_changelog: {
+        Row: {
+          change_type: string
+          created_at: string
+          created_by: string | null
+          details: Json
+          handbook_id: string
+          id: string
+          organization_id: string
+          section_key: string | null
+          summary: string
+          version_id: string | null
+        }
+        Insert: {
+          change_type: string
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          handbook_id: string
+          id?: string
+          organization_id: string
+          section_key?: string | null
+          summary: string
+          version_id?: string | null
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          handbook_id?: string
+          id?: string
+          organization_id?: string
+          section_key?: string | null
+          summary?: string
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbook_changelog_handbook_id_fkey"
+            columns: ["handbook_id"]
+            isOneToOne: false
+            referencedRelation: "org_handbooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_changelog_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_handbook_org_setup: {
         Row: {
           brand_tone: string
@@ -13946,9 +14058,11 @@ export type Database = {
           current_version_id: string | null
           description: string | null
           id: string
+          legacy_handbook_id: string | null
           location_scope: string
           name: string
           organization_id: string
+          primary_role: string | null
           status: Database["public"]["Enums"]["org_handbook_status"]
           updated_at: string
         }
@@ -13958,9 +14072,11 @@ export type Database = {
           current_version_id?: string | null
           description?: string | null
           id?: string
+          legacy_handbook_id?: string | null
           location_scope?: string
           name: string
           organization_id: string
+          primary_role?: string | null
           status?: Database["public"]["Enums"]["org_handbook_status"]
           updated_at?: string
         }
@@ -13970,15 +14086,73 @@ export type Database = {
           current_version_id?: string | null
           description?: string | null
           id?: string
+          legacy_handbook_id?: string | null
           location_scope?: string
           name?: string
           organization_id?: string
+          primary_role?: string | null
           status?: Database["public"]["Enums"]["org_handbook_status"]
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "org_handbooks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_policy_blocks: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          organization_id: string
+          slug: string
+          status: string
+          summary: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          slug: string
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          slug?: string
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_policy_blocks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
