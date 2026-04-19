@@ -716,8 +716,10 @@ export function DayView({
                   <div className="relative shrink-0">
                     {specialties ? (
                       <Tooltip>
-                        <TooltipTrigger asChild>{avatarEl}</TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                        <TooltipTrigger asChild>
+                          <span className="inline-block">{avatarEl}</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs max-w-[220px]">
                           <div className="font-medium">{fullName}</div>
                           <div className="text-muted-foreground mt-0.5">{specialties}</div>
                         </TooltipContent>
@@ -729,7 +731,7 @@ export function DayView({
                       <TooltipTrigger asChild>
                         <span
                           className={cn(
-                            'absolute -top-1 -right-1 w-3 h-3 rounded-full cursor-help',
+                            'absolute -top-1 -right-1 w-3 h-3 rounded-full cursor-help z-10',
                             'shadow-[0_0_0_2px_hsl(var(--sidebar-background)/0.95),0_1px_3px_rgba(0,0,0,0.4)]',
                             'ring-1 ring-white/20',
                             acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
