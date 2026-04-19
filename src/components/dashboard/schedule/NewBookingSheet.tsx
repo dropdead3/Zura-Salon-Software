@@ -43,7 +43,9 @@ import {
   Loader2,
   Calendar as CalendarIcon,
   Plus,
-  UserPlus
+  UserPlus,
+  Info,
+  AlertTriangle,
 } from 'lucide-react';
 import { NewClientDialog } from './NewClientDialog';
 import { cn, formatDisplayName } from '@/lib/utils';
