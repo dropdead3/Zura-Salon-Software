@@ -32,7 +32,7 @@ export function usePublicServicesForWebsite(orgId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, description, website_description, is_popular, price, category, display_order')
+        .select('id, name, description, website_description, is_popular, price, category, display_order, online_name, online_duration_override, online_discount_pct, include_from_prefix')
         .eq('is_active', true)
         .eq('bookable_online', true)
         .eq('organization_id', orgId!);
