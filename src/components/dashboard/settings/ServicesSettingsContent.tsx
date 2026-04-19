@@ -430,7 +430,13 @@ export function ServicesSettingsContent() {
     const q = searchQuery.toLowerCase();
     const filtered: Record<string, Service[]> = {};
     for (const [cat, svcs] of Object.entries(servicesByCategory)) {
-      const matches = svcs.filter(s => s.name.toLowerCase().includes(q));
+      // Wave 11: search across name + online_name + description + pos_hotkey
+      const matches = svcs.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        s.online_name?.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q) ||
+        s.pos_hotkey?.toLowerCase().includes(q)
+      );
       if (matches.length > 0) filtered[cat] = matches;
     }
     return filtered;

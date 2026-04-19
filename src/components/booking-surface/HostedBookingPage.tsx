@@ -152,7 +152,6 @@ export function HostedBookingPage() {
   const { data: requiredForms } = useRequiredFormsForService(selectedServiceId);
   const [signedFormTemplateIds, setSignedFormTemplateIds] = useState<string[]>([]);
   const [showFormSigningDialog, setShowFormSigningDialog] = useState(false);
-  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
 
   // Reset sign state if the chosen service changes mid-flow
   useEffect(() => {
@@ -212,9 +211,7 @@ export function HostedBookingPage() {
       if (data?.error) throw new Error(data.error);
 
       const appointmentId = data.appointment_id;
-      const returnedClientId = data.client_id ?? null;
       setCreatedAppointmentId(appointmentId);
-      setPendingClientId(returnedClientId);
 
       // If payment needed and Stripe is configured, create intent
       if (needsPayment && stripeConfig) {
