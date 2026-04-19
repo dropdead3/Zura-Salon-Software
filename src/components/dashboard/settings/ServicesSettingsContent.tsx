@@ -14,8 +14,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { EmptyState } from '@/components/ui/empty-state';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal, FileText,
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal, FileText, AlertTriangle,
 } from 'lucide-react';
+import { CatalogHealthBar, type CatalogHealthFilter } from './CatalogHealthBar';
+import { ServiceVolumeCell } from './ServiceVolumeCell';
+import { useServiceBookingVolumes } from '@/hooks/useServiceBookingVolumes';
 import { cn } from '@/lib/utils';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
@@ -194,6 +197,9 @@ export function ServicesSettingsContent() {
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   // Wave 4: form-count map for the "forms attached" indicator on each row
   const { data: formCounts } = useServiceFormCounts(resolvedOrgId);
+  // Wave 15a: trailing-30d booking volumes per service for the volume column
+  // and zombie-service health chip.
+  const { data: serviceVolumes, isLoading: volumesLoading } = useServiceBookingVolumes(resolvedOrgId);
   const { formatCurrency } = useFormatCurrency();
   const showUndoToast = useUndoToast();
 
@@ -266,6 +272,11 @@ export function ServicesSettingsContent() {
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Wave 15a: Catalog Health filter — chip on the health bar narrows the
+  // catalog view to services matching that defect class. Mutually exclusive
+  // with no filter (null = show all).
+  const [healthFilter, setHealthFilter] = useState<CatalogHealthFilter>(null);
 
   // Wave 14: Density toggle (persisted per-user)
   const [density, setDensityState] = useState<'comfortable' | 'compact'>(() => {
@@ -493,23 +504,39 @@ export function ServicesSettingsContent() {
     setEditorDialogOpen(true);
   };
 
-  // Filtered services for search
+  // Filtered services for search + Wave 15a health filter
   const filteredServicesByCategory = useMemo(() => {
-    if (!searchQuery.trim()) return servicesByCategory;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
+    const passesHealth = (s: Service): boolean => {
+      switch (healthFilter) {
+        case 'missing_cost': return s.cost == null && (s.price ?? 0) > 0;
+        case 'low_margin': {
+          if (s.cost == null || !s.price) return false;
+          const m = ((s.price - s.cost) / s.price) * 100;
+          return m < 30;
+        }
+        case 'not_bookable': return s.bookable_online === false;
+        case 'missing_patch_test': return !!s.is_chemical_service && !s.patch_test_required;
+        case 'zombie': return (serviceVolumes?.[s.id]?.count30d ?? 0) === 0;
+        case 'empty_categories': return false; // filtered at category level below
+        default: return true;
+      }
+    };
     const filtered: Record<string, Service[]> = {};
     for (const [cat, svcs] of Object.entries(servicesByCategory)) {
-      // Wave 11: search across name + online_name + description + pos_hotkey
-      const matches = svcs.filter(s =>
-        s.name.toLowerCase().includes(q) ||
-        s.online_name?.toLowerCase().includes(q) ||
-        s.description?.toLowerCase().includes(q) ||
-        s.pos_hotkey?.toLowerCase().includes(q)
-      );
+      const matches = svcs.filter(s => {
+        const matchesSearch = !q || (
+          s.name.toLowerCase().includes(q) ||
+          s.online_name?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q) ||
+          s.pos_hotkey?.toLowerCase().includes(q)
+        );
+        return matchesSearch && passesHealth(s);
+      });
       if (matches.length > 0) filtered[cat] = matches;
     }
     return filtered;
-  }, [servicesByCategory, searchQuery]);
+  }, [servicesByCategory, searchQuery, healthFilter, serviceVolumes]);
 
   // Wave 14: Search match summary (informs operator before they expand)
   const { searchMatchCount, searchMatchCategoryCount, firstMatchCategoryId } = useMemo(() => {
@@ -671,6 +698,32 @@ export function ServicesSettingsContent() {
               )}
 
               <CardContent>
+                {/* Wave 15a: Uncategorized banner — promoted from a quiet
+                    bottom-of-card box to a top-of-card amber callout because
+                    orphaned services are a structural defect, not a footnote. */}
+                {uncategorizedServices.length > 0 && (
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+                      <span className={cn(tokens.body.emphasis, 'text-warning-foreground')}>
+                        {uncategorizedServices.length} service{uncategorizedServices.length === 1 ? '' : 's'} orphaned
+                      </span>
+                      <span className={tokens.body.muted}>
+                        — assign to a category or archive below
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Wave 15a: Catalog Health Bar — silent when clean */}
+                <CatalogHealthBar
+                  services={allServices ?? []}
+                  categories={localOrder}
+                  volumes={serviceVolumes}
+                  activeFilter={healthFilter}
+                  onFilterChange={setHealthFilter}
+                />
+
                 {/* Search match summary */}
                 {searchQuery.trim() && (
                   <p className={cn(tokens.body.muted, 'mb-3')}>
@@ -869,6 +922,7 @@ export function ServicesSettingsContent() {
                                                 </span>
                                               )}
                                               <MarginBadge margin={margin} />
+                                              <ServiceVolumeCell entry={serviceVolumes?.[svc.id]} loading={volumesLoading} />
                                               {(formCounts?.[svc.id] ?? 0) > 0 && (
                                                 <Tooltip>
                                                   <TooltipTrigger asChild>
