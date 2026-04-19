@@ -113,6 +113,19 @@ export function ServiceEditorDialog({
             ? String((initialData as any).online_discount_pct)
             : '',
         );
+        // Wave 2
+        setPatchTestRequired((initialData as any).patch_test_required ?? false);
+        setPatchTestValidityDays(String((initialData as any).patch_test_validity_days ?? 180));
+        setStartUpMinutes(String((initialData as any).start_up_minutes ?? 0));
+        setShutDownMinutes(String((initialData as any).shut_down_minutes ?? 0));
+        setCreationPrompt((initialData as any).creation_prompt ?? '');
+        setCheckinPrompt((initialData as any).checkin_prompt ?? '');
+        setPosHotkey((initialData as any).pos_hotkey ?? '');
+        setLoyaltyPointsOverride(
+          (initialData as any).loyalty_points_override != null
+            ? String((initialData as any).loyalty_points_override)
+            : '',
+        );
       } else {
         setName('');
         setCategory(presetCategory || categories[0]?.category_name || '');
