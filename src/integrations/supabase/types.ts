@@ -13948,6 +13948,11 @@ export type Database = {
           notes: string | null
           organization_id: string
           policy_config: Json
+          policy_ref_id: string | null
+          policy_variant_type:
+            | Database["public"]["Enums"]["policy_variant_type"]
+            | null
+          source: string
           status: Database["public"]["Enums"]["org_handbook_section_status"]
           title: string
           updated_at: string
@@ -13964,6 +13969,11 @@ export type Database = {
           notes?: string | null
           organization_id: string
           policy_config?: Json
+          policy_ref_id?: string | null
+          policy_variant_type?:
+            | Database["public"]["Enums"]["policy_variant_type"]
+            | null
+          source?: string
           status?: Database["public"]["Enums"]["org_handbook_section_status"]
           title: string
           updated_at?: string
@@ -13980,6 +13990,11 @@ export type Database = {
           notes?: string | null
           organization_id?: string
           policy_config?: Json
+          policy_ref_id?: string | null
+          policy_variant_type?:
+            | Database["public"]["Enums"]["policy_variant_type"]
+            | null
+          source?: string
           status?: Database["public"]["Enums"]["org_handbook_section_status"]
           title?: string
           updated_at?: string
@@ -13997,6 +14012,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_sections_policy_ref_id_fkey"
+            columns: ["policy_ref_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
             referencedColumns: ["id"]
           },
         ]
@@ -17501,6 +17523,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      policy_handbook_section_map: {
+        Row: {
+          created_at: string
+          handbook_section_key: string
+          id: string
+          notes: string | null
+          policy_library_key: string
+          variant_type: Database["public"]["Enums"]["policy_variant_type"]
+        }
+        Insert: {
+          created_at?: string
+          handbook_section_key: string
+          id?: string
+          notes?: string | null
+          policy_library_key: string
+          variant_type?: Database["public"]["Enums"]["policy_variant_type"]
+        }
+        Update: {
+          created_at?: string
+          handbook_section_key?: string
+          id?: string
+          notes?: string | null
+          policy_library_key?: string
+          variant_type?: Database["public"]["Enums"]["policy_variant_type"]
+        }
+        Relationships: []
       }
       policy_library: {
         Row: {
