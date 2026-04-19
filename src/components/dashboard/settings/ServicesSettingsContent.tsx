@@ -504,23 +504,39 @@ export function ServicesSettingsContent() {
     setEditorDialogOpen(true);
   };
 
-  // Filtered services for search
+  // Filtered services for search + Wave 15a health filter
   const filteredServicesByCategory = useMemo(() => {
-    if (!searchQuery.trim()) return servicesByCategory;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
+    const passesHealth = (s: Service): boolean => {
+      switch (healthFilter) {
+        case 'missing_cost': return s.cost == null && (s.price ?? 0) > 0;
+        case 'low_margin': {
+          if (s.cost == null || !s.price) return false;
+          const m = ((s.price - s.cost) / s.price) * 100;
+          return m < 30;
+        }
+        case 'not_bookable': return s.bookable_online === false;
+        case 'missing_patch_test': return !!s.is_chemical_service && !s.patch_test_required;
+        case 'zombie': return (serviceVolumes?.[s.id]?.count30d ?? 0) === 0;
+        case 'empty_categories': return false; // filtered at category level below
+        default: return true;
+      }
+    };
     const filtered: Record<string, Service[]> = {};
     for (const [cat, svcs] of Object.entries(servicesByCategory)) {
-      // Wave 11: search across name + online_name + description + pos_hotkey
-      const matches = svcs.filter(s =>
-        s.name.toLowerCase().includes(q) ||
-        s.online_name?.toLowerCase().includes(q) ||
-        s.description?.toLowerCase().includes(q) ||
-        s.pos_hotkey?.toLowerCase().includes(q)
-      );
+      const matches = svcs.filter(s => {
+        const matchesSearch = !q || (
+          s.name.toLowerCase().includes(q) ||
+          s.online_name?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q) ||
+          s.pos_hotkey?.toLowerCase().includes(q)
+        );
+        return matchesSearch && passesHealth(s);
+      });
       if (matches.length > 0) filtered[cat] = matches;
     }
     return filtered;
-  }, [servicesByCategory, searchQuery]);
+  }, [servicesByCategory, searchQuery, healthFilter, serviceVolumes]);
 
   // Wave 14: Search match summary (informs operator before they expand)
   const { searchMatchCount, searchMatchCategoryCount, firstMatchCategoryId } = useMemo(() => {
