@@ -157,6 +157,21 @@ export function NewBookingSheet({
     return selectedServiceDetails.reduce((sum, s) => sum + (s.price || 0), 0);
   }, [selectedServiceDetails]);
 
+  // Surface service-specific creation prompts (Wave 2 operational guardrails)
+  const selectedServiceRowIds = useMemo(
+    () => selectedServiceDetails.map(s => s.id).filter(Boolean),
+    [selectedServiceDetails],
+  );
+  const { data: servicePrompts = [] } = useServicePrompts(selectedServiceRowIds);
+  const activeCreationPrompts = useMemo(
+    () => servicePrompts.filter(p => p.creation_prompt && p.creation_prompt.trim().length > 0),
+    [servicePrompts],
+  );
+  const patchTestServices = useMemo(
+    () => servicePrompts.filter(p => p.patch_test_required),
+    [servicePrompts],
+  );
+
   // Check availability when stylist and date are selected
   const [availableSlots, setAvailableSlots] = useState<{ start_time: string; end_time: string }[]>([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
