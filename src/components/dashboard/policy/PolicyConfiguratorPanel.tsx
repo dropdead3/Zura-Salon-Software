@@ -11,9 +11,12 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
+import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
+import { Switch } from '@/components/ui/switch';
+import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -71,8 +74,9 @@ export function PolicyConfiguratorPanel({
 
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
-  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts'>('rules');
+  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts' | 'acknowledgments'>('rules');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const updateAckFlag = useUpdatePolicyAcknowledgmentFlag();
 
   // Auto-adopt if not yet adopted, so the configurator always has a draft version.
   useEffect(() => {
