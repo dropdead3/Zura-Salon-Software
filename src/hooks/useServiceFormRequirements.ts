@@ -82,8 +82,32 @@ export function useRequiredFormsForService(serviceId: string | undefined) {
 
 // useServicesWithFormCount removed — superseded by org-scoped useServiceFormCounts.
 
+/**
+ * Targeted invalidation: refresh the org-scoped catalog list AND any
+ * per-service required-forms caches (which share the `['service-form-requirements', serviceId]`
+ * key prefix). Avoids the wildcard `['service-form-requirements']` prefix sweep
+ * that previously refetched every variant in the cache.
+ */
+function invalidateFormRequirementCaches(queryClient: ReturnType<typeof useQueryClient>, orgId: string | null | undefined) {
+  if (orgId) {
+    queryClient.invalidateQueries({ queryKey: ['service-form-requirements', orgId] });
+  }
+  // Per-service caches keyed by serviceId — predicate match to avoid org-list collision
+  queryClient.invalidateQueries({
+    predicate: (q) =>
+      Array.isArray(q.queryKey) &&
+      q.queryKey[0] === 'service-form-requirements' &&
+      typeof q.queryKey[1] === 'string' &&
+      q.queryKey[1] !== orgId,
+  });
+  queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
+  queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
+}
+
 export function useLinkFormToService() {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
 
   return useMutation({
     mutationFn: async (requirement: ServiceFormRequirementInsert) => {
@@ -97,9 +121,7 @@ export function useLinkFormToService() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
-      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
+      invalidateFormRequirementCaches(queryClient, orgId);
       toast.success('Form linked to service');
     },
     onError: (error) => {
@@ -110,6 +132,8 @@ export function useLinkFormToService() {
 
 export function useLinkFormToMultipleServices() {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
 
   return useMutation({
     mutationFn: async ({ 
@@ -139,9 +163,7 @@ export function useLinkFormToMultipleServices() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
-      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
+      invalidateFormRequirementCaches(queryClient, orgId);
       toast.success('Form linked to services');
     },
     onError: (error) => {
@@ -152,6 +174,8 @@ export function useLinkFormToMultipleServices() {
 
 export function useUnlinkFormFromService() {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -163,9 +187,7 @@ export function useUnlinkFormFromService() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
-      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
+      invalidateFormRequirementCaches(queryClient, orgId);
       toast.success('Form unlinked from service');
     },
     onError: (error) => {
@@ -176,6 +198,8 @@ export function useUnlinkFormFromService() {
 
 export function useUpdateFormRequirement() {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
 
   return useMutation({
     mutationFn: async ({ 
@@ -196,9 +220,7 @@ export function useUpdateFormRequirement() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
-      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
+      invalidateFormRequirementCaches(queryClient, orgId);
       toast.success('Requirement updated');
     },
     onError: (error) => {
