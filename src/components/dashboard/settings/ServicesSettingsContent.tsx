@@ -14,7 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { EmptyState } from '@/components/ui/empty-state';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal,
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal, FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -41,6 +41,7 @@ import { ServiceAddonAssignmentsCard } from './ServiceAddonAssignmentsCard';
 import { StaffServiceConfiguratorCard } from './StaffServiceConfiguratorCard';
 import { toast } from 'sonner';
 import { useUndoToast } from '@/hooks/useUndoToast';
+import { useServiceFormCounts } from '@/hooks/useServiceFormCounts';
 import {
   getCategoryAbbreviation as getAbbr,
   SPECIAL_GRADIENTS,
@@ -141,6 +142,8 @@ export function ServicesSettingsContent() {
   const permanentlyDeleteService = usePermanentlyDeleteService();
   const { data: archivedServices } = useArchivedServices(resolvedOrgId);
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
+  // Wave 4: form-count map for the "forms attached" indicator on each row
+  const { data: formCounts } = useServiceFormCounts(resolvedOrgId);
   const { formatCurrency } = useFormatCurrency();
   const showUndoToast = useUndoToast();
 
@@ -764,6 +767,19 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                         </span>
                                       )}
                                       <MarginBadge margin={margin} />
+                                      {(formCounts?.[svc.id] ?? 0) > 0 && (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="flex items-center gap-1 text-primary">
+                                              <FileText className="w-3 h-3" />
+                                              {formCounts?.[svc.id]}
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p className="text-xs">{formCounts?.[svc.id]} required {formCounts?.[svc.id] === 1 ? 'form' : 'forms'} attached</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
