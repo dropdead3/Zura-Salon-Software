@@ -85,7 +85,7 @@ const Stats = lazyWithRetry(() => import("./pages/dashboard/Stats"));
 const WeeklyWins = lazyWithRetry(() => import("./pages/dashboard/WeeklyWins"));
 const TeamOverview = lazyWithRetry(() => import("./pages/dashboard/admin/TeamOverview"));
 const Handbooks = lazyWithRetry(() => import("./pages/dashboard/admin/Handbooks"));
-const Policies = lazyWithRetry(() => import("./pages/dashboard/admin/Policies"));
+const AdminPolicies = lazyWithRetry(() => import("./pages/dashboard/admin/Policies"));
 const HandbookDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookDashboard"));
 const HandbookWizard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookWizard"));
 const AdminSettings = lazyWithRetry(() => import("./pages/dashboard/admin/Settings"));
@@ -339,7 +339,7 @@ function DashboardRoutes() {
       <Route path="admin/assistant-requests" element={<ProtectedRoute requiredPermission="view_team_overview"><AssistantRequestsOverview /></ProtectedRoute>} />
       <Route path="admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
       <Route path="admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
-      <Route path="admin/policies" element={<ProtectedRoute requiredPermission="manage_handbooks"><Policies /></ProtectedRoute>} />
+      <Route path="admin/policies" element={<ProtectedRoute requiredPermission="manage_handbooks"><AdminPolicies /></ProtectedRoute>} />
       <Route path="admin/handbook-wizard" element={<Navigate to="../handbooks?tab=wizard" replace />} />
       <Route path="admin/handbook-wizard/:handbookId/edit" element={<ProtectedRoute requiredPermission="manage_handbooks"><HandbookWizard /></ProtectedRoute>} />
       <Route path="admin/handbook" element={<Navigate to="../handbooks?tab=wizard" replace />} />
