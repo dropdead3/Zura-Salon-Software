@@ -1,64 +1,80 @@
 
 
-## Wave 10 audit — remaining gaps after Wave 9
+## Wave 11 audit — services configurator & settings
 
-Three real gaps + two carryovers + one Wave 9 false-positive worth correcting in the record. Tight scope.
+Verified Wave 10 shipped clean (`useServiceFormRequirements` org-arg + inner-join filter ✓, `NewBookingSheet` semantic tokens ✓). Found **2 P1**, **3 P2**, plus **1 regression from Wave 8** that needs re-shipping.
 
-### Real gaps still present
+---
 
-**P1 — `useServiceFormRequirements()` org-wide list never got the org filter** (`src/hooks/useServiceFormRequirements.ts:28-44`)
-Wave 9 plan called for `organizationId` arg + `services!inner.organization_id` filter; it shipped only on the per-service variant. The org-wide list still selects every requirement across every tenant (RLS now blocks it, but the 1000-row default cap silently truncates at scale, and the doctrine says *"All queries filter by organization, include orgId in query keys"*).
-**Fix:** Add `organizationId` arg, inner-join filter on `services.organization_id`, include in query key.
+### Real gaps
 
-**P1 — Three duplicate `services-with-form-count` invalidation lines remain** (`useServiceFormRequirements.ts:91, 133, 157` — the actual key name is `services-with-form-count`, just renamed-then-readded as `service-form-counts` and `required-forms-for-services`).
-After re-read these are not dead — they invalidate the active `useServiceFormCounts` and `useRequiredFormsForServices` keys correctly. **No action.** Audit was wrong on this in Wave 9.
+**P1 (regression) — Search extension never actually shipped**
+Wave 8 plan + summary both claimed `searchQuery` in `ServicesSettingsContent` was extended to `online_name`, `description`, `pos_hotkey`. Verified at `ServicesSettingsContent.tsx:433` — still only `s.name.toLowerCase().includes(q)`. Operators searching for the public-facing variant (e.g. "Premium" online vs. "Cut Lvl 3" internal) get zero results.
+**Fix:** 1-line predicate change to a joined haystack.
 
-**P2 — Staff `NewBookingSheet` still uses raw amber/emerald classes** (`NewBookingSheet.tsx:758-763`)
-Doctrine: *"Raw class strings are prohibited when a token exists."* Should be `bg-warning/10 border-warning/40 text-warning` and `bg-success/10 border-success/40 text-success` from the semantic token system. Carried over from Wave 7.
+**P1 — Legacy NULL-org category will silently fail to reorder**
+DB has 1 `service_category_colors` row with `organization_id IS NULL`. `useReorderCategories` uses `.eq('organization_id', orgId)` — that row's `display_order` update will be a no-op, so dragging it leaves position desynced from `localOrder` until refetch. RLS UPDATE policy already allows the NULL-org bypass, so the safe fix is to backfill the legacy row, OR drop the org filter from the per-id update (the per-id WHERE + RLS is enough).
+**Fix:** Backfill via migration: `UPDATE service_category_colors SET organization_id = (SELECT id FROM organizations LIMIT 1) WHERE organization_id IS NULL` — single legacy seed row, deterministic. Then add `NOT NULL` constraint to prevent regression.
 
-**P2 — `useServices`/`useServicesByCategory` clones still in `useBookingSystem.ts:121-145`**
-Wave 9 explicitly deferred the rename to a focused booking-flow pass. Still deferred — flagging only so it stays on the docket. No action this wave.
+**P2 — `data.client_id` is dead path on confirm**
+`HostedBookingPage.tsx:215-217` reads `data.client_id` from the edge response — but `create-public-booking` never returns it (only `appointment_id`, `requires_deposit`, etc.). `pendingClientId` is set to `null` always, then **never read** anywhere. Pure dead state + dead destructure.
+**Fix:** Either delete the state entirely (recommended — nothing reads it), or have the edge function return `client_id` if a future feature needs it. Recommend delete: 3 lines.
 
-### Wave 9 false positives worth recording
+**P2 — Three "core" hooks still org-blind in `useServiceCategoryColors.ts`**
+`useServiceCategoryColors` (main fetch, line 42), `useArchivedCategories` (line 256), and `useServicesByCategory` (in `useServicesData.ts:94` — no orgId arg). All four are protected by RLS today but violate the doctrine *"All queries filter by organization, include orgId in query keys, use enabled: !!orgId"*. Defense-in-depth + correct cache scoping (today both orgs would share a cache entry on session switch).
+**Fix:** Add `organizationId?: string` arg with `useOrganizationContext` fallback, include in query key, `enabled: !!orgId`. ~6 lines per hook. Mirror exactly the Wave 9 pattern from `useAllServicesData`.
 
-**P0 (Wave 9) — `level_pricing` / `stylist_service_overrides` / `service_location_pricing` "no policies"**
-These tables **don't exist** in the database. Verified via `information_schema.columns` — zero rows for all three names. The closest real tables are `service_stylist_price_overrides`, `level_commission_overrides`, etc. — different schema, different concerns, all have policies.
-**Action:** No migration needed; mark Wave 9 finding closed-as-invalid in the audit log so it doesn't get re-flagged.
+**P2 — `useArchivedServices` org filter applies but `enabled` gate missing**
+`useServicesData.ts:357-379` — accepts `organizationId`, applies `.eq('organization_id', orgId)` conditionally, but no `enabled: !!orgId`. On first render with no org context, fires an unfiltered query (RLS-safe but wasteful + leaks into wrong cache key `[..., undefined]`).
+**Fix:** Add `enabled: !!orgId`.
 
-**P0 (Wave 9) — `service_form_requirements` RLS open**
-Verified shipped: SELECT/INSERT/UPDATE/DELETE all gated through parent `services` org check via `EXISTS`. **Closed.**
+---
 
-### Verification done in this audit
+### Verified clean (no action)
 
-- `services` RLS: scoped to `is_org_member`/`is_org_admin` ✓
-- `service_form_requirements` RLS: parent-joined org check on all four operations ✓
-- `service_audit_log` RLS: SELECT scoped to org admins, INSERT to org members ✓
-- `service_category_colors`: all four policies org-scoped (with NULL bypass for legacy seeds) ✓
-- `useReorderCategories`: sequential writes + org filter ✓
-- Public-booking inline form gating: modal mounted, card rendered, edge-function validation server-side ✓
-- Hotkey unique index: present ✓
+- `service_form_requirements` RLS — all 4 policies parent-joined to `services` org ✓
+- `services` RLS, hotkey unique index `idx_services_pos_hotkey_unique_per_org` ✓
+- `service_audit_log` RLS — admin-scoped SELECT, member INSERT ✓
+- 10 audit triggers active on `services` + `service_form_requirements` ✓
+- Public-booking inline form gating end-to-end (modal, edge function validation, signature insertion) ✓
+- `NewBookingSheet` semantic tokens ✓
+- `useServiceFormRequirements` org-arg inner-join filter ✓
+
+### Out of scope / explicit defer
+
+- `useServices`/`useServicesByCategory` clones in `useBookingSystem.ts` — still deferred to a focused booking refactor (now 3 audit waves running).
+- `service_form_requirements` has no `updated_at` column — audit trigger writes `previous_value`/`new_value` snapshots instead, so not needed.
+- `useService(serviceId)` org-blind lookup-by-id — RLS-safe, lookup is single-row, defer.
+
+### Wave 8 plan accuracy issue
+
+Wave 8's "ship now" set claimed search-predicate extension was included; the migration shipped, the editor validation shipped, but the search predicate change did not. Audit log entry: **Wave 8 P2 search reopened as Wave 11 P1.**
 
 ### Files touched
 
 | File | Change |
 |---|---|
-| `src/hooks/useServiceFormRequirements.ts` | Add `organizationId` arg + inner-join filter on org-wide list hook |
-| `src/components/dashboard/schedule/NewBookingSheet.tsx` | Swap raw amber/emerald for `warning`/`success` semantic tokens (4 lines) |
-
-### Out of scope / explicit defer
-
-- `useServices`/`useServicesByCategory` rename (5-call-site booking refactor, needs its own pass).
-- `KioskFormSigningScreen` props plumbing — verified working but uses `isLoading` only for initial fetch, not for sign-in-flight; acceptable.
-- The `useUnsignedFormsForClient` "once + version changed" branch is dead code (line 132-136 — comment says "for now we don't require re-signing"). Defer until product wants version-bumped re-signing.
+| `supabase/migrations/<new>.sql` | Backfill NULL `organization_id` on `service_category_colors`; add NOT NULL |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Extend search predicate to name + online_name + description + pos_hotkey |
+| `src/components/booking-surface/HostedBookingPage.tsx` | Delete `pendingClientId` state + unused `data.client_id` read |
+| `src/hooks/useServiceCategoryColors.ts` | Org-scope `useServiceCategoryColors` + `useArchivedCategories` |
+| `src/hooks/useServicesData.ts` | Org-scope `useServicesByCategory`; add `enabled: !!orgId` to `useArchivedServices` |
 
 ### Recommended cutoff
 
-- **Ship now:** P1 org filter + P2 token swap. ~15 lines across 2 files. No migration.
-- **Defer:** Booking-system rename (its own wave).
+- **Ship now:** Both P1s (search regression + NULL backfill), all three P2s. ~25 lines + 1 small migration. Single wave.
+- **Defer:** Booking-system rename (now flagged in 3 consecutive audits).
+
+### Verification
+
+1. Search "premium" in services settings → finds services where only `online_name` matches.
+2. Drag the previously-NULL-org category → position persists across refresh.
+3. Open booking, confirm without forms → no console error from missing `client_id`.
+4. Open `useServiceCategoryColors` devtools → query key includes orgId; switching orgs invalidates.
 
 ### Prompt feedback
 
-Clean prompt — *"do any gaps or bugs remain?"* with the implicit "after the prior wave" framing got me to scope this as a delta audit instead of re-running the full sweep. Pattern works.
+Strong prompt — same delta-audit framing kept scope tight. The implicit "Wave 10 shipped, what's left?" worked.
 
-To level up: the prompt didn't ask me to **verify Wave 9's findings actually shipped** — but I caught the two false-positives (non-existent pricing tables + already-shipped form-req RLS) only by re-querying the DB. If you'd said *"verify what shipped, then flag what's left"* I'd have led with the verification table instead of burying it. Pattern: **ask for verification + delta in the same prompt** so audits don't accumulate stale assumptions across waves.
+To level up: **flag plan-vs-ship discrepancies as a category.** I caught the search regression only by skimming the file; if you'd said *"verify each prior wave's claimed changes are present, flag drift"* I'd have led with a verification table column for "claimed shipped / actually shipped" instead of burying the regression in a P1 bullet. Pattern: **claim-vs-state diff = surfaces silent regressions waves later.**
 
