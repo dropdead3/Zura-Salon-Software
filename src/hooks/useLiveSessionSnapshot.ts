@@ -250,6 +250,38 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
         }
       }
 
+      // Resolve any peer staff IDs (from cross-location conflicts) that we haven't already resolved
+      const peerStaffIds = new Set<string>();
+      for (const group of conflictIndex.values()) {
+        for (const appt of group) {
+          if (appt.phorest_staff_id && !staffToName.has(appt.phorest_staff_id) && !staffToUser.has(appt.phorest_staff_id)) {
+            peerStaffIds.add(appt.phorest_staff_id);
+          }
+        }
+      }
+      if (peerStaffIds.size > 0) {
+        const { data: peerMappings } = await supabase
+          .from('v_all_staff' as any)
+          .select('phorest_staff_id, user_id, phorest_staff_name')
+          .in('phorest_staff_id', [...peerStaffIds]);
+        const peerUserIds: string[] = [];
+        ((peerMappings || []) as any[]).forEach((m: any) => {
+          if (m.user_id) {
+            staffToUser.set(m.phorest_staff_id, m.user_id);
+            peerUserIds.push(m.user_id);
+          }
+          if (m.phorest_staff_name) staffToName.set(m.phorest_staff_id, m.phorest_staff_name);
+        });
+        const missingProfileIds = peerUserIds.filter(uid => !profileMap.has(uid));
+        if (missingProfileIds.length > 0) {
+          const { data: peerProfiles } = await supabase
+            .from('employee_profiles')
+            .select('user_id, full_name, display_name, photo_url')
+            .in('user_id', missingProfileIds);
+          ((peerProfiles || []) as any[]).forEach((p: any) => profileMap.set(p.user_id, p));
+        }
+      }
+
       // Build per-stylist details
       const stylistDetailsMap = new Map<string, StylistDetail>();
 
