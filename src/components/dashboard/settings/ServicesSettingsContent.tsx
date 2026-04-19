@@ -744,8 +744,16 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                           ) : (
                             services.map(svc => {
                               const margin = computeMargin(svc.price || 0, svc.cost);
+                              const isSelected = selectedServiceIds.has(svc.id);
                               return (
-                                <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
+                                <div key={svc.id} className={cn('flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer', isSelected && 'bg-primary/5')} onClick={() => openEditService(svc)}>
+                                  <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleServiceSelected(svc.id)}
+                                      aria-label={`Select ${svc.name}`}
+                                    />
+                                  </div>
                                   <div className="flex-1 min-w-0">
                                     <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
                                     <div className={cn('flex items-center gap-3', tokens.body.muted)}>
