@@ -22,18 +22,25 @@ export interface StylistPriceOverride {
 }
 
 // ─── Level Prices ────────────────────────────────────────────────
-export function useServiceLevelPrices(serviceId: string | null) {
+// Wave 12: org-scoped query keys + explicit org filter (defense-in-depth on
+// top of RLS) so super-admin org switches invalidate cleanly and no row from
+// another tenant can ever leak into a per-service cache entry.
+export function useServiceLevelPrices(serviceId: string | null, organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId ?? effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['service-level-prices', serviceId],
+    queryKey: ['service-level-prices', orgId, serviceId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_level_prices')
         .select('*')
-        .eq('service_id', serviceId!);
+        .eq('service_id', serviceId!)
+        .eq('organization_id', orgId!);
       if (error) throw error;
       return data as unknown as ServiceLevelPrice[];
     },
-    enabled: !!serviceId,
+    enabled: !!serviceId && !!orgId,
   });
 }
 
@@ -57,8 +64,8 @@ export function useUpsertServiceLevelPrices() {
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
-      const serviceId = vars[0]?.service_id;
-      queryClient.invalidateQueries({ queryKey: ['service-level-prices', serviceId] });
+      // Prefix-match invalidation so both org-scoped and any legacy keys refetch.
+      queryClient.invalidateQueries({ queryKey: ['service-level-prices'] });
       toast.success('Level prices saved');
     },
     onError: (e) => toast.error('Failed to save level prices: ' + e.message),
@@ -66,18 +73,22 @@ export function useUpsertServiceLevelPrices() {
 }
 
 // ─── Stylist Overrides ───────────────────────────────────────────
-export function useStylistPriceOverrides(serviceId: string | null) {
+export function useStylistPriceOverrides(serviceId: string | null, organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId ?? effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['stylist-price-overrides', serviceId],
+    queryKey: ['stylist-price-overrides', orgId, serviceId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_stylist_price_overrides')
         .select('*')
-        .eq('service_id', serviceId!);
+        .eq('service_id', serviceId!)
+        .eq('organization_id', orgId!);
       if (error) throw error;
       return data as unknown as StylistPriceOverride[];
     },
-    enabled: !!serviceId,
+    enabled: !!serviceId && !!orgId,
   });
 }
 
@@ -95,8 +106,8 @@ export function useUpsertStylistPriceOverride() {
         .upsert({ ...row, organization_id: orgId }, { onConflict: 'service_id,employee_id' });
       if (error) throw error;
     },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['stylist-price-overrides', vars.service_id] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stylist-price-overrides'] });
       toast.success('Override saved');
     },
     onError: (e) => toast.error('Failed to save override: ' + e.message),
@@ -115,8 +126,8 @@ export function useDeleteStylistPriceOverride() {
       if (error) throw error;
       return serviceId;
     },
-    onSuccess: (serviceId) => {
-      queryClient.invalidateQueries({ queryKey: ['stylist-price-overrides', serviceId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stylist-price-overrides'] });
       toast.success('Override removed');
     },
     onError: (e) => toast.error('Failed to remove override: ' + e.message),
