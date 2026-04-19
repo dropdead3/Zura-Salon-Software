@@ -2,8 +2,10 @@ import { Calendar, Clock, User, Scissors, MapPin, CheckCircle2, CalendarPlus } f
 import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 import type { BookingClientInfo } from './BookingClientForm';
+import type { ServiceFormRequirement } from '@/hooks/useServiceFormRequirements';
 import { BookingPaymentForm } from './BookingPaymentForm';
 import { AfterpayPromoBadge } from './AfterpayPromoBadge';
+import { InlineFormSigningCard } from './InlineFormSigningCard';
 
 interface BookingConfirmationProps {
   theme: BookingSurfaceTheme;
@@ -31,6 +33,11 @@ interface BookingConfirmationProps {
   showPaymentForm?: boolean;
   afterpayEnabled?: boolean;
   afterpaySurchargeRate?: number | null;
+  // Wave 9: Inline required-form gating (hybrid model — sign now or defer)
+  requiredForms?: ServiceFormRequirement[];
+  signedFormTemplateIds?: string[];
+  onSignForms?: () => void;
+  onDeferForms?: () => void;
 }
 
 export function BookingConfirmation({
@@ -39,6 +46,7 @@ export function BookingConfirmation({
   depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
   paymentClientSecret, paymentIntentType, stripePublishableKey, stripeConnectedAccountId,
   onPaymentComplete, showPaymentForm, afterpayEnabled, afterpaySurchargeRate,
+  requiredForms, signedFormTemplateIds, onSignForms, onDeferForms,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
     const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
@@ -190,6 +198,17 @@ export function BookingConfirmation({
             Afterpay is available at checkout via payment link after your appointment.
           </p>
         </div>
+      )}
+
+      {/* Wave 9: Inline form-gating card (hybrid: sign now or defer to check-in) */}
+      {requiredForms && requiredForms.length > 0 && !showPaymentForm && (
+        <InlineFormSigningCard
+          theme={theme}
+          forms={requiredForms}
+          signedFormTemplateIds={signedFormTemplateIds ?? []}
+          onSignForms={onSignForms}
+          onDeferForms={onDeferForms}
+        />
       )}
 
       {/* Payment Form (shown after appointment creation) */}

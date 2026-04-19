@@ -26,6 +26,8 @@ import {
 } from '@/lib/booking-embed-messages';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRequiredFormsForService } from '@/hooks/useServiceFormRequirements';
+import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
 
 export function HostedBookingPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
@@ -145,6 +147,18 @@ export function HostedBookingPage() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [createdAppointmentId, setCreatedAppointmentId] = useState<string | null>(null);
 
+  // ─── Wave 9: required-form gating (hybrid sign-now / defer) ─────
+  const selectedServiceId = selectedServiceData?.id;
+  const { data: requiredForms } = useRequiredFormsForService(selectedServiceId);
+  const [signedFormTemplateIds, setSignedFormTemplateIds] = useState<string[]>([]);
+  const [showFormSigningDialog, setShowFormSigningDialog] = useState(false);
+  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
+
+  // Reset sign state if the chosen service changes mid-flow
+  useEffect(() => {
+    setSignedFormTemplateIds([]);
+  }, [selectedServiceId]);
+
   // Check if any eligible service needs payment (lazy Stripe config fetch)
   const anyServiceNeedsPayment = useMemo(() => {
     return eligibleServices?.some(s => s.requiresDeposit || s.requireCardOnFile) ?? false;
@@ -189,6 +203,8 @@ export function HostedBookingPage() {
             phone: state.clientInfo.phone,
             notes: state.clientInfo.notes,
           },
+          // Wave 9: Inline-signed forms — empty array means deferred to check-in
+          signed_form_template_ids: signedFormTemplateIds,
         },
       });
 
@@ -196,7 +212,9 @@ export function HostedBookingPage() {
       if (data?.error) throw new Error(data.error);
 
       const appointmentId = data.appointment_id;
+      const returnedClientId = data.client_id ?? null;
       setCreatedAppointmentId(appointmentId);
+      setPendingClientId(returnedClientId);
 
       // If payment needed and Stripe is configured, create intent
       if (needsPayment && stripeConfig) {
@@ -239,7 +257,7 @@ export function HostedBookingPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [org?.id, state, isEmbedMode, update, needsPayment, stripeConfig, depositAmount]);
+  }, [org?.id, state, isEmbedMode, update, needsPayment, stripeConfig, depositAmount, signedFormTemplateIds]);
 
   // ─── Payment complete handler ─────────────────────────────────
   const handlePaymentComplete = useCallback((intentId: string) => {

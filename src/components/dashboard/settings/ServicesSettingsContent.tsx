@@ -124,7 +124,7 @@ function SortableCategoryRow({ category, children }: { category: ServiceCategory
 export function ServicesSettingsContent() {
   const { effectiveOrganization, userOrganizations } = useOrganizationContext();
   const resolvedOrgId = effectiveOrganization?.id || userOrganizations[0]?.id;
-  const { data: categories, isLoading: catsLoading } = useServiceCategoryColors(resolvedOrgId);
+  const { data: categories, isLoading: catsLoading } = useServiceCategoryColors();
   const { data: allServices, isLoading: servicesLoading } = useServicesData(undefined, resolvedOrgId);
   const updateColor = useUpdateCategoryColor();
   const reorderCategories = useReorderCategories();
@@ -133,7 +133,7 @@ export function ServicesSettingsContent() {
   const deleteCategory = useDeleteCategory();
   const archiveCategory = useArchiveCategory();
   const restoreCategory = useRestoreCategory();
-  const { data: archivedCategories } = useArchivedCategories(resolvedOrgId);
+  const { data: archivedCategories } = useArchivedCategories();
   const createService = useCreateService();
   const updateService = useUpdateService();
   const deleteService = useDeleteService();
@@ -254,15 +254,21 @@ export function ServicesSettingsContent() {
     const newIdx = localOrder.findIndex(c => c.id === over.id);
     const newOrder = arrayMove(localOrder, oldIdx, newIdx);
     setLocalOrder(newOrder);
-    reorderCategories.mutate(newOrder.map(c => c.id), {
-      onSuccess: () => {
-        showUndoToast('Category order updated', () => {
-          setLocalOrder(previousOrder);
-          reorderCategories.mutate(previousOrder.map(c => c.id));
-        });
+    reorderCategories.mutate(
+      { orderedIds: newOrder.map(c => c.id), organizationId: effectiveOrganization?.id },
+      {
+        onSuccess: () => {
+          showUndoToast('Category order updated', () => {
+            setLocalOrder(previousOrder);
+            reorderCategories.mutate({
+              orderedIds: previousOrder.map(c => c.id),
+              organizationId: effectiveOrganization?.id,
+            });
+          });
+        },
+        onError: () => toast.error('Failed to save order'),
       },
-      onError: () => toast.error('Failed to save order'),
-    });
+    );
   };
 
   const handleCreateCategory = (name: string) => {
@@ -345,17 +351,14 @@ export function ServicesSettingsContent() {
   };
 
   const handleArchiveCategory = () => {
-    if (!archiveCategoryId || !resolvedOrgId) return;
+    if (!archiveCategoryId) return;
     const catId = archiveCategoryId;
     const catName = archiveCategoryName;
-    const orgId = resolvedOrgId;
-    archiveCategory.mutate({ categoryId: catId, categoryName: catName, organizationId: orgId }, {
+    archiveCategory.mutate({ categoryId: catId, categoryName: catName }, {
       onSuccess: () => {
         setArchiveCategoryId(null);
         setArchiveCategoryName('');
-        showUndoToast(`Archived '${catName}'`, () =>
-          restoreCategory.mutate({ categoryId: catId, categoryName: catName, organizationId: orgId }),
-        );
+        showUndoToast(`Archived '${catName}'`, () => restoreCategory.mutate({ categoryId: catId, categoryName: catName }));
       },
     });
   };
@@ -397,8 +400,8 @@ export function ServicesSettingsContent() {
             // Undo: archive the freshly recreated category
             // We need to find it after invalidation — use name match
             const restored = localOrder.find(c => c.category_name === categoryName);
-            if (restored && resolvedOrgId) {
-              archiveCategory.mutate({ categoryId: restored.id, categoryName, organizationId: resolvedOrgId });
+            if (restored) {
+              archiveCategory.mutate({ categoryId: restored.id, categoryName });
             }
           });
         },
@@ -421,26 +424,13 @@ export function ServicesSettingsContent() {
     setEditorDialogOpen(true);
   };
 
-  // Filtered services for search — Wave 8: extend predicate to online_name,
-  // description, and pos_hotkey so operators can find services by their
-  // public-facing name or POS shortcut, not just the internal name.
+  // Filtered services for search
   const filteredServicesByCategory = useMemo(() => {
     if (!searchQuery.trim()) return servicesByCategory;
     const q = searchQuery.toLowerCase();
     const filtered: Record<string, Service[]> = {};
     for (const [cat, svcs] of Object.entries(servicesByCategory)) {
-      const matches = svcs.filter((s) => {
-        const haystack = [
-          s.name,
-          (s as any).online_name,
-          s.description,
-          (s as any).pos_hotkey,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(q);
-      });
+      const matches = svcs.filter(s => s.name.toLowerCase().includes(q));
       if (matches.length > 0) filtered[cat] = matches;
     }
     return filtered;
@@ -639,8 +629,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => {
-                            if (!resolvedOrgId) return;
-                            restoreCategory.mutate({ categoryId: cat.id, categoryName: cat.category_name, organizationId: resolvedOrgId });
+                            restoreCategory.mutate({ categoryId: cat.id, categoryName: cat.category_name });
                           }}>
                             <ArchiveRestore className="w-3 h-3" /> Restore
                           </Button>

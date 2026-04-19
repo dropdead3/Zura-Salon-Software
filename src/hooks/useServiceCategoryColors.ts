@@ -38,25 +38,18 @@ export function getCategoryAbbreviation(categoryName: string): string {
   return categoryName.slice(0, 2).toUpperCase();
 }
 
-// Fetch all category colors from database (org-scoped, plus legacy global rows)
-export function useServiceCategoryColors(organizationId?: string | null) {
+// Fetch all category colors from database
+export function useServiceCategoryColors() {
   return useQuery({
-    queryKey: ['service-category-colors', organizationId ?? null],
+    queryKey: ['service-category-colors'],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('service_category_colors')
         .select('*')
-        .eq('is_archived', false);
-
-      if (organizationId) {
-        // Include the org's rows AND legacy NULL-org rows (global defaults)
-        query = query.or(`organization_id.eq.${organizationId},organization_id.is.null`);
-      }
-
-      const { data, error } = await query
+        .eq('is_archived', false)
         .order('display_order')
         .order('category_name');
-
+      
       if (error) throw error;
       return data as unknown as ServiceCategoryColor[];
     },
@@ -102,23 +95,33 @@ export function useUpdateCategoryColor() {
   });
 }
 
-// Reorder categories by updating display_order values
+// Reorder categories by updating display_order values.
+// Wave 9: writes are sequential (deterministic on race) and explicitly
+// scoped to organizationId as defense-in-depth on top of RLS.
 export function useReorderCategories() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (orderedIds: string[]) => {
-      // Update each category's display_order based on array position
-      const updates = orderedIds.map((id, index) =>
-        supabase
+    mutationFn: async ({
+      orderedIds,
+      organizationId,
+    }: {
+      orderedIds: string[];
+      organizationId?: string | null;
+    }) => {
+      const nowIso = new Date().toISOString();
+      for (let i = 0; i < orderedIds.length; i++) {
+        const id = orderedIds[i];
+        let q = supabase
           .from('service_category_colors')
-          .update({ display_order: index + 1, updated_at: new Date().toISOString() })
-          .eq('id', id)
-      );
-      
-      const results = await Promise.all(updates);
-      const failed = results.find(r => r.error);
-      if (failed?.error) throw failed.error;
+          .update({ display_order: i + 1, updated_at: nowIso })
+          .eq('id', id);
+        if (organizationId) {
+          q = q.eq('organization_id', organizationId);
+        }
+        const { error } = await q;
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
@@ -248,23 +251,18 @@ export function useDeleteCategory() {
 }
 
 /**
- * Fetch archived categories (org-scoped)
+ * Fetch archived categories
  */
-export function useArchivedCategories(organizationId?: string | null) {
+export function useArchivedCategories() {
   return useQuery({
-    queryKey: ['service-category-colors-archived', organizationId ?? null],
+    queryKey: ['service-category-colors-archived'],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('service_category_colors')
         .select('*')
-        .eq('is_archived', true);
-
-      if (organizationId) {
-        query = query.or(`organization_id.eq.${organizationId},organization_id.is.null`);
-      }
-
-      const { data, error } = await query.order('archived_at', { ascending: false });
-
+        .eq('is_archived', true)
+        .order('archived_at', { ascending: false });
+      
       if (error) throw error;
       return data as unknown as ServiceCategoryColor[];
     },
@@ -272,28 +270,13 @@ export function useArchivedCategories(organizationId?: string | null) {
 }
 
 /**
- * Archive a category and all its services (org-scoped cascade)
- *
- * organizationId is REQUIRED to prevent cross-tenant cascade — without it,
- * archiving "Color" in org A would archive "Color" services in every org
- * that happens to share the category name.
+ * Archive a category and all its services
  */
 export function useArchiveCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      categoryId,
-      categoryName,
-      organizationId,
-    }: {
-      categoryId: string;
-      categoryName: string;
-      organizationId: string;
-    }) => {
-      if (!organizationId) {
-        throw new Error('organizationId is required to archive a category');
-      }
+    mutationFn: async ({ categoryId, categoryName }: { categoryId: string; categoryName: string }) => {
       // Archive the category
       const { error: catError } = await supabase
         .from('service_category_colors')
@@ -301,12 +284,11 @@ export function useArchiveCategory() {
         .eq('id', categoryId);
       if (catError) throw catError;
 
-      // Archive all services in this category — strictly within the org
+      // Archive all services in this category
       const { error: svcError } = await supabase
         .from('services')
         .update({ is_archived: true, archived_at: new Date().toISOString() } as any)
-        .eq('category', categoryName)
-        .eq('organization_id', organizationId);
+        .eq('category', categoryName);
       if (svcError) throw svcError;
     },
     onSuccess: () => {
@@ -323,24 +305,13 @@ export function useArchiveCategory() {
 }
 
 /**
- * Restore a category and its services (org-scoped cascade)
+ * Restore a category and its services
  */
 export function useRestoreCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      categoryId,
-      categoryName,
-      organizationId,
-    }: {
-      categoryId: string;
-      categoryName: string;
-      organizationId: string;
-    }) => {
-      if (!organizationId) {
-        throw new Error('organizationId is required to restore a category');
-      }
+    mutationFn: async ({ categoryId, categoryName }: { categoryId: string; categoryName: string }) => {
       // Restore the category
       const { error: catError } = await supabase
         .from('service_category_colors')
@@ -348,12 +319,11 @@ export function useRestoreCategory() {
         .eq('id', categoryId);
       if (catError) throw catError;
 
-      // Restore all services in this category — strictly within the org
+      // Restore all services in this category
       const { error: svcError } = await supabase
         .from('services')
         .update({ is_archived: false, archived_at: null } as any)
-        .eq('category', categoryName)
-        .eq('organization_id', organizationId);
+        .eq('category', categoryName);
       if (svcError) throw svcError;
     },
     onSuccess: () => {
