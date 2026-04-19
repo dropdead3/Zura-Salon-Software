@@ -1066,25 +1066,25 @@ export function ServiceEditorDialog({
             You have unsaved changes to this service. Are you sure you want to close without saving?
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex flex-col-reverse sm:flex-row sm:flex-wrap sm:justify-end gap-2 pt-2">
-          <AlertDialogCancel className="mt-0 w-full sm:w-auto">
+        <AlertDialogFooter className="flex flex-col gap-2 pt-2 sm:flex-col sm:space-x-0">
+          <AlertDialogAction
+            onClick={handleSaveAndClose}
+            disabled={!name.trim() || isPending || hasErrors}
+            className="w-full mt-0"
+          >
+            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Save &amp; Close
+          </AlertDialogAction>
+          <AlertDialogCancel className="w-full mt-0 sm:mt-0">
             Keep Editing
           </AlertDialogCancel>
           <Button
             variant="outline"
             onClick={handleDiscard}
-            className="w-full sm:w-auto border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             Discard Changes
           </Button>
-          <AlertDialogAction
-            onClick={handleSaveAndClose}
-            disabled={!name.trim() || isPending || hasErrors}
-            className="w-full sm:w-auto"
-          >
-            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Save &amp; Close
-          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
