@@ -896,6 +896,8 @@ export default function Schedule() {
                 zoomLevel={zoomLevel}
                 scheduleBlocks={scheduleBlocks}
                 inactiveConnectLocationIds={inactiveConnectLocationIds}
+                locationName={selectedLocationData?.name}
+                isMultiLocation={locations.length > 1}
               />
             );
           })()}
