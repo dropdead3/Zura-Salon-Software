@@ -247,6 +247,13 @@ export function ServiceEditorDialog({
             </SubTabsTrigger>
           </SubTabsList>
 
+          {/*
+            Note: All three tab forms (details / online / advanced) share a single
+            `handleDetailsSubmit` handler that writes the FULL payload from React state
+            (price, duration, online overrides, prompts, etc). Different form IDs exist
+            only so the footer "Save Changes" button can target the active tab's form
+            element via `form={...}` — they do not partition the payload.
+          */}
           <div className="flex-1 overflow-y-auto mt-4 p-1 min-h-[480px]">
             <TabsContent value="details" className="mt-0 p-px">
               <form id="service-details-form" onSubmit={handleDetailsSubmit} className="space-y-4">
