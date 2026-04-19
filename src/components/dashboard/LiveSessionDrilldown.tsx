@@ -209,6 +209,34 @@ function StylistRow({ stylist }: { stylist: StylistDetail }) {
                 </TooltipContent>
               </Tooltip>
             )}
+            {stylist.conflictPeers && stylist.conflictPeers.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-medium shrink-0 cursor-help">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span>Double-booked in Phorest</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-medium">Client double-booked</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    {stylist.clientName || 'This client'} also has a concurrent appointment:
+                  </p>
+                  <ul className="text-muted-foreground text-xs mt-1 space-y-0.5">
+                    {stylist.conflictPeers.map((peer, idx) => (
+                      <li key={idx}>
+                        • {formatNameWithPeriod(peer.stylistName)}
+                        {peer.locationName ? ` at ${peer.locationName}` : ''}
+                        {' '}({formatTimeDisplay(peer.startTime)}–{formatTimeDisplay(peer.endTime)})
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-muted-foreground/70 text-[10px] mt-1.5">
+                    Verify with front desk — Phorest holds the source of truth.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
           {stylist.assistedBy.length > 0 && (
             <span className="bg-muted/60 text-muted-foreground/80 text-[10px] px-2 py-0.5 rounded-full italic whitespace-nowrap">
