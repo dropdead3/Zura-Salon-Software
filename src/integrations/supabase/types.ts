@@ -22045,6 +22045,59 @@ export type Database = {
           },
         ]
       }
+      service_audit_log: {
+        Row: {
+          actor_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          field_name: string | null
+          id: string
+          metadata: Json | null
+          new_value: Json | null
+          organization_id: string
+          previous_value: Json | null
+          service_id: string
+          source: string
+        }
+        Insert: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          field_name?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          organization_id: string
+          previous_value?: Json | null
+          service_id: string
+          source?: string
+        }
+        Update: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          field_name?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          organization_id?: string
+          previous_value?: Json | null
+          service_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_blueprints: {
         Row: {
           created_at: string

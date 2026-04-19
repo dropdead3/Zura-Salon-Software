@@ -642,13 +642,13 @@ export function NewBookingSheet({
               </div>
             )}
 
-            {/* Wave 4: Required intake/consent forms — info-only, no gating yet */}
+            {/* Wave 4: Required intake/consent forms — info-only, collected at check-in */}
             {requiredForms.length > 0 && (
               <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-start gap-2">
                 <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <div className="text-sm space-y-1">
                   <p className="font-medium text-foreground">
-                    {requiredForms.length === 1 ? 'Form required' : 'Forms required'} before service
+                    {requiredForms.length === 1 ? 'Form expected at check-in' : 'Forms expected at check-in'}
                   </p>
                   <ul className="text-muted-foreground space-y-0.5">
                     {requiredForms.map((f) => (
@@ -661,6 +661,9 @@ export function NewBookingSheet({
                       </li>
                     ))}
                   </ul>
+                  <p className="text-xs text-muted-foreground/80 pt-0.5">
+                    Booking is not gated — collect on arrival.
+                  </p>
                 </div>
               </div>
             )}
