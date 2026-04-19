@@ -255,14 +255,14 @@ export function ServicesSettingsContent() {
     const newOrder = arrayMove(localOrder, oldIdx, newIdx);
     setLocalOrder(newOrder);
     reorderCategories.mutate(
-      { orderedIds: newOrder.map(c => c.id), organizationId: effectiveOrganization?.id },
+      { orderedIds: newOrder.map(c => c.id), organizationId: resolvedOrgId },
       {
         onSuccess: () => {
           showUndoToast('Category order updated', () => {
             setLocalOrder(previousOrder);
             reorderCategories.mutate({
               orderedIds: previousOrder.map(c => c.id),
-              organizationId: effectiveOrganization?.id,
+              organizationId: resolvedOrgId,
             });
           });
         },

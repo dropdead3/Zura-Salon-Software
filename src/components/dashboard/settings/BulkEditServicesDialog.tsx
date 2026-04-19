@@ -128,7 +128,10 @@ export function BulkEditServicesDialog({
           if (priceMode === 'percent') next = cur * (1 + v / 100);
           else if (priceMode === 'flat-add') next = cur + v;
           else if (priceMode === 'flat-set') next = v;
-          perId[svc.id] = { ...(perId[svc.id] ?? {}), price: Math.round(next * 100) / 100 };
+          // Wave 12: clamp to editor's lower bound (price ≥ 0) so bulk paths
+          // can't silently push negatives into `services.price`.
+          const clamped = Math.max(0, next);
+          perId[svc.id] = { ...(perId[svc.id] ?? {}), price: Math.round(clamped * 100) / 100 };
         }
       }
     }
@@ -139,7 +142,9 @@ export function BulkEditServicesDialog({
         for (const svc of selectedServices) {
           const cur = svc.duration_minutes ?? 0;
           const next = durationMode === 'minutes-add' ? cur + v : v;
-          perId[svc.id] = { ...(perId[svc.id] ?? {}), duration_minutes: Math.max(0, next) };
+          // Wave 12: align with editor (min 5 min) so a stray "-10" or "0"
+          // doesn't write a non-bookable duration across the selection.
+          perId[svc.id] = { ...(perId[svc.id] ?? {}), duration_minutes: Math.max(5, next) };
         }
       }
     }
@@ -162,9 +167,19 @@ export function BulkEditServicesDialog({
 
   // Bug 2 fix: block Apply when category toggle is on but no destination picked
   const categoryInvalid = changeCategory && !newCategory;
-  // Wave 6: block Apply when numeric inputs are toggled but unparseable
-  const priceInvalid = changePrice && !Number.isFinite(parseFloat(priceValue));
-  const durationInvalid = changeDuration && !Number.isFinite(parseInt(durationValue, 10));
+  // Wave 6 + Wave 12: block Apply when numeric inputs are unparseable, AND
+  // when "Set to" mode would write an out-of-bound value (price < 0,
+  // duration < 5). Add/percent modes can also push values negative; we clamp
+  // on apply, but only flag the input as invalid when the user explicitly
+  // typed a negative SET value so the message is unambiguous.
+  const parsedPrice = parseFloat(priceValue);
+  const parsedDuration = parseInt(durationValue, 10);
+  const priceInvalid =
+    changePrice &&
+    (!Number.isFinite(parsedPrice) || (priceMode === 'flat-set' && parsedPrice < 0));
+  const durationInvalid =
+    changeDuration &&
+    (!Number.isFinite(parsedDuration) || (durationMode === 'minutes-set' && parsedDuration < 5));
   const canApply = hasAnyChange && !categoryInvalid && !priceInvalid && !durationInvalid;
 
   return (
