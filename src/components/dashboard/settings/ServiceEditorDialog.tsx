@@ -781,6 +781,10 @@ export function ServiceEditorDialog({
                 />
               )}
             </TabsContent>
+
+            <TabsContent value="forms" className="mt-0 p-px">
+              {serviceId && <ServiceFormsLinkagePanel serviceId={serviceId} />}
+            </TabsContent>
           </div>
         </Tabs>
 
