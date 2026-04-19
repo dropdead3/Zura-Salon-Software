@@ -156,8 +156,9 @@ export default function Policies() {
                         entry={entry}
                         adopted={adoptedByKey.get(entry.key)}
                         onClick={() => {
-                          // Wave 28.4 — open Policy Configurator detail
-                          navigate(`/dashboard/admin/policies?policy=${entry.key}`);
+                          const next = new URLSearchParams(searchParams);
+                          next.set('policy', entry.key);
+                          setSearchParams(next, { replace: true });
                         }}
                       />
                     ))}
@@ -178,6 +179,24 @@ export default function Policies() {
             </SheetDescription>
           </SheetHeader>
           <PolicySetupWizard onClose={() => setSetupOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={!!activeEntry} onOpenChange={(open) => !open && closeConfigurator()}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle className={cn(tokens.heading.section)}>Configure policy</SheetTitle>
+            <SheetDescription className="font-sans">
+              Define the structured rules. AI drafting will render these into prose later — it cannot invent rules.
+            </SheetDescription>
+          </SheetHeader>
+          {activeEntry && (
+            <PolicyConfiguratorPanel
+              entry={activeEntry}
+              alreadyAdopted={adoptedByKey.has(activeEntry.key)}
+              onClose={closeConfigurator}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </DashboardLayout>
