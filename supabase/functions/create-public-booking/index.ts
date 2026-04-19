@@ -80,11 +80,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Look up service ─────────────────────────────────────────
+    // ── Look up service (with online overrides) ─────────────────
     const { data: service, error: svcErr } = await supabase
       .from("services")
       .select(
-        "id, name, category, duration_minutes, price, requires_deposit, deposit_type, deposit_amount, require_card_on_file"
+        "id, name, category, duration_minutes, price, requires_deposit, deposit_type, deposit_amount, require_card_on_file, online_duration_override, online_discount_pct"
       )
       .eq("organization_id", organization_id)
       .eq("name", service_name)
@@ -157,11 +157,21 @@ Deno.serve(async (req) => {
     }
 
     // ── Calculate end time ──────────────────────────────────────
+    // Internal scheduling always uses real duration_minutes (online_duration_override is display-only)
     const durationMinutes = service.duration_minutes || 60;
     const [h, m] = time.split(":").map(Number);
     const startMinutes = h * 60 + m;
     const endMinutes = startMinutes + durationMinutes;
     const endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
+
+    // ── Apply online discount if configured ─────────────────────
+    const basePrice = service.price != null ? Number(service.price) : null;
+    const discountPct = service.online_discount_pct != null
+      ? Number(service.online_discount_pct)
+      : 0;
+    const finalPrice = basePrice != null && discountPct > 0
+      ? +(basePrice * (1 - discountPct / 100)).toFixed(2)
+      : basePrice;
 
     // ── Create appointment ──────────────────────────────────────
     const requiresDeposit = service.requires_deposit ?? false;
@@ -186,8 +196,8 @@ Deno.serve(async (req) => {
         start_time: `${date}T${time}:00`,
         end_time: `${date}T${endTime}:00`,
         duration_minutes: durationMinutes,
-        total_price: service.price,
-        original_price: service.price,
+        total_price: finalPrice,
+        original_price: basePrice,
         status: "pending",
         import_source: "online_booking",
         deposit_required: requiresDeposit,

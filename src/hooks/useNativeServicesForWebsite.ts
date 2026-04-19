@@ -15,6 +15,11 @@ export interface NativeServiceItem {
   basePrice: number;
   category: string;
   displayOrder: number;
+  // Wave 1: Online & App overrides
+  onlineName: string | null;
+  onlineDurationOverride: number | null;
+  onlineDiscountPct: number | null;
+  includeFromPrefix: boolean;
   levelPrices: Record<string, number>; // stylist_level_id → price
 }
 
@@ -47,7 +52,7 @@ export function useNativeServicesForWebsite() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, description, website_description, is_popular, bookable_online, price, category, display_order')
+        .select('id, name, description, website_description, is_popular, bookable_online, price, category, display_order, online_name, online_duration_override, online_discount_pct, include_from_prefix')
         .eq('is_active', true)
         .eq('organization_id', orgId!);
       if (error) throw error;
@@ -128,7 +133,7 @@ export function useNativeServicesForWebsite() {
     const catItems = (servicesQuery.data ?? [])
       .filter((s) => s.category === cat.category_name)
       .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999))
-      .map((s) => ({
+      .map((s: any) => ({
         id: s.id,
         name: s.name,
         description: s.description,
@@ -138,6 +143,10 @@ export function useNativeServicesForWebsite() {
         basePrice: Number(s.price),
         category: s.category!,
         displayOrder: s.display_order ?? 999,
+        onlineName: s.online_name ?? null,
+        onlineDurationOverride: s.online_duration_override ?? null,
+        onlineDiscountPct: s.online_discount_pct != null ? Number(s.online_discount_pct) : null,
+        includeFromPrefix: s.include_from_prefix ?? false,
         levelPrices: priceMap.get(s.id) ?? {},
       }));
 

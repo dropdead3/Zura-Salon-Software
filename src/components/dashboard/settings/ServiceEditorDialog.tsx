@@ -19,6 +19,7 @@ import { LevelPricingContent } from './LevelPricingContent';
 import { StylistOverridesContent } from './StylistOverridesContent';
 import { LocationPricingContent } from './LocationPricingContent';
 import { SeasonalAdjustmentsContent } from './SeasonalAdjustmentsContent';
+import { BookingSurfacePreview } from './BookingSurfacePreview';
 
 interface ServiceEditorDialogProps {
   open: boolean;
@@ -57,6 +58,11 @@ export function ServiceEditorDialog({
   const [containerTypes, setContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
   const [billingMode, setBillingMode] = useState<'allowance' | 'parts_and_labor'>('allowance');
   const [requireCardOnFile, setRequireCardOnFile] = useState(false);
+  // Wave 1: Online & App overrides
+  const [includeFromPrefix, setIncludeFromPrefix] = useState(false);
+  const [onlineName, setOnlineName] = useState('');
+  const [onlineDurationOverride, setOnlineDurationOverride] = useState('');
+  const [onlineDiscountPct, setOnlineDiscountPct] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -85,6 +91,19 @@ export function ServiceEditorDialog({
         setDepositType(initialData.deposit_type ?? 'percentage');
         setDepositAmount(initialData.deposit_amount != null ? String(initialData.deposit_amount) : '');
         setDepositAmountFlat(initialData.deposit_amount_flat != null ? String(initialData.deposit_amount_flat) : '');
+        // Wave 1: Online & App overrides
+        setIncludeFromPrefix((initialData as any).include_from_prefix ?? false);
+        setOnlineName((initialData as any).online_name ?? '');
+        setOnlineDurationOverride(
+          (initialData as any).online_duration_override != null
+            ? String((initialData as any).online_duration_override)
+            : '',
+        );
+        setOnlineDiscountPct(
+          (initialData as any).online_discount_pct != null
+            ? String((initialData as any).online_discount_pct)
+            : '',
+        );
       } else {
         setName('');
         setCategory(presetCategory || categories[0]?.category_name || '');
@@ -108,6 +127,11 @@ export function ServiceEditorDialog({
         setDepositAmount('');
         setDepositAmountFlat('');
         setRequireCardOnFile(false);
+        // Wave 1
+        setIncludeFromPrefix(false);
+        setOnlineName('');
+        setOnlineDurationOverride('');
+        setOnlineDiscountPct('');
       }
     }
   }, [open, initialData, categories, presetCategory]);
@@ -139,6 +163,11 @@ export function ServiceEditorDialog({
       container_types: isChemicalService ? containerTypes : [],
       billing_mode: isChemicalService ? billingMode : 'allowance',
       require_card_on_file: requireCardOnFile,
+      // Wave 1: Online & App overrides
+      include_from_prefix: includeFromPrefix,
+      online_name: onlineName.trim() || null,
+      online_duration_override: onlineDurationOverride ? parseInt(onlineDurationOverride) : null,
+      online_discount_pct: onlineDiscountPct ? parseFloat(onlineDiscountPct) : null,
     } as Partial<Service>);
   };
 
@@ -162,6 +191,7 @@ export function ServiceEditorDialog({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
           <SubTabsList>
             <SubTabsTrigger value="details">Details</SubTabsTrigger>
+            <SubTabsTrigger value="online">Online &amp; App</SubTabsTrigger>
             <SubTabsTrigger value="levels" disabled={isCreateMode}>
               Level Pricing
             </SubTabsTrigger>
@@ -459,6 +489,90 @@ export function ServiceEditorDialog({
               </form>
             </TabsContent>
 
+            <TabsContent value="online" className="mt-0 p-px">
+              <form id="service-online-form" onSubmit={handleDetailsSubmit} className="space-y-5">
+                <BookingSurfacePreview
+                  internalName={name}
+                  internalPrice={price ? parseFloat(price) : null}
+                  internalDuration={parseInt(duration) || 60}
+                  onlineName={onlineName}
+                  onlineDurationOverride={onlineDurationOverride ? parseInt(onlineDurationOverride) : null}
+                  onlineDiscountPct={onlineDiscountPct ? parseFloat(onlineDiscountPct) : null}
+                  includeFromPrefix={includeFromPrefix}
+                  bookableOnline={bookableOnline}
+                />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className={tokens.body.emphasis}>Bookable Online</p>
+                      <MetricInfoTooltip description="Controls whether this service appears on your website and can be booked by clients online." />
+                    </div>
+                    <p className={tokens.body.muted}>Show on website and allow online booking</p>
+                  </div>
+                  <Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className={tokens.body.emphasis}>Show "From" Price Prefix</p>
+                      <MetricInfoTooltip description='Display the price as "from $X" on public surfaces. Useful when actual price varies by stylist level or consultation.' />
+                    </div>
+                    <p className={tokens.body.muted}>Signals price variability without committing to a single number</p>
+                  </div>
+                  <Switch checked={includeFromPrefix} onCheckedChange={setIncludeFromPrefix} />
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-border/60">
+                  <Label htmlFor="online-name" className="flex items-center gap-1.5">
+                    Online Name Override
+                    <MetricInfoTooltip description="Optional. Display a different service name on the public booking site. Leave blank to use the internal name." />
+                  </Label>
+                  <Input
+                    id="online-name"
+                    value={onlineName}
+                    onChange={e => setOnlineName(e.target.value)}
+                    placeholder={name || 'Same as internal name'}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/60">
+                  <div className="space-y-2">
+                    <Label htmlFor="online-duration" className="flex items-center gap-1.5">
+                      Online Duration (min)
+                      <MetricInfoTooltip description="Optional. Display a different duration on the public booking site (e.g. show 90 min publicly while internally booking 120). Internal scheduling still uses the real duration." />
+                    </Label>
+                    <Input
+                      id="online-duration"
+                      type="number"
+                      min="5"
+                      step="5"
+                      value={onlineDurationOverride}
+                      onChange={e => setOnlineDurationOverride(e.target.value)}
+                      placeholder={`Same as internal (${duration} min)`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="online-discount" className="flex items-center gap-1.5">
+                      Online Discount (%)
+                      <MetricInfoTooltip description="Optional automatic discount applied when booked online. Useful for driving utilization in slow windows." />
+                    </Label>
+                    <Input
+                      id="online-discount"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={onlineDiscountPct}
+                      onChange={e => setOnlineDiscountPct(e.target.value)}
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                </div>
+              </form>
+            </TabsContent>
+
             <TabsContent value="levels" className="mt-0">
               {serviceId && (
                 <LevelPricingContent
@@ -496,17 +610,21 @@ export function ServiceEditorDialog({
           </div>
         </Tabs>
 
-        {activeTab === 'details' && (
+        {(activeTab === 'details' || activeTab === 'online') && (
           <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" form="service-details-form" disabled={!name.trim() || isPending}>
+            <Button
+              type="submit"
+              form={activeTab === 'online' ? 'service-online-form' : 'service-details-form'}
+              disabled={!name.trim() || isPending}
+            >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isCreateMode ? 'Create Service' : 'Save Changes'}
             </Button>
           </DialogFooter>
         )}
 
-        {activeTab !== 'details' && (
+        {activeTab !== 'details' && activeTab !== 'online' && (
           <DialogFooter className="pt-4 border-t border-border">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Done</Button>
           </DialogFooter>
