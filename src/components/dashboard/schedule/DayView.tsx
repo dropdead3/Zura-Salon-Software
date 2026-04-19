@@ -897,3 +897,150 @@ export function DayView({
     </DndContext>
   );
 }
+
+interface StylistHeaderCellProps {
+  stylist: {
+    user_id: string;
+    full_name: string;
+    display_name?: string | null;
+    photo_url: string | null;
+    specialties?: string[] | null;
+  };
+  idx: number;
+  pct: number;
+  acceptingClients: boolean;
+  levelInfo: { shortLabel: string; index: number } | null | undefined;
+}
+
+function StylistHeaderCell({ stylist, idx, pct, acceptingClients, levelInfo }: StylistHeaderCellProps) {
+  const { ref, state } = useSpatialState<HTMLDivElement>('compact');
+
+  const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
+  const fullName = formatDisplayName(stylist.full_name, stylist.display_name);
+  const condensedName = (() => {
+    const parts = fullName.trim().split(' ');
+    if (parts.length <= 1) return fullName;
+    return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+  })();
+
+  const showPillText = state === 'default';
+  const useInitialName = state === 'compact' || state === 'compressed';
+  const isStacked = state === 'stacked';
+  const showLevelInline = state === 'default' || state === 'compressed';
+
+  const dotEl = (
+    <span
+      className={cn(
+        'w-2 h-2 rounded-full shrink-0',
+        acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70',
+      )}
+    />
+  );
+
+  const statusCluster = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex items-center gap-1 cursor-default shrink-0">
+          {dotEl}
+          {showPillText && (
+            <span
+              className={cn(
+                'text-[10px] whitespace-nowrap',
+                acceptingClients ? 'text-emerald-500' : 'text-destructive/70',
+              )}
+            >
+              {acceptingClients ? 'Booking' : 'Not Booking'}
+            </span>
+          )}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
+      </TooltipContent>
+    </Tooltip>
+  );
+
+  const avatar = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer h-10 w-10 shrink-0 rounded-[5px]', isStacked && 'relative')}>
+          <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
+          <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
+            {fullName.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+        {stylist.specialties && stylist.specialties.length > 0
+          ? stylist.specialties.join(' · ')
+          : 'No specialties listed'}
+      </TooltipContent>
+    </Tooltip>
+  );
+
+  // Stacked (very narrow) — vertical layout, dot overlay on avatar
+  if (isStacked) {
+    return (
+      <div
+        ref={ref}
+        data-spatial-state={state}
+        className={cn(
+          'relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0',
+          idx % 2 === 1 && 'bg-muted/15',
+        )}
+      >
+        <div className="relative">
+          {avatar}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={cn(
+                'absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[hsl(var(--sidebar-background))]',
+                acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70',
+              )} />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {acceptingClients ? 'Accepting New Clients' : 'Not Accepting New Clients'}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="text-xs font-medium leading-tight truncate max-w-full">{condensedName}</span>
+        <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
+        {levelInfo && (
+          <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
+            {levelInfo.shortLabel}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // Horizontal layout — flex negotiates: [avatar] [name+meta] [status]
+  return (
+    <div
+      ref={ref}
+      data-spatial-state={state}
+      className={cn(
+        'relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0',
+        idx % 2 === 1 && 'bg-muted/15',
+      )}
+    >
+      {avatar}
+      <div className="flex flex-col min-w-0 flex-1">
+        <span className="text-sm font-medium leading-tight truncate">
+          {useInitialName ? condensedName : fullName}
+        </span>
+        <div className="flex items-center gap-1 mt-0.5 min-w-0">
+          <span className={cn('text-[11px] shrink-0', pctColor)}>{pct}%</span>
+          {levelInfo && showLevelInline && (
+            <>
+              <span className="text-[10px] text-muted-foreground shrink-0">·</span>
+              <span className="text-[10px] text-muted-foreground truncate">{levelInfo.shortLabel}</span>
+            </>
+          )}
+        </div>
+      </div>
+      {statusCluster}
+    </div>
+  );
+}
+
