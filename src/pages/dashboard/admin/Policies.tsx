@@ -146,6 +146,18 @@ export default function Policies() {
           </section>
         </div>
       )}
+
+      <Sheet open={setupOpen} onOpenChange={setSetupOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle className={cn(tokens.heading.section)}>Policy setup</SheetTitle>
+            <SheetDescription className="font-sans">
+              Tell us how your business operates. We'll recommend the right policy set.
+            </SheetDescription>
+          </SheetHeader>
+          <PolicySetupWizard onClose={() => setSetupOpen(false)} />
+        </SheetContent>
+      </Sheet>
     </DashboardLayout>
   );
 }
