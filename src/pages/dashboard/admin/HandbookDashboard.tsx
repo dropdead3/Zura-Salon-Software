@@ -44,7 +44,7 @@ export default function HandbookDashboard() {
     setDialogOpen(false);
     setName('');
     setDescription('');
-    navigate(dashPath(`/admin/handbook/${result.handbook.id}/edit`));
+    navigate(dashPath(`/admin/handbook-wizard/${result.handbook.id}/edit`));
   };
 
   return (
@@ -85,7 +85,7 @@ export default function HandbookDashboard() {
               <Card
                 key={h.id}
                 className="cursor-pointer hover:border-primary/40 transition-colors bg-card/80"
-                onClick={() => navigate(dashPath(`/admin/handbook/${h.id}/edit`))}
+                onClick={() => navigate(dashPath(`/admin/handbook-wizard/${h.id}/edit`))}
               >
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-start justify-between gap-3">
