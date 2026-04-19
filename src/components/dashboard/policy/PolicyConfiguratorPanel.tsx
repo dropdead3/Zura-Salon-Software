@@ -317,6 +317,12 @@ export function PolicyConfiguratorPanel({
                 </Badge>
               )}
             </TabsTrigger>
+            {!!(data as any)?.requiresAcknowledgment && (
+              <TabsTrigger value="acknowledgments" className="font-sans">
+                <FileSignature className="w-3.5 h-3.5 mr-1.5" />
+                Acknowledgments
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* ---- Rules tab ---- */}
@@ -409,6 +415,16 @@ export function PolicyConfiguratorPanel({
               <PolicyDraftWorkspace versionId={versionId} rulesReady={rulesReady} />
             )}
           </TabsContent>
+
+          {/* ---- Acknowledgments tab (Wave 28.10) ---- */}
+          {!!(data as any)?.requiresAcknowledgment && (
+            <TabsContent value="acknowledgments" className="mt-6">
+              <PolicyAcknowledgmentsPanel
+                policyId={data?.policyId ?? null}
+                policyTitle={entry.title}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       )}
 
