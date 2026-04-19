@@ -38,6 +38,13 @@ export function KioskSuccessScreen() {
   const client = session?.client;
   const clientFirstName = client?.name?.split(' ')[0] || '';
 
+  // Surface service-specific check-in prompt (Wave 2 operational guardrails)
+  const { data: servicePrompt } = useServicePromptByName(
+    appointment?.service_name ?? null,
+    session?.organizationId ?? null,
+  );
+  const checkinPrompt = servicePrompt?.checkin_prompt?.trim() || null;
+
   // Complete check-in on mount
   useEffect(() => {
     if (!hasCompleted && !isCheckingIn) {
