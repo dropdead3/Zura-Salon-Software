@@ -7,7 +7,9 @@ export interface PublicServiceItem {
   name: string;
   description: string | null;
   isPopular: boolean;
-  prices: Record<string, string | null>; // level slug → formatted price
+  prices: Record<string, string | null>; // level slug → formatted price (prefix/discount-aware)
+  durationMinutes: number | null;
+  includeFromPrefix: boolean;
 }
 
 export interface PublicServiceCategory {
