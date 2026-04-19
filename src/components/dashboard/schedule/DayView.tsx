@@ -35,6 +35,7 @@ import {
 import { toast } from 'sonner';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSpatialState } from '@/lib/responsive/useSpatialState';
 
 interface DayViewProps {
   date: Date;
