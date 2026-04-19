@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -22,6 +22,7 @@ import { SeasonalAdjustmentsContent } from './SeasonalAdjustmentsContent';
 import { BookingSurfacePreview } from './BookingSurfacePreview';
 import { ServiceFormsLinkagePanel } from './ServiceFormsLinkagePanel';
 import { ServiceAuditLogPanel } from './ServiceAuditLogPanel';
+import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 
 interface ServiceEditorDialogProps {
   open: boolean;
