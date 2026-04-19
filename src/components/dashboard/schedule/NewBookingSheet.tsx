@@ -828,6 +828,47 @@ export function NewBookingSheet({
           )}
         </Button>
       </div>
+
+      {/* Wave 7: Override gate dialog */}
+      <AlertDialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {unsignedRequiredForms.length} unsigned form{unsignedRequiredForms.length === 1 ? '' : 's'} on file
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedClient?.name} hasn't signed: {unsignedRequiredForms.map(f => f.form_template_name).join(', ')}.
+              Forms can be collected at check-in via Zura Dock, or signed now.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => { setShowOverrideDialog(false); setShowInlineSigningDialog(true); }}
+            >
+              Sign now
+            </Button>
+            <AlertDialogAction onClick={handleOverrideProceed}>
+              Proceed (collect at arrival)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Wave 7: Inline signing dialog */}
+      {selectedClient?.id && formsToSignInline.length > 0 && (
+        <FormSigningDialog
+          open={showInlineSigningDialog}
+          onOpenChange={setShowInlineSigningDialog}
+          forms={formsToSignInline}
+          clientId={selectedClient.id}
+          onComplete={() => {
+            setShowInlineSigningDialog(false);
+            createBooking.mutate();
+          }}
+        />
+      )}
     </PremiumFloatingPanel>
   );
 }
