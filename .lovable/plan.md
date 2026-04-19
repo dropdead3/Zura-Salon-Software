@@ -1,81 +1,104 @@
 
 
-## Wave 14 — Unified Service Catalog (build)
+## Wave 15 audit — Services Settings utility for owners
 
-Single-file refactor of `ServicesSettingsContent.tsx`. Merges the two-card layout into one consolidated catalog surface with the refinements approved in the prior round.
+The Wave 14 catalog merge solved **navigation density**. It did **not** add operator-grade utility. Right now, the page is a clean filing cabinet — every action is a single edit, every signal is descriptive. An owner running 30 stylists across 3 locations still can't answer "what should I price up?" or "which services are bleeding margin?" from this surface.
 
-### What ships
+Below: 6 ranked utility upgrades, plus 3 things I'd remove or change.
 
-**Structural merge**
-- Remove `grid-cols-2` split; collapse Categories card + Services card into one `<Card>` titled `SERVICE CATALOG`.
-- Header: palette icon + title (left) · search + density toggle + expand-all + `+ Add Category` + `+ Add Service` (right).
-- Bulk-edit toolbar becomes `position: sticky top-0 z-10` directly below header when selections active.
+---
 
-**Unified row primitive** (replaces `SortableCategoryRow` + separate `AccordionItem`)
-- Collapsed: drag handle · color popover · name (click rename) · count badge or amber empty-indicator · edit · archive · expand chevron · bulk-select checkbox.
-- Expanded: existing services-inside-category block (rows with checkbox/name/duration/price/margin/forms/hover-actions) + inline `+ Add service to {category}` footer.
-- Sticky row header inside expanded panel (`position: sticky top-0`) so drag handle + add-CTA stay reachable in long lists.
-- Empty expanded panel: skip warning text, show only the inline CTA (warning indicator stays on collapsed row).
+### High-leverage adds
 
-**Density toggle** (header right)
-- `Comfortable` (default) / `Compact` (single-line rows, count badges only).
-- Persisted to `localStorage` per user (key: `service-catalog-density`).
-- Token-driven row heights — no raw class strings.
+**1. Catalog Health bar (top of card) — P1**
+A single horizontal bar above the category list that surfaces the structural risks already detectable from existing hooks. No new queries, just aggregation:
 
-**Expand all / Collapse all**
-- Single icon toggle next to search; respects active search filter.
+```text
+┌─ CATALOG HEALTH ────────────────────────────────────────────────┐
+│  ⚠ 4 services missing cost  ·  3 below 30% margin               │
+│  ⚠ 2 categories empty  ·  6 services not bookable online        │
+│  ⚠ 1 service missing patch-test rule  ·  Last edit: 2d ago      │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-**Search behavior refinement**
-- On keystroke: auto-expand only the *first* matching category.
-- Show count badge: `12 matches in 5 categories` — operator chooses what to expand.
-- Cuts the jumpy 8-category cascade.
+Each chip is clickable → filters the catalog to those services. This is the doctrine fit: **rare, high-confidence, ranked leverage**, surfaced silently when material, hidden when clean (visibility contract).
 
-**Subsections move into the same card body, below category list**
-- Uncategorized services (existing block, verbatim)
-- Archived Categories collapsible (existing, verbatim)
-- Archived Services collapsible (existing, verbatim)
+**2. Booking-volume column on every service row — P1**
+The data already exists (`useBulkPriceImpactPreview` queries trailing-30-day appointment volume). Promote that query to a catalog-level fetch and render a small sparkline + 30d count next to price:
 
-**Calendar Appearance card** — untouched, stays below as its own card.
+```text
+Women's Cut    45m · $85 · 62% margin · ▁▂▃▄▅ 142/30d
+Men's Cut      30m · $55 · 71% margin · ▁▁▂▂▃  38/30d
+Beard Trim     15m · $25 · — · ⊘ 0/30d (zombie service)
+```
 
-### What does NOT change
+Gives owners the one signal they actually need to decide what to price up, what to deprecate, what to promote. **Zombie services** (zero bookings in 90d) get a subtle gray flag — currently invisible.
 
-- Zero hook/mutation/RLS changes.
-- Drag-and-drop handler logic preserved verbatim (still operates on row header).
-- Bulk-select, undo toast, form-count badges, archive flows — all preserved.
-- No service-within-category drag (deferred — flagged with `// TODO Wave 15` on row primitive).
-- No keyboard nav beyond what exists (deferred — `tabIndex={0}` placed on row trigger so Wave 15 can layer on).
+**3. Inline-edit price + duration (no dialog) — P1**
+Owners adjust price 10x more than any other field. Today every adjustment requires opening the full editor dialog. Make the `$85` and `45m` cells click-to-edit inline (popover with number input + save). Keeps the editor for everything else.
 
-### UI canon compliance
+Pattern proven: same approach the `BulkEditServicesDialog` uses for percentage adjustments — extract the field component and reuse it inline.
 
-- `tokens.heading.section`, `tokens.card.iconBox`, `tokens.card.title`, `tokens.button.cardAction`, `tokens.layout.cardPadding`.
-- Card retains standard `<Card>` wrapper (`rounded-xl`, glass aesthetic).
-- No `font-bold`/`font-semibold`. Termina for header, Aeonik for row content.
-- `BlurredAmount` preserved on every price.
+**4. "Apply to all in category" quick action — P2**
+On a category row header, add a kebab menu:
+- Bulk activate / deactivate all in category
+- Bulk archive empty category
+- Apply margin floor to all (e.g. flag all under 30%)
+- Export category as CSV
 
-### File touched
+Cuts the bulk-select dance for the 80% case where the operator wants "all of Blonding."
 
-| File | Change |
-|---|---|
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Merge cards; unified sortable+collapsible row; density toggle; expand-all; sticky bulk toolbar; refined search auto-expand; subsections inline |
+**5. Margin distribution sparkline per category — P2**
+Tiny inline visualization on the collapsed category row showing margin spread:
 
-Single file. Net: ~40-60 line reduction from card chrome merge, +~30 lines for density toggle / expand-all / sticky behavior.
+```text
+🟢 Haircuts (8 svcs) ·  margin ████▆▆▄▄▂  range 28%–74%
+```
 
-### Verification
+Surfaces silent margin erosion at category-level — the doctrine's primary alert trigger. Currently invisible until you expand and read every row.
 
-1. Reorder a category by drag → order persists, undo toast appears.
-2. Click color badge → popover opens, color updates instantly.
-3. Click chevron → services list expands; scroll long list → row header stays visible (sticky).
-4. Click `+ Add service to Haircuts` → editor opens preset to Haircuts.
-5. Bulk-select 3 services across 2 categories → bulk toolbar sticks to top of card while scrolling.
-6. Search `premium` → first match auto-expands, badge reads `N matches in M categories`.
-7. Toggle Compact → rows collapse to single-line; reload page → density persists.
-8. Click Expand All → every category opens; click again → collapses.
-9. Archive a category → moves to "Archived Categories" inside same card.
-10. Switch viewport to 768px → single column, expanded panels not double-scroll.
+**6. Recent edits drawer — P2**
+A small `Activity` icon in the header opens a side drawer showing the last 20 entries from `service_audit_log` (hook already exists). Lets owners answer "who changed the cut price last week?" without opening a service. Read-only, scoped to the current org.
+
+---
+
+### What I'd change or remove
+
+**Drop the density toggle to "Cozy/Compact" or kill Comfortable**
+Comfortable wastes vertical space for orgs with 20+ categories. Either default to Compact and let owners opt into Cozy, or merge the two — the line-height delta isn't earning its keep.
+
+**Move "Calendar Appearance" out of this tab**
+It's a presentation concern collapsed at the bottom of an operations page. Belongs in `Settings → Schedule` or a dedicated `Appearance` tab. It's currently buried where owners won't find it but always rendered, slowing scroll.
+
+**Uncategorized section is too quiet**
+Today it's a soft dashed box at the bottom. If services exist there, it's a structural defect (their category was archived). Should be a top-of-page **amber banner**: "3 services orphaned from archived category 'Express Services' — assign or archive."
+
+---
+
+### Doctrine alignment check
+
+| Add | Reduces ambiguity | Protects margin | Clarifies leverage |
+|---|---|---|---|
+| Catalog Health bar | ✓ ranks defects | ✓ flags low-margin | ✓ what to fix first |
+| Volume column | ✓ what's used | — | ✓ what to price up |
+| Inline price edit | — | ✓ removes friction to act | — |
+| Per-cat quick actions | ✓ batch the obvious | — | ✓ |
+| Margin distribution | — | ✓ silent erosion | ✓ which category |
+| Recent edits | ✓ accountability | — | — |
+
+All 6 satisfy at least one doctrine pillar. None introduce noise.
+
+---
+
+### Recommended cutoff
+
+- **Wave 15a (cheap, high impact):** Health bar + Volume column + Uncategorized banner promotion. Single-file additions, ~120 lines, reuses existing hooks.
+- **Wave 15b (interaction work):** Inline price/duration edit + per-category quick actions. ~200 lines, new `InlineEditableNumber` primitive worth keeping.
+- **Wave 15c (deferred):** Margin distribution sparkline + recent edits drawer + Calendar Appearance relocation. Chartwork + IA decision — own wave.
 
 ### Prompt feedback
 
-Strong prompt — *"good, lets build the full plan"* is exactly the right cue: confirms the prior critique round closed cleanly and authorizes execution without re-litigating scope. The brevity itself is the signal.
+Strong prompt — *"How else can we improve the utility... would you do anything differently?"* gave permission both to add AND to subtract, which is rare and valuable. Most prompts only authorize additive critique; this one let me flag Calendar Appearance for relocation and the density toggle for reduction.
 
-To level up: **add a "ship-mode" suffix.** Phrases like *"build with the approved refinements only — no new additions"* would have foreclosed any temptation to expand scope at build time. Pattern: **explicit scope-lock at build authorization = zero drift between plan and ship.**
+To level up: **set a numeric ceiling.** Phrases like *"top 3 utility adds, 1 thing to remove, ranked by leverage"* would have forced harder triage. I gave you 6 + 3, which is too long for a single wave. The ceiling does the prioritization work for me up front.
 
