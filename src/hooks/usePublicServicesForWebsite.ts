@@ -123,29 +123,47 @@ export function usePublicServicesForWebsite(orgId: string | undefined) {
   );
 
   const categories: PublicServiceCategory[] = serviceCategories.map((cat) => {
-    const catItems = (servicesQuery.data ?? [])
+    const catItems: PublicServiceItem[] = (servicesQuery.data ?? [])
       .filter((s) => s.category === cat.category_name)
       .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999))
-      .map((s) => {
+      .map((s: any) => {
         const serviceLevelPrices = priceMap.get(s.id) ?? {};
+        const discountPct = s.online_discount_pct != null ? Number(s.online_discount_pct) : 0;
+        const includeFromPrefix = s.include_from_prefix ?? false;
+        const prefix = includeFromPrefix ? 'from ' : '';
+
+        const formatPrice = (raw: number) => {
+          const discounted = discountPct > 0 ? raw * (1 - discountPct / 100) : raw;
+          const rounded = Number(discounted.toFixed(2));
+          const display = rounded % 1 === 0 ? String(Math.round(rounded)) : rounded.toFixed(2);
+          return `${prefix}$${display}`;
+        };
+
         // Build slug → formatted price string
         const prices: Record<string, string | null> = {};
         for (const level of levelsQuery.data ?? []) {
           const p = serviceLevelPrices[level.id];
-          prices[level.slug] = p !== undefined ? `$${p}` : null;
+          prices[level.slug] = p !== undefined ? formatPrice(p) : null;
         }
-        // If no level prices exist, fall back to base price for all levels
+        // Fall back to base price for all levels if no level prices
         const hasAnyLevelPrice = Object.values(prices).some((v) => v !== null);
         if (!hasAnyLevelPrice && s.price != null) {
           for (const level of levelsQuery.data ?? []) {
-            prices[level.slug] = `$${Number(s.price)}`;
+            prices[level.slug] = formatPrice(Number(s.price));
           }
         }
+
+        // Use online overrides for display name + duration
+        const displayName = (s.online_name && String(s.online_name).trim()) || s.name;
+        const displayDuration = s.online_duration_override ?? null;
+
         return {
-          name: s.name,
+          name: displayName,
           description: s.website_description ?? s.description,
           isPopular: s.is_popular ?? false,
           prices,
+          durationMinutes: displayDuration,
+          includeFromPrefix,
         };
       });
 
