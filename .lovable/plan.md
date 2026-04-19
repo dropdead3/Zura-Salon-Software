@@ -1,50 +1,59 @@
 
 
-## Bug: "Stylist 5" appears in Happening Now because a Phorest staff is unmapped
+## Diagnosis: Two real Phorest appointments, identical client/time, different stylists/locations
 
-### Root cause (confirmed via DB inspection)
+### What the data actually says
 
-The user's hypothesis is partially right and partially wrong:
-- **Wrong:** these are not the same appointment shown twice. They are two genuinely separate Phorest appointments — different staff IDs, different locations, slightly different end times (17:30 vs 17:00).
-- **Right:** something IS broken. The "Stylist 5" appointment at North Mesa belongs to Phorest staff ID `LTAp-jlMGDKgre8YqAf9Fg` who has **zero rows** in `phorest_staff_mapping` (and therefore in `v_all_staff`). With no name available, `useLiveSessionSnapshot` falls all the way through its waterfall and lands on the generic `Stylist ${fallbackIndex}` placeholder.
+Two `appointments` rows exist for **Katara Potts on 2026-04-18, 17:00–19:00, "Single Process Color"**:
 
-This Phorest staff has **14 appointments** in the DB — they are an active stylist who has never been synced to Zura's mapping table. Same root cause that the [Staff Mapping Constraints](mem://constraints/project-specific-staff-mapping) memory documents.
+| Field | Row A (the visible one) | Row B (the unmapped one) |
+|---|---|---|
+| `id` | `6539b5d2…` | `a7bf2357…` |
+| `phorest_staff_id` | `CEJCM1rVldGkgzfWb6ytlQ` | `LTAp-jlMGDKgre8YqAf9Fg` |
+| `staff_name` | `Gavin Eagan` | `NULL` |
+| `location_id` | `val-vista-lakes` | `north-mesa` |
+| `phorest_client_id` | `miHXa2H70RPpDD65ru9gTA` (same) | `miHXa2H70RPpDD65ru9gTA` (same) |
+| `created_at` | 2026-04-11 (Phorest) | 2026-04-16 (Phorest) |
+| `source` | `phorest` | `phorest` |
 
-### What's actually happening in the code
+Both rows came from the **Phorest sync** (not Zura-native, not a duplicate insert bug). They have **different Phorest IDs**, different staff, and different locations. The unmapped staff `LTAp-jlMG…` has 14 future Phorest appointments at North Mesa — they are a real Phorest staff record that's never been added to `phorest_staff_mapping`.
 
-In `useLiveSessionSnapshot.ts` (lines 150–157 and again 209–216) the name resolution waterfall is:
-1. Mapped employee profile → use `formatFullDisplayName(...)`
-2. Else mapped Phorest name from `v_all_staff` → use that
-3. Else → `Stylist ${fallbackIndex}` ← **this is the leak**
+### So this is one of two things — and we can't tell from the DB alone
 
-The fallback was designed for missing data, but in production it surfaces as anonymous "Stylist N" labels that look like bugs to operators. Worse, the `fallbackIndex` is order-dependent — the same unmapped staff can appear as "Stylist 3" on Monday and "Stylist 7" on Tuesday depending on iteration order, which destroys recognizability.
+1. **Phorest data quality issue** (most likely): the same client was double-booked in Phorest itself, once at Val Vista with Gavin and once at North Mesa with the unmapped stylist. Possibly an admin error in Phorest, possibly a test booking, possibly intentional. Zura is correctly mirroring what Phorest sent.
 
-### The fix (two layers)
+2. **Zura sync misattribution** (less likely): the sync wrongly attached the same client to two different staff/locations. Would require a bug in `sync-phorest-data`, but we have no evidence of that — the rows have distinct Phorest IDs and `created_at` timestamps 5 days apart, which is consistent with two separate Phorest write events.
 
-#### Layer 1 — runtime: stop emitting "Stylist N"
-Replace the generic fallback in both name resolution sites (lines 155 and 215) with a single more useful label:
-- Use `phorestName` if present (already covered).
-- If neither profile nor phorestName exists, fall back to `Unmapped Stylist` (singular, no index) plus the truncated staff ID for support traceability — e.g. `Unmapped (LTAp-jlMG…)`. Operators can then immediately see "this is a sync issue" rather than thinking it's a duplicate ghost.
-- Bonus: lookup the staff name directly from `phorest_staff_mapping` even when `v_all_staff` doesn't return them (the v_all_staff view may be filtering on `is_active` or org scoping; need to verify why this Phorest staff isn't surfacing despite having 14 appointments). Investigate the view definition; if it's a filter issue, the right fix is a left-join fallback in the hook.
+Per the **Phorest write-back safety gate** doctrine, Zura cannot delete or modify the Phorest source. The fix is operational, not code — but the surface needs to make this legible.
 
-#### Layer 2 — visibility contract: surface the sync gap
-"Unmapped Stylist" is still a soft signal. Per the Visibility Contracts doctrine, this is exactly the kind of structural drift that should produce a real alert, not a silent label. Add a small inline warning chip on the row (`AlertTriangle` icon + "Sync needed" tooltip) so the operator knows to action it from the Operations Hub → Staff Mapping page. Keep it dev-friendly: clicking the chip routes them to the mapping fix-up screen filtered to that staff ID.
+### The plan
 
-### Out of scope for this plan
-- Fixing the actual mapping for `LTAp-jlMGDKgre8YqAf9Fg` (operator/support task — not code).
-- Auditing why `v_all_staff` excludes this staff record (may be a separate plan if the view turns out to be over-filtering — I'll inspect the view definition during execution and report back if it needs its own fix).
-- Any backfill of historic anonymous labels in cached queries (cache TTL handles it).
+#### 1. Verify upstream (read-only, mandatory before any UI change)
+Pull both appointments from Phorest's API directly via `sync-phorest-data` debug or a one-shot fetch on the two `phorest_appointment_id`s. If both exist in Phorest → it's their data, doctrine says don't touch. If only one exists → Zura created a phantom row and we have a sync bug to chase.
 
-### Files touched
-- `src/hooks/useLiveSessionSnapshot.ts` — replace fallback label, add unmapped flag to `StylistDetail`.
-- `src/components/dashboard/LiveSessionDrilldown.tsx` — render the "Sync needed" chip on unmapped rows.
+I can't make that API call from chat-mode, but the answer determines branch (a) vs (b) below.
 
-### Verification
-- Open Happening Now on the org with the unmapped staff. The North Mesa row should now read "Unmapped (LTAp-jlMG…)" with a small warning chip, not "Stylist 5". Hover the chip → tooltip explains the sync gap. Gavin Eagan's separate appointment at Val Vista Lakes is unchanged.
-- Confirm count math is unaffected: still 6 appointments, 6 stylists working (the unmapped one IS a real stylist serving a real client).
+#### 2a. If Phorest confirms both exist (expected outcome)
+- **Surface the conflict on the Happening Now modal.** When two active appointments share the same `phorest_client_id` + `start_time` across different `location_id` or `phorest_staff_id`, render a single grouped row with an amber `AlertTriangle` + "Double-booked in Phorest — verify with front desk" tooltip. This satisfies the visibility-contracts doctrine: structural drift gets surfaced, not silently rendered as twin rows.
+- Implementation: extend `useLiveSessionSnapshot.stylistDetails` with a `conflictGroupId` derived from `${phorest_client_id}::${start_time}::${end_time}`. Group in the UI, don't dedupe in data (we still need both for staff utilization counts).
+- Files: `src/hooks/useLiveSessionSnapshot.ts` (group key + flag), `src/components/dashboard/LiveSessionDrilldown.tsx` (render conflict chip).
+
+#### 2b. If only one exists in Phorest (sync bug)
+Different plan entirely: investigate `sync-phorest-data` insert path for the failure mode that creates a row with `staff_name: NULL` from a staff ID never written to mapping. That would be its own multi-step trace and likely a separate plan.
+
+#### 3. Independently, fix the unmapped staff (operator task, not code)
+`LTAp-jlMGDKgre8YqAf9Fg` has 14 upcoming appointments at North Mesa with no name and no user mapping. The "Sync needed" chip already routes to `/admin/settings/staff-mapping` — operator action will fix it. Not a code task.
+
+### Out of scope
+- Deleting or modifying the Phorest-side appointment (write-back forbidden).
+- Backfilling `staff_name` for the unmapped row from `v_all_staff` (currently it stays NULL because nothing in `phorest_staff_mapping` resolves it — fixed by the operator mapping action in #3).
+- Wave 2 loader sweep, snapshot test refinements (separate threads).
+
+### Verification (after 2a ships)
+- The Happening Now modal at North Mesa shows the unmapped row with **two chips**: existing "Sync needed" + new "Double-booked in Phorest". Tooltip on the conflict chip names the other location ("Also booked at Val Vista Lakes with Gavin Eagan, 5:00–7:00 PM").
+- The Val Vista row shows the same conflict chip pointing back at North Mesa.
+- Stylist counts unchanged (still two real Phorest staff on the schedule).
 
 ### Prompt feedback
-Strong bug report — you included a screenshot, your hypothesis ("same appointment twice"), and your reasoning ("Stylist 5 is Gavin Eagan"). The hypothesis turned out to be wrong but the screenshot + reasoning was exactly enough for me to find the real cause in three queries. That's the gold standard: lead with what you see, follow with what you think, leave room for the diagnosis to differ.
-
-One refinement: when you suspect duplication, including the precise visual difference you'd expect to see if it WERE a duplicate ("both should show ~7:00 PM" — they actually do, coincidentally) helps me falsify faster. In this case the wrap-up times happened to match, which reinforced your hypothesis but masked the underlying location/end-time difference. Adding "I'd expect them to differ if separate" would have prompted me to lead with the diff check instead of the mapping check.
+Sharp instinct — you connected two separate UI rows by recognizing the client name was identical and immediately suspected duplication. That's the right pattern recognition. The refinement: when you make a duplication claim, name the **dimension you'd expect to differ if they were distinct** ("if these were two real appointments, they'd have different times or different services — they don't, so it's a dupe"). That forces the diagnosis to either confirm (true dupe) or break the assumption (turns out it's same time/client across two locations, which is a *different* failure mode — a Phorest double-booking, not a Zura render bug). The dimension you missed was `phorest_appointment_id` differing across the two rows, which flips the diagnosis from "render bug" to "upstream data conflict."
 
