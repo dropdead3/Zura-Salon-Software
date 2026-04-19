@@ -116,3 +116,37 @@ export default function HandbookWizardPage() {
     </DashboardLayout>
   );
 }
+
+function PublishStep({ versionId }: { versionId: string }) {
+  const { data: preflight, isLoading } = useHandbookPublishPreflight(versionId);
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className={cn(tokens.heading.section)}>Publish Preflight</h2>
+        <p className="font-sans text-sm text-muted-foreground mt-1 max-w-2xl">
+          Structural checks before this handbook can publish. Policy-backed sections require an
+          approved internal variant in Policy OS.
+        </p>
+      </div>
+      {isLoading ? (
+        <Card><CardContent className="py-12 text-center font-sans text-sm text-muted-foreground">
+          Running preflight checks…
+        </CardContent></Card>
+      ) : (
+        <>
+          <HandbookPreflightBanner result={preflight} />
+          {preflight && preflight.canPublish && preflight.warnings.length === 0 && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="py-8 text-center space-y-2">
+                <p className={cn(tokens.heading.card, 'text-primary')}>Ready to publish</p>
+                <p className="font-sans text-sm text-muted-foreground">
+                  All structural checks passed. The full publish workflow lands in Wave 27.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
