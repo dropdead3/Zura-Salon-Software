@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Loader2, Library, Settings } from 'lucide-react';
@@ -20,6 +20,7 @@ import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategory
 import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
 import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBanner';
 import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
+import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyConfiguratorPanel';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function Policies() {
@@ -31,8 +32,29 @@ export default function Policies() {
 
   const [activeCategory, setActiveCategory] = useState<PolicyCategory | 'all'>('all');
   const [setupOpen, setSetupOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activePolicyKey = searchParams.get('policy');
 
   const hasProfile = !!profile?.setup_completed_at;
+
+  const activeEntry = useMemo(
+    () => library.find((l) => l.key === activePolicyKey) ?? null,
+    [library, activePolicyKey],
+  );
+
+  const closeConfigurator = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('policy');
+    setSearchParams(next, { replace: true });
+  };
+
+  // Defensive: if URL has ?policy=... but library hasn't loaded the entry, no-op.
+  useEffect(() => {
+    if (activePolicyKey && library.length > 0 && !activeEntry) {
+      closeConfigurator();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePolicyKey, library.length, activeEntry]);
 
   const adoptedByKey = useMemo(() => {
     const map = new Map<string, (typeof adopted)[number]>();
