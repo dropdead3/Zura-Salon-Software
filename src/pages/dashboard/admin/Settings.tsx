@@ -43,12 +43,12 @@ function StaticCard({ category, onClick }: {
         className="transition-all relative h-[140px] cursor-pointer group hover:border-primary/30 hover:shadow-md"
         onClick={onClick}
       >
-        <MetricInfoTooltip description={category.description} className="absolute top-3 right-3 w-4 h-4" />
-        <div className="flex flex-col items-center justify-center h-full gap-3 p-4 text-center">
+        <MetricInfoTooltip description={category.description} className="absolute top-3 right-3 w-4 h-4 z-10" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 px-4 text-center">
           <div className={tokens.card.iconBox}>
             <Icon className={tokens.card.icon} />
           </div>
-          <span className={tokens.card.title}>{category.label}</span>
+          <span className={cn(tokens.card.title, 'leading-tight')}>{category.label}</span>
         </div>
       </Card>
     </div>
