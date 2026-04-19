@@ -606,13 +606,13 @@ export function NewBookingSheet({
 
             {/* Wave 2: Patch-test guardrail warning */}
             {patchTestServices.length > 0 && (
-              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium text-amber-900 dark:text-amber-200">
+                  <p className="font-medium text-foreground">
                     Patch test required
                   </p>
-                  <p className="text-amber-800/80 dark:text-amber-200/80 mt-0.5">
+                  <p className="text-muted-foreground mt-0.5">
                     {patchTestServices.map(s => s.name).join(', ')} requires a valid patch test on file before service.
                   </p>
                 </div>
