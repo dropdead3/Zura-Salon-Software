@@ -239,6 +239,11 @@ Deno.serve(async (req) => {
     }
 
     // ── Apply online discount if configured ─────────────────────
+    // NOTE: `original_price` is reserved for manual at-checkout discounts
+    // (the client-facing list price before staff overrides). Online catalog
+    // discounts are a published rate, not a manual override — so we write
+    // `total_price = finalPrice` and leave `original_price` null. This keeps
+    // online-discounted bookings out of "manually discounted" revenue reports.
     const basePrice = service.price != null ? Number(service.price) : null;
     const discountPct = service.online_discount_pct != null
       ? Number(service.online_discount_pct)
@@ -271,7 +276,7 @@ Deno.serve(async (req) => {
         end_time: `${date}T${endTime}:00`,
         duration_minutes: durationMinutes,
         total_price: finalPrice,
-        original_price: basePrice,
+        original_price: null,
         status: "pending",
         import_source: "online_booking",
         deposit_required: requiresDeposit,

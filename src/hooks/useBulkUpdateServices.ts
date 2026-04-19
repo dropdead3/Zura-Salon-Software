@@ -31,7 +31,7 @@ export interface BulkServicePatch {
   perId?: Record<string, Partial<Pick<Service, 'price' | 'duration_minutes' | 'cost'>>>;
 }
 
-export function useBulkUpdateServices() {
+export function useBulkUpdateServices(onAfterSuccess?: () => void) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -57,14 +57,19 @@ export function useBulkUpdateServices() {
       const succeeded = results.length - failed.length;
       return { succeeded, failed: failed.length, total: results.length };
     },
-    onSuccess: ({ succeeded, failed, total }) => {
-      queryClient.invalidateQueries({ queryKey: ['services-data'] });
-      queryClient.invalidateQueries({ queryKey: ['service-prompts'] });
+    onSuccess: async ({ succeeded, failed, total }) => {
+      // Bug 4 fix: await invalidation before clearing selection so rows re-render
+      // with fresh data before the selection toolbar disappears.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['services-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['service-prompts'] }),
+      ]);
       if (failed === 0) {
         toast.success(`Updated ${succeeded} ${succeeded === 1 ? 'service' : 'services'}`);
       } else {
         toast.warning(`Updated ${succeeded} of ${total} — ${failed} failed`);
       }
+      onAfterSuccess?.();
     },
     onError: (e: Error) => toast.error('Bulk update failed: ' + e.message),
   });
@@ -82,9 +87,13 @@ export function useBulkPriceImpactPreview(
 ) {
   return useQuery({
     queryKey: ['bulk-price-impact', organizationId, [...serviceIds].sort().join(',')],
-    queryFn: async (): Promise<{ volumeByService: Record<string, number>; totalVolume: number }> => {
+    queryFn: async (): Promise<{
+      volumeByService: Record<string, number>;
+      totalVolume: number;
+      servicesWithoutVolume: number;
+    }> => {
       if (!organizationId || serviceIds.length === 0) {
-        return { volumeByService: {}, totalVolume: 0 };
+        return { volumeByService: {}, totalVolume: 0, servicesWithoutVolume: 0 };
       }
       const since = new Date();
       since.setDate(since.getDate() - 30);
@@ -106,7 +115,10 @@ export function useBulkPriceImpactPreview(
         volumeByService[sid] = (volumeByService[sid] ?? 0) + 1;
       }
       const totalVolume = Object.values(volumeByService).reduce((a, b) => a + b, 0);
-      return { volumeByService, totalVolume };
+      const servicesWithoutVolume = serviceIds.filter(
+        (id) => (volumeByService[id] ?? 0) === 0,
+      ).length;
+      return { volumeByService, totalVolume, servicesWithoutVolume };
     },
     enabled: !!organizationId && serviceIds.length > 0,
     staleTime: 60 * 1000,
