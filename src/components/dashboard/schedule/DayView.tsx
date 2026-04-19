@@ -652,16 +652,27 @@ export function DayView({
             {/* Stylist Headers - frosted glass sticky header */}
             <div ref={headerRowRef} className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Corner cell — location name (multi-location) or week number */}
-              {isMultiLocation && locationName ? (
-                <div
-                  className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center px-1 text-muted-foreground border-r"
-                  title={locationName}
-                >
-                  <span className="font-display tracking-wide uppercase text-[10px] truncate">
-                    {locationName}
-                  </span>
-                </div>
-              ) : (
+              {isMultiLocation && locationName ? (() => {
+                const longestWord = Math.max(...locationName.split(/\s+/).map(w => w.length));
+                const sizeClass =
+                  longestWord > 11 ? 'text-[7px]' :
+                  longestWord > 9  ? 'text-[8px]' :
+                  longestWord > 7  ? 'text-[9px]' :
+                                     'text-[10px]';
+                return (
+                  <div
+                    className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center px-1 py-1 text-muted-foreground border-r"
+                    title={locationName}
+                  >
+                    <span className={cn(
+                      'font-display tracking-wide uppercase text-center leading-[1.05] break-words',
+                      sizeClass
+                    )}>
+                      {locationName}
+                    </span>
+                  </div>
+                );
+              })() : (
                 <div className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
                   W {weekNumber}
                 </div>
