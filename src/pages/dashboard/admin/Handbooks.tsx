@@ -75,6 +75,7 @@ type TabKey = 'wizard' | 'documents';
 function DocumentsTab() {
   const { formatDate } = useFormatDate();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -90,6 +91,24 @@ function DocumentsTab() {
 
   useEffect(() => {
     fetchHandbooks();
+  }, []);
+
+  // Role-prefill via ?upload=role&role=<key>
+  useEffect(() => {
+    if (searchParams.get('upload') === 'role') {
+      const role = searchParams.get('role');
+      if (role) {
+        setVisibleToRoles([role]);
+        setTitle(`${role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())} Handbook`);
+        setDialogOpen(true);
+        // Clear the params so it doesn't re-trigger
+        const next = new URLSearchParams(searchParams);
+        next.delete('upload');
+        next.delete('role');
+        setSearchParams(next, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchHandbooks = async () => {
