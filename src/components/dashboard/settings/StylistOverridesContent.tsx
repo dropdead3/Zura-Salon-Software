@@ -136,6 +136,48 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
         <MetricInfoTooltip description="Set a custom price for an individual stylist on this service. Takes priority over both level pricing and the base price." />
       </div>
       <div className="space-y-4 max-h-[40vh] overflow-y-auto p-1">
+        {/* Cannot Perform — exclusion toggles */}
+        {serviceId && (
+          <div className="space-y-2">
+            <div className="flex items-start gap-1.5">
+              <p className={tokens.heading.subsection}>Cannot Perform</p>
+              <MetricInfoTooltip description="Mark stylists who cannot perform this service. Excluded stylists will be hidden from booking and surfaced in the schedule tooltip." />
+            </div>
+            <div className="space-y-1">
+              {employees.map((emp) => {
+                const isExcluded = exclusionSet.has(emp.id);
+                return (
+                  <div
+                    key={`excl-${emp.id}`}
+                    className={cn(
+                      'flex items-center gap-3 p-2 rounded-lg transition-colors',
+                      isExcluded ? 'bg-destructive/5' : 'hover:bg-muted/40',
+                    )}
+                  >
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                      {isExcluded && <Ban className="w-3.5 h-3.5 text-destructive shrink-0" />}
+                      <p className={cn(tokens.body.emphasis, 'truncate')}>
+                        {formatDisplayName(emp.full_name, emp.display_name)}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isExcluded}
+                      disabled={toggleExclusion.isPending}
+                      onCheckedChange={(checked) =>
+                        toggleExclusion.mutate({
+                          service_id: serviceId,
+                          employee_id: emp.id,
+                          excluded: checked,
+                        })
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Existing overrides */}
         {overriddenEmployees.length > 0 && (
           <div className="space-y-2">
