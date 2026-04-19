@@ -744,6 +744,14 @@ export function ServiceEditorDialog({
               </form>
             </TabsContent>
 
+            <TabsContent value="levels" className="mt-0">
+              {serviceId && (
+                <LevelPricingContent
+                  serviceId={serviceId}
+                  basePrice={initialData?.price ?? null}
+                />
+              )}
+            </TabsContent>
 
 
             <TabsContent value="overrides" className="mt-0">
