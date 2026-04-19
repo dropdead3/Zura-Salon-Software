@@ -9,6 +9,13 @@ interface ActiveStylist {
   photoUrl: string | null;
 }
 
+export interface ConflictPeer {
+  stylistName: string;
+  locationName: string | null;
+  startTime: string;
+  endTime: string;
+}
+
 export interface StylistDetail {
   name: string;
   photoUrl: string | null;
@@ -23,6 +30,8 @@ export interface StylistDetail {
   locationName: string | null;
   isUnmapped?: boolean;
   phorestStaffId?: string | null;
+  /** Set when this client has another concurrent appointment with a different staff/location. */
+  conflictPeers?: ConflictPeer[];
 }
 
 /** Truncate a Phorest staff ID to a recognizable prefix for support traceability. */
