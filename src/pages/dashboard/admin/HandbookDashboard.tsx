@@ -15,6 +15,7 @@ import { tokens } from '@/lib/design-tokens';
 import { useHandbooks, useCreateHandbook } from '@/hooks/handbook/useHandbookData';
 import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import { HandbookStatusBadge } from '@/components/dashboard/handbook/HandbookStatusBadge';
+import { RoleHandbookGrid } from '@/components/dashboard/handbook/RoleHandbookGrid';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -33,6 +34,7 @@ export function HandbookDashboardContent({ embedded = false }: HandbookDashboard
   const { data: handbooks = [], isLoading } = useHandbooks();
   const createHandbook = useCreateHandbook();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
@@ -50,12 +52,68 @@ export function HandbookDashboardContent({ embedded = false }: HandbookDashboard
       {embedded && (
         <div className="flex items-center justify-between gap-4">
           <p className="font-sans text-sm text-muted-foreground max-w-2xl">
-            Architect role-aware handbooks for your organization. Configure policy first, draft with AI, publish when ready.
+            One handbook per role. Configure with the wizard or upload an existing document — every staff role gets its own scoped handbook.
           </p>
-          <Button onClick={() => setDialogOpen(true)} className="font-sans shrink-0">
-            <Plus className="w-4 h-4 mr-2" /> New Handbook
-          </Button>
         </div>
+      )}
+
+      {/* Role-first grid is the default surface */}
+      <RoleHandbookGrid
+        showingAll={showAll}
+        onShowAllToggle={() => setShowAll((v) => !v)}
+      />
+
+      {/* Legacy flat list, hidden behind a toggle */}
+      {showAll && (
+        isLoading ? (
+          <DashboardLoader />
+        ) : handbooks.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="py-12 flex flex-col items-center text-center gap-3">
+              <BookOpen className="w-8 h-8 text-muted-foreground" />
+              <p className="font-sans text-sm text-muted-foreground max-w-md">
+                No handbooks yet. Use a role card above to start.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-xs tracking-widest text-muted-foreground uppercase">All Handbooks</h3>
+              <Button onClick={() => setDialogOpen(true)} size="sm" variant="outline" className="font-sans">
+                <Plus className="w-3.5 h-3.5 mr-1.5" /> New unscoped handbook
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {handbooks.map((h: any) => (
+                <Card
+                  key={h.id}
+                  className="cursor-pointer hover:border-primary/40 transition-colors bg-card/80"
+                  onClick={() => navigate(dashPath(`/admin/handbook-wizard/${h.id}/edit`))}
+                >
+                  <CardContent className="p-5 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className={cn(tokens.heading.card, 'truncate')}>{h.name}</h3>
+                        {h.primary_role && (
+                          <p className="font-sans text-xs text-primary mt-0.5">Role: {h.primary_role.replace(/_/g, ' ')}</p>
+                        )}
+                        {h.description && (
+                          <p className="font-sans text-sm text-muted-foreground mt-1 line-clamp-2">{h.description}</p>
+                        )}
+                      </div>
+                      <HandbookStatusBadge status={h.status} />
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-sans text-muted-foreground pt-2 border-t border-border/60">
+                      <span>Updated {formatDistanceToNow(new Date(h.updated_at), { addSuffix: true })}</span>
+                      <span>{h.location_scope === 'shared' ? 'Shared' : 'Per-location'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       {isLoading ? (

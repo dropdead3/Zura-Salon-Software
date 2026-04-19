@@ -86,7 +86,7 @@ export default function HandbookWizardPage() {
     <DashboardLayout>
       <WizardShell
         title={handbook.name}
-        subtitle="Handbook Wizard"
+        subtitle={subtitle}
         steps={steps}
         activeStepKey={activeStep}
         onStepClick={setActiveStep}
