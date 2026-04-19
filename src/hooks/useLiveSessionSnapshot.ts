@@ -225,14 +225,29 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
       }
 
       // Pre-compute conflict groups: same client + time across different staff or locations.
-      // Index active appointments by `${phorest_client_id}::${start_time}::${end_time}`.
+      // Fetch ACROSS all locations (ignoring locationId filter) so cross-location double-bookings surface.
+      const activeClientIds = [...new Set(
+        (appointments as any[]).map(a => a.phorest_client_id).filter(Boolean)
+      )];
       const conflictIndex = new Map<string, any[]>();
-      for (const appt of appointments as any[]) {
-        const cid = appt.phorest_client_id;
-        if (!cid) continue;
-        const key = `${cid}::${appt.start_time}::${appt.end_time}`;
-        if (!conflictIndex.has(key)) conflictIndex.set(key, []);
-        conflictIndex.get(key)!.push(appt);
+      if (activeClientIds.length > 0) {
+        const { data: crossLocationActive } = await supabase
+          .from('v_all_appointments' as any)
+          .select('id, phorest_staff_id, phorest_client_id, start_time, end_time, location_id')
+          .eq('appointment_date', today)
+          .lte('start_time', now)
+          .gt('end_time', now)
+          .is('deleted_at', null)
+          .not('status', 'in', '("cancelled","no_show")')
+          .in('phorest_client_id', activeClientIds);
+
+        for (const appt of (crossLocationActive || []) as any[]) {
+          const cid = appt.phorest_client_id;
+          if (!cid) continue;
+          const key = `${cid}::${appt.start_time}::${appt.end_time}`;
+          if (!conflictIndex.has(key)) conflictIndex.set(key, []);
+          conflictIndex.get(key)!.push(appt);
+        }
       }
 
       // Build per-stylist details
