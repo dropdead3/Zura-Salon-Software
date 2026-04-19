@@ -54,6 +54,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useServicesByCategory } from '@/hooks/usePhorestServices';
 import { usePhorestAvailability } from '@/hooks/usePhorestAvailability';
 import { useLocations } from '@/hooks/useLocations';
+import { useServicePrompts } from '@/hooks/useServicePrompts';
 
 interface NewBookingSheetProps {
   open: boolean;
