@@ -20,7 +20,9 @@ interface Props {
 
 export function ScopeBuilderStep({ versionId, setup, selectedSections, primaryRole }: Props) {
   const { data: library = [], isLoading } = useSectionLibrary();
+  const { data: availablePolicies } = useHandbookPolicySections();
   const upsert = useUpsertSelectedSections(versionId);
+  const [policyBackedOnly, setPolicyBackedOnly] = useState(false);
 
   const initialKeys = useMemo(() => {
     if (selectedSections.length > 0) return new Set(selectedSections.map((s) => s.library_section_key));
@@ -54,14 +56,24 @@ export function ScopeBuilderStep({ versionId, setup, selectedSections, primaryRo
     upsert.mutate(entries);
   };
 
+  const filteredLibrary = useMemo(() => {
+    if (!policyBackedOnly) return library;
+    return library.filter((s: any) => sectionHasPolicyOption(s.key));
+  }, [library, policyBackedOnly]);
+
   const grouped = useMemo(() => {
     const out: Record<string, any[]> = {};
-    library.forEach((s: any) => {
+    filteredLibrary.forEach((s: any) => {
       if (!out[s.category]) out[s.category] = [];
       out[s.category].push(s);
     });
     return out;
-  }, [library]);
+  }, [filteredLibrary]);
+
+  const policyBackedAvailableCount = useMemo(
+    () => library.filter((s: any) => sectionHasPolicyOption(s.key)).length,
+    [library]
+  );
 
   const categoryLabels: Record<string, string> = {
     foundation: 'Foundation',
@@ -118,11 +130,40 @@ export function ScopeBuilderStep({ versionId, setup, selectedSections, primaryRo
             </div>
           )}
         </div>
-        <Button onClick={handleSave} disabled={upsert.isPending} className="font-sans">
-          {upsert.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          Save selection ({selected.size})
-        </Button>
+        <div className="flex items-center gap-2">
+          {policyBackedAvailableCount > 0 && (
+            <Button
+              variant={policyBackedOnly ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPolicyBackedOnly((p) => !p)}
+              className="font-sans"
+            >
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Policy-backed only ({policyBackedAvailableCount})
+            </Button>
+          )}
+          <Button onClick={handleSave} disabled={upsert.isPending} className="font-sans">
+            {upsert.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Save selection ({selected.size})
+          </Button>
+        </div>
       </div>
+
+      {selectedSections.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="font-display text-xs tracking-widest text-muted-foreground uppercase">
+            Saved Sections — Source
+          </h3>
+          <p className="font-sans text-xs text-muted-foreground -mt-1">
+            Choose whether each saved section renders from an approved policy or from custom prose.
+          </p>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+            {selectedSections.map((s: any) => (
+              <HandbookSectionEditor key={s.id} section={s} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {Object.entries(grouped).map(([category, sections]) => (
         <div key={category} className="space-y-3">
