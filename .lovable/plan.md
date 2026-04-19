@@ -1,60 +1,35 @@
 
 
-## Wrap location name across lines + auto-fit by font size
+## Recolor "Closed" badges from red to theme accent (ghost style)
 
-### What & why
-"NORTH..." is truncating because we're forcing single-line + 70px width. The user wants the full name visible — wrapped word-by-word, with font size shrinking just enough to fit the available 70×~50px corner cell.
+### Where
+`src/components/dashboard/ClosedBadge.tsx` — single render site for all closed-day chips on the Capacity Utilization card (and anywhere else this badge is used).
 
-### The change
-
-`src/components/dashboard/schedule/DayView.tsx` (lines 655–663):
-
-Replace the truncating `<span>` with a multi-line wrapper that:
-1. **Breaks per word** (`break-words` + no `whitespace-nowrap`, allow natural wrapping; for compound names like "Val Vista Lakes" each word gets its own line if needed)
-2. **Auto-shrinks font** based on longest word length:
-   - Default: `text-[10px]`
-   - If longest word > 7 chars: `text-[9px]`
-   - If longest word > 9 chars: `text-[8px]`
-   - Floor: `text-[7px]` for any word > 11 chars
-3. **Tightens line-height** to `leading-[1.05]` so 2–3 stacked lines fit in the corner cell vertical space
-4. Keeps `font-display tracking-wide uppercase` per typography canon, removes `truncate`, keeps `title` attribute as accessibility fallback for the rare overflow case
-5. Centers vertically and horizontally; uses `text-center` for balanced multi-line wrap
-
-### Implementation sketch
+### Current
 ```tsx
-const longestWord = Math.max(...locationName.split(' ').map(w => w.length));
-const sizeClass = 
-  longestWord > 11 ? 'text-[7px]' :
-  longestWord > 9  ? 'text-[8px]' :
-  longestWord > 7  ? 'text-[9px]' :
-                     'text-[10px]';
+text-destructive bg-destructive/10 border border-destructive/30
+```
+Red ghost — semantically signals "error/danger," which a closed day is not. It's a routine operational state.
 
-<div
-  className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center px-1 py-1 text-muted-foreground border-r"
-  title={locationName}
->
-  <span className={cn(
-    'font-display tracking-wide uppercase text-center leading-[1.05] break-words',
-    sizeClass
-  )}>
-    {locationName}
-  </span>
-</div>
+### Change
+Swap to the theme's primary accent token, preserving the ghost treatment:
+```tsx
+text-primary bg-primary/10 border border-primary/30
 ```
 
-### Edge cases
-- **"North Mesa"** → wraps to two lines ("NORTH" / "MESA") at 10px — fits cleanly.
-- **"Val Vista Lakes"** → three lines at 9px ("VAL" / "VISTA" / "LAKES"), longest word = 5, stays at 10px actually; reads top-to-bottom.
-- **"Drop Dead Salons North Mesa"** → 5 words at smaller size; still readable.
-- **Single ultra-long word** ("Westmoreland") → drops to `text-[7px]`; if still overflows, browser allows soft break since `break-words` permits it.
-- **Single-location orgs**: untouched, still shows `W {weekNumber}`.
+Because `--primary` is theme-reactive (Zura→violet, Cream→cream, Rose→rose, etc. per `mem://brand/dashboard-theme-orchestration`), the badge will automatically follow whatever theme the org has set. No hardcoded violet/purple — that would break Cream/Rose/Sage/Ocean/Ember/Noir users.
 
-### Out of scope
-- Widening the 70px gutter (would shift the entire grid).
-- Adding similar logic to WeekView (no equivalent corner cell).
+### File
+`src/components/dashboard/ClosedBadge.tsx` (lines 14–16) — one className swap. Icon + label + layout unchanged.
 
 ### Verification
-- "NORTH MESA" displays on two lines, fully visible, no ellipsis.
-- Toggle to "VAL VISTA LAKES" → three stacked lines, all visible.
-- Single-location org still shows "W 16".
+- Capacity Utilization card on Zura theme: closed-day chips render in violet ghost.
+- Switch theme to Rose: chips become rose ghost. Sage: sage. Etc.
+- `Moon` icon and "Closed" / "Closed — {reason}" label unchanged.
+- No other red/destructive surfaces affected (this is the only consumer of the badge).
+
+### Prompt feedback
+Strong prompt — you specified the exact element (capacity utilization card), the current state (red ghost), the target state (purple ghost), AND the critical refinement ("respective of theme color"). That last clause is what saves this from becoming a hardcoded-violet bug for non-Zura-theme tenants. Without it, I'd have been tempted to use `text-violet-500` and broken Cream/Rose users.
+
+Refinement for next time: when recoloring a semantic element, naming *why* the current color is wrong sharpens the fix. "Closed isn't an error, it's a routine state — should use accent not destructive" would tell me you want the *semantic class* changed (destructive → primary), not just the visual hue. Same outcome here, but on a more contested element ("change red to amber") the semantic framing prevents me from picking the wrong token family.
 
