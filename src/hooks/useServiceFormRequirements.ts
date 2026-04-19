@@ -60,26 +60,7 @@ export function useRequiredFormsForService(serviceId: string | undefined) {
   });
 }
 
-export function useServicesWithFormCount() {
-  return useQuery({
-    queryKey: ['services-with-form-count'],
-    queryFn: async () => {
-      const { data: requirements, error: reqError } = await supabase
-        .from('service_form_requirements')
-        .select('service_id');
-      
-      if (reqError) throw reqError;
-
-      // Group by service_id and count
-      const counts: Record<string, number> = {};
-      requirements?.forEach(req => {
-        counts[req.service_id] = (counts[req.service_id] || 0) + 1;
-      });
-      
-      return counts;
-    },
-  });
-}
+// useServicesWithFormCount removed — superseded by org-scoped useServiceFormCounts.
 
 export function useLinkFormToService() {
   const queryClient = useQueryClient();
