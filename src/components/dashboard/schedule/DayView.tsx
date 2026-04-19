@@ -681,106 +681,22 @@ export function DayView({
               
                {sortedStylists.map((stylist, idx) => {
                 const levelInfo = stylist.stylist_level ? levelLabelMap.get(stylist.stylist_level) : null;
-                const levelColor = levelInfo ? getLevelColor(levelInfo.index, stylistLevels.length) : null;
                 const pct = utilizationByStylist.get(stylist.user_id) ?? 0;
-                const pctColor = pct >= 75 ? 'text-emerald-500' : pct >= 50 ? 'text-amber-500' : 'text-muted-foreground';
                 const acceptingClients = stylist.is_booking !== false && stylist.lead_pool_eligible !== false;
 
-                const isCondensed = columnWidth < 120;
-                const isMedium = columnWidth < 200;
-
-                const fullName = formatDisplayName(stylist.full_name, stylist.display_name);
-                const condensedName = (() => {
-                  const parts = fullName.trim().split(' ');
-                  if (parts.length <= 1) return fullName;
-                  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
-                })();
-
-                const displayName = isMedium ? condensedName : fullName;
-
-                // Status dot — absolute top-right in all modes
-                const statusDot = (
-                  <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="flex items-center gap-1 cursor-default">
-                          <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
-                          {!isMedium && (
-                            <span className={cn("text-[10px] whitespace-nowrap", acceptingClients ? "text-emerald-500" : "text-destructive/70")}>
-                              {acceptingClients ? 'Booking' : 'Not Booking'}
-                            </span>
-                          )}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
-                        {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                );
-
-                const avatar = (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 shrink-0 rounded-[5px]')}>
-                        <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
-                        <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
-                          {fullName.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-                      {stylist.specialties && stylist.specialties.length > 0
-                        ? stylist.specialties.join(' · ')
-                        : 'No specialties listed'}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-
-                // Condensed (< 120px) — vertical stack
-                if (isCondensed) {
-                  return (
-                    <div
-                      key={stylist.user_id}
-                      className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
-                    >
-                      {statusDot}
-                      {avatar}
-                      <span className="text-xs font-medium leading-tight">{condensedName}</span>
-                      <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
-                      {levelInfo && (
-                        <span className="text-[10px] text-muted-foreground leading-none truncate max-w-full">
-{levelInfo.shortLabel}
-                        </span>
-                      )}
-                    </div>
-                  );
-                }
-
-                // Normal + Medium — horizontal layout
                 return (
-                  <div
+                  <StylistHeaderCell
                     key={stylist.user_id}
-                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
-                  >
-                    {statusDot}
-                    {avatar}
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-sm font-medium leading-tight truncate">{displayName}</span>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <span className={cn('text-[11px]', pctColor)}>{pct}%</span>
-                        {levelInfo && (
-                          <>
-                            <span className="text-[10px] text-muted-foreground">·</span>
-                            <span className="text-[10px] text-muted-foreground truncate">{levelInfo.shortLabel}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                    stylist={stylist}
+                    idx={idx}
+                    pct={pct}
+                    acceptingClients={acceptingClients}
+                    levelInfo={levelInfo}
+                  />
                 );
               })}
             </div>
+
 
             {/* Time Grid */}
             <div className="flex relative" style={{ minWidth: requiredGridWidth }}>
