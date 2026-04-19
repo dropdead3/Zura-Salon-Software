@@ -20,6 +20,11 @@ export interface ServiceFormRequirementInsert {
   signing_frequency?: 'once' | 'per_visit' | 'annually';
 }
 
+/**
+ * Org-wide list of every service↔form linkage row, joined with the form template.
+ * Use this for catalog-level views (e.g. Forms admin showing what each form is
+ * attached to). For "what does THIS service require" use `useRequiredFormsForService`.
+ */
 export function useServiceFormRequirements() {
   return useQuery({
     queryKey: ['service-form-requirements'],
@@ -38,6 +43,11 @@ export function useServiceFormRequirements() {
   });
 }
 
+/**
+ * Per-service required-only filter — returns only `is_required = true` rows for
+ * a single service. Use this at booking confirm / kiosk check-in to drive form
+ * gating. For the org-wide catalog list, use `useServiceFormRequirements`.
+ */
 export function useRequiredFormsForService(serviceId: string | undefined) {
   return useQuery({
     queryKey: ['service-form-requirements', serviceId],

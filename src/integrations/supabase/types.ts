@@ -1224,6 +1224,9 @@ export type Database = {
           duration_minutes: number | null
           end_time: string
           external_id: string | null
+          forms_completed: boolean
+          forms_completed_at: string | null
+          forms_required: boolean
           id: string
           import_job_id: string | null
           import_source: string | null
@@ -1297,6 +1300,9 @@ export type Database = {
           duration_minutes?: number | null
           end_time: string
           external_id?: string | null
+          forms_completed?: boolean
+          forms_completed_at?: string | null
+          forms_required?: boolean
           id?: string
           import_job_id?: string | null
           import_source?: string | null
@@ -1370,6 +1376,9 @@ export type Database = {
           duration_minutes?: number | null
           end_time?: string
           external_id?: string | null
+          forms_completed?: boolean
+          forms_completed_at?: string | null
+          forms_required?: boolean
           id?: string
           import_job_id?: string | null
           import_source?: string | null

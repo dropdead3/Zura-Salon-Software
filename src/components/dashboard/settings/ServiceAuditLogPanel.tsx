@@ -40,6 +40,17 @@ export function ServiceAuditLogPanel({ serviceId }: ServiceAuditLogPanelProps) {
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     if (typeof value === 'object') {
       const obj = value as Record<string, unknown>;
+      // Form requirement metadata: surface the meaningful fields rather than dumping JSON.
+      if (eventType === 'form_requirement_changed') {
+        const parts: string[] = [];
+        if ('signing_frequency' in obj) {
+          parts.push(`signing: ${String(obj.signing_frequency).replace('_', ' ')}`);
+        }
+        if ('is_required' in obj) {
+          parts.push(`required: ${obj.is_required ? 'yes' : 'no'}`);
+        }
+        if (parts.length > 0) return parts.join(' · ');
+      }
       if (obj.form_template_name) return String(obj.form_template_name);
       return JSON.stringify(obj);
     }

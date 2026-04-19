@@ -67,6 +67,8 @@ export const SERVICE_AUDIT_EVENT_CONFIG: Record<
   form_attached: { label: 'Form attached', tone: 'positive' },
   form_detached: { label: 'Form detached', tone: 'warning' },
   form_requirement_changed: { label: 'Form requirement updated', tone: 'neutral' },
+  // Wave 7: staff override of unsigned-form gate at booking creation
+  booking_unsigned_forms_override: { label: 'Booked w/ unsigned forms', tone: 'warning' },
 };
 
 export function getServiceAuditEventConfig(eventType: string) {

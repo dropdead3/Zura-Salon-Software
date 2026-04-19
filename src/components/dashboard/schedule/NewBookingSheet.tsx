@@ -58,6 +58,19 @@ import { usePhorestAvailability } from '@/hooks/usePhorestAvailability';
 import { useLocations } from '@/hooks/useLocations';
 import { useServicePrompts } from '@/hooks/useServicePrompts';
 import { useRequiredFormsForServices } from '@/hooks/useRequiredFormsForServices';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
+import { differenceInYears } from 'date-fns';
+import type { ServiceFormRequirement } from '@/hooks/useServiceFormRequirements';
 
 interface NewBookingSheetProps {
   open: boolean;
@@ -177,6 +190,61 @@ export function NewBookingSheet({
   // Wave 4: required intake/consent forms for the selected services
   const { data: requiredForms = [] } = useRequiredFormsForServices(selectedServiceRowIds);
 
+  // Wave 7: gate-with-override — fetch client's existing signatures and compute unsigned set
+  const { data: clientSignatures = [] } = useQuery({
+    queryKey: ['client-signatures-for-booking', selectedClient?.id, requiredForms.map(f => f.form_template_id).join(',')],
+    queryFn: async () => {
+      if (!selectedClient?.id || requiredForms.length === 0) return [];
+      const { data } = await supabase
+        .from('client_form_signatures')
+        .select('form_template_id, form_version, signed_at')
+        .eq('client_id', selectedClient.id)
+        .in('form_template_id', requiredForms.map(f => f.form_template_id));
+      return data ?? [];
+    },
+    enabled: !!selectedClient?.id && requiredForms.length > 0,
+  });
+
+  const unsignedRequiredForms = useMemo(() => {
+    if (requiredForms.length === 0 || !selectedClient?.id) return [];
+    const sigMap = new Map(
+      clientSignatures.map((s: any) => [s.form_template_id, { signedAt: new Date(s.signed_at) }]),
+    );
+    return requiredForms.filter((req) => {
+      const existing = sigMap.get(req.form_template_id);
+      if (!existing) return true;
+      switch (req.signing_frequency) {
+        case 'per_visit': return true;
+        case 'annually': return differenceInYears(new Date(), existing.signedAt) >= 1;
+        case 'once':
+        default: return false;
+      }
+    });
+  }, [requiredForms, clientSignatures, selectedClient?.id]);
+
+  // Wave 7: override dialog + inline signing dialog state
+  const [showOverrideDialog, setShowOverrideDialog] = useState(false);
+  const [showInlineSigningDialog, setShowInlineSigningDialog] = useState(false);
+
+  const { data: fullRequirements = [] } = useQuery({
+    queryKey: ['full-requirements-for-booking', selectedServiceRowIds.join(',')],
+    queryFn: async () => {
+      if (selectedServiceRowIds.length === 0) return [];
+      const { data } = await supabase
+        .from('service_form_requirements')
+        .select('*, form_template:form_templates(*)')
+        .in('service_id', selectedServiceRowIds)
+        .eq('is_required', true);
+      return (data ?? []) as unknown as ServiceFormRequirement[];
+    },
+    enabled: selectedServiceRowIds.length > 0,
+  });
+
+  const formsToSignInline = useMemo(() => {
+    const unsignedTemplateIds = new Set(unsignedRequiredForms.map(f => f.form_template_id));
+    return fullRequirements.filter(r => unsignedTemplateIds.has(r.form_template_id));
+  }, [fullRequirements, unsignedRequiredForms]);
+
   // Check availability when stylist and date are selected
   const [availableSlots, setAvailableSlots] = useState<{ start_time: string; end_time: string }[]>([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
@@ -267,8 +335,48 @@ export function NewBookingSheet({
       case 'client': setStep('service'); break;
       case 'service': setStep('datetime'); break;
       case 'datetime': setStep('confirm'); break;
-      case 'confirm': createBooking.mutate(); break;
+      case 'confirm':
+        // Wave 7: gate-with-override — if client has unsigned required forms, intercept.
+        if (unsignedRequiredForms.length > 0) {
+          setShowOverrideDialog(true);
+          return;
+        }
+        createBooking.mutate();
+        break;
     }
+  };
+
+  // Wave 7: proceed with booking after staff overrides the gate; log to audit.
+  const handleOverrideProceed = async () => {
+    setShowOverrideDialog(false);
+    try {
+      // Best-effort audit write — don't block booking if it fails.
+      const firstServiceId = selectedServiceRowIds[0];
+      if (firstServiceId) {
+        const { data: svc } = await supabase
+          .from('services')
+          .select('organization_id')
+          .eq('id', firstServiceId)
+          .maybeSingle();
+        if (svc?.organization_id) {
+          await supabase.from('service_audit_log' as any).insert({
+            organization_id: svc.organization_id,
+            service_id: firstServiceId,
+            event_type: 'booking_unsigned_forms_override',
+            metadata: {
+              client_id: selectedClient?.id,
+              client_name: selectedClient?.name,
+              unsigned_form_count: unsignedRequiredForms.length,
+              unsigned_form_names: unsignedRequiredForms.map(f => f.form_template_name),
+            },
+            source: 'staff_booking',
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('audit log write failed (non-fatal):', e);
+    }
+    createBooking.mutate();
   };
 
   const handleBack = () => {
@@ -642,28 +750,44 @@ export function NewBookingSheet({
               </div>
             )}
 
-            {/* Wave 4: Required intake/consent forms — info-only, collected at check-in */}
+            {/* Wave 7: Required intake/consent forms — gated with override */}
             {requiredForms.length > 0 && (
-              <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-start gap-2">
-                <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <div className={cn(
+                "rounded-lg border p-3 flex items-start gap-2",
+                unsignedRequiredForms.length > 0
+                  ? "border-amber-500/40 bg-amber-500/10"
+                  : "border-emerald-500/40 bg-emerald-500/10"
+              )}>
+                {unsignedRequiredForms.length > 0
+                  ? <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  : <Check className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                }
                 <div className="text-sm space-y-1">
                   <p className="font-medium text-foreground">
-                    {requiredForms.length === 1 ? 'Form expected at check-in' : 'Forms expected at check-in'}
+                    {unsignedRequiredForms.length > 0
+                      ? `${unsignedRequiredForms.length} unsigned form${unsignedRequiredForms.length === 1 ? '' : 's'}`
+                      : 'All required forms on file'}
                   </p>
                   <ul className="text-muted-foreground space-y-0.5">
-                    {requiredForms.map((f) => (
-                      <li key={`${f.service_id}-${f.form_template_id}`}>
-                        <span className="text-foreground">{f.form_template_name}</span>
-                        {f.service_name && <span> for {f.service_name}</span>}
-                        {f.signing_frequency !== 'once' && (
-                          <span className="text-xs"> ({f.signing_frequency.replace('_', ' ')})</span>
-                        )}
-                      </li>
-                    ))}
+                    {requiredForms.map((f) => {
+                      const isUnsigned = unsignedRequiredForms.some(u => u.form_template_id === f.form_template_id);
+                      return (
+                        <li key={`${f.service_id}-${f.form_template_id}`}>
+                          <span className={isUnsigned ? "text-foreground" : "text-muted-foreground line-through"}>
+                            {f.form_template_name}
+                          </span>
+                          {f.signing_frequency !== 'once' && (
+                            <span className="text-xs"> ({f.signing_frequency.replace('_', ' ')})</span>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
-                  <p className="text-xs text-muted-foreground/80 pt-0.5">
-                    Booking is not gated — collect on arrival.
-                  </p>
+                  {unsignedRequiredForms.length > 0 && (
+                    <p className="text-xs text-muted-foreground/80 pt-0.5">
+                      You'll be prompted to collect at check-in or sign now.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -704,6 +828,47 @@ export function NewBookingSheet({
           )}
         </Button>
       </div>
+
+      {/* Wave 7: Override gate dialog */}
+      <AlertDialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {unsignedRequiredForms.length} unsigned form{unsignedRequiredForms.length === 1 ? '' : 's'} on file
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedClient?.name} hasn't signed: {unsignedRequiredForms.map(f => f.form_template_name).join(', ')}.
+              Forms can be collected at check-in via Zura Dock, or signed now.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => { setShowOverrideDialog(false); setShowInlineSigningDialog(true); }}
+            >
+              Sign now
+            </Button>
+            <AlertDialogAction onClick={handleOverrideProceed}>
+              Proceed (collect at arrival)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Wave 7: Inline signing dialog */}
+      {selectedClient?.id && formsToSignInline.length > 0 && (
+        <FormSigningDialog
+          open={showInlineSigningDialog}
+          onOpenChange={setShowInlineSigningDialog}
+          forms={formsToSignInline}
+          clientId={selectedClient.id}
+          onComplete={() => {
+            setShowInlineSigningDialog(false);
+            createBooking.mutate();
+          }}
+        />
+      )}
     </PremiumFloatingPanel>
   );
 }

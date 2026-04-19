@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
       date,
       time,
       client,
+      signed_form_template_ids, // Wave 7: optional list of form templates the client signed inline at confirm
     } = body;
 
     if (!organization_id || typeof organization_id !== "string") {
@@ -58,6 +59,10 @@ Deno.serve(async (req) => {
         400
       );
     }
+
+    const signedFormIds: string[] = Array.isArray(signed_form_template_ids)
+      ? signed_form_template_ids.filter((id) => typeof id === "string")
+      : [];
 
     const email = client.email.trim().toLowerCase();
     const firstName = client.first_name.trim();
@@ -238,12 +243,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Wave 7: Resolve required forms for this service ─────────
+    // Used to (a) decide forms_required flag, (b) validate signed_form_template_ids
+    // claims against the actual server-side requirements.
+    const { data: requirements } = await supabase
+      .from("service_form_requirements")
+      .select("form_template_id, is_required, signing_frequency, form_templates!inner(id, version, organization_id)")
+      .eq("service_id", service.id)
+      .eq("is_required", true);
+
+    const requiredFormIds = new Set(
+      (requirements ?? [])
+        .filter((r: any) => r.form_templates?.organization_id === organization_id)
+        .map((r: any) => r.form_template_id as string)
+    );
+    const formsRequired = requiredFormIds.size > 0;
+
+    // Filter the client-claimed signed list to only those that actually match the requirements
+    const validSignedIds = signedFormIds.filter((id) => requiredFormIds.has(id));
+    const allRequiredSigned =
+      formsRequired && validSignedIds.length === requiredFormIds.size;
+    const formsCompleted = !formsRequired || allRequiredSigned;
+
     // ── Apply online discount if configured ─────────────────────
-    // NOTE: `original_price` is reserved for manual at-checkout discounts
-    // (the client-facing list price before staff overrides). Online catalog
-    // discounts are a published rate, not a manual override — so we write
-    // `total_price = finalPrice` and leave `original_price` null. This keeps
-    // online-discounted bookings out of "manually discounted" revenue reports.
     const basePrice = service.price != null ? Number(service.price) : null;
     const discountPct = service.online_discount_pct != null
       ? Number(service.online_discount_pct)
@@ -283,11 +305,47 @@ Deno.serve(async (req) => {
         deposit_amount: requiresDeposit ? service.deposit_amount : null,
         deposit_status: requiresDeposit ? "pending" : null,
         card_on_file_id: null,
+        // Wave 7: form gating flags
+        forms_required: formsRequired,
+        forms_completed: formsCompleted,
+        forms_completed_at: formsCompleted && formsRequired ? new Date().toISOString() : null,
       })
       .select("id")
       .single();
 
     if (apptErr) throw apptErr;
+
+    // ── Wave 7: Record signatures server-side ───────────────────
+    // We trust the form_template_id only after validating against required set above.
+    if (validSignedIds.length > 0) {
+      // Look up each template's current version to stamp the signature row.
+      const { data: tmplRows } = await supabase
+        .from("form_templates")
+        .select("id, version")
+        .in("id", validSignedIds);
+
+      const versionMap = new Map<string, string>(
+        (tmplRows ?? []).map((t: any) => [t.id as string, t.version as string])
+      );
+
+      const sigRows = validSignedIds.map((tplId) => ({
+        client_id: clientId,
+        form_template_id: tplId,
+        form_version: versionMap.get(tplId) ?? "1",
+        typed_signature: `${firstName} ${lastName}`.trim(),
+        appointment_id: appointment.id,
+        collected_by: null, // self-signed via public booking
+      }));
+
+      const { error: sigErr } = await supabase
+        .from("client_form_signatures")
+        .insert(sigRows);
+
+      if (sigErr) {
+        // Don't fail the booking — log and continue. Forms can be re-collected at check-in.
+        console.error("Failed to record signatures (booking still created):", sigErr);
+      }
+    }
 
     return jsonResponse({
       success: true,
@@ -295,6 +353,8 @@ Deno.serve(async (req) => {
       requires_deposit: requiresDeposit,
       requires_card_on_file: requireCardOnFile,
       deposit_amount: requiresDeposit ? service.deposit_amount : null,
+      forms_required: formsRequired,
+      forms_completed: formsCompleted,
     });
   } catch (error) {
     console.error("create-public-booking error:", error);
