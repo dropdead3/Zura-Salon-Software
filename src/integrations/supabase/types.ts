@@ -9318,18 +9318,21 @@ export type Database = {
           acknowledged_at: string
           handbook_id: string
           id: string
+          organization_id: string | null
           user_id: string
         }
         Insert: {
           acknowledged_at?: string
           handbook_id: string
           id?: string
+          organization_id?: string | null
           user_id: string
         }
         Update: {
           acknowledged_at?: string
           handbook_id?: string
           id?: string
+          organization_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -9338,6 +9341,13 @@ export type Database = {
             columns: ["handbook_id"]
             isOneToOne: false
             referencedRelation: "handbooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handbook_acknowledgments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
