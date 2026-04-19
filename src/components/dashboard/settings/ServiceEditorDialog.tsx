@@ -19,6 +19,7 @@ import { LevelPricingContent } from './LevelPricingContent';
 import { StylistOverridesContent } from './StylistOverridesContent';
 import { LocationPricingContent } from './LocationPricingContent';
 import { SeasonalAdjustmentsContent } from './SeasonalAdjustmentsContent';
+import { BookingSurfacePreview } from './BookingSurfacePreview';
 
 interface ServiceEditorDialogProps {
   open: boolean;
@@ -57,6 +58,11 @@ export function ServiceEditorDialog({
   const [containerTypes, setContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
   const [billingMode, setBillingMode] = useState<'allowance' | 'parts_and_labor'>('allowance');
   const [requireCardOnFile, setRequireCardOnFile] = useState(false);
+  // Wave 1: Online & App overrides
+  const [includeFromPrefix, setIncludeFromPrefix] = useState(false);
+  const [onlineName, setOnlineName] = useState('');
+  const [onlineDurationOverride, setOnlineDurationOverride] = useState('');
+  const [onlineDiscountPct, setOnlineDiscountPct] = useState('');
 
   useEffect(() => {
     if (open) {
