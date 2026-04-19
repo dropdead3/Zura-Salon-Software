@@ -445,6 +445,18 @@ export function HostedBookingPage() {
           )}
         </div>
       </div>
+
+      {/* Wave 9: Public-booking inline form signer */}
+      {requiredForms && requiredForms.length > 0 && state.clientInfo && (
+        <PublicFormSigningModal
+          open={showFormSigningDialog}
+          onOpenChange={setShowFormSigningDialog}
+          forms={requiredForms}
+          theme={theme}
+          defaultSignerName={`${state.clientInfo.firstName} ${state.clientInfo.lastName}`.trim()}
+          onComplete={(ids) => setSignedFormTemplateIds(ids)}
+        />
+      )}
     </BookingThemeProvider>
   );
 }
