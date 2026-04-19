@@ -377,6 +377,10 @@ export function HostedBookingPage() {
             showPaymentForm={showPaymentForm}
             afterpayEnabled={afterpayEnabled}
             afterpaySurchargeRate={afterpaySurchargeEnabled ? afterpaySurchargeRate : undefined}
+            requiredForms={requiredForms ?? []}
+            signedFormTemplateIds={signedFormTemplateIds}
+            onSignForms={() => setShowFormSigningDialog(true)}
+            onDeferForms={() => setSignedFormTemplateIds([])}
           />
         ) : null;
       default:
