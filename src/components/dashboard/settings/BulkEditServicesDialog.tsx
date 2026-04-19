@@ -157,6 +157,10 @@ export function BulkEditServicesDialog({
   const hasAnyChange =
     changePrice || changeDuration || changeCategory || changeOnline || changeActive || changePatchTest;
 
+  // Bug 2 fix: block Apply when category toggle is on but no destination picked
+  const categoryInvalid = changeCategory && !newCategory;
+  const canApply = hasAnyChange && !categoryInvalid;
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
@@ -250,6 +254,9 @@ export function BulkEditServicesDialog({
                 ))}
               </SelectContent>
             </Select>
+            {categoryInvalid && (
+              <p className="text-xs text-destructive mt-1.5">Pick a destination category to enable Apply.</p>
+            )}
           </FieldBlock>
 
           {/* Online bookable */}
@@ -306,7 +313,7 @@ export function BulkEditServicesDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={bulkUpdate.isPending}>
             Cancel
           </Button>
-          <Button onClick={handleApply} disabled={!hasAnyChange || bulkUpdate.isPending}>
+          <Button onClick={handleApply} disabled={!canApply || bulkUpdate.isPending}>
             {bulkUpdate.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Apply to {selectedServices.length}
           </Button>

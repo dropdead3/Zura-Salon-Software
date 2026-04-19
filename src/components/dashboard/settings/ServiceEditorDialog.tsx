@@ -413,16 +413,7 @@ export function ServiceEditorDialog({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className={tokens.body.emphasis}>Bookable Online</p>
-                        <MetricInfoTooltip description="Controls whether this service appears on your website and can be booked by clients online." />
-                      </div>
-                      <p className={tokens.body.muted}>Show on website and allow online booking</p>
-                    </div>
-                    <Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />
-                  </div>
+                  {/* Bookable Online toggle lives in the "Online & App" tab — single source of truth. */}
 
                   <div className="flex items-center justify-between">
                     <div>
