@@ -210,8 +210,63 @@ export function ServiceEditorDialog({
   useEditorDirtyState(isDirty);
 
 
+  // Wave 9: Comprehensive numeric validation. Disables Save and surfaces inline
+  // errors when any bounds are violated (negatives, out-of-range %, NaN, etc.).
+  const errors = useMemo<Record<string, string>>(() => {
+    const e: Record<string, string> = {};
+    const checkInt = (key: string, raw: string, min: number, max?: number, label?: string) => {
+      if (raw === '' || raw == null) return;
+      const n = Number(raw);
+      if (!Number.isFinite(n) || !Number.isInteger(n)) {
+        e[key] = `${label ?? key} must be a whole number`;
+        return;
+      }
+      if (n < min) e[key] = `${label ?? key} must be ≥ ${min}`;
+      else if (max !== undefined && n > max) e[key] = `${label ?? key} must be ≤ ${max}`;
+    };
+    const checkFloat = (key: string, raw: string, min: number, max?: number, label?: string) => {
+      if (raw === '' || raw == null) return;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) {
+        e[key] = `${label ?? key} must be a number`;
+        return;
+      }
+      if (n < min) e[key] = `${label ?? key} must be ≥ ${min}`;
+      else if (max !== undefined && n > max) e[key] = `${label ?? key} must be ≤ ${max}`;
+    };
+
+    checkInt('duration', duration, 5, undefined, 'Duration');
+    checkFloat('price', price, 0, undefined, 'Price');
+    checkFloat('cost', cost, 0, undefined, 'Cost');
+    checkInt('leadTimeDays', leadTimeDays, 0, 365, 'Lead time');
+    checkInt('finishingTime', finishingTime, 0, 480, 'Finishing time');
+    checkInt('contentCreationTime', contentCreationTime, 0, 480, 'Content time');
+    checkInt('processingTime', processingTime, 0, 480, 'Processing time');
+    checkFloat('onlineDiscountPct', onlineDiscountPct, 0, 100, 'Online discount');
+    checkInt('onlineDurationOverride', onlineDurationOverride, 5, undefined, 'Online duration');
+    checkInt('patchTestValidityDays', patchTestValidityDays, 1, undefined, 'Patch test validity');
+    checkInt('startUpMinutes', startUpMinutes, 0, 480, 'Start-up window');
+    checkInt('shutDownMinutes', shutDownMinutes, 0, 480, 'Shut-down window');
+    checkInt('loyaltyPointsOverride', loyaltyPointsOverride, 0, undefined, 'Loyalty points');
+
+    if (posHotkey.trim() !== posHotkey) {
+      e.posHotkey = 'POS hotkey cannot start or end with whitespace';
+    } else if (posHotkey && !/^[A-Za-z0-9]{1,8}$/.test(posHotkey)) {
+      e.posHotkey = 'POS hotkey must be 1–8 alphanumeric characters';
+    }
+
+    return e;
+  }, [
+    duration, price, cost, leadTimeDays, finishingTime, contentCreationTime, processingTime,
+    onlineDiscountPct, onlineDurationOverride, patchTestValidityDays,
+    startUpMinutes, shutDownMinutes, loyaltyPointsOverride, posHotkey,
+  ]);
+
+  const hasErrors = Object.keys(errors).length > 0;
+
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (hasErrors) return;
     onSubmit({
       ...(initialData?.id ? { id: initialData.id } : {}),
       name: name.trim(),
