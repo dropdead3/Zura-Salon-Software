@@ -91,6 +91,19 @@ export function ServiceEditorDialog({
         setDepositType(initialData.deposit_type ?? 'percentage');
         setDepositAmount(initialData.deposit_amount != null ? String(initialData.deposit_amount) : '');
         setDepositAmountFlat(initialData.deposit_amount_flat != null ? String(initialData.deposit_amount_flat) : '');
+        // Wave 1: Online & App overrides
+        setIncludeFromPrefix((initialData as any).include_from_prefix ?? false);
+        setOnlineName((initialData as any).online_name ?? '');
+        setOnlineDurationOverride(
+          (initialData as any).online_duration_override != null
+            ? String((initialData as any).online_duration_override)
+            : '',
+        );
+        setOnlineDiscountPct(
+          (initialData as any).online_discount_pct != null
+            ? String((initialData as any).online_discount_pct)
+            : '',
+        );
       } else {
         setName('');
         setCategory(presetCategory || categories[0]?.category_name || '');
@@ -114,6 +127,11 @@ export function ServiceEditorDialog({
         setDepositAmount('');
         setDepositAmountFlat('');
         setRequireCardOnFile(false);
+        // Wave 1
+        setIncludeFromPrefix(false);
+        setOnlineName('');
+        setOnlineDurationOverride('');
+        setOnlineDiscountPct('');
       }
     }
   }, [open, initialData, categories, presetCategory]);
@@ -145,6 +163,11 @@ export function ServiceEditorDialog({
       container_types: isChemicalService ? containerTypes : [],
       billing_mode: isChemicalService ? billingMode : 'allowance',
       require_card_on_file: requireCardOnFile,
+      // Wave 1: Online & App overrides
+      include_from_prefix: includeFromPrefix,
+      online_name: onlineName.trim() || null,
+      online_duration_override: onlineDurationOverride ? parseInt(onlineDurationOverride) : null,
+      online_discount_pct: onlineDiscountPct ? parseFloat(onlineDiscountPct) : null,
     } as Partial<Service>);
   };
 
