@@ -96,7 +96,7 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
           versionId: '',
           blocks: [],
           versionNumber: 0,
-          requiresAcknowledgment: !!(policy as any).requires_acknowledgment,
+          requiresAcknowledgment: !!policy.requires_acknowledgment,
         };
       }
 
@@ -112,7 +112,7 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
         versionId: version.id,
         versionNumber: version.version_number,
         blocks: (blocks ?? []) as PolicyRuleBlock[],
-        requiresAcknowledgment: !!(policy as any).requires_acknowledgment,
+        requiresAcknowledgment: !!policy.requires_acknowledgment,
       };
     },
     enabled: !!orgId && !!libraryKey,
