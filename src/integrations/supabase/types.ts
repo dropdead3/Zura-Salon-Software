@@ -17450,6 +17450,7 @@ export type Database = {
           audience: Database["public"]["Enums"]["policy_audience"]
           candidate_surfaces: Database["public"]["Enums"]["policy_surface"][]
           category: Database["public"]["Enums"]["policy_category"]
+          configurator_schema_key: string | null
           created_at: string
           default_owner_role: string | null
           display_order: number
@@ -17468,6 +17469,7 @@ export type Database = {
           audience: Database["public"]["Enums"]["policy_audience"]
           candidate_surfaces?: Database["public"]["Enums"]["policy_surface"][]
           category: Database["public"]["Enums"]["policy_category"]
+          configurator_schema_key?: string | null
           created_at?: string
           default_owner_role?: string | null
           display_order?: number
@@ -17486,6 +17488,7 @@ export type Database = {
           audience?: Database["public"]["Enums"]["policy_audience"]
           candidate_surfaces?: Database["public"]["Enums"]["policy_surface"][]
           category?: Database["public"]["Enums"]["policy_category"]
+          configurator_schema_key?: string | null
           created_at?: string
           default_owner_role?: string | null
           display_order?: number
@@ -29995,6 +29998,10 @@ export type Database = {
         }
         Returns: string
       }
+      adopt_and_init_policy: {
+        Args: { p_library_key: string; p_organization_id: string }
+        Returns: string
+      }
       adopt_policies_from_library: {
         Args: { p_library_keys: string[]; p_organization_id: string }
         Returns: {
@@ -30376,6 +30383,10 @@ export type Database = {
       }
       revert_price_recommendation: {
         Args: { _recommendation_id: string; _user_id?: string }
+        Returns: undefined
+      }
+      save_policy_rule_blocks: {
+        Args: { p_blocks: Json; p_version_id: string }
         Returns: undefined
       }
       set_employee_pin: {

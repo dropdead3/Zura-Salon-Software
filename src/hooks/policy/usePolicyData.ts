@@ -30,6 +30,7 @@ export interface PolicyLibraryEntry {
   requires_retail: boolean;
   requires_packages: boolean;
   display_order: number;
+  configurator_schema_key: string | null;
 }
 
 export interface OrgPolicy {
