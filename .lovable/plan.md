@@ -1,30 +1,36 @@
 
-## Wave 22 — Stylist Overrides: swap column positions
+## Wave 23 — Discard dialog: reorder buttons (Save at bottom)
 
 **The change**
-Flip the two columns in `StylistOverridesContent.tsx`:
-- **Left** (was Current Overrides) → **Add Override** (the discovery/action panel)
-- **Right** (was Add Override) → **Current Overrides** (the result panel)
+In the discard confirmation dialog, reorder the three stacked buttons so the destructive-but-final action sits at the top and the primary "Save & Close" anchors the bottom (closest to thumb on mobile, last-read in scan order).
 
-**Why this is correct (not just cosmetic)**
-- The current empty state on the left says *"Add per-stylist pricing from the panel on the right →"* — but after the flip, action-first reading order (left→right in LTR) means **action lives on the left, result lives on the right**, which matches scan order for configurators.
-- Empty-state pointer arrow flips to `←` and copy updates to *"Add per-stylist pricing from the panel on the left"*.
+**New order (top → bottom):**
+1. Discard Changes (destructive, red outline)
+2. Keep Editing (neutral)
+3. Save & Close (primary, violet)
 
-**Single file: `src/components/dashboard/settings/StylistOverridesContent.tsx`**
+**Why this is correct**
+- Bottom-anchored primary matches mobile thumb-reach conventions and the iOS/Material action-sheet pattern.
+- Reading order now flows from "most destructive → safest → recommended" — last button read is the one we want pressed.
+- "Keep Editing" as the middle (neutral) option separates the two terminal actions visually, reducing mis-tap risk between Discard and Save.
 
-Changes:
-1. Swap the order of the two `<section>` blocks inside the `grid-cols-1 md:grid-cols-2` container so "Add Override" renders first (left on desktop, top on mobile).
-2. Update the empty-state copy in the Current Overrides section: arrow `→` becomes `←`, "right" becomes "left".
-3. No logic, hooks, queries, or styling tokens change.
+### File touched
+
+| File | Change |
+|---|---|
+| `src/components/dashboard/settings/ServiceEditorDialog.tsx` (or wherever the discard confirmation dialog lives) | Reorder the three button JSX blocks inside the stacked button container. No styling, handler, or logic changes. |
+
+I'll locate the exact file during implementation — likely the same dialog touched in Wave 19. Pure JSX reorder, ~3 line moves.
 
 ### Verification
-1. Open Service Editor → Stylists tab → "Add Override" appears on the left, "Current Overrides" on the right (desktop).
-2. Empty state on the right reads *"Add per-stylist pricing from the panel on the left ←"*.
-3. Mobile (<768px) → "Add Override" stacks on top, "Current Overrides" below — order preserved.
-4. All filter chips, search, location grouping, set-price flow continue working unchanged.
+
+1. Trigger unsaved-changes discard dialog → buttons appear in order: Discard Changes (top, red) → Keep Editing (middle) → Save & Close (bottom, violet).
+2. All three handlers fire correctly (no wiring regression).
+3. Mobile: primary "Save & Close" sits within thumb arc.
+4. Equal width + vertical stack from Wave 19 preserved.
 
 ### Prompt feedback
 
-Maximally efficient prompt — *"flip the position of these two cards"* + screenshot = zero ambiguity. The screenshot pinned exactly which two cards, and "flip" is unambiguous (swap, not rotate). No clarification needed.
+Clean prompt — *"flip the positions of these buttons so that save is on the bottom"* + screenshot = unambiguous. The "so that" clause names the desired end state explicitly, which removed all interpretation risk (vs. just "flip these" which could mean reverse-all or swap-two).
 
-To level up: **call out dependent copy when swapping spatial elements.** Swapping columns invalidates any directional copy ("on the right →", "see panel below", etc.). A one-liner like *"flip these two and update any directional copy"* would have pre-authorized the empty-state update and saved a round-trip if I had missed it. Pattern: **spatial swaps often have copy/icon dependencies — name them or grant blanket permission to fix them.**
+To level up: **for 3+ item reorders, naming only one anchor still leaves the middle ambiguous.** I inferred Discard→Keep→Save (destructive-first) but you could equally want Keep→Discard→Save. A one-liner like *"order: discard, keep, save (top to bottom)"* eliminates the inference. Pattern: **for N≥3 reorders, name the full sequence or name two anchors (top + bottom).**
