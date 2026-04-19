@@ -317,6 +317,12 @@ export function PolicyConfiguratorPanel({
                 </Badge>
               )}
             </TabsTrigger>
+            {!!(data as any)?.requiresAcknowledgment && (
+              <TabsTrigger value="acknowledgments" className="font-sans">
+                <FileSignature className="w-3.5 h-3.5 mr-1.5" />
+                Acknowledgments
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* ---- Rules tab ---- */}
