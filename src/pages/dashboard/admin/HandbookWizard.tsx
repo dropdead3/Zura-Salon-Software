@@ -12,6 +12,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ROLE_OPTIONS } from '@/lib/handbook/brandTones';
+import { useHandbookPublishPreflight } from '@/hooks/handbook/useHandbookPublishPreflight';
+import { HandbookPreflightBanner } from '@/components/dashboard/handbook/HandbookPreflightBanner';
+import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 export default function HandbookWizardPage() {
   const { handbookId } = useParams<{ handbookId: string }>();
@@ -76,7 +80,7 @@ export default function HandbookWizardPage() {
       case 'review':
         return <ComingSoonStep title="Review & Handbook Health" description="Surface unresolved fields, conflicts, role gaps, and review-readiness. Score completeness and clarity." waveLabel="Wave 27" />;
       case 'publish':
-        return <ComingSoonStep title="Publish & Final Reader" description="Publish a versioned, navigable handbook with table of contents, role views, and acknowledgment workflow." waveLabel="Wave 27" />;
+        return <PublishStep versionId={version.id} />;
       default:
         return null;
     }
