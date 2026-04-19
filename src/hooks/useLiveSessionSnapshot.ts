@@ -9,6 +9,13 @@ interface ActiveStylist {
   photoUrl: string | null;
 }
 
+export interface ConflictPeer {
+  stylistName: string;
+  locationName: string | null;
+  startTime: string;
+  endTime: string;
+}
+
 export interface StylistDetail {
   name: string;
   photoUrl: string | null;
@@ -23,6 +30,8 @@ export interface StylistDetail {
   locationName: string | null;
   isUnmapped?: boolean;
   phorestStaffId?: string | null;
+  /** Set when this client has another concurrent appointment with a different staff/location. */
+  conflictPeers?: ConflictPeer[];
 }
 
 /** Truncate a Phorest staff ID to a recognizable prefix for support traceability. */
@@ -58,7 +67,7 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
       const activeQuery = applyLocationFilter(
         supabase
           .from('v_all_appointments' as any)
-          .select('id, phorest_staff_id, start_time, end_time, service_name, client_name, location_id')
+          .select('id, phorest_staff_id, phorest_client_id, start_time, end_time, service_name, client_name, location_id')
           .eq('appointment_date', today)
           .lte('start_time', now)
           .gt('end_time', now)
@@ -215,6 +224,64 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
         }
       }
 
+      // Pre-compute conflict groups: same client + time across different staff or locations.
+      // Fetch ACROSS all locations (ignoring locationId filter) so cross-location double-bookings surface.
+      const activeClientIds = [...new Set(
+        (appointments as any[]).map(a => a.phorest_client_id).filter(Boolean)
+      )];
+      const conflictIndex = new Map<string, any[]>();
+      if (activeClientIds.length > 0) {
+        const { data: crossLocationActive } = await supabase
+          .from('v_all_appointments' as any)
+          .select('id, phorest_staff_id, phorest_client_id, start_time, end_time, location_id')
+          .eq('appointment_date', today)
+          .lte('start_time', now)
+          .gt('end_time', now)
+          .is('deleted_at', null)
+          .not('status', 'in', '("cancelled","no_show")')
+          .in('phorest_client_id', activeClientIds);
+
+        for (const appt of (crossLocationActive || []) as any[]) {
+          const cid = appt.phorest_client_id;
+          if (!cid) continue;
+          const key = `${cid}::${appt.start_time}::${appt.end_time}`;
+          if (!conflictIndex.has(key)) conflictIndex.set(key, []);
+          conflictIndex.get(key)!.push(appt);
+        }
+      }
+
+      // Resolve any peer staff IDs (from cross-location conflicts) that we haven't already resolved
+      const peerStaffIds = new Set<string>();
+      for (const group of conflictIndex.values()) {
+        for (const appt of group) {
+          if (appt.phorest_staff_id && !staffToName.has(appt.phorest_staff_id) && !staffToUser.has(appt.phorest_staff_id)) {
+            peerStaffIds.add(appt.phorest_staff_id);
+          }
+        }
+      }
+      if (peerStaffIds.size > 0) {
+        const { data: peerMappings } = await supabase
+          .from('v_all_staff' as any)
+          .select('phorest_staff_id, user_id, phorest_staff_name')
+          .in('phorest_staff_id', [...peerStaffIds]);
+        const peerUserIds: string[] = [];
+        ((peerMappings || []) as any[]).forEach((m: any) => {
+          if (m.user_id) {
+            staffToUser.set(m.phorest_staff_id, m.user_id);
+            peerUserIds.push(m.user_id);
+          }
+          if (m.phorest_staff_name) staffToName.set(m.phorest_staff_id, m.phorest_staff_name);
+        });
+        const missingProfileIds = peerUserIds.filter(uid => !profileMap.has(uid));
+        if (missingProfileIds.length > 0) {
+          const { data: peerProfiles } = await supabase
+            .from('employee_profiles')
+            .select('user_id, full_name, display_name, photo_url')
+            .in('user_id', missingProfileIds);
+          ((peerProfiles || []) as any[]).forEach((p: any) => profileMap.set(p.user_id, p));
+        }
+      }
+
       // Build per-stylist details
       const stylistDetailsMap = new Map<string, StylistDetail>();
 
@@ -254,6 +321,34 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
 
         const apptLocationId = (current as any)?.location_id || null;
 
+        // Compute conflict peers for current appointment (same client + time, different staff/location)
+        let conflictPeers: ConflictPeer[] | undefined;
+        const currentClientId = (current as any)?.phorest_client_id;
+        if (current && currentClientId) {
+          const key = `${currentClientId}::${current.start_time}::${current.end_time}`;
+          const group = conflictIndex.get(key) || [];
+          const peers = group.filter((a: any) =>
+            a.phorest_staff_id !== staffId || a.location_id !== apptLocationId
+          );
+          if (peers.length > 0) {
+            conflictPeers = peers.map((p: any) => {
+              const peerProfile = staffToUser.get(p.phorest_staff_id)
+                ? profileMap.get(staffToUser.get(p.phorest_staff_id)!)
+                : null;
+              const peerPhorestName = staffToName.get(p.phorest_staff_id);
+              const peerName = peerProfile
+                ? formatFullDisplayName(peerProfile.full_name || '', peerProfile.display_name)
+                : (peerPhorestName ? peerPhorestName : unmappedLabel(p.phorest_staff_id));
+              return {
+                stylistName: peerName,
+                locationName: p.location_id ? (locationNameMap.get(p.location_id) || null) : null,
+                startTime: p.start_time,
+                endTime: p.end_time,
+              };
+            });
+          }
+        }
+
         stylistDetailsMap.set(staffId, {
           name,
           photoUrl,
@@ -268,6 +363,7 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
           locationName: apptLocationId ? (locationNameMap.get(apptLocationId) || null) : null,
           isUnmapped,
           phorestStaffId: staffId,
+          conflictPeers,
         });
       }
 
