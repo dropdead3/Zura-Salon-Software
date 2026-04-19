@@ -121,6 +121,56 @@ function SortableCategoryRow({ category, children }: { category: ServiceCategory
   );
 }
 
+/**
+ * Unified sortable + collapsible row used in the consolidated Service Catalog card.
+ * Wraps a single AccordionItem with dnd-kit sortable behavior. The drag handle
+ * lives at the row's left edge (header only) so expanded service lists remain
+ * scrollable without triggering reorder.
+ *
+ * TODO Wave 15: keyboard navigation (↑/↓ between rows, →/← expand/collapse)
+ *               and service-within-category drag.
+ */
+function UnifiedCategoryRow({
+  category,
+  density,
+  children,
+}: {
+  category: ServiceCategoryColor;
+  density: 'comfortable' | 'compact';
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    opacity: isDragging ? 0.9 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'border border-border/60 rounded-lg bg-card/40 hover:bg-card/60 transition-colors',
+        isDragging && 'shadow-lg ring-1 ring-primary/30'
+      )}
+    >
+      <div className={cn('flex items-stretch', density === 'compact' ? 'px-2' : 'px-3')}>
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex items-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none pr-2"
+          aria-label={`Drag to reorder ${category.category_name}`}
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 export function ServicesSettingsContent() {
   const { effectiveOrganization, userOrganizations } = useOrganizationContext();
   const resolvedOrgId = effectiveOrganization?.id || userOrganizations[0]?.id;
