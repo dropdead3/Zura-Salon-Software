@@ -12,8 +12,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown,
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -34,6 +35,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
 import { ServiceEditorDialog } from './ServiceEditorDialog';
 import { ServiceAddonsLibrary } from './ServiceAddonsLibrary';
+import { BulkEditServicesDialog } from './BulkEditServicesDialog';
 import { RedoPolicySettings } from './RedoPolicySettings';
 import { ServiceAddonAssignmentsCard } from './ServiceAddonAssignmentsCard';
 import { StaffServiceConfiguratorCard } from './StaffServiceConfiguratorCard';
@@ -212,6 +214,30 @@ export function ServicesSettingsContent() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Wave 3: Bulk selection
+  const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const selectedServices = useMemo(
+    () => (allServices ?? []).filter((s) => selectedServiceIds.has(s.id)),
+    [allServices, selectedServiceIds],
+  );
+  const toggleServiceSelected = (id: string) => {
+    setSelectedServiceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleCategorySelected = (categoryName: string, allSelected: boolean) => {
+    const idsInCat = (servicesByCategory[categoryName] ?? []).map((s) => s.id);
+    setSelectedServiceIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) idsInCat.forEach((id) => next.delete(id));
+      else idsInCat.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedServiceIds(new Set());
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -627,8 +653,25 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                 <Plus className="w-4 h-4 mr-1" /> Add Service
               </Button>
             </div>
-            <CardDescription>Manage individual services within each category.</CardDescription>
+            <CardDescription>Manage individual services within each category. Select multiple to bulk-edit.</CardDescription>
           </CardHeader>
+
+          {/* Wave 3: Bulk selection toolbar */}
+          {selectedServiceIds.size > 0 && (
+            <div className="mx-6 mb-4 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/5 px-3 py-2">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearSelection}>
+                  <X className="w-4 h-4" />
+                </Button>
+                <span className={cn(tokens.body.emphasis)}>
+                  {selectedServiceIds.size} selected
+                </span>
+              </div>
+              <Button size="sm" onClick={() => setBulkEditOpen(true)}>
+                <SlidersHorizontal className="w-4 h-4 mr-1.5" /> Bulk edit
+              </Button>
+            </div>
+          )}
           <CardContent>
             {/* Search */}
             {(allServices?.length || 0) > 5 && (
@@ -666,10 +709,22 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                   // Hide categories with no matching services when searching
                   if (searchQuery.trim() && services.length === 0) return null;
 
+                  const catServiceIds = (servicesByCategory[cat.category_name] ?? []).map((s) => s.id);
+                  const selectedInCat = catServiceIds.filter((id) => selectedServiceIds.has(id)).length;
+                  const allInCatSelected = catServiceIds.length > 0 && selectedInCat === catServiceIds.length;
+                  const someInCatSelected = selectedInCat > 0 && !allInCatSelected;
+
                   return (
                     <AccordionItem key={cat.id} value={cat.id} className="border rounded-lg mb-2 px-4">
                       <AccordionTrigger className="hover:no-underline py-4">
                         <div className="flex items-center gap-3">
+                          <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                            <Checkbox
+                              checked={allInCatSelected ? true : someInCatSelected ? 'indeterminate' : false}
+                              onCheckedChange={() => toggleCategorySelected(cat.category_name, allInCatSelected)}
+                              aria-label={`Select all in ${cat.category_name}`}
+                            />
+                          </div>
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0"
 style={gradient ? { background: gradient.background, color: gradient.textColor, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
@@ -689,8 +744,16 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                           ) : (
                             services.map(svc => {
                               const margin = computeMargin(svc.price || 0, svc.cost);
+                              const isSelected = selectedServiceIds.has(svc.id);
                               return (
-                                <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
+                                <div key={svc.id} className={cn('flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer', isSelected && 'bg-primary/5')} onClick={() => openEditService(svc)}>
+                                  <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleServiceSelected(svc.id)}
+                                      aria-label={`Select ${svc.name}`}
+                                    />
+                                  </div>
                                   <div className="flex-1 min-w-0">
                                     <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
                                     <div className={cn('flex items-center gap-3', tokens.body.muted)}>
@@ -1034,7 +1097,16 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           presetCategory={editorPresetCategory}
         />
 
-        {/* Category Form Dialog */}
+        {/* Wave 3: Bulk Edit Services Dialog */}
+        <BulkEditServicesDialog
+          open={bulkEditOpen}
+          onOpenChange={setBulkEditOpen}
+          selectedServices={selectedServices}
+          categories={serviceCategories}
+          organizationId={resolvedOrgId}
+          onComplete={clearSelection}
+        />
+
         <CategoryFormDialog
           open={categoryDialogOpen}
           onOpenChange={setCategoryDialogOpen}
