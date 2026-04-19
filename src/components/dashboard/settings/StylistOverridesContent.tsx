@@ -461,46 +461,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* LEFT: Current overrides */}
-          <section className="rounded-xl border border-border/60 bg-card/40 flex flex-col min-h-[340px]">
-            <header className="flex items-center justify-between px-4 py-3 border-b border-border/60">
-              <p className={cn(tokens.heading.subsection, 'flex items-center gap-2')}>
-                <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                Current Overrides
-              </p>
-              <span className="text-xs font-display tracking-wide text-muted-foreground">
-                {overriddenEmployees.length}
-              </span>
-            </header>
-            <div className="flex-1 overflow-y-auto p-2 max-h-[55vh]">
-              {overriddenEmployees.length === 0 ? (
-                <div className={cn(tokens.empty.container, 'py-8')}>
-                  <Users className={tokens.empty.icon} />
-                  <h3 className={tokens.empty.heading}>No overrides yet</h3>
-                  <p className={tokens.empty.description}>
-                    Add per-stylist pricing from the panel on the right →
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  {overriddenGroups.map(group => (
-                    <div key={`override-group-${group.id}`} className="mb-2">
-                      {sortedLocations.length > 0 && renderGroupHeader(group.name, group.employees.length)}
-                      {group.employees.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-muted-foreground/60 italic">No overrides at this location</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {group.employees.map(renderOverrideRow)}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* RIGHT: Add override */}
+          {/* LEFT: Add override */}
           <section className="rounded-xl border border-border/60 bg-card/40 flex flex-col min-h-[340px]">
             <header className="flex items-center justify-between px-4 py-3 border-b border-border/60">
               <p className={cn(tokens.heading.subsection, 'flex items-center gap-2')}>
@@ -546,6 +507,45 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                       ) : (
                         <div className="space-y-1">
                           {group.employees.map(renderCandidateRow)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* RIGHT: Current overrides */}
+          <section className="rounded-xl border border-border/60 bg-card/40 flex flex-col min-h-[340px]">
+            <header className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+              <p className={cn(tokens.heading.subsection, 'flex items-center gap-2')}>
+                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                Current Overrides
+              </p>
+              <span className="text-xs font-display tracking-wide text-muted-foreground">
+                {overriddenEmployees.length}
+              </span>
+            </header>
+            <div className="flex-1 overflow-y-auto p-2 max-h-[55vh]">
+              {overriddenEmployees.length === 0 ? (
+                <div className={cn(tokens.empty.container, 'py-8')}>
+                  <Users className={tokens.empty.icon} />
+                  <h3 className={tokens.empty.heading}>No overrides yet</h3>
+                  <p className={tokens.empty.description}>
+                    ← Add per-stylist pricing from the panel on the left
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {overriddenGroups.map(group => (
+                    <div key={`override-group-${group.id}`} className="mb-2">
+                      {sortedLocations.length > 0 && renderGroupHeader(group.name, group.employees.length)}
+                      {group.employees.length === 0 ? (
+                        <p className="px-3 py-2 text-xs text-muted-foreground/60 italic">No overrides at this location</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {group.employees.map(renderOverrideRow)}
                         </div>
                       )}
                     </div>
