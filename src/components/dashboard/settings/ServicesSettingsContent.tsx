@@ -254,15 +254,21 @@ export function ServicesSettingsContent() {
     const newIdx = localOrder.findIndex(c => c.id === over.id);
     const newOrder = arrayMove(localOrder, oldIdx, newIdx);
     setLocalOrder(newOrder);
-    reorderCategories.mutate(newOrder.map(c => c.id), {
-      onSuccess: () => {
-        showUndoToast('Category order updated', () => {
-          setLocalOrder(previousOrder);
-          reorderCategories.mutate(previousOrder.map(c => c.id));
-        });
+    reorderCategories.mutate(
+      { orderedIds: newOrder.map(c => c.id), organizationId: effectiveOrganization?.id },
+      {
+        onSuccess: () => {
+          showUndoToast('Category order updated', () => {
+            setLocalOrder(previousOrder);
+            reorderCategories.mutate({
+              orderedIds: previousOrder.map(c => c.id),
+              organizationId: effectiveOrganization?.id,
+            });
+          });
+        },
+        onError: () => toast.error('Failed to save order'),
       },
-      onError: () => toast.error('Failed to save order'),
-    });
+    );
   };
 
   const handleCreateCategory = (name: string) => {
