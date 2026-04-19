@@ -214,6 +214,30 @@ export function ServicesSettingsContent() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Wave 3: Bulk selection
+  const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const selectedServices = useMemo(
+    () => (allServices ?? []).filter((s) => selectedServiceIds.has(s.id)),
+    [allServices, selectedServiceIds],
+  );
+  const toggleServiceSelected = (id: string) => {
+    setSelectedServiceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleCategorySelected = (categoryName: string, allSelected: boolean) => {
+    const idsInCat = (servicesByCategory[categoryName] ?? []).map((s) => s.id);
+    setSelectedServiceIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) idsInCat.forEach((id) => next.delete(id));
+      else idsInCat.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedServiceIds(new Set());
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
