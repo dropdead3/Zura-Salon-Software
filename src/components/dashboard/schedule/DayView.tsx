@@ -394,6 +394,7 @@ export function DayView({
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
   const { data: stylistLevels = [] } = useStylistLevels();
+  const { data: exclusionSummaries } = useStylistExclusionSummaries();
 
   // Wave 21.3 Layer 2 — bulk-fetch decline reasons for completed appointments
   // so the calendar can render the muted "rebook skipped" dot inline.
@@ -704,6 +705,9 @@ export function DayView({
                   ? stylist.specialties.join(' · ')
                   : null;
 
+                const exclusion = exclusionSummaries?.get(stylist.user_id);
+                const hasExclusions = !!exclusion && (exclusion.categories.length > 0 || exclusion.services.length > 0);
+
                 const avatarEl = (
                   <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 rounded-[5px]')}>
                     <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
@@ -745,6 +749,20 @@ export function DayView({
                       </div>
                       {specialties && (
                         <div className="mt-1 text-muted-foreground">{specialties}</div>
+                      )}
+                      {hasExclusions && (
+                        <div className="mt-2 pt-2 border-t border-border/40">
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">
+                            Doesn't perform
+                          </div>
+                          <div className="text-muted-foreground">
+                            {[
+                              ...exclusion!.categories,
+                              ...exclusion!.services.slice(0, 3),
+                            ].join(' · ')}
+                            {exclusion!.services.length > 3 && ` +${exclusion!.services.length - 3} more`}
+                          </div>
+                        </div>
                       )}
                     </TooltipContent>
                   </Tooltip>
