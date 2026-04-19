@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
@@ -38,6 +39,7 @@ interface Acknowledgment {
 export default function MyHandbooks() {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
+  const { effectiveOrganization } = useOrganizationContext();
   const { formatDate } = useFormatDate();
   const { toast } = useToast();
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
@@ -107,7 +109,8 @@ export default function MyHandbooks() {
       .from('handbook_acknowledgments')
       .insert({
         user_id: user.id,
-        handbook_id: selectedHandbook.id
+        handbook_id: selectedHandbook.id,
+        organization_id: effectiveOrganization?.id ?? null,
       });
 
     if (error) {

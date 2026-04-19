@@ -62,12 +62,18 @@ const categories = [
   'Other',
 ];
 
+// Aligned 1:1 with the public.app_role Postgres enum so visible_to_roles
+// inserts never violate the enum constraint.
 const roleOptions = [
-  { value: 'admin', label: 'Admin' },
+  { value: 'admin', label: 'Admin / Director' },
   { value: 'manager', label: 'Manager' },
   { value: 'stylist', label: 'Stylist' },
-  { value: 'receptionist', label: 'Receptionist' },
-  { value: 'assistant', label: 'Assistant' },
+  { value: 'stylist_assistant', label: 'Assistant Stylist' },
+  { value: 'receptionist', label: 'Front Desk / Receptionist' },
+  { value: 'assistant', label: 'Apprentice / Associate' },
+  { value: 'inventory_manager', label: 'Inventory / Support' },
+  { value: 'bookkeeper', label: 'Bookkeeper' },
+  { value: 'booth_renter', label: 'Booth Renter' },
 ];
 
 type TabKey = 'wizard' | 'documents';

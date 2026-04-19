@@ -259,7 +259,11 @@ export function useUpsertSelectedSections(versionId?: string) {
 
 /**
  * Acknowledgment counts for handbooks linked via legacy_handbook_id.
- * Returns Map<handbookId, { acknowledged: number, total: number }>.
+ * Denominator is role-scoped: counts only active+approved staff whose
+ * user_roles include the handbook's primary_role. Falls back to all-staff
+ * for legacy multi-role handbooks where primary_role is null.
+ *
+ * Returns Map<handbookId, { acknowledged, total, role }>.
  */
 export function useHandbookAckCounts() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -273,41 +277,52 @@ export function useHandbookAckCounts() {
         .select('id, legacy_handbook_id, primary_role')
         .eq('organization_id', orgId);
 
-      const legacyIds = (handbooks || [])
-        .map((h: any) => h.legacy_handbook_id)
-        .filter(Boolean);
-
-      // Total active staff in org
-      const { count: totalStaff } = await (supabase as any)
+      // Pull active+approved staff with their roles (one query, joined)
+      const { data: staff } = await (supabase as any)
         .from('employee_profiles')
-        .select('user_id', { count: 'exact', head: true })
+        .select('user_id, user_roles(role)')
         .eq('organization_id', orgId)
         .eq('is_active', true)
         .eq('is_approved', true);
 
-      const result = new Map<string, { acknowledged: number; total: number }>();
-      if (legacyIds.length === 0) {
-        for (const h of handbooks || []) {
-          result.set(h.id, { acknowledged: 0, total: totalStaff || 0 });
+      const allStaffCount = (staff || []).length;
+
+      // role -> count of staff with that role
+      const roleCounts = new Map<string, number>();
+      for (const s of staff || []) {
+        const userRoles: string[] = (s.user_roles || []).map((r: any) => r.role);
+        for (const r of userRoles) {
+          roleCounts.set(r, (roleCounts.get(r) || 0) + 1);
         }
-        return result;
       }
 
-      const { data: acks } = await (supabase as any)
-        .from('handbook_acknowledgments')
-        .select('handbook_id, user_id')
-        .in('handbook_id', legacyIds);
+      const legacyIds = (handbooks || [])
+        .map((h: any) => h.legacy_handbook_id)
+        .filter(Boolean);
 
       const ackByLegacy = new Map<string, Set<string>>();
-      for (const a of acks || []) {
-        if (!ackByLegacy.has(a.handbook_id)) ackByLegacy.set(a.handbook_id, new Set());
-        ackByLegacy.get(a.handbook_id)!.add(a.user_id);
+      if (legacyIds.length > 0) {
+        const { data: acks } = await (supabase as any)
+          .from('handbook_acknowledgments')
+          .select('handbook_id, user_id')
+          .in('handbook_id', legacyIds);
+        for (const a of acks || []) {
+          if (!ackByLegacy.has(a.handbook_id)) ackByLegacy.set(a.handbook_id, new Set());
+          ackByLegacy.get(a.handbook_id)!.add(a.user_id);
+        }
       }
 
+      const result = new Map<
+        string,
+        { acknowledged: number; total: number; role: string | null }
+      >();
       for (const h of handbooks || []) {
         const legacy = h.legacy_handbook_id;
         const acked = legacy ? ackByLegacy.get(legacy)?.size || 0 : 0;
-        result.set(h.id, { acknowledged: acked, total: totalStaff || 0 });
+        const total = h.primary_role
+          ? roleCounts.get(h.primary_role) || 0
+          : allStaffCount;
+        result.set(h.id, { acknowledged: acked, total, role: h.primary_role });
       }
       return result;
     },

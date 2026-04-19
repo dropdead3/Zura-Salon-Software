@@ -8,15 +8,18 @@ export const BRAND_TONES = [
 
 export type BrandToneKey = typeof BRAND_TONES[number]['key'];
 
+// Keys MUST map 1:1 to the public.app_role Postgres enum so handbooks can
+// publish into legacy.visible_to_roles (typed app_role[]) without enum violations.
 export const ROLE_OPTIONS = [
   { key: 'stylist', label: 'Stylist' },
   { key: 'stylist_assistant', label: 'Assistant Stylist' },
-  { key: 'front_desk', label: 'Front Desk / Receptionist' },
+  { key: 'receptionist', label: 'Front Desk / Receptionist' },
   { key: 'manager', label: 'Salon Manager' },
-  { key: 'director', label: 'Director of Operations' },
-  { key: 'educator', label: 'Educator' },
-  { key: 'apprentice', label: 'Apprentice / Associate' },
-  { key: 'support', label: 'Inventory / Support Staff' },
+  { key: 'admin', label: 'Admin / Director' },
+  { key: 'assistant', label: 'Apprentice / Associate' },
+  { key: 'inventory_manager', label: 'Inventory / Support Staff' },
+  { key: 'bookkeeper', label: 'Bookkeeper' },
+  { key: 'booth_renter', label: 'Booth Renter' },
 ] as const;
 
 export const EMPLOYMENT_TYPES = [
