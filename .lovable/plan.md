@@ -1,127 +1,113 @@
 
+## Full services build audit (Waves 1–5)
 
-## Wave 3 audit — gaps, bugs, enhancements before Wave 4
+Comprehensive sweep of 5 waves against codebase + DB + doctrine. Found **3 P1 bugs** (one is data integrity, one is RLS), **4 P2 gaps**, and **3 polish items**. None block usage; the audit-log RLS issue is the most material.
 
-Let me sweep the Wave 3 deliverables (`useBulkUpdateServices.ts`, `BulkEditServicesDialog.tsx`, `ServicesSettingsContent.tsx` selection UI) against the codebase, doctrine, and the prior plan's promises.
-<lov-tool-use id="toolu_vrtx_01GMgQAtEEJhZ82LxcYqR2Pd" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServicesSettingsContent.tsx\"}">
-</lov-tool-use>
+---
 
-<lov-tool-use id="toolu_vrtx_01NbgppQK9PRPuZiinjBAfqb" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/BulkEditServicesDialog.tsx\"}">
-</lov-tool-use>
+### P1 — Audit log INSERT policy is broken (Wave 5)
 
-<lov-tool-use id="toolu_vrtx_019fdSjx1E1yMsvQq1zJWyoc" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/BulkEditServicesDialog.tsx\"}">
-</lov-tool-use>
+**Where:** `service_audit_log` RLS policy `"Platform users can insert service audit entries"` — `WITH CHECK (is_platform_user(auth.uid()))`.
 
-<lov-tool-use id="toolu_vrtx_016KrTF9YgKNVnCJZ4byxvCo" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServicesSettingsContent.tsx\"}">
-</lov-tool-use>
+**Why it matters:** Triggers run as `SECURITY DEFINER`, which bypasses RLS regardless. But a regular operator firing the `services` UPDATE trigger inside their own session still inserts into `service_audit_log` *as themselves* via the trigger context. Postgres applies the WITH CHECK on trigger inserts when the function is SECURITY DEFINER and the owner doesn't bypass RLS — so depending on owner config, regular operator updates may either silently fail to log (if RLS blocks) or work only for platform users.
 
-<lov-tool-use id="toolu_vrtx_01GC6CkTnVpZhUsee4CihWn1" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServicesSettingsContent.tsx\", \"lines\": \"430-900\"}">
-</lov-tool-use>
+**Fix:** Add an org-scoped insert policy: `WITH CHECK (is_org_member(auth.uid(), organization_id))`. Trigger functions are still the only writers; the policy just unblocks them. Verify in DB by running a `services` UPDATE as a regular org member and confirming a log row appears.
 
-<lov-tool-use id="toolu_vrtx_019AbMz7awmpUMFNp3mjfQNi" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServiceEditorDialog.tsx\"}">
-</lov-tool-use>
+---
 
-<lov-tool-use id="toolu_vrtx_01Sesg9iBb8qgYQ9DpGauGtd" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServicesSettingsContent.tsx\", \"lines\": \"748-1000\"}">
-</lov-tool-use>
+### P1 — Audit trigger source label is hardcoded to `'editor'`
 
-<lov-tool-use id="toolu_vrtx_01FhdQ3sw3JsNfAD7KtJsnoz" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServiceEditorDialog.tsx\", \"lines\": \"331-813\"}">
-</lov-tool-use>
+**Where:** `log_service_changes()` always inserts `source = 'editor'`. Bulk updates from `useBulkUpdateServices` go through the same `services` UPDATE path, so they're labeled `'editor'` instead of `'bulk_edit'`. This defeats the badge in `ServiceAuditLogPanel` (line 98–101) that tries to differentiate sources.
 
-<lov-tool-use id="toolu_vrtx_016bQNqkrPZjjgnb5PhG5QSu" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServiceEditorDialog.tsx\", \"lines\": \"634-813\"}">
-</lov-tool-use>
+**Fix:** Either (a) accept that source can't be inferred at the trigger level and remove the badge logic, or (b) add a `current_setting('app.audit_source', true)` lookup in the trigger and have `useBulkUpdateServices` set `app.audit_source = 'bulk_edit'` via RPC before its UPDATEs. Option (a) is simpler and honest.
 
-<lov-tool-use id="toolu_vrtx_0175PXibi7Dx1fKgzAXNttWd" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServicesSettingsContent.tsx\", \"lines\": \"1000-1196\"}">
-</lov-tool-use>
-I have enough context. Let me also peek at the BookingSurfacePreview to verify discount math and check the create-public-booking edge function discount handling.
-<lov-tool-use id="toolu_vrtx_01XaTgoTipv1hQGiZDwirL64" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/BookingSurfacePreview.tsx\"}">
-</lov-tool-use>
+---
 
-<lov-tool-use id="toolu_vrtx_015y1pDEyGwWtDnU9WLgQ7SA" name="code--search_files" integration-id="code" data="{\"query\": \"online_discount_pct\", \"include_patterns\": \"supabase/functions/create-public-booking/**,src/hooks/usePublicServicesForWebsite.ts,src/components/booking-surface/**\"}">
-</lov-tool-use>
+### P1 — `Service` TypeScript type is missing all Wave 1/2/4/5 columns
 
-<lov-tool-use id="toolu_vrtx_01PSfy4Y773odrF9C93ekPjW" name="code--view" integration-id="code" data="{\"file_path\": \"supabase/functions/create-public-booking/index.ts\", \"lines\": \"80-300\"}">
-</lov-tool-use>
+**Where:** `src/hooks/useServicesData.ts` `Service` interface stops at `require_card_on_file`. Missing: `bookable_online` (DB has it, type doesn't list it as a top-level field even though it's referenced — `(initialData as any).bookable_online`), `is_archived`, `archived_at`, `patch_test_required`, `patch_test_validity_days`, `start_up_minutes`, `shut_down_minutes`, `creation_prompt`, `checkin_prompt`, `pos_hotkey`, `loyalty_points_override`, `online_name`, `online_duration_override`, `online_discount_pct`, `include_from_prefix`.
 
-<lov-tool-use id="toolu_vrtx_019pD5yxjt65MtCBsq8uvhvk" name="code--search_files" integration-id="code" data="{\"query\": \"creation_prompt|checkin_prompt\", \"include_patterns\": \"src/components/dashboard/schedule/**,src/components/kiosk/**,src/hooks/**\"}">
-</lov-tool-use>
-I have enough. Let me also quickly check `useServicesData` for the new column types and any obvious types.ts gap.
-<lov-tool-use id="toolu_vrtx_01HLNnvk6Yq9GBD7AXUDEyLR" name="code--search_files" integration-id="code" data="{\"query\": \"patch_test_required|start_up_minutes|online_discount_pct|creation_prompt\", \"include_patterns\": \"src/hooks/useServicesData.ts,src/integrations/supabase/types.ts\"}">
-</lov-tool-use>
-I have enough. Now let me present the audit plan.
+**Why it matters:** Every consumer is forced to `(svc as any).field_name`, defeating type safety. New contributors will assume the fields don't exist. The DB has all 14 columns; the TS interface lies about it.
 
-<lov-plan>
-## Wave 3 audit — gaps and bugs found
+**Fix:** Extend the `Service` interface to include all DB columns. ~15 lines.
 
-Fast sweep of Waves 1–3 against the codebase. Found **4 real issues** (one is a data integrity bug) and **2 polish items**. Nothing blocks Wave 4, but the bulk-edit category bug and the duplicate-toggle UX issue are worth a quick pass.
+---
 
-### Bug 1 — `original_price` semantics inverted (data integrity, P0-light)
+### P2 — Booking copy contradiction (Wave 4)
 
-**Where:** `supabase/functions/create-public-booking/index.ts` lines 273–274.
+`NewBookingSheet.tsx` line 665: *"Booking is not gated — collect on arrival."*  
+`ServiceFormsLinkagePanel.tsx` line 229: *"Required forms gate booking confirmation. Optional forms are presented but skippable."*
 
-```text
-total_price:    finalPrice    (discounted)
-original_price: basePrice     (pre-discount)
-```
+The settings panel claims forms gate booking; the actual booking flow says they don't. Operators configuring forms expect gating to happen and won't get it. Either (a) implement booking-time gating (out of scope — Phase 4 enforcement), or (b) update the linkage panel copy to match reality: *"Required forms surface as a prep callout at booking. Collected at check-in via {{PLATFORM_NAME}} Dock."*
 
-Across the rest of the codebase, `original_price` is used as the **client-facing list price before manual discounts** — not as a "what we would have charged without our own promo." Storing the catalog price in `original_price` makes every online-discounted booking look like a manually-discounted appointment in revenue reports and discount analytics.
+**Fix:** Update `ServiceFormsLinkagePanel.tsx` line 226–231 copy.
 
-**Fix:** Set `original_price = basePrice` only when a manual discount is applied later. For Wave 1 online discounts, write `original_price = finalPrice` (or null) and record the online discount on a dedicated field — reusing existing `service_discount_*` columns if present, or omitting until Wave 5 audit log lands. Recommend: write `total_price = finalPrice` and leave `original_price` null for online-discount bookings, matching how POS currently treats list price.
+---
 
-### Bug 2 — Bulk "Move to category" lets you select an empty value
+### P2 — Bulk update doesn't refresh audit log query
 
-**Where:** `BulkEditServicesDialog.tsx` line 115.
+`useBulkUpdateServices` invalidates `services-data` and `service-prompts` but not `service-audit-log`. If the operator opens the editor on a service they just bulk-edited, the History tab is stale until they refetch.
 
-```text
-if (changeCategory && newCategory) shared.category = newCategory;
-```
+**Fix:** Add `queryClient.invalidateQueries({ queryKey: ['service-audit-log'] })` to the hook's `onSuccess`.
 
-If the operator toggles "Move to category" but never picks one, the toggle is silently a no-op — but the Apply button is still enabled and the toast claims success. Two-line fix: either disable Apply when `changeCategory && !newCategory`, or surface inline validation ("Pick a destination category").
+---
 
-### Bug 3 — "Bookable Online" toggle exists in two tabs with separate state writes
+### P2 — Audit log RLS uses `is_org_member` for SELECT — exposes price-change history to all staff
 
-**Where:** `ServiceEditorDialog.tsx` Details tab (line 424) and Online & App tab (line 554) both render `<Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />`.
+Every employee in the org can read the audit log. Pricing/cost change history is sensitive — typical operator wants this restricted to admins (Salon Owner persona, not Stylist).
 
-They share state, which is correct — but the **submission** goes through three different form IDs (`service-details-form`, `service-online-form`, `service-advanced-form`) that all call the same `handleDetailsSubmit`. So submitting from the Online tab actually saves *all* fields from *all* tabs. That's fine functionally but two real consequences:
+**Fix:** Tighten SELECT policy to `is_org_admin(auth.uid(), organization_id)`. Confirms with persona doctrine: stylists shouldn't see what owners changed in pricing.
 
-1. The "Save Changes" footer button is wired to whichever form matches `activeTab`, but since all three submit identical payloads, switching tabs and clicking Save can save stale state from a tab the operator hasn't touched yet (e.g. open editor, switch to Advanced, never visit Online — Advanced submit still writes the empty Online overrides).
-2. Validation triggers (`validate_service_online_overrides`) fire on every save regardless of which tab the user was on, increasing surface for "weird error from a tab I didn't touch."
+---
 
-**Fix (low risk):** Drop the duplicate "Bookable Online" toggle from Details (it semantically belongs with the other online controls). Keep the unified submit handler — it works — but add a comment documenting that all three forms write the full payload.
+### P2 — `log_service_changes` doesn't capture INSERT events
 
-### Bug 4 — Bulk edit doesn't refresh selection after success
+Trigger only fires `AFTER UPDATE`. Service creation has no audit row, so the History tab on a service created today shows "No history yet" forever — even though the service was just created. Also: archive/restore via `useArchiveService` updates `is_archived`, which logs correctly, but service *deletion* (permanent) leaves orphaned audit rows.
 
-**Where:** `ServicesSettingsContent.tsx` line 1107 passes `onComplete={clearSelection}`, but `useBulkUpdateServices` invalidates `services-data` *after* `onComplete` resolves. Operator sees:
+**Fix:** Add `AFTER INSERT` to the services trigger emitting a single `'created'` event with the initial price/duration/category snapshot in `new_value`. Optional: add `ON DELETE CASCADE` from `service_audit_log.service_id` (currently no FK).
 
-1. Toast: "Updated 12 services"
-2. Selection clears
-3. ~200ms later: rows re-render with new prices
+---
 
-Cosmetic: small flash where prices are stale while the toolbar disappears. Fix: invalidate first, then resolve. Or call `clearSelection` inside the hook's `onSuccess` rather than via `onComplete` — sequencing only.
+### Polish 1 — Audit panel doesn't render archived/activated event labels well
 
-### Polish — Bulk edit price impact undercounts new services
+`ServiceAuditLogPanel.tsx` line 78–90: when `previous_value` is a boolean (e.g. `is_active: true → false`), `showDelta` is true, but `renderValue` returns `'Yes' / 'No'` — which reads strangely next to an "Activated" / "Archived" chip. Either suppress the value diff for boolean state events or render a friendlier transition.
 
-`useBulkPriceImpactPreview` looks at trailing 30 days. A service launched 5 days ago shows zero projected impact even if it's already booking. Footnote in the dialog ("Excludes services with no recent volume") covers this, but for a 78-service catalog, operators will eyeball the number and miss new services. Optional enhancement: separately count `services_with_no_volume` in the impact data and surface "12 services have no volume yet — impact for those isn't projected."
+**Fix:** Skip delta render when `field_name in ('is_active', 'is_archived')` since the chip label already conveys the state.
 
-### Polish — `'service-advanced-form'` ID is referenced in submit but the form's submit handler is `handleDetailsSubmit`
+---
 
-Cosmetic: `<form id="service-advanced-form" onSubmit={handleDetailsSubmit}>` works but reads as a smell. A future contributor will assume it has its own handler. Add a one-line comment, or rename to `service-shared-form` and have all three TabsContent forms reference the same ID.
+### Polish 2 — `ServicesSettingsContent` form-count tooltip says "required forms attached" but the count comes from `is_required=true` — leaves optional forms invisible
+
+`useServiceFormCounts` filters `is_required=true`. So a service with 2 optional forms attached shows zero indicator. This is intentional (rationale documented in the hook), but the UI gives no visibility into optional attachments at all. Operators have to open every service to discover them.
+
+**Fix:** Either (a) add a second hook `useServiceOptionalFormCounts` and show both as `2 required • 1 optional`, or (b) document this intentionally with a note in the editor: "Optional forms attached: N" in the linkage panel header.
+
+---
+
+### Polish 3 — `is_platform_user` insert policy on audit log is dead code
+
+If we fix P1 above by adding the org-member insert policy, the platform-user policy becomes redundant (org members include platform users). Either delete it or document why it exists (backfill scripts, admin tools).
+
+---
 
 ## Recommended fix order (one wave, ~30 min)
 
-1. Bug 1 — flip `original_price` semantics in edge function
-2. Bug 2 — disable Apply when category toggled but unset
-3. Bug 4 — move `clearSelection` into mutation `onSuccess` after invalidate
-4. Bug 3 — drop duplicate Bookable Online toggle from Details tab
-5. Polish — add "no volume yet" callout + form ID comment
+1. **P1** — Tighten audit log RLS: add `is_org_member` insert policy + change SELECT to `is_org_admin`
+2. **P1** — Extend `Service` TypeScript type with all DB columns
+3. **P1** — Drop the `source` differentiation (or keep as `'trigger'` everywhere)
+4. **P2** — Update `ServiceFormsLinkagePanel` copy to match reality
+5. **P2** — Add `service-audit-log` invalidation to bulk update hook
+6. **P2** — Add INSERT trigger for service creation events
+7. **Polish** — Suppress boolean delta render in audit panel; document optional form counts
 
-## What I'm intentionally not flagging
+## Out of scope (won't fix)
 
-- No audit log on price/duration mutations — that's **Wave 5** scope, called out in the original plan as the {{PLATFORM_NAME}} compliance lever.
-- Bulk edit doesn't support all guardrail fields (start-up/shut-down windows, prompts) — intentionally limited to high-frequency bulk ops; per-field edits stay in the editor.
-- `BulkEditServicesDialog` uses raw `Loader2` inside a `<Button>` — that's *allowed* by the loader doctrine (button-internal spinner), no change needed.
+- Booking-time form gating — needs Phase 4 enforcement layer
+- Optional form count UI in catalog — minor; operators can drill in
+- Audit log pagination — current limit of 100 entries is enough until a service has years of history
 
 ## Prompt feedback
 
-Sharp prompt — "do a cleanup for any bugs and gaps or enhancements before we move to phase 4" gave me three explicit lenses (bugs, gaps, enhancements) and a clear cutoff (before Wave 4). That's a textbook audit prompt.
+Strong prompt — *"do a full audit of the services build"* sets a clear scope (full) and lens (audit). I knew to sweep all 5 waves, look across code/DB/doctrine, and rank findings.
 
-To go even sharper: **declare the severity bar.** E.g. *"Only P0/P1 bugs, skip cosmetic polish"* or *"Include cosmetic if it touches the catalog hot path."* Right now I had to guess where to draw the line and ended up surfacing 4 bugs + 2 polish items. If you'd specified "P0/P1 only, defer polish to Wave 5 cleanup," this audit would have been 3 items and a one-paragraph next-step. Pattern: **lens + cutoff + severity bar = audit you can act on without filtering.**
+To level up: **specify the deliverable shape.** Right now I had to choose between (a) presenting a plan to fix, (b) writing a markdown report, (c) just listing items. I picked the plan. Try: *"Present an audit plan I can approve to fix everything in one wave"* or *"Write me a P0/P1-only audit report; defer P2+"*. Pattern: **scope + lens + deliverable shape + cutoff = an audit you can act on without needing a second pass.**
