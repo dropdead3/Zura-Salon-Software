@@ -18,25 +18,23 @@ import { HandbookStatusBadge } from '@/components/dashboard/handbook/HandbookSta
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { formatDistanceToNow } from 'date-fns';
 
-export default function HandbookDashboard() {
+interface HandbookDashboardContentProps {
+  /** When true, renders header + new-handbook CTA inline. When false, parent provides surrounding chrome. */
+  embedded?: boolean;
+}
+
+/**
+ * Reusable content body for the Handbook Wizard list.
+ * Used standalone (page mode) and inside the consolidated Handbooks tabbed surface.
+ */
+export function HandbookDashboardContent({ embedded = false }: HandbookDashboardContentProps) {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
-  const { isLeadership } = useLeadershipCheck();
   const { data: handbooks = [], isLoading } = useHandbooks();
   const createHandbook = useCreateHandbook();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-
-  if (!isLeadership) {
-    return (
-      <DashboardLayout>
-        <Card><CardContent className="py-12 text-center font-sans text-sm text-muted-foreground">
-          Handbook administration is restricted to leadership.
-        </CardContent></Card>
-      </DashboardLayout>
-    );
-  }
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -48,65 +46,64 @@ export default function HandbookDashboard() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <DashboardPageHeader
-          title="Handbook"
-          description="Architect role-aware handbooks for your organization. Configure policy first, draft with AI, publish when ready."
-          actions={
-            <Button onClick={() => setDialogOpen(true)} className="font-sans">
-              <Plus className="w-4 h-4 mr-2" /> New Handbook
-            </Button>
-          }
-        />
+    <div className="space-y-6">
+      {embedded && (
+        <div className="flex items-center justify-between gap-4">
+          <p className="font-sans text-sm text-muted-foreground max-w-2xl">
+            Architect role-aware handbooks for your organization. Configure policy first, draft with AI, publish when ready.
+          </p>
+          <Button onClick={() => setDialogOpen(true)} className="font-sans shrink-0">
+            <Plus className="w-4 h-4 mr-2" /> New Handbook
+          </Button>
+        </div>
+      )}
 
-        {isLoading ? (
-          <DashboardLoader />
-        ) : handbooks.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-16 flex flex-col items-center text-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                <BookOpen className="w-7 h-7 text-primary" />
-              </div>
-              <div className="max-w-md space-y-1">
-                <h3 className={cn(tokens.heading.card)}>Create your first handbook</h3>
-                <p className="font-sans text-sm text-muted-foreground">
-                  We'll guide you through structure, scope, and policy decisions before any drafting begins — so the final handbook reflects how you actually operate.
-                </p>
-              </div>
-              <Button onClick={() => setDialogOpen(true)} className="font-sans">
-                <Plus className="w-4 h-4 mr-2" /> Start handbook
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {handbooks.map((h: any) => (
-              <Card
-                key={h.id}
-                className="cursor-pointer hover:border-primary/40 transition-colors bg-card/80"
-                onClick={() => navigate(dashPath(`/admin/handbook-wizard/${h.id}/edit`))}
-              >
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className={cn(tokens.heading.card, 'truncate')}>{h.name}</h3>
-                      {h.description && (
-                        <p className="font-sans text-sm text-muted-foreground mt-1 line-clamp-2">{h.description}</p>
-                      )}
-                    </div>
-                    <HandbookStatusBadge status={h.status} />
+      {isLoading ? (
+        <DashboardLoader />
+      ) : handbooks.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <BookOpen className="w-7 h-7 text-primary" />
+            </div>
+            <div className="max-w-md space-y-1">
+              <h3 className={cn(tokens.heading.card)}>Create your first handbook</h3>
+              <p className="font-sans text-sm text-muted-foreground">
+                We'll guide you through structure, scope, and policy decisions before any drafting begins — so the final handbook reflects how you actually operate.
+              </p>
+            </div>
+            <Button onClick={() => setDialogOpen(true)} className="font-sans">
+              <Plus className="w-4 h-4 mr-2" /> Start handbook
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {handbooks.map((h: any) => (
+            <Card
+              key={h.id}
+              className="cursor-pointer hover:border-primary/40 transition-colors bg-card/80"
+              onClick={() => navigate(dashPath(`/admin/handbook-wizard/${h.id}/edit`))}
+            >
+              <CardContent className="p-5 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className={cn(tokens.heading.card, 'truncate')}>{h.name}</h3>
+                    {h.description && (
+                      <p className="font-sans text-sm text-muted-foreground mt-1 line-clamp-2">{h.description}</p>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between text-xs font-sans text-muted-foreground pt-2 border-t border-border/60">
-                    <span>Updated {formatDistanceToNow(new Date(h.updated_at), { addSuffix: true })}</span>
-                    <span>{h.location_scope === 'shared' ? 'Shared' : 'Per-location'}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                  <HandbookStatusBadge status={h.status} />
+                </div>
+                <div className="flex items-center justify-between text-xs font-sans text-muted-foreground pt-2 border-t border-border/60">
+                  <span>Updated {formatDistanceToNow(new Date(h.updated_at), { addSuffix: true })}</span>
+                  <span>{h.location_scope === 'shared' ? 'Shared' : 'Per-location'}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -143,6 +140,37 @@ export default function HandbookDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/**
+ * Page-mode wrapper. Kept for backward-compat when redirected from the legacy
+ * `/admin/handbook-wizard` route. Now redirects callers to the consolidated
+ * `/admin/handbooks?tab=wizard` surface in App.tsx routing.
+ */
+export default function HandbookDashboard() {
+  const { isLeadership } = useLeadershipCheck();
+
+  if (!isLeadership) {
+    return (
+      <DashboardLayout>
+        <Card><CardContent className="py-12 text-center font-sans text-sm text-muted-foreground">
+          Handbook administration is restricted to leadership.
+        </CardContent></Card>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <DashboardPageHeader
+          title="Handbook"
+          description="Architect role-aware handbooks for your organization. Configure policy first, draft with AI, publish when ready."
+        />
+        <HandbookDashboardContent embedded />
+      </div>
     </DashboardLayout>
   );
 }
