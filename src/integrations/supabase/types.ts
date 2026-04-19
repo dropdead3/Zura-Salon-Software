@@ -22618,7 +22618,7 @@ export type Database = {
             foreignKeyName: "service_form_requirements_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
-            referencedRelation: "phorest_services"
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]

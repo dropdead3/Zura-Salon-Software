@@ -57,6 +57,7 @@ import { useServicesByCategory } from '@/hooks/usePhorestServices';
 import { usePhorestAvailability } from '@/hooks/usePhorestAvailability';
 import { useLocations } from '@/hooks/useLocations';
 import { useServicePrompts } from '@/hooks/useServicePrompts';
+import { useRequiredFormsForServices } from '@/hooks/useRequiredFormsForServices';
 
 interface NewBookingSheetProps {
   open: boolean;
@@ -173,6 +174,8 @@ export function NewBookingSheet({
     () => servicePrompts.filter(p => p.patch_test_required),
     [servicePrompts],
   );
+  // Wave 4: required intake/consent forms for the selected services
+  const { data: requiredForms = [] } = useRequiredFormsForServices(selectedServiceRowIds);
 
   // Check availability when stylist and date are selected
   const [availableSlots, setAvailableSlots] = useState<{ start_time: string; end_time: string }[]>([]);
@@ -636,6 +639,29 @@ export function NewBookingSheet({
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Wave 4: Required intake/consent forms — info-only, no gating yet */}
+            {requiredForms.length > 0 && (
+              <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-start gap-2">
+                <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="text-sm space-y-1">
+                  <p className="font-medium text-foreground">
+                    {requiredForms.length === 1 ? 'Form required' : 'Forms required'} before service
+                  </p>
+                  <ul className="text-muted-foreground space-y-0.5">
+                    {requiredForms.map((f) => (
+                      <li key={`${f.service_id}-${f.form_template_id}`}>
+                        <span className="text-foreground">{f.form_template_name}</span>
+                        {f.service_name && <span> for {f.service_name}</span>}
+                        {f.signing_frequency !== 'once' && (
+                          <span className="text-xs"> ({f.signing_frequency.replace('_', ' ')})</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
 
