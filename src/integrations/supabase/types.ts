@@ -24513,6 +24513,48 @@ export type Database = {
           },
         ]
       }
+      stylist_category_exclusions: {
+        Row: {
+          category_name: string
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          category_name: string
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          category_name?: string
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_category_exclusions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stylist_category_exclusions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stylist_commission_overrides: {
         Row: {
           created_at: string
@@ -24773,6 +24815,55 @@ export type Database = {
           weekly_wins_due_day?: number | null
         }
         Relationships: []
+      }
+      stylist_service_exclusions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          id: string
+          organization_id: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          id?: string
+          organization_id: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          id?: string
+          organization_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_service_exclusions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stylist_service_exclusions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stylist_service_exclusions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stylist_spi_scores: {
         Row: {
