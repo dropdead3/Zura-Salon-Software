@@ -31,6 +31,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   'retail-products': '#F97316',
   'zura-config': '#A855F7',
   'terminals': '#0EA5E9',
+  handbooks: '#8B5CF6',
 };
 
 // Section groups for organized layout
@@ -43,7 +44,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['my-profile', 'business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'terminals', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
+    categories: ['my-profile', 'business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'terminals', 'dayrate', 'forms', 'levels', 'handbooks', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
   },
   {
     id: 'team',
