@@ -58,6 +58,19 @@ import { usePhorestAvailability } from '@/hooks/usePhorestAvailability';
 import { useLocations } from '@/hooks/useLocations';
 import { useServicePrompts } from '@/hooks/useServicePrompts';
 import { useRequiredFormsForServices } from '@/hooks/useRequiredFormsForServices';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
+import { differenceInYears } from 'date-fns';
+import type { ServiceFormRequirement } from '@/hooks/useServiceFormRequirements';
 
 interface NewBookingSheetProps {
   open: boolean;
