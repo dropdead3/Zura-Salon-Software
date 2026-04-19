@@ -74,6 +74,9 @@ interface DayViewProps {
   scheduleBlocks?: import('@/hooks/useStaffScheduleBlocks').StaffScheduleBlock[];
   /** Wave 22.2 — Stripe Connect inactive location IDs; surfaces "Setup needed" pill on cards. */
   inactiveConnectLocationIds?: Set<string>;
+  /** Display label for the corner cell when org has multiple locations. */
+  locationName?: string;
+  isMultiLocation?: boolean;
 }
 
 // Use consolidated status colors from design tokens
@@ -371,6 +374,8 @@ export function DayView({
   zoomLevel = 0,
   scheduleBlocks = [],
   inactiveConnectLocationIds,
+  locationName,
+  isMultiLocation,
 }: DayViewProps) {
   const ZOOM_CONFIG: Record<string, { interval: number }> = {
     '-3': { interval: 60 },
@@ -646,10 +651,21 @@ export function DayView({
           <div style={{ width: needsHorizontalScroll ? requiredGridWidth : '100%' }}>
             {/* Stylist Headers - frosted glass sticky header */}
             <div ref={headerRowRef} className="flex border-b sticky top-0 z-20" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
-              {/* Week indicator */}
-              <div className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
-                W {weekNumber}
-              </div>
+              {/* Corner cell — location name (multi-location) or week number */}
+              {isMultiLocation && locationName ? (
+                <div
+                  className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center px-1 text-muted-foreground border-r"
+                  title={locationName}
+                >
+                  <span className="font-display tracking-wide uppercase text-[10px] truncate">
+                    {locationName}
+                  </span>
+                </div>
+              ) : (
+                <div className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
+                  W {weekNumber}
+                </div>
+              )}
               
                {sortedStylists.map((stylist, idx) => {
                 const levelInfo = stylist.stylist_level ? levelLabelMap.get(stylist.stylist_level) : null;
