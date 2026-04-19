@@ -736,31 +736,65 @@ export function DayView({
                         />
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs max-w-[220px]">
-                      <div className="font-medium">{fullName}</div>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+                    <TooltipContent side="bottom" className="max-w-[280px] p-3 space-y-2.5">
+                      <div className="text-sm font-medium leading-tight">{fullName}</div>
+                      <div>
                         <span
                           className={cn(
-                            'inline-block w-1.5 h-1.5 rounded-full',
-                            acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
+                            'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]',
+                            acceptingClients
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                              : 'bg-destructive/10 text-destructive'
                           )}
-                        />
-                        <span>{acceptingLabel}</span>
+                        >
+                          <span
+                            className={cn(
+                              'inline-block w-1.5 h-1.5 rounded-full',
+                              acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
+                            )}
+                          />
+                          {acceptingLabel}
+                        </span>
                       </div>
-                      {specialties && (
-                        <div className="mt-1 text-muted-foreground">{specialties}</div>
+                      {specialtiesList && (
+                        <div className="border-t border-border/40 pt-2.5">
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                            Specialties
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {specialtiesList.map((s) => (
+                              <span
+                                key={s}
+                                className="rounded-full px-2 py-0.5 text-[11px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                              >
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       )}
                       {hasExclusions && (
-                        <div className="mt-2 pt-2 border-t border-border/40">
-                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">
+                        <div className="border-t border-border/40 pt-2.5">
+                          <div className="text-[10px] uppercase tracking-wider text-destructive/60 mb-1.5">
                             Doesn't perform
                           </div>
-                          <div className="text-muted-foreground">
-                            {[
-                              ...exclusion!.categories,
-                              ...exclusion!.services.slice(0, 3),
-                            ].join(' · ')}
-                            {exclusion!.services.length > 3 && ` +${exclusion!.services.length - 3} more`}
+                          <div className="flex flex-wrap gap-1.5">
+                            {exclusion!.categories.map((c) => (
+                              <span
+                                key={`cat-${c}`}
+                                className="rounded-full px-2 py-0.5 text-[11px] bg-destructive/15 text-destructive border border-destructive/20"
+                              >
+                                {c}
+                              </span>
+                            ))}
+                            {exclusion!.services.map((s) => (
+                              <span
+                                key={`svc-${s}`}
+                                className="rounded-full px-2 py-0.5 text-[11px] bg-muted text-muted-foreground"
+                              >
+                                {s}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       )}
