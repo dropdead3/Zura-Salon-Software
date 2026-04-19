@@ -27,7 +27,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRequiredFormsForService } from '@/hooks/useServiceFormRequirements';
-import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
+import { PublicFormSigningModal } from './PublicFormSigningModal';
 
 export function HostedBookingPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
@@ -377,6 +377,10 @@ export function HostedBookingPage() {
             showPaymentForm={showPaymentForm}
             afterpayEnabled={afterpayEnabled}
             afterpaySurchargeRate={afterpaySurchargeEnabled ? afterpaySurchargeRate : undefined}
+            requiredForms={requiredForms ?? []}
+            signedFormTemplateIds={signedFormTemplateIds}
+            onSignForms={() => setShowFormSigningDialog(true)}
+            onDeferForms={() => setSignedFormTemplateIds([])}
           />
         ) : null;
       default:
@@ -441,6 +445,18 @@ export function HostedBookingPage() {
           )}
         </div>
       </div>
+
+      {/* Wave 9: Public-booking inline form signer */}
+      {requiredForms && requiredForms.length > 0 && state.clientInfo && (
+        <PublicFormSigningModal
+          open={showFormSigningDialog}
+          onOpenChange={setShowFormSigningDialog}
+          forms={requiredForms}
+          theme={theme}
+          defaultSignerName={`${state.clientInfo.firstName} ${state.clientInfo.lastName}`.trim()}
+          onComplete={(ids) => setSignedFormTemplateIds(ids)}
+        />
+      )}
     </BookingThemeProvider>
   );
 }
