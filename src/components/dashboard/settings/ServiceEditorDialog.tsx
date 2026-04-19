@@ -782,12 +782,18 @@ export function ServiceEditorDialog({
           </div>
         </Tabs>
 
-        {(activeTab === 'details' || activeTab === 'online') && (
+        {(activeTab === 'details' || activeTab === 'online' || activeTab === 'advanced') && (
           <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button
               type="submit"
-              form={activeTab === 'online' ? 'service-online-form' : 'service-details-form'}
+              form={
+                activeTab === 'online'
+                  ? 'service-online-form'
+                  : activeTab === 'advanced'
+                    ? 'service-advanced-form'
+                    : 'service-details-form'
+              }
               disabled={!name.trim() || isPending}
             >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -796,7 +802,7 @@ export function ServiceEditorDialog({
           </DialogFooter>
         )}
 
-        {activeTab !== 'details' && activeTab !== 'online' && (
+        {activeTab !== 'details' && activeTab !== 'online' && activeTab !== 'advanced' && (
           <DialogFooter className="pt-4 border-t border-border">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Done</Button>
           </DialogFooter>
