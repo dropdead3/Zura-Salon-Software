@@ -85,6 +85,8 @@ const Stats = lazyWithRetry(() => import("./pages/dashboard/Stats"));
 const WeeklyWins = lazyWithRetry(() => import("./pages/dashboard/WeeklyWins"));
 const TeamOverview = lazyWithRetry(() => import("./pages/dashboard/admin/TeamOverview"));
 const Handbooks = lazyWithRetry(() => import("./pages/dashboard/admin/Handbooks"));
+const HandbookDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookDashboard"));
+const HandbookWizard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookWizard"));
 const AdminSettings = lazyWithRetry(() => import("./pages/dashboard/admin/Settings"));
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/dashboard/admin/Announcements"));
 const HomepageStylists = lazyWithRetry(() => import("./pages/dashboard/admin/HomepageStylists"));
@@ -336,6 +338,9 @@ function DashboardRoutes() {
       <Route path="admin/assistant-requests" element={<ProtectedRoute requiredPermission="view_team_overview"><AssistantRequestsOverview /></ProtectedRoute>} />
       <Route path="admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
       <Route path="admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
+      <Route path="admin/handbook-wizard" element={<ProtectedRoute requiredPermission="manage_handbooks"><HandbookDashboard /></ProtectedRoute>} />
+      <Route path="admin/handbook-wizard/:handbookId/edit" element={<ProtectedRoute requiredPermission="manage_handbooks"><HandbookWizard /></ProtectedRoute>} />
+      <Route path="admin/handbook" element={<Navigate to="admin/handbook-wizard" replace />} />
       <Route path="admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
       <Route path="admin/website-hub" element={<ProtectedRoute requiredPermission="manage_settings"><WebsiteHub /></ProtectedRoute>} />
       <Route path="admin/homepage-stylists" element={<Navigate to="admin/website-hub" replace />} />
