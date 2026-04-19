@@ -54,13 +54,19 @@ export default function HandbookWizardPage() {
 
   const { handbook, version, setup, sections } = data;
   const handleExit = () => navigate(dashPath('/admin/handbooks?tab=wizard'));
+  const primaryRole: string | null = handbook?.primary_role || null;
+  const roleLabel = primaryRole
+    ? (require('@/lib/handbook/brandTones').ROLE_OPTIONS.find((r: any) => r.key === primaryRole)?.label
+       || primaryRole.replace(/_/g, ' '))
+    : null;
+  const subtitle = primaryRole ? `${roleLabel} Handbook` : 'Handbook Wizard';
 
   const renderStep = () => {
     switch (activeStep) {
       case 'org_setup':
-        return <OrgSetupStep setup={setup} versionId={version.id} onSavingChange={setSaving} />;
+        return <OrgSetupStep setup={setup} versionId={version.id} onSavingChange={setSaving} primaryRole={primaryRole} />;
       case 'scope':
-        return <ScopeBuilderStep versionId={version.id} setup={setup} selectedSections={sections} />;
+        return <ScopeBuilderStep versionId={version.id} setup={setup} selectedSections={sections} primaryRole={primaryRole} />;
       case 'policy':
         return <ComingSoonStep title="Policy Configuration" description="Configure the decision logic for each section before drafting language. This sets the rules your AI will follow." waveLabel="Wave 25" />;
       case 'matrix':
