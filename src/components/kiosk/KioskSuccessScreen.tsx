@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, User, Sparkles } from 'lucide-react';
+import { CheckCircle2, Clock, User, Sparkles, Info } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { parse } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useServicePromptByName } from '@/hooks/useServicePrompts';
 import { cn } from '@/lib/utils';
 
 export function KioskSuccessScreen() {
@@ -36,6 +37,13 @@ export function KioskSuccessScreen() {
   const appointment = session?.selectedAppointment;
   const client = session?.client;
   const clientFirstName = client?.name?.split(' ')[0] || '';
+
+  // Surface service-specific check-in prompt (Wave 2 operational guardrails)
+  const { data: servicePrompt } = useServicePromptByName(
+    appointment?.service_name ?? null,
+    session?.organizationId ?? null,
+  );
+  const checkinPrompt = servicePrompt?.checkin_prompt?.trim() || null;
 
   // Complete check-in on mount
   useEffect(() => {
@@ -273,6 +281,25 @@ export function KioskSuccessScreen() {
                 </motion.div>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {/* Service-specific check-in prompt (e.g. "Please change into a robe") */}
+        {checkinPrompt && (
+          <motion.div
+            className="mt-6 max-w-md w-full p-5 rounded-2xl backdrop-blur-md flex items-start gap-3"
+            style={{
+              backgroundColor: `${accentColor}12`,
+              border: `1px solid ${accentColor}30`,
+            }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.85 }}
+          >
+            <Info className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: accentColor }} />
+            <p className="text-base text-left leading-relaxed" style={{ color: textColor }}>
+              {checkinPrompt}
+            </p>
           </motion.div>
         )}
 

@@ -43,7 +43,9 @@ import {
   Loader2,
   Calendar as CalendarIcon,
   Plus,
-  UserPlus
+  UserPlus,
+  Info,
+  AlertTriangle,
 } from 'lucide-react';
 import { NewClientDialog } from './NewClientDialog';
 import { cn, formatDisplayName } from '@/lib/utils';
@@ -54,6 +56,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useServicesByCategory } from '@/hooks/usePhorestServices';
 import { usePhorestAvailability } from '@/hooks/usePhorestAvailability';
 import { useLocations } from '@/hooks/useLocations';
+import { useServicePrompts } from '@/hooks/useServicePrompts';
 
 interface NewBookingSheetProps {
   open: boolean;
@@ -155,6 +158,21 @@ export function NewBookingSheet({
   const totalPrice = useMemo(() => {
     return selectedServiceDetails.reduce((sum, s) => sum + (s.price || 0), 0);
   }, [selectedServiceDetails]);
+
+  // Surface service-specific creation prompts (Wave 2 operational guardrails)
+  const selectedServiceRowIds = useMemo(
+    () => selectedServiceDetails.map(s => s.id).filter(Boolean),
+    [selectedServiceDetails],
+  );
+  const { data: servicePrompts = [] } = useServicePrompts(selectedServiceRowIds);
+  const activeCreationPrompts = useMemo(
+    () => servicePrompts.filter(p => p.creation_prompt && p.creation_prompt.trim().length > 0),
+    [servicePrompts],
+  );
+  const patchTestServices = useMemo(
+    () => servicePrompts.filter(p => p.patch_test_required),
+    [servicePrompts],
+  );
 
   // Check availability when stylist and date are selected
   const [availableSlots, setAvailableSlots] = useState<{ start_time: string; end_time: string }[]>([]);
@@ -585,6 +603,41 @@ export function NewBookingSheet({
                 <p className="font-medium">{formatCurrencyWhole(totalPrice)} estimated</p>
               </div>
             </div>
+
+            {/* Wave 2: Patch-test guardrail warning */}
+            {patchTestServices.length > 0 && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-foreground">
+                    Patch test required
+                  </p>
+                  <p className="text-muted-foreground mt-0.5">
+                    {patchTestServices.map(s => s.name).join(', ')} requires a valid patch test on file before service.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Wave 2: Service-specific creation prompts (staff prep notes) */}
+            {activeCreationPrompts.length > 0 && (
+              <div className="space-y-2">
+                {activeCreationPrompts.map(p => (
+                  <div
+                    key={p.id}
+                    className="rounded-lg border border-border bg-muted/40 p-3 flex items-start gap-2"
+                  >
+                    <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium text-foreground">{p.name}</p>
+                      <p className="text-muted-foreground mt-0.5 whitespace-pre-line">
+                        {p.creation_prompt}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div>
               <Label>Notes (optional)</Label>
