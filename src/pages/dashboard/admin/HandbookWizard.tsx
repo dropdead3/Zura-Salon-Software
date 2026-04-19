@@ -12,6 +12,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ROLE_OPTIONS } from '@/lib/handbook/brandTones';
+import { useHandbookPublishPreflight } from '@/hooks/handbook/useHandbookPublishPreflight';
+import { HandbookPreflightBanner } from '@/components/dashboard/handbook/HandbookPreflightBanner';
+import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 export default function HandbookWizardPage() {
   const { handbookId } = useParams<{ handbookId: string }>();
@@ -76,7 +80,7 @@ export default function HandbookWizardPage() {
       case 'review':
         return <ComingSoonStep title="Review & Handbook Health" description="Surface unresolved fields, conflicts, role gaps, and review-readiness. Score completeness and clarity." waveLabel="Wave 27" />;
       case 'publish':
-        return <ComingSoonStep title="Publish & Final Reader" description="Publish a versioned, navigable handbook with table of contents, role views, and acknowledgment workflow." waveLabel="Wave 27" />;
+        return <PublishStep versionId={version.id} />;
       default:
         return null;
     }
@@ -110,5 +114,39 @@ export default function HandbookWizardPage() {
         {renderStep()}
       </WizardShell>
     </DashboardLayout>
+  );
+}
+
+function PublishStep({ versionId }: { versionId: string }) {
+  const { data: preflight, isLoading } = useHandbookPublishPreflight(versionId);
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className={cn(tokens.heading.section)}>Publish Preflight</h2>
+        <p className="font-sans text-sm text-muted-foreground mt-1 max-w-2xl">
+          Structural checks before this handbook can publish. Policy-backed sections require an
+          approved internal variant in Policy OS.
+        </p>
+      </div>
+      {isLoading ? (
+        <Card><CardContent className="py-12 text-center font-sans text-sm text-muted-foreground">
+          Running preflight checks…
+        </CardContent></Card>
+      ) : (
+        <>
+          <HandbookPreflightBanner result={preflight} />
+          {preflight && preflight.canPublish && preflight.warnings.length === 0 && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="py-8 text-center space-y-2">
+                <p className={cn(tokens.heading.card, 'text-primary')}>Ready to publish</p>
+                <p className="font-sans text-sm text-muted-foreground">
+                  All structural checks passed. The full publish workflow lands in Wave 27.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
   );
 }

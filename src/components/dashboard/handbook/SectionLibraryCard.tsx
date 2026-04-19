@@ -1,9 +1,12 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { RoleChip } from './RoleChip';
+import { sectionHasPolicyOption } from '@/lib/handbook/policySectionMap';
+import { useHandbookPolicySections } from '@/hooks/handbook/useHandbookPolicySections';
 
 interface Props {
   section: any;
@@ -20,6 +23,10 @@ const RECOMMENDATION_STYLES: Record<string, string> = {
 export function SectionLibraryCard({ section, selected, onToggle }: Props) {
   const roles: string[] = Array.isArray(section.default_roles) ? section.default_roles : [];
   const recStyle = RECOMMENDATION_STYLES[section.recommendation] || RECOMMENDATION_STYLES.recommended;
+  const { data: availableMap } = useHandbookPolicySections();
+  const hasPolicyOption = sectionHasPolicyOption(section.key);
+  const approvedPolicies = availableMap?.get(section.key) ?? [];
+  const policyBacked = approvedPolicies.length > 0;
 
   return (
     <Card
@@ -38,9 +45,22 @@ export function SectionLibraryCard({ section, selected, onToggle }: Props) {
               <p className="font-sans text-sm text-muted-foreground mt-1">{section.description}</p>
             </div>
           </div>
-          <Badge variant="outline" className={cn('font-sans text-xs uppercase tracking-wider shrink-0', recStyle)}>
-            {section.recommendation}
-          </Badge>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <Badge variant="outline" className={cn('font-sans text-xs uppercase tracking-wider', recStyle)}>
+              {section.recommendation}
+            </Badge>
+            {policyBacked ? (
+              <Badge variant="outline" className="font-sans text-[10px] uppercase tracking-wider border-primary/40 text-primary bg-primary/5 gap-1">
+                <ClipboardList className="w-3 h-3" />
+                Policy-backed
+              </Badge>
+            ) : hasPolicyOption ? (
+              <Badge variant="outline" className="font-sans text-[10px] uppercase tracking-wider border-border text-muted-foreground gap-1">
+                <ClipboardList className="w-3 h-3" />
+                Policy available
+              </Badge>
+            ) : null}
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-border/60">
