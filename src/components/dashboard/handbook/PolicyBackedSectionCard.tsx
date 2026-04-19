@@ -40,18 +40,18 @@ export function PolicyBackedSectionCard({ policyId, policyTitle, body, approvedA
         ? 'Policy has no current version configured.'
         : 'No policy linked.';
     return (
-      <Card className="border-amber-500/30 bg-amber-500/5">
+      <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="p-5 space-y-3">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
             </div>
             <div className="min-w-0 flex-1">
               <h3 className={cn(tokens.heading.card)}>{policyTitle || 'Policy-backed section'}</h3>
               <p className="font-sans text-sm text-muted-foreground mt-1">{message}</p>
             </div>
           </div>
-          <div className="flex justify-end pt-2 border-t border-amber-500/20">
+          <div className="flex justify-end pt-2 border-t border-destructive/20">
             <Button variant="outline" size="sm" onClick={goToPolicy} className="font-sans">
               <ExternalLink className="w-4 h-4 mr-2" />
               Configure in Policy OS
