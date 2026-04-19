@@ -220,13 +220,26 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
   });
 
   // Select appointment and proceed
-  const selectAppointment = useCallback((appointment: KioskAppointment) => {
+  // Wave 7: branch into 'signing' state when the appointment is flagged
+  // forms_required & not yet completed. Hard gate at kiosk.
+  const selectAppointment = useCallback(async (appointment: KioskAppointment) => {
     setSession(prev => prev ? {
       ...prev,
       selectedAppointment: appointment,
     } : null);
-    // TODO: Check if forms are required, then go to signing or success
-    setState('success'); // For now, skip signing
+
+    // Look up flags from the live appointments table (view may not include them)
+    const { data: appt } = await supabase
+      .from('appointments')
+      .select('forms_required, forms_completed')
+      .eq('id', appointment.id)
+      .maybeSingle();
+
+    if (appt?.forms_required && !appt?.forms_completed) {
+      setState('signing');
+    } else {
+      setState('success');
+    }
   }, []);
 
   // Complete check-in
