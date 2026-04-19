@@ -31,9 +31,9 @@ export function useStylistExclusionSummaries() {
     queryKey: ['stylist-exclusion-summaries', orgId],
     queryFn: async () => {
       // 1. Identify service-provider users in this org.
-      const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'];
+      const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'] as const;
       const [rolesRes, employeesRes, servicesRes] = await Promise.all([
-        supabase.from('user_roles').select('user_id').in('role', SERVICE_PROVIDER_ROLES),
+        supabase.from('user_roles').select('user_id').in('role', SERVICE_PROVIDER_ROLES as unknown as string[]),
         supabase
           .from('employee_profiles')
           .select('user_id')
