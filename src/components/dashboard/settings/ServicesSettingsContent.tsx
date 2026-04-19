@@ -499,20 +499,16 @@ export function ServicesSettingsContent() {
     setEditorDialogOpen(true);
   };
 
-  // Filtered services for search + Wave 15a health filter
+  // Filtered services for search + Wave 16a setup-checklist filter
   const filteredServicesByCategory = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const passesHealth = (s: Service): boolean => {
       switch (healthFilter) {
         case 'missing_cost': return s.cost == null && (s.price ?? 0) > 0;
-        case 'low_margin': {
-          if (s.cost == null || !s.price) return false;
-          const m = ((s.price - s.cost) / s.price) * 100;
-          return m < 30;
-        }
+        case 'missing_price': return s.price == null || s.price <= 0;
+        case 'missing_duration': return !s.duration_minutes || s.duration_minutes <= 0;
         case 'not_bookable': return s.bookable_online === false;
         case 'missing_patch_test': return !!s.is_chemical_service && !s.patch_test_required;
-        case 'zombie': return (serviceVolumes?.[s.id]?.count30d ?? 0) === 0;
         case 'empty_categories': return false; // filtered at category level below
         default: return true;
       }
@@ -531,7 +527,7 @@ export function ServicesSettingsContent() {
       if (matches.length > 0) filtered[cat] = matches;
     }
     return filtered;
-  }, [servicesByCategory, searchQuery, healthFilter, serviceVolumes]);
+  }, [servicesByCategory, searchQuery, healthFilter]);
 
   // Wave 14: Search match summary (informs operator before they expand)
   const { searchMatchCount, searchMatchCategoryCount, firstMatchCategoryId } = useMemo(() => {
@@ -710,11 +706,10 @@ export function ServicesSettingsContent() {
                   </div>
                 )}
 
-                {/* Wave 15a: Catalog Health Bar — silent when clean */}
-                <CatalogHealthBar
+                {/* Wave 16a: Catalog Setup Checklist — structural defects + done state */}
+                <CatalogSetupChecklist
                   services={allServices ?? []}
                   categories={localOrder}
-                  volumes={serviceVolumes}
                   activeFilter={healthFilter}
                   onFilterChange={setHealthFilter}
                 />
