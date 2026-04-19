@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Loader2, Library, Settings } from 'lucide-react';
@@ -24,7 +24,6 @@ import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyCon
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function Policies() {
-  const navigate = useNavigate();
   const { data: library = [], isLoading: libLoading } = usePolicyLibrary();
   const { data: adopted = [], isLoading: adoptedLoading } = useOrgPolicies();
   const { data: profile, isLoading: profileLoading } = usePolicyOrgProfile();
