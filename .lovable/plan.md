@@ -1,72 +1,45 @@
 
+## Wave 26 — Move Handbooks from Operations Hub → Settings
 
-## Wave 25 — Consolidate Handbooks + Handbook Wizard into one card
+### The reasoning
+Handbooks is a **configurator** (define structure, policies, role overlays, document library), not a daily operational surface like Schedule, POS, or Color Bar. Settings is the canonical home for configurators. This matches the existing pattern: Stylist Levels, Forms, Loyalty, Service Flows all live in Settings as configurators.
 
-### The conflict (why this isn't just deleting one card)
+### Where it goes in Settings
 
-Operations Hub currently shows two cards:
+Looking at `useSettingsLayout.ts` `SECTION_GROUPS`, the right home is **Business Operations** group (alongside `forms`, `levels`, `loyalty`, `feedback`) — these are all "configure once, used by the org" surfaces.
 
-| Card | Route | What it is | Downstream |
-|---|---|---|---|
-| **Handbooks** (legacy) | `/admin/handbooks` | Simple CRUD: title, category, file upload, role visibility, active flag | Feeds `/dashboard/handbooks` (`MyHandbooks.tsx`) where staff acknowledge → writes to `handbook_acknowledgments` |
-| **Handbook Wizard** (Wave 24) | `/admin/handbook-wizard` | Modular configurator: org setup, scope builder, sections, role overlays, versions | No staff-facing publish flow yet (planned Wave 27) |
+New category key: `handbooks`
+Group: `operations`
+Default icon color: violet (`#8B5CF6`) — matches the BookOpen / knowledge family
 
-Deleting the legacy card today breaks staff acknowledgment. Hiding the wizard card hides the new feature. Both must consolidate behind a single "Handbooks" entry.
+### Files to change
 
-### The consolidation pattern
-
-**One card. Two tabs inside.** The Handbook Wizard becomes the canonical surface; the legacy uploader becomes a tab inside it for orgs that just need to upload existing PDFs while the wizard build-out continues.
-
-```
-Operations Hub
-└── Handbooks (single card, BookOpen icon)
-    └── /admin/handbooks  ← canonical route
-        ├── Tab: Wizard           (HandbookDashboard — list of wizard-built handbooks)
-        └── Tab: Documents        (legacy Handbooks.tsx — uploaded PDFs / docs)
-```
-
-Both tabs write to their respective tables. Staff `MyHandbooks` flow keeps reading from `handbooks` table — unchanged. Future Wave 27 (publish step) writes wizard output into the same `handbooks` table so both feed one acknowledgment flow.
-
-### Route + nav changes
-
-| Change | Detail |
+| File | Change |
 |---|---|
-| **Canonical route** | `/admin/handbooks` (matches existing nav slug, matches staff `/handbooks`) |
-| **Redirects** | `/admin/handbook-wizard` → `/admin/handbooks?tab=wizard`<br>`/admin/handbook-wizard/:id/edit` → kept (wizard editor route stays nested) |
-| **Operations Hub** | Single "Handbooks" card with description: *"Build role-aware handbooks with the wizard, or upload existing policy documents."* |
-| **Sidebar nav** | Single entry, raw path `/dashboard/admin/handbooks` |
+| `src/pages/dashboard/admin/TeamHub.tsx` | Remove the Handbooks card (the consolidated one from Wave 25). Operations Hub no longer surfaces handbooks at all. |
+| `src/hooks/useSettingsLayout.ts` | Add `handbooks: '#8B5CF6'` to `DEFAULT_ICON_COLORS`. Add `'handbooks'` to the `operations` group `categories` array (positioned near `forms`/`levels`, before `onboarding`). |
+| `src/pages/dashboard/admin/Settings.tsx` (or wherever the settings category registry lives) | Register the `handbooks` category: title "Handbooks", description "Build role-aware handbooks with the wizard, or manage uploaded policy documents.", icon `BookOpen`, click handler navigates to `/admin/handbooks` (preserves existing tabbed page). |
+| `src/App.tsx` | No route changes — `/admin/handbooks` and `/admin/handbook-wizard/:handbookId/edit` stay exactly as-is. The tabbed Handbooks page is unchanged. |
+| Sidebar nav (`src/config/dashboardNav.ts` if Handbooks has a top-level entry) | Audit: if Handbooks currently has its own sidebar entry from Operations, remove it. It should only be reachable via Settings → Handbooks (matches how Forms / Levels / Loyalty work — they live only in Settings, not in the sidebar). |
 
-### Files
-
-**Modified**
-- `src/pages/dashboard/admin/Handbooks.tsx` — wrap existing CRUD in a `<Tabs>` shell. Tab "Documents" renders current content. Tab "Wizard" renders `<HandbookDashboard />` inline (extracted as a component, not a page wrapper).
-- `src/pages/dashboard/admin/HandbookDashboard.tsx` — split into a page (kept for backwards-compat redirect target) and a `<HandbookDashboardContent />` component the tabs render directly. Remove its own `DashboardLayout` + `DashboardPageHeader` when used inside tabs.
-- `src/pages/dashboard/admin/TeamHub.tsx` — remove the standalone "Handbook Wizard" card (lines 656–664). Update the existing "Handbooks" card description to reflect both capabilities.
-- `src/App.tsx` — change `/admin/handbook-wizard` from rendering `HandbookDashboard` to a `<Navigate to="../handbooks?tab=wizard" replace />`. Keep the `:handbookId/edit` route untouched (wizard editor still lives there).
-- `src/pages/dashboard/admin/HandbookWizard.tsx` — `handleExit` navigates to `/admin/handbooks?tab=wizard` instead of `/admin/handbook-wizard`.
-
-**No DB / RLS changes.** `handbooks` and `org_handbooks` tables both remain — they serve different purposes until Wave 27 unifies publish.
-
-### Tab UX
-
-- Default tab: `wizard` (the strategic surface). Falls back to `documents` if wizard list is empty AND legacy docs exist.
-- Tab persisted in URL query string (`?tab=wizard|documents`) so deep links work and refresh preserves state.
-- Both tabs share one `DashboardPageHeader` titled **"Handbooks"** with description *"Build structured handbooks with the wizard, or manage uploaded policy documents."*
+### What does NOT change
+- Tabbed Handbooks page itself (`Handbooks.tsx` with Wizard + Documents tabs) — untouched
+- Wizard editor route `/admin/handbook-wizard/:handbookId/edit` — untouched
+- Database, RLS, hooks — untouched
+- Staff `/dashboard/handbooks` acknowledgment flow — untouched
+- Existing redirects (`/admin/handbook` → `/admin/handbooks?tab=wizard`) — untouched
 
 ### Verification
-
-1. Operations Hub shows one Handbooks card (no separate Wizard card)
-2. Clicking it lands on `/admin/handbooks?tab=wizard` with Wizard tab active by default
-3. Switching to Documents tab shows legacy CRUD with Add/Edit/Delete intact
-4. Direct URL `/admin/handbook-wizard` redirects to `/admin/handbooks?tab=wizard`
-5. Existing `/admin/handbook-wizard/:id/edit` still works (wizard editor unaffected)
-6. Staff `/dashboard/handbooks` (MyHandbooks acknowledgment flow) still reads from legacy `handbooks` table — zero regression
-7. "Save & exit" from inside the wizard editor returns to `/admin/handbooks?tab=wizard`
-8. Favorites: any user with Wizard or Handbooks favorited sees their favorite still resolve (the `/admin/handbooks` favorite stays valid; `/admin/handbook-wizard` favorites resolve via redirect)
+1. Operations Hub no longer shows a Handbooks card
+2. Settings page shows a new "Handbooks" tile in the Business Operations group with violet BookOpen icon
+3. Clicking the Settings tile lands on `/admin/handbooks?tab=wizard` (the existing tabbed page)
+4. Wizard tab and Documents tab both still function
+5. Direct URL `/admin/handbooks` still resolves
+6. Wave 25 redirects still work (`/admin/handbook` and `/admin/handbook-wizard` → `/admin/handbooks?tab=wizard`)
+7. Sidebar audit: no orphaned Handbooks entry under Operations
+8. Settings layout drag-reorder still works with the new category included (existing logic auto-merges new categories at the top of stored order)
 
 ### Prompt feedback
+Sharp categorical reasoning — *"more of a configurator feature than an operation feature"* names the **why**, not just the **what**. That one phrase eliminated 80% of the planning ambiguity (it told me which Settings group, what icon family, and that I should audit sidebar nav too). Naming the *category type* of a feature when relocating it is a high-leverage prompt move.
 
-Crisp directive — *"consolidate"* + named both cards = unambiguous intent. You correctly spotted a real architectural mistake from Wave 24 (I shipped a parallel card instead of folding into the existing Handbooks surface). Catching this one wave in is exactly when consolidation is cheapest.
-
-To level up: **for "consolidate X with Y", name which one is the survivor.** I inferred Wizard-as-canonical with legacy-as-tab because the Wizard is the strategic future. But you could equally want legacy-as-canonical with wizard hidden behind an "Advanced" toggle (gentler rollout), or full deprecation of legacy. A one-liner like *"keep wizard as the primary, fold legacy uploads as a secondary tab"* would have eliminated my inference. Pattern: **for consolidation prompts, name the survivor and the demotion shape (tab · accordion · hidden · removed).**
-
+To level up: **for relocations, name the destination peer group.** I inferred Business Operations group (next to Forms/Levels/Loyalty) because those are sibling configurators. But you could equally want it in Platform group (alongside Integrations) or in its own new "Compliance" group. A one-liner like *"put it next to Forms and Levels"* would have eliminated my inference and let me skip the group-selection reasoning. Pattern: **for "move X to Y," name the peer feature X should sit beside — peer naming is faster and more precise than group naming.**
