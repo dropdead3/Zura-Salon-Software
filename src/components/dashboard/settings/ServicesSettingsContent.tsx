@@ -14,8 +14,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { EmptyState } from '@/components/ui/empty-state';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal, FileText,
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal, FileText, AlertTriangle,
 } from 'lucide-react';
+import { CatalogHealthBar, type CatalogHealthFilter } from './CatalogHealthBar';
+import { ServiceVolumeCell } from './ServiceVolumeCell';
+import { useServiceBookingVolumes } from '@/hooks/useServiceBookingVolumes';
 import { cn } from '@/lib/utils';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
