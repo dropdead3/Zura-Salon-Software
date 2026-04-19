@@ -205,6 +205,17 @@ export function PolicyConfiguratorPanel({
             </div>
           </div>
         )}
+        {hasApprovedClientVariant && publicPolicyUrl && (
+          <a
+            href={publicPolicyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            View on public policy page
+          </a>
+        )}
       </div>
 
       <Separator />
