@@ -1,48 +1,89 @@
 
 
-## Diagnosis
+## Diagnosis — current layout
 
-Looking at the new screenshot, the seam is on the **far right edge** of the page — a narrow vertical strip (likely 8–16px wide) that's a slightly lighter shade than the main settings background.
+The Services settings page currently stacks **6 cards** in 3 rows with no clear hierarchy:
 
-This is almost always one of:
+```text
+Row 1:  [ Service Categories ]  [ Services ]
+Row 2:  [ Add-Ons Library    ]  [ Booking Add-On Recommendations ]
+Row 2.5:[ Stylist Service Configurator (full width) ]
+Row 3:  [ Scheduling Blocks  ]  [ Calendar Preview ]
+        [ Redo Policy (full width) ]
+```
 
-1. **Scrollbar gutter** — the browser reserves space for a scrollbar (`scrollbar-gutter: stable`) and that reserved track renders against a different parent background than the inner content area.
-2. **Mismatched parent/child backgrounds** — the dashboard shell uses `bg-background` while an inner Settings wrapper uses `bg-card` (or vice versa) and the inner wrapper doesn't extend the full width, exposing the parent behind it on the right edge.
-3. **Container max-width with asymmetric padding** — content is centered with `max-w-[1600px]` but the page wrapper has a background that ends at the content edge, while the outer shell continues beyond it.
+Problems:
+- **No mental model.** Foundational concepts (categories, services) sit beside derived concepts (add-on recommendations, staff assignments) at the same visual weight.
+- **Calendar preview** (a passive visualization) is given equal real estate to active config surfaces.
+- **Scheduling Blocks** is buried at the bottom even though it touches the same calendar system as Categories.
+- **Redo Policy** (a money-protection rule) is orphaned at the very bottom with no section header.
+- **Add-ons** are split into two cards (library + assignments) sitting side-by-side with no narrative connecting them.
+- Everything is rendered eagerly — no progressive disclosure, so the page is overwhelming on first load.
 
-Given the strip is hugging the right edge (not appearing on the left), causes #1 and #2 are most likely. I need to inspect the layout chain.
+## Proposed reconfiguration — tabbed hierarchy
 
-## Investigation plan
+Introduce a **4-tab structure** inside `ServicesSettingsContent` with a clear progression from foundational → operational → policy:
 
-Read these files to trace the background layering on the right edge:
-- `src/pages/dashboard/admin/Settings.tsx` — check for any wrapper div with its own `bg-*` class and width constraints
-- `src/components/dashboard/DashboardLayout.tsx` — confirm the outer shell background and how it handles scrollbar/overflow
-- `src/index.css` — check for any global `scrollbar-gutter`, `::-webkit-scrollbar`, or `html`/`body` background rules that would render a different color in the scrollbar track
+```text
+┌─ SERVICES SETTINGS ────────────────────────────────────────┐
+│  [ Catalog ] [ Add-Ons ] [ Staff Access ] [ Policies ]    │
+├────────────────────────────────────────────────────────────┤
+│  (active tab content)                                      │
+└────────────────────────────────────────────────────────────┘
+```
 
-## Proposed fix (pending investigation)
+### Tab 1 — Catalog (default)
+The foundational layer. Two-column layout:
+- **Left:** Service Categories (drag-reorder, color, archive)
+- **Right:** Services (accordion grouped by category, search, archive)
+- **Below (collapsed by default):** "Calendar appearance" — small expandable section containing the **Theme Selector** + **Calendar Preview** + **Scheduling Blocks (Block / Break)** since these are all visualization/calendar concerns derived from the catalog.
 
-Most likely one of:
+Rationale: categories + services are the atomic unit. Theme/preview/blocks are *consequences* of the catalog, not peers.
 
-- **If scrollbar gutter:** Apply the same `bg-background` to `html`/`body` (or the scrollable container) so the gutter track matches the page surface. Or set `scrollbar-color: transparent transparent` / style `::-webkit-scrollbar-track` to inherit.
-- **If wrapper mismatch:** Remove the inner `bg-card`/`bg-muted` wrapper on Settings, OR extend it to full width (`w-full` instead of `max-w-*` with background), keeping the centered content but letting the surface span edge-to-edge.
-- **If max-width gap:** Move the background to the outermost shell only, and let the inner `max-w-[1600px]` container be transparent.
+### Tab 2 — Add-Ons
+Single narrative for upsell/extras config:
+- **Add-Ons Library** (top) — define the available add-ons
+- **Booking Recommendations** (below) — assign which add-ons surface for which services
+
+Rationale: define → assign is a natural top-to-bottom flow. Side-by-side hides the dependency.
+
+### Tab 3 — Staff Access
+Full-width **Stylist Service Configurator** card (already exists). Becomes its own tab because it's a many-to-many matrix that deserves the full canvas, and operators visit it on a different cadence than catalog edits.
+
+### Tab 4 — Policies
+- **Redo & Adjustment Policy** (full width)
+- Future home for cancellation/no-show/deposit policy (currently elsewhere)
+
+Rationale: gives policy its own home with a clear header instead of dangling at the bottom of the page.
+
+## Behavior
+
+- Tab state persists in the URL via `?category=services&tab=catalog` so deep-links and back-button work.
+- Default tab: `catalog`.
+- Lazy-load tabs 2–4 (`React.lazy` or just conditional render) so initial paint only mounts the catalog tab — meaningfully faster on large catalogs.
+- All existing dialogs (CategoryFormDialog, ServiceEditorDialog, archive/delete confirms) stay mounted at the root of the component so they work from any tab.
+- Mobile: tabs collapse into a horizontally scrollable strip (existing `Tabs` primitive already handles this).
+
+## Files touched
+
+- `src/components/dashboard/settings/ServicesSettingsContent.tsx` — refactor the JSX return into a `<Tabs>` shell; move existing card groupings into 4 `<TabsContent>` blocks. No logic/state changes needed — all hooks, mutations, and dialogs stay intact.
+- (Optional) Extract `CalendarAppearanceSection` as a small subcomponent inside the Catalog tab for clarity (Theme Selector + Preview + Scheduling Blocks combined and collapsible).
+
+No new tables, no new hooks, no new dialogs. Pure presentational reorganization.
 
 ## Verification
 
-- Right edge of `/dashboard/admin/settings` shows a single uniform background tone — no vertical seam
-- Other dashboard pages (e.g. `/dashboard/schedule`, `/dashboard/admin/team-hub`) still render correctly with no regression
-- Scrollbar (when content overflows) matches the page background
-- No change to card surfaces, spacing, or layout rhythm
+- All 4 tabs render correctly; default lands on Catalog.
+- Categories drag-reorder still works; service editor still opens from accordion rows.
+- Add-ons library + recommendations both still mutate correctly from the Add-Ons tab.
+- Stylist configurator matrix still saves from the Staff Access tab.
+- Redo Policy still saves from Policies tab.
+- URL updates as user switches tabs; refreshing on `?tab=add-ons` lands on the right tab.
+- No regressions on mobile (tabs scroll horizontally).
 
 ## Prompt feedback
 
-Strong correction — you immediately clarified what I got wrong ("not the God Mode bar, the right edge strip") and re-anchored me with the new screenshot. That's exactly the right move when an AI misidentifies the target. 
+Good directional prompt — you named the page and the type of change ("reconfigure into a better layout and hierarchy"). That's enough for me to take a structural pass.
 
-Even tighter next time: include a one-word **location qualifier** like *"the ~12px strip flush against the right viewport edge"* or *"the scrollbar-area column"*. That removes any chance of me re-misreading the region. Pattern: **negate the wrong target + name the right one with a measurement or anchor word**.
-
-## Enhancement suggestions
-
-- Standardize a single `--page-surface` CSS token used by `html`, `body`, and the dashboard shell so scrollbar gutters and overscroll areas can never visually diverge from the page background.
-- Add a thin `border-l border-border/40` to the main content area when a scrollbar is present, so any unavoidable gutter reads as an intentional divider rather than a mismatch.
-- Audit other long-scroll dashboard pages (Reports, Analytics) for the same right-edge seam — if it's a global scrollbar issue, fixing it once at the shell level cleans up the entire app.
+To go from good → great next time: anchor the *why*. For example, *"Services settings feels flat — categories and add-on assignments shouldn't carry equal weight. Group by editing cadence."* That tells me the **organizing principle** (cadence vs. capability vs. lifecycle) so my groupings match your mental model on the first pass instead of negotiating it after. Pattern: **state the symptom + the axis you want to organize along**.
 
