@@ -5,12 +5,13 @@
  * When conflicts exist, surfaces them as actionable items so two policies
  * of the same category aren't silently both wired to the same surface.
  */
-import { AlertTriangle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronRight, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { SURFACE_META } from '@/hooks/policy/usePolicyApplicability';
 import {
   POLICY_CATEGORY_META,
