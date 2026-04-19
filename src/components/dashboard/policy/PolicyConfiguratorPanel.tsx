@@ -150,6 +150,12 @@ export function PolicyConfiguratorPanel({
   const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
   const { data: variantsData = [] } = usePolicyVariants(versionId);
   const approvedVariantCount = variantsData.filter((v) => v.approved).length;
+  const hasApprovedClientVariant = variantsData.some(
+    (v) => v.approved && v.variant_type === 'client',
+  );
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgSlug = effectiveOrganization?.slug;
+  const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
 
   /* Required-rule readiness for drafter */
   const rulesReady = useMemo(() => {
