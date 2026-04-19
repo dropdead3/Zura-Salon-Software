@@ -938,7 +938,7 @@ export function ServiceEditorDialog({
                     ? 'service-advanced-form'
                     : 'service-details-form'
               }
-              disabled={!name.trim() || isPending || (!isCreateMode && !isDirty)}
+              disabled={!name.trim() || isPending || (!isCreateMode && !isDirty) || hasValidationErrors}
             >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isCreateMode ? 'Create Service' : 'Save Changes'}
