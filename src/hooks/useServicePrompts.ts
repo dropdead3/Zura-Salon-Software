@@ -12,15 +12,12 @@ export interface ServicePromptRow {
 
 /**
  * Fetches operational prompts (creation_prompt, checkin_prompt) and
- * patch-test guardrails for one or more services. Used by:
- *  - NewBookingSheet (creation_prompt at booking time)
- *  - KioskSuccessScreen (checkin_prompt on client check-in)
- *  - AppointmentDetailSheet (both, for staff prep)
+ * patch-test guardrails for one or more services by id.
  */
 export function useServicePrompts(serviceIds: string[] | undefined) {
   const ids = (serviceIds ?? []).filter(Boolean);
   return useQuery({
-    queryKey: ['service-prompts', ids.sort().join(',')],
+    queryKey: ['service-prompts', 'by-id', ids.sort().join(',')],
     queryFn: async (): Promise<ServicePromptRow[]> => {
       if (ids.length === 0) return [];
       const { data, error } = await supabase
@@ -36,9 +33,29 @@ export function useServicePrompts(serviceIds: string[] | undefined) {
 }
 
 /**
- * Convenience: fetch prompts for a single service id.
+ * Fallback lookup by service name within an organization. Used by the kiosk
+ * (where appointment views expose service_name but not service_id). Returns
+ * the first matching active service.
  */
-export function useServicePrompt(serviceId: string | null | undefined) {
-  const { data, ...rest } = useServicePrompts(serviceId ? [serviceId] : []);
-  return { data: data?.[0] ?? null, ...rest };
+export function useServicePromptByName(
+  serviceName: string | null | undefined,
+  organizationId: string | null | undefined,
+) {
+  return useQuery({
+    queryKey: ['service-prompts', 'by-name', organizationId, serviceName],
+    queryFn: async (): Promise<ServicePromptRow | null> => {
+      if (!serviceName || !organizationId) return null;
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name, creation_prompt, checkin_prompt, patch_test_required, patch_test_validity_days')
+        .eq('organization_id', organizationId)
+        .ilike('name', serviceName)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as ServicePromptRow | null;
+    },
+    enabled: !!serviceName && !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  });
 }
