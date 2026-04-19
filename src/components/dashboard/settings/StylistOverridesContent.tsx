@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Trash2, Search } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Trash2, Search, Ban } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn, formatDisplayName } from '@/lib/utils';
@@ -17,6 +18,10 @@ import {
 } from '@/hooks/useServiceLevelPricing';
 import { useServiceLevelPrices } from '@/hooks/useServiceLevelPricing';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import {
+  useStylistServiceExclusions,
+  useToggleStylistServiceExclusion,
+} from '@/hooks/useStylistExclusions';
 
 interface StylistOverridesContentProps {
   serviceId: string | null;
