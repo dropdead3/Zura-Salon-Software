@@ -26,6 +26,8 @@ import {
 } from '@/lib/booking-embed-messages';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRequiredFormsForService } from '@/hooks/useServiceFormRequirements';
+import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
 
 export function HostedBookingPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
@@ -144,6 +146,18 @@ export function HostedBookingPage() {
   const [stripeConfig, setStripeConfig] = useState<{ publishableKey: string; connectedAccountId: string } | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [createdAppointmentId, setCreatedAppointmentId] = useState<string | null>(null);
+
+  // ─── Wave 9: required-form gating (hybrid sign-now / defer) ─────
+  const selectedServiceId = selectedServiceData?.id;
+  const { data: requiredForms } = useRequiredFormsForService(selectedServiceId);
+  const [signedFormTemplateIds, setSignedFormTemplateIds] = useState<string[]>([]);
+  const [showFormSigningDialog, setShowFormSigningDialog] = useState(false);
+  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
+
+  // Reset sign state if the chosen service changes mid-flow
+  useEffect(() => {
+    setSignedFormTemplateIds([]);
+  }, [selectedServiceId]);
 
   // Check if any eligible service needs payment (lazy Stripe config fetch)
   const anyServiceNeedsPayment = useMemo(() => {

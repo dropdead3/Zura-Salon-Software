@@ -1,4 +1,4 @@
-import { Calendar, Clock, User, Scissors, MapPin, CheckCircle2, CalendarPlus, FileText, ShieldCheck } from 'lucide-react';
+import { Calendar, Clock, User, Scissors, MapPin, CheckCircle2, CalendarPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 import type { BookingClientInfo } from './BookingClientForm';
