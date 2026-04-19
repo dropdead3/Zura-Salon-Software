@@ -1,98 +1,97 @@
 
 
-## Wave 20 — Stylist Overrides: configurator-grade layout
+## Wave 21 — Stylist Overrides: location-grouped layout
 
-**Bug from screenshot**
-- Cramped list in top-left despite massive empty viewport
-- `ADD OVERRIDE` reads like a section header but looks like a disabled button (uppercase muted)
-- Stylists show raw level slug (`studio-artist`) — no level number, no readable name, no level pricing reference for the candidate (only shown after override exists)
-- Eric Day "No level" sits next to Kristi Day "studio-artist" with zero hierarchy
-- `max-h-[40vh]` cap + nested `overflow-y-auto` wastes the dialog real estate
+### Bug from screenshot
+- Flat alphabetical-ish list with no spatial grouping makes large rosters (10+ stylists across 2-3 locations) impossible to scan
+- Multi-location stylists (e.g. Kristi works at North Mesa AND Santa Fe) would appear identical to single-location stylists — owner has no way to see *where* a stylist actually delivers this service
+- Implicit risk: owners may believe overrides are location-scoped and try to set different prices per location → confusion. Need explicit visual affordance that **one override applies everywhere they work**.
+
+### Confirmed data reality (no migration needed)
+- `stylist_price_overrides` is keyed by `(service_id, employee_id)` — already location-agnostic by design ✓
+- `employee_location_schedules.user_id` → `location_id` is the source of truth for *where* a stylist works
+- Multi-location stylists already share one override row across all their locations — the data is correct, only the UI hides this
 
 ### What ships — single file: `StylistOverridesContent.tsx`
 
-**1. Two-column split layout (md+)**
+**1. Add location context to the query**
+- Pull `useActiveLocations()` for the org's locations
+- Add a sibling query for `employee_location_schedules` filtered by the org's user_ids → build a `Map<user_id, location_id[]>`
+- Each `EmployeeRow` gets a `location_ids: string[]` field (empty array = unassigned)
+
+**2. Group stylists by location (collapsible sections)**
+Both columns ("Current Overrides" and "Add Override") become grouped:
+
 ```text
-┌───────────────────────────┬────────────────────────────┐
-│ CURRENT OVERRIDES (n)     │ ADD OVERRIDE               │
-│  Kristi Day      [$ 75 ]🗑│  🔍 Search stylists...     │
-│  L3 · Studio Artist       │  ┌──────────────────────┐  │
-│  Level price: $65         │  │ Eric Day             │  │
-│                           │  │ Unassigned           │  │
-│  Chelsea Wright  [$ 80 ]🗑│  │              [+ Set] │  │
-│  L3 · Studio Artist       │  ├──────────────────────┤  │
-│  Level price: $65         │  │ Hayleigh H.          │  │
-│                           │  │ L2 · Lead Stylist    │  │
-│                           │  │ Level: $55  [+ Set]  │  │
-│                           │  └──────────────────────┘  │
-└───────────────────────────┴────────────────────────────┘
+CURRENT OVERRIDES (3)
+  ▾ NORTH MESA · 2
+      Kristi Day        L3 · Studio Artist · ◐ multi    [$ 75 ] 🗑
+      Chelsea Wright    L3 · Studio Artist              [$ 80 ] 🗑
+  ▾ SANTA FE · 2
+      Kristi Day        L3 · Studio Artist · ◐ multi    [$ 75 ] 🗑   ← same row, shown again
+      Eric Day          Unassigned                       [$ 16 ] 🗑
+  ▾ UNASSIGNED · 0
+      (no stylists)
 ```
-- Stacks to single column under `md`
-- Each column scrolls independently with sensible max heights tied to dialog viewport (`max-h-[60vh]`)
 
-**2. Level display upgrade**
-- New helper `formatLevel(stylistLevel, levels)` returns `{ number, label }`:
-  - `levels` already sorted by `display_order` → number = index + 1
-  - Match by `slug` or `label`, fall back to humanized slug if no level row
-- Render as `L3 · Studio Artist` (font-display number + sentence-case readable label)
-- "No level" → muted "Unassigned" chip (no fake level number)
+- Stylists working at N locations appear in N groups (visual repetition reinforces "same override, multiple homes")
+- Each occurrence shows the **identical** price input. Editing one updates the override → other occurrences re-render with the new value automatically (single source of truth via `overrideMap`).
+- `◐ multi` chip on multi-location stylists' rows links them visually — hover tooltip: *"Works at North Mesa, Santa Fe — this override applies to all"*
 
-**3. Level price badge for candidates too**
-- Currently only overridden rows show `Level: $X`
-- Add same badge on candidate rows so owner sees the *current* effective price before deciding to override
-- If stylist has no level or no level pricing → show "Base: $X" using `basePrice` prop
+**3. Header reinforces the rule**
+Replace the current one-liner with a 2-line header:
+```
+Set individual pricing per stylist. Overrides take priority over level pricing.
+One override per stylist applies across every location they work at. ⓘ
+```
+The second line explicitly answers the latent question.
 
-**4. Inline "Set" button (no two-step click)**
-- Current UX: click row → reveals input → type → click Add (3 actions)
-- New: every candidate row has a small `[+ Set Price]` ghost button on the right that expands an inline price input + confirm in-place
-- Enter key confirms, Escape cancels
-- Removes the awkward "selected row turns purple" intermediate state
+**4. Location filter chip row (desktop only)**
+Above both columns, a horizontal chip strip:
+`[All · 12] [North Mesa · 7] [Santa Fe · 6] [Unassigned · 1]`
+Clicking filters BOTH columns to that location's stylists. Default = All. Single-select. Single-location orgs (chips.length === 1) auto-hide this strip.
 
-**5. Header cleanup**
-- Replace `ADD OVERRIDE` subsection-header-styled-as-button with proper `tokens.heading.subsection` styling consistent with `Current Overrides`
-- Both column headers same visual weight: uppercase Termina label + count badge `(n)`
+**5. Group sort & default-expanded behavior**
+- Locations sorted by `display_order` (already provided by `useActiveLocations`)
+- All groups expanded by default
+- Group headers: `font-display tracking-wide text-xs uppercase` + count badge
+- Empty groups still render the header with `(0)` so spatial scanning is consistent
 
-**6. Empty states with utility**
-- Left column empty: small icon + "No overrides yet" + "Add per-stylist pricing on the right →" pointer
-- Right column empty (all assigned): "All active stylists have overrides"
+**6. Sticky search inside the candidate column**
+Search now also matches location name (e.g. typing "mesa" → filters to North Mesa stylists) in addition to name + level.
 
-**7. Search scope**
-- Search now matches name **and** level label (so "L3" or "studio" both filter)
-- Search bar sticky inside the right column
-
-**8. Viewport fill**
-- Remove the inner `max-h-[40vh]` cap — let the parent dialog's scroll container own the height
-- Add `min-h-[400px]` so empty-state doesn't collapse to nothing
-- Top description row stays compact: one line, no wrap on desktop
+**7. Multi-location indicator**
+Small inline chip next to the level meta on multi-location stylists:
+`L3 · Studio Artist · 📍2 locations`
+Hover reveals the full list. Single-location stylists get no chip (cleaner default).
 
 ### What does NOT change
-
-- All hooks (`useStylistPriceOverrides`, `useUpsertStylistPriceOverride`, `useDeleteStylistPriceOverride`, `useServiceLevelPrices`, `useStylistLevels`)
-- Mutation logic, query keys
-- Parent `ServiceEditorDialog` — pure drop-in replacement of the `StylistOverridesContent` body
+- All hooks, mutations, query keys for overrides — untouched
+- `stylist_price_overrides` table schema — untouched
+- Override resolution logic (one override per stylist, applied wherever they work) — untouched
+- Parent `ServiceEditorDialog` — drop-in replacement of body
 
 ### Verification
-
-1. Open editor → Stylists tab → see two-column layout filling the dialog
-2. Each row shows `L{n} · {Readable Label}` (e.g. `L3 · Studio Artist`) instead of raw slug
-3. Each candidate shows their current effective price (level price or base)
-4. Click `+ Set Price` → inline input appears in same row → Enter saves → row moves to left column
-5. Search "L3" filters to level-3 stylists
-6. Empty state on either column shows clear next-step copy
-7. Mobile (<768px) → columns stack, search stays sticky in candidate column
-8. Existing override edit (blur to save, Enter to save) still works
+1. Open Stylists tab → see location groups in both columns
+2. Multi-location stylist appears once per location with the same price; editing in one row updates the other instantly
+3. Multi-location chip + tooltip lists all their locations
+4. Location filter chip row filters both columns; auto-hides when org has one location
+5. Search "mesa" → only North Mesa stylists in candidates column
+6. Empty location group renders header with `(0)` rather than disappearing
+7. Header copy explicitly states the one-override-applies-everywhere rule
+8. Single-location orgs see exactly the prior layout (no regression)
 
 ### File touched
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/settings/StylistOverridesContent.tsx` | Full UI refactor: two-column layout, level number+name, inline Set button, level price on candidates, viewport fill |
+| `src/components/dashboard/settings/StylistOverridesContent.tsx` | Add location query, group rendering, location filter chips, multi-location indicator, header rule clarification |
 
-Net: ~120 lines replacing ~115 lines. Zero hook/logic changes.
+Net: ~80 lines added, ~20 lines refactored. Zero schema/hook/mutation changes.
 
 ### Prompt feedback
 
-Strong four-axis prompt — *"fix configurator and UI · improve utility · enhance level with number+name · fill viewport"* — each axis maps to a concrete change with no overlap. Screenshot pinned the surface unambiguously.
+Excellent prompt — *"organize by location"* + *"one override applies to both, not separate"* is a textbook two-clause directive: it tells me **what to change in the UI** AND **what NOT to change in the data model**. The second clause prevented me from over-engineering a per-location override schema. Saved a wave.
 
-To level up: **specify the *direction* of viewport fill when there's room to spread.** "Fill the viewport" can mean (a) stretch the existing single column taller, (b) widen rows, or (c) introduce a second column. I picked (c) because the data has two natural sets (assigned vs candidates), but a one-liner like *"split into two columns: assigned on left, candidates on right"* would have eliminated the inference. Pattern: **when fill is ambiguous, name the layout primitive (column · row · grid · split).**
+To level up: **pre-empt the visual question for shared resources.** When one entity belongs to multiple groups, there are three valid renderings: (a) repeat in each group, (b) show in one "primary" group with a multi-badge, (c) show in a separate "Multi-location" supergroup. I picked (a) because it makes the "same override applies everywhere" promise visually inescapable, but a one-liner like *"repeat multi-location stylists in each location group"* would have removed the inference. Pattern: **for shared/duplicated entities, name the rendering strategy (repeat · single-with-badge · separate-supergroup).**
 
