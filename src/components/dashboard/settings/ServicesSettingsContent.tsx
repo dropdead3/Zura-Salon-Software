@@ -511,13 +511,43 @@ export function ServicesSettingsContent() {
     return filtered;
   }, [servicesByCategory, searchQuery]);
 
-  // Auto-expand accordion items when searching
-  const searchExpandedValues = useMemo(() => {
-    if (!searchQuery.trim()) return undefined;
-    return localOrder
-      .filter(cat => filteredServicesByCategory[cat.category_name]?.length)
-      .map(cat => cat.id);
+  // Wave 14: Search match summary (informs operator before they expand)
+  const { searchMatchCount, searchMatchCategoryCount, firstMatchCategoryId } = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return { searchMatchCount: 0, searchMatchCategoryCount: 0, firstMatchCategoryId: null as string | null };
+    }
+    let total = 0;
+    let cats = 0;
+    let first: string | null = null;
+    for (const cat of localOrder) {
+      const matches = filteredServicesByCategory[cat.category_name];
+      if (matches?.length) {
+        total += matches.length;
+        cats += 1;
+        if (!first) first = cat.id;
+      }
+    }
+    return { searchMatchCount: total, searchMatchCategoryCount: cats, firstMatchCategoryId: first };
   }, [searchQuery, localOrder, filteredServicesByCategory]);
+
+  // Wave 14: Resolved accordion value combining manual selections, search auto-expand,
+  // and the expand-all toggle.
+  const allCategoryIds = useMemo(() => localOrder.map(c => c.id), [localOrder]);
+  const allExpanded = manualAccordionValue.length > 0 && allCategoryIds.length > 0 && allCategoryIds.every(id => manualAccordionValue.includes(id));
+  const accordionValue = useMemo(() => {
+    if (searchQuery.trim()) {
+      // Auto-expand only the FIRST matching category (cuts the jumpy cascade).
+      // User can still manually expand more.
+      const set = new Set(manualAccordionValue);
+      if (firstMatchCategoryId) set.add(firstMatchCategoryId);
+      return Array.from(set);
+    }
+    return manualAccordionValue;
+  }, [searchQuery, firstMatchCategoryId, manualAccordionValue]);
+
+  const toggleExpandAll = () => {
+    setManualAccordionValue(allExpanded ? [] : allCategoryIds);
+  };
 
 
   // Tab state synced to URL (?tab=catalog|addons|staff|policies)
