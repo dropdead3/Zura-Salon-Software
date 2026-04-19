@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Loader2, Library } from 'lucide-react';
+import { Loader2, Library, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -12,18 +14,25 @@ import {
   POLICY_CATEGORY_META,
   type PolicyCategory,
 } from '@/hooks/policy/usePolicyData';
+import { usePolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
 import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
+import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBanner';
+import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function Policies() {
   const navigate = useNavigate();
   const { data: library = [], isLoading: libLoading } = usePolicyLibrary();
   const { data: adopted = [], isLoading: adoptedLoading } = useOrgPolicies();
+  const { data: profile, isLoading: profileLoading } = usePolicyOrgProfile();
   const summary = usePolicyHealthSummary();
 
   const [activeCategory, setActiveCategory] = useState<PolicyCategory | 'all'>('all');
+  const [setupOpen, setSetupOpen] = useState(false);
+
+  const hasProfile = !!profile?.setup_completed_at;
 
   const adoptedByKey = useMemo(() => {
     const map = new Map<string, (typeof adopted)[number]>();
@@ -40,13 +49,21 @@ export default function Policies() {
     (a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order,
   );
 
-  const isLoading = libLoading || adoptedLoading;
+  const isLoading = libLoading || adoptedLoading || profileLoading;
 
   return (
     <DashboardLayout>
       <DashboardPageHeader
         title="Policies"
         description="The source of truth for every policy your business runs on. Configure once, render everywhere — handbooks, client pages, booking, checkout, and manager decisions."
+        actions={
+          hasProfile ? (
+            <Button variant="outline" size="sm" onClick={() => setSetupOpen(true)} className="font-sans">
+              <Settings className="w-4 h-4 mr-2" />
+              Update profile
+            </Button>
+          ) : undefined
+        }
       />
 
       {isLoading ? (
@@ -55,6 +72,9 @@ export default function Policies() {
         </div>
       ) : (
         <div className="space-y-8">
+          {!hasProfile && (
+            <PolicySetupBanner onStart={() => setSetupOpen(true)} hasProfile={false} />
+          )}
           <PolicyHealthStrip summary={summary} />
 
           <section className="space-y-4">
@@ -126,6 +146,18 @@ export default function Policies() {
           </section>
         </div>
       )}
+
+      <Sheet open={setupOpen} onOpenChange={setSetupOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle className={cn(tokens.heading.section)}>Policy setup</SheetTitle>
+            <SheetDescription className="font-sans">
+              Tell us how your business operates. We'll recommend the right policy set.
+            </SheetDescription>
+          </SheetHeader>
+          <PolicySetupWizard onClose={() => setSetupOpen(false)} />
+        </SheetContent>
+      </Sheet>
     </DashboardLayout>
   );
 }

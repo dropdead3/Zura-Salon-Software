@@ -17502,6 +17502,77 @@ export type Database = {
         }
         Relationships: []
       }
+      policy_org_profile: {
+        Row: {
+          business_type: string | null
+          created_at: string
+          created_by: string | null
+          has_existing_client_policies: boolean
+          has_existing_handbook: boolean
+          id: string
+          offers_extensions: boolean
+          offers_memberships: boolean
+          offers_packages: boolean
+          offers_retail: boolean
+          organization_id: string
+          primary_state: string | null
+          roles_used: string[]
+          serves_minors: boolean
+          service_categories: string[]
+          setup_completed_at: string | null
+          team_size_band: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          has_existing_client_policies?: boolean
+          has_existing_handbook?: boolean
+          id?: string
+          offers_extensions?: boolean
+          offers_memberships?: boolean
+          offers_packages?: boolean
+          offers_retail?: boolean
+          organization_id: string
+          primary_state?: string | null
+          roles_used?: string[]
+          serves_minors?: boolean
+          service_categories?: string[]
+          setup_completed_at?: string | null
+          team_size_band?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          has_existing_client_policies?: boolean
+          has_existing_handbook?: boolean
+          id?: string
+          offers_extensions?: boolean
+          offers_memberships?: boolean
+          offers_packages?: boolean
+          offers_retail?: boolean
+          organization_id?: string
+          primary_state?: string | null
+          roles_used?: string[]
+          serves_minors?: boolean
+          service_categories?: string[]
+          setup_completed_at?: string | null
+          team_size_band?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_org_profile_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       policy_rule_blocks: {
         Row: {
           block_key: string
@@ -29923,6 +29994,14 @@ export type Database = {
           p_transaction_type: string
         }
         Returns: string
+      }
+      adopt_policies_from_library: {
+        Args: { p_library_keys: string[]; p_organization_id: string }
+        Returns: {
+          library_key: string
+          policy_id: string
+          was_created: boolean
+        }[]
       }
       archive_old_platform_notifications: { Args: never; Returns: Json }
       award_points: {
