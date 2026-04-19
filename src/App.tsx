@@ -39,6 +39,7 @@ import DashboardHome from "./pages/dashboard/DashboardHome";
 
 // Organization public pages (under /org/:orgSlug)
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
+import ClientPolicyCenter from "./pages/public/ClientPolicyCenter";
 
 // Dashboard pages
 import { OrgAccessDenied } from "./components/auth/OrgAccessDenied";
@@ -478,7 +479,8 @@ const App = () => (
                       <Route path="booking" element={<Booking />} />
                       <Route path="stylists" element={<Stylists />} />
                       <Route path="extensions" element={<Extensions />} />
-                      <Route path="policies" element={<Policies />} />
+                      <Route path="policies" element={<ClientPolicyCenter />} />
+                      <Route path="policies-legacy" element={<Policies />} />
                       <Route path="book" element={<PublicBooking />} />
                       <Route path="day-rate" element={<DayRateBooking />} />
                       <Route path="shop" element={<Shop />} />

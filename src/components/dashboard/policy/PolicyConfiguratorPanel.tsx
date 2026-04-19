@@ -11,13 +11,14 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PolicyRuleField } from './PolicyRuleField';
 import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
@@ -149,6 +150,12 @@ export function PolicyConfiguratorPanel({
   const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
   const { data: variantsData = [] } = usePolicyVariants(versionId);
   const approvedVariantCount = variantsData.filter((v) => v.approved).length;
+  const hasApprovedClientVariant = variantsData.some(
+    (v) => v.approved && v.variant_type === 'client',
+  );
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgSlug = effectiveOrganization?.slug;
+  const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
 
   /* Required-rule readiness for drafter */
   const rulesReady = useMemo(() => {
@@ -197,6 +204,17 @@ export function PolicyConfiguratorPanel({
               </p>
             </div>
           </div>
+        )}
+        {hasApprovedClientVariant && publicPolicyUrl && (
+          <a
+            href={publicPolicyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            View on public policy page
+          </a>
         )}
       </div>
 
