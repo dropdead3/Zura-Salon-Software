@@ -22228,7 +22228,7 @@ export type Database = {
           display_order: number
           id: string
           is_archived: boolean
-          organization_id: string | null
+          organization_id: string
           text_color_hex: string
           updated_at: string
         }
@@ -22241,7 +22241,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_archived?: boolean
-          organization_id?: string | null
+          organization_id: string
           text_color_hex?: string
           updated_at?: string
         }
@@ -22254,7 +22254,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_archived?: boolean
-          organization_id?: string | null
+          organization_id?: string
           text_color_hex?: string
           updated_at?: string
         }
