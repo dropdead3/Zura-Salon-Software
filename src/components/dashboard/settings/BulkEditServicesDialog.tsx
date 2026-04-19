@@ -205,6 +205,9 @@ export function BulkEditServicesDialog({
                 {priceMode === 'percent' ? '%' : '$'}
               </span>
             </div>
+            {priceInvalid && (
+              <p className="text-xs text-destructive mt-1.5">Enter a valid number to enable Apply.</p>
+            )}
             {projectedMonthlyDelta !== null && (
               <div className="flex items-start gap-2 mt-2 rounded-md bg-muted/40 p-2.5 text-xs">
                 <TrendingUp className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
@@ -252,6 +255,9 @@ export function BulkEditServicesDialog({
               />
               <span className="flex items-center text-sm text-muted-foreground w-10">min</span>
             </div>
+            {durationInvalid && (
+              <p className="text-xs text-destructive mt-1.5">Enter a whole number of minutes to enable Apply.</p>
+            )}
           </FieldBlock>
 
           {/* Category */}
@@ -291,14 +297,17 @@ export function BulkEditServicesDialog({
           <FieldBlock
             checked={changeActive}
             onCheckedChange={setChangeActive}
-            label="Active status"
+            label="Activate / deactivate (does not archive)"
           >
             <div className="flex items-center gap-2">
               <Switch checked={activeValue} onCheckedChange={setActiveValue} />
               <span className="text-sm text-muted-foreground">
-                {activeValue ? 'Active' : 'Inactive (cannot be booked)'}
+                {activeValue ? 'Active — bookable' : 'Inactive — hidden from booking, kept in catalog'}
               </span>
             </div>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              For permanent removal, use the Archive action on each service row.
+            </p>
           </FieldBlock>
 
           {/* Patch test required (Wave 2 guardrail) */}
