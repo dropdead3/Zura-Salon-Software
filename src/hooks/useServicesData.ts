@@ -223,6 +223,7 @@ export function useUpdateService() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['services-data'] });
       queryClient.invalidateQueries({ queryKey: ['service', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['service-audit-log'] });
       toast.success('Service updated');
     },
     onError: (error: Error) => {
@@ -361,6 +362,7 @@ export function useArchiveService() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services-data'] });
       queryClient.invalidateQueries({ queryKey: ['services-archived'] });
+      queryClient.invalidateQueries({ queryKey: ['service-audit-log'] });
       toast.success('Service archived');
     },
     onError: (error: Error) => {
@@ -386,6 +388,7 @@ export function useRestoreService() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services-data'] });
       queryClient.invalidateQueries({ queryKey: ['services-archived'] });
+      queryClient.invalidateQueries({ queryKey: ['service-audit-log'] });
       toast.success('Service restored');
     },
     onError: (error: Error) => {
