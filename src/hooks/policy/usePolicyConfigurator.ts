@@ -35,6 +35,7 @@ export interface PolicyConfiguratorPayload {
   versionId: string;
   blocks: PolicyRuleBlock[];
   versionNumber: number;
+  requiresAcknowledgment?: boolean;
 }
 
 /** Adopt a single policy from the library and ensure a draft version exists. */
@@ -72,7 +73,7 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
       // Fetch policy by (org, library_key)
       const { data: policy, error: pErr } = await supabase
         .from('policies')
-        .select('id, current_version_id')
+        .select('id, current_version_id, requires_acknowledgment')
         .eq('organization_id', orgId)
         .eq('library_key', libraryKey)
         .maybeSingle();
@@ -90,7 +91,13 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
         .maybeSingle();
       if (vErr) throw vErr;
       if (!version) {
-        return { policyId: policy.id, versionId: '', blocks: [], versionNumber: 0 };
+        return {
+          policyId: policy.id,
+          versionId: '',
+          blocks: [],
+          versionNumber: 0,
+          requiresAcknowledgment: !!(policy as any).requires_acknowledgment,
+        };
       }
 
       const { data: blocks, error: bErr } = await supabase
@@ -105,6 +112,7 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
         versionId: version.id,
         versionNumber: version.version_number,
         blocks: (blocks ?? []) as PolicyRuleBlock[],
+        requiresAcknowledgment: !!(policy as any).requires_acknowledgment,
       };
     },
     enabled: !!orgId && !!libraryKey,

@@ -1,16 +1,24 @@
 /**
- * Wave 28.8 — Category group on the public Client Policy Center.
+ * Wave 28.8 + 28.10 — Category group on the public Client Policy Center.
  *
  * Termina header + description + stack of PolicyCenterCard items.
+ * 28.10: passes acknowledgment props per-card.
  */
 import { PolicyCenterCard } from './PolicyCenterCard';
 import type { PublicPolicyGroup } from '@/hooks/policy/usePublicOrgPolicies';
+import type { AckIdentity } from './AcknowledgeIdentityModal';
 
 interface PolicyCategoryGroupProps {
   group: PublicPolicyGroup;
+  acknowledgedPolicyIds?: Set<string>;
+  onAcknowledged?: (info: { policyId: string; ackedAt: string; identity: AckIdentity }) => void;
 }
 
-export function PolicyCategoryGroup({ group }: PolicyCategoryGroupProps) {
+export function PolicyCategoryGroup({
+  group,
+  acknowledgedPolicyIds,
+  onAcknowledged,
+}: PolicyCategoryGroupProps) {
   return (
     <section className="space-y-4" aria-labelledby={`policy-cat-${group.category}`}>
       <header className="space-y-1">
@@ -29,7 +37,13 @@ export function PolicyCategoryGroup({ group }: PolicyCategoryGroupProps) {
 
       <div className="space-y-3">
         {group.policies.map((p) => (
-          <PolicyCenterCard key={p.policyId} policy={p} />
+          <PolicyCenterCard
+            key={p.policyId}
+            policy={p}
+            requiresAcknowledgment={p.requiresAcknowledgment}
+            alreadyAcknowledged={acknowledgedPolicyIds?.has(p.policyId) ?? false}
+            onAcknowledged={onAcknowledged}
+          />
         ))}
       </div>
     </section>

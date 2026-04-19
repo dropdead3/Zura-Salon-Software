@@ -290,3 +290,6 @@ verify_jwt = false
 
 [functions.send-client-sms]
 verify_jwt = false
+
+[functions.record-policy-acknowledgment]
+verify_jwt = false

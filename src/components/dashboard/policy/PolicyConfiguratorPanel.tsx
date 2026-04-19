@@ -11,9 +11,12 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
+import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
+import { Switch } from '@/components/ui/switch';
+import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -71,8 +74,9 @@ export function PolicyConfiguratorPanel({
 
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
-  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts'>('rules');
+  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts' | 'acknowledgments'>('rules');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const updateAckFlag = useUpdatePolicyAcknowledgmentFlag();
 
   // Auto-adopt if not yet adopted, so the configurator always has a draft version.
   useEffect(() => {
@@ -231,6 +235,32 @@ export function PolicyConfiguratorPanel({
             </button>
           )}
         </div>
+
+        {/* Wave 28.10 — operator opt-in to require client acknowledgment */}
+        {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
+          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
+            <Switch
+              id="require-ack"
+              checked={!!(data as any).requiresAcknowledgment}
+              disabled={updateAckFlag.isPending}
+              onCheckedChange={(checked) =>
+                updateAckFlag.mutate(
+                  { policyId: data.policyId, requiresAcknowledgment: checked },
+                  { onSuccess: () => refetch() },
+                )
+              }
+            />
+            <label htmlFor="require-ack" className="flex-1 cursor-pointer space-y-0.5">
+              <p className="font-sans text-sm text-foreground">
+                Require client acknowledgment
+              </p>
+              <p className="font-sans text-xs text-muted-foreground">
+                Clients must type their name and check a confirmation on the public Policy
+                Center before the policy is considered acknowledged.
+              </p>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Version History side-sheet */}

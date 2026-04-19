@@ -25,6 +25,7 @@ export interface PublicPolicyEntry {
   bodyMd: string;
   approvedAt: string | null;
   versionNumber: number | null;
+  requiresAcknowledgment: boolean;
 }
 
 export interface PublicPolicyGroup {
@@ -47,7 +48,7 @@ export function usePublicOrgPolicies(orgId: string | undefined) {
       const { data: policies, error: pErr } = await (supabase as any)
         .from('policies')
         .select(
-          'id, library_key, category, audience, status, internal_title, external_title, current_version_id'
+          'id, library_key, category, audience, status, internal_title, external_title, current_version_id, requires_acknowledgment'
         )
         .eq('organization_id', orgId)
         .in('audience', ['external', 'both'])
@@ -103,6 +104,7 @@ export function usePublicOrgPolicies(orgId: string | undefined) {
           bodyMd: variant.body_md,
           approvedAt: variant.approved_at,
           versionNumber: v.version_number ?? null,
+          requiresAcknowledgment: !!p.requires_acknowledgment,
         });
       }
 

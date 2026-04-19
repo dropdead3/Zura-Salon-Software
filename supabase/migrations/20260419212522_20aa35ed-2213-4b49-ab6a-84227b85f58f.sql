@@ -1,0 +1,1 @@
+ALTER TABLE public.policies ADD COLUMN IF NOT EXISTS requires_acknowledgment BOOLEAN NOT NULL DEFAULT false;

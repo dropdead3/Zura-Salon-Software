@@ -17267,6 +17267,7 @@ export type Database = {
           library_key: string
           organization_id: string
           primary_owner_role: string | null
+          requires_acknowledgment: boolean
           status: Database["public"]["Enums"]["policy_status"]
           updated_at: string
         }
@@ -17283,6 +17284,7 @@ export type Database = {
           library_key: string
           organization_id: string
           primary_owner_role?: string | null
+          requires_acknowledgment?: boolean
           status?: Database["public"]["Enums"]["policy_status"]
           updated_at?: string
         }
@@ -17299,6 +17301,7 @@ export type Database = {
           library_key?: string
           organization_id?: string
           primary_owner_role?: string | null
+          requires_acknowledgment?: boolean
           status?: Database["public"]["Enums"]["policy_status"]
           updated_at?: string
         }
@@ -17329,35 +17332,68 @@ export type Database = {
       policy_acknowledgments: {
         Row: {
           acknowledged_at: string
+          acknowledgment_method:
+            | Database["public"]["Enums"]["policy_ack_method"]
+            | null
+          appointment_id: string | null
+          client_email: string | null
           client_id: string | null
+          client_name: string | null
           created_at: string
           evidence: Json
           id: string
+          ip_address: string | null
           organization_id: string
+          policy_id: string | null
+          policy_variant_id: string | null
           policy_version_id: string
+          signature_text: string | null
           surface: Database["public"]["Enums"]["policy_surface"]
+          user_agent: string | null
           user_id: string | null
         }
         Insert: {
           acknowledged_at?: string
+          acknowledgment_method?:
+            | Database["public"]["Enums"]["policy_ack_method"]
+            | null
+          appointment_id?: string | null
+          client_email?: string | null
           client_id?: string | null
+          client_name?: string | null
           created_at?: string
           evidence?: Json
           id?: string
+          ip_address?: string | null
           organization_id: string
+          policy_id?: string | null
+          policy_variant_id?: string | null
           policy_version_id: string
+          signature_text?: string | null
           surface: Database["public"]["Enums"]["policy_surface"]
+          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           acknowledged_at?: string
+          acknowledgment_method?:
+            | Database["public"]["Enums"]["policy_ack_method"]
+            | null
+          appointment_id?: string | null
+          client_email?: string | null
           client_id?: string | null
+          client_name?: string | null
           created_at?: string
           evidence?: Json
           id?: string
+          ip_address?: string | null
           organization_id?: string
+          policy_id?: string | null
+          policy_variant_id?: string | null
           policy_version_id?: string
+          signature_text?: string | null
           surface?: Database["public"]["Enums"]["policy_surface"]
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -30709,6 +30745,7 @@ export type Database = {
         | "homebase"
         | "rippling"
         | "wave"
+      policy_ack_method: "typed_signature" | "checkbox" | "click"
       policy_audience: "internal" | "external" | "both"
       policy_category:
         | "team"
@@ -31148,6 +31185,7 @@ export const Constants = {
         "rippling",
         "wave",
       ],
+      policy_ack_method: ["typed_signature", "checkbox", "click"],
       policy_audience: ["internal", "external", "both"],
       policy_category: [
         "team",
