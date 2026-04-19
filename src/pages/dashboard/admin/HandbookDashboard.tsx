@@ -116,53 +116,6 @@ export function HandbookDashboardContent({ embedded = false }: HandbookDashboard
         )
       )}
 
-      {isLoading ? (
-        <DashboardLoader />
-      ) : handbooks.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-16 flex flex-col items-center text-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <BookOpen className="w-7 h-7 text-primary" />
-            </div>
-            <div className="max-w-md space-y-1">
-              <h3 className={cn(tokens.heading.card)}>Create your first handbook</h3>
-              <p className="font-sans text-sm text-muted-foreground">
-                We'll guide you through structure, scope, and policy decisions before any drafting begins — so the final handbook reflects how you actually operate.
-              </p>
-            </div>
-            <Button onClick={() => setDialogOpen(true)} className="font-sans">
-              <Plus className="w-4 h-4 mr-2" /> Start handbook
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {handbooks.map((h: any) => (
-            <Card
-              key={h.id}
-              className="cursor-pointer hover:border-primary/40 transition-colors bg-card/80"
-              onClick={() => navigate(dashPath(`/admin/handbook-wizard/${h.id}/edit`))}
-            >
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className={cn(tokens.heading.card, 'truncate')}>{h.name}</h3>
-                    {h.description && (
-                      <p className="font-sans text-sm text-muted-foreground mt-1 line-clamp-2">{h.description}</p>
-                    )}
-                  </div>
-                  <HandbookStatusBadge status={h.status} />
-                </div>
-                <div className="flex items-center justify-between text-xs font-sans text-muted-foreground pt-2 border-t border-border/60">
-                  <span>Updated {formatDistanceToNow(new Date(h.updated_at), { addSuffix: true })}</span>
-                  <span>{h.location_scope === 'shared' ? 'Shared' : 'Per-location'}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
