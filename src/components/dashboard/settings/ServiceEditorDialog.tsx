@@ -902,7 +902,12 @@ export function ServiceEditorDialog({
         </Tabs>
 
         {(activeTab === 'details' || activeTab === 'online' || activeTab === 'advanced') && (
-          <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-border">
+          <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-border flex-col sm:flex-row sm:items-center">
+            {hasErrors && (
+              <p className="text-xs text-destructive sm:mr-auto">
+                {Object.values(errors)[0]}
+              </p>
+            )}
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
             <Button
               type="submit"
@@ -913,7 +918,7 @@ export function ServiceEditorDialog({
                     ? 'service-advanced-form'
                     : 'service-details-form'
               }
-              disabled={!name.trim() || isPending || (!isCreateMode && !isDirty)}
+              disabled={!name.trim() || isPending || hasErrors || (!isCreateMode && !isDirty)}
             >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isCreateMode ? 'Create Service' : 'Save Changes'}
