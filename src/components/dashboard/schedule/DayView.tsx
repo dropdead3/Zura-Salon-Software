@@ -699,32 +699,50 @@ export function DayView({
 
                 const acceptingLabel = acceptingClients ? 'Accepting clients' : 'Not accepting clients';
 
+                const specialties = stylist.specialties && stylist.specialties.length > 0
+                  ? stylist.specialties.join(' · ')
+                  : null;
+
+                const avatarEl = (
+                  <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 rounded-[5px]')}>
+                    <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
+                    <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
+                      {fullName.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                );
+
                 const avatar = (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="relative shrink-0">
-                        <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 rounded-[5px]')}>
-                          <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
-                          <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
-                            {fullName.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                  <div className="relative shrink-0">
+                    {specialties ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>{avatarEl}</TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                          <div className="font-medium">{fullName}</div>
+                          <div className="text-muted-foreground mt-0.5">{specialties}</div>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      avatarEl
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <span
                           className={cn(
-                            'absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[hsl(var(--sidebar-background))]',
+                            'absolute -top-1 -right-1 w-3 h-3 rounded-full cursor-help',
+                            'shadow-[0_0_0_2px_hsl(var(--sidebar-background)/0.95),0_1px_3px_rgba(0,0,0,0.4)]',
+                            'ring-1 ring-white/20',
                             acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
                           )}
                           aria-label={acceptingLabel}
+                          role="status"
                         />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-                      <div className="font-medium">{acceptingLabel}</div>
-                      {stylist.specialties && stylist.specialties.length > 0 && (
-                        <div className="text-muted-foreground mt-1">{stylist.specialties.join(' · ')}</div>
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {acceptingLabel}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 );
 
                 // Condensed (< 120px) — vertical stack
