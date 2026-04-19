@@ -178,33 +178,37 @@ export function useCreateService() {
 
   return useMutation({
     mutationFn: async (service: Partial<Service>) => {
+      // Strip id (insert generates one) and spread the full payload so all
+      // Wave 1/2/4/5 fields (online overrides, prompts, patch-test, hotkey,
+      // loyalty, etc.) persist on creation. Apply sensible defaults only for
+      // operational booleans that the editor may omit.
+      const { id: _ignored, created_at, updated_at, imported_at, ...payload } = service;
+      const insertRow = {
+        ...payload,
+        name: service.name!,
+        is_active: service.is_active ?? true,
+        requires_qualification: service.requires_qualification ?? false,
+        allow_same_day_booking: service.allow_same_day_booking ?? true,
+        lead_time_days: service.lead_time_days ?? 0,
+        finishing_time_minutes: service.finishing_time_minutes ?? 0,
+        content_creation_time_minutes: service.content_creation_time_minutes ?? 0,
+        processing_time_minutes: service.processing_time_minutes ?? 0,
+        requires_new_client_consultation: service.requires_new_client_consultation ?? false,
+        is_chemical_service: service.is_chemical_service ?? false,
+        is_backroom_tracked: service.is_chemical_service ? true : (service.is_backroom_tracked ?? false),
+        container_types: service.is_chemical_service
+          ? (service.container_types?.length ? service.container_types : ['bowl'])
+          : [],
+        organization_id: service.organization_id || effectiveOrganization?.id || null,
+        import_source: service.import_source ?? 'manual',
+      };
+
       const { data, error } = await supabase
         .from('services')
-        .insert({
-          name: service.name!,
-          description: service.description,
-          category: service.category,
-          duration_minutes: service.duration_minutes,
-          price: service.price,
-          cost: service.cost,
-          is_active: service.is_active ?? true,
-          requires_qualification: service.requires_qualification ?? false,
-          allow_same_day_booking: service.allow_same_day_booking ?? true,
-          lead_time_days: service.lead_time_days ?? 0,
-          finishing_time_minutes: service.finishing_time_minutes ?? 0,
-          content_creation_time_minutes: service.content_creation_time_minutes ?? 0,
-          processing_time_minutes: service.processing_time_minutes ?? 0,
-          requires_new_client_consultation: service.requires_new_client_consultation ?? false,
-          is_chemical_service: service.is_chemical_service ?? false,
-          is_backroom_tracked: service.is_chemical_service ? true : (service.is_backroom_tracked ?? false),
-          container_types: service.is_chemical_service ? (service.container_types?.length ? service.container_types : ['bowl']) : [],
-          location_id: service.location_id,
-          organization_id: service.organization_id || effectiveOrganization?.id || null,
-          import_source: 'manual',
-        })
+        .insert(insertRow as any)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -239,7 +243,9 @@ export function useUpdateService() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['services-data'] });
       queryClient.invalidateQueries({ queryKey: ['service', data.id] });
-      queryClient.invalidateQueries({ queryKey: ['service-audit-log'] });
+      // Scope audit-log invalidation to the mutated service so other open
+      // editors don't refetch unnecessarily.
+      queryClient.invalidateQueries({ queryKey: ['service-audit-log', data.id] });
       toast.success('Service updated');
     },
     onError: (error: Error) => {
@@ -375,10 +381,10 @@ export function useArchiveService() {
         .eq('id', serviceId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, serviceId) => {
       queryClient.invalidateQueries({ queryKey: ['services-data'] });
       queryClient.invalidateQueries({ queryKey: ['services-archived'] });
-      queryClient.invalidateQueries({ queryKey: ['service-audit-log'] });
+      queryClient.invalidateQueries({ queryKey: ['service-audit-log', serviceId] });
       toast.success('Service archived');
     },
     onError: (error: Error) => {
@@ -401,10 +407,10 @@ export function useRestoreService() {
         .eq('id', serviceId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, serviceId) => {
       queryClient.invalidateQueries({ queryKey: ['services-data'] });
       queryClient.invalidateQueries({ queryKey: ['services-archived'] });
-      queryClient.invalidateQueries({ queryKey: ['service-audit-log'] });
+      queryClient.invalidateQueries({ queryKey: ['service-audit-log', serviceId] });
       toast.success('Service restored');
     },
     onError: (error: Error) => {

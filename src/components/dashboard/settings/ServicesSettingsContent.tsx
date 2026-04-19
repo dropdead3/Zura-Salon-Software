@@ -323,8 +323,9 @@ export function ServicesSettingsContent() {
         onError: () => {},
       });
     } else if (editorService?.id) {
-      const { id, ...updates } = { id: editorService.id, ...service };
-      updateService.mutate({ id, ...updates } as any, {
+      // Strip any id from the editor payload — useUpdateService takes id separately.
+      const { id: _omit, ...updates } = service;
+      updateService.mutate({ id: editorService.id, ...updates }, {
         onSuccess: () => { setEditorDialogOpen(false); setEditorService(null); },
         onError: () => {},
       });
