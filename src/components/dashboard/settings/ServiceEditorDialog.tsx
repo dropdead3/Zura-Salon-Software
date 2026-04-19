@@ -610,17 +610,21 @@ export function ServiceEditorDialog({
           </div>
         </Tabs>
 
-        {activeTab === 'details' && (
+        {(activeTab === 'details' || activeTab === 'online') && (
           <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" form="service-details-form" disabled={!name.trim() || isPending}>
+            <Button
+              type="submit"
+              form={activeTab === 'online' ? 'service-online-form' : 'service-details-form'}
+              disabled={!name.trim() || isPending}
+            >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isCreateMode ? 'Create Service' : 'Save Changes'}
             </Button>
           </DialogFooter>
         )}
 
-        {activeTab !== 'details' && (
+        {activeTab !== 'details' && activeTab !== 'online' && (
           <DialogFooter className="pt-4 border-t border-border">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Done</Button>
           </DialogFooter>
