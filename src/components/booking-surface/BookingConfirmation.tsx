@@ -200,6 +200,17 @@ export function BookingConfirmation({
         </div>
       )}
 
+      {/* Wave 9: Inline form-gating card (hybrid: sign now or defer to check-in) */}
+      {requiredForms && requiredForms.length > 0 && !showPaymentForm && (
+        <InlineFormSigningCard
+          theme={theme}
+          forms={requiredForms}
+          signedFormTemplateIds={signedFormTemplateIds ?? []}
+          onSignForms={onSignForms}
+          onDeferForms={onDeferForms}
+        />
+      )}
+
       {/* Payment Form (shown after appointment creation) */}
       {showPaymentForm && paymentClientSecret && paymentIntentType && stripePublishableKey && stripeConnectedAccountId && onPaymentComplete ? (
         <div className="mb-4">
