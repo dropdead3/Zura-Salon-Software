@@ -39,12 +39,12 @@ function SortableCard({ category, onClick }: { category: CategoryInfo; onClick: 
   return (
     <DragFeedback ref={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} className="group relative">
       <Card className={cn("transition-all relative h-[140px] border-dashed", isDragging && "opacity-50")}>
-        <div {...attributes} {...listeners} className="absolute top-3 right-3 p-1.5 rounded-md bg-muted hover:bg-muted/80 cursor-grab active:cursor-grabbing">
+        <div {...attributes} {...listeners} className="absolute top-3 right-3 p-1.5 rounded-md bg-muted hover:bg-muted/80 cursor-grab active:cursor-grabbing z-10">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
-        <div className="flex flex-col items-center justify-center h-full gap-3 p-4 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 px-4 text-center">
           <div className={tokens.card.iconBox}><Icon className={tokens.card.icon} /></div>
-          <span className={tokens.card.title}>{category.label}</span>
+          <span className={cn(tokens.card.title, 'leading-tight')}>{category.label}</span>
         </div>
       </Card>
     </DragFeedback>
