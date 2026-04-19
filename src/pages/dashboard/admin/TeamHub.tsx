@@ -653,6 +653,15 @@ export default function TeamHub() {
               {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
             />
           )}
+          {!isFavorited(dashPath('/admin/handbook-wizard')) && (
+            <ManagementCard
+              href={dashPath('/admin/handbook-wizard')}
+              icon={BookOpen}
+              title="Handbook Wizard"
+              description="AI-assisted configurator for role-aware employee handbooks"
+              {...favProps('/admin/handbook-wizard', 'Handbook Wizard', BookOpen)}
+            />
+          )}
           {!isFavorited(dashPath('/admin/documents')) && (
             <ManagementCard
               href={dashPath('/admin/documents')}
