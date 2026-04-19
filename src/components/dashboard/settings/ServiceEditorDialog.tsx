@@ -20,6 +20,7 @@ import { StylistOverridesContent } from './StylistOverridesContent';
 import { LocationPricingContent } from './LocationPricingContent';
 import { SeasonalAdjustmentsContent } from './SeasonalAdjustmentsContent';
 import { BookingSurfacePreview } from './BookingSurfacePreview';
+import { ServiceFormsLinkagePanel } from './ServiceFormsLinkagePanel';
 
 interface ServiceEditorDialogProps {
   open: boolean;
@@ -244,6 +245,9 @@ export function ServiceEditorDialog({
             </SubTabsTrigger>
             <SubTabsTrigger value="seasonal" disabled={isCreateMode}>
               Seasonal
+            </SubTabsTrigger>
+            <SubTabsTrigger value="forms" disabled={isCreateMode}>
+              Forms
             </SubTabsTrigger>
           </SubTabsList>
 
