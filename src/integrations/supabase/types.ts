@@ -17267,6 +17267,7 @@ export type Database = {
           library_key: string
           organization_id: string
           primary_owner_role: string | null
+          requires_acknowledgment: boolean
           status: Database["public"]["Enums"]["policy_status"]
           updated_at: string
         }
@@ -17283,6 +17284,7 @@ export type Database = {
           library_key: string
           organization_id: string
           primary_owner_role?: string | null
+          requires_acknowledgment?: boolean
           status?: Database["public"]["Enums"]["policy_status"]
           updated_at?: string
         }
@@ -17299,6 +17301,7 @@ export type Database = {
           library_key?: string
           organization_id?: string
           primary_owner_role?: string | null
+          requires_acknowledgment?: boolean
           status?: Database["public"]["Enums"]["policy_status"]
           updated_at?: string
         }
