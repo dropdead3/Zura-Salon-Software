@@ -1,28 +1,30 @@
 
-## Wave 28.7 — Handbook Wizard refactor (policy-coupled)
+## Wave 28.8 — Client Policy Center surface
 
-Refactor handbook sections to render from approved policy variants instead of free-text, closing the loop between Policy OS and Handbook OS.
+Expose approved client-facing policy variants on a public org-scoped page at `/org/:orgSlug/policies`, closing the loop from Policy OS → public surface.
 
 ### Build sequence
 
 | Step | Scope | Files |
 |---|---|---|
-| **1. Schema** | Add `policy_ref_id` (uuid → policies) and `policy_variant_type` (text) to `handbook_sections`. Add `source` enum-like text column ('policy' \| 'custom') with default 'custom'. Backfill existing sections as 'custom'. | Migration |
-| **2. Policy section catalog** | Create `policy_handbook_section_map` view (or static map) linking policy categories → handbook section keys (e.g., `cancellation_fees` → `attendance_policy`). | Migration + `src/lib/handbook/policySectionMap.ts` |
-| **3. Hook layer** | New `useHandbookPolicySections.ts` — given an org, returns policies that have an approved `internal` variant + map to a handbook section. `useHandbookSection` updated to resolve policy-backed content from `policy_variants` when `source='policy'`. | New + edited hooks |
-| **4. Wizard UI** | `HandbookSectionEditor` gains a "Source" toggle: **Policy-backed** (read-only preview, edit redirects to Policy Configurator) vs **Custom prose**. New `PolicyBackedSectionCard` shows variant content + "Edit in Policy OS" button. | Edited components |
-| **5. Section library** | `SectionLibraryCard` shows a 📋 chip when a section has an available policy-backed source. Library filter: "Policy-backed available". | Edited |
-| **6. Publish gate** | Handbook publish gate: if a section is `source='policy'` and the underlying policy has no approved internal variant, surface as a blocker in publish preflight. | `useHandbookPublishPreflight.ts` (edited) |
+| **1. Hook** | `usePublicOrgPolicies(orgSlug)` — fetches adopted policies with approved `client` variant for the org. Public read (no auth required) via existing org-slug resolution pattern. | `src/hooks/policy/usePublicOrgPolicies.ts` |
+| **2. Page** | `ClientPolicyCenter.tsx` at `/org/:orgSlug/policies` — uses `PublicOrgProvider`, renders policy variants grouped by category (Booking, Service, Conduct, etc.). Empty state if no approved client variants. | `src/pages/public/ClientPolicyCenter.tsx` |
+| **3. Components** | `PolicyCenterCard.tsx` (one per policy: title, last updated, expandable markdown body) + `PolicyCategoryGroup.tsx` (groups cards by category with Termina header). | New components in `src/components/public/policy-center/` |
+| **4. Route** | Add `/org/:orgSlug/policies` route in `App.tsx` under public org routes (alongside services/booking). | `App.tsx` |
+| **5. SEO** | `<title>`: "{Org Name} — Policies", meta description, JSON-LD `Organization` schema, single H1, canonical tag. | Within `ClientPolicyCenter.tsx` |
+| **6. Linking** | Update `PolicySurfaceMappingsEditor` (if exists) hint text to mention the new public URL. Add a "View public policy page" link in `PolicyConfiguratorPanel` when client variant is approved. | Edited |
 
 ### Doctrine checks
-- ✅ Single source of truth: policy rules → variants → handbook (no drift)
-- ✅ Visibility contract: policy-backed sections silent until policy approved
-- ✅ Tenant isolation: all reads org-scoped via existing RLS
-- ✅ Phase 2: handbook recommends policy adoption, never auto-publishes
-- ✅ UI tokens, font-medium max, no hype copy
+- ✅ Tenant isolation: org-scoped via slug → organization_id resolution
+- ✅ Visibility contract: page silent (empty state) until at least one client variant approved
+- ✅ Single source of truth: renders `policy_variants.body_md` directly — no copy
+- ✅ Public surface: no auth required, RLS policy allows anonymous read of approved client variants
+- ✅ UI tokens, Termina headers, font-medium max, no hype copy
+- ✅ SEO: semantic HTML, canonical, JSON-LD
 
 ### Out of scope
-- Bulk migrate existing custom sections to policy-backed (manual choice per section)
-- Client-facing variant in handbook (handbook is internal — uses `internal` variant only)
+- Multi-language variants (Phase 4)
+- Policy version history on public page (only latest approved)
+- Acceptance/signature capture (separate wave — Client Acknowledgments)
 
-After 28.7: **Wave 28.8 — Client Policy Center surface** at `/book/:orgSlug/policies`.
+After 28.8: **Wave 28.9 — Conflict Center & Version History UI**.
