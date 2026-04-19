@@ -191,6 +191,7 @@ export function ServiceEditorDialog({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
           <SubTabsList>
             <SubTabsTrigger value="details">Details</SubTabsTrigger>
+            <SubTabsTrigger value="online">Online &amp; App</SubTabsTrigger>
             <SubTabsTrigger value="levels" disabled={isCreateMode}>
               Level Pricing
             </SubTabsTrigger>
