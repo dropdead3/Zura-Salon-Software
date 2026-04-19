@@ -108,7 +108,7 @@ export function VersionDiffView({ previousBody, currentBody }: Props) {
     <div className="space-y-2">
       <div className="flex items-center gap-3 font-sans text-[10px] uppercase tracking-wider">
         <span className="text-muted-foreground">Changes</span>
-        <span className="text-emerald-600 dark:text-emerald-400">+{stats.added}</span>
+        <span className="text-foreground">+{stats.added}</span>
         <span className="text-destructive">−{stats.removed}</span>
       </div>
       <div className="rounded-md border border-border/60 bg-muted/10 overflow-hidden">
@@ -118,7 +118,7 @@ export function VersionDiffView({ previousBody, currentBody }: Props) {
               key={idx}
               className={cn(
                 'flex gap-2 px-3 py-0.5 whitespace-pre-wrap break-words',
-                line.kind === 'added' && 'bg-emerald-500/10 text-foreground',
+                line.kind === 'added' && 'bg-foreground/10 text-foreground',
                 line.kind === 'removed' && 'bg-destructive/10 text-muted-foreground line-through',
                 line.kind === 'unchanged' && 'text-muted-foreground/80',
               )}
@@ -126,7 +126,7 @@ export function VersionDiffView({ previousBody, currentBody }: Props) {
               <span
                 className={cn(
                   'select-none w-3 flex-shrink-0',
-                  line.kind === 'added' && 'text-emerald-600 dark:text-emerald-400',
+                  line.kind === 'added' && 'text-foreground',
                   line.kind === 'removed' && 'text-destructive',
                 )}
               >
