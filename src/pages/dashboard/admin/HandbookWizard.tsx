@@ -15,10 +15,28 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 export default function HandbookWizardPage() {
   const { handbookId } = useParams<{ handbookId: string }>();
   const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const { isLeadership } = useLeadershipCheck();
   const { data, isLoading } = useHandbookWithVersion(handbookId);
   const [activeStep, setActiveStep] = useState<string>('org_setup');
   const [saving, setSaving] = useState(false);
+
+  const setupComplete = !!(
+    data?.setup?.roles_enabled?.length &&
+    data.setup.roles_enabled.length > 0 &&
+    Object.values(data?.setup?.classifications || {}).some(Boolean)
+  );
+  const scopeComplete = (data?.sections?.length ?? 0) > 0;
+
+  const steps: WizardStep[] = useMemo(() => [
+    { key: 'org_setup', label: 'Organization Setup', status: activeStep === 'org_setup' ? 'active' : setupComplete ? 'done' : 'todo' },
+    { key: 'scope', label: 'Scope Builder', status: activeStep === 'scope' ? 'active' : scopeComplete ? 'done' : 'todo', disabled: !setupComplete },
+    { key: 'policy', label: 'Policy Configuration', status: activeStep === 'policy' ? 'active' : 'todo', disabled: !scopeComplete },
+    { key: 'matrix', label: 'Applicability Matrix', status: activeStep === 'matrix' ? 'active' : 'todo', disabled: !scopeComplete },
+    { key: 'drafting', label: 'AI Drafting', status: activeStep === 'drafting' ? 'active' : 'todo', disabled: !scopeComplete },
+    { key: 'review', label: 'Review & Health', status: activeStep === 'review' ? 'active' : 'todo', disabled: !scopeComplete },
+    { key: 'publish', label: 'Publish', status: activeStep === 'publish' ? 'active' : 'todo', disabled: !scopeComplete },
+  ], [activeStep, setupComplete, scopeComplete]);
 
   if (!isLeadership) {
     return (
@@ -35,23 +53,6 @@ export default function HandbookWizardPage() {
   }
 
   const { handbook, version, setup, sections } = data;
-
-  const setupComplete = !!(
-    setup?.roles_enabled?.length > 0 &&
-    Object.values(setup?.classifications || {}).some(Boolean)
-  );
-  const scopeComplete = sections.length > 0;
-
-  const steps: WizardStep[] = useMemo(() => [
-    { key: 'org_setup', label: 'Organization Setup', status: activeStep === 'org_setup' ? 'active' : setupComplete ? 'done' : 'todo' },
-    { key: 'scope', label: 'Scope Builder', status: activeStep === 'scope' ? 'active' : scopeComplete ? 'done' : 'todo', disabled: !setupComplete },
-    { key: 'policy', label: 'Policy Configuration', status: activeStep === 'policy' ? 'active' : 'todo', disabled: !scopeComplete },
-    { key: 'matrix', label: 'Applicability Matrix', status: activeStep === 'matrix' ? 'active' : 'todo', disabled: !scopeComplete },
-    { key: 'drafting', label: 'AI Drafting', status: activeStep === 'drafting' ? 'active' : 'todo', disabled: !scopeComplete },
-    { key: 'review', label: 'Review & Health', status: activeStep === 'review' ? 'active' : 'todo', disabled: !scopeComplete },
-    { key: 'publish', label: 'Publish', status: activeStep === 'publish' ? 'active' : 'todo', disabled: !scopeComplete },
-  ], [activeStep, setupComplete, scopeComplete]);
-
   const handleExit = () => navigate(dashPath('/admin/handbook'));
 
   const renderStep = () => {
