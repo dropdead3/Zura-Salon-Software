@@ -49,6 +49,7 @@ export function ServiceEditorDialog({
   open, onOpenChange, onSubmit, isPending, categories, initialData, mode, presetCategory,
 }: ServiceEditorDialogProps) {
   const [activeTab, setActiveTab] = useState('details');
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [duration, setDuration] = useState('60');
