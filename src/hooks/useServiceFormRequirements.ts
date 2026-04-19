@@ -98,6 +98,8 @@ export function useLinkFormToService() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
       queryClient.invalidateQueries({ queryKey: ['services-with-form-count'] });
+      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
       toast.success('Form linked to service');
     },
     onError: (error) => {
@@ -139,6 +141,8 @@ export function useLinkFormToMultipleServices() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
       queryClient.invalidateQueries({ queryKey: ['services-with-form-count'] });
+      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
       toast.success('Form linked to services');
     },
     onError: (error) => {
@@ -162,6 +166,8 @@ export function useUnlinkFormFromService() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
       queryClient.invalidateQueries({ queryKey: ['services-with-form-count'] });
+      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
       toast.success('Form unlinked from service');
     },
     onError: (error) => {
@@ -193,6 +199,8 @@ export function useUpdateFormRequirement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-form-requirements'] });
+      queryClient.invalidateQueries({ queryKey: ['service-form-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['required-forms-for-services'] });
       toast.success('Requirement updated');
     },
     onError: (error) => {
