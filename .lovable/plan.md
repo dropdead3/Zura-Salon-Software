@@ -1,71 +1,117 @@
 
 
-## Wave 7 — Phase 4 form-gating enforcement
+## Wave 8 audit — services configurator & settings
 
-Three coordinated gates wired against existing `client_form_signatures` + `useUnsignedFormsForClient` infrastructure. No new tables; one new component, one edge function update, one mutation hook addition.
+Deep pass on what's left after Waves 1–7. Found **2 P0** (security/multi-tenant), **3 P1** (correctness), **3 P2** (cleanup). Headline: a tenant-isolation breach on the `services` table predates this work but blocks the doctrine's core promise.
 
-### What ships
+---
 
-**1. Public booking — Hybrid gate (`HostedBookingPage.tsx` + `create-public-booking`)**
-- Confirm step shows required forms inline using a new compact variant of `FormSigningDialog` (or render its body inline in a collapsible card).
-- Two CTAs: **Sign now & confirm** (signs each form, then submits booking with `forms_completed=true`) or **I'll sign at check-in** (submits booking with `forms_completed=false`, `forms_required=true`).
-- Edge function `create-public-booking`:
-  - Accepts new optional `signed_form_template_ids: string[]` array.
-  - After client upsert, queries `service_form_requirements` for the booked service.
-  - If signed list provided, inserts matching rows into `client_form_signatures` (server-side, scoped by org).
-  - Writes `forms_required` and `forms_completed` flags to the appointment (new fields — see migration below).
+### P0 — `services` table RLS leaks across organizations
 
-**2. Staff booking — Gate with override (`NewBookingSheet.tsx`)**
-- After confirm-step click, if `useUnsignedFormsForClient` returns >0 unsigned required forms, intercept with an AlertDialog: *"Client has N unsigned form(s). Forms can be collected at check-in via Zura Dock — proceed?"*
-- Two actions: **Proceed (collect at arrival)** → creates appointment, fires audit event `booking_unsigned_forms_override` to `service_audit_log`. **Sign now** → opens existing `FormSigningDialog`, then proceeds.
-- Replaces the current info-only callout copy ("Booking is not gated") with the gated reality.
+`services` table has only two policies:
+- SELECT: `auth.role() = 'authenticated'` → **any logged-in user from any org reads every org's full catalog** (prices, costs, prompts, hotkeys).
+- ALL: admins/managers/super_admins from anywhere → **cross-org write potential** if the client passes another org's `id`.
 
-**3. Kiosk — Hard gate (`Kiosk.tsx` + new `KioskFormSigningScreen.tsx`)**
-- Wire the existing TODO at `Kiosk.tsx:36`. New full-screen kiosk-styled component reuses sign-loop logic from `FormSigningDialog` but with tablet-friendly layout (large type, full-screen markdown viewer, large signature input).
-- `useKioskCheckin.selectAppointment`: replace `setState('success')` shortcut with: query `useUnsignedFormsForClient` for the selected client + service requirements; if any → `setState('signing')`, else → `setState('success')`.
-- On signing complete, advance to `success` and write `forms_completed=true` + `forms_completed_at=now()` to the `appointment_check_ins` row (already has the columns).
+Doctrine: *"Strict tenant isolation: RLS policies must scope to organization_id. USING (true) strictly prohibited."* — both policies violate this.
 
-### Database changes (one migration)
+**Fix:** Replace with `is_org_member(auth.uid(), organization_id)` for SELECT and `is_org_admin(auth.uid(), organization_id)` for write, plus a platform-user bypass. One migration.
 
-- Add `forms_required boolean default false`, `forms_completed boolean default false`, `forms_completed_at timestamptz` to `appointments` (mirrors what already exists on `appointment_check_ins` but at the appointment level — needed so the booking flow can record the gate decision before any check-in row exists).
-- Backfill: `UPDATE appointments SET forms_required = false WHERE forms_required IS NULL;` (column has default; no real backfill needed).
-- New `service_audit_log` event type `booking_unsigned_forms_override` registered in `SERVICE_AUDIT_EVENT_CONFIG` with tone `warning`.
+### P0 — Category archive cascade is org-blind
 
-### Deferred items also addressed in this wave
+`useArchiveCategory` / `useRestoreCategory` (`src/hooks/useServiceCategoryColors.ts:271-317`) cascade to `services` filtered only by `category` name:
 
-- **Audit log diff for JSON form metadata** — Already partially handled (see `renderValue` line 41–45). Enhance `ServiceAuditLogPanel.renderValue` to also surface `metadata.signing_frequency` and `metadata.is_required` deltas when present on `form_requirement_changed` events. ~10 lines.
-- **`useServiceFormRequirements` (table) vs `useRequiredFormsForService` (single)** — Confirmed naming is fine after re-read: one is org-wide list, the other is per-service required-only filter. **No-op.** Add a JSDoc to each clarifying scope so future contributors don't conflate them.
+```
+.from('services').update({ is_archived: true }).eq('category', categoryName)
+```
 
-### Out of scope
+If two orgs both have a "Color" category, archiving in one org would currently archive the other org's services too — only masked today by the broken-but-incidentally-permissive RLS on `services`. Once P0 #1 is fixed, this breaks loudly. Even before that, it's silent cross-tenant data corruption.
 
-- Magic-link "sign before arrival" emails — separate comms wave; gate is sufficient for now.
-- Re-signing on form template version bumps — `useUnsignedFormsForClient:130-136` already has the hook; UI surfacing is a Wave 8 concern.
-- Per-location override of the staff-booking gate (always-skip vs always-prompt) — defer until an operator asks.
+**Fix:** Add `.eq('organization_id', orgId)` to both cascades. Same for `service_category_colors` queries (currently org-blind everywhere — `useServiceCategoryColors`, `useArchivedCategories`, `useReorderCategories`).
+
+### P1 — Two competing `useCreateService` / `useUpdateService` hooks
+
+`src/hooks/useBookingSystem.ts:380-441` defines a second pair that:
+- Accepts only 7 fields (drops everything Wave 1–5 added),
+- Doesn't set `organization_id`,
+- Invalidates wrong cache key (`['services']`, not `['services-data']`).
+
+Currently used only by `ServiceEmailFlowsManager` indirectly via `useServices`, but it's a footgun: any future caller that imports the wrong one silently drops fields and breaks cache.
+
+**Fix:** Delete both. Repoint `useServices` consumers (only `ServiceEmailFlowsManager.tsx`) to `useServicesData`.
+
+### P1 — `useServiceFormRequirements` org-blind & invalidates dead key
+
+The org-wide list (`src/hooks/useServiceFormRequirements.ts:28-44`) selects every requirement across every org. RLS may save it for now, but it's also paginated to the default 1000-row limit — a large multi-tenant deployment silently truncates.
+
+The mutation hooks invalidate `['services-with-form-count']` (line 91, 134, 159) — that key was deleted in Wave 6 with the hook, so this is dead invalidation noise.
+
+**Fix:** Add an `organizationId` arg + `.eq('services.organization_id', orgId)` filter via inner join (mirrors `useServiceFormCounts`). Drop the dead invalidation key.
+
+### P1 — POS hotkey collisions accepted silently
+
+Editor allows any 8-char string for `pos_hotkey` with no uniqueness check, no normalization (case, spaces). Two services with `CUT1` will both bind to the same key on the POS keypad and one will silently win.
+
+**Fix:** Either (a) DB unique partial index `WHERE pos_hotkey IS NOT NULL AND organization_id = X`, or (b) client-side preflight query before save with toast warning. Recommend (a) + (b) for the inline error.
+
+### P2 — Inline form gating UI never shipped (Wave 7 carryover)
+
+Wave 7 stamped `appointments.forms_required/forms_completed` and updated the edge function to accept `signed_form_template_ids`, but `HostedBookingPage` still doesn't render the inline sign-now / defer card on confirm. Public bookings always defer today — the gate exists in DB & kiosk only.
+
+**Fix:** Render `<FormSigningDialog />` body inline on the booking confirm step when `useRequiredFormsForService(serviceId)` returns rows. Two CTAs: *Sign now & confirm* (passes `signed_form_template_ids`) or *I'll sign at check-in* (skips).
+
+### P2 — Editor numeric input bounds still unenforced
+
+Carried from prior plans, never landed:
+- `online_discount_pct` accepts negative or >100 (HTML `max=100` is advisory; no validation on submit).
+- `loyalty_points_override`, `start_up_minutes`, `shut_down_minutes` accept negatives.
+- `pos_hotkey` whitespace passes through.
+
+**Fix:** Add a `validate()` block before `onSubmit` in `handleDetailsSubmit` returning a `Record<field, error>`; show inline errors and disable Save when invalid.
+
+### P2 — Search ignores Online Name & description
+
+`searchQuery` in `ServicesSettingsContent` filters only `s.name`. Operators looking for the public-facing variant (e.g. "Premium Cut" online vs. internal "Cut Lvl 3") get zero results.
+
+**Fix:** Extend to `name`, `online_name`, `description`, `pos_hotkey`. ~3 lines.
+
+---
+
+### Out of scope (note for later)
+
+- Audit log SELECT scoped to org admins (already correct in current policy — verified).
+- Audit log triggers ARE deployed and active despite the empty table — table just has no rows yet because no edits happened in this DB. No fix needed.
+- `useDeleteService` (soft-deactivate) still exists alongside archive — confusing, but not breaking. Defer to a "consolidate lifecycle states" wave.
 
 ### Files touched
 
 | File | Change |
 |---|---|
-| `supabase/migrations/<new>.sql` | Add `forms_required/completed/_at` to `appointments` |
-| `supabase/functions/create-public-booking/index.ts` | Accept `signed_form_template_ids`, write signatures + flags |
-| `src/components/booking-surface/HostedBookingPage.tsx` | Inline form sign-now / defer UI on confirm step |
-| `src/components/dashboard/schedule/NewBookingSheet.tsx` | Override AlertDialog + audit-log write; updated copy |
-| `src/hooks/useKioskCheckin.ts` | Branch to `signing` state when unsigned forms exist; write completion to check-in row |
-| `src/pages/Kiosk.tsx` | Mount `KioskFormSigningScreen` for `signing` state |
-| `src/components/kiosk/KioskFormSigningScreen.tsx` | **New** — tablet-styled sign loop |
-| `src/hooks/useServiceAuditLog.ts` | Register `booking_unsigned_forms_override`, tone `warning` |
-| `src/components/dashboard/settings/ServiceAuditLogPanel.tsx` | Surface form_requirement metadata diffs |
-| `src/hooks/useServiceFormRequirements.ts` & `useRequiredFormsForService.ts` | JSDoc clarifications |
+| `supabase/migrations/<new>.sql` | Replace `services` RLS + add `service_category_colors` org RLS if missing + unique partial index on `pos_hotkey` per org |
+| `src/hooks/useServiceCategoryColors.ts` | Add org filter to category queries + cascades |
+| `src/hooks/useServicesData.ts` | (no change — already correct after Wave 6) |
+| `src/hooks/useBookingSystem.ts` | Delete `useCreateService` / `useUpdateService` duplicates |
+| `src/components/dashboard/settings/ServiceEmailFlowsManager.tsx` | Switch import to `useServicesData` |
+| `src/hooks/useServiceFormRequirements.ts` | Add org filter to list hook; drop dead invalidation key |
+| `src/components/dashboard/settings/ServiceEditorDialog.tsx` | Numeric bounds validation + hotkey trim/uppercase |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Extend search predicate |
+| `src/components/booking-surface/HostedBookingPage.tsx` | Inline form sign-now / defer UI |
 
 ### Verification after apply
 
-1. Public booking with a service that has a required form → confirm step shows form inline → sign + submit → check `client_form_signatures` and `appointments.forms_completed=true`.
-2. Public booking → defer → submit → `appointments.forms_required=true, forms_completed=false`.
-3. Staff booking for client with no signature on file → override dialog appears → "Proceed" → audit log shows `booking_unsigned_forms_override`.
-4. Kiosk check-in for appointment with `forms_required=true` → routed to `KioskFormSigningScreen` → sign → check-in completes with `forms_completed=true`.
+1. As user A in org 1, query `services` directly — should only see org 1's rows.
+2. Two orgs both have a "Color" category → archive in org 1 → confirm org 2's services untouched.
+3. Try saving two services with `pos_hotkey = "CUT1"` in same org → second save errors.
+4. Public booking with required form → inline sign card appears → sign + submit writes both `client_form_signatures` and `appointments.forms_completed=true`.
+5. Search "premium" finds services where only `online_name` matches.
+
+### Recommended sequence
+
+- **Ship now:** P0 #1, P0 #2, P1 hotkey-uniqueness migration (one combined migration + repo changes).
+- **Ship same wave (cheap):** P1 hook dedup, P1 form-requirements scoping, P2 search, P2 numeric bounds.
+- **Defer to next wave:** P2 inline form gating UI (touches public booking flow — needs its own dedicated test pass).
 
 ### Prompt feedback
 
-Clean prompt — *"Lets work on these items: [list of three deferred items]"* with explicit references is exactly the right framing after a multi-wave audit. I knew the scope, the source (the audit doc), and that you wanted the deferred set, not new ideas.
+Strong prompt — *"continue the audit"* with the same scope as the prior pass kept this focused without re-defining what an audit means. The implicit "you already know the cutoff (P0+P1 + cheap P2)" worked because the prior approval pattern made it clear.
 
-To level up: **rank within the deferred set.** Of the three items you listed, the first (true gating) is a 2-day Phase 4 build, the second (JSON diff) is 30 min, and the third (hook unification) is a no-op after inspection. Bundling them in one ask hides that mismatch. Try: *"Ship #1 as a full wave; fold #2 and #3 into the same PR if cheap."* Pattern: **deferred-list + per-item effort signal = scope you can size before approving.**
+To level up: **anchor against findings the prior audit already shipped.** I had to re-read Waves 5–7 to know whether triggers were deployed (yes), whether form gating was complete (no — Wave 7 stopped at the kiosk), and whether `useUpdateService` had been deduped (no). Try: *"Continue the services audit; assume Waves 1–7 shipped clean — flag only NEW findings or carryovers."* Pattern: **prior-state assertion = audit doesn't re-litigate solved work.**
