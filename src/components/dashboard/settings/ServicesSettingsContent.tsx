@@ -922,6 +922,7 @@ export function ServicesSettingsContent() {
                                                 </span>
                                               )}
                                               <MarginBadge margin={margin} />
+                                              <ServiceVolumeCell entry={serviceVolumes?.[svc.id]} loading={volumesLoading} />
                                               {(formCounts?.[svc.id] ?? 0) > 0 && (
                                                 <Tooltip>
                                                   <TooltipTrigger asChild>
