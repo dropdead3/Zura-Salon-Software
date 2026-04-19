@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, User, Sparkles } from 'lucide-react';
+import { CheckCircle2, Clock, User, Sparkles, Info } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { parse } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useServicePromptByName } from '@/hooks/useServicePrompts';
 import { cn } from '@/lib/utils';
 
 export function KioskSuccessScreen() {
