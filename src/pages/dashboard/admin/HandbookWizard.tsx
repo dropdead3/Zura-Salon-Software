@@ -10,7 +10,7 @@ import { ScopeBuilderStep } from '@/components/dashboard/handbook/steps/ScopeBui
 import { ComingSoonStep } from '@/components/dashboard/handbook/steps/ComingSoonStep';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { dashPath } from '@/lib/dashPath';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function HandbookWizardPage() {
   const { handbookId } = useParams<{ handbookId: string }>();
