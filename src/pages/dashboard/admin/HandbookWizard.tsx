@@ -53,7 +53,7 @@ export default function HandbookWizardPage() {
   }
 
   const { handbook, version, setup, sections } = data;
-  const handleExit = () => navigate(dashPath('/admin/handbook-wizard'));
+  const handleExit = () => navigate(dashPath('/admin/handbooks?tab=wizard'));
 
   const renderStep = () => {
     switch (activeStep) {

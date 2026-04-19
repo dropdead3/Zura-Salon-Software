@@ -649,17 +649,8 @@ export default function TeamHub() {
               href={dashPath('/admin/handbooks')}
               icon={BookOpen}
               title="Handbooks"
-              description="Create and manage team handbooks and policy documents"
+              description="Build role-aware handbooks with the wizard, or upload existing policy documents"
               {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
-            />
-          )}
-          {!isFavorited(dashPath('/admin/handbook-wizard')) && (
-            <ManagementCard
-              href={dashPath('/admin/handbook-wizard')}
-              icon={BookOpen}
-              title="Handbook Wizard"
-              description="AI-assisted configurator for role-aware employee handbooks"
-              {...favProps('/admin/handbook-wizard', 'Handbook Wizard', BookOpen)}
             />
           )}
           {!isFavorited(dashPath('/admin/documents')) && (
