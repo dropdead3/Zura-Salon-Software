@@ -16,9 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown, X, SlidersHorizontal, FileText, AlertTriangle,
 } from 'lucide-react';
-import { CatalogHealthBar, type CatalogHealthFilter } from './CatalogHealthBar';
-import { ServiceVolumeCell } from './ServiceVolumeCell';
-import { useServiceBookingVolumes } from '@/hooks/useServiceBookingVolumes';
+import { CatalogSetupChecklist, type CatalogSetupFilter } from './CatalogSetupChecklist';
 import { cn } from '@/lib/utils';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { tokens } from '@/lib/design-tokens';
@@ -197,9 +195,6 @@ export function ServicesSettingsContent() {
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   // Wave 4: form-count map for the "forms attached" indicator on each row
   const { data: formCounts } = useServiceFormCounts(resolvedOrgId);
-  // Wave 15a: trailing-30d booking volumes per service for the volume column
-  // and zombie-service health chip.
-  const { data: serviceVolumes, isLoading: volumesLoading } = useServiceBookingVolumes(resolvedOrgId);
   const { formatCurrency } = useFormatCurrency();
   const showUndoToast = useUndoToast();
 
@@ -273,10 +268,10 @@ export function ServicesSettingsContent() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Wave 15a: Catalog Health filter — chip on the health bar narrows the
-  // catalog view to services matching that defect class. Mutually exclusive
-  // with no filter (null = show all).
-  const [healthFilter, setHealthFilter] = useState<CatalogHealthFilter>(null);
+  // Wave 16a: Catalog Setup filter — chip on the setup checklist narrows the
+  // catalog view to services matching that structural-defect class. Mutually
+  // exclusive with no filter (null = show all).
+  const [healthFilter, setHealthFilter] = useState<CatalogSetupFilter>(null);
 
   // Wave 14: Density toggle (persisted per-user)
   const [density, setDensityState] = useState<'comfortable' | 'compact'>(() => {
