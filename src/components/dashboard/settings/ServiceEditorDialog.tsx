@@ -257,8 +257,17 @@ export function ServiceEditorDialog({
   const isCreateMode = mode === 'create';
   const serviceId = initialData?.id || null;
 
+  // Intercept close attempts when there's unsaved work.
+  const handleOpenChange = (next: boolean) => {
+    if (!next && isDirty) {
+      const ok = window.confirm('Discard unsaved changes?');
+      if (!ok) return;
+    }
+    onOpenChange(next);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
