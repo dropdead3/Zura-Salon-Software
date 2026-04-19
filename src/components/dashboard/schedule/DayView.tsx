@@ -697,41 +697,32 @@ export function DayView({
 
                 const displayName = isMedium ? condensedName : fullName;
 
-                // Status dot — absolute top-right in all modes
-                const statusDot = (
-                  <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="flex items-center gap-1 cursor-default">
-                          <span className={cn('w-2 h-2 rounded-full shrink-0', acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70')} />
-                          {!isMedium && (
-                            <span className={cn("text-[10px] whitespace-nowrap", acceptingClients ? "text-emerald-500" : "text-destructive/70")}>
-                              {acceptingClients ? 'Booking' : 'Not Booking'}
-                            </span>
-                          )}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
-                        {acceptingClients ? 'Accepting New Clients & Lead Pool Eligible' : 'Not Accepting New Clients'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                );
+                const acceptingLabel = acceptingClients ? 'Accepting clients' : 'Not accepting clients';
 
                 const avatar = (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 shrink-0 rounded-[5px]')}>
-                        <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
-                        <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
-                          {fullName.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative shrink-0">
+                        <Avatar className={cn('border border-[hsl(var(--sidebar-foreground))]/20 cursor-pointer', 'h-10 w-10 rounded-[5px]')}>
+                          <AvatarImage src={stylist.photo_url || undefined} className="rounded-[5px]" />
+                          <AvatarFallback className="text-xs bg-[hsl(var(--sidebar-foreground))]/20 text-[hsl(var(--sidebar-foreground))] rounded-[5px]">
+                            {fullName.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span
+                          className={cn(
+                            'absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[hsl(var(--sidebar-background))]',
+                            acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
+                          )}
+                          aria-label={acceptingLabel}
+                        />
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-                      {stylist.specialties && stylist.specialties.length > 0
-                        ? stylist.specialties.join(' · ')
-                        : 'No specialties listed'}
+                      <div className="font-medium">{acceptingLabel}</div>
+                      {stylist.specialties && stylist.specialties.length > 0 && (
+                        <div className="text-muted-foreground mt-1">{stylist.specialties.join(' · ')}</div>
+                      )}
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -743,7 +734,6 @@ export function DayView({
                       key={stylist.user_id}
                       className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
                     >
-                      {statusDot}
                       {avatar}
                       <span className="text-xs font-medium leading-tight">{condensedName}</span>
                       <span className={cn('text-[10px]', pctColor)}>{pct}%</span>
@@ -760,9 +750,8 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id}
-                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 pr-5 flex items-start gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
                   >
-                    {statusDot}
                     {avatar}
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-sm font-medium leading-tight truncate">{displayName}</span>
