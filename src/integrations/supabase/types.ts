@@ -9381,35 +9381,6 @@ export type Database = {
         }
         Relationships: []
       }
-      handbooks_test1: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          organization_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          organization_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          organization_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "handbooks_test1_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       hardware_orders: {
         Row: {
           created_at: string
@@ -13609,6 +13580,405 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "operational_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_handbook_org_setup: {
+        Row: {
+          brand_tone: string
+          classifications: Json
+          created_at: string
+          custom_roles: Json
+          handbook_version_id: string
+          id: string
+          location_strategy: string
+          notes: string | null
+          organization_id: string
+          roles_enabled: Json
+          states_operated: Json
+          updated_at: string
+        }
+        Insert: {
+          brand_tone?: string
+          classifications?: Json
+          created_at?: string
+          custom_roles?: Json
+          handbook_version_id: string
+          id?: string
+          location_strategy?: string
+          notes?: string | null
+          organization_id: string
+          roles_enabled?: Json
+          states_operated?: Json
+          updated_at?: string
+        }
+        Update: {
+          brand_tone?: string
+          classifications?: Json
+          created_at?: string
+          custom_roles?: Json
+          handbook_version_id?: string
+          id?: string
+          location_strategy?: string
+          notes?: string | null
+          organization_id?: string
+          roles_enabled?: Json
+          states_operated?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbook_org_setup_handbook_version_id_fkey"
+            columns: ["handbook_version_id"]
+            isOneToOne: true
+            referencedRelation: "org_handbook_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_org_setup_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_handbook_review_issues: {
+        Row: {
+          created_at: string
+          handbook_version_id: string
+          id: string
+          issue_type: string
+          message: string
+          organization_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          section_id: string | null
+          severity: Database["public"]["Enums"]["org_handbook_review_severity"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          handbook_version_id: string
+          id?: string
+          issue_type: string
+          message: string
+          organization_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          section_id?: string | null
+          severity?: Database["public"]["Enums"]["org_handbook_review_severity"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          handbook_version_id?: string
+          id?: string
+          issue_type?: string
+          message?: string
+          organization_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          section_id?: string | null
+          severity?: Database["public"]["Enums"]["org_handbook_review_severity"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbook_review_issues_handbook_version_id_fkey"
+            columns: ["handbook_version_id"]
+            isOneToOne: false
+            referencedRelation: "org_handbook_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_review_issues_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_review_issues_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "org_handbook_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_handbook_role_overlays: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          override_content: string | null
+          override_policy_config: Json
+          role_key: string
+          section_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          override_content?: string | null
+          override_policy_config?: Json
+          role_key: string
+          section_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          override_content?: string | null
+          override_policy_config?: Json
+          role_key?: string
+          section_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbook_role_overlays_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_role_overlays_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "org_handbook_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_handbook_section_library: {
+        Row: {
+          category: string
+          created_at: string
+          default_employment_types: Json
+          default_roles: Json
+          description: string
+          display_order: number
+          id: string
+          key: string
+          policy_schema: Json
+          recommendation: string
+          title: string
+          updated_at: string
+          what_it_covers: string
+          who_applies: string
+          why_it_matters: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          default_employment_types?: Json
+          default_roles?: Json
+          description: string
+          display_order?: number
+          id?: string
+          key: string
+          policy_schema?: Json
+          recommendation?: string
+          title: string
+          updated_at?: string
+          what_it_covers: string
+          who_applies: string
+          why_it_matters: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_employment_types?: Json
+          default_roles?: Json
+          description?: string
+          display_order?: number
+          id?: string
+          key?: string
+          policy_schema?: Json
+          recommendation?: string
+          title?: string
+          updated_at?: string
+          what_it_covers?: string
+          who_applies?: string
+          why_it_matters?: string
+        }
+        Relationships: []
+      }
+      org_handbook_sections: {
+        Row: {
+          ai_draft_state: Json
+          applies_to: Json
+          created_at: string
+          display_order: number
+          draft_content: string | null
+          handbook_version_id: string
+          id: string
+          library_section_key: string | null
+          notes: string | null
+          organization_id: string
+          policy_config: Json
+          status: Database["public"]["Enums"]["org_handbook_section_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_draft_state?: Json
+          applies_to?: Json
+          created_at?: string
+          display_order?: number
+          draft_content?: string | null
+          handbook_version_id: string
+          id?: string
+          library_section_key?: string | null
+          notes?: string | null
+          organization_id: string
+          policy_config?: Json
+          status?: Database["public"]["Enums"]["org_handbook_section_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_draft_state?: Json
+          applies_to?: Json
+          created_at?: string
+          display_order?: number
+          draft_content?: string | null
+          handbook_version_id?: string
+          id?: string
+          library_section_key?: string | null
+          notes?: string | null
+          organization_id?: string
+          policy_config?: Json
+          status?: Database["public"]["Enums"]["org_handbook_section_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbook_sections_handbook_version_id_fkey"
+            columns: ["handbook_version_id"]
+            isOneToOne: false
+            referencedRelation: "org_handbook_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_sections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_handbook_versions: {
+        Row: {
+          completeness_pct: number
+          created_at: string
+          created_by: string | null
+          current_step: string
+          handbook_id: string
+          id: string
+          notes: string | null
+          organization_id: string
+          published_at: string | null
+          status: Database["public"]["Enums"]["org_handbook_version_status"]
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          completeness_pct?: number
+          created_at?: string
+          created_by?: string | null
+          current_step?: string
+          handbook_id: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["org_handbook_version_status"]
+          updated_at?: string
+          version_number?: number
+        }
+        Update: {
+          completeness_pct?: number
+          created_at?: string
+          created_by?: string | null
+          current_step?: string
+          handbook_id?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["org_handbook_version_status"]
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbook_versions_handbook_id_fkey"
+            columns: ["handbook_id"]
+            isOneToOne: false
+            referencedRelation: "org_handbooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_handbook_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_handbooks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          current_version_id: string | null
+          description: string | null
+          id: string
+          location_scope: string
+          name: string
+          organization_id: string
+          status: Database["public"]["Enums"]["org_handbook_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          description?: string | null
+          id?: string
+          location_scope?: string
+          name: string
+          organization_id: string
+          status?: Database["public"]["Enums"]["org_handbook_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          description?: string | null
+          id?: string
+          location_scope?: string
+          name?: string
+          organization_id?: string
+          status?: Database["public"]["Enums"]["org_handbook_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_handbooks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -29417,6 +29787,25 @@ export type Database = {
         | "offer"
         | "convert"
         | "scale"
+      org_handbook_review_severity: "info" | "warning" | "blocker"
+      org_handbook_section_status:
+        | "not_started"
+        | "configuring"
+        | "drafting"
+        | "drafted"
+        | "reviewed"
+        | "approved"
+      org_handbook_status:
+        | "draft"
+        | "reviewed"
+        | "approved"
+        | "published"
+        | "archived"
+      org_handbook_version_status:
+        | "draft"
+        | "reviewed"
+        | "approved"
+        | "published"
       payroll_provider:
         | "gusto"
         | "quickbooks"
@@ -29799,6 +30188,28 @@ export const Constants = {
         "offer",
         "convert",
         "scale",
+      ],
+      org_handbook_review_severity: ["info", "warning", "blocker"],
+      org_handbook_section_status: [
+        "not_started",
+        "configuring",
+        "drafting",
+        "drafted",
+        "reviewed",
+        "approved",
+      ],
+      org_handbook_status: [
+        "draft",
+        "reviewed",
+        "approved",
+        "published",
+        "archived",
+      ],
+      org_handbook_version_status: [
+        "draft",
+        "reviewed",
+        "approved",
+        "published",
       ],
       payroll_provider: [
         "gusto",
