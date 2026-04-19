@@ -701,8 +701,8 @@ export function DayView({
 
                 const acceptingLabel = acceptingClients ? 'Accepting clients' : 'Not accepting clients';
 
-                const specialties = stylist.specialties && stylist.specialties.length > 0
-                  ? stylist.specialties.join(' · ')
+                const specialtiesList = stylist.specialties && stylist.specialties.length > 0
+                  ? stylist.specialties
                   : null;
 
                 const exclusion = exclusionSummaries?.get(stylist.user_id);
