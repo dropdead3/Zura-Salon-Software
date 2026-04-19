@@ -1,66 +1,31 @@
 
 
 ## Diagnosis
+In the schedule's top-left corner, "VAL VISTA LAKES" wraps onto three lines and visually outweighs the rest of the header. It's likely rendered with `font-display` at `text-base` or larger, which is too prominent for a contextual label.
 
-Looking at the screenshot, the current tooltip works but reads as a flat text dump:
-- "Doesn't perform" list is a long run-on sentence with `·` separators — hard to scan, and items wrap awkwardly mid-line ("New Client Consultation").
-- No visual distinction between the **positive** state (Accepting clients) and the **negative** state (Doesn't perform). They're styled identically.
-- The dot before "Accepting clients" is the only color cue — exclusions have no semantic marker.
-- Section labels (`DOESN'T PERFORM`) are uppercase but the content below sits flush, no rhythm.
-- Tooltip width feels arbitrary — it expands to fit the longest line, which makes 7 items render as a wall of text.
+## Proposed change
+Locate the location label in the schedule header (likely `src/components/dashboard/schedule/DayView.tsx` or a sibling header component like `ScheduleHeader.tsx` / the location column header in the day grid).
 
-## Proposed enhancement (visual only, no data changes)
+Reduce the size from current (likely `text-base`/`text-sm` with `tracking-wide`) down to:
+- `text-xs` (12px) with existing `font-display tracking-wider`
+- Keep uppercase + Termina styling per typography canon
+- This lets "VAL VISTA LAKES" fit on one or two lines instead of three, restoring header balance
 
-Update the avatar tooltip in `src/components/dashboard/schedule/DayView.tsx`:
+If the label is part of a column header in a multi-location grid, also tighten its container padding so the smaller text doesn't leave awkward whitespace.
 
-### 1. Convert exclusion list → chip/pill cluster
-Each excluded category and service becomes a small pill: `rounded-full px-2 py-0.5 bg-destructive/10 text-destructive/80 text-[11px]`. Wraps naturally, scans instantly, no awkward `·` separators.
+## Verification
+- "VAL VISTA LAKES" wraps to at most 2 lines (ideally 1)
+- Still reads as a clear section label, not a headline
+- Other locations with shorter names (e.g. "Mesa") remain visually balanced
+- No change to font family, weight, or tracking — purely a size reduction
 
-### 2. Differentiate categories vs services
-- **Categories** (broader): slightly stronger pill — `bg-destructive/15 text-destructive border border-destructive/20`
-- **Services** (granular): lighter pill — `bg-muted text-muted-foreground`
+## Prompt feedback
+Clear, scoped, and actionable — you named the exact element and the exact change. Even better next time: specify the target size or relative reduction (e.g. "make it ~25% smaller" or "match the time-axis label size"), which removes my one remaining guess. Pattern: **"Element + direction + reference size"** is the tightest visual-tweak prompt shape.
 
-This communicates "Color (entire category)" carries more weight than "Styling (one service)".
+Also worth knowing: small static text/size changes like this are exactly what **Visual Edits** is built for — click the Edit button in the chat box, select the label, and resize it directly without burning a prompt.
 
-### 3. Cap width + tighten layout
-- Tooltip: `max-w-[280px]` so pills wrap predictably instead of one long line.
-- Section spacing: `space-y-2.5` between header rows and content, `gap-1.5` between pills.
-
-### 4. Upgrade the status row
-Promote "Accepting clients" / "Not accepting" into a pill row that mirrors the exclusion pills:
-- Green pill with dot for accepting, muted red pill for not accepting.
-- Removes the lone-dot inconsistency.
-
-### 5. Specialties as positive chips (consistency)
-If specialties already render, convert them to the same chip pattern but in `bg-emerald-500/10 text-emerald-700` so the tooltip reads as: **green chips = does**, **red chips = doesn't**, instantly parseable.
-
-### 6. Section headers
-Keep the `text-[10px] uppercase tracking-wider` label, but add a faint divider above (`border-t border-border/40 pt-2.5`) and color-code: "Specialties" → muted-foreground, "Doesn't perform" → `text-destructive/60`.
-
-### Final structure
-```
-[Avatar name]
-[● Accepting clients pill]
-─────────────────
-SPECIALTIES
-[chip] [chip] [chip]
-─────────────────
-DOESN'T PERFORM
-[Category chip] [Category chip]
-[service] [service] [service]
-```
-
-### Verification
-- Tooltip on a stylist with many exclusions wraps cleanly within 280px.
-- Categories visually outweigh individual services.
-- Color semantics are consistent (green = capability, red = exclusion).
-- No text changes, no new data fetches — purely presentational.
-
-### Prompt feedback
-Open-ended "improve the UI" prompts give wide latitude but also risk drift. A tighter version like *"Make the exclusion list scannable — too dense as a comma list"* would point me directly at the pain point. Pattern: **"What's wrong + what direction to go"** beats **"make it better"**.
-
-### Enhancement suggestions
-- Add a tiny count badge in the section header: `DOESN'T PERFORM (7)`.
-- For very long exclusion lists (>6), collapse with "+N more" and show full list on click.
-- Mirror the same chip system in the booking flow when an operator tries to assign a stylist to an excluded service — shows the same red chip as a soft block.
+## Enhancement suggestions
+- Add a tooltip on the location label showing full name + address for cases where it gets truncated.
+- Consider a single-line ellipsis with `truncate` so very long location names degrade gracefully instead of stacking.
+- Color-code each location header subtly (using the location's brand accent) to reinforce visual identification across columns.
 
