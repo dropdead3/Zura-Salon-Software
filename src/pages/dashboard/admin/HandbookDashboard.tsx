@@ -15,11 +15,12 @@ import { tokens } from '@/lib/design-tokens';
 import { useHandbooks, useCreateHandbook } from '@/hooks/handbook/useHandbookData';
 import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import { HandbookStatusBadge } from '@/components/dashboard/handbook/HandbookStatusBadge';
-import { dashPath } from '@/lib/dashPath';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function HandbookDashboard() {
   const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const { isLeadership } = useLeadershipCheck();
   const { data: handbooks = [], isLoading } = useHandbooks();
   const createHandbook = useCreateHandbook();
