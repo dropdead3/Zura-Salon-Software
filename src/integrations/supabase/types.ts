@@ -17231,6 +17231,508 @@ export type Database = {
           },
         ]
       }
+      policies: {
+        Row: {
+          audience: Database["public"]["Enums"]["policy_audience"]
+          category: Database["public"]["Enums"]["policy_category"]
+          created_at: string
+          created_by: string | null
+          current_version_id: string | null
+          external_title: string | null
+          id: string
+          intent: string | null
+          internal_title: string
+          library_key: string
+          organization_id: string
+          primary_owner_role: string | null
+          status: Database["public"]["Enums"]["policy_status"]
+          updated_at: string
+        }
+        Insert: {
+          audience: Database["public"]["Enums"]["policy_audience"]
+          category: Database["public"]["Enums"]["policy_category"]
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          external_title?: string | null
+          id?: string
+          intent?: string | null
+          internal_title: string
+          library_key: string
+          organization_id: string
+          primary_owner_role?: string | null
+          status?: Database["public"]["Enums"]["policy_status"]
+          updated_at?: string
+        }
+        Update: {
+          audience?: Database["public"]["Enums"]["policy_audience"]
+          category?: Database["public"]["Enums"]["policy_category"]
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          external_title?: string | null
+          id?: string
+          intent?: string | null
+          internal_title?: string
+          library_key?: string
+          organization_id?: string
+          primary_owner_role?: string | null
+          status?: Database["public"]["Enums"]["policy_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policies_current_version_fk"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "policy_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policies_library_key_fkey"
+            columns: ["library_key"]
+            isOneToOne: false
+            referencedRelation: "policy_library"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          client_id: string | null
+          created_at: string
+          evidence: Json
+          id: string
+          organization_id: string
+          policy_version_id: string
+          surface: Database["public"]["Enums"]["policy_surface"]
+          user_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string
+          client_id?: string | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          organization_id: string
+          policy_version_id: string
+          surface: Database["public"]["Enums"]["policy_surface"]
+          user_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string
+          client_id?: string | null
+          created_at?: string
+          evidence?: Json
+          id?: string
+          organization_id?: string
+          policy_version_id?: string
+          surface?: Database["public"]["Enums"]["policy_surface"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_acknowledgments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_acknowledgments_policy_version_id_fkey"
+            columns: ["policy_version_id"]
+            isOneToOne: false
+            referencedRelation: "policy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_applicability: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          scope_type: Database["public"]["Enums"]["policy_scope_type"]
+          scope_value: string
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          scope_type: Database["public"]["Enums"]["policy_scope_type"]
+          scope_value: string
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          scope_type?: Database["public"]["Enums"]["policy_scope_type"]
+          scope_value?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_applicability_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_applicability_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "policy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_exceptions: {
+        Row: {
+          authority_role: string
+          created_at: string
+          documentation_required: Json
+          id: string
+          organization_id: string
+          policy_id: string
+          scope: Json
+          updated_at: string
+        }
+        Insert: {
+          authority_role: string
+          created_at?: string
+          documentation_required?: Json
+          id?: string
+          organization_id: string
+          policy_id: string
+          scope?: Json
+          updated_at?: string
+        }
+        Update: {
+          authority_role?: string
+          created_at?: string
+          documentation_required?: Json
+          id?: string
+          organization_id?: string
+          policy_id?: string
+          scope?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_exceptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_exceptions_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_library: {
+        Row: {
+          audience: Database["public"]["Enums"]["policy_audience"]
+          candidate_surfaces: Database["public"]["Enums"]["policy_surface"][]
+          category: Database["public"]["Enums"]["policy_category"]
+          created_at: string
+          default_owner_role: string | null
+          display_order: number
+          id: string
+          key: string
+          recommendation: Database["public"]["Enums"]["policy_recommendation"]
+          requires_extensions: boolean
+          requires_packages: boolean
+          requires_retail: boolean
+          short_description: string
+          title: string
+          updated_at: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          audience: Database["public"]["Enums"]["policy_audience"]
+          candidate_surfaces?: Database["public"]["Enums"]["policy_surface"][]
+          category: Database["public"]["Enums"]["policy_category"]
+          created_at?: string
+          default_owner_role?: string | null
+          display_order?: number
+          id?: string
+          key: string
+          recommendation?: Database["public"]["Enums"]["policy_recommendation"]
+          requires_extensions?: boolean
+          requires_packages?: boolean
+          requires_retail?: boolean
+          short_description: string
+          title: string
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          audience?: Database["public"]["Enums"]["policy_audience"]
+          candidate_surfaces?: Database["public"]["Enums"]["policy_surface"][]
+          category?: Database["public"]["Enums"]["policy_category"]
+          created_at?: string
+          default_owner_role?: string | null
+          display_order?: number
+          id?: string
+          key?: string
+          recommendation?: Database["public"]["Enums"]["policy_recommendation"]
+          requires_extensions?: boolean
+          requires_packages?: boolean
+          requires_retail?: boolean
+          short_description?: string
+          title?: string
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Relationships: []
+      }
+      policy_rule_blocks: {
+        Row: {
+          block_key: string
+          created_at: string
+          id: string
+          ordering: number
+          organization_id: string
+          required: boolean
+          rule_type: string
+          updated_at: string
+          value: Json
+          version_id: string
+        }
+        Insert: {
+          block_key: string
+          created_at?: string
+          id?: string
+          ordering?: number
+          organization_id: string
+          required?: boolean
+          rule_type: string
+          updated_at?: string
+          value?: Json
+          version_id: string
+        }
+        Update: {
+          block_key?: string
+          created_at?: string
+          id?: string
+          ordering?: number
+          organization_id?: string
+          required?: boolean
+          rule_type?: string
+          updated_at?: string
+          value?: Json
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_rule_blocks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_rule_blocks_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "policy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_surface_mappings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          organization_id: string
+          surface: Database["public"]["Enums"]["policy_surface"]
+          surface_config: Json
+          updated_at: string
+          variant_type: Database["public"]["Enums"]["policy_variant_type"]
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id: string
+          surface: Database["public"]["Enums"]["policy_surface"]
+          surface_config?: Json
+          updated_at?: string
+          variant_type: Database["public"]["Enums"]["policy_variant_type"]
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id?: string
+          surface?: Database["public"]["Enums"]["policy_surface"]
+          surface_config?: Json
+          updated_at?: string
+          variant_type?: Database["public"]["Enums"]["policy_variant_type"]
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_surface_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_surface_mappings_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "policy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_variants: {
+        Row: {
+          ai_generated: boolean
+          ai_model: string | null
+          approved: boolean
+          approved_at: string | null
+          approved_by: string | null
+          body_md: string | null
+          created_at: string
+          id: string
+          last_drafted_at: string | null
+          organization_id: string
+          updated_at: string
+          variant_type: Database["public"]["Enums"]["policy_variant_type"]
+          version_id: string
+        }
+        Insert: {
+          ai_generated?: boolean
+          ai_model?: string | null
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          body_md?: string | null
+          created_at?: string
+          id?: string
+          last_drafted_at?: string | null
+          organization_id: string
+          updated_at?: string
+          variant_type: Database["public"]["Enums"]["policy_variant_type"]
+          version_id: string
+        }
+        Update: {
+          ai_generated?: boolean
+          ai_model?: string | null
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          body_md?: string | null
+          created_at?: string
+          id?: string
+          last_drafted_at?: string | null
+          organization_id?: string
+          updated_at?: string
+          variant_type?: Database["public"]["Enums"]["policy_variant_type"]
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_variants_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_variants_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "policy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_versions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          changelog_summary: string | null
+          created_at: string
+          created_by: string | null
+          effective_from: string | null
+          effective_to: string | null
+          id: string
+          is_published_external: boolean
+          organization_id: string
+          policy_id: string
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          changelog_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          id?: string
+          is_published_external?: boolean
+          organization_id: string
+          policy_id: string
+          updated_at?: string
+          version_number: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          changelog_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          id?: string
+          is_published_external?: boolean
+          organization_id?: string
+          policy_id?: string
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_versions_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procurement_budgets: {
         Row: {
           alert_threshold_pct: number
@@ -30000,6 +30502,39 @@ export type Database = {
         | "homebase"
         | "rippling"
         | "wave"
+      policy_audience: "internal" | "external" | "both"
+      policy_category:
+        | "team"
+        | "client"
+        | "extensions"
+        | "financial"
+        | "facility"
+        | "management"
+      policy_recommendation: "required" | "recommended" | "optional"
+      policy_scope_type:
+        | "role"
+        | "employment_type"
+        | "service_category"
+        | "location"
+        | "audience"
+      policy_status:
+        | "not_started"
+        | "drafting"
+        | "configured"
+        | "needs_review"
+        | "approved_internal"
+        | "published_external"
+        | "wired"
+        | "archived"
+      policy_surface:
+        | "handbook"
+        | "client_page"
+        | "booking"
+        | "checkout"
+        | "intake"
+        | "manager"
+        | "sop"
+      policy_variant_type: "internal" | "client" | "disclosure" | "manager_note"
       price_queue_status: "pending" | "approved" | "rejected" | "auto_applied"
       price_recommendation_status: "pending" | "accepted" | "dismissed"
       program_status: "active" | "paused" | "completed" | "restarted"
@@ -30406,6 +30941,43 @@ export const Constants = {
         "rippling",
         "wave",
       ],
+      policy_audience: ["internal", "external", "both"],
+      policy_category: [
+        "team",
+        "client",
+        "extensions",
+        "financial",
+        "facility",
+        "management",
+      ],
+      policy_recommendation: ["required", "recommended", "optional"],
+      policy_scope_type: [
+        "role",
+        "employment_type",
+        "service_category",
+        "location",
+        "audience",
+      ],
+      policy_status: [
+        "not_started",
+        "drafting",
+        "configured",
+        "needs_review",
+        "approved_internal",
+        "published_external",
+        "wired",
+        "archived",
+      ],
+      policy_surface: [
+        "handbook",
+        "client_page",
+        "booking",
+        "checkout",
+        "intake",
+        "manager",
+        "sop",
+      ],
+      policy_variant_type: ["internal", "client", "disclosure", "manager_note"],
       price_queue_status: ["pending", "approved", "rejected", "auto_applied"],
       price_recommendation_status: ["pending", "accepted", "dismissed"],
       program_status: ["active", "paused", "completed", "restarted"],
