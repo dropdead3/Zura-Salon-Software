@@ -1097,7 +1097,16 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           presetCategory={editorPresetCategory}
         />
 
-        {/* Category Form Dialog */}
+        {/* Wave 3: Bulk Edit Services Dialog */}
+        <BulkEditServicesDialog
+          open={bulkEditOpen}
+          onOpenChange={setBulkEditOpen}
+          selectedServices={selectedServices}
+          categories={serviceCategories}
+          organizationId={resolvedOrgId}
+          onComplete={clearSelection}
+        />
+
         <CategoryFormDialog
           open={categoryDialogOpen}
           onOpenChange={setCategoryDialogOpen}
