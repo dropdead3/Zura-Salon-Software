@@ -272,15 +272,18 @@ export function PolicyCenterCard({
         </div>
       </CollapsibleContent>
 
-      {/* Identity capture for first-time acknowledgers */}
+      {/* Identity capture for first-time acknowledgers (28.10.1: opens on
+          card expansion, not at submit time, so the user has identity context
+          before typing a signature). */}
       {requiresAcknowledgment && !acknowledged && (
         <AcknowledgeIdentityModal
           open={identityOpen}
           onOpenChange={setIdentityOpen}
           onConfirm={(id) => {
             setIdentity(id);
-            if (!signature.trim()) setSignature(id.name);
-            submit(id);
+            // Only seed the signature if the field is still blank — never overwrite
+            // a signature the user already typed.
+            setSignature((current) => current.trim() ? current : id.name);
           }}
         />
       )}
