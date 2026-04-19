@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
 export interface ServiceCategoryColor {
@@ -38,21 +39,30 @@ export function getCategoryAbbreviation(categoryName: string): string {
   return categoryName.slice(0, 2).toUpperCase();
 }
 
-// Fetch all category colors from database
-export function useServiceCategoryColors() {
+// Fetch all category colors from database (Wave 11: org-scoped)
+export function useServiceCategoryColors(organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId || effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['service-category-colors'],
+    queryKey: ['service-category-colors', orgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('service_category_colors')
         .select('*')
         .eq('is_archived', false)
         .order('display_order')
         .order('category_name');
-      
+
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as unknown as ServiceCategoryColor[];
     },
+    enabled: !!orgId,
   });
 }
 
@@ -129,55 +139,62 @@ export function useReorderCategories() {
   });
 }
 
-// Sync new categories from services table (native)
+// Sync new categories from services table (native). Wave 11: org-scoped reads/writes.
 export function useSyncServiceCategories() {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async () => {
-      // Get unique categories from native services table
+      const orgId = effectiveOrganization?.id;
+      if (!orgId) throw new Error('No active organization');
+
+      // Get unique categories from native services table (org-scoped)
       const { data: services, error: servicesError } = await supabase
         .from('services')
         .select('category')
-        .eq('is_active', true);
-      
+        .eq('is_active', true)
+        .eq('organization_id', orgId);
+
       if (servicesError) throw servicesError;
-      
-      // Get existing categories
+
+      // Get existing categories (org-scoped)
       const { data: existingColors, error: colorsError } = await supabase
         .from('service_category_colors')
-        .select('category_name');
-      
+        .select('category_name')
+        .eq('organization_id', orgId);
+
       if (colorsError) throw colorsError;
-      
+
       const existingNames = new Set(existingColors?.map(c => c.category_name) || []);
       const uniqueCategories = [...new Set(services?.map(s => s.category).filter(Boolean) || [])];
-      
+
       // Find new categories that need to be added
       const newCategories = uniqueCategories.filter(cat => cat && !existingNames.has(cat));
-      
+
       if (newCategories.length > 0) {
         const defaultColors = [
           '#60a5fa', '#f472b6', '#facc15', '#10b981', '#a78bfa',
           '#f97316', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6',
         ];
-        
+
         const newRecords = newCategories.map((categoryName, index) => {
           const colorHex = defaultColors[index % defaultColors.length];
           return {
             category_name: categoryName,
             color_hex: colorHex,
             text_color_hex: getContrastingTextColor(colorHex),
+            organization_id: orgId,
           };
         });
-        
+
         const { error: insertError } = await supabase
           .from('service_category_colors')
           .insert(newRecords);
-        
+
         if (insertError) throw insertError;
       }
-      
+
       return { added: newCategories.length };
     },
     onSuccess: () => {
@@ -251,21 +268,30 @@ export function useDeleteCategory() {
 }
 
 /**
- * Fetch archived categories
+ * Fetch archived categories (Wave 11: org-scoped)
  */
-export function useArchivedCategories() {
+export function useArchivedCategories(organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId || effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['service-category-colors-archived'],
+    queryKey: ['service-category-colors-archived', orgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('service_category_colors')
         .select('*')
         .eq('is_archived', true)
         .order('archived_at', { ascending: false });
-      
+
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as unknown as ServiceCategoryColor[];
     },
+    enabled: !!orgId,
   });
 }
 
@@ -340,8 +366,8 @@ export function useRestoreCategory() {
 }
 
 // Helper hook to get colors as a map for easy lookup
-export function useServiceCategoryColorsMap() {
-  const { data: colors, ...rest } = useServiceCategoryColors();
+export function useServiceCategoryColorsMap(organizationId?: string) {
+  const { data: colors, ...rest } = useServiceCategoryColors(organizationId);
   
   const colorMap = colors?.reduce((acc, color) => {
     acc[color.category_name.toLowerCase()] = {

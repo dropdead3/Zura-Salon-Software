@@ -89,10 +89,10 @@ export function useServicesData(locationId?: string, organizationId?: string) {
 }
 
 /**
- * Get services grouped by category
+ * Get services grouped by category (Wave 11: org-scoped passthrough)
  */
-export function useServicesByCategory(locationId?: string) {
-  const { data: services, ...rest } = useServicesData(locationId);
+export function useServicesByCategory(locationId?: string, organizationId?: string) {
+  const { data: services, ...rest } = useServicesData(locationId, organizationId);
 
   const grouped = services?.reduce((acc, service) => {
     const category = service.category || 'Other';
@@ -375,6 +375,7 @@ export function useArchivedServices(organizationId?: string) {
       if (error) throw error;
       return data as unknown as Service[];
     },
+    enabled: !!orgId,
   });
 }
 
