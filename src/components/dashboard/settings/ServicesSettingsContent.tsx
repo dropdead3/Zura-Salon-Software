@@ -418,13 +418,26 @@ export function ServicesSettingsContent() {
     setEditorDialogOpen(true);
   };
 
-  // Filtered services for search
+  // Filtered services for search — Wave 8: extend predicate to online_name,
+  // description, and pos_hotkey so operators can find services by their
+  // public-facing name or POS shortcut, not just the internal name.
   const filteredServicesByCategory = useMemo(() => {
     if (!searchQuery.trim()) return servicesByCategory;
     const q = searchQuery.toLowerCase();
     const filtered: Record<string, Service[]> = {};
     for (const [cat, svcs] of Object.entries(servicesByCategory)) {
-      const matches = svcs.filter(s => s.name.toLowerCase().includes(q));
+      const matches = svcs.filter((s) => {
+        const haystack = [
+          s.name,
+          (s as any).online_name,
+          s.description,
+          (s as any).pos_hotkey,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(q);
+      });
       if (matches.length > 0) filtered[cat] = matches;
     }
     return filtered;

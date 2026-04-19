@@ -376,66 +376,6 @@ export function useUpdateClient() {
   });
 }
 
-// ============= SERVICE MUTATIONS =============
-export function useCreateService() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: {
-      name: string;
-      description?: string;
-      category?: string;
-      duration_minutes: number;
-      price?: number;
-      location_id?: string;
-      requires_qualification?: boolean;
-    }) => {
-      const { data, error } = await supabase
-        .from('services')
-        .insert({
-          ...params,
-          import_source: 'manual',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as unknown as Service;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-    },
-  });
-}
-
-export function useUpdateService() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: {
-      id: string;
-      name?: string;
-      description?: string;
-      category?: string;
-      duration_minutes?: number;
-      price?: number;
-      location_id?: string;
-      requires_qualification?: boolean;
-      is_active?: boolean;
-    }) => {
-      const { id, ...updates } = params;
-      const { data, error } = await supabase
-        .from('services')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as unknown as Service;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-    },
-  });
-}
+// SERVICE MUTATIONS removed in Wave 8 — these duplicates dropped Wave 1–5
+// fields and skipped organization_id. Use the canonical hooks from
+// `@/hooks/useServicesData` instead: `useCreateService`, `useUpdateService`.
