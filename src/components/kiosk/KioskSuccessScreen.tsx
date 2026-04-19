@@ -284,6 +284,25 @@ export function KioskSuccessScreen() {
           </motion.div>
         )}
 
+        {/* Service-specific check-in prompt (e.g. "Please change into a robe") */}
+        {checkinPrompt && (
+          <motion.div
+            className="mt-6 max-w-md w-full p-5 rounded-2xl backdrop-blur-md flex items-start gap-3"
+            style={{
+              backgroundColor: `${accentColor}12`,
+              border: `1px solid ${accentColor}30`,
+            }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.85 }}
+          >
+            <Info className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: accentColor }} />
+            <p className="text-base text-left leading-relaxed" style={{ color: textColor }}>
+              {checkinPrompt}
+            </p>
+          </motion.div>
+        )}
+
         {/* Auto-return indicator */}
         <motion.div
           className="mt-10 flex items-center gap-2"
