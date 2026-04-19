@@ -35,6 +35,7 @@ export interface PolicyConfiguratorPayload {
   versionId: string;
   blocks: PolicyRuleBlock[];
   versionNumber: number;
+  requiresAcknowledgment?: boolean;
 }
 
 /** Adopt a single policy from the library and ensure a draft version exists. */
