@@ -170,6 +170,46 @@ export function ServiceEditorDialog({
     }
   }, [open, initialData, categories, presetCategory]);
 
+  // Snapshot the form state shape so we can detect dirtiness via shallow compare.
+  // Initial snapshot is captured on every (re)open via the effect below.
+  const initialSnapshotRef = useRef<string>('');
+
+  const currentSnapshot = useMemo(() => JSON.stringify({
+    name, category, duration, price, cost, description,
+    requiresQualification, allowSameDayBooking, bookableOnline, leadTimeDays,
+    finishingTime, contentCreationTime, processingTime,
+    requiresNewClientConsultation, isChemicalService, containerTypes, billingMode,
+    requireCardOnFile, requiresDeposit, depositType, depositAmount, depositAmountFlat,
+    includeFromPrefix, onlineName, onlineDurationOverride, onlineDiscountPct,
+    patchTestRequired, patchTestValidityDays, startUpMinutes, shutDownMinutes,
+    creationPrompt, checkinPrompt, posHotkey, loyaltyPointsOverride,
+  }), [
+    name, category, duration, price, cost, description,
+    requiresQualification, allowSameDayBooking, bookableOnline, leadTimeDays,
+    finishingTime, contentCreationTime, processingTime,
+    requiresNewClientConsultation, isChemicalService, containerTypes, billingMode,
+    requireCardOnFile, requiresDeposit, depositType, depositAmount, depositAmountFlat,
+    includeFromPrefix, onlineName, onlineDurationOverride, onlineDiscountPct,
+    patchTestRequired, patchTestValidityDays, startUpMinutes, shutDownMinutes,
+    creationPrompt, checkinPrompt, posHotkey, loyaltyPointsOverride,
+  ]);
+
+  // Capture the baseline snapshot once after the open-effect resets state.
+  useEffect(() => {
+    if (open) {
+      // Defer one tick so all the setState calls in the effect above flush first.
+      const t = setTimeout(() => { initialSnapshotRef.current = currentSnapshot; }, 0);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData?.id]);
+
+  const isDirty = open && initialSnapshotRef.current !== '' && currentSnapshot !== initialSnapshotRef.current;
+
+  // Wire dirty state into the Hub interceptor (catches tab switch / close with unsaved work).
+  useEditorDirtyState(isDirty);
+
+
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
