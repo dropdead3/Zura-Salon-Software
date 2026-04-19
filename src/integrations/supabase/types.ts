@@ -23135,6 +23135,7 @@ export type Database = {
           import_job_id: string | null
           import_source: string | null
           imported_at: string | null
+          include_from_prefix: boolean
           is_active: boolean | null
           is_archived: boolean
           is_backroom_tracked: boolean
@@ -23143,6 +23144,9 @@ export type Database = {
           lead_time_days: number | null
           location_id: string | null
           name: string
+          online_discount_pct: number | null
+          online_duration_override: number | null
+          online_name: string | null
           organization_id: string | null
           predictive_backroom_enabled: boolean
           price: number | null
@@ -23181,6 +23185,7 @@ export type Database = {
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
+          include_from_prefix?: boolean
           is_active?: boolean | null
           is_archived?: boolean
           is_backroom_tracked?: boolean
@@ -23189,6 +23194,9 @@ export type Database = {
           lead_time_days?: number | null
           location_id?: string | null
           name: string
+          online_discount_pct?: number | null
+          online_duration_override?: number | null
+          online_name?: string | null
           organization_id?: string | null
           predictive_backroom_enabled?: boolean
           price?: number | null
@@ -23227,6 +23235,7 @@ export type Database = {
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
+          include_from_prefix?: boolean
           is_active?: boolean | null
           is_archived?: boolean
           is_backroom_tracked?: boolean
@@ -23235,6 +23244,9 @@ export type Database = {
           lead_time_days?: number | null
           location_id?: string | null
           name?: string
+          online_discount_pct?: number | null
+          online_duration_override?: number | null
+          online_name?: string | null
           organization_id?: string | null
           predictive_backroom_enabled?: boolean
           price?: number | null
