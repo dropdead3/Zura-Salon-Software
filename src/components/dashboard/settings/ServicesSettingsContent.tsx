@@ -267,6 +267,25 @@ export function ServicesSettingsContent() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Wave 14: Density toggle (persisted per-user)
+  const [density, setDensityState] = useState<'comfortable' | 'compact'>(() => {
+    if (typeof window === 'undefined') return 'comfortable';
+    const stored = window.localStorage.getItem('service-catalog-density');
+    return stored === 'compact' ? 'compact' : 'comfortable';
+  });
+  const setDensity = (next: 'comfortable' | 'compact') => {
+    setDensityState(next);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('service-catalog-density', next);
+    }
+  };
+
+  // Wave 14: Manual accordion expansion state.
+  // - Search auto-expands the first matching category.
+  // - Expand-all toggle expands every category.
+  // - Otherwise tracks user clicks.
+  const [manualAccordionValue, setManualAccordionValue] = useState<string[]>([]);
+
   // Wave 3: Bulk selection
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
