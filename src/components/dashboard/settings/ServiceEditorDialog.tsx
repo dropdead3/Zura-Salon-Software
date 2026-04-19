@@ -21,6 +21,7 @@ import { LocationPricingContent } from './LocationPricingContent';
 import { SeasonalAdjustmentsContent } from './SeasonalAdjustmentsContent';
 import { BookingSurfacePreview } from './BookingSurfacePreview';
 import { ServiceFormsLinkagePanel } from './ServiceFormsLinkagePanel';
+import { ServiceAuditLogPanel } from './ServiceAuditLogPanel';
 
 interface ServiceEditorDialogProps {
   open: boolean;
@@ -248,6 +249,9 @@ export function ServiceEditorDialog({
             </SubTabsTrigger>
             <SubTabsTrigger value="forms" disabled={isCreateMode}>
               Forms
+            </SubTabsTrigger>
+            <SubTabsTrigger value="history" disabled={isCreateMode}>
+              History
             </SubTabsTrigger>
           </SubTabsList>
 
@@ -784,6 +788,10 @@ export function ServiceEditorDialog({
 
             <TabsContent value="forms" className="mt-0 p-px">
               {serviceId && <ServiceFormsLinkagePanel serviceId={serviceId} />}
+            </TabsContent>
+
+            <TabsContent value="history" className="mt-0 p-px">
+              {serviceId && <ServiceAuditLogPanel serviceId={serviceId} />}
             </TabsContent>
           </div>
         </Tabs>
