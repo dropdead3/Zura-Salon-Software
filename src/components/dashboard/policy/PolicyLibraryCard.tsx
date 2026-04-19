@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { CheckCircle2, Circle, Lock } from 'lucide-react';
 import type { PolicyLibraryEntry, OrgPolicy } from '@/hooks/policy/usePolicyData';
 import { POLICY_STATUS_META } from '@/hooks/policy/usePolicyData';
+import { SURFACE_META } from '@/hooks/policy/usePolicyApplicability';
 
 interface Props {
   entry: PolicyLibraryEntry;
@@ -93,6 +94,35 @@ export function PolicyLibraryCard({ entry, adopted, onClick }: Props) {
               </Badge>
             )}
           </div>
+
+          {entry.candidate_surfaces && entry.candidate_surfaces.length > 0 && (
+            <div className="flex items-center gap-1.5 pt-1 mt-auto border-t border-border/40">
+              <span className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                Renders to
+              </span>
+              <div className="flex items-center gap-1">
+                {entry.candidate_surfaces.slice(0, 4).map((s) => {
+                  const meta = SURFACE_META[s];
+                  if (!meta) return null;
+                  const Icon = meta.icon;
+                  return (
+                    <span
+                      key={s}
+                      title={meta.label}
+                      className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-muted/60 text-muted-foreground"
+                    >
+                      <Icon className="w-3 h-3" />
+                    </span>
+                  );
+                })}
+                {entry.candidate_surfaces.length > 4 && (
+                  <span className="font-sans text-[10px] text-muted-foreground">
+                    +{entry.candidate_surfaces.length - 4}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </button>
