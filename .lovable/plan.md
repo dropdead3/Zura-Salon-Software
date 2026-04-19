@@ -1,104 +1,111 @@
 
 
-## Wave 15 audit — Services Settings utility for owners
+## Wave 16 audit — Services Settings as a configurator (not analytics)
 
-The Wave 14 catalog merge solved **navigation density**. It did **not** add operator-grade utility. Right now, the page is a clean filing cabinet — every action is a single edit, every signal is descriptive. An owner running 30 stylists across 3 locations still can't answer "what should I price up?" or "which services are bleeding margin?" from this surface.
+Fair correction. Wave 15a leaned analytical (sparklines, volume cells, defect counts) on what is fundamentally a **configurator** — a surface where owners *set up the catalog so the rest of the platform behaves correctly*. Reframing the lens.
 
-Below: 6 ranked utility upgrades, plus 3 things I'd remove or change.
+### What a configurator owes the operator
+
+1. **Fast structural setup** — categories, services, prices, durations, rules
+2. **Correctness guarantees** — surface misconfiguration that *breaks downstream surfaces* (booking, payroll, deposits)
+3. **Bulk operations** — change many things at once without dialogs
+4. **Templates / starting points** — don't make every org build from zero
+5. **Confidence the config is "done"** — knowing what's still unconfigured
+
+Wave 15a addressed #2 partially. The rest is open.
 
 ---
 
-### High-leverage adds
+### Top 3 configurator-grade adds (ranked)
 
-**1. Catalog Health bar (top of card) — P1**
-A single horizontal bar above the category list that surfaces the structural risks already detectable from existing hooks. No new queries, just aggregation:
+**1. Service templates / starter pack — P1**
+The biggest configurator win. New orgs and new categories start empty. Add a "Start from template" affordance:
+- Per industry (Salon, Barber, Spa, Med-spa, Nails) — preloaded category + service skeletons with sensible default durations
+- Per category — when creating a new category, offer "Add common services" (e.g. Haircuts → Women's Cut, Men's Cut, Kids' Cut, Bang Trim)
+- Per service — "Duplicate from existing" button on the editor (already exists? if not, add it)
+
+Cuts setup time from hours to minutes for new orgs. Pure configurator leverage.
+
+**2. Configuration completeness checklist — P1**
+Replace the analytical Health bar with a **structural** completeness panel at the top of the catalog:
 
 ```text
-┌─ CATALOG HEALTH ────────────────────────────────────────────────┐
-│  ⚠ 4 services missing cost  ·  3 below 30% margin               │
-│  ⚠ 2 categories empty  ·  6 services not bookable online        │
-│  ⚠ 1 service missing patch-test rule  ·  Last edit: 2d ago      │
-└─────────────────────────────────────────────────────────────────┘
+┌─ CATALOG SETUP ─────────────────────────────────────────────┐
+│  ✓ 24 services defined                                       │
+│  ✓ All services have prices                                  │
+│  ⚠ 4 services missing duration → blocks scheduling           │
+│  ⚠ 6 services not assigned to any staff → won't be bookable  │
+│  ⚠ 2 chemical services missing patch-test rule               │
+│  ○ No deposit policies configured (optional)                 │
+│  ○ No location-specific pricing (optional)                   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-Each chip is clickable → filters the catalog to those services. This is the doctrine fit: **rare, high-confidence, ranked leverage**, surfaced silently when material, hidden when clean (visibility contract).
+Difference from Wave 15a Health bar: this lists **what's required for downstream surfaces to function**, not what's analytically interesting. Each row tells you *what breaks if unfixed*. Click → filters or jumps to the editor field.
 
-**2. Booking-volume column on every service row — P1**
-The data already exists (`useBulkPriceImpactPreview` queries trailing-30-day appointment volume). Promote that query to a catalog-level fetch and render a small sparkline + 30d count next to price:
-
-```text
-Women's Cut    45m · $85 · 62% margin · ▁▂▃▄▅ 142/30d
-Men's Cut      30m · $55 · 71% margin · ▁▁▂▂▃  38/30d
-Beard Trim     15m · $25 · — · ⊘ 0/30d (zombie service)
-```
-
-Gives owners the one signal they actually need to decide what to price up, what to deprecate, what to promote. **Zombie services** (zero bookings in 90d) get a subtle gray flag — currently invisible.
-
-**3. Inline-edit price + duration (no dialog) — P1**
-Owners adjust price 10x more than any other field. Today every adjustment requires opening the full editor dialog. Make the `$85` and `45m` cells click-to-edit inline (popover with number input + save). Keeps the editor for everything else.
-
-Pattern proven: same approach the `BulkEditServicesDialog` uses for percentage adjustments — extract the field component and reuse it inline.
-
-**4. "Apply to all in category" quick action — P2**
-On a category row header, add a kebab menu:
-- Bulk activate / deactivate all in category
-- Bulk archive empty category
-- Apply margin floor to all (e.g. flag all under 30%)
-- Export category as CSV
-
-Cuts the bulk-select dance for the 80% case where the operator wants "all of Blonding."
-
-**5. Margin distribution sparkline per category — P2**
-Tiny inline visualization on the collapsed category row showing margin spread:
-
-```text
-🟢 Haircuts (8 svcs) ·  margin ████▆▆▄▄▂  range 28%–74%
-```
-
-Surfaces silent margin erosion at category-level — the doctrine's primary alert trigger. Currently invisible until you expand and read every row.
-
-**6. Recent edits drawer — P2**
-A small `Activity` icon in the header opens a side drawer showing the last 20 entries from `service_audit_log` (hook already exists). Lets owners answer "who changed the cut price last week?" without opening a service. Read-only, scoped to the current org.
+**3. Inline-edit price + duration — P1 (carry forward from prior plan)**
+Still the highest-value interaction win. Click `$85` → popover with number input → save. Same for `45m`. Owners adjust these constantly during seasonal repricing or service tuning. The full editor dialog for a single number is friction.
 
 ---
 
-### What I'd change or remove
+### One thing to remove
 
-**Drop the density toggle to "Cozy/Compact" or kill Comfortable**
-Comfortable wastes vertical space for orgs with 20+ categories. Either default to Compact and let owners opt into Cozy, or merge the two — the line-height delta isn't earning its keep.
+**Pull the volume sparklines and zombie flags from Wave 15a out of the catalog rows.**
 
-**Move "Calendar Appearance" out of this tab**
-It's a presentation concern collapsed at the bottom of an operations page. Belongs in `Settings → Schedule` or a dedicated `Appearance` tab. It's currently buried where owners won't find it but always rendered, slowing scroll.
+They're analytical signals on a configurator surface. They belong in the **Service Performance** report or as a column in the **Catalog Health** dashboard if/when one exists. On the configurator, they create cognitive noise during what should be a fast structural task.
 
-**Uncategorized section is too quiet**
-Today it's a soft dashed box at the bottom. If services exist there, it's a structural defect (their category was archived). Should be a top-of-page **amber banner**: "3 services orphaned from archived category 'Express Services' — assign or archive."
+Keep `useServiceBookingVolumes` — repurpose it for the **Recent edits drawer** and for a new lightweight "deprecate suggestion" inside the service editor's archive flow ("This service had 0 bookings in 90 days — safe to archive").
 
 ---
 
-### Doctrine alignment check
+### Two structural changes worth flagging
 
-| Add | Reduces ambiguity | Protects margin | Clarifies leverage |
-|---|---|---|---|
-| Catalog Health bar | ✓ ranks defects | ✓ flags low-margin | ✓ what to fix first |
-| Volume column | ✓ what's used | — | ✓ what to price up |
-| Inline price edit | — | ✓ removes friction to act | — |
-| Per-cat quick actions | ✓ batch the obvious | — | ✓ |
-| Margin distribution | — | ✓ silent erosion | ✓ which category |
-| Recent edits | ✓ accountability | — | — |
+**Reorder the tab itself**
+Current order under `/admin/settings?tab=catalog` puts Catalog first, then Add-Ons / Staff / Policies. Configurator-correct order is the dependency chain:
+1. **Catalog** (services exist)
+2. **Staff** (who can perform them)
+3. **Policies** (deposits, lead times, cancellation)
+4. **Add-Ons** (depend on base services)
 
-All 6 satisfy at least one doctrine pillar. None introduce noise.
+Fixes the "I configured everything and bookings still don't work" trap.
+
+**Move "Calendar Appearance" out** (still applies)
+Configurator surface should not host presentation settings. Belongs in `Settings → Schedule` or `Appearance`.
 
 ---
 
-### Recommended cutoff
+### What I'd do differently in retrospect
 
-- **Wave 15a (cheap, high impact):** Health bar + Volume column + Uncategorized banner promotion. Single-file additions, ~120 lines, reuses existing hooks.
-- **Wave 15b (interaction work):** Inline price/duration edit + per-category quick actions. ~200 lines, new `InlineEditableNumber` primitive worth keeping.
-- **Wave 15c (deferred):** Margin distribution sparkline + recent edits drawer + Calendar Appearance relocation. Chartwork + IA decision — own wave.
+Wave 15a was the right *architecture* (aggregating signals from existing hooks) applied to the *wrong frame* (analytics instead of configuration). The signals are useful — they just belong on a different page. The CatalogHealthBar component is salvageable: rename to `CatalogSetupChecklist`, swap the chips to required-vs-optional structural items, drop the analytical filters (low_margin, zombie), keep the structural ones (missing_cost, missing_duration, no_staff, missing_patch_test, no_bookable_online).
+
+---
+
+### Wave 16 cutoff
+
+- **Wave 16a (cheap, high impact, single file + checklist component swap):**
+  - Reframe `CatalogHealthBar` → `CatalogSetupChecklist` (structural items only)
+  - Remove volume sparklines from rows
+  - Reorder tabs (Catalog → Staff → Policies → Add-Ons)
+
+- **Wave 16b (interaction):**
+  - Inline-edit price + duration (extract `InlineEditableNumber` primitive)
+  - "Duplicate service" button in editor (verify if exists first)
+
+- **Wave 16c (templates — own wave):**
+  - Industry starter packs + per-category common-services suggestions
+  - Requires a small `service_templates` seed table or static JSON
+
+### Files touched (Wave 16a)
+
+| File | Change |
+|---|---|
+| `src/components/dashboard/settings/CatalogHealthBar.tsx` | Rename + reframe to `CatalogSetupChecklist`; structural items only |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Remove `<ServiceVolumeCell>` from rows; swap CatalogHealthBar usage; tab reorder |
+| `src/components/dashboard/settings/ServiceVolumeCell.tsx` | Keep file (used later in editor archive suggestion) |
 
 ### Prompt feedback
 
-Strong prompt — *"How else can we improve the utility... would you do anything differently?"* gave permission both to add AND to subtract, which is rare and valuable. Most prompts only authorize additive critique; this one let me flag Calendar Appearance for relocation and the density toggle for reduction.
+Strong correction — *"its not an analytics page, its a configurator page"* is the kind of reframe that resets the whole approach in one sentence. Most users would have accepted Wave 15a as "good enough" and let the surface drift toward analytical bloat. Catching the frame mismatch now saves three waves of cleanup later.
 
-To level up: **set a numeric ceiling.** Phrases like *"top 3 utility adds, 1 thing to remove, ranked by leverage"* would have forced harder triage. I gave you 6 + 3, which is too long for a single wave. The ceiling does the prioritization work for me up front.
+To level up: **declare the surface frame in the original plan request.** A one-liner like *"this is a configurator page — optimize for setup speed and correctness, not insight"* up front would have aimed Wave 15 at the right target from the start. Pattern: **frame declaration before feature requests = no wasted waves on the wrong axis.**
 
