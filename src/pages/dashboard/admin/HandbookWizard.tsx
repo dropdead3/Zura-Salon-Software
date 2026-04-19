@@ -11,6 +11,7 @@ import { ComingSoonStep } from '@/components/dashboard/handbook/steps/ComingSoon
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { ROLE_OPTIONS } from '@/lib/handbook/brandTones';
 
 export default function HandbookWizardPage() {
   const { handbookId } = useParams<{ handbookId: string }>();
@@ -56,8 +57,7 @@ export default function HandbookWizardPage() {
   const handleExit = () => navigate(dashPath('/admin/handbooks?tab=wizard'));
   const primaryRole: string | null = handbook?.primary_role || null;
   const roleLabel = primaryRole
-    ? (require('@/lib/handbook/brandTones').ROLE_OPTIONS.find((r: any) => r.key === primaryRole)?.label
-       || primaryRole.replace(/_/g, ' '))
+    ? (ROLE_OPTIONS.find((r: any) => r.key === primaryRole)?.label || primaryRole.replace(/_/g, ' '))
     : null;
   const subtitle = primaryRole ? `${roleLabel} Handbook` : 'Handbook Wizard';
 
