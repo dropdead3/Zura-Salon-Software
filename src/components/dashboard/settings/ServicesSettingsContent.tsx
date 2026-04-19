@@ -591,9 +591,9 @@ export function ServicesSettingsContent() {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList>
             <TabsTrigger value="catalog">Catalog</TabsTrigger>
-            <TabsTrigger value="addons">Add-Ons</TabsTrigger>
             <TabsTrigger value="staff">Staff Access</TabsTrigger>
             <TabsTrigger value="policies">Policies</TabsTrigger>
+            <TabsTrigger value="addons">Add-Ons</TabsTrigger>
           </TabsList>
 
           {/* ============ TAB 1: CATALOG (UNIFIED) ============ */}
@@ -912,7 +912,6 @@ export function ServicesSettingsContent() {
                                                 </span>
                                               )}
                                               <MarginBadge margin={margin} />
-                                              <ServiceVolumeCell entry={serviceVolumes?.[svc.id]} loading={volumesLoading} />
                                               {(formCounts?.[svc.id] ?? 0) > 0 && (
                                                 <Tooltip>
                                                   <TooltipTrigger asChild>
