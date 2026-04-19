@@ -1,26 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { BRAND_TONES, ROLE_OPTIONS, EMPLOYMENT_TYPES, US_STATES } from '@/lib/handbook/brandTones';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useUpdateOrgSetup } from '@/hooks/handbook/useHandbookData';
+import { Lock } from 'lucide-react';
 
 interface Props {
   setup: any;
   versionId: string;
   onSavingChange?: (saving: boolean) => void;
+  /** When set, the role selector is locked to this single role */
+  primaryRole?: string | null;
 }
 
-export function OrgSetupStep({ setup, versionId, onSavingChange }: Props) {
+export function OrgSetupStep({ setup, versionId, onSavingChange, primaryRole }: Props) {
   const [brandTone, setBrandTone] = useState<string>(setup?.brand_tone || 'professional');
   const [classifications, setClassifications] = useState<Record<string, boolean>>(
     setup?.classifications || { w2_full_time: true, w2_part_time: true, contractor_1099: false }
   );
-  const [rolesEnabled, setRolesEnabled] = useState<string[]>(setup?.roles_enabled || []);
+  const [rolesEnabled, setRolesEnabled] = useState<string[]>(
+    primaryRole ? [primaryRole] : (setup?.roles_enabled || [])
+  );
   const [statesOperated, setStatesOperated] = useState<string[]>(setup?.states_operated || []);
   const [locationStrategy, setLocationStrategy] = useState<string>(setup?.location_strategy || 'shared');
 
@@ -44,11 +47,17 @@ export function OrgSetupStep({ setup, versionId, onSavingChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
 
-  const toggleRole = (key: string) =>
+  const toggleRole = (key: string) => {
+    if (primaryRole) return; // locked
     setRolesEnabled((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  };
 
   const toggleState = (s: string) =>
     setStatesOperated((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+
+  const lockedRoleLabel = primaryRole
+    ? ROLE_OPTIONS.find((r) => r.key === primaryRole)?.label || primaryRole.replace(/_/g, ' ')
+    : null;
 
   return (
     <div className="space-y-6">
@@ -103,19 +112,33 @@ export function OrgSetupStep({ setup, versionId, onSavingChange }: Props) {
       {/* Roles */}
       <Card className="border-border bg-card/80">
         <CardHeader>
-          <CardTitle className={cn(tokens.card.title, 'tracking-wide')}>Roles in Your Organization</CardTitle>
-          <p className="font-sans text-sm text-muted-foreground">Select every role currently on your team.</p>
+          <CardTitle className={cn(tokens.card.title, 'tracking-wide')}>
+            {primaryRole ? 'Scoped Role' : 'Roles in Your Organization'}
+          </CardTitle>
+          {primaryRole ? (
+            <div className="flex items-start gap-2 p-3 rounded-md bg-primary/5 border border-primary/20 mt-2">
+              <Lock className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+              <p className="font-sans text-xs text-foreground">
+                Scoped to <span className="font-medium">{lockedRoleLabel}</span>. Manage other roles from the Handbooks dashboard.
+              </p>
+            </div>
+          ) : (
+            <p className="font-sans text-sm text-muted-foreground">Select every role currently on your team.</p>
+          )}
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {ROLE_OPTIONS.map((r) => {
             const active = rolesEnabled.includes(r.key);
+            const disabled = !!primaryRole && r.key !== primaryRole;
             return (
               <button
                 key={r.key}
                 onClick={() => toggleRole(r.key)}
+                disabled={disabled}
                 className={cn(
                   'text-left p-3 rounded-lg border transition-colors flex items-center gap-3',
-                  active ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+                  active ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40',
+                  disabled && 'opacity-40 cursor-not-allowed hover:border-border'
                 )}
               >
                 <Checkbox checked={active} className="pointer-events-none" />

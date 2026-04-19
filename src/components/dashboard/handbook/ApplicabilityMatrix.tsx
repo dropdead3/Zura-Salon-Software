@@ -8,10 +8,14 @@ interface Props {
   sections: any[];
   enabledRoles: string[];
   enabledEmploymentTypes: string[];
+  /** When set, collapses role columns to just this role and shifts emphasis to employment types */
+  singleRole?: string;
 }
 
-export function ApplicabilityMatrix({ sections, enabledRoles, enabledEmploymentTypes }: Props) {
-  const roleCols = ROLE_OPTIONS.filter((r) => enabledRoles.includes(r.key));
+export function ApplicabilityMatrix({ sections, enabledRoles, enabledEmploymentTypes, singleRole }: Props) {
+  const roleCols = singleRole
+    ? ROLE_OPTIONS.filter((r) => r.key === singleRole)
+    : ROLE_OPTIONS.filter((r) => enabledRoles.includes(r.key));
   const empCols = EMPLOYMENT_TYPES.filter((e) => enabledEmploymentTypes.includes(e.key));
 
   if (sections.length === 0) {
