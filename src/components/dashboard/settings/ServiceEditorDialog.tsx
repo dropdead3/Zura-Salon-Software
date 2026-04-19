@@ -489,6 +489,90 @@ export function ServiceEditorDialog({
               </form>
             </TabsContent>
 
+            <TabsContent value="online" className="mt-0 p-px">
+              <form id="service-online-form" onSubmit={handleDetailsSubmit} className="space-y-5">
+                <BookingSurfacePreview
+                  internalName={name}
+                  internalPrice={price ? parseFloat(price) : null}
+                  internalDuration={parseInt(duration) || 60}
+                  onlineName={onlineName}
+                  onlineDurationOverride={onlineDurationOverride ? parseInt(onlineDurationOverride) : null}
+                  onlineDiscountPct={onlineDiscountPct ? parseFloat(onlineDiscountPct) : null}
+                  includeFromPrefix={includeFromPrefix}
+                  bookableOnline={bookableOnline}
+                />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className={tokens.body.emphasis}>Bookable Online</p>
+                      <MetricInfoTooltip description="Controls whether this service appears on your website and can be booked by clients online." />
+                    </div>
+                    <p className={tokens.body.muted}>Show on website and allow online booking</p>
+                  </div>
+                  <Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className={tokens.body.emphasis}>Show "From" Price Prefix</p>
+                      <MetricInfoTooltip description='Display the price as "from $X" on public surfaces. Useful when actual price varies by stylist level or consultation.' />
+                    </div>
+                    <p className={tokens.body.muted}>Signals price variability without committing to a single number</p>
+                  </div>
+                  <Switch checked={includeFromPrefix} onCheckedChange={setIncludeFromPrefix} />
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-border/60">
+                  <Label htmlFor="online-name" className="flex items-center gap-1.5">
+                    Online Name Override
+                    <MetricInfoTooltip description="Optional. Display a different service name on the public booking site. Leave blank to use the internal name." />
+                  </Label>
+                  <Input
+                    id="online-name"
+                    value={onlineName}
+                    onChange={e => setOnlineName(e.target.value)}
+                    placeholder={name || 'Same as internal name'}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/60">
+                  <div className="space-y-2">
+                    <Label htmlFor="online-duration" className="flex items-center gap-1.5">
+                      Online Duration (min)
+                      <MetricInfoTooltip description="Optional. Display a different duration on the public booking site (e.g. show 90 min publicly while internally booking 120). Internal scheduling still uses the real duration." />
+                    </Label>
+                    <Input
+                      id="online-duration"
+                      type="number"
+                      min="5"
+                      step="5"
+                      value={onlineDurationOverride}
+                      onChange={e => setOnlineDurationOverride(e.target.value)}
+                      placeholder={`Same as internal (${duration} min)`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="online-discount" className="flex items-center gap-1.5">
+                      Online Discount (%)
+                      <MetricInfoTooltip description="Optional automatic discount applied when booked online. Useful for driving utilization in slow windows." />
+                    </Label>
+                    <Input
+                      id="online-discount"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={onlineDiscountPct}
+                      onChange={e => setOnlineDiscountPct(e.target.value)}
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                </div>
+              </form>
+            </TabsContent>
+
             <TabsContent value="levels" className="mt-0">
               {serviceId && (
                 <LevelPricingContent
