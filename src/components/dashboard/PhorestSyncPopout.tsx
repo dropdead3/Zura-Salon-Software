@@ -75,7 +75,7 @@ export function PhorestSyncPopout({
     try {
       // Fire individual syncs in parallel with short timeout awareness
       // Each sync type runs independently to avoid CPU timeout
-      const syncTypes = ['appointments', 'sales', 'staff', 'services'];
+      const syncTypes = ['appointments', 'sales', 'staff', 'clients'];
       const results: Record<string, any> = {};
       
       for (const syncType of syncTypes) {
