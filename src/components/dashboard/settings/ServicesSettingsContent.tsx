@@ -653,8 +653,25 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                 <Plus className="w-4 h-4 mr-1" /> Add Service
               </Button>
             </div>
-            <CardDescription>Manage individual services within each category.</CardDescription>
+            <CardDescription>Manage individual services within each category. Select multiple to bulk-edit.</CardDescription>
           </CardHeader>
+
+          {/* Wave 3: Bulk selection toolbar */}
+          {selectedServiceIds.size > 0 && (
+            <div className="mx-6 mb-4 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/5 px-3 py-2">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearSelection}>
+                  <X className="w-4 h-4" />
+                </Button>
+                <span className={cn(tokens.body.emphasis)}>
+                  {selectedServiceIds.size} selected
+                </span>
+              </div>
+              <Button size="sm" onClick={() => setBulkEditOpen(true)}>
+                <SlidersHorizontal className="w-4 h-4 mr-1.5" /> Bulk edit
+              </Button>
+            </div>
+          )}
           <CardContent>
             {/* Search */}
             {(allServices?.length || 0) > 5 && (
