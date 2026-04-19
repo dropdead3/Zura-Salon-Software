@@ -1018,11 +1018,13 @@ export function ServiceEditorDialog({
             <TabsContent value="history" className="mt-0 p-px">
               {serviceId && <ServiceAuditLogPanel serviceId={serviceId} />}
             </TabsContent>
+            </div>
           </div>
         </Tabs>
+        </TooltipProvider>
 
         {(activeTab === 'details' || activeTab === 'online' || activeTab === 'advanced') && (
-          <DialogFooter className="gap-2 sm:gap-0 pt-4 border-t border-border flex-col sm:flex-row sm:items-center">
+          <DialogFooter className="gap-2 sm:gap-0 px-6 py-4 border-t border-border flex-col sm:flex-row sm:items-center shrink-0 bg-background">
             {hasErrors && (
               <p className="text-xs text-destructive sm:mr-auto">
                 {Object.values(errors)[0]}
@@ -1047,7 +1049,7 @@ export function ServiceEditorDialog({
         )}
 
         {activeTab !== 'details' && activeTab !== 'online' && activeTab !== 'advanced' && (
-          <DialogFooter className="pt-4 border-t border-border">
+          <DialogFooter className="px-6 py-4 border-t border-border shrink-0 bg-background">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Done</Button>
           </DialogFooter>
         )}
