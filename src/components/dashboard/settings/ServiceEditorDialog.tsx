@@ -955,5 +955,34 @@ export function ServiceEditorDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved changes to this service. Are you sure you want to close without saving?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+          <Button
+            variant="outline"
+            onClick={handleDiscard}
+            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            Discard Changes
+          </Button>
+          <AlertDialogAction
+            onClick={handleSaveAndClose}
+            disabled={!name.trim() || isPending || hasErrors}
+          >
+            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Save &amp; Close
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
