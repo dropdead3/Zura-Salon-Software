@@ -251,6 +251,15 @@ export function ServiceEditorDialog({
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+  // Re-run validation reactively after the user has tried to submit once,
+  // so error chips clear as soon as the field is fixed.
+  useEffect(() => {
+    if (Object.keys(validationErrors).length === 0) return;
+    setValidationErrors(validate());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onlineDiscountPct, loyaltyPointsOverride, startUpMinutes, shutDownMinutes, posHotkey, duration, price, cost]);
+
+
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
