@@ -224,6 +224,17 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
         }
       }
 
+      // Pre-compute conflict groups: same client + time across different staff or locations.
+      // Index active appointments by `${phorest_client_id}::${start_time}::${end_time}`.
+      const conflictIndex = new Map<string, any[]>();
+      for (const appt of appointments as any[]) {
+        const cid = appt.phorest_client_id;
+        if (!cid) continue;
+        const key = `${cid}::${appt.start_time}::${appt.end_time}`;
+        if (!conflictIndex.has(key)) conflictIndex.set(key, []);
+        conflictIndex.get(key)!.push(appt);
+      }
+
       // Build per-stylist details
       const stylistDetailsMap = new Map<string, StylistDetail>();
 
@@ -263,6 +274,34 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
 
         const apptLocationId = (current as any)?.location_id || null;
 
+        // Compute conflict peers for current appointment (same client + time, different staff/location)
+        let conflictPeers: ConflictPeer[] | undefined;
+        const currentClientId = (current as any)?.phorest_client_id;
+        if (current && currentClientId) {
+          const key = `${currentClientId}::${current.start_time}::${current.end_time}`;
+          const group = conflictIndex.get(key) || [];
+          const peers = group.filter((a: any) =>
+            a.phorest_staff_id !== staffId || a.location_id !== apptLocationId
+          );
+          if (peers.length > 0) {
+            conflictPeers = peers.map((p: any) => {
+              const peerProfile = staffToUser.get(p.phorest_staff_id)
+                ? profileMap.get(staffToUser.get(p.phorest_staff_id)!)
+                : null;
+              const peerPhorestName = staffToName.get(p.phorest_staff_id);
+              const peerName = peerProfile
+                ? formatFullDisplayName(peerProfile.full_name || '', peerProfile.display_name)
+                : (peerPhorestName ? peerPhorestName : unmappedLabel(p.phorest_staff_id));
+              return {
+                stylistName: peerName,
+                locationName: p.location_id ? (locationNameMap.get(p.location_id) || null) : null,
+                startTime: p.start_time,
+                endTime: p.end_time,
+              };
+            });
+          }
+        }
+
         stylistDetailsMap.set(staffId, {
           name,
           photoUrl,
@@ -277,6 +316,7 @@ export function useLiveSessionSnapshot(locationId?: string, enabled: boolean = t
           locationName: apptLocationId ? (locationNameMap.get(apptLocationId) || null) : null,
           isUnmapped,
           phorestStaffId: staffId,
+          conflictPeers,
         });
       }
 
