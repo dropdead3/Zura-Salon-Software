@@ -24,22 +24,32 @@ export interface ServiceFormRequirementInsert {
  * Org-wide list of every service↔form linkage row, joined with the form template.
  * Use this for catalog-level views (e.g. Forms admin showing what each form is
  * attached to). For "what does THIS service require" use `useRequiredFormsForService`.
+ *
+ * Wave 8: scoped via inner-join on services.organization_id so a large
+ * multi-tenant deployment never silently truncates at the 1000-row default.
  */
-export function useServiceFormRequirements() {
+export function useServiceFormRequirements(organizationId?: string | null) {
   return useQuery({
-    queryKey: ['service-form-requirements'],
+    queryKey: ['service-form-requirements', organizationId ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('service_form_requirements')
         .select(`
           *,
+          services!inner(organization_id),
           form_template:form_templates(*)
-        `)
-        .order('created_at', { ascending: false });
-      
+        `);
+
+      if (organizationId) {
+        query = query.eq('services.organization_id', organizationId);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
       if (error) throw error;
       return data as unknown as ServiceFormRequirement[];
     },
+    enabled: !organizationId || !!organizationId, // always enabled; guard is informational
   });
 }
 

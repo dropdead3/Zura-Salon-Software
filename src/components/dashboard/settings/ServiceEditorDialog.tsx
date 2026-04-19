@@ -210,8 +210,66 @@ export function ServiceEditorDialog({
   useEditorDirtyState(isDirty);
 
 
+  // Wave 8: numeric bounds + hotkey hygiene validation. Returns a map of
+  // field-key -> error message; empty map means OK to submit.
+  const validate = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+
+    const durationNum = parseInt(duration);
+    if (!duration || isNaN(durationNum) || durationNum < 5) {
+      errors.duration = 'Duration must be at least 5 minutes';
+    }
+
+    if (price && parseFloat(price) < 0) errors.price = 'Price cannot be negative';
+    if (cost && parseFloat(cost) < 0) errors.cost = 'Cost cannot be negative';
+
+    if (onlineDiscountPct) {
+      const pct = parseFloat(onlineDiscountPct);
+      if (isNaN(pct) || pct < 0 || pct > 100) {
+        errors.onlineDiscountPct = 'Discount must be between 0 and 100';
+      }
+    }
+
+    if (loyaltyPointsOverride && parseInt(loyaltyPointsOverride) < 0) {
+      errors.loyaltyPointsOverride = 'Loyalty points cannot be negative';
+    }
+    if (startUpMinutes && parseInt(startUpMinutes) < 0) {
+      errors.startUpMinutes = 'Start-up minutes cannot be negative';
+    }
+    if (shutDownMinutes && parseInt(shutDownMinutes) < 0) {
+      errors.shutDownMinutes = 'Shut-down minutes cannot be negative';
+    }
+
+    // POS hotkey: trim, uppercase, alphanumeric only, max 8 chars
+    const hk = posHotkey.trim().toUpperCase();
+    if (hk && !/^[A-Z0-9]{1,8}$/.test(hk)) {
+      errors.posHotkey = 'Hotkey must be 1–8 letters/numbers (no spaces or symbols)';
+    }
+
+    return errors;
+  };
+
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  // Re-run validation reactively after the user has tried to submit once,
+  // so error chips clear as soon as the field is fixed.
+  useEffect(() => {
+    if (Object.keys(validationErrors).length === 0) return;
+    setValidationErrors(validate());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onlineDiscountPct, loyaltyPointsOverride, startUpMinutes, shutDownMinutes, posHotkey, duration, price, cost]);
+
+
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors = validate();
+    setValidationErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    // Normalize hotkey before write
+    const normalizedHotkey = posHotkey.trim().toUpperCase() || null;
+
     onSubmit({
       ...(initialData?.id ? { id: initialData.id } : {}),
       name: name.trim(),
@@ -249,10 +307,12 @@ export function ServiceEditorDialog({
       shut_down_minutes: parseInt(shutDownMinutes) || 0,
       creation_prompt: creationPrompt.trim() || null,
       checkin_prompt: checkinPrompt.trim() || null,
-      pos_hotkey: posHotkey.trim() || null,
+      pos_hotkey: normalizedHotkey,
       loyalty_points_override: loyaltyPointsOverride ? parseInt(loyaltyPointsOverride) : null,
     } as Partial<Service>);
   };
+
+  const hasValidationErrors = Object.keys(validationErrors).length > 0;
 
   const isCreateMode = mode === 'create';
   const serviceId = initialData?.id || null;
@@ -664,7 +724,11 @@ export function ServiceEditorDialog({
                       value={onlineDiscountPct}
                       onChange={e => setOnlineDiscountPct(e.target.value)}
                       placeholder="e.g. 10"
+                      aria-invalid={!!validationErrors.onlineDiscountPct}
                     />
+                    {validationErrors.onlineDiscountPct && (
+                      <p className="text-xs text-destructive">{validationErrors.onlineDiscountPct}</p>
+                    )}
                   </div>
                 </div>
               </form>
@@ -718,7 +782,11 @@ export function ServiceEditorDialog({
                       value={startUpMinutes}
                       onChange={e => setStartUpMinutes(e.target.value)}
                       placeholder="0"
+                      aria-invalid={!!validationErrors.startUpMinutes}
                     />
+                    {validationErrors.startUpMinutes && (
+                      <p className="text-xs text-destructive">{validationErrors.startUpMinutes}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="shutdown-min" className="flex items-center gap-1.5">
@@ -733,7 +801,11 @@ export function ServiceEditorDialog({
                       value={shutDownMinutes}
                       onChange={e => setShutDownMinutes(e.target.value)}
                       placeholder="0"
+                      aria-invalid={!!validationErrors.shutDownMinutes}
                     />
+                    {validationErrors.shutDownMinutes && (
+                      <p className="text-xs text-destructive">{validationErrors.shutDownMinutes}</p>
+                    )}
                   </div>
                 </div>
 
@@ -771,15 +843,19 @@ export function ServiceEditorDialog({
                   <div className="space-y-2">
                     <Label htmlFor="pos-hotkey" className="flex items-center gap-1.5">
                       POS Hotkey
-                      <MetricInfoTooltip description="Optional 1–8 character shortcut to add this service from the POS keypad. Speeds up high-volume checkout." />
+                      <MetricInfoTooltip description="Optional 1–8 character shortcut to add this service from the POS keypad. Speeds up high-volume checkout. Letters and numbers only." />
                     </Label>
                     <Input
                       id="pos-hotkey"
                       maxLength={8}
                       value={posHotkey}
-                      onChange={e => setPosHotkey(e.target.value)}
+                      onChange={e => setPosHotkey(e.target.value.toUpperCase())}
                       placeholder="e.g. CUT1"
+                      aria-invalid={!!validationErrors.posHotkey}
                     />
+                    {validationErrors.posHotkey && (
+                      <p className="text-xs text-destructive">{validationErrors.posHotkey}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="loyalty-override" className="flex items-center gap-1.5">
@@ -794,7 +870,11 @@ export function ServiceEditorDialog({
                       value={loyaltyPointsOverride}
                       onChange={e => setLoyaltyPointsOverride(e.target.value)}
                       placeholder="Default rule"
+                      aria-invalid={!!validationErrors.loyaltyPointsOverride}
                     />
+                    {validationErrors.loyaltyPointsOverride && (
+                      <p className="text-xs text-destructive">{validationErrors.loyaltyPointsOverride}</p>
+                    )}
                   </div>
                 </div>
               </form>
@@ -858,7 +938,7 @@ export function ServiceEditorDialog({
                     ? 'service-advanced-form'
                     : 'service-details-form'
               }
-              disabled={!name.trim() || isPending || (!isCreateMode && !isDirty)}
+              disabled={!name.trim() || isPending || (!isCreateMode && !isDirty) || hasValidationErrors}
             >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isCreateMode ? 'Create Service' : 'Save Changes'}
