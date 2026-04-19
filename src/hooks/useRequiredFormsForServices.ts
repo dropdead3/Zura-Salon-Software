@@ -17,6 +17,12 @@ export interface RequiredFormForService {
  *
  * Filters server-side to is_required=true so optional/recommended forms don't
  * surface as gates.
+ *
+ * NOTE: Service IDs sourced from `v_all_services` may originate from either
+ * `services.id` (native) or `phorest_services.id` (legacy fallback). Form
+ * requirements only attach to native `services` rows, so phorest-only services
+ * silently return zero matches. After Phorest decoupling completes the legacy
+ * leg of the view disappears and this caveat goes away.
  */
 export function useRequiredFormsForServices(serviceIds: string[] | undefined) {
   const ids = (serviceIds ?? []).filter(Boolean);

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -39,7 +38,6 @@ export function ServiceFormsLinkagePanel({ serviceId }: ServiceFormsLinkagePanel
   const { data: templates, isLoading: tplLoading } = useActiveFormTemplates();
   // Fetch ALL requirements for this service (not just is_required=true) so we can
   // show optional ones too.
-  const queryClient = useQueryClient();
   const { data: requirements, isLoading: reqLoading } = useQuery({
     queryKey: ['service-form-requirements', 'all', serviceId],
     queryFn: async () => {
@@ -54,6 +52,8 @@ export function ServiceFormsLinkagePanel({ serviceId }: ServiceFormsLinkagePanel
     enabled: !!serviceId,
   });
 
+  // Mutation hooks own their own cache invalidation (incl. service-form-counts
+  // and required-forms-for-services) — no manual invalidation needed here.
   const linkForm = useLinkFormToService();
   const unlinkForm = useUnlinkFormFromService();
   const updateReq = useUpdateFormRequirement();
@@ -79,22 +79,18 @@ export function ServiceFormsLinkagePanel({ serviceId }: ServiceFormsLinkagePanel
       signing_frequency: 'once',
     });
     setPickerValue('');
-    queryClient.invalidateQueries({ queryKey: ['service-form-requirements', 'all', serviceId] });
   };
 
   const handleRemove = async (id: string) => {
     await unlinkForm.mutateAsync(id);
-    queryClient.invalidateQueries({ queryKey: ['service-form-requirements', 'all', serviceId] });
   };
 
   const handleToggleRequired = async (id: string, isRequired: boolean) => {
     await updateReq.mutateAsync({ id, updates: { is_required: isRequired } });
-    queryClient.invalidateQueries({ queryKey: ['service-form-requirements', 'all', serviceId] });
   };
 
   const handleFrequency = async (id: string, freq: 'once' | 'per_visit' | 'annually') => {
     await updateReq.mutateAsync({ id, updates: { signing_frequency: freq } });
-    queryClient.invalidateQueries({ queryKey: ['service-form-requirements', 'all', serviceId] });
   };
 
   if (tplLoading || reqLoading) {
@@ -178,9 +174,11 @@ export function ServiceFormsLinkagePanel({ serviceId }: ServiceFormsLinkagePanel
                       <Badge variant="outline" className="text-[10px] py-0 h-4">
                         {req.form_template?.form_type ?? 'custom'}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        v{req.form_template?.version ?? '1.0'}
-                      </span>
+                      {req.form_template?.version && (
+                        <span className="text-xs text-muted-foreground">
+                          v{req.form_template.version}
+                        </span>
+                      )}
                     </div>
                   </div>
 
