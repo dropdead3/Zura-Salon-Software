@@ -713,38 +713,40 @@ export function DayView({
                 );
 
                 const avatar = (
-                  <div className="relative shrink-0">
-                    {specialties ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="inline-block">{avatarEl}</span>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs max-w-[220px]">
-                          <div className="font-medium">{fullName}</div>
-                          <div className="text-muted-foreground mt-0.5">{specialties}</div>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      avatarEl
-                    )}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+                  <Tooltip delayDuration={150}>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="relative shrink-0 inline-block"
+                        aria-label={`${fullName}. ${acceptingLabel}`}
+                      >
+                        {avatarEl}
                         <span
                           className={cn(
-                            'absolute -top-1 -right-1 w-3 h-3 rounded-full cursor-help z-10',
+                            'absolute -top-1 -right-1 w-3 h-3 rounded-full pointer-events-none z-10',
                             'shadow-[0_0_0_2px_hsl(var(--sidebar-background)/0.95),0_1px_3px_rgba(0,0,0,0.4)]',
                             'ring-1 ring-white/20',
                             acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
                           )}
-                          aria-label={acceptingLabel}
                           role="status"
                         />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs">
-                        {acceptingLabel}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs max-w-[220px]">
+                      <div className="font-medium">{fullName}</div>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+                        <span
+                          className={cn(
+                            'inline-block w-1.5 h-1.5 rounded-full',
+                            acceptingClients ? 'bg-emerald-500' : 'bg-destructive/70'
+                          )}
+                        />
+                        <span>{acceptingLabel}</span>
+                      </div>
+                      {specialties && (
+                        <div className="mt-1 text-muted-foreground">{specialties}</div>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
                 );
 
                 // Condensed (< 120px) — vertical stack
