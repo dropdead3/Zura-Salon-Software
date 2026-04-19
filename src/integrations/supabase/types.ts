@@ -17397,6 +17397,63 @@ export type Database = {
           },
         ]
       }
+      policy_draft_jobs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          model: string
+          organization_id: string
+          output_md: string | null
+          prompt_hash: string | null
+          status: string
+          variant_type: Database["public"]["Enums"]["policy_variant_type"]
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          model?: string
+          organization_id: string
+          output_md?: string | null
+          prompt_hash?: string | null
+          status?: string
+          variant_type: Database["public"]["Enums"]["policy_variant_type"]
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          model?: string
+          organization_id?: string
+          output_md?: string | null
+          prompt_hash?: string | null
+          status?: string
+          variant_type?: Database["public"]["Enums"]["policy_variant_type"]
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_draft_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_draft_jobs_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "policy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       policy_exceptions: {
         Row: {
           authority_role: string

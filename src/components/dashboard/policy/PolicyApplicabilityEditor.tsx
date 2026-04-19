@@ -4,8 +4,8 @@
  * Schema-light grid for picking who a policy applies to. Group by scope_type;
  * each scope is a multiselect. Empty = "applies to everyone in that scope".
  */
-import { useMemo } from 'react';
-import { Loader2, Save, Users } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
+import { Loader2, Save, Users, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -17,8 +17,10 @@ import {
   SCOPE_TYPE_META,
   DEFAULT_SCOPE_VALUES,
   useSavePolicyApplicability,
+  seedApplicabilityFromProfile,
 } from '@/hooks/policy/usePolicyApplicability';
 import { useLocations } from '@/hooks/useLocations';
+import { usePolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
 
 interface Props {
   versionId: string;
@@ -37,7 +39,28 @@ const SCOPE_ORDER: PolicyScopeType[] = [
 
 export function PolicyApplicabilityEditor({ versionId, rows, onChange, onSaved }: Props) {
   const { data: locations = [] } = useLocations();
+  const { data: profile } = usePolicyOrgProfile();
   const save = useSavePolicyApplicability();
+  const seededRef = useRef(false);
+  const seededFromProfile = seededRef.current;
+
+  // Profile-seeded defaults: when this editor mounts with zero rows AND we
+  // have a profile, seed the scopes from roles_used / service_categories /
+  // locations. Operator can deselect any chip before saving.
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (rows.length > 0) {
+      seededRef.current = true;
+      return;
+    }
+    if (!profile) return;
+    const seeded = seedApplicabilityFromProfile(profile, locations);
+    if (seeded.length > 0) {
+      seededRef.current = true;
+      onChange(seeded);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, locations, rows.length]);
 
   const grouped = useMemo(() => {
     const out: Record<PolicyScopeType, Set<string>> = {
@@ -75,10 +98,20 @@ export function PolicyApplicabilityEditor({ versionId, rows, onChange, onSaved }
     <div className="space-y-6">
       <div className="flex items-start gap-2">
         <Users className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-        <p className="font-sans text-xs text-muted-foreground">
-          Pick who this policy applies to. Leaving a scope empty means it applies to{' '}
-          <span className="text-foreground font-medium">everyone</span> in that scope.
-        </p>
+        <div className="space-y-1.5">
+          <p className="font-sans text-xs text-muted-foreground">
+            Pick who this policy applies to. Leaving a scope empty means it applies to{' '}
+            <span className="text-foreground font-medium">everyone</span> in that scope.
+          </p>
+          {seededFromProfile && (
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5">
+              <Sparkles className="w-3 h-3 text-primary" />
+              <span className="font-sans text-[10px] text-primary">
+                Pre-filled from your business profile — adjust as needed
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-5">

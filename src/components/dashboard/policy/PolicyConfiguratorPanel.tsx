@@ -11,7 +11,7 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { PolicyRuleField } from './PolicyRuleField';
 import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
+import { PolicyDraftWorkspace } from './PolicyDraftWorkspace';
 import {
   getConfiguratorSchema,
   type RuleField,
@@ -37,6 +38,7 @@ import {
   type SurfaceMappingRow,
   SURFACE_META,
 } from '@/hooks/policy/usePolicyApplicability';
+import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 import { POLICY_CATEGORY_META } from '@/hooks/policy/usePolicyData';
 
@@ -66,7 +68,7 @@ export function PolicyConfiguratorPanel({
 
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
-  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces'>('rules');
+  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts'>('rules');
 
   // Auto-adopt if not yet adopted, so the configurator always has a draft version.
   useEffect(() => {
@@ -145,6 +147,18 @@ export function PolicyConfiguratorPanel({
   /* Counters for tab badges */
   const applicabilityCount = applicability?.length ?? 0;
   const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
+  const { data: variantsData = [] } = usePolicyVariants(versionId);
+  const approvedVariantCount = variantsData.filter((v) => v.approved).length;
+
+  /* Required-rule readiness for drafter */
+  const rulesReady = useMemo(() => {
+    return allFields
+      .filter((f) => f.required)
+      .every((f) => {
+        const v = values[f.key];
+        return v !== null && v !== undefined && v !== '';
+      });
+  }, [allFields, values]);
 
   return (
     <div className="space-y-6">
@@ -214,6 +228,15 @@ export function PolicyConfiguratorPanel({
               {surfacesActiveCount > 0 && (
                 <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
                   {surfacesActiveCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="drafts" className="font-sans">
+              <FileText className="w-3.5 h-3.5 mr-1.5" />
+              Drafts
+              {approvedVariantCount > 0 && (
+                <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
+                  {approvedVariantCount}
                 </Badge>
               )}
             </TabsTrigger>
@@ -300,6 +323,13 @@ export function PolicyConfiguratorPanel({
                 rows={surfaces}
                 onChange={setSurfaces}
               />
+            )}
+          </TabsContent>
+
+          {/* ---- Drafts tab (Wave 28.6) ---- */}
+          <TabsContent value="drafts" className="mt-6">
+            {versionId && (
+              <PolicyDraftWorkspace versionId={versionId} rulesReady={rulesReady} />
             )}
           </TabsContent>
         </Tabs>

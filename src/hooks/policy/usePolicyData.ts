@@ -135,6 +135,13 @@ export function useOrgPolicies() {
   });
 }
 
+export interface PolicySurfaceConflict {
+  surface: PolicySurface;
+  category: PolicyCategory;
+  policy_keys: string[];
+  policy_titles: string[];
+}
+
 export interface PolicyHealthSummary {
   total_recommended: number;
   adopted: number;
@@ -142,12 +149,57 @@ export interface PolicyHealthSummary {
   published: number;
   wired: number;
   by_category: Record<PolicyCategory, { adopted: number; total: number }>;
+  surface_conflicts: PolicySurfaceConflict[];
+}
+
+/**
+ * Fetch surface mappings for all of an org's adopted policies (current_version_id).
+ * Used to detect surface conflicts (two policies of same category mapped to same surface).
+ */
+export function useOrgPolicySurfaceMappings() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  return useQuery({
+    queryKey: ['org-policy-surface-mappings', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await supabase
+        .from('policy_surface_mappings')
+        .select('surface, version_id, enabled, policy_versions!inner(policy_id, policies!inner(library_key, category, internal_title, organization_id, current_version_id))')
+        .eq('enabled', true);
+      if (error) throw error;
+      // Filter to current-version mappings only and this org
+      return (data ?? []).filter((row: any) => {
+        const pol = row.policy_versions?.policies;
+        return (
+          pol &&
+          pol.organization_id === orgId &&
+          pol.current_version_id === row.version_id
+        );
+      }) as Array<{
+        surface: PolicySurface;
+        version_id: string;
+        policy_versions: {
+          policy_id: string;
+          policies: {
+            library_key: string;
+            category: PolicyCategory;
+            internal_title: string;
+            organization_id: string;
+            current_version_id: string;
+          };
+        };
+      }>;
+    },
+    enabled: !!orgId,
+  });
 }
 
 /** Compute lightweight health summary from library + adopted policies. */
 export function usePolicyHealthSummary() {
   const { data: library = [] } = usePolicyLibrary();
   const { data: adopted = [] } = useOrgPolicies();
+  const { data: surfaceMappings = [] } = useOrgPolicySurfaceMappings();
 
   const adoptedKeys = new Set(adopted.map((p) => p.library_key));
   const recommendedLibrary = library.filter(
@@ -164,6 +216,30 @@ export function usePolicyHealthSummary() {
     {} as Record<PolicyCategory, { adopted: number; total: number }>,
   );
 
+  // Surface conflict detection: group by (surface, category), flag groups with 2+ policies
+  const buckets = new Map<string, { surface: PolicySurface; category: PolicyCategory; keys: Set<string>; titles: Set<string> }>();
+  surfaceMappings.forEach((m) => {
+    const pol = m.policy_versions.policies;
+    const k = `${m.surface}::${pol.category}`;
+    if (!buckets.has(k)) {
+      buckets.set(k, { surface: m.surface, category: pol.category, keys: new Set(), titles: new Set() });
+    }
+    const b = buckets.get(k)!;
+    b.keys.add(pol.library_key);
+    b.titles.add(pol.internal_title);
+  });
+  const surface_conflicts: PolicySurfaceConflict[] = [];
+  buckets.forEach((b) => {
+    if (b.keys.size > 1) {
+      surface_conflicts.push({
+        surface: b.surface,
+        category: b.category,
+        policy_keys: Array.from(b.keys),
+        policy_titles: Array.from(b.titles),
+      });
+    }
+  });
+
   const summary: PolicyHealthSummary = {
     total_recommended: recommendedLibrary.length,
     adopted: adopted.length,
@@ -179,6 +255,7 @@ export function usePolicyHealthSummary() {
     ).length,
     wired: adopted.filter((p) => p.status === 'wired').length,
     by_category,
+    surface_conflicts,
   };
 
   return summary;

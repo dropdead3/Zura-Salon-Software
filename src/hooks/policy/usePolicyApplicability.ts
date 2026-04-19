@@ -9,10 +9,21 @@
  * versions remain intact when a new draft is opened.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Book,
+  Globe,
+  CalendarCheck,
+  CreditCard,
+  ClipboardList,
+  ShieldAlert,
+  ListChecks,
+  type LucideIcon,
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import type { PolicyOrgProfile } from './usePolicyOrgProfile';
 
 export type PolicyScopeType = Database['public']['Enums']['policy_scope_type'];
 export type PolicySurface = Database['public']['Enums']['policy_surface'];
@@ -142,44 +153,77 @@ export function useSavePolicySurfaceMappings() {
 
 export const SURFACE_META: Record<
   PolicySurface,
-  { label: string; description: string; defaultVariant: PolicyVariantType }
+  { label: string; description: string; defaultVariant: PolicyVariantType; icon: LucideIcon; shortLabel: string }
 > = {
   handbook: {
     label: 'Employee Handbook',
+    shortLabel: 'Handbook',
     description: 'Internal team-facing handbook section.',
     defaultVariant: 'internal',
+    icon: Book,
   },
   client_page: {
     label: 'Client Policy Page',
+    shortLabel: 'Client',
     description: 'Public client-facing policy page (/book/:org/policies).',
     defaultVariant: 'client',
+    icon: Globe,
   },
   booking: {
     label: 'Booking Disclosure',
+    shortLabel: 'Booking',
     description: 'Inline disclosure shown before a client confirms a booking.',
     defaultVariant: 'disclosure',
+    icon: CalendarCheck,
   },
   checkout: {
     label: 'Checkout Enforcement',
+    shortLabel: 'Checkout',
     description: 'Rules enforced at checkout (deposits, fees, surcharges).',
     defaultVariant: 'disclosure',
+    icon: CreditCard,
   },
   intake: {
     label: 'Consultation / Intake',
+    shortLabel: 'Intake',
     description: 'Required acknowledgment during consultation or intake form.',
     defaultVariant: 'client',
+    icon: ClipboardList,
   },
   manager: {
     label: 'Manager Decision Card',
+    shortLabel: 'Manager',
     description: 'Quick-reference card surfaced when staff need to make exception calls.',
     defaultVariant: 'manager_note',
+    icon: ShieldAlert,
   },
   sop: {
     label: 'Standard Operating Procedure',
+    shortLabel: 'SOP',
     description: 'Step-by-step procedural reference for staff execution.',
     defaultVariant: 'internal',
+    icon: ListChecks,
   },
 };
+
+/**
+ * Seed applicability rows from the org profile (28.3) so freshly adopted
+ * policies inherit org reality (roles_used, service_categories, locations).
+ * The operator can deselect any chip before saving.
+ */
+export function seedApplicabilityFromProfile(
+  profile: PolicyOrgProfile | null,
+  locations: Array<{ id: string }>,
+): ApplicabilityRow[] {
+  if (!profile) return [];
+  const out: ApplicabilityRow[] = [];
+  (profile.roles_used ?? []).forEach((r) => out.push({ scope_type: 'role', scope_value: r }));
+  (profile.service_categories ?? []).forEach((s) =>
+    out.push({ scope_type: 'service_category', scope_value: s }),
+  );
+  locations.forEach((l) => out.push({ scope_type: 'location', scope_value: l.id }));
+  return out;
+}
 
 export const SCOPE_TYPE_META: Record<
   PolicyScopeType,
