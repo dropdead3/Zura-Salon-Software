@@ -47,6 +47,9 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
   const upsertOverride = useUpsertStylistPriceOverride();
   const deleteOverride = useDeleteStylistPriceOverride();
 
+  const { data: exclusions = [] } = useStylistServiceExclusions(serviceId);
+  const toggleExclusion = useToggleStylistServiceExclusion();
+
   const { data: employees = [], isLoading: employeesLoading } = useQuery({
     queryKey: ['employees-for-overrides', orgId],
     queryFn: async () => {
@@ -61,6 +64,11 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
     },
     enabled: !!orgId,
   });
+
+  const exclusionSet = useMemo(
+    () => new Set(exclusions.map((e) => e.employee_id)),
+    [exclusions],
+  );
 
   const [search, setSearch] = useState('');
   const [addingEmployeeId, setAddingEmployeeId] = useState<string | null>(null);
