@@ -323,33 +323,6 @@ export function useServiceLocations(serviceName: string) {
   });
 }
 
-/**
- * Get service categories
- */
-export function useServiceCategories(locationId?: string) {
-  return useQuery({
-    queryKey: ['service-categories', locationId],
-    queryFn: async () => {
-      let query = supabase
-        .from('services')
-        .select('category')
-        .eq('is_active', true)
-        .eq('is_archived', false)
-        .not('category', 'is', null);
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      
-      // Get unique categories
-      const categories = [...new Set(data?.map(s => s.category).filter(Boolean) || [])];
-      return categories.sort();
-    },
-  });
-}
 
 /**
  * Fetch archived services

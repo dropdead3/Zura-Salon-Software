@@ -16,13 +16,17 @@ export interface ServiceSeasonalAdjustment {
   organization_id: string;
 }
 
-export function useServiceSeasonalAdjustments(serviceId: string | null) {
+export function useServiceSeasonalAdjustments(serviceId: string | null, organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId ?? effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['service-seasonal-adjustments', serviceId],
+    queryKey: ['service-seasonal-adjustments', orgId, serviceId],
     queryFn: async () => {
       const query = supabase
         .from('service_seasonal_adjustments')
         .select('*')
+        .eq('organization_id', orgId as string)
         .order('start_date', { ascending: false });
 
       // Get adjustments for this specific service OR global ones (service_id IS NULL)
@@ -34,7 +38,7 @@ export function useServiceSeasonalAdjustments(serviceId: string | null) {
       if (error) throw error;
       return data as unknown as ServiceSeasonalAdjustment[];
     },
-    enabled: !!serviceId,
+    enabled: !!serviceId && !!orgId,
   });
 }
 
