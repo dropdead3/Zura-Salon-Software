@@ -5916,6 +5916,67 @@ export type Database = {
           },
         ]
       }
+      client_patch_tests: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          performed_at: string
+          performed_by: string | null
+          result: string
+          service_category: string | null
+          service_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          performed_at?: string
+          performed_by?: string | null
+          result?: string
+          service_category?: string | null
+          service_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          performed_at?: string
+          performed_by?: string | null
+          result?: string
+          service_category?: string | null
+          service_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_patch_tests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_patch_tests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_patch_tests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_portal_tokens: {
         Row: {
           client_id: string
@@ -23118,10 +23179,12 @@ export type Database = {
           backroom_config_dismissed: boolean
           bookable_online: boolean
           category: string | null
+          checkin_prompt: string | null
           container_types: Database["public"]["Enums"]["container_type"][]
           content_creation_time_minutes: number
           cost: number | null
           created_at: string | null
+          creation_prompt: string | null
           deposit_amount: number | null
           deposit_amount_flat: number | null
           deposit_type: string
@@ -23143,11 +23206,15 @@ export type Database = {
           is_popular: boolean
           lead_time_days: number | null
           location_id: string | null
+          loyalty_points_override: number | null
           name: string
           online_discount_pct: number | null
           online_duration_override: number | null
           online_name: string | null
           organization_id: string | null
+          patch_test_required: boolean
+          patch_test_validity_days: number
+          pos_hotkey: string | null
           predictive_backroom_enabled: boolean
           price: number | null
           processing_time_minutes: number
@@ -23156,7 +23223,9 @@ export type Database = {
           requires_new_client_consultation: boolean
           requires_qualification: boolean | null
           same_day_restriction_reason: string | null
+          shut_down_minutes: number
           smart_mix_assist_enabled: boolean
+          start_up_minutes: number
           updated_at: string | null
           variance_threshold_pct: number
           website_description: string | null
@@ -23168,10 +23237,12 @@ export type Database = {
           backroom_config_dismissed?: boolean
           bookable_online?: boolean
           category?: string | null
+          checkin_prompt?: string | null
           container_types?: Database["public"]["Enums"]["container_type"][]
           content_creation_time_minutes?: number
           cost?: number | null
           created_at?: string | null
+          creation_prompt?: string | null
           deposit_amount?: number | null
           deposit_amount_flat?: number | null
           deposit_type?: string
@@ -23193,11 +23264,15 @@ export type Database = {
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
+          loyalty_points_override?: number | null
           name: string
           online_discount_pct?: number | null
           online_duration_override?: number | null
           online_name?: string | null
           organization_id?: string | null
+          patch_test_required?: boolean
+          patch_test_validity_days?: number
+          pos_hotkey?: string | null
           predictive_backroom_enabled?: boolean
           price?: number | null
           processing_time_minutes?: number
@@ -23206,7 +23281,9 @@ export type Database = {
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
+          shut_down_minutes?: number
           smart_mix_assist_enabled?: boolean
+          start_up_minutes?: number
           updated_at?: string | null
           variance_threshold_pct?: number
           website_description?: string | null
@@ -23218,10 +23295,12 @@ export type Database = {
           backroom_config_dismissed?: boolean
           bookable_online?: boolean
           category?: string | null
+          checkin_prompt?: string | null
           container_types?: Database["public"]["Enums"]["container_type"][]
           content_creation_time_minutes?: number
           cost?: number | null
           created_at?: string | null
+          creation_prompt?: string | null
           deposit_amount?: number | null
           deposit_amount_flat?: number | null
           deposit_type?: string
@@ -23243,11 +23322,15 @@ export type Database = {
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
+          loyalty_points_override?: number | null
           name?: string
           online_discount_pct?: number | null
           online_duration_override?: number | null
           online_name?: string | null
           organization_id?: string | null
+          patch_test_required?: boolean
+          patch_test_validity_days?: number
+          pos_hotkey?: string | null
           predictive_backroom_enabled?: boolean
           price?: number | null
           processing_time_minutes?: number
@@ -23256,7 +23339,9 @@ export type Database = {
           requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
+          shut_down_minutes?: number
           smart_mix_assist_enabled?: boolean
+          start_up_minutes?: number
           updated_at?: string | null
           variance_threshold_pct?: number
           website_description?: string | null

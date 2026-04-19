@@ -80,11 +80,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Look up service (with online overrides) ─────────────────
+    // ── Look up service (with online overrides + Wave 2 guardrails) ──
     const { data: service, error: svcErr } = await supabase
       .from("services")
       .select(
-        "id, name, category, duration_minutes, price, requires_deposit, deposit_type, deposit_amount, require_card_on_file, online_duration_override, online_discount_pct"
+        "id, name, category, duration_minutes, price, requires_deposit, deposit_type, deposit_amount, require_card_on_file, online_duration_override, online_discount_pct, patch_test_required, patch_test_validity_days, start_up_minutes, shut_down_minutes"
       )
       .eq("organization_id", organization_id)
       .eq("name", service_name)
@@ -163,6 +163,80 @@ Deno.serve(async (req) => {
     const startMinutes = h * 60 + m;
     const endMinutes = startMinutes + durationMinutes;
     const endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
+
+    // ── Wave 2: Operational guardrails ─────────────────────────
+    // Start-up / shut-down windows protect chemical & long services from booking
+    // in the first/last N minutes of the operating day.
+    const startUpMin = Number(service.start_up_minutes ?? 0);
+    const shutDownMin = Number(service.shut_down_minutes ?? 0);
+
+    if (startUpMin > 0 || shutDownMin > 0) {
+      // Resolve operating hours for the date — fall back to 09:00–20:00 if not configured.
+      const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayKey = dayNames[new Date(`${date}T12:00:00Z`).getUTCDay()];
+      let openMin = 9 * 60;
+      let closeMin = 20 * 60;
+
+      if (location_id) {
+        const { data: loc } = await supabase
+          .from("locations")
+          .select("hours_json")
+          .eq("id", location_id)
+          .maybeSingle();
+        const dayHours = (loc?.hours_json as Record<string, { open?: string; close?: string; closed?: boolean }> | null)?.[dayKey];
+        if (dayHours && !dayHours.closed && dayHours.open && dayHours.close) {
+          const [oh, om] = dayHours.open.split(":").map(Number);
+          const [ch, cm] = dayHours.close.split(":").map(Number);
+          openMin = oh * 60 + (om || 0);
+          closeMin = ch * 60 + (cm || 0);
+        }
+      }
+
+      if (startMinutes < openMin + startUpMin) {
+        return jsonResponse(
+          {
+            error: `This service can't be booked in the first ${startUpMin} minutes of the day.`,
+            code: "START_UP_WINDOW",
+          },
+          422
+        );
+      }
+      if (endMinutes > closeMin - shutDownMin) {
+        return jsonResponse(
+          {
+            error: `This service can't be booked in the final ${shutDownMin} minutes of the day.`,
+            code: "SHUT_DOWN_WINDOW",
+          },
+          422
+        );
+      }
+    }
+
+    // Patch test gate — block if required and no valid test on file.
+    if (service.patch_test_required) {
+      const validityDays = Number(service.patch_test_validity_days ?? 180);
+      const cutoff = new Date(Date.now() - validityDays * 86400_000).toISOString();
+      const { data: tests } = await supabase
+        .from("client_patch_tests")
+        .select("id, performed_at, result")
+        .eq("organization_id", organization_id)
+        .eq("client_id", clientId)
+        .eq("result", "pass")
+        .gte("performed_at", cutoff)
+        .order("performed_at", { ascending: false })
+        .limit(1);
+
+      if (!tests || tests.length === 0) {
+        return jsonResponse(
+          {
+            error: "A valid patch test is required before booking this service. Please contact the salon to schedule one.",
+            code: "PATCH_TEST_REQUIRED",
+            patch_test_validity_days: validityDays,
+          },
+          422
+        );
+      }
+    }
 
     // ── Apply online discount if configured ─────────────────────
     const basePrice = service.price != null ? Number(service.price) : null;
