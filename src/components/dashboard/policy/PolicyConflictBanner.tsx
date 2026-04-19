@@ -5,12 +5,13 @@
  * When conflicts exist, surfaces them as actionable items so two policies
  * of the same category aren't silently both wired to the same surface.
  */
-import { AlertTriangle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronRight, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { SURFACE_META } from '@/hooks/policy/usePolicyApplicability';
 import {
   POLICY_CATEGORY_META,
@@ -23,6 +24,12 @@ interface Props {
 }
 
 export function PolicyConflictBanner({ conflicts, onJumpToPolicy }: Props) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgSlug = effectiveOrganization?.slug;
+  const conflictsPath = orgSlug
+    ? `/org/${orgSlug}/dashboard/admin/policy/conflicts`
+    : '/dashboard/admin/policy/conflicts';
+
   if (conflicts.length === 0) return null;
 
   const primary = conflicts[0];
@@ -77,11 +84,22 @@ export function PolicyConflictBanner({ conflicts, onJumpToPolicy }: Props) {
               ))}
             </div>
 
-            {remaining > 0 && (
-              <p className="font-sans text-xs text-muted-foreground pt-1 border-t border-border/40">
-                +{remaining} more conflict{remaining === 1 ? '' : 's'} across other surfaces
-              </p>
-            )}
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/40">
+              {remaining > 0 ? (
+                <p className="font-sans text-xs text-muted-foreground">
+                  +{remaining} more conflict{remaining === 1 ? '' : 's'} across other surfaces
+                </p>
+              ) : (
+                <span />
+              )}
+              <Link
+                to={conflictsPath}
+                className="inline-flex items-center gap-1.5 font-sans text-xs text-foreground hover:underline"
+              >
+                Open Conflict Center
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         </div>
       </CardContent>

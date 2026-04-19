@@ -11,7 +11,9 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -70,6 +72,7 @@ export function PolicyConfiguratorPanel({
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
   const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts'>('rules');
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Auto-adopt if not yet adopted, so the configurator always has a draft version.
   useEffect(() => {
@@ -205,18 +208,44 @@ export function PolicyConfiguratorPanel({
             </div>
           </div>
         )}
-        {hasApprovedClientVariant && publicPolicyUrl && (
-          <a
-            href={publicPolicyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            View on public policy page
-          </a>
-        )}
+        <div className="flex items-center gap-4 flex-wrap">
+          {hasApprovedClientVariant && publicPolicyUrl && (
+            <a
+              href={publicPolicyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              View on public policy page
+            </a>
+          )}
+          {data?.policyId && (
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              className="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+              Version history
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Version History side-sheet */}
+      <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle className={cn(tokens.heading.section)}>Version history</SheetTitle>
+            <SheetDescription className="font-sans">
+              Every saved version of {entry.title}, newest first. Expand any version to see
+              what changed.
+            </SheetDescription>
+          </SheetHeader>
+          <PolicyVersionHistoryPanel policyId={data?.policyId ?? null} />
+        </SheetContent>
+      </Sheet>
 
       <Separator />
 
