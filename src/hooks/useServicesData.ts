@@ -35,6 +35,22 @@ export interface Service {
   is_chemical_service: boolean;
   is_backroom_tracked: boolean;
   require_card_on_file: boolean;
+  // Wave 1/2/4/5 fields — kept in sync with the `services` DB schema so consumers
+  // don't have to `(svc as any).field_name` every time.
+  is_archived: boolean | null;
+  archived_at: string | null;
+  patch_test_required: boolean | null;
+  patch_test_validity_days: number | null;
+  start_up_minutes: number | null;
+  shut_down_minutes: number | null;
+  creation_prompt: string | null;
+  checkin_prompt: string | null;
+  pos_hotkey: string | null;
+  loyalty_points_override: number | null;
+  online_name: string | null;
+  online_duration_override: number | null;
+  online_discount_pct: number | null;
+  include_from_prefix: boolean | null;
 }
 
 /**

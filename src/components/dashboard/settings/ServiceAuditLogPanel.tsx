@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { History, ArrowRight } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
@@ -58,10 +57,17 @@ export function ServiceAuditLogPanel({ serviceId }: ServiceAuditLogPanelProps) {
         ? 'border-destructive/40 bg-destructive/5 text-destructive'
         : 'border-border bg-muted/40 text-muted-foreground';
 
+    // Polish: skip noisy "Yes → No" deltas for boolean state events — the
+    // event chip ("Activated", "Archived", "Restored") already conveys the
+    // transition, so the duplicate value diff just clutters the row.
+    const isBooleanStateEvent =
+      e.field_name === 'is_active' || e.field_name === 'is_archived';
+
     const showDelta =
       e.previous_value !== null &&
       e.new_value !== null &&
-      typeof e.previous_value !== 'object';
+      typeof e.previous_value !== 'object' &&
+      !isBooleanStateEvent;
 
     const formMeta = e.metadata as { form_template_name?: string } | null;
 
@@ -95,11 +101,10 @@ export function ServiceAuditLogPanel({ serviceId }: ServiceAuditLogPanelProps) {
             <span title={new Date(e.created_at).toLocaleString()}>
               {formatDistanceToNow(new Date(e.created_at), { addSuffix: true })}
             </span>
-            {e.source !== 'editor' && (
-              <Badge variant="outline" className="text-[10px] py-0 h-4">
-                {e.source.replace('_', ' ')}
-              </Badge>
-            )}
+            {/* Source badge intentionally suppressed: the trigger emits the
+                same `'editor'` label for both single-edit and bulk-edit paths,
+                so differentiating in the UI would mislead. Restore once the
+                trigger learns the call site (e.g. via `app.audit_source`). */}
           </div>
         </div>
       </div>

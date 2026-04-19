@@ -63,6 +63,9 @@ export function useBulkUpdateServices(onAfterSuccess?: () => void) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['services-data'] }),
         queryClient.invalidateQueries({ queryKey: ['service-prompts'] }),
+        // Wave 5 audit: bulk edits trigger price/duration log rows, so the
+        // History tab in the editor must refetch when a bulk wave completes.
+        queryClient.invalidateQueries({ queryKey: ['service-audit-log'] }),
       ]);
       if (failed === 0) {
         toast.success(`Updated ${succeeded} ${succeeded === 1 ? 'service' : 'services'}`);

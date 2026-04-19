@@ -53,6 +53,7 @@ export const SERVICE_AUDIT_EVENT_CONFIG: Record<
   string,
   { label: string; tone: 'neutral' | 'positive' | 'warning' | 'destructive' }
 > = {
+  created: { label: 'Created', tone: 'positive' },
   price_changed: { label: 'Price changed', tone: 'warning' },
   duration_changed: { label: 'Duration changed', tone: 'warning' },
   cost_changed: { label: 'Cost changed', tone: 'neutral' },
