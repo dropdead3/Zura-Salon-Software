@@ -190,6 +190,61 @@ export function NewBookingSheet({
   // Wave 4: required intake/consent forms for the selected services
   const { data: requiredForms = [] } = useRequiredFormsForServices(selectedServiceRowIds);
 
+  // Wave 7: gate-with-override — fetch client's existing signatures and compute unsigned set
+  const { data: clientSignatures = [] } = useQuery({
+    queryKey: ['client-signatures-for-booking', selectedClient?.id, requiredForms.map(f => f.form_template_id).join(',')],
+    queryFn: async () => {
+      if (!selectedClient?.id || requiredForms.length === 0) return [];
+      const { data } = await supabase
+        .from('client_form_signatures')
+        .select('form_template_id, form_version, signed_at')
+        .eq('client_id', selectedClient.id)
+        .in('form_template_id', requiredForms.map(f => f.form_template_id));
+      return data ?? [];
+    },
+    enabled: !!selectedClient?.id && requiredForms.length > 0,
+  });
+
+  const unsignedRequiredForms = useMemo(() => {
+    if (requiredForms.length === 0 || !selectedClient?.id) return [];
+    const sigMap = new Map(
+      clientSignatures.map((s: any) => [s.form_template_id, { signedAt: new Date(s.signed_at) }]),
+    );
+    return requiredForms.filter((req) => {
+      const existing = sigMap.get(req.form_template_id);
+      if (!existing) return true;
+      switch (req.signing_frequency) {
+        case 'per_visit': return true;
+        case 'annually': return differenceInYears(new Date(), existing.signedAt) >= 1;
+        case 'once':
+        default: return false;
+      }
+    });
+  }, [requiredForms, clientSignatures, selectedClient?.id]);
+
+  // Wave 7: override dialog + inline signing dialog state
+  const [showOverrideDialog, setShowOverrideDialog] = useState(false);
+  const [showInlineSigningDialog, setShowInlineSigningDialog] = useState(false);
+
+  const { data: fullRequirements = [] } = useQuery({
+    queryKey: ['full-requirements-for-booking', selectedServiceRowIds.join(',')],
+    queryFn: async () => {
+      if (selectedServiceRowIds.length === 0) return [];
+      const { data } = await supabase
+        .from('service_form_requirements')
+        .select('*, form_template:form_templates(*)')
+        .in('service_id', selectedServiceRowIds)
+        .eq('is_required', true);
+      return (data ?? []) as unknown as ServiceFormRequirement[];
+    },
+    enabled: selectedServiceRowIds.length > 0,
+  });
+
+  const formsToSignInline = useMemo(() => {
+    const unsignedTemplateIds = new Set(unsignedRequiredForms.map(f => f.form_template_id));
+    return fullRequirements.filter(r => unsignedTemplateIds.has(r.form_template_id));
+  }, [fullRequirements, unsignedRequiredForms]);
+
   // Check availability when stylist and date are selected
   const [availableSlots, setAvailableSlots] = useState<{ start_time: string; end_time: string }[]>([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
