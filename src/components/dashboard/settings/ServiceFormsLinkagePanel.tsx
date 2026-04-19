@@ -226,8 +226,8 @@ export function ServiceFormsLinkagePanel({ serviceId }: ServiceFormsLinkagePanel
           <div className="flex items-start gap-2 rounded-md bg-muted/40 p-2.5 text-xs">
             <ExternalLink className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
             <p className="text-muted-foreground">
-              Required forms gate booking confirmation. Optional forms are presented but skippable.
-              Frequency controls when a fresh signature is needed.
+              Required forms surface as a prep callout at booking and are collected at check-in via Zura Dock.
+              Optional forms are presented but skippable. Frequency controls when a fresh signature is needed.
             </p>
           </div>
         </>
