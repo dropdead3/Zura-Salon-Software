@@ -1,91 +1,27 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { toast } from 'sonner';
-import { useMemo } from 'react';
 
 // ─── Types ───────────────────────────────────────────────────────
-export interface StylistServiceExclusion {
-  id: string;
-  organization_id: string;
-  employee_id: string;
-  service_id: string;
-  created_at: string;
-}
-
-export interface StylistCategoryExclusion {
-  id: string;
-  organization_id: string;
-  employee_id: string;
-  category_name: string;
-  created_at: string;
-}
-
-// ─── Per-service exclusions (for configurator dialog) ────────────
-export function useStylistServiceExclusions(serviceId: string | null) {
-  return useQuery({
-    queryKey: ['stylist-service-exclusions', serviceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('stylist_service_exclusions')
-        .select('*')
-        .eq('service_id', serviceId!);
-      if (error) throw error;
-      return data as unknown as StylistServiceExclusion[];
-    },
-    enabled: !!serviceId,
-  });
-}
-
-export function useToggleStylistServiceExclusion() {
-  const queryClient = useQueryClient();
-  const { effectiveOrganization } = useOrganizationContext();
-
-  return useMutation({
-    mutationFn: async ({
-      service_id,
-      employee_id,
-      excluded,
-    }: {
-      service_id: string;
-      employee_id: string;
-      excluded: boolean;
-    }) => {
-      const orgId = effectiveOrganization?.id;
-      if (!orgId) throw new Error('No organization');
-
-      if (excluded) {
-        const { error } = await supabase
-          .from('stylist_service_exclusions')
-          .insert({ service_id, employee_id, organization_id: orgId });
-        if (error && error.code !== '23505') throw error; // ignore duplicate
-      } else {
-        const { error } = await supabase
-          .from('stylist_service_exclusions')
-          .delete()
-          .eq('service_id', service_id)
-          .eq('employee_id', employee_id);
-        if (error) throw error;
-      }
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['stylist-service-exclusions', vars.service_id] });
-      queryClient.invalidateQueries({ queryKey: ['stylist-exclusion-summaries'] });
-      toast.success(vars.excluded ? 'Marked as cannot perform' : 'Removed exclusion');
-    },
-    onError: (e) => toast.error('Failed to update exclusion: ' + e.message),
-  });
-}
-
-// ─── Org-wide summary (for tooltip) ──────────────────────────────
 export interface StylistExclusionSummary {
+  /** Categories where the stylist is excluded from EVERY service in that category. */
   categories: string[];
+  /** Individual excluded services that don't roll up to a full-category exclusion. */
   services: string[];
 }
 
 /**
- * Returns a Map<userId, { categories, services }> of all exclusions in the org,
- * keyed by employee user_id (not employee id) so the schedule can look up by stylist.user_id.
+ * Returns a Map<userId, { categories, services }> describing what each stylist
+ * does NOT perform, derived from `staff_service_qualifications` (the existing
+ * "Stylist Service Assignments" configurator).
+ *
+ * Rules:
+ *  - A service is "excluded" if there is no `staff_service_qualifications` row
+ *    for (user_id, service_id) OR the row has `is_active = false`.
+ *  - If every service in a category is excluded for a stylist, we collapse
+ *    those into a single category entry and omit the individual services.
+ *  - Only considers active service-provider roles (stylist / stylist_assistant
+ *    / booth_renter) within the current organization.
  */
 export function useStylistExclusionSummaries() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -94,54 +30,89 @@ export function useStylistExclusionSummaries() {
   return useQuery({
     queryKey: ['stylist-exclusion-summaries', orgId],
     queryFn: async () => {
-      const [serviceRes, categoryRes, employeeRes, servicesRes] = await Promise.all([
-        supabase
-          .from('stylist_service_exclusions')
-          .select('employee_id, service_id')
-          .eq('organization_id', orgId!),
-        supabase
-          .from('stylist_category_exclusions')
-          .select('employee_id, category_name')
-          .eq('organization_id', orgId!),
+      // 1. Identify service-provider users in this org.
+      const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'];
+      const [rolesRes, employeesRes, servicesRes] = await Promise.all([
+        supabase.from('user_roles').select('user_id').in('role', SERVICE_PROVIDER_ROLES),
         supabase
           .from('employee_profiles')
-          .select('id, user_id')
-          .eq('organization_id', orgId!),
+          .select('user_id')
+          .eq('organization_id', orgId!)
+          .eq('is_active', true)
+          .eq('is_approved', true),
         supabase
           .from('services')
-          .select('id, name')
-          .eq('organization_id', orgId!),
+          .select('id, name, category')
+          .eq('organization_id', orgId!)
+          .eq('is_active', true),
       ]);
 
-      if (serviceRes.error) throw serviceRes.error;
-      if (categoryRes.error) throw categoryRes.error;
-      if (employeeRes.error) throw employeeRes.error;
+      if (rolesRes.error) throw rolesRes.error;
+      if (employeesRes.error) throw employeesRes.error;
       if (servicesRes.error) throw servicesRes.error;
 
-      const empIdToUserId = new Map<string, string>();
-      (employeeRes.data ?? []).forEach((e: any) => empIdToUserId.set(e.id, e.user_id));
+      const providerUserIds = new Set((rolesRes.data ?? []).map((r: any) => r.user_id));
+      const stylistUserIds = (employeesRes.data ?? [])
+        .map((e: any) => e.user_id)
+        .filter((uid: string) => providerUserIds.has(uid));
 
-      const serviceIdToName = new Map<string, string>();
-      (servicesRes.data ?? []).forEach((s: any) => serviceIdToName.set(s.id, s.name));
+      const services = (servicesRes.data ?? []) as Array<{
+        id: string;
+        name: string;
+        category: string | null;
+      }>;
 
       const summaries = new Map<string, StylistExclusionSummary>();
-      const ensure = (userId: string) => {
-        if (!summaries.has(userId)) summaries.set(userId, { categories: [], services: [] });
-        return summaries.get(userId)!;
-      };
+      if (stylistUserIds.length === 0 || services.length === 0) return summaries;
 
-      (categoryRes.data ?? []).forEach((row: any) => {
-        const userId = empIdToUserId.get(row.employee_id);
-        if (!userId) return;
-        ensure(userId).categories.push(row.category_name);
-      });
+      // 2. Build category → service[] map for the org.
+      const servicesByCategory = new Map<string, Array<{ id: string; name: string }>>();
+      for (const s of services) {
+        const cat = s.category || 'Uncategorized';
+        if (!servicesByCategory.has(cat)) servicesByCategory.set(cat, []);
+        servicesByCategory.get(cat)!.push({ id: s.id, name: s.name });
+      }
+      const serviceIdToName = new Map(services.map((s) => [s.id, s.name]));
 
-      (serviceRes.data ?? []).forEach((row: any) => {
-        const userId = empIdToUserId.get(row.employee_id);
-        if (!userId) return;
-        const name = serviceIdToName.get(row.service_id);
-        if (name) ensure(userId).services.push(name);
-      });
+      // 3. Fetch all qualification rows for these stylists (single query).
+      const { data: qualRows, error: qualErr } = await supabase
+        .from('staff_service_qualifications')
+        .select('user_id, service_id, is_active')
+        .in('user_id', stylistUserIds);
+      if (qualErr) throw qualErr;
+
+      // qualifiedByUser: user_id → Set of service_ids where is_active = true
+      const qualifiedByUser = new Map<string, Set<string>>();
+      for (const uid of stylistUserIds) qualifiedByUser.set(uid, new Set());
+      for (const row of (qualRows ?? []) as any[]) {
+        if (row.is_active === false) continue;
+        qualifiedByUser.get(row.user_id)?.add(row.service_id);
+      }
+
+      // 4. For each stylist, derive excluded services & roll up to category.
+      for (const userId of stylistUserIds) {
+        const qualified = qualifiedByUser.get(userId)!;
+        const excludedCategories: string[] = [];
+        const excludedServices: string[] = [];
+
+        for (const [cat, catServices] of servicesByCategory.entries()) {
+          const excludedInCat = catServices.filter((s) => !qualified.has(s.id));
+          if (excludedInCat.length === 0) continue;
+          if (excludedInCat.length === catServices.length) {
+            // Every service in this category is excluded → collapse.
+            excludedCategories.push(cat);
+          } else {
+            excludedServices.push(...excludedInCat.map((s) => s.name));
+          }
+        }
+
+        if (excludedCategories.length > 0 || excludedServices.length > 0) {
+          summaries.set(userId, {
+            categories: excludedCategories.sort(),
+            services: excludedServices.sort(),
+          });
+        }
+      }
 
       return summaries;
     },
