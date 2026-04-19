@@ -63,6 +63,15 @@ export function ServiceEditorDialog({
   const [onlineName, setOnlineName] = useState('');
   const [onlineDurationOverride, setOnlineDurationOverride] = useState('');
   const [onlineDiscountPct, setOnlineDiscountPct] = useState('');
+  // Wave 2: Operational Guardrails
+  const [patchTestRequired, setPatchTestRequired] = useState(false);
+  const [patchTestValidityDays, setPatchTestValidityDays] = useState('180');
+  const [startUpMinutes, setStartUpMinutes] = useState('0');
+  const [shutDownMinutes, setShutDownMinutes] = useState('0');
+  const [creationPrompt, setCreationPrompt] = useState('');
+  const [checkinPrompt, setCheckinPrompt] = useState('');
+  const [posHotkey, setPosHotkey] = useState('');
+  const [loyaltyPointsOverride, setLoyaltyPointsOverride] = useState('');
 
   useEffect(() => {
     if (open) {
