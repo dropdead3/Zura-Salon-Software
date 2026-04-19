@@ -2,6 +2,16 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +49,7 @@ export function ServiceEditorDialog({
   open, onOpenChange, onSubmit, isPending, categories, initialData, mode, presetCategory,
 }: ServiceEditorDialogProps) {
   const [activeTab, setActiveTab] = useState('details');
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [duration, setDuration] = useState('60');
@@ -315,13 +326,25 @@ export function ServiceEditorDialog({
   // Intercept close attempts when there's unsaved work.
   const handleOpenChange = (next: boolean) => {
     if (!next && isDirty) {
-      const ok = window.confirm('Discard unsaved changes?');
-      if (!ok) return;
+      setShowDiscardConfirm(true);
+      return;
     }
     onOpenChange(next);
   };
 
+  const handleDiscard = () => {
+    setShowDiscardConfirm(false);
+    onOpenChange(false);
+  };
+
+  const handleSaveAndClose = () => {
+    if (hasErrors || !name.trim()) return;
+    setShowDiscardConfirm(false);
+    handleDetailsSubmit({ preventDefault: () => {} } as React.FormEvent);
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
@@ -933,5 +956,34 @@ export function ServiceEditorDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved changes to this service. Are you sure you want to close without saving?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+          <Button
+            variant="outline"
+            onClick={handleDiscard}
+            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            Discard Changes
+          </Button>
+          <AlertDialogAction
+            onClick={handleSaveAndClose}
+            disabled={!name.trim() || isPending || hasErrors}
+          >
+            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Save &amp; Close
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
