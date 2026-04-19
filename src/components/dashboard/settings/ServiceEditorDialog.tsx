@@ -154,6 +154,15 @@ export function ServiceEditorDialog({
         setOnlineName('');
         setOnlineDurationOverride('');
         setOnlineDiscountPct('');
+        // Wave 2
+        setPatchTestRequired(false);
+        setPatchTestValidityDays('180');
+        setStartUpMinutes('0');
+        setShutDownMinutes('0');
+        setCreationPrompt('');
+        setCheckinPrompt('');
+        setPosHotkey('');
+        setLoyaltyPointsOverride('');
       }
     }
   }, [open, initialData, categories, presetCategory]);
