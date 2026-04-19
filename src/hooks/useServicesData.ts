@@ -50,7 +50,7 @@ export interface Service {
   online_name: string | null;
   online_duration_override: number | null;
   online_discount_pct: number | null;
-  include_from_prefix: string | null;
+  include_from_prefix: boolean | null;
 }
 
 /**

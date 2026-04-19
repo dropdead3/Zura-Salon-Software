@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { History, ArrowRight } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
@@ -11,11 +10,6 @@ import {
   getServiceAuditEventConfig,
   type ServiceAuditEntry,
 } from '@/hooks/useServiceAuditLog';
-
-// Badge import retained for future re-introduction of source differentiation
-// once the audit trigger learns the call site (single edit vs bulk_edit vs api).
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _BadgeReserved = Badge;
 
 /**
  * Wave 5: Renders the chronological audit history for a single service.
