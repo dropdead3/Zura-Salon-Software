@@ -27,7 +27,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRequiredFormsForService } from '@/hooks/useServiceFormRequirements';
-import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
+import { PublicFormSigningModal } from './PublicFormSigningModal';
 
 export function HostedBookingPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
