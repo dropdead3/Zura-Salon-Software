@@ -210,8 +210,57 @@ export function ServiceEditorDialog({
   useEditorDirtyState(isDirty);
 
 
+  // Wave 8: numeric bounds + hotkey hygiene validation. Returns a map of
+  // field-key -> error message; empty map means OK to submit.
+  const validate = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+
+    const durationNum = parseInt(duration);
+    if (!duration || isNaN(durationNum) || durationNum < 5) {
+      errors.duration = 'Duration must be at least 5 minutes';
+    }
+
+    if (price && parseFloat(price) < 0) errors.price = 'Price cannot be negative';
+    if (cost && parseFloat(cost) < 0) errors.cost = 'Cost cannot be negative';
+
+    if (onlineDiscountPct) {
+      const pct = parseFloat(onlineDiscountPct);
+      if (isNaN(pct) || pct < 0 || pct > 100) {
+        errors.onlineDiscountPct = 'Discount must be between 0 and 100';
+      }
+    }
+
+    if (loyaltyPointsOverride && parseInt(loyaltyPointsOverride) < 0) {
+      errors.loyaltyPointsOverride = 'Loyalty points cannot be negative';
+    }
+    if (startUpMinutes && parseInt(startUpMinutes) < 0) {
+      errors.startUpMinutes = 'Start-up minutes cannot be negative';
+    }
+    if (shutDownMinutes && parseInt(shutDownMinutes) < 0) {
+      errors.shutDownMinutes = 'Shut-down minutes cannot be negative';
+    }
+
+    // POS hotkey: trim, uppercase, alphanumeric only, max 8 chars
+    const hk = posHotkey.trim().toUpperCase();
+    if (hk && !/^[A-Z0-9]{1,8}$/.test(hk)) {
+      errors.posHotkey = 'Hotkey must be 1–8 letters/numbers (no spaces or symbols)';
+    }
+
+    return errors;
+  };
+
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors = validate();
+    setValidationErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    // Normalize hotkey before write
+    const normalizedHotkey = posHotkey.trim().toUpperCase() || null;
+
     onSubmit({
       ...(initialData?.id ? { id: initialData.id } : {}),
       name: name.trim(),
@@ -249,10 +298,12 @@ export function ServiceEditorDialog({
       shut_down_minutes: parseInt(shutDownMinutes) || 0,
       creation_prompt: creationPrompt.trim() || null,
       checkin_prompt: checkinPrompt.trim() || null,
-      pos_hotkey: posHotkey.trim() || null,
+      pos_hotkey: normalizedHotkey,
       loyalty_points_override: loyaltyPointsOverride ? parseInt(loyaltyPointsOverride) : null,
     } as Partial<Service>);
   };
+
+  const hasValidationErrors = Object.keys(validationErrors).length > 0;
 
   const isCreateMode = mode === 'create';
   const serviceId = initialData?.id || null;
