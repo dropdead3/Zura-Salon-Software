@@ -755,12 +755,12 @@ export function NewBookingSheet({
               <div className={cn(
                 "rounded-lg border p-3 flex items-start gap-2",
                 unsignedRequiredForms.length > 0
-                  ? "border-amber-500/40 bg-amber-500/10"
-                  : "border-emerald-500/40 bg-emerald-500/10"
+                  ? "border-warning/40 bg-warning/10"
+                  : "border-success/40 bg-success/10"
               )}>
                 {unsignedRequiredForms.length > 0
-                  ? <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  : <Check className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  ? <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+                  : <Check className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
                 }
                 <div className="text-sm space-y-1">
                   <p className="font-medium text-foreground">
