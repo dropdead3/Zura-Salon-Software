@@ -203,6 +203,8 @@ export function HostedBookingPage() {
             phone: state.clientInfo.phone,
             notes: state.clientInfo.notes,
           },
+          // Wave 9: Inline-signed forms — empty array means deferred to check-in
+          signed_form_template_ids: signedFormTemplateIds,
         },
       });
 
@@ -210,7 +212,9 @@ export function HostedBookingPage() {
       if (data?.error) throw new Error(data.error);
 
       const appointmentId = data.appointment_id;
+      const returnedClientId = data.client_id ?? null;
       setCreatedAppointmentId(appointmentId);
+      setPendingClientId(returnedClientId);
 
       // If payment needed and Stripe is configured, create intent
       if (needsPayment && stripeConfig) {
@@ -253,7 +257,7 @@ export function HostedBookingPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [org?.id, state, isEmbedMode, update, needsPayment, stripeConfig, depositAmount]);
+  }, [org?.id, state, isEmbedMode, update, needsPayment, stripeConfig, depositAmount, signedFormTemplateIds]);
 
   // ─── Payment complete handler ─────────────────────────────────
   const handlePaymentComplete = useCallback((intentId: string) => {
