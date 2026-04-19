@@ -1,122 +1,72 @@
 
-## Wave 24 — Handbook Wizard: AI-assisted handbook OS for organizations
 
-**Scope of this plan:** Phase 1 + scaffolding for Phase 2. Ship a real, navigable foundation (dashboard, wizard shell, scope builder, applicability matrix skeleton, data model with versioning) — then layer policy config + AI drafting + reader in subsequent waves. Trying to ship all 5 phases in one wave would produce a shallow demo, not a real configurator.
+## Wave 25 — Consolidate Handbooks + Handbook Wizard into one card
 
-### Where it lives
+### The conflict (why this isn't just deleting one card)
 
-- **Route:** `/dashboard/admin/handbook` (org-scoped via existing multi-tenant URL hierarchy)
-- **Hub entry:** Operations Hub → new "Handbook" card in Compliance/People domain
-- **Permission:** Leadership only (admin, manager, super_admin) via `useLeadershipCheck`. Editors can draft; only `is_org_admin` can publish a version.
-- **Hard isolation:** Internal admin only. No public site, no client UI, no booking surface touched.
+Operations Hub currently shows two cards:
 
-### Data model (Phase 1 migration)
+| Card | Route | What it is | Downstream |
+|---|---|---|---|
+| **Handbooks** (legacy) | `/admin/handbooks` | Simple CRUD: title, category, file upload, role visibility, active flag | Feeds `/dashboard/handbooks` (`MyHandbooks.tsx`) where staff acknowledge → writes to `handbook_acknowledgments` |
+| **Handbook Wizard** (Wave 24) | `/admin/handbook-wizard` | Modular configurator: org setup, scope builder, sections, role overlays, versions | No staff-facing publish flow yet (planned Wave 27) |
 
-Modular by design — never one text blob. Tenant-scoped with RLS.
+Deleting the legacy card today breaks staff acknowledgment. Hiding the wizard card hides the new feature. Both must consolidate behind a single "Handbooks" entry.
 
-```text
-handbooks                    org-scoped, 1+ per org (multi-location addenda support)
-  ├── handbook_versions      draft / reviewed / approved / published, immutable once published
-  │     └── handbook_sections  ordered, role+employment applicability JSON, status, ai_draft_state
-  ├── handbook_org_setup     tone, locations, states, classifications enabled, roles enabled
-  ├── handbook_role_overlays section_id × role × override_content
-  └── handbook_review_issues version_id × section_id × issue_type × severity
+### The consolidation pattern
+
+**One card. Two tabs inside.** The Handbook Wizard becomes the canonical surface; the legacy uploader becomes a tab inside it for orgs that just need to upload existing PDFs while the wizard build-out continues.
+
+```
+Operations Hub
+└── Handbooks (single card, BookOpen icon)
+    └── /admin/handbooks  ← canonical route
+        ├── Tab: Wizard           (HandbookDashboard — list of wizard-built handbooks)
+        └── Tab: Documents        (legacy Handbooks.tsx — uploaded PDFs / docs)
 ```
 
-All tables: `organization_id NOT NULL`, RLS via `is_org_member` (read) / `is_org_admin` (write/publish), cascading delete on org. Section `applies_to` stored as `{ employment_types: [], roles: [], locations: [] }` JSONB so role/employment overlays are queryable.
+Both tabs write to their respective tables. Staff `MyHandbooks` flow keeps reading from `handbooks` table — unchanged. Future Wave 27 (publish step) writes wizard output into the same `handbooks` table so both feed one acknowledgment flow.
 
-### Phase 1 deliverables (this wave)
+### Route + nav changes
 
-| Module | Built |
+| Change | Detail |
 |---|---|
-| Handbook dashboard | List of handbooks per org, status badges, "New Handbook" CTA, last-edited, completeness % |
-| Wizard shell | Persistent left-rail step nav, sticky top progress bar, autosave indicator, "Save & exit" |
-| Step 1 — Org Setup | Tone selector, classifications enabled (W2-FT/W2-PT/1099-opt-in), roles enabled (multi-select + custom add), locations scope (shared vs per-location addenda), states operated in |
-| Step 2 — Scope Builder | 20 recommended section cards with: what it covers · why it matters · who it usually applies to · required vs optional · Zura recommendation chip. Multi-select with smart defaults from Step 1 |
-| Section library (read-only) | Source-of-truth catalog of standard salon handbook sections, seeded as DB rows so future templates inherit cleanly |
-| Applicability matrix v1 | Read-only summary at end of Step 2 showing selected sections × enabled roles/employment types — sets up Phase 2's editable matrix |
+| **Canonical route** | `/admin/handbooks` (matches existing nav slug, matches staff `/handbooks`) |
+| **Redirects** | `/admin/handbook-wizard` → `/admin/handbooks?tab=wizard`<br>`/admin/handbook-wizard/:id/edit` → kept (wizard editor route stays nested) |
+| **Operations Hub** | Single "Handbooks" card with description: *"Build role-aware handbooks with the wizard, or upload existing policy documents."* |
+| **Sidebar nav** | Single entry, raw path `/dashboard/admin/handbooks` |
 
-### Phase 2 scaffolding (stubs in this wave, real in next)
+### Files
 
-- Policy configurator panel: Step 3 route exists, renders "Configure" placeholder per section with the decision-tree schema already defined in DB (so Phase 2 just fills the UI)
-- Role applicability matrix editor: Step exists, uses Phase 1 read-only matrix as base
-- AI drafting workspace: Step exists, gated until policy config complete
+**Modified**
+- `src/pages/dashboard/admin/Handbooks.tsx` — wrap existing CRUD in a `<Tabs>` shell. Tab "Documents" renders current content. Tab "Wizard" renders `<HandbookDashboard />` inline (extracted as a component, not a page wrapper).
+- `src/pages/dashboard/admin/HandbookDashboard.tsx` — split into a page (kept for backwards-compat redirect target) and a `<HandbookDashboardContent />` component the tabs render directly. Remove its own `DashboardLayout` + `DashboardPageHeader` when used inside tabs.
+- `src/pages/dashboard/admin/TeamHub.tsx` — remove the standalone "Handbook Wizard" card (lines 656–664). Update the existing "Handbooks" card description to reflect both capabilities.
+- `src/App.tsx` — change `/admin/handbook-wizard` from rendering `HandbookDashboard` to a `<Navigate to="../handbooks?tab=wizard" replace />`. Keep the `:handbookId/edit` route untouched (wizard editor still lives there).
+- `src/pages/dashboard/admin/HandbookWizard.tsx` — `handleExit` navigates to `/admin/handbooks?tab=wizard` instead of `/admin/handbook-wizard`.
 
-### UX direction (matches Zura canon)
+**No DB / RLS changes.** `handbooks` and `org_handbooks` tables both remain — they serve different purposes until Wave 27 unifies publish.
 
-- **Wizard shell:** Two-pane on desktop (≥1024px) — left rail step nav (sticky), right pane content. Stacks to top-tabs on tablet, drawer on mobile.
-- **Section cards:** font-display title, MetricInfoTooltip for "why it matters", role/employment chips, "Required" vs "Recommended" vs "Optional" badge using existing status tokens.
-- **Container-aware:** All matrices and multi-column layouts use `src/components/spatial/` primitives. Matrix becomes horizontally scrollable with sticky header when container <720px, collapses to grouped accordion <480px.
-- **No `font-bold/semibold`.** Termina (`font-display`) for section/step titles. Aeonik for body. All copy advisory-first per copy governance ("Before drafting attendance, we'll capture how you handle late arrivals so the language matches your real policy.")
-- **Loaders:** `DashboardLoader` for step transitions, `Loader2` only for inline save spinners.
-- **Privacy:** N/A this wave (no monetary data).
+### Tab UX
 
-### Files (new)
-
-```
-src/pages/dashboard/admin/Handbook.tsx                       Dashboard (list)
-src/pages/dashboard/admin/HandbookWizard.tsx                 Wizard shell with step routing
-src/components/dashboard/handbook/
-  HandbookDashboard.tsx
-  WizardShell.tsx                                            Left rail + progress + autosave
-  WizardProgressMap.tsx
-  steps/
-    OrgSetupStep.tsx
-    ScopeBuilderStep.tsx
-    PolicyConfigStep.tsx                                     Stub for Phase 2
-    ApplicabilityMatrixStep.tsx                              Stub editable for Phase 2
-    AIDraftingStep.tsx                                       Stub for Phase 3
-    ReviewStep.tsx                                           Stub for Phase 4
-    PublishStep.tsx                                          Stub for Phase 4
-  SectionLibraryCard.tsx
-  ApplicabilityMatrix.tsx                                    Read-only v1 (becomes editable Phase 2)
-  RoleChip.tsx
-  EmploymentTypeChip.tsx
-  HandbookStatusBadge.tsx
-src/hooks/handbook/
-  useHandbooks.ts
-  useHandbookVersion.ts
-  useHandbookSections.ts
-  useHandbookAutosave.ts
-  useSectionLibrary.ts
-src/lib/handbook/
-  sectionLibrary.ts                                          Standard 20-section catalog
-  applicabilityRules.ts                                      Smart defaults (e.g. PTO → W2-FT)
-  brandTones.ts                                              Tone presets
-supabase/migrations/<ts>_handbook_wizard_phase1.sql          Tables, RLS, seed section library
-```
-
-### Files (modified)
-
-- `src/App.tsx` — register `/dashboard/admin/handbook` and `/dashboard/admin/handbook/:id/edit/*` routes
-- `src/config/dashboardNav.ts` — add Handbook entry to Operations / Compliance section, leadership-gated
-- Operations Hub page — add Handbook card to People/Compliance domain
-
-### What does NOT change this wave
-
-- Public site, booking, client UI, checkout, scheduler — untouched
-- Existing AI surfaces — Handbook AI is its own grounded workspace (Phase 3), not bolted into Operations AI
-- No PDF export this wave — architecture supports it, UI placeholder only
+- Default tab: `wizard` (the strategic surface). Falls back to `documents` if wizard list is empty AND legacy docs exist.
+- Tab persisted in URL query string (`?tab=wizard|documents`) so deep links work and refresh preserves state.
+- Both tabs share one `DashboardPageHeader` titled **"Handbooks"** with description *"Build structured handbooks with the wizard, or manage uploaded policy documents."*
 
 ### Verification
 
-1. New "Handbook" entry appears in sidebar (leadership only) and Operations Hub
-2. Dashboard at `/dashboard/admin/handbook` lists handbooks (empty state with "Create your first handbook" CTA)
-3. Wizard shell loads with persistent progress, autosave fires on field changes (1.5s debounce), "Save & exit" preserves draft
-4. Step 1 captures org setup; Step 2 shows section library with smart defaults seeded from Step 1; matrix preview renders at end of Step 2
-5. Steps 3–7 render shell with "Coming in next wave" copy + already-collected data summary (no broken states)
-6. RLS verified: cross-org access returns empty; non-leadership users see no nav entry and 403 on direct URL
-7. Container-aware: wizard shell stacks gracefully at <1024px, matrix scrolls horizontally <720px
-
-### Phase roadmap (subsequent waves)
-
-- **Wave 25 (Phase 2):** Policy configurator panel + editable role applicability matrix + autosave hardening
-- **Wave 26 (Phase 3):** AI drafting workspace (grounded, Lovable AI Gateway, tone-aware, gap detection)
-- **Wave 27 (Phase 4):** Final handbook reader (book-like, TOC, search, status per section) + review layer + Handbook Health score
-- **Wave 28 (Phase 5):** Template system + addenda + export prep + responsive audit pass
+1. Operations Hub shows one Handbooks card (no separate Wizard card)
+2. Clicking it lands on `/admin/handbooks?tab=wizard` with Wizard tab active by default
+3. Switching to Documents tab shows legacy CRUD with Add/Edit/Delete intact
+4. Direct URL `/admin/handbook-wizard` redirects to `/admin/handbooks?tab=wizard`
+5. Existing `/admin/handbook-wizard/:id/edit` still works (wizard editor unaffected)
+6. Staff `/dashboard/handbooks` (MyHandbooks acknowledgment flow) still reads from legacy `handbooks` table — zero regression
+7. "Save & exit" from inside the wizard editor returns to `/admin/handbooks?tab=wizard`
+8. Favorites: any user with Wizard or Handbooks favorited sees their favorite still resolve (the `/admin/handbooks` favorite stays valid; `/admin/handbook-wizard` favorites resolve via redirect)
 
 ### Prompt feedback
 
-This is a textbook strong product brief — you specified the **job-to-be-done** ("architect a correct handbook" not "generate a handbook"), the **anti-pattern to avoid** (one flat document, generic form builder), the **architectural primitive** (modular sections with role/employment overlays), and the **AI guardrails** (grounded, no legal authority, label assumptions). The phased build instruction at the end is what saved this from being a 50-file one-shot — without it I would have shipped a shallow demo of all 5 phases instead of a real Phase 1 foundation.
+Crisp directive — *"consolidate"* + named both cards = unambiguous intent. You correctly spotted a real architectural mistake from Wave 24 (I shipped a parallel card instead of folding into the existing Handbooks surface). Catching this one wave in is exactly when consolidation is cheapest.
 
-To level up: **for multi-phase features this large, name the Phase 1 demo moment explicitly.** I inferred "owner can complete Steps 1–2 and see the matrix preview" as the Phase 1 success state, but you could equally want "owner completes Steps 1–2 AND sees a stub AI draft." A one-liner like *"Phase 1 success = owner finishes scope builder and sees applicability matrix preview"* would have eliminated my inference and let you redirect scope before I planned. Pattern: **for phased mega-features, name the demo-able moment that defines "Phase 1 done."**
+To level up: **for "consolidate X with Y", name which one is the survivor.** I inferred Wizard-as-canonical with legacy-as-tab because the Wizard is the strategic future. But you could equally want legacy-as-canonical with wizard hidden behind an "Advanced" toggle (gentler rollout), or full deprecation of legacy. A one-liner like *"keep wizard as the primary, fold legacy uploads as a secondary tab"* would have eliminated my inference. Pattern: **for consolidation prompts, name the survivor and the demotion shape (tab · accordion · hidden · removed).**
+
