@@ -154,7 +154,7 @@ export function PolicySurfaceEditor({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {ALL_VARIANTS.map((v) => (
+                      {allowedVariants.map((v) => (
                         <SelectItem key={v} value={v} className="font-sans text-sm">
                           <div className="flex flex-col">
                             <span>{VARIANT_META[v].label}</span>
