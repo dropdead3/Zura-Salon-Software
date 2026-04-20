@@ -1,142 +1,107 @@
 
 
-# Policy OS — Wave 28.11.2.5 Audit (post-surfaces-wired)
+# Policy OS — Wave 28.11.3.5 Audit (post-audience-aware-configurator)
 
-Wave 28.11.2 closed the consumption gap: `usePolicyForSurface` + `<PolicyDisclosure />` ship, booking confirmation + checkout footer + service card render configured policies. North Star is satisfied for the booking surface. **New audit below — current deltas only, no re-listing of fixed items.**
-
----
-
-## P0 — Still blocking
-
-### 1. Auto-adopt on configurator open (carry-forward)
-`PolicyConfiguratorPanel.tsx:84-89` still mutates `adopt` from `useEffect`. Sharing `?policy=key` deep links silently adopts on the recipient's account. Violates "Recommend → Approve → Execute."
-**Fix:** gate body behind explicit "Adopt this policy" CTA when `!alreadyAdopted`.
-
-### 2. Configurator UX collapses internal and external policies into one shape (NEW — see Section A below)
-The five-tab editor (Rules / Applicability / Surfaces / Drafts / Acks) is built for client-facing publishing. Applied to **23 internal handbook policies**, three of those tabs (Surfaces, Publish toggle, Acks) are dead weight — and the missing tabs (training assignment, role acknowledgment, manager sign-off) leave handbook lifecycle homeless. This is the biggest UX gap in the system today.
+Wave 28.11.3 shipped the audience-aware configurator, library audience filter, and `PolicyAudienceBanner`. The mental model is now correctly split. **What changed in the gap map:** four findings closed, three new findings emerged from the split itself, and the carry-forward P1s are unchanged. Below — current deltas only.
 
 ---
 
-## P1 — Lifecycle & integrity (carried)
+## Closed since last audit
+- Internal vs external collapsed into one shape → split via tab-visibility + audience banner.
+- Library has no audience navigation → segmented control with live counts shipped.
+- Stacked Publish + Require-ack toggles → consolidated under audience banner.
+
+## Still P0
+
+### 1. Auto-adopt on configurator open (carry-forward, now 4 audits old)
+`PolicyConfiguratorPanel.tsx:84-89` still mutates `adopt` from `useEffect`. **Critical now that the library is segmented**: an operator browsing the new "Internal" tab to research handbook options silently adopts every card they tap. The audience filter makes this *more* damaging because operators are now incentivized to explore.
+**Fix:** gate the configurator body behind an explicit "Adopt and configure" CTA when `!alreadyAdopted`. Show the schema/why-it-matters as read-only preview above the CTA.
+
+### 2. Surface mappings cross the audience boundary (NEW)
+`SURFACE_META` in `usePolicyApplicability.ts:154-207` lists 7 surfaces with no `audience` tag. `PolicySurfaceEditor` lets an operator wire a `team` policy to `booking_confirmation`. The new audience banner explicitly tells the operator "This policy isn't shown to clients" — but the Surfaces tab (when `audience='both'`) silently allows it anyway. Worse: `usePolicyForSurface` line 85-92 only gates client-facing surfaces by `is_published_external`, so internal surfaces render any wired policy regardless of audience match.
+**Fix:** add `audience: 'internal' | 'external' | 'both'` to `SURFACE_META`; filter the Surfaces tab's candidate list by intersection with the policy's audience; in `usePolicyForSurface`, drop mappings whose policy audience doesn't include the surface's audience.
+
+## Still P1 (carried)
 
 3. **No archive / unadopt path** — `archived` exists in enum, no UI surfaces it.
-4. **Ack flag preconditions absent** — `useUpdatePolicyAcknowledgmentFlag` accepts toggle without validating audience/approved-variant/published.
-5. **`useResolvePolicyConflict` writes false audit rows** when toggling already-disabled mappings — needs `.eq('enabled', true)` guard.
-6. **Variant approval doesn't snapshot body** — past acknowledgments reference mutable text; need `policy_variant_snapshots` table.
+4. **Ack flag preconditions absent** — `useUpdatePolicyAcknowledgmentFlag` accepts toggle without validating audience/approved-variant/published. The new banner now shows the toggle next to a publish toggle that *is* gated; the inconsistency is visible.
+5. **`useResolvePolicyConflict` writes false audit rows** — needs `.eq('enabled', true)` guard before logging.
+6. **Variant approval doesn't snapshot body** — past acks reference mutable text; `policy_variant_snapshots` table needed.
+7. **`usePolicyForSurface` falls back `disclosure → client` silently** — needs an inline "Using client variant" hint in the Surfaces tab.
 
-## P1 — New (post-28.11.2)
+## New from 28.11.3 itself
 
-7. **`usePolicyForSurface` falls back `disclosure → client` silently** — operators who configured a `disclosure` variant and saw the `client` variant render get no signal that their tone choice was overridden. Add a dev-only log + an inline "Using client variant" hint in the surfaces tab.
-8. **Surface mapping editor lists every surface for every policy** — internal handbook policies show `booking_confirmation`, `checkout`, `kiosk` as candidate surfaces. Filter `candidate_surfaces` by audience server-side or in `SURFACE_META`.
-9. **Public center shows `requires_acknowledgment` policies inline with optional ones** — no visual distinction between "must acknowledge" and "informational." Required acks should hoist to top with a "Action required" pill.
+### 8. Drafts tab doesn't filter by audience
+`PolicyDraftWorkspace` renders all 4 variant types (internal / client / disclosure / manager_note) for every policy. For an `audience='internal'` policy, the operator now sees a "Client" variant card next to a banner that says "isn't shown to clients." Direct contradiction.
+**Fix:** filter drafter cards by audience: internal → `internal` + `manager_note`; external → `client` + `disclosure`; both → all four.
 
-## P2 — UX & polish (carried + new)
+### 9. Banner reserves "Staff acknowledgment" space without delivery
+`PolicyAudienceBanner.tsx:146-153` shows "Staff acknowledgment & role assignment ship in the next wave" for every internal/both policy. That's 26 policies (23 internal + 3 both) × every visit = a permanent "coming soon" footer until 28.11.4. Doctrine says silence > false promise; this is the opposite.
+**Fix:** remove the placeholder until the wave lands; the Applicability tab already implies the role-targeting story.
 
-10. Drafter `<pre>` markdown preview (line ~219 `PolicyDraftWorkspace`)
-11. Configurator opens at "Rules" even when complete — open at first incomplete step
-12. Conflict banner shows only one detail — top 3 + "+N more"
-13. Library has no search/filter (54 items)
-14. Acknowledgment timestamps lack timezone label
-15. Public center ack state localStorage-only
-16. Public center has no sticky category nav
-17. Setup wizard counts include optional in "recommended"
-18. Booking confirmation `<PolicyDisclosure />` renders unconditionally — when zero surfaces wired, surface still mounts a card shell. Confirm Visibility Contract returns null at the section level, not just the body level.
+### 10. Internal-only acks tab is hidden but historical client acks aren't migrated
+`showAcknowledgmentsTab = !isInternalOnly` (configurator line 164). Correct for new policies. **But:** if an operator changes a policy's audience from `both` → `internal` (no UI for this yet, but server allows), historical client acknowledgment data becomes orphaned and invisible. Audit immutability says historical acks must remain accessible.
+**Fix:** show the acks tab whenever there's at least one historical row, regardless of current audience. Add a banner: "Audience changed; historical client acks preserved."
 
----
+## P2 (carried — unchanged scope)
 
-# Section A — Reorganizing the configurator: Internal vs Client-facing
-
-This is the audit's primary recommendation. Today one configurator serves all three audiences with the same five tabs. Below is the proposed split.
-
-## Current shape (problem)
-
-```text
-PolicyConfiguratorPanel (one shape for all 54 policies)
-├── Header: Publish toggle + Require Ack toggle (irrelevant for internal)
-└── Tabs: Rules → Applicability → Surfaces → Drafts → Acknowledgments
-                                  ^^^^^^^^   ^^^^^^^^^^^^^^^^
-                                  dead for internal policies
-```
-
-Result: handbook editor and client-policy editor look identical. Operators editing "Attendance & Punctuality" see a Publish-to-Public-Page toggle they can never use; operators editing "Cancellation Policy" never see "Assign as required reading to roles."
-
-## Proposed shape: audience-aware configurator
-
-```text
-PolicyConfiguratorPanel
-├── Header
-│    ├─ Audience badge (Internal / Client-facing / Both)
-│    ├─ Status badge + version
-│    └─ [Audience-specific actions row]
-│         • Internal:  "Assign to roles"  "Require staff acknowledgment"
-│         • External:  "Publish to client policy center"  "Require client acknowledgment"
-│         • Both:      Both rows, grouped under sub-headers
-│
-└── Tabs (audience-filtered)
-     ├─ Internal-only audience:
-     │    Rules → Applicability → Drafts (internal tone) → Staff Acks
-     │
-     ├─ External-only audience:
-     │    Rules → Applicability → Surfaces → Drafts (client tone) → Publish → Client Acks
-     │
-     └─ Both audience:
-          Rules → Applicability → Surfaces → Drafts (Internal | Client tabs) → Publish → Acks (Staff | Client)
-```
-
-## Why this works
-
-- **Removes dead UI**: handbook policies stop showing 3 unusable tabs.
-- **Adds missing UI**: internal policies gain the staff-acknowledgment workflow they need (today acks are external-only).
-- **Preserves single configurator**: same component, same data hooks — just audience-driven tab visibility and CTAs.
-- **Makes the Library page navigable**: add a top-level segmented control above category tabs:
-  ```
-  [ All (54) ]  [ Client-facing (28) ]  [ Internal handbook (23) ]  [ Both (3) ]
-  ```
-  This is a one-line change that gives operators the mental model the data already has.
-
-## Library reorganization (parallel to configurator split)
-
-Six current categories mix audiences. Restructure tab ordering to lead with audience:
-
-```text
-Library
-├── Audience filter (segmented):  All • Client-facing • Internal • Both
-└── Within filter, group by category:
-     Client-facing  → Client Experience (15) · Extensions (10) · Financial-external (3)
-     Internal       → Team & Employment (18) · Management & Exceptions (4) · Facility-internal (1)
-     Both           → Financial-mixed (1) · Facility-mixed (2)
-```
-
-Counts derived live from `library.length` filtered by audience — no hardcoding.
-
-## Configurator visual: single header, dual treatment
-
-The header currently stacks 3 toggles vertically. Replace with an **audience banner** that sets context once:
-
-- **Internal** banner: muted background, "This policy lives inside your handbook. It isn't shown to clients."
-- **External** banner: primary tint, "This policy is visible at /org/:slug/policies once published."
-- **Both** banner: split (left = internal context, right = external context).
-
-Each banner contains the audience-relevant action toggles only. Cuts visual noise ~40%.
+11. Drafter `<pre>` markdown preview (`PolicyDraftWorkspace.tsx:219-221`)
+12. Configurator opens at "Rules" — should open at first incomplete step
+13. Conflict banner shows only one detail in expanded form
+14. No library search input (54 items, audience filter helps but keyword search still missing)
+15. Acknowledgment timestamps lack timezone label
+16. Public center ack state localStorage-only (clearing browser → re-prompts when server has the row)
+17. Public center has no sticky category nav
+18. Setup wizard counts include optional in "recommended"
+19. `<PolicyDisclosure />` correctly returns null on empty (verified line 66) — finding from prior audit closed
 
 ---
 
-# Library content gaps (carried — only items still missing after 28.11.1+ schema work)
+# Section A — Configurator organization: what 28.11.3 didn't finish
 
-Already in DB (verified): `late_arrival_policy`, `no_show_policy`, `pet_policy`, `child_guest_policy`, `photo_consent_policy`. Still **missing**:
+The audience split landed at the *tab visibility* layer. It didn't land at three deeper layers. Each is small but compounding.
 
-- **Allergy & patch-test policy** (48-hr patch test for color, liability waiver) — `client`
-- **Pregnancy / medical disclosure** (chemical service screening) — `client`
-- **Tipping policy** (cash-only, included-in-card, gratuity governance) — `client` or `both`
-- **Walk-in policy** (accept/decline criteria, surcharge, queue order) — `client`
-- **Weather closure / force majeure** (refund vs credit) — `client`
-- **Phone & device policy** (staff-side: `team`; client-side: `client`)
-- **Confidentiality / NDA** (VIP / celebrity) — `client`
-- **Booth rental boundary policy** (hybrid commission shops) — `team`
-- **Service satisfaction window** (sets expectation *before* the redo) — `client`
-- **Parking & arrival policy** (urban locations) — `client`
-- **Tip pooling / distribution** (companion to existing tip distribution payroll) — `team`
-- **Minor consent / parental authorization** (chemical services on minors) — `client`
+## Layer 1 — Header information density (SHIPPED ✓)
+Audience banner consolidated 3 toggles into 1 contextual block. Working.
+
+## Layer 2 — Surface boundary (NOT SHIPPED → finding #2)
+Audience metadata stops at the configurator chrome. The data layer (`SURFACE_META`, `usePolicyForSurface`) doesn't know an internal policy can't render to a client surface. Result: operator can wire it, the system honors it, the audience banner contradicts it.
+
+**Recommended:** tag every surface with its valid audience(s):
+
+```text
+handbook       → internal
+sop            → internal
+manager        → internal
+client_page    → external
+booking        → external
+checkout       → external
+intake         → external (with optional internal mirror for SOP)
+```
+
+Then `PolicySurfaceEditor` filters candidates by `policy.audience ∩ surface.audience`. Single source of truth.
+
+## Layer 3 — Drafts tab variant filter (NOT SHIPPED → finding #8)
+Same shape as Layer 2 but for the 4 tone variants. An internal policy should never offer a "Client tone" draft. The variant types map cleanly:
+
+```text
+internal       → internal, manager_note
+external       → client, disclosure
+both           → all four (operator chooses)
+```
+
+## Recommended structural follow-up: collapse banner placeholder (#9)
+The "coming in next wave" footer in the audience banner is the only piece of the new UI that violates the silence-doctrine. Remove until 28.11.4 lands the staff-ack flow. Net code change: 9 lines deleted.
+
+---
+
+# Library content gaps (verified against current DB — all 12 still missing)
+
+Confirmed via DB query: zero of these exist as `library_key`. Same list as last audit — schema work has not started:
+
+`allergy_patch_test_policy`, `pregnancy_disclosure_policy`, `tipping_policy`, `walk_in_policy`, `weather_force_majeure_policy`, `phone_device_policy`, `confidentiality_nda_policy`, `booth_rental_boundary_policy`, `service_satisfaction_window_policy`, `parking_arrival_policy`, `tip_pooling_policy`, `minor_consent_policy`.
+
+Suggest batching these into 28.11.6 with full configurator schemas + seed variants. Library jumps 54 → 66.
 
 ---
 
@@ -144,11 +109,11 @@ Already in DB (verified): `late_arrival_policy`, `no_show_policy`, `pet_policy`,
 
 | Doctrine | Status | Δ |
 |---|---|---|
-| North Star (configure once, render everywhere) | ✅ | ↑ shipped (28.11.2) |
-| Persona scaling | ❌ | new finding — internal vs external collapsed (#2) |
-| Autonomy boundaries | ⚠️ | auto-adopt still present (#1) |
-| Audit immutability | ⚠️ | conflict-resolve still inaccurate (#5) |
-| Visibility Contracts | ⚠️ | `<PolicyDisclosure />` may render empty shell (#18) |
+| Persona scaling | ⚠️ | ↑ tab visibility split shipped, surface/variant layers still leak (#2, #8) |
+| Autonomy boundaries | ⚠️ | unchanged — auto-adopt still present (#1) |
+| Visibility Contracts | ⚠️ | new violation — banner placeholder is "false promise" (#9) |
+| Audit immutability | ⚠️ | unchanged — conflict-resolve inaccurate (#5); audience change orphans acks (#10) |
+| Single source of truth | ⚠️ | new — audience exists in policy data, missing from surface/variant data (#2, #8) |
 
 ---
 
@@ -156,18 +121,22 @@ Already in DB (verified): `late_arrival_policy`, `no_show_policy`, `pet_policy`,
 
 | Wave | Priority | Scope |
 |---|---|---|
-| **28.11.3 — Audience-aware configurator** | P0 | #2 + library audience filter + audience banner header |
-| **28.11.4 — Lifecycle hardening** | P1 | #1 adopt CTA + #3 archive + #4 ack guard + #5 audit accuracy + #7 fallback signal |
-| **28.11.5 — Variant snapshots** | P1 | #6 snapshot table + ack reference rewrite |
-| **28.11.6 — Polish & content** | P2 | #8–#18 + 12 missing library entries |
+| **28.11.4 — Audience boundary completion** | P0 | #2 surface audience tagging + #8 drafter variant filter + #9 banner cleanup |
+| **28.11.5 — Lifecycle hardening** | P1 | #1 adopt CTA + #3 archive + #4 ack guard + #5 audit accuracy + #7 fallback signal + #10 historical ack visibility |
+| **28.11.6 — Variant snapshots** | P1 | #6 snapshot table + acknowledgment reference rewrite |
+| **28.11.7 — Polish & content** | P2 | #11–#18 + 12 missing library entries |
 
-P0s never bundled. 28.11.3 ships first because it changes the mental model the rest of the system rests on.
+P0s never bundled. **28.11.4 reorders to "audience boundary completion" rather than "lifecycle hardening" because the split shipped in 28.11.3 is incomplete at the data layer — finishing it before adding lifecycle features prevents the new lifecycle code from inheriting the same boundary leak.**
 
 ---
 
 # Prompt feedback
 
-**What worked:** Adding "suggest how you might organize the policies configurator better for client facing policies vs internal policies" gave me a concrete design problem to anchor the audit around — much better than pure "find issues" framing. The audit converged on a single highest-leverage UX restructure instead of a flat list of 20 fixes.
+**What worked:** Re-running the same prompt after each wave creates a clean delta-tracking rhythm. Each audit can lean on the previous as a baseline, which is why this one runs ~30% shorter than 28.11.2.5 — most carry-forwards just need one-line restatement.
 
-**To tighten next time:** "Audit Policy OS post-28.11.2; current pain is the configurator treats internal handbook items the same as client-facing policies — propose a restructure" would have cut the 17 secondary findings and let me ship a deeper design proposal (mockups, state machine, migration path). When you have a specific suspected problem, lead with it; the audit becomes diagnostic rather than exploratory.
+**To tighten next time:** You're now in a stable audit cadence. Two upgrades worth trying:
+1. **"Audit only what 28.11.3 changed"** — would have produced a 4-finding focused report instead of restating the carry-forwards. Tradeoff: you lose the "still open" visibility.
+2. **"Audit and propose the next wave's scope as a one-paragraph charter"** — would let me end with implementation-ready scope rather than a roadmap table. Best when you know the next wave is approved and want to ship.
+
+The current framing is best when you want both surveillance (what's still broken) and direction (what to ship next). Keep using it through 28.11.6; switch to scoped framing once the P0s clear.
 
