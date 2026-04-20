@@ -24,11 +24,28 @@ export function useResolvePolicyConflict() {
       versionId: string;
       surface: PolicySurface;
     }) => {
+      // Wave 28.11.5 — only proceed (and audit-log) when there's an actually
+      // enabled mapping to disable. Without this guard, repeated clicks or
+      // stale UI state would write false "surface_mapping_disabled" rows.
+      const { data: existing, error: selErr } = await supabase
+        .from('policy_surface_mappings')
+        .select('enabled')
+        .eq('version_id', versionId)
+        .eq('surface', surface)
+        .eq('enabled', true)
+        .maybeSingle();
+      if (selErr) throw selErr;
+      if (!existing) {
+        // Idempotent no-op: nothing enabled to disable.
+        return { versionId, surface, noop: true as const };
+      }
+
       const { error } = await supabase
         .from('policy_surface_mappings')
         .update({ enabled: false })
         .eq('version_id', versionId)
-        .eq('surface', surface);
+        .eq('surface', surface)
+        .eq('enabled', true);
       if (error) throw error;
 
       // Wave 28.10.1 — audit trail for conflict resolutions.
@@ -55,12 +72,19 @@ export function useResolvePolicyConflict() {
         }
       }
 
-      return { versionId, surface };
+      return { versionId, surface, noop: false as const };
     },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['org-policy-surface-mappings', orgId] });
       qc.invalidateQueries({ queryKey: ['policy-surfaces', res.versionId] });
       qc.invalidateQueries({ queryKey: ['org-policies', orgId] });
+      if (res.noop) {
+        toast({
+          title: 'Already disabled',
+          description: 'No active mapping was found for that surface.',
+        });
+        return;
+      }
       toast({
         title: 'Mapping disabled',
         description: 'This policy no longer renders on that surface.',
