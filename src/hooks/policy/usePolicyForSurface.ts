@@ -21,7 +21,8 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { PolicySurface, PolicyVariantType, PolicyCategory } from './usePolicyData';
+import type { PolicySurface, PolicyCategory } from './usePolicyData';
+import type { PolicyVariantType } from './usePolicyApplicability';
 
 export interface SurfacePolicyEntry {
   policyId: string;
@@ -106,12 +107,14 @@ export function usePolicyForSurface(
       if (vErr) throw vErr;
 
       const byVersion = new Map<string, Map<PolicyVariantType, string>>();
-      for (const v of variants ?? []) {
+      for (const v of (variants ?? []) as Array<{
+        version_id: string;
+        variant_type: PolicyVariantType;
+        body_md: string | null;
+      }>) {
         if (!v.body_md) continue;
         if (!byVersion.has(v.version_id)) byVersion.set(v.version_id, new Map());
-        byVersion
-          .get(v.version_id)!
-          .set(v.variant_type as PolicyVariantType, v.body_md as string);
+        byVersion.get(v.version_id)!.set(v.variant_type, v.body_md);
       }
 
       // 3) Assemble entries with fallback resolution.
