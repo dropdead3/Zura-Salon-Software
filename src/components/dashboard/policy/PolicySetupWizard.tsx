@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { US_STATES, ROLE_OPTIONS } from '@/lib/handbook/brandTones';
 
 const SELECTABLE_ROW_CLASS =
   'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm';
@@ -25,7 +26,6 @@ const ROW_UNSELECTED = 'border-border hover:bg-muted';
 
 const formatCategoryLabel = (cat: string) =>
   cat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-import { US_STATES, ROLE_OPTIONS } from '@/lib/handbook/brandTones';
 import {
   usePolicyOrgProfile,
   useUpsertPolicyOrgProfile,
