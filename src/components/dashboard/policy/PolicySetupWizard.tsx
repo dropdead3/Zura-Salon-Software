@@ -795,6 +795,15 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
         )}
       </div>
 
+      {/* Step 1 confirmation summary */}
+      {step === 'confirm' && !defaults.isLoading && (
+        <p className={cn(tokens.body.muted, 'text-xs pt-2')}>
+          {step1Facts.gaps === 0
+            ? `${step1Facts.ready} of ${step1Facts.total} facts auto-detected. Edit if anything's wrong, or continue.`
+            : `${step1Facts.ready} of ${step1Facts.total} facts ready. Resolve ${step1Facts.gaps} setup gap${step1Facts.gaps === 1 ? '' : 's'} above to continue.`}
+        </p>
+      )}
+
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <Button variant="ghost" size={tokens.button.inline} onClick={onClose} disabled={isSaving} className="font-sans">
