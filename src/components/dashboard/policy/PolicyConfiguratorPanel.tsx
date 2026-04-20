@@ -473,13 +473,112 @@ export function PolicyConfiguratorPanel({
         </Tabs>
       )}
 
-      {/* Footer close */}
+      {/* Footer — Wave 28.11.5 lifecycle actions (archive / reactivate). Only
+          shown after adoption since archive applies to existing policies only. */}
       <Separator />
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {data?.policyId && !isArchived && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setArchiveDialogOpen(true)}
+              disabled={archive.isPending}
+              className="font-sans text-muted-foreground hover:text-destructive"
+            >
+              <Archive className="w-4 h-4 mr-2" />
+              Archive policy
+            </Button>
+          )}
+          {data?.policyId && isArchived && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                archive.mutate(
+                  {
+                    policyId: data.policyId,
+                    currentVersionId: data.versionId || null,
+                    nextStatus: 'drafting',
+                  },
+                  { onSuccess: () => refetch() },
+                )
+              }
+              disabled={archive.isPending}
+              className="font-sans"
+            >
+              {archive.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RotateCcw className="w-4 h-4 mr-2" />
+              )}
+              Reactivate
+            </Button>
+          )}
+          {isArchived && (
+            <Badge
+              variant="outline"
+              className="font-sans text-xs text-muted-foreground border-border/60"
+            >
+              Archived — not rendering on any surface
+            </Badge>
+          )}
+        </div>
         <Button variant="outline" size="sm" onClick={onClose} className="font-sans">
           Close
         </Button>
       </div>
+
+      {/* Archive confirmation — destructive-ish action: disables surface
+          mappings and stops client-facing renders. Reversible via Reactivate. */}
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display tracking-wide">
+              Archive this policy?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-sans space-y-2">
+              <span className="block">
+                {entry.title} will stop rendering on all client-facing surfaces
+                immediately. Internal handbook references will also pause.
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                History — versions, approved variants, and acknowledgments — is
+                preserved. You can reactivate any time from this panel.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-sans">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="font-sans bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!data?.policyId) return;
+                archive.mutate(
+                  {
+                    policyId: data.policyId,
+                    currentVersionId: data.versionId || null,
+                    nextStatus: 'archived',
+                  },
+                  {
+                    onSuccess: () => {
+                      setArchiveDialogOpen(false);
+                      refetch();
+                    },
+                  },
+                );
+              }}
+            >
+              {archive.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Archive className="w-4 h-4 mr-2" />
+              )}
+              Archive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
