@@ -12,10 +12,19 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+
+const SELECTABLE_ROW_CLASS =
+  'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm';
+const SELECTABLE_ROW_CLASS_START =
+  'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm';
+const ROW_SELECTED = 'border-primary bg-primary/5';
+const ROW_UNSELECTED = 'border-border hover:bg-muted';
+
+const formatCategoryLabel = (cat: string) =>
+  cat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 import { US_STATES, ROLE_OPTIONS } from '@/lib/handbook/brandTones';
 import {
   usePolicyOrgProfile,
@@ -227,7 +236,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   return (
     <div className="space-y-6">
       {/* Step rail */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-4 overflow-x-auto pb-1">
         {STEP_ORDER.map((s, idx) => {
           const isActive = s === step;
           const isDone = idx < stepIndex;
@@ -237,10 +246,10 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               type="button"
               onClick={() => setStep(s)}
               className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors shrink-0',
-                isActive && 'bg-primary/10 text-foreground',
-                !isActive && !isDone && 'text-muted-foreground hover:bg-muted',
-                !isActive && isDone && 'text-foreground hover:bg-muted',
+                'flex items-center gap-2 transition-colors shrink-0',
+                isActive && 'text-foreground',
+                !isActive && isDone && 'text-foreground',
+                !isActive && !isDone && 'text-muted-foreground hover:text-foreground',
               )}
             >
               <span
@@ -260,17 +269,15 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       </div>
 
       <div>
-        <h2 className={cn(tokens.heading.section)}>{STEP_META[step].label}</h2>
-        <p className="font-sans text-sm text-muted-foreground mt-1">{STEP_META[step].description}</p>
+        <p className={tokens.body.muted}>{STEP_META[step].description}</p>
       </div>
 
       {/* Step content */}
-      <Card className="rounded-xl border-border/60 bg-card/80">
-        <CardContent className="p-6 space-y-5">
+      <div className="space-y-5">
           {step === 'business' && (
             <>
               <div className="space-y-2">
-                <Label className="font-sans text-sm">Business type</Label>
+                <Label className={tokens.body.emphasis}>Business type</Label>
                 <Select
                   value={form.business_type ?? ''}
                   onValueChange={(v) => setForm((f) => ({ ...f, business_type: v }))}
@@ -289,7 +296,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label className="font-sans text-sm">Primary state</Label>
+                <Label className={tokens.body.emphasis}>Primary state</Label>
                 <Select
                   value={form.primary_state ?? ''}
                   onValueChange={(v) => setForm((f) => ({ ...f, primary_state: v }))}
@@ -308,7 +315,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               </div>
 
               <div className="space-y-2">
-                <Label className="font-sans text-sm">Team size</Label>
+                <Label className={tokens.body.emphasis}>Team size</Label>
                 <RadioGroup
                   value={form.team_size_band ?? ''}
                   onValueChange={(v) => setForm((f) => ({ ...f, team_size_band: v }))}
@@ -319,10 +326,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       key={b.key}
                       htmlFor={`team-${b.key}`}
                       className={cn(
-                        'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm',
-                        form.team_size_band === b.key
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:bg-muted',
+                        SELECTABLE_ROW_CLASS,
+                        form.team_size_band === b.key ? ROW_SELECTED : ROW_UNSELECTED,
                       )}
                     >
                       <RadioGroupItem value={b.key} id={`team-${b.key}`} />
@@ -337,7 +342,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
           {step === 'services' && (
             <>
               <div className="space-y-2">
-                <Label className="font-sans text-sm">Service categories offered</Label>
+                <Label className={tokens.body.emphasis}>Service categories offered</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {SERVICE_CATEGORIES.map((s) => {
                     const checked = form.service_categories.includes(s.key);
@@ -346,8 +351,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                         key={s.key}
                         htmlFor={`svc-${s.key}`}
                         className={cn(
-                          'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm',
-                          checked ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+                          SELECTABLE_ROW_CLASS,
+                          checked ? ROW_SELECTED : ROW_UNSELECTED,
                         )}
                       >
                         <Checkbox
@@ -363,7 +368,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               </div>
 
               <div className="space-y-2 pt-2 border-t border-border/60">
-                <Label className="font-sans text-sm">Business model toggles</Label>
+                <Label className={tokens.body.emphasis}>Business model toggles</Label>
                 <div className="space-y-2">
                   {[
                     { key: 'offers_extensions', label: 'We offer hair extensions', staticHelper: 'Unlocks extension-specific policies' },
@@ -397,8 +402,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                         key={row.key}
                         htmlFor={row.key}
                         className={cn(
-                          'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm',
-                          checked ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+                          SELECTABLE_ROW_CLASS_START,
+                          checked ? ROW_SELECTED : ROW_UNSELECTED,
                         )}
                       >
                         <Checkbox
@@ -428,8 +433,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
           {step === 'team' && (
             <div className="space-y-2">
-              <Label className="font-sans text-sm">Roles used in your business</Label>
-              <p className="font-sans text-xs text-muted-foreground">
+              <Label className={tokens.body.emphasis}>Roles used in your business</Label>
+              <p className={cn(tokens.body.muted, 'text-xs')}>
                 Drives applicability for handbook sections and policy scoping.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
@@ -440,8 +445,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       key={r.key}
                       htmlFor={`role-${r.key}`}
                       className={cn(
-                        'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm',
-                        checked ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+                        SELECTABLE_ROW_CLASS,
+                        checked ? ROW_SELECTED : ROW_UNSELECTED,
                       )}
                     >
                       <Checkbox
@@ -459,7 +464,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
           {step === 'existing' && (
             <div className="space-y-3">
-              <p className="font-sans text-sm text-muted-foreground">
+              <p className={tokens.body.muted}>
                 Helps us prioritize what to draft fresh vs. what to adapt from your existing materials.
               </p>
               {[
@@ -472,8 +477,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                     key={row.key}
                     htmlFor={row.key}
                     className={cn(
-                      'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm',
-                      checked ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+                      SELECTABLE_ROW_CLASS,
+                      checked ? ROW_SELECTED : ROW_UNSELECTED,
                     )}
                   >
                     <Checkbox
@@ -492,8 +497,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
             <div className="space-y-4">
               <div>
                 <Label className={cn(tokens.kpi.label)}>Recommended policy set</Label>
-                <p className="font-display text-3xl tracking-wide mt-1">{recommendedKeys.length}</p>
-                <p className="font-sans text-sm text-muted-foreground mt-1">
+                <p className={cn(tokens.stat.xlarge, 'mt-1')}>{recommendedKeys.length}</p>
+                <p className={cn(tokens.body.muted, 'mt-1')}>
                   Based on your profile. You can browse the full library and add more anytime.
                 </p>
               </div>
@@ -543,7 +548,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       key={cat}
                       className="flex items-center justify-between p-2 rounded-md bg-muted/50 font-sans text-sm"
                     >
-                      <span className="text-muted-foreground capitalize">{cat}</span>
+                      <span className="text-muted-foreground">{formatCategoryLabel(cat)}</span>
                       <span className="text-foreground">{count}</span>
                     </div>
                   ))}
@@ -556,35 +561,32 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
-        <Button variant="ghost" size="sm" onClick={onClose} disabled={isSaving} className="font-sans">
+        <Button variant="ghost" size={tokens.button.inline} onClick={onClose} disabled={isSaving} className="font-sans">
           Cancel
         </Button>
         <div className="flex items-center gap-2">
           {!isFirst && (
-            <Button variant="outline" size="sm" onClick={back} disabled={isSaving} className="font-sans">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back
+            <Button variant="outline" size={tokens.button.inline} onClick={back} disabled={isSaving} className="font-sans">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
           )}
           {!isLast ? (
-            <Button size="sm" onClick={next} disabled={!canProceed} className="font-sans">
-              Next <ArrowRight className="w-4 h-4 ml-1" />
+            <Button size={tokens.button.inline} onClick={next} disabled={!canProceed} className="font-sans">
+              Next <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button size="sm" onClick={handleFinish} disabled={isSaving} className="font-sans">
+            <Button size={tokens.button.page} onClick={handleFinish} disabled={isSaving} className="font-sans">
               {isSaving ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Saving…
                 </>
               ) : (
-                <>
-                  Save & adopt {recommendedKeys.length}
-                </>
+                <>Save & adopt {recommendedKeys.length}</>
               )}
             </Button>
           )}

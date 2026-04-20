@@ -440,8 +440,8 @@ export default function Policies() {
       <Sheet open={setupOpen} onOpenChange={setSetupOpen}>
         <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader className="mb-6">
-            <SheetTitle className={cn(tokens.heading.section)}>Policy setup</SheetTitle>
-            <SheetDescription className="font-sans">
+            <SheetTitle className={tokens.heading.page}>Policy setup</SheetTitle>
+            <SheetDescription className={tokens.body.muted}>
               Tell us how your business operates. We'll recommend the right policy set.
             </SheetDescription>
           </SheetHeader>
