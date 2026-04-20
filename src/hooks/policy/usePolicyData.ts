@@ -29,6 +29,7 @@ export interface PolicyLibraryEntry {
   requires_extensions: boolean;
   requires_retail: boolean;
   requires_packages: boolean;
+  requires_minors: boolean;
   display_order: number;
   configurator_schema_key: string | null;
 }

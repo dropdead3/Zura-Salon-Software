@@ -121,35 +121,26 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
    * should review on the final step. Adopted policies always stay; only the
    * starter set grows. See mem://features/policy-os-applicability-doctrine.
    */
+  type ExpansionFlag = 'offers_extensions' | 'offers_retail' | 'offers_packages' | 'serves_minors';
+  const EXPANSION_FLAGS: Array<{
+    key: ExpansionFlag;
+    label: string;
+    filter: (l: typeof library[number]) => boolean;
+  }> = [
+    { key: 'offers_extensions', label: 'extensions', filter: (l) => l.requires_extensions },
+    { key: 'offers_retail', label: 'retail products', filter: (l) => l.requires_retail },
+    { key: 'offers_packages', label: 'packages or memberships', filter: (l) => l.requires_packages },
+    { key: 'serves_minors', label: 'minors (under 18)', filter: (l) => l.requires_minors },
+  ];
+
   const expansionFlips = useMemo(() => {
     if (!existingProfile?.setup_completed_at) return [] as Array<{
-      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
+      key: ExpansionFlag;
       label: string;
       requiredCount: number;
       recommendedCount: number;
     }>;
-    const flags: Array<{
-      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
-      label: string;
-      filter: (l: typeof library[number]) => boolean;
-    }> = [
-      {
-        key: 'offers_extensions',
-        label: 'extensions',
-        filter: (l) => l.requires_extensions,
-      },
-      {
-        key: 'offers_retail',
-        label: 'retail products',
-        filter: (l) => l.requires_retail,
-      },
-      {
-        key: 'offers_packages',
-        label: 'packages or memberships',
-        filter: (l) => l.requires_packages,
-      },
-    ];
-    return flags
+    return EXPANSION_FLAGS
       .filter((f) => !existingProfile[f.key] && form[f.key])
       .map((f) => {
         const matched = library.filter(f.filter);
@@ -162,6 +153,42 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       })
       .filter((f) => f.requiredCount + f.recommendedCount > 0);
   }, [existingProfile, form, library]);
+
+  /**
+   * Wave 28.11.7 — live "what changes" helper for the services step.
+   * Computes per-toggle policy counts so operators see the impact of flipping
+   * `offers_*` BEFORE they reach the review step. Only flags with library
+   * content show live counts; the rest get a "(coming soon)" badge.
+   */
+  const flagImpacts = useMemo(() => {
+    const FLAG_HAS_LIBRARY: Record<string, ((l: typeof library[number]) => boolean) | null> = {
+      offers_extensions: (l) => l.requires_extensions,
+      offers_retail: (l) => l.requires_retail,
+      offers_packages: (l) => l.requires_packages,
+      serves_minors: (l) => l.requires_minors,
+      offers_memberships: null,
+    };
+    const result: Record<string, {
+      hasLibrary: boolean;
+      total: number;
+      requiredCount: number;
+      recommendedCount: number;
+    }> = {};
+    Object.entries(FLAG_HAS_LIBRARY).forEach(([key, filter]) => {
+      if (!filter) {
+        result[key] = { hasLibrary: false, total: 0, requiredCount: 0, recommendedCount: 0 };
+        return;
+      }
+      const matched = library.filter(filter);
+      result[key] = {
+        hasLibrary: true,
+        total: matched.length,
+        requiredCount: matched.filter((l) => l.recommendation === 'required').length,
+        recommendedCount: matched.filter((l) => l.recommendation === 'recommended').length,
+      };
+    });
+    return result;
+  }, [library]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFirst = stepIndex === 0;
@@ -339,13 +366,32 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 <Label className="font-sans text-sm">Business model toggles</Label>
                 <div className="space-y-2">
                   {[
-                    { key: 'offers_extensions', label: 'We offer hair extensions', helper: 'Unlocks extension-specific policy set (10 policies)' },
-                    { key: 'offers_retail', label: 'We sell retail products', helper: 'Unlocks retail return / exchange policy' },
-                    { key: 'offers_packages', label: 'We sell packages or memberships', helper: 'Unlocks package expiration & membership policies' },
-                    { key: 'offers_memberships', label: 'We offer ongoing memberships', helper: 'Adds membership-specific terms' },
-                    { key: 'serves_minors', label: 'We serve clients under 18', helper: 'Adds guardian consent and minor-specific rules' },
+                    { key: 'offers_extensions', label: 'We offer hair extensions', staticHelper: 'Unlocks extension-specific policies' },
+                    { key: 'offers_retail', label: 'We sell retail products', staticHelper: 'Unlocks retail return / exchange policies' },
+                    { key: 'offers_packages', label: 'We sell packages or memberships', staticHelper: 'Unlocks package expiration & membership policies' },
+                    { key: 'offers_memberships', label: 'We offer ongoing memberships', staticHelper: 'Adds membership-specific terms' },
+                    { key: 'serves_minors', label: 'We serve clients under 18', staticHelper: 'Adds guardian consent and minor-specific rules' },
                   ].map((row) => {
                     const checked = (form as any)[row.key] as boolean;
+                    const previousValue = (existingProfile as any)?.[row.key] as boolean | undefined;
+                    const hasChanged = previousValue !== undefined && previousValue !== checked;
+                    const impact = flagImpacts[row.key];
+                    let helper: string = row.staticHelper;
+                    let helperEmphasis = false;
+                    if (impact?.hasLibrary && impact.total > 0) {
+                      if (checked) {
+                        helper = `${impact.total} ${impact.total === 1 ? 'policy' : 'policies'} active in your library`;
+                      } else {
+                        const parts: string[] = [];
+                        if (impact.requiredCount > 0) parts.push(`${impact.requiredCount} required`);
+                        if (impact.recommendedCount > 0) parts.push(`${impact.recommendedCount} recommended`);
+                        const breakdown = parts.length > 0 ? ` (${parts.join(' + ')})` : '';
+                        helper = `Hides ${impact.total} ${impact.total === 1 ? 'policy' : 'policies'}${breakdown} from your library`;
+                      }
+                      helperEmphasis = hasChanged;
+                    } else if (impact && !impact.hasLibrary) {
+                      helper = `${row.staticHelper} (coming soon)`;
+                    }
                     return (
                       <Label
                         key={row.key}
@@ -363,7 +409,14 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                         />
                         <span className="flex-1">
                           <span className="block">{row.label}</span>
-                          <span className="block text-xs text-muted-foreground mt-0.5">{row.helper}</span>
+                          <span
+                            className={cn(
+                              'block text-xs mt-0.5 transition-colors',
+                              helperEmphasis ? 'text-foreground' : 'text-muted-foreground',
+                            )}
+                          >
+                            {helper}
+                          </span>
                         </span>
                       </Label>
                     );

@@ -139,13 +139,14 @@ export function useAdoptPoliciesFromLibrary() {
  * profile loads or when the operator hasn't completed setup.
  */
 export function isApplicableToProfile(
-  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages'>,
+  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages' | 'requires_minors'>,
   profile: PolicyOrgProfile | null | undefined,
 ): boolean {
   if (!profile) return true;
   if (entry.requires_extensions && !profile.offers_extensions) return false;
   if (entry.requires_retail && !profile.offers_retail) return false;
   if (entry.requires_packages && !profile.offers_packages) return false;
+  if (entry.requires_minors && !profile.serves_minors) return false;
   return true;
 }
 
@@ -154,9 +155,9 @@ export function isApplicableToProfile(
  * it IS applicable. Drives the configurator's quiet "no longer applies" banner.
  */
 export function applicabilityReason(
-  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages'>,
+  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages' | 'requires_minors'>,
   profile: PolicyOrgProfile | null | undefined,
-): { service: 'extensions' | 'retail' | 'packages'; label: string } | null {
+): { service: 'extensions' | 'retail' | 'packages' | 'minors'; label: string } | null {
   if (!profile) return null;
   if (entry.requires_extensions && !profile.offers_extensions) {
     return { service: 'extensions', label: 'extensions' };
@@ -166,6 +167,9 @@ export function applicabilityReason(
   }
   if (entry.requires_packages && !profile.offers_packages) {
     return { service: 'packages', label: 'packages or memberships' };
+  }
+  if (entry.requires_minors && !profile.serves_minors) {
+    return { service: 'minors', label: 'minors (under 18)' };
   }
   return null;
 }
