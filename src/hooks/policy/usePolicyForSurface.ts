@@ -119,12 +119,27 @@ export function usePolicyForSurface(
 
       // 3) Assemble entries with fallback resolution.
       const entries: SurfacePolicyEntry[] = [];
-      for (const m of mappings) {
-        const pol = (m as any).policy_versions.policies;
+      for (const raw of mappings) {
+        const m = raw as {
+          version_id: string;
+          variant_type: PolicyVariantType;
+          surface_config: Record<string, unknown> | null;
+          policy_versions: {
+            policies: {
+              id: string;
+              library_key: string;
+              category: PolicyCategory;
+              internal_title: string;
+              external_title: string | null;
+              requires_acknowledgment: boolean;
+            };
+          };
+        };
+        const pol = m.policy_versions.policies;
         const variantsForVersion = byVersion.get(m.version_id);
         if (!variantsForVersion) continue;
 
-        const requested = m.variant_type as PolicyVariantType;
+        const requested = m.variant_type;
         let body = variantsForVersion.get(requested);
         let fellBack = false;
         if (!body && requested !== 'client') {
@@ -137,12 +152,12 @@ export function usePolicyForSurface(
           policyId: pol.id,
           versionId: m.version_id,
           libraryKey: pol.library_key,
-          category: pol.category as PolicyCategory,
+          category: pol.category,
           title: pol.external_title || pol.internal_title,
           bodyMd: body,
           variantType: fellBack ? 'client' : requested,
           fellBack,
-          surfaceConfig: ((m as any).surface_config ?? {}) as Record<string, unknown>,
+          surfaceConfig: (m.surface_config ?? {}) as Record<string, unknown>,
           requiresAcknowledgment: !!pol.requires_acknowledgment,
         });
       }
