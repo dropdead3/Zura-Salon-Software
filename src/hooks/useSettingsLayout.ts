@@ -44,7 +44,7 @@ export const SECTION_GROUPS = [
   {
     id: 'governance',
     label: 'Governance',
-    categories: ['policies', 'handbooks', 'access-hub'],
+    categories: ['policies', 'handbooks'],
   },
   {
     id: 'operations',
@@ -54,7 +54,7 @@ export const SECTION_GROUPS = [
   {
     id: 'team',
     label: 'Access & Visibility',
-    categories: ['users'],
+    categories: ['users', 'access-hub'],
   },
   {
     id: 'custom-programs',
