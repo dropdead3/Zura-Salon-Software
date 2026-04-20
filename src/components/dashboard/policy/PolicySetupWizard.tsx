@@ -1,21 +1,40 @@
 /**
- * Policy Setup Wizard (Wave 28.3)
+ * Policy Setup Wizard (Wave 28.12 — Derived-by-default)
  *
- * 4-step wizard captures the business profile that drives recommendations.
- * Steps: Business · Services offered · Team & roles · Existing materials.
- * On finish: saves profile + adopts the recommended policy set.
+ * 3 steps. Confirmation + judgment, not data entry.
+ *  1. Confirm — pre-filled from org data; operator corrects only if needed.
+ *  2. Business model — judgment toggles {{PLATFORM_NAME}} cannot infer.
+ *  3. Materials & review — existing materials + recommended set.
+ *
+ * Doctrine: mem://features/policy-os-applicability-doctrine.md
+ *           ("Wizard inputs must be derived-by-default.")
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { US_STATES, ROLE_OPTIONS } from '@/lib/handbook/brandTones';
+import { US_STATES } from '@/lib/handbook/brandTones';
+import {
+  usePolicyOrgProfile,
+  useUpsertPolicyOrgProfile,
+  useAdoptPoliciesFromLibrary,
+  recommendedKeysForProfile,
+  type PolicyOrgProfileInput,
+} from '@/hooks/policy/usePolicyOrgProfile';
+import { usePolicyLibrary } from '@/hooks/policy/usePolicyData';
+import {
+  usePolicyProfileDefaults,
+  TEAM_BAND_LABELS,
+  BUSINESS_TYPE_LABELS,
+  ROLE_LABELS,
+  type TeamSizeBand,
+} from '@/hooks/policy/usePolicyProfileDefaults';
 
 const SELECTABLE_ROW_CLASS =
   'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm';
@@ -26,14 +45,6 @@ const ROW_UNSELECTED = 'border-border hover:bg-muted';
 
 const formatCategoryLabel = (cat: string) =>
   cat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-import {
-  usePolicyOrgProfile,
-  useUpsertPolicyOrgProfile,
-  useAdoptPoliciesFromLibrary,
-  recommendedKeysForProfile,
-  type PolicyOrgProfileInput,
-} from '@/hooks/policy/usePolicyOrgProfile';
-import { usePolicyLibrary } from '@/hooks/policy/usePolicyData';
 
 interface Props {
   onClose: () => void;
@@ -48,44 +59,51 @@ const BUSINESS_TYPES = [
   { key: 'multi_service', label: 'Multi-service' },
 ] as const;
 
-const TEAM_SIZE_BANDS = [
-  { key: 'solo', label: 'Solo (1)' },
-  { key: 'small', label: 'Small (2–5)' },
-  { key: 'medium', label: 'Medium (6–15)' },
-  { key: 'large', label: 'Large (16–40)' },
-  { key: 'enterprise', label: 'Enterprise (40+)' },
-] as const;
+const TEAM_SIZE_BANDS: Array<{ key: TeamSizeBand; label: string }> = [
+  { key: 'solo', label: TEAM_BAND_LABELS.solo },
+  { key: 'small', label: TEAM_BAND_LABELS.small },
+  { key: 'medium', label: TEAM_BAND_LABELS.medium },
+  { key: 'large', label: TEAM_BAND_LABELS.large },
+  { key: 'enterprise', label: TEAM_BAND_LABELS.enterprise },
+];
 
-const SERVICE_CATEGORIES = [
-  { key: 'cut', label: 'Cut & style' },
-  { key: 'color', label: 'Color' },
-  { key: 'extensions', label: 'Extensions' },
-  { key: 'treatments', label: 'Treatments' },
-  { key: 'barbering', label: 'Barbering' },
-  { key: 'lash_brow', label: 'Lash & brow' },
-  { key: 'nails', label: 'Nails' },
-  { key: 'esthetics', label: 'Esthetics' },
-] as const;
-
-type WizardStep = 'business' | 'services' | 'team' | 'existing' | 'review';
-const STEP_ORDER: WizardStep[] = ['business', 'services', 'team', 'existing', 'review'];
+type WizardStep = 'confirm' | 'model' | 'materials';
+const STEP_ORDER: WizardStep[] = ['confirm', 'model', 'materials'];
 
 const STEP_META: Record<WizardStep, { label: string; description: string }> = {
-  business: { label: 'Business', description: 'Type, location, and team size' },
-  services: { label: 'Services', description: 'What you offer to clients' },
-  team: { label: 'Team & roles', description: 'Who works in your business' },
-  existing: { label: 'Existing materials', description: 'What you already have in place' },
-  review: { label: 'Review', description: 'Confirm and adopt recommended policies' },
+  confirm: {
+    label: 'Confirm',
+    description: 'What we know about your business — confirm or correct.',
+  },
+  model: {
+    label: 'Business model',
+    description: 'Tell us how you operate — drives which policies apply.',
+  },
+  materials: {
+    label: 'Materials & review',
+    description: 'What you already have, and what we’ll adopt.',
+  },
 };
 
 export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   const { data: existingProfile } = usePolicyOrgProfile();
   const { data: library = [] } = usePolicyLibrary();
+  const defaults = usePolicyProfileDefaults();
   const upsert = useUpsertPolicyOrgProfile();
   const adopt = useAdoptPoliciesFromLibrary();
 
-  const [step, setStep] = useState<WizardStep>('business');
+  const [step, setStep] = useState<WizardStep>('confirm');
 
+  // Inline-edit toggles for Step 1 (default to read-only)
+  const [editBusinessType, setEditBusinessType] = useState(false);
+  const [editPrimaryState, setEditPrimaryState] = useState(false);
+  const [editTeamSize, setEditTeamSize] = useState(false);
+
+  /**
+   * Form state — seeds from existing profile first, then derived defaults
+   * (existing always wins; operator's prior overrides are preserved).
+   * Roles + service categories are intentionally derived-only (read-only chips).
+   */
   const [form, setForm] = useState<PolicyOrgProfileInput>(() => ({
     business_type: existingProfile?.business_type ?? null,
     primary_state: existingProfile?.primary_state ?? null,
@@ -100,6 +118,27 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     roles_used: existingProfile?.roles_used ?? [],
     service_categories: existingProfile?.service_categories ?? [],
   }));
+
+  // Hydrate derived-by-default values once they load (existing profile values win)
+  useEffect(() => {
+    if (defaults.isLoading) return;
+    setForm((f) => ({
+      ...f,
+      business_type: existingProfile?.business_type ?? f.business_type ?? defaults.business_type,
+      primary_state: existingProfile?.primary_state ?? f.primary_state ?? defaults.primary_state,
+      team_size_band: existingProfile?.team_size_band ?? f.team_size_band ?? defaults.team_size_band,
+      // Read-only mirrors of catalog/team — always reflect current state for accurate recommendations
+      service_categories:
+        defaults.service_categories.length > 0 ? defaults.service_categories : f.service_categories,
+      roles_used: defaults.roles_used.length > 0 ? defaults.roles_used : f.roles_used,
+      // Heuristic toggle defaults — only seed when no existing profile and operator hasn't touched them
+      offers_retail: existingProfile?.offers_retail ?? defaults.detected_offers_retail,
+      offers_extensions: existingProfile?.offers_extensions ?? defaults.detected_offers_extensions,
+      offers_packages: existingProfile?.offers_packages ?? defaults.detected_offers_packages,
+      offers_memberships: existingProfile?.offers_memberships ?? defaults.detected_offers_memberships,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaults.isLoading]);
 
   const recommendedKeys = useMemo(
     () =>
@@ -124,11 +163,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   }, [library, recommendedKeys]);
 
   /**
-   * Wave 28.11.6 — expansion prompt.
+   * Wave 28.11.6 — expansion prompt (preserved).
    * Detect offers_* flags that flipped false → true since the existing profile.
-   * Each flip unlocks new required + recommended policies that the operator
-   * should review on the final step. Adopted policies always stay; only the
-   * starter set grows. See mem://features/policy-os-applicability-doctrine.
    */
   type ExpansionFlag = 'offers_extensions' | 'offers_retail' | 'offers_packages' | 'serves_minors';
   const EXPANSION_FLAGS: Array<{
@@ -164,10 +200,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   }, [existingProfile, form, library]);
 
   /**
-   * Wave 28.11.7 — live "what changes" helper for the services step.
-   * Computes per-toggle policy counts so operators see the impact of flipping
-   * `offers_*` BEFORE they reach the review step. Only flags with library
-   * content show live counts; the rest get a "(coming soon)" badge.
+   * Wave 28.11.7 — live "what changes" helper for the model step (preserved).
    */
   const flagImpacts = useMemo(() => {
     const FLAG_HAS_LIBRARY: Record<string, ((l: typeof library[number]) => boolean) | null> = {
@@ -202,10 +235,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEP_ORDER.length - 1;
-  const canProceed = (() => {
-    if (step === 'business') return !!form.business_type && !!form.team_size_band;
-    return true;
-  })();
+  const canProceed = !!form.business_type && !!form.team_size_band;
 
   const next = () => !isLast && setStep(STEP_ORDER[stepIndex + 1]);
   const back = () => !isFirst && setStep(STEP_ORDER[stepIndex - 1]);
@@ -222,16 +252,70 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     onClose();
   };
 
-  const toggleArrayItem = (field: 'roles_used' | 'service_categories', value: string) => {
-    setForm((f) => {
-      const set = new Set(f[field]);
-      if (set.has(value)) set.delete(value);
-      else set.add(value);
-      return { ...f, [field]: Array.from(set) };
-    });
-  };
-
   const isSaving = upsert.isPending || adopt.isPending;
+
+  // ── helper sub-components (local) ────────────────────────────────────
+  const ConfirmRow = ({
+    label,
+    value,
+    detail,
+    isEditing,
+    onEdit,
+    children,
+    structuralGate,
+  }: {
+    label: string;
+    value: string | null;
+    detail?: string | null;
+    isEditing?: boolean;
+    onEdit?: () => void;
+    children?: React.ReactNode;
+    structuralGate?: { message: string; ctaLabel: string; ctaPath: string } | null;
+  }) => (
+    <div className="space-y-2 py-3 border-b border-border/60 last:border-b-0">
+      <div className="flex items-baseline justify-between gap-3">
+        <Label className={tokens.body.emphasis}>{label}</Label>
+        {onEdit && !structuralGate && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="font-sans text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+          >
+            <Pencil className="w-3 h-3" />
+            {isEditing ? 'Done' : 'Edit'}
+          </button>
+        )}
+      </div>
+      {structuralGate ? (
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3">
+          <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="flex-1 space-y-1">
+            <p className={cn(tokens.body.muted, 'text-xs')}>{structuralGate.message}</p>
+            <Link
+              to={structuralGate.ctaPath}
+              className="font-sans text-xs text-primary hover:underline"
+            >
+              {structuralGate.ctaLabel} →
+            </Link>
+          </div>
+        </div>
+      ) : isEditing && children ? (
+        children
+      ) : (
+        <div className="space-y-0.5">
+          <p className="font-sans text-sm text-foreground">{value ?? '—'}</p>
+          {detail && <p className={cn(tokens.body.muted, 'text-xs')}>{detail}</p>}
+        </div>
+      )}
+    </div>
+  );
+
+  const teamBandLabel = form.team_size_band
+    ? TEAM_BAND_LABELS[form.team_size_band as TeamSizeBand] ?? form.team_size_band
+    : null;
+  const businessTypeLabel = form.business_type
+    ? BUSINESS_TYPE_LABELS[form.business_type] ?? form.business_type
+    : null;
 
   return (
     <div className="space-y-6">
@@ -274,199 +358,297 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
       {/* Step content */}
       <div className="space-y-5">
-          {step === 'business' && (
-            <>
-              <div className="space-y-2">
-                <Label className={tokens.body.emphasis}>Business type</Label>
-                <Select
-                  value={form.business_type ?? ''}
-                  onValueChange={(v) => setForm((f) => ({ ...f, business_type: v }))}
-                >
-                  <SelectTrigger className="font-sans">
-                    <SelectValue placeholder="Select your business type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BUSINESS_TYPES.map((b) => (
-                      <SelectItem key={b.key} value={b.key}>
-                        {b.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        {/* ── STEP 1 — CONFIRM ─────────────────────────────────────── */}
+        {step === 'confirm' && (
+          <div>
+            {defaults.isLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className={tokens.loading.spinner} />
               </div>
-
-              <div className="space-y-2">
-                <Label className={tokens.body.emphasis}>Primary state</Label>
-                <Select
-                  value={form.primary_state ?? ''}
-                  onValueChange={(v) => setForm((f) => ({ ...f, primary_state: v }))}
+            ) : (
+              <>
+                <ConfirmRow
+                  label="Business type"
+                  value={businessTypeLabel}
+                  isEditing={editBusinessType}
+                  onEdit={() => setEditBusinessType((v) => !v)}
                 >
-                  <SelectTrigger className="font-sans">
-                    <SelectValue placeholder="Select state" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {US_STATES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <Select
+                    value={form.business_type ?? ''}
+                    onValueChange={(v) => setForm((f) => ({ ...f, business_type: v }))}
+                  >
+                    <SelectTrigger className="font-sans">
+                      <SelectValue placeholder="Select your business type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BUSINESS_TYPES.map((b) => (
+                        <SelectItem key={b.key} value={b.key}>
+                          {b.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </ConfirmRow>
 
-              <div className="space-y-2">
-                <Label className={tokens.body.emphasis}>Team size</Label>
-                <RadioGroup
-                  value={form.team_size_band ?? ''}
-                  onValueChange={(v) => setForm((f) => ({ ...f, team_size_band: v }))}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                <ConfirmRow
+                  label="Primary state"
+                  value={form.primary_state}
+                  detail={
+                    defaults.derived_states.length > 1
+                      ? `Operating in ${defaults.derived_states.length} states: ${defaults.derived_states.join(' · ')}`
+                      : defaults.primary_state
+                        ? 'From your primary location'
+                        : null
+                  }
+                  isEditing={editPrimaryState}
+                  onEdit={() => setEditPrimaryState((v) => !v)}
+                  structuralGate={
+                    defaults.needs_location_setup
+                      ? {
+                          message: 'No locations configured — set up at least one location to capture your operating state.',
+                          ctaLabel: 'Set up a location',
+                          ctaPath: '/dashboard/admin/settings?category=locations',
+                        }
+                      : null
+                  }
                 >
-                  {TEAM_SIZE_BANDS.map((b) => (
-                    <Label
-                      key={b.key}
-                      htmlFor={`team-${b.key}`}
-                      className={cn(
-                        SELECTABLE_ROW_CLASS,
-                        form.team_size_band === b.key ? ROW_SELECTED : ROW_UNSELECTED,
-                      )}
-                    >
-                      <RadioGroupItem value={b.key} id={`team-${b.key}`} />
-                      {b.label}
-                    </Label>
-                  ))}
-                </RadioGroup>
-              </div>
-            </>
-          )}
+                  <Select
+                    value={form.primary_state ?? ''}
+                    onValueChange={(v) => setForm((f) => ({ ...f, primary_state: v }))}
+                  >
+                    <SelectTrigger className="font-sans">
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {US_STATES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </ConfirmRow>
 
-          {step === 'services' && (
-            <>
-              <div className="space-y-2">
-                <Label className={tokens.body.emphasis}>Service categories offered</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {SERVICE_CATEGORIES.map((s) => {
-                    const checked = form.service_categories.includes(s.key);
-                    return (
+                <ConfirmRow
+                  label="Team size"
+                  value={teamBandLabel}
+                  detail={
+                    defaults.team_size_count > 0
+                      ? `Based on ${defaults.team_size_count} active staff`
+                      : null
+                  }
+                  isEditing={editTeamSize}
+                  onEdit={() => setEditTeamSize((v) => !v)}
+                  structuralGate={
+                    defaults.needs_team_setup
+                      ? {
+                          message: 'No active staff — add team members so we can scope handbook policies correctly.',
+                          ctaLabel: 'Add team members',
+                          ctaPath: '/dashboard/admin/team',
+                        }
+                      : null
+                  }
+                >
+                  <RadioGroup
+                    value={form.team_size_band ?? ''}
+                    onValueChange={(v) => setForm((f) => ({ ...f, team_size_band: v }))}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                  >
+                    {TEAM_SIZE_BANDS.map((b) => (
                       <Label
-                        key={s.key}
-                        htmlFor={`svc-${s.key}`}
+                        key={b.key}
+                        htmlFor={`team-${b.key}`}
                         className={cn(
                           SELECTABLE_ROW_CLASS,
-                          checked ? ROW_SELECTED : ROW_UNSELECTED,
+                          form.team_size_band === b.key ? ROW_SELECTED : ROW_UNSELECTED,
                         )}
                       >
-                        <Checkbox
-                          id={`svc-${s.key}`}
-                          checked={checked}
-                          onCheckedChange={() => toggleArrayItem('service_categories', s.key)}
-                        />
-                        {s.label}
+                        <RadioGroupItem value={b.key} id={`team-${b.key}`} />
+                        {b.label}
                       </Label>
-                    );
-                  })}
-                </div>
-              </div>
+                    ))}
+                  </RadioGroup>
+                </ConfirmRow>
 
-              <div className="space-y-2 pt-2 border-t border-border/60">
-                <Label className={tokens.body.emphasis}>Business model toggles</Label>
-                <div className="space-y-2">
-                  {[
-                    { key: 'offers_extensions', label: 'We offer hair extensions', staticHelper: 'Unlocks extension-specific policies' },
-                    { key: 'offers_retail', label: 'We sell retail products', staticHelper: 'Unlocks retail return / exchange policies' },
-                    { key: 'offers_packages', label: 'We sell packages or memberships', staticHelper: 'Unlocks package expiration & membership policies' },
-                    { key: 'offers_memberships', label: 'We offer ongoing memberships', staticHelper: 'Adds membership-specific terms' },
-                    { key: 'serves_minors', label: 'We serve clients under 18', staticHelper: 'Adds guardian consent and minor-specific rules' },
-                  ].map((row) => {
-                    const checked = (form as any)[row.key] as boolean;
-                    const previousValue = (existingProfile as any)?.[row.key] as boolean | undefined;
-                    const hasChanged = previousValue !== undefined && previousValue !== checked;
-                    const impact = flagImpacts[row.key];
-                    let helper: string = row.staticHelper;
-                    let helperEmphasis = false;
-                    if (impact?.hasLibrary && impact.total > 0) {
-                      if (checked) {
-                        helper = `${impact.total} ${impact.total === 1 ? 'policy' : 'policies'} active in your library`;
-                      } else {
-                        const parts: string[] = [];
-                        if (impact.requiredCount > 0) parts.push(`${impact.requiredCount} required`);
-                        if (impact.recommendedCount > 0) parts.push(`${impact.recommendedCount} recommended`);
-                        const breakdown = parts.length > 0 ? ` (${parts.join(' + ')})` : '';
-                        helper = `Hides ${impact.total} ${impact.total === 1 ? 'policy' : 'policies'}${breakdown} from your library`;
-                      }
-                      helperEmphasis = hasChanged;
-                    } else if (impact && !impact.hasLibrary) {
-                      helper = `${row.staticHelper} (coming soon)`;
-                    }
-                    return (
-                      <Label
-                        key={row.key}
-                        htmlFor={row.key}
-                        className={cn(
-                          SELECTABLE_ROW_CLASS_START,
-                          checked ? ROW_SELECTED : ROW_UNSELECTED,
-                        )}
-                      >
-                        <Checkbox
-                          id={row.key}
-                          checked={checked}
-                          onCheckedChange={(v) => setForm((f) => ({ ...f, [row.key]: !!v }))}
-                          className="mt-0.5"
-                        />
-                        <span className="flex-1">
-                          <span className="block">{row.label}</span>
-                          <span
-                            className={cn(
-                              'block text-xs mt-0.5 transition-colors',
-                              helperEmphasis ? 'text-foreground' : 'text-muted-foreground',
-                            )}
-                          >
-                            {helper}
-                          </span>
+                <ConfirmRow
+                  label="Services offered"
+                  value={null}
+                  structuralGate={
+                    defaults.needs_services_setup
+                      ? {
+                          message: 'No services in your catalog — add services so we can scope service policies correctly.',
+                          ctaLabel: 'Manage services',
+                          ctaPath: '/dashboard/admin/services',
+                        }
+                      : null
+                  }
+                >
+                  <></>
+                </ConfirmRow>
+                {!defaults.needs_services_setup && (
+                  <div className="-mt-3 pb-3 border-b border-border/60">
+                    <div className="flex flex-wrap gap-1.5">
+                      {defaults.service_categories.map((c) => (
+                        <span
+                          key={c}
+                          className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
+                        >
+                          {defaults.service_category_labels[c] ?? formatCategoryLabel(c)}
                         </span>
-                      </Label>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
+                      ))}
+                    </div>
+                    <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
+                      From your service catalog. Edit services in the catalog itself.
+                    </p>
+                  </div>
+                )}
 
-          {step === 'team' && (
-            <div className="space-y-2">
-              <Label className={tokens.body.emphasis}>Roles used in your business</Label>
-              <p className={cn(tokens.body.muted, 'text-xs')}>
-                Drives applicability for handbook sections and policy scoping.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                {ROLE_OPTIONS.map((r) => {
-                  const checked = form.roles_used.includes(r.key);
-                  return (
-                    <Label
-                      key={r.key}
-                      htmlFor={`role-${r.key}`}
+                <ConfirmRow
+                  label="Roles in use"
+                  value={null}
+                  structuralGate={
+                    defaults.needs_team_setup
+                      ? {
+                          message: 'Roles will appear once team members are added.',
+                          ctaLabel: 'Add team members',
+                          ctaPath: '/dashboard/admin/team',
+                        }
+                      : null
+                  }
+                >
+                  <></>
+                </ConfirmRow>
+                {!defaults.needs_team_setup && defaults.roles_used.length > 0 && (
+                  <div className="-mt-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {defaults.roles_used.map((r) => (
+                        <span
+                          key={r}
+                          className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
+                        >
+                          {ROLE_LABELS[r] ?? formatCategoryLabel(r)}
+                        </span>
+                      ))}
+                    </div>
+                    <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
+                      From your team. Edit roles in Access &amp; Permissions.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── STEP 2 — BUSINESS MODEL ──────────────────────────────── */}
+        {step === 'model' && (
+          <div className="space-y-2">
+            {[
+              {
+                key: 'offers_extensions',
+                label: 'We offer hair extensions',
+                staticHelper: 'Unlocks extension-specific policies',
+                detected: defaults.detected_offers_extensions,
+                detectedReason: defaults.extensions_reason,
+              },
+              {
+                key: 'offers_retail',
+                label: 'We sell retail products',
+                staticHelper: 'Unlocks retail return / exchange policies',
+                detected: defaults.detected_offers_retail,
+                detectedReason: defaults.retail_reason,
+              },
+              {
+                key: 'offers_packages',
+                label: 'We sell packages or memberships',
+                staticHelper: 'Unlocks package expiration & membership policies',
+                detected: defaults.detected_offers_packages,
+                detectedReason: defaults.packages_reason,
+              },
+              {
+                key: 'offers_memberships',
+                label: 'We offer ongoing memberships',
+                staticHelper: 'Adds membership-specific terms',
+                detected: defaults.detected_offers_memberships,
+                detectedReason: defaults.memberships_reason,
+              },
+              {
+                key: 'serves_minors',
+                label: 'We serve clients under 18',
+                staticHelper: 'Adds guardian consent and minor-specific rules',
+                detected: false,
+                detectedReason: null,
+              },
+            ].map((row) => {
+              const checked = (form as any)[row.key] as boolean;
+              const previousValue = (existingProfile as any)?.[row.key] as boolean | undefined;
+              const hasChanged = previousValue !== undefined && previousValue !== checked;
+              const impact = flagImpacts[row.key];
+              let helper: string = row.staticHelper;
+              let helperEmphasis = false;
+              if (impact?.hasLibrary && impact.total > 0) {
+                if (checked) {
+                  helper = `${impact.total} ${impact.total === 1 ? 'policy' : 'policies'} active in your library`;
+                } else {
+                  const parts: string[] = [];
+                  if (impact.requiredCount > 0) parts.push(`${impact.requiredCount} required`);
+                  if (impact.recommendedCount > 0) parts.push(`${impact.recommendedCount} recommended`);
+                  const breakdown = parts.length > 0 ? ` (${parts.join(' + ')})` : '';
+                  helper = `Hides ${impact.total} ${impact.total === 1 ? 'policy' : 'policies'}${breakdown} from your library`;
+                }
+                helperEmphasis = hasChanged;
+              } else if (impact && !impact.hasLibrary) {
+                helper = `${row.staticHelper} (coming soon)`;
+              }
+              return (
+                <Label
+                  key={row.key}
+                  htmlFor={row.key}
+                  className={cn(
+                    SELECTABLE_ROW_CLASS_START,
+                    checked ? ROW_SELECTED : ROW_UNSELECTED,
+                  )}
+                >
+                  <Checkbox
+                    id={row.key}
+                    checked={checked}
+                    onCheckedChange={(v) => setForm((f) => ({ ...f, [row.key]: !!v }))}
+                    className="mt-0.5"
+                  />
+                  <span className="flex-1">
+                    <span className="flex items-center gap-2 flex-wrap">
+                      <span>{row.label}</span>
+                      {row.detected && row.detectedReason && (
+                        <span className="font-sans text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          auto-detected · {row.detectedReason}
+                        </span>
+                      )}
+                    </span>
+                    <span
                       className={cn(
-                        SELECTABLE_ROW_CLASS,
-                        checked ? ROW_SELECTED : ROW_UNSELECTED,
+                        'block text-xs mt-0.5 transition-colors',
+                        helperEmphasis ? 'text-foreground' : 'text-muted-foreground',
                       )}
                     >
-                      <Checkbox
-                        id={`role-${r.key}`}
-                        checked={checked}
-                        onCheckedChange={() => toggleArrayItem('roles_used', r.key)}
-                      />
-                      {r.label}
-                    </Label>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                      {helper}
+                    </span>
+                  </span>
+                </Label>
+              );
+            })}
+          </div>
+        )}
 
-          {step === 'existing' && (
+        {/* ── STEP 3 — MATERIALS & REVIEW ──────────────────────────── */}
+        {step === 'materials' && (
+          <div className="space-y-5">
             <div className="space-y-3">
-              <p className={tokens.body.muted}>
-                Helps us prioritize what to draft fresh vs. what to adapt from your existing materials.
-              </p>
+              <div>
+                <Label className={tokens.body.emphasis}>Existing materials</Label>
+                <p className={cn(tokens.body.muted, 'text-xs mt-1')}>
+                  Helps us prioritize what to draft fresh vs. what to adapt from your existing materials.
+                </p>
+              </div>
               {[
                 { key: 'has_existing_handbook', label: 'We already have an employee handbook' },
                 { key: 'has_existing_client_policies', label: 'We already publish client-facing policies' },
@@ -491,10 +673,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 );
               })}
             </div>
-          )}
 
-          {step === 'review' && (
-            <div className="space-y-4">
+            <div className="pt-4 border-t border-border/60 space-y-4">
               <div>
                 <Label className={cn(tokens.kpi.label)}>Recommended policy set</Label>
                 <p className={cn(tokens.stat.xlarge, 'mt-1')}>{recommendedKeys.length}</p>
@@ -540,27 +720,30 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 </div>
               )}
 
-              <div className="space-y-2 pt-2 border-t border-border/60">
-                <Label className={cn(tokens.kpi.label)}>Breakdown by category</Label>
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  {Array.from(recommendedByCategory.entries()).map(([cat, count]) => (
-                    <div
-                      key={cat}
-                      className="flex items-center justify-between p-2 rounded-md bg-muted/50 font-sans text-sm"
-                    >
-                      <span className="text-muted-foreground">{formatCategoryLabel(cat)}</span>
-                      <span className="text-foreground">{count}</span>
-                    </div>
-                  ))}
+              {recommendedByCategory.size > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border/60">
+                  <Label className={cn(tokens.kpi.label)}>Breakdown by category</Label>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {Array.from(recommendedByCategory.entries()).map(([cat, count]) => (
+                      <div
+                        key={cat}
+                        className="flex items-center justify-between p-2 rounded-md bg-muted/50 font-sans text-sm"
+                      >
+                        <span className="text-muted-foreground">{formatCategoryLabel(cat)}</span>
+                        <span className="text-foreground">{count}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <p className="font-sans text-xs text-muted-foreground pt-2 border-t border-border/60">
                 Adopting a policy creates a draft you can configure. Nothing is published or wired
                 automatically — you stay in control of what goes live.
               </p>
             </div>
-          )}
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -586,7 +769,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                   Saving…
                 </>
               ) : (
-                <>Save & adopt {recommendedKeys.length}</>
+                <>Save &amp; adopt {recommendedKeys.length}</>
               )}
             </Button>
           )}
