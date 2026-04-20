@@ -48,6 +48,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
 import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 import { useStylistSkipRate } from '@/hooks/useStylistSkipRate';
+import { PolicyDisclosure } from '@/components/policy/PolicyDisclosure';
 
 type CheckoutPaymentMethod = 'card_reader' | 'cash' | 'other';
 
@@ -1407,6 +1408,15 @@ export function CheckoutSummarySheet({
                 </Button>
               )}
             </div>
+          )}
+
+          {/* Wave 28.11.2 — Surface-mapped policy disclosures (checkout). */}
+          {organizationId && (
+            <PolicyDisclosure
+              surface="checkout"
+              organizationId={organizationId}
+              maxItems={3}
+            />
           )}
 
           <div className="flex justify-between items-center py-2">
