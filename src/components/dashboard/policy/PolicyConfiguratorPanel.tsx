@@ -11,11 +11,10 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Globe } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
-import { Switch } from '@/components/ui/switch';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { usePublishPolicyExternally } from '@/hooks/policy/usePublishPolicyExternally';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,7 @@ import { PolicyRuleField } from './PolicyRuleField';
 import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
 import { PolicyDraftWorkspace } from './PolicyDraftWorkspace';
+import { PolicyAudienceBanner } from './PolicyAudienceBanner';
 import {
   getConfiguratorSchema,
   type RuleField,
