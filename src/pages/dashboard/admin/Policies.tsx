@@ -24,7 +24,7 @@ import { computeHiddenByReason } from '@/lib/policy/applicability-summary';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
 import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
-import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBanner';
+import { PolicySetupIntro } from '@/components/dashboard/policy/PolicySetupIntro';
 import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
 import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyConfiguratorPanel';
 import { PolicyConflictBanner } from '@/components/dashboard/policy/PolicyConflictBanner';
@@ -154,7 +154,11 @@ export default function Policies() {
     <DashboardLayout>
       <DashboardPageHeader
         title="Policies"
-        description="The source of truth for every policy your business runs on. Configure once, render everywhere — handbooks, client pages, booking, checkout, and manager decisions."
+        description={
+          hasProfile
+            ? 'The source of truth for every policy your business runs on. Configure once, render everywhere — handbooks, client pages, booking, checkout, and manager decisions.'
+            : 'Configure once. Render everywhere.'
+        }
         actions={
           hasProfile ? (
             <Button variant="outline" size="sm" onClick={() => setSetupOpen(true)} className="font-sans">
@@ -169,12 +173,14 @@ export default function Policies() {
         <div className="flex items-center justify-center h-64">
           <Loader2 className={tokens.loading.spinner} />
         </div>
+      ) : !hasProfile ? (
+        <div className="space-y-8">
+          <PageExplainer pageId="policies" />
+          <PolicySetupIntro onStart={() => setSetupOpen(true)} libraryCount={library.length} />
+        </div>
       ) : (
         <div className="space-y-8">
           <PageExplainer pageId="policies" />
-          {!hasProfile && (
-            <PolicySetupBanner onStart={() => setSetupOpen(true)} hasProfile={false} libraryCount={library.length} />
-          )}
           <PolicyHealthStrip summary={summary} />
           <PolicyConflictBanner
             conflicts={summary.surface_conflicts}
