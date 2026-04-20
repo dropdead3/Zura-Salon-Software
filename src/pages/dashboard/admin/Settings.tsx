@@ -83,6 +83,7 @@ const categoriesMap: Record<string, { id: string; label: string; description: st
   'zura-config': { id: 'zura-config', label: 'Zura Configuration', description: 'Customize AI personality, knowledge base, role rules, and behavioral guardrails.', icon: Sparkles },
   'terminals': { id: 'terminals', label: 'Point Of Sale', description: 'Configure your Point Of Sale hardware fleet, purchase readers, monitor connectivity, and preview checkout display.', icon: CreditCard },
   'handbooks': { id: 'handbooks', label: 'Handbooks', description: 'Build role-aware handbooks with the wizard, or manage uploaded policy documents.', icon: BookOpen },
+  'policies': { id: 'policies', label: 'Policies', description: "Adopt and configure your salon's cancellation, no-show, redo, and house policies. Drive structure across booking, checkout, and the public Policy Center.", icon: FileCheck },
 };
 
 export default function Settings() {
@@ -131,6 +132,7 @@ export default function Settings() {
     else if (id === 'data-import') navigate(dashPath('/admin/data-import'));
     else if (id === 'zura-config') navigate(dashPath('/admin/zura-config'));
     else if (id === 'handbooks') navigate(dashPath('/admin/handbooks'));
+    else if (id === 'policies') navigate(dashPath('/admin/policies'));
     else setActiveCategory(id as SettingsCategory);
   };
 
