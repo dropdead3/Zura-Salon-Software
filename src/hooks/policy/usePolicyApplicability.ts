@@ -249,6 +249,26 @@ export function isSurfaceCompatibleWithAudience(
 }
 
 /**
+ * Wave 28.11.5 — Per-policy default variant for surfaces tagged `audience: 'both'`.
+ *
+ * `SURFACE_META.intake.defaultVariant` is `'client'`, but for an `internal`-only
+ * policy the audience filter strips the `client` variant — the operator would
+ * see "intake enabled" with no rendered body. This helper picks an audience-
+ * appropriate seed so that doesn't happen.
+ */
+export function defaultVariantForSurface(
+  surface: PolicySurface,
+  policyAudience: 'internal' | 'external' | 'both',
+): PolicyVariantType {
+  const meta = SURFACE_META[surface];
+  if (meta.audience !== 'both') return meta.defaultVariant;
+  // Surface accepts both; bias the seed by policy audience.
+  if (policyAudience === 'internal') return 'internal';
+  if (policyAudience === 'external') return 'client';
+  return meta.defaultVariant;
+}
+
+/**
  * Seed applicability rows from the org profile (28.3) so freshly adopted
  * policies inherit org reality (roles_used, service_categories, locations).
  * The operator can deselect any chip before saving.

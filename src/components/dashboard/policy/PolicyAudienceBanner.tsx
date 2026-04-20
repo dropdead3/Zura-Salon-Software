@@ -83,7 +83,9 @@ export function PolicyAudienceBanner({
             <p className="font-display text-xs tracking-wider uppercase text-foreground">
               {label}
             </p>
-            {isExternal && isPublishedExternal && (
+            {/* Wave 28.11.5 — Live badge applies to any audience that touches
+                external (external OR both), not just external-only. */}
+            {(isExternal || isBoth) && isPublishedExternal && (
               <Badge
                 variant="outline"
                 className="font-sans text-[10px] text-primary border-primary/30"
@@ -133,8 +135,11 @@ export function PolicyAudienceBanner({
               Require client acknowledgment
             </p>
             <p className="font-sans text-xs text-muted-foreground">
-              Clients must type their name and confirm on the public Policy Center
-              before the policy is considered acknowledged.
+              {/* Wave 28.11.5 — make precondition visible alongside the disabled state,
+                  matching the publish toggle pattern. */}
+              {ackDisabled && !requiresClientAck
+                ? 'Approve a client-facing variant and publish before requiring acknowledgment.'
+                : 'Clients must type their name and confirm on the public Policy Center before the policy is considered acknowledged.'}
             </p>
           </label>
         </div>

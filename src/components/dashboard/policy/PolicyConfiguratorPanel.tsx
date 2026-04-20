@@ -11,16 +11,28 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Archive, Check, RotateCcw } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { usePublishPolicyExternally } from '@/hooks/policy/usePublishPolicyExternally';
+import { useArchivePolicy } from '@/hooks/policy/useArchivePolicy';
+import { usePolicyAcknowledgmentCount } from '@/hooks/policy/usePolicyAcknowledgmentCount';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -44,6 +56,7 @@ import {
   type ApplicabilityRow,
   type SurfaceMappingRow,
   SURFACE_META,
+  defaultVariantForSurface,
 } from '@/hooks/policy/usePolicyApplicability';
 import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
@@ -77,16 +90,16 @@ export function PolicyConfiguratorPanel({
   const [hydrated, setHydrated] = useState(false);
   const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts' | 'acknowledgments'>('rules');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const updateAckFlag = useUpdatePolicyAcknowledgmentFlag();
   const publish = usePublishPolicyExternally();
+  const archive = useArchivePolicy();
 
-  // Auto-adopt if not yet adopted, so the configurator always has a draft version.
-  useEffect(() => {
-    if (!alreadyAdopted && !adopt.isPending && !adopt.isSuccess) {
-      adopt.mutate(entry.key, { onSuccess: () => refetch() });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alreadyAdopted, entry.key]);
+  // Wave 28.11.5 — autonomy boundary: NEVER silently adopt on configurator
+  // open. The library is segmented by audience (28.11.3) which incentivizes
+  // exploration; auto-adopt would write a `policies` row for every card the
+  // operator inspects. Adoption now requires explicit consent (CTA below).
+  // The `adopt` mutation is invoked from `handleAdopt` only.
 
   const allFields = useMemo(() => schema.sections.flatMap((s) => s.fields), [schema]);
 
@@ -128,16 +141,18 @@ export function PolicyConfiguratorPanel({
       setSurfaces(surfaceRows);
       return;
     }
-    // Seed: pre-enable each candidate surface from the library entry with its
-    // default variant. Operator can toggle off before saving.
+    // Wave 28.11.5 — audience-aware seed: use `defaultVariantForSurface` so
+    // 'both'-audience surfaces (intake) seed an internal-only policy with
+    // the `internal` variant rather than the meta default `client`, which
+    // the audience filter would otherwise strip.
     const seeded: SurfaceMappingRow[] = (entry.candidate_surfaces ?? []).map((s) => ({
       surface: s,
-      variant_type: SURFACE_META[s].defaultVariant,
+      variant_type: defaultVariantForSurface(s, entry.audience),
       enabled: true,
       surface_config: {},
     }));
     setSurfaces(seeded);
-  }, [surfaceRows, surfaces, versionId, entry.candidate_surfaces]);
+  }, [surfaceRows, surfaces, versionId, entry.candidate_surfaces, entry.audience]);
 
   const handleSaveRules = () => {
     if (!versionId) return;
@@ -154,14 +169,13 @@ export function PolicyConfiguratorPanel({
 
   const categoryMeta = POLICY_CATEGORY_META[entry.category];
 
-  /* Wave 28.11.3 — audience-aware tab visibility.
-     Internal-only policies don't render anywhere client-facing, so the
-     Surfaces tab (booking confirmation / checkout / kiosk) is dead UI.
-     Acknowledgments tab is reserved for client acks today; staff acks
-     ship in 28.11.4. We hide it for internal-only audiences for now. */
+  /* Wave 28.11.5 — historical-aware tab visibility.
+     Internal-only policies hide the Surfaces tab (dead UI). Acknowledgments
+     tab now follows audit-immutability: visible if the audience touches
+     external OR if there's at least one historical ack row (audience may
+     have changed `both`→`internal` after acks were collected). */
   const isInternalOnly = entry.audience === 'internal';
   const showSurfacesTab = !isInternalOnly;
-  const showAcknowledgmentsTab = !isInternalOnly;
 
   // Clamp tab if operator is on a tab the audience doesn't allow
   // (e.g., shared deep link previously landed on `surfaces`).
@@ -182,6 +196,14 @@ export function PolicyConfiguratorPanel({
   const { effectiveOrganization } = useOrganizationContext();
   const orgSlug = effectiveOrganization?.slug;
   const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
+
+  /* Wave 28.11.5 — historical ack visibility (audit immutability).
+     Show acks tab whenever count > 0 even if audience changed to internal-only. */
+  const { data: ackCount = 0 } = usePolicyAcknowledgmentCount(data?.policyId ?? null);
+  const showAcknowledgmentsTab = !isInternalOnly || ackCount > 0;
+  const isArchived = data?.status === 'archived';
+  const ackToggleAllowed =
+    !!data?.isPublishedExternal && hasApprovedClientVariant && !isArchived;
 
   /* Required-rule readiness for drafter */
   const rulesReady = useMemo(() => {
@@ -265,7 +287,7 @@ export function PolicyConfiguratorPanel({
               )
             }
             requiresClientAck={!!data.requiresAcknowledgment}
-            ackDisabled={updateAckFlag.isPending}
+            ackDisabled={updateAckFlag.isPending || (!data.requiresAcknowledgment && !ackToggleAllowed)}
             onClientAckChange={(checked) =>
               updateAckFlag.mutate(
                 { policyId: data.policyId, requiresAcknowledgment: checked },
