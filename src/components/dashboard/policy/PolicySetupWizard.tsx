@@ -366,13 +366,32 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 <Label className="font-sans text-sm">Business model toggles</Label>
                 <div className="space-y-2">
                   {[
-                    { key: 'offers_extensions', label: 'We offer hair extensions', helper: 'Unlocks extension-specific policy set (10 policies)' },
-                    { key: 'offers_retail', label: 'We sell retail products', helper: 'Unlocks retail return / exchange policy' },
-                    { key: 'offers_packages', label: 'We sell packages or memberships', helper: 'Unlocks package expiration & membership policies' },
-                    { key: 'offers_memberships', label: 'We offer ongoing memberships', helper: 'Adds membership-specific terms' },
-                    { key: 'serves_minors', label: 'We serve clients under 18', helper: 'Adds guardian consent and minor-specific rules' },
+                    { key: 'offers_extensions', label: 'We offer hair extensions', staticHelper: 'Unlocks extension-specific policies' },
+                    { key: 'offers_retail', label: 'We sell retail products', staticHelper: 'Unlocks retail return / exchange policies' },
+                    { key: 'offers_packages', label: 'We sell packages or memberships', staticHelper: 'Unlocks package expiration & membership policies' },
+                    { key: 'offers_memberships', label: 'We offer ongoing memberships', staticHelper: 'Adds membership-specific terms' },
+                    { key: 'serves_minors', label: 'We serve clients under 18', staticHelper: 'Adds guardian consent and minor-specific rules' },
                   ].map((row) => {
                     const checked = (form as any)[row.key] as boolean;
+                    const previousValue = (existingProfile as any)?.[row.key] as boolean | undefined;
+                    const hasChanged = previousValue !== undefined && previousValue !== checked;
+                    const impact = flagImpacts[row.key];
+                    let helper: string = row.staticHelper;
+                    let helperEmphasis = false;
+                    if (impact?.hasLibrary && impact.total > 0) {
+                      if (checked) {
+                        helper = `${impact.total} ${impact.total === 1 ? 'policy' : 'policies'} active in your library`;
+                      } else {
+                        const parts: string[] = [];
+                        if (impact.requiredCount > 0) parts.push(`${impact.requiredCount} required`);
+                        if (impact.recommendedCount > 0) parts.push(`${impact.recommendedCount} recommended`);
+                        const breakdown = parts.length > 0 ? ` (${parts.join(' + ')})` : '';
+                        helper = `Hides ${impact.total} ${impact.total === 1 ? 'policy' : 'policies'}${breakdown} from your library`;
+                      }
+                      helperEmphasis = hasChanged;
+                    } else if (impact && !impact.hasLibrary) {
+                      helper = `${row.staticHelper} (coming soon)`;
+                    }
                     return (
                       <Label
                         key={row.key}
@@ -390,7 +409,14 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                         />
                         <span className="flex-1">
                           <span className="block">{row.label}</span>
-                          <span className="block text-xs text-muted-foreground mt-0.5">{row.helper}</span>
+                          <span
+                            className={cn(
+                              'block text-xs mt-0.5 transition-colors',
+                              helperEmphasis ? 'text-foreground' : 'text-muted-foreground',
+                            )}
+                          >
+                            {helper}
+                          </span>
                         </span>
                       </Label>
                     );
