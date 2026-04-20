@@ -83,7 +83,9 @@ export function PolicyAudienceBanner({
             <p className="font-display text-xs tracking-wider uppercase text-foreground">
               {label}
             </p>
-            {isExternal && isPublishedExternal && (
+            {/* Wave 28.11.5 — Live badge applies to any audience that touches
+                external (external OR both), not just external-only. */}
+            {(isExternal || isBoth) && isPublishedExternal && (
               <Badge
                 variant="outline"
                 className="font-sans text-[10px] text-primary border-primary/30"
