@@ -16,10 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { US_STATES } from '@/lib/handbook/brandTones';
 import {
   usePolicyOrgProfile,
   useUpsertPolicyOrgProfile,
@@ -96,17 +96,17 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
   // Inline-edit toggles for Step 1 (default to read-only)
   const [editBusinessType, setEditBusinessType] = useState(false);
-  const [editPrimaryState, setEditPrimaryState] = useState(false);
   const [editTeamSize, setEditTeamSize] = useState(false);
 
   /**
    * Form state — seeds from existing profile first, then derived defaults
    * (existing always wins; operator's prior overrides are preserved).
-   * Roles + service categories are intentionally derived-only (read-only chips).
+   * Roles + service categories + operating states are derived-only (read-only chips).
    */
   const [form, setForm] = useState<PolicyOrgProfileInput>(() => ({
     business_type: existingProfile?.business_type ?? null,
     primary_state: existingProfile?.primary_state ?? null,
+    operating_states: existingProfile?.operating_states ?? [],
     team_size_band: existingProfile?.team_size_band ?? null,
     offers_extensions: existingProfile?.offers_extensions ?? false,
     offers_retail: existingProfile?.offers_retail ?? false,
@@ -125,7 +125,11 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     setForm((f) => ({
       ...f,
       business_type: existingProfile?.business_type ?? f.business_type ?? defaults.business_type,
-      primary_state: existingProfile?.primary_state ?? f.primary_state ?? defaults.primary_state,
+      // States: always reflect derived (operator can't edit — they edit locations instead)
+      operating_states:
+        defaults.derived_states.length > 0 ? defaults.derived_states : (existingProfile?.operating_states ?? []),
+      primary_state:
+        defaults.derived_states[0] ?? existingProfile?.primary_state ?? f.primary_state ?? defaults.primary_state,
       team_size_band: existingProfile?.team_size_band ?? f.team_size_band ?? defaults.team_size_band,
       // Read-only mirrors of catalog/team — always reflect current state for accurate recommendations
       service_categories:
