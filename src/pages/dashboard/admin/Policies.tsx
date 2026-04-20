@@ -189,10 +189,38 @@ export default function Policies() {
               <div>
                 <h2 className={cn(tokens.heading.section)}>Library</h2>
                 <p className="font-sans text-sm text-muted-foreground mt-1">
-                  {library.length} recommended policies. Filter by audience first, then narrow by category.
+                  {profileApplicableLibrary.length} recommended {profileApplicableLibrary.length === 1 ? 'policy' : 'policies'} for your business. Filter by audience first, then narrow by category.
                 </p>
               </div>
+              {profile && (hiddenByProfile.length > 0 || showNonApplicable) && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="show-non-applicable"
+                    checked={showNonApplicable}
+                    onCheckedChange={setShowNonApplicable}
+                  />
+                  <Label htmlFor="show-non-applicable" className="font-sans text-xs text-muted-foreground cursor-pointer">
+                    Show non-applicable
+                  </Label>
+                </div>
+              )}
             </div>
+
+            {hiddenByProfile.length > 0 && !showNonApplicable && (
+              <div className="flex items-start gap-2 px-3 py-2 rounded-md border border-border/40 bg-muted/30">
+                <p className="font-sans text-xs text-muted-foreground flex-1">
+                  Hiding {hiddenByProfile.length}{' '}
+                  {hiddenByProfile.length === 1 ? 'policy' : 'policies'} that don't apply to your business profile.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setSetupOpen(true)}
+                    className="font-sans text-xs text-foreground underline-offset-2 hover:underline"
+                  >
+                    Edit profile
+                  </button>
+                </p>
+              </div>
+            )}
 
             {/* Wave 28.11.3 — Audience-first segmented control. The data already
                 carries this distinction; we surface it so operators don't apply
