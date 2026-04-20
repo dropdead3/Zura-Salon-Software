@@ -48,6 +48,22 @@ export default function Policies() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activePolicyKey = searchParams.get('policy');
 
+  const orgScopeKey = profile?.organization_id ?? 'anon';
+  const showAllStorageKey = `policies:show-non-applicable:${orgScopeKey}`;
+  const [showNonApplicable, setShowNonApplicable] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(`policies:show-non-applicable:anon`) === '1';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem(showAllStorageKey);
+    if (stored !== null) setShowNonApplicable(stored === '1');
+  }, [showAllStorageKey]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(showAllStorageKey, showNonApplicable ? '1' : '0');
+  }, [showAllStorageKey, showNonApplicable]);
+
   const hasProfile = !!profile?.setup_completed_at;
 
   const activeEntry = useMemo(
