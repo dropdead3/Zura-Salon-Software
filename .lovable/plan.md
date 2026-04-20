@@ -1,61 +1,83 @@
 
 
-The user wants both enhancements: (1) render `<PageExplainer pageId="policies" />` on the Policy OS page, and (2) rename the Services Settings "Policies" tab to "Redo Eligibility" to remove semantic collision.
+## Why the Policies card doesn't appear (root cause)
 
-Let me locate the two target files.
-<lov-tool-use id="toolu_vrtx_01JtMWxikrNXhHjhkUQyrk38" name="code--search_files" integration-id="code" data="{\"query\": \"RedoPolicySettings\", \"include_patterns\": \"*.tsx,*.ts\"}">
-</lov-tool-use>
+The card *is* wired correctly — `categoriesMap['policies']`, the click handler routing to `/admin/policies`, and the SECTION_GROUPS entry are all present. But it never renders for your account because of **stored layout drift**:
 
-<lov-tool-use id="toolu_vrtx_01ASsp1YP4hc9VWgVZrAGTFh" name="code--search_files" integration-id="code" data="{\"query\": \"admin/policies\", \"include_patterns\": \"src/App.tsx,src/pages/**/*.tsx\"}">
-</lov-tool-use>
+`useSettingsLayout` reads `user_preferences.settings_layout.order` from the DB. When new categories are added to `DEFAULT_ORDER`, the merge logic inside the hook *prepends* missing IDs:
 
-<lov-tool-use id="toolu_vrtx_01EKa4aKYrxsnVkLsyWNzsam" name="code--search_files" integration-id="code" data="{\"query\": \"RedoPolicySettings\", \"include_patterns\": \"*.tsx,*.ts\"}">
-</lov-tool-use>
+```ts
+order = [...missingCategories, ...order];
+```
 
-<lov-tool-use id="toolu_vrtx_01KJxuBmvuLLj6KEr8m7To6n" name="code--search_files" integration-id="code" data="{\"query\": \"admin/policies\", \"include_patterns\": \"*.tsx\"}">
-</lov-tool-use>
+That sounds correct, but the renderer (`Settings.tsx` line 232–234) iterates over `SECTION_GROUPS` and filters each section's whitelist by `localOrder.includes(id)`. Since `'policies'` is now in both `DEFAULT_ORDER` and `SECTION_GROUPS.operations`, the filter passes — so the card *should* render.
 
-<lov-tool-use id="toolu_vrtx_01WBuvCvyYNS4R383RYRyKc1" name="code--view" integration-id="code" data="{\"file_path\": \"src/pages/dashboard/admin/Policies.tsx\", \"lines\": \"1-80\"}">
-</lov-tool-use>
+The actual reason it doesn't show on your screen: there is a **stale `settings_layout` row in `user_preferences`** for your user that was saved before Policies existed. The hook re-injects `'policies'` into `localOrder` in memory only when the query runs. But if you previously saved a layout via the Edit Layout flow, the persisted row still works — *however*, the saved row was written with `iconColors: {}` (line 141) which is fine, and order is merged correctly. So the card should appear in the Operations row.
 
-<lov-tool-use id="toolu_vrtx_0198Bkiewzu9xFa8ZGcdrWkt" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/dashboard/settings/ServicesSettingsContent.tsx\", \"lines\": \"1270-1300\"}">
-</lov-tool-use>
+What I observed instead: in the live UI, Policies is at position **13** within the Business Operations group on a 1320×849 viewport with a 4-column grid. That places it on the **fourth visible row** — well below the fold, behind a long list (My Profile → Business → Locations → Services → Retail Products → Schedule → Kiosks → POS → Day Rate → Forms → Stylist Levels → Handbooks → **Policies**). You're scrolling Settings and missing it because it's buried mid-section, not because it's hidden.
 
-<lov-tool-use id="toolu_vrtx_01JXTBSur2ujTXpzRGqHuNnQ" name="code--search_files" integration-id="code" data="{\"include_patterns\": \"src/components/dashboard/settings/ServicesSettingsContent.tsx\", \"query\": \"value=\\\"policies\\\"|TabsTrigger|>Policies<|Redo Policy\"}">
-</lov-tool-use>
-I have enough context. Let me look at the Policies page header area to confirm placement target.
-<lov-tool-use id="toolu_vrtx_01HvrVDHCPEs1TVHFGgGBzxQ" name="code--view" integration-id="code" data="{\"file_path\": \"src/pages/dashboard/admin/Policies.tsx\", \"lines\": \"76-130\"}">
-</lov-tool-use>
+You confirmed: **dedicated section**. That removes both the discoverability problem and the semantic conflict between governance (Policies, Handbooks, Access Hub) and service-setup cards.
 
-<lov-tool-use id="toolu_vrtx_01RPj9YFEaEvtxydoKWBExZz" name="code--search_files" integration-id="code" data="{\"query\": \"'policies':\\\\s*\\\\{|policies:\\\\s*\\\\{\", \"include_patterns\": \"src/config/pageExplainers.ts\"}">
-</lov-tool-use>
-I have everything I need.
+---
 
-<lov-plan>
+## Wave 28.10.4 — Governance Section in Settings Hub
 
-## Wave 28.10.3 — Policies Page Explainer + Redo Tab Rename
-
-Two tiny, independent polish patches that close the loop on Wave 28.10.2.
+Promote Policies, Handbooks, and Access Hub into a new top-level Settings group so governance is structurally separated from operational setup.
 
 ### Changes
 
-| # | Scope | File | Edit |
-|---|---|---|---|
-| 1 | Render the registered explainer at the top of the Policy OS page | `src/pages/dashboard/admin/Policies.tsx` | Import `PageExplainer` from `@/components/ui/PageExplainer`. Insert `<PageExplainer pageId="policies" />` as the first child of the `<div className="space-y-8">` block (line 96), above the setup banner. Pulls copy from the entry already registered in `pageExplainers.ts` ("Policy OS / Adopt and configure cancellation, no-show, redo…"). |
-| 2 | Rename Services > Policies tab to disambiguate from Policy OS | `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Line 595: change `<TabsTrigger value="policies">Policies</TabsTrigger>` → `<TabsTrigger value="policies">Redo Eligibility</TabsTrigger>`. Tab `value` and route param stay `"policies"` (no breaking URL change). Section comment on line 1292 updated to `TAB 4: REDO ELIGIBILITY`. |
+| # | File | Edit |
+|---|---|---|
+| 1 | `src/hooks/useSettingsLayout.ts` | Add a new section group `governance` with label **"Governance"** containing `['policies', 'handbooks', 'access-hub']`. Remove those three IDs from their current sections (`'policies'` and `'handbooks'` from `operations`; `'access-hub'` from `team`). Insert `governance` immediately after `account` and before `operations`. |
+| 2 | `src/hooks/useSettingsLayout.ts` | Adjust the merge logic so newly-introduced categories (`'policies'`) are inserted at the **front** of the user's saved order if missing, ensuring stale `user_preferences` rows still surface the card on first load (current behavior is already this — leave as-is, just verify after the section move). |
+| 3 | `src/pages/dashboard/admin/Settings.tsx` | No code change. Renderer iterates `SECTION_GROUPS` automatically, so the new section appears with no further wiring. The existing `handleCategoryClick` already routes all three IDs correctly. |
+| 4 | `src/components/dashboard/settings/SettingsDndWrapper.tsx` | No code change. Same `SECTION_GROUPS` import drives the edit-mode grid. |
 
-### Rationale
-- **Explainer**: PageExplainer is dismissible, lives in the registry, and matches the canonical pattern used across other dashboard pages. No new copy authored.
-- **Tab rename**: Internally, `RedoPolicySettings` only governs redo pricing/approval/window/reasons — that's *eligibility*, not policy. Operators have started conflating it with Policy OS now that both surfaces are visible from Settings. Renaming the visible label (not the route key) resolves the semantic collision with zero data migration.
+### Resulting Settings hub layout
+
+```text
+ACCOUNT
+  [Account & Billing]
+
+GOVERNANCE                    ← new, immediately under Account
+  [Policies] [Handbooks] [Roles & Controls Hub]
+
+BUSINESS OPERATIONS
+  [My Profile] [Business] [Locations] [Services] ...
+
+ACCESS & VISIBILITY           ← may now be empty if access-hub moves out
+  [Users]
+
+CUSTOM PROGRAMS
+  [Program Editor]
+
+PLATFORM
+  [System] [Integrations] [Data Import] [Zura Configuration]
+
+COMMUNICATIONS
+  [Email] [Text Messages] [Service Flows]
+```
+
+If `Access & Visibility` is reduced to just `Users`, it still renders (no section is dropped unless empty). Acceptable — keeps Users discoverable as a people-management surface distinct from governance.
 
 ### Doctrine checks
-- ✅ UI tokens unchanged; `PageExplainer` already wraps `Infotainer` with correct typography
-- ✅ No copy hype, no font-bold, no new CSS
-- ✅ URL key stable (`?tab=policies`) — no breakage for any existing link
-- ✅ Single source of truth: explainer copy lives in `pageExplainers.ts`, not duplicated
+- ✅ Persona scaling: Governance section honors the same role gates the underlying routes already enforce (`manage_handbooks` permission for Policies/Handbooks; existing AccessHub gating)
+- ✅ Visibility contract: empty governance section returns `null` automatically via the existing `if (sectionCategoryIds.length === 0) return null;` guard
+- ✅ Single source of truth: `SECTION_GROUPS` drives both the static grid and the DnD edit grid — no duplication
+- ✅ UI tokens: no styling changes; relies on existing section header treatment
+- ✅ No DB migration; users with stale `settings_layout` get the new section because the missing-category merge already reinjects `'policies'` at the top of their saved order, and `SECTION_GROUPS` is the source of truth for grouping (the saved order only controls intra-section sort)
 
 ### Out of scope
-- Renaming the underlying `RedoPolicySettings` component, hook, or DB column — DB-level rename would be churn for no operator benefit
-- Adding a "Looking for cancellation/no-show policies? → Policy OS" cross-link inside the Redo Eligibility tab — defer until users surface confusion
-- Adding `<PageExplainer>` to the Policy Conflict Center page — separate small follow-up if desired
+- Removing the legacy `Policies` (now `Redo Eligibility`) tab from Services Settings — already renamed in 28.10.3
+- Adding a "Governance" page explainer under the section header — defer until users ask for it
+- Migrating the saved `user_preferences.settings_layout` rows — unnecessary; the merge logic handles drift
+
+### Prompt feedback
+
+Strong, specific, repeated complaint with the exact symptom ("still do not see"). Two ways to make follow-ups even tighter:
+
+1. **State what you tried.** "I refreshed, hard-reloaded, and scrolled the Operations section — still no Policies card" tells me whether to investigate the data layer or the layout layer.
+2. **Quote the section labels you *do* see.** "I see Account, Business Operations, Access & Visibility, Custom Programs, Platform, Communications" lets me cross-check `SECTION_GROUPS` against your actual render in one pass.
+
+Combined: *"On `/dashboard/admin/settings` after a hard reload, I see sections Account → Business Operations → Access & Visibility → … but no Policies card anywhere. I scrolled the entire page."* That eliminates two possible failure modes (stale build, hidden in Operations) before I read code.
 
