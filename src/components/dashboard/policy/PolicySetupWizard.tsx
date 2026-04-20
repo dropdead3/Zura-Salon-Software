@@ -305,11 +305,14 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
         </div>
       ) : isEditing && children ? (
         children
-      ) : (
+      ) : value !== null ? (
         <div className="space-y-0.5">
-          <p className="font-sans text-sm text-foreground">{value ?? '—'}</p>
+          <p className="font-sans text-sm text-foreground">{value}</p>
           {detail && <p className={cn(tokens.body.muted, 'text-xs')}>{detail}</p>}
         </div>
+      ) : (
+        // value === null + no structural gate + not editing → render children inline (chips)
+        children ?? null
       )}
     </div>
   );
@@ -395,42 +398,42 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 </ConfirmRow>
 
                 <ConfirmRow
-                  label="Primary state"
-                  value={form.primary_state}
-                  detail={
-                    defaults.derived_states.length > 1
-                      ? `Operating in ${defaults.derived_states.length} states: ${defaults.derived_states.join(' · ')}`
-                      : defaults.primary_state
-                        ? 'From your primary location'
-                        : null
-                  }
-                  isEditing={editPrimaryState}
-                  onEdit={() => setEditPrimaryState((v) => !v)}
+                  label="Operating states"
+                  value={null}
                   structuralGate={
                     defaults.needs_location_setup
                       ? {
-                          message: 'No locations configured — set up at least one location to capture your operating state.',
+                          message: 'No locations configured — set up at least one location to capture your operating states.',
                           ctaLabel: 'Set up a location',
                           ctaPath: '/dashboard/admin/settings?category=locations',
                         }
-                      : null
+                      : defaults.needs_state_resolution
+                        ? {
+                            message: 'Locations exist but no state could be detected from their addresses. Add a state or full city/ZIP to each location.',
+                            ctaLabel: 'Edit locations',
+                            ctaPath: '/dashboard/admin/settings?category=locations',
+                          }
+                        : null
                   }
                 >
-                  <Select
-                    value={form.primary_state ?? ''}
-                    onValueChange={(v) => setForm((f) => ({ ...f, primary_state: v }))}
-                  >
-                    <SelectTrigger className="font-sans">
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {US_STATES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
+                  <div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {defaults.derived_states.map((code, idx) => (
+                        <span
+                          key={code}
+                          className="inline-flex items-center gap-1.5 font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
+                        >
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                          {defaults.derived_state_names[idx] ?? code}
+                        </span>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                    <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
+                      {defaults.derived_states.length > 1
+                        ? `Operating in ${defaults.derived_states.length} states — applicable policies will respect all jurisdictions. Edit a location to change.`
+                        : 'Detected from your locations. Edit a location to change.'}
+                    </p>
+                  </div>
                 </ConfirmRow>
 
                 <ConfirmRow
@@ -487,25 +490,31 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       : null
                   }
                 >
-                  <></>
-                </ConfirmRow>
-                {!defaults.needs_services_setup && (
-                  <div className="-mt-3 pb-3 border-b border-border/60">
-                    <div className="flex flex-wrap gap-1.5">
-                      {defaults.service_categories.map((c) => (
-                        <span
-                          key={c}
-                          className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
-                        >
-                          {defaults.service_category_labels[c] ?? formatCategoryLabel(c)}
-                        </span>
-                      ))}
-                    </div>
+                  <div>
+                    <TooltipProvider delayDuration={150}>
+                      <div className="flex flex-wrap gap-1.5">
+                        {defaults.service_categories.map((c) => {
+                          const count = defaults.service_category_counts[c] ?? 0;
+                          return (
+                            <Tooltip key={c}>
+                              <TooltipTrigger asChild>
+                                <span className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground cursor-help">
+                                  {defaults.service_category_labels[c] ?? formatCategoryLabel(c)}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="font-sans text-xs">
+                                {count} {count === 1 ? 'service' : 'services'} in this category
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    </TooltipProvider>
                     <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
                       From your service catalog. Edit services in the catalog itself.
                     </p>
                   </div>
-                )}
+                </ConfirmRow>
 
                 <ConfirmRow
                   label="Roles in use"
@@ -520,25 +529,33 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       : null
                   }
                 >
-                  <></>
-                </ConfirmRow>
-                {!defaults.needs_team_setup && defaults.roles_used.length > 0 && (
-                  <div className="-mt-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      {defaults.roles_used.map((r) => (
-                        <span
-                          key={r}
-                          className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
-                        >
-                          {ROLE_LABELS[r] ?? formatCategoryLabel(r)}
-                        </span>
-                      ))}
+                  {defaults.roles_used.length > 0 ? (
+                    <div>
+                      <TooltipProvider delayDuration={150}>
+                        <div className="flex flex-wrap gap-1.5">
+                          {defaults.roles_used.map((r) => {
+                            const count = defaults.role_counts[r] ?? 0;
+                            return (
+                              <Tooltip key={r}>
+                                <TooltipTrigger asChild>
+                                  <span className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground cursor-help">
+                                    {ROLE_LABELS[r] ?? formatCategoryLabel(r)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="font-sans text-xs">
+                                  {count} active staff with this role
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })}
+                        </div>
+                      </TooltipProvider>
+                      <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
+                        From your team. Edit roles in Access &amp; Permissions.
+                      </p>
                     </div>
-                    <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
-                      From your team. Edit roles in Access &amp; Permissions.
-                    </p>
-                  </div>
-                )}
+                  ) : null}
+                </ConfirmRow>
               </>
             )}
           </div>
