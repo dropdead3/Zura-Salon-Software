@@ -320,15 +320,17 @@ export function PolicyConfiguratorPanel({
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="surfaces" className="font-sans">
-              <MapPin className="w-3.5 h-3.5 mr-1.5" />
-              Surfaces
-              {surfacesActiveCount > 0 && (
-                <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
-                  {surfacesActiveCount}
-                </Badge>
-              )}
-            </TabsTrigger>
+            {showSurfacesTab && (
+              <TabsTrigger value="surfaces" className="font-sans">
+                <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                Surfaces
+                {surfacesActiveCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
+                    {surfacesActiveCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="drafts" className="font-sans">
               <FileText className="w-3.5 h-3.5 mr-1.5" />
               Drafts
@@ -338,10 +340,10 @@ export function PolicyConfiguratorPanel({
                 </Badge>
               )}
             </TabsTrigger>
-            {data?.policyId && (
+            {data?.policyId && showAcknowledgmentsTab && (
               <TabsTrigger value="acknowledgments" className="font-sans">
                 <FileSignature className="w-3.5 h-3.5 mr-1.5" />
-                Acknowledgments
+                Client acknowledgments
               </TabsTrigger>
             )}
           </TabsList>
