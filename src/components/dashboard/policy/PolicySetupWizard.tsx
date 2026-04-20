@@ -555,23 +555,37 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 >
                   {defaults.roles_used.length > 0 ? (
                     <div>
+                      <div className="flex items-baseline justify-between mb-2">
+                        <span className="font-sans text-sm text-foreground">
+                          {defaults.team_size_count} {defaults.team_size_count === 1 ? 'team member' : 'team members'}
+                        </span>
+                        <span className={cn(tokens.body.muted, 'text-xs')}>
+                          {defaults.roles_used.length} {defaults.roles_used.length === 1 ? 'role' : 'roles'}
+                        </span>
+                      </div>
                       <TooltipProvider delayDuration={150}>
                         <div className="flex flex-wrap gap-1.5">
-                          {defaults.roles_used.map((r) => {
-                            const count = defaults.role_counts[r] ?? 0;
-                            return (
-                              <Tooltip key={r}>
-                                <TooltipTrigger asChild>
-                                  <span className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground cursor-help">
-                                    {ROLE_LABELS[r] ?? formatCategoryLabel(r)}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="font-sans text-xs">
-                                  {count} active staff with this role
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })}
+                          {defaults.roles_used
+                            .slice()
+                            .sort((a, b) => (defaults.role_counts[b] ?? 0) - (defaults.role_counts[a] ?? 0))
+                            .map((r) => {
+                              const count = defaults.role_counts[r] ?? 0;
+                              return (
+                                <Tooltip key={r}>
+                                  <TooltipTrigger asChild>
+                                    <span className="inline-flex items-center gap-1.5 font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground cursor-help">
+                                      <span>{ROLE_LABELS[r] ?? formatCategoryLabel(r)}</span>
+                                      <span className="font-display text-[10px] tracking-wide px-1.5 py-0.5 rounded bg-background/60 text-muted-foreground">
+                                        {count}
+                                      </span>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="font-sans text-xs">
+                                    {count} active staff with this role
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })}
                         </div>
                       </TooltipProvider>
                       <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
