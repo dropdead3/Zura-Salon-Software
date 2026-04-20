@@ -17,6 +17,14 @@ import {
 import { usePolicyOrgProfile, type PolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
+import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
+import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
+import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBanner';
+import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
+import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyConfiguratorPanel';
+import { PolicyConflictBanner } from '@/components/dashboard/policy/PolicyConflictBanner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
@@ -27,14 +35,6 @@ function isApplicableToProfile(entry: PolicyLibraryEntry, profile: PolicyOrgProf
   if (entry.requires_packages && !profile.offers_packages) return false;
   return true;
 }
-import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
-import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
-import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBanner';
-import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
-import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyConfiguratorPanel';
-import { PolicyConflictBanner } from '@/components/dashboard/policy/PolicyConflictBanner';
-import { PageExplainer } from '@/components/ui/PageExplainer';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function Policies() {
   const { data: library = [], isLoading: libLoading } = usePolicyLibrary();
