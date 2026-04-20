@@ -419,6 +419,7 @@ export function PolicyConfiguratorPanel({
               <PolicySurfaceEditor
                 versionId={versionId}
                 candidateSurfaces={entry.candidate_surfaces ?? []}
+                policyAudience={entry.audience}
                 rows={surfaces}
                 onChange={setSurfaces}
               />
@@ -428,7 +429,11 @@ export function PolicyConfiguratorPanel({
           {/* ---- Drafts tab (Wave 28.6) ---- */}
           <TabsContent value="drafts" className="mt-6">
             {versionId && (
-              <PolicyDraftWorkspace versionId={versionId} rulesReady={rulesReady} />
+              <PolicyDraftWorkspace
+                versionId={versionId}
+                rulesReady={rulesReady}
+                audience={entry.audience}
+              />
             )}
           </TabsContent>
 

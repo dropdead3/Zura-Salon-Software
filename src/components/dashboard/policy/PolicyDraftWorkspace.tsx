@@ -24,11 +24,23 @@ import {
   type PolicyVariantType,
   type PolicyVariantRow,
 } from '@/hooks/policy/usePolicyDrafter';
+import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 
 interface Props {
   versionId: string;
   /** Whether all required rule blocks are configured. Drafter is disabled otherwise. */
   rulesReady: boolean;
+  /** Wave 28.11.4 — filters which voice variants surface for editing. */
+  audience: PolicyLibraryEntry['audience'];
+}
+
+/** Variant types valid for a given audience. Mirrors PolicySurfaceEditor. */
+function variantsForAudience(
+  audience: PolicyLibraryEntry['audience'],
+): PolicyVariantType[] {
+  if (audience === 'internal') return ['internal', 'manager_note'];
+  if (audience === 'external') return ['client', 'disclosure'];
+  return VARIANT_TYPE_ORDER;
 }
 
 function timeAgo(iso: string | null): string {
@@ -43,7 +55,8 @@ function timeAgo(iso: string | null): string {
   return `${d}d ago`;
 }
 
-export function PolicyDraftWorkspace({ versionId, rulesReady }: Props) {
+export function PolicyDraftWorkspace({ versionId, rulesReady, audience }: Props) {
+  const allowedTypes = variantsForAudience(audience);
   const { data: variants = [] } = usePolicyVariants(versionId);
   const generate = useGenerateDraftVariant();
   const approve = useApprovePolicyVariant();
@@ -102,7 +115,7 @@ export function PolicyDraftWorkspace({ versionId, rulesReady }: Props) {
       )}
 
       <div className="space-y-3">
-        {VARIANT_TYPE_ORDER.map((vt) => {
+        {allowedTypes.map((vt) => {
           const meta = VARIANT_LABELS[vt];
           const variant = byType.get(vt);
           const isPending = pendingType === vt && generate.isPending;

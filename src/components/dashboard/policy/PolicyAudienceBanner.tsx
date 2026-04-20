@@ -140,18 +140,9 @@ export function PolicyAudienceBanner({
         </div>
       )}
 
-      {/* Internal actions — staff acknowledgment workflow lands in Wave 28.11.4.
-          Surface a placeholder hint so operators understand it's coming and not
-          missing. Keeps doctrine: silence > false promise. */}
-      {(isInternal || isBoth) && (
-        <div className="pt-3 border-t border-border/50">
-          <p className="font-sans text-xs text-muted-foreground">
-            Staff acknowledgment & role assignment ship in the next wave. Today,
-            internal policies render in the Handbook OS for any role you target
-            in the Applicability tab.
-          </p>
-        </div>
-      )}
+      {/* Wave 28.11.4 — silence > false promise. The "staff acknowledgment ships
+          next wave" placeholder was removed. The Applicability tab already implies
+          the role-targeting story for internal policies. */}
     </div>
   );
 }

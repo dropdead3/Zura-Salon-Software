@@ -24,12 +24,16 @@ import {
   type PolicyVariantType,
   SURFACE_META,
   VARIANT_META,
+  isSurfaceCompatibleWithAudience,
   useSavePolicySurfaceMappings,
 } from '@/hooks/policy/usePolicyApplicability';
+import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 
 interface Props {
   versionId: string;
   candidateSurfaces: PolicySurface[];
+  /** Wave 28.11.4 — required so we can filter candidates by audience intersection. */
+  policyAudience: PolicyLibraryEntry['audience'];
   rows: SurfaceMappingRow[];
   onChange: (rows: SurfaceMappingRow[]) => void;
   onSaved?: () => void;
@@ -37,18 +41,36 @@ interface Props {
 
 const ALL_VARIANTS: PolicyVariantType[] = ['internal', 'client', 'disclosure', 'manager_note'];
 
+/** Variant types valid for a given audience (mirrors PolicyDraftWorkspace filter). */
+function variantsForAudience(
+  audience: PolicyLibraryEntry['audience'],
+): PolicyVariantType[] {
+  if (audience === 'internal') return ['internal', 'manager_note'];
+  if (audience === 'external') return ['client', 'disclosure'];
+  return ALL_VARIANTS;
+}
+
 export function PolicySurfaceEditor({
   versionId,
   candidateSurfaces,
+  policyAudience,
   rows,
   onChange,
   onSaved,
 }: Props) {
   const save = useSavePolicySurfaceMappings();
 
-  const surfaces: PolicySurface[] = candidateSurfaces.length
+  // Filter candidates to surfaces compatible with the policy's audience.
+  // Falls back to the full surface list (still audience-filtered) when the
+  // library entry forgot to declare candidates.
+  const baseSurfaces: PolicySurface[] = candidateSurfaces.length
     ? candidateSurfaces
     : (Object.keys(SURFACE_META) as PolicySurface[]);
+  const surfaces: PolicySurface[] = baseSurfaces.filter((s) =>
+    isSurfaceCompatibleWithAudience(policyAudience, SURFACE_META[s].audience),
+  );
+
+  const allowedVariants = variantsForAudience(policyAudience);
 
   const byKey = new Map(rows.map((r) => [r.surface, r]));
 
@@ -132,7 +154,7 @@ export function PolicySurfaceEditor({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {ALL_VARIANTS.map((v) => (
+                      {allowedVariants.map((v) => (
                         <SelectItem key={v} value={v} className="font-sans text-sm">
                           <div className="flex flex-col">
                             <span>{VARIANT_META[v].label}</span>
