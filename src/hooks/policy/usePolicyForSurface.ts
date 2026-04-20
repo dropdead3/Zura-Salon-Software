@@ -22,7 +22,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { PolicySurface, PolicyCategory } from './usePolicyData';
-import type { PolicyVariantType } from './usePolicyApplicability';
+import {
+  type PolicyVariantType,
+  SURFACE_META,
+  isSurfaceCompatibleWithAudience,
+} from './usePolicyApplicability';
 
 export interface SurfacePolicyEntry {
   policyId: string;
@@ -74,20 +78,24 @@ export function usePolicyForSurface(
         .eq('enabled', true);
       if (mErr) throw mErr;
 
+      const surfaceAudience = SURFACE_META[surface].audience;
+
       const mappings = (rawMappings ?? []).filter((row: any) => {
         const pol = row?.policy_versions?.policies;
         if (!pol) return false;
         if (pol.organization_id !== orgId) return false;
         if (pol.current_version_id !== row.version_id) return false;
+        // Wave 28.11.4 — audience boundary enforcement at the consumer layer.
+        // Drops mappings whose policy audience doesn't include the surface's
+        // audience, even if a stale mapping row exists from before this fix.
+        const polAudience = (pol.audience ?? 'both') as 'internal' | 'external' | 'both';
+        if (!isSurfaceCompatibleWithAudience(polAudience, surfaceAudience)) {
+          return false;
+        }
         // Only published external policies render on client-facing surfaces.
         // Internal-only surfaces (handbook, manager, sop) are gated by the
-        // surface enum itself, but external surfaces still need the publish flag.
-        const isClientFacing =
-          surface === 'client_page' ||
-          surface === 'booking' ||
-          surface === 'checkout' ||
-          surface === 'intake';
-        if (isClientFacing && !row.policy_versions?.is_published_external) {
+        // audience check above; external-facing surfaces still need the publish flag.
+        if (surfaceAudience !== 'internal' && !row.policy_versions?.is_published_external) {
           return false;
         }
         return true;
