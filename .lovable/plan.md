@@ -1,151 +1,134 @@
 
 
-# Policy OS — Full Audit (Wave 28.10.5 Audit)
+# Policy OS — Wave 28.11.1.5 Audit (post-publish)
 
-Six waves shipped (28.1–28.10.4). Below is a categorized audit of what works, what's broken, what's misleading, and what's missing. Findings carry **Priority** (P0 blocking, P1 should-fix, P2 polish) and a **Doctrine anchor** where applicable. Anchorless findings default to P2.
-
----
-
-## P0 — Blocking gaps (system silently fails its core promise)
-
-### 1. No "Publish externally" action exists anywhere
-**Symptom:** A policy can be adopted → configured → drafted → client variant approved, and the public Policy Center at `/org/:slug/policies` will *still* render nothing for it. `usePublicOrgPolicies` requires `policy_versions.is_published_external = true`, but **no UI mutation ever sets that flag**, and no UI ever moves `policies.status` to `published_external`. The `PolicyHealthStrip` "Published" tile is hard-coded to count statuses that nothing ever assigns.
-**Anchor:** Visibility Contracts — silence is valid only when threshold is *operator-controllable*. Today it's silent because the system has no publish button at all.
-**Fix:** Add a "Publish to client policy page" toggle in the configurator header (audience external/both only). Mutation flips `policy_versions.is_published_external` + bumps `policies.status` to `published_external`. Disable the toggle until at least one approved `client` variant exists. Show the public URL when on.
-
-### 2. Surface mappings are configured but never consumed
-**Symptom:** `PolicySurfaceEditor` lets operators wire policies to surfaces (`booking_confirmation`, `checkout`, `service_card`, etc.). The mappings are saved, conflict-detected, and audit-logged — but **no booking, checkout, scheduler, or POS code reads `policy_surface_mappings`**. Only Handbook OS and the public Policy Center consume policy data, and they don't go through surface mappings at all.
-**Anchor:** North Star — "Configure once, render everywhere." Today: configure once, render *almost* nowhere.
-**Fix:** Ship a `usePolicyForSurface(surface, context)` hook + a `<PolicyDisclosure surface="..."/>` primitive. Wire at minimum: booking confirmation footer, checkout disclosure card, service card pre-book.
-
-### 3. Status field is dead metadata
-**Symptom:** `PolicyStatus` enum has 8 values (`not_started` → `wired`) shown in badges across cards, but **zero code paths mutate it** beyond `adopt_and_init_policy`. Every adopted policy stays at its initial status forever. Health strip counters ("Configured", "Published", "Wired") will read zero indefinitely.
-**Anchor:** Lever & Confidence Doctrine — KPIs that don't move are noise.
-**Fix:** Auto-promote on the server side via the existing save RPCs:
-- `save_policy_rule_blocks` → `configured` (if all required rules present)
-- variant approval → `approved_internal` (when internal variant approved)
-- new publish action (#1) → `published_external`
-- when surface mappings exist on a published version → `wired`
+Wave 28.11.1 closed the publish gap: status auto-promotes, the toggle exists, the public center sorts by `approvedAt desc`, and the library count is dynamic. That demotes the previous P0s. Below is the **current** gap map.
 
 ---
 
-## P1 — High-impact gaps & bugs
+## P0 — Still blocking the core promise
 
-### 4. Library count mismatch ("47" vs actual 54)
-**Symptom:** Page hard-codes "47 recommended policies." DB now has 54 entries. Setup banner also says "47."
-**Fix:** Replace hard-coded number with `library.length`.
-
-### 5. No way to unadopt or archive a policy
-**Symptom:** Clicking any library card auto-adopts that policy via `adopt_and_init_policy` (line 82–87 of `PolicyConfiguratorPanel`). There is no "Remove" / "Archive" action. Operators who click a card to *read* it will inadvertently adopt it. Adopted count inflates immediately.
-**Anchor:** Autonomy Model — "Recommend → Simulate → Approve → Execute." Auto-adopt skips the approve step.
-**Fix options:** (a) Don't auto-adopt; show a clear "Adopt this policy" CTA inside the configurator. (b) Add an "Archive" action on the library card and configurator that flips status to `archived`. Recommend both.
-
-### 6. `useResolvePolicyConflict` writes audit log without `version_id` filter integrity
-**Symptom:** `useResolvePolicyConflict` updates `policy_surface_mappings` by `(version_id, surface)` pair without enforcing `enabled=true` first — disabling something already disabled writes a duplicate audit row claiming `previous_value: { enabled: true }`. Misleading audit trail.
-**Anchor:** Audit findings require accuracy; immutability without truthfulness is worse than no log.
-**Fix:** Add `.eq('enabled', true)` to the update; gate audit insert on actual row count change.
-
-### 7. Acknowledgment flag with no `client` variant approved is a footgun
-**Symptom:** Operator can toggle "Require client acknowledgment" before any client variant is approved or published. The public center won't show the policy → clients can't acknowledge → required acknowledgment is unsatisfiable, but operator gets no warning.
-**Fix:** In `useUpdatePolicyAcknowledgmentFlag`, when enabling, validate (a) audience includes external, (b) at least one approved client variant exists, (c) `is_published_external` is true. Otherwise show a toast: "Approve and publish the client variant first." Surface the same warning inline next to the switch.
-
-### 8. Configurator panel auto-adopts on mount even for read-only browsers
-**Symptom:** Same root cause as #5 — `useEffect` on line 82 fires `adopt.mutate(entry.key)` automatically. Combined with `?policy=` URL param, sharing a deep link to a non-adopted policy adopts it on the recipient's account.
-**Fix:** Convert auto-adopt to an explicit "Adopt and configure" CTA when `!alreadyAdopted`.
-
-### 9. `PolicyHealthStrip` "Published" / "Wired" tiles bury the meaningful number
-**Symptom:** Of four stat tiles, only "Adopted" moves under current code paths. Operators see 0/0/0 perpetually for Configured/Published/Wired and conclude the system is broken.
-**Fix:** Either (a) implement #3 so tiles move, or (b) until then, replace dead tiles with operator-relevant counts: "Drafts awaiting approval", "Acknowledgments this month", "Surfaces with conflicts."
-
-### 10. No library search or keyword filter
-**Symptom:** 54 policies, no search box. Operators must scroll category tabs to find e.g. "tip pooling" or "minor consent."
-**Fix:** Add a search input above the library grid that filters `library` by `title + short_description + key`.
-
-### 11. Public Policy Center has no "Last updated" sort or jump nav with 50+ policies
-**Symptom:** When fully populated, public page becomes one long scroll. No category jumplinks, no "Recently updated" indicator beyond the per-card date.
-**Fix:** Add a sticky category nav rail; sort policies within group by `approvedAt desc` instead of alphabetical.
+### 1. Surface mappings remain unconsumed
+Operators wire policies to `booking_confirmation`, `checkout`, `service_card`, `kiosk`, etc. via `PolicySurfaceEditor`. Mappings save, conflict-detect, audit-log — but **zero consumer code reads `policy_surface_mappings` outside the conflict view**. Search confirms: no `usePolicyForSurface`, no `<PolicyDisclosure />`, no booking/checkout/POS reference.
+Result: the entire "configure once, render everywhere" promise renders only on the public center (which doesn't use surface mappings) and Handbook OS. The configurator's biggest tab does nothing visible.
+**Fix:** ship `usePolicyForSurface(surface, ctx)` + `<PolicyDisclosure surface="..." />` primitive. Wire booking confirmation footer, checkout disclosure card, and public booking service card. This is the next P0 wave.
 
 ---
 
-## P2 — Polish, copy, and UX refinements
+## P1 — Lifecycle integrity
 
-### 12. Configurator footer "Save rules" is far from "Save applicability" and "Save surfaces"
-Each tab has its own save button at different scroll positions. Operators saving rules then switching tabs lose context. **Fix:** unified footer that reflects the active tab's dirty state, or auto-save on tab change with toast.
+### 2. Auto-adopt on configurator open (still present)
+`PolicyConfiguratorPanel` line 84–89 still fires `adopt.mutate` from a `useEffect` when `!alreadyAdopted`. Clicking a library card — or opening a shared `?policy=key` deep link — silently adopts. Violates Recommend → Approve → Execute.
+**Fix:** gate the configurator with an "Adopt and configure" CTA; only adopted policies enter the editor.
 
-### 13. `PolicyConfiguratorPanel` opens at "Rules" even when rules already saved
-Returning operators who want to approve drafts have to click through 4 tabs every time. **Fix:** open at the first incomplete step (rules → applicability → surfaces → drafts → publish).
+### 3. No archive / unadopt path
+Every adopted policy is permanent. `policies.status` enum has no `archived` value, no UI surfaces removal. Operators who experiment can't clean up.
+**Fix:** add `archived` status + soft-archive mutation on the configurator header and library card; filter archived from health summary by default.
 
-### 14. Conflict banner only shows the first conflict in detail
-`PolicyConflictBanner` collapses N conflicts into "+X more." For an org with 5 surface conflicts, only one is visible. **Fix:** show top 3, then "+N more."
+### 4. Acknowledgment flag has no preconditions
+`useUpdatePolicyAcknowledgmentFlag` lets operators toggle "Require client acknowledgment" before any client variant is approved or published — clients then can't acknowledge what they can't see.
+**Fix:** validate (a) audience external/both, (b) approved client variant exists, (c) `is_published_external = true`. Inline warning on the switch when not satisfied; toast on failed enable.
 
-### 15. Variant approval doesn't snapshot the body
-If operator approves a variant, then edits the body, the edit re-flips approval to false (good) — but the *approved snapshot* is gone. Acknowledgments may have been recorded against a body that no longer exists. **Fix:** when approving, write a snapshot row to `policy_version_variant_snapshots` (new table) that acknowledgments can reference for litigation-grade audit.
+### 5. `useResolvePolicyConflict` writes inaccurate audit rows
+Updates `policy_surface_mappings` by `(version_id, surface)` without `enabled = true` filter. Disabling an already-disabled mapping logs `previous_value: { enabled: true }` — false. Audit immutability ≠ truthfulness.
+**Fix:** add `.eq('enabled', true)`; gate audit insert on row count > 0.
 
-### 16. "Client-facing" tone variant uses `<pre>` for body display in drafter
-Line 219 of `PolicyDraftWorkspace` renders `body_md` inside `<pre>` with `whitespace-pre-wrap`. For markdown content with headings/lists this renders raw markdown syntax, not formatted. Public center renders it correctly via `ReactMarkdown` — drafter preview should match. **Fix:** swap to `ReactMarkdown` in the drafter card.
-
-### 17. Health strip tile labels collide with tile sub-text
-"Adopted / of recommended" and "Configured / rule sets defined" — "Configured" reads as a status, but the sub-text says "rule sets defined." Two different concepts. **Fix:** rename to "Rule sets defined" / "Live to clients" / "Wired to surfaces" so the headline matches the meaning.
-
-### 18. No timezone on acknowledgment timestamps
-`PolicyAcknowledgmentsPanel` formats with `toLocaleString(undefined, ...)` — no zone label. CSV export same. For multi-state operators / litigation, this is ambiguous.
-**Anchor:** Schedule Unified Mechanics — timezone-safe display rule.
-**Fix:** include org timezone abbreviation; CSV export ISO with `+00:00` offset.
-
-### 19. Public center caches acknowledgment locally only
-`ACKED_STORAGE_PREFIX` localStorage means clearing browser data wipes the "I acknowledged" UX state. Server-side ack is intact, but the client thinks they need to re-acknowledge. **Fix:** on page load, query `policy_acknowledgments` by stored email and rehydrate the set.
-
-### 20. Setup wizard "Recommended policy set" count includes optional policies
-`recommendedKeysForProfile` filters by gating flags (`requires_extensions`, etc.) but doesn't filter by `recommendation = 'optional'`. Operators see "47 recommended" then later realize many were optional. **Fix:** filter to `required + recommended`; show optional separately as "Plus 12 optional you can add anytime."
+### 6. Variant approval never snapshots body
+Approving a `client` variant, then editing the body, flips approval to false (good) but loses the previously-approved body. Past `policy_acknowledgments` reference a variant body that no longer exists. Litigation-grade audit broken.
+**Fix:** new `policy_variant_snapshots` table; snapshot on approval; acknowledgments reference the snapshot row.
 
 ---
 
-## Policy library content suggestions (operator-business value)
+## P2 — UX, copy, content
 
-These categories have visible gaps relative to industry reality:
+### 7. Drafter renders markdown as raw text
+`PolicyDraftWorkspace` line 219 uses `<pre>` for `body_md` — operators see raw `##` and `-` syntax in the preview while clients see formatted markdown via `ReactMarkdown`. Mismatched preview.
+**Fix:** swap `<pre>` for `ReactMarkdown` inside the drafter card.
 
-- **Late-arrival policy** (separate from cancellation) — 10/15 minute thresholds, partial-service vs reschedule
-- **No-show fee enforcement** — explicit charge-card-on-file authorization, dispute exclusion language
-- **Photo & social media consent** — before/after posting, model release for portfolio use
-- **Allergy & patch-test policy** — 48-hour patch test for color, liability waiver
-- **Pregnancy / medical disclosure policy** — chemical service screening
-- **Pet policy** — service animals vs comfort animals (ADA-correct language)
-- **Tipping policy** — cash-only, included-in-card, gratuity governance (referenced from staff side as "Tip Distribution")
-- **Walk-in policy** — accept/decline criteria, walk-in surcharge, queue order
-- **Parking & arrival policy** — for urban locations
-- **Weather closure / force majeure** — automatic refund vs credit logic
-- **Service satisfaction guarantee window** — separate from Redo Eligibility (sets expectations *before* the redo)
-- **Children-in-salon policy** — accompanying minors during a parent's service (liability + space)
-- **Phone & device policy** — staff-side and client-side
-- **Confidentiality / NDA** — for celebrity / VIP clients
-- **Booth rental boundary policy** — for hybrid commission/booth shops
+### 8. Configurator opens at "Rules" every time
+Returning operators (rules already saved, drafts pending approval) still land on Rules. Click-through tax on every visit.
+**Fix:** open at first incomplete step in ladder (rules → applicability → surfaces → drafts → publish).
 
-Each maps cleanly to one of the existing six categories.
+### 9. Conflict banner shows only one conflict in detail
+`PolicyConflictBanner` collapses N conflicts into "+X more." Multi-conflict orgs see one.
+**Fix:** show top 3 inline, then "+N more."
+
+### 10. No library search / keyword filter
+54 policies, category tabs only. Finding "tip pooling" or "minor consent" requires scrolling.
+**Fix:** search input above the library grid filtering on `title + short_description + key`.
+
+### 11. Acknowledgment timestamps lack timezone
+`PolicyAcknowledgmentsPanel.formatDate` and CSV export use `toLocaleString(undefined, ...)` — no zone label. Multi-state operator audit ambiguity.
+**Fix:** display in org timezone with abbreviation; CSV export full ISO with offset.
+
+### 12. Public center ack state is localStorage-only
+`ACKED_STORAGE_PREFIX` means clearing browser data hides the "I acknowledged" UX state even though the server record exists.
+**Fix:** rehydrate from `policy_acknowledgments` by stored email on page mount.
+
+### 13. Public center has no nav with 50+ policies
+Long scroll, no category jumplinks beyond per-card date. Sort by `approvedAt desc` shipped in 28.11.1; nav rail did not.
+**Fix:** sticky category jump nav on the left rail.
+
+### 14. Setup wizard counts include optional policies
+`recommendedKeysForProfile` doesn't filter `recommendation = 'optional'`. Operators see "X recommended" then realize many are optional.
+**Fix:** count required + recommended only; surface optional separately.
 
 ---
 
-## Doctrine compliance scorecard
+## Library content gaps (operator-business value)
 
-| Doctrine | Status | Notes |
+Six categories exist; these high-frequency policies have no library entry:
+
+- **Late-arrival** (separate from cancellation; 10/15-min thresholds)
+- **No-show fee enforcement** (card-on-file authorization, dispute exclusion)
+- **Photo & social media consent** (model release, before/after posting)
+- **Allergy & patch-test** (48-hr patch test for color, liability waiver)
+- **Pregnancy / medical disclosure** (chemical service screening)
+- **Pet policy** (ADA service vs comfort animal language)
+- **Tipping** (cash, card, distribution rules)
+- **Walk-in** (accept criteria, surcharge, queue)
+- **Weather / force majeure** (refund vs credit)
+- **Children-in-salon** (accompanying minors; liability)
+- **Phone & device** (staff and client)
+- **Confidentiality / NDA** (VIP clients)
+- **Booth rental boundaries** (hybrid commission shops)
+- **Service satisfaction window** (separate from Redo Eligibility — sets expectation *before* the redo)
+- **Parking & arrival** (urban locations)
+
+Each maps to one of the existing six categories.
+
+---
+
+## Doctrine scorecard (delta vs prior audit)
+
+| Doctrine | Status | Δ |
 |---|---|---|
-| Tenant isolation | ✅ | All queries scope by `organization_id`; surface mapping query filters defensively in JS |
-| Visibility Contracts | ⚠️ | Public center silent — but for the wrong reason (no publish action, not threshold-driven) |
-| Single source of truth | ✅ | One library, one configurator, one drafter |
-| Brand neutrality | ✅ | No hardcoded tenant references found |
-| Loader unification | ✅ | Uses `tokens.loading.spinner` consistently |
-| Typography | ✅ | All headers `font-display`; bodies `font-sans`; no banned weights |
-| Audit immutability | ⚠️ | Conflict-resolve audit can write false `previous_value` (#6) |
-| Persona scaling | ⚠️ | No solo-vs-enterprise gating; solo operators see all 6 categories |
-| Autonomy boundaries | ⚠️ | Auto-adopt on configurator open violates "Recommend → Approve → Execute" |
+| Tenant isolation | ✅ | — |
+| Visibility Contracts | ✅ | ↑ (publish flow real) |
+| Lever & Confidence | ✅ | ↑ (status now moves) |
+| Single source of truth | ✅ | — |
+| Audit immutability | ⚠️ | conflict-resolve still inaccurate (#5) |
+| Autonomy boundaries | ⚠️ | auto-adopt still present (#2) |
+| North Star (configure once, render everywhere) | ❌ | unchanged — surfaces not consumed (#1) |
 
 ---
 
-## Recommended fix sequence (Wave 28.11 candidate)
+## Recommended fix sequence
 
-**Wave 28.11.1 — Make publish real (P0):** #1 + #3 + #11. Without this, the public center cannot work for any operator.
-**Wave 28.11.2 — Wire to surfaces (P0):** #2. Booking + checkout disclosure consumption.
-**Wave 28.11.3 — Lifecycle hardening (P1):** #5 + #7 + #8. Adopt/archive flow + acknowledgment guards.
-**Wave 28.11.4 — Polish & content (P1/P2):** #4, #10, #14, #16, #17, #19 + new library entries.
+| Wave | Priority | Scope |
+|---|---|---|
+| **28.11.2 — Wire to surfaces** | P0 | #1 + the consumer hook + booking/checkout consumption |
+| **28.11.3 — Lifecycle hardening** | P1 | #2 adopt CTA + #3 archive + #4 ack guard + #5 audit accuracy |
+| **28.11.4 — Variant snapshots** | P1 | #6 snapshot table + acknowledgment reference rewrite |
+| **28.11.5 — Polish & content** | P2 | #7–#14 + new library entries |
 
-Each ships as its own wave, never bundled. P0s are leverage gates — without them the surrounding intelligence layer does nothing visible to clients.
+Each ships as its own wave; P0s never bundled.
+
+---
+
+## Prompt feedback
+
+**What worked:** Same prompt, second audit — leverages prior context to surface deltas instead of re-listing fixed items. Concise scope ("UI, UX, gaps, bugs, enhancements, policy suggestions") gave me permission to span content + code + architecture.
+
+**To tighten next time:** "Audit Policy OS post-28.11.1, focus on what's still P0/P1 and what new gaps emerged from the publish flow shipping" would have skipped the redundant scorecard work and pointed me at the 28.11.1 changes specifically. State which audits should *not* repeat.
 
