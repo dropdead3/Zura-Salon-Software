@@ -11,12 +11,13 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Globe } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
 import { Switch } from '@/components/ui/switch';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
+import { usePublishPolicyExternally } from '@/hooks/policy/usePublishPolicyExternally';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -77,6 +78,7 @@ export function PolicyConfiguratorPanel({
   const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts' | 'acknowledgments'>('rules');
   const [historyOpen, setHistoryOpen] = useState(false);
   const updateAckFlag = useUpdatePolicyAcknowledgmentFlag();
+  const publish = usePublishPolicyExternally();
 
   // Auto-adopt if not yet adopted, so the configurator always has a draft version.
   useEffect(() => {
@@ -235,6 +237,41 @@ export function PolicyConfiguratorPanel({
             </button>
           )}
         </div>
+
+        {/* Wave 28.11.1 — Publish to client policy center toggle */}
+        {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
+          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
+            <Switch
+              id="publish-external"
+              checked={!!data.isPublishedExternal}
+              disabled={publish.isPending || !hasApprovedClientVariant}
+              onCheckedChange={(checked) =>
+                publish.mutate(
+                  { policyId: data.policyId, publish: checked },
+                  { onSuccess: () => refetch() },
+                )
+              }
+            />
+            <label htmlFor="publish-external" className="flex-1 cursor-pointer space-y-0.5">
+              <p className="font-sans text-sm text-foreground flex items-center gap-2">
+                <Globe className="w-3.5 h-3.5 text-primary" />
+                Publish to client policy center
+                {data.isPublishedExternal && (
+                  <Badge variant="outline" className="font-sans text-[10px] text-primary border-primary/30">
+                    Live
+                  </Badge>
+                )}
+              </p>
+              <p className="font-sans text-xs text-muted-foreground">
+                {hasApprovedClientVariant
+                  ? data.isPublishedExternal
+                    ? `Visible to clients at ${publicPolicyUrl}.`
+                    : 'Turn on to make this policy visible on your public policy page.'
+                  : 'Approve a client-facing variant in the Drafts tab before publishing.'}
+              </p>
+            </label>
+          </div>
+        )}
 
         {/* Wave 28.10 — operator opt-in to require client acknowledgment */}
         {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
