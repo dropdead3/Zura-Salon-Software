@@ -315,7 +315,89 @@ export function PolicyConfiguratorPanel({
 
       <Separator />
 
-      {!ready ? (
+      {/* Wave 28.11.5 — Adopt-and-configure gate. Operators browsing the
+          audience-segmented library should not silently write `policies` rows
+          on every card click. Until they explicitly click "Adopt and
+          configure", we render a read-only schema preview instead of mounting
+          the editor surface. */}
+      {!alreadyAdopted && !data?.policyId ? (
+        <div className="space-y-5">
+          <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-4">
+            <div className="space-y-1">
+              <h4 className="font-display text-xs tracking-wider uppercase text-muted-foreground">
+                Preview — not yet adopted
+              </h4>
+              <p className="font-sans text-sm text-foreground">
+                Review the rules this policy will configure. Adoption creates a
+                draft version you can edit, publish, and archive — nothing is
+                surfaced to staff or clients until you choose to.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {schema.sections.map((section) => (
+                <div
+                  key={section.title}
+                  className="rounded-lg border border-border/60 bg-card/60 p-3"
+                >
+                  <h5 className="font-display text-[11px] tracking-wider uppercase text-foreground">
+                    {section.title}
+                  </h5>
+                  {section.description && (
+                    <p className="font-sans text-xs text-muted-foreground mt-1">
+                      {section.description}
+                    </p>
+                  )}
+                  <ul className="mt-2 space-y-1">
+                    {section.fields.map((f) => (
+                      <li
+                        key={f.key}
+                        className="font-sans text-xs text-muted-foreground flex items-start gap-2"
+                      >
+                        <span className="text-foreground">•</span>
+                        <span>
+                          <span className="text-foreground">{f.label}</span>
+                          {f.required && (
+                            <span className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                              required
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="font-sans"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() =>
+                adopt.mutate(entry.key, {
+                  onSuccess: () => refetch(),
+                })
+              }
+              disabled={adopt.isPending}
+              className="font-sans"
+            >
+              {adopt.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4 mr-2" />
+              )}
+              Adopt and configure
+            </Button>
+          </div>
+        </div>
+      ) : !ready ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className={tokens.loading.spinner} />
         </div>
@@ -473,13 +555,112 @@ export function PolicyConfiguratorPanel({
         </Tabs>
       )}
 
-      {/* Footer close */}
+      {/* Footer — Wave 28.11.5 lifecycle actions (archive / reactivate). Only
+          shown after adoption since archive applies to existing policies only. */}
       <Separator />
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {data?.policyId && !isArchived && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setArchiveDialogOpen(true)}
+              disabled={archive.isPending}
+              className="font-sans text-muted-foreground hover:text-destructive"
+            >
+              <Archive className="w-4 h-4 mr-2" />
+              Archive policy
+            </Button>
+          )}
+          {data?.policyId && isArchived && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                archive.mutate(
+                  {
+                    policyId: data.policyId,
+                    currentVersionId: data.versionId || null,
+                    nextStatus: 'drafting',
+                  },
+                  { onSuccess: () => refetch() },
+                )
+              }
+              disabled={archive.isPending}
+              className="font-sans"
+            >
+              {archive.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RotateCcw className="w-4 h-4 mr-2" />
+              )}
+              Reactivate
+            </Button>
+          )}
+          {isArchived && (
+            <Badge
+              variant="outline"
+              className="font-sans text-xs text-muted-foreground border-border/60"
+            >
+              Archived — not rendering on any surface
+            </Badge>
+          )}
+        </div>
         <Button variant="outline" size="sm" onClick={onClose} className="font-sans">
           Close
         </Button>
       </div>
+
+      {/* Archive confirmation — destructive-ish action: disables surface
+          mappings and stops client-facing renders. Reversible via Reactivate. */}
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display tracking-wide">
+              Archive this policy?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-sans space-y-2">
+              <span className="block">
+                {entry.title} will stop rendering on all client-facing surfaces
+                immediately. Internal handbook references will also pause.
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                History — versions, approved variants, and acknowledgments — is
+                preserved. You can reactivate any time from this panel.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-sans">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="font-sans bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!data?.policyId) return;
+                archive.mutate(
+                  {
+                    policyId: data.policyId,
+                    currentVersionId: data.versionId || null,
+                    nextStatus: 'archived',
+                  },
+                  {
+                    onSuccess: () => {
+                      setArchiveDialogOpen(false);
+                      refetch();
+                    },
+                  },
+                );
+              }}
+            >
+              {archive.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Archive className="w-4 h-4 mr-2" />
+              )}
+              Archive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
