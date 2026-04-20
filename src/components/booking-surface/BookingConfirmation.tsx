@@ -204,6 +204,22 @@ export function BookingConfirmation({
         </div>
       )}
 
+      {/* Wave 28.11.2 — Surface-mapped policy disclosures (booking surface). */}
+      {organizationId && (
+        <div className="mb-4">
+          <PolicyDisclosure
+            surface="booking"
+            organizationId={organizationId}
+            theme={{
+              textColor: theme.textColor,
+              mutedTextColor: theme.mutedTextColor,
+              borderColor: theme.borderColor,
+              surfaceColor: theme.surfaceColor,
+            }}
+          />
+        </div>
+      )}
+
       {/* Wave 9: Inline form-gating card (hybrid: sign now or defer to check-in) */}
       {requiredForms && requiredForms.length > 0 && !showPaymentForm && (
         <InlineFormSigningCard

@@ -363,6 +363,7 @@ export function HostedBookingPage() {
             isSubmitting={isSubmitting}
             isConfirmed={state.isConfirmed}
             depositAmount={depositAmount}
+            organizationId={org.id}
             requiresCardOnFile={requiresCardOnFile}
             depositPolicyText={(hosted as any).depositPolicyText || hosted.policyText || undefined}
             cancellationPolicyText={(hosted as any).cancellationPolicyText || hosted.policyText || undefined}
