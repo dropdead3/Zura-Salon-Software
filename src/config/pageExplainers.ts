@@ -316,6 +316,11 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     description: 'Create and distribute team handbooks. Track acknowledgments and ensure everyone has read the latest policies.',
     icon: BookOpen,
   },
+  'policies': {
+    title: 'Policy OS',
+    description: 'Adopt and configure cancellation, no-show, redo, and house policies. Versioned, conflict-aware, and surfaced across booking, checkout, and the public Policy Center.',
+    icon: ShieldCheck,
+  },
   'pto-manager': {
     title: 'PTO & Time Off',
     description: 'Manage paid time off requests, vacation balances, and time-off policies. Approve or deny requests with calendar visibility.',

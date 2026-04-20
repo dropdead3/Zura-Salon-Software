@@ -44,7 +44,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['my-profile', 'business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'terminals', 'dayrate', 'forms', 'levels', 'handbooks', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
+    categories: ['my-profile', 'business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'terminals', 'dayrate', 'forms', 'levels', 'handbooks', 'policies', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
   },
   {
     id: 'team',
