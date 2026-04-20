@@ -16,7 +16,10 @@ export interface PolicyOrgProfile {
   id: string;
   organization_id: string;
   business_type: string | null;
+  /** @deprecated Legacy mirror of operating_states[0]. New code should read operating_states. */
   primary_state: string | null;
+  /** Source of truth for jurisdictional applicability. Multi-state orgs apply policies per state. */
+  operating_states: string[];
   team_size_band: string | null;
   offers_extensions: boolean;
   offers_retail: boolean;
