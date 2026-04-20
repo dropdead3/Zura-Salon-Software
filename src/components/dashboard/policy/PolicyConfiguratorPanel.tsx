@@ -90,16 +90,16 @@ export function PolicyConfiguratorPanel({
   const [hydrated, setHydrated] = useState(false);
   const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts' | 'acknowledgments'>('rules');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const updateAckFlag = useUpdatePolicyAcknowledgmentFlag();
   const publish = usePublishPolicyExternally();
+  const archive = useArchivePolicy();
 
-  // Auto-adopt if not yet adopted, so the configurator always has a draft version.
-  useEffect(() => {
-    if (!alreadyAdopted && !adopt.isPending && !adopt.isSuccess) {
-      adopt.mutate(entry.key, { onSuccess: () => refetch() });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alreadyAdopted, entry.key]);
+  // Wave 28.11.5 — autonomy boundary: NEVER silently adopt on configurator
+  // open. The library is segmented by audience (28.11.3) which incentivizes
+  // exploration; auto-adopt would write a `policies` row for every card the
+  // operator inspects. Adoption now requires explicit consent (CTA below).
+  // The `adopt` mutation is invoked from `handleAdopt` only.
 
   const allFields = useMemo(() => schema.sections.flatMap((s) => s.fields), [schema]);
 
