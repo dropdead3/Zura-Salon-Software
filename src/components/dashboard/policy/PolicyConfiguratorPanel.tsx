@@ -11,11 +11,10 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Globe } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
-import { Switch } from '@/components/ui/switch';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { usePublishPolicyExternally } from '@/hooks/policy/usePublishPolicyExternally';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,7 @@ import { PolicyRuleField } from './PolicyRuleField';
 import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
 import { PolicyDraftWorkspace } from './PolicyDraftWorkspace';
+import { PolicyAudienceBanner } from './PolicyAudienceBanner';
 import {
   getConfiguratorSchema,
   type RuleField,
@@ -154,6 +154,23 @@ export function PolicyConfiguratorPanel({
 
   const categoryMeta = POLICY_CATEGORY_META[entry.category];
 
+  /* Wave 28.11.3 — audience-aware tab visibility.
+     Internal-only policies don't render anywhere client-facing, so the
+     Surfaces tab (booking confirmation / checkout / kiosk) is dead UI.
+     Acknowledgments tab is reserved for client acks today; staff acks
+     ship in 28.11.4. We hide it for internal-only audiences for now. */
+  const isInternalOnly = entry.audience === 'internal';
+  const showSurfacesTab = !isInternalOnly;
+  const showAcknowledgmentsTab = !isInternalOnly;
+
+  // Clamp tab if operator is on a tab the audience doesn't allow
+  // (e.g., shared deep link previously landed on `surfaces`).
+  useEffect(() => {
+    if (isInternalOnly && (tab === 'surfaces' || tab === 'acknowledgments')) {
+      setTab('rules');
+    }
+  }, [isInternalOnly, tab]);
+
   /* Counters for tab badges */
   const applicabilityCount = applicability?.length ?? 0;
   const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
@@ -183,13 +200,6 @@ export function PolicyConfiguratorPanel({
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="font-sans text-xs">
             {categoryMeta.label}
-          </Badge>
-          <Badge variant="secondary" className="font-sans text-xs">
-            {entry.audience === 'both'
-              ? 'Internal + Client-facing'
-              : entry.audience === 'external'
-                ? 'Client-facing'
-                : 'Internal'}
           </Badge>
           {ready && (
             <Badge variant="outline" className="font-sans text-xs">
@@ -238,65 +248,32 @@ export function PolicyConfiguratorPanel({
           )}
         </div>
 
-        {/* Wave 28.11.1 — Publish to client policy center toggle */}
-        {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-            <Switch
-              id="publish-external"
-              checked={!!data.isPublishedExternal}
-              disabled={publish.isPending || !hasApprovedClientVariant}
-              onCheckedChange={(checked) =>
-                publish.mutate(
-                  { policyId: data.policyId, publish: checked },
-                  { onSuccess: () => refetch() },
-                )
-              }
-            />
-            <label htmlFor="publish-external" className="flex-1 cursor-pointer space-y-0.5">
-              <p className="font-sans text-sm text-foreground flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-primary" />
-                Publish to client policy center
-                {data.isPublishedExternal && (
-                  <Badge variant="outline" className="font-sans text-[10px] text-primary border-primary/30">
-                    Live
-                  </Badge>
-                )}
-              </p>
-              <p className="font-sans text-xs text-muted-foreground">
-                {hasApprovedClientVariant
-                  ? data.isPublishedExternal
-                    ? `Visible to clients at ${publicPolicyUrl}.`
-                    : 'Turn on to make this policy visible on your public policy page.'
-                  : 'Approve a client-facing variant in the Drafts tab before publishing.'}
-              </p>
-            </label>
-          </div>
-        )}
-
-        {/* Wave 28.10 — operator opt-in to require client acknowledgment */}
-        {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-            <Switch
-              id="require-ack"
-              checked={!!data.requiresAcknowledgment}
-              disabled={updateAckFlag.isPending}
-              onCheckedChange={(checked) =>
-                updateAckFlag.mutate(
-                  { policyId: data.policyId, requiresAcknowledgment: checked },
-                  { onSuccess: () => refetch() },
-                )
-              }
-            />
-            <label htmlFor="require-ack" className="flex-1 cursor-pointer space-y-0.5">
-              <p className="font-sans text-sm text-foreground">
-                Require client acknowledgment
-              </p>
-              <p className="font-sans text-xs text-muted-foreground">
-                Clients must type their name and check a confirmation on the public Policy
-                Center before the policy is considered acknowledged.
-              </p>
-            </label>
-          </div>
+        {/* Wave 28.11.3 — Audience-aware banner replaces the stacked
+            Publish + Require-ack toggles. Renders only the actions that
+            apply to this policy's audience, killing dead UI for handbook
+            policies and grouping client-facing actions under one context. */}
+        {data?.policyId && (
+          <PolicyAudienceBanner
+            audience={entry.audience}
+            publicPolicyUrl={publicPolicyUrl}
+            isPublishedExternal={!!data.isPublishedExternal}
+            publishDisabled={publish.isPending || !hasApprovedClientVariant}
+            onPublishChange={(checked) =>
+              publish.mutate(
+                { policyId: data.policyId, publish: checked },
+                { onSuccess: () => refetch() },
+              )
+            }
+            requiresClientAck={!!data.requiresAcknowledgment}
+            ackDisabled={updateAckFlag.isPending}
+            onClientAckChange={(checked) =>
+              updateAckFlag.mutate(
+                { policyId: data.policyId, requiresAcknowledgment: checked },
+                { onSuccess: () => refetch() },
+              )
+            }
+            hasApprovedClientVariant={hasApprovedClientVariant}
+          />
         )}
       </div>
 
@@ -336,15 +313,17 @@ export function PolicyConfiguratorPanel({
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="surfaces" className="font-sans">
-              <MapPin className="w-3.5 h-3.5 mr-1.5" />
-              Surfaces
-              {surfacesActiveCount > 0 && (
-                <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
-                  {surfacesActiveCount}
-                </Badge>
-              )}
-            </TabsTrigger>
+            {showSurfacesTab && (
+              <TabsTrigger value="surfaces" className="font-sans">
+                <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                Surfaces
+                {surfacesActiveCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
+                    {surfacesActiveCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="drafts" className="font-sans">
               <FileText className="w-3.5 h-3.5 mr-1.5" />
               Drafts
@@ -354,10 +333,10 @@ export function PolicyConfiguratorPanel({
                 </Badge>
               )}
             </TabsTrigger>
-            {data?.policyId && (
+            {data?.policyId && showAcknowledgmentsTab && (
               <TabsTrigger value="acknowledgments" className="font-sans">
                 <FileSignature className="w-3.5 h-3.5 mr-1.5" />
-                Acknowledgments
+                Client acknowledgments
               </TabsTrigger>
             )}
           </TabsList>

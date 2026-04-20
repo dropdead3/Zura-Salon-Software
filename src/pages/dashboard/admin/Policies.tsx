@@ -32,6 +32,7 @@ export default function Policies() {
   const summary = usePolicyHealthSummary();
 
   const [activeCategory, setActiveCategory] = useState<PolicyCategory | 'all'>('all');
+  const [activeAudience, setActiveAudience] = useState<'all' | 'external' | 'internal' | 'both'>('all');
   const [setupOpen, setSetupOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const activePolicyKey = searchParams.get('policy');
@@ -63,10 +64,23 @@ export default function Policies() {
     return map;
   }, [adopted]);
 
+  const audienceCounts = useMemo(() => {
+    const counts = { all: library.length, external: 0, internal: 0, both: 0 };
+    library.forEach((l) => {
+      if (l.audience === 'external') counts.external += 1;
+      else if (l.audience === 'internal') counts.internal += 1;
+      else if (l.audience === 'both') counts.both += 1;
+    });
+    return counts;
+  }, [library]);
+
   const filteredLibrary = useMemo(() => {
-    if (activeCategory === 'all') return library;
-    return library.filter((l) => l.category === activeCategory);
-  }, [library, activeCategory]);
+    return library.filter((l) => {
+      if (activeAudience !== 'all' && l.audience !== activeAudience) return false;
+      if (activeCategory !== 'all' && l.category !== activeCategory) return false;
+      return true;
+    });
+  }, [library, activeCategory, activeAudience]);
 
   const categoryOrder = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).sort(
     (a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order,
@@ -135,9 +149,45 @@ export default function Policies() {
               <div>
                 <h2 className={cn(tokens.heading.section)}>Library</h2>
                 <p className="font-sans text-sm text-muted-foreground mt-1">
-                  {library.length} recommended policies. Adopt the ones that fit your operation; structured configuration comes next.
+                  {library.length} recommended policies. Filter by audience first, then narrow by category.
                 </p>
               </div>
+            </div>
+
+            {/* Wave 28.11.3 — Audience-first segmented control. The data already
+                carries this distinction; we surface it so operators don't apply
+                client-facing thinking to handbook-only policies (and vice versa). */}
+            <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted/50 border border-border/60 flex-wrap">
+              {([
+                { key: 'all', label: 'All', count: audienceCounts.all },
+                { key: 'external', label: 'Client-facing', count: audienceCounts.external },
+                { key: 'internal', label: 'Internal', count: audienceCounts.internal },
+                { key: 'both', label: 'Both', count: audienceCounts.both },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setActiveAudience(opt.key)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-sans text-xs transition-colors',
+                    activeAudience === opt.key
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <span>{opt.label}</span>
+                  <span
+                    className={cn(
+                      'inline-flex items-center justify-center min-w-[1.25rem] px-1.5 h-4 rounded-full text-[10px]',
+                      activeAudience === opt.key
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    {opt.count}
+                  </span>
+                </button>
+              ))}
             </div>
 
             <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as PolicyCategory | 'all')}>
