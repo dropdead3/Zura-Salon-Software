@@ -120,7 +120,8 @@ export function usePolicyForSurface(
       // 3) Assemble entries with fallback resolution.
       const entries: SurfacePolicyEntry[] = [];
       for (const raw of mappings) {
-        const m = raw as {
+        // PostgREST inferred type for nested joins is too narrow; cast through unknown.
+        const m = raw as unknown as {
           version_id: string;
           variant_type: PolicyVariantType;
           surface_config: Record<string, unknown> | null;
