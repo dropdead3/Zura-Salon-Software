@@ -121,35 +121,26 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
    * should review on the final step. Adopted policies always stay; only the
    * starter set grows. See mem://features/policy-os-applicability-doctrine.
    */
+  type ExpansionFlag = 'offers_extensions' | 'offers_retail' | 'offers_packages' | 'serves_minors';
+  const EXPANSION_FLAGS: Array<{
+    key: ExpansionFlag;
+    label: string;
+    filter: (l: typeof library[number]) => boolean;
+  }> = [
+    { key: 'offers_extensions', label: 'extensions', filter: (l) => l.requires_extensions },
+    { key: 'offers_retail', label: 'retail products', filter: (l) => l.requires_retail },
+    { key: 'offers_packages', label: 'packages or memberships', filter: (l) => l.requires_packages },
+    { key: 'serves_minors', label: 'minors (under 18)', filter: (l) => l.requires_minors },
+  ];
+
   const expansionFlips = useMemo(() => {
     if (!existingProfile?.setup_completed_at) return [] as Array<{
-      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
+      key: ExpansionFlag;
       label: string;
       requiredCount: number;
       recommendedCount: number;
     }>;
-    const flags: Array<{
-      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
-      label: string;
-      filter: (l: typeof library[number]) => boolean;
-    }> = [
-      {
-        key: 'offers_extensions',
-        label: 'extensions',
-        filter: (l) => l.requires_extensions,
-      },
-      {
-        key: 'offers_retail',
-        label: 'retail products',
-        filter: (l) => l.requires_retail,
-      },
-      {
-        key: 'offers_packages',
-        label: 'packages or memberships',
-        filter: (l) => l.requires_packages,
-      },
-    ];
-    return flags
+    return EXPANSION_FLAGS
       .filter((f) => !existingProfile[f.key] && form[f.key])
       .map((f) => {
         const matched = library.filter(f.filter);
@@ -162,6 +153,42 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       })
       .filter((f) => f.requiredCount + f.recommendedCount > 0);
   }, [existingProfile, form, library]);
+
+  /**
+   * Wave 28.11.7 — live "what changes" helper for the services step.
+   * Computes per-toggle policy counts so operators see the impact of flipping
+   * `offers_*` BEFORE they reach the review step. Only flags with library
+   * content show live counts; the rest get a "(coming soon)" badge.
+   */
+  const flagImpacts = useMemo(() => {
+    const FLAG_HAS_LIBRARY: Record<string, ((l: typeof library[number]) => boolean) | null> = {
+      offers_extensions: (l) => l.requires_extensions,
+      offers_retail: (l) => l.requires_retail,
+      offers_packages: (l) => l.requires_packages,
+      serves_minors: (l) => l.requires_minors,
+      offers_memberships: null,
+    };
+    const result: Record<string, {
+      hasLibrary: boolean;
+      total: number;
+      requiredCount: number;
+      recommendedCount: number;
+    }> = {};
+    Object.entries(FLAG_HAS_LIBRARY).forEach(([key, filter]) => {
+      if (!filter) {
+        result[key] = { hasLibrary: false, total: 0, requiredCount: 0, recommendedCount: 0 };
+        return;
+      }
+      const matched = library.filter(filter);
+      result[key] = {
+        hasLibrary: true,
+        total: matched.length,
+        requiredCount: matched.filter((l) => l.recommendation === 'required').length,
+        recommendedCount: matched.filter((l) => l.recommendation === 'recommended').length,
+      };
+    });
+    return result;
+  }, [library]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFirst = stepIndex === 0;
