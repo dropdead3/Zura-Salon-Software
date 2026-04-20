@@ -114,6 +114,55 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     return map;
   }, [library, recommendedKeys]);
 
+  /**
+   * Wave 28.11.6 — expansion prompt.
+   * Detect offers_* flags that flipped false → true since the existing profile.
+   * Each flip unlocks new required + recommended policies that the operator
+   * should review on the final step. Adopted policies always stay; only the
+   * starter set grows. See mem://features/policy-os-applicability-doctrine.
+   */
+  const expansionFlips = useMemo(() => {
+    if (!existingProfile?.setup_completed_at) return [] as Array<{
+      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
+      label: string;
+      requiredCount: number;
+      recommendedCount: number;
+    }>;
+    const flags: Array<{
+      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
+      label: string;
+      filter: (l: typeof library[number]) => boolean;
+    }> = [
+      {
+        key: 'offers_extensions',
+        label: 'extensions',
+        filter: (l) => l.requires_extensions,
+      },
+      {
+        key: 'offers_retail',
+        label: 'retail products',
+        filter: (l) => l.requires_retail,
+      },
+      {
+        key: 'offers_packages',
+        label: 'packages or memberships',
+        filter: (l) => l.requires_packages,
+      },
+    ];
+    return flags
+      .filter((f) => !existingProfile[f.key] && form[f.key])
+      .map((f) => {
+        const matched = library.filter(f.filter);
+        return {
+          key: f.key,
+          label: f.label,
+          requiredCount: matched.filter((l) => l.recommendation === 'required').length,
+          recommendedCount: matched.filter((l) => l.recommendation === 'recommended').length,
+        };
+      })
+      .filter((f) => f.requiredCount + f.recommendedCount > 0);
+  }, [existingProfile, form, library]);
+
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEP_ORDER.length - 1;
@@ -395,6 +444,43 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                   Based on your profile. You can browse the full library and add more anytime.
                 </p>
               </div>
+
+              {expansionFlips.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border/60">
+                  <Label className={cn(tokens.kpi.label)}>What changed</Label>
+                  <div className="space-y-2">
+                    {expansionFlips.map((f) => (
+                      <div
+                        key={f.key}
+                        className="rounded-lg border border-border/60 bg-muted/30 p-3"
+                      >
+                        <p className="font-sans text-sm text-foreground">
+                          You now offer <span className="font-medium">{f.label}</span>.
+                        </p>
+                        <p className="font-sans text-xs text-muted-foreground mt-1">
+                          We've added{' '}
+                          {f.requiredCount > 0 && (
+                            <>
+                              <span className="text-foreground">{f.requiredCount} required</span>
+                              {f.recommendedCount > 0 ? ' and ' : ''}
+                            </>
+                          )}
+                          {f.recommendedCount > 0 && (
+                            <>
+                              <span className="text-foreground">
+                                {f.recommendedCount} recommended
+                              </span>
+                            </>
+                          )}{' '}
+                          {f.requiredCount + f.recommendedCount === 1 ? 'policy' : 'policies'} to
+                          your starter set. Already-adopted policies stay; only the recommended
+                          set grows.
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2 pt-2 border-t border-border/60">
                 <Label className={cn(tokens.kpi.label)}>Breakdown by category</Label>

@@ -14,7 +14,11 @@ import {
   POLICY_CATEGORY_META,
   type PolicyCategory,
 } from '@/hooks/policy/usePolicyData';
-import { usePolicyOrgProfile, type PolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
+import {
+  usePolicyOrgProfile,
+  isApplicableToProfile,
+  type PolicyOrgProfile,
+} from '@/hooks/policy/usePolicyOrgProfile';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
@@ -28,14 +32,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-
-function isApplicableToProfile(entry: PolicyLibraryEntry, profile: PolicyOrgProfile | null | undefined) {
-  if (!profile) return true; // before profile loads / exists, don't pre-hide
-  if (entry.requires_extensions && !profile.offers_extensions) return false;
-  if (entry.requires_retail && !profile.offers_retail) return false;
-  if (entry.requires_packages && !profile.offers_packages) return false;
-  return true;
-}
 
 export default function Policies() {
   const { data: library = [], isLoading: libLoading } = usePolicyLibrary();
@@ -427,6 +423,10 @@ export default function Policies() {
               entry={activeEntry}
               alreadyAdopted={adoptedByKey.has(activeEntry.key)}
               onClose={closeConfigurator}
+              onEditProfile={() => {
+                closeConfigurator();
+                setSetupOpen(true);
+              }}
             />
           )}
         </SheetContent>

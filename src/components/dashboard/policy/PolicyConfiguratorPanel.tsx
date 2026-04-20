@@ -61,11 +61,16 @@ import {
 import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 import { POLICY_CATEGORY_META } from '@/hooks/policy/usePolicyData';
+import {
+  usePolicyOrgProfile,
+  applicabilityReason,
+} from '@/hooks/policy/usePolicyOrgProfile';
 
 interface PolicyConfiguratorPanelProps {
   entry: PolicyLibraryEntry & { configurator_schema_key?: string | null };
   alreadyAdopted: boolean;
   onClose: () => void;
+  onEditProfile?: () => void;
 }
 
 function defaultsFromSchema(fields: RuleField[]): Record<string, unknown> {
@@ -80,11 +85,20 @@ export function PolicyConfiguratorPanel({
   entry,
   alreadyAdopted,
   onClose,
+  onEditProfile,
 }: PolicyConfiguratorPanelProps) {
   const schema = getConfiguratorSchema(entry.configurator_schema_key);
   const adopt = useAdoptAndInitPolicy();
   const { data, isLoading, refetch } = usePolicyConfiguratorData(entry.key);
   const save = useSavePolicyRuleBlocks();
+
+  // Wave 28.11.6 — applicability banner. When this policy requires a service
+  // the operator's profile says they don't offer (e.g., extensions for a solo
+  // stylist), surface a soft "no longer applies" note. Adoption is still
+  // permitted — operator chose to deep-link here. See doctrine:
+  // mem://features/policy-os-applicability-doctrine
+  const { data: orgProfile } = usePolicyOrgProfile();
+  const nonApplicable = applicabilityReason(entry, orgProfile);
 
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
@@ -244,6 +258,30 @@ export function PolicyConfiguratorPanel({
                 {entry.why_it_matters}
               </p>
             </div>
+          </div>
+        )}
+        {nonApplicable && (
+          <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+            <p className="font-sans text-xs text-muted-foreground">
+              This policy applies to businesses that offer{' '}
+              <span className="text-foreground">{nonApplicable.label}</span>. Your
+              business profile says you don't currently offer this — you can
+              still configure and adopt it
+              {onEditProfile ? (
+                <>
+                  , or{' '}
+                  <button
+                    type="button"
+                    onClick={onEditProfile}
+                    className="text-foreground underline-offset-2 hover:underline"
+                  >
+                    update your profile
+                  </button>{' '}
+                  if this changed
+                </>
+              ) : null}
+              .
+            </p>
           </div>
         )}
         <div className="flex items-center gap-4 flex-wrap">

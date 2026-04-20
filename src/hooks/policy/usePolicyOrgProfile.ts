@@ -4,12 +4,13 @@
  * Captures the business profile that drives smart recommendations
  * in the Policy Library. One row per organization.
  */
+import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import type { PolicyLibraryEntry } from './usePolicyData';
+import { usePolicyLibrary, useOrgPolicies, type PolicyLibraryEntry } from './usePolicyData';
 
 export interface PolicyOrgProfile {
   id: string;
@@ -126,6 +127,50 @@ export function useAdoptPoliciesFromLibrary() {
 }
 
 /**
+ * Canonical applicability check — does this library entry apply to the org's
+ * declared business profile? Mirrors recommendedKeysForProfile filter logic so
+ * every surface (Library grid, configurator banner, future Command Center
+ * tile, audit reports) uses the same source of truth.
+ *
+ * Doctrine: Any surface that counts, gates, or nags about required policies
+ * MUST filter through this helper. See mem://features/policy-os-applicability-doctrine.
+ *
+ * Returns `true` when profile is null/undefined — we don't pre-hide before the
+ * profile loads or when the operator hasn't completed setup.
+ */
+export function isApplicableToProfile(
+  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages'>,
+  profile: PolicyOrgProfile | null | undefined,
+): boolean {
+  if (!profile) return true;
+  if (entry.requires_extensions && !profile.offers_extensions) return false;
+  if (entry.requires_retail && !profile.offers_retail) return false;
+  if (entry.requires_packages && !profile.offers_packages) return false;
+  return true;
+}
+
+/**
+ * Returns the human-readable reason a policy is non-applicable, or `null` when
+ * it IS applicable. Drives the configurator's quiet "no longer applies" banner.
+ */
+export function applicabilityReason(
+  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages'>,
+  profile: PolicyOrgProfile | null | undefined,
+): { service: 'extensions' | 'retail' | 'packages'; label: string } | null {
+  if (!profile) return null;
+  if (entry.requires_extensions && !profile.offers_extensions) {
+    return { service: 'extensions', label: 'extensions' };
+  }
+  if (entry.requires_retail && !profile.offers_retail) {
+    return { service: 'retail', label: 'retail products' };
+  }
+  if (entry.requires_packages && !profile.offers_packages) {
+    return { service: 'packages', label: 'packages or memberships' };
+  }
+  return null;
+}
+
+/**
  * Smart-recommend: filter library entries to those that apply to this org's profile.
  * - 'required' always recommended
  * - 'recommended' included when domain prerequisites match
@@ -141,10 +186,40 @@ export function recommendedKeysForProfile(
   }
   return library
     .filter((l) => {
-      if (l.requires_extensions && !profile.offers_extensions) return false;
-      if (l.requires_retail && !profile.offers_retail) return false;
-      if (l.requires_packages && !profile.offers_packages) return false;
+      if (!isApplicableToProfile(l, profile)) return false;
       return l.recommendation === 'required' || l.recommendation === 'recommended';
     })
     .map((l) => l.key);
+}
+
+/**
+ * Canonical "required policies setup health" computation. Filters the library
+ * through `isApplicableToProfile` against the org's profile so phantom
+ * extension/retail/package policies never inflate the denominator. Use this
+ * hook anywhere a Policies completion gauge is rendered (Library page,
+ * future Command Center tile, audit/compliance reports).
+ */
+export function useApplicableRequiredPolicies() {
+  const { data: library = [], isLoading: libLoading } = usePolicyLibrary();
+  const { data: adopted = [], isLoading: adoptedLoading } = useOrgPolicies();
+  const { data: profile, isLoading: profileLoading } = usePolicyOrgProfile();
+
+  return useMemo(() => {
+    const adoptedKeys = new Set(adopted.map((p) => p.library_key));
+    const applicableRequired = library.filter(
+      (l) => l.recommendation === 'required' && isApplicableToProfile(l, profile),
+    );
+    const adoptedCount = applicableRequired.filter((l) => adoptedKeys.has(l.key)).length;
+    const total = applicableRequired.length;
+    const pct = total > 0 ? Math.round((adoptedCount / total) * 100) : 0;
+    const missing = applicableRequired.filter((l) => !adoptedKeys.has(l.key));
+    return {
+      total,
+      adopted: adoptedCount,
+      pct,
+      missing,
+      isComplete: total > 0 && adoptedCount === total,
+      isLoading: libLoading || adoptedLoading || profileLoading,
+    };
+  }, [library, adopted, profile, libLoading, adoptedLoading, profileLoading]);
 }
