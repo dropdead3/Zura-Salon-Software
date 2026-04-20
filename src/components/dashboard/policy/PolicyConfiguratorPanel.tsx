@@ -154,6 +154,23 @@ export function PolicyConfiguratorPanel({
 
   const categoryMeta = POLICY_CATEGORY_META[entry.category];
 
+  /* Wave 28.11.3 — audience-aware tab visibility.
+     Internal-only policies don't render anywhere client-facing, so the
+     Surfaces tab (booking confirmation / checkout / kiosk) is dead UI.
+     Acknowledgments tab is reserved for client acks today; staff acks
+     ship in 28.11.4. We hide it for internal-only audiences for now. */
+  const isInternalOnly = entry.audience === 'internal';
+  const showSurfacesTab = !isInternalOnly;
+  const showAcknowledgmentsTab = !isInternalOnly;
+
+  // Clamp tab if operator is on a tab the audience doesn't allow
+  // (e.g., shared deep link previously landed on `surfaces`).
+  useEffect(() => {
+    if (isInternalOnly && (tab === 'surfaces' || tab === 'acknowledgments')) {
+      setTab('rules');
+    }
+  }, [isInternalOnly, tab]);
+
   /* Counters for tab badges */
   const applicabilityCount = applicability?.length ?? 0;
   const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
