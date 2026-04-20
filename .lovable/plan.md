@@ -1,87 +1,107 @@
 
 
 ## Goal
-All policy drawers must use the canonical luxury glass bento floating drawer (`PremiumFloatingPanel`) — not the flush-edge `Sheet` primitive. The screenshot shows the wizard rendering edge-to-edge with no float, no corner radius, no breathing room from the impersonation bar — violating the bento drawer doctrine.
+Two parallel improvements:
 
-## What's wrong today
-Three drawers on the Policies surface bypass the canonical pattern by using `Sheet` directly:
-1. **Policy Setup Wizard** — `<Sheet>` in `Policies.tsx` L440-450
-2. **Policy Configurator** — `<Sheet>` in `Policies.tsx` L452-472
-3. **Version History** — `<Sheet>` in `PolicyConfiguratorPanel.tsx` L341-352
+1. **Parse states from existing location data** — `state_province` column is empty for many orgs, but state lives inside the `city` field as `"Mesa, AZ 85203"`. Stop showing "—" when we can clearly extract it.
+2. **Embrace multi-state reality** — model `primary_state` as **operating states** (multi). A multi-loc org in AZ + CA must drive policy applicability for both, not one.
 
-`Sheet` ships full-height, flush-right, no inset, no rounded corners. `PremiumFloatingPanel` ships floating (16px inset), `rounded-xl`, `bg-card/80 backdrop-blur-xl`, spring physics, God Mode bar offset, mobile adaptation.
+Plus targeted UI/utility upgrades the screenshot exposes.
 
-## Doctrine (codify)
-**All slide-in detail panels in the dashboard MUST use `PremiumFloatingPanel`.** Direct `Sheet`/`SheetContent` usage is reserved for:
-- Mobile sidebar drawer (already uses `PremiumFloatingPanel` via `sidebar.tsx`)
-- Edge cases requiring non-floating full-height behavior (none currently exist on org dashboard)
+## What's wrong (from screenshot)
 
-`tokens.drawer.*` remains the styling source of truth (the panel already inherits these via its base classes).
+| Issue | Cause | Fix |
+|---|---|---|
+| `Primary state` renders "—" | `state_province` empty in DB; address parser never tried | Parse `city` → extract 2-letter state code |
+| Concept of "primary" state for multi-loc | Single state field can't represent reality | Replace with `operating_states[]` chips (read-only, one per location) |
+| `Services offered` shows "—" with chips below | Top value line is empty because chips render outside ConfirmRow's `value` prop | Drop the "—" line; chips ARE the value |
+| `Roles in use` same as above | Same | Same |
+| `Edit` affordances on derived chips (Services, Roles) | Can't edit here — they mirror catalog/team | Already removed in code; UI polish only |
+| No "Confirm everything looks right" affordance at bottom of Step 1 | Operator must scroll to find Next | Add a quiet `All clear · 5 facts confirmed` summary above the footer |
 
-## Scope of this wave
-**Migrate the 3 policy drawers.** Out of scope: auditing the rest of the codebase for other `Sheet` usages — that's a separate sweep. The other current `Sheet` consumer (`TransactionDetailSheet`) already applies `tokens.drawer.content` and is functioning, so it's lower priority.
+## State derivation (the core fix)
 
-## Migration shape (per drawer)
-Replace:
-```tsx
-<Sheet open={x} onOpenChange={setX}>
-  <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-    <SheetHeader className="mb-6">
-      <SheetTitle className={tokens.heading.page}>Policy setup</SheetTitle>
-      <SheetDescription className={tokens.body.muted}>…</SheetDescription>
-    </SheetHeader>
-    <PolicySetupWizard … />
-  </SheetContent>
-</Sheet>
+### New helper in `usePolicyProfileDefaults.ts`
+```ts
+const US_STATE_CODES = new Set(['AL','AK','AZ','AR','CA',...]);
+const STATE_NAME_BY_CODE = { AZ: 'Arizona', CA: 'California', ... };
+
+function extractState(loc): string | null {
+  // 1. Use state_province if populated
+  if (loc.state_province?.trim()) return normalizeState(loc.state_province);
+  // 2. Parse city: "Mesa, AZ 85203" or "Gilbert, AZ"
+  const cityMatch = loc.city?.match(/,\s*([A-Z]{2})(\s+\d{5})?/);
+  if (cityMatch) return cityMatch[1];
+  // 3. Parse trailing address: "...Suite 1, Phoenix AZ 85020"
+  const addrMatch = loc.address?.match(/\b([A-Z]{2})\s+\d{5}\b/);
+  if (addrMatch) return addrMatch[1];
+  return null;
+}
 ```
 
-With:
-```tsx
-<PremiumFloatingPanel open={x} onOpenChange={setX} maxWidth="720px">
-  <div className={tokens.drawer.header}>
-    <h2 className={tokens.heading.page}>Policy setup</h2>
-    <p className={cn(tokens.body.muted, 'mt-1')}>
-      Tell us how your business operates. We'll recommend the right policy set.
-    </p>
-  </div>
-  <div className={tokens.drawer.body}>
-    <PolicySetupWizard onClose={() => setX(false)} />
-  </div>
-</PremiumFloatingPanel>
+For Drop Dead's data:
+- `"Mesa, AZ 85203"` → `AZ`
+- `"Gilbert, AZ 85234"` → `AZ`
+- Result: `derived_states = ['AZ']` instead of `[]`
+
+### Schema model shift
+`policy_org_profile.primary_state` stays (for backwards compat), but the wizard treats it as a **derived display** — operator never picks. New persisted field: **`operating_states: string[]`** populated from `derived_states`. If applicability rules reference `primary_state`, we keep writing it as `derived_states[0]` so nothing breaks downstream.
+
+**Database migration**: add `operating_states text[] not null default '{}'` to `policy_org_profile`. Backfill from `primary_state` for existing rows.
+
+### Wizard UI changes for state row
+Replace the editable Select with a read-only multi-state chip row:
+
+```
+Operating states                    [no Edit affordance]
+[ Arizona ]                         (one chip per detected state)
+Detected from your locations. Edit a location to change.
 ```
 
-Key contracts honored automatically by `PremiumFloatingPanel`:
-- 16px inset on desktop, full-screen on mobile
-- `rounded-xl` corners + glass blur + shadow-2xl
-- God Mode bar offset (`44px` push when impersonating — solves the visible overlap in the screenshot)
-- Spring physics entry from the right
-- Built-in close button (we keep `showCloseButton={true}` default)
-- Backdrop click to close + ESC key
+If multiple states: `[ Arizona ] [ California ] [ Texas ]` + caption *"Operating in 3 states — applicable policies will respect all jurisdictions."*
 
-### Width tuning
-- Setup wizard: `maxWidth="720px"` (form density) — wider than default `440px` because of step rail + grid radios
-- Policy configurator: `maxWidth="720px"` (matches form density)
-- Version history: `maxWidth="640px"` (read-only list, narrower)
+If still nothing detected (no city/address either): structural gate as today: *"No location address — set up at least one location."*
 
-### Wizard internal shell adjustments
-The wizard component currently has its own outer `space-y-6`. Inside the panel's `tokens.drawer.body`, that still works — the body slot already gives `p-5` and `overflow-y-auto`. No changes to the wizard component itself; it remains panel-agnostic.
+## Other Step 1 utility upgrades
 
-### Footer treatment
-Wizard already has its own footer block at the bottom of its content. With `PremiumFloatingPanel`, the body scrolls and the footer scrolls with it (current behavior). If we want a sticky footer, that's a follow-up — not part of this strict-migration wave.
+### 1. Drop the leading `—` for derived chip rows
+Currently `ConfirmRow` renders `value ?? '—'` above the chips. For Services / Roles / Operating states, hide the value line entirely when chips exist below. Cleaner hierarchy.
+
+### 2. Make chips informative, not decorative
+- **Services chips** → tooltip on hover: `"12 services in this category"` (we already query the catalog).
+- **Roles chips** → tooltip: `"4 active staff with this role"`.
+- No new design — pure data attached to existing chips.
+
+### 3. Step 1 confirmation summary
+Above the footer, single quiet line: *"5 of 5 facts auto-detected. Edit if anything's wrong, or continue."* — turns Step 1 from "form" to "review".
+
+If anything is missing (structural gate active), it shifts to: *"3 of 5 facts ready. Resolve 2 setup gaps to continue."* and disables Next.
+
+### 4. Extend "auto-detected" reasoning to all heuristic toggles in Step 2
+Already partially done (`retail_reason`, etc.) — ensure the labels render consistently and add `team_size_reason: "Based on N active staff"` so Step 2 has parity with Step 1's transparency.
 
 ## Files touched
-- `src/pages/dashboard/admin/Policies.tsx` — swap 2× `Sheet` → `PremiumFloatingPanel` (wizard + configurator)
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — swap 1× `Sheet` → `PremiumFloatingPanel` (version history)
-- `mem://style/loader-unification.md` (or new entry under `mem://style/drawer-canon.md`) — codify the **"All dashboard drawers use `PremiumFloatingPanel`"** rule. Keeping it short: one file, references `tokens.drawer.*` and the panel component path.
+
+| File | Change |
+|---|---|
+| `src/hooks/policy/usePolicyProfileDefaults.ts` | Add `extractState()` parser for city/address fallback. Build `derived_states` from extracted values. Add per-category service counts + per-role staff counts (for chip tooltips). |
+| `src/components/dashboard/policy/PolicySetupWizard.tsx` | Operating states row: read-only chip multi (no Edit), drop `value` line when chips render. Add Step 1 summary line above footer. Wire chip tooltips. |
+| `supabase/migrations/<timestamp>_policy_operating_states.sql` | Add `operating_states text[]` column, backfill from `primary_state` |
+| `src/hooks/policy/usePolicyOrgProfile.ts` | Persist `operating_states` on upsert; update applicability filter to use array (with `primary_state` as fallback for legacy rows) |
+| `mem://features/policy-os-applicability-doctrine.md` | Append: *"Multi-state orgs apply policies per jurisdiction. `operating_states` is the source of truth; `primary_state` is a legacy mirror."* |
 
 ## Out of scope (deferred)
-- `TransactionDetailSheet` migration (separate domain, separate wave)
-- Other `Sheet` consumers across the app (audit + batch migration is its own wave)
-- Sticky footers inside the wizard (separate UX call)
-- Animating step transitions (separate UX call)
+
+- Per-location policy variance (e.g., AZ tipping policy differs from CA) — surfaces would need per-location overrides; not in this wave
+- International support (CA, TX, etc. only — US 2-letter codes for now)
+- Editing addresses inline from the wizard — operator goes to Locations settings
+- Step 2 toggle UI changes beyond reason-label parity
 
 ## Sequencing
-1. Migrate the 2 drawers in `Policies.tsx`.
-2. Migrate the version history drawer in `PolicyConfiguratorPanel.tsx`.
-3. Write the drawer canon memory entry.
+
+1. Migration: add `operating_states` column + backfill.
+2. Hook: `extractState()` parser + derived_states from `city`/`address` fallback + chip-count metadata.
+3. Wizard: chip-multi state row, drop redundant `value` lines, Step 1 summary.
+4. Persistence: write `operating_states` alongside `primary_state` on upsert.
+5. Doctrine: memory append.
 
