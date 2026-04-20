@@ -445,6 +445,43 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 </p>
               </div>
 
+              {expansionFlips.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border/60">
+                  <Label className={cn(tokens.kpi.label)}>What changed</Label>
+                  <div className="space-y-2">
+                    {expansionFlips.map((f) => (
+                      <div
+                        key={f.key}
+                        className="rounded-lg border border-border/60 bg-muted/30 p-3"
+                      >
+                        <p className="font-sans text-sm text-foreground">
+                          You now offer <span className="font-medium">{f.label}</span>.
+                        </p>
+                        <p className="font-sans text-xs text-muted-foreground mt-1">
+                          We've added{' '}
+                          {f.requiredCount > 0 && (
+                            <>
+                              <span className="text-foreground">{f.requiredCount} required</span>
+                              {f.recommendedCount > 0 ? ' and ' : ''}
+                            </>
+                          )}
+                          {f.recommendedCount > 0 && (
+                            <>
+                              <span className="text-foreground">
+                                {f.recommendedCount} recommended
+                              </span>
+                            </>
+                          )}{' '}
+                          {f.requiredCount + f.recommendedCount === 1 ? 'policy' : 'policies'} to
+                          your starter set. Already-adopted policies stay; only the recommended
+                          set grows.
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2 pt-2 border-t border-border/60">
                 <Label className={cn(tokens.kpi.label)}>Breakdown by category</Label>
                 <div className="grid grid-cols-2 gap-2 pt-1">
