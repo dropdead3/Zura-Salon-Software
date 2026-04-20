@@ -32,6 +32,7 @@ export default function Policies() {
   const summary = usePolicyHealthSummary();
 
   const [activeCategory, setActiveCategory] = useState<PolicyCategory | 'all'>('all');
+  const [activeAudience, setActiveAudience] = useState<'all' | 'external' | 'internal' | 'both'>('all');
   const [setupOpen, setSetupOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const activePolicyKey = searchParams.get('policy');
@@ -63,10 +64,23 @@ export default function Policies() {
     return map;
   }, [adopted]);
 
+  const audienceCounts = useMemo(() => {
+    const counts = { all: library.length, external: 0, internal: 0, both: 0 };
+    library.forEach((l) => {
+      if (l.audience === 'external') counts.external += 1;
+      else if (l.audience === 'internal') counts.internal += 1;
+      else if (l.audience === 'both') counts.both += 1;
+    });
+    return counts;
+  }, [library]);
+
   const filteredLibrary = useMemo(() => {
-    if (activeCategory === 'all') return library;
-    return library.filter((l) => l.category === activeCategory);
-  }, [library, activeCategory]);
+    return library.filter((l) => {
+      if (activeAudience !== 'all' && l.audience !== activeAudience) return false;
+      if (activeCategory !== 'all' && l.category !== activeCategory) return false;
+      return true;
+    });
+  }, [library, activeCategory, activeAudience]);
 
   const categoryOrder = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).sort(
     (a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order,
