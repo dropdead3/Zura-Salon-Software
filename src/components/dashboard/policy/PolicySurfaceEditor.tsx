@@ -154,30 +154,51 @@ export function PolicySurfaceEditor({
               </div>
 
               {enabled && (
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-3 items-center">
-                  <label className="font-sans text-xs text-muted-foreground">Tone variant</label>
-                  <Select
-                    value={variant}
-                    onValueChange={(v) =>
-                      updateSurface(surface, { variant_type: v as PolicyVariantType })
-                    }
-                  >
-                    <SelectTrigger className="h-9 font-sans text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allowedVariants.map((v) => (
-                        <SelectItem key={v} value={v} className="font-sans text-sm">
-                          <div className="flex flex-col">
-                            <span>{VARIANT_META[v].label}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {VARIANT_META[v].description}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="mt-4 space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-3 items-center">
+                    <label className="font-sans text-xs text-muted-foreground">Tone variant</label>
+                    <Select
+                      value={variant}
+                      onValueChange={(v) =>
+                        updateSurface(surface, { variant_type: v as PolicyVariantType })
+                      }
+                    >
+                      <SelectTrigger className="h-9 font-sans text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allowedVariants.map((v) => (
+                          <SelectItem key={v} value={v} className="font-sans text-sm">
+                            <div className="flex flex-col">
+                              <span>{VARIANT_META[v].label}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {VARIANT_META[v].description}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {/* Wave 28.11.5 — fallback signal. If the chosen tone has no
+                      approved variant but 'client' does, runtime resolution will
+                      silently fall back. Tell the operator now. */}
+                  {!approvedTypes.has(variant) && approvedTypes.has('client') && variant !== 'client' && (
+                    <div className="flex items-start gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5">
+                      <Info className="w-3 h-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <p className="font-sans text-[11px] text-muted-foreground">
+                        No approved <span className="text-foreground">{VARIANT_META[variant].label}</span> draft yet — this surface will render the <span className="text-foreground">Client</span> variant as a fallback.
+                      </p>
+                    </div>
+                  )}
+                  {!approvedTypes.has(variant) && !approvedTypes.has('client') && (
+                    <div className="flex items-start gap-1.5 rounded-md border border-foreground/20 bg-muted/40 px-2 py-1.5">
+                      <Info className="w-3 h-3 text-foreground mt-0.5 flex-shrink-0" />
+                      <p className="font-sans text-[11px] text-muted-foreground">
+                        No approved draft for this tone — this surface won't render until a variant is approved in the Drafts tab.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
