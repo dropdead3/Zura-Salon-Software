@@ -141,16 +141,18 @@ export function PolicyConfiguratorPanel({
       setSurfaces(surfaceRows);
       return;
     }
-    // Seed: pre-enable each candidate surface from the library entry with its
-    // default variant. Operator can toggle off before saving.
+    // Wave 28.11.5 — audience-aware seed: use `defaultVariantForSurface` so
+    // 'both'-audience surfaces (intake) seed an internal-only policy with
+    // the `internal` variant rather than the meta default `client`, which
+    // the audience filter would otherwise strip.
     const seeded: SurfaceMappingRow[] = (entry.candidate_surfaces ?? []).map((s) => ({
       surface: s,
-      variant_type: SURFACE_META[s].defaultVariant,
+      variant_type: defaultVariantForSurface(s, entry.audience),
       enabled: true,
       surface_config: {},
     }));
     setSurfaces(seeded);
-  }, [surfaceRows, surfaces, versionId, entry.candidate_surfaces]);
+  }, [surfaceRows, surfaces, versionId, entry.candidate_surfaces, entry.audience]);
 
   const handleSaveRules = () => {
     if (!versionId) return;
@@ -167,14 +169,13 @@ export function PolicyConfiguratorPanel({
 
   const categoryMeta = POLICY_CATEGORY_META[entry.category];
 
-  /* Wave 28.11.3 — audience-aware tab visibility.
-     Internal-only policies don't render anywhere client-facing, so the
-     Surfaces tab (booking confirmation / checkout / kiosk) is dead UI.
-     Acknowledgments tab is reserved for client acks today; staff acks
-     ship in 28.11.4. We hide it for internal-only audiences for now. */
+  /* Wave 28.11.5 — historical-aware tab visibility.
+     Internal-only policies hide the Surfaces tab (dead UI). Acknowledgments
+     tab now follows audit-immutability: visible if the audience touches
+     external OR if there's at least one historical ack row (audience may
+     have changed `both`→`internal` after acks were collected). */
   const isInternalOnly = entry.audience === 'internal';
   const showSurfacesTab = !isInternalOnly;
-  const showAcknowledgmentsTab = !isInternalOnly;
 
   // Clamp tab if operator is on a tab the audience doesn't allow
   // (e.g., shared deep link previously landed on `surfaces`).
