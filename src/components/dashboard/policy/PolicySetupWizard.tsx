@@ -239,7 +239,35 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEP_ORDER.length - 1;
-  const canProceed = !!form.business_type && !!form.team_size_band;
+
+  // Step 1 readiness summary — counts auto-detected facts vs. structural gaps
+  const step1Facts = useMemo(() => {
+    const facts = [
+      { key: 'business_type', ready: !!form.business_type, gated: false },
+      { key: 'states', ready: defaults.derived_states.length > 0, gated: defaults.needs_location_setup || defaults.needs_state_resolution },
+      { key: 'team_size', ready: !!form.team_size_band, gated: defaults.needs_team_setup },
+      { key: 'services', ready: defaults.service_categories.length > 0, gated: defaults.needs_services_setup },
+      { key: 'roles', ready: defaults.roles_used.length > 0, gated: defaults.needs_team_setup },
+    ];
+    const ready = facts.filter((f) => f.ready).length;
+    const gaps = facts.filter((f) => f.gated).length;
+    return { ready, total: facts.length, gaps };
+  }, [
+    form.business_type,
+    form.team_size_band,
+    defaults.derived_states.length,
+    defaults.needs_location_setup,
+    defaults.needs_state_resolution,
+    defaults.needs_team_setup,
+    defaults.needs_services_setup,
+    defaults.service_categories.length,
+    defaults.roles_used.length,
+  ]);
+
+  const canProceed =
+    !!form.business_type &&
+    !!form.team_size_band &&
+    (step !== 'confirm' || step1Facts.gaps === 0);
 
   const next = () => !isLast && setStep(STEP_ORDER[stepIndex + 1]);
   const back = () => !isFirst && setStep(STEP_ORDER[stepIndex - 1]);
