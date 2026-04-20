@@ -17,6 +17,7 @@ import {
 import {
   usePolicyOrgProfile,
   isApplicableToProfile,
+  applicabilityReason,
   type PolicyOrgProfile,
 } from '@/hooks/policy/usePolicyOrgProfile';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
@@ -114,6 +115,19 @@ export default function Policies() {
     if (showNonApplicable || !profile) return [] as PolicyLibraryEntry[];
     return library.filter((l) => !isApplicableToProfile(l, profile));
   }, [library, profile, showNonApplicable]);
+
+  // Wave 28.11.8 — group hidden entries by reason so the chip reads as a one-glance
+  // breakdown ("8 extensions · 2 minors") instead of a single opaque count.
+  const hiddenByReason = useMemo(() => {
+    const acc: Record<string, { label: string; count: number }> = {};
+    for (const entry of hiddenByProfile) {
+      const reason = applicabilityReason(entry, profile);
+      if (!reason) continue;
+      if (!acc[reason.service]) acc[reason.service] = { label: reason.label, count: 0 };
+      acc[reason.service].count += 1;
+    }
+    return acc;
+  }, [hiddenByProfile, profile]);
 
   const audienceCounts = useMemo(() => {
     const counts = { all: profileApplicableLibrary.length, external: 0, internal: 0, both: 0 };
