@@ -287,7 +287,7 @@ export function PolicyConfiguratorPanel({
               )
             }
             requiresClientAck={!!data.requiresAcknowledgment}
-            ackDisabled={updateAckFlag.isPending}
+            ackDisabled={updateAckFlag.isPending || (!data.requiresAcknowledgment && !ackToggleAllowed)}
             onClientAckChange={(checked) =>
               updateAckFlag.mutate(
                 { policyId: data.policyId, requiresAcknowledgment: checked },
