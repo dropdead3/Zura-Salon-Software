@@ -172,6 +172,7 @@ export const hubChildrenItems: { href: string; label: string }[] = [
   { href: '/dashboard/admin/recruiting', label: 'Recruiting Pipeline' },
   { href: '/dashboard/admin/graduation-tracker', label: 'Graduation Tracker' },
   { href: '/dashboard/admin/stylist-levels', label: 'Stylist Levels' },
+  { href: '/dashboard/admin/compensation', label: 'Compensation Plans' },
   { href: '/dashboard/admin/headshots', label: 'Headshot Requests' },
   { href: '/dashboard/admin/business-cards', label: 'Business Card Requests' },
   { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1' },
