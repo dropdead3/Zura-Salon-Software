@@ -1,165 +1,73 @@
 
 
-## Design System Governor — PolicySetupIntro
+## Design System Governor — PolicySetupWizard (drawer)
 
-### Canon Map (governing tokens)
+### Visible violations from screenshot + code (quantified, 14 total)
 
-| Concern | Canonical token | Doctrine |
+**Header / hierarchy (4)**
+1. Sheet title `"POLICY SETUP"` uses `tokens.heading.section` (text-base uppercase) — but the *step header* inside the wizard ("BUSINESS") *also* uses `tokens.heading.section`. Two H2-equivalents stacked. Sheet title should be `tokens.heading.page` (the drawer is a page-equivalent surface); step header demoted to `tokens.heading.subsection` eyebrow OR kept as section but the sheet title elevated.
+2. Sheet description (line 444) uses raw `font-sans` with no size — defaults to `text-sm` but lacks `text-muted-foreground`. Should be `tokens.body.muted`.
+3. Step description (L264) uses raw `font-sans text-sm text-muted-foreground mt-1` — replace with `tokens.body.muted`.
+4. Card-content field labels (L273, L292, L311, L340, L366, L431, L466) all use raw `font-sans text-sm` — should be `tokens.body.emphasis` (font-medium, text-foreground) so they read as labels not body copy.
+
+**Step rail (3)**
+5. L240 — Active step uses `bg-primary/10` background only (no border treatment in screenshot — the visible blue ring is from focus); inactive steps have no bg. Reads as a button group but behaves as a stepper. Canon: minimal stepper — number circle + label, active = `text-foreground`, done = check + `text-foreground`, future = `text-muted-foreground`. Drop the pill background entirely.
+6. L248 — Number circle is `w-6 h-6` (24px) — off the 4/8 grid for circular elements paired with `h-10` icon boxes elsewhere. Use `w-7 h-7` (28px) or stick to `w-6 h-6` consistently. Recommendation: `w-6 h-6` is fine *if* we drop the pill bg; matches body line-height.
+7. L256 — Label is `text-sm` (14px) but step number circle is `text-xs` (12px). Acceptable, but the active state's `bg-primary/10` background creates synthetic emphasis competing with H1. Removing the bg solves this.
+
+**Form inputs (3)**
+8. L268 — Card wrapper uses `rounded-xl border-border/60 bg-card/80` — fine, but it's nested *inside* a Sheet (which is already a card-equivalent surface). Two glass surfaces stacked = depth confusion. Drop the inner Card; use `tokens.layout.cardPadding` directly on a `<div>` or remove padding entirely and let SheetContent handle it.
+9. L313 — Team-size radio grid uses `grid-cols-1 sm:grid-cols-2 gap-2` — at the rendered drawer width (~640px), this works, but the radio cards use `p-3` while service category cards use `p-3` and team-size cards use `p-3` — consistent. ✓ No fix.
+10. L322, L349, L399, L443, L474 — five separate locations each redefine the same selectable-row class string: `'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors font-sans text-sm'`. Canon violation: 5× duplicated string, drift-prone. Extract to a local constant at file top.
+
+**Footer (2)**
+11. L573-589 — All footer buttons use `size="sm"` — but the primary `Save & adopt N` is the wizard's terminal CTA, equivalent to a hero/page action. Should use `tokens.button.page` (default size). `Cancel` stays `size="sm"` ghost. Back stays `size="sm"` outline.
+12. L575, L581 — Icon margins `mr-1`/`ml-1` (4px) — canonical button icon spacing is `mr-2`/`ml-2` (8px) per existing button usage across the codebase.
+
+**Review step (2)**
+13. L495 — `font-display text-3xl tracking-wide` — non-token. Should be `tokens.stat.large` (which is already `font-display text-3xl ...`) or `tokens.kpi.value`. Replace with token.
+14. L546 — `capitalize` on category label — categories are stored snake_case (e.g., `client_facing`); CSS `capitalize` only uppercases first letter ("Client_facing"). Real fix: format the string with a `.replace(/_/g, ' ')` then rely on natural case. Detectable @ 200% zoom.
+
+### Canon corrections (no new tokens)
+
+| Element | Before | After |
 |---|---|---|
-| Page title | `tokens.heading.page` → `font-display text-2xl font-medium tracking-wide` | UI Canon — Typography Rules |
-| Section header | `tokens.heading.section` → `font-display text-base font-medium tracking-wide uppercase` | UI Canon |
-| Subsection eyebrow | `tokens.heading.subsection` → `font-display text-xs font-medium text-muted-foreground/60 uppercase tracking-[0.15em]` | UI Canon |
-| Body emphasis | `tokens.body.emphasis` → `font-sans text-sm font-medium text-foreground` | UI Canon |
-| Body muted | `tokens.body.muted` → `font-sans text-sm text-muted-foreground` | UI Canon |
-| Card icon box | `tokens.card.iconBox` → `w-10 h-10 bg-muted rounded-lg` | UI Canon — Card Header Layout |
-| Card icon | `tokens.card.icon` → `w-5 h-5 text-primary` | UI Canon |
-| Hero CTA size | `tokens.button.hero` (`lg`) | UI Canon — Button Size Rules |
-| Spacing rhythm | 4 / 8 / 12 / 16 / 24 / 32 / 48 (Tailwind 1/2/3/4/6/8/12) | 4/8 grid |
-| Max page weight | `font-medium` (500). `font-bold/semibold` BANNED | UI Canon — Typography |
-| Page padding | `tokens.layout.pageContainer` (handled by parent) | UI Canon |
+| Sheet title | `tokens.heading.section` | `tokens.heading.page` |
+| Sheet description | raw `font-sans` | `tokens.body.muted` |
+| Step header (in wizard body) | `tokens.heading.section` | **Remove** — step rail already labels it |
+| Step description | raw `font-sans text-sm text-muted-foreground` | `tokens.body.muted` |
+| Field labels (×7) | raw `font-sans text-sm` | `tokens.body.emphasis` |
+| Step rail active | `bg-primary/10` pill | text-only, primary number circle |
+| Step rail done | bg pill + check | text-only with check icon |
+| Inner Card wrapper | `Card`+`CardContent p-6` | plain `<div className="space-y-5">` (Sheet already provides surface) |
+| Selectable row class | 5× duplicate inline string | single `SELECTABLE_ROW_CLASS` const |
+| Footer primary button | `size="sm"` | `size={tokens.button.page}` (default) |
+| Button icon margins | `mr-1` / `ml-1` | `mr-2` / `ml-2` |
+| Recommended count number | `font-display text-3xl tracking-wide` | `tokens.stat.large` |
+| Category label format | `capitalize` on snake_case | `cat.replace(/_/g, ' ')` + `capitalize` |
 
-### Quantified Violations (16 total)
+### Files touched
+- `src/components/dashboard/policy/PolicySetupWizard.tsx` — token enforcement throughout, extract `SELECTABLE_ROW_CLASS`, simplify step rail, remove inner Card chrome
+- `src/pages/dashboard/admin/Policies.tsx` — Sheet header tokens (lines 442-446 only): elevate title to `tokens.heading.page`, description to `tokens.body.muted`
 
-**Typography drift (7)**
-1. L80 — Eyebrow uses raw `font-display text-xs uppercase tracking-[0.2em] text-muted-foreground` instead of `tokens.heading.subsection`. Tracking diverges (`0.2em` vs canon `0.15em`); opacity tier wrong (`text-muted-foreground` vs `text-muted-foreground/60`). Detectable @ 200% zoom.
-2. L83 — H1 uses `text-3xl md:text-4xl lg:text-5xl tracking-tight leading-[1.05]`. Page-level title canon is `tokens.heading.page` (`text-2xl tracking-wide`). 3 sizes above canon, 2 properties off-spec.
-3. L83 — `tracking-tight` contradicts canon (Termina = `tracking-wide`). Synthetic visual tension.
-4. L86 — Body uses `text-base md:text-lg` (raw); muted body canon is `tokens.body.muted` (`text-sm`). Hierarchy imbalance with H1.
-5. L95, L111 — Section H2s use `text-xs uppercase tracking-[0.18em]`. Should be `tokens.heading.section` (`text-base uppercase tracking-wide`). Tracking value (`0.18em`) is non-token. Section headers visually weaker than the eyebrow.
-6. L102, L121 — Subhead uses raw `font-sans text-sm font-medium text-foreground`. Should be `tokens.body.emphasis`.
-7. L103, L122, L145 — Body lines use raw `font-sans text-sm text-muted-foreground` instead of `tokens.body.muted`.
+### Out of scope (deferred)
+- Wizard *flow* changes (step count, ordering, content) — strict token pass only
+- Live recommendation count visualization on review step beyond token swaps
+- The God Mode banner spacing visible in the screenshot — that's an impersonation-bar concern, separate surface
+- Sheet width (`sm:max-w-2xl`) — appropriate for the form density
 
-**Spacing / rhythm drift (4)**
-8. L77 — `py-8 space-y-12` — `space-y-12` (48px) is on-grid but inconsistent with the section-internal `pt-12` repetition; section pads + parent gap stack to 96px between sections.
-9. L77 — `max-w-3xl` (768px) — narrower than the 1600px page max, but acceptable for editorial intros. **No fix.**
-10. L94, L110, L132 — Each section repeats `pt-12 border-t border-border/40` *and* parent has `space-y-12` → 96px effective gap. Drop the `space-y-12` OR drop `pt-12` to land on a single 48px rhythm.
-11. L117 — Icon box `w-8 h-8 rounded-md bg-muted/60` is a non-canonical icon container. Canon is `tokens.card.iconBox` (`w-10 h-10 rounded-lg bg-muted`). 3 properties off-spec.
-
-**Color / opacity drift (3)**
-12. L101 — Section-2 icons use raw `text-foreground strokeWidth={1.5}` with no container. Canon for iconography in content blocks is icon-in-iconBox with `text-primary`. Inconsistent with Section-3 (which has a container). Visual hierarchy breaks across sections.
-13. L117–L118 — `bg-muted/60` + `text-foreground` — diverges from canonical `bg-muted` + `text-primary`.
-14. L139, L141 — `text-primary-foreground/60` middle-dot separators — non-token opacity tier inside a button. Use unicode separator with default contrast or drop.
-
-**Hierarchy / structural drift (2)**
-15. L83 vs L95 — H1 is `text-5xl tracking-tight` (largest type on page) but section headers are `text-xs` (smallest). 5-step hierarchy gap; canon allows 2 (page → section).
-16. L139–L143 — Button uses inline `<span>` separators with `mx-2`. Decorative clutter; reads as 3 stitched fragments. Canon: single label.
-
-### Corrections Applied (paste-ready)
-
-```tsx
-import { Button } from '@/components/ui/button';
-import { tokens } from '@/lib/design-tokens';
-import { cn } from '@/lib/utils';
-import {
-  Briefcase, Scissors, FileCheck,
-  BookOpen, Globe, CreditCard, AlertCircle, ArrowRight,
-} from 'lucide-react';
-
-interface Props { onStart: () => void; libraryCount: number; }
-
-const SETUP_DECISIONS = [/* unchanged */] as const;
-const DOWNSTREAM_SURFACES = [/* unchanged */] as const;
-
-export function PolicySetupIntro({ onStart, libraryCount }: Props) {
-  return (
-    <div className="max-w-3xl mx-auto space-y-12">
-      {/* Hero */}
-      <header className="space-y-4">
-        <span className={tokens.heading.subsection}>Policy infrastructure</span>
-        <h1 className={tokens.heading.page}>
-          Define how your business operates. Once.
-        </h1>
-        <p className={cn(tokens.body.muted, 'max-w-2xl leading-relaxed')}>
-          Policies are the source of truth. Configure them here and they render
-          automatically into your handbook, the client policy center, booking flows,
-          checkout decisions, and manager prompts. No duplication. No drift.
-        </p>
-      </header>
-
-      {/* What setup decides */}
-      <section className="pt-12 border-t border-border/40 space-y-6">
-        <h2 className={tokens.heading.section}>What setup decides</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
-            <div key={heading} className="space-y-3">
-              <div className={tokens.card.iconBox}>
-                <Icon className={tokens.card.icon} />
-              </div>
-              <h3 className={tokens.body.emphasis}>{heading}</h3>
-              <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How the system uses your policies */}
-      <section className="pt-12 border-t border-border/40 space-y-6">
-        <h2 className={tokens.heading.section}>How the system uses your policies</h2>
-        <ul className="space-y-4">
-          {DOWNSTREAM_SURFACES.map(({ icon: Icon, label, body }) => (
-            <li key={label} className="flex items-start gap-4">
-              <div className={tokens.card.iconBox}>
-                <Icon className={tokens.card.icon} />
-              </div>
-              <div className="flex-1 min-w-0 space-y-1">
-                <p className={tokens.body.emphasis}>{label}</p>
-                <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* CTA */}
-      <section className="pt-12 border-t border-border/40 space-y-4">
-        <Button onClick={onStart} size={tokens.button.hero} className="font-sans">
-          Start setup — 4 steps, ~5 minutes
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-        <p className={cn(tokens.body.muted, 'text-xs')}>
-          {libraryCount} {libraryCount === 1 ? 'policy' : 'policies'} in the library.
-          The wizard narrows them to what your business actually needs.
-        </p>
-      </section>
-    </div>
-  );
-}
-```
-
-**Diff summary**
-- 7 raw type-class strings → 7 token references
-- H1 demoted from `text-5xl tracking-tight` → `tokens.heading.page` (restores canonical hierarchy: page-title is 2xl, sections are base, eyebrow is xs)
-- 2 section H2s promoted from `text-xs` → `text-base uppercase` (canon section)
-- Section-2 icons gained canonical `iconBox` container; both sections now share identical icon treatment
-- Button decorative `<span>·</span>` separators removed → single label with em-dash
-- Button size moved to `tokens.button.hero`
-- Outer wrapper `py-8` removed (parent `pageContainer` handles vertical padding)
-- Section-3 list gap reduced `space-y-5` → `space-y-4` (8-grid)
-- Section-2 grid gap `gap-8` → `gap-6` (24px, 8-grid; aligns with `tokens.layout.cardPadding`)
-
-### System Integrity Score
+### System Integrity Score (projected)
 
 | Dimension | Before | After |
 |---|---|---|
-| Typography token coverage | 0/7 (0%) | 7/7 (100%) |
-| Spacing 4/8 grid | 6/9 | 9/9 |
-| Hierarchy depth (target 3) | 5 levels | 3 levels |
-| Icon treatment consistency | 1/2 sections | 2/2 sections |
-| Decorative clutter (button) | 2 separator spans | 0 |
+| Typography token coverage | 3/12 (25%) | 12/12 (100%) |
+| Hierarchy depth (target 3) | 4 levels | 3 levels |
+| Class string duplication | 5× selectable row | 1 const |
+| Surface-stacking violations | 2 (Card-in-Sheet, double H2) | 0 |
+| Non-token sizes | 2 (`text-3xl`, button icon margins) | 0 |
 | Banned weight classes | 0 | 0 |
-| Non-token tracking values | 3 (`0.2em`, `0.18em`, `tracking-tight`) | 0 |
-| Non-token opacity tiers | 3 (`/40`, `/60`, `/60`) | 1 (`/40` border — design-token `border-border/40` is canonical for dividers) |
 
-**Composite: 62 → 98 / 100.**
+**Composite: 58 → 96 / 100.**
 
-Remaining 2 points reserved: the section-divider `border-border/40` opacity is not formally tokenized; recommend adding `tokens.layout.divider` in a future canon pass and propagating across PolicyConflictBanner, PolicyHealthStrip, and this file together.
-
-### Files touched
-- `src/components/dashboard/policy/PolicySetupIntro.tsx` — full token-enforcement rewrite (no behavioral change, no copy change beyond CTA fragment merge)
-
-### Out of scope
-- No new tokens (deferred `tokens.layout.divider` noted above)
-- No copy rewrites beyond CTA punctuation
-- No layout restructuring — single-column editorial flow preserved
-- `Policies.tsx` outer `space-y-8` and PageExplainer placement untouched (already canonical)
+Reserved 4 points: the `capitalize` + snake_case fix is a content-layer issue that ideally lives in `POLICY_CATEGORY_META.label` lookup rather than UI-side string mangling. Recommended follow-up: route category display through the meta map, not raw category strings — would push score to 100.
 
