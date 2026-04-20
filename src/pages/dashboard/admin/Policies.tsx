@@ -91,23 +91,36 @@ export default function Policies() {
     return map;
   }, [adopted]);
 
+  // Applicability layer: hide policies that require services this org does not offer
+  // (e.g., extension policies for solo stylists who don't do extensions). Mirrors the
+  // Setup Wizard's recommendedKeysForProfile logic — Library page now has parity.
+  const profileApplicableLibrary = useMemo(() => {
+    if (showNonApplicable) return library;
+    return library.filter((l) => isApplicableToProfile(l, profile));
+  }, [library, profile, showNonApplicable]);
+
+  const hiddenByProfile = useMemo(() => {
+    if (showNonApplicable || !profile) return [] as PolicyLibraryEntry[];
+    return library.filter((l) => !isApplicableToProfile(l, profile));
+  }, [library, profile, showNonApplicable]);
+
   const audienceCounts = useMemo(() => {
-    const counts = { all: library.length, external: 0, internal: 0, both: 0 };
-    library.forEach((l) => {
+    const counts = { all: profileApplicableLibrary.length, external: 0, internal: 0, both: 0 };
+    profileApplicableLibrary.forEach((l) => {
       if (l.audience === 'external') counts.external += 1;
       else if (l.audience === 'internal') counts.internal += 1;
       else if (l.audience === 'both') counts.both += 1;
     });
     return counts;
-  }, [library]);
+  }, [profileApplicableLibrary]);
 
   const filteredLibrary = useMemo(() => {
-    return library.filter((l) => {
+    return profileApplicableLibrary.filter((l) => {
       if (activeAudience !== 'all' && l.audience !== activeAudience) return false;
       if (activeCategory !== 'all' && l.category !== activeCategory) return false;
       return true;
     });
-  }, [library, activeCategory, activeAudience]);
+  }, [profileApplicableLibrary, activeCategory, activeAudience]);
 
   const categoryOrder = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).sort(
     (a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order,
