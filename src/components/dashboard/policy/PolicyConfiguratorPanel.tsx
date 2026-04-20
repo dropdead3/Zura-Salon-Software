@@ -419,6 +419,7 @@ export function PolicyConfiguratorPanel({
               <PolicySurfaceEditor
                 versionId={versionId}
                 candidateSurfaces={entry.candidate_surfaces ?? []}
+                policyAudience={entry.audience}
                 rows={surfaces}
                 onChange={setSurfaces}
               />
