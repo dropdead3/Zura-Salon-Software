@@ -114,6 +114,55 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     return map;
   }, [library, recommendedKeys]);
 
+  /**
+   * Wave 28.11.6 — expansion prompt.
+   * Detect offers_* flags that flipped false → true since the existing profile.
+   * Each flip unlocks new required + recommended policies that the operator
+   * should review on the final step. Adopted policies always stay; only the
+   * starter set grows. See mem://features/policy-os-applicability-doctrine.
+   */
+  const expansionFlips = useMemo(() => {
+    if (!existingProfile?.setup_completed_at) return [] as Array<{
+      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
+      label: string;
+      requiredCount: number;
+      recommendedCount: number;
+    }>;
+    const flags: Array<{
+      key: 'offers_extensions' | 'offers_retail' | 'offers_packages';
+      label: string;
+      filter: (l: typeof library[number]) => boolean;
+    }> = [
+      {
+        key: 'offers_extensions',
+        label: 'extensions',
+        filter: (l) => l.requires_extensions,
+      },
+      {
+        key: 'offers_retail',
+        label: 'retail products',
+        filter: (l) => l.requires_retail,
+      },
+      {
+        key: 'offers_packages',
+        label: 'packages or memberships',
+        filter: (l) => l.requires_packages,
+      },
+    ];
+    return flags
+      .filter((f) => !existingProfile[f.key] && form[f.key])
+      .map((f) => {
+        const matched = library.filter(f.filter);
+        return {
+          key: f.key,
+          label: f.label,
+          requiredCount: matched.filter((l) => l.recommendation === 'required').length,
+          recommendedCount: matched.filter((l) => l.recommendation === 'recommended').length,
+        };
+      })
+      .filter((f) => f.requiredCount + f.recommendedCount > 0);
+  }, [existingProfile, form, library]);
+
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEP_ORDER.length - 1;
