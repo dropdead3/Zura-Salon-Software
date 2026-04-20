@@ -17709,6 +17709,7 @@ export type Database = {
           offers_memberships: boolean
           offers_packages: boolean
           offers_retail: boolean
+          operating_states: string[]
           organization_id: string
           primary_state: string | null
           roles_used: string[]
@@ -17729,6 +17730,7 @@ export type Database = {
           offers_memberships?: boolean
           offers_packages?: boolean
           offers_retail?: boolean
+          operating_states?: string[]
           organization_id: string
           primary_state?: string | null
           roles_used?: string[]
@@ -17749,6 +17751,7 @@ export type Database = {
           offers_memberships?: boolean
           offers_packages?: boolean
           offers_retail?: boolean
+          operating_states?: string[]
           organization_id?: string
           primary_state?: string | null
           roles_used?: string[]

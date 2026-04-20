@@ -16,10 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { US_STATES } from '@/lib/handbook/brandTones';
 import {
   usePolicyOrgProfile,
   useUpsertPolicyOrgProfile,
@@ -96,17 +96,17 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
   // Inline-edit toggles for Step 1 (default to read-only)
   const [editBusinessType, setEditBusinessType] = useState(false);
-  const [editPrimaryState, setEditPrimaryState] = useState(false);
   const [editTeamSize, setEditTeamSize] = useState(false);
 
   /**
    * Form state — seeds from existing profile first, then derived defaults
    * (existing always wins; operator's prior overrides are preserved).
-   * Roles + service categories are intentionally derived-only (read-only chips).
+   * Roles + service categories + operating states are derived-only (read-only chips).
    */
   const [form, setForm] = useState<PolicyOrgProfileInput>(() => ({
     business_type: existingProfile?.business_type ?? null,
     primary_state: existingProfile?.primary_state ?? null,
+    operating_states: existingProfile?.operating_states ?? [],
     team_size_band: existingProfile?.team_size_band ?? null,
     offers_extensions: existingProfile?.offers_extensions ?? false,
     offers_retail: existingProfile?.offers_retail ?? false,
@@ -125,7 +125,11 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     setForm((f) => ({
       ...f,
       business_type: existingProfile?.business_type ?? f.business_type ?? defaults.business_type,
-      primary_state: existingProfile?.primary_state ?? f.primary_state ?? defaults.primary_state,
+      // States: always reflect derived (operator can't edit — they edit locations instead)
+      operating_states:
+        defaults.derived_states.length > 0 ? defaults.derived_states : (existingProfile?.operating_states ?? []),
+      primary_state:
+        defaults.derived_states[0] ?? existingProfile?.primary_state ?? f.primary_state ?? defaults.primary_state,
       team_size_band: existingProfile?.team_size_band ?? f.team_size_band ?? defaults.team_size_band,
       // Read-only mirrors of catalog/team — always reflect current state for accurate recommendations
       service_categories:
@@ -235,7 +239,35 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEP_ORDER.length - 1;
-  const canProceed = !!form.business_type && !!form.team_size_band;
+
+  // Step 1 readiness summary — counts auto-detected facts vs. structural gaps
+  const step1Facts = useMemo(() => {
+    const facts = [
+      { key: 'business_type', ready: !!form.business_type, gated: false },
+      { key: 'states', ready: defaults.derived_states.length > 0, gated: defaults.needs_location_setup || defaults.needs_state_resolution },
+      { key: 'team_size', ready: !!form.team_size_band, gated: defaults.needs_team_setup },
+      { key: 'services', ready: defaults.service_categories.length > 0, gated: defaults.needs_services_setup },
+      { key: 'roles', ready: defaults.roles_used.length > 0, gated: defaults.needs_team_setup },
+    ];
+    const ready = facts.filter((f) => f.ready).length;
+    const gaps = facts.filter((f) => f.gated).length;
+    return { ready, total: facts.length, gaps };
+  }, [
+    form.business_type,
+    form.team_size_band,
+    defaults.derived_states.length,
+    defaults.needs_location_setup,
+    defaults.needs_state_resolution,
+    defaults.needs_team_setup,
+    defaults.needs_services_setup,
+    defaults.service_categories.length,
+    defaults.roles_used.length,
+  ]);
+
+  const canProceed =
+    !!form.business_type &&
+    !!form.team_size_band &&
+    (step !== 'confirm' || step1Facts.gaps === 0);
 
   const next = () => !isLast && setStep(STEP_ORDER[stepIndex + 1]);
   const back = () => !isFirst && setStep(STEP_ORDER[stepIndex - 1]);
@@ -301,11 +333,14 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
         </div>
       ) : isEditing && children ? (
         children
-      ) : (
+      ) : value !== null ? (
         <div className="space-y-0.5">
-          <p className="font-sans text-sm text-foreground">{value ?? '—'}</p>
+          <p className="font-sans text-sm text-foreground">{value}</p>
           {detail && <p className={cn(tokens.body.muted, 'text-xs')}>{detail}</p>}
         </div>
+      ) : (
+        // value === null + no structural gate + not editing → render children inline (chips)
+        children ?? null
       )}
     </div>
   );
@@ -391,52 +426,48 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 </ConfirmRow>
 
                 <ConfirmRow
-                  label="Primary state"
-                  value={form.primary_state}
-                  detail={
-                    defaults.derived_states.length > 1
-                      ? `Operating in ${defaults.derived_states.length} states: ${defaults.derived_states.join(' · ')}`
-                      : defaults.primary_state
-                        ? 'From your primary location'
-                        : null
-                  }
-                  isEditing={editPrimaryState}
-                  onEdit={() => setEditPrimaryState((v) => !v)}
+                  label="Operating states"
+                  value={null}
                   structuralGate={
                     defaults.needs_location_setup
                       ? {
-                          message: 'No locations configured — set up at least one location to capture your operating state.',
+                          message: 'No locations configured — set up at least one location to capture your operating states.',
                           ctaLabel: 'Set up a location',
                           ctaPath: '/dashboard/admin/settings?category=locations',
                         }
-                      : null
+                      : defaults.needs_state_resolution
+                        ? {
+                            message: 'Locations exist but no state could be detected from their addresses. Add a state or full city/ZIP to each location.',
+                            ctaLabel: 'Edit locations',
+                            ctaPath: '/dashboard/admin/settings?category=locations',
+                          }
+                        : null
                   }
                 >
-                  <Select
-                    value={form.primary_state ?? ''}
-                    onValueChange={(v) => setForm((f) => ({ ...f, primary_state: v }))}
-                  >
-                    <SelectTrigger className="font-sans">
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {US_STATES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
+                  <div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {defaults.derived_states.map((code, idx) => (
+                        <span
+                          key={code}
+                          className="inline-flex items-center gap-1.5 font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
+                        >
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                          {defaults.derived_state_names[idx] ?? code}
+                        </span>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                    <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
+                      {defaults.derived_states.length > 1
+                        ? `Operating in ${defaults.derived_states.length} states — applicable policies will respect all jurisdictions. Edit a location to change.`
+                        : 'Detected from your locations. Edit a location to change.'}
+                    </p>
+                  </div>
                 </ConfirmRow>
 
                 <ConfirmRow
                   label="Team size"
                   value={teamBandLabel}
-                  detail={
-                    defaults.team_size_count > 0
-                      ? `Based on ${defaults.team_size_count} active staff`
-                      : null
-                  }
+                  detail={defaults.team_size_reason}
                   isEditing={editTeamSize}
                   onEdit={() => setEditTeamSize((v) => !v)}
                   structuralGate={
@@ -483,25 +514,31 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       : null
                   }
                 >
-                  <></>
-                </ConfirmRow>
-                {!defaults.needs_services_setup && (
-                  <div className="-mt-3 pb-3 border-b border-border/60">
-                    <div className="flex flex-wrap gap-1.5">
-                      {defaults.service_categories.map((c) => (
-                        <span
-                          key={c}
-                          className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
-                        >
-                          {defaults.service_category_labels[c] ?? formatCategoryLabel(c)}
-                        </span>
-                      ))}
-                    </div>
+                  <div>
+                    <TooltipProvider delayDuration={150}>
+                      <div className="flex flex-wrap gap-1.5">
+                        {defaults.service_categories.map((c) => {
+                          const count = defaults.service_category_counts[c] ?? 0;
+                          return (
+                            <Tooltip key={c}>
+                              <TooltipTrigger asChild>
+                                <span className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground cursor-help">
+                                  {defaults.service_category_labels[c] ?? formatCategoryLabel(c)}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="font-sans text-xs">
+                                {count} {count === 1 ? 'service' : 'services'} in this category
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    </TooltipProvider>
                     <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
                       From your service catalog. Edit services in the catalog itself.
                     </p>
                   </div>
-                )}
+                </ConfirmRow>
 
                 <ConfirmRow
                   label="Roles in use"
@@ -516,25 +553,33 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       : null
                   }
                 >
-                  <></>
-                </ConfirmRow>
-                {!defaults.needs_team_setup && defaults.roles_used.length > 0 && (
-                  <div className="-mt-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      {defaults.roles_used.map((r) => (
-                        <span
-                          key={r}
-                          className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground"
-                        >
-                          {ROLE_LABELS[r] ?? formatCategoryLabel(r)}
-                        </span>
-                      ))}
+                  {defaults.roles_used.length > 0 ? (
+                    <div>
+                      <TooltipProvider delayDuration={150}>
+                        <div className="flex flex-wrap gap-1.5">
+                          {defaults.roles_used.map((r) => {
+                            const count = defaults.role_counts[r] ?? 0;
+                            return (
+                              <Tooltip key={r}>
+                                <TooltipTrigger asChild>
+                                  <span className="font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground cursor-help">
+                                    {ROLE_LABELS[r] ?? formatCategoryLabel(r)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="font-sans text-xs">
+                                  {count} active staff with this role
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })}
+                        </div>
+                      </TooltipProvider>
+                      <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
+                        From your team. Edit roles in Access &amp; Permissions.
+                      </p>
                     </div>
-                    <p className={cn(tokens.body.muted, 'text-xs mt-2')}>
-                      From your team. Edit roles in Access &amp; Permissions.
-                    </p>
-                  </div>
-                )}
+                  ) : null}
+                </ConfirmRow>
               </>
             )}
           </div>
@@ -745,6 +790,15 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
           </div>
         )}
       </div>
+
+      {/* Step 1 confirmation summary */}
+      {step === 'confirm' && !defaults.isLoading && (
+        <p className={cn(tokens.body.muted, 'text-xs pt-2')}>
+          {step1Facts.gaps === 0
+            ? `${step1Facts.ready} of ${step1Facts.total} facts auto-detected. Edit if anything's wrong, or continue.`
+            : `${step1Facts.ready} of ${step1Facts.total} facts ready. Resolve ${step1Facts.gaps} setup gap${step1Facts.gaps === 1 ? '' : 's'} above to continue.`}
+        </p>
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
