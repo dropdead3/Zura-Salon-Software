@@ -467,11 +467,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 <ConfirmRow
                   label="Team size"
                   value={teamBandLabel}
-                  detail={
-                    defaults.team_size_count > 0
-                      ? `Based on ${defaults.team_size_count} active staff`
-                      : null
-                  }
+                  detail={defaults.team_size_reason}
                   isEditing={editTeamSize}
                   onEdit={() => setEditTeamSize((v) => !v)}
                   structuralGate={
