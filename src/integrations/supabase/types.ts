@@ -17647,6 +17647,7 @@ export type Database = {
           key: string
           recommendation: Database["public"]["Enums"]["policy_recommendation"]
           requires_extensions: boolean
+          requires_minors: boolean
           requires_packages: boolean
           requires_retail: boolean
           short_description: string
@@ -17666,6 +17667,7 @@ export type Database = {
           key: string
           recommendation?: Database["public"]["Enums"]["policy_recommendation"]
           requires_extensions?: boolean
+          requires_minors?: boolean
           requires_packages?: boolean
           requires_retail?: boolean
           short_description: string
@@ -17685,6 +17687,7 @@ export type Database = {
           key?: string
           recommendation?: Database["public"]["Enums"]["policy_recommendation"]
           requires_extensions?: boolean
+          requires_minors?: boolean
           requires_packages?: boolean
           requires_retail?: boolean
           short_description?: string
