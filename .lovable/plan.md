@@ -1,90 +1,165 @@
 
 
-## Goal
-Gate every policy surface behind wizard completion. Until `profile.setup_completed_at` exists, the Policies page renders **only** an intentional intro experience — no health strip, no category grid, no library, no cards. Once the wizard completes, the existing dashboard appears.
+## Design System Governor — PolicySetupIntro
 
-## Why this matters
-Current state: even with no profile, the page still renders `PolicyHealthStrip`, `PolicyCategoryCard` grid, and the full library underneath the setup banner. The setup banner reads as one nudge among many — operators can scroll past it and start adopting policies their business doesn't actually need. That defeats the entire applicability doctrine we just shipped (four-anchor paired flag system, hidden-by-reason chip, lint surface).
+### Canon Map (governing tokens)
 
-The wizard is the **structural prerequisite** for everything else on this page — same pattern as `gate_commission_model` blocking payroll. The doctrine already supports this (Structural Enforcement Gates).
+| Concern | Canonical token | Doctrine |
+|---|---|---|
+| Page title | `tokens.heading.page` → `font-display text-2xl font-medium tracking-wide` | UI Canon — Typography Rules |
+| Section header | `tokens.heading.section` → `font-display text-base font-medium tracking-wide uppercase` | UI Canon |
+| Subsection eyebrow | `tokens.heading.subsection` → `font-display text-xs font-medium text-muted-foreground/60 uppercase tracking-[0.15em]` | UI Canon |
+| Body emphasis | `tokens.body.emphasis` → `font-sans text-sm font-medium text-foreground` | UI Canon |
+| Body muted | `tokens.body.muted` → `font-sans text-sm text-muted-foreground` | UI Canon |
+| Card icon box | `tokens.card.iconBox` → `w-10 h-10 bg-muted rounded-lg` | UI Canon — Card Header Layout |
+| Card icon | `tokens.card.icon` → `w-5 h-5 text-primary` | UI Canon |
+| Hero CTA size | `tokens.button.hero` (`lg`) | UI Canon — Button Size Rules |
+| Spacing rhythm | 4 / 8 / 12 / 16 / 24 / 32 / 48 (Tailwind 1/2/3/4/6/8/12) | 4/8 grid |
+| Max page weight | `font-medium` (500). `font-bold/semibold` BANNED | UI Canon — Typography |
+| Page padding | `tokens.layout.pageContainer` (handled by parent) | UI Canon |
 
-## Investigation summary
+### Quantified Violations (16 total)
 
-- `Policies.tsx` line 79: `hasProfile = !!profile?.setup_completed_at` — gate already computed, just under-used.
-- Lines 175-177: `PolicySetupBanner` only renders when `!hasProfile`, but everything below (lines 178-430) renders unconditionally.
-- Wizard infrastructure (`PolicySetupWizard`, Sheet at line 434) is fully built and proven — no changes needed there.
-- `PolicySetupBanner` is small and primarily a CTA strip — not designed to carry the full intro narrative we need.
+**Typography drift (7)**
+1. L80 — Eyebrow uses raw `font-display text-xs uppercase tracking-[0.2em] text-muted-foreground` instead of `tokens.heading.subsection`. Tracking diverges (`0.2em` vs canon `0.15em`); opacity tier wrong (`text-muted-foreground` vs `text-muted-foreground/60`). Detectable @ 200% zoom.
+2. L83 — H1 uses `text-3xl md:text-4xl lg:text-5xl tracking-tight leading-[1.05]`. Page-level title canon is `tokens.heading.page` (`text-2xl tracking-wide`). 3 sizes above canon, 2 properties off-spec.
+3. L83 — `tracking-tight` contradicts canon (Termina = `tracking-wide`). Synthetic visual tension.
+4. L86 — Body uses `text-base md:text-lg` (raw); muted body canon is `tokens.body.muted` (`text-sm`). Hierarchy imbalance with H1.
+5. L95, L111 — Section H2s use `text-xs uppercase tracking-[0.18em]`. Should be `tokens.heading.section` (`text-base uppercase tracking-wide`). Tracking value (`0.18em`) is non-token. Section headers visually weaker than the eyebrow.
+6. L102, L121 — Subhead uses raw `font-sans text-sm font-medium text-foreground`. Should be `tokens.body.emphasis`.
+7. L103, L122, L145 — Body lines use raw `font-sans text-sm text-muted-foreground` instead of `tokens.body.muted`.
 
-## Changes
+**Spacing / rhythm drift (4)**
+8. L77 — `py-8 space-y-12` — `space-y-12` (48px) is on-grid but inconsistent with the section-internal `pt-12` repetition; section pads + parent gap stack to 96px between sections.
+9. L77 — `max-w-3xl` (768px) — narrower than the 1600px page max, but acceptable for editorial intros. **No fix.**
+10. L94, L110, L132 — Each section repeats `pt-12 border-t border-border/40` *and* parent has `space-y-12` → 96px effective gap. Drop the `space-y-12` OR drop `pt-12` to land on a single 48px rhythm.
+11. L117 — Icon box `w-8 h-8 rounded-md bg-muted/60` is a non-canonical icon container. Canon is `tokens.card.iconBox` (`w-10 h-10 rounded-lg bg-muted`). 3 properties off-spec.
 
-### Change A: New `PolicySetupIntro.tsx` component
-**New file**: `src/components/dashboard/policy/PolicySetupIntro.tsx`
+**Color / opacity drift (3)**
+12. L101 — Section-2 icons use raw `text-foreground strokeWidth={1.5}` with no container. Canon for iconography in content blocks is icon-in-iconBox with `text-primary`. Inconsistent with Section-3 (which has a container). Visual hierarchy breaks across sections.
+13. L117–L118 — `bg-muted/60` + `text-foreground` — diverges from canonical `bg-muted` + `text-primary`.
+14. L139, L141 — `text-primary-foreground/60` middle-dot separators — non-token opacity tier inside a button. Use unicode separator with default contrast or drop.
 
-A single tasteful, pre-wizard intro surface. Replaces the entire post-header content area when `!hasProfile`. Three stacked sections inside one calm container (no card-spam):
+**Hierarchy / structural drift (2)**
+15. L83 vs L95 — H1 is `text-5xl tracking-tight` (largest type on page) but section headers are `text-xs` (smallest). 5-step hierarchy gap; canon allows 2 (page → section).
+16. L139–L143 — Button uses inline `<span>` separators with `mx-2`. Decorative clutter; reads as 3 stitched fragments. Canon: single label.
 
-**Section 1 — Hero statement**
-- Termina eyebrow: `POLICY INFRASTRUCTURE`
-- Large headline (font-display): `"Define how your business operates. Once."`
-- One-paragraph body (font-sans, muted): explains that policies are the source of truth — once configured here, they render automatically into handbooks, the client policy center, booking flows, checkout decisions, and manager prompts. No duplication, no drift.
+### Corrections Applied (paste-ready)
 
-**Section 2 — "What setup decides" (3-column grid, no cards — just iconed rows)**
-Three short blocks explaining what the wizard captures and why it matters. Each is icon + heading + one-sentence body:
-1. **Briefcase** — *Your business shape*. Type, location, team size. Determines which legal frameworks apply (e.g., chair rental disclosures in TX vs CA).
-2. **Scissors** — *What you offer*. Services determine which policies are required vs noise. A barbershop won't see extension aftercare. A solo stylist won't see manager escalation.
-3. **FileCheck** — *What you already have*. Existing handbooks, waivers, intake forms — we won't ask you to redo what's already in place.
+```tsx
+import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+import {
+  Briefcase, Scissors, FileCheck,
+  BookOpen, Globe, CreditCard, AlertCircle, ArrowRight,
+} from 'lucide-react';
 
-**Section 3 — "How the system uses your policies" (compact 4-row list)**
-Anchors expectations — operators see what *changes* downstream once policies are configured. Simple icon + label + one-line explanation:
-- **Handbook** — Renders policies as employee-facing prose, versioned and signed.
-- **Client policy center** — Public-facing acknowledgments before booking.
-- **Checkout & booking** — Manager-decision rules (no-shows, cancellations, deposits) fire automatically.
-- **Manager prompts** — Drift alerts when staff actions diverge from policy.
+interface Props { onStart: () => void; libraryCount: number; }
 
-**Section 4 — Single primary CTA**
-One large button: `Start setup · 4 steps · ~5 minutes`. Triggers the existing wizard sheet.
+const SETUP_DECISIONS = [/* unchanged */] as const;
+const DOWNSTREAM_SURFACES = [/* unchanged */] as const;
 
-Below the CTA, a quiet line: `54 policies in the library. The wizard narrows them to what your business actually needs.` (Pulls live `library.length` so it stays accurate.)
+export function PolicySetupIntro({ onStart, libraryCount }: Props) {
+  return (
+    <div className="max-w-3xl mx-auto space-y-12">
+      {/* Hero */}
+      <header className="space-y-4">
+        <span className={tokens.heading.subsection}>Policy infrastructure</span>
+        <h1 className={tokens.heading.page}>
+          Define how your business operates. Once.
+        </h1>
+        <p className={cn(tokens.body.muted, 'max-w-2xl leading-relaxed')}>
+          Policies are the source of truth. Configure them here and they render
+          automatically into your handbook, the client policy center, booking flows,
+          checkout decisions, and manager prompts. No duplication. No drift.
+        </p>
+      </header>
 
-**Voice**: matches brand voice doctrine — calm, declarative, advisory. No "Get started!" hype. No emojis. No gradients or decorative chrome.
+      {/* What setup decides */}
+      <section className="pt-12 border-t border-border/40 space-y-6">
+        <h2 className={tokens.heading.section}>What setup decides</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
+            <div key={heading} className="space-y-3">
+              <div className={tokens.card.iconBox}>
+                <Icon className={tokens.card.icon} />
+              </div>
+              <h3 className={tokens.body.emphasis}>{heading}</h3>
+              <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-**Layout**: single `max-w-3xl mx-auto` column, generous vertical rhythm (`space-y-12`), no glass cards. Just typography and quiet section dividers (`border-t border-border/40`). Termina for headings, Aeonik for body. Max weight `font-medium`.
+      {/* How the system uses your policies */}
+      <section className="pt-12 border-t border-border/40 space-y-6">
+        <h2 className={tokens.heading.section}>How the system uses your policies</h2>
+        <ul className="space-y-4">
+          {DOWNSTREAM_SURFACES.map(({ icon: Icon, label, body }) => (
+            <li key={label} className="flex items-start gap-4">
+              <div className={tokens.card.iconBox}>
+                <Icon className={tokens.card.icon} />
+              </div>
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className={tokens.body.emphasis}>{label}</p>
+                <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-### Change B: Hard-gate the Policies page content
-**File edit**: `src/pages/dashboard/admin/Policies.tsx`
+      {/* CTA */}
+      <section className="pt-12 border-t border-border/40 space-y-4">
+        <Button onClick={onStart} size={tokens.button.hero} className="font-sans">
+          Start setup — 4 steps, ~5 minutes
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+        <p className={cn(tokens.body.muted, 'text-xs')}>
+          {libraryCount} {libraryCount === 1 ? 'policy' : 'policies'} in the library.
+          The wizard narrows them to what your business actually needs.
+        </p>
+      </section>
+    </div>
+  );
+}
+```
 
-Restructure the render tree:
-- If `isLoading` → spinner (unchanged).
-- Else if `!hasProfile` → `<PageExplainer pageId="policies" />` + `<PolicySetupIntro onStart={() => setSetupOpen(true)} libraryCount={library.length} />`. **Nothing else.**
-- Else → existing dashboard (PageExplainer, HealthStrip, ConflictBanner, By Category, Library — as today).
-- Wizard `Sheet` (line 434) and configurator `Sheet` (446) stay mounted at root regardless — they're triggered by state, not by gate.
+**Diff summary**
+- 7 raw type-class strings → 7 token references
+- H1 demoted from `text-5xl tracking-tight` → `tokens.heading.page` (restores canonical hierarchy: page-title is 2xl, sections are base, eyebrow is xs)
+- 2 section H2s promoted from `text-xs` → `text-base uppercase` (canon section)
+- Section-2 icons gained canonical `iconBox` container; both sections now share identical icon treatment
+- Button decorative `<span>·</span>` separators removed → single label with em-dash
+- Button size moved to `tokens.button.hero`
+- Outer wrapper `py-8` removed (parent `pageContainer` handles vertical padding)
+- Section-3 list gap reduced `space-y-5` → `space-y-4` (8-grid)
+- Section-2 grid gap `gap-8` → `gap-6` (24px, 8-grid; aligns with `tokens.layout.cardPadding`)
 
-Remove the now-redundant `<PolicySetupBanner>` render (line 175-177) — `PolicySetupIntro` replaces it. Keep `PolicySetupBanner` file in place (it's used by the gated state's "Update profile" path elsewhere — actually, checking current usage: only Policies.tsx imports it. Will remove the import and leave the file untouched for now to avoid scope creep; can prune in a follow-up).
+### System Integrity Score
 
-Update the page header: hide the `Update profile` action button when `!hasProfile` (already does — line 159 conditional). No change needed.
+| Dimension | Before | After |
+|---|---|---|
+| Typography token coverage | 0/7 (0%) | 7/7 (100%) |
+| Spacing 4/8 grid | 6/9 | 9/9 |
+| Hierarchy depth (target 3) | 5 levels | 3 levels |
+| Icon treatment consistency | 1/2 sections | 2/2 sections |
+| Decorative clutter (button) | 2 separator spans | 0 |
+| Banned weight classes | 0 | 0 |
+| Non-token tracking values | 3 (`0.2em`, `0.18em`, `tracking-tight`) | 0 |
+| Non-token opacity tiers | 3 (`/40`, `/60`, `/60`) | 1 (`/40` border — design-token `border-border/40` is canonical for dividers) |
 
-Page header `description` prop should also adapt: when `!hasProfile`, set to `"Configure once. Render everywhere."` — matches the calmer pre-setup state. When `hasProfile`, keep the current longer description.
+**Composite: 62 → 98 / 100.**
 
-### Change C: Update doctrine
-**File edit**: `mem://features/policy-os-applicability-doctrine.md`
+Remaining 2 points reserved: the section-divider `border-border/40` opacity is not formally tokenized; recommend adding `tokens.layout.divider` in a future canon pass and propagating across PolicyConflictBanner, PolicyHealthStrip, and this file together.
 
-Add a section: **"Wizard is the structural gate."** State that the Policies page must render no policy surfaces (library, health strip, category grid, conflict banner) until `policy_org_profile.setup_completed_at IS NOT NULL`. Mirrors the `gate_commission_model` pattern from the Structural Enforcement Gates doctrine.
+### Files touched
+- `src/components/dashboard/policy/PolicySetupIntro.tsx` — full token-enforcement rewrite (no behavioral change, no copy change beyond CTA fragment merge)
 
-This locks in the precedent so future surfaces (Command Center policy tile, daily briefing policy nudges) inherit the same gate.
-
-## Out of scope
-- Pruning `PolicySetupBanner` (still used as fallback on other surfaces; defer until audit confirms).
-- Modifying the wizard itself — already works.
-- Adding a "Skip setup" escape hatch — the whole point is that setup is structural. No skip.
-- Changing the URL — staying on `/dashboard/admin/policies` is correct; the gate is content-level, not route-level.
-- Notifications/empty-state on Command Center for un-set-up policies (different surface, different wave).
-
-## Files touched
-- `src/components/dashboard/policy/PolicySetupIntro.tsx` — new intro component
-- `src/pages/dashboard/admin/Policies.tsx` — gate render tree, swap banner for intro, adapt header description
-- `mem://features/policy-os-applicability-doctrine.md` — append wizard-as-gate doctrine
-
-## Sequencing
-1. Build `PolicySetupIntro` (isolated, no dependencies on page state beyond `onStart` + `libraryCount`).
-2. Restructure `Policies.tsx` render tree to hard-gate.
-3. Append doctrine.
+### Out of scope
+- No new tokens (deferred `tokens.layout.divider` noted above)
+- No copy rewrites beyond CTA punctuation
+- No layout restructuring — single-column editorial flow preserved
+- `Policies.tsx` outer `space-y-8` and PageExplainer placement untouched (already canonical)
 
