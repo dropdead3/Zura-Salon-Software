@@ -14,8 +14,19 @@ import {
   POLICY_CATEGORY_META,
   type PolicyCategory,
 } from '@/hooks/policy/usePolicyData';
-import { usePolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
+import { usePolicyOrgProfile, type PolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
+import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+
+function isApplicableToProfile(entry: PolicyLibraryEntry, profile: PolicyOrgProfile | null | undefined) {
+  if (!profile) return true; // before profile loads / exists, don't pre-hide
+  if (entry.requires_extensions && !profile.offers_extensions) return false;
+  if (entry.requires_retail && !profile.offers_retail) return false;
+  if (entry.requires_packages && !profile.offers_packages) return false;
+  return true;
+}
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
 import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
 import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBanner';
