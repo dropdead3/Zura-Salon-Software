@@ -6,6 +6,7 @@ import type { ServiceFormRequirement } from '@/hooks/useServiceFormRequirements'
 import { BookingPaymentForm } from './BookingPaymentForm';
 import { AfterpayPromoBadge } from './AfterpayPromoBadge';
 import { InlineFormSigningCard } from './InlineFormSigningCard';
+import { PolicyDisclosure } from '@/components/policy/PolicyDisclosure';
 
 interface BookingConfirmationProps {
   theme: BookingSurfaceTheme;
@@ -24,6 +25,8 @@ interface BookingConfirmationProps {
   depositPolicyText?: string;
   cancellationPolicyText?: string;
   requiresCardOnFile?: boolean;
+  /** Wave 28.11.2 — for surface-mapped policy disclosures. */
+  organizationId?: string | null;
   // Payment integration props
   paymentClientSecret?: string | null;
   paymentIntentType?: 'payment' | 'setup' | null;
@@ -44,6 +47,7 @@ export function BookingConfirmation({
   theme, serviceName, categoryName, stylistName, locationName,
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
   depositAmount, depositPolicyText, cancellationPolicyText, requiresCardOnFile,
+  organizationId,
   paymentClientSecret, paymentIntentType, stripePublishableKey, stripeConnectedAccountId,
   onPaymentComplete, showPaymentForm, afterpayEnabled, afterpaySurchargeRate,
   requiredForms, signedFormTemplateIds, onSignForms, onDeferForms,
