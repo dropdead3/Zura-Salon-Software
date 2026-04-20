@@ -17,10 +17,10 @@ import {
 import {
   usePolicyOrgProfile,
   isApplicableToProfile,
-  applicabilityReason,
   type PolicyOrgProfile,
 } from '@/hooks/policy/usePolicyOrgProfile';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
+import { computeHiddenByReason } from '@/lib/policy/applicability-summary';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
 import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
@@ -118,16 +118,13 @@ export default function Policies() {
 
   // Wave 28.11.8 — group hidden entries by reason so the chip reads as a one-glance
   // breakdown ("8 extensions · 2 minors") instead of a single opaque count.
-  const hiddenByReason = useMemo(() => {
-    const acc: Record<string, { label: string; count: number }> = {};
-    for (const entry of hiddenByProfile) {
-      const reason = applicabilityReason(entry, profile);
-      if (!reason) continue;
-      if (!acc[reason.service]) acc[reason.service] = { label: reason.label, count: 0 };
-      acc[reason.service].count += 1;
-    }
-    return acc;
-  }, [hiddenByProfile, profile]);
+  // Logic extracted to `computeHiddenByReason` so future surfaces (Command Center
+  // tile, audit reports) can reuse the same grouping. See
+  // `mem://features/policy-os-applicability-doctrine`.
+  const hiddenByReason = useMemo(
+    () => computeHiddenByReason(hiddenByProfile, profile),
+    [hiddenByProfile, profile],
+  );
 
   const audienceCounts = useMemo(() => {
     const counts = { all: profileApplicableLibrary.length, external: 0, internal: 0, both: 0 };
