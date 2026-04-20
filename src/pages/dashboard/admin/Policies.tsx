@@ -27,6 +27,7 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 
 function isApplicableToProfile(entry: PolicyLibraryEntry, profile: PolicyOrgProfile | null | undefined) {
   if (!profile) return true; // before profile loads / exists, don't pre-hide
@@ -50,9 +51,14 @@ export default function Policies() {
 
   const orgScopeKey = profile?.organization_id ?? 'anon';
   const showAllStorageKey = `policies:show-non-applicable:${orgScopeKey}`;
+  const hideAdoptedStorageKey = `policies:hide-adopted-required:${orgScopeKey}`;
   const [showNonApplicable, setShowNonApplicable] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem(`policies:show-non-applicable:anon`) === '1';
+  });
+  const [hideAdoptedRequired, setHideAdoptedRequired] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(`policies:hide-adopted-required:anon`) === '1';
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -61,8 +67,17 @@ export default function Policies() {
   }, [showAllStorageKey]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem(hideAdoptedStorageKey);
+    if (stored !== null) setHideAdoptedRequired(stored === '1');
+  }, [hideAdoptedStorageKey]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     window.localStorage.setItem(showAllStorageKey, showNonApplicable ? '1' : '0');
   }, [showAllStorageKey, showNonApplicable]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(hideAdoptedStorageKey, hideAdoptedRequired ? '1' : '0');
+  }, [hideAdoptedStorageKey, hideAdoptedRequired]);
 
   const hasProfile = !!profile?.setup_completed_at;
 
@@ -279,6 +294,17 @@ export default function Policies() {
                   (() => {
                     const requiredEntries = filteredLibrary.filter((e) => e.recommendation === 'required');
                     const otherEntries = filteredLibrary.filter((e) => e.recommendation !== 'required');
+                    const requiredAdoptedCount = requiredEntries.filter((e) => adoptedByKey.has(e.key)).length;
+                    const requiredTotal = requiredEntries.length;
+                    const requiredPct = requiredTotal > 0 ? Math.round((requiredAdoptedCount / requiredTotal) * 100) : 0;
+                    const isComplete = requiredTotal > 0 && requiredAdoptedCount === requiredTotal;
+                    // Stable sort: unadopted first, adopted second (preserves library order within each group)
+                    const requiredSorted = [...requiredEntries].sort(
+                      (a, b) => Number(adoptedByKey.has(a.key)) - Number(adoptedByKey.has(b.key)),
+                    );
+                    const requiredVisible = hideAdoptedRequired
+                      ? requiredSorted.filter((e) => !adoptedByKey.has(e.key))
+                      : requiredSorted;
                     const renderCard = (entry: typeof filteredLibrary[number]) => (
                       <PolicyLibraryCard
                         key={entry.id}
@@ -295,17 +321,60 @@ export default function Policies() {
                       <div className="space-y-6">
                         {requiredEntries.length > 0 && (
                           <div className="space-y-3">
-                            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
-                              <h3 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
-                                Required
-                              </h3>
-                              <span className="inline-flex items-center justify-center min-w-[1.25rem] px-1.5 h-4 rounded-full text-[10px] bg-primary/10 text-primary">
-                                {requiredEntries.length}
-                              </span>
+                            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1 border-b border-border/40">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
+                                  Required
+                                </h3>
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <span
+                                    className={cn(
+                                      'font-sans text-xs',
+                                      isComplete ? 'text-primary' : 'text-muted-foreground',
+                                    )}
+                                  >
+                                    {requiredAdoptedCount} of {requiredTotal} adopted
+                                  </span>
+                                  <Progress
+                                    value={requiredPct}
+                                    className="h-[2px] w-[120px] bg-muted"
+                                    indicatorClassName={isComplete ? 'bg-primary' : 'bg-primary/70'}
+                                  />
+                                  <span
+                                    className={cn(
+                                      'font-sans text-xs tabular-nums',
+                                      isComplete ? 'text-primary' : 'text-muted-foreground',
+                                    )}
+                                  >
+                                    {requiredPct}%
+                                  </span>
+                                </div>
+                                {requiredAdoptedCount > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <Switch
+                                      id="hide-adopted-required"
+                                      checked={hideAdoptedRequired}
+                                      onCheckedChange={setHideAdoptedRequired}
+                                    />
+                                    <Label
+                                      htmlFor="hide-adopted-required"
+                                      className="font-sans text-xs text-muted-foreground cursor-pointer"
+                                    >
+                                      Hide adopted
+                                    </Label>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                              {requiredEntries.map(renderCard)}
-                            </div>
+                            {requiredVisible.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                                {requiredVisible.map(renderCard)}
+                              </div>
+                            ) : (
+                              <p className="font-sans text-xs text-muted-foreground py-4">
+                                All required policies adopted. Toggle "Hide adopted" off to review them.
+                              </p>
+                            )}
                           </div>
                         )}
                         {otherEntries.length > 0 && (
