@@ -12,7 +12,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Archive, Check, RotateCcw } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
@@ -337,19 +337,19 @@ export function PolicyConfiguratorPanel({
         )}
       </div>
 
-      {/* Version History side-sheet */}
-      <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader className="mb-6">
-            <SheetTitle className={cn(tokens.heading.section)}>Version history</SheetTitle>
-            <SheetDescription className="font-sans">
-              Every saved version of {entry.title}, newest first. Expand any version to see
-              what changed.
-            </SheetDescription>
-          </SheetHeader>
+      {/* Version History — luxury glass bento floating drawer */}
+      <PremiumFloatingPanel open={historyOpen} onOpenChange={setHistoryOpen} maxWidth="640px">
+        <div className={tokens.drawer.header}>
+          <h2 className={cn(tokens.heading.section)}>Version history</h2>
+          <p className="font-sans text-sm text-muted-foreground mt-1">
+            Every saved version of {entry.title}, newest first. Expand any version to see
+            what changed.
+          </p>
+        </div>
+        <div className={tokens.drawer.body}>
           <PolicyVersionHistoryPanel policyId={data?.policyId ?? null} />
-        </SheetContent>
-      </Sheet>
+        </div>
+      </PremiumFloatingPanel>
 
       <Separator />
 

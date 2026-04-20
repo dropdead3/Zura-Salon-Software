@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Loader2, Library, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -437,26 +437,30 @@ export default function Policies() {
         </div>
       )}
 
-      <Sheet open={setupOpen} onOpenChange={setSetupOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader className="mb-6">
-            <SheetTitle className={tokens.heading.page}>Policy setup</SheetTitle>
-            <SheetDescription className={tokens.body.muted}>
-              Tell us how your business operates. We'll recommend the right policy set.
-            </SheetDescription>
-          </SheetHeader>
+      <PremiumFloatingPanel open={setupOpen} onOpenChange={setSetupOpen} maxWidth="720px">
+        <div className={tokens.drawer.header}>
+          <h2 className={tokens.heading.page}>Policy setup</h2>
+          <p className={cn(tokens.body.muted, 'mt-1')}>
+            Tell us how your business operates. We'll recommend the right policy set.
+          </p>
+        </div>
+        <div className={tokens.drawer.body}>
           <PolicySetupWizard onClose={() => setSetupOpen(false)} />
-        </SheetContent>
-      </Sheet>
+        </div>
+      </PremiumFloatingPanel>
 
-      <Sheet open={!!activeEntry} onOpenChange={(open) => !open && closeConfigurator()}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader className="mb-6">
-            <SheetTitle className={cn(tokens.heading.section)}>Configure policy</SheetTitle>
-            <SheetDescription className="font-sans">
-              Define the structured rules. AI drafting will render these into prose later — it cannot invent rules.
-            </SheetDescription>
-          </SheetHeader>
+      <PremiumFloatingPanel
+        open={!!activeEntry}
+        onOpenChange={(open) => !open && closeConfigurator()}
+        maxWidth="720px"
+      >
+        <div className={tokens.drawer.header}>
+          <h2 className={cn(tokens.heading.section)}>Configure policy</h2>
+          <p className={cn('font-sans text-sm text-muted-foreground mt-1')}>
+            Define the structured rules. AI drafting will render these into prose later — it cannot invent rules.
+          </p>
+        </div>
+        <div className={tokens.drawer.body}>
           {activeEntry && (
             <PolicyConfiguratorPanel
               entry={activeEntry}
@@ -468,8 +472,8 @@ export default function Policies() {
               }}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </div>
+      </PremiumFloatingPanel>
     </DashboardLayout>
   );
 }
