@@ -1,105 +1,99 @@
 
 
 ## Goal
-The applicability filter we shipped only covers the **Library grid**. The same "policy is required, but operator doesn't do that service" logic needs to ripple through every other surface that counts, gates, or nags about required policies — otherwise we get phantom required-work showing up elsewhere (setup wizard progress, dashboard nudges, configurator deep-links, public center expectations, etc.).
+Close the last three applicability gaps:
+1. **PolicyHealthStrip "Adopted" KPI** — switch denominator to applicability-filtered required count so the health strip stops over-reporting.
+2. **Wizard services step "Why hidden?" affordance** — quietly show how many policies each `offers_*` toggle hides/unlocks the moment the operator changes it.
+3. **Library content audit** — add a `requires_minors` flag (mirrors the existing `serves_minors` profile flag) so future minor-consent policies inherit the same applicability lens.
 
-## Investigation
+## Investigation summary
 
-Searched the codebase for surfaces that read `recommendation === 'required'` or count required policies. Found these gaps:
+### Gap 1: PolicyHealthStrip is showing inflated denominators
+`usePolicyHealthSummary` (`usePolicyData.ts:199`) filters `library.recommendation === 'required' || 'recommended'` but **does not filter by profile applicability**. So a solo stylist who doesn't offer extensions sees `total_recommended` include 10 phantom extension policies — the "Adopted: 3/22" tile is structurally dishonest.
 
-### Gap 1: Setup Wizard recommendation list
-`recommendedKeysForProfile` in `usePolicyOrgProfile.ts` already filters by `requires_extensions/retail/packages` — **good, no change needed**. ✅
+The Library page's progress chip already uses `useApplicableRequiredPolicies()` — but `PolicyHealthStrip` (rendered above it on the same page) still uses raw `summary.total_recommended`. Same view, two different denominators. Drift.
 
-### Gap 2: Required-policy completion gauges elsewhere
-The new progress chip ("3 of 7 adopted") only lives on the Library page. If we surface a "Policies setup health" tile in the Command Center, Operator Mode, or Zura Health Engine, those readers must use the **same applicability-filtered count** — otherwise the gauge will say "5 of 12" forever because 7 phantom extension policies live in the denominator.
+### Gap 2: Wizard services step has no live "what changes" feedback
+The wizard already detects `false → true` flips (`expansionFlips`) and shows a "What changed" panel on the **review step**. But operators get **no feedback on the services step itself** when they toggle a flag off — they don't know that unchecking `offers_extensions` will hide 10 policies until two screens later (or never, if they don't reach review).
 
-### Gap 3: Configurator deep-links to non-applicable policies
-`PolicyConfiguratorPanel` opens any policy by key (URL `?policy=extension_aftercare_policy`). If an operator who doesn't offer extensions lands on a deep-link (email, training doc, audit), they'll see a Required-flagged configurator with no contextual explanation. Needs an **inline applicability banner**:
-> "This policy is for businesses offering extensions. Your profile says you don't — you can still configure it, or [update your profile]."
+The current helper text is static (`"Unlocks extension-specific policy set (10 policies)"`) — it doesn't reflect their current state or the delta their toggle creates.
 
-### Gap 4: Public Client Policy Center
-`usePublicOrgPolicies` returns whatever the org has adopted + approved + published. If a profile-misaligned policy was adopted before the profile said "no extensions," it can still appear on the public center. Two options:
-- **A**: Hide non-applicable adopted policies from the public center (silent doctrine).
-- **B**: Leave them — once adopted + published, the operator made a choice; respect it.
+### Gap 3: Library content audit — minor-consent gap
+Audited the seed migration:
+- Only one explicit minor reference: `booking_policy` mentions "minors" in its description but is `required` for everyone (correct — booking rules apply to all orgs).
+- `package_membership_policy` correctly uses `requires_packages` (note: `offers_memberships` profile flag exists but maps to the same library column today — acceptable for now).
+- **No dedicated minor-consent policy exists yet**, but `serves_minors` is a profile flag and minor-consent policies are a known future addition (guardian consent, photo release for minors, etc.).
+- **No `requires_minors` column on `policy_library`** — adding it now (with default `false`) preserves current behavior and unblocks future minor-specific policies without a second migration.
 
-I recommend **B** with a one-time review nudge in the configurator (Gap 3 covers this). Removing already-published policies silently violates the "structure precedes intelligence" doctrine — we don't unpublish on profile change.
+Same audit found `offers_memberships` profile flag has no library column either, but no membership-only policies exist in the seed yet — defer.
 
-### Gap 5: Dashboard nudges / Daily Briefing
-If/when Policy OS ever surfaces "X required policies still need adoption" in the Daily Briefing, Command Center, or a notification — it MUST use the applicability-filtered list. Today this surface doesn't exist for policies, but it's a **future-proofing rule** to add to the doctrine.
+## Changes
 
-### Gap 6: Onboarding tasks linked to policy adoption
-`onboarding_tasks` table includes policy-related items. Need to verify whether any onboarding task hardcodes "adopt extension_aftercare_policy" — if so, it should be skipped when `offers_extensions = false`. (Investigation step in implementation.)
+### Change A: PolicyHealthStrip uses applicability-filtered counts
+**File**: `src/components/dashboard/policy/PolicyHealthStrip.tsx`
 
-### Gap 7: Profile-change side effects
-When an operator flips `offers_extensions` from true → false in the Setup Wizard:
-- Adopted extension policies stay (data preservation)
-- Library grid hides them (already done)
-- Configurator should surface "no longer applicable" state if visited (Gap 3)
-- No automatic unpublish (Gap 4 decision)
+- Change `Props` to no longer require the full `summary` for the Adopted tile's denominator. Instead, the strip itself calls `useApplicableRequiredPolicies()` internally for the Adopted tile.
+- Keep `summary` prop for `configured/published/wired` tiles (those are not denominator-driven by required count — they show absolute counts of what's set up).
+- Adopted tile selector becomes: `${applicable.adopted}/${applicable.total}` with subtitle `"of required for your business"` (was `"of recommended"` — more accurate, more reassuring).
+- No change to `usePolicyHealthSummary` itself (other surfaces may still want the raw count for a "library coverage" gauge later).
 
-When false → true:
-- Library re-shows them
-- Required count chip recalculates automatically (already correct)
-- Setup Wizard recommendations expand (already correct)
+**Why this scope**: the other three tiles (configured/published/wired) count *adopted* policies that have advanced through workflow stages — applicability filtering doesn't change their meaning. Only "Adopted X of Y" carries a denominator that needs profile-awareness.
 
-No code change needed for the bidirectional flow itself — the filter is reactive. But we need to verify the Wizard prompts the operator: "You now offer extensions — 4 new required policies are recommended. Review them?"
+### Change B: Live "Why hidden?" delta on services step
+**File**: `src/components/dashboard/policy/PolicySetupWizard.tsx`
 
-### Gap 8: Audit / compliance reports
-If a policy audit report ever counts "required policies adopted vs. total required" for compliance proof, it MUST use the applicability-filtered total. Otherwise an operator who genuinely doesn't need extension policies gets flagged as out-of-compliance forever.
+Replace the static helper string with a reactive count derived from `library` + `existingProfile` + `form` for each `offers_*` row:
 
-## Proposed changes (this wave)
+- For each toggle, compute `currentMatched` (library entries that match the flag's `requires_*` column) — count required + recommended.
+- Render a quiet inline helper that reflects the **current state of the toggle**:
+  - When **off**: `"Hides 10 policies (8 required + 2 recommended) from your library"`
+  - When **on**: `"10 policies active in your library"`
+  - Color: muted by default; switches to `text-foreground` when state differs from `existingProfile` (visual cue that "you just changed this — here's what it means").
+- Apply only to the three columns that actually exist on `policy_library` today: `offers_extensions`, `offers_retail`, `offers_packages`. The two flags without library columns yet (`offers_memberships`, `serves_minors`) keep their static helper but get a small `(coming soon)` label so we set the right expectation.
 
-### Change A: Configurator applicability banner — **Gap 3** (highest leverage)
-File: `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` (and/or its drawer wrapper).
+This satisfies the "silence vs. signal" doctrine — the count only appears when there's actual content gated on the flag.
 
-Add a quiet inline banner above the policy body when:
-- The policy's `requires_*` flag is true
-- The org profile says they don't offer that service
+### Change C: Add `requires_minors` column to `policy_library`
+**Migration** (new file in `supabase/migrations/`):
 
-Banner text:
-> "This policy applies to businesses that offer extensions. Your business profile says you don't currently offer this — you can still configure and adopt it, or [update your profile] if this changed."
+```sql
+ALTER TABLE public.policy_library
+  ADD COLUMN IF NOT EXISTS requires_minors BOOLEAN NOT NULL DEFAULT false;
+```
 
-Uses `tokens.body` muted styling (not an alert). Link triggers the Setup Wizard step for service offerings.
+**Then update**:
+- `src/hooks/policy/usePolicyOrgProfile.ts`:
+  - `isApplicableToProfile` — add `if (entry.requires_minors && !profile.serves_minors) return false;`
+  - `applicabilityReason` — add minors branch returning `{ service: 'minors', label: 'minors (under 18)' }`.
+  - Update the `Pick<PolicyLibraryEntry, ...>` types to include `requires_minors`.
+- `src/hooks/policy/usePolicyData.ts` `PolicyLibraryEntry` type — add `requires_minors: boolean`.
+- `src/components/dashboard/policy/PolicySetupWizard.tsx` `expansionFlips` — extend the `flags` array with a `serves_minors` entry filtering on `requires_minors`.
 
-### Change B: Wizard prompt on profile expansion — **Gap 7**
-File: `PolicySetupWizard` (path TBD during implementation).
+No seed data change — no minor-specific policies exist yet, so the column is dormant infrastructure ready for the next library content wave.
 
-When the operator changes a `offers_*` flag from `false → true` in the Wizard, surface a final-step note:
-> "You now offer extensions. We've added 4 required and 2 recommended policies to your starter set. Review on the next step."
+### Change D: Doctrine memory update
+Append to `mem://features/policy-os-applicability-doctrine.md`:
+- Note that `requires_minors` joins `requires_extensions/retail/packages` as the fourth applicability dimension.
+- Reaffirm: any new `offers_*` profile flag must ship paired with its `requires_*` library column **and** a branch in `isApplicableToProfile`/`applicabilityReason`/`expansionFlips`. Three places — checked together.
 
-Already-adopted policies stay; new ones are flagged for adoption review.
+## Out of scope
+- No `requires_memberships` column (profile flag exists but no library content gates on it; defer until a membership-only policy is authored).
+- No new minor-specific seed policies (separate content wave).
+- No change to `usePolicyHealthSummary` shape — other pages may consume it.
+- No public center filtering changes — adopted policies still publish regardless of current profile (Wave 28.11.x decision stands).
 
-### Change C: Centralize applicability helper — **Gap 5/8 future-proofing**
-Move `isApplicableToProfile` from `Policies.tsx` into `src/hooks/policy/usePolicyOrgProfile.ts` (or a sibling `policyApplicability.ts`). Export as a named utility so any future surface (Command Center tile, audit report, Daily Briefing) uses one source of truth.
+## Files touched
+- `src/components/dashboard/policy/PolicyHealthStrip.tsx` — applicability-filtered Adopted tile
+- `src/components/dashboard/policy/PolicySetupWizard.tsx` — live delta helpers + minors expansion flip
+- `src/hooks/policy/usePolicyOrgProfile.ts` — `requires_minors` branch in `isApplicableToProfile` + `applicabilityReason`
+- `src/hooks/policy/usePolicyData.ts` — `PolicyLibraryEntry` type extension
+- `supabase/migrations/{new}.sql` — add `requires_minors` column with safe default
+- `mem://features/policy-os-applicability-doctrine.md` — fourth dimension + paired-shipping rule
 
-Also export a derived hook: `useApplicableRequiredPolicies(orgId)` returning `{ total, adopted, pct, missing[] }` — the canonical "required policies setup health" computation. The Library page's progress chip should switch to this hook so there's never drift.
-
-### Change D: Onboarding task audit — **Gap 6** (investigation + conditional fix)
-Search `onboarding_tasks` content for hardcoded references to extension/retail/package policies. If found, add a `requires_*` column to `onboarding_tasks` mirroring `policy_library`, and filter task visibility through the same applicability lens.
-
-If no such tasks exist, document the rule in the Policy OS doctrine and move on.
-
-### Change E: Doctrine entry — **future-proofing**
-Add a memory entry: `mem://features/policy-os-applicability-doctrine`:
-> Any surface that counts, gates, or nags about required policies MUST filter through `isApplicableToProfile` against `policy_org_profile`. Adopted-but-no-longer-applicable policies are preserved (no auto-unpublish), but the configurator surfaces a soft "no longer applicable" banner.
-
-## Out of scope (defer)
-- Auto-unpublish or auto-archive non-applicable adopted policies (Gap 4 — by design)
-- New `requires_minors` / `requires_memberships` flags (separate wave; needs library content audit first)
-- Public Client Policy Center filtering (Gap 4 — by design)
-- Audit/compliance report (Gap 8 — surface doesn't exist yet; doctrine entry covers it)
-
-## Files touched (estimated)
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — applicability banner
-- `src/hooks/policy/usePolicyOrgProfile.ts` — extract `isApplicableToProfile` + new `useApplicableRequiredPolicies` hook
-- `src/pages/dashboard/admin/Policies.tsx` — switch progress chip to shared hook
-- `PolicySetupWizard` (path TBD) — expansion prompt
-- `mem://features/policy-os-applicability-doctrine.md` — new doctrine entry
-- (Conditional) `onboarding_tasks` content/schema — only if Gap 6 investigation finds hardcoded extension/retail/package tasks
-
-## Recommended sequencing
-1. **A + C together** (configurator banner + centralized helper) — biggest UX gap, sets the foundation.
-2. **D** (investigation) — quick, may be no-op.
-3. **B** (wizard prompt) — polish.
-4. **E** (doctrine) — closes the loop so future surfaces inherit the rule.
+## Sequencing
+1. Migration first (column + default) so type regen has a target.
+2. Hooks (`isApplicableToProfile`, `useApplicableRequiredPolicies`) inherit `requires_minors`.
+3. PolicyHealthStrip swap (smallest UI change, biggest honesty payoff).
+4. Wizard live deltas (highest UX leverage).
+5. Doctrine memory close.
 
