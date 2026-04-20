@@ -201,13 +201,6 @@ export function PolicyConfiguratorPanel({
           <Badge variant="outline" className="font-sans text-xs">
             {categoryMeta.label}
           </Badge>
-          <Badge variant="secondary" className="font-sans text-xs">
-            {entry.audience === 'both'
-              ? 'Internal + Client-facing'
-              : entry.audience === 'external'
-                ? 'Client-facing'
-                : 'Internal'}
-          </Badge>
           {ready && (
             <Badge variant="outline" className="font-sans text-xs">
               v{versionNumber} · draft
