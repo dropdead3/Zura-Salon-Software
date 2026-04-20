@@ -135,8 +135,11 @@ export function PolicyAudienceBanner({
               Require client acknowledgment
             </p>
             <p className="font-sans text-xs text-muted-foreground">
-              Clients must type their name and confirm on the public Policy Center
-              before the policy is considered acknowledged.
+              {/* Wave 28.11.5 — make precondition visible alongside the disabled state,
+                  matching the publish toggle pattern. */}
+              {ackDisabled && !requiresClientAck
+                ? 'Approve a client-facing variant and publish before requiring acknowledgment.'
+                : 'Clients must type their name and confirm on the public Policy Center before the policy is considered acknowledged.'}
             </p>
           </label>
         </div>
