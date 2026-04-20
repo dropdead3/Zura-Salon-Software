@@ -18,24 +18,24 @@ const items = [
   },
   {
     key: 'configured',
-    label: 'Configured',
+    label: 'Rule sets defined',
     icon: FileCheck2,
     selector: (s: PolicyHealthSummary) => `${s.configured}`,
-    sub: 'rule sets defined',
+    sub: 'configured policies',
   },
   {
     key: 'published',
-    label: 'Published',
+    label: 'Live to clients',
     icon: Megaphone,
     selector: (s: PolicyHealthSummary) => `${s.published}`,
-    sub: 'live to clients',
+    sub: 'on public policy page',
   },
   {
     key: 'wired',
-    label: 'Wired',
+    label: 'Wired to surfaces',
     icon: Network,
     selector: (s: PolicyHealthSummary) => `${s.wired}`,
-    sub: 'across surfaces',
+    sub: 'rendered in workflows',
   },
 ] as const;
 

@@ -123,7 +123,13 @@ export function usePublicOrgPolicies(orgId: string | undefined) {
           label: meta?.label ?? cat,
           description: meta?.description ?? '',
           order: meta?.order ?? 99,
-          policies: list.sort((a, b) => a.title.localeCompare(b.title)),
+          policies: list.sort((a, b) => {
+            // Wave 28.11.1 — newest approvals first; null approvedAt sorts last.
+            const ta = a.approvedAt ? new Date(a.approvedAt).getTime() : 0;
+            const tb = b.approvedAt ? new Date(b.approvedAt).getTime() : 0;
+            if (tb !== ta) return tb - ta;
+            return a.title.localeCompare(b.title);
+          }),
         });
       }
 
