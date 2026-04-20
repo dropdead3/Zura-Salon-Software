@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import type { Database } from '@/integrations/supabase/types';
+import { usePolicyOrgProfile, isApplicableToProfile } from './usePolicyOrgProfile';
 
 export type PolicyCategory = Database['public']['Enums']['policy_category'];
 export type PolicyAudience = Database['public']['Enums']['policy_audience'];
@@ -196,15 +197,25 @@ export function useOrgPolicySurfaceMappings() {
   });
 }
 
-/** Compute lightweight health summary from library + adopted policies. */
+/**
+ * Compute lightweight health summary from library + adopted policies.
+ *
+ * Wave 28.11.8 — `total_recommended` and `by_category.total` are filtered
+ * through `isApplicableToProfile` so phantom extension/retail/package/minor
+ * policies never inflate denominators. Mirrors `useApplicableRequiredPolicies`.
+ * When the profile hasn't loaded, no filtering happens (silence over wrong number).
+ */
 export function usePolicyHealthSummary() {
   const { data: library = [] } = usePolicyLibrary();
   const { data: adopted = [] } = useOrgPolicies();
   const { data: surfaceMappings = [] } = useOrgPolicySurfaceMappings();
+  const { data: profile } = usePolicyOrgProfile();
 
   const adoptedKeys = new Set(adopted.map((p) => p.library_key));
   const recommendedLibrary = library.filter(
-    (l) => l.recommendation === 'required' || l.recommendation === 'recommended',
+    (l) =>
+      (l.recommendation === 'required' || l.recommendation === 'recommended') &&
+      isApplicableToProfile(l, profile),
   );
 
   const by_category = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).reduce(
