@@ -22,6 +22,7 @@ import { PolicySetupBanner } from '@/components/dashboard/policy/PolicySetupBann
 import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
 import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyConfiguratorPanel';
 import { PolicyConflictBanner } from '@/components/dashboard/policy/PolicyConflictBanner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function Policies() {
@@ -94,6 +95,7 @@ export default function Policies() {
         </div>
       ) : (
         <div className="space-y-8">
+          <PageExplainer pageId="policies" />
           {!hasProfile && (
             <PolicySetupBanner onStart={() => setSetupOpen(true)} hasProfile={false} />
           )}

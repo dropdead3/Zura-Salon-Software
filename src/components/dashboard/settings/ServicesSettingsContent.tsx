@@ -592,7 +592,7 @@ export function ServicesSettingsContent() {
           <TabsList>
             <TabsTrigger value="catalog">Catalog</TabsTrigger>
             <TabsTrigger value="staff">Staff Access</TabsTrigger>
-            <TabsTrigger value="policies">Policies</TabsTrigger>
+            <TabsTrigger value="policies">Redo Eligibility</TabsTrigger>
             <TabsTrigger value="addons">Add-Ons</TabsTrigger>
           </TabsList>
 
@@ -1289,7 +1289,7 @@ export function ServicesSettingsContent() {
             )}
           </TabsContent>
 
-          {/* ============ TAB 4: POLICIES ============ */}
+          {/* ============ TAB 4: REDO ELIGIBILITY ============ */}
           <TabsContent value="policies" className="space-y-4">
             <RedoPolicySettings />
           </TabsContent>
