@@ -231,21 +231,43 @@ export default function Policies() {
               )}
             </div>
 
-            {hiddenByProfile.length > 0 && !showNonApplicable && (
-              <div className="flex items-start gap-2 px-3 py-2 rounded-md border border-border/40 bg-muted/30">
-                <p className="font-sans text-xs text-muted-foreground flex-1">
-                  Hiding {hiddenByProfile.length}{' '}
-                  {hiddenByProfile.length === 1 ? 'policy' : 'policies'} that don't apply to your business profile.{' '}
-                  <button
-                    type="button"
-                    onClick={() => setSetupOpen(true)}
-                    className="font-sans text-xs text-foreground underline-offset-2 hover:underline"
-                  >
-                    Edit profile
-                  </button>
-                </p>
-              </div>
-            )}
+            {hiddenByProfile.length > 0 && !showNonApplicable && (() => {
+              const reasonEntries = Object.values(hiddenByReason);
+              const total = hiddenByProfile.length;
+              const showBreakdown = reasonEntries.length > 1;
+              return (
+                <div className="flex items-start gap-2 px-3 py-2 rounded-md border border-border/40 bg-muted/30">
+                  <p className="font-sans text-xs text-muted-foreground flex-1">
+                    Hiding {total} {total === 1 ? 'policy' : 'policies'}
+                    {showBreakdown ? (
+                      <>
+                        :{' '}
+                        {reasonEntries.map((r, idx) => (
+                          <span key={r.label} className="font-sans text-xs text-foreground/80">
+                            {r.count} {r.label}
+                            {idx < reasonEntries.length - 1 && (
+                              <span className="text-muted-foreground/60"> · </span>
+                            )}
+                          </span>
+                        ))}
+                        .
+                      </>
+                    ) : reasonEntries.length === 1 ? (
+                      <> ({reasonEntries[0].label}).</>
+                    ) : (
+                      <> that don't apply to your business profile.</>
+                    )}{' '}
+                    <button
+                      type="button"
+                      onClick={() => setSetupOpen(true)}
+                      className="font-sans text-xs text-foreground underline-offset-2 hover:underline"
+                    >
+                      Edit profile
+                    </button>
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Wave 28.11.3 — Audience-first segmented control. The data already
                 carries this distinction; we surface it so operators don't apply
