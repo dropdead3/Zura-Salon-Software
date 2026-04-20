@@ -260,6 +260,30 @@ export function PolicyConfiguratorPanel({
             </div>
           </div>
         )}
+        {nonApplicable && (
+          <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+            <p className="font-sans text-xs text-muted-foreground">
+              This policy applies to businesses that offer{' '}
+              <span className="text-foreground">{nonApplicable.label}</span>. Your
+              business profile says you don't currently offer this — you can
+              still configure and adopt it
+              {onEditProfile ? (
+                <>
+                  , or{' '}
+                  <button
+                    type="button"
+                    onClick={onEditProfile}
+                    className="text-foreground underline-offset-2 hover:underline"
+                  >
+                    update your profile
+                  </button>{' '}
+                  if this changed
+                </>
+              ) : null}
+              .
+            </p>
+          </div>
+        )}
         <div className="flex items-center gap-4 flex-wrap">
           {hasApprovedClientVariant && publicPolicyUrl && (
             <a
