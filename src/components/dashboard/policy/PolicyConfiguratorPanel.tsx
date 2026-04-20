@@ -197,6 +197,14 @@ export function PolicyConfiguratorPanel({
   const orgSlug = effectiveOrganization?.slug;
   const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
 
+  /* Wave 28.11.5 — historical ack visibility (audit immutability).
+     Show acks tab whenever count > 0 even if audience changed to internal-only. */
+  const { data: ackCount = 0 } = usePolicyAcknowledgmentCount(data?.policyId ?? null);
+  const showAcknowledgmentsTab = !isInternalOnly || ackCount > 0;
+  const isArchived = data?.status === 'archived';
+  const ackToggleAllowed =
+    !!data?.isPublishedExternal && hasApprovedClientVariant && !isArchived;
+
   /* Required-rule readiness for drafter */
   const rulesReady = useMemo(() => {
     return allFields
