@@ -423,6 +423,10 @@ export default function Policies() {
               entry={activeEntry}
               alreadyAdopted={adoptedByKey.has(activeEntry.key)}
               onClose={closeConfigurator}
+              onEditProfile={() => {
+                closeConfigurator();
+                setSetupOpen(true);
+              }}
             />
           )}
         </SheetContent>
