@@ -30544,12 +30544,20 @@ export type Database = {
         }
         Returns: string
       }
+      publish_policy_externally: {
+        Args: { p_policy_id: string; p_publish: boolean }
+        Returns: Json
+      }
       rebuild_inventory_projection: {
         Args: { p_location_id?: string; p_org_id: string; p_product_id: string }
         Returns: undefined
       }
       rebuild_mix_session_projection: {
         Args: { p_session_id: string }
+        Returns: undefined
+      }
+      recompute_policy_status: {
+        Args: { p_policy_id: string }
         Returns: undefined
       }
       reschedule_booking: {
