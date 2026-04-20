@@ -208,8 +208,10 @@ export default function Policies() {
                     <p className={tokens.empty.description}>Try a different filter.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {filteredLibrary.map((entry) => (
+                  (() => {
+                    const requiredEntries = filteredLibrary.filter((e) => e.recommendation === 'required');
+                    const otherEntries = filteredLibrary.filter((e) => e.recommendation !== 'required');
+                    const renderCard = (entry: typeof filteredLibrary[number]) => (
                       <PolicyLibraryCard
                         key={entry.id}
                         entry={entry}
@@ -220,8 +222,42 @@ export default function Policies() {
                           setSearchParams(next, { replace: true });
                         }}
                       />
-                    ))}
-                  </div>
+                    );
+                    return (
+                      <div className="space-y-6">
+                        {requiredEntries.length > 0 && (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+                              <h3 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
+                                Required
+                              </h3>
+                              <span className="inline-flex items-center justify-center min-w-[1.25rem] px-1.5 h-4 rounded-full text-[10px] bg-primary/10 text-primary">
+                                {requiredEntries.length}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                              {requiredEntries.map(renderCard)}
+                            </div>
+                          </div>
+                        )}
+                        {otherEntries.length > 0 && (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+                              <h3 className="font-display text-xs tracking-[0.14em] uppercase text-muted-foreground">
+                                Recommended &amp; Optional
+                              </h3>
+                              <span className="inline-flex items-center justify-center min-w-[1.25rem] px-1.5 h-4 rounded-full text-[10px] bg-muted text-muted-foreground">
+                                {otherEntries.length}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                              {otherEntries.map(renderCard)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()
                 )}
               </TabsContent>
             </Tabs>
