@@ -238,65 +238,32 @@ export function PolicyConfiguratorPanel({
           )}
         </div>
 
-        {/* Wave 28.11.1 — Publish to client policy center toggle */}
-        {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-            <Switch
-              id="publish-external"
-              checked={!!data.isPublishedExternal}
-              disabled={publish.isPending || !hasApprovedClientVariant}
-              onCheckedChange={(checked) =>
-                publish.mutate(
-                  { policyId: data.policyId, publish: checked },
-                  { onSuccess: () => refetch() },
-                )
-              }
-            />
-            <label htmlFor="publish-external" className="flex-1 cursor-pointer space-y-0.5">
-              <p className="font-sans text-sm text-foreground flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-primary" />
-                Publish to client policy center
-                {data.isPublishedExternal && (
-                  <Badge variant="outline" className="font-sans text-[10px] text-primary border-primary/30">
-                    Live
-                  </Badge>
-                )}
-              </p>
-              <p className="font-sans text-xs text-muted-foreground">
-                {hasApprovedClientVariant
-                  ? data.isPublishedExternal
-                    ? `Visible to clients at ${publicPolicyUrl}.`
-                    : 'Turn on to make this policy visible on your public policy page.'
-                  : 'Approve a client-facing variant in the Drafts tab before publishing.'}
-              </p>
-            </label>
-          </div>
-        )}
-
-        {/* Wave 28.10 — operator opt-in to require client acknowledgment */}
-        {data?.policyId && (entry.audience === 'external' || entry.audience === 'both') && (
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-            <Switch
-              id="require-ack"
-              checked={!!data.requiresAcknowledgment}
-              disabled={updateAckFlag.isPending}
-              onCheckedChange={(checked) =>
-                updateAckFlag.mutate(
-                  { policyId: data.policyId, requiresAcknowledgment: checked },
-                  { onSuccess: () => refetch() },
-                )
-              }
-            />
-            <label htmlFor="require-ack" className="flex-1 cursor-pointer space-y-0.5">
-              <p className="font-sans text-sm text-foreground">
-                Require client acknowledgment
-              </p>
-              <p className="font-sans text-xs text-muted-foreground">
-                Clients must type their name and check a confirmation on the public Policy
-                Center before the policy is considered acknowledged.
-              </p>
-            </label>
-          </div>
+        {/* Wave 28.11.3 — Audience-aware banner replaces the stacked
+            Publish + Require-ack toggles. Renders only the actions that
+            apply to this policy's audience, killing dead UI for handbook
+            policies and grouping client-facing actions under one context. */}
+        {data?.policyId && (
+          <PolicyAudienceBanner
+            audience={entry.audience}
+            publicPolicyUrl={publicPolicyUrl}
+            isPublishedExternal={!!data.isPublishedExternal}
+            publishDisabled={publish.isPending || !hasApprovedClientVariant}
+            onPublishChange={(checked) =>
+              publish.mutate(
+                { policyId: data.policyId, publish: checked },
+                { onSuccess: () => refetch() },
+              )
+            }
+            requiresClientAck={!!data.requiresAcknowledgment}
+            ackDisabled={updateAckFlag.isPending}
+            onClientAckChange={(checked) =>
+              updateAckFlag.mutate(
+                { policyId: data.policyId, requiresAcknowledgment: checked },
+                { onSuccess: () => refetch() },
+              )
+            }
+            hasApprovedClientVariant={hasApprovedClientVariant}
+          />
         )}
       </div>
 
