@@ -1,99 +1,118 @@
 
 
 ## Goal
-Close the last three applicability gaps:
-1. **PolicyHealthStrip "Adopted" KPI** — switch denominator to applicability-filtered required count so the health strip stops over-reporting.
-2. **Wizard services step "Why hidden?" affordance** — quietly show how many policies each `offers_*` toggle hides/unlocks the moment the operator changes it.
-3. **Library content audit** — add a `requires_minors` flag (mirrors the existing `serves_minors` profile flag) so future minor-consent policies inherit the same applicability lens.
+Close the last applicability drift surfaces:
+1. **Per-category coverage drift** — `usePolicyHealthSummary.by_category` ignores profile applicability, so `PolicyCategoryCard` ("Extensions: 0/10") still shows phantom totals for operators who don't offer that service.
+2. **Hidden-chip legibility** — the "Hiding N policies" banner doesn't tell operators *which* services are causing the hiding. One-glance breakdown by reason.
+3. **Author drift guard** — a dev-time linter for `policy_library` content rules so future content waves can't ship a `requires_minors=true` policy that wasn't actually authored as a minors policy.
 
 ## Investigation summary
 
-### Gap 1: PolicyHealthStrip is showing inflated denominators
-`usePolicyHealthSummary` (`usePolicyData.ts:199`) filters `library.recommendation === 'required' || 'recommended'` but **does not filter by profile applicability**. So a solo stylist who doesn't offer extensions sees `total_recommended` include 10 phantom extension policies — the "Adopted: 3/22" tile is structurally dishonest.
+### Gap 1: `by_category` denominator drift
+`usePolicyHealthSummary` (lines 199-218) computes `by_category[cat].total` from `recommendedLibrary` with **no profile filter**. The "By category" grid on the Policies page renders `Extensions 0/10` even for solo stylists who don't offer extensions — same dishonesty pattern we just fixed in PolicyHealthStrip. Numerator (`adoptedCount`) is fine because adopted policies always belong to the operator.
 
-The Library page's progress chip already uses `useApplicableRequiredPolicies()` — but `PolicyHealthStrip` (rendered above it on the same page) still uses raw `summary.total_recommended`. Same view, two different denominators. Drift.
+The Extensions category is the loudest case, but the same drift applies anywhere a category is dominated by gated policies (future minors-heavy or membership-heavy categories).
 
-### Gap 2: Wizard services step has no live "what changes" feedback
-The wizard already detects `false → true` flips (`expansionFlips`) and shows a "What changed" panel on the **review step**. But operators get **no feedback on the services step itself** when they toggle a flag off — they don't know that unchecking `offers_extensions` will hide 10 policies until two screens later (or never, if they don't reach review).
+### Gap 2: Hidden-chip is opaque
+Current copy: `"Hiding 10 policies that don't apply to your business profile."`
 
-The current helper text is static (`"Unlocks extension-specific policy set (10 policies)"`) — it doesn't reflect their current state or the delta their toggle creates.
+Operators with `serves_minors=false` AND `offers_extensions=false` see one number with no breakdown. Doesn't help them confirm "yes, that matches what I told you" — they have to trust the count blindly.
 
-### Gap 3: Library content audit — minor-consent gap
-Audited the seed migration:
-- Only one explicit minor reference: `booking_policy` mentions "minors" in its description but is `required` for everyone (correct — booking rules apply to all orgs).
-- `package_membership_policy` correctly uses `requires_packages` (note: `offers_memberships` profile flag exists but maps to the same library column today — acceptable for now).
-- **No dedicated minor-consent policy exists yet**, but `serves_minors` is a profile flag and minor-consent policies are a known future addition (guardian consent, photo release for minors, etc.).
-- **No `requires_minors` column on `policy_library`** — adding it now (with default `false`) preserves current behavior and unblocks future minor-specific policies without a second migration.
+`applicabilityReason` (added last wave) already returns `{ service, label }` per entry — perfect input. We just need to group/count.
 
-Same audit found `offers_memberships` profile flag has no library column either, but no membership-only policies exist in the seed yet — defer.
+### Gap 3: Linter scope
+Dev-time only — never runs in prod. Two reasonable homes:
+- **A**: A vitest test (`src/__tests__/policy-library-content.test.ts`) that fetches the library and asserts content rules.
+- **B**: A standalone script (`scripts/lint-policy-library.ts`) invoked on demand.
+
+I recommend **A** — it runs in the existing test pipeline (no new infra), fails CI on author drift, and lives next to the doctrine it enforces. No DB CHECK constraints (forbidden by doctrine for time/content-validation logic).
+
+Rules to assert (extensible):
+- `requires_minors=true` → must be `category='client'` AND `why_it_matters` must contain "minor", "guardian", or "under 18" (case-insensitive).
+- `requires_extensions=true` → must be `category='extensions'` (already true today; lock it in).
+- `requires_retail=true` → audience may be `internal`, `external`, or `both`; no category lock (retail can sit in `client` or `financial`).
+- `requires_packages=true` → must mention "package", "membership", or "subscription" in title or `why_it_matters`.
+- One blanket rule: any entry with **two or more** `requires_*` flags set is structurally suspicious — an authoring drift signal — and must include an explanatory comment in `why_it_matters` mentioning both services.
 
 ## Changes
 
-### Change A: PolicyHealthStrip uses applicability-filtered counts
-**File**: `src/components/dashboard/policy/PolicyHealthStrip.tsx`
+### Change A: Profile-aware `by_category` totals
+**File**: `src/hooks/policy/usePolicyData.ts`
 
-- Change `Props` to no longer require the full `summary` for the Adopted tile's denominator. Instead, the strip itself calls `useApplicableRequiredPolicies()` internally for the Adopted tile.
-- Keep `summary` prop for `configured/published/wired` tiles (those are not denominator-driven by required count — they show absolute counts of what's set up).
-- Adopted tile selector becomes: `${applicable.adopted}/${applicable.total}` with subtitle `"of required for your business"` (was `"of recommended"` — more accurate, more reassuring).
-- No change to `usePolicyHealthSummary` itself (other surfaces may still want the raw count for a "library coverage" gauge later).
+Two-step refactor — preserve the existing function signature, add an optional profile-aware mode:
 
-**Why this scope**: the other three tiles (configured/published/wired) count *adopted* policies that have advanced through workflow stages — applicability filtering doesn't change their meaning. Only "Adopted X of Y" carries a denominator that needs profile-awareness.
+1. Modify `usePolicyHealthSummary` to accept `usePolicyOrgProfile()` internally. (No props change — it already pulls from React Query; adding one more query keeps the API stable.)
+2. Filter `recommendedLibrary` through `isApplicableToProfile(l, profile)` *before* the `by_category` reduction.
+3. Also filter `total_recommended` for consistency with the strip — this is the same logic the strip already does via `useApplicableRequiredPolicies()`, but now the summary itself is honest so any future consumer (audit reports, Command Center tile) inherits it.
 
-### Change B: Live "Why hidden?" delta on services step
-**File**: `src/components/dashboard/policy/PolicySetupWizard.tsx`
+Edge cases:
+- Profile not yet loaded → fall back to unfiltered library (silence over wrong number — matches `isApplicableToProfile`'s null-profile contract).
+- Profile says no flags set → all policies remain (correct — no service constraints means no filtering).
 
-Replace the static helper string with a reactive count derived from `library` + `existingProfile` + `form` for each `offers_*` row:
+`adopted` count stays unchanged (already accurate — operator chose what to adopt).
 
-- For each toggle, compute `currentMatched` (library entries that match the flag's `requires_*` column) — count required + recommended.
-- Render a quiet inline helper that reflects the **current state of the toggle**:
-  - When **off**: `"Hides 10 policies (8 required + 2 recommended) from your library"`
-  - When **on**: `"10 policies active in your library"`
-  - Color: muted by default; switches to `text-foreground` when state differs from `existingProfile` (visual cue that "you just changed this — here's what it means").
-- Apply only to the three columns that actually exist on `policy_library` today: `offers_extensions`, `offers_retail`, `offers_packages`. The two flags without library columns yet (`offers_memberships`, `serves_minors`) keep their static helper but get a small `(coming soon)` label so we set the right expectation.
+### Change B: Reason-grouped hidden chip
+**File**: `src/pages/dashboard/admin/Policies.tsx` (lines 220-234, the hidden banner block)
 
-This satisfies the "silence vs. signal" doctrine — the count only appears when there's actual content gated on the flag.
+Replace the existing single-sentence chip with grouped breakdown:
 
-### Change C: Add `requires_minors` column to `policy_library`
-**Migration** (new file in `supabase/migrations/`):
-
-```sql
-ALTER TABLE public.policy_library
-  ADD COLUMN IF NOT EXISTS requires_minors BOOLEAN NOT NULL DEFAULT false;
+```text
+Hiding 10 policies: 8 extensions · 2 minors. Edit profile
 ```
 
-**Then update**:
-- `src/hooks/policy/usePolicyOrgProfile.ts`:
-  - `isApplicableToProfile` — add `if (entry.requires_minors && !profile.serves_minors) return false;`
-  - `applicabilityReason` — add minors branch returning `{ service: 'minors', label: 'minors (under 18)' }`.
-  - Update the `Pick<PolicyLibraryEntry, ...>` types to include `requires_minors`.
-- `src/hooks/policy/usePolicyData.ts` `PolicyLibraryEntry` type — add `requires_minors: boolean`.
-- `src/components/dashboard/policy/PolicySetupWizard.tsx` `expansionFlips` — extend the `flags` array with a `serves_minors` entry filtering on `requires_minors`.
+Implementation:
+- Inside the existing `hiddenByProfile` memo derivation, also compute `hiddenByReason: Record<service, count>` using `applicabilityReason(l, profile).service` as the key.
+- Render service segments as small inline chips separated by `·` middle dots. Each segment uses `font-sans text-xs text-foreground/80` (slightly stronger than the surrounding muted copy so the breakdown reads as the data point).
+- Keep "Edit profile" button intact.
+- If only one reason exists, drop the colon segment ("Hiding 8 extensions policies. Edit profile") — silence over redundancy.
 
-No seed data change — no minor-specific policies exist yet, so the column is dormant infrastructure ready for the next library content wave.
+No new icons (keep it text-first; matches the calm UX doctrine). Service labels come from `applicabilityReason().label` so they stay in sync with future flags.
 
-### Change D: Doctrine memory update
-Append to `mem://features/policy-os-applicability-doctrine.md`:
-- Note that `requires_minors` joins `requires_extensions/retail/packages` as the fourth applicability dimension.
-- Reaffirm: any new `offers_*` profile flag must ship paired with its `requires_*` library column **and** a branch in `isApplicableToProfile`/`applicabilityReason`/`expansionFlips`. Three places — checked together.
+### Change C: Library content linter
+**New file**: `src/__tests__/policy-library-content.test.ts`
 
-## Out of scope
-- No `requires_memberships` column (profile flag exists but no library content gates on it; defer until a membership-only policy is authored).
-- No new minor-specific seed policies (separate content wave).
-- No change to `usePolicyHealthSummary` shape — other pages may consume it.
-- No public center filtering changes — adopted policies still publish regardless of current profile (Wave 28.11.x decision stands).
+Vitest suite that:
+1. Reads the library via the public `usePolicyLibrary` query path (or a direct `supabase.from('policy_library').select('*')` in a test wrapper — TBD on confirming test infra; the project may already have a Supabase test client).
+2. Iterates entries and asserts the rules listed in Gap 3 investigation.
+3. Each violation produces a precise failure message: `[lib:extension_aftercare_policy] requires_minors=true but category='extensions' (expected 'client')`.
+
+Single source of truth for the rule table — exported as `POLICY_LIBRARY_LINT_RULES` so it can later be reused by:
+- A pre-seed script when content waves add new rows
+- An admin-side dev-only badge on the Library page (out of scope for this wave, but designed into the API)
+
+Rules table (concrete starting set):
+
+| Rule ID | Trigger | Assertion |
+|---|---|---|
+| `minors-category` | `requires_minors=true` | `category === 'client'` |
+| `minors-rationale` | `requires_minors=true` | `why_it_matters` matches `/minor\|guardian\|under 18/i` |
+| `extensions-category` | `requires_extensions=true` | `category === 'extensions'` |
+| `packages-rationale` | `requires_packages=true` | `title` or `why_it_matters` mentions "package", "membership", or "subscription" |
+| `multi-flag-rationale` | 2+ `requires_*` flags | `why_it_matters` is non-null and >40 chars |
+
+Today the suite passes on the seed (no `requires_minors` rows yet, all `requires_extensions` rows are in `extensions` category). It exists as a tripwire — first failing assertion will be when someone seeds a misclassified policy in a future content wave.
+
+### Change D: Doctrine memory append
+**File**: `mem://features/policy-os-applicability-doctrine.md`
+
+Append the linter rule to the doctrine — make it explicit that:
+- Content rules live in `POLICY_LIBRARY_LINT_RULES` (single source).
+- Adding a new `requires_*` flag now has a **fourth** paired-shipping requirement: a linter rule entry. So new flag = profile column + library column + applicability branch + lint rule. Four places, checked together.
+
+## Out of scope (defer)
+- Admin-side surfacing of lint failures (dev-only test is enough until content waves restart).
+- Per-category "applicable" badge on `PolicyCategoryCard` itself (totals will silently self-correct after Change A — no UI change needed).
+- Migrating the lint rules into a SQL trigger (doctrine forbids time/content CHECK constraints; tests are the right home).
+- New `requires_memberships` column — same defer as last wave; no library content gates on it yet.
 
 ## Files touched
-- `src/components/dashboard/policy/PolicyHealthStrip.tsx` — applicability-filtered Adopted tile
-- `src/components/dashboard/policy/PolicySetupWizard.tsx` — live delta helpers + minors expansion flip
-- `src/hooks/policy/usePolicyOrgProfile.ts` — `requires_minors` branch in `isApplicableToProfile` + `applicabilityReason`
-- `src/hooks/policy/usePolicyData.ts` — `PolicyLibraryEntry` type extension
-- `supabase/migrations/{new}.sql` — add `requires_minors` column with safe default
-- `mem://features/policy-os-applicability-doctrine.md` — fourth dimension + paired-shipping rule
+- `src/hooks/policy/usePolicyData.ts` — `usePolicyHealthSummary` profile-aware filter for `by_category` and `total_recommended`
+- `src/pages/dashboard/admin/Policies.tsx` — reason-grouped hidden chip (lines 113-116 memo extension, lines 220-234 banner JSX)
+- `src/__tests__/policy-library-content.test.ts` — new linter suite + exported `POLICY_LIBRARY_LINT_RULES`
+- `mem://features/policy-os-applicability-doctrine.md` — append linter as the fourth paired-shipping anchor
 
 ## Sequencing
-1. Migration first (column + default) so type regen has a target.
-2. Hooks (`isApplicableToProfile`, `useApplicableRequiredPolicies`) inherit `requires_minors`.
-3. PolicyHealthStrip swap (smallest UI change, biggest honesty payoff).
-4. Wizard live deltas (highest UX leverage).
-5. Doctrine memory close.
+1. **A** first — biggest honesty fix, smallest surface area, unblocks the whole "By category" grid.
+2. **B** — quick UX layer over A's accurate data.
+3. **C + D** together — close the doctrine loop. Tests confirm the existing seed is clean before the suite ships, so first run is green.
 
