@@ -13,6 +13,7 @@
  * Voice: calm, declarative, advisory. No hype. No emojis. No gradients.
  */
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   Briefcase,
@@ -74,16 +75,14 @@ const DOWNSTREAM_SURFACES = [
 
 export function PolicySetupIntro({ onStart, libraryCount }: Props) {
   return (
-    <div className="max-w-3xl mx-auto py-8 space-y-12">
+    <div className="max-w-3xl mx-auto space-y-12">
       {/* Section 1 — Hero */}
-      <header className="space-y-5">
-        <span className="block font-display text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          Policy infrastructure
-        </span>
-        <h1 className="font-display text-3xl md:text-4xl lg:text-5xl tracking-tight leading-[1.05] text-foreground">
+      <header className="space-y-4">
+        <span className={tokens.heading.subsection}>Policy infrastructure</span>
+        <h1 className={tokens.heading.page}>
           Define how your business operates. Once.
         </h1>
-        <p className="font-sans text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
+        <p className={cn(tokens.body.muted, 'max-w-2xl leading-relaxed')}>
           Policies are the source of truth. Configure them here and they render automatically into
           your handbook, the client policy center, booking flows, checkout decisions, and manager
           prompts. No duplication. No drift.
@@ -92,15 +91,15 @@ export function PolicySetupIntro({ onStart, libraryCount }: Props) {
 
       {/* Section 2 — What setup decides */}
       <section className="pt-12 border-t border-border/40 space-y-6">
-        <h2 className="font-display text-xs uppercase tracking-[0.18em] text-foreground">
-          What setup decides
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <h2 className={tokens.heading.section}>What setup decides</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
             <div key={heading} className="space-y-3">
-              <Icon className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-              <h3 className="font-sans text-sm font-medium text-foreground">{heading}</h3>
-              <p className="font-sans text-sm text-muted-foreground leading-relaxed">{body}</p>
+              <div className={tokens.card.iconBox}>
+                <Icon className={tokens.card.icon} />
+              </div>
+              <h3 className={tokens.body.emphasis}>{heading}</h3>
+              <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
             </div>
           ))}
         </div>
@@ -108,20 +107,16 @@ export function PolicySetupIntro({ onStart, libraryCount }: Props) {
 
       {/* Section 3 — How the system uses your policies */}
       <section className="pt-12 border-t border-border/40 space-y-6">
-        <h2 className="font-display text-xs uppercase tracking-[0.18em] text-foreground">
-          How the system uses your policies
-        </h2>
-        <ul className="space-y-5">
+        <h2 className={tokens.heading.section}>How the system uses your policies</h2>
+        <ul className="space-y-4">
           {DOWNSTREAM_SURFACES.map(({ icon: Icon, label, body }) => (
             <li key={label} className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-md bg-muted/60 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon className="w-4 h-4 text-foreground" strokeWidth={1.5} />
+              <div className={tokens.card.iconBox}>
+                <Icon className={tokens.card.icon} />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-sans text-sm font-medium text-foreground">{label}</p>
-                <p className="font-sans text-sm text-muted-foreground leading-relaxed mt-0.5">
-                  {body}
-                </p>
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className={tokens.body.emphasis}>{label}</p>
+                <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
               </div>
             </li>
           ))}
@@ -130,19 +125,11 @@ export function PolicySetupIntro({ onStart, libraryCount }: Props) {
 
       {/* Section 4 — CTA */}
       <section className="pt-12 border-t border-border/40 space-y-4">
-        <Button
-          onClick={onStart}
-          size="lg"
-          className={cn('font-sans w-full md:w-auto')}
-        >
-          Start setup
-          <span className="text-primary-foreground/60 mx-2">·</span>
-          4 steps
-          <span className="text-primary-foreground/60 mx-2">·</span>
-          ~5 minutes
+        <Button onClick={onStart} size={tokens.button.hero} className="font-sans">
+          Start setup — 4 steps, ~5 minutes
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
-        <p className="font-sans text-xs text-muted-foreground">
+        <p className={cn(tokens.body.muted, 'text-xs')}>
           {libraryCount} {libraryCount === 1 ? 'policy' : 'policies'} in the library. The wizard
           narrows them to what your business actually needs.
         </p>
