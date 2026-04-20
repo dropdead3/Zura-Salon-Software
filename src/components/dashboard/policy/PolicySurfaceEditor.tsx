@@ -5,7 +5,7 @@
  * renders, and which variant (internal / client / disclosure / manager_note).
  * Candidate surfaces are sourced from the library entry to constrain choices.
  */
-import { Loader2, Save, MapPin, Sparkles } from 'lucide-react';
+import { Loader2, Save, MapPin, Sparkles, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -25,8 +25,10 @@ import {
   SURFACE_META,
   VARIANT_META,
   isSurfaceCompatibleWithAudience,
+  defaultVariantForSurface,
   useSavePolicySurfaceMappings,
 } from '@/hooks/policy/usePolicyApplicability';
+import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
 import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 
 interface Props {
@@ -72,6 +74,14 @@ export function PolicySurfaceEditor({
 
   const allowedVariants = variantsForAudience(policyAudience);
 
+  // Wave 28.11.5 — read approved variants so we can warn the operator when
+  // their selected tone will silently fall back to the 'client' variant at
+  // render time (per `usePolicyForSurface` resolution rules).
+  const { data: variantRows = [] } = usePolicyVariants(versionId);
+  const approvedTypes = new Set(
+    variantRows.filter((v) => v.approved && !!v.body_md).map((v) => v.variant_type),
+  );
+
   const byKey = new Map(rows.map((r) => [r.surface, r]));
 
   const updateSurface = (surface: PolicySurface, patch: Partial<SurfaceMappingRow>) => {
@@ -80,7 +90,9 @@ export function PolicySurfaceEditor({
       ? { ...existing, ...patch }
       : {
           surface,
-          variant_type: SURFACE_META[surface].defaultVariant,
+          // Wave 28.11.5 — audience-aware seed so 'both' surfaces (intake) seed
+          // an internal-only policy with `'internal'`, not `'client'`.
+          variant_type: defaultVariantForSurface(surface, policyAudience),
           enabled: true,
           surface_config: {},
           ...patch,
