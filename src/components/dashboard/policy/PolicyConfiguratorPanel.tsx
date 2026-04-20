@@ -315,7 +315,94 @@ export function PolicyConfiguratorPanel({
 
       <Separator />
 
-      {!ready ? (
+      {/* Wave 28.11.5 — Adopt-and-configure gate. Operators browsing the
+          audience-segmented library should not silently write `policies` rows
+          on every card click. Until they explicitly click "Adopt and
+          configure", we render a read-only schema preview instead of mounting
+          the editor surface. */}
+      {!alreadyAdopted && !data?.policyId ? (
+        <div className="space-y-5">
+          <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-4">
+            <div className="space-y-1">
+              <h4 className="font-display text-xs tracking-wider uppercase text-muted-foreground">
+                Preview — not yet adopted
+              </h4>
+              <p className="font-sans text-sm text-foreground">
+                Review the rules this policy will configure. Adoption creates a
+                draft version you can edit, publish, and archive — nothing is
+                surfaced to staff or clients until you choose to.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {schema.sections.map((section) => (
+                <div
+                  key={section.title}
+                  className="rounded-lg border border-border/60 bg-card/60 p-3"
+                >
+                  <h5 className="font-display text-[11px] tracking-wider uppercase text-foreground">
+                    {section.title}
+                  </h5>
+                  {section.description && (
+                    <p className="font-sans text-xs text-muted-foreground mt-1">
+                      {section.description}
+                    </p>
+                  )}
+                  <ul className="mt-2 space-y-1">
+                    {section.fields.map((f) => (
+                      <li
+                        key={f.key}
+                        className="font-sans text-xs text-muted-foreground flex items-start gap-2"
+                      >
+                        <span className="text-foreground">•</span>
+                        <span>
+                          <span className="text-foreground">{f.label}</span>
+                          {f.required && (
+                            <span className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                              required
+                            </span>
+                          )}
+                          {f.description && (
+                            <span className="block text-muted-foreground/80">
+                              {f.description}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="font-sans"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() =>
+                adopt.mutate(entry.key, {
+                  onSuccess: () => refetch(),
+                })
+              }
+              disabled={adopt.isPending}
+              className="font-sans"
+            >
+              {adopt.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4 mr-2" />
+              )}
+              Adopt and configure
+            </Button>
+          </div>
+        </div>
+      ) : !ready ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className={tokens.loading.spinner} />
         </div>
