@@ -51,9 +51,14 @@ export default function Policies() {
 
   const orgScopeKey = profile?.organization_id ?? 'anon';
   const showAllStorageKey = `policies:show-non-applicable:${orgScopeKey}`;
+  const hideAdoptedStorageKey = `policies:hide-adopted-required:${orgScopeKey}`;
   const [showNonApplicable, setShowNonApplicable] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem(`policies:show-non-applicable:anon`) === '1';
+  });
+  const [hideAdoptedRequired, setHideAdoptedRequired] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(`policies:hide-adopted-required:anon`) === '1';
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -62,8 +67,17 @@ export default function Policies() {
   }, [showAllStorageKey]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem(hideAdoptedStorageKey);
+    if (stored !== null) setHideAdoptedRequired(stored === '1');
+  }, [hideAdoptedStorageKey]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     window.localStorage.setItem(showAllStorageKey, showNonApplicable ? '1' : '0');
   }, [showAllStorageKey, showNonApplicable]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(hideAdoptedStorageKey, hideAdoptedRequired ? '1' : '0');
+  }, [hideAdoptedStorageKey, hideAdoptedRequired]);
 
   const hasProfile = !!profile?.setup_completed_at;
 
