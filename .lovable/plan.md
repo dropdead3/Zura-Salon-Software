@@ -1,107 +1,159 @@
 
+## Compensation model expansion — beyond stylist-levels
 
-## Goal
-Two parallel improvements:
+### Where we are today
 
-1. **Parse states from existing location data** — `state_province` column is empty for many orgs, but state lives inside the `city` field as `"Mesa, AZ 85203"`. Stop showing "—" when we can clearly extract it.
-2. **Embrace multi-state reality** — model `primary_state` as **operating states** (multi). A multi-loc org in AZ + CA must drive policy applicability for both, not one.
+Single doctrine: every staff member maps to a `stylist_level` with a fixed `service_commission_rate` + `retail_commission_rate`. `useResolveCommission` reads that level → returns rates. `stylist_commission_overrides` lets admins one-off override per user. That's it.
 
-Plus targeted UI/utility upgrades the screenshot exposes.
+That covers ~one industry pattern (level-based career ladder, e.g. Drop Dead). It misses the majority of how commission salons actually pay.
 
-## What's wrong (from screenshot)
+### What real commission salons do (industry reality)
 
-| Issue | Cause | Fix |
+Six structurally distinct compensation patterns we're not modeling:
+
+| Model | How it works | Who uses it |
 |---|---|---|
-| `Primary state` renders "—" | `state_province` empty in DB; address parser never tried | Parse `city` → extract 2-letter state code |
-| Concept of "primary" state for multi-loc | Single state field can't represent reality | Replace with `operating_states[]` chips (read-only, one per location) |
-| `Services offered` shows "—" with chips below | Top value line is empty because chips render outside ConfirmRow's `value` prop | Drop the "—" line; chips ARE the value |
-| `Roles in use` same as above | Same | Same |
-| `Edit` affordances on derived chips (Services, Roles) | Can't edit here — they mirror catalog/team | Already removed in code; UI polish only |
-| No "Confirm everything looks right" affordance at bottom of Step 1 | Operator must scroll to find Next | Add a quiet `All clear · 5 facts confirmed` summary above the footer |
+| **1. Flat % commission** (already supported via Level 1 default) | One rate for everyone, no ladder | Small salons, suite-rentals offering a desk |
+| **2. Sliding-scale by pay-period earnings** | Bracket: $0–3k = 40%, $3–5k = 45%, $5k+ = 50%. Resets each pay period | Most mid-size commission salons (Aveda concept salons, JCP, Ulta) |
+| **3. Sliding-scale by trailing avg** | Same brackets but uses 4-week or 13-week trailing average to set rate for the period — prevents whipsaw | Premium independents |
+| **4. Hourly + commission (whichever is higher)** | Guaranteed hourly wage; commission only paid if it exceeds hours × rate. CA/NY compliance default | California, New York mandates |
+| **5. Hourly + commission stacked** | Hourly base + lower % on top (e.g. $15/hr + 25% on services > $0) | Apprentice programs, training salons |
+| **6. Team / pooled commission** | All service revenue from a team (e.g. assistants under a master) split by hours worked or fixed % | Master-stylist studios with assistants |
+| **7. Service-category rate** | Different rate for color vs cut vs extensions vs treatments | Specialty salons (color bars, extension bars) |
+| **8. Booth/chair rental hybrid** | Stylist pays $X/wk rent, keeps 100% above; or rent + reduced commission | Suite-style, transitional models |
 
-## State derivation (the core fix)
+Plus orthogonal rules every model needs:
+- **Product cost deduction** — commission paid on (service revenue – chemical/back-bar cost)
+- **Tip handling** — direct to stylist vs pooled vs withheld for tax remit
+- **Refund clawback** — if a service is refunded after payout, deduct from next period
+- **Discount handling** — commission on gross (pre-discount) or net (post-discount) — a real fight
+- **Add-on commission** — gloss/treatment add-ons paid same as parent service or separate
 
-### New helper in `usePolicyProfileDefaults.ts`
-```ts
-const US_STATE_CODES = new Set(['AL','AK','AZ','AR','CA',...]);
-const STATE_NAME_BY_CODE = { AZ: 'Arizona', CA: 'California', ... };
+### Proposed architecture
 
-function extractState(loc): string | null {
-  // 1. Use state_province if populated
-  if (loc.state_province?.trim()) return normalizeState(loc.state_province);
-  // 2. Parse city: "Mesa, AZ 85203" or "Gilbert, AZ"
-  const cityMatch = loc.city?.match(/,\s*([A-Z]{2})(\s+\d{5})?/);
-  if (cityMatch) return cityMatch[1];
-  // 3. Parse trailing address: "...Suite 1, Phoenix AZ 85020"
-  const addrMatch = loc.address?.match(/\b([A-Z]{2})\s+\d{5}\b/);
-  if (addrMatch) return addrMatch[1];
-  return null;
-}
-```
+#### 1. Introduce `compensation_models` as the new top-level concept
 
-For Drop Dead's data:
-- `"Mesa, AZ 85203"` → `AZ`
-- `"Gilbert, AZ 85234"` → `AZ`
-- Result: `derived_states = ['AZ']` instead of `[]`
-
-### Schema model shift
-`policy_org_profile.primary_state` stays (for backwards compat), but the wizard treats it as a **derived display** — operator never picks. New persisted field: **`operating_states: string[]`** populated from `derived_states`. If applicability rules reference `primary_state`, we keep writing it as `derived_states[0]` so nothing breaks downstream.
-
-**Database migration**: add `operating_states text[] not null default '{}'` to `policy_org_profile`. Backfill from `primary_state` for existing rows.
-
-### Wizard UI changes for state row
-Replace the editable Select with a read-only multi-state chip row:
+`stylist_levels` becomes one *kind* of compensation model — not the only one. New table:
 
 ```
-Operating states                    [no Edit affordance]
-[ Arizona ]                         (one chip per detected state)
-Detected from your locations. Edit a location to change.
+compensation_plans (org-scoped)
+  id, organization_id, name, slug, plan_type, is_active
+  plan_type: 'level_based' | 'flat_commission' | 'sliding_period' | 'sliding_trailing'
+           | 'hourly_vs_commission' | 'hourly_plus_commission'
+           | 'team_pooled' | 'category_based' | 'booth_rental'
+  config: jsonb  // shape varies by plan_type
+  
+  // Universal modifiers (apply to any plan_type)
+  commission_basis: 'gross' | 'net_of_discount' | 'net_of_product_cost'
+  tip_handling: 'direct' | 'pooled' | 'withheld_for_payout'
+  refund_clawback: boolean
+  addon_treatment: 'same_as_parent' | 'separate_rate' | 'no_commission'
 ```
 
-If multiple states: `[ Arizona ] [ California ] [ Texas ]` + caption *"Operating in 3 states — applicable policies will respect all jurisdictions."*
+Each user assigned to a plan via `user_compensation_assignments` (replaces the implicit "stylist_level on profile" coupling). Existing stylist-level orgs migrate cleanly: their level becomes a `level_based` plan with the existing rate ladder in `config`.
 
-If still nothing detected (no city/address either): structural gate as today: *"No location address — set up at least one location."*
+#### 2. Plan-type config shapes (JSONB, validated by Zod)
 
-## Other Step 1 utility upgrades
+- `flat_commission`: `{ service_rate: 0.45, retail_rate: 0.10 }`
+- `sliding_period`: `{ brackets: [{min: 0, max: 3000, rate: 0.40}, {min: 3000, max: 5000, rate: 0.45}, {min: 5000, rate: 0.50}], retail_rate: 0.10 }`
+- `sliding_trailing`: same brackets + `{ window_weeks: 4 | 13 }`
+- `hourly_vs_commission`: `{ hourly_rate: 18, service_rate: 0.40, retail_rate: 0.10 }` — payroll picks max(hours×rate, commission)
+- `hourly_plus_commission`: `{ hourly_rate: 15, service_rate: 0.25, retail_rate: 0.10 }` — sums both
+- `team_pooled`: `{ pool_id: uuid, split_method: 'hours_worked' | 'fixed_pct', members: [{user_id, pct?}] }`
+- `category_based`: `{ rates_by_category: {color: 0.50, cut: 0.40, extensions: 0.55, treatment: 0.45}, retail_rate: 0.10 }`
+- `booth_rental`: `{ weekly_rent: 300, commission_above_rent: 0 | 0.10 }`
 
-### 1. Drop the leading `—` for derived chip rows
-Currently `ConfirmRow` renders `value ?? '—'` above the chips. For Services / Roles / Operating states, hide the value line entirely when chips exist below. Cleaner hierarchy.
+#### 3. Resolver becomes plan-aware
 
-### 2. Make chips informative, not decorative
-- **Services chips** → tooltip on hover: `"12 services in this category"` (we already query the catalog).
-- **Roles chips** → tooltip: `"4 active staff with this role"`.
-- No new design — pure data attached to existing chips.
+`useResolveCommission` evolves into `resolveCommissionForPlan(plan, context)` where context includes:
+- pay-period sales-to-date (for sliding_period)
+- trailing window sales (for sliding_trailing)
+- hours worked (for hourly variants)
+- service categories breakdown (for category_based)
+- chemical cost (for net_of_product_cost basis)
 
-### 3. Step 1 confirmation summary
-Above the footer, single quiet line: *"5 of 5 facts auto-detected. Edit if anything's wrong, or continue."* — turns Step 1 from "form" to "review".
+Returns the same shape (`{ serviceCommission, retailCommission, totalCommission, sourceName, breakdown }`) so downstream consumers (`useStaffCompensationRatio`, `usePayrollForecasting`, payroll exports) need only a thin update.
 
-If anything is missing (structural gate active), it shifts to: *"3 of 5 facts ready. Resolve 2 setup gaps to continue."* and disables Next.
+#### 4. Settings UX — Compensation Hub
 
-### 4. Extend "auto-detected" reasoning to all heuristic toggles in Step 2
-Already partially done (`retail_reason`, etc.) — ensure the labels render consistently and add `team_size_reason: "Based on N active staff"` so Step 2 has parity with Step 1's transparency.
+New surface at `/dashboard/admin/compensation` (or absorbed into Operations Hub → Pay structure):
 
-## Files touched
+- **Plans tab**: list of compensation plans for the org with type, # of staff assigned, status
+- **Create plan wizard**: pick plan_type → guided config (brackets editor, hourly+rate input, category-rate matrix, etc.) → universal modifiers → assign staff
+- **Assignments tab**: bulk-assign or per-staff plan picker; effective-dated changes
+- **Simulator**: paste a hypothetical $/hours scenario, see what each plan would pay — critical for owners changing models
 
-| File | Change |
-|---|---|
-| `src/hooks/policy/usePolicyProfileDefaults.ts` | Add `extractState()` parser for city/address fallback. Build `derived_states` from extracted values. Add per-category service counts + per-role staff counts (for chip tooltips). |
-| `src/components/dashboard/policy/PolicySetupWizard.tsx` | Operating states row: read-only chip multi (no Edit), drop `value` line when chips render. Add Step 1 summary line above footer. Wire chip tooltips. |
-| `supabase/migrations/<timestamp>_policy_operating_states.sql` | Add `operating_states text[]` column, backfill from `primary_state` |
-| `src/hooks/policy/usePolicyOrgProfile.ts` | Persist `operating_states` on upsert; update applicability filter to use array (with `primary_state` as fallback for legacy rows) |
-| `mem://features/policy-os-applicability-doctrine.md` | Append: *"Multi-state orgs apply policies per jurisdiction. `operating_states` is the source of truth; `primary_state` is a legacy mirror."* |
+Keep `StylistLevels.tsx` page as the editor *for* `level_based` plans (no scrap, just relabel).
 
-## Out of scope (deferred)
+#### 5. Policy implications (ties to the wizard work in flight)
 
-- Per-location policy variance (e.g., AZ tipping policy differs from CA) — surfaces would need per-location overrides; not in this wave
-- International support (CA, TX, etc. only — US 2-letter codes for now)
-- Editing addresses inline from the wizard — operator goes to Locations settings
-- Step 2 toggle UI changes beyond reason-label parity
+Each plan_type unlocks/requires different policies:
+- `hourly_vs_commission` + CA/NY operating state → mandatory wage-statement policy + meal-break tracking
+- `team_pooled` → tip-pool policy required (FLSA section 3(m) — owners/managers cannot share)
+- `booth_rental` → 1099 vs W-2 classification policy + chair-rental agreement template
+- `sliding_*` with refund_clawback → wage-deduction authorization policy (state-restricted)
+- `commission_basis = net_of_product_cost` → product-cost transparency disclosure to staff (some states require)
 
-## Sequencing
+`policy_org_profile` gains:
+```
+compensation_models_in_use: text[]  // ['hourly_vs_commission', 'team_pooled']
+commission_basis_in_use: text[]
+uses_tip_pooling: boolean
+uses_refund_clawback: boolean
+has_booth_renters: boolean
+```
 
-1. Migration: add `operating_states` column + backfill.
-2. Hook: `extractState()` parser + derived_states from `city`/`address` fallback + chip-count metadata.
-3. Wizard: chip-multi state row, drop redundant `value` lines, Step 1 summary.
-4. Persistence: write `operating_states` alongside `primary_state` on upsert.
-5. Doctrine: memory append.
+`isApplicableToProfile` extends to filter recommended policies by compensation model — same applicability doctrine, new dimension.
 
+#### 6. Payroll forecasting + analytics impact
+
+`usePayrollForecasting` already projects per-employee compensation. Update it to:
+- Read the assigned plan instead of hardcoded level rate
+- Pass period-to-date sales when resolving sliding plans
+- For `hourly_*`, multiply scheduled hours by hourly_rate as a baseline floor
+- For `team_pooled`, project at the pool level then split
+
+`useTierDistribution` becomes `usePlanDistribution` — same shape but groups by plan rather than level. Level-based orgs see the existing tier breakdown; sliding-scale orgs see "$0–3k bracket: 4 staff, $3–5k: 6 staff, $5k+: 2 staff" with current period-to-date positions.
+
+### What we'd build (sequenced)
+
+**Wave 1 — Foundation (this wave)**
+1. Migration: `compensation_plans`, `user_compensation_assignments`, RLS, indexes
+2. Backfill: every org with stylist levels gets one auto-generated `level_based` plan; users assigned by their current level
+3. Plan-aware resolver alongside existing `useResolveCommission` (dual-path until parity verified)
+4. Compensation Hub list view + plan-type picker
+
+**Wave 2 — Plan editors**
+5. Editor UIs per plan_type (brackets editor, hourly+rate, category matrix, pool builder, rental terms)
+6. Universal modifiers UI (basis, tips, clawback, addon treatment)
+7. Effective-dated assignment editor
+8. Simulator
+
+**Wave 3 — Downstream + policy**
+9. Wire `usePayrollForecasting`, `useStaffCompensationRatio`, `useTierDistribution` to plan-aware resolver
+10. Policy applicability extension (compensation-model-driven recommendations)
+11. Wizard Step 2 surfaces compensation_model toggles (auto-detected from `compensation_plans` in use)
+
+**Wave 4 — Compliance polish**
+12. State-aware enforcement (CA hourly floor, NY wage statements, FLSA tip-pool gates)
+13. Refund clawback workflow + wage-deduction authorization capture
+14. Product-cost-deduction transparency report
+
+### Files & systems touched (high-level)
+
+- DB: 2 new tables, RLS policies, backfill migration, possible deprecation flag on `stylist_levels` (kept, not dropped)
+- Hooks: `useCompensationPlans`, `useUserCompensationAssignment`, plan-aware `resolveCommissionForPlan`, refactor `useResolveCommission` to delegate
+- Components: `CompensationHub`, `CompensationPlanEditor`, `BracketsEditor`, `CategoryRateMatrix`, `PoolBuilder`, `RentalTermsEditor`, `CompensationSimulator`, `PlanAssignmentTable`
+- Routes: `/dashboard/admin/compensation` + nav entry under Operations Hub → "Pay structure"
+- Policy layer: extend `policy_org_profile` schema, extend `isApplicableToProfile`, add ~12 new policy keys (tip-pool agreement, wage-deduction auth, chair-rental agreement, 1099 classification, etc.)
+- Forecasting: update 3 hooks (`usePayrollForecasting`, `useStaffCompensationRatio`, `useTierDistribution`)
+- Memory: new doctrine entry `mem://features/payroll/compensation-plans-pluralism.md` codifying that level-based is one of N models, never the assumed default
+
+### Decisions needed before building
+
+1. **Scope of Wave 1** — do we ship all 8 plan types' editors, or start with the top 3 (level_based, sliding_period, hourly_vs_commission) which cover ~80% of US salons?
+2. **Migration strategy** — auto-create `level_based` plans for every existing org silently, or surface a one-time "review your migrated plan" prompt?
+3. **Compensation Hub placement** — standalone route or nested under Operations Hub → Pay structure (matches existing settings hub doctrine)?
+4. **Stylist Levels page fate** — keep as-is (level-based-only editor), absorb into the new Compensation Hub as one plan type's editor, or deprecate the standalone page entirely?
+
+Pick those four and I'll tighten the build order.
