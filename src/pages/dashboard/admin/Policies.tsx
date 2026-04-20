@@ -97,7 +97,7 @@ export default function Policies() {
         <div className="space-y-8">
           <PageExplainer pageId="policies" />
           {!hasProfile && (
-            <PolicySetupBanner onStart={() => setSetupOpen(true)} hasProfile={false} />
+            <PolicySetupBanner onStart={() => setSetupOpen(true)} hasProfile={false} libraryCount={library.length} />
           )}
           <PolicyHealthStrip summary={summary} />
           <PolicyConflictBanner
@@ -135,7 +135,7 @@ export default function Policies() {
               <div>
                 <h2 className={cn(tokens.heading.section)}>Library</h2>
                 <p className="font-sans text-sm text-muted-foreground mt-1">
-                  47 recommended policies. Adopt the ones that fit your operation; structured configuration comes next.
+                  {library.length} recommended policies. Adopt the ones that fit your operation; structured configuration comes next.
                 </p>
               </div>
             </div>

@@ -36,6 +36,11 @@ export interface PolicyConfiguratorPayload {
   blocks: PolicyRuleBlock[];
   versionNumber: number;
   requiresAcknowledgment?: boolean;
+  /** Wave 28.11.1 — current version's external publish state */
+  isPublishedExternal: boolean;
+  /** Wave 28.11.1 — surfaced here so the publish toggle can render the audience guard */
+  audience: 'internal' | 'external' | 'both';
+  status: string;
 }
 
 /** Adopt a single policy from the library and ensure a draft version exists. */
@@ -73,7 +78,7 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
       // Fetch policy by (org, library_key)
       const { data: policy, error: pErr } = await supabase
         .from('policies')
-        .select('id, current_version_id, requires_acknowledgment')
+        .select('id, current_version_id, requires_acknowledgment, audience, status')
         .eq('organization_id', orgId)
         .eq('library_key', libraryKey)
         .maybeSingle();
@@ -97,6 +102,9 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
           blocks: [],
           versionNumber: 0,
           requiresAcknowledgment: !!policy.requires_acknowledgment,
+          isPublishedExternal: false,
+          audience: policy.audience,
+          status: policy.status,
         };
       }
 
@@ -113,6 +121,9 @@ export function usePolicyConfiguratorData(libraryKey: string | null | undefined)
         versionNumber: version.version_number,
         blocks: (blocks ?? []) as PolicyRuleBlock[],
         requiresAcknowledgment: !!policy.requires_acknowledgment,
+        isPublishedExternal: !!version.is_published_external,
+        audience: policy.audience,
+        status: policy.status,
       };
     },
     enabled: !!orgId && !!libraryKey,
