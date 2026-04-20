@@ -42,14 +42,14 @@ export const SECTION_GROUPS = [
     categories: ['account-billing'],
   },
   {
-    id: 'governance',
-    label: 'Governance',
-    categories: ['policies', 'handbooks'],
-  },
-  {
     id: 'operations',
     label: 'Business Operations',
     categories: ['my-profile', 'business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'terminals', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
+  },
+  {
+    id: 'governance',
+    label: 'Governance',
+    categories: ['policies', 'handbooks'],
   },
   {
     id: 'team',
