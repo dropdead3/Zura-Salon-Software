@@ -27,6 +27,7 @@ const audienceLabel: Record<PolicyLibraryEntry['audience'], string> = {
 
 export function PolicyLibraryCard({ entry, adopted, onClick }: Props) {
   const isAdopted = !!adopted;
+  const isRequired = entry.recommendation === 'required';
   const status = adopted?.status;
   const statusMeta = status ? POLICY_STATUS_META[status] : null;
 
@@ -38,8 +39,16 @@ export function PolicyLibraryCard({ entry, adopted, onClick }: Props) {
     >
       <Card
         className={cn(
-          'rounded-xl border bg-card/80 transition-all h-full',
-          isAdopted ? 'border-primary/30' : 'border-border/60 group-hover:border-foreground/20',
+          'relative rounded-xl border transition-all h-full overflow-hidden',
+          isRequired && !isAdopted && 'bg-primary/[0.03]',
+          !isRequired && 'bg-card/80',
+          isAdopted
+            ? 'border-primary/30'
+            : isRequired
+              ? 'border-primary/40 group-hover:border-primary/60'
+              : 'border-border/60 group-hover:border-foreground/20',
+          isRequired &&
+            'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-primary/50',
         )}
       >
         <CardContent className="p-5 flex flex-col gap-3 h-full">
@@ -65,10 +74,10 @@ export function PolicyLibraryCard({ entry, adopted, onClick }: Props) {
             <Badge
               variant="outline"
               className={cn(
-                'rounded-full font-sans text-[10px] px-2 py-0 h-5 border-border/70',
+                'rounded-full font-sans text-[10px] px-2 py-0 h-5',
                 entry.recommendation === 'required'
-                  ? 'text-foreground border-foreground/30'
-                  : 'text-muted-foreground',
+                  ? 'text-primary border-primary/40 bg-primary/5'
+                  : 'text-muted-foreground border-border/70',
               )}
             >
               {entry.recommendation === 'required' && <Lock className="w-2.5 h-2.5 mr-1" />}
