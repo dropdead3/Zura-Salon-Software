@@ -361,11 +361,6 @@ export function PolicyConfiguratorPanel({
                               required
                             </span>
                           )}
-                          {f.description && (
-                            <span className="block text-muted-foreground/80">
-                              {f.description}
-                            </span>
-                          )}
                         </span>
                       </li>
                     ))}
