@@ -6537,6 +6537,71 @@ export type Database = {
         }
         Relationships: []
       }
+      compensation_plans: {
+        Row: {
+          addon_treatment: Database["public"]["Enums"]["addon_treatment"]
+          commission_basis: Database["public"]["Enums"]["commission_basis"]
+          config: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          organization_id: string
+          plan_type: Database["public"]["Enums"]["compensation_plan_type"]
+          refund_clawback: boolean
+          slug: string
+          tip_handling: Database["public"]["Enums"]["tip_handling"]
+          updated_at: string
+        }
+        Insert: {
+          addon_treatment?: Database["public"]["Enums"]["addon_treatment"]
+          commission_basis?: Database["public"]["Enums"]["commission_basis"]
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          organization_id: string
+          plan_type: Database["public"]["Enums"]["compensation_plan_type"]
+          refund_clawback?: boolean
+          slug: string
+          tip_handling?: Database["public"]["Enums"]["tip_handling"]
+          updated_at?: string
+        }
+        Update: {
+          addon_treatment?: Database["public"]["Enums"]["addon_treatment"]
+          commission_basis?: Database["public"]["Enums"]["commission_basis"]
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          organization_id?: string
+          plan_type?: Database["public"]["Enums"]["compensation_plan_type"]
+          refund_clawback?: boolean
+          slug?: string
+          tip_handling?: Database["public"]["Enums"]["tip_handling"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compensation_plans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_adjustments: {
         Row: {
           adjustment_type: string
@@ -28343,6 +28408,60 @@ export type Database = {
           },
         ]
       }
+      user_compensation_assignments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          plan_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          plan_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          plan_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_compensation_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_compensation_assignments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "compensation_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_mentions: {
         Row: {
           channel_id: string | null
@@ -30647,6 +30766,7 @@ export type Database = {
       }
     }
     Enums: {
+      addon_treatment: "same_as_parent" | "separate_rate" | "no_commission"
       app_role:
         | "admin"
         | "manager"
@@ -30674,6 +30794,17 @@ export type Database = {
       chat_user_status_type: "available" | "busy" | "dnd" | "away"
       color_bar_suspension_event_type: "suspended" | "reactivated"
       color_type: "permanent" | "demi_permanent" | "semi_permanent"
+      commission_basis: "gross" | "net_of_discount" | "net_of_product_cost"
+      compensation_plan_type:
+        | "level_based"
+        | "flat_commission"
+        | "sliding_period"
+        | "sliding_trailing"
+        | "hourly_vs_commission"
+        | "hourly_plus_commission"
+        | "team_pooled"
+        | "category_based"
+        | "booth_rental"
       container_type: "bowl" | "bottle"
       day_rate_booking_status:
         | "pending"
@@ -30908,6 +31039,7 @@ export type Database = {
         | "waiting_on_internal"
         | "resolved"
         | "closed"
+      tip_handling: "direct" | "pooled" | "withheld_for_payout"
       touchpoint_type: "call" | "text" | "email" | "social" | "in_person"
       trend_confidence: "low" | "medium" | "high"
       trend_direction: "rising" | "stable" | "declining"
@@ -31068,6 +31200,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      addon_treatment: ["same_as_parent", "separate_rate", "no_commission"],
       app_role: [
         "admin",
         "manager",
@@ -31097,6 +31230,18 @@ export const Constants = {
       chat_user_status_type: ["available", "busy", "dnd", "away"],
       color_bar_suspension_event_type: ["suspended", "reactivated"],
       color_type: ["permanent", "demi_permanent", "semi_permanent"],
+      commission_basis: ["gross", "net_of_discount", "net_of_product_cost"],
+      compensation_plan_type: [
+        "level_based",
+        "flat_commission",
+        "sliding_period",
+        "sliding_trailing",
+        "hourly_vs_commission",
+        "hourly_plus_commission",
+        "team_pooled",
+        "category_based",
+        "booth_rental",
+      ],
       container_type: ["bowl", "bottle"],
       day_rate_booking_status: [
         "pending",
@@ -31360,6 +31505,7 @@ export const Constants = {
         "resolved",
         "closed",
       ],
+      tip_handling: ["direct", "pooled", "withheld_for_payout"],
       touchpoint_type: ["call", "text", "email", "social", "in_person"],
       trend_confidence: ["low", "medium", "high"],
       trend_direction: ["rising", "stable", "declining"],

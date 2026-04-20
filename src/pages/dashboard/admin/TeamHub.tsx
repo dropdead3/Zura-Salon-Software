@@ -493,6 +493,15 @@ export default function TeamHub() {
               {...favProps('/admin/training-hub', 'Training Hub', Video)}
             />
           )}
+          {!isFavorited(dashPath('/admin/compensation')) && (
+            <ManagementCard
+              href={dashPath('/admin/compensation')}
+              icon={Briefcase}
+              title="Compensation Plans"
+              description="Pay structure: levels, sliding scales, hourly, pooled, rental"
+              {...favProps('/admin/compensation', 'Compensation Plans', Briefcase)}
+            />
+          )}
           {isPayrollEntitled && !isFavorited(dashPath('/admin/payroll')) && (
             <ManagementCard
               href={dashPath('/admin/payroll')}
