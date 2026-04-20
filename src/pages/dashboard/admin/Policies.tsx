@@ -149,9 +149,45 @@ export default function Policies() {
               <div>
                 <h2 className={cn(tokens.heading.section)}>Library</h2>
                 <p className="font-sans text-sm text-muted-foreground mt-1">
-                  {library.length} recommended policies. Adopt the ones that fit your operation; structured configuration comes next.
+                  {library.length} recommended policies. Filter by audience first, then narrow by category.
                 </p>
               </div>
+            </div>
+
+            {/* Wave 28.11.3 — Audience-first segmented control. The data already
+                carries this distinction; we surface it so operators don't apply
+                client-facing thinking to handbook-only policies (and vice versa). */}
+            <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted/50 border border-border/60 flex-wrap">
+              {([
+                { key: 'all', label: 'All', count: audienceCounts.all },
+                { key: 'external', label: 'Client-facing', count: audienceCounts.external },
+                { key: 'internal', label: 'Internal', count: audienceCounts.internal },
+                { key: 'both', label: 'Both', count: audienceCounts.both },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setActiveAudience(opt.key)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-sans text-xs transition-colors',
+                    activeAudience === opt.key
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <span>{opt.label}</span>
+                  <span
+                    className={cn(
+                      'inline-flex items-center justify-center min-w-[1.25rem] px-1.5 h-4 rounded-full text-[10px]',
+                      activeAudience === opt.key
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    {opt.count}
+                  </span>
+                </button>
+              ))}
             </div>
 
             <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as PolicyCategory | 'all')}>
