@@ -27,6 +27,7 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 
 function isApplicableToProfile(entry: PolicyLibraryEntry, profile: PolicyOrgProfile | null | undefined) {
   if (!profile) return true; // before profile loads / exists, don't pre-hide
