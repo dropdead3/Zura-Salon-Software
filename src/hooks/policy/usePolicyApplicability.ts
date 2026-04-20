@@ -151,9 +151,28 @@ export function useSavePolicySurfaceMappings() {
 /* Constants                                                                  */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Surface audience tagging (Wave 28.11.4):
+ *   - 'internal'  → renders only inside staff-facing tools (handbook, manager, sop)
+ *   - 'external'  → renders only on client-facing surfaces (client_page, booking, checkout)
+ *   - 'both'      → may render on either side (intake — staff use the intake form too)
+ *
+ * Used by `PolicySurfaceEditor` to filter candidate surfaces by `policy.audience ∩ surface.audience`,
+ * and by `usePolicyForSurface` to drop mappings whose policy audience doesn't include the surface's
+ * audience. Single source of truth — no leakage from configurator chrome to data layer.
+ */
+export type SurfaceAudience = 'internal' | 'external' | 'both';
+
 export const SURFACE_META: Record<
   PolicySurface,
-  { label: string; description: string; defaultVariant: PolicyVariantType; icon: LucideIcon; shortLabel: string }
+  {
+    label: string;
+    description: string;
+    defaultVariant: PolicyVariantType;
+    icon: LucideIcon;
+    shortLabel: string;
+    audience: SurfaceAudience;
+  }
 > = {
   handbook: {
     label: 'Employee Handbook',
@@ -161,6 +180,7 @@ export const SURFACE_META: Record<
     description: 'Internal team-facing handbook section.',
     defaultVariant: 'internal',
     icon: Book,
+    audience: 'internal',
   },
   client_page: {
     label: 'Client Policy Page',
@@ -168,6 +188,7 @@ export const SURFACE_META: Record<
     description: 'Public client-facing policy page (/book/:org/policies).',
     defaultVariant: 'client',
     icon: Globe,
+    audience: 'external',
   },
   booking: {
     label: 'Booking Disclosure',
@@ -175,6 +196,7 @@ export const SURFACE_META: Record<
     description: 'Inline disclosure shown before a client confirms a booking.',
     defaultVariant: 'disclosure',
     icon: CalendarCheck,
+    audience: 'external',
   },
   checkout: {
     label: 'Checkout Enforcement',
@@ -182,6 +204,7 @@ export const SURFACE_META: Record<
     description: 'Rules enforced at checkout (deposits, fees, surcharges).',
     defaultVariant: 'disclosure',
     icon: CreditCard,
+    audience: 'external',
   },
   intake: {
     label: 'Consultation / Intake',
@@ -189,6 +212,7 @@ export const SURFACE_META: Record<
     description: 'Required acknowledgment during consultation or intake form.',
     defaultVariant: 'client',
     icon: ClipboardList,
+    audience: 'both',
   },
   manager: {
     label: 'Manager Decision Card',
@@ -196,6 +220,7 @@ export const SURFACE_META: Record<
     description: 'Quick-reference card surfaced when staff need to make exception calls.',
     defaultVariant: 'manager_note',
     icon: ShieldAlert,
+    audience: 'internal',
   },
   sop: {
     label: 'Standard Operating Procedure',
@@ -203,8 +228,25 @@ export const SURFACE_META: Record<
     description: 'Step-by-step procedural reference for staff execution.',
     defaultVariant: 'internal',
     icon: ListChecks,
+    audience: 'internal',
   },
 };
+
+/**
+ * Returns true if a policy with the given audience is allowed to render to a
+ * surface with the given audience. Intersection rule:
+ *   - policy=internal  → only internal surfaces (or 'both' surfaces like intake)
+ *   - policy=external  → only external surfaces (or 'both')
+ *   - policy=both      → all surfaces
+ *   - surface=both     → accepts any policy audience
+ */
+export function isSurfaceCompatibleWithAudience(
+  policyAudience: 'internal' | 'external' | 'both',
+  surfaceAudience: SurfaceAudience,
+): boolean {
+  if (policyAudience === 'both' || surfaceAudience === 'both') return true;
+  return policyAudience === surfaceAudience;
+}
 
 /**
  * Seed applicability rows from the org profile (28.3) so freshly adopted
