@@ -1,118 +1,128 @@
 
 
 ## Goal
-Close the last applicability drift surfaces:
-1. **Per-category coverage drift** — `usePolicyHealthSummary.by_category` ignores profile applicability, so `PolicyCategoryCard` ("Extensions: 0/10") still shows phantom totals for operators who don't offer that service.
-2. **Hidden-chip legibility** — the "Hiding N policies" banner doesn't tell operators *which* services are causing the hiding. One-glance breakdown by reason.
-3. **Author drift guard** — a dev-time linter for `policy_library` content rules so future content waves can't ship a `requires_minors=true` policy that wasn't actually authored as a minors policy.
+Three small hardening passes on the linter we just shipped:
+1. **CI wiring** — confirm `bun test` (or equivalent) actually runs the new spec on push, so author drift fails the build, not just local runs.
+2. **Package boundary** — extract `POLICY_LIBRARY_LINT_RULES` from the test file into `src/lib/policy/lint-rules.ts` so future consumers (admin badge, pre-seed CLI) can import without dragging in vitest.
+3. **Reason-grouping smoke test** — a fast, mock-based unit test for the `hiddenByReason` memo logic so regressions in `applicabilityReason`'s service keys fail loudly.
 
-## Investigation summary
+## Investigation
 
-### Gap 1: `by_category` denominator drift
-`usePolicyHealthSummary` (lines 199-218) computes `by_category[cat].total` from `recommendedLibrary` with **no profile filter**. The "By category" grid on the Policies page renders `Extensions 0/10` even for solo stylists who don't offer extensions — same dishonesty pattern we just fixed in PolicyHealthStrip. Numerator (`adoptedCount`) is fine because adopted policies always belong to the operator.
+### Gap 1: CI wiring — investigation needed
+The lint suite passes locally but only matters if CI runs it. Need to check:
+- Is there a `package.json` test script (`bun test` / `vitest`)?
+- Is there a CI workflow file (`.github/workflows/*.yml`) running tests on push/PR?
+- If neither exists, this is **not a code change** — it's a "you need to add CI" recommendation.
 
-The Extensions category is the loudest case, but the same drift applies anywhere a category is dominated by gated policies (future minors-heavy or membership-heavy categories).
+I'll inspect `package.json` and `.github/workflows/` during implementation. Three outcomes:
 
-### Gap 2: Hidden-chip is opaque
-Current copy: `"Hiding 10 policies that don't apply to your business profile."`
+**Outcome A**: Test script + workflow already exist and pick up `src/__tests__/**` → no change needed; document the path in the doctrine.
+**Outcome B**: Test script exists but no workflow → add a minimal `.github/workflows/test.yml` that runs `bun install` + `bun test` on push.
+**Outcome C**: Neither exists → add both. Risky in a Lovable project (test infra may not be set up); will check first and ask the user only if vitest config is missing entirely.
 
-Operators with `serves_minors=false` AND `offers_extensions=false` see one number with no breakdown. Doesn't help them confirm "yes, that matches what I told you" — they have to trust the count blindly.
+The lint suite itself uses `supabase.from('policy_library').select(...)` against the live anon-keyed client. **In CI without env vars, it will fail to connect.** Two options to handle:
+- **A**: Gate the suite with `describe.skipIf(!process.env.VITE_SUPABASE_URL)` — runs locally and on PR if secrets are wired, silently skips otherwise.
+- **B**: Refactor the linter to take a `rows` array as input (pure function) and split into two tests: a pure-rules unit test (always runs) and an integration test (gated on env).
 
-`applicabilityReason` (added last wave) already returns `{ service, label }` per entry — perfect input. We just need to group/count.
+I recommend **B** — it makes the rule logic testable without DB access, and incidentally fulfills Gap 3's "make the rules importable for non-test consumers." Two birds.
 
-### Gap 3: Linter scope
-Dev-time only — never runs in prod. Two reasonable homes:
-- **A**: A vitest test (`src/__tests__/policy-library-content.test.ts`) that fetches the library and asserts content rules.
-- **B**: A standalone script (`scripts/lint-policy-library.ts`) invoked on demand.
+### Gap 2: Package boundary extraction
+The current location bundles rules with vitest imports. Extraction plan:
+- New file: `src/lib/policy/lint-rules.ts`
+  - Exports `LibraryRow` type (rename to `PolicyLibraryRow`)
+  - Exports `PolicyLintRule` interface
+  - Exports `POLICY_LIBRARY_LINT_RULES` array
+  - Exports a pure helper: `runPolicyLibraryLint(rows: PolicyLibraryRow[]): { failures: string[] }`
+- Test file (`src/__tests__/policy-library-content.test.ts`) becomes thin:
+  - Imports rules + helper from `@/lib/policy/lint-rules`
+  - One test fetches from Supabase and runs the helper
+  - One test (new) provides synthetic rows covering each rule's pass + fail path — runs without DB
 
-I recommend **A** — it runs in the existing test pipeline (no new infra), fails CI on author drift, and lives next to the doctrine it enforces. No DB CHECK constraints (forbidden by doctrine for time/content-validation logic).
+Future consumers (admin dev badge, pre-seed CLI) just import the helper. No vitest baggage.
 
-Rules to assert (extensible):
-- `requires_minors=true` → must be `category='client'` AND `why_it_matters` must contain "minor", "guardian", or "under 18" (case-insensitive).
-- `requires_extensions=true` → must be `category='extensions'` (already true today; lock it in).
-- `requires_retail=true` → audience may be `internal`, `external`, or `both`; no category lock (retail can sit in `client` or `financial`).
-- `requires_packages=true` → must mention "package", "membership", or "subscription" in title or `why_it_matters`.
-- One blanket rule: any entry with **two or more** `requires_*` flags set is structurally suspicious — an authoring drift signal — and must include an explanatory comment in `why_it_matters` mentioning both services.
+### Gap 3: byReason memo smoke test
+The `hiddenByReason` memo lives in `src/pages/dashboard/admin/Policies.tsx`. Two ways to test it:
+- **A**: Extract the memo logic into a pure function (`computeHiddenByReason(library, profile)`) in `src/lib/policy/applicability-summary.ts`, then test that function with mock inputs. Component just calls it.
+- **B**: Render the page in a test with mocked hooks and assert the rendered breakdown copy.
+
+**A** is cleaner — the function becomes reusable (Command Center could call it later for an "applicability summary" tile), and the test runs in milliseconds without React infra.
+
+Test cases:
+1. 3 entries hidden across 2 services (e.g., 2 extensions + 1 minors) → returns `{ extensions: { count: 2, label: 'extensions' }, minors: { count: 1, label: 'minors (under 18)' } }`.
+2. All entries applicable → returns `{}`.
+3. Profile null → returns `{}` (silence over wrong number, matches existing contract).
+4. Single-reason hiding → returns one key (lets the JSX drop the colon segment).
+
+Locks the `applicabilityReason().service` key contract — if someone renames `'minors'` to `'underage'` without updating the doctrine, this test fails.
 
 ## Changes
 
-### Change A: Profile-aware `by_category` totals
-**File**: `src/hooks/policy/usePolicyData.ts`
+### Change A: Extract pure rules + helper
+**New file**: `src/lib/policy/lint-rules.ts`
+- Move `PolicyLibraryRow`, `PolicyLintRule`, `POLICY_LIBRARY_LINT_RULES` here.
+- Add `runPolicyLibraryLint(rows): { failures: string[] }` pure helper.
 
-Two-step refactor — preserve the existing function signature, add an optional profile-aware mode:
+**File edit**: `src/__tests__/policy-library-content.test.ts`
+- Import everything from `@/lib/policy/lint-rules`.
+- Add a new `describe('rule logic — pure')` block with synthetic-row tests that exercise each rule's pass and fail path (no DB).
+- Keep the existing live-DB test, but wrap with `describe.skipIf(!import.meta.env.VITE_SUPABASE_URL)` so it skips silently in environments without Supabase config.
 
-1. Modify `usePolicyHealthSummary` to accept `usePolicyOrgProfile()` internally. (No props change — it already pulls from React Query; adding one more query keeps the API stable.)
-2. Filter `recommendedLibrary` through `isApplicableToProfile(l, profile)` *before* the `by_category` reduction.
-3. Also filter `total_recommended` for consistency with the strip — this is the same logic the strip already does via `useApplicableRequiredPolicies()`, but now the summary itself is honest so any future consumer (audit reports, Command Center tile) inherits it.
+### Change B: Extract `hiddenByReason` to pure function + test
+**New file**: `src/lib/policy/applicability-summary.ts`
+- Export `computeHiddenByReason(library, profile): Record<string, { count: number; label: string }>`.
+- Pulls service/label from existing `applicabilityReason`.
 
-Edge cases:
-- Profile not yet loaded → fall back to unfiltered library (silence over wrong number — matches `isApplicableToProfile`'s null-profile contract).
-- Profile says no flags set → all policies remain (correct — no service constraints means no filtering).
+**File edit**: `src/pages/dashboard/admin/Policies.tsx`
+- Replace the inline `hiddenByReason` reduction with a call to the new helper. Same memo signature, same render output.
 
-`adopted` count stays unchanged (already accurate — operator chose what to adopt).
+**New file**: `src/__tests__/policy-applicability-summary.test.ts`
+- 4 cases listed in Gap 3 investigation above.
+- Pure JS — no React, no DB, no mocks beyond plain objects.
 
-### Change B: Reason-grouped hidden chip
-**File**: `src/pages/dashboard/admin/Policies.tsx` (lines 220-234, the hidden banner block)
+### Change C: CI workflow (conditional)
+- First inspect `package.json` and `.github/workflows/`.
+- If a workflow already runs `bun test` / `vitest`, no change — document the test path in the doctrine.
+- If a test script exists but no workflow, add `.github/workflows/test.yml`:
+  ```yaml
+  name: Test
+  on: [push, pull_request]
+  jobs:
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: oven-sh/setup-bun@v1
+        - run: bun install
+        - run: bun test
+  ```
+- If no test script exists, add `"test": "vitest run"` to `package.json` scripts (vitest is already imported by the existing test file, so it must be installed).
+- The live-DB integration test will skip in CI (no env vars) — only pure rule tests + summary tests run. Authoring drift in pure rules still fails CI; live drift only fails locally with creds. Acceptable.
 
-Replace the existing single-sentence chip with grouped breakdown:
+### Change D: Doctrine update
+**File edit**: `mem://features/policy-os-applicability-doctrine.md`
+- Note that lint rules now live at `src/lib/policy/lint-rules.ts` (not in the test file).
+- Note that applicability-summary helpers live at `src/lib/policy/applicability-summary.ts`.
+- Reaffirm the four-place paired-shipping rule (profile column + library column + applicability branch + lint rule) — locations now precise.
 
-```text
-Hiding 10 policies: 8 extensions · 2 minors. Edit profile
-```
-
-Implementation:
-- Inside the existing `hiddenByProfile` memo derivation, also compute `hiddenByReason: Record<service, count>` using `applicabilityReason(l, profile).service` as the key.
-- Render service segments as small inline chips separated by `·` middle dots. Each segment uses `font-sans text-xs text-foreground/80` (slightly stronger than the surrounding muted copy so the breakdown reads as the data point).
-- Keep "Edit profile" button intact.
-- If only one reason exists, drop the colon segment ("Hiding 8 extensions policies. Edit profile") — silence over redundancy.
-
-No new icons (keep it text-first; matches the calm UX doctrine). Service labels come from `applicabilityReason().label` so they stay in sync with future flags.
-
-### Change C: Library content linter
-**New file**: `src/__tests__/policy-library-content.test.ts`
-
-Vitest suite that:
-1. Reads the library via the public `usePolicyLibrary` query path (or a direct `supabase.from('policy_library').select('*')` in a test wrapper — TBD on confirming test infra; the project may already have a Supabase test client).
-2. Iterates entries and asserts the rules listed in Gap 3 investigation.
-3. Each violation produces a precise failure message: `[lib:extension_aftercare_policy] requires_minors=true but category='extensions' (expected 'client')`.
-
-Single source of truth for the rule table — exported as `POLICY_LIBRARY_LINT_RULES` so it can later be reused by:
-- A pre-seed script when content waves add new rows
-- An admin-side dev-only badge on the Library page (out of scope for this wave, but designed into the API)
-
-Rules table (concrete starting set):
-
-| Rule ID | Trigger | Assertion |
-|---|---|---|
-| `minors-category` | `requires_minors=true` | `category === 'client'` |
-| `minors-rationale` | `requires_minors=true` | `why_it_matters` matches `/minor\|guardian\|under 18/i` |
-| `extensions-category` | `requires_extensions=true` | `category === 'extensions'` |
-| `packages-rationale` | `requires_packages=true` | `title` or `why_it_matters` mentions "package", "membership", or "subscription" |
-| `multi-flag-rationale` | 2+ `requires_*` flags | `why_it_matters` is non-null and >40 chars |
-
-Today the suite passes on the seed (no `requires_minors` rows yet, all `requires_extensions` rows are in `extensions` category). It exists as a tripwire — first failing assertion will be when someone seeds a misclassified policy in a future content wave.
-
-### Change D: Doctrine memory append
-**File**: `mem://features/policy-os-applicability-doctrine.md`
-
-Append the linter rule to the doctrine — make it explicit that:
-- Content rules live in `POLICY_LIBRARY_LINT_RULES` (single source).
-- Adding a new `requires_*` flag now has a **fourth** paired-shipping requirement: a linter rule entry. So new flag = profile column + library column + applicability branch + lint rule. Four places, checked together.
-
-## Out of scope (defer)
-- Admin-side surfacing of lint failures (dev-only test is enough until content waves restart).
-- Per-category "applicable" badge on `PolicyCategoryCard` itself (totals will silently self-correct after Change A — no UI change needed).
-- Migrating the lint rules into a SQL trigger (doctrine forbids time/content CHECK constraints; tests are the right home).
-- New `requires_memberships` column — same defer as last wave; no library content gates on it yet.
+## Out of scope
+- Admin-side dev badge consuming the rules (designed-for, not built this wave).
+- Pre-seed CLI (same — file structure now supports it).
+- Rendering the lint failures inline on the Policies page in dev mode.
+- Snapshot tests for the JSX banner copy (the smoke test on the underlying memo is sufficient).
 
 ## Files touched
-- `src/hooks/policy/usePolicyData.ts` — `usePolicyHealthSummary` profile-aware filter for `by_category` and `total_recommended`
-- `src/pages/dashboard/admin/Policies.tsx` — reason-grouped hidden chip (lines 113-116 memo extension, lines 220-234 banner JSX)
-- `src/__tests__/policy-library-content.test.ts` — new linter suite + exported `POLICY_LIBRARY_LINT_RULES`
-- `mem://features/policy-os-applicability-doctrine.md` — append linter as the fourth paired-shipping anchor
+- `src/lib/policy/lint-rules.ts` — new, pure rule table + runner
+- `src/lib/policy/applicability-summary.ts` — new, `computeHiddenByReason` helper
+- `src/__tests__/policy-library-content.test.ts` — slim down to imports + add pure-rule tests + skipIf guard
+- `src/__tests__/policy-applicability-summary.test.ts` — new, 4 smoke cases
+- `src/pages/dashboard/admin/Policies.tsx` — swap inline reduce for helper call
+- `package.json` — add `test` script if missing (conditional)
+- `.github/workflows/test.yml` — add if missing (conditional)
+- `mem://features/policy-os-applicability-doctrine.md` — file-path precision update
 
 ## Sequencing
-1. **A** first — biggest honesty fix, smallest surface area, unblocks the whole "By category" grid.
-2. **B** — quick UX layer over A's accurate data.
-3. **C + D** together — close the doctrine loop. Tests confirm the existing seed is clean before the suite ships, so first run is green.
+1. **A** — extract rules to `src/lib/policy/lint-rules.ts`, add pure tests, gate live test. Highest leverage; unblocks future consumers.
+2. **B** — extract `hiddenByReason`, add summary spec. Fast safety net.
+3. **C** — inspect CI infra; add only what's missing. May be a no-op.
+4. **D** — doctrine close.
 
