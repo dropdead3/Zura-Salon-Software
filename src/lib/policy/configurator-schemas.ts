@@ -42,6 +42,10 @@ export interface RuleField {
   key: string;
   label: string;
   helper?: string;
+  /** Optional one-sentence explanation rendered as a MetricInfoTooltip
+   *  next to the field label. Use for fields where the label alone doesn't
+   *  convey what authority/effect the value confers. */
+  tooltip?: string;
   type: RuleFieldType;
   required?: boolean;
   options?: { value: string; label: string }[];
