@@ -39,7 +39,10 @@ const STEP_ORDER_FALLBACK = [
   "step_7_5_apps",
 ];
 
-const SYSTEM_BY_STEP: Record<string, string> = {
+// Wave 13H — B9: SYSTEM_BY_STEP is now a fallback only. The registry's
+// `system` column is the source of truth (see migration 13H). Keeping this
+// map handles cold-cache / registry-read-failure cases.
+const SYSTEM_BY_STEP_FALLBACK: Record<string, string> = {
   step_0_fit_check: "fit_check",
   step_1_identity: "identity",
   step_2_footprint: "footprint",
@@ -51,20 +54,35 @@ const SYSTEM_BY_STEP: Record<string, string> = {
   step_7_5_apps: "apps",
 };
 
-async function loadStepOrder(supabase: any): Promise<string[]> {
+/**
+ * Loads {stepKey → system} from setup_step_registry (B9).
+ * Falls back to hardcoded map on any failure so a registry regression
+ * never blocks commit.
+ */
+async function loadRegistry(
+  supabase: any,
+): Promise<{ stepOrder: string[]; systemByStep: Record<string, string> }> {
   const { data, error } = await supabase
     .from("setup_step_registry")
-    .select("key, step_order, deprecated_at")
+    .select("key, step_order, system, deprecated_at")
     .is("deprecated_at", null)
     .order("step_order", { ascending: true });
   if (error || !data || data.length === 0) {
     console.warn(
-      "[commit-org-setup] registry read failed, using STEP_ORDER_FALLBACK:",
+      "[commit-org-setup] registry read failed, using fallbacks:",
       error?.message,
     );
-    return STEP_ORDER_FALLBACK;
+    return {
+      stepOrder: STEP_ORDER_FALLBACK,
+      systemByStep: SYSTEM_BY_STEP_FALLBACK,
+    };
   }
-  return data.map((r: any) => r.key);
+  const stepOrder = data.map((r: any) => r.key);
+  const systemByStep: Record<string, string> = {};
+  for (const r of data) {
+    systemByStep[r.key] = r.system ?? SYSTEM_BY_STEP_FALLBACK[r.key] ?? r.key;
+  }
+  return { stepOrder, systemByStep };
 }
 
 Deno.serve(async (req) => {
@@ -168,10 +186,10 @@ Deno.serve(async (req) => {
     const results: CommitStepResult[] = [];
 
     // Execute per-step commit handlers in registry order (Wave 13F.B — G26)
-    const stepOrder = await loadStepOrder(supabase);
+    const { stepOrder, systemByStep } = await loadRegistry(supabase);
     for (const stepKey of stepOrder) {
       const data = stepData[stepKey];
-      const system = SYSTEM_BY_STEP[stepKey] ?? stepKey;
+      const system = systemByStep[stepKey] ?? SYSTEM_BY_STEP_FALLBACK[stepKey] ?? stepKey;
 
       // Wave 13G.B — scoped re-entry: skip every step not in the caller's list.
       if (scopedKeys && !scopedKeys.includes(stepKey)) {
@@ -194,6 +212,39 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Wave 13H — B6: purely-backfilled-untouched steps are NOT re-applied.
+      // Backfill seeds defaults (e.g. serves_minors:false, tip_distribution_rule:
+      // individual) which would silently overwrite policy_org_profile on commit
+      // if the operator never confirmed them. Step 0 (fit check) and Step 7/7.5
+      // have no backfilled shape so they always pass through.
+      const d = data as Record<string, unknown>;
+      const isPurelyBackfilled =
+        d.backfilled === true &&
+        d.__touched !== true &&
+        d.__skipped__ !== true;
+      if (isPurelyBackfilled) {
+        results.push({
+          step_key: stepKey,
+          system,
+          status: "skipped",
+          reason: "backfill-only, no user confirmation",
+        });
+        // Still record a completion row so the rail and audit trail see
+        // this step as "acknowledged via backfill" — but do NOT run the
+        // handler or write to policy_org_profile.
+        await supabase.from("org_setup_commit_log").insert({
+          organization_id,
+          system,
+          status: "skipped",
+          reason: "backfill-only, no user confirmation",
+          acknowledged_conflicts,
+          attempted_by: user.id,
+          source: "wizard",
+          idempotency_key: idempotency_key ?? null,
+        });
+        continue;
+      }
+
       try {
         const handlerResult = await executeStepHandler(
           supabase,
@@ -202,6 +253,7 @@ Deno.serve(async (req) => {
           organization_id,
           data,
           user.id,
+          stepData, // Wave 13H — B2: full draft for server-side cross-step derivation
         );
         results.push(handlerResult);
 
@@ -319,6 +371,7 @@ async function executeStepHandler(
   orgId: string,
   data: any,
   userId: string,
+  fullDraft?: Record<string, any>, // Wave 13H — B2: cross-step re-derivation
 ): Promise<CommitStepResult> {
   switch (stepKey) {
     case "step_0_fit_check": {
@@ -575,18 +628,36 @@ async function executeStepHandler(
       //   not get re-activated after the operator removed its qualifying input.
       // Wave 13G.F — record Tier-1 declines as `app_interest.status='declined'`
       //   instead of activating; preserves operator autonomy.
+      // Wave 13H — B2: re-derive qualification server-side from steps 3/4/5
+      // so stale client qualified_keys can't cause wrongly-activated apps.
+      const step3 = (fullDraft?.["step_3_team"] ?? {}) as Record<string, any>;
+      const step4 = (fullDraft?.["step_4_compensation"] ?? {}) as Record<string, any>;
+      const step5 = (fullDraft?.["step_5_catalog"] ?? {}) as Record<string, any>;
+      const cats: string[] = Array.isArray(step5.service_categories) ? step5.service_categories : [];
+      const compModels: string[] = Array.isArray(step4.models) ? step4.models : [];
+      const serverQualified = new Set<string>();
+      if (cats.includes("color") || cats.includes("chemical")) serverQualified.add("color_bar");
+      if (compModels.length > 0) serverQualified.add("zura_payroll");
+      if (step3.has_booth_renters === true) serverQualified.add("booth_rental");
+      if (cats.includes("extensions")) serverQualified.add("extensions_tracker");
+
       const installedRaw: string[] = Array.isArray(data.installed_apps)
         ? data.installed_apps.filter(Boolean)
         : [];
       const declined: string[] = Array.isArray(data.declined_apps)
         ? data.declined_apps.filter(Boolean)
         : [];
-      const qualified: string[] | null = Array.isArray(data.qualified_keys)
+      const clientQualified: string[] | null = Array.isArray(data.qualified_keys)
         ? data.qualified_keys.filter(Boolean)
         : null;
-      // Drop installs that no longer qualify (stale draft) and any explicitly declined.
+      // Server-derived takes precedence; fall back to client list only when
+      // we have no server signal (forward-compat for new app keys).
+      const effectiveQualified: Set<string> | null =
+        serverQualified.size > 0
+          ? serverQualified
+          : (clientQualified ? new Set(clientQualified) : null);
       const installed = installedRaw.filter(
-        (k) => (qualified === null || qualified.includes(k)) && !declined.includes(k),
+        (k) => (effectiveQualified === null || effectiveQualified.has(k)) && !declined.includes(k),
       );
       const interest: string[] = Array.isArray(data.expressed_interest)
         ? data.expressed_interest.filter(Boolean)

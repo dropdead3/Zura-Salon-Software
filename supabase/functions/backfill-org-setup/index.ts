@@ -69,17 +69,54 @@ Deno.serve(async (req) => {
       return json({ error: "Organization not found" }, 404, corsHeaders);
     }
 
+    // Wave 13H — B8: log ineligible outcomes too so platform admin can see
+    // *why* nothing's been backfilled, not just that nothing has. Each early
+    // return below threads through this helper before responding.
+    const logIneligible = async (reason: string) => {
+      await supabase.from("org_setup_backfill_attempts").insert({
+        organization_id,
+        attempted_by: user.id,
+        outcome: "ineligible",
+        backfilled_count: 0,
+        pending_count: 0,
+        skipped_count: 0,
+        details: { reason },
+      });
+    };
+
+    if (org.setup_completed_at) {
+      await logIneligible("already_completed");
+      return json(
+        {
+          success: true,
+          backfilled: 0,
+          pending: 0,
+          skipped: 0,
+          results: [],
+          ineligible: "already_completed",
+        },
+        200,
+        corsHeaders,
+      );
+    }
+
     const results: BackfillResult[] = [];
 
-    // Read existing draft to preserve any owner-entered data
+    // Read existing draft to preserve any owner-entered data — including
+    // resume position (Wave 13H — B5). Without this, a backfill that runs
+    // after a user has already started the wizard (e.g. they opened the
+    // dashboard in another browser) wipes their current_step/current_step_key
+    // and dumps them back at Step 0 on next visit.
     const { data: existingDraft } = await supabase
       .from("org_setup_drafts")
-      .select("step_data")
+      .select("step_data, current_step, current_step_key")
       .eq("user_id", user.id)
       .eq("organization_id", organization_id)
       .maybeSingle();
     const existingStepData =
       (existingDraft?.step_data as Record<string, unknown>) ?? {};
+    const existingCurrentStep = existingDraft?.current_step ?? null;
+    const existingCurrentStepKey = existingDraft?.current_step_key ?? null;
 
     const stepData: Record<string, unknown> = { ...existingStepData };
 
@@ -266,19 +303,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Persist the merged draft
+    // Persist the merged draft. Wave 13H — B5: preserve any existing
+    // resume position; only write current_step/current_step_key when we
+    // actually have a prior value. Never clobber an in-progress wizard.
+    const upsertRow: Record<string, unknown> = {
+      user_id: user.id,
+      organization_id,
+      step_data: stepData,
+      updated_at: new Date().toISOString(),
+    };
+    if (existingCurrentStep !== null && existingCurrentStep !== undefined) {
+      upsertRow.current_step = existingCurrentStep;
+    }
+    if (existingCurrentStepKey) {
+      upsertRow.current_step_key = existingCurrentStepKey;
+    }
     await supabase
       .from("org_setup_drafts")
-      .upsert(
-        {
-          user_id: user.id,
-          organization_id,
-          step_data: stepData,
-          current_step: null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,organization_id" },
-      );
+      .upsert(upsertRow, { onConflict: "user_id,organization_id" });
 
     // Wave 13D.G9 — record per-step inference provenance on the policy
     // profile so a future "review your inferred answers" UI can show the
