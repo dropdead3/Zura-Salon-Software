@@ -33,8 +33,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function Policies() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: library = [], isLoading: libLoading } = usePolicyLibrary();
   const { data: adopted = [], isLoading: adoptedLoading } = useOrgPolicies();
   const { data: profile, isLoading: profileLoading } = usePolicyOrgProfile();
@@ -154,6 +156,7 @@ export default function Policies() {
     <DashboardLayout>
       <DashboardPageHeader
         title="Policies"
+        backTo={dashPath('/admin/settings')}
         description={
           hasProfile
             ? 'The source of truth for every policy your business runs on. Configure once, render everywhere — handbooks, client pages, booking, checkout, and manager decisions.'
