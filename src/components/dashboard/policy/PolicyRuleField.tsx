@@ -234,22 +234,22 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal',
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-border p-3 bg-muted/30">
-            {field.options?.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex items-center gap-2 cursor-pointer font-sans text-sm"
-              >
-                <Checkbox
-                  checked={arr.includes(opt.value)}
-                  onCheckedChange={() => toggle(opt.value)}
-                />
-                <span>{opt.label}</span>
-              </label>
-            ))}
-          </div>
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-border p-3 bg-muted/30">
+              {field.options?.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 cursor-pointer font-sans text-sm"
+                >
+                  <Checkbox
+                    checked={arr.includes(opt.value)}
+                    onCheckedChange={() => toggle(opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
