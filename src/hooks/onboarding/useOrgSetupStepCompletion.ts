@@ -5,17 +5,17 @@ export interface StepCompletionRow {
   completed_at: string | null;
   status: string;
   completion_source: string | null;
-  /** Derived: count of distinct commit attempts (current row counts as 1; created_at vs updated_at gap implies retries). */
+  /** Exact count of commit attempts for this step (Wave 13G.G — RPC-backed). */
   attempt_count: number;
 }
 
 /**
- * useOrgSetupStepCompletion — Wave 13G.E.
+ * useOrgSetupStepCompletion — Wave 13G.E (exact-count upgrade in 13G.G).
  *
- * Reads `org_setup_step_completion` (write-only until now) so the wizard's
- * `SetupProgressPanel` can show "Confirmed Xm ago" under each completed step.
- * Returns a map keyed by `step_key`. Honors visibility-contract: empty map
- * when nothing has been committed yet, never throws on missing rows.
+ * Reads `org_setup_step_completion` so the wizard's `SetupProgressPanel` can
+ * show "Confirmed Xm ago" under each completed step, plus a precise retry
+ * hint when `attempt_count > 1`. Honors visibility-contract: empty map when
+ * nothing has been committed yet, never throws on missing rows.
  */
 export function useOrgSetupStepCompletion(orgId: string | null) {
   return useQuery({
@@ -24,7 +24,7 @@ export function useOrgSetupStepCompletion(orgId: string | null) {
       if (!orgId) return {} as Record<string, StepCompletionRow>;
       const { data, error } = await supabase
         .from("org_setup_step_completion")
-        .select("step_key, completed_at, status, completion_source, created_at, updated_at")
+        .select("step_key, completed_at, status, completion_source, attempt_count")
         .eq("organization_id", orgId);
       if (error) throw error;
       const map: Record<string, StepCompletionRow> = {};
@@ -33,20 +33,16 @@ export function useOrgSetupStepCompletion(orgId: string | null) {
         completed_at: string | null;
         status: string;
         completion_source: string | null;
-        created_at: string;
-        updated_at: string;
+        attempt_count: number | null;
       }>) {
-        // Heuristic: if updated_at differs meaningfully from created_at,
-        // the operator re-committed at least once. We can't recover an exact
-        // count from a single-row upsert, so cap at 2 ("retried").
-        const created = new Date(row.created_at).getTime();
-        const updated = new Date(row.updated_at).getTime();
-        const retried = Number.isFinite(created) && Number.isFinite(updated) && updated - created > 2_000;
         map[row.step_key] = {
           completed_at: row.completed_at,
           status: row.status,
           completion_source: row.completion_source,
-          attempt_count: retried ? 2 : 1,
+          attempt_count:
+            typeof row.attempt_count === "number" && row.attempt_count > 0
+              ? row.attempt_count
+              : 1,
         };
       }
       return map;

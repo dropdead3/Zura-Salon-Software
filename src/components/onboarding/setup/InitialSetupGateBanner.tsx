@@ -100,7 +100,12 @@ export function InitialSetupGateBanner() {
   };
 
   const handleStart = () => {
-    navigate(dashPath("/onboarding/organization-setup"));
+    // Wave 13G.G — migrated reviewers fast-track to summary via reviewMode=1.
+    // Greenfield orgs continue through the full intro/sequence.
+    const target = isMigratedReview
+      ? `/onboarding/organization-setup?org=${orgId}&skipIntro=1&reviewMode=1`
+      : "/onboarding/organization-setup";
+    navigate(dashPath(target));
   };
 
   // Migrated cohort with at least one backfilled step → reviewer framing.
