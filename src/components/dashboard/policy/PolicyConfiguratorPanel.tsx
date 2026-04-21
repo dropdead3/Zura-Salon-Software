@@ -11,11 +11,13 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Archive, Check, RotateCcw, ChevronRight } from 'lucide-react';
+import { Loader2, Save, Sparkles, ExternalLink, History, FileSignature, Archive, Check, RotateCcw, ChevronRight, ChevronLeft } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { LuxeLoader } from '@/components/ui/loaders/LuxeLoader';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
+import { PolicyConfiguratorStepper } from './PolicyConfiguratorStepper';
+import { STEP_META, getVisibleSteps, type StepId } from '@/lib/policy/configurator-steps';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { usePublishPolicyExternally } from '@/hooks/policy/usePublishPolicyExternally';
 import { useArchivePolicy } from '@/hooks/policy/useArchivePolicy';
