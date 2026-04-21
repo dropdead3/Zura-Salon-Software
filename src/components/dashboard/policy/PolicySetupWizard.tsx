@@ -31,7 +31,7 @@ import {
   recommendedKeysForProfile,
   type PolicyOrgProfileInput,
 } from '@/hooks/policy/usePolicyOrgProfile';
-import { usePolicyLibrary } from '@/hooks/policy/usePolicyData';
+import { usePolicyLibrary, POLICY_CATEGORY_META, type PolicyCategory } from '@/hooks/policy/usePolicyData';
 import {
   usePolicyProfileDefaults,
   TEAM_BAND_LABELS,
