@@ -14292,6 +14292,53 @@ export type Database = {
           },
         ]
       }
+      org_setup_backfill_attempts: {
+        Row: {
+          attempted_at: string
+          attempted_by: string | null
+          backfilled_count: number
+          details: Json | null
+          id: string
+          organization_id: string
+          outcome: string
+          pending_count: number
+          reason: string | null
+          skipped_count: number
+        }
+        Insert: {
+          attempted_at?: string
+          attempted_by?: string | null
+          backfilled_count?: number
+          details?: Json | null
+          id?: string
+          organization_id: string
+          outcome: string
+          pending_count?: number
+          reason?: string | null
+          skipped_count?: number
+        }
+        Update: {
+          attempted_at?: string
+          attempted_by?: string | null
+          backfilled_count?: number
+          details?: Json | null
+          id?: string
+          organization_id?: string
+          outcome?: string
+          pending_count?: number
+          reason?: string | null
+          skipped_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_setup_backfill_attempts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_setup_commit_log: {
         Row: {
           acknowledged_conflicts: Json
@@ -14301,6 +14348,7 @@ export type Database = {
           id: string
           organization_id: string
           reason: string | null
+          source: string
           status: string
           system: string
         }
@@ -14312,6 +14360,7 @@ export type Database = {
           id?: string
           organization_id: string
           reason?: string | null
+          source?: string
           status: string
           system: string
         }
@@ -14323,6 +14372,7 @@ export type Database = {
           id?: string
           organization_id?: string
           reason?: string | null
+          source?: string
           status?: string
           system?: string
         }
@@ -25195,6 +25245,7 @@ export type Database = {
           created_at: string
           exported_at: string
           exported_by: string | null
+          exported_on_date: string | null
           id: string
           organization_id: string
           step_label: string | null
@@ -25204,6 +25255,7 @@ export type Database = {
           created_at?: string
           exported_at?: string
           exported_by?: string | null
+          exported_on_date?: string | null
           id?: string
           organization_id: string
           step_label?: string | null
@@ -25213,6 +25265,7 @@ export type Database = {
           created_at?: string
           exported_at?: string
           exported_by?: string | null
+          exported_on_date?: string | null
           id?: string
           organization_id?: string
           step_label?: string | null
