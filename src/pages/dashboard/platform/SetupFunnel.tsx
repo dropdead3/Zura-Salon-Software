@@ -572,6 +572,11 @@ export default function SetupFunnel() {
           />
         </div>
 
+        {/* Step Health (governance signal) */}
+        <div className="mb-6">
+          <StepHealthCardWrapper />
+        </div>
+
         {/* Funnel */}
         <Card>
           <CardHeader>
