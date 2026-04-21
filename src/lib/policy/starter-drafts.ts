@@ -398,11 +398,6 @@ function composeWhoItAppliesTo(
   libraryKey: string,
   ctx: PolicySummaryContext,
 ): string | null {
-  // Lazy-require to avoid a circular import (relevance manifest doesn't
-  // import starter-drafts, but keep it defensive).
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getRelevantScopes } = require('./applicability-relevance') as typeof import('./applicability-relevance');
-
   const category = (ctx.category ?? 'client') as Parameters<typeof getRelevantScopes>[1];
   const audience = ctx.audience ?? 'both';
   const manifest = getRelevantScopes(libraryKey, category, audience);
