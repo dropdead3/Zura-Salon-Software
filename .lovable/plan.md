@@ -1,182 +1,148 @@
 
 
-# Turn the Policy Configurator into a guided questionnaire
+# Decompress the Questionnaire UI
 
-## What's wrong today
+## What's wrong in the screenshot
 
-The configurator opens straight into a wall of structured fields under sections like "Timing", "Fee", "Exceptions & authority". Even with provenance helpers and tooltips, the operator faces:
+Looking at your screenshot at 1300px viewport, six concrete failures:
 
-1. **All decisions visible at once** — no progressive disclosure. They see 6–10 inputs before they've made 1.
-2. **Database-shaped labels, not human questions** — "Notice window (hours)", "Fee type", "Approver role". These are field names, not how an owner actually thinks about cancellation.
-3. **No live preview of consequence** — the operator can't see what the policy will *say* until the Approve wording step at the end.
-4. **No reference points** — they have to invent answers from a blank slate. No "here's what most salons do" anchor.
+1. **Ghost line behind the header** — "Step 1 of 5 — Define rules" is half-rendered behind the header description. Z-index / margin collision between `PolicyConfiguratorStepper` and the page-context block above it.
+2. **The question textarea is squeezed** — `who_it_applies_to` is a longtext field that forces a 4-line `<textarea>`, but it's living inside a column that's only ~46% of the panel width. The text wraps into 3 awkward lines mid-sentence ("Drop Dead / Salons. Manager-level…").
+3. **The PREFILLED helper sits *below* the input** — pushing the Back/Skip/Next row way down. The provenance line should be lateral (right of the input on wide viewports) so the input gets its full height/width.
+4. **The Live Preview is unreadable** — pinned to a `minmax(0,420px)` column, the prose breaks every 4-5 words ("Drop Dead Salons / employs team / members in the / following…"). Reads like a poem, not policy prose.
+5. **The progress chip row competes with navigation** — three chips stack into two visual rows directly under the Back/Skip/Next buttons. Operator's eye doesn't know which row to act on.
+6. **The whole left card has `p-5` inside a panel that already has its own padding** — double-quilted whitespace eats horizontal real estate.
 
-The configurator works like an admin tool. It should work like a coach asking 6 questions.
+The questionnaire frame is right. The container math is wrong.
 
-## The fix — a Q&A interview that writes the policy as you answer
+## The fix — five surgical layout changes
 
-Replace the section-grouped form on the **Define rules** step with a **one-question-at-a-time interview**. The right pane shows a live policy preview that rewrites itself with every answer. The operator never sees a field key, never picks a "type", never thinks about structure. They answer plain-English questions; the policy materializes beside them.
+### 1. Remove the wrapper card around the questionnaire
 
-### Layout — split pane
+Today: `<div className="rounded-xl border border-border bg-card p-5"> <PolicyQuestionnaire/> </div>`
+Change to: `<PolicyQuestionnaire/>` directly — the questionnaire already controls its own internal spacing. Removing the outer card returns ~40px of horizontal real estate per side and removes the visual "card-in-a-card-in-a-drawer" stacking.
 
+### 2. Re-balance the split — preview gets more, input gets max-width
+
+Today: `grid-cols-[1fr_minmax(0,420px)]` — the input column is variable (squeezed), the preview is capped at 420px.
+Change to: `grid-cols-[minmax(0,1fr)_minmax(360px,520px)]` AND drop the right pane entirely below `lg` (already does). On a 1300px viewport with the panel at ~960px usable width, that yields ~440px input column + ~480px preview column. The preview prose breaks at a comfortable ~70 characters per line instead of the current ~28.
+
+Below `lg` (mobile/tablet), the live preview moves to a **collapsed drawer pinned to the bottom** with a "Preview policy" trigger (no inline stacking that pushes the form off-screen). Reuses the existing `Sheet` primitive.
+
+### 3. Promote provenance + prefilled helper to the right of the input
+
+Today: `PolicyRuleField` renders the input full-width and stacks the `PREFILLED` helper underneath it.
+Change in the questionnaire context only: when the field has provenance (`prefilled` / `internal-only` / `surfaces-on`), render the input at `max-w-[640px]` and float the helper as a **right-side column at `w-[200px]`** on `xl+` viewports. On smaller viewports, keep today's stacked behavior. The helper becomes a *side note*, not a bottom-stack push.
+
+For longtext fields specifically: the `<textarea>` gets `min-h-[160px]` (today it's `min-h-[100px]` which forced the awkward 4-line wrap). With more height, the prose flows naturally and the operator can see the full prefilled text without scrolling inside the input.
+
+### 4. Split the navigation row from the progress chips
+
+Today: nav buttons + progress chips render in the same vertical block, separated only by `pt-3 border-t`.
+Change to:
+- **Nav row stays where it is** (Back / Skip / Next) — primary action, always visible at the same eye-level.
+- **Progress chips move to the top of the questionnaire**, replacing today's "Section 1 of 1 · Question 2 of 3" text label. Render as a horizontal scroll strip with the current question marked. This collapses two chrome rows into one and puts orientation at the top where the operator's eye lands first.
+
+Layout result, top to bottom:
 ```
-┌─ Configure policy ─────────────────────────────────────────────┐
-│  Step 1 of 3 — Define rules                                    │
-│  ────────●──────────○──────────○                              │
-│                                                                │
-│  ┌── Question 3 of 6 ────────────┐  ┌── Live preview ──────┐ │
-│  │                                │  │                       │ │
-│  │  How late can a client cancel │  │  Drop Dead Salons     │ │
-│  │  without paying a fee?        │  │  asks clients to      │ │
-│  │                                │  │  cancel at least      │ │
-│  │  ○ 12 hours  (faster turn)    │  │  ┃24 hours┃ before    │ │
-│  │  ● 24 hours  ⭐ industry std  │  │  their appointment.   │ │
-│  │  ○ 48 hours  (high-end)       │  │  Cancellations inside │ │
-│  │  ○ Custom: [__]               │  │  this window forfeit  │ │
-│  │                                │  │  50% of the service.  │ │
-│  │  Why this matters: This is the│  │                       │ │
-│  │  notice clients have to give  │  │  [4 more sections     │ │
-│  │  to avoid the cancellation    │  │   ghosted, will fill  │ │
-│  │  fee. Most salons use 24h.    │  │   in as you answer]   │ │
-│  │                                │  │                       │ │
-│  │  [Back]      [Skip]   [Next →]│  │                       │ │
-│  └────────────────────────────────┘  └───────────────────────┘ │
-│                                                                │
-│  ✓ Hours of operation (24h) · ✓ Fee type (% of service)       │
-│  · ⏵ How late can a client cancel · ○ Fee amount               │
-│  · ○ Exceptions · ○ Who waives                                 │
-└────────────────────────────────────────────────────────────────┘
-```
-
-Three concrete shifts from today:
-
-- **One question at a time** — not 10 inputs in a section. The "Next" button is the rhythm.
-- **Live policy preview on the right** — the prose rewrites itself as the operator answers. The exact value they just chose is highlighted (`┃24 hours┃`) so they see *which words* their answer changed.
-- **Anchored options with one recommended pick** — every multi-choice question shows 3-4 sensible presets with one marked `⭐ industry standard` (or `⭐ what most salons do`). "Custom" is always last. Removes the blank-slate problem.
-
-### What changes in the schema
-
-The `RuleField` interface gains 3 optional fields — backwards compatible:
-
-```ts
-interface RuleField {
-  // ... existing ...
-  /** The plain-English question. Falls back to `label` if missing. */
-  question?: string;
-  /** Operator-facing reason this question matters. Falls back to `helper`. */
-  whyItMatters?: string;
-  /** Curated presets shown as cards above the raw input.
-   *  One can be marked `recommended: true`. */
-  presets?: Array<{
-    value: unknown;
-    label: string;
-    sublabel?: string;
-    recommended?: boolean;
-  }>;
-}
+[Progress strip — chips, current highlighted]
+[Big plain-English question + why-this-matters card]
+[Anchored presets grid (when present)]
+[Input + provenance side-note (right column on xl+)]
+[Back ←——— Skip · Next] (single row, no chips below)
 ```
 
-For example, `notice_window_hours` becomes:
+### 5. Fix the ghost line + decompress the whole step container
 
-```ts
-{
-  key: 'notice_window_hours',
-  label: 'Notice window (hours)', // kept for accessibility/save
-  question: 'How late can a client cancel without paying a fee?',
-  whyItMatters: 'This is the notice clients have to give to avoid the cancellation fee. Most salons use 24 hours.',
-  presets: [
-    { value: 12, label: '12 hours', sublabel: 'Faster table turn' },
-    { value: 24, label: '24 hours', sublabel: 'Industry standard', recommended: true },
-    { value: 48, label: '48 hours', sublabel: 'High-end / specialty' },
-  ],
-  type: 'number',
-  unit: 'hours',
-  required: true,
-  defaultValue: 24,
-}
-```
+The "Step 1 of 5" ghost in your screenshot is the stepper's text bleeding through because the panel description above it has no `mb-*` and the stepper has no `mt-*`. Fix:
+- The configurator panel's outer wrapper changes from `space-y-6` to `space-y-8` between major blocks (header → stepper → step content).
+- The header context block gets an explicit `pb-2` so the stepper's chip background never overlaps it.
+- Inside the rules step, swap `space-y-6` for `space-y-8` between the mode toggle and the questionnaire/preview grid.
 
-If a field has no `question`, it falls back to today's behavior — so non-questionnaire fields (e.g., `documentation_required` longtext) keep their current input. The questionnaire is **opt-in per field** in the schema.
+Net visual breathing room: the step content moves down ~16px, the description text fully clears the stepper, and the questionnaire+preview grid has visible margin from the controls above it.
 
-### Live preview is already wired
+### Bonus: collapse the "Why this matters" card on small viewports
 
-We have `getPolicySummaryDefaults` + `substituteRuleTokens` doing this work today — they just render into the `policy_summary` textarea. The new preview pane reuses that same composer; the only new piece is **highlighting the exact tokens the operator just answered**. Implementation: when a field changes, wrap the just-substituted span in a brief `<mark className="bg-primary/20 transition-colors">` that fades to plain in 1.5s. No new prose generation, no new API calls.
+Today the why-this-matters card is always rendered as a full-width muted box with the Sparkles icon. On `<lg` viewports, this stacks above the question and pushes presets below the fold. Change: on `<lg`, the why-this-matters becomes a `<Disclosure>` ("Why this matters →") that expands inline. Same content, less first-paint weight on tablet/mobile.
 
-### Question ordering
+## What stays untouched
 
-Today schemas group by section ("Timing", "Fee", "Exceptions"). The questionnaire follows the same `RuleSection.fields` order — **so the question sequence is already the schema author's job**, not a new piece of doctrine. The section title becomes a small chip ("Section 2 of 3 — Fee") above the question. No reshuffling needed.
+- The questionnaire's data contract — `values`, `onChange`, `onComplete` — unchanged.
+- The schema shape (`question`, `whyItMatters`, `presets`) — unchanged.
+- The Live Preview composer logic, token highlighting, `substituteWithHighlight` — unchanged.
+- The Interview / Expert toggle — unchanged.
+- Save behavior, version blocks, all hooks — unchanged.
 
-### Skip + jump-ahead
-
-- Every non-required question shows a "Skip for now" link → uses `defaultValue` and moves on.
-- The progress chip row at the bottom is clickable. Operators can jump back to any answered question. Required questions that haven't been answered are dimmed and not clickable until reached.
-- "Back" never destroys an answer — it just shows the same question with the prior value pre-selected.
-
-### What stays exactly as it is
-
-- **Step 2 (Decide who)** and **Step 3 (Approve wording)** — unchanged. The questionnaire only replaces the inside of Step 1.
-- **The rules engine, the AI drafter, the publish flow** — all read the same `policy_rule_blocks` table. The questionnaire is a UI swap, not a data-model change.
-- **Provenance helpers, tooltips, `MetricInfoTooltip`** — these now appear on the *one current question* instead of stacked on every field. Same copy, same component.
-- **The "Preview — not yet adopted" view** for un-adopted policies — unchanged.
-- **Internal-only policies** — same audience-aware step hiding as today.
-
-### The "expert mode" escape hatch
-
-Some operators (and every audit) need the all-fields-at-once view. Add a small toggle in the step header: **`Interview` / `Expert view`**. Default is Interview. Expert view renders today's grouped sections — same component, no regression. Decision persists per operator in `localStorage` so power users land in their preferred mode every time.
-
-### Why this is "done with you," not "done by you"
-
-Per the doctrine — *Recommend → Simulate → Request Approval → Execute*:
-
-- **Recommend** — every preset has a `⭐ recommended` anchor based on industry norms.
-- **Simulate** — the live preview *is* the simulation. Operators see the exact prose their answer produces before committing.
-- **Request approval** — the existing Step 3 (Approve wording) is the formal approval gate.
-- **Execute** — Save still writes to `policy_rule_blocks` exactly as today.
-
-The operator answers questions, sees the consequence, approves the wording. They never touch a field key, never invent prose, never face a blank input. Structure precedes intelligence — the schema is still the source of truth — but the operator-facing surface is interview, not form.
-
-## Doctrine alignment
-
-- **Lever and confidence** — one question at a time *is* the lever. Recommended presets reduce decision fatigue without removing operator control.
-- **Silence is meaningful** — questions without `presets` simply render the raw input + helper. We don't manufacture fake recommendations.
-- **Operator edits are sacred** — answering a question is an edit; the live preview reflects it; back-navigation never overwrites. Same contract as today.
-- **Brand abstraction** — preview prose runs through `interpolateBrandTokens` exactly as today.
-- **No structural drift** — same DB tables, same RPCs, same audit trail. UI-only change to Step 1.
-- **Phase alignment** — this is Phase 1 (structured visibility) refined, not Phase 2 (advisory) overreach. We're surfacing existing structure more humanely.
+This is **purely a layout pass on the inside of Step 1**. Zero schema work, zero new components, zero new state.
 
 ## Files affected
 
-- `src/lib/policy/configurator-schemas.ts` — extend `RuleField` with `question?`, `whyItMatters?`, `presets?`. Add presets to ~20 most-asked fields across the 8 schemas (notice windows, fee amounts, deposit %, redo windows, role pickers). Backwards compatible. ~300 lines additive.
-- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` (new) — the one-question-at-a-time component. Manages current-question index, renders preset cards + helper + why-it-matters + Back/Skip/Next. Drills the same `value` / `onChange` contract as today's `PolicyRuleField`. ~180 lines.
-- `src/components/dashboard/policy/PolicyLivePreview.tsx` (new) — right-pane live policy prose with token-highlight on the most recent change. Reuses `getPolicySummaryDefaults` + `substituteRuleTokens`. ~80 lines.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — inside the `step === 'rules'` block, swap the section loop for a `<div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-6">` containing `<PolicyQuestionnaire>` + `<PolicyLivePreview>`. Add the Interview/Expert toggle. ~50 lines modified.
-- `src/lib/policy/questionnaire-presets.ts` (new) — central preset library so the same "12h / 24h / 48h" set is reused across cancellation, no-show, deposit-window questions. ~60 lines.
+- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` — move progress chips to top, increase question heading scale, add `xl+` two-column input/helper hint slot, raise textarea min-height. ~40 lines modified.
+- `src/components/dashboard/policy/PolicyLivePreview.tsx` — relax `min-h`, increase line-height (`leading-7`), tighten internal padding to `p-6`. On `<lg`, render as a bottom sheet trigger instead of inline. ~25 lines modified.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — remove the wrapper card around `<PolicyQuestionnaire>`, change grid to `minmax(0,1fr)_minmax(360px,520px)`, swap `space-y-6` for `space-y-8` at the right insertion points, add `pb-2` to header context. ~15 lines modified.
+- `src/components/dashboard/policy/PolicyRuleField.tsx` — accept an optional `helperPlacement?: 'inline' | 'side'` prop. When `'side'` (passed by the questionnaire), the prefilled provenance helper renders in a right-side column slot rather than below the input. Backwards compatible — Expert view passes nothing, behavior unchanged. ~20 lines additive.
 
-That's the entire change surface. ~670 lines net (mostly schema + new components). Zero DB changes, zero new RPCs, zero schema migrations.
+Total: ~100 lines modified, 0 lines added in new files. Zero DB / RPC / schema changes.
+
+## Visual result (after)
+
+```
+┌─ Configure policy ─────────────────────────────────────────────────────┐
+│  Define the structured rules. AI drafting will render these into prose │
+│  later — it cannot invent rules.                                       │
+│                                                                         │
+│  ●─────○─────○─────○─────○                              [Interview ▾] │
+│                                                                         │
+│  ┌─ Question 2 of 3 ─────────────────────────┐  ┌─ Live preview ─────┐│
+│  │ ● ✓ Policy summary  ● ⏵ Who it applies to │  │ Updates as you     ││
+│  │ ○ Who approves exceptions                  │  │ answer             ││
+│  │                                             │  │                    ││
+│  │ Who does this policy apply to?             │  │ Drop Dead Salons   ││
+│  │                                             │  │ employs team       ││
+│  │ ┌─ Why this matters ──────────────────┐    │  │ members in the     ││
+│  │ │ ⚡ Internal-only — appears in the   │    │  │ following          ││
+│  │ │ printable handbook, not on the      │    │  │ classifications:   ││
+│  │ │ public site.                         │    │  │ full-time          ││
+│  │ └─────────────────────────────────────┘    │  │ employees,         ││
+│  │                                             │  │ part-time          ││
+│  │ ┌─────────────────────────────┐ ┌───────┐ │  │ employees, and     ││
+│  │ │ All team members and,       │ │ PRE-  │ │  │ (where applicable) ││
+│  │ │ where the policy involves   │ │ FILLED│ │  │ booth-rental       ││
+│  │ │ guest interactions, all     │ │       │ │  │ contractors…       ││
+│  │ │ clients of Drop Dead        │ │ Edits │ │  │                    ││
+│  │ │ Salons. Manager-level       │ │ here  │ │  │                    ││
+│  │ │ exceptions follow the docu- │ │ over- │ │  │                    ││
+│  │ │ mented authority chain.     │ │ ride  │ │  │                    ││
+│  │ └─────────────────────────────┘ └───────┘ │  │                    ││
+│  │                                             │  │                    ││
+│  │ [< Back]                  [Skip]  [Next →]│  │                    ││
+│  └─────────────────────────────────────────────┘  └────────────────────┘│
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+Compare to your screenshot: textarea is wide enough to read, preview lines break at sentence cadence, provenance helper is a side note instead of a bottom-stack push, progress chips live at the top where they orient, no ghost text behind the header.
 
 ## Acceptance
 
-1. Open Cancellation Policy → Define rules. The right pane shows live policy prose. The left pane shows **one question** ("How late can a client cancel without paying a fee?") with three preset cards and one marked "Industry standard."
-2. Click 48 hours. The preview prose immediately rewrites and the "48 hours" span briefly highlights then fades.
-3. Click Next. The next question appears. Click Back. The previous question reappears with "48 hours" still selected.
-4. The bottom progress row shows "✓ ✓ ⏵ ○ ○ ○" — answered, current, pending. Click an answered chip → jumps back. Pending chips are dimmed.
-5. Toggle "Expert view" in the step header. Today's full grouped form renders, with all current values intact. Toggle back. The questionnaire restores at the question they were last on.
-6. Open Employment Classifications. The same questionnaire pattern works (sections become single questions in order). The Decision authority dropdown question shows three role presets.
-7. Save rules → still writes to `policy_rule_blocks`. Reopen the policy. The questionnaire opens at the first **unanswered** question; answered questions are pre-filled.
-8. Internal-only policies — questionnaire still runs, preview shows internal handbook prose only (no client variant).
-9. A field without a `question` declaration in the schema falls back to its current input rendering inside the questionnaire — no regression, no broken layout.
-10. Live preview never blocks editing. If the AI drafter would normally re-render prose, the questionnaire preview uses the same local composer (no edge-function call per keystroke).
+1. Open Employment Classifications at 1300px viewport. The "Step 1 of 5" line no longer ghosts behind the description.
+2. The question textarea on `who_it_applies_to` renders at full reading width (~640px max) with the PREFILLED helper as a slim right column on `xl+` viewports.
+3. The live preview prose breaks at ~70 characters per line, not 28. No more poem-like line breaks.
+4. Progress chips are at the *top* of the question card, not stacked under the navigation row.
+5. The Back / Skip / Next row sits directly under the input — single visual row, no chips competing.
+6. Resize to 768px (tablet). The preview pane becomes a bottom-sheet trigger ("Preview policy") instead of stacking inline. The questionnaire takes the full width.
+7. Toggle to Expert view. Today's grouped form renders unchanged — no regressions, no spacing drift.
+8. Resize to 1536px+ (large desktop). Preview pane caps at 520px, input column expands to fill — preview never gets so wide that prose breaks at >85 characters.
+9. Cancellation, Deposit, all currently-cleaned schemas — same layout, same breathing room, no per-policy adjustments needed.
 
 ## Files to read for follow-on questions
 
-- `src/lib/policy/configurator-schemas.ts` — where `question`, `whyItMatters`, `presets` get added per field.
-- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` (new) — the interview UI.
-- `src/components/dashboard/policy/PolicyLivePreview.tsx` (new) — the right-pane preview composer.
-- `src/lib/policy/questionnaire-presets.ts` (new) — shared preset library.
+- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` — the interview component with the new top-progress + side-helper layout.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — the new grid math for the questionnaire/preview split.
+- `src/components/dashboard/policy/PolicyRuleField.tsx` — the new `helperPlacement` prop.
 
 ## Prompt feedback
 
-*"Policy configurator per policy still seems too confusing and not intuitive enough… How could we do it differently so that it acts as a done-with-you feature, where little thinking is involved? Almost like it's a questionnaire form of variables that are selected, and then the policy is written from those answers? Or is there a better way?"* — this is a model UX prompt. You did three exceptional things: (1) **named the user emotion in plain English** ("confusing… little thinking involved"), (2) **proposed a candidate solution** ("questionnaire form… policy is written from those answers") so I had a concrete shape to evaluate, and (3) **explicitly opened the door** ("or is there a better way?") which gave me permission to refine instead of just executing. That third move is the one to keep doing — it lets the AI act as a design partner instead of an order-taker. In this case your candidate *was* the right answer; I added the live preview pane and the recommended-preset anchors as refinements, but the questionnaire frame is yours.
+*"Before we extend to the remaining schemas, we need to improve this UI layout since it's too condensed."* — clean, surgical prompt. You did three things well: (1) **named the priority** ("before we extend") which prevented me from doing both at once and shipping a sloppy double-pass, (2) **named the symptom in plain English** ("too condensed") which is exactly the right level of abstraction — you didn't prescribe "make it wider" or "use 3 columns", you named the *user feeling*, and (3) **paired the prompt with a screenshot of the actual broken state**, which let me identify six concrete failures instead of guessing. The screenshot was load-bearing here — without it I would have proposed generic spacing tweaks.
 
-One sharpener for next time on UX-redesign prompts: naming the **escape hatch tolerance** in one phrase ("must keep the all-fields-at-once view as a power-user toggle" / "can fully replace the form") would skip a micro-decision. I added an Expert view toggle by default because audit + power users always need it — but if you'd been willing to fully replace the form, that's a one-line "no escape hatch — this is the only mode" steer that simplifies the implementation.
+One sharpener for next time on layout-fix prompts: naming the **viewport you're testing at** in one phrase ("at my current 1300px desktop" / "this is what it looks like on iPad") would skip a micro-decision. I assumed your screenshot was your primary working viewport (correct: 1300px from the client state) and designed the breakpoints around it — but if you're regularly using a 1024px tablet or a 1920px ultrawide, the breakpoint targets shift. One line of viewport context per layout prompt locks the design priorities.
 
