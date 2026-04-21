@@ -625,15 +625,15 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               },
               {
                 key: 'offers_packages',
-                label: 'We sell packages or memberships',
-                staticHelper: 'Unlocks package expiration & membership policies',
+                label: 'We sell prepaid packages (series of services)',
+                staticHelper: 'Unlocks package expiration and redemption policies',
                 detected: defaults.detected_offers_packages,
                 detectedReason: defaults.packages_reason,
               },
               {
                 key: 'offers_memberships',
-                label: 'We offer ongoing memberships',
-                staticHelper: 'Adds membership-specific terms',
+                label: 'We sell recurring memberships (monthly / annual)',
+                staticHelper: 'Unlocks auto-renewal and cancellation policies',
                 detected: defaults.detected_offers_memberships,
                 detectedReason: defaults.memberships_reason,
               },
@@ -641,6 +641,27 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 key: 'serves_minors',
                 label: 'We serve clients under 18',
                 staticHelper: 'Adds guardian consent and minor-specific rules',
+                detected: false,
+                detectedReason: null,
+              },
+              {
+                key: 'uses_tip_pooling',
+                label: 'We pool tips across the team',
+                staticHelper: 'Unlocks tip-pool allocation and disclosure policies',
+                detected: false,
+                detectedReason: null,
+              },
+              {
+                key: 'uses_refund_clawback',
+                label: 'We claw back commission on refunds',
+                staticHelper: 'Unlocks refund-clawback and commission adjustment policies',
+                detected: false,
+                detectedReason: null,
+              },
+              {
+                key: 'has_booth_renters',
+                label: 'We have booth renters or 1099 contractors',
+                staticHelper: 'Unlocks booth-rental, chemical liability, and supplies-ownership policies',
                 detected: false,
                 detectedReason: null,
               },
@@ -663,8 +684,6 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                   helper = `Adds ${impact.total} ${noun}${breakdown} to your library`;
                 }
                 helperEmphasis = hasChanged;
-              } else if (impact && !impact.hasLibrary) {
-                helper = `${row.staticHelper} (coming soon)`;
               }
               return (
                 <Label
