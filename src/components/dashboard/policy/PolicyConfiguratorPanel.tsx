@@ -111,6 +111,7 @@ export function PolicyConfiguratorPanel({
   const adopt = useAdoptAndInitPolicy();
   const { data, isLoading, refetch } = usePolicyConfiguratorData(entry.key);
   const save = useSavePolicyRuleBlocks();
+  const { effectiveOrganization } = useOrganizationContext();
 
   // Wave 28.11.6 — applicability banner. When this policy requires a service
   // the operator's profile says they don't offer (e.g., extensions for a solo
@@ -137,7 +138,11 @@ export function PolicyConfiguratorPanel({
 
   const allFields = useMemo(() => schema.sections.flatMap((s) => s.fields), [schema]);
 
-  // Hydrate values once data arrives.
+  // Hydrate values once data arrives. Brand tokens in schema defaults
+  // ({{ORG_NAME}}, {{PLATFORM_NAME}}) are resolved at this moment so the
+  // editor and the saved record both read concretely. Operator-saved values
+  // (fromBlocks) are sacred — never re-interpolated.
+  const orgNameForTokens = effectiveOrganization?.name ?? undefined;
   useEffect(() => {
     if (!data || hydrated) return;
     const fromBlocks: Record<string, unknown> = {};
@@ -147,10 +152,14 @@ export function PolicyConfiguratorPanel({
         ? (v as { v: unknown }).v
         : v;
     });
-    const seeded = { ...defaultsFromSchema(allFields), ...fromBlocks };
+    const interpolated = interpolateDefaults(defaultsFromSchema(allFields), {
+      orgName: orgNameForTokens,
+      platformName: PLATFORM_NAME,
+    });
+    const seeded = { ...interpolated, ...fromBlocks };
     setValues(seeded);
     setHydrated(true);
-  }, [data, hydrated, allFields]);
+  }, [data, hydrated, allFields, orgNameForTokens]);
 
   const versionId = data?.versionId;
   const versionNumber = data?.versionNumber ?? 1;
