@@ -3,8 +3,28 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStylistLevels, StylistLevel } from './useStylistLevels';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useUserPlanMap } from './useCompensationPlans';
+import {
+  resolveCommissionForPlan,
+  type ResolveContext,
+} from '@/lib/compensation/resolve-plan';
 
-export type CommissionSource = 'override' | 'location_override' | 'level' | 'unassigned';
+/**
+ * Doctrine: This is the canonical commission entrypoint. Resolution priority:
+ *  1) per-stylist override
+ *  2) assigned compensation plan (delegates to resolveCommissionForPlan)
+ *      — except for `level_based` plans which fall through to the legacy
+ *        level/location-override path so existing tier UX stays intact.
+ *  3) location commission override
+ *  4) stylist-level default
+ *  5) unassigned (0%)
+ */
+export type CommissionSource =
+  | 'override'
+  | 'location_override'
+  | 'level'
+  | 'plan'
+  | 'unassigned';
 
 export interface ResolvedCommission {
   serviceRate: number;
