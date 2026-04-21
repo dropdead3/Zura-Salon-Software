@@ -1059,3 +1059,9 @@ function SourceBreakdownTile({
     </Card>
   );
 }
+
+function StepHealthSection() {
+  const { data, isLoading } = useOrgSetupFunnelHealth();
+  return <StepHealthCard rows={data} isLoading={isLoading} stepLabels={STEP_LABELS} />;
+}
+
