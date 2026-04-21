@@ -25190,6 +25190,44 @@ export type Database = {
           },
         ]
       }
+      setup_outreach_log: {
+        Row: {
+          created_at: string
+          exported_at: string
+          exported_by: string | null
+          id: string
+          organization_id: string
+          step_label: string | null
+          step_number: number
+        }
+        Insert: {
+          created_at?: string
+          exported_at?: string
+          exported_by?: string | null
+          id?: string
+          organization_id: string
+          step_label?: string | null
+          step_number: number
+        }
+        Update: {
+          created_at?: string
+          exported_at?: string
+          exported_by?: string | null
+          id?: string
+          organization_id?: string
+          step_label?: string | null
+          step_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_outreach_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setup_pause_events: {
         Row: {
           free_text: string | null

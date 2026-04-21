@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import {
   TrendingDown,
@@ -8,8 +8,16 @@ import {
   Users,
   ChevronDown,
   ChevronRight,
+  PieChart as PieChartIcon,
+  CheckCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { buildCsvString } from "@/utils/csvExport";
+
+const OUTREACH_COOLDOWN_DAYS = 7;
+const OUTREACH_COOLDOWN_MS = OUTREACH_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
 import {
   Card,
   CardContent,
@@ -63,6 +71,8 @@ const SOURCE_OPTIONS: { key: SourceKey; label: string }[] = [
 interface DroppedOrg {
   id: string;
   lastActivityMs: number;
+  contacted: boolean;
+  lastContactedMs: number | null;
 }
 
 interface FunnelRow {
@@ -72,6 +82,8 @@ interface FunnelRow {
   skipped: number;
   /** Orgs that viewed this step but never completed it (drop-offs), sorted hottest-first */
   droppedOrgs: DroppedOrg[];
+  /** Weekly drop-off counts (oldest → newest) for sparkline */
+  weeklyDrops: number[];
 }
 
 /**
@@ -84,6 +96,8 @@ interface FunnelRow {
  * before signup_source was tracked (NULL).
  */
 export default function SetupFunnel() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [range, setRange] = useState<RangeKey>("30d");
   const [source, setSource] = useState<SourceKey>("all");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
@@ -187,6 +201,32 @@ export default function SetupFunnel() {
     staleTime: 60_000,
   });
 
+  // Outreach log: which (org, step) pairs have been contacted within the cooldown
+  const { data: outreachData } = useQuery({
+    queryKey: ["platform-setup-outreach"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - OUTREACH_COOLDOWN_MS).toISOString();
+      const { data: rows, error } = await (supabase as any)
+        .from("setup_outreach_log")
+        .select("organization_id, step_number, exported_at")
+        .gte("exported_at", since)
+        .order("exported_at", { ascending: false })
+        .limit(10000);
+      if (error) {
+        console.warn("[SetupFunnel] outreach log fetch failed:", error);
+        return new Map<string, number>();
+      }
+      // Key: `${orgId}::${stepNumber}` → most recent exported_at ms
+      const m = new Map<string, number>();
+      for (const r of (rows ?? []) as any[]) {
+        const k = `${r.organization_id}::${r.step_number}`;
+        if (!m.has(k)) m.set(k, new Date(r.exported_at).getTime());
+      }
+      return m;
+    },
+    staleTime: 30_000,
+  });
+
   // Per-org last activity (max of any event timestamp). Used to weight
   // dropped orgs hottest-first so platform ops triage warm leads.
   const lastActivityByOrg = useMemo(() => {
@@ -208,9 +248,10 @@ export default function SetupFunnel() {
     if (!data?.events) return [];
     const map = new Map<
       number,
-      Omit<FunnelRow, "droppedOrgs"> & {
+      Omit<FunnelRow, "droppedOrgs" | "weeklyDrops"> & {
         viewedOrgs: Set<string>;
         completedOrgs: Set<string>;
+        viewedAt: Map<string, number>;
       }
     >();
     for (const ev of data.events) {
@@ -224,10 +265,16 @@ export default function SetupFunnel() {
           skipped: 0,
           viewedOrgs: new Set<string>(),
           completedOrgs: new Set<string>(),
+          viewedAt: new Map<string, number>(),
         };
+      const tMs = new Date(ev.occurred_at).getTime();
       if (ev.event === "viewed") {
         row.viewed += 1;
         row.viewedOrgs.add(ev.organization_id);
+        const prev = row.viewedAt.get(ev.organization_id);
+        if (prev === undefined || tMs < prev) {
+          row.viewedAt.set(ev.organization_id, tMs);
+        }
       }
       if (ev.event === "completed") {
         row.completed += 1;
@@ -236,23 +283,75 @@ export default function SetupFunnel() {
       if (ev.event === "skipped") row.skipped += 1;
       map.set(stepNum, row);
     }
+
+    // 8-week sparkline window (oldest → newest)
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const SPARKLINE_WEEKS = 8;
+    const nowMs = Date.now();
+    const windowStartMs = nowMs - SPARKLINE_WEEKS * WEEK_MS;
+
     return Array.from(map.values())
       .sort((a, b) => a.step_number - b.step_number)
-      .map((r) => ({
-        step_number: r.step_number,
-        viewed: r.viewed,
-        completed: r.completed,
-        skipped: r.skipped,
-        droppedOrgs: Array.from(r.viewedOrgs)
-          .filter((id) => !r.completedOrgs.has(id))
-          .map((id) => ({
-            id,
-            lastActivityMs: lastActivityByOrg.get(id) ?? 0,
-          }))
-          // Hottest (most recent activity) first — ops triage warm leads
-          .sort((a, b) => b.lastActivityMs - a.lastActivityMs),
-      }));
-  }, [data?.events, lastActivityByOrg]);
+      .map((r) => {
+        const droppedIds = Array.from(r.viewedOrgs).filter(
+          (id) => !r.completedOrgs.has(id),
+        );
+        const weeklyDrops = new Array(SPARKLINE_WEEKS).fill(0);
+        for (const id of droppedIds) {
+          const ts = r.viewedAt.get(id) ?? lastActivityByOrg.get(id) ?? 0;
+          if (ts < windowStartMs) continue;
+          const idx = Math.min(
+            SPARKLINE_WEEKS - 1,
+            Math.floor((ts - windowStartMs) / WEEK_MS),
+          );
+          weeklyDrops[idx] += 1;
+        }
+        return {
+          step_number: r.step_number,
+          viewed: r.viewed,
+          completed: r.completed,
+          skipped: r.skipped,
+          weeklyDrops,
+          droppedOrgs: droppedIds
+            .map((id) => {
+              const k = `${id}::${r.step_number}`;
+              const lastContactedMs = outreachData?.get(k) ?? null;
+              return {
+                id,
+                lastActivityMs: lastActivityByOrg.get(id) ?? 0,
+                contacted: lastContactedMs !== null,
+                lastContactedMs,
+              };
+            })
+            // Uncontacted first, then hottest
+            .sort((a, b) => {
+              if (a.contacted !== b.contacted) return a.contacted ? 1 : -1;
+              return b.lastActivityMs - a.lastActivityMs;
+            }),
+        };
+      });
+  }, [data?.events, lastActivityByOrg, outreachData]);
+
+  // Source breakdown across the whole cohort (orgs that touched setup)
+  const sourceBreakdown = useMemo(() => {
+    if (!data) return [] as { source: string; count: number; pct: number }[];
+    const orgIds = new Set<string>();
+    for (const e of data.events) orgIds.add(e.organization_id);
+    for (const c of data.commits) orgIds.add(c.organization_id);
+    const counts = new Map<string, number>();
+    for (const id of orgIds) {
+      const src = data.orgSources.get(id) ?? "legacy";
+      counts.set(src, (counts.get(src) ?? 0) + 1);
+    }
+    const total = orgIds.size || 1;
+    return Array.from(counts.entries())
+      .map(([source, count]) => ({
+        source,
+        count,
+        pct: (count / total) * 100,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [data]);
 
   const totals = useMemo(() => {
     const orgs = new Set(data?.events.map((e) => e.organization_id) ?? []);
@@ -359,7 +458,7 @@ export default function SetupFunnel() {
         </div>
 
         {/* Top stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
           <StatTile
             icon={<Users className="w-5 h-5 text-primary" />}
             label="Orgs started"
@@ -387,6 +486,10 @@ export default function SetupFunnel() {
                   ? `${totals.avgTimeMinutes.toFixed(1)} min`
                   : "—"
             }
+          />
+          <SourceBreakdownTile
+            isLoading={isLoading}
+            breakdown={sourceBreakdown}
           />
         </div>
 
@@ -473,6 +576,12 @@ export default function SetupFunnel() {
                             />
                             <div className="text-right w-16">
                               <div className="font-sans text-xs text-muted-foreground">
+                                Trend
+                              </div>
+                              <Sparkline values={row.weeklyDrops} />
+                            </div>
+                            <div className="text-right w-16">
+                              <div className="font-sans text-xs text-muted-foreground">
                                 Rate
                               </div>
                               <div className="font-display text-sm tracking-wide tabular-nums">
@@ -494,35 +603,72 @@ export default function SetupFunnel() {
                         <div className="px-4 pb-4 pt-2 border-t border-border/60 mt-2">
                           <div className="flex items-center justify-between gap-2 mb-2">
                             <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-                              Dropped at this step ({row.droppedOrgs.length}) — hottest first
+                              Dropped at this step ({row.droppedOrgs.length})
+                              {(() => {
+                                const uncontacted = row.droppedOrgs.filter(
+                                  (d) => !d.contacted,
+                                ).length;
+                                if (uncontacted === row.droppedOrgs.length)
+                                  return " — hottest first";
+                                return ` — ${uncontacted} uncontacted, hottest first`;
+                              })()}
                             </div>
                             <button
                               type="button"
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                downloadDroppedCsv(
-                                  row.step_number,
-                                  STEP_LABELS[row.step_number] ?? `step_${row.step_number}`,
-                                  row.droppedOrgs,
-                                  data?.orgNames ?? new Map(),
-                                  data?.orgSources ?? new Map(),
+                                const uncontactedOrgs = row.droppedOrgs.filter(
+                                  (d) => !d.contacted,
+                                );
+                                if (uncontactedOrgs.length === 0) {
+                                  toast.info(
+                                    `All ${row.droppedOrgs.length} orgs contacted within ${OUTREACH_COOLDOWN_DAYS}d cooldown`,
+                                  );
+                                  return;
+                                }
+                                await downloadDroppedCsvAndLog({
+                                  stepNumber: row.step_number,
+                                  stepLabel:
+                                    STEP_LABELS[row.step_number] ??
+                                    `step_${row.step_number}`,
+                                  rows: uncontactedOrgs,
+                                  names: data?.orgNames ?? new Map(),
+                                  sources: data?.orgSources ?? new Map(),
+                                  exportedBy: user?.id ?? null,
+                                });
+                                queryClient.invalidateQueries({
+                                  queryKey: ["platform-setup-outreach"],
+                                });
+                                toast.success(
+                                  `Exported ${uncontactedOrgs.length} orgs · marked as contacted (${OUTREACH_COOLDOWN_DAYS}d cooldown)`,
                                 );
                               }}
                               className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded border border-border/60 hover:border-border"
                             >
-                              Export CSV
+                              Export uncontacted CSV
                             </button>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                             {row.droppedOrgs.slice(0, 60).map((d) => {
                               const src = data?.orgSources.get(d.id) ?? "legacy";
                               const recency = formatRecency(d.lastActivityMs);
+                              const contactedRecency = d.lastContactedMs
+                                ? formatRecency(d.lastContactedMs)
+                                : null;
                               return (
                                 <div
                                   key={d.id}
-                                  className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
-                                  title={`${d.id}\nLast activity: ${recency}`}
+                                  className={cn(
+                                    "flex items-center gap-2 rounded-md border px-2.5 py-1.5",
+                                    d.contacted
+                                      ? "border-border/40 bg-muted/10 opacity-60"
+                                      : "border-border/60 bg-muted/20",
+                                  )}
+                                  title={`${d.id}\nLast activity: ${recency}${contactedRecency ? `\nContacted: ${contactedRecency} ago` : ""}`}
                                 >
+                                  {d.contacted && (
+                                    <CheckCheck className="w-3 h-3 text-muted-foreground shrink-0" />
+                                  )}
                                   <span className="font-sans text-xs text-foreground truncate flex-1">
                                     {data?.orgNames.get(d.id) ?? d.id.slice(0, 8)}
                                   </span>
@@ -600,13 +746,33 @@ function formatRecency(ms: number): string {
   return `${months}mo`;
 }
 
-function downloadDroppedCsv(
-  stepNumber: number,
-  stepLabel: string,
-  rows: DroppedOrg[],
-  names: Map<string, string>,
-  sources: Map<string, string>,
-) {
+async function downloadDroppedCsvAndLog(args: {
+  stepNumber: number;
+  stepLabel: string;
+  rows: DroppedOrg[];
+  names: Map<string, string>;
+  sources: Map<string, string>;
+  exportedBy: string | null;
+}) {
+  const { stepNumber, stepLabel, rows, names, sources, exportedBy } = args;
+
+  // Write outreach log entries (best-effort, fire-and-await)
+  if (rows.length > 0) {
+    const logRows = rows.map((r) => ({
+      organization_id: r.id,
+      step_number: stepNumber,
+      step_label: stepLabel,
+      exported_by: exportedBy,
+    }));
+    const { error } = await (supabase as any)
+      .from("setup_outreach_log")
+      .insert(logRows);
+    if (error) {
+      console.warn("[SetupFunnel] outreach log write failed:", error);
+    }
+  }
+
+  // Build CSV via shared util (RFC 4180 escaping)
   const header = [
     "organization_id",
     "organization_name",
@@ -614,21 +780,19 @@ function downloadDroppedCsv(
     "last_activity_iso",
     "days_since_activity",
   ];
-  const csv = [header.join(",")]
-    .concat(
-      rows.map((r) => {
-        const name = (names.get(r.id) ?? "").replace(/"/g, '""');
-        const src = sources.get(r.id) ?? "legacy";
-        const iso = r.lastActivityMs
-          ? new Date(r.lastActivityMs).toISOString()
-          : "";
-        const days = r.lastActivityMs
-          ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
-          : "";
-        return [r.id, `"${name}"`, src, iso, days].join(",");
-      }),
-    )
-    .join("\n");
+  const body = rows.map((r) => {
+    const name = names.get(r.id) ?? "";
+    const src = sources.get(r.id) ?? "legacy";
+    const iso = r.lastActivityMs
+      ? new Date(r.lastActivityMs).toISOString()
+      : "";
+    const days = r.lastActivityMs
+      ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
+      : "";
+    return [r.id, name, src, iso, days];
+  });
+  const csv = buildCsvString([header, ...body]);
+
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -662,6 +826,99 @@ function StatTile({
               <Skeleton className="h-7 w-20 mt-2" />
             ) : (
               <div className={cn(tokens.kpi.value, "mt-1")}>{value}</div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Sparkline — compact 8-week drop trend per step. Uses semantic foreground
+ * tokens (no hardcoded colors) so it respects theme.
+ */
+function Sparkline({ values }: { values: number[] }) {
+  if (!values || values.length === 0) {
+    return <div className="h-5" />;
+  }
+  const max = Math.max(1, ...values);
+  const W = 56;
+  const H = 18;
+  const stepX = values.length > 1 ? W / (values.length - 1) : W;
+  const points = values
+    .map((v, i) => {
+      const x = i * stepX;
+      const y = H - (v / max) * H;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <svg
+      width={W}
+      height={H}
+      viewBox={`0 0 ${W} ${H}`}
+      className="ml-auto block"
+      aria-label={`Drops over last ${values.length} weeks`}
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke="hsl(var(--foreground))"
+        strokeWidth={1.25}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.7}
+      />
+    </svg>
+  );
+}
+
+/**
+ * SourceBreakdownTile — 5th top-line tile breaking the cohort by acquisition
+ * source so platform ops sees attribution health at a glance.
+ */
+function SourceBreakdownTile({
+  isLoading,
+  breakdown,
+}: {
+  isLoading: boolean;
+  breakdown: { source: string; count: number; pct: number }[];
+}) {
+  return (
+    <Card className="relative">
+      <CardContent className="p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+            <PieChartIcon className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className={tokens.kpi.label}>Source mix</div>
+            {isLoading ? (
+              <Skeleton className="h-7 w-32 mt-2" />
+            ) : breakdown.length === 0 ? (
+              <div className="font-display text-sm tracking-wide text-muted-foreground mt-2">
+                —
+              </div>
+            ) : (
+              <div className="mt-2 space-y-1">
+                {breakdown.slice(0, 3).map((b) => (
+                  <div
+                    key={b.source}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <SourceBadge source={b.source} />
+                    <span className="font-display text-xs tracking-wide tabular-nums text-foreground">
+                      {b.pct.toFixed(0)}%
+                    </span>
+                  </div>
+                ))}
+                {breakdown.length > 3 && (
+                  <div className="font-sans text-[10px] text-muted-foreground pt-0.5">
+                    + {breakdown.length - 3} more
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
