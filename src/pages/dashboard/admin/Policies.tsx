@@ -25,7 +25,7 @@ import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
 import { computeHiddenByReason } from '@/lib/policy/applicability-summary';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
-import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
+import { PolicyLibraryRow } from '@/components/dashboard/policy/PolicyLibraryRow';
 import {
   CORE_FUNCTION_POLICY_KEYS,
   CORE_FUNCTION_CONSUMERS,
@@ -605,10 +605,10 @@ export default function Policies() {
                       ? requiredSorted.filter((e) => !adoptedByKey.has(e.key))
                       : requiredSorted;
 
-                    const renderCard = (entry: typeof filteredLibrary[number]) => {
+                    const renderRow = (entry: typeof filteredLibrary[number]) => {
                       const isCore = isCoreFunctionPolicy(entry.key);
                       return (
-                        <PolicyLibraryCard
+                        <PolicyLibraryRow
                           key={entry.id}
                           entry={entry}
                           adopted={adoptedByKey.get(entry.key)}
