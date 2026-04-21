@@ -721,7 +721,12 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
             </Card>
           )}
 
-          {activeCategory === 'onboarding' && <OnboardingConfigurator />}
+          {activeCategory === 'onboarding' && (
+            <div className="space-y-6">
+              <OnboardingConfigurator />
+              <SetupResetCard />
+            </div>
+          )}
           {activeCategory === 'leaderboard' && <LeaderboardConfigurator />}
           {activeCategory === 'integrations' && <IntegrationsTab />}
 
