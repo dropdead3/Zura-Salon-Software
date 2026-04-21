@@ -195,6 +195,9 @@ export default function OrganizationSetup() {
   // Wave 13D.G1 — onChange snapshots are stored in a ref. We also keep a
   // setter that flushes synchronously on Next so a fast click doesn't drop
   // the latest payload between effect tick and persist.
+  // Wave 13G.C — track per-step "touched" so SetupSummary can distinguish
+  // user input from default-on-mount payloads.
+  const touchedKeysRef = useRef<Set<string>>(new Set());
   const handleStepChange = useCallback((data: Record<string, unknown>) => {
     stepDataRef.current = data;
   }, []);
@@ -210,9 +213,16 @@ export default function OrganizationSetup() {
       const hasPayload = Object.keys(stepDataRef.current).length > 0;
       const nextStepKey = renderableSteps[nextIndex]?.key;
       if (advance >= 0 && (hasPayload || skipping)) {
+        // Wave 13G.C — stamp __touched once the user advances past a step.
+        if (advance === 1 && hasPayload && !skipping) {
+          touchedKeysRef.current.add(currentStep.key);
+        }
+        const payload = hasPayload
+          ? { ...stepDataRef.current, __touched: touchedKeysRef.current.has(currentStep.key) }
+          : { __skipped__: true };
         await save.mutateAsync({
           stepKey: currentStep.key,
-          data: hasPayload ? stepDataRef.current : { __skipped__: true },
+          data: payload,
           currentStep: nextIndex,
           currentStepKey: nextStepKey,
         });
@@ -237,8 +247,20 @@ export default function OrganizationSetup() {
           metadata: isOffRamp ? { reason: "not_a_salon" } : undefined,
         });
       }
-      // Single-step re-entry: commit just this step and bounce back to settings
+      // Single-step re-entry: commit just this step and bounce back to settings.
+      // Wave 13G.B — actually invoke the orchestrator (was draft-only before),
+      // scoped to the single step so DB columns get the new value.
       if (advance === 1 && singleStepKey) {
+        try {
+          await commit.mutateAsync({
+            organization_id: orgId,
+            step_keys: [currentStep.key],
+          });
+        } catch (err) {
+          console.error("[OrganizationSetup] scoped commit failed:", err);
+          toast.error("Saved your draft, but couldn't apply the change. Try again from settings.");
+          return;
+        }
         toast.success("Saved");
         navigate(returnTo || "/dashboard");
         return;
