@@ -157,34 +157,68 @@ export function PolicyLivePreview({
 
   const segments = substituteWithHighlight(composed, values, showHighlight);
 
-  return (
-    <aside
-      className={cn(
-        'rounded-xl border border-border bg-card p-5 sticky top-4 self-start',
-        'min-h-[260px] max-h-[calc(100vh-8rem)] overflow-y-auto',
+  const previewBody = (
+    <div className="font-sans text-sm leading-7 text-foreground whitespace-pre-wrap">
+      {segments.map((seg, i) =>
+        seg.kind === 'mark' ? (
+          <mark
+            key={i}
+            className="bg-primary/20 text-foreground rounded px-0.5 transition-colors duration-700"
+          >
+            {seg.value}
+          </mark>
+        ) : (
+          <span key={i}>{seg.value}</span>
+        ),
       )}
-      aria-label="Live policy preview"
-    >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h4 className={cn(tokens.card.title, 'text-xs')}>Live preview</h4>
-        <span className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground">
-          Updates as you answer
-        </span>
-      </div>
-      <div className="font-sans text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-        {segments.map((seg, i) =>
-          seg.kind === 'mark' ? (
-            <mark
-              key={i}
-              className="bg-primary/20 text-foreground rounded px-0.5 transition-colors duration-700"
-            >
-              {seg.value}
-            </mark>
-          ) : (
-            <span key={i}>{seg.value}</span>
-          ),
+    </div>
+  );
+
+  return (
+    <>
+      {/* Inline preview pane — visible only on lg+ to avoid stacking on tablets */}
+      <aside
+        className={cn(
+          'hidden lg:block rounded-xl border border-border bg-card p-6 sticky top-4 self-start',
+          'min-h-[260px] max-h-[calc(100vh-8rem)] overflow-y-auto',
         )}
+        aria-label="Live policy preview"
+      >
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <h4 className={cn(tokens.card.title, 'text-xs')}>Live preview</h4>
+          <span className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground">
+            Updates as you answer
+          </span>
+        </div>
+        {previewBody}
+      </aside>
+
+      {/* Below lg: collapsed bottom-sheet trigger so the questionnaire owns
+          the full viewport width without inline stacking pushing the form
+          off-screen. */}
+      <div className="lg:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full font-sans"
+              type="button"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Preview policy
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className={cn(tokens.card.title, 'text-xs text-left')}>
+                Live preview
+              </SheetTitle>
+            </SheetHeader>
+            <div className="mt-4">{previewBody}</div>
+          </SheetContent>
+        </Sheet>
       </div>
-    </aside>
+    </>
   );
 }
