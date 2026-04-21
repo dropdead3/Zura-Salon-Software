@@ -11,7 +11,7 @@
  * existing rule blocks, applicability, and surface mappings for editing.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Archive, Check, RotateCcw } from 'lucide-react';
+import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Archive, Check, RotateCcw, ChevronRight } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { LuxeLoader } from '@/components/ui/loaders/LuxeLoader';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
@@ -247,7 +247,14 @@ export function PolicyConfiguratorPanel({
         required: !!f.required,
       }))
       .filter((b) => b.value.v !== null && b.value.v !== '');
-    save.mutate({ versionId, blocks }); // stay open so operator can move to Applicability tab
+    // Advance to the Applicability tab on success so the "Save and continue"
+    // CTA fulfills its implied next step. Surfaces tab follows after that
+    // (or is hidden for internal-only policies — operator can step through
+    // remaining tabs manually from there).
+    save.mutate(
+      { versionId, blocks },
+      { onSuccess: () => setTab('applicability') },
+    );
   };
 
   const categoryMeta = POLICY_CATEGORY_META[entry.category];
@@ -612,7 +619,8 @@ export function PolicyConfiguratorPanel({
                   ) : (
                     <Save className="w-4 h-4 mr-2" />
                   )}
-                  Save rules
+                  Save and continue
+                  <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
             </div>
