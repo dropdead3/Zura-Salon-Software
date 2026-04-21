@@ -104,8 +104,10 @@ export default function OrganizationSetup() {
     [draftStepData],
   );
 
-  // Resume at draft's current_step on first load — or jump to single-step from settings.
-  // Wave 13A.B3 — coerce because legacy values may still be text post-migration on cold caches.
+  // Resume at draft's current step on first load — or jump to single-step from settings.
+  // Wave 13F.B — prefer key-based resume (current_step_key) so registry reorders
+  // don't strand returning users on the wrong screen. Fall back to numeric
+  // current_step for orgs whose drafts predate the column.
   const resumedRef = useRef(false);
   useEffect(() => {
     if (resumedRef.current || !renderableSteps.length) return;
@@ -119,6 +121,18 @@ export default function OrganizationSetup() {
       return;
     }
     if (!draft) return;
+    // Key-based resume (preferred)
+    const resumeKey = (draft as any).current_step_key as string | null | undefined;
+    if (resumeKey) {
+      const idx = renderableSteps.findIndex((s) => s.key === resumeKey);
+      if (idx >= 0) {
+        setCurrentIndex(idx);
+        if (idx > 0) setShowIntro(false);
+        return;
+      }
+    }
+    // Index-based resume (legacy fallback). Coerce because legacy values may
+    // still be text post-migration on cold caches.
     const raw = (draft as any).current_step;
     const resumeAt = raw === null || raw === undefined || raw === "" ? null : Number(raw);
     if (
@@ -130,7 +144,7 @@ export default function OrganizationSetup() {
       setCurrentIndex(resumeAt);
       if (resumeAt > 0) setShowIntro(false);
     }
-  }, [draft, renderableSteps.length, singleStepKey]);
+  }, [draft, renderableSteps, singleStepKey]);
 
   // ── Wave 13D — dwell-time tracking + validation_blocked ────────────────
   // stepEnterAt is reset every time the user lands on a new step. We feed
@@ -194,11 +208,13 @@ export default function OrganizationSetup() {
       // Wave 13D.G2 — when soft-skipping, advance current_step in the draft
       // even though stepDataRef is empty, so resume doesn't bounce back.
       const hasPayload = Object.keys(stepDataRef.current).length > 0;
+      const nextStepKey = renderableSteps[nextIndex]?.key;
       if (advance >= 0 && (hasPayload || skipping)) {
         await save.mutateAsync({
           stepKey: currentStep.key,
           data: hasPayload ? stepDataRef.current : { __skipped__: true },
           currentStep: nextIndex,
+          currentStepKey: nextStepKey,
         });
       }
       if (advance === 1) {
