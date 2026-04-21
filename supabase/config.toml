@@ -293,3 +293,12 @@ verify_jwt = false
 
 [functions.record-policy-acknowledgment]
 verify_jwt = false
+
+[functions.commit-org-setup]
+verify_jwt = false
+
+[functions.commit-self-serve-signup]
+verify_jwt = false
+
+[functions.send-setup-confirmation]
+verify_jwt = false
