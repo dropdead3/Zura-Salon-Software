@@ -547,6 +547,7 @@ export function PolicyConfiguratorPanel({
               )
             }
             hasApprovedClientVariant={hasApprovedClientVariant}
+            onJumpToStep={setStep}
           />
         )}
       </div>
