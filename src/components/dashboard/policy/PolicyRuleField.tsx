@@ -8,6 +8,7 @@
  * The line documents origin (Prefilled), surface (where it renders), and
  * edit contract (operator edits are sacred). See `buildProvenanceLine`.
  */
+import type { ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
