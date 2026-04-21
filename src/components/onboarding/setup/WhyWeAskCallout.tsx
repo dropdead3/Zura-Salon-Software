@@ -5,13 +5,17 @@ import { cn } from "@/lib/utils";
 interface WhyWeAskCalloutProps {
   reason: string;
   unlocks?: string;
+  /** Wave 13G.E — apps automatically activated by this step (e.g. "Zura Color Bar"). */
+  activates?: string;
+  /** Optional extra context for the activation line. */
+  activatesHint?: string;
 }
 
 /**
  * WhyWeAskCallout — collapsible disclosure explaining why a step matters.
  * Subtle, calm. Closed by default.
  */
-export function WhyWeAskCallout({ reason, unlocks }: WhyWeAskCalloutProps) {
+export function WhyWeAskCallout({ reason, unlocks, activates, activatesHint }: WhyWeAskCalloutProps) {
   const [open, setOpen] = useState(false);
   return (
     <div className="rounded-lg border border-border/60 bg-muted/30">
@@ -40,6 +44,15 @@ export function WhyWeAskCallout({ reason, unlocks }: WhyWeAskCalloutProps) {
             <p className="font-sans text-[11px] text-muted-foreground leading-relaxed">
               <span className="font-medium text-foreground">This unlocks: </span>
               {unlocks}
+            </p>
+          )}
+          {activates && (
+            <p className="font-sans text-[11px] text-muted-foreground leading-relaxed">
+              <span className="font-medium text-foreground">Activates: </span>
+              {activates}
+              {activatesHint && (
+                <span className="italic text-muted-foreground/80"> ({activatesHint})</span>
+              )}
             </p>
           )}
         </div>

@@ -25,26 +25,59 @@ import { SetupCommitResult } from "@/components/onboarding/setup/SetupCommitResu
 import type { StepRegistryEntry, StepProps } from "@/components/onboarding/setup/types";
 import { toast } from "sonner";
 
-const WHY_WE_ASK: Record<string, string> = {
-  step_0_fit_check:
-    "We want to know quickly if Zura is the right fit for your operation. If it isn't, we'll say so — your time matters more than our funnel.",
-  step_1_identity:
-    "Your business name appears on every invoice, payroll statement, and client communication. Your timezone drives the dashboard clock and reporting day boundaries.",
-  step_2_footprint:
-    "Locations drive cross-location benchmarking, state law applicability, and operational scope. Without locations, intelligence cannot be scoped correctly.",
-  step_3_team:
-    "Roles drive your career pathway, compensation eligibility, and which intelligence surfaces apply. Apprentices and booth renters have different rules than commission staff.",
-  step_4_compensation:
-    "Compensation architecture is the foundation of payroll, margin protection, and commission breach detection. This is the single most important configuration.",
-  step_5_catalog:
-    "Service categories drive Color Bar eligibility, retail commission rules, and policy applicability (e.g. minor consent for chemical services).",
-  step_6_standards:
-    "Operating standards govern tip distribution, refund handling, and policy enforcement. They protect margin and reduce ambiguity for staff.",
-  step_7_intent:
-    "What you want from Zura shapes your sidebar persona, recommendation engine, and the order intelligence surfaces.",
-  step_7_5_apps:
-    "Based on everything you've told us, these are the apps that fit your operation. You can install or remove any of them later.",
+interface WhyWeAskEntry {
+  reason: string;
+  /** Apps automatically activated by completing this step. */
+  activates?: string;
+  /** Optional contextual hint paired with `activates`. */
+  activatesHint?: string;
+}
+
+const WHY_WE_ASK: Record<string, WhyWeAskEntry> = {
+  step_0_fit_check: {
+    reason:
+      "We want to know quickly if {{PLATFORM_NAME}} is the right fit for your operation. If it isn't, we'll say so — your time matters more than our funnel.",
+  },
+  step_1_identity: {
+    reason:
+      "Your business name appears on every invoice, payroll statement, and client communication. Your timezone drives the dashboard clock and reporting day boundaries.",
+  },
+  step_2_footprint: {
+    reason:
+      "Locations drive cross-location benchmarking, state law applicability, and operational scope. Without locations, intelligence cannot be scoped correctly.",
+  },
+  step_3_team: {
+    reason:
+      "Roles drive your career pathway, compensation eligibility, and which intelligence surfaces apply. Apprentices and booth renters have different rules than commission staff.",
+    activates: "{{PLATFORM_NAME}} Payroll",
+    activatesHint: "installs automatically when commission models are configured",
+  },
+  step_4_compensation: {
+    reason:
+      "Compensation architecture is the foundation of payroll, margin protection, and commission breach detection. This is the single most important configuration.",
+  },
+  step_5_catalog: {
+    reason:
+      "Service categories drive Color Bar eligibility, retail commission rules, and policy applicability (e.g. minor consent for chemical services).",
+    activates: "{{PLATFORM_NAME}} Color Bar",
+    activatesHint: "installs automatically when you select chemical or color services",
+  },
+  step_6_standards: {
+    reason:
+      "Operating standards govern tip distribution, refund handling, and policy enforcement. They protect margin and reduce ambiguity for staff.",
+  },
+  step_7_intent: {
+    reason:
+      "What you want from {{PLATFORM_NAME}} shapes your sidebar persona, recommendation engine, and the order intelligence surfaces.",
+  },
+  step_7_5_apps: {
+    reason:
+      "Based on everything you've told us, these are the apps that fit your operation. You can install or remove any of them later.",
+  },
 };
+
+const PLATFORM_NAME = "Zura";
+const tokenize = (s: string) => s.replace(/\{\{PLATFORM_NAME\}\}/g, PLATFORM_NAME);
 
 const STEP_COMPONENTS: Record<string, React.ComponentType<StepProps<any>>> = {
   Step0FitCheck,
@@ -382,17 +415,20 @@ export default function OrganizationSetup() {
   });
   const blockingConflict = stepBanners.some((c) => c.severity === "block");
 
+  const whyEntry = WHY_WE_ASK[currentStep.key];
   return (
     <>
       <Helmet>
-        <title>{currentStep.title.replace("{{PLATFORM_NAME}}", "Zura")} — Zura setup</title>
+        <title>{tokenize(currentStep.title)} — {PLATFORM_NAME} setup</title>
       </Helmet>
       <StepShell
         orgId={orgId}
         step={currentStep}
         steps={renderableSteps}
         completedKeys={completedKeys}
-        whyWeAsk={WHY_WE_ASK[currentStep.key] ?? ""}
+        whyWeAsk={tokenize(whyEntry?.reason ?? "")}
+        activates={whyEntry?.activates ? tokenize(whyEntry.activates) : undefined}
+        activatesHint={whyEntry?.activatesHint}
         canAdvance={stepValid && !blockingConflict}
         saving={save.isPending}
         isFirst={singleStepKey ? false : currentIndex === 0}
