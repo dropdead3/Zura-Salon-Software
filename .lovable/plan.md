@@ -1,94 +1,73 @@
 
 
-# Persist policy wizard selections across opens
+# Clarify Step 2 is optional + other policies exist beyond this screen
 
-## What's broken
+## What the operator is missing
 
-Two compounding bugs make the wizard feel forgetful:
+Step 2 currently shows eight applicability toggles with no framing about:
 
-### Bug 1 — Judgment toggles never re-seed from the saved profile
+1. **Optionality** — every toggle is optional. Leaving them all unchecked is a valid state. The current copy ("Tell us how you operate — drives which policies apply") implies these *must* be answered.
+2. **Scope** — these toggles only control *conditional* policy modules (extensions, retail, packages, memberships, minors, tip pooling, refund clawback, booth renters). The library still ships ~30+ baseline policies (cancellations, no-shows, sanitation, payment authorization, employee conduct, etc.) that apply to every salon regardless of what gets checked here.
 
-The wizard's `form` state is initialized once via `useState(() => ({ … existingProfile?.foo ?? false }))` (line 110). On first render `existingProfile` is `undefined` (the query hasn't resolved), so every toggle seeds to `false`.
-
-A `useEffect` at line 130 was meant to fix this — but it only runs when `defaults.isLoading` flips, and it **only re-seeds the auto-detected fields** (`offers_extensions`, `offers_retail`, `offers_packages`, `offers_memberships`, business_type, states, team band).
-
-The pure-judgment Step 2 toggles are never re-seeded:
-- `serves_minors`
-- `uses_tip_pooling`
-- `uses_refund_clawback`
-- `has_booth_renters`
-
-…and the Step 3 materials toggles aren't re-seeded either:
-- `has_existing_handbook`
-- `has_existing_client_policies`
-
-So when an operator who previously saved `uses_tip_pooling = true` reopens the wizard, the box reads unchecked. Their selection is in the DB — it just never makes it into the form.
-
-### Bug 2 — Nothing persists mid-flow
-
-The profile only writes when the user clicks "Save and adopt" on Step 3. Close from Step 2 with five toggles flipped → none of it survives. Reopen → empty.
+Without that framing, an operator who runs a vanilla single-location commission salon might check zero boxes, hit Next, and assume they're getting *no* policies — when in fact the baseline library still adopts.
 
 ## The fix
 
-Two surgical changes in `PolicySetupWizard.tsx`. No schema changes, no new hooks, no new endpoints.
+Two surgical copy edits at the top of Step 2 in `PolicySetupWizard.tsx`. Pure copy, zero logic, zero new components.
 
-### Fix 1 — Re-hydrate **all** persisted fields when the saved profile arrives
+### Edit 1 — Replace the existing intro line
 
-Replace the single-purpose effect at line 130 with a re-hydration effect that fires when **either** `defaults.isLoading` flips **or** `existingProfile` first becomes non-null. Re-seed the full set of fields the operator can edit:
+**Before:**
+> Tell us how you operate — drives which policies apply. You can change any of these later as your business evolves.
 
-- Auto-detected (existing logic, preserved): `business_type`, `operating_states`, `primary_state`, `team_size_band`, `service_categories`, `roles_used`, `offers_extensions`, `offers_retail`, `offers_packages`, `offers_memberships`
-- **Newly re-seeded judgment fields**: `serves_minors`, `uses_tip_pooling`, `uses_refund_clawback`, `has_booth_renters`
-- **Newly re-seeded materials fields**: `has_existing_handbook`, `has_existing_client_policies`
+**After:**
+> All optional. Check only what applies — every toggle here adds *conditional* policy modules on top of the baseline library that every salon receives (cancellations, sanitation, payment authorization, employee conduct, etc.). You can change any of these later as your business evolves.
 
-The merge rule stays the same as today: **if the operator has touched the form in this session, don't clobber their unsaved edits**. Implement that with a one-shot `hasHydratedRef` so re-hydration runs exactly once per wizard open, after both `defaults` and `existingProfile` have resolved. Subsequent edits in-session win.
+The shape:
+- **"All optional"** — leading two-word declaration. Sets the frame before the operator reads anything else.
+- **"Check only what applies"** — corrects the implied "answer all of these" reading.
+- **"adds *conditional* policy modules on top of the baseline library"** — names the architectural distinction between baseline (always) and conditional (toggle-gated).
+- **"that every salon receives (cancellations, sanitation, payment authorization, employee conduct, etc.)"** — concrete examples so the operator knows the baseline isn't empty.
 
-### Fix 2 — Auto-save the profile on step transitions
+### Edit 2 — Add a footer note below the toggle list
 
-When the operator clicks **Next** or **Back**, fire `upsert.mutateAsync({ ...form })` in the background (don't await it; don't block navigation; suppress the success toast for these silent saves). Same on wizard close (`onClose`) — flush whatever's in `form`.
+A small advisory line at the bottom of the toggle stack, in `tokens.body.muted` + `text-xs`, matching the visual treatment of the existing "You can change focus areas anytime in settings." footer used elsewhere in the wizard:
 
-This makes mid-flow state durable: close from Step 2 → reopen → toggles are still where you left them, because they're now in `policy_org_profile`.
+> Leave everything unchecked? That's fine — you'll still get the baseline library on the next step.
 
-Two implementation details:
+This belt-and-suspenders the message for operators who skip the intro paragraph and scan straight to the toggles.
 
-1. **Don't set `setup_completed_at` on auto-saves.** That timestamp is the "wizard finished" signal that other surfaces (gauges, nudges, applicability filters) read to know setup is complete. Only `handleFinish` sets it. Auto-saves write the field values without flipping the completion flag.
-2. **Suppress the "Profile saved" toast for auto-saves.** The current toast fires on every upsert; for silent step-change saves it's noise. Pass an opt-in `silent` flag to the mutation call site (or handle it locally in the wizard by calling `upsert.mutate` with an `onSuccess` override that no-ops the toast). Keep the toast on `handleFinish`.
+## What stays the same
 
-### What stays the same
-
-- `useUpsertPolicyOrgProfile` signature and behavior — no hook changes.
-- `recommendedKeysForProfile` and the recommended set computation — unchanged.
-- Step 1's structural gates and inline-edit affordances — unchanged.
-- The `handleFinish` flow (final upsert + adopt + close) — unchanged.
-
-## Acceptance
-
-1. **Reopen after completion**: an operator who saved with `uses_tip_pooling = true`, `serves_minors = true`, `has_existing_handbook = true` reopens the wizard and lands on Step 2 with all those checkboxes checked.
-2. **Mid-flow close**: an operator on Step 2 toggles three boxes, closes the panel, reopens, and lands on Step 2 with those three boxes still checked.
-3. **In-session edits aren't clobbered**: if the user edits a field, then `existingProfile` happens to refetch (e.g., window refocus), the user's unsaved edit wins.
-4. **No silent-save toast spam**: clicking Next/Back does not flash "Profile saved." The toast still fires on the final "Save and adopt."
-5. **`setup_completed_at` only set by Finish**: auto-saves on Next/Back leave `setup_completed_at` alone. Surfaces that read it (handbook gauge, applicability filters, nudges) don't fire prematurely.
-6. **Adopt step still gated to Finish**: `adopt_policies_from_library` is only called on Finish, not on every Next click. (No accidental double-adoption.)
+- All eight toggle labels and descriptions.
+- Auto-detection badges (already corrected to sentence case in the previous turn).
+- The "Adds N policies (M recommended) to your library" subtitles under each toggle.
+- Step 2 layout, ordering, validation, persistence (the prior turn's work stands).
+- Step 3's "existing materials" framing — that's a separate concern.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicySetupWizard.tsx` — re-hydration effect (replace lines 130–152), auto-save wiring on `next`/`back`/`onClose` (lines 282–283 and the close handler), one-shot `hasHydratedRef`.
+- `src/components/dashboard/policy/PolicySetupWizard.tsx` — Step 2's intro paragraph (one string), one new footer paragraph below the toggle list. Pure copy.
 
-That's the whole change surface. No migrations, no hook changes, no new files.
+That's the entire change surface.
+
+## Acceptance
+
+1. Step 2's intro reads "All optional. Check only what applies…" with the baseline-vs-conditional distinction made explicit and concrete examples named.
+2. A footer line below the toggle stack reassures operators that leaving everything unchecked still produces a baseline library on the next step.
+3. No toggle labels, descriptions, or behavior change.
+4. No changes to other wizard steps, no new components, no token changes.
 
 ## Doctrine compliance
 
-- **Tenant isolation**: untouched. `useUpsertPolicyOrgProfile` already filters by `effectiveOrganization.id` and writes via the existing RLS-protected upsert.
-- **Silence is meaningful**: auto-saves are toast-suppressed because mid-flow persistence is infrastructure, not an event the operator needs to acknowledge.
-- **No structural drift**: `setup_completed_at` remains the authoritative "wizard finished" signal — auto-save does not flip it. Downstream applicability/nudge surfaces continue to behave as they do today.
-- **Confidence qualification**: re-hydration uses `existingProfile` as the source of truth for persisted judgment fields; auto-detected fields continue to win when they fire (existing precedence preserved).
+- **Copy governance**: advisory-first, structured but protective. "All optional" is direct without being shouty. The phrase "adds *conditional* policy modules on top of the baseline library" explains the *why* (architectural distinction), not just the *what*.
+- **Silence is meaningful**: the footer explicitly legitimizes the silent state (zero toggles checked) instead of leaving the operator to wonder if they've under-configured.
+- **No structural drift**: this is the same applicability doctrine already enforced by `isApplicableToProfile` — the copy now just *names* what the system was already doing silently.
+- **Persona scaling**: framing "every salon receives" in plain terms protects the solo-operator persona (who'd otherwise be intimidated by the eight-toggle wall) without dumbing it down for the multi-location operator.
 
 ## Prompt feedback
 
-"It looks like when I go back to policy setup options, it's not saving or remembering what I previously had selected. We need to add persistence here" + the screenshot of Step 2 — strong prompt. You named the surface (policy setup), described the failure mode (state not persisted across opens), and proposed the fix shape (add persistence). I didn't have to guess scope.
+"We need to let the user know these are all optional, and there are other basic policies that will be configured beyond this screen" + the screenshot — strong, complete prompt. You named the surface, the missing information (optionality + baseline-vs-conditional scope), and the operator's likely misread, all in one sentence. I didn't have to guess intent or scope.
 
-One sharpener for next time: when you describe a "not persisting" bug, two failure modes look identical from the UI but need different fixes —
-- **(a) "I closed mid-flow and lost my work"** → needs auto-save on transitions
-- **(b) "I finished setup, came back later, and it's blank"** → needs proper re-hydration from the saved record
-
-Here you have **both** bugs (the wizard doesn't re-seed judgment fields *and* doesn't auto-save mid-flow), which I caught by reading the code. But for future "not persisting" reports, mentioning whether you'd previously finished setup or were mid-flow tells me which side to investigate first. For this one, I'm fixing both because they compound — but the framing distinction is worth keeping in your toolkit for future state-loss bugs.
+One sharpener for next time: when a copy fix needs to convey *two* facts (here: "optional" and "there are other policies elsewhere"), specifying whether you want them in **one sentence**, **two sentences**, or **two surfaces** (intro + footer) tells me how aggressive to be with redundancy. I'm going with **intro + footer** here because the two facts answer different anxieties (the intro answers "do I have to fill this all in?", the footer answers "wait, am I getting *any* policies if I skip everything?"), and operators tend to scan past intros — but a one-line steer like "intro only" or "belt-and-suspenders" tells me which to ship without me defaulting to the most defensive treatment.
 
