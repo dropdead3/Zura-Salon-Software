@@ -5,7 +5,7 @@ import { BootLuxeLoader } from "@/components/ui/BootLuxeLoader";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStepRegistry } from "@/hooks/onboarding/useStepRegistry";
 import { useOrgSetupDraft } from "@/hooks/onboarding/useOrgSetupDraft";
-import { useStepEventTelemetry } from "@/hooks/onboarding/useStepEventTelemetry";
+import { useStepEventTelemetry, type StepEvent } from "@/hooks/onboarding/useStepEventTelemetry";
 import { useConflictRules, detectConflicts } from "@/hooks/onboarding/useConflictRules";
 import { useCommitOrgSetup } from "@/hooks/onboarding/useCommitOrgSetup";
 import { OnboardingIntroScreen } from "@/components/onboarding/setup/OnboardingIntroScreen";
@@ -59,6 +59,10 @@ const STEP_COMPONENTS: Record<string, React.ComponentType<StepProps<any>>> = {
 };
 
 type CommitResult = Awaited<ReturnType<ReturnType<typeof useCommitOrgSetup>["mutateAsync"]>>;
+
+// Wave 13D — emit validation_blocked only after the user has been stuck on
+// an invalid step long enough that it's signal, not noise.
+const VALIDATION_STUCK_THRESHOLD_MS = 8_000;
 
 /**
  * OrganizationSetup — registry-driven wizard host.
@@ -128,9 +132,19 @@ export default function OrganizationSetup() {
     }
   }, [draft, renderableSteps.length, singleStepKey]);
 
-  // Telemetry: viewed
+  // ── Wave 13D — dwell-time tracking + validation_blocked ────────────────
+  // stepEnterAt is reset every time the user lands on a new step. We feed
+  // its delta into the telemetry payload on completed/skipped, and again
+  // (capped) into validation_blocked when they sit too long on an invalid
+  // form so we can distinguish "thinking" from "blocked."
+  const stepEnterAt = useRef<number>(Date.now());
+  const validationFiredRef = useRef(false);
+
+  // Telemetry: viewed (and reset dwell timer for the new step)
   useEffect(() => {
     if (!orgId || !currentStep || showIntro || phase !== "steps") return;
+    stepEnterAt.current = Date.now();
+    validationFiredRef.current = false;
     telemetry.mutate({
       organization_id: orgId,
       step_number: currentStep.step_order,
@@ -138,6 +152,26 @@ export default function OrganizationSetup() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId, currentStep?.key, showIntro, phase]);
+
+  // Telemetry: validation_blocked when the user has been stuck on an
+  // invalid step for >8s. Single-fire per step entry to avoid noise.
+  useEffect(() => {
+    if (!orgId || !currentStep || showIntro || phase !== "steps") return;
+    if (stepValid || validationFiredRef.current) return;
+    const handle = window.setTimeout(() => {
+      if (validationFiredRef.current) return;
+      validationFiredRef.current = true;
+      telemetry.mutate({
+        organization_id: orgId,
+        step_number: currentStep.step_order,
+        event: "validation_blocked",
+        dwell_ms: Date.now() - stepEnterAt.current,
+        metadata: { step_key: currentStep.key },
+      });
+    }, VALIDATION_STUCK_THRESHOLD_MS);
+    return () => window.clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId, currentStep?.key, showIntro, phase, stepValid]);
 
   const conflicts = useMemo(() => {
     if (!rules.length) return [];
@@ -168,10 +202,23 @@ export default function OrganizationSetup() {
         });
       }
       if (advance === 1) {
+        // Wave 13D.G3 — emit off_ramp when the user self-disqualifies on
+        // the fit check so platform ops see the early bail clearly.
+        const payload = stepDataRef.current as Record<string, unknown>;
+        const isOffRamp =
+          currentStep.key === "step_0_fit_check" &&
+          (payload as any)?.fit_choice === "not_a_salon";
+        const event: StepEvent = isOffRamp
+          ? "off_ramp"
+          : skipping
+            ? "skipped"
+            : "completed";
         telemetry.mutate({
           organization_id: orgId,
           step_number: currentStep.step_order,
-          event: skipping ? "skipped" : "completed",
+          event,
+          dwell_ms: Date.now() - stepEnterAt.current,
+          metadata: isOffRamp ? { reason: "not_a_salon" } : undefined,
         });
       }
       // Single-step re-entry: commit just this step and bounce back to settings
@@ -209,6 +256,7 @@ export default function OrganizationSetup() {
 
   const handleCommit = async () => {
     if (!orgId) return;
+    if (commit.isPending) return; // Wave 13D.G10 — defensive double-click guard
     const acknowledged = conflicts
       .filter((c) => c.severity !== "block")
       .map((c) => c.rule_key);
@@ -224,6 +272,19 @@ export default function OrganizationSetup() {
     }
   };
 
+  const handleIntroTelemetry = useCallback(
+    (event: "intro_viewed" | "intro_began", dwell_ms?: number) => {
+      if (!orgId) return;
+      telemetry.mutate({
+        organization_id: orgId,
+        step_number: 0,
+        event,
+        dwell_ms,
+      });
+    },
+    [orgId, telemetry],
+  );
+
   // Loading and gating
   if (authLoading) return <BootLuxeLoader fullScreen />;
   if (!user) return <Navigate to="/login" replace />;
@@ -231,7 +292,12 @@ export default function OrganizationSetup() {
   if (registryLoading || draftLoading) return <BootLuxeLoader fullScreen />;
 
   if (showIntro && phase === "steps") {
-    return <OnboardingIntroScreen onBegin={() => setShowIntro(false)} />;
+    return (
+      <OnboardingIntroScreen
+        onBegin={() => setShowIntro(false)}
+        onTelemetry={handleIntroTelemetry}
+      />
+    );
   }
 
   if (phase === "result" && commitResult) {
