@@ -646,14 +646,15 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               let helper: string = row.staticHelper;
               let helperEmphasis = false;
               if (impact?.hasLibrary && impact.total > 0) {
+                const noun = impact.total === 1 ? 'policy' : 'policies';
                 if (checked) {
-                  helper = `${impact.total} ${impact.total === 1 ? 'policy' : 'policies'} active in your library`;
+                  helper = `${impact.total} ${noun} active in your library`;
                 } else {
                   const parts: string[] = [];
                   if (impact.requiredCount > 0) parts.push(`${impact.requiredCount} required`);
                   if (impact.recommendedCount > 0) parts.push(`${impact.recommendedCount} recommended`);
                   const breakdown = parts.length > 0 ? ` (${parts.join(' + ')})` : '';
-                  helper = `Hides ${impact.total} ${impact.total === 1 ? 'policy' : 'policies'}${breakdown} from your library`;
+                  helper = `Adds ${impact.total} ${noun}${breakdown} to your library`;
                 }
                 helperEmphasis = hasChanged;
               } else if (impact && !impact.hasLibrary) {
