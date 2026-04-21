@@ -56,13 +56,13 @@ export default function SetupFunnel() {
           .limit(10000),
       ]);
       return {
-        events: (events ?? []) as Array<{
+        events: ((events ?? []) as unknown) as Array<{
           step_number: number;
           event: string;
           organization_id: string;
           created_at: string;
         }>,
-        commits: (commits ?? []) as Array<{
+        commits: ((commits ?? []) as unknown) as Array<{
           org_id: string;
           status: string;
           attempted_at: string;
