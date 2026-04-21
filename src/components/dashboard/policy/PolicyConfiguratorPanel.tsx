@@ -68,7 +68,7 @@ import {
   usePolicyOrgProfile,
   applicabilityReason,
 } from '@/hooks/policy/usePolicyOrgProfile';
-import { interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
+import { interpolateBrandTokens, humanize } from '@/lib/policy/render-starter-draft';
 import { getPolicySummaryDefaults } from '@/lib/policy/starter-drafts';
 import { useLocations } from '@/hooks/useLocations';
 import { PLATFORM_NAME } from '@/lib/brand';
@@ -89,20 +89,54 @@ function defaultsFromSchema(fields: RuleField[]): Record<string, unknown> {
 }
 
 /**
- * Apply brand-token substitution to schema defaults at hydration time.
+ * Apply brand-token + rule-value substitution to schema defaults at hydration.
  * Only string values are interpolated; numbers, booleans, arrays, and enum
  * values pass through untouched. Operator-saved values (fromBlocks) bypass
  * this entirely — only the platform's authored defaults are resolved.
+ *
+ * Rule-value tokens (`{{authority_role}}`, `{{max_value}}`, `{{escalation_role}}`,
+ * etc.) are substituted from the seeded `ruleValues` map using `humanize()`
+ * so role values like `manager` render as "a Manager". Unresolved tokens are
+ * left as-is so the platform team notices missing wiring (silence is meaningful).
  */
 function interpolateDefaults(
   defaults: Record<string, unknown>,
-  ctx: { orgName?: string; platformName?: string },
+  ctx: { orgName?: string; platformName?: string; ruleValues?: Record<string, unknown> },
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(defaults)) {
-    out[key] = typeof value === 'string' ? interpolateBrandTokens(value, ctx) : value;
+    if (typeof value !== 'string') {
+      out[key] = value;
+      continue;
+    }
+    const branded = interpolateBrandTokens(value, ctx);
+    out[key] = ctx.ruleValues
+      ? substituteRuleTokens(branded, ctx.ruleValues)
+      : branded;
   }
   return out;
+}
+
+/**
+ * Substitute `{{rule_field_key}}` tokens with the humanized current value
+ * from the rule-values map. Brand tokens ({{ORG_NAME}}, {{PLATFORM_NAME}})
+ * are skipped — handled by `interpolateBrandTokens`. Unresolved tokens are
+ * preserved verbatim so wiring gaps remain visible.
+ */
+function substituteRuleTokens(
+  text: string,
+  ruleValues: Record<string, unknown>,
+): string {
+  if (!text) return text;
+  return text.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key: string) => {
+    if (key === 'ORG_NAME' || key === 'PLATFORM_NAME') return match;
+    if (key in ruleValues) {
+      const v = ruleValues[key];
+      if (v === null || v === undefined || v === '') return match;
+      return humanize(v);
+    }
+    return match;
+  });
 }
 
 export function PolicyConfiguratorPanel({
