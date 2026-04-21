@@ -1,78 +1,69 @@
 
 
-# Audit: What's missing / redundant on Step 2 (Business model)
+# Add "you can change this anytime" reassurance to Step 2
 
-Short answer: **yes — two gaps and one redundancy worth fixing.** None are urgent bugs; all are structural clarity wins.
+## Short answer to your question
 
-## 1. Redundant: "packages or memberships" vs "ongoing memberships"
+**Yes — every toggle on Step 2 is editable after initial setup.** The wizard is built for re-entry:
 
-Rows 3 and 4 currently read:
+- `policy_org_profile` is a single upsert-able row keyed by `organization_id`. Every flag (`offers_extensions`, `offers_retail`, `offers_packages`, `offers_memberships`, `serves_minors`, `uses_tip_pooling`, `uses_refund_clawback`, `has_booth_renters`) is a plain boolean column with no one-way migration.
+- `PolicySetupWizard.tsx` (lines 188–225) already has an **`expansionFlips`** mechanism that only activates when `existingProfile.setup_completed_at` is set — it diffs the current form against the stored profile and surfaces which flags were newly enabled. That exists *because* the wizard is designed to be re-opened and re-run.
+- Re-running the wizard adopts newly-applicable policies and leaves existing adoptions untouched. Nothing is destructive.
 
-- "We sell packages or memberships" → `offers_packages`
-- "We offer ongoing memberships" → `offers_memberships` (shows "(coming soon)")
+So the guidance is accurate — and the UI just doesn't say so. First-time operators staring at Step 2 have no idea these toggles can be revisited. That's the gap to close.
 
-The first row already says "or memberships." The second row then asks about memberships again, but is marked "coming soon" and has no library attached. For the operator this reads as: *"Didn't I just answer that?"*
+## The fix
 
-**Fix:** Either
+Add a single reassurance line to Step 2's intro block. One file, one copy change.
 
-- **(a) Merge** — drop `offers_memberships` for now, let `offers_packages` carry both until the membership-specific library ships. Relabel to just "We sell packages" to make the distinction meaningful when `offers_memberships` returns.
-- **(b) Sharpen** — rename `offers_packages` → "We sell prepaid packages (series of services)" and keep `offers_memberships` → "We sell recurring memberships (monthly/annual)". Different legal surfaces (expiration vs auto-renewal/cancellation), so once memberships ships they *should* be separate.
+**Location:** `src/components/dashboard/policy/PolicySetupWizard.tsx`, line 80 (the `model` step description in `STEP_META`).
 
-Recommendation: **(b)** long-term, **(a)** until the membership library exists. Today's UI is the worst of both — two rows, one dead.
+**Current:**
+```ts
+model: {
+  label: 'Business model',
+  description: 'Tell us how you operate — drives which policies apply.',
+},
+```
 
-## 2. Missing: compensation-aware toggles
+**Proposed:**
+```ts
+model: {
+  label: 'Business model',
+  description: 'Tell us how you operate — drives which policies apply. You can change any of these later as your business evolves.',
+},
+```
 
-The applicability engine (`usePolicyOrgProfile.ts` lines 187–256) already gates policies on:
+That trailing clause renders under "Tell us how you operate" in the sub-header and is visible the moment the operator lands on Step 2. No modal, no tooltip, no extra chrome — just one line of calm reassurance, in the spot the operator is already reading.
 
-- `uses_tip_pooling` → `requires_tip_pooling`
-- `uses_refund_clawback` → `requires_refund_clawback`
+## Why not a tooltip or helper panel
 
-But Step 2 never asks the operator about either. So any tip-pooling or clawback policy is silently excluded, even for salons that practice them. This is a real data gap: the wizard promises "drives which policies apply" but skips two drivers.
-
-**Fix:** Add two rows:
-
-- "We pool tips across the team" → `uses_tip_pooling`
-- "We claw back commission on refunds" → `uses_refund_clawback`
-
-Both are judgment calls {{PLATFORM_NAME}} can't infer from POS data — exactly the shape of toggles Step 2 was built for.
-
-## 3. Missing: independent-contractor / booth-rental toggle
-
-Many salons run a hybrid W2 + 1099 model, which changes a large swath of handbook policy (benefits, scheduling, chemical liability, supplies ownership). There's no row for it. Either:
-
-- "We have booth renters or 1099 contractors" → `has_contractors`
-
-Or defer to Step 4 (Compensation) in the org onboarding and read it through. Either is fine — just not silent.
-
-## 4. Not missing but worth naming
-
-Things I checked and confirmed are **already handled elsewhere** — don't re-add here:
-
-- **Location count / multi-location** → read from org context, no toggle needed.
-- **State/jurisdiction** → read from org address (drives state-specific clauses).
-- **Service-under-18 vs minors-as-clients** → `serves_minors` already covers both paths.
+- **Doctrine**: advisory-first copy, no decorative UI. A new tooltip or info icon adds weight for a reassurance that belongs in the primary read.
+- **Silence principle**: one declarative sentence > a hover surface the operator may never trigger.
+- **No redundancy**: Confirm-step and Materials-step don't need this line — those commit different shapes (service categories, handbook materials) and the latter already shows acknowledgment flow context.
 
 ## Acceptance
 
-1. The "ongoing memberships (coming soon)" row either merges with the packages row or gets a distinct, non-overlapping label.
-2. Step 2 includes tip-pooling and refund-clawback toggles so the applicability engine receives all its inputs.
-3. Contractor/booth-rental is either a Step 2 toggle or explicitly sourced from Step 4 Compensation.
-4. No toggle on Step 2 is "coming soon" — silence-doctrine: ship the row when the library ships.
+1. Step 2 sub-header reads: **"Tell us how you operate — drives which policies apply. You can change any of these later as your business evolves."**
+2. Step 1 (Confirm) and Step 3 (Materials & review) descriptions unchanged.
+3. No new component, icon, tooltip, or styling — pure string edit in `STEP_META`.
+4. Post-setup re-entry flow (`expansionFlips`) unchanged.
 
-## Files that would change
+## Files affected
 
-- `src/components/dashboard/policy/PolicySetupWizard.tsx` — row list (lines 605–640), `flagImpacts` registry (line 179), form state defaults.
-- `src/hooks/policy/usePolicyProfileDefaults.ts` — detected flags + reasons.
-- `src/hooks/policy/usePolicyOrgProfile.ts` — already has the applicability branches; may need DB column for `uses_tip_pooling` / `uses_refund_clawback` if not present.
-- Possibly a migration on `policy_org_profile` to add the two new columns.
+- `src/components/dashboard/policy/PolicySetupWizard.tsx` — one string in `STEP_META.model.description` (line 80).
+
+## Doctrine compliance
+
+- **Copy governance**: advisory-first, protective framing ("as your business evolves"), no shame, no lock-in language.
+- **Silence**: adds one sentence, removes ambiguity, avoids new UI chrome.
+- **Operator trust**: states the truth about reversibility so the operator commits confidently instead of over-deliberating each toggle.
 
 ## Prompt feedback
 
-"Is there anything missing from here?" — open-ended prompts like this are great for a *review-mode* answer, but they burn more round-trips than a scoped one. I had to inspect the wizard, the applicability engine, and the detection hook to give a grounded reply. A five-word sharpener would narrow it fast:
+"Can any of these be changed after initial setup…? If so, we need to add that context into this area" — excellent prompt shape. You asked a **yes/no diagnostic** first, then conditioned the fix on the answer. That's disciplined: it lets me confirm the assumption before writing UI for it. If I'd found that some flags *weren't* reversible (e.g. `serves_minors` triggering a one-way compliance workflow), the plan would have been different — and your prompt left room for that possibility.
 
-- "Missing **toggles** only?" → skips copy critique.
-- "Any **redundancy** here?" → skips gap analysis.
-- "Does this **cover our compensation model**?" → directs me straight to the tip-pooling / clawback gap.
+One small sharpener: when the reassurance applies conditionally (e.g. "most are reversible, but `serves_minors` locks guardian-consent records once clients are collected"), a phrase like "and flag anything that isn't reversible separately" invites me to surface the exception instead of papering over it. Here there's no exception — every flag is a pure boolean with no one-way side effects — so the single-sentence fix is clean. But for future audits of "can this be changed later" type questions, inviting the caveat is free insurance against a silent lock-in lurking somewhere.
 
-The "anything missing" frame tends to invite a list; if you want a *ranked* answer ("what's the one thing I'd fix first"), say so — I'll return a single recommendation instead of three. Also: if you have a specific user who got confused on this screen, quoting their reaction ("my manager asked why there are two membership rows") tells me which gap is real vs theoretical.
+Also: this is a textbook **Visual Edits** change — one string constant, zero logic. Credit-free lane.
 
