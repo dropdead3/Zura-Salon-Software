@@ -53,6 +53,26 @@ export interface RuleField {
   unit?: string;
   defaultValue?: unknown;
   provenance?: FieldProvenance;
+  /**
+   * Wave 28.14 — Questionnaire mode (Policy Configurator interview UI).
+   * Plain-English question rendered in place of `label`. Falls back to
+   * `label` when omitted so non-questionnaire fields keep working.
+   */
+  question?: string;
+  /** Operator-facing reason this question matters. Falls back to `helper`. */
+  whyItMatters?: string;
+  /**
+   * Curated preset answers shown as cards above the raw input. Exactly one
+   * preset may be marked `recommended: true` to anchor the operator on the
+   * industry-standard pick. The underlying input remains available so
+   * custom values are always possible.
+   */
+  presets?: Array<{
+    value: unknown;
+    label: string;
+    sublabel?: string;
+    recommended?: boolean;
+  }>;
 }
 
 export interface RuleSection {
