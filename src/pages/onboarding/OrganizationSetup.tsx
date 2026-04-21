@@ -100,17 +100,26 @@ export default function OrganizationSetup() {
     [draftStepData],
   );
 
-  // Resume at draft's current_step on first load
+  // Resume at draft's current_step on first load — or jump to single-step from settings
   const resumedRef = useRef(false);
   useEffect(() => {
-    if (resumedRef.current || !draft || !renderableSteps.length) return;
+    if (resumedRef.current || !renderableSteps.length) return;
     resumedRef.current = true;
+    if (singleStepKey) {
+      const idx = renderableSteps.findIndex((s) => s.key === singleStepKey);
+      if (idx >= 0) {
+        setCurrentIndex(idx);
+        setShowIntro(false);
+      }
+      return;
+    }
+    if (!draft) return;
     const resumeAt = draft.current_step;
     if (typeof resumeAt === "number" && resumeAt >= 0 && resumeAt < renderableSteps.length) {
       setCurrentIndex(resumeAt);
       if (resumeAt > 0) setShowIntro(false);
     }
-  }, [draft, renderableSteps.length]);
+  }, [draft, renderableSteps.length, singleStepKey]);
 
   // Telemetry: viewed
   useEffect(() => {
