@@ -264,35 +264,32 @@ export function PolicyConfiguratorPanel({
         required: !!f.required,
       }))
       .filter((b) => b.value.v !== null && b.value.v !== '');
-    // Advance to the Applicability tab on success so the "Save and continue"
-    // CTA fulfills its implied next step. Surfaces tab follows after that
-    // (or is hidden for internal-only policies — operator can step through
-    // remaining tabs manually from there).
+    // Advance to the next step on success so the operator's "Save and continue"
+    // CTA fulfills its implied next step. Wave 28.13: tabs replaced by stepper.
     save.mutate(
       { versionId, blocks },
-      { onSuccess: () => setTab('applicability') },
+      { onSuccess: () => setStep('applicability') },
     );
   };
 
   const categoryMeta = POLICY_CATEGORY_META[entry.category];
 
-  /* Wave 28.11.5 — historical-aware tab visibility.
-     Internal-only policies hide the Surfaces tab (dead UI). Acknowledgments
-     tab now follows audit-immutability: visible if the audience touches
-     external OR if there's at least one historical ack row (audience may
-     have changed `both`→`internal` after acks were collected). */
+  /* Wave 28.13 — internal-only policies hide the Surfaces step (dead UI).
+     Acknowledgments moves to a header-link drawer (no longer a step) but is
+     still surfaced when the audience touches external OR when at least one
+     historical ack row exists (audit immutability per Wave 28.10.1). */
   const isInternalOnly = entry.audience === 'internal';
-  const showSurfacesTab = !isInternalOnly;
+  const visibleSteps = useMemo(() => getVisibleSteps(entry.audience), [entry.audience]);
 
-  // Clamp tab if operator is on a tab the audience doesn't allow
-  // (e.g., shared deep link previously landed on `surfaces`).
+  // Clamp step if operator landed on a step the audience doesn't allow
+  // (e.g., audience flipped to internal-only after the panel mounted).
   useEffect(() => {
-    if (isInternalOnly && (tab === 'surfaces' || tab === 'acknowledgments')) {
-      setTab('rules');
+    if (isInternalOnly && step === 'surfaces') {
+      setStep('rules');
     }
-  }, [isInternalOnly, tab]);
+  }, [isInternalOnly, step]);
 
-  /* Counters for tab badges */
+  /* Counters / completion signals */
   const applicabilityCount = applicability?.length ?? 0;
   const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
   const { data: variantsData = [] } = usePolicyVariants(versionId);
@@ -305,9 +302,9 @@ export function PolicyConfiguratorPanel({
   const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
 
   /* Wave 28.11.5 — historical ack visibility (audit immutability).
-     Show acks tab whenever count > 0 even if audience changed to internal-only. */
+     Show acks link whenever count > 0 even if audience changed to internal-only. */
   const { data: ackCount = 0 } = usePolicyAcknowledgmentCount(data?.policyId ?? null);
-  const showAcknowledgmentsTab = !isInternalOnly || ackCount > 0;
+  const showAcknowledgmentsLink = (!isInternalOnly || ackCount > 0) && !!data?.policyId;
   const isArchived = data?.status === 'archived';
   const ackToggleAllowed =
     !!data?.isPublishedExternal && hasApprovedClientVariant && !isArchived;
