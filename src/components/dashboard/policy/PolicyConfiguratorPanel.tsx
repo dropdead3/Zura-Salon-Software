@@ -10,9 +10,10 @@
  * library entry. Adopts the policy if it hasn't been adopted yet, then loads
  * existing rule blocks, applicability, and surface mappings for editing.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Save, Sparkles, Settings, Users, MapPin, FileText, ExternalLink, History, FileSignature, Archive, Check, RotateCcw } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { LuxeLoader } from '@/components/ui/loaders/LuxeLoader';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
@@ -135,6 +136,38 @@ export function PolicyConfiguratorPanel({
   const versionId = data?.versionId;
   const versionNumber = data?.versionNumber ?? 1;
   const ready = !isLoading && !!versionId && hydrated;
+
+  // Heal-on-open: if the policy was adopted (e.g. via the Setup Wizard's bulk
+  // adopt before the version-row backfill landed) but has no open draft
+  // version, invoke adopt_and_init_policy once to materialize a v1 draft, then
+  // refetch. Guarded by a ref so it fires at most once per panel open and only
+  // when we have confirmed data shape (loaded but missing versionId on an
+  // already-adopted policy). Doctrine: silence is meaningful only when
+  // intentional — an indefinite spinner is unintentional silence.
+  const healAttempted = useRef(false);
+  const isHealing =
+    alreadyAdopted &&
+    !isLoading &&
+    !!data?.policyId &&
+    !versionId &&
+    (healAttempted.current || adopt.isPending);
+
+  useEffect(() => {
+    if (
+      alreadyAdopted &&
+      !isLoading &&
+      data &&
+      data.policyId &&
+      !data.versionId &&
+      !healAttempted.current &&
+      !adopt.isPending
+    ) {
+      healAttempted.current = true;
+      adopt.mutate(entry.key, {
+        onSuccess: () => refetch(),
+      });
+    }
+  }, [alreadyAdopted, isLoading, data, adopt, entry.key, refetch]);
 
   /* ---- Applicability state (28.5) ---- */
   const { data: applicabilityRows = [] } = usePolicyApplicability(versionId);
@@ -436,8 +469,13 @@ export function PolicyConfiguratorPanel({
           </div>
         </div>
       ) : !ready ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className={tokens.loading.spinner} />
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <LuxeLoader size="md" />
+          {isHealing && (
+            <p className="font-sans text-xs text-muted-foreground">
+              Initializing draft version…
+            </p>
+          )}
         </div>
       ) : (
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
