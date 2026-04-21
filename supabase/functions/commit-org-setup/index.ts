@@ -560,16 +560,28 @@ async function executeStepHandler(
     }
 
     case "step_7_5_apps": {
-      // Component writes: { installed_apps: string[], expressed_interest: string[] }
+      // Component writes: { installed_apps: string[], expressed_interest: string[],
+      //                     declined_apps?: string[], qualified_keys?: string[] }
       //
-      // Wave 13F.A — fix B9. Previously this handler only persisted Tier-3
-      // interest and silently dropped `installed_apps`, leaving the operator's
-      // selection unrecognized by entitlement gates. Now we activate each
-      // installed app in `organization_apps` (idempotent on app_key) and still
-      // record Tier-3 interest in `app_interest`.
-      const installed: string[] = Array.isArray(data.installed_apps)
+      // Wave 13F.A — fix B9. Activate every Tier 1/2 install, record Tier 3 interest.
+      // Wave 13G.A — classifier idempotency: intersect installed_apps with the
+      //   freshly-classified `qualified_keys` so a previously-Tier-1 app does
+      //   not get re-activated after the operator removed its qualifying input.
+      // Wave 13G.F — record Tier-1 declines as `app_interest.status='declined'`
+      //   instead of activating; preserves operator autonomy.
+      const installedRaw: string[] = Array.isArray(data.installed_apps)
         ? data.installed_apps.filter(Boolean)
         : [];
+      const declined: string[] = Array.isArray(data.declined_apps)
+        ? data.declined_apps.filter(Boolean)
+        : [];
+      const qualified: string[] | null = Array.isArray(data.qualified_keys)
+        ? data.qualified_keys.filter(Boolean)
+        : null;
+      // Drop installs that no longer qualify (stale draft) and any explicitly declined.
+      const installed = installedRaw.filter(
+        (k) => (qualified === null || qualified.includes(k)) && !declined.includes(k),
+      );
       const interest: string[] = Array.isArray(data.expressed_interest)
         ? data.expressed_interest.filter(Boolean)
         : [];
@@ -590,6 +602,18 @@ async function executeStepHandler(
           organization_id: orgId,
           app_key: appKey,
           expressed_by: userId,
+          status: "interested",
+        }, { onConflict: "organization_id,app_key" });
+        if (error) throw error;
+      }
+
+      // Wave 13G.F — declines recorded for product/lifecycle visibility.
+      for (const appKey of declined) {
+        const { error } = await supabase.from("app_interest").upsert({
+          organization_id: orgId,
+          app_key: appKey,
+          expressed_by: userId,
+          status: "declined",
         }, { onConflict: "organization_id,app_key" });
         if (error) throw error;
       }
@@ -597,7 +621,7 @@ async function executeStepHandler(
         step_key: stepKey,
         system,
         status: "completed",
-        reason: `${activated} activated, ${interest.length} interest`,
+        reason: `${activated} activated, ${interest.length} interest, ${declined.length} declined`,
         deep_link: "/dashboard/apps",
       };
     }
