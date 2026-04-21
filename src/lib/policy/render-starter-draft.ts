@@ -24,7 +24,7 @@ const HUMAN_LABELS: Record<string, (v: unknown) => string> = {
   any_admin: () => 'any Admin',
 };
 
-function humanize(value: unknown): string {
+export function humanize(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
   if (typeof value === 'boolean') return value ? 'yes' : 'no';
   if (Array.isArray(value)) {
