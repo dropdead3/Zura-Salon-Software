@@ -1,78 +1,61 @@
 
 
-# Stack "What setup decides" vertically (1×3 instead of 3×1)
+# Switch role count badges to Aeonik
 
-## The change
+## The bug
 
-The "What setup decides" section currently renders as a 3-column horizontal grid. The screenshot shows the cramped result: headings wrap awkwardly ("EXISTING / DOCUMENTS"), body copy sits in narrow ~230px columns, and the icons float small against wide horizontal whitespace. Converting to a single-column vertical stack — matching the rhythm of the "How the system uses your policies" section directly below — restores readable line lengths and gives the advisory prose the breathing room it was written for.
+In `src/components/dashboard/policy/PolicySetupWizard.tsx` (line 578), the numeric count inside each role chip ("Stylist [18]", "Super Admin [2]", "Receptionist [2]") renders with `font-display` — Termina, uppercase-intent. Two problems:
 
-## Specifics
+1. **Termina is reserved for headlines, stats, KPI labels, buttons, and navigation.** Numeric inline badges inside muted chips are UI metadata, not stat architecture.
+2. **The "Service categories" chips directly above (lines 520–534) don't use Termina for their counts** — they show count on hover via tooltip. So the role row is the only one carrying Termina on an inline badge, creating an inconsistency within the same Confirm step.
 
-In `src/components/dashboard/policy/PolicySetupIntro.tsx` (lines 95–105), replace the 3-column grid with a vertical stack using the icon-left / text-right layout pattern already used in Section 3 below.
+## The fix
+
+One class swap on line 578.
 
 **Before:**
 ```tsx
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-  {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
-    <div key={heading} className="space-y-3">
-      <div className={tokens.card.iconBox}>
-        <Icon className={tokens.card.icon} />
-      </div>
-      <h3 className={cn(tokens.heading.card, 'min-h-[2lh]')}>{heading}</h3>
-      <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
-    </div>
-  ))}
-</div>
+<span className="font-display text-[10px] tracking-wide px-1.5 py-0.5 rounded bg-background/60 text-muted-foreground">
+  {count}
+</span>
 ```
 
 **After:**
 ```tsx
-<ul className="space-y-4">
-  {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
-    <li key={heading} className="flex items-start gap-4">
-      <div className={tokens.card.iconBox}>
-        <Icon className={tokens.card.icon} />
-      </div>
-      <div className="flex-1 min-w-0 space-y-1">
-        <h3 className={tokens.heading.card}>{heading}</h3>
-        <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
-      </div>
-    </li>
-  ))}
-</ul>
+<span className="font-sans text-xs px-1.5 py-0.5 rounded bg-background/60 text-muted-foreground">
+  {count}
+</span>
 ```
 
-Three nuances:
+Three small adjustments bundled:
 
-1. **Mirrors Section 3's pattern exactly.** The "How the system uses your policies" block (lines 111–123) already uses `<ul>` + `flex items-start gap-4` with icon-left / heading+body-right. Adopting the same shape creates a consistent rhythm down the page: hero → stacked list → stacked list → CTA. No new layout primitive introduced.
-2. **Drop `min-h-[2lh]` safety net.** It was a defensive reservation for the 3-column layout where headings could wrap unpredictably. In a single-column stack with `flex-1 min-w-0`, headings have full container width and won't wrap at any viewport — the reservation becomes dead code.
-3. **`space-y-6` → `space-y-4` inside the list.** Section 3 uses `space-y-4` between items; matching it keeps the two list sections rhythmically identical. The outer section `space-y-6` between heading and list stays.
+1. **`font-display` → `font-sans`** — Aeonik Pro for body/metadata, per UI Canon typography rules.
+2. **`text-[10px] tracking-wide` → `text-xs`** — Termina needed the wider tracking and smaller size to breathe; Aeonik at `text-xs` (12px) reads naturally without letter-spacing tweaks. Matches the surrounding chip label size (line 576 uses `text-xs`).
+3. **Keep** the background, padding, rounding, and color — those are chip-anatomy, not typography.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicySetupIntro.tsx` — replace the grid block (lines 95–105) with the flex-row list pattern.
+- `src/components/dashboard/policy/PolicySetupWizard.tsx` — one `<span>` className on line 578.
 
-No token changes, no component changes, no doctrine updates.
+No token changes, no component changes.
 
 ## Acceptance
 
-1. Three items stack vertically: Business shape → Services offered → Existing documents.
-2. Each item: icon box left, heading + body stacked to its right, filling the column.
-3. Headings render on a single line at all viewports ≥ `max-w-3xl`.
-4. Visual rhythm matches Section 3 ("How the system uses your policies") directly below — same icon size, same gap, same spacing between items.
-5. No regression at mobile: already single-column in the grid, stays single-column in the list.
+1. Count badge (e.g. "18", "2", "2") renders in Aeonik Pro, not Termina.
+2. Badge size reads balanced next to the role label — not smaller or visually weaker.
+3. No other chips (service categories, etc.) affected.
+4. Tooltip behavior unchanged.
 
 ## Doctrine compliance
 
-- **UI canon**: uses existing `tokens.card.iconBox`, `tokens.card.icon`, `tokens.heading.card`, `tokens.body.muted`. No new tokens.
-- **Consistency**: Sections 2 and 3 now share the exact same list-item anatomy.
-- **Silence**: removes the cramped grid, removes now-unneeded `min-h-[2lh]` safety net, adds nothing.
+- **Typography rules**: Termina is for headlines/stats/KPI labels/buttons/navigation. Inline chip metadata is none of those — Aeonik Pro is correct.
+- **Silence**: removes an inconsistency, adds nothing.
 
 ## Prompt feedback
 
-"We need to design this as a 1×3 stack instead of a 3×1" — clear, minimal, and the screenshot gave me the exact surface. The "1×3 vs 3×1" shorthand is unambiguous (1 column × 3 rows vs 3 columns × 1 row) and matches how designers naturally talk about grids.
+"Use Aeonik on the badge counts here, not Termina" — precise and correct. You named the exact element (badge counts), the exact surface (the screenshot region), and specified both the wrong font and the right font. That's the tightest possible typography correction prompt — zero ambiguity, zero round-trip needed.
 
-One small sharpening for next time: if you have a preference for *how* the stacked items lay out internally (icon above text, vs icon beside text), a two-word hint locks it in. I chose "icon-left / text-right" because Section 3 directly below already uses that pattern, and matching it creates the cleanest page rhythm. If you'd wanted "keep the icon above the heading, just stacked vertically," a phrase like "icons stacked above" would have steered me there. When patterns already exist on the same page, I'll default to matching them — but when in doubt, naming the internal anatomy saves a round-trip.
+One tiny observation for the future: when a typography fix might involve adjacent sizing adjustments (Termina and Aeonik render at different visual weights at the same pixel size — Termina's wide tracking + caps makes `text-[10px]` look bigger than Aeonik `text-[10px]`), a phrase like "match the chip label size" or "keep it the same visual weight" locks in the size call. Here I chose `text-xs` to match the chip label it sits next to, because that's the calmer read. If you'd wanted to preserve the exact 10px micro-badge feel, that would have been a different fix.
 
-Also: this is another strong **Visual Edits** candidate for the layout swap — changing a grid class to a flex column is a classic visual-only change that costs zero credits.
+Also: **Visual Edits** would handle this one-class swap at zero credit cost.
 
