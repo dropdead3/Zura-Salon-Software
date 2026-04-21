@@ -210,7 +210,7 @@ export function PolicyConfiguratorPanel({
     //   2. per-policy summary derived from the starter draft + applicability
     //      manifest (specific prose for both `policy_summary` and
     //      `who_it_applies_to`)
-    //   3. brand-token interpolation across the merged map
+    //   3. brand-token + rule-value interpolation across the merged map
     //   4. operator-saved values (sacred — never touched)
     const schemaDefaults = defaultsFromSchema(allFields);
     const policySpecific = getPolicySummaryDefaults(entry.key, {
@@ -219,14 +219,71 @@ export function PolicyConfiguratorPanel({
       locationCount,
       schemaHasAuthorityRole,
     });
-    const interpolated = interpolateDefaults(
-      { ...schemaDefaults, ...policySpecific },
-      { orgName: orgNameForTokens, platformName: PLATFORM_NAME },
-    );
+    const mergedDefaults = { ...schemaDefaults, ...policySpecific };
+    // Snapshot the original (pre-substitution) longtext defaults so the
+    // reactive effect can recompute from the template when role values change.
+    const longtextSnapshot: Record<string, string> = {};
+    allFields.forEach((f) => {
+      if (f.type === 'longtext') {
+        const v = mergedDefaults[f.key];
+        if (typeof v === 'string') longtextSnapshot[f.key] = v;
+      }
+    });
+    longtextDefaultsRef.current = longtextSnapshot;
+    // Rule-value tokens resolve against the *seeded* values map: schema
+    // defaults for role fields take precedence at hydration, but any
+    // operator-saved block value wins (per layer-4 sacredness).
+    const ruleValuesForTokens = { ...schemaDefaults, ...fromBlocks };
+    const interpolated = interpolateDefaults(mergedDefaults, {
+      orgName: orgNameForTokens,
+      platformName: PLATFORM_NAME,
+      ruleValues: ruleValuesForTokens,
+    });
     const seeded = { ...interpolated, ...fromBlocks };
     setValues(seeded);
+    // Any operator-saved longtext value is treated as already user-edited:
+    // the reactive effect must not overwrite saved prose.
+    Object.keys(fromBlocks).forEach((k) => {
+      const field = allFields.find((f) => f.key === k);
+      if (field?.type === 'longtext') userEditedFieldsRef.current.add(k);
+    });
     setHydrated(true);
   }, [data, hydrated, allFields, orgNameForTokens, entry.key, entry.category, entry.audience, locationCount, schemaHasAuthorityRole]);
+
+  // Reactive re-substitution: when a role-type field value changes, recompute
+  // longtext fields from their original templates — but only for longtext
+  // fields the operator hasn't manually edited. Operator edits are sacred.
+  useEffect(() => {
+    if (!hydrated) return;
+    const longtextDefaults = longtextDefaultsRef.current;
+    const editedFields = userEditedFieldsRef.current;
+    setValues((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const [fieldKey, template] of Object.entries(longtextDefaults)) {
+        if (editedFields.has(fieldKey)) continue;
+        const branded = interpolateBrandTokens(template, {
+          orgName: orgNameForTokens,
+          platformName: PLATFORM_NAME,
+        });
+        const resolved = substituteRuleTokens(branded, prev);
+        if (resolved !== prev[fieldKey]) {
+          next[fieldKey] = resolved;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+    // Re-run when any role-type field value changes. Tracking only the
+    // role-type subset avoids a re-render loop on the very longtext fields
+    // we're rewriting.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    hydrated,
+    orgNameForTokens,
+    // Spread role-field values into deps so any role change triggers re-sub.
+    ...allFields.filter((f) => f.type === 'role').map((f) => values[f.key]),
+  ]);
 
   const versionId = data?.versionId;
   const versionNumber = data?.versionNumber ?? 1;
