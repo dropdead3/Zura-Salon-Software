@@ -100,7 +100,8 @@ export default function OrganizationSetup() {
     [draftStepData],
   );
 
-  // Resume at draft's current_step on first load — or jump to single-step from settings
+  // Resume at draft's current_step on first load — or jump to single-step from settings.
+  // Wave 13A.B3 — coerce because legacy values may still be text post-migration on cold caches.
   const resumedRef = useRef(false);
   useEffect(() => {
     if (resumedRef.current || !renderableSteps.length) return;
@@ -114,8 +115,14 @@ export default function OrganizationSetup() {
       return;
     }
     if (!draft) return;
-    const resumeAt = draft.current_step;
-    if (typeof resumeAt === "number" && resumeAt >= 0 && resumeAt < renderableSteps.length) {
+    const raw = (draft as any).current_step;
+    const resumeAt = raw === null || raw === undefined || raw === "" ? null : Number(raw);
+    if (
+      resumeAt !== null &&
+      Number.isFinite(resumeAt) &&
+      resumeAt >= 0 &&
+      resumeAt < renderableSteps.length
+    ) {
       setCurrentIndex(resumeAt);
       if (resumeAt > 0) setShowIntro(false);
     }
@@ -137,19 +144,26 @@ export default function OrganizationSetup() {
     return detectConflicts(rules, draftStepData);
   }, [rules, draftStepData]);
 
+  // Wave 13D.G1 — onChange snapshots are stored in a ref. We also keep a
+  // setter that flushes synchronously on Next so a fast click doesn't drop
+  // the latest payload between effect tick and persist.
   const handleStepChange = useCallback((data: Record<string, unknown>) => {
     stepDataRef.current = data;
   }, []);
 
-  const persist = async (advance: 1 | -1 | 0) => {
+  const persist = async (advance: 1 | -1 | 0, opts?: { skipping?: boolean }) => {
     if (!orgId || !currentStep) return;
     const isLast = currentIndex === renderableSteps.length - 1;
     const nextIndex = Math.max(0, Math.min(renderableSteps.length - 1, currentIndex + advance));
+    const skipping = opts?.skipping ?? false;
     try {
-      if (advance >= 0 && Object.keys(stepDataRef.current).length > 0) {
+      // Wave 13D.G2 — when soft-skipping, advance current_step in the draft
+      // even though stepDataRef is empty, so resume doesn't bounce back.
+      const hasPayload = Object.keys(stepDataRef.current).length > 0;
+      if (advance >= 0 && (hasPayload || skipping)) {
         await save.mutateAsync({
           stepKey: currentStep.key,
-          data: stepDataRef.current,
+          data: hasPayload ? stepDataRef.current : { __skipped__: true },
           currentStep: nextIndex,
         });
       }
@@ -157,7 +171,7 @@ export default function OrganizationSetup() {
         telemetry.mutate({
           organization_id: orgId,
           step_number: currentStep.step_order,
-          event: "completed",
+          event: skipping ? "skipped" : "completed",
         });
       }
       // Single-step re-entry: commit just this step and bounce back to settings
@@ -182,12 +196,7 @@ export default function OrganizationSetup() {
 
   const handleSkip = async () => {
     if (!orgId || !currentStep) return;
-    telemetry.mutate({
-      organization_id: orgId,
-      step_number: currentStep.step_order,
-      event: "skipped",
-    });
-    await persist(1);
+    await persist(1, { skipping: true });
   };
 
   const handleJump = (stepKey: string) => {
