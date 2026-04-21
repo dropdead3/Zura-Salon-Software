@@ -11,6 +11,18 @@ interface Props {
   entry: PolicyLibraryEntry;
   adopted?: OrgPolicy;
   onClick: () => void;
+  /**
+   * Optional one-line description of what the platform DOES with this
+   * policy's values at runtime. Surfaced under the title for Core
+   * Function policies (e.g., "Powers the public booking page").
+   */
+  consumerLabel?: string;
+  /**
+   * When true and the policy is not yet adopted, render the soft-nudge
+   * fallback line ("Using platform default — configure to make it yours.")
+   * underneath the consumer label.
+   */
+  showDefaultFallback?: boolean;
 }
 
 const recommendationLabel: Record<PolicyLibraryEntry['recommendation'], string> = {
@@ -25,7 +37,13 @@ const audienceLabel: Record<PolicyLibraryEntry['audience'], string> = {
   both: 'Internal + Client',
 };
 
-export function PolicyLibraryCard({ entry, adopted, onClick }: Props) {
+export function PolicyLibraryCard({
+  entry,
+  adopted,
+  onClick,
+  consumerLabel,
+  showDefaultFallback,
+}: Props) {
   const isAdopted = !!adopted;
   const isRequired = entry.recommendation === 'required';
   const status = adopted?.status;
@@ -63,9 +81,19 @@ export function PolicyLibraryCard({ entry, adopted, onClick }: Props) {
                 <h4 className="font-sans text-sm font-medium text-foreground truncate">
                   {entry.title}
                 </h4>
+                {consumerLabel && (
+                  <p className="font-sans text-xs text-foreground/80 mt-1">
+                    {consumerLabel}
+                  </p>
+                )}
                 <p className="font-sans text-xs text-muted-foreground mt-1 line-clamp-2">
                   {entry.short_description}
                 </p>
+                {showDefaultFallback && !isAdopted && (
+                  <p className="font-sans text-xs text-muted-foreground/80 mt-1 italic">
+                    Using platform default — configure to make it yours.
+                  </p>
+                )}
               </div>
             </div>
           </div>
