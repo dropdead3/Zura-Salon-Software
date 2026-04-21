@@ -193,6 +193,95 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     return map;
   }, [library, recommendedKeys]);
 
+  // Set of library keys that are "required" within the recommended set.
+  // Required policies are locked-checked and cannot be excluded.
+  const requiredKeySet = useMemo(() => {
+    const set = new Set<string>();
+    library
+      .filter((l) => recommendedKeys.includes(l.key) && l.recommendation === 'required')
+      .forEach((l) => set.add(l.key));
+    return set;
+  }, [library, recommendedKeys]);
+
+  /**
+   * Operator opt-outs from the recommended set. Local-only (not persisted to
+   * policy_org_profile) — this is a one-shot adoption decision, not an
+   * ongoing profile attribute. Required keys can never be added here.
+   */
+  const [excludedKeys, setExcludedKeys] = useState<Set<string>>(new Set());
+  const [recommendationsRecentlyReset, setRecommendationsRecentlyReset] = useState(false);
+
+  // When the recommended set changes (operator went back to Step 2 and toggled
+  // an offers_* flag), reset opt-outs so new additions surface checked.
+  const recommendedKeysSig = useMemo(() => recommendedKeys.slice().sort().join('|'), [recommendedKeys]);
+  const lastSigRef = useRef<string>(recommendedKeysSig);
+  useEffect(() => {
+    if (lastSigRef.current === recommendedKeysSig) return;
+    const wasInitial = lastSigRef.current === '';
+    lastSigRef.current = recommendedKeysSig;
+    if (wasInitial) return;
+    setExcludedKeys(new Set());
+    setRecommendationsRecentlyReset(true);
+  }, [recommendedKeysSig]);
+
+  const effectiveKeys = useMemo(
+    () => recommendedKeys.filter((k) => !excludedKeys.has(k)),
+    [recommendedKeys, excludedKeys],
+  );
+
+  const togglePolicyExcluded = (key: string) => {
+    if (requiredKeySet.has(key)) return; // defense-in-depth: required cannot be excluded
+    setExcludedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const resetToRecommended = () => {
+    setExcludedKeys(new Set());
+    setRecommendationsRecentlyReset(false);
+  };
+
+  // Group recommended library entries by category for the review accordion.
+  const recommendedByCategoryEntries = useMemo(() => {
+    const byCat = new Map<PolicyCategory, typeof library>();
+    library
+      .filter((l) => recommendedKeys.includes(l.key))
+      .forEach((l) => {
+        const arr = byCat.get(l.category) ?? [];
+        arr.push(l);
+        byCat.set(l.category, arr);
+      });
+    // Sort entries inside each category: required first, then by display_order.
+    byCat.forEach((arr) => {
+      arr.sort((a, b) => {
+        if (a.recommendation !== b.recommendation) {
+          return a.recommendation === 'required' ? -1 : 1;
+        }
+        return a.display_order - b.display_order;
+      });
+    });
+    return (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[])
+      .sort((a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order)
+      .map((cat) => ({ cat, items: byCat.get(cat) ?? [] }))
+      .filter((g) => g.items.length > 0);
+  }, [library, recommendedKeys]);
+
+  // Compute trigger chips for a policy — which Step 2 toggle unlocked it.
+  const getTriggerChips = (entry: typeof library[number]): string[] => {
+    const chips: string[] = [];
+    if (entry.requires_extensions && form.offers_extensions) chips.push('Extensions');
+    if (entry.requires_retail && form.offers_retail) chips.push('Retail');
+    if (entry.requires_packages && form.offers_packages) chips.push('Packages');
+    if (entry.requires_minors && form.serves_minors) chips.push('Minors');
+    if ((entry as any).requires_tip_pooling && form.uses_tip_pooling) chips.push('Tip pool');
+    if ((entry as any).requires_refund_clawback && form.uses_refund_clawback) chips.push('Refund clawback');
+    if ((entry as any).requires_booth_rental && form.has_booth_renters) chips.push('Booth renters');
+    return chips;
+  };
+
   /**
    * Wave 28.11.6 — expansion prompt (preserved).
    * Detect offers_* flags that flipped false → true since the existing profile.
