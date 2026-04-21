@@ -165,13 +165,41 @@ export default function Policies() {
     return counts;
   }, [profileApplicableLibrary]);
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const isSearching = normalizedQuery.length > 0;
+
   const filteredLibrary = useMemo(() => {
     return profileApplicableLibrary.filter((l) => {
       if (activeAudience !== 'all' && l.audience !== activeAudience) return false;
       if (activeCategory !== 'all' && l.category !== activeCategory) return false;
+      if (adoptionFilter === 'adopted' && !adoptedByKey.has(l.key)) return false;
+      if (adoptionFilter === 'not_adopted' && adoptedByKey.has(l.key)) return false;
+      if (normalizedQuery) {
+        const categoryLabel = POLICY_CATEGORY_META[l.category]?.label.toLowerCase() ?? '';
+        const haystack = [
+          l.title,
+          l.short_description,
+          l.why_it_matters ?? '',
+          categoryLabel,
+          l.key,
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(normalizedQuery)) return false;
+      }
       return true;
     });
-  }, [profileApplicableLibrary, activeCategory, activeAudience]);
+  }, [profileApplicableLibrary, activeCategory, activeAudience, adoptionFilter, normalizedQuery, adoptedByKey]);
+
+  // Suggest a matching category when search has zero results — single-word
+  // queries like "team" should nudge toward the Team category tab.
+  const suggestedCategory = useMemo<PolicyCategory | null>(() => {
+    if (!isSearching || filteredLibrary.length > 0) return null;
+    const match = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).find((c) =>
+      POLICY_CATEGORY_META[c].label.toLowerCase().includes(normalizedQuery),
+    );
+    return match ?? null;
+  }, [isSearching, filteredLibrary.length, normalizedQuery]);
 
   const categoryOrder = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).sort(
     (a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order,
