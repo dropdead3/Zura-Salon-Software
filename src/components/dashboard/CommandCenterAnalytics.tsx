@@ -51,6 +51,7 @@ import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperie
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout, getPinnedVisibilityKey } from '@/hooks/useDashboardLayout';
+import { useSetupIntent } from '@/hooks/onboarding/useSetupIntent';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
@@ -114,6 +115,49 @@ const CARD_COMPONENTS: Record<string, string> = {
 };
 
 /**
+ * Card-ID → persona surface-key map.
+ *
+ * Wave 13F.C — when the operator has NOT manually arranged their pinned cards,
+ * we fall back to persona scoring from `useSetupIntent`. The mapping below
+ * translates a Command Center card_id into the surface_key that intent
+ * weights are defined against in `INTENT_TO_SURFACE_WEIGHTS`.
+ *
+ * Doctrine: persona scaling is structural, not decorative. Surfaces should
+ * scale to operator focus instead of dumping every feature on every user.
+ */
+const CARD_TO_SURFACE_KEY: Record<string, string> = {
+  sales_overview: 'sales_analytics',
+  revenue_breakdown: 'sales_analytics',
+  true_profit: 'sales_analytics',
+  service_profitability: 'sales_analytics',
+  week_ahead_forecast: 'forecasting',
+  capacity_utilization: 'forecasting',
+  commission_summary: 'commission_drift',
+  staff_commission_breakdown: 'commission_drift',
+  zura_capital: 'payroll',
+  locations_rollup: 'location_comparison',
+  operations_stats: 'operations',
+  control_tower: 'operations',
+  predictive_inventory: 'operations',
+  staff_performance: 'coaching',
+  top_performers: 'leaderboard',
+  hiring_capacity: 'career_pathway',
+  staffing_trends: 'career_pathway',
+  stylist_workload: 'coaching',
+  client_health: 'client_health',
+  rebooking: 'rebook_intelligence',
+  client_funnel: 'rebook_intelligence',
+  client_experience_staff: 'client_health',
+  daily_brief: 'daily_briefing',
+  operational_health: 'daily_briefing',
+  new_bookings: 'todays_prep',
+  goal_tracker: 'tasks',
+  executive_summary: 'daily_briefing',
+  service_mix: 'sales_analytics',
+  retail_effectiveness: 'sales_analytics',
+};
+
+/**
  * Command Center Analytics Section
  * 
  * Renders pinned analytics cards based on visibility settings.
@@ -124,6 +168,7 @@ export function CommandCenterAnalytics() {
   const { dashPath } = useOrgDashboardPath();
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const { layout } = useDashboardLayout();
+  const { hasIntent, scoreSurface } = useSetupIntent();
   
   // Shared filter state for all pinned analytics cards
   const [locationId, setLocationId] = useState<string>('all');
@@ -153,18 +198,35 @@ export function CommandCenterAnalytics() {
     return Object.keys(CARD_COMPONENTS).filter(id => isElementVisible(id));
   }, [visibilityData]);
   
-  // Order visible cards by user's preferred order (from pinnedCards)
+  /**
+   * Wave 13F.C — persona-driven ordering for un-arranged cards.
+   *
+   * Precedence:
+   *   1. User's saved manual order (layout.pinnedCards) — sacred, never overridden.
+   *   2. Cards not in saved order: sorted by persona score from setup_intent.
+   *      Higher intent score → renders earlier. Ties stable by CARD_COMPONENTS order.
+   *   3. Operators with no intent set keep the existing arbitrary order.
+   */
   const orderedVisibleCards = useMemo(() => {
     const savedOrder = layout.pinnedCards || [];
-    
-    // Start with cards in saved order that are visible
+
     const fromSavedOrder = savedOrder.filter(id => allVisibleCardIds.includes(id));
-    
-    // Add any visible cards not in saved order
     const notInOrder = allVisibleCardIds.filter(id => !savedOrder.includes(id));
-    
+
+    if (hasIntent && notInOrder.length > 1) {
+      const scored = notInOrder
+        .map((cardId, idx) => ({
+          cardId,
+          score: scoreSurface(CARD_TO_SURFACE_KEY[cardId] ?? cardId),
+          idx,
+        }))
+        .sort((a, b) => (b.score - a.score) || (a.idx - b.idx))
+        .map(s => s.cardId);
+      return [...fromSavedOrder, ...scored];
+    }
+
     return [...fromSavedOrder, ...notInOrder];
-  }, [layout.pinnedCards, allVisibleCardIds]);
+  }, [layout.pinnedCards, allVisibleCardIds, hasIntent, scoreSurface]);
   
   const hasAnyPinned = orderedVisibleCards.length > 0;
   
