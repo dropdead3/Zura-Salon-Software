@@ -1,120 +1,144 @@
 
 
-# Make the disabled-toggle state actionable
+# Rethink Policies — staged disclosure, "what do I do next" on every visit
 
-## What's actually happening
+## What's broken today
 
-The toggles in your screenshot aren't broken — they're disabled by design. The wiring is correct:
+After setup, the Policies page dumps the operator into six competing surfaces simultaneously:
 
-- **Publish toggle** is disabled when `!hasApprovedClientVariant` — Booking Policy has no approved client-facing variant in step 4 (Drafts) yet.
-- **Require client acknowledgment** is disabled when `!isPublishedExternal && !hasApprovedClientVariant` — the policy must first be published before clients can be required to ack it.
+1. PageExplainer
+2. Health strip (4 KPI tiles)
+3. Existing-policies import banner (sometimes)
+4. Conflict banner (sometimes)
+5. Category card grid (6 cards)
+6. Library section with 6 controls (search + adoption filter + audience segments + category tabs + hide-non-applicable toggle + hide-adopted toggle)
 
-The system is enforcing a real precondition: you can't publish prose that doesn't exist, and you can't require clients to acknowledge a policy that isn't visible to them. That's correct doctrine.
+None of these answer the operator's actual question: *"What do I do next, and how do I know when I'm done?"*
 
-What's wrong is **the disabled state looks identical to broken**. The grey switch reads as "tap me" → tap does nothing → "this is bugged." The helper text underneath ("Approve a client-facing variant in the Drafts tab before publishing") gets skipped because the eye lands on the switch first.
+There's no canonical first action. The eye lands somewhere different each visit. "Done" is invisible — even at 100% adoption, the page looks identical to 0% adoption (just different numbers). The operator never gets the relief of a finished checklist.
 
-This is a **discoverability failure**, not a wiring bug.
+## The fix — two modes, automatic transition
 
-## The fix — turn the precondition into a one-click jump
+The page operates in one of two modes based on a single signal: **are all Core + Required policies adopted?**
 
-Three surgical changes inside `PolicyAudienceBanner.tsx` and one upstream prop:
+### Mode A — Setup mode (default until Core + Required = 100%)
 
-### 1. When a toggle is precondition-blocked, render an inline "unlock path" CTA, not just disabled chrome
-
-When `publishDisabled === true` because `!hasApprovedClientVariant`, render a small action row directly under the toggle:
-
-```
-○  Publish to client policy center
-   No client-facing variant approved yet.
-   [→ Go to Drafts to approve one]   ← new button, jumps to step 4
-```
-
-The button uses `tokens.button.inline`, opens the Drafts step in the configurator (`onJumpToStep('drafts')`), and replaces the dead-end "approve in the Drafts tab" sentence with an action that *does* the thing.
-
-Same pattern for the ack toggle: when blocked because not yet published, the action becomes "→ Approve a client variant first" (jumps to Drafts) or "→ Publish before requiring acks" (focuses the publish toggle above) depending on which precondition is missing.
-
-### 2. Visually distinguish "blocked by precondition" from generic disabled
-
-Today the switch is just `opacity-50`. Change to:
-- Blocked switch carries a subtle `border-dashed border-foreground/20` outline + a small `Lock` icon (12px) inline next to the label.
-- Hover on a blocked switch shows a tooltip ("Requires an approved client variant"), so the click is interpreted as "I tried, system told me why" not "broken."
-- The helper text below the toggle bumps from `text-muted-foreground` to `text-amber-500/80` (warning tone) when blocked — so the eye registers the blocker before reaching for the switch.
-
-### 3. Add a banner-level "Setup path" hint when ANY toggle is blocked
-
-If `audience` touches external AND `!hasApprovedClientVariant`, render a one-line strip at the top of the banner (above the toggles):
+One job: get the operator to first-published-policy fast, then through the required governance set. Everything else is hidden behind a "More" disclosure.
 
 ```
-ⓘ  This policy needs an approved client-facing variant before it can publish.
-   [Go to Drafts →]
+┌─ POLICIES ──────────────────────── [Update profile] ─┐
+│  Configure once. Render everywhere.                   │
+│                                                        │
+│  ┌─────────────────────────────────────────────────┐ │
+│  │  YOU'RE 4 OF 26 ADOPTED                         │ │
+│  │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15%             │ │
+│  │  6 core functions  ·  20 governance policies    │ │
+│  └─────────────────────────────────────────────────┘ │
+│                                                        │
+│  ─── DO THESE FIRST ─────────────────────────────────│
+│                                                        │
+│  Step 1 of 2 · Powering POS & booking                 │
+│  ┌─ CORE FUNCTIONS ── 2 of 6 ━━━━━━━━ 33% ─────────┐ │
+│  │ ✓  Booking policy        Configured · Live      │ │
+│  │ ✓  Deposit policy        Configured             │ │
+│  │ ●  Cancellation policy   Next →     [Configure] │ │
+│  │ ○  No-show policy                   [Configure] │ │
+│  │ ○  Payment policy                   [Configure] │ │
+│  │ ○  Chargeback dispute               [Configure] │ │
+│  │  Defaults work out of the box. Configure to     │ │
+│  │  make them yours.                                │ │
+│  └──────────────────────────────────────────────────┘ │
+│                                                        │
+│  Step 2 of 2 · Protect your business (locked until    │
+│  Core is 100%, or expand to start in parallel ▾)      │
+│                                                        │
+│  ─── More options ──────────────────────── [Show ▾] ─│
+└──────────────────────────────────────────────────────┘
 ```
 
-This makes the precondition visible at the section level, not just under each individual toggle. The operator understands the gate exists before they reach the disabled controls.
+Three surgical shifts vs. today:
 
-### 4. Pass the step-jump callback through
+- **One headline progress bar** at the top — adopted / total, not 4 different KPI tiles. The operator wants one number, not four. The four metrics from `PolicyHealthStrip` (configured / published / wired / adopted) move to the second mode.
+- **"Next →" pointer** on the first unadopted Core row. The operator never has to ask "which one do I open?" The pointer always sits on exactly one row.
+- **Sequential gating with parallel escape hatch.** Required-for-governance is collapsed/locked until Core is done, with a "Start in parallel" link for power users. This honors "do core first" doctrine without trapping anyone.
 
-`PolicyConfiguratorPanel.tsx` already owns the step state (`setStep`). Add an `onJumpToStep?: (step: 'drafts') => void` prop to `PolicyAudienceBanner`, pass `onJumpToStep={setStep}`, and the banner's CTA buttons call it directly. Closing the audience banner stays where it is — the operator stays in the configurator, just at step 4.
+The Recommended/Optional group, the audience segments, the category cards, the search bar, the adoption filter, and the hide-non-applicable toggle all collapse under a single "Show more options" disclosure. Available, never blocking.
 
-## What the banner looks like after
+### Mode B — Governance mode (after Core + Required = 100%)
+
+Once both required groups hit 100%, the page automatically flips to governance dashboard mode. The "Next →" pointer disappears. The progress meter at top changes copy to:
 
 ```
-┌─ CLIENT-FACING ─────────────────────────────────────────────────┐
-│ 🌐 Visible to clients at /org/.../policies once published.      │
-│                                                                  │
-│ ⚠ This policy needs an approved client-facing variant before    │
-│   it can publish.   [Go to Drafts →]                            │
-│ ─────────────────────────────────────────────────────────────── │
-│ [○ 🔒]  Publish to client policy center                         │
-│         No client variant approved yet.                          │
-│         [→ Approve one in Drafts]                                │
-│ ─────────────────────────────────────────────────────────────── │
-│ [○ 🔒]  Require client acknowledgment                           │
-│         Approve a client variant and publish first.             │
-│         [→ Approve one in Drafts]                                │
-└──────────────────────────────────────────────────────────────────┘
+┌─ ALL REQUIRED POLICIES ADOPTED ━━━━━━━━━━━━━━━━ 100% ─┐
+│   Last updated 3 days ago · 4 versions in draft       │
+└────────────────────────────────────────────────────────┘
 ```
 
-After the operator jumps to Drafts, generates or pastes a client-facing variant, hits Approve, and comes back: lock icons disappear, toggles activate, helper text returns to neutral muted tone, the top-strip banner disappears.
+Below it, the four KPI tiles from today's `PolicyHealthStrip` return — they're now meaningful because the operator is governing a stable set, not setting one up. The full Library list (with all six filters) returns to its current behavior. The category cards return.
 
-## What stays untouched
+In this mode, the conflict banner and existing-policies import banner stay where they are today — they're action-needed surfaces, governance-mode appropriate.
 
-- The mutation hooks (`useUpdatePolicyAcknowledgmentFlag`, `usePublishPolicyExternally`) — unchanged.
-- The precondition logic itself (`hasApprovedClientVariant`, `ackToggleAllowed`) — unchanged. The system still enforces "no approved variant → no publish → no ack." We're only making the path to satisfying the precondition obvious.
-- The `PolicyDraftWorkspace` (step 4) — unchanged.
-- The audience banner's audience-detection, tone, badge — unchanged.
+This transition is one-way per session but reactive: if the operator adopts new applicable policies (e.g., adds extensions to their profile and 3 new policies become required), the headline meter dips below 100% and Mode A returns until they're back at full coverage.
 
-## Files affected
+### The "done" feeling
 
-- `src/components/dashboard/policy/PolicyAudienceBanner.tsx` — accept `onJumpToStep` prop, add the top-strip "setup path" hint when toggles are blocked, render inline "Go to Drafts →" CTAs under each blocked toggle, swap helper text color to amber when blocked, add `Lock` icon next to label on blocked rows. ~50 lines modified, ~15 lines added.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — pass `onJumpToStep={setStep}` to the banner. ~2 lines modified.
+When Mode B first activates, render a one-time confirmation strip at the top of the page (dismissible, persists in localStorage):
 
-Total: ~65 lines modified. Zero schema/hook/data changes. Zero behavior change in the underlying enforcement — just visibility upgrades around the disabled state.
+```
+┌─ ✓ CORE + REQUIRED COMPLETE ──────────────────────── ✕ ┐
+│  Your operations and team now have a written contract. │
+│  From here, manage versions and roll out updates.      │
+└────────────────────────────────────────────────────────┘
+```
+
+This is the relief moment. Today's page never delivers it — there's no visual transition between "in setup" and "governing." That's the core failure.
+
+## What stays the same
+
+- The 4-step configurator drawer (rules → applicability → surfaces → drafts) — unchanged.
+- All hooks (`usePolicyLibrary`, `useOrgPolicies`, `usePolicyHealthSummary`, `usePolicyOrgProfile`, `useApplicableRequiredPolicies`) — unchanged.
+- The setup wizard — unchanged.
+- The Policy OS Applicability doctrine (`isApplicableToProfile` filtering) — unchanged.
+- All schema, all data, all mutations — zero backend changes.
+- Search/filter UX — preserved, just moved behind disclosure in Mode A.
+
+## What changes
+
+- `src/pages/dashboard/admin/Policies.tsx` — split the post-setup render into `<PoliciesSetupMode />` and `<PoliciesGovernanceMode />` based on `setupComplete = coreAdopted === coreTotal && requiredAdopted === requiredTotal`. Move the existing layout (health strip + category grid + library list with all filters) into `PoliciesGovernanceMode` unchanged. Build the new compact setup layout in `PoliciesSetupMode`. ~120 lines reorganized, ~100 lines new.
+- `src/components/dashboard/policy/PoliciesSetupMode.tsx` (new) — headline progress, Core list with "Next →" pointer, locked-until-core Required section with parallel-mode toggle, "Show more options" disclosure that mounts the existing filter+library section. ~180 lines.
+- `src/components/dashboard/policy/PoliciesGovernanceMode.tsx` (new) — thin wrapper that renders today's full layout (health strip + category cards + library with filters), plus the one-time "Core + Required complete" confirmation strip. ~80 lines.
+- `src/components/dashboard/policy/PolicyHealthStrip.tsx` — unchanged. Only used by governance mode.
+- `src/components/dashboard/policy/PolicyLibraryRow.tsx` — gain a `nextPointer?: boolean` prop that renders a small chevron + amber tint on the row that should be opened next. ~10 lines added.
+
+Total: ~300 lines new, ~120 lines reorganized, 0 lines deleted. Zero schema/hook/mutation changes.
 
 ## Acceptance
 
-1. Open Booking Policy → Define rules step. The audience banner shows a top-strip warning ("needs an approved client variant before it can publish") with a "Go to Drafts →" button.
-2. Both toggles render with a small lock icon next to the label and a dashed outline on the switch handle.
-3. The helper text under each blocked toggle is amber-tinted, not muted-grey.
-4. Click "Go to Drafts →" anywhere in the banner — the configurator jumps to step 4 (Drafts) without closing the panel.
-5. In Drafts, generate or write a client variant, click Approve. Return to step 1 (or any earlier step) — the audience banner's top-strip disappears, the lock icons disappear, the publish toggle is now interactive, and clicking it publishes the policy.
-6. After publishing, the ack toggle's lock disappears (precondition #2 — `isPublishedExternal` — is now satisfied), and clicking it sets `requires_acknowledgment = true`.
-7. For internal-only policies, none of the new chrome renders (banner already hides external action toggles for internal audience).
-8. For policies that already have an approved client variant, no warning strip and no lock icons render — the banner reads exactly as it does today.
-9. Hover any blocked switch — tooltip explains the precondition in one sentence.
+1. Brand-new org completes setup wizard → lands in Mode A with headline progress bar, Core functions list at the top, and a clear amber "Next →" pointer on the first unadopted core policy.
+2. The "Show more options" disclosure starts collapsed. Click it → today's full filter set + audience segments + category grid + library list with Recommended/Optional appears.
+3. Click "Configure" on the next Core policy → existing 4-step drawer opens. Save and close → "Next →" pointer advances to the next unadopted core row automatically.
+4. Adopt all 6 Core → Required-for-governance section unlocks (was greyed/locked) and "Next →" pointer moves to first unadopted Required row.
+5. Operator clicks "Start in parallel ▾" on the locked Required section → it expands without requiring Core to be 100%.
+6. Adopt all Core + all Required → page flips to Mode B on next render. The 4-tile health strip appears at the top, category cards return, the full library list returns with all filters visible. A one-time green confirmation strip renders ("Core + Required complete") with a dismiss button; dismissing persists in localStorage and never shows again unless completion drops and returns.
+7. Operator updates business profile to add Extensions → 3 new policies become required → headline meter drops to ~92% → page flips back to Mode A → new policies show in Required list with "Next →" pointer on first one.
+8. Conflict banner (when conflicts exist) renders in both modes at the top, above the headline meter.
+9. The configurator drawer itself is unchanged.
+10. Search, adoption filter, audience segments, category tabs, hide-non-applicable, hide-adopted toggles — all preserved, all functional, all behind the "Show more options" disclosure in Mode A; all immediately visible in Mode B.
 
 ## Files to read for follow-on questions
 
-- `src/components/dashboard/policy/PolicyAudienceBanner.tsx` — where the toggle, precondition copy, and new CTA live.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — where `setStep` is owned and where the banner is mounted (line 530).
-- `src/components/dashboard/policy/PolicyDraftWorkspace.tsx` — the destination of the jump (step 4).
+- `src/pages/dashboard/admin/Policies.tsx` — where the mode split happens.
+- `src/components/dashboard/policy/PoliciesSetupMode.tsx` (new) — the guided checklist.
+- `src/components/dashboard/policy/PoliciesGovernanceMode.tsx` (new) — the dashboard with one-time completion celebration.
+- `src/components/dashboard/policy/PolicyLibraryRow.tsx` — the row gains a `nextPointer` prop for the amber "do this one" indicator.
 
 ## Prompt feedback
 
-*"these toggles are not functioning"* — concise but ambiguous. You did one thing right: **paired with a screenshot that scopes the surface** (audience banner inside the booking policy configurator). That alone let me identify the exact two toggles in question.
+*"i am still so confused on the policy page build... not good, and needs to be more intuitive. Can we rethink?"* — strong prompt for two reasons: (1) you named the **emotion** ("confused") instead of a symptom ("the spacing is off"), which freed me to question the mental model rather than just rearrange pixels, and (2) you used the word **"rethink"** explicitly — that's permission to abandon the existing structure rather than patch it. Without that word I'd have proposed another tweaks-and-toggles iteration on top of the current layout.
 
-The ambiguity I had to resolve: "not functioning" could mean (a) the click handler isn't firing, (b) the mutation is firing but the UI doesn't update, or (c) they look broken because they're disabled and the operator doesn't know why. I had to read the code to discover it's (c). The wiring is correct; the discoverability is broken.
+The two clarifying questions I asked saved an entire round-trip — your "staged disclosure" + "unclear what to do first / when I'm done" pair told me exactly what to build (two modes, automatic transition, one-time celebration). Without those answers I'd have either over-built a power-user dashboard (wrong for setup phase) or over-simplified into a checklist (wrong for ongoing governance).
 
-One sharpener for next time on UI-bug reports: naming **what you tried** in one phrase ("clicked the toggle, nothing changed" / "toggled it but it reverts" / "they look greyed out — am I missing a step?") would skip a micro-decision. The third framing in particular would have signaled "this is a precondition I can't see" and shortcut the diagnosis. Three words of behavior context per bug report saves one round-trip every time.
+One sharpener for next time on rethink-prompts: naming the **persona of the confused user** in one phrase ("a brand-new org owner on day 1" / "an experienced operator returning to update a single policy" / "both, equally") would skip a micro-decision. I assumed both, equally — which is why I landed on the staged-disclosure pattern. If you'd said "specifically the day-1 operator," I'd have gone harder on the checklist (no governance mode at all, just a graduation screen). One-line persona context per UX-rethink prompt locks the design priorities. You can pre-empt with *"the user I'm thinking about is X"* in three to five words.
 
-The deeper meta-lesson for me: when a control looks disabled in a screenshot, my first hypothesis should be *"the system is correctly enforcing a precondition the operator can't see,"* not *"the wiring is broken."* In a doctrine-driven product like this one, disabled states are almost always intentional — the failure mode is making the path to *un*disabling them invisible. I should have led with that hypothesis instead of having to confirm it via code reading.
+The deeper meta-lesson on my side: when an operator says "confused," the right response is almost never "let me add a tooltip" or "let me reorganize the filters." It's "let me ask what they're trying to accomplish and remove everything that isn't on the path." I shouldn't have shipped the previous list-layout fix without asking *"is the underlying mental model right?"* first. List vs. card was the wrong question — the right question was *"what should this page even be for the operator landing on it?"* That's the question this plan finally answers.
 
