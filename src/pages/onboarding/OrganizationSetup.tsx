@@ -71,8 +71,10 @@ export default function OrganizationSetup() {
   const { user, loading: authLoading } = useAuth();
   const orgId = params.get("org");
   const skipIntro = params.get("skipIntro") === "1";
+  const singleStepKey = params.get("step"); // single-step re-entry from settings
+  const returnTo = params.get("returnTo");
 
-  const [showIntro, setShowIntro] = useState(!skipIntro);
+  const [showIntro, setShowIntro] = useState(!skipIntro && !singleStepKey);
   const [phase, setPhase] = useState<"steps" | "summary" | "result">("steps");
   const [commitResult, setCommitResult] = useState<CommitResult | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
