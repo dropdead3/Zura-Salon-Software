@@ -1,69 +1,74 @@
 
 
-# Add "you can change this anytime" reassurance to Step 2
+# What's supposed to happen here — and what actually happens
 
-## Short answer to your question
+## Short answer
 
-**Yes — every toggle on Step 2 is editable after initial setup.** The wizard is built for re-entry:
+**Nothing.** Today, checking either box does this:
 
-- `policy_org_profile` is a single upsert-able row keyed by `organization_id`. Every flag (`offers_extensions`, `offers_retail`, `offers_packages`, `offers_memberships`, `serves_minors`, `uses_tip_pooling`, `uses_refund_clawback`, `has_booth_renters`) is a plain boolean column with no one-way migration.
-- `PolicySetupWizard.tsx` (lines 188–225) already has an **`expansionFlips`** mechanism that only activates when `existingProfile.setup_completed_at` is set — it diffs the current form against the stored profile and surfaces which flags were newly enabled. That exists *because* the wizard is designed to be re-opened and re-run.
-- Re-running the wizard adopts newly-applicable policies and leaves existing adoptions untouched. Nothing is destructive.
+1. Persists `has_existing_handbook = true` and/or `has_existing_client_policies = true` to the `policy_org_profile` row.
+2. …and that's it.
 
-So the guidance is accurate — and the UI just doesn't say so. First-time operators staring at Step 2 have no idea these toggles can be revisited. That's the gap to close.
+I grep'd the entire codebase. Outside the wizard form, the migration that creates the columns, and the `commit-org-setup` handler that writes them, **nothing reads these flags**. No surface conditions on them, no upload affordance appears, no draft prioritization changes, no "review your existing materials first" nudge fires later. The promise made by the helper text — *"Helps us prioritize what to draft fresh vs. what to adapt from your existing materials"* — is currently a lie of omission. We collect the signal, then drop it on the floor.
 
-## The fix
+This is a real doctrinal violation: **silence is valid output, but a UI control that does nothing is not silence — it's a broken promise.** Either the box drives behavior, or it shouldn't be on the screen.
 
-Add a single reassurance line to Step 2's intro block. One file, one copy change.
+## What *should* happen
 
-**Location:** `src/components/dashboard/policy/PolicySetupWizard.tsx`, line 80 (the `model` step description in `STEP_META`).
+Two paths, and we should pick one — they're not both viable in Phase 1.
 
-**Current:**
-```ts
-model: {
-  label: 'Business model',
-  description: 'Tell us how you operate — drives which policies apply.',
-},
-```
+### Path A — Wire the flags to a real follow-up action (recommended)
 
-**Proposed:**
-```ts
-model: {
-  label: 'Business model',
-  description: 'Tell us how you operate — drives which policies apply. You can change any of these later as your business evolves.',
-},
-```
+When checked, the wizard's confirm-step should reveal a single advisory line + CTA, anchored to the existing handbook upload infrastructure (which already exists at `/admin/handbooks?tab=documents&upload=role&role=...`):
 
-That trailing clause renders under "Tell us how you operate" in the sub-header and is visible the moment the operator lands on Step 2. No modal, no tooltip, no extra chrome — just one line of calm reassurance, in the spot the operator is already reading.
+- **`has_existing_handbook` checked** → on Confirm screen, show:
+  > "We'll skip drafting a fresh handbook. Upload your current one after setup so we can map it to roles."
+  > [ Upload after setup → ] (deep-links to `/admin/handbooks?tab=documents&upload=role`)
 
-## Why not a tooltip or helper panel
+- **`has_existing_client_policies` checked** → on Confirm screen, show:
+  > "We'll seed your client-facing policy variants from your existing language. Paste or upload them in the Policies workspace after setup."
+  > [ Open Policies workspace → ] (deep-links to `/admin/policies`)
 
-- **Doctrine**: advisory-first copy, no decorative UI. A new tooltip or info icon adds weight for a reassurance that belongs in the primary read.
-- **Silence principle**: one declarative sentence > a hover surface the operator may never trigger.
-- **No redundancy**: Confirm-step and Materials-step don't need this line — those commit different shapes (service categories, handbook materials) and the latter already shows acknowledgment flow context.
+Then wire one downstream consumer: the `PolicySetupBanner` on `/admin/policies` should show a single "Import your existing client policies" nudge **only when** `has_existing_client_policies = true` AND no policy variant has been edited yet. Same pattern for the handbook side on `/admin/handbooks`.
+
+This makes the checkboxes load-bearing: they alter what the operator sees next, which is the whole point of asking the question.
+
+### Path B — Remove the checkboxes (acceptable fallback)
+
+If we're not ready to ship the import/seed flow, strike both rows from Step 3 entirely. Keep the "Existing materials" section header out, leave the recommended-policy-set summary as the whole step. Honest > performative.
+
+**Recommendation: Path A.** The infrastructure already exists for handbook uploads, and the policy workspace already supports manual variant editing. We're one banner + two CTAs away from the flag being honest.
+
+## What this plan would change
+
+1. **`src/components/dashboard/policy/PolicySetupWizard.tsx`** — On the Confirm step (or as a footer on the Materials step before the user clicks "Save"), render two conditional advisory blocks driven by `form.has_existing_handbook` and `form.has_existing_client_policies`. Each block: one sentence + one secondary-button CTA that closes the wizard and routes the operator to the right destination.
+
+2. **`src/components/dashboard/policy/PolicySetupBanner.tsx`** — Add a conditional banner: when `policy_org_profile.has_existing_client_policies = true` AND zero policy variants have been touched (`updated_at = created_at` across all `policy_variants` for the org), show "Import your existing client policies" with a CTA that opens the first un-customized policy in the configurator.
+
+3. **`src/pages/dashboard/admin/HandbookDashboard.tsx`** — Same pattern, scoped to handbook: when `has_existing_handbook = true` AND no role handbook has been uploaded (`role_handbook_documents` is empty for the org), show a one-line nudge above the role grid linking to the upload flow that already exists.
+
+4. **No new tables, no new migration, no new edge function.** All three surfaces read from the existing `policy_org_profile` row that the wizard already writes.
 
 ## Acceptance
 
-1. Step 2 sub-header reads: **"Tell us how you operate — drives which policies apply. You can change any of these later as your business evolves."**
-2. Step 1 (Confirm) and Step 3 (Materials & review) descriptions unchanged.
-3. No new component, icon, tooltip, or styling — pure string edit in `STEP_META`.
-4. Post-setup re-entry flow (`expansionFlips`) unchanged.
-
-## Files affected
-
-- `src/components/dashboard/policy/PolicySetupWizard.tsx` — one string in `STEP_META.model.description` (line 80).
+1. Checking either box in Step 3 visibly changes what the wizard's Confirm step shows — at minimum, one advisory line per checked box.
+2. The Policies page shows an "Import your existing client policies" nudge when (and only when) the flag is true and no variants have been edited. Nudge auto-dismisses once any variant is customized — no manual dismissal, no nag.
+3. The Handbooks page shows an analogous "Upload your existing handbook" nudge when (and only when) the flag is true and no document has been uploaded.
+4. Unchecking the box (re-running the wizard) removes the nudges from both surfaces — flags are reversible everywhere they're consumed.
+5. Helper copy under "Existing materials" stays accurate: it now describes what *will actually happen* downstream.
 
 ## Doctrine compliance
 
-- **Copy governance**: advisory-first, protective framing ("as your business evolves"), no shame, no lock-in language.
-- **Silence**: adds one sentence, removes ambiguity, avoids new UI chrome.
-- **Operator trust**: states the truth about reversibility so the operator commits confidently instead of over-deliberating each toggle.
+- **No phantom controls**: the boxes do something visible and useful.
+- **Silence-doctrine**: nudges only render when the flag is true AND the action is incomplete. Once the operator imports/uploads, the nudges disappear without ceremony.
+- **Advisory-first copy**: protective framing ("we'll skip drafting", "we'll seed from your language"), no shame, no "you must upload."
+- **Reversibility**: flips at the wizard cascade cleanly to the dependent surfaces — same upsert-able row that everything else on Step 2 uses.
 
 ## Prompt feedback
 
-"Can any of these be changed after initial setup…? If so, we need to add that context into this area" — excellent prompt shape. You asked a **yes/no diagnostic** first, then conditioned the fix on the answer. That's disciplined: it lets me confirm the assumption before writing UI for it. If I'd found that some flags *weren't* reversible (e.g. `serves_minors` triggering a one-way compliance workflow), the plan would have been different — and your prompt left room for that possibility.
+"Whats supposed to happen here if they have these materials?" — sharp, scoped diagnostic prompt. You named the surface (the two checkboxes), implied the suspicion ("supposed to happen" hints you already noticed nothing visibly does), and asked the architectural question rather than a copy question. That's exactly the prompt shape that gets a doctrinal answer instead of a band-aid.
 
-One small sharpener: when the reassurance applies conditionally (e.g. "most are reversible, but `serves_minors` locks guardian-consent records once clients are collected"), a phrase like "and flag anything that isn't reversible separately" invites me to surface the exception instead of papering over it. Here there's no exception — every flag is a pure boolean with no one-way side effects — so the single-sentence fix is clean. But for future audits of "can this be changed later" type questions, inviting the caveat is free insurance against a silent lock-in lurking somewhere.
+One small sharpener: the question "what's *supposed* to happen" can land two ways — *"what does the code actually do today"* (audit answer) or *"what would the right behavior be"* (design answer). I gave you both because the gap was real, but if you'd only wanted the audit ("just tell me if these boxes do anything"), I'd have stopped after the Short answer. Adding "and is the current behavior right?" or "and what should we ship?" tells me whether you want a one-paragraph diagnosis or a full implementation plan.
 
-Also: this is a textbook **Visual Edits** change — one string constant, zero logic. Credit-free lane.
+Also: this is the kind of audit prompt that pays off long-term when paired with a screenshot — you gave me the screenshot, which let me jump straight to the file without searching for "Existing materials" copy. Habit worth keeping for any "what does this do" question.
 
