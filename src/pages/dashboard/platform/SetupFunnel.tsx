@@ -746,13 +746,33 @@ function formatRecency(ms: number): string {
   return `${months}mo`;
 }
 
-function downloadDroppedCsv(
-  stepNumber: number,
-  stepLabel: string,
-  rows: DroppedOrg[],
-  names: Map<string, string>,
-  sources: Map<string, string>,
-) {
+async function downloadDroppedCsvAndLog(args: {
+  stepNumber: number;
+  stepLabel: string;
+  rows: DroppedOrg[];
+  names: Map<string, string>;
+  sources: Map<string, string>;
+  exportedBy: string | null;
+}) {
+  const { stepNumber, stepLabel, rows, names, sources, exportedBy } = args;
+
+  // Write outreach log entries (best-effort, fire-and-await)
+  if (rows.length > 0) {
+    const logRows = rows.map((r) => ({
+      organization_id: r.id,
+      step_number: stepNumber,
+      step_label: stepLabel,
+      exported_by: exportedBy,
+    }));
+    const { error } = await (supabase as any)
+      .from("setup_outreach_log")
+      .insert(logRows);
+    if (error) {
+      console.warn("[SetupFunnel] outreach log write failed:", error);
+    }
+  }
+
+  // Build CSV via shared util (RFC 4180 escaping)
   const header = [
     "organization_id",
     "organization_name",
@@ -760,21 +780,19 @@ function downloadDroppedCsv(
     "last_activity_iso",
     "days_since_activity",
   ];
-  const csv = [header.join(",")]
-    .concat(
-      rows.map((r) => {
-        const name = (names.get(r.id) ?? "").replace(/"/g, '""');
-        const src = sources.get(r.id) ?? "legacy";
-        const iso = r.lastActivityMs
-          ? new Date(r.lastActivityMs).toISOString()
-          : "";
-        const days = r.lastActivityMs
-          ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
-          : "";
-        return [r.id, `"${name}"`, src, iso, days].join(",");
-      }),
-    )
-    .join("\n");
+  const body = rows.map((r) => {
+    const name = names.get(r.id) ?? "";
+    const src = sources.get(r.id) ?? "legacy";
+    const iso = r.lastActivityMs
+      ? new Date(r.lastActivityMs).toISOString()
+      : "";
+    const days = r.lastActivityMs
+      ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
+      : "";
+    return [r.id, name, src, iso, days];
+  });
+  const csv = buildCsvString([header, ...body]);
+
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -808,6 +826,99 @@ function StatTile({
               <Skeleton className="h-7 w-20 mt-2" />
             ) : (
               <div className={cn(tokens.kpi.value, "mt-1")}>{value}</div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Sparkline — compact 8-week drop trend per step. Uses semantic foreground
+ * tokens (no hardcoded colors) so it respects theme.
+ */
+function Sparkline({ values }: { values: number[] }) {
+  if (!values || values.length === 0) {
+    return <div className="h-5" />;
+  }
+  const max = Math.max(1, ...values);
+  const W = 56;
+  const H = 18;
+  const stepX = values.length > 1 ? W / (values.length - 1) : W;
+  const points = values
+    .map((v, i) => {
+      const x = i * stepX;
+      const y = H - (v / max) * H;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <svg
+      width={W}
+      height={H}
+      viewBox={`0 0 ${W} ${H}`}
+      className="ml-auto block"
+      aria-label={`Drops over last ${values.length} weeks`}
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke="hsl(var(--foreground))"
+        strokeWidth={1.25}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.7}
+      />
+    </svg>
+  );
+}
+
+/**
+ * SourceBreakdownTile — 5th top-line tile breaking the cohort by acquisition
+ * source so platform ops sees attribution health at a glance.
+ */
+function SourceBreakdownTile({
+  isLoading,
+  breakdown,
+}: {
+  isLoading: boolean;
+  breakdown: { source: string; count: number; pct: number }[];
+}) {
+  return (
+    <Card className="relative">
+      <CardContent className="p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+            <PieChartIcon className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className={tokens.kpi.label}>Source mix</div>
+            {isLoading ? (
+              <Skeleton className="h-7 w-32 mt-2" />
+            ) : breakdown.length === 0 ? (
+              <div className="font-display text-sm tracking-wide text-muted-foreground mt-2">
+                —
+              </div>
+            ) : (
+              <div className="mt-2 space-y-1">
+                {breakdown.slice(0, 3).map((b) => (
+                  <div
+                    key={b.source}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <SourceBadge source={b.source} />
+                    <span className="font-display text-xs tracking-wide tabular-nums text-foreground">
+                      {b.pct.toFixed(0)}%
+                    </span>
+                  </div>
+                ))}
+                {breakdown.length > 3 && (
+                  <div className="font-sans text-[10px] text-muted-foreground pt-0.5">
+                    + {breakdown.length - 3} more
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
