@@ -25,10 +25,13 @@ import {
 import { LocationPreviewModal } from '@/components/dashboard/LocationPreviewModal';
 import { useNavigate } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { UnfinishedFromSetupCallout } from '@/components/onboarding/setup/UnfinishedFromSetupCallout';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 
 export default function LocationsManager() {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [], isLoading } = useLocations();
   const updateLocation = useUpdateLocation();
   const navigate = useNavigate();
@@ -72,6 +75,12 @@ export default function LocationsManager() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-8">
+        {effectiveOrganization?.id && (
+          <UnfinishedFromSetupCallout
+            orgId={effectiveOrganization.id}
+            systems={['identity', 'footprint']}
+          />
+        )}
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>

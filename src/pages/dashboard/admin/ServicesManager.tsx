@@ -64,6 +64,8 @@ import { ServiceCommunicationFlowEditor } from '@/components/dashboard/ServiceCo
 import { useAllServiceCommunicationFlows } from '@/hooks/useServiceCommunicationFlows';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { UnfinishedFromSetupCallout } from '@/components/onboarding/setup/UnfinishedFromSetupCallout';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 
 // Local type extending native with backward-compat aliases
@@ -81,6 +83,7 @@ interface LocalCategory {
 
 export default function ServicesManager() {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: stylistLevels } = useStylistLevelsSimple();
   const { data: allFlows } = useAllServiceCommunicationFlows();
   const { categories: nativeCategories, levels, isLoading: servicesLoading } = useNativeServicesForWebsite();
@@ -258,6 +261,12 @@ export default function ServicesManager() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
+        {effectiveOrganization?.id && (
+          <UnfinishedFromSetupCallout
+            orgId={effectiveOrganization.id}
+            systems={['catalog']}
+          />
+        )}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-display flex items-center gap-2">
