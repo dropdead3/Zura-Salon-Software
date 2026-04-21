@@ -282,12 +282,18 @@ export default function OrganizationSetup() {
         whyWeAsk={WHY_WE_ASK[currentStep.key] ?? ""}
         canAdvance={stepValid && !blockingConflict}
         saving={save.isPending}
-        isFirst={currentIndex === 0}
-        isLast={currentIndex === renderableSteps.length - 1}
-        onBack={() => persist(-1)}
+        isFirst={singleStepKey ? false : currentIndex === 0}
+        isLast={singleStepKey ? false : currentIndex === renderableSteps.length - 1}
+        onBack={() => {
+          if (singleStepKey) {
+            navigate(returnTo || "/dashboard");
+            return;
+          }
+          persist(-1);
+        }}
         onNext={() => persist(1)}
-        onSkip={currentStep.required ? handleSkip : undefined}
-        onJumpToStep={handleJump}
+        onSkip={!singleStepKey && currentStep.required ? handleSkip : undefined}
+        onJumpToStep={singleStepKey ? undefined : handleJump}
         banners={
           stepBanners.length > 0
             ? stepBanners.map((c) => (
