@@ -142,6 +142,7 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             label: 'Documentation required when waived',
             type: 'longtext',
             placeholder: 'e.g., reason logged, manager initials, exception ticket created',
+            defaultValue: 'Manager logs the reason in the appointment record, includes their initials, and notes the originating ticket or guest interaction.',
           },
         ],
       },
