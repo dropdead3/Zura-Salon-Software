@@ -464,6 +464,7 @@ export default function OrganizationSetup() {
         saving={save.isPending}
         isFirst={singleStepKey ? false : currentIndex === 0}
         isLast={singleStepKey ? false : currentIndex === renderableSteps.length - 1}
+        singleStep={!!singleStepKey}
         onBack={() => {
           if (singleStepKey) {
             navigate(returnTo || "/dashboard");
