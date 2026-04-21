@@ -1,17 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganizationContext } from "@/contexts/OrganizationContext";
+import { useOrgSetupCommitLog } from "@/hooks/onboarding/useOrgSetupCommitLog";
 import {
   readBackfillBanner,
   dismissBackfillBanner,
 } from "@/hooks/onboarding/useBackfillTrigger";
 
+const COMPLETION_SYSTEMS = ["intent", "apps"] as const;
+
 /**
  * BackfillWelcomeBanner — one-time, dismissible banner shown after the
  * silent backfill completes. Drives the owner to finish intent + apps.
+ *
+ * Auto-hide: When the commit log shows BOTH `intent` and `apps` as
+ * `completed`, the banner self-dismisses (no manual close required).
+ * This keeps the banner from lingering after the operator finishes.
  */
 export function BackfillWelcomeBanner() {
   const { user } = useAuth();
@@ -23,6 +30,19 @@ export function BackfillWelcomeBanner() {
     pending: number;
   } | null>(null);
 
+  const { data: log = [] } = useOrgSetupCommitLog(
+    effectiveOrganization?.id ?? null,
+  );
+
+  // Auto-dismiss check: latest entry per system; both must be completed.
+  const intentAndAppsDone = useMemo(() => {
+    const latest = new Map<string, string>();
+    for (const row of log) {
+      if (!latest.has(row.system)) latest.set(row.system, row.status);
+    }
+    return COMPLETION_SYSTEMS.every((s) => latest.get(s) === "completed");
+  }, [log]);
+
   useEffect(() => {
     const state = readBackfillBanner(user?.id, effectiveOrganization?.id);
     if (state && !state.shown && (state.backfilled ?? 0) > 0) {
@@ -30,6 +50,16 @@ export function BackfillWelcomeBanner() {
       setVisible(true);
     }
   }, [user?.id, effectiveOrganization?.id]);
+
+  // Auto-dismiss when both pending steps are completed.
+  useEffect(() => {
+    if (!visible) return;
+    if (!intentAndAppsDone) return;
+    if (user?.id && effectiveOrganization?.id) {
+      dismissBackfillBanner(user.id, effectiveOrganization.id);
+    }
+    setVisible(false);
+  }, [intentAndAppsDone, visible, user?.id, effectiveOrganization?.id]);
 
   const dismiss = () => {
     if (user?.id && effectiveOrganization?.id) {

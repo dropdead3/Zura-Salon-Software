@@ -25146,6 +25146,47 @@ export type Database = {
         }
         Relationships: []
       }
+      setup_followup_queue: {
+        Row: {
+          enqueued_at: string
+          id: string
+          organization_id: string
+          scheduled_for: string
+          sent_at: string | null
+          skipped_at: string | null
+          skipped_reason: string | null
+          user_id: string
+        }
+        Insert: {
+          enqueued_at?: string
+          id?: string
+          organization_id: string
+          scheduled_for: string
+          sent_at?: string | null
+          skipped_at?: string | null
+          skipped_reason?: string | null
+          user_id: string
+        }
+        Update: {
+          enqueued_at?: string
+          id?: string
+          organization_id?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          skipped_at?: string | null
+          skipped_reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_followup_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setup_pause_events: {
         Row: {
           free_text: string | null

@@ -1,7 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { TrendingDown, CheckCircle2, Clock, Users } from "lucide-react";
+import {
+  TrendingDown,
+  CheckCircle2,
+  Clock,
+  Users,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -10,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tokens } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
@@ -26,11 +34,22 @@ const STEP_LABELS: Record<number, string> = {
   8: "Apps",
 };
 
+type RangeKey = "7d" | "30d" | "90d" | "all";
+
+const RANGE_OPTIONS: { key: RangeKey; label: string; days: number | null }[] = [
+  { key: "7d", label: "Last 7 days", days: 7 },
+  { key: "30d", label: "Last 30 days", days: 30 },
+  { key: "90d", label: "Last 90 days", days: 90 },
+  { key: "all", label: "All time", days: null },
+];
+
 interface FunnelRow {
   step_number: number;
   viewed: number;
   completed: number;
   skipped: number;
+  /** Orgs that viewed this step but never completed it (drop-offs) */
+  droppedOrgs: string[];
 }
 
 /**
@@ -38,23 +57,56 @@ interface FunnelRow {
  * org_setup_step_events + org_setup_commit_log. Exposes drop-off,
  * completion rate, and time-to-commit so platform ops can spot
  * which step is the bottleneck.
+ *
+ * Wave 6: Cohort filter (7/30/90d/all) + per-step drill-down listing
+ * the orgs that dropped off at each stage.
  */
 export default function SetupFunnel() {
+  const [range, setRange] = useState<RangeKey>("30d");
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+
+  const sinceIso = useMemo(() => {
+    const opt = RANGE_OPTIONS.find((r) => r.key === range);
+    if (!opt?.days) return null;
+    return new Date(Date.now() - opt.days * 24 * 60 * 60 * 1000).toISOString();
+  }, [range]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["platform-setup-funnel"],
+    queryKey: ["platform-setup-funnel", range],
     queryFn: async () => {
+      const eventsQuery = supabase
+        .from("org_setup_step_events" as any)
+        .select("step_number, event, organization_id, created_at")
+        .order("created_at", { ascending: true })
+        .limit(10000);
+      const commitsQuery = supabase
+        .from("org_setup_commit_log" as any)
+        .select("org_id, status, attempted_at, system")
+        .order("attempted_at", { ascending: true })
+        .limit(10000);
+
+      if (sinceIso) {
+        eventsQuery.gte("created_at", sinceIso);
+        commitsQuery.gte("attempted_at", sinceIso);
+      }
+
       const [{ data: events }, { data: commits }] = await Promise.all([
-        supabase
-          .from("org_setup_step_events" as any)
-          .select("step_number, event, organization_id, created_at")
-          .order("created_at", { ascending: true })
-          .limit(10000),
-        supabase
-          .from("org_setup_commit_log" as any)
-          .select("org_id, status, attempted_at")
-          .order("attempted_at", { ascending: true })
-          .limit(10000),
+        eventsQuery,
+        commitsQuery,
       ]);
+
+      // Fetch org names for the affected set in one shot
+      const orgIds = new Set<string>();
+      for (const e of (events ?? []) as any[]) orgIds.add(e.organization_id);
+      for (const c of (commits ?? []) as any[]) orgIds.add(c.org_id);
+
+      const { data: orgs } = orgIds.size
+        ? await supabase
+            .from("organizations")
+            .select("id, name")
+            .in("id", Array.from(orgIds))
+        : { data: [] as { id: string; name: string }[] };
+
       return {
         events: ((events ?? []) as unknown) as Array<{
           step_number: number;
@@ -66,7 +118,14 @@ export default function SetupFunnel() {
           org_id: string;
           status: string;
           attempted_at: string;
+          system: string;
         }>,
+        orgNames: new Map(
+          ((orgs ?? []) as { id: string; name: string }[]).map((o) => [
+            o.id,
+            o.name,
+          ]),
+        ),
       };
     },
     staleTime: 60_000,
@@ -74,7 +133,13 @@ export default function SetupFunnel() {
 
   const funnel: FunnelRow[] = useMemo(() => {
     if (!data?.events) return [];
-    const map = new Map<number, FunnelRow>();
+    const map = new Map<
+      number,
+      Omit<FunnelRow, "droppedOrgs"> & {
+        viewedOrgs: Set<string>;
+        completedOrgs: Set<string>;
+      }
+    >();
     for (const ev of data.events) {
       const row =
         map.get(ev.step_number) ?? {
@@ -82,20 +147,39 @@ export default function SetupFunnel() {
           viewed: 0,
           completed: 0,
           skipped: 0,
+          viewedOrgs: new Set<string>(),
+          completedOrgs: new Set<string>(),
         };
-      if (ev.event === "viewed") row.viewed += 1;
-      if (ev.event === "completed") row.completed += 1;
+      if (ev.event === "viewed") {
+        row.viewed += 1;
+        row.viewedOrgs.add(ev.organization_id);
+      }
+      if (ev.event === "completed") {
+        row.completed += 1;
+        row.completedOrgs.add(ev.organization_id);
+      }
       if (ev.event === "skipped") row.skipped += 1;
       map.set(ev.step_number, row);
     }
-    return Array.from(map.values()).sort((a, b) => a.step_number - b.step_number);
+    return Array.from(map.values())
+      .sort((a, b) => a.step_number - b.step_number)
+      .map((r) => ({
+        step_number: r.step_number,
+        viewed: r.viewed,
+        completed: r.completed,
+        skipped: r.skipped,
+        droppedOrgs: Array.from(r.viewedOrgs).filter(
+          (id) => !r.completedOrgs.has(id),
+        ),
+      }));
   }, [data?.events]);
 
   const totals = useMemo(() => {
     const orgs = new Set(data?.events.map((e) => e.organization_id) ?? []);
     const committedOrgs = new Set(
-      data?.commits.filter((c) => c.status === "completed").map((c) => c.org_id) ??
-        [],
+      data?.commits
+        .filter((c) => c.status === "completed")
+        .map((c) => c.org_id) ?? [],
     );
     const firstView = new Map<string, number>();
     const lastCommit = new Map<string, number>();
@@ -134,17 +218,41 @@ export default function SetupFunnel() {
         <title>Setup Funnel — Platform</title>
       </Helmet>
       <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
-        <div className="mb-8">
-          <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-            Platform analytics
+        <div className="mb-8 flex items-start justify-between gap-6 flex-wrap">
+          <div>
+            <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+              Platform analytics
+            </div>
+            <h1 className="font-display text-2xl sm:text-3xl tracking-wide font-medium mt-2">
+              Setup funnel
+            </h1>
+            <p className="font-sans text-sm text-muted-foreground mt-2 max-w-2xl">
+              Where operators drop off, how often they finish, and how long it
+              takes. Sourced from setup telemetry and commit log.
+            </p>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl tracking-wide font-medium mt-2">
-            Setup funnel
-          </h1>
-          <p className="font-sans text-sm text-muted-foreground mt-2 max-w-2xl">
-            Where operators drop off, how often they finish, and how long it
-            takes. Sourced from setup telemetry and commit log.
-          </p>
+
+          {/* Cohort range filter */}
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => {
+                  setRange(opt.key);
+                  setExpandedStep(null);
+                }}
+                className={cn(
+                  "px-3 py-1.5 rounded-md font-sans text-xs transition-colors",
+                  range === opt.key
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Top stats */}
@@ -192,7 +300,7 @@ export default function SetupFunnel() {
                     Step-by-step drop-off
                   </CardTitle>
                   <CardDescription>
-                    Views, completions, and skips per step.
+                    Click a step to see which orgs dropped off there.
                   </CardDescription>
                 </div>
               </div>
@@ -210,7 +318,8 @@ export default function SetupFunnel() {
                 <TrendingDown className={tokens.empty.icon} />
                 <h3 className={tokens.empty.heading}>No funnel data yet</h3>
                 <p className={tokens.empty.description}>
-                  Once orgs start the wizard, telemetry will populate here.
+                  Once orgs start the wizard in this window, telemetry will
+                  populate here.
                 </p>
               </div>
             ) : (
@@ -219,69 +328,89 @@ export default function SetupFunnel() {
                   const completionRate =
                     row.viewed > 0 ? (row.completed / row.viewed) * 100 : 0;
                   const widthPct = (row.viewed / peakViewed) * 100;
+                  const isExpanded = expandedStep === row.step_number;
+                  const hasDrops = row.droppedOrgs.length > 0;
                   return (
                     <div
                       key={row.step_number}
-                      className="rounded-lg border border-border/60 bg-background px-4 py-3"
+                      className="rounded-lg border border-border/60 bg-background"
                     >
-                      <div className="flex items-center justify-between gap-4 mb-2">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 w-12 shrink-0">
-                            Step {row.step_number}
-                          </div>
-                          <div className="font-sans text-sm font-medium text-foreground">
-                            {STEP_LABELS[row.step_number] ??
-                              `Step ${row.step_number}`}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 shrink-0">
-                          <div className="text-right">
-                            <div className="font-sans text-xs text-muted-foreground">
-                              Views
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedStep(isExpanded ? null : row.step_number)
+                        }
+                        className="w-full text-left px-4 py-3 hover:bg-muted/30 transition-colors rounded-lg"
+                      >
+                        <div className="flex items-center justify-between gap-4 mb-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {hasDrops ? (
+                              isExpanded ? (
+                                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              ) : (
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              )
+                            ) : (
+                              <span className="w-3.5 h-3.5 shrink-0" />
+                            )}
+                            <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 w-12 shrink-0">
+                              Step {row.step_number}
                             </div>
-                            <div className="font-display text-sm tracking-wide tabular-nums">
-                              {row.viewed}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-sans text-xs text-muted-foreground">
-                              Completed
-                            </div>
-                            <div className="font-display text-sm tracking-wide tabular-nums">
-                              {row.completed}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-sans text-xs text-muted-foreground">
-                              Skipped
-                            </div>
-                            <div className="font-display text-sm tracking-wide tabular-nums">
-                              {row.skipped}
+                            <div className="font-sans text-sm font-medium text-foreground">
+                              {STEP_LABELS[row.step_number] ??
+                                `Step ${row.step_number}`}
                             </div>
                           </div>
-                          <div className="text-right w-16">
-                            <div className="font-sans text-xs text-muted-foreground">
-                              Rate
-                            </div>
-                            <div
-                              className={cn(
-                                "font-display text-sm tracking-wide tabular-nums",
-                                completionRate < 60
-                                  ? "text-foreground"
-                                  : "text-foreground",
-                              )}
-                            >
-                              {completionRate.toFixed(0)}%
+                          <div className="flex items-center gap-4 shrink-0">
+                            <Stat label="Views" value={row.viewed} />
+                            <Stat label="Completed" value={row.completed} />
+                            <Stat label="Skipped" value={row.skipped} />
+                            <Stat
+                              label="Dropped"
+                              value={row.droppedOrgs.length}
+                            />
+                            <div className="text-right w-16">
+                              <div className="font-sans text-xs text-muted-foreground">
+                                Rate
+                              </div>
+                              <div className="font-display text-sm tracking-wide tabular-nums">
+                                {completionRate.toFixed(0)}%
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full bg-foreground transition-all"
-                          style={{ width: `${widthPct}%` }}
-                        />
-                      </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden ml-7">
+                          <div
+                            className="h-full bg-foreground transition-all"
+                            style={{ width: `${widthPct}%` }}
+                          />
+                        </div>
+                      </button>
+
+                      {/* Drill-down: orgs that dropped off here */}
+                      {isExpanded && hasDrops && (
+                        <div className="px-4 pb-4 pt-2 border-t border-border/60 mt-2">
+                          <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
+                            Dropped at this step ({row.droppedOrgs.length})
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                            {row.droppedOrgs.slice(0, 60).map((orgId) => (
+                              <div
+                                key={orgId}
+                                className="font-sans text-xs text-foreground rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5 truncate"
+                                title={orgId}
+                              >
+                                {data?.orgNames.get(orgId) ?? orgId.slice(0, 8)}
+                              </div>
+                            ))}
+                          </div>
+                          {row.droppedOrgs.length > 60 && (
+                            <p className="font-sans text-xs text-muted-foreground mt-2">
+                              + {row.droppedOrgs.length - 60} more
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -291,6 +420,17 @@ export default function SetupFunnel() {
         </Card>
       </div>
     </>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="text-right">
+      <div className="font-sans text-xs text-muted-foreground">{label}</div>
+      <div className="font-display text-sm tracking-wide tabular-nums">
+        {value}
+      </div>
+    </div>
   );
 }
 
