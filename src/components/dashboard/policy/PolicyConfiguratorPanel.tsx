@@ -40,6 +40,8 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PolicyRuleField } from './PolicyRuleField';
+import { PolicyQuestionnaire } from './PolicyQuestionnaire';
+import { PolicyLivePreview } from './PolicyLivePreview';
 import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
 import { PolicyDraftWorkspace } from './PolicyDraftWorkspace';
