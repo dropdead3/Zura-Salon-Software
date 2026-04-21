@@ -244,6 +244,35 @@ export default function SetupFunnel() {
     return m;
   }, [data?.events, data?.commits]);
 
+  // Wave 12: per-org completion context for outreach copy. Uses successful
+  // commit log entries (any source) to derive completed step count + last
+  // step completed.
+  const completedContextByOrg = useMemo(() => {
+    const m = new Map<
+      string,
+      { systems: Set<string>; lastSystem: string; lastTs: number }
+    >();
+    for (const c of data?.commits ?? []) {
+      if (c.status !== "completed") continue;
+      const ts = new Date(c.attempted_at).getTime();
+      const cur = m.get(c.organization_id);
+      if (!cur) {
+        m.set(c.organization_id, {
+          systems: new Set([c.system]),
+          lastSystem: c.system,
+          lastTs: ts,
+        });
+      } else {
+        cur.systems.add(c.system);
+        if (ts > cur.lastTs) {
+          cur.lastTs = ts;
+          cur.lastSystem = c.system;
+        }
+      }
+    }
+    return m;
+  }, [data?.commits]);
+
   const funnel: FunnelRow[] = useMemo(() => {
     if (!data?.events) return [];
     const map = new Map<
@@ -682,6 +711,7 @@ export default function SetupFunnel() {
                                   rows: uncontactedOrgs,
                                   names: data?.orgNames ?? new Map(),
                                   sources: data?.orgSources ?? new Map(),
+                                  completedContext: completedContextByOrg,
                                   exportedBy: user?.id ?? null,
                                 });
                                 queryClient.invalidateQueries({
