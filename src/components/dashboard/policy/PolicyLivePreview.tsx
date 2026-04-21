@@ -14,8 +14,17 @@
  *  - Unresolved tokens render as `{{token}}` so wiring gaps stay visible.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { humanize, interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
 import { getPolicySummaryDefaults } from '@/lib/policy/starter-drafts';
 import { PLATFORM_NAME } from '@/lib/brand';
