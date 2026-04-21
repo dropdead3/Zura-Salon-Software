@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Library, FileCheck2, Megaphone, Network } from 'lucide-react';
 import type { PolicyHealthSummary } from '@/hooks/policy/usePolicyData';
 import { useApplicableRequiredPolicies } from '@/hooks/policy/usePolicyOrgProfile';
+import { useOrgPolicies } from '@/hooks/policy/usePolicyData';
 
 interface Props {
   summary: PolicyHealthSummary;
@@ -11,14 +12,16 @@ interface Props {
 
 export function PolicyHealthStrip({ summary }: Props) {
   const applicable = useApplicableRequiredPolicies();
+  const { data: adoptedAll = [] } = useOrgPolicies();
+  const totalAdopted = adoptedAll.length;
 
   const items = [
     {
       key: 'adopted',
-      label: 'Adopted',
+      label: 'Required coverage',
       icon: Library,
       value: `${applicable.adopted}/${applicable.total}`,
-      sub: 'of required for your business',
+      sub: `required policies adopted (you have ${totalAdopted} total in your library)`,
     },
     {
       key: 'configured',
