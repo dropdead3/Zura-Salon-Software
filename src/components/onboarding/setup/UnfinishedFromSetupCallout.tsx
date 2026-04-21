@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrgSetupCommitLog } from "@/hooks/onboarding/useOrgSetupCommitLog";
 import { useOrgDashboardPath } from "@/hooks/useOrgDashboardPath";
+import { tokens } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 
 interface UnfinishedFromSetupCalloutProps {
@@ -89,19 +90,21 @@ export function UnfinishedFromSetupCallout({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-muted/20 p-5 space-y-3",
+        tokens.layout.cardBase,
+        tokens.layout.cardPadding,
+        "border border-border bg-muted/20 space-y-3",
         className,
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="w-7 h-7 rounded-lg bg-background border border-border flex items-center justify-center shrink-0 mt-0.5">
+        <div className={cn(tokens.card.iconBox, "w-7 h-7 rounded-lg")}>
           <AlertTriangle className="w-3.5 h-3.5 text-foreground" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
             Unfinished from setup
           </div>
-          <h3 className="font-display text-sm tracking-wide font-medium mt-1">
+          <h3 className={cn(tokens.card.title, "mt-1")}>
             {unfinished.length === 1
               ? "One system still needs your attention"
               : `${unfinished.length} systems still need your attention`}
@@ -113,16 +116,19 @@ export function UnfinishedFromSetupCallout({
         {unfinished.map((row) => (
           <div
             key={row.id}
-            className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-background px-4 py-3"
+            className={cn(
+              tokens.card.inner,
+              "flex items-start justify-between gap-3 px-4 py-3",
+            )}
           >
             <div className="flex items-start gap-2.5 min-w-0 flex-1">
               <X className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
               <div className="min-w-0">
-                <div className="font-sans text-sm font-medium text-foreground capitalize">
+                <div className={cn(tokens.body.emphasis, "capitalize")}>
                   {row.system.replace(/_/g, " ")}
                 </div>
                 {row.reason && (
-                  <p className="font-sans text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  <p className={cn(tokens.body.muted, "text-xs mt-0.5 leading-relaxed")}>
                     {row.reason}
                   </p>
                 )}
@@ -130,7 +136,7 @@ export function UnfinishedFromSetupCallout({
             </div>
             <Button
               type="button"
-              size="sm"
+              size={tokens.button.inline}
               variant="outline"
               onClick={() => handleFinish(row)}
               className="gap-1.5 shrink-0"
