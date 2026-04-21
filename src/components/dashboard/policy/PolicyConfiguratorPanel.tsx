@@ -469,8 +469,13 @@ export function PolicyConfiguratorPanel({
           </div>
         </div>
       ) : !ready ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className={tokens.loading.spinner} />
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <LuxeLoader size="md" />
+          {isHealing && (
+            <p className="font-sans text-xs text-muted-foreground">
+              Initializing draft version…
+            </p>
+          )}
         </div>
       ) : (
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
