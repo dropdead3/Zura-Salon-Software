@@ -415,17 +415,20 @@ export default function OrganizationSetup() {
   });
   const blockingConflict = stepBanners.some((c) => c.severity === "block");
 
+  const whyEntry = WHY_WE_ASK[currentStep.key];
   return (
     <>
       <Helmet>
-        <title>{currentStep.title.replace("{{PLATFORM_NAME}}", "Zura")} — Zura setup</title>
+        <title>{tokenize(currentStep.title)} — {PLATFORM_NAME} setup</title>
       </Helmet>
       <StepShell
         orgId={orgId}
         step={currentStep}
         steps={renderableSteps}
         completedKeys={completedKeys}
-        whyWeAsk={WHY_WE_ASK[currentStep.key] ?? ""}
+        whyWeAsk={tokenize(whyEntry?.reason ?? "")}
+        activates={whyEntry?.activates ? tokenize(whyEntry.activates) : undefined}
+        activatesHint={whyEntry?.activatesHint}
         canAdvance={stepValid && !blockingConflict}
         saving={save.isPending}
         isFirst={singleStepKey ? false : currentIndex === 0}
