@@ -42,6 +42,10 @@ export interface RuleField {
   key: string;
   label: string;
   helper?: string;
+  /** Optional one-sentence explanation rendered as a MetricInfoTooltip
+   *  next to the field label. Use for fields where the label alone doesn't
+   *  convey what authority/effect the value confers. */
+  tooltip?: string;
   type: RuleFieldType;
   required?: boolean;
   options?: { value: string; label: string }[];
@@ -152,6 +156,8 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             key: 'waiver_authority',
             label: 'Who can waive a fee?',
             type: 'role',
+            tooltip:
+              'The role authorized to waive the cancellation/no-show fee. Anyone below this role must escalate.',
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
             required: true,
@@ -287,6 +293,8 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             key: 'approver_role',
             label: 'Who approves a redo?',
             type: 'role',
+            tooltip:
+              'The role authorized to approve a complimentary redo or refund alternative. Front desk routes requests to this role.',
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
             required: true,
@@ -543,6 +551,8 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             key: 'authority_role',
             label: 'Who holds this authority',
             type: 'role',
+            tooltip:
+              'The role that owns this decision by default. Anything above the maximum dollar value escalates to the role below.',
             options: ROLE_OPTIONS,
             required: true,
             defaultValue: 'manager',
@@ -565,6 +575,8 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             key: 'escalation_role',
             label: 'Escalates to',
             type: 'role',
+            tooltip:
+              'The role decisions escalate to when they exceed the maximum dollar value above.',
             options: ROLE_OPTIONS,
             defaultValue: 'owner',
             provenance: {
@@ -659,6 +671,8 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             key: 'enforcement_authority',
             label: 'Who enforces',
             type: 'role',
+            tooltip:
+              'The role responsible for delivering verbal/written warnings and documenting the conversation in the employee file.',
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
             required: true,
@@ -836,6 +850,8 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             key: 'authority_role',
             label: 'Decision authority',
             type: 'role',
+            tooltip:
+              'The role that approves exceptions to this policy and signs off on edge-case decisions. Their name appears wherever the policy references "{{authority_role}}".',
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
             provenance: {

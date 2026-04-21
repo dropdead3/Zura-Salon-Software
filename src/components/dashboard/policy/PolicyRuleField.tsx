@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
 import type { RuleField } from '@/lib/policy/configurator-schemas';
 import {
@@ -69,6 +70,7 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
       {field.label}
       {field.required && <span className="text-destructive">*</span>}
       {field.unit && <span className="text-muted-foreground font-sans text-xs">({field.unit})</span>}
+      {field.tooltip && <MetricInfoTooltip description={field.tooltip} />}
     </Label>
   );
 
