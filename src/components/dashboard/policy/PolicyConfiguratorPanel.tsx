@@ -545,59 +545,25 @@ export function PolicyConfiguratorPanel({
           )}
         </div>
       ) : (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsList className="bg-muted/50">
-            <TabsTrigger value="rules" className="font-sans">
-              <Settings className="w-3.5 h-3.5 mr-1.5" />
-              Rules
-            </TabsTrigger>
-            <TabsTrigger value="applicability" className="font-sans">
-              <Users className="w-3.5 h-3.5 mr-1.5" />
-              Applicability
-              {applicabilityCount > 0 && (
-                <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
-                  {applicabilityCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            {showSurfacesTab && (
-              <TabsTrigger value="surfaces" className="font-sans">
-                <MapPin className="w-3.5 h-3.5 mr-1.5" />
-                Surfaces
-                {surfacesActiveCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
-                    {surfacesActiveCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="drafts" className="font-sans">
-              <FileText className="w-3.5 h-3.5 mr-1.5" />
-              Drafts
-              {approvedVariantCount > 0 && (
-                <Badge variant="secondary" className="ml-2 font-sans text-[10px]">
-                  {approvedVariantCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            {data?.policyId && showAcknowledgmentsTab && (
-              <TabsTrigger value="acknowledgments" className="font-sans">
-                <FileSignature className="w-3.5 h-3.5 mr-1.5" />
-                Client acknowledgments
-              </TabsTrigger>
-            )}
-          </TabsList>
+        <div className="space-y-6">
+          {/* Wave 28.13 — Linear stepper replaces the parallel tab strip.
+              Step labels are operator-outcome verbs; acknowledgments moved
+              to a header-link drawer (it's an audit log, not a config step). */}
+          <PolicyConfiguratorStepper
+            steps={visibleSteps}
+            activeStep={step}
+            completedSteps={{
+              rules: !!data && data.blocks.length > 0,
+              applicability: applicabilityCount > 0,
+              surfaces: surfacesActiveCount > 0,
+              drafts: approvedVariantCount > 0,
+            }}
+            onStepClick={setStep}
+          />
 
-          {/* ---- Rules tab ---- */}
-          <TabsContent value="rules" className="mt-6">
+          {/* ---- Step 1 · Define rules ---- */}
+          {step === 'rules' && (
             <div className="space-y-6">
-              <div>
-                <h4 className="font-sans text-sm font-medium mb-1">{schema.label}</h4>
-                <p className="font-sans text-xs text-muted-foreground">
-                  {schema.description}
-                </p>
-              </div>
-
               <div className="space-y-6">
                 {schema.sections.map((section) => (
                   <div key={section.title} className="space-y-4">
@@ -628,10 +594,7 @@ export function PolicyConfiguratorPanel({
               </div>
 
               <Separator />
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-sans text-xs text-muted-foreground">
-                  After saving rules, define applicability and surfaces in the next tabs.
-                </p>
+              <div className="flex items-center justify-end gap-3">
                 <Button
                   size="sm"
                   onClick={handleSaveRules}
@@ -643,41 +606,65 @@ export function PolicyConfiguratorPanel({
                   ) : (
                     <Save className="w-4 h-4 mr-2" />
                   )}
-                  Save and continue
+                  {STEP_META.rules.cta}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
             </div>
-          </TabsContent>
+          )}
 
-          {/* ---- Applicability tab ---- */}
-          <TabsContent value="applicability" className="mt-6">
-            {versionId && applicability !== null && (
+          {/* ---- Step 2 · Decide who ---- */}
+          {step === 'applicability' && versionId && applicability !== null && (
+            <div className="space-y-6">
               <PolicyApplicabilityEditor
                 versionId={versionId}
                 rows={applicability}
                 onChange={setApplicability}
+                onSaved={() => setStep(isInternalOnly ? 'drafts' : 'surfaces')}
                 entry={entry}
               />
-            )}
-          </TabsContent>
+              <div className="flex items-center justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStep('rules')}
+                  className="font-sans text-muted-foreground"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back
+                </Button>
+              </div>
+            </div>
+          )}
 
-          {/* ---- Surfaces tab ---- */}
-          <TabsContent value="surfaces" className="mt-6">
-            {versionId && surfaces !== null && (
+          {/* ---- Step 3 · Choose where it shows (skipped for internal-only) ---- */}
+          {step === 'surfaces' && !isInternalOnly && versionId && surfaces !== null && (
+            <div className="space-y-6">
               <PolicySurfaceEditor
                 versionId={versionId}
                 candidateSurfaces={entry.candidate_surfaces ?? []}
                 policyAudience={entry.audience}
                 rows={surfaces}
                 onChange={setSurfaces}
+                onSaved={() => setStep('drafts')}
               />
-            )}
-          </TabsContent>
+              <div className="flex items-center justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStep('applicability')}
+                  className="font-sans text-muted-foreground"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back
+                </Button>
+              </div>
+            </div>
+          )}
 
-          {/* ---- Drafts tab (Wave 28.6) ---- */}
-          <TabsContent value="drafts" className="mt-6">
-            {versionId && (
+          {/* ---- Step 4 · Approve wording ---- */}
+          {step === 'drafts' && versionId && (
+            <div className="space-y-6">
               <PolicyDraftWorkspace
                 versionId={versionId}
                 rulesReady={rulesReady}
@@ -685,21 +672,43 @@ export function PolicyConfiguratorPanel({
                 libraryKey={entry.key}
                 ruleValues={values}
               />
-            )}
-          </TabsContent>
-
-          {/* ---- Acknowledgments tab (Wave 28.10) — always render so historical
-                acks remain visible even after the require-ack toggle is turned off
-                (audit immutability per Wave 28.10.1). */}
-          {data?.policyId && (
-            <TabsContent value="acknowledgments" className="mt-6">
-              <PolicyAcknowledgmentsPanel
-                policyId={data.policyId}
-                policyTitle={entry.title}
-              />
-            </TabsContent>
+              <div className="flex items-center justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setStep(isInternalOnly ? 'applicability' : 'surfaces')
+                  }
+                  className="font-sans text-muted-foreground"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back
+                </Button>
+              </div>
+            </div>
           )}
-        </Tabs>
+        </div>
+      )}
+
+      {/* Acknowledgments — luxury glass bento floating drawer (relocated from
+          tab strip in Wave 28.13). Audit-immutable: continues to render even
+          after audience flips to internal-only when historical acks exist. */}
+      {data?.policyId && (
+        <PremiumFloatingPanel open={acksOpen} onOpenChange={setAcksOpen} maxWidth="720px">
+          <div className={tokens.drawer.header}>
+            <h2 className={cn(tokens.heading.section)}>Client acknowledgments</h2>
+            <p className="font-sans text-sm text-muted-foreground mt-1">
+              Every signature collected for {entry.title}, with timestamp and
+              policy version. Read-only audit log.
+            </p>
+          </div>
+          <div className={tokens.drawer.body}>
+            <PolicyAcknowledgmentsPanel
+              policyId={data.policyId}
+              policyTitle={entry.title}
+            />
+          </div>
+        </PremiumFloatingPanel>
       )}
 
       {/* Footer — Wave 28.11.5 lifecycle actions (archive / reactivate). Only
