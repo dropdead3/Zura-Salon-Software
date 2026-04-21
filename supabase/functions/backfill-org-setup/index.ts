@@ -280,6 +280,37 @@ Deno.serve(async (req) => {
         { onConflict: "user_id,organization_id" },
       );
 
+    // Wave 13D.G9 — record per-step inference provenance on the policy
+    // profile so a future "review your inferred answers" UI can show the
+    // operator exactly what we guessed and from which source table.
+    const inferences: Record<string, { source: string; inferred_at: string }> = {};
+    const SOURCE_BY_STEP: Record<string, string> = {
+      step_1_identity: "organizations",
+      step_2_footprint: "locations",
+      step_3_team: "employee_profiles",
+      step_4_compensation: "stylist_levels",
+      step_5_catalog: "services",
+      step_6_standards: "business_settings",
+    };
+    for (const r of results) {
+      if (r.status !== "backfilled") continue;
+      const source = SOURCE_BY_STEP[r.step_key];
+      if (!source) continue;
+      inferences[r.step_key] = {
+        source,
+        inferred_at: new Date().toISOString(),
+      };
+    }
+    if (Object.keys(inferences).length > 0) {
+      await supabase.from("policy_org_profile").upsert(
+        {
+          organization_id,
+          backfill_inferences: inferences,
+        },
+        { onConflict: "organization_id" },
+      );
+    }
+
     // Write synthetic commit log entries (only for backfilled/skipped — not pending)
     // Marked source='backfill' so the followup processor doesn't treat
     // a backfilled 'completed' as a real wizard completion.
