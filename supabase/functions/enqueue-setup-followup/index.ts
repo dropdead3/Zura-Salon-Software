@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Authorize: caller must be org admin.
     const { data: isAdmin } = await admin.rpc("is_org_admin", {
       _user_id: userData.user.id,
-      _organization_id: organization_id,
+      _org_id: organization_id,
     });
     if (!isAdmin) {
       return json({ error: "Not an org admin" }, 403);
