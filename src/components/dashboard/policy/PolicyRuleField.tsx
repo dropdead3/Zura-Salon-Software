@@ -205,23 +205,23 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal',
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <Select
-            value={typeof value === 'string' ? value : ''}
-            onValueChange={(v) => onChange(v)}
-          >
-            <SelectTrigger id={id} className="font-sans">
-              <SelectValue placeholder="Select…" />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="font-sans">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <Select
+              value={typeof value === 'string' ? value : ''}
+              onValueChange={(v) => onChange(v)}
+            >
+              <SelectTrigger id={id} className="font-sans">
+                <SelectValue placeholder="Select…" />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="font-sans">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       );
 
