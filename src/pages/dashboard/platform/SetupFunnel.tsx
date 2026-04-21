@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import {
   TrendingDown,
@@ -8,8 +8,16 @@ import {
   Users,
   ChevronDown,
   ChevronRight,
+  PieChart as PieChartIcon,
+  CheckCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { buildCsvString } from "@/utils/csvExport";
+
+const OUTREACH_COOLDOWN_DAYS = 7;
+const OUTREACH_COOLDOWN_MS = OUTREACH_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
 import {
   Card,
   CardContent,
