@@ -14346,6 +14346,7 @@ export type Database = {
           attempted_by: string | null
           deep_link: string | null
           id: string
+          idempotency_key: string | null
           organization_id: string
           reason: string | null
           source: string
@@ -14358,6 +14359,7 @@ export type Database = {
           attempted_by?: string | null
           deep_link?: string | null
           id?: string
+          idempotency_key?: string | null
           organization_id: string
           reason?: string | null
           source?: string
@@ -14370,6 +14372,7 @@ export type Database = {
           attempted_by?: string | null
           deep_link?: string | null
           id?: string
+          idempotency_key?: string | null
           organization_id?: string
           reason?: string | null
           source?: string
