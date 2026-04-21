@@ -191,18 +191,16 @@ export default function OrganizationSetup() {
   }
 
   const StepComponent = STEP_COMPONENTS[currentStep.component_key];
-  const stepBanners = conflicts
-    .filter((c) => (currentStep.trigger_steps_match ? false : true))
-    .filter((c) => {
-      // Only surface conflicts whose triggers include current step or whose
-      // resolution_step is the current step.
-      const rule = rules.find((r) => r.key === c.rule_key);
-      if (!rule) return false;
-      return (
-        rule.trigger_steps.includes(currentStep.key) ||
-        c.resolution_step === currentStep.key
-      );
-    });
+  const stepBanners = conflicts.filter((c) => {
+    // Only surface conflicts whose triggers include current step or whose
+    // resolution_step is the current step.
+    const rule = rules.find((r) => r.key === c.rule_key);
+    if (!rule) return false;
+    return (
+      rule.trigger_steps.includes(currentStep.key) ||
+      c.resolution_step === currentStep.key
+    );
+  });
   const blockingConflict = stepBanners.some((c) => c.severity === "block");
 
   return (
