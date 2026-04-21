@@ -363,7 +363,17 @@ export default function Policies() {
               <div>
                 <h2 className={cn(tokens.heading.section)}>Library</h2>
                 <p className="font-sans text-sm text-muted-foreground mt-1">
-                  {profileApplicableLibrary.length} recommended {profileApplicableLibrary.length === 1 ? 'policy' : 'policies'} for your business. Filter by audience first, then narrow by category.
+                  {isSearching ? (
+                    <>
+                      Showing {filteredLibrary.length} of {profileApplicableLibrary.length}{' '}
+                      {profileApplicableLibrary.length === 1 ? 'policy' : 'policies'} matching{' '}
+                      <span className="text-foreground">&ldquo;{query}&rdquo;</span>.
+                    </>
+                  ) : (
+                    <>
+                      {profileApplicableLibrary.length} recommended {profileApplicableLibrary.length === 1 ? 'policy' : 'policies'} for your business. Filter by audience first, then narrow by category.
+                    </>
+                  )}
                 </p>
               </div>
               {profile && (hiddenByProfile.length > 0 || showNonApplicable) && (
