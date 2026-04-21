@@ -102,15 +102,21 @@ Deno.serve(async (req) => {
 
     const results: BackfillResult[] = [];
 
-    // Read existing draft to preserve any owner-entered data
+    // Read existing draft to preserve any owner-entered data — including
+    // resume position (Wave 13H — B5). Without this, a backfill that runs
+    // after a user has already started the wizard (e.g. they opened the
+    // dashboard in another browser) wipes their current_step/current_step_key
+    // and dumps them back at Step 0 on next visit.
     const { data: existingDraft } = await supabase
       .from("org_setup_drafts")
-      .select("step_data")
+      .select("step_data, current_step, current_step_key")
       .eq("user_id", user.id)
       .eq("organization_id", organization_id)
       .maybeSingle();
     const existingStepData =
       (existingDraft?.step_data as Record<string, unknown>) ?? {};
+    const existingCurrentStep = existingDraft?.current_step ?? null;
+    const existingCurrentStepKey = existingDraft?.current_step_key ?? null;
 
     const stepData: Record<string, unknown> = { ...existingStepData };
 
