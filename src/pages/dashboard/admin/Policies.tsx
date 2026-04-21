@@ -631,8 +631,8 @@ export default function Policies() {
                     return (
                       <div className="space-y-6">
                         {coreEntries.length > 0 && (
-                          <div className="space-y-3">
-                            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1 border-b border-border/40">
+                          <div className="@container rounded-xl border border-border/60 overflow-hidden bg-card/40">
+                            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-4 py-3 border-b border-border/60">
                               <div className="flex items-center gap-3 flex-wrap">
                                 <h3 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
                                   Core functions
@@ -681,19 +681,19 @@ export default function Policies() {
                               </p>
                             </div>
                             {coreVisible.length > 0 ? (
-                              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                                {coreVisible.map(renderCard)}
+                              <div className="divide-y divide-border/40">
+                                {coreVisible.map(renderRow)}
                               </div>
                             ) : (
-                              <p className="font-sans text-xs text-muted-foreground py-4">
+                              <p className="font-sans text-xs text-muted-foreground px-4 py-4">
                                 All core functions configured. Toggle "Hide adopted" off to review them.
                               </p>
                             )}
                           </div>
                         )}
                         {requiredEntries.length > 0 && (
-                          <div className="space-y-3">
-                            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1 border-b border-border/40">
+                          <div className="@container rounded-xl border border-border/60 overflow-hidden bg-card/40">
+                            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-4 py-3 border-b border-border/60">
                               <div className="flex items-center gap-3 flex-wrap">
                                 <h3 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
                                   Required for governance
@@ -727,19 +727,19 @@ export default function Policies() {
                               </p>
                             </div>
                             {requiredVisible.length > 0 ? (
-                              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                                {requiredVisible.map(renderCard)}
+                              <div className="divide-y divide-border/40">
+                                {requiredVisible.map(renderRow)}
                               </div>
                             ) : (
-                              <p className="font-sans text-xs text-muted-foreground py-4">
+                              <p className="font-sans text-xs text-muted-foreground px-4 py-4">
                                 All governance policies adopted. Toggle "Hide adopted" off to review them.
                               </p>
                             )}
                           </div>
                         )}
                         {otherEntries.length > 0 && (
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+                          <div className="@container rounded-xl border border-border/60 overflow-hidden bg-card/40">
+                            <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
                               <h3 className="font-display text-xs tracking-[0.14em] uppercase text-muted-foreground">
                                 Recommended &amp; Optional
                               </h3>
@@ -747,8 +747,8 @@ export default function Policies() {
                                 {otherEntries.length}
                               </span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                              {otherEntries.map(renderCard)}
+                            <div className="divide-y divide-border/40">
+                              {otherEntries.map(renderRow)}
                             </div>
                           </div>
                         )}
