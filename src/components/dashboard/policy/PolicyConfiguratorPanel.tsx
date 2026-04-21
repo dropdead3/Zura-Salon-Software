@@ -434,9 +434,9 @@ export function PolicyConfiguratorPanel({
   }, [allFields, values]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header context */}
-      <div className="space-y-3">
+      <div className="space-y-3 pb-2">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="font-sans text-xs">
             {categoryMeta.label}
