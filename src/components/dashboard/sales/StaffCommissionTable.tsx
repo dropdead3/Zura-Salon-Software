@@ -38,6 +38,7 @@ const SOURCE_BADGE_STYLES: Record<CommissionSource, string> = {
   override: 'bg-chart-4/10 text-chart-4 border-chart-4/30',
   location_override: 'bg-chart-3/10 text-chart-3 border-chart-3/30',
   level: 'bg-chart-2/10 text-chart-2 border-chart-2/30',
+  plan: 'bg-chart-1/10 text-chart-1 border-chart-1/30',
   unassigned: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 

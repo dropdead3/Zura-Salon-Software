@@ -183,7 +183,26 @@ export function useResolveCommission() {
       }
     }
 
-    // Resolve employee's level and location
+    // 1.5. Compensation plan (non-level types delegate to plan resolver)
+    const assignedPlan = planMap.get(userId);
+    if (assignedPlan && assignedPlan.plan_type !== 'level_based') {
+      const ctx: ResolveContext = {
+        serviceRevenue,
+        productRevenue,
+        periodToDateServiceSales: serviceRevenue,
+      };
+      const r = resolveCommissionForPlan(assignedPlan, ctx);
+      return {
+        serviceRate: r.serviceRate,
+        retailRate: r.retailRate,
+        serviceCommission: r.serviceCommission,
+        retailCommission: r.retailCommission,
+        totalCommission: r.totalCommission,
+        source: 'plan',
+        sourceName: r.sourceName,
+      };
+    }
+
     const empInfo = empLevelMap.get(userId);
     const levelSlug = empInfo?.level;
     const effectiveLocationId = locationId ?? empInfo?.locationId;
@@ -253,7 +272,7 @@ export function useResolveCommission() {
     };
   };
 
-  const isLoading = levelsLoading || overridesLoading || empLoading || locOverridesLoading;
+  const isLoading = levelsLoading || overridesLoading || empLoading || locOverridesLoading || planMapLoading;
 
   return {
     resolveCommission,
