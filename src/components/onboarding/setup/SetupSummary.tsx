@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { OperatorProfileSentence } from "./OperatorProfileSentence";
 import { ConflictBanner } from "./ConflictBanner";
 import { detectConflicts, useConflictRules } from "@/hooks/onboarding/useConflictRules";
+import { tokenize } from "@/lib/wizard-tokenize";
 import type { StepRegistryEntry } from "./types";
 
 interface SetupSummaryProps {
@@ -116,7 +117,7 @@ export function SetupSummary({
                     <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                   </div>
                   <div className="font-sans text-sm text-foreground truncate">
-                    {step.title.replace("{{PLATFORM_NAME}}", "Zura")}
+                    {tokenize(step.title)}
                   </div>
                 </div>
                 <span className="font-sans text-xs text-muted-foreground shrink-0">

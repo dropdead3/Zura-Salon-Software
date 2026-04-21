@@ -120,7 +120,16 @@ export function SetupProgressPanel({
               >
                 {step.title}
               </div>
-              {completed && completedRel && (
+              {/*
+                Wave 13H — B7: timestamp visibility is gated on the CURRENT
+                wizard session's completedKeys, not just the existence of an
+                org_setup_step_completion row. Otherwise a single-step
+                re-entry from settings (which writes a completion row) would
+                make a fresh full-wizard run appear "Confirmed 2m ago" on
+                Step 1 even though the operator hasn't touched anything yet
+                this session. The RPC row is necessary; it isn't sufficient.
+              */}
+              {completed && completedRel && completedKeys.has(step.key) && (
                 <div className="font-sans text-[10px] text-muted-foreground/70 mt-1 leading-snug">
                   Confirmed {completedRel}
                   {retried && (

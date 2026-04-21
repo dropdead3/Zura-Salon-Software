@@ -163,10 +163,15 @@ export default function OrganizationSetup() {
     // operator isn't dumped into a dead-end summary screen.
     if (reviewMode) {
       const draftStepDataLocal = (draft.step_data ?? {}) as Record<string, Record<string, unknown>>;
+      // Wave 13H — B1: `__skipped__` is strictly dominant. A step that was
+      // backfilled and later soft-skipped (e.g. operator chose "skip" on a
+      // re-entry) must NOT count as populated even though `backfilled:true`
+      // still survives in the merge. The skip flag wins; nothing else is
+      // checked. Mirrors the SetupSummary.isPopulated contract exactly.
       const isPopulated = (val: unknown) => {
         if (!val || typeof val !== "object") return false;
         const obj = val as Record<string, unknown>;
-        if (obj.__skipped__ === true) return false;
+        if (obj.__skipped__ === true) return false; // dominant
         if (obj.backfilled === true) return true;
         if (obj.__touched !== true) return false;
         return Object.keys(obj).filter(

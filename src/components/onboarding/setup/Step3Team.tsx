@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +24,18 @@ const SIZE_BANDS: Array<{ value: Step3Data["team_size_band"]; label: string; des
 ];
 
 /**
+ * Wave 13H — B4: midpoint by band for stepper auto-snap. Keeps band and
+ * total_team_count from drifting (e.g. operator picks "11-25" but stepper
+ * still reads 5 → downstream funnel sees contradictory data).
+ */
+const BAND_MIDPOINT: Record<Step3Data["team_size_band"], number> = {
+  "1-3": 2,
+  "4-10": 7,
+  "11-25": 17,
+  "26+": 30,
+};
+
+/**
  * Step 3 — Your team. Drives stylist levels, career pathway, and conflict
  * detection (e.g. apprentices without hourly comp).
  */
@@ -45,6 +57,27 @@ export function Step3Team({ initialData, onChange, onValidityChange }: StepProps
     (initialData?.has_front_desk as boolean) ?? false,
   );
   const [unmodeled, setUnmodeled] = useState((initialData?.unmodeled_structure as string) ?? "");
+
+  // Wave 13H — B4: track whether the operator has manually adjusted the
+  // stepper. If they have, band changes never overwrite their value. If they
+  // haven't, band changes snap the stepper to the midpoint of the new band.
+  // Initialized true when initialData provided a count, so we don't clobber
+  // a returning user's saved value on first render.
+  const countTouched = useRef<boolean>(
+    typeof initialData?.total_team_count === "number",
+  );
+
+  const handleBandChange = (next: Step3Data["team_size_band"]) => {
+    setBand(next);
+    if (!countTouched.current) {
+      setCount(BAND_MIDPOINT[next]);
+    }
+  };
+
+  const handleCountChange = (next: number) => {
+    countTouched.current = true;
+    setCount(next);
+  };
 
   useEffect(() => {
     onChange({
@@ -70,7 +103,7 @@ export function Step3Team({ initialData, onChange, onValidityChange }: StepProps
               label={b.label}
               description={b.description}
               selected={band === b.value}
-              onClick={() => setBand(b.value)}
+              onClick={() => handleBandChange(b.value)}
             />
           ))}
         </div>
@@ -78,7 +111,7 @@ export function Step3Team({ initialData, onChange, onValidityChange }: StepProps
 
       <div className="space-y-3">
         <Label className="font-sans text-sm">Total people on payroll today</Label>
-        <NumberStepper value={count} onChange={setCount} min={1} max={500} label="people" />
+        <NumberStepper value={count} onChange={handleCountChange} min={1} max={500} label="people" />
       </div>
 
       <div className="space-y-3">
