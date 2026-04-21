@@ -744,6 +744,41 @@ export type Database = {
           },
         ]
       }
+      app_interest: {
+        Row: {
+          app_key: string
+          expressed_at: string
+          expressed_by: string | null
+          id: string
+          organization_id: string
+          surfaced_until: string
+        }
+        Insert: {
+          app_key: string
+          expressed_at?: string
+          expressed_by?: string | null
+          id?: string
+          organization_id: string
+          surfaced_until?: string
+        }
+        Update: {
+          app_key?: string
+          expressed_at?: string
+          expressed_by?: string | null
+          id?: string
+          organization_id?: string
+          surfaced_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_interest_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_assistants: {
         Row: {
           appointment_id: string
@@ -14257,6 +14292,176 @@ export type Database = {
           },
         ]
       }
+      org_setup_commit_log: {
+        Row: {
+          acknowledged_conflicts: Json
+          attempted_at: string
+          attempted_by: string | null
+          deep_link: string | null
+          id: string
+          organization_id: string
+          reason: string | null
+          status: string
+          system: string
+        }
+        Insert: {
+          acknowledged_conflicts?: Json
+          attempted_at?: string
+          attempted_by?: string | null
+          deep_link?: string | null
+          id?: string
+          organization_id: string
+          reason?: string | null
+          status: string
+          system: string
+        }
+        Update: {
+          acknowledged_conflicts?: Json
+          attempted_at?: string
+          attempted_by?: string | null
+          deep_link?: string | null
+          id?: string
+          organization_id?: string
+          reason?: string | null
+          status?: string
+          system?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_setup_commit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_setup_drafts: {
+        Row: {
+          current_step: string | null
+          id: string
+          organization_id: string
+          started_at: string
+          step_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_step?: string | null
+          id?: string
+          organization_id: string
+          started_at?: string
+          step_data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_step?: string | null
+          id?: string
+          organization_id?: string
+          started_at?: string
+          step_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_setup_drafts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_setup_step_completion: {
+        Row: {
+          completed_at: string | null
+          completed_version: number | null
+          completion_source: string | null
+          created_at: string
+          data: Json
+          id: string
+          organization_id: string
+          status: string
+          step_key: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_version?: number | null
+          completion_source?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          organization_id: string
+          status?: string
+          step_key: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_version?: number | null
+          completion_source?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          organization_id?: string
+          status?: string
+          step_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_setup_step_completion_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_setup_step_events: {
+        Row: {
+          event: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          organization_id: string
+          step_key: string
+          step_number: number | null
+          user_id: string | null
+        }
+        Insert: {
+          event: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          organization_id: string
+          step_key: string
+          step_number?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          event?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          organization_id?: string
+          step_key?: string
+          step_number?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_setup_step_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_admins: {
         Row: {
           created_at: string | null
@@ -15041,6 +15246,7 @@ export type Database = {
           email_show_attribution: boolean | null
           email_social_links: Json | null
           go_live_date: string | null
+          has_non_traditional_structure: boolean
           id: string
           is_internal: boolean
           is_multi_location: boolean | null
@@ -15057,6 +15263,9 @@ export type Database = {
           primary_contact_email: string | null
           primary_contact_phone: string | null
           settings: Json | null
+          setup_completed_at: string | null
+          setup_intent: string[]
+          setup_source: string | null
           slug: string
           source_software: string | null
           status: string | null
@@ -15098,6 +15307,7 @@ export type Database = {
           email_show_attribution?: boolean | null
           email_social_links?: Json | null
           go_live_date?: string | null
+          has_non_traditional_structure?: boolean
           id?: string
           is_internal?: boolean
           is_multi_location?: boolean | null
@@ -15114,6 +15324,9 @@ export type Database = {
           primary_contact_email?: string | null
           primary_contact_phone?: string | null
           settings?: Json | null
+          setup_completed_at?: string | null
+          setup_intent?: string[]
+          setup_source?: string | null
           slug: string
           source_software?: string | null
           status?: string | null
@@ -15155,6 +15368,7 @@ export type Database = {
           email_show_attribution?: boolean | null
           email_social_links?: Json | null
           go_live_date?: string | null
+          has_non_traditional_structure?: boolean
           id?: string
           is_internal?: boolean
           is_multi_location?: boolean | null
@@ -15171,6 +15385,9 @@ export type Database = {
           primary_contact_email?: string | null
           primary_contact_phone?: string | null
           settings?: Json | null
+          setup_completed_at?: string | null
+          setup_intent?: string[]
+          setup_source?: string | null
           slug?: string
           source_software?: string | null
           status?: string | null
@@ -17779,6 +17996,7 @@ export type Database = {
       }
       policy_org_profile: {
         Row: {
+          backfill_inferences: Json
           business_type: string | null
           commission_basis_in_use: string[]
           compensation_models_in_use: string[]
@@ -17805,6 +18023,7 @@ export type Database = {
           uses_tip_pooling: boolean
         }
         Insert: {
+          backfill_inferences?: Json
           business_type?: string | null
           commission_basis_in_use?: string[]
           compensation_models_in_use?: string[]
@@ -17831,6 +18050,7 @@ export type Database = {
           uses_tip_pooling?: boolean
         }
         Update: {
+          backfill_inferences?: Json
           business_type?: string | null
           commission_basis_in_use?: string[]
           compensation_models_in_use?: string[]
@@ -24884,6 +25104,178 @@ export type Database = {
           },
         ]
       }
+      setup_conflict_rules: {
+        Row: {
+          condition: Json
+          created_at: string
+          explanation: string
+          id: string
+          is_active: boolean
+          key: string
+          resolution_step: string | null
+          severity: string
+          suggested_resolution: string | null
+          trigger_steps: string[]
+          updated_at: string
+        }
+        Insert: {
+          condition: Json
+          created_at?: string
+          explanation: string
+          id?: string
+          is_active?: boolean
+          key: string
+          resolution_step?: string | null
+          severity: string
+          suggested_resolution?: string | null
+          trigger_steps?: string[]
+          updated_at?: string
+        }
+        Update: {
+          condition?: Json
+          created_at?: string
+          explanation?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          resolution_step?: string | null
+          severity?: string
+          suggested_resolution?: string | null
+          trigger_steps?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      setup_pause_events: {
+        Row: {
+          free_text: string | null
+          id: string
+          occurred_at: string
+          organization_id: string
+          reason_chip: string | null
+          resumed_at: string | null
+          step_key: string
+          user_id: string | null
+        }
+        Insert: {
+          free_text?: string | null
+          id?: string
+          occurred_at?: string
+          organization_id: string
+          reason_chip?: string | null
+          resumed_at?: string | null
+          step_key: string
+          user_id?: string | null
+        }
+        Update: {
+          free_text?: string | null
+          id?: string
+          occurred_at?: string
+          organization_id?: string
+          reason_chip?: string | null
+          resumed_at?: string | null
+          step_key?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_pause_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      setup_step_registry: {
+        Row: {
+          applies_when: Json
+          commit_handler: string | null
+          component_key: string
+          created_at: string
+          depends_on: string[]
+          deprecated_at: string | null
+          id: string
+          key: string
+          required: boolean
+          step_order: number
+          step_version: number
+          title: string
+          unlocks: string[]
+          updated_at: string
+        }
+        Insert: {
+          applies_when?: Json
+          commit_handler?: string | null
+          component_key: string
+          created_at?: string
+          depends_on?: string[]
+          deprecated_at?: string | null
+          id?: string
+          key: string
+          required?: boolean
+          step_order: number
+          step_version?: number
+          title: string
+          unlocks?: string[]
+          updated_at?: string
+        }
+        Update: {
+          applies_when?: Json
+          commit_handler?: string | null
+          component_key?: string
+          created_at?: string
+          depends_on?: string[]
+          deprecated_at?: string | null
+          id?: string
+          key?: string
+          required?: boolean
+          step_order?: number
+          step_version?: number
+          title?: string
+          unlocks?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      setup_unmodeled_structures: {
+        Row: {
+          id: string
+          occurred_at: string
+          organization_id: string
+          raw_description: string
+          reported_by: string | null
+          step_key: string
+          suggested_fit: string | null
+        }
+        Insert: {
+          id?: string
+          occurred_at?: string
+          organization_id: string
+          raw_description: string
+          reported_by?: string | null
+          step_key: string
+          suggested_fit?: string | null
+        }
+        Update: {
+          id?: string
+          occurred_at?: string
+          organization_id?: string
+          raw_description?: string
+          reported_by?: string | null
+          step_key?: string
+          suggested_fit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_unmodeled_structures_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_formulas: {
         Row: {
           client_id: string
@@ -30367,6 +30759,7 @@ export type Database = {
         }
         Returns: number
       }
+      backfill_org_setup_profile: { Args: { _org_id: string }; Returns: Json }
       calculate_preferred_stylists: {
         Args: never
         Returns: {
