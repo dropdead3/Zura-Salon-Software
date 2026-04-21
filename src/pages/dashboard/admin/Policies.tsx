@@ -428,6 +428,55 @@ export default function Policies() {
               );
             })()}
 
+            {/* Search bar + adoption-status facet. Composes with audience and
+                category filters (intersection, not replacement). */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[260px] max-w-xl">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search policies — title, description, or topic…"
+                  autoCapitalize="none"
+                  className="pl-9 pr-9 font-sans text-sm"
+                  aria-label="Search policies"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted/50 border border-border/60">
+                {([
+                  { key: 'all', label: 'All' },
+                  { key: 'adopted', label: 'Adopted' },
+                  { key: 'not_adopted', label: 'Not adopted' },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setAdoptionFilter(opt.key)}
+                    className={cn(
+                      'inline-flex items-center px-3 py-1.5 rounded-md font-sans text-xs transition-colors',
+                      adoptionFilter === opt.key
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Wave 28.11.3 — Audience-first segmented control. The data already
                 carries this distinction; we surface it so operators don't apply
                 client-facing thinking to handbook-only policies (and vice versa). */}
