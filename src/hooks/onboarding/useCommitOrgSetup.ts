@@ -10,18 +10,31 @@ import { dismissBackfillBanner } from "@/hooks/onboarding/useBackfillTrigger";
  *
  * Wave 11B: on full success, permanently dismiss the BackfillWelcomeBanner
  * for the (user, org) pair so it never reappears after a 24h snooze cycle.
+ *
+ * Wave 13D.G10 — every commit attempt is tagged with a per-attempt
+ * idempotency key. The orchestrator uses (organization_id, idempotency_key,
+ * system) as a unique index, so a double-clicked Build button no longer
+ * inserts duplicate audit rows or re-runs handlers (locations, app_interest).
  */
 export function useCommitOrgSetup() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   return useMutation({
+    // mutationKey prevents react-query from running parallel commits even
+    // if a stray click slips past the disabled state.
+    mutationKey: ["commit-org-setup"],
     mutationFn: async (params: {
       organization_id: string;
       acknowledged_conflicts?: string[];
     }) => {
+      // crypto.randomUUID is available in all modern browsers and React Native.
+      const idempotency_key =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `commit-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const { data, error } = await supabase.functions.invoke(
         "commit-org-setup",
-        { body: params },
+        { body: { ...params, idempotency_key } },
       );
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
