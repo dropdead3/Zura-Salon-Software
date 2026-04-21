@@ -477,6 +477,9 @@ const App = () => (
                     <Route path="/product" element={<Product />} />
                     <Route path="/ecosystem" element={<Ecosystem />} />
                     <Route path="/login" element={<UnifiedLogin />} />
+                    <Route path="/signup" element={<Suspense fallback={<RouteFallback />}><Signup /></Suspense>} />
+                    <Route path="/auth/verify-email" element={<Suspense fallback={<RouteFallback />}><VerifyEmail /></Suspense>} />
+                    <Route path="/onboarding/setup" element={<Suspense fallback={<RouteFallback />}><OrganizationSetup /></Suspense>} />
 
                     {/* Backward-compatible redirects */}
                     <Route path="/staff-login" element={<Navigate to="/login" replace />} />
