@@ -429,8 +429,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       ...form,
       setup_completed_at: new Date().toISOString(),
     });
-    if (recommendedKeys.length > 0) {
-      await adopt.mutateAsync(recommendedKeys);
+    if (effectiveKeys.length > 0) {
+      await adopt.mutateAsync(effectiveKeys);
     }
     onCompleted?.();
     onClose();
@@ -1067,7 +1067,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                   Saving…
                 </>
               ) : (
-                <>Save &amp; adopt {recommendedKeys.length}</>
+                <>Save &amp; adopt {effectiveKeys.length}</>
               )}
             </Button>
           )}
