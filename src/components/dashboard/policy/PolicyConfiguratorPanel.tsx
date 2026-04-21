@@ -40,6 +40,8 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PolicyRuleField } from './PolicyRuleField';
+import { PolicyQuestionnaire } from './PolicyQuestionnaire';
+import { PolicyLivePreview } from './PolicyLivePreview';
 import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
 import { PolicyDraftWorkspace } from './PolicyDraftWorkspace';
@@ -170,6 +172,19 @@ export function PolicyConfiguratorPanel({
   const longtextDefaultsRef = useRef<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
   const [step, setStep] = useState<StepId>('rules');
+  // Wave 28.14 — Interview vs Expert mode for the Rules step.
+  // Persisted per operator so power users land back in their preferred mode.
+  const [rulesMode, setRulesMode] = useState<'interview' | 'expert'>(() => {
+    if (typeof window === 'undefined') return 'interview';
+    const saved = window.localStorage.getItem('policy-configurator-rules-mode');
+    return saved === 'expert' ? 'expert' : 'interview';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('policy-configurator-rules-mode', rulesMode);
+    }
+  }, [rulesMode]);
+  const [recentlyChangedKey, setRecentlyChangedKey] = useState<string | null>(null);
   const [acksOpen, setAcksOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -663,60 +678,122 @@ export function PolicyConfiguratorPanel({
           {/* ---- Step 1 · Define rules ---- */}
           {step === 'rules' && (
             <div className="space-y-6">
-              <div className="space-y-6">
-                {schema.sections.map((section) => (
-                  <div key={section.title} className="space-y-4">
-                    <div>
-                      <h5 className="font-display text-xs tracking-wider uppercase text-foreground">
-                        {section.title}
-                      </h5>
-                      {section.description && (
-                        <p className="font-sans text-xs text-muted-foreground mt-1">
-                          {section.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-                      {section.fields.map((field) => (
-                        <PolicyRuleField
-                          key={field.key}
-                          field={field}
-                          value={values[field.key]}
-                          audience={entry.audience}
-                          onChange={(v) => {
-                            // Operator typed into a longtext field — flag it
-                            // so the reactive role-token re-substitution
-                            // effect won't overwrite their edit. Operator
-                            // edits are sacred.
-                            if (field.type === 'longtext') {
-                              userEditedFieldsRef.current.add(field.key);
-                            }
-                            setValues((prev) => ({ ...prev, [field.key]: v }));
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              {/* Interview / Expert toggle */}
+              <div className="flex items-center justify-end">
+                <div className="inline-flex items-center rounded-full border border-border bg-muted/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setRulesMode('interview')}
+                    className={cn(
+                      'font-sans text-xs px-3 py-1 rounded-full transition-colors',
+                      rulesMode === 'interview'
+                        ? 'bg-card text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    Interview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRulesMode('expert')}
+                    className={cn(
+                      'font-sans text-xs px-3 py-1 rounded-full transition-colors',
+                      rulesMode === 'expert'
+                        ? 'bg-card text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    Expert view
+                  </button>
+                </div>
               </div>
 
-              <Separator />
-              <div className="flex items-center justify-end gap-3">
-                <Button
-                  size="sm"
-                  onClick={handleSaveRules}
-                  disabled={save.isPending}
-                  className="font-sans"
-                >
-                  {save.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  {STEP_META.rules.cta}
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
+              {rulesMode === 'interview' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-6">
+                  <div className="rounded-xl border border-border bg-card p-5">
+                    <PolicyQuestionnaire
+                      schema={schema}
+                      values={values}
+                      audience={entry.audience}
+                      saving={save.isPending}
+                      ctaLabel={STEP_META.rules.cta}
+                      onChange={(key, v, fieldType) => {
+                        if (fieldType === 'longtext') {
+                          userEditedFieldsRef.current.add(key);
+                        }
+                        setValues((prev) => ({ ...prev, [key]: v }));
+                        setRecentlyChangedKey(key);
+                      }}
+                      onComplete={handleSaveRules}
+                    />
+                  </div>
+                  <PolicyLivePreview
+                    schema={schema}
+                    values={values}
+                    recentlyChangedKey={recentlyChangedKey}
+                    libraryKey={entry.key}
+                    category={entry.category}
+                    audience={entry.audience}
+                    orgName={orgNameForTokens}
+                    schemaHasAuthorityRole={schemaHasAuthorityRole}
+                    locationCount={locationCount}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-6">
+                    {schema.sections.map((section) => (
+                      <div key={section.title} className="space-y-4">
+                        <div>
+                          <h5 className="font-display text-xs tracking-wider uppercase text-foreground">
+                            {section.title}
+                          </h5>
+                          {section.description && (
+                            <p className="font-sans text-xs text-muted-foreground mt-1">
+                              {section.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-4 rounded-xl border border-border bg-card p-4">
+                          {section.fields.map((field) => (
+                            <PolicyRuleField
+                              key={field.key}
+                              field={field}
+                              value={values[field.key]}
+                              audience={entry.audience}
+                              onChange={(v) => {
+                                if (field.type === 'longtext') {
+                                  userEditedFieldsRef.current.add(field.key);
+                                }
+                                setValues((prev) => ({ ...prev, [field.key]: v }));
+                                setRecentlyChangedKey(field.key);
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+                  <div className="flex items-center justify-end gap-3">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveRules}
+                      disabled={save.isPending}
+                      className="font-sans"
+                    >
+                      {save.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
+                      {STEP_META.rules.cta}
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

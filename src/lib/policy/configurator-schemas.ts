@@ -53,6 +53,26 @@ export interface RuleField {
   unit?: string;
   defaultValue?: unknown;
   provenance?: FieldProvenance;
+  /**
+   * Wave 28.14 — Questionnaire mode (Policy Configurator interview UI).
+   * Plain-English question rendered in place of `label`. Falls back to
+   * `label` when omitted so non-questionnaire fields keep working.
+   */
+  question?: string;
+  /** Operator-facing reason this question matters. Falls back to `helper`. */
+  whyItMatters?: string;
+  /**
+   * Curated preset answers shown as cards above the raw input. Exactly one
+   * preset may be marked `recommended: true` to anchor the operator on the
+   * industry-standard pick. The underlying input remains available so
+   * custom values are always possible.
+   */
+  presets?: Array<{
+    value: unknown;
+    label: string;
+    sublabel?: string;
+    recommended?: boolean;
+  }>;
 }
 
 export interface RuleSection {
@@ -76,6 +96,19 @@ const ROLE_OPTIONS: RuleField['options'] = [
   { value: 'any_admin', label: 'Any admin' },
 ];
 
+// Wave 28.14 — shared questionnaire presets imported lazily so this module
+// stays the single source of truth for both the preset library and schemas.
+import {
+  NOTICE_WINDOW_PRESETS,
+  CANCELLATION_FEE_PCT_PRESETS,
+  NO_SHOW_FEE_PCT_PRESETS,
+  DEPOSIT_PCT_PRESETS,
+  REDO_WINDOW_PRESETS,
+  RETURN_WINDOW_PRESETS,
+  AUTHORITY_ROLE_PRESETS,
+  ESCALATION_ROLE_PRESETS,
+} from './questionnaire-presets';
+
 const SCHEMAS: Record<string, ConfiguratorSchema> = {
   cancellation_shape: {
     key: 'cancellation_shape',
@@ -89,6 +122,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'notice_window_hours',
             label: 'Notice window (hours)',
+            question: 'How late can a client cancel without paying a fee?',
+            whyItMatters:
+              'This is the notice clients have to give to avoid the cancellation fee. Most salons use 24 hours.',
+            presets: NOTICE_WINDOW_PRESETS,
             helper: 'Cancellations inside this window trigger a fee.',
             type: 'number',
             unit: 'hours',
@@ -98,6 +135,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'reschedule_window_hours',
             label: 'Free reschedule window (hours)',
+            question: 'How much notice do clients need to reschedule for free?',
+            whyItMatters:
+              'Reschedules outside this window cost nothing. Inside it, the cancellation fee may apply.',
+            presets: NOTICE_WINDOW_PRESETS,
             helper: 'Reschedules outside this window are free.',
             type: 'number',
             unit: 'hours',
@@ -111,6 +152,9 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'fee_type',
             label: 'Fee type',
+            question: 'How is the cancellation fee structured?',
+            whyItMatters:
+              'Most salons charge a percentage of the booked service so the fee scales with risk.',
             type: 'select',
             required: true,
             options: [
@@ -124,6 +168,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'fee_amount',
             label: 'Fee amount',
+            question: 'How much is the cancellation fee?',
+            whyItMatters:
+              'For percentage fees, 50% is the most common anchor — it covers half the lost slot without feeling punitive.',
+            presets: CANCELLATION_FEE_PCT_PRESETS,
             helper: 'Percentage (0–100) or dollar amount, depending on fee type.',
             type: 'number',
             defaultValue: 50,
@@ -131,6 +179,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'no_show_fee_amount',
             label: 'No-show fee',
+            question: 'How much is charged when a client no-shows?',
+            whyItMatters:
+              'No-shows cost the full slot. Most salons charge 100% to recover the booked time.',
+            presets: NO_SHOW_FEE_PCT_PRESETS,
             helper: 'Typically 100%. Charged when client never arrives.',
             type: 'number',
             defaultValue: 100,
@@ -155,6 +207,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'waiver_authority',
             label: 'Who can waive a fee?',
+            question: 'Who has the authority to waive a cancellation or no-show fee?',
+            whyItMatters:
+              'Anyone below this role must escalate. Manager-level is the industry default — high enough to protect revenue, low enough to keep the floor moving.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role authorized to waive the cancellation/no-show fee. Anyone below this role must escalate.',
@@ -209,6 +265,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'deposit_amount',
             label: 'Deposit amount',
+            question: 'How much should the deposit be?',
+            whyItMatters:
+              '25% of the service total is the most common anchor — enough to discourage no-shows without scaring off new clients.',
+            presets: DEPOSIT_PCT_PRESETS,
             type: 'number',
             defaultValue: 25,
           },
@@ -252,6 +312,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'window_days',
             label: 'Redo window (days)',
+            question: 'How long after a service can a client request a redo?',
+            whyItMatters:
+              'Most salons use 7 days. Long enough for issues to surface, short enough to rule out home damage or wear.',
+            presets: REDO_WINDOW_PRESETS,
             type: 'number',
             unit: 'days',
             required: true,
@@ -292,6 +356,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'approver_role',
             label: 'Who approves a redo?',
+            question: 'Who approves a complimentary redo or refund?',
+            whyItMatters:
+              'Redos are revenue-impacting decisions. Most salons route them through a Manager so the call is consistent across the floor.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role authorized to approve a complimentary redo or refund alternative. Front desk routes requests to this role.',
@@ -550,6 +618,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'authority_role',
             label: 'Who holds this authority',
+            question: 'Who holds this decision authority by default?',
+            whyItMatters:
+              'This role owns the call below the dollar threshold. Anyone above the threshold escalates.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role that owns this decision by default. Anything above the maximum dollar value escalates to the role below.',
@@ -574,6 +646,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'escalation_role',
             label: 'Escalates to',
+            question: 'Who do decisions escalate to above the dollar threshold?',
+            whyItMatters:
+              'When the call exceeds the threshold, this role owns it. Owner-level escalation is the most common pattern.',
+            presets: ESCALATION_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role decisions escalate to when they exceed the maximum dollar value above.',
@@ -670,6 +746,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'enforcement_authority',
             label: 'Who enforces',
+            question: 'Who delivers warnings and documents the conversation?',
+            whyItMatters:
+              'A consistent enforcer keeps the documentation trail clean and the message even-handed.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role responsible for delivering verbal/written warnings and documenting the conversation in the employee file.',
@@ -849,6 +929,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'authority_role',
             label: 'Decision authority',
+            question: 'Who approves exceptions to this policy?',
+            whyItMatters:
+              'This role signs off on edge cases and their title appears anywhere the policy references the decision-maker.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role that approves exceptions to this policy and signs off on edge-case decisions. Their name appears wherever the policy references "{{authority_role}}".',
