@@ -201,6 +201,32 @@ export default function SetupFunnel() {
     staleTime: 60_000,
   });
 
+  // Outreach log: which (org, step) pairs have been contacted within the cooldown
+  const { data: outreachData } = useQuery({
+    queryKey: ["platform-setup-outreach"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - OUTREACH_COOLDOWN_MS).toISOString();
+      const { data: rows, error } = await (supabase as any)
+        .from("setup_outreach_log")
+        .select("organization_id, step_number, exported_at")
+        .gte("exported_at", since)
+        .order("exported_at", { ascending: false })
+        .limit(10000);
+      if (error) {
+        console.warn("[SetupFunnel] outreach log fetch failed:", error);
+        return new Map<string, number>();
+      }
+      // Key: `${orgId}::${stepNumber}` → most recent exported_at ms
+      const m = new Map<string, number>();
+      for (const r of (rows ?? []) as any[]) {
+        const k = `${r.organization_id}::${r.step_number}`;
+        if (!m.has(k)) m.set(k, new Date(r.exported_at).getTime());
+      }
+      return m;
+    },
+    staleTime: 30_000,
+  });
+
   // Per-org last activity (max of any event timestamp). Used to weight
   // dropped orgs hottest-first so platform ops triage warm leads.
   const lastActivityByOrg = useMemo(() => {
