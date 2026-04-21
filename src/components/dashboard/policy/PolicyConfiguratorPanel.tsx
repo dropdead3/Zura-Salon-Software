@@ -25,7 +25,7 @@ import { usePolicyAcknowledgmentCount } from '@/hooks/policy/usePolicyAcknowledg
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,7 +127,8 @@ export function PolicyConfiguratorPanel({
 
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [hydrated, setHydrated] = useState(false);
-  const [tab, setTab] = useState<'rules' | 'applicability' | 'surfaces' | 'drafts' | 'acknowledgments'>('rules');
+  const [step, setStep] = useState<StepId>('rules');
+  const [acksOpen, setAcksOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const updateAckFlag = useUpdatePolicyAcknowledgmentFlag();
