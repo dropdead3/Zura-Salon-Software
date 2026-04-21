@@ -8,6 +8,7 @@ import { useOrgSetupCommitLog } from "@/hooks/onboarding/useOrgSetupCommitLog";
 import {
   readBackfillBanner,
   dismissBackfillBanner,
+  snoozeBackfillBanner,
 } from "@/hooks/onboarding/useBackfillTrigger";
 
 const COMPLETION_SYSTEMS = ["intent", "apps"] as const;
@@ -45,10 +46,11 @@ export function BackfillWelcomeBanner() {
 
   useEffect(() => {
     const state = readBackfillBanner(user?.id, effectiveOrganization?.id);
-    if (state && !state.shown && (state.backfilled ?? 0) > 0) {
-      setData({ backfilled: state.backfilled, pending: state.pending ?? 0 });
-      setVisible(true);
-    }
+    if (!state || state.shown || !(state.backfilled && state.backfilled > 0)) return;
+    // Honor active snooze — banner returns automatically once it expires.
+    if (state.snoozedUntil && state.snoozedUntil > Date.now()) return;
+    setData({ backfilled: state.backfilled, pending: state.pending ?? 0 });
+    setVisible(true);
   }, [user?.id, effectiveOrganization?.id]);
 
   // Auto-dismiss when both pending steps are completed.
@@ -61,16 +63,22 @@ export function BackfillWelcomeBanner() {
     setVisible(false);
   }, [intentAndAppsDone, visible, user?.id, effectiveOrganization?.id]);
 
+  /** X button — soft snooze (24h) so the user can come back to setup later. */
   const dismiss = () => {
     if (user?.id && effectiveOrganization?.id) {
-      dismissBackfillBanner(user.id, effectiveOrganization.id);
+      snoozeBackfillBanner(user.id, effectiveOrganization.id);
     }
     setVisible(false);
   };
 
   const handleReview = () => {
     if (!effectiveOrganization?.id) return;
-    dismiss();
+    // Snooze (not permanent dismiss) — if they back out of the wizard,
+    // the banner returns on next visit so they can resume.
+    if (user?.id) {
+      snoozeBackfillBanner(user.id, effectiveOrganization.id);
+    }
+    setVisible(false);
     navigate(
       `/onboarding/setup?org=${effectiveOrganization.id}&step=step_7_intent&skipIntro=1&returnTo=${encodeURIComponent(
         window.location.pathname,
