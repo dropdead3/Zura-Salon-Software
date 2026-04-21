@@ -515,6 +515,29 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
+const SOURCE_BADGE_STYLES: Record<string, string> = {
+  organic: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  invited: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  migrated: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  backfilled: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
+  imported: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+  legacy: "bg-muted text-muted-foreground border-border",
+};
+
+function SourceBadge({ source }: { source: string }) {
+  const style = SOURCE_BADGE_STYLES[source] ?? SOURCE_BADGE_STYLES.legacy;
+  return (
+    <span
+      className={cn(
+        "shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 font-display text-[9px] uppercase tracking-[0.15em]",
+        style,
+      )}
+    >
+      {source}
+    </span>
+  );
+}
+
 function StatTile({
   icon,
   label,
