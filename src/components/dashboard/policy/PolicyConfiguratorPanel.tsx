@@ -67,6 +67,7 @@ import {
   applicabilityReason,
 } from '@/hooks/policy/usePolicyOrgProfile';
 import { interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
+import { getPolicySummaryDefaults } from '@/lib/policy/starter-drafts';
 import { PLATFORM_NAME } from '@/lib/brand';
 
 interface PolicyConfiguratorPanelProps {
@@ -152,14 +153,21 @@ export function PolicyConfiguratorPanel({
         ? (v as { v: unknown }).v
         : v;
     });
-    const interpolated = interpolateDefaults(defaultsFromSchema(allFields), {
-      orgName: orgNameForTokens,
-      platformName: PLATFORM_NAME,
-    });
+    // Layer order (lowest precedence first):
+    //   1. schema defaultValue (generic boilerplate)
+    //   2. per-policy summary derived from the starter draft (specific prose)
+    //   3. brand-token interpolation across the merged map
+    //   4. operator-saved values (sacred — never touched)
+    const schemaDefaults = defaultsFromSchema(allFields);
+    const policySpecific = getPolicySummaryDefaults(entry.key);
+    const interpolated = interpolateDefaults(
+      { ...schemaDefaults, ...policySpecific },
+      { orgName: orgNameForTokens, platformName: PLATFORM_NAME },
+    );
     const seeded = { ...interpolated, ...fromBlocks };
     setValues(seeded);
     setHydrated(true);
-  }, [data, hydrated, allFields, orgNameForTokens]);
+  }, [data, hydrated, allFields, orgNameForTokens, entry.key]);
 
   const versionId = data?.versionId;
   const versionNumber = data?.versionNumber ?? 1;

@@ -315,3 +315,49 @@ export const STARTER_DRAFTS: Record<string, StarterDraftSet> = {
 export function getStarterDraftSet(libraryKey: string): StarterDraftSet | null {
   return STARTER_DRAFTS[libraryKey] ?? null;
 }
+
+/**
+ * Strip the leading bold heading line (e.g. `**Cancellation policy**`) from
+ * a starter-draft body so we can reuse the prose as a structured-field
+ * default without leaking markdown into a plain `<Textarea>`.
+ */
+function stripHeading(body: string): string {
+  return body.replace(/^\s*\*\*[^*]+\*\*\s*\n+/, '').trim();
+}
+
+/**
+ * Split a body into paragraphs (double-newline separated).
+ */
+function paragraphs(body: string): string[] {
+  return body
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Per-policy structured defaults for the `generic_shape` schema, derived
+ * from the platform-authored starter draft for that policy. The starter
+ * draft is the canonical prose; this helper just exposes its first
+ * paragraph as the `policy_summary` default so the Rules tab no longer
+ * shows the same boilerplate sentence on every generic policy.
+ *
+ * Returns an empty object when no starter draft exists for the key — the
+ * schema's own `defaultValue` strings remain the fallback.
+ *
+ * Brand tokens ({{ORG_NAME}}, {{PLATFORM_NAME}}) are NOT resolved here;
+ * the configurator's existing `interpolateDefaults` pass handles that so
+ * there's exactly one place tokens get substituted.
+ */
+export function getPolicySummaryDefaults(
+  libraryKey: string,
+): Partial<{ policy_summary: string; who_it_applies_to: string }> {
+  const set = STARTER_DRAFTS[libraryKey];
+  const internal = set?.internal;
+  if (!internal) return {};
+  const body = stripHeading(internal);
+  const paras = paragraphs(body);
+  if (paras.length === 0) return {};
+  // First paragraph is the policy's substantive summary.
+  return { policy_summary: paras[0] };
+}
