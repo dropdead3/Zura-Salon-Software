@@ -265,6 +265,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'deposit_amount',
             label: 'Deposit amount',
+            question: 'How much should the deposit be?',
+            whyItMatters:
+              '25% of the service total is the most common anchor — enough to discourage no-shows without scaring off new clients.',
+            presets: DEPOSIT_PCT_PRESETS,
             type: 'number',
             defaultValue: 25,
           },
@@ -308,6 +312,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'window_days',
             label: 'Redo window (days)',
+            question: 'How long after a service can a client request a redo?',
+            whyItMatters:
+              'Most salons use 7 days. Long enough for issues to surface, short enough to rule out home damage or wear.',
+            presets: REDO_WINDOW_PRESETS,
             type: 'number',
             unit: 'days',
             required: true,
