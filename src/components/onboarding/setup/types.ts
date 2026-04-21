@@ -47,6 +47,7 @@ export interface StepProps<TData = Record<string, unknown>> {
 
 /** Map of which downstream surfaces a step unlocks — drives the side panel */
 export const STEP_UNLOCK_CONSEQUENCES: Record<string, string> = {
+  step_0_fit_check: "Whether Zura is the right operating system for you.",
   step_1_identity: "Branding, timezone, and your dashboard clock.",
   step_2_footprint: "Cross-location benchmarking and operational scope.",
   step_3_team: "Career pathway, stylist levels, and team intelligence.",
