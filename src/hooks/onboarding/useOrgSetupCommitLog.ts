@@ -16,7 +16,7 @@ export function useOrgSetupCommitLog(orgId: string | null) {
         .eq("org_id", orgId)
         .order("attempted_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as Array<{
+      return (data ?? []) as unknown as Array<{
         id: string;
         system: string;
         status: string;
