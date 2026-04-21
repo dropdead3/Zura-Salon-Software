@@ -607,7 +607,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       <HelpFAB />
       {isLocked && !isImpersonating && <DashboardLockScreen onUnlock={unlock} />}
       <ClockInPromptDialog />
-      <PostSetupOrientationOverlay />
+      
       
       {hasZuraGuidance && <ZuraStickyGuidance />}
     </div>
