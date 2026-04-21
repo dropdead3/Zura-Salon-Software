@@ -124,15 +124,20 @@ export function PolicySetupIntro({ onStart, libraryCount }: Props) {
       </section>
 
       {/* Section 4 — CTA */}
-      <section className="pt-12 border-t border-border/40 space-y-4">
+      <section className="pt-12 border-t border-border/40 space-y-3">
         <Button onClick={onStart} size={tokens.button.hero} className="font-sans">
-          Start setup — 4 steps, ~5 minutes
+          Start setup
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
-        <p className={cn(tokens.body.muted, 'text-xs')}>
-          {libraryCount} {libraryCount === 1 ? 'policy' : 'policies'} in the library. The wizard
-          narrows them to what your business actually needs.
-        </p>
+        <div className="space-y-1">
+          <p className={cn(tokens.body.muted, 'text-xs')}>
+            4 steps · ~5 minutes
+          </p>
+          <p className={cn(tokens.body.muted, 'text-xs')}>
+            {libraryCount} {libraryCount === 1 ? 'policy' : 'policies'} in the library. The wizard
+            narrows them to what your business actually needs.
+          </p>
+        </div>
       </section>
     </div>
   );
