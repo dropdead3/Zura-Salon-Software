@@ -142,28 +142,28 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal',
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <div className="relative">
-            {field.type === 'currency' && (
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">$</span>
-            )}
-            <Input
-              id={id}
-              type="number"
-              inputMode="decimal"
-              value={num}
-              placeholder={field.placeholder}
-              onChange={(e) => {
-                const v = e.target.value;
-                onChange(v === '' ? null : Number(v));
-              }}
-              className={cn('font-sans', field.type === 'currency' && 'pl-7')}
-            />
-            {field.type === 'percent' && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">%</span>
-            )}
-          </div>
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <div className="relative">
+              {field.type === 'currency' && (
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">$</span>
+              )}
+              <Input
+                id={id}
+                type="number"
+                inputMode="decimal"
+                value={num}
+                placeholder={field.placeholder}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  onChange(v === '' ? null : Number(v));
+                }}
+                className={cn('font-sans', field.type === 'currency' && 'pl-7')}
+              />
+              {field.type === 'percent' && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">%</span>
+              )}
+            </div>
+          )}
         </div>
       );
     }
