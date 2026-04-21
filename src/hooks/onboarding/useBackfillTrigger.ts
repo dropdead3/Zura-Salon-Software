@@ -9,16 +9,11 @@ const BACKFILL_ATTEMPT_KEY = "zura.setup.backfill.attempted";
 const BACKFILL_BANNER_KEY = "zura.setup.backfill.banner";
 
 /**
- * useBackfillTrigger — runs once per legacy org per browser.
+ * useBackfillTrigger — runs once per legacy org per (user, org).
  *
- * Eligibility (all must be true):
- * - User is authenticated and an org admin
- * - Organization has setup_completed_at = null
- * - Organization has at least 1 active location (non-empty operation)
- * - We haven't attempted backfill for this (user, org) pair this browser
- *
- * On success it sets a per-(user,org) banner key so the welcome banner can
- * surface exactly once. Idempotent on the server side too.
+ * Wave 12: state is mirrored to `org_setup_user_state` so switching browsers
+ * doesn't re-trigger the backfill or re-show the banner. localStorage is a
+ * write-through cache for offline resilience.
  */
 export function useBackfillTrigger() {
   const { user } = useAuth();
@@ -31,9 +26,10 @@ export function useBackfillTrigger() {
     if (ranRef.current) return;
     if (!user?.id || !effectiveOrganization?.id) return;
     const orgId = effectiveOrganization.id;
-    const attemptKey = `${BACKFILL_ATTEMPT_KEY}.${user.id}.${orgId}`;
+    const userId = user.id;
+    const attemptKey = `${BACKFILL_ATTEMPT_KEY}.${userId}.${orgId}`;
 
-    // Already attempted in this browser — never retry.
+    // Local cache short-circuit
     if (localStorage.getItem(attemptKey)) {
       ranRef.current = true;
       return;
@@ -42,6 +38,18 @@ export function useBackfillTrigger() {
 
     (async () => {
       try {
+        // Wave 12: check DB-backed state first (cross-browser durability)
+        const { data: stateRow } = await supabase
+          .from("org_setup_user_state")
+          .select("backfill_attempted_at")
+          .eq("user_id", userId)
+          .eq("organization_id", orgId)
+          .maybeSingle();
+        if (stateRow?.backfill_attempted_at) {
+          localStorage.setItem(attemptKey, stateRow.backfill_attempted_at);
+          return;
+        }
+
         // Eligibility: setup not complete + has at least one active location
         const [{ data: org }, { count }] = await Promise.all([
           supabase
@@ -56,22 +64,34 @@ export function useBackfillTrigger() {
             .eq("is_active", true),
         ]);
 
+        const stamp = new Date().toISOString();
+        const markAttempted = async () => {
+          localStorage.setItem(attemptKey, stamp);
+          await supabase.from("org_setup_user_state").upsert(
+            {
+              user_id: userId,
+              organization_id: orgId,
+              backfill_attempted_at: stamp,
+            },
+            { onConflict: "user_id,organization_id" },
+          );
+        };
+
         if (!org || org.setup_completed_at) {
-          localStorage.setItem(attemptKey, new Date().toISOString());
+          await markAttempted();
           return;
         }
         if (!count || count < 1) {
-          // Empty operation — let them go through the wizard normally.
-          localStorage.setItem(attemptKey, new Date().toISOString());
+          await markAttempted();
           return;
         }
 
         const result = await backfill.mutateAsync({ organization_id: orgId });
-        localStorage.setItem(attemptKey, new Date().toISOString());
+        await markAttempted();
 
         if (result?.backfilled > 0) {
           localStorage.setItem(
-            `${BACKFILL_BANNER_KEY}.${user.id}.${orgId}`,
+            `${BACKFILL_BANNER_KEY}.${userId}.${orgId}`,
             JSON.stringify({
               backfilled: result.backfilled,
               pending: result.pending,
@@ -122,19 +142,71 @@ export function readBackfillBanner(
 }
 
 /**
+ * Hydrate banner state from the DB into localStorage. Call on app boot or
+ * when (user, org) becomes known to ensure cross-browser parity.
+ */
+export async function hydrateBackfillStateFromDb(
+  userId: string,
+  orgId: string,
+): Promise<void> {
+  try {
+    const { data } = await supabase
+      .from("org_setup_user_state")
+      .select("snoozed_until, dismissed_at")
+      .eq("user_id", userId)
+      .eq("organization_id", orgId)
+      .maybeSingle();
+    if (!data) return;
+
+    const existing = readBackfillBanner(userId, orgId) ?? {};
+    const merged: BannerState = { ...existing };
+
+    if (data.dismissed_at) {
+      merged.shown = true;
+      delete merged.snoozedUntil;
+    } else if (data.snoozed_until) {
+      const ts = new Date(data.snoozed_until).getTime();
+      if (ts > Date.now()) merged.snoozedUntil = ts;
+    }
+
+    localStorage.setItem(
+      `${BACKFILL_BANNER_KEY}.${userId}.${orgId}`,
+      JSON.stringify(merged),
+    );
+  } catch (err) {
+    console.warn("[hydrateBackfillStateFromDb] failed:", err);
+  }
+}
+
+/**
  * Soft-dismiss the banner — hides for 24h, then it returns automatically.
  * Use for the X button and "remind me" style exits so users can come back to setup.
  */
 export function snoozeBackfillBanner(userId: string, orgId: string) {
   const existing = readBackfillBanner(userId, orgId) ?? {};
+  const snoozedUntil = Date.now() + SNOOZE_MS;
   localStorage.setItem(
     `${BACKFILL_BANNER_KEY}.${userId}.${orgId}`,
     JSON.stringify({
       ...existing,
       shown: false,
-      snoozedUntil: Date.now() + SNOOZE_MS,
+      snoozedUntil,
     }),
   );
+  // Mirror to DB (cross-browser durability)
+  void supabase
+    .from("org_setup_user_state")
+    .upsert(
+      {
+        user_id: userId,
+        organization_id: orgId,
+        snoozed_until: new Date(snoozedUntil).toISOString(),
+      },
+      { onConflict: "user_id,organization_id" },
+    )
+    .then(({ error }) => {
+      if (error) console.warn("[snoozeBackfillBanner] db mirror failed:", error);
+    });
   supabase.functions
     .invoke("enqueue-setup-followup", { body: { organization_id: orgId } })
     .catch((err) =>
@@ -151,4 +223,18 @@ export function dismissBackfillBanner(userId: string, orgId: string) {
     `${BACKFILL_BANNER_KEY}.${userId}.${orgId}`,
     JSON.stringify({ shown: true }),
   );
+  // Mirror to DB so other browsers honor the dismissal
+  void supabase
+    .from("org_setup_user_state")
+    .upsert(
+      {
+        user_id: userId,
+        organization_id: orgId,
+        dismissed_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,organization_id" },
+    )
+    .then(({ error }) => {
+      if (error) console.warn("[dismissBackfillBanner] db mirror failed:", error);
+    });
 }

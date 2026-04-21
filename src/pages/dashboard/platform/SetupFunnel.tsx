@@ -336,8 +336,39 @@ export default function SetupFunnel() {
       });
   }, [data?.events, lastActivityByOrg, outreachData]);
 
-  // Source breakdown across the whole cohort (orgs that touched setup)
-  const sourceBreakdown = useMemo(() => {
+  // Wave 12: source breakdown of the entire org base (true attribution health)
+  // when no source filter is active. When filtered, we fall back to the
+  // event-touched cohort.
+  const { data: orgBaseBreakdown } = useQuery({
+    queryKey: ["platform-setup-org-base-source-mix"],
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("organizations")
+        .select("signup_source")
+        .limit(20000);
+      if (error) {
+        console.warn("[SetupFunnel] org base breakdown failed:", error);
+        return [] as { source: string; count: number; pct: number }[];
+      }
+      const counts = new Map<string, number>();
+      for (const r of (rows ?? []) as { signup_source: string | null }[]) {
+        const src = r.signup_source ?? "legacy";
+        counts.set(src, (counts.get(src) ?? 0) + 1);
+      }
+      const total = (rows?.length ?? 0) || 1;
+      return Array.from(counts.entries())
+        .map(([source, count]) => ({
+          source,
+          count,
+          pct: (count / total) * 100,
+        }))
+        .sort((a, b) => b.count - a.count);
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Source breakdown across the cohort (orgs that touched setup) — used when filtering
+  const cohortSourceBreakdown = useMemo(() => {
     if (!data) return [] as { source: string; count: number; pct: number }[];
     const orgIds = new Set<string>();
     for (const e of data.events) orgIds.add(e.organization_id);
@@ -356,6 +387,14 @@ export default function SetupFunnel() {
       }))
       .sort((a, b) => b.count - a.count);
   }, [data]);
+
+  // Show org-base mix when "All sources" is active, cohort mix otherwise
+  const sourceBreakdown =
+    source === "all"
+      ? (orgBaseBreakdown ?? cohortSourceBreakdown)
+      : cohortSourceBreakdown;
+  const sourceBreakdownLabel =
+    source === "all" ? "% of org base" : "% of cohort";
 
   const totals = useMemo(() => {
     const orgs = new Set(data?.events.map((e) => e.organization_id) ?? []);
