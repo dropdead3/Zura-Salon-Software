@@ -751,6 +751,7 @@ export type Database = {
           expressed_by: string | null
           id: string
           organization_id: string
+          status: string
           surfaced_until: string
         }
         Insert: {
@@ -759,6 +760,7 @@ export type Database = {
           expressed_by?: string | null
           id?: string
           organization_id: string
+          status?: string
           surfaced_until?: string
         }
         Update: {
@@ -767,6 +769,7 @@ export type Database = {
           expressed_by?: string | null
           id?: string
           organization_id?: string
+          status?: string
           surfaced_until?: string
         }
         Relationships: [
@@ -18121,6 +18124,10 @@ export type Database = {
           setup_completed_at: string | null
           team_size_band: string | null
           tip_distribution_model: string | null
+          total_team_count: number | null
+          unmodeled_categories: string | null
+          unmodeled_compensation: string | null
+          unmodeled_structure: string | null
           updated_at: string
           uses_refund_clawback: boolean
           uses_tip_pooling: boolean
@@ -18151,6 +18158,10 @@ export type Database = {
           setup_completed_at?: string | null
           team_size_band?: string | null
           tip_distribution_model?: string | null
+          total_team_count?: number | null
+          unmodeled_categories?: string | null
+          unmodeled_compensation?: string | null
+          unmodeled_structure?: string | null
           updated_at?: string
           uses_refund_clawback?: boolean
           uses_tip_pooling?: boolean
@@ -18181,6 +18192,10 @@ export type Database = {
           setup_completed_at?: string | null
           team_size_band?: string | null
           tip_distribution_model?: string | null
+          total_team_count?: number | null
+          unmodeled_categories?: string | null
+          unmodeled_compensation?: string | null
+          unmodeled_structure?: string | null
           updated_at?: string
           uses_refund_clawback?: boolean
           uses_tip_pooling?: boolean
