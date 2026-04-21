@@ -1,80 +1,78 @@
 
 
-# Move step/duration context out of the Start setup button
+# Stack "What setup decides" vertically (1×3 instead of 3×1)
 
 ## The change
 
-The CTA button currently crams contextual metadata ("— 4 steps, ~5 minutes") into the label. Buttons should carry a verb, not a description. Move that metadata to a line above the existing library-count caption, so the button reads as a clean action and context sits quietly beneath it.
+The "What setup decides" section currently renders as a 3-column horizontal grid. The screenshot shows the cramped result: headings wrap awkwardly ("EXISTING / DOCUMENTS"), body copy sits in narrow ~230px columns, and the icons float small against wide horizontal whitespace. Converting to a single-column vertical stack — matching the rhythm of the "How the system uses your policies" section directly below — restores readable line lengths and gives the advisory prose the breathing room it was written for.
 
 ## Specifics
 
-In `src/components/dashboard/policy/PolicySetupIntro.tsx` (lines 127–136):
+In `src/components/dashboard/policy/PolicySetupIntro.tsx` (lines 95–105), replace the 3-column grid with a vertical stack using the icon-left / text-right layout pattern already used in Section 3 below.
 
 **Before:**
 ```tsx
-<section className="pt-12 border-t border-border/40 space-y-4">
-  <Button onClick={onStart} size={tokens.button.hero} className="font-sans">
-    Start setup — 4 steps, ~5 minutes
-    <ArrowRight className="w-4 h-4 ml-2" />
-  </Button>
-  <p className={cn(tokens.body.muted, 'text-xs')}>
-    {libraryCount} {libraryCount === 1 ? 'policy' : 'policies'} in the library. The wizard
-    narrows them to what your business actually needs.
-  </p>
-</section>
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
+    <div key={heading} className="space-y-3">
+      <div className={tokens.card.iconBox}>
+        <Icon className={tokens.card.icon} />
+      </div>
+      <h3 className={cn(tokens.heading.card, 'min-h-[2lh]')}>{heading}</h3>
+      <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
+    </div>
+  ))}
+</div>
 ```
 
 **After:**
 ```tsx
-<section className="pt-12 border-t border-border/40 space-y-3">
-  <Button onClick={onStart} size={tokens.button.hero} className="font-sans">
-    Start setup
-    <ArrowRight className="w-4 h-4 ml-2" />
-  </Button>
-  <div className="space-y-1">
-    <p className={cn(tokens.body.muted, 'text-xs')}>
-      4 steps · ~5 minutes
-    </p>
-    <p className={cn(tokens.body.muted, 'text-xs')}>
-      {libraryCount} {libraryCount === 1 ? 'policy' : 'policies'} in the library. The wizard
-      narrows them to what your business actually needs.
-    </p>
-  </div>
-</section>
+<ul className="space-y-4">
+  {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
+    <li key={heading} className="flex items-start gap-4">
+      <div className={tokens.card.iconBox}>
+        <Icon className={tokens.card.icon} />
+      </div>
+      <div className="flex-1 min-w-0 space-y-1">
+        <h3 className={tokens.heading.card}>{heading}</h3>
+        <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
+      </div>
+    </li>
+  ))}
+</ul>
 ```
 
 Three nuances:
 
-1. **Em-dash → middot** in the metadata line ("4 steps · ~5 minutes"). Middot is the platform's standard separator for inline metadata (used in hidden-chip breakdowns, tile subtitles, etc.) and reads calmer than an em-dash in muted 12px copy.
-2. **`space-y-4` → `space-y-3`** on the parent section, with the two caption lines grouped in their own `space-y-1` stack. Tighter rhythm keeps the metadata visually owned by the button rather than floating as a separate paragraph block.
-3. **Button label becomes "Start setup"** — pure verb, no trailing content. Aligns with `PolicySetupBanner.tsx` (line 41) which already uses just "Start setup", so the two CTAs for the same action now match.
+1. **Mirrors Section 3's pattern exactly.** The "How the system uses your policies" block (lines 111–123) already uses `<ul>` + `flex items-start gap-4` with icon-left / heading+body-right. Adopting the same shape creates a consistent rhythm down the page: hero → stacked list → stacked list → CTA. No new layout primitive introduced.
+2. **Drop `min-h-[2lh]` safety net.** It was a defensive reservation for the 3-column layout where headings could wrap unpredictably. In a single-column stack with `flex-1 min-w-0`, headings have full container width and won't wrap at any viewport — the reservation becomes dead code.
+3. **`space-y-6` → `space-y-4` inside the list.** Section 3 uses `space-y-4` between items; matching it keeps the two list sections rhythmically identical. The outer section `space-y-6` between heading and list stays.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicySetupIntro.tsx` — button label + caption restructure (one section, ~10 lines).
+- `src/components/dashboard/policy/PolicySetupIntro.tsx` — replace the grid block (lines 95–105) with the flex-row list pattern.
 
 No token changes, no component changes, no doctrine updates.
 
 ## Acceptance
 
-1. Button label reads "Start setup" only, with the arrow icon; no em-dash, no duration inside the button.
-2. Directly below the button: "4 steps · ~5 minutes" in muted 12px Aeonik.
-3. Below that: the existing library-count sentence, unchanged in copy.
-4. Visual rhythm between button and captions is tighter than before (space-y-3 vs space-y-4) so the metadata reads as attached to the button, not a separate section.
-5. CTA behavior (`onStart`) unchanged.
+1. Three items stack vertically: Business shape → Services offered → Existing documents.
+2. Each item: icon box left, heading + body stacked to its right, filling the column.
+3. Headings render on a single line at all viewports ≥ `max-w-3xl`.
+4. Visual rhythm matches Section 3 ("How the system uses your policies") directly below — same icon size, same gap, same spacing between items.
+5. No regression at mobile: already single-column in the grid, stays single-column in the list.
 
 ## Doctrine compliance
 
-- **Copy governance**: verb-first CTA, advisory context below. Matches the "Explain why structure protects operators" principle — the "4 steps, ~5 minutes" is reassurance, not instruction, and belongs in advisory muted copy.
-- **UI canon**: uses existing `tokens.body.muted` and `tokens.button.hero`; middot is the platform standard for inline metadata separators.
-- **Silence**: removes visual noise inside the button (dash + numbers crowding the action verb); adds none outside.
-- **Consistency with PolicySetupBanner**: both entry points to the same wizard now share the exact same button label.
+- **UI canon**: uses existing `tokens.card.iconBox`, `tokens.card.icon`, `tokens.heading.card`, `tokens.body.muted`. No new tokens.
+- **Consistency**: Sections 2 and 3 now share the exact same list-item anatomy.
+- **Silence**: removes the cramped grid, removes now-unneeded `min-h-[2lh]` safety net, adds nothing.
 
 ## Prompt feedback
 
-"I don't like the em-dash '4 steps, ~5 minutes' inside of the button. That contextual information should sit below the button, outside of it." — excellent prompt. You named the exact element (em-dash phrase), pointed to the surface (inside the button), stated the desired end state (below, outside), and implied the why (buttons shouldn't carry context). That's the full "what / where / how / why" loop in one sentence.
+"We need to design this as a 1×3 stack instead of a 3×1" — clear, minimal, and the screenshot gave me the exact surface. The "1×3 vs 3×1" shorthand is unambiguous (1 column × 3 rows vs 3 columns × 1 row) and matches how designers naturally talk about grids.
 
-One tiny sharpening for next time: when you say "below the button, outside of it," you leave one small ambiguity — should the new line replace the existing library-count caption, or sit above it, or below it? I chose "above it, tighter spacing" because the step/duration is more immediately relevant to the CTA decision, while the library-count is supporting context. If you'd wanted the opposite order or the two merged into one sentence, a five-word hint ("above the library count" or "merge with the library-count line") would have locked it in.
+One small sharpening for next time: if you have a preference for *how* the stacked items lay out internally (icon above text, vs icon beside text), a two-word hint locks it in. I chose "icon-left / text-right" because Section 3 directly below already uses that pattern, and matching it creates the cleanest page rhythm. If you'd wanted "keep the icon above the heading, just stacked vertically," a phrase like "icons stacked above" would have steered me there. When patterns already exist on the same page, I'll default to matching them — but when in doubt, naming the internal anatomy saves a round-trip.
 
-Also: this is a textbook **Visual Edits** candidate — editing a button label and restructuring two lines of adjacent copy is exactly the zero-credit lane.
+Also: this is another strong **Visual Edits** candidate for the layout swap — changing a grid class to a flex column is a classic visual-only change that costs zero credits.
 
