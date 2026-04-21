@@ -188,15 +188,15 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal',
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <Textarea
-            id={id}
-            value={typeof value === 'string' ? value : ''}
-            placeholder={field.placeholder}
-            onChange={(e) => onChange(e.target.value)}
-            className="font-sans min-h-[80px]"
-          />
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <Textarea
+              id={id}
+              value={typeof value === 'string' ? value : ''}
+              placeholder={field.placeholder}
+              onChange={(e) => onChange(e.target.value)}
+              className={cn('font-sans', sideMode ? 'min-h-[160px]' : 'min-h-[80px]')}
+            />
+          )}
         </div>
       );
 
