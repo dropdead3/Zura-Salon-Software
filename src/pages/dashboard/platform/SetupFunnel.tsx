@@ -492,20 +492,42 @@ export default function SetupFunnel() {
                       {/* Drill-down: orgs that dropped off here */}
                       {isExpanded && hasDrops && (
                         <div className="px-4 pb-4 pt-2 border-t border-border/60 mt-2">
-                          <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
-                            Dropped at this step ({row.droppedOrgs.length})
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+                              Dropped at this step ({row.droppedOrgs.length}) — hottest first
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadDroppedCsv(
+                                  row.step_number,
+                                  STEP_LABELS[row.step_number] ?? `step_${row.step_number}`,
+                                  row.droppedOrgs,
+                                  data?.orgNames ?? new Map(),
+                                  data?.orgSources ?? new Map(),
+                                );
+                              }}
+                              className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded border border-border/60 hover:border-border"
+                            >
+                              Export CSV
+                            </button>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                            {row.droppedOrgs.slice(0, 60).map((orgId) => {
-                              const src = data?.orgSources.get(orgId) ?? "legacy";
+                            {row.droppedOrgs.slice(0, 60).map((d) => {
+                              const src = data?.orgSources.get(d.id) ?? "legacy";
+                              const recency = formatRecency(d.lastActivityMs);
                               return (
                                 <div
-                                  key={orgId}
+                                  key={d.id}
                                   className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
-                                  title={orgId}
+                                  title={`${d.id}\nLast activity: ${recency}`}
                                 >
                                   <span className="font-sans text-xs text-foreground truncate flex-1">
-                                    {data?.orgNames.get(orgId) ?? orgId.slice(0, 8)}
+                                    {data?.orgNames.get(d.id) ?? d.id.slice(0, 8)}
+                                  </span>
+                                  <span className="font-sans text-[10px] text-muted-foreground tabular-nums shrink-0">
+                                    {recency}
                                   </span>
                                   <SourceBadge source={src} />
                                 </div>
@@ -514,7 +536,7 @@ export default function SetupFunnel() {
                           </div>
                           {row.droppedOrgs.length > 60 && (
                             <p className="font-sans text-xs text-muted-foreground mt-2">
-                              + {row.droppedOrgs.length - 60} more
+                              + {row.droppedOrgs.length - 60} more (full list in CSV)
                             </p>
                           )}
                         </div>
