@@ -19,6 +19,8 @@
  *   disclosure    — short, legal-leaning paragraph for booking/checkout
  */
 
+import { getRelevantScopes } from './applicability-relevance';
+
 export interface StarterDraftSet {
   internal?: string;
   client?: string;
