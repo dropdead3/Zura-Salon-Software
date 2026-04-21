@@ -66,6 +66,7 @@ export function useResolveCommission() {
   const orgId = selectedOrganization?.id;
 
   const { data: levels, isLoading: levelsLoading } = useStylistLevels();
+  const { map: planMap, isLoading: planMapLoading } = useUserPlanMap();
 
   // Fetch active, non-expired overrides for the org
   const { data: overrides, isLoading: overridesLoading } = useQuery({
