@@ -110,7 +110,7 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal',
    * Only activates when there's actually provenance content to show.
    */
   const sideMode = helperPlacement === 'side' && !!provenanceLine;
-  const wrap = (input: React.ReactNode) => {
+  const wrap = (input: ReactNode) => {
     if (!sideMode) {
       return (
         <>
