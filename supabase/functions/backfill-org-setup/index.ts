@@ -303,19 +303,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Persist the merged draft
+    // Persist the merged draft. Wave 13H — B5: preserve any existing
+    // resume position; only write current_step/current_step_key when we
+    // actually have a prior value. Never clobber an in-progress wizard.
+    const upsertRow: Record<string, unknown> = {
+      user_id: user.id,
+      organization_id,
+      step_data: stepData,
+      updated_at: new Date().toISOString(),
+    };
+    if (existingCurrentStep !== null && existingCurrentStep !== undefined) {
+      upsertRow.current_step = existingCurrentStep;
+    }
+    if (existingCurrentStepKey) {
+      upsertRow.current_step_key = existingCurrentStepKey;
+    }
     await supabase
       .from("org_setup_drafts")
-      .upsert(
-        {
-          user_id: user.id,
-          organization_id,
-          step_data: stepData,
-          current_step: null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,organization_id" },
-      );
+      .upsert(upsertRow, { onConflict: "user_id,organization_id" });
 
     // Wave 13D.G9 — record per-step inference provenance on the policy
     // profile so a future "review your inferred answers" UI can show the
