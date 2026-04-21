@@ -20,6 +20,24 @@ export type RuleFieldType =
   | 'boolean'
   | 'role';
 
+/**
+ * Per-field provenance metadata (Wave 28.13.x). Drives the small
+ * "Prefilled · You can edit this. Surfaces in…" caption beneath the standard
+ * helper text in the Rules step. Optional — fields without `provenance` render
+ * as before. See `buildProvenanceLine` for the composer.
+ */
+export interface FieldProvenance {
+  /** Where the value originated. */
+  origin: 'prefilled' | 'derived' | 'authored';
+  /** Where the value renders downstream. */
+  surfaces: 'client-facing' | 'internal-only' | 'configurator-only' | 'drives-other-field';
+  /** Free-form override sentence for unusual provenance shapes. */
+  surfaceNote?: string;
+  /** How operator edits behave: `sacred` overrides prefill permanently;
+   *  `live-derived` keeps auto-updating until first manual edit. */
+  editContract?: 'sacred' | 'live-derived';
+}
+
 export interface RuleField {
   key: string;
   label: string;
@@ -30,6 +48,7 @@ export interface RuleField {
   placeholder?: string;
   unit?: string;
   defaultValue?: unknown;
+  provenance?: FieldProvenance;
 }
 
 export interface RuleSection {
@@ -136,6 +155,13 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
             required: true,
+            provenance: {
+              origin: 'derived',
+              surfaces: 'drives-other-field',
+              surfaceNote:
+                'Drives the {{waiver_authority}} reference in policy wording. Surfaces in client receipts and the booking disclosure.',
+              editContract: 'live-derived',
+            },
           },
           {
             key: 'documentation_required',
@@ -143,6 +169,11 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             type: 'longtext',
             placeholder: 'e.g., reason logged, manager initials, exception ticket created',
             defaultValue: 'Manager logs the reason in the appointment record, includes their initials, and notes the originating ticket or guest interaction.',
+            provenance: {
+              origin: 'prefilled',
+              surfaces: 'internal-only',
+              editContract: 'sacred',
+            },
           },
         ],
       },
@@ -259,6 +290,13 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
             required: true,
+            provenance: {
+              origin: 'derived',
+              surfaces: 'drives-other-field',
+              surfaceNote:
+                'Drives the {{approver_role}} reference in service-recovery wording.',
+              editContract: 'live-derived',
+            },
           },
           {
             key: 'refund_alternative',
@@ -508,6 +546,13 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             options: ROLE_OPTIONS,
             required: true,
             defaultValue: 'manager',
+            provenance: {
+              origin: 'derived',
+              surfaces: 'drives-other-field',
+              surfaceNote:
+                'Drives the {{authority_role}} reference across this policy and any downstream documentation.',
+              editContract: 'live-derived',
+            },
           },
           {
             key: 'max_value',
@@ -522,6 +567,13 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             type: 'role',
             options: ROLE_OPTIONS,
             defaultValue: 'owner',
+            provenance: {
+              origin: 'derived',
+              surfaces: 'drives-other-field',
+              surfaceNote:
+                'Drives the {{escalation_role}} reference in escalation wording.',
+              editContract: 'live-derived',
+            },
           },
         ],
       },
@@ -540,6 +592,11 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             type: 'longtext',
             placeholder: 'e.g., photo, manager initials, ticket number, client signature',
             defaultValue: 'Manager initials, a brief reason note, and a reference to the originating ticket, photo, or client signature where applicable.',
+            provenance: {
+              origin: 'prefilled',
+              surfaces: 'internal-only',
+              editContract: 'sacred',
+            },
           },
         ],
       },
@@ -562,6 +619,11 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             required: true,
             placeholder: 'e.g., Staff arrive 10 minutes before first appointment, in dress code, ready to work.',
             defaultValue: 'Staff arrive ready to work, present themselves professionally, and conduct every guest interaction with the standard of care expected at {{ORG_NAME}}.',
+            provenance: {
+              origin: 'prefilled',
+              surfaces: 'internal-only',
+              editContract: 'sacred',
+            },
           },
         ],
       },
@@ -587,6 +649,11 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             type: 'longtext',
             placeholder: 'e.g., note in employee file, signed acknowledgment, manager log',
             defaultValue: 'A dated note in the employee file describing the incident, the conversation, the corrective action expected, and the manager and employee signatures acknowledging the discussion.',
+            provenance: {
+              origin: 'prefilled',
+              surfaces: 'internal-only',
+              editContract: 'sacred',
+            },
           },
           {
             key: 'enforcement_authority',
@@ -595,6 +662,13 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
             required: true,
+            provenance: {
+              origin: 'derived',
+              surfaces: 'drives-other-field',
+              surfaceNote:
+                'Drives the {{enforcement_authority}} reference in conduct wording.',
+              editContract: 'live-derived',
+            },
           },
         ],
       },
@@ -740,6 +814,11 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             type: 'longtext',
             required: true,
             defaultValue: 'This policy documents how {{ORG_NAME}} handles this area of operations. It defines the standard, names who is responsible for decisions, and explains how exceptions are reviewed and recorded so that team members and clients are treated consistently.',
+            provenance: {
+              origin: 'prefilled',
+              surfaces: 'client-facing',
+              editContract: 'sacred',
+            },
           },
           {
             key: 'who_it_applies_to',
@@ -747,6 +826,11 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             type: 'longtext',
             placeholder: 'e.g., All staff. All clients. New clients only.',
             defaultValue: 'All team members and, where the policy involves guest interactions, all clients of {{ORG_NAME}}. Manager-level exceptions follow the documented authority chain below.',
+            provenance: {
+              origin: 'prefilled',
+              surfaces: 'internal-only',
+              editContract: 'sacred',
+            },
           },
           {
             key: 'authority_role',
@@ -754,6 +838,13 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             type: 'role',
             options: ROLE_OPTIONS,
             defaultValue: 'manager',
+            provenance: {
+              origin: 'derived',
+              surfaces: 'drives-other-field',
+              surfaceNote:
+                'Drives the {{authority_role}} reference in the Policy summary above.',
+              editContract: 'live-derived',
+            },
           },
         ],
       },

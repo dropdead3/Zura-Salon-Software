@@ -2,6 +2,11 @@
  * Schema-driven rule field renderer (Wave 28.4)
  *
  * Renders one field of a configurator schema. Pure UI — value is owned by parent.
+ *
+ * Wave 28.13.x — also renders an optional provenance helper line beneath the
+ * standard `helper` text when `field.provenance` is declared in the schema.
+ * The line documents origin (Prefilled), surface (where it renders), and
+ * edit contract (operator edits are sacred). See `buildProvenanceLine`.
  */
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,16 +14,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { RuleField } from '@/lib/policy/configurator-schemas';
+import {
+  buildProvenanceLine,
+  type PolicyAudience,
+} from '@/lib/policy/build-provenance-line';
 
 interface PolicyRuleFieldProps {
   field: RuleField;
   value: unknown;
   onChange: (next: unknown) => void;
+  /** Policy audience — drives the surface sentence in the provenance helper. */
+  audience?: PolicyAudience;
 }
 
-export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps) {
+function ProvenanceHelper({ field, audience }: { field: RuleField; audience: PolicyAudience }) {
+  const line = buildProvenanceLine(field, audience);
+  if (!line) return null;
+  return (
+    <div className="border-t border-border/40 pt-2 mt-1 flex items-start gap-2 flex-wrap">
+      {line.showPrefilledBadge && (
+        <Badge
+          variant="outline"
+          className="font-display text-[10px] tracking-wider uppercase px-1.5 py-0 h-4 leading-none"
+        >
+          Prefilled
+        </Badge>
+      )}
+      <p className="font-sans text-xs text-muted-foreground flex-1 min-w-0 leading-relaxed">
+        {line.segments.map((seg, i) =>
+          seg.kind === 'token' ? (
+            <code
+              key={i}
+              className="font-mono text-[11px] px-1 py-0.5 rounded bg-muted text-foreground"
+            >
+              {seg.value}
+            </code>
+          ) : (
+            <span key={i}>{seg.value}</span>
+          ),
+        )}
+      </p>
+    </div>
+  );
+}
+
+export function PolicyRuleField({ field, value, onChange, audience = 'internal' }: PolicyRuleFieldProps) {
   const id = `pf-${field.key}`;
 
   const labelEl = (
@@ -32,6 +75,8 @@ export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps
   const helperEl = field.helper ? (
     <p className="font-sans text-xs text-muted-foreground mt-1">{field.helper}</p>
   ) : null;
+
+  const provenanceEl = <ProvenanceHelper field={field} audience={audience} />;
 
   switch (field.type) {
     case 'number':
@@ -62,6 +107,7 @@ export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps
             )}
           </div>
           {helperEl}
+          {provenanceEl}
         </div>
       );
     }
@@ -78,6 +124,7 @@ export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps
             className="font-sans"
           />
           {helperEl}
+          {provenanceEl}
         </div>
       );
 
@@ -93,6 +140,7 @@ export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps
             className="font-sans min-h-[80px]"
           />
           {helperEl}
+          {provenanceEl}
         </div>
       );
 
@@ -117,6 +165,7 @@ export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps
             </SelectContent>
           </Select>
           {helperEl}
+          {provenanceEl}
         </div>
       );
 
@@ -144,6 +193,7 @@ export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps
             ))}
           </div>
           {helperEl}
+          {provenanceEl}
         </div>
       );
     }
@@ -154,6 +204,7 @@ export function PolicyRuleField({ field, value, onChange }: PolicyRuleFieldProps
           <div className="flex-1">
             {labelEl}
             {helperEl}
+            {provenanceEl}
           </div>
           <Switch
             id={id}
