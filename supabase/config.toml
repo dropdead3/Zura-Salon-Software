@@ -302,3 +302,6 @@ verify_jwt = false
 
 [functions.send-setup-confirmation]
 verify_jwt = false
+
+[functions.backfill-org-setup]
+verify_jwt = false
