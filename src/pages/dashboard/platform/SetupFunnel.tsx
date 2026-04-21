@@ -28,6 +28,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { tokens } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
+import { useOrgSetupFunnelHealth } from "@/hooks/onboarding/useOrgSetupFunnelHealth";
+import { StepHealthCard } from "@/components/platform/onboarding/StepHealthCard";
 
 const STEP_LABELS: Record<number, string> = {
   0: "Fit check",
