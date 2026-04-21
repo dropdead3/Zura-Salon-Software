@@ -84,9 +84,12 @@ Deno.serve(async (req) => {
     const stepData: Record<string, unknown> = { ...existingStepData };
 
     // --- Step 1: Identity (from organizations) ---
+    // Canonical shape matches Step1Identity onChange payload.
     if (!stepData["step_1_identity"] && org.name) {
       stepData["step_1_identity"] = {
         business_name: org.name,
+        legal_name: "",
+        business_type: "single_location",
         timezone: org.timezone ?? "America/Los_Angeles",
         backfilled: true,
       };
@@ -98,20 +101,26 @@ Deno.serve(async (req) => {
     }
 
     // --- Step 2: Footprint (from locations) ---
+    // Canonical shape matches Step2Footprint onChange payload.
     const { data: locations } = await supabase
       .from("locations")
       .select("id, name, city, state, country, is_active")
       .eq("organization_id", organization_id)
       .eq("is_active", true);
     if (!stepData["step_2_footprint"] && locations && locations.length > 0) {
+      const locShapes = locations.map((l) => ({
+        id: l.id,
+        name: l.name ?? "",
+        city: l.city ?? "",
+        state: l.state ?? "",
+      }));
+      const operatingStates = Array.from(
+        new Set(locShapes.map((l) => l.state).filter(Boolean)),
+      );
       stepData["step_2_footprint"] = {
-        location_count: locations.length,
-        locations: locations.map((l) => ({
-          id: l.id,
-          name: l.name,
-          state: l.state,
-          country: l.country ?? "US",
-        })),
+        locations: locShapes,
+        location_count: locShapes.length,
+        operating_states: operatingStates,
         backfilled: true,
       };
       results.push({
@@ -121,7 +130,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Step 3: Team (from employee_profiles + user_roles) ---
+    // --- Step 3: Team (from employee_profiles) ---
+    // Canonical shape matches Step3Team onChange payload.
     const { data: employees } = await supabase
       .from("employee_profiles")
       .select("user_id, employment_type, is_active")
@@ -129,12 +139,16 @@ Deno.serve(async (req) => {
       .eq("is_active", true);
     if (!stepData["step_3_team"] && employees && employees.length > 0) {
       const types = new Set(employees.map((e) => e.employment_type).filter(Boolean));
+      const count = employees.length;
+      const band: "1-3" | "4-10" | "11-25" | "26+" =
+        count <= 3 ? "1-3" : count <= 10 ? "4-10" : count <= 25 ? "11-25" : "26+";
       stepData["step_3_team"] = {
-        team_size: employees.length,
+        team_size_band: band,
+        total_team_count: count,
         has_apprentices: types.has("apprentice"),
         has_booth_renters: types.has("booth_renter") || types.has("renter"),
-        has_w2_staff: types.has("w2") || types.has("employee"),
-        has_1099_contractors: types.has("1099") || types.has("contractor"),
+        has_assistants: types.has("assistant"),
+        has_front_desk: types.has("front_desk") || types.has("receptionist"),
         backfilled: true,
       };
       results.push({
@@ -144,7 +158,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Step 4: Compensation (best-effort from stylist_levels presence) ---
+    // --- Step 4: Compensation (from stylist_levels presence) ---
+    // Canonical shape matches Step4Compensation onChange payload.
     const { data: levels } = await supabase
       .from("stylist_levels")
       .select("id, level_number")
@@ -153,8 +168,7 @@ Deno.serve(async (req) => {
     if (!stepData["step_4_compensation"]) {
       if (levels && levels.length > 0) {
         stepData["step_4_compensation"] = {
-          plan_types: ["level_based_commission"],
-          primary_plan: "level_based_commission",
+          models: ["level_based"],
           backfilled: true,
         };
         results.push({
@@ -173,18 +187,36 @@ Deno.serve(async (req) => {
     }
 
     // --- Step 5: Catalog (from services) ---
+    // Canonical shape matches Step5Catalog onChange payload.
     const { data: services } = await supabase
       .from("services")
       .select("id, category")
       .eq("organization_id", organization_id)
       .limit(500);
     if (!stepData["step_5_catalog"] && services && services.length > 0) {
-      const categories = Array.from(
-        new Set(services.map((s) => s.category).filter(Boolean)),
+      const rawCategories = Array.from(
+        new Set(services.map((s) => (s.category ?? "").toLowerCase()).filter(Boolean)),
       );
+      // Map raw service categories to wizard's canonical category vocabulary
+      const CATEGORY_MAP: Record<string, string> = {
+        cut: "haircut", haircut: "haircut", style: "haircut", styling: "haircut", blowout: "haircut",
+        color: "color", colour: "color", highlights: "color", balayage: "color",
+        chemical: "chemical", perm: "chemical", relaxer: "chemical", keratin: "chemical",
+        extension: "extensions", extensions: "extensions",
+        treatment: "treatment", olaplex: "treatment",
+        barber: "barbering", barbering: "barbering", beard: "barbering",
+        spa: "spa", facial: "spa", wax: "spa", lash: "spa", brow: "spa",
+        nail: "nails", nails: "nails", manicure: "nails", pedicure: "nails",
+      };
+      const mapped = Array.from(new Set(
+        rawCategories.map((c) => CATEGORY_MAP[c] ?? null).filter(Boolean) as string[],
+      ));
       stepData["step_5_catalog"] = {
-        service_count: services.length,
-        categories,
+        service_categories: mapped,
+        sells_retail: true,
+        sells_packages: false,
+        sells_memberships: false,
+        serves_minors: false,
         backfilled: true,
       };
       results.push({
@@ -195,6 +227,7 @@ Deno.serve(async (req) => {
     }
 
     // --- Step 6: Standards (from business_settings) ---
+    // Canonical shape matches Step6Standards onChange payload.
     const { data: bizSettings } = await supabase
       .from("business_settings")
       .select("*")
@@ -202,8 +235,10 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!stepData["step_6_standards"] && bizSettings) {
       stepData["step_6_standards"] = {
-        accepts_tips: true,
-        refund_policy: "case_by_case",
+        tip_distribution_rule: "individual",
+        commission_basis: "gross",
+        refund_clawback: "rare",
+        has_existing_handbook: false,
         backfilled: true,
       };
       results.push({
