@@ -682,6 +682,7 @@ export function PolicyConfiguratorPanel({
                           key={field.key}
                           field={field}
                           value={values[field.key]}
+                          audience={entry.audience}
                           onChange={(v) => {
                             // Operator typed into a longtext field — flag it
                             // so the reactive role-token re-substitution
