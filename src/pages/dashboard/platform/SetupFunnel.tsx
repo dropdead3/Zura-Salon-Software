@@ -830,9 +830,21 @@ async function downloadDroppedCsvAndLog(args: {
   rows: DroppedOrg[];
   names: Map<string, string>;
   sources: Map<string, string>;
+  completedContext?: Map<
+    string,
+    { systems: Set<string>; lastSystem: string; lastTs: number }
+  >;
   exportedBy: string | null;
 }) {
-  const { stepNumber, stepLabel, rows, names, sources, exportedBy } = args;
+  const {
+    stepNumber,
+    stepLabel,
+    rows,
+    names,
+    sources,
+    completedContext,
+    exportedBy,
+  } = args;
 
   // Wave 11A: write outreach log via dedicated edge function so RLS is
   // enforced server-side and errors surface to the user.
@@ -857,12 +869,16 @@ async function downloadDroppedCsvAndLog(args: {
   }
 
   // Build CSV via shared util (RFC 4180 escaping)
+  // Wave 12: include completed_steps + last_step_completed for outreach
+  // copy that references stage progress.
   const header = [
     "organization_id",
     "organization_name",
     "signup_source",
     "last_activity_iso",
     "days_since_activity",
+    "completed_steps",
+    "last_step_completed",
   ];
   const body = rows.map((r) => {
     const name = names.get(r.id) ?? "";
@@ -873,7 +889,10 @@ async function downloadDroppedCsvAndLog(args: {
     const days = r.lastActivityMs
       ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
       : "";
-    return [r.id, name, src, iso, days];
+    const ctx = completedContext?.get(r.id);
+    const completedSteps = ctx ? ctx.systems.size.toString() : "0";
+    const lastStep = ctx?.lastSystem ?? "";
+    return [r.id, name, src, iso, days, completedSteps, lastStep];
   });
   const csv = buildCsvString([header, ...body]);
 
