@@ -26,6 +26,8 @@ import { computeHiddenByReason } from '@/lib/policy/applicability-summary';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
 import { PolicyLibraryRow } from '@/components/dashboard/policy/PolicyLibraryRow';
+import { PoliciesSetupMode } from '@/components/dashboard/policy/PoliciesSetupMode';
+import { PoliciesGovernanceMode } from '@/components/dashboard/policy/PoliciesGovernanceMode';
 import {
   CORE_FUNCTION_POLICY_KEYS,
   CORE_FUNCTION_CONSUMERS,
