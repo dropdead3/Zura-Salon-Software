@@ -337,10 +337,11 @@ function paragraphs(body: string): string[] {
 
 /**
  * Per-policy structured defaults for the `generic_shape` schema, derived
- * from the platform-authored starter draft for that policy. The starter
- * draft is the canonical prose; this helper just exposes its first
- * paragraph as the `policy_summary` default so the Rules tab no longer
- * shows the same boilerplate sentence on every generic policy.
+ * from the platform-authored starter draft for that policy + the
+ * applicability manifest (for `who_it_applies_to`). The starter draft is
+ * the canonical prose source; the applicability manifest is the structured
+ * truth about who the policy covers — composing the prose from it keeps
+ * the two surfaces in sync.
  *
  * Returns an empty object when no starter draft exists for the key — the
  * schema's own `defaultValue` strings remain the fallback.
@@ -349,15 +350,111 @@ function paragraphs(body: string): string[] {
  * the configurator's existing `interpolateDefaults` pass handles that so
  * there's exactly one place tokens get substituted.
  */
+export interface PolicySummaryContext {
+  /** Library category — used to fall back through `getRelevantScopes`. */
+  category?: string;
+  /** Library audience — `internal` | `external` | `both`. */
+  audience?: 'internal' | 'external' | 'both';
+  /** Number of active locations on the org (drives "across every location" filler). */
+  locationCount?: number;
+  /** Whether the policy's schema declares an `authority_role` field. */
+  schemaHasAuthorityRole?: boolean;
+}
+
 export function getPolicySummaryDefaults(
   libraryKey: string,
+  ctx: PolicySummaryContext = {},
 ): Partial<{ policy_summary: string; who_it_applies_to: string }> {
+  const out: Partial<{ policy_summary: string; who_it_applies_to: string }> = {};
+
+  // ── policy_summary (first paragraph of starter draft) ───────────────────
   const set = STARTER_DRAFTS[libraryKey];
   const internal = set?.internal;
-  if (!internal) return {};
-  const body = stripHeading(internal);
-  const paras = paragraphs(body);
-  if (paras.length === 0) return {};
-  // First paragraph is the policy's substantive summary.
-  return { policy_summary: paras[0] };
+  if (internal) {
+    const body = stripHeading(internal);
+    const paras = paragraphs(body);
+    if (paras.length > 0) out.policy_summary = paras[0];
+  }
+
+  // ── who_it_applies_to (composed from applicability manifest) ────────────
+  const composed = composeWhoItAppliesTo(libraryKey, ctx);
+  if (composed) out.who_it_applies_to = composed;
+
+  return out;
+}
+
+/**
+ * Compose a per-policy "Who it applies to" sentence from the applicability
+ * manifest. Returns null if no manifest entry exists and the category has
+ * no defaults — letting the schema's generic `defaultValue` win.
+ *
+ * The composition is deterministic and intentionally narrow: audience
+ * clause + (optional) primary-lever clause + (optional) location clause +
+ * (optional) authority-chain footnote. No 47 hand-authored strings.
+ */
+function composeWhoItAppliesTo(
+  libraryKey: string,
+  ctx: PolicySummaryContext,
+): string | null {
+  // Lazy-require to avoid a circular import (relevance manifest doesn't
+  // import starter-drafts, but keep it defensive).
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getRelevantScopes } = require('./applicability-relevance') as typeof import('./applicability-relevance');
+
+  const category = (ctx.category ?? 'client') as Parameters<typeof getRelevantScopes>[1];
+  const audience = ctx.audience ?? 'both';
+  const manifest = getRelevantScopes(libraryKey, category, audience);
+
+  // Audience clause — locked manifests give us a definitive answer.
+  let audienceClause: string;
+  if (manifest.audienceLocked) {
+    audienceClause =
+      audience === 'internal'
+        ? 'All team members of {{ORG_NAME}}'
+        : audience === 'external'
+          ? 'All clients of {{ORG_NAME}}'
+          : 'All team members and clients of {{ORG_NAME}}';
+  } else if (audience === 'external') {
+    audienceClause = 'All clients of {{ORG_NAME}}';
+  } else if (audience === 'internal') {
+    audienceClause = 'All team members of {{ORG_NAME}}';
+  } else {
+    // 'both' with no lock — keep the original boilerplate phrasing as the
+    // honest answer (the policy genuinely spans both audiences).
+    audienceClause =
+      'All team members and, where the policy involves guest interactions, all clients of {{ORG_NAME}}';
+  }
+
+  // Primary lever clause — phrased per scope type.
+  const primaryClause = (() => {
+    switch (manifest.primaryScope) {
+      case 'employment_type':
+        return ', organized by employment classification';
+      case 'role':
+        return ', based on role assignment';
+      case 'service_category':
+        return ', for the configured service categories';
+      case 'location':
+        return '';
+      case 'audience':
+        return '';
+      default:
+        return '';
+    }
+  })();
+
+  // Location clause — only when the policy lists location AND the org
+  // actually has multiple locations (single-location orgs don't need
+  // "across every location" filler).
+  const locationCount = ctx.locationCount ?? 0;
+  const locationClause =
+    manifest.scopes.includes('location') && locationCount > 1
+      ? ' across every location'
+      : '';
+
+  const authorityClause = ctx.schemaHasAuthorityRole
+    ? ' Exceptions follow the documented authority chain below.'
+    : '';
+
+  return `${audienceClause}${primaryClause}${locationClause}.${authorityClause}`;
 }
