@@ -677,7 +677,7 @@ export function PolicyConfiguratorPanel({
 
           {/* ---- Step 1 · Define rules ---- */}
           {step === 'rules' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Interview / Expert toggle */}
               <div className="flex items-center justify-end">
                 <div className="inline-flex items-center rounded-full border border-border bg-muted/40 p-0.5">
@@ -709,24 +709,22 @@ export function PolicyConfiguratorPanel({
               </div>
 
               {rulesMode === 'interview' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-6">
-                  <div className="rounded-xl border border-border bg-card p-5">
-                    <PolicyQuestionnaire
-                      schema={schema}
-                      values={values}
-                      audience={entry.audience}
-                      saving={save.isPending}
-                      ctaLabel={STEP_META.rules.cta}
-                      onChange={(key, v, fieldType) => {
-                        if (fieldType === 'longtext') {
-                          userEditedFieldsRef.current.add(key);
-                        }
-                        setValues((prev) => ({ ...prev, [key]: v }));
-                        setRecentlyChangedKey(key);
-                      }}
-                      onComplete={handleSaveRules}
-                    />
-                  </div>
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] gap-8">
+                  <PolicyQuestionnaire
+                    schema={schema}
+                    values={values}
+                    audience={entry.audience}
+                    saving={save.isPending}
+                    ctaLabel={STEP_META.rules.cta}
+                    onChange={(key, v, fieldType) => {
+                      if (fieldType === 'longtext') {
+                        userEditedFieldsRef.current.add(key);
+                      }
+                      setValues((prev) => ({ ...prev, [key]: v }));
+                      setRecentlyChangedKey(key);
+                    }}
+                    onComplete={handleSaveRules}
+                  />
                   <PolicyLivePreview
                     schema={schema}
                     values={values}
