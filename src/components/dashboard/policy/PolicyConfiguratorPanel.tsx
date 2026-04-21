@@ -66,6 +66,8 @@ import {
   usePolicyOrgProfile,
   applicabilityReason,
 } from '@/hooks/policy/usePolicyOrgProfile';
+import { interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface PolicyConfiguratorPanelProps {
   entry: PolicyLibraryEntry & { configurator_schema_key?: string | null };
@@ -79,6 +81,23 @@ function defaultsFromSchema(fields: RuleField[]): Record<string, unknown> {
   fields.forEach((f) => {
     if (f.defaultValue !== undefined) out[f.key] = f.defaultValue;
   });
+  return out;
+}
+
+/**
+ * Apply brand-token substitution to schema defaults at hydration time.
+ * Only string values are interpolated; numbers, booleans, arrays, and enum
+ * values pass through untouched. Operator-saved values (fromBlocks) bypass
+ * this entirely — only the platform's authored defaults are resolved.
+ */
+function interpolateDefaults(
+  defaults: Record<string, unknown>,
+  ctx: { orgName?: string; platformName?: string },
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(defaults)) {
+    out[key] = typeof value === 'string' ? interpolateBrandTokens(value, ctx) : value;
+  }
   return out;
 }
 
