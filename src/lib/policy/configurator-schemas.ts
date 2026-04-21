@@ -229,6 +229,15 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
               { value: 'tone_shift', label: 'Tone shifted post-service' },
               { value: 'product_failure', label: 'Product failure' },
             ],
+            defaultValue: ['workmanship', 'color_off_target', 'tone_shift'],
+          },
+          {
+            key: 'exclusions',
+            label: 'Exclusions',
+            helper: 'Cases that never qualify (preference change, home damage, etc.)',
+            type: 'longtext',
+            placeholder: 'e.g., change of mind after 48h, color altered at home, integrity-damaged hair',
+            defaultValue: 'Change of preference more than 48 hours after service. Color or condition altered at home (boxed color, heat damage, chemical exposure). Integrity-compromised hair where re-service would cause harm. Requests outside the redo window.',
           },
           {
             key: 'exclusions',
