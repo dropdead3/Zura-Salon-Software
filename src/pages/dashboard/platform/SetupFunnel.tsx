@@ -60,13 +60,18 @@ const SOURCE_OPTIONS: { key: SourceKey; label: string }[] = [
   { key: "legacy", label: "Legacy (pre-source)" },
 ];
 
+interface DroppedOrg {
+  id: string;
+  lastActivityMs: number;
+}
+
 interface FunnelRow {
   step_number: number;
   viewed: number;
   completed: number;
   skipped: number;
-  /** Orgs that viewed this step but never completed it (drop-offs) */
-  droppedOrgs: string[];
+  /** Orgs that viewed this step but never completed it (drop-offs), sorted hottest-first */
+  droppedOrgs: DroppedOrg[];
 }
 
 /**
@@ -182,6 +187,23 @@ export default function SetupFunnel() {
     staleTime: 60_000,
   });
 
+  // Per-org last activity (max of any event timestamp). Used to weight
+  // dropped orgs hottest-first so platform ops triage warm leads.
+  const lastActivityByOrg = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of data?.events ?? []) {
+      const t = new Date(e.occurred_at).getTime();
+      const prev = m.get(e.organization_id) ?? 0;
+      if (t > prev) m.set(e.organization_id, t);
+    }
+    for (const c of data?.commits ?? []) {
+      const t = new Date(c.attempted_at).getTime();
+      const prev = m.get(c.organization_id) ?? 0;
+      if (t > prev) m.set(c.organization_id, t);
+    }
+    return m;
+  }, [data?.events, data?.commits]);
+
   const funnel: FunnelRow[] = useMemo(() => {
     if (!data?.events) return [];
     const map = new Map<
@@ -221,11 +243,16 @@ export default function SetupFunnel() {
         viewed: r.viewed,
         completed: r.completed,
         skipped: r.skipped,
-        droppedOrgs: Array.from(r.viewedOrgs).filter(
-          (id) => !r.completedOrgs.has(id),
-        ),
+        droppedOrgs: Array.from(r.viewedOrgs)
+          .filter((id) => !r.completedOrgs.has(id))
+          .map((id) => ({
+            id,
+            lastActivityMs: lastActivityByOrg.get(id) ?? 0,
+          }))
+          // Hottest (most recent activity) first — ops triage warm leads
+          .sort((a, b) => b.lastActivityMs - a.lastActivityMs),
       }));
-  }, [data?.events]);
+  }, [data?.events, lastActivityByOrg]);
 
   const totals = useMemo(() => {
     const orgs = new Set(data?.events.map((e) => e.organization_id) ?? []);
@@ -465,20 +492,42 @@ export default function SetupFunnel() {
                       {/* Drill-down: orgs that dropped off here */}
                       {isExpanded && hasDrops && (
                         <div className="px-4 pb-4 pt-2 border-t border-border/60 mt-2">
-                          <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
-                            Dropped at this step ({row.droppedOrgs.length})
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+                              Dropped at this step ({row.droppedOrgs.length}) — hottest first
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadDroppedCsv(
+                                  row.step_number,
+                                  STEP_LABELS[row.step_number] ?? `step_${row.step_number}`,
+                                  row.droppedOrgs,
+                                  data?.orgNames ?? new Map(),
+                                  data?.orgSources ?? new Map(),
+                                );
+                              }}
+                              className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded border border-border/60 hover:border-border"
+                            >
+                              Export CSV
+                            </button>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                            {row.droppedOrgs.slice(0, 60).map((orgId) => {
-                              const src = data?.orgSources.get(orgId) ?? "legacy";
+                            {row.droppedOrgs.slice(0, 60).map((d) => {
+                              const src = data?.orgSources.get(d.id) ?? "legacy";
+                              const recency = formatRecency(d.lastActivityMs);
                               return (
                                 <div
-                                  key={orgId}
+                                  key={d.id}
                                   className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
-                                  title={orgId}
+                                  title={`${d.id}\nLast activity: ${recency}`}
                                 >
                                   <span className="font-sans text-xs text-foreground truncate flex-1">
-                                    {data?.orgNames.get(orgId) ?? orgId.slice(0, 8)}
+                                    {data?.orgNames.get(d.id) ?? d.id.slice(0, 8)}
+                                  </span>
+                                  <span className="font-sans text-[10px] text-muted-foreground tabular-nums shrink-0">
+                                    {recency}
                                   </span>
                                   <SourceBadge source={src} />
                                 </div>
@@ -487,7 +536,7 @@ export default function SetupFunnel() {
                           </div>
                           {row.droppedOrgs.length > 60 && (
                             <p className="font-sans text-xs text-muted-foreground mt-2">
-                              + {row.droppedOrgs.length - 60} more
+                              + {row.droppedOrgs.length - 60} more (full list in CSV)
                             </p>
                           )}
                         </div>
@@ -536,6 +585,59 @@ function SourceBadge({ source }: { source: string }) {
       {source}
     </span>
   );
+}
+
+function formatRecency(ms: number): string {
+  if (!ms) return "—";
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d`;
+  const months = Math.floor(days / 30);
+  return `${months}mo`;
+}
+
+function downloadDroppedCsv(
+  stepNumber: number,
+  stepLabel: string,
+  rows: DroppedOrg[],
+  names: Map<string, string>,
+  sources: Map<string, string>,
+) {
+  const header = [
+    "organization_id",
+    "organization_name",
+    "signup_source",
+    "last_activity_iso",
+    "days_since_activity",
+  ];
+  const csv = [header.join(",")]
+    .concat(
+      rows.map((r) => {
+        const name = (names.get(r.id) ?? "").replace(/"/g, '""');
+        const src = sources.get(r.id) ?? "legacy";
+        const iso = r.lastActivityMs
+          ? new Date(r.lastActivityMs).toISOString()
+          : "";
+        const days = r.lastActivityMs
+          ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
+          : "";
+        return [r.id, `"${name}"`, src, iso, days].join(",");
+      }),
+    )
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `setup-funnel-step${stepNumber}-${stepLabel.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function StatTile({
