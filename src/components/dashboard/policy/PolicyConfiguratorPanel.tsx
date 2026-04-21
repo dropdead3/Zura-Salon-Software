@@ -68,6 +68,7 @@ import {
 } from '@/hooks/policy/usePolicyOrgProfile';
 import { interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
 import { getPolicySummaryDefaults } from '@/lib/policy/starter-drafts';
+import { useLocations } from '@/hooks/useLocations';
 import { PLATFORM_NAME } from '@/lib/brand';
 
 interface PolicyConfiguratorPanelProps {
