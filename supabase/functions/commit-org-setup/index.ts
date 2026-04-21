@@ -115,7 +115,8 @@ Deno.serve(async (req) => {
           completed_version: 1,
         }, { onConflict: "organization_id,step_key" });
 
-        // Audit log
+        // Audit log — mark source='wizard' so process-setup-followups can
+        // distinguish real wizard completions from synthetic backfills.
         await supabase.from("org_setup_commit_log").insert({
           organization_id,
           system: handlerResult.system,
@@ -124,6 +125,7 @@ Deno.serve(async (req) => {
           deep_link: handlerResult.deep_link ?? null,
           acknowledged_conflicts,
           attempted_by: user.id,
+          source: "wizard",
         });
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
@@ -141,6 +143,7 @@ Deno.serve(async (req) => {
           reason,
           acknowledged_conflicts,
           attempted_by: user.id,
+          source: "wizard",
         });
       }
     }

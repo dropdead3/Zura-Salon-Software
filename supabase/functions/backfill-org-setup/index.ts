@@ -246,6 +246,8 @@ Deno.serve(async (req) => {
       );
 
     // Write synthetic commit log entries (only for backfilled/skipped — not pending)
+    // Marked source='backfill' so the followup processor doesn't treat
+    // a backfilled 'completed' as a real wizard completion.
     const logRows = results
       .filter((r) => r.status === "backfilled" || r.status === "skipped")
       .map((r) => ({
@@ -259,6 +261,7 @@ Deno.serve(async (req) => {
         attempted_at: new Date().toISOString(),
         acknowledged_conflicts: [],
         attempted_by: user.id,
+        source: "backfill",
       }));
     if (logRows.length > 0) {
       await supabase.from("org_setup_commit_log").insert(logRows);
@@ -302,12 +305,28 @@ Deno.serve(async (req) => {
       .eq("id", organization_id)
       .is("signup_source", null);
 
+    const backfilled = results.filter((r) => r.status === "backfilled").length;
+    const pending = results.filter((r) => r.status === "pending_intent").length;
+    const skippedCt = results.filter((r) => r.status === "skipped").length;
+
+    // Server-side audit ledger — replaces the localStorage attempt key so
+    // platform ops can audit who ran backfill, when, and what was inferred.
+    await supabase.from("org_setup_backfill_attempts").insert({
+      organization_id,
+      attempted_by: user.id,
+      outcome: backfilled > 0 ? "backfilled" : (skippedCt > 0 ? "skipped" : "noop"),
+      backfilled_count: backfilled,
+      pending_count: pending,
+      skipped_count: skippedCt,
+      details: { results },
+    });
+
     return json(
       {
         success: true,
-        backfilled: results.filter((r) => r.status === "backfilled").length,
-        pending: results.filter((r) => r.status === "pending_intent").length,
-        skipped: results.filter((r) => r.status === "skipped").length,
+        backfilled,
+        pending,
+        skipped: skippedCt,
         results,
       },
       200,

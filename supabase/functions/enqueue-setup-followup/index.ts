@@ -59,26 +59,49 @@ Deno.serve(async (req) => {
       return json({ error: "Not an org admin" }, 403);
     }
 
+    // Dedupe semantics:
+    //  - If a row already exists AND has been sent → never reschedule
+    //    (prevents the upsert from overwriting sent_at and re-nudging).
+    //  - If a row exists and is unsent → keep its original scheduled_for
+    //    (snoozing the banner repeatedly cannot push the nudge out).
+    //  - Else → insert fresh +48h.
+    const { data: existing } = await admin
+      .from("setup_followup_queue")
+      .select("id, sent_at, scheduled_for")
+      .eq("organization_id", organization_id)
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+
+    if (existing?.sent_at) {
+      return json({
+        success: true,
+        scheduled_for: existing.scheduled_for,
+        skipped_reason: "already_sent",
+      });
+    }
+
+    if (existing) {
+      return json({
+        success: true,
+        scheduled_for: existing.scheduled_for,
+        skipped_reason: "already_queued",
+      });
+    }
+
     const scheduledFor = new Date(
       Date.now() + 48 * 60 * 60 * 1000,
     ).toISOString();
 
     const { error } = await admin
       .from("setup_followup_queue")
-      .upsert(
-        {
-          organization_id,
-          user_id: userData.user.id,
-          scheduled_for: scheduledFor,
-          sent_at: null,
-          skipped_at: null,
-          skipped_reason: null,
-        },
-        { onConflict: "organization_id,user_id" },
-      );
+      .insert({
+        organization_id,
+        user_id: userData.user.id,
+        scheduled_for: scheduledFor,
+      });
 
     if (error) {
-      console.error("[enqueue-setup-followup] upsert failed:", error);
+      console.error("[enqueue-setup-followup] insert failed:", error);
       return json({ error: error.message }, 500);
     }
 
