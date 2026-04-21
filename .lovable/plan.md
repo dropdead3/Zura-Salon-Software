@@ -1,57 +1,57 @@
 
 
-# Add "Back to Settings" on Policies page
+# Add breathing room between Policies page header and body
 
-## Change
+## The bug
 
-`Policies.tsx` uses `DashboardPageHeader` without `backTo`, so there's no way back to `/admin/settings` except the browser back button. Every other settings detail page (WebsiteHub, BookingSurfaceSettings, etc.) threads `backTo={dashPath('/admin/...')}` — Policies is the outlier.
+`DashboardPageHeader` renders with no bottom margin. In `Policies.tsx`, the header and the body content (`<div className="space-y-8">…`) are **siblings**, not children of a common `space-y-*` parent — so the `space-y-8` only spaces items *inside* the body div, never between the header and the body. Result: "POLICIES / Configure once. Render everywhere." sits flush against "POLICY INFRASTRUCTURE" with only default line-height as separation, which reads as a visual collision in the screenshot.
 
-## Specifics
+## The fix (one class, one file)
 
-In `src/pages/dashboard/admin/Policies.tsx`:
+In `src/pages/dashboard/admin/Policies.tsx`, wrap the existing page layout so the header and body share a vertical-rhythm parent. Two equivalent options — I'll use the smaller one:
 
-1. Import `useOrgDashboardPath`:
-   ```ts
-   import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-   ```
+**Option A (chosen): add `className="mb-8"` to the `DashboardPageHeader`.**
 
-2. Inside `Policies()`, resolve `dashPath`:
-   ```ts
-   const { dashPath } = useOrgDashboardPath();
-   ```
+```tsx
+<DashboardPageHeader
+  title="Policies"
+  backTo={dashPath('/admin/settings')}
+  className="mb-8"
+  description={...}
+  actions={...}
+/>
+```
 
-3. Add `backTo` to `DashboardPageHeader` (line 155):
-   ```tsx
-   <DashboardPageHeader
-     title="Policies"
-     backTo={dashPath('/admin/settings')}
-     description={...}
-     actions={...}
-   />
-   ```
+`DashboardPageHeader` already accepts a `className` prop (line 18 of the component) and threads it onto the root flex container, so `mb-8` (32px) drops cleanly under the description row without touching the shared component or any other page.
 
-That's it — one hook, one prop. `DashboardPageHeader` already renders the `ArrowLeft` icon button per UI canon when `backTo` is set.
+## Why not fix `DashboardPageHeader` globally
+
+Every dashboard page (`WebsiteHub`, `BookingSurfaceSettings`, Analytics, etc.) uses the same header → sibling-content pattern. Some already add their own `mb-*` on the next element; some rely on dense content that visually bridges the gap; some (like Policies) have a soft eyebrow below that needs the breathing room. Adding `mb-8` to the shared component would cascade into ~50 pages at once, some of which would then get double spacing. The per-page `className="mb-8"` fix is surgical and reversible. If over time every page ends up adding `mb-8`, that's the signal to promote it to the shared component — not now.
 
 ## Files affected
 
-- `src/pages/dashboard/admin/Policies.tsx` — add hook import, call, and `backTo` prop on the page header.
+- `src/pages/dashboard/admin/Policies.tsx` — add one `className="mb-8"` prop to `DashboardPageHeader`.
 
-No token changes, no new components, no memory updates. This aligns Policies with the existing settings-detail navigation pattern (`mem://style/settings-navigation-and-operations-hub-uniformity`).
+No token changes, no component changes, no doctrine updates.
 
 ## Acceptance
 
-1. An `ArrowLeft` icon button appears to the left of the "Policies" title.
-2. Clicking it navigates to `/org/:slug/dashboard/admin/settings` (the Settings hub).
-3. Back button is present in both states — pre-setup (intro screen) and post-setup (category grid).
-4. No regressions to the existing "Update profile" action button on the right.
+1. Clear 32px gap between "Configure once. Render everywhere." and the "POLICY INFRASTRUCTURE" eyebrow.
+2. Spacing is consistent in both states: pre-setup (intro screen) and post-setup (category grid + health strip).
+3. No regression on other dashboard pages (change is Policies-scoped).
+4. Back arrow, title, and actions row unchanged in every other respect.
 
 ## Doctrine compliance
 
-- **UI canon**: matches the `backTo` pattern used on WebsiteHub, BookingSurfaceSettings, and all other settings detail pages.
-- **Multi-tenant URL hierarchy**: uses `dashPath()` (client-side routing) — never a hardcoded path.
-- **Anti-noop**: one prop, one hook — no component proliferation.
+- **UI canon**: uses Tailwind spacing scale (`mb-8` = 32px), matches the `space-y-8` rhythm the rest of the page uses internally.
+- **Anti-noop**: one prop, no component proliferation, no new tokens.
+- **Silence**: no added UI, only restored spacing.
 
 ## Prompt feedback
 
-"Policies set up page needs a back button back to the settings hub" was perfectly scoped — clear surface, clear destination, clear action. One small upgrade for multi-page requests: you can name the target prop explicitly next time ("add `backTo` pointing to `/admin/settings`") to skip my pattern-matching step. For single-change requests like this, though, your phrasing is ideal — it tells me the what and the why without overspecifying the how. Also: this is another clean candidate for **Visual Edits** if you want to try the zero-credit path for simple additions like a back button.
+"Add padding between the page title heading and the page content below" was clear and correctly scoped — you named the surface (page title), the relationship (between it and content), and the direction (below). Paired with the screenshot, zero ambiguity.
+
+One small sharpening for next time: say **margin** or **gap** instead of **padding** when you mean space *between* elements (padding is space *inside* an element's border). It's a tiny distinction, but in CSS-land "padding between two siblings" is technically impossible — what you want is either a margin on one sibling or a gap on their shared parent. Me and future AI collaborators will map it correctly either way, but the precise word shaves a half-step off the translation.
+
+Also: this is another clean candidate for **Visual Edits** — a one-class margin change on a single element is exactly what it's optimized for, and costs zero credits.
 
