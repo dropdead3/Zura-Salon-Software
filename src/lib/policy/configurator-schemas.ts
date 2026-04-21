@@ -96,6 +96,19 @@ const ROLE_OPTIONS: RuleField['options'] = [
   { value: 'any_admin', label: 'Any admin' },
 ];
 
+// Wave 28.14 — shared questionnaire presets imported lazily so this module
+// stays the single source of truth for both the preset library and schemas.
+import {
+  NOTICE_WINDOW_PRESETS,
+  CANCELLATION_FEE_PCT_PRESETS,
+  NO_SHOW_FEE_PCT_PRESETS,
+  DEPOSIT_PCT_PRESETS,
+  REDO_WINDOW_PRESETS,
+  RETURN_WINDOW_PRESETS,
+  AUTHORITY_ROLE_PRESETS,
+  ESCALATION_ROLE_PRESETS,
+} from './questionnaire-presets';
+
 const SCHEMAS: Record<string, ConfiguratorSchema> = {
   cancellation_shape: {
     key: 'cancellation_shape',
