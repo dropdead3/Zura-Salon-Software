@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * useOrgSetupCommitLog — read the per-system commit history for an org.
  * Drives the "unfinished from setup" callouts on settings pages.
+ *
+ * Returns rows with the legacy `system` shape so existing consumers don't
+ * need to change. Internally queries by the canonical `organization_id`.
  */
 export function useOrgSetupCommitLog(orgId: string | null) {
   return useQuery({
@@ -11,9 +14,9 @@ export function useOrgSetupCommitLog(orgId: string | null) {
     queryFn: async () => {
       if (!orgId) return [];
       const { data, error } = await supabase
-        .from("org_setup_commit_log" as any)
+        .from("org_setup_commit_log")
         .select("*")
-        .eq("org_id", orgId)
+        .eq("organization_id", orgId)
         .order("attempted_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Array<{

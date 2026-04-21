@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       .from("org_setup_drafts")
       .select("step_data")
       .eq("user_id", user.id)
-      .eq("org_id", organization_id)
+      .eq("organization_id", organization_id)
       .maybeSingle();
     const existingStepData =
       (existingDraft?.step_data as Record<string, unknown>) ?? {};
@@ -237,19 +237,19 @@ Deno.serve(async (req) => {
       .upsert(
         {
           user_id: user.id,
-          org_id: organization_id,
+          organization_id,
           step_data: stepData,
           current_step: null,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "user_id,org_id" },
+        { onConflict: "user_id,organization_id" },
       );
 
     // Write synthetic commit log entries (only for backfilled/skipped — not pending)
     const logRows = results
       .filter((r) => r.status === "backfilled" || r.status === "skipped")
       .map((r) => ({
-        org_id: organization_id,
+        organization_id,
         system: r.system,
         status: r.status === "backfilled" ? "completed" : "skipped",
         reason: r.status === "backfilled"
@@ -258,10 +258,49 @@ Deno.serve(async (req) => {
         deep_link: null,
         attempted_at: new Date().toISOString(),
         acknowledged_conflicts: [],
+        attempted_by: user.id,
       }));
     if (logRows.length > 0) {
       await supabase.from("org_setup_commit_log").insert(logRows);
     }
+
+    // Wave 7: Backfill telemetry — emit synthetic step events so the funnel
+    // reflects backfilled orgs, not just wizard walkers. We mark each
+    // backfilled system as 'completed' and each pending one as 'viewed'
+    // so platform ops see them as "started but not finished".
+    const stepNumberByKey: Record<string, number> = {
+      step_1_identity: 1,
+      step_2_footprint: 2,
+      step_3_team: 3,
+      step_4_compensation: 4,
+      step_5_catalog: 5,
+      step_6_standards: 6,
+      step_7_intent: 7,
+      step_7_5_apps: 8,
+    };
+    const eventRows = results.map((r) => ({
+      organization_id,
+      user_id: user.id,
+      step_key: r.step_key,
+      step_number: stepNumberByKey[r.step_key] ?? null,
+      event:
+        r.status === "backfilled"
+          ? "completed"
+          : r.status === "skipped"
+            ? "skipped"
+            : "viewed", // pending_intent → owner needs to act
+      metadata: { source: "backfill", reason: r.reason ?? null },
+    }));
+    if (eventRows.length > 0) {
+      await supabase.from("org_setup_step_events").insert(eventRows);
+    }
+
+    // Stamp acquisition source so cohort filter shows "backfilled" bucket
+    await supabase
+      .from("organizations")
+      .update({ signup_source: "backfilled" })
+      .eq("id", organization_id)
+      .is("signup_source", null);
 
     return json(
       {

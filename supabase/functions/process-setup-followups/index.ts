@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const { data: log } = await admin
       .from("org_setup_commit_log")
       .select("system, status, attempted_at")
-      .eq("org_id", row.organization_id)
+      .eq("organization_id", row.organization_id)
       .order("attempted_at", { ascending: false });
 
     const latest = new Map<string, string>();
@@ -80,40 +80,102 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // Pull org name for the notification copy
+    // Pull org name + owner email for the nudge copy
     const { data: org } = await admin
       .from("organizations")
       .select("name")
       .eq("id", row.organization_id)
       .maybeSingle();
 
-    const result = await createNotification(
-      admin,
-      {
-        type: "setup_followup_pending",
-        severity: "info",
-        title: "Finish setting up Zura",
-        message:
-          "Two minutes left: tell us what you want from Zura and pick the apps you'll use. Recommendations sharpen the moment you do.",
-        metadata: {
-          organization_id: row.organization_id,
-          user_id: row.user_id,
-          org_name: org?.name ?? null,
-          deep_link: `/onboarding/setup?org=${row.organization_id}&step=step_7_intent&skipIntro=1`,
+    const deepLink = `/onboarding/setup?org=${row.organization_id}&step=step_7_intent&skipIntro=1`;
+
+    // Wave 7 — Email upgrade path: prefer transactional email when the
+    // project has email infrastructure configured. Falls back to in-app
+    // notification when send-transactional-email is not deployed (404).
+    let dispatched = false;
+    let dispatchReason: string | null = null;
+
+    try {
+      const { data: ownerProfile } = await admin
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", row.user_id)
+        .maybeSingle();
+      const ownerEmail = (ownerProfile as { email?: string } | null)?.email;
+      const ownerName = (ownerProfile as { full_name?: string } | null)
+        ?.full_name;
+
+      if (ownerEmail) {
+        const emailResp = await admin.functions.invoke(
+          "send-transactional-email",
+          {
+            body: {
+              to: ownerEmail,
+              purpose: "transactional",
+              idempotency_key: `setup-followup:${row.id}`,
+              template: "setup_followup",
+              subject: "Two minutes left to finish setting up Zura",
+              data: {
+                org_name: org?.name ?? "your salon",
+                owner_name: ownerName ?? null,
+                deep_link: deepLink,
+              },
+            },
+          },
+        );
+        if (!emailResp.error) {
+          dispatched = true;
+          dispatchReason = "email_sent";
+        } else {
+          dispatchReason = `email_error:${emailResp.error.message}`;
+          console.warn(
+            "[process-setup-followups] email failed, falling back:",
+            emailResp.error,
+          );
+        }
+      } else {
+        dispatchReason = "no_owner_email";
+      }
+    } catch (err) {
+      // Function not deployed (no email infra) → fall back silently
+      dispatchReason = `email_unavailable:${(err as Error).message}`;
+    }
+
+    // In-app fallback (always runs if email didn't dispatch)
+    if (!dispatched) {
+      const result = await createNotification(
+        admin,
+        {
+          type: "setup_followup_pending",
+          severity: "info",
+          title: "Finish setting up Zura",
+          message:
+            "Two minutes left: tell us what you want from Zura and pick the apps you'll use. Recommendations sharpen the moment you do.",
+          metadata: {
+            organization_id: row.organization_id,
+            user_id: row.user_id,
+            org_name: org?.name ?? null,
+            deep_link: deepLink,
+          },
         },
-      },
-      { cooldownMinutes: 60 * 24 * 7 }, // one nudge per week max
-    );
+        { cooldownMinutes: 60 * 24 * 7 }, // one nudge per week max
+      );
+      dispatched = result.inserted;
+      dispatchReason = result.inserted
+        ? "notification_sent"
+        : (dispatchReason ?? result.reason ?? "notification_skipped");
+    }
 
     await admin
       .from("setup_followup_queue")
       .update({
-        sent_at: nowIso,
-        skipped_reason: result.inserted ? null : result.reason,
+        sent_at: dispatched ? nowIso : null,
+        skipped_at: dispatched ? null : nowIso,
+        skipped_reason: dispatchReason,
       })
       .eq("id", row.id);
 
-    if (result.inserted) sent += 1;
+    if (dispatched) sent += 1;
   }
 
   console.log(
