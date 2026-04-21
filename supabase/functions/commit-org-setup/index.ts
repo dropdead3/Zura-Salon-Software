@@ -242,6 +242,27 @@ Deno.serve(async (req) => {
           source: "wizard",
           idempotency_key: idempotency_key ?? null,
         });
+        // Wave 13I — B6 residual: also write to org_setup_step_completion so
+        // the side rail's timestamp surface ("Inferred Xm ago") has a row to
+        // render. Without this, a backfilled-then-committed org sees a
+        // half-empty rail even though setup is acknowledged complete.
+        const { error: backfillCompletionErr } = await supabase.rpc(
+          "upsert_org_setup_step_completion",
+          {
+            p_organization_id: organization_id,
+            p_step_key: stepKey,
+            p_status: "skipped",
+            p_data: data ?? {},
+            p_completion_source: "backfill_only",
+            p_completed_version: 1,
+            p_user_id: user.id,
+          },
+        );
+        if (backfillCompletionErr) {
+          console.warn(
+            `[commit-org-setup] backfill step_completion rpc: ${backfillCompletionErr.message}`,
+          );
+        }
         continue;
       }
 
