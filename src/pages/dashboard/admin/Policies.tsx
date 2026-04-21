@@ -33,8 +33,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function Policies() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: library = [], isLoading: libLoading } = usePolicyLibrary();
   const { data: adopted = [], isLoading: adoptedLoading } = useOrgPolicies();
   const { data: profile, isLoading: profileLoading } = usePolicyOrgProfile();
