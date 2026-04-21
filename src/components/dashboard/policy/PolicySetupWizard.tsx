@@ -575,7 +575,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                                   <TooltipTrigger asChild>
                                     <span className="inline-flex items-center gap-1.5 font-sans text-xs px-2 py-1 rounded-md bg-muted text-foreground cursor-help">
                                       <span>{ROLE_LABELS[r] ?? formatCategoryLabel(r)}</span>
-                                      <span className="font-display text-[10px] tracking-wide px-1.5 py-0.5 rounded bg-background/60 text-muted-foreground">
+                                      <span className="font-sans text-xs px-1.5 py-0.5 rounded bg-background/60 text-muted-foreground">
                                         {count}
                                       </span>
                                     </span>
