@@ -24,8 +24,10 @@ interface CommitStepResult {
   deep_link?: string;
 }
 
-// Registry-aligned keys. Must match setup_step_registry.key values.
-const STEP_ORDER = [
+// Wave 13F.B — Registry-driven step order (G26 fix).
+// Hardcoded fallback used only if the registry read fails or returns empty.
+// Keys must match setup_step_registry.key values.
+const STEP_ORDER_FALLBACK = [
   "step_0_fit_check",
   "step_1_identity",
   "step_2_footprint",
@@ -48,6 +50,22 @@ const SYSTEM_BY_STEP: Record<string, string> = {
   step_7_intent: "intent",
   step_7_5_apps: "apps",
 };
+
+async function loadStepOrder(supabase: any): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("setup_step_registry")
+    .select("key, step_order, deprecated_at")
+    .is("deprecated_at", null)
+    .order("step_order", { ascending: true });
+  if (error || !data || data.length === 0) {
+    console.warn(
+      "[commit-org-setup] registry read failed, using STEP_ORDER_FALLBACK:",
+      error?.message,
+    );
+    return STEP_ORDER_FALLBACK;
+  }
+  return data.map((r: any) => r.key);
+}
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -136,8 +154,9 @@ Deno.serve(async (req) => {
     const stepData = (draft?.step_data ?? {}) as Record<string, any>;
     const results: CommitStepResult[] = [];
 
-    // Execute per-step commit handlers in registry order
-    for (const stepKey of STEP_ORDER) {
+    // Execute per-step commit handlers in registry order (Wave 13F.B — G26)
+    const stepOrder = await loadStepOrder(supabase);
+    for (const stepKey of stepOrder) {
       const data = stepData[stepKey];
       const system = SYSTEM_BY_STEP[stepKey] ?? stepKey;
 

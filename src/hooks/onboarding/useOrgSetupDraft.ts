@@ -34,6 +34,8 @@ export function useOrgSetupDraft(orgId: string | null) {
       stepKey: string;
       data: Record<string, unknown>;
       currentStep?: number;
+      /** Wave 13F.B — registry key of the next step. Survives reordering. */
+      currentStepKey?: string;
     }) => {
       if (!user?.id || !orgId) throw new Error("Not ready");
       const existing = (query.data?.step_data as Record<string, unknown> | null) ?? {};
@@ -48,6 +50,11 @@ export function useOrgSetupDraft(orgId: string | null) {
       };
       if (typeof params.currentStep === "number" && Number.isFinite(params.currentStep)) {
         upsertRow.current_step = params.currentStep;
+      }
+      // Wave 13F.B — persist key alongside index so registry reorders don't
+      // strand returning users on the wrong step.
+      if (typeof params.currentStepKey === "string" && params.currentStepKey.length > 0) {
+        upsertRow.current_step_key = params.currentStepKey;
       }
       const { error } = await supabase
         .from("org_setup_drafts" as any)
