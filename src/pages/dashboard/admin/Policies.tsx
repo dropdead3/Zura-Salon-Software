@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Loader2, Library, Settings, FileText, ArrowRight, X } from 'lucide-react';
+import { Loader2, Library, Settings, FileText, ArrowRight, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { tokens } from '@/lib/design-tokens';
@@ -49,6 +50,49 @@ export default function Policies() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activePolicyKey = searchParams.get('policy');
   const librarySectionRef = useRef<HTMLElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Search query — URL-synced via ?q=
+  const [query, setQuery] = useState<string>(() => searchParams.get('q') ?? '');
+  const [adoptionFilter, setAdoptionFilter] = useState<'all' | 'adopted' | 'not_adopted'>('all');
+
+  // Sync query <-> URL (?q=)
+  useEffect(() => {
+    const current = searchParams.get('q') ?? '';
+    if (current === query) return;
+    const next = new URLSearchParams(searchParams);
+    if (query.trim()) next.set('q', query);
+    else next.delete('q');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  // Keyboard shortcuts: "/" focuses the search; Esc clears, then blurs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isTyping =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+      if (e.key === '/' && !isTyping) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        if (query) {
+          e.preventDefault();
+          setQuery('');
+        } else {
+          searchInputRef.current?.blur();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [query]);
 
   const handleCategoryCardClick = (cat: PolicyCategory) => {
     setActiveCategory((prev) => (prev === cat ? 'all' : cat));
@@ -148,13 +192,41 @@ export default function Policies() {
     return counts;
   }, [profileApplicableLibrary]);
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const isSearching = normalizedQuery.length > 0;
+
   const filteredLibrary = useMemo(() => {
     return profileApplicableLibrary.filter((l) => {
       if (activeAudience !== 'all' && l.audience !== activeAudience) return false;
       if (activeCategory !== 'all' && l.category !== activeCategory) return false;
+      if (adoptionFilter === 'adopted' && !adoptedByKey.has(l.key)) return false;
+      if (adoptionFilter === 'not_adopted' && adoptedByKey.has(l.key)) return false;
+      if (normalizedQuery) {
+        const categoryLabel = POLICY_CATEGORY_META[l.category]?.label.toLowerCase() ?? '';
+        const haystack = [
+          l.title,
+          l.short_description,
+          l.why_it_matters ?? '',
+          categoryLabel,
+          l.key,
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(normalizedQuery)) return false;
+      }
       return true;
     });
-  }, [profileApplicableLibrary, activeCategory, activeAudience]);
+  }, [profileApplicableLibrary, activeCategory, activeAudience, adoptionFilter, normalizedQuery, adoptedByKey]);
+
+  // Suggest a matching category when search has zero results — single-word
+  // queries like "team" should nudge toward the Team category tab.
+  const suggestedCategory = useMemo<PolicyCategory | null>(() => {
+    if (!isSearching || filteredLibrary.length > 0) return null;
+    const match = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).find((c) =>
+      POLICY_CATEGORY_META[c].label.toLowerCase().includes(normalizedQuery),
+    );
+    return match ?? null;
+  }, [isSearching, filteredLibrary.length, normalizedQuery]);
 
   const categoryOrder = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).sort(
     (a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order,
@@ -291,7 +363,17 @@ export default function Policies() {
               <div>
                 <h2 className={cn(tokens.heading.section)}>Library</h2>
                 <p className="font-sans text-sm text-muted-foreground mt-1">
-                  {profileApplicableLibrary.length} recommended {profileApplicableLibrary.length === 1 ? 'policy' : 'policies'} for your business. Filter by audience first, then narrow by category.
+                  {isSearching ? (
+                    <>
+                      Showing {filteredLibrary.length} of {profileApplicableLibrary.length}{' '}
+                      {profileApplicableLibrary.length === 1 ? 'policy' : 'policies'} matching{' '}
+                      <span className="text-foreground">&ldquo;{query}&rdquo;</span>.
+                    </>
+                  ) : (
+                    <>
+                      {profileApplicableLibrary.length} recommended {profileApplicableLibrary.length === 1 ? 'policy' : 'policies'} for your business. Filter by audience first, then narrow by category.
+                    </>
+                  )}
                 </p>
               </div>
               {profile && (hiddenByProfile.length > 0 || showNonApplicable) && (
@@ -346,6 +428,55 @@ export default function Policies() {
               );
             })()}
 
+            {/* Search bar + adoption-status facet. Composes with audience and
+                category filters (intersection, not replacement). */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[260px] max-w-xl">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search policies — title, description, or topic…"
+                  autoCapitalize="none"
+                  className="pl-9 pr-9 font-sans text-sm"
+                  aria-label="Search policies"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted/50 border border-border/60">
+                {([
+                  { key: 'all', label: 'All' },
+                  { key: 'adopted', label: 'Adopted' },
+                  { key: 'not_adopted', label: 'Not adopted' },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setAdoptionFilter(opt.key)}
+                    className={cn(
+                      'inline-flex items-center px-3 py-1.5 rounded-md font-sans text-xs transition-colors',
+                      adoptionFilter === opt.key
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Wave 28.11.3 — Audience-first segmented control. The data already
                 carries this distinction; we surface it so operators don't apply
                 client-facing thinking to handbook-only policies (and vice versa). */}
@@ -396,8 +527,43 @@ export default function Policies() {
                 {filteredLibrary.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <Library className={tokens.empty.icon} />
-                    <h3 className={tokens.empty.heading}>No policies in this category</h3>
-                    <p className={tokens.empty.description}>Try a different filter.</p>
+                    {isSearching ? (
+                      <>
+                        <h3 className={tokens.empty.heading}>
+                          No policies match &ldquo;{query}&rdquo;
+                        </h3>
+                        <p className={tokens.empty.description}>
+                          Check spelling or clear the search to see the full library.
+                          {suggestedCategory && (
+                            <>
+                              {' '}Or jump to the{' '}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setQuery('');
+                                  setActiveCategory(suggestedCategory);
+                                }}
+                                className="font-sans text-foreground underline-offset-2 hover:underline"
+                              >
+                                {POLICY_CATEGORY_META[suggestedCategory].label}
+                              </button>{' '}
+                              category.
+                            </>
+                          )}
+                        </p>
+                        <div className="mt-4 flex items-center justify-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setQuery('')} className="font-sans">
+                            <X className="w-3.5 h-3.5 mr-1" />
+                            Clear search
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className={tokens.empty.heading}>No policies in this category</h3>
+                        <p className={tokens.empty.description}>Try a different filter.</p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   (() => {
