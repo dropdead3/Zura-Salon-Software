@@ -858,7 +858,10 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
               {recommendedByCategory.size > 0 && (
                 <div className="space-y-2 pt-2 border-t border-border/60">
-                  <Label className={cn(tokens.kpi.label)}>Breakdown by category</Label>
+                  <Label className={cn(tokens.kpi.label)}>Policies by category</Label>
+                  <p className="font-sans text-xs text-muted-foreground">
+                    Counts of recommended policies in each category — not headcount or location counts.
+                  </p>
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     {Array.from(recommendedByCategory.entries()).map(([cat, count]) => (
                       <div
@@ -866,7 +869,12 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                         className="flex items-center justify-between p-2 rounded-md bg-muted/50 font-sans text-sm"
                       >
                         <span className="text-muted-foreground">{formatCategoryLabel(cat)}</span>
-                        <span className="text-foreground">{count}</span>
+                        <span>
+                          <span className="text-foreground">{count}</span>
+                          <span className="text-muted-foreground text-xs ml-1">
+                            {count === 1 ? 'policy' : 'policies'}
+                          </span>
+                        </span>
                       </div>
                     ))}
                   </div>
