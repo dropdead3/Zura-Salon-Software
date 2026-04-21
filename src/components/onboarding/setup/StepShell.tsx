@@ -102,7 +102,12 @@ export function StepShell({
 
         {/* Why we're asking */}
         <div className="mb-6">
-          <WhyWeAskCallout reason={whyWeAsk} unlocks={consequence} />
+          <WhyWeAskCallout
+            reason={whyWeAsk}
+            unlocks={consequence}
+            activates={activates}
+            activatesHint={activatesHint}
+          />
         </div>
 
         {/* Conflict banners */}
