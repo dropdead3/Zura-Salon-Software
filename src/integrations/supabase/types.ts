@@ -18099,10 +18099,12 @@ export type Database = {
           compensation_models_in_use: string[]
           created_at: string
           created_by: string | null
+          fit_choice: string | null
           has_booth_renters: boolean
           has_existing_client_policies: boolean
           has_existing_handbook: boolean
           id: string
+          non_traditional_structure: boolean
           offers_extensions: boolean
           offers_memberships: boolean
           offers_packages: boolean
@@ -18115,6 +18117,7 @@ export type Database = {
           service_categories: string[]
           setup_completed_at: string | null
           team_size_band: string | null
+          tip_distribution_model: string | null
           updated_at: string
           uses_refund_clawback: boolean
           uses_tip_pooling: boolean
@@ -18126,10 +18129,12 @@ export type Database = {
           compensation_models_in_use?: string[]
           created_at?: string
           created_by?: string | null
+          fit_choice?: string | null
           has_booth_renters?: boolean
           has_existing_client_policies?: boolean
           has_existing_handbook?: boolean
           id?: string
+          non_traditional_structure?: boolean
           offers_extensions?: boolean
           offers_memberships?: boolean
           offers_packages?: boolean
@@ -18142,6 +18147,7 @@ export type Database = {
           service_categories?: string[]
           setup_completed_at?: string | null
           team_size_band?: string | null
+          tip_distribution_model?: string | null
           updated_at?: string
           uses_refund_clawback?: boolean
           uses_tip_pooling?: boolean
@@ -18153,10 +18159,12 @@ export type Database = {
           compensation_models_in_use?: string[]
           created_at?: string
           created_by?: string | null
+          fit_choice?: string | null
           has_booth_renters?: boolean
           has_existing_client_policies?: boolean
           has_existing_handbook?: boolean
           id?: string
+          non_traditional_structure?: boolean
           offers_extensions?: boolean
           offers_memberships?: boolean
           offers_packages?: boolean
@@ -18169,6 +18177,7 @@ export type Database = {
           service_categories?: string[]
           setup_completed_at?: string | null
           team_size_band?: string | null
+          tip_distribution_model?: string | null
           updated_at?: string
           uses_refund_clawback?: boolean
           uses_tip_pooling?: boolean
