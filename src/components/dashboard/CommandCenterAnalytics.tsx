@@ -168,6 +168,7 @@ export function CommandCenterAnalytics() {
   const { dashPath } = useOrgDashboardPath();
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const { layout } = useDashboardLayout();
+  const { hasIntent, scoreSurface } = useSetupIntent();
   
   // Shared filter state for all pinned analytics cards
   const [locationId, setLocationId] = useState<string>('all');
@@ -197,18 +198,35 @@ export function CommandCenterAnalytics() {
     return Object.keys(CARD_COMPONENTS).filter(id => isElementVisible(id));
   }, [visibilityData]);
   
-  // Order visible cards by user's preferred order (from pinnedCards)
+  /**
+   * Wave 13F.C — persona-driven ordering for un-arranged cards.
+   *
+   * Precedence:
+   *   1. User's saved manual order (layout.pinnedCards) — sacred, never overridden.
+   *   2. Cards not in saved order: sorted by persona score from setup_intent.
+   *      Higher intent score → renders earlier. Ties stable by CARD_COMPONENTS order.
+   *   3. Operators with no intent set keep the existing arbitrary order.
+   */
   const orderedVisibleCards = useMemo(() => {
     const savedOrder = layout.pinnedCards || [];
-    
-    // Start with cards in saved order that are visible
+
     const fromSavedOrder = savedOrder.filter(id => allVisibleCardIds.includes(id));
-    
-    // Add any visible cards not in saved order
     const notInOrder = allVisibleCardIds.filter(id => !savedOrder.includes(id));
-    
+
+    if (hasIntent && notInOrder.length > 1) {
+      const scored = notInOrder
+        .map((cardId, idx) => ({
+          cardId,
+          score: scoreSurface(CARD_TO_SURFACE_KEY[cardId] ?? cardId),
+          idx,
+        }))
+        .sort((a, b) => (b.score - a.score) || (a.idx - b.idx))
+        .map(s => s.cardId);
+      return [...fromSavedOrder, ...scored];
+    }
+
     return [...fromSavedOrder, ...notInOrder];
-  }, [layout.pinnedCards, allVisibleCardIds]);
+  }, [layout.pinnedCards, allVisibleCardIds, hasIntent, scoreSurface]);
   
   const hasAnyPinned = orderedVisibleCards.length > 0;
   
