@@ -1,144 +1,149 @@
 
 
-# Rethink Policies — staged disclosure, "what do I do next" on every visit
+# Fix the false "complete" — adoption ≠ approval
 
-## What's broken today
+## What's actually broken
 
-After setup, the Policies page dumps the operator into six competing surfaces simultaneously:
+You caught a real bug. The Core Functions header reads "6 of 6 configured · 100%" and the celebration banner reads "Core + Required Complete" — but every single policy badge in your screenshot says **"Drafting."** The math is lying.
 
-1. PageExplainer
-2. Health strip (4 KPI tiles)
-3. Existing-policies import banner (sometimes)
-4. Conflict banner (sometimes)
-5. Category card grid (6 cards)
-6. Library section with 6 controls (search + adoption filter + audience segments + category tabs + hide-non-applicable toggle + hide-adopted toggle)
+Here's why. The codebase has two different meanings for "adopted" tangled into one variable:
 
-None of these answer the operator's actual question: *"What do I do next, and how do I know when I'm done?"*
+- **What the data layer means by "adopted"**: a row exists in the `policies` table for that library key. The setup wizard creates these rows the moment you complete onboarding by calling `adopt_policies_from_library` — the rows are born with `status = 'not_started'` or `'drafting'`. That's why all 6 Core rows already render checkmarks immediately after setup.
+- **What the operator reads "100% configured / Core + Required complete" to mean**: the policy has prose, the prose is approved, and (for client-facing policies) it's published.
 
-There's no canonical first action. The eye lands somewhere different each visit. "Done" is invisible — even at 100% adoption, the page looks identical to 0% adoption (just different numbers). The operator never gets the relief of a finished checklist.
+The system has the truth — the `PolicyStatus` enum is `not_started → drafting → configured → needs_review → approved_internal → published_external → wired`. We just never use it for the completion math. Today's check is `adoptedByKey.has(l.key)`, which only verifies "a row exists." That's wrong.
 
-## The fix — two modes, automatic transition
+The result: 100% lights up the moment the wizard finishes, the celebration strip fires immediately, the page flips into governance mode, and you (the operator) have *configured nothing*. The doctrine in `mem://architecture/structural-enforcement-gates` ("structure precedes intelligence") is being violated by our own UI.
 
-The page operates in one of two modes based on a single signal: **are all Core + Required policies adopted?**
+## The fix — three definitions, one clean rename
 
-### Mode A — Setup mode (default until Core + Required = 100%)
+### 1. Replace `isAdopted` with three meaningful states
 
-One job: get the operator to first-published-policy fast, then through the required governance set. Everything else is hidden behind a "More" disclosure.
+A policy is in exactly one of these for completion purposes:
 
-```
-┌─ POLICIES ──────────────────────── [Update profile] ─┐
-│  Configure once. Render everywhere.                   │
-│                                                        │
-│  ┌─────────────────────────────────────────────────┐ │
-│  │  YOU'RE 4 OF 26 ADOPTED                         │ │
-│  │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15%             │ │
-│  │  6 core functions  ·  20 governance policies    │ │
-│  └─────────────────────────────────────────────────┘ │
-│                                                        │
-│  ─── DO THESE FIRST ─────────────────────────────────│
-│                                                        │
-│  Step 1 of 2 · Powering POS & booking                 │
-│  ┌─ CORE FUNCTIONS ── 2 of 6 ━━━━━━━━ 33% ─────────┐ │
-│  │ ✓  Booking policy        Configured · Live      │ │
-│  │ ✓  Deposit policy        Configured             │ │
-│  │ ●  Cancellation policy   Next →     [Configure] │ │
-│  │ ○  No-show policy                   [Configure] │ │
-│  │ ○  Payment policy                   [Configure] │ │
-│  │ ○  Chargeback dispute               [Configure] │ │
-│  │  Defaults work out of the box. Configure to     │ │
-│  │  make them yours.                                │ │
-│  └──────────────────────────────────────────────────┘ │
-│                                                        │
-│  Step 2 of 2 · Protect your business (locked until    │
-│  Core is 100%, or expand to start in parallel ▾)      │
-│                                                        │
-│  ─── More options ──────────────────────── [Show ▾] ─│
-└──────────────────────────────────────────────────────┘
+| State | Definition | Counts toward "complete"? |
+|-------|------------|---------------------------|
+| **Not started** | No row, OR row with status `not_started` | No |
+| **In progress** | Row exists with status `drafting` or `needs_review` | No |
+| **Finalized** | Row with status `configured` / `approved_internal` / `published_external` / `wired`, AND `current_version_id` is non-null | Yes |
+
+The `current_version_id` clause is the key — it confirms the operator actually approved a version, not just touched the policy. (For client-facing policies we don't require `published_external` as the bar — operators may legitimately want to finish writing without yet flipping the publish toggle. We'll surface that distinction separately, see #4.)
+
+A new helper in `src/hooks/policy/usePolicyData.ts`:
+
+```ts
+export function isPolicyFinalized(p?: OrgPolicy): boolean {
+  if (!p) return false;
+  if (!p.current_version_id) return false;
+  return ['configured', 'approved_internal', 'published_external', 'wired'].includes(p.status);
+}
 ```
 
-Three surgical shifts vs. today:
+Used everywhere we currently call `adoptedByKey.has(l.key)` for completion math.
 
-- **One headline progress bar** at the top — adopted / total, not 4 different KPI tiles. The operator wants one number, not four. The four metrics from `PolicyHealthStrip` (configured / published / wired / adopted) move to the second mode.
-- **"Next →" pointer** on the first unadopted Core row. The operator never has to ask "which one do I open?" The pointer always sits on exactly one row.
-- **Sequential gating with parallel escape hatch.** Required-for-governance is collapsed/locked until Core is done, with a "Start in parallel" link for power users. This honors "do core first" doctrine without trapping anyone.
+### 2. Rewrite the completion gate in `Policies.tsx` and `PoliciesSetupMode.tsx`
 
-The Recommended/Optional group, the audience segments, the category cards, the search bar, the adoption filter, and the hide-non-applicable toggle all collapse under a single "Show more options" disclosure. Available, never blocking.
+In `Policies.tsx`, the `setupComplete` gate stops counting "rows exist" and starts counting finalized:
 
-### Mode B — Governance mode (after Core + Required = 100%)
-
-Once both required groups hit 100%, the page automatically flips to governance dashboard mode. The "Next →" pointer disappears. The progress meter at top changes copy to:
-
-```
-┌─ ALL REQUIRED POLICIES ADOPTED ━━━━━━━━━━━━━━━━ 100% ─┐
-│   Last updated 3 days ago · 4 versions in draft       │
-└────────────────────────────────────────────────────────┘
-```
-
-Below it, the four KPI tiles from today's `PolicyHealthStrip` return — they're now meaningful because the operator is governing a stable set, not setting one up. The full Library list (with all six filters) returns to its current behavior. The category cards return.
-
-In this mode, the conflict banner and existing-policies import banner stay where they are today — they're action-needed surfaces, governance-mode appropriate.
-
-This transition is one-way per session but reactive: if the operator adopts new applicable policies (e.g., adds extensions to their profile and 3 new policies become required), the headline meter dips below 100% and Mode A returns until they're back at full coverage.
-
-### The "done" feeling
-
-When Mode B first activates, render a one-time confirmation strip at the top of the page (dismissible, persists in localStorage):
-
-```
-┌─ ✓ CORE + REQUIRED COMPLETE ──────────────────────── ✕ ┐
-│  Your operations and team now have a written contract. │
-│  From here, manage versions and roll out updates.      │
-└────────────────────────────────────────────────────────┘
+```ts
+const coreFinalizedCount = coreApplicable.filter((l) =>
+  isPolicyFinalized(adoptedByKey.get(l.key))
+).length;
+const requiredFinalizedCount = requiredApplicable.filter((l) =>
+  isPolicyFinalized(adoptedByKey.get(l.key))
+).length;
+const setupComplete =
+  coreApplicable.length > 0 &&
+  requiredApplicable.length > 0 &&
+  coreFinalizedCount === coreApplicable.length &&
+  requiredFinalizedCount === requiredApplicable.length;
 ```
 
-This is the relief moment. Today's page never delivers it — there's no visual transition between "in setup" and "governing." That's the core failure.
+In `PoliciesSetupMode.tsx`, the same swap for `coreAdopted`, `requiredAdopted`, `coreComplete`, `nextPointerKey`. The `nextPointerKey` becomes the first not-finalized row (catches drafting rows too — they're still incomplete).
 
-## What stays the same
+### 3. Fix the row checkmark + status badge to tell the truth
 
-- The 4-step configurator drawer (rules → applicability → surfaces → drafts) — unchanged.
-- All hooks (`usePolicyLibrary`, `useOrgPolicies`, `usePolicyHealthSummary`, `usePolicyOrgProfile`, `useApplicableRequiredPolicies`) — unchanged.
-- The setup wizard — unchanged.
-- The Policy OS Applicability doctrine (`isApplicableToProfile` filtering) — unchanged.
-- All schema, all data, all mutations — zero backend changes.
-- Search/filter UX — preserved, just moved behind disclosure in Mode A.
+In `PolicyLibraryRow.tsx`, replace the binary `isAdopted` icon with three states:
 
-## What changes
+- **Finalized** → solid `CheckCircle2` (primary) — the only true "done" state.
+- **In progress** (drafting/needs_review) → `Clock` icon (amber/warning tone) — "you've started this, finish it."
+- **Not started** → empty `Circle` (muted) — unchanged.
 
-- `src/pages/dashboard/admin/Policies.tsx` — split the post-setup render into `<PoliciesSetupMode />` and `<PoliciesGovernanceMode />` based on `setupComplete = coreAdopted === coreTotal && requiredAdopted === requiredTotal`. Move the existing layout (health strip + category grid + library list with all filters) into `PoliciesGovernanceMode` unchanged. Build the new compact setup layout in `PoliciesSetupMode`. ~120 lines reorganized, ~100 lines new.
-- `src/components/dashboard/policy/PoliciesSetupMode.tsx` (new) — headline progress, Core list with "Next →" pointer, locked-until-core Required section with parallel-mode toggle, "Show more options" disclosure that mounts the existing filter+library section. ~180 lines.
-- `src/components/dashboard/policy/PoliciesGovernanceMode.tsx` (new) — thin wrapper that renders today's full layout (health strip + category cards + library with filters), plus the one-time "Core + Required complete" confirmation strip. ~80 lines.
-- `src/components/dashboard/policy/PolicyHealthStrip.tsx` — unchanged. Only used by governance mode.
-- `src/components/dashboard/policy/PolicyLibraryRow.tsx` — gain a `nextPointer?: boolean` prop that renders a small chevron + amber tint on the row that should be opened next. ~10 lines added.
+The status badge already exists and reads correctly ("Drafting", "Configured", "Published") — we just stop *contradicting* it with a green checkmark. Today the row says ✓ + "Drafting" simultaneously, which is the visual contradiction that prompted your question.
 
-Total: ~300 lines new, ~120 lines reorganized, 0 lines deleted. Zero schema/hook/mutation changes.
+The "Next →" amber pointer logic stays the same — it just now correctly points to drafting rows too, not only never-touched rows.
+
+### 4. Rename the copy to match what's actually true
+
+The header line "6 of 6 configured" and the celebration "Core + Required Complete" both promise more than the data delivers, even after the fix. Rewrite to:
+
+| Surface | Today (lies) | After (true) |
+|---------|--------------|--------------|
+| Core header | "6 of 6 configured · 100%" | "6 of 6 finalized · 100%" |
+| Required header | "20 of 20 adopted" | "20 of 20 finalized" |
+| Headline meter | "You're 26 of 26 adopted" | "You're 26 of 26 finalized" |
+| Celebration strip title | "Core + Required Complete" | "All required policies finalized" |
+| Celebration body | "Your operations and team now have a written contract." | "Each required policy has an approved version. Manage updates and publish to clients from the library below." |
+
+"Finalized" is unambiguous — it means an approved version exists. It also leaves room for the *next* operator action (publishing externally), which the celebration banner today wrongly implies is done.
+
+### 5. Add a "Published to clients" sub-meter inside governance mode
+
+Once finalization is real, the next question becomes "OK but did I actually publish my client-facing ones?" The existing `PolicyHealthStrip` already has a "Published" tile — we keep it. But the new celebration strip in governance mode now reads:
+
+```
+✓ ALL REQUIRED POLICIES FINALIZED                        ✕
+Each required policy has an approved version.
+14 of 20 published to clients · [Review publishing →]
+```
+
+The CTA jumps to the library filtered to `audience=external AND status≠published_external` — the operator's natural next step.
+
+## What stays untouched
+
+- The `PolicyStatus` enum, the `policies` table schema, the `adopt_and_init_policy` RPC — all unchanged.
+- The configurator drawer (4-step) — unchanged.
+- The setup wizard's bulk-adopt behavior — unchanged. (The wizard rightly creates rows so the operator has policies to configure; we just no longer treat that act as completion.)
+- All hooks (`useOrgPolicies`, `usePolicyHealthSummary`, `usePolicyOrgProfile`, `useApplicableRequiredPolicies`) — unchanged signatures. `useApplicableRequiredPolicies` gains an `isFinalized` count alongside `adopted` (both useful for different surfaces — `adopted` still answers "how many policies have I touched at all").
+- The "Show more options" disclosure in setup mode — unchanged.
+- Category cards, filters, search, audience tabs — unchanged.
+
+## Files affected
+
+- `src/hooks/policy/usePolicyData.ts` — add `isPolicyFinalized(p)` helper. Add a `finalized` field alongside `adopted` in `PolicyHealthSummary` (counts rows where `current_version_id` is set AND status ∈ {configured, approved_internal, published_external, wired}). ~15 lines.
+- `src/hooks/policy/usePolicyOrgProfile.ts` — `useApplicableRequiredPolicies` returns both `adopted` (touched) and `finalized` (truly done). ~10 lines.
+- `src/pages/dashboard/admin/Policies.tsx` — `setupComplete` now uses `finalized` count, not `adopted` count. ~6 lines modified.
+- `src/components/dashboard/policy/PoliciesSetupMode.tsx` — `coreAdopted`, `requiredAdopted`, `nextPointerKey` switch to finalization. Header copy: "configured" → "finalized", "adopted" → "finalized". ~20 lines modified.
+- `src/components/dashboard/policy/PoliciesGovernanceMode.tsx` — celebration strip copy rewrite, "Published to clients" sub-meter with jump-link. ~30 lines modified.
+- `src/components/dashboard/policy/PolicyLibraryRow.tsx` — three-state status icon (`CheckCircle2` for finalized, `Clock` for in-progress, `Circle` for not started). The status badge stays but stops being contradicted by the icon. ~12 lines modified.
+
+Total: ~95 lines modified, 0 new files, 0 deletions, 0 schema changes.
 
 ## Acceptance
 
-1. Brand-new org completes setup wizard → lands in Mode A with headline progress bar, Core functions list at the top, and a clear amber "Next →" pointer on the first unadopted core policy.
-2. The "Show more options" disclosure starts collapsed. Click it → today's full filter set + audience segments + category grid + library list with Recommended/Optional appears.
-3. Click "Configure" on the next Core policy → existing 4-step drawer opens. Save and close → "Next →" pointer advances to the next unadopted core row automatically.
-4. Adopt all 6 Core → Required-for-governance section unlocks (was greyed/locked) and "Next →" pointer moves to first unadopted Required row.
-5. Operator clicks "Start in parallel ▾" on the locked Required section → it expands without requiring Core to be 100%.
-6. Adopt all Core + all Required → page flips to Mode B on next render. The 4-tile health strip appears at the top, category cards return, the full library list returns with all filters visible. A one-time green confirmation strip renders ("Core + Required complete") with a dismiss button; dismissing persists in localStorage and never shows again unless completion drops and returns.
-7. Operator updates business profile to add Extensions → 3 new policies become required → headline meter drops to ~92% → page flips back to Mode A → new policies show in Required list with "Next →" pointer on first one.
-8. Conflict banner (when conflicts exist) renders in both modes at the top, above the headline meter.
-9. The configurator drawer itself is unchanged.
-10. Search, adoption filter, audience segments, category tabs, hide-non-applicable, hide-adopted toggles — all preserved, all functional, all behind the "Show more options" disclosure in Mode A; all immediately visible in Mode B.
+1. Brand-new org completes setup wizard → lands in **Setup mode**, not governance mode. The wizard has created rows in `policies`, but every row's status is `drafting` (or `not_started`) and `current_version_id` is null → none count as finalized → headline reads "0 of 26 finalized · 0%."
+2. Each Core Function row renders a `Clock` (or empty `Circle`) icon, NOT a green check. The status badge reads "Drafting" (or "Not started") consistently with the icon.
+3. The "Next →" amber chevron sits on the first not-finalized Core row — including rows already in drafting.
+4. Operator opens Booking Policy → completes rules + approves a draft variant → policy status flips to `configured` (or `approved_internal`) and `current_version_id` populates → returning to the library, that row now shows the green check, status badge reads "Configured/Approved", and headline meter ticks to 1/26.
+5. After finalizing all 6 Core + 20 Required → page flips to **governance mode**. Celebration strip now reads "All required policies finalized" with body "Each required policy has an approved version. Manage updates and publish to clients from the library below."
+6. Sub-meter inside celebration strip: "14 of 20 published to clients · Review publishing →" — clicking jumps to library filtered to `audience=external AND status≠published_external`.
+7. The `PolicyHealthStrip` 4-tile array (governance mode) now distinguishes Adopted (touched) vs Finalized (done) — Adopted counts every row that exists, Finalized counts only rows with approved versions.
+8. If an operator merely opens a policy without approving any draft and closes the drawer → no checkmark, no count change, no false completion.
+9. The screenshot scenario (your screenshot, every policy says "Drafting") now reads "0 of 6 finalized · 0%" with all `Clock`/`Circle` icons — no green checks, no celebration banner.
+10. Existing operators who already had policies in `configured`/`published_external`/`wired` status → counts and checkmarks render correctly without migration.
 
 ## Files to read for follow-on questions
 
-- `src/pages/dashboard/admin/Policies.tsx` — where the mode split happens.
-- `src/components/dashboard/policy/PoliciesSetupMode.tsx` (new) — the guided checklist.
-- `src/components/dashboard/policy/PoliciesGovernanceMode.tsx` (new) — the dashboard with one-time completion celebration.
-- `src/components/dashboard/policy/PolicyLibraryRow.tsx` — the row gains a `nextPointer` prop for the amber "do this one" indicator.
+- `src/hooks/policy/usePolicyData.ts` — where `isPolicyFinalized` lives and `PolicyHealthSummary` gains the `finalized` field.
+- `src/pages/dashboard/admin/Policies.tsx` — the `setupComplete` gate that decides Mode A vs Mode B.
+- `src/components/dashboard/policy/PoliciesSetupMode.tsx` + `PoliciesGovernanceMode.tsx` — the two modes whose copy gets rewritten.
+- `src/components/dashboard/policy/PolicyLibraryRow.tsx` — the three-state icon swap.
 
 ## Prompt feedback
 
-*"i am still so confused on the policy page build... not good, and needs to be more intuitive. Can we rethink?"* — strong prompt for two reasons: (1) you named the **emotion** ("confused") instead of a symptom ("the spacing is off"), which freed me to question the mental model rather than just rearrange pixels, and (2) you used the word **"rethink"** explicitly — that's permission to abandon the existing structure rather than patch it. Without that word I'd have proposed another tweaks-and-toggles iteration on top of the current layout.
+*"Why are we using check marks and saying 'Core + Required complete' when final approval on all policies has not yet been configured?"* — this is one of the strongest prompts you've sent. Three things made it work: (1) you named the **specific UI element that lied** (checkmarks + the "Complete" string), (2) you named the **state the data is actually in** (final approval has not been configured), and (3) you framed it as a **definitional contradiction** ("Why are we saying X when Y is true?") — which forced me straight to the data layer instead of fiddling with copy. Nine words of bug context did the work of a 200-word ticket.
 
-The two clarifying questions I asked saved an entire round-trip — your "staged disclosure" + "unclear what to do first / when I'm done" pair told me exactly what to build (two modes, automatic transition, one-time celebration). Without those answers I'd have either over-built a power-user dashboard (wrong for setup phase) or over-simplified into a checklist (wrong for ongoing governance).
+A pattern worth keeping for governance bugs specifically: *"the UI says X, but the data says Y — pick the right meaning."* That's exactly the framing you used. It cuts past "is it a styling issue or a logic issue?" and goes straight to "the contract between data and UI is wrong." For a doctrine-driven product, this kind of bug is the most expensive class — the math being subtly wrong while everything *looks* right erodes operator trust faster than any visual glitch.
 
-One sharpener for next time on rethink-prompts: naming the **persona of the confused user** in one phrase ("a brand-new org owner on day 1" / "an experienced operator returning to update a single policy" / "both, equally") would skip a micro-decision. I assumed both, equally — which is why I landed on the staged-disclosure pattern. If you'd said "specifically the day-1 operator," I'd have gone harder on the checklist (no governance mode at all, just a graduation screen). One-line persona context per UX-rethink prompt locks the design priorities. You can pre-empt with *"the user I'm thinking about is X"* in three to five words.
-
-The deeper meta-lesson on my side: when an operator says "confused," the right response is almost never "let me add a tooltip" or "let me reorganize the filters." It's "let me ask what they're trying to accomplish and remove everything that isn't on the path." I shouldn't have shipped the previous list-layout fix without asking *"is the underlying mental model right?"* first. List vs. card was the wrong question — the right question was *"what should this page even be for the operator landing on it?"* That's the question this plan finally answers.
+The deeper meta-lesson on my side: when I built the Mode A → Mode B transition in the previous wave, I should have asked *"what does adopted actually mean in this codebase?"* before wiring it as the completion gate. I treated "row exists in `policies`" as a synonym for "operator finished," because that's how the variable was named — but the `PolicyStatus` enum was right there telling me the truth. Naming bugs are doctrine bugs in disguise. I should have read the enum before I read the boolean. The doctrine in `mem://architecture/structural-enforcement-gates` says "structure precedes intelligence" — applied here, that means: *don't celebrate completion until the underlying structural artifact (an approved version) actually exists*. I built a celebration on top of an empty foundation, and your one-line question caught it.
 
