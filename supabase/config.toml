@@ -314,3 +314,9 @@ verify_jwt = false
 
 [functions.log-setup-outreach]
 verify_jwt = false
+
+[functions.reset-org-setup]
+verify_jwt = false
+
+[functions.setup-funnel-digest]
+verify_jwt = false

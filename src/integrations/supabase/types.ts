@@ -14512,6 +14512,47 @@ export type Database = {
           },
         ]
       }
+      org_setup_user_state: {
+        Row: {
+          backfill_attempted_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          organization_id: string
+          snoozed_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backfill_attempted_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          organization_id: string
+          snoozed_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backfill_attempted_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          organization_id?: string
+          snoozed_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_setup_user_state_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_admins: {
         Row: {
           created_at: string | null

@@ -244,6 +244,35 @@ export default function SetupFunnel() {
     return m;
   }, [data?.events, data?.commits]);
 
+  // Wave 12: per-org completion context for outreach copy. Uses successful
+  // commit log entries (any source) to derive completed step count + last
+  // step completed.
+  const completedContextByOrg = useMemo(() => {
+    const m = new Map<
+      string,
+      { systems: Set<string>; lastSystem: string; lastTs: number }
+    >();
+    for (const c of data?.commits ?? []) {
+      if (c.status !== "completed") continue;
+      const ts = new Date(c.attempted_at).getTime();
+      const cur = m.get(c.organization_id);
+      if (!cur) {
+        m.set(c.organization_id, {
+          systems: new Set([c.system]),
+          lastSystem: c.system,
+          lastTs: ts,
+        });
+      } else {
+        cur.systems.add(c.system);
+        if (ts > cur.lastTs) {
+          cur.lastTs = ts;
+          cur.lastSystem = c.system;
+        }
+      }
+    }
+    return m;
+  }, [data?.commits]);
+
   const funnel: FunnelRow[] = useMemo(() => {
     if (!data?.events) return [];
     const map = new Map<
@@ -336,8 +365,39 @@ export default function SetupFunnel() {
       });
   }, [data?.events, lastActivityByOrg, outreachData]);
 
-  // Source breakdown across the whole cohort (orgs that touched setup)
-  const sourceBreakdown = useMemo(() => {
+  // Wave 12: source breakdown of the entire org base (true attribution health)
+  // when no source filter is active. When filtered, we fall back to the
+  // event-touched cohort.
+  const { data: orgBaseBreakdown } = useQuery({
+    queryKey: ["platform-setup-org-base-source-mix"],
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("organizations")
+        .select("signup_source")
+        .limit(20000);
+      if (error) {
+        console.warn("[SetupFunnel] org base breakdown failed:", error);
+        return [] as { source: string; count: number; pct: number }[];
+      }
+      const counts = new Map<string, number>();
+      for (const r of (rows ?? []) as { signup_source: string | null }[]) {
+        const src = r.signup_source ?? "legacy";
+        counts.set(src, (counts.get(src) ?? 0) + 1);
+      }
+      const total = (rows?.length ?? 0) || 1;
+      return Array.from(counts.entries())
+        .map(([source, count]) => ({
+          source,
+          count,
+          pct: (count / total) * 100,
+        }))
+        .sort((a, b) => b.count - a.count);
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Source breakdown across the cohort (orgs that touched setup) — used when filtering
+  const cohortSourceBreakdown = useMemo(() => {
     if (!data) return [] as { source: string; count: number; pct: number }[];
     const orgIds = new Set<string>();
     for (const e of data.events) orgIds.add(e.organization_id);
@@ -356,6 +416,14 @@ export default function SetupFunnel() {
       }))
       .sort((a, b) => b.count - a.count);
   }, [data]);
+
+  // Show org-base mix when "All sources" is active, cohort mix otherwise
+  const sourceBreakdown =
+    source === "all"
+      ? (orgBaseBreakdown ?? cohortSourceBreakdown)
+      : cohortSourceBreakdown;
+  const sourceBreakdownLabel =
+    source === "all" ? "% of org base" : "% of cohort";
 
   const totals = useMemo(() => {
     const orgs = new Set(data?.events.map((e) => e.organization_id) ?? []);
@@ -494,6 +562,7 @@ export default function SetupFunnel() {
           <SourceBreakdownTile
             isLoading={isLoading}
             breakdown={sourceBreakdown}
+            label={sourceBreakdownLabel}
             onSelectSource={(s) => {
               setSource(s as SourceKey);
               setExpandedStep(null);
@@ -642,6 +711,7 @@ export default function SetupFunnel() {
                                   rows: uncontactedOrgs,
                                   names: data?.orgNames ?? new Map(),
                                   sources: data?.orgSources ?? new Map(),
+                                  completedContext: completedContextByOrg,
                                   exportedBy: user?.id ?? null,
                                 });
                                 queryClient.invalidateQueries({
@@ -760,9 +830,21 @@ async function downloadDroppedCsvAndLog(args: {
   rows: DroppedOrg[];
   names: Map<string, string>;
   sources: Map<string, string>;
+  completedContext?: Map<
+    string,
+    { systems: Set<string>; lastSystem: string; lastTs: number }
+  >;
   exportedBy: string | null;
 }) {
-  const { stepNumber, stepLabel, rows, names, sources, exportedBy } = args;
+  const {
+    stepNumber,
+    stepLabel,
+    rows,
+    names,
+    sources,
+    completedContext,
+    exportedBy,
+  } = args;
 
   // Wave 11A: write outreach log via dedicated edge function so RLS is
   // enforced server-side and errors surface to the user.
@@ -787,12 +869,16 @@ async function downloadDroppedCsvAndLog(args: {
   }
 
   // Build CSV via shared util (RFC 4180 escaping)
+  // Wave 12: include completed_steps + last_step_completed for outreach
+  // copy that references stage progress.
   const header = [
     "organization_id",
     "organization_name",
     "signup_source",
     "last_activity_iso",
     "days_since_activity",
+    "completed_steps",
+    "last_step_completed",
   ];
   const body = rows.map((r) => {
     const name = names.get(r.id) ?? "";
@@ -803,7 +889,10 @@ async function downloadDroppedCsvAndLog(args: {
     const days = r.lastActivityMs
       ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
       : "";
-    return [r.id, name, src, iso, days];
+    const ctx = completedContext?.get(r.id);
+    const completedSteps = ctx ? ctx.systems.size.toString() : "0";
+    const lastStep = ctx?.lastSystem ?? "";
+    return [r.id, name, src, iso, days, completedSteps, lastStep];
   });
   const csv = buildCsvString([header, ...body]);
 
@@ -902,10 +991,12 @@ function Sparkline({ values }: { values: number[] }) {
 function SourceBreakdownTile({
   isLoading,
   breakdown,
+  label,
   onSelectSource,
 }: {
   isLoading: boolean;
   breakdown: { source: string; count: number; pct: number }[];
+  label?: string;
   onSelectSource?: (source: string) => void;
 }) {
   return (
@@ -917,6 +1008,11 @@ function SourceBreakdownTile({
           </div>
           <div className="min-w-0 flex-1">
             <div className={tokens.kpi.label}>Source mix</div>
+            {label && (
+              <div className="font-sans text-[10px] text-muted-foreground/80 mt-0.5">
+                {label}
+              </div>
+            )}
             {isLoading ? (
               <Skeleton className="h-7 w-32 mt-2" />
             ) : breakdown.length === 0 ? (

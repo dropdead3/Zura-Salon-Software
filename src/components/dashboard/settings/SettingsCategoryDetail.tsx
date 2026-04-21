@@ -54,6 +54,7 @@ const EmailTemplatesManager = lazy(() => import('@/components/dashboard/EmailTem
 const EmailVariablesManager = lazy(() => import('@/components/dashboard/EmailVariablesManager').then(m => ({ default: m.EmailVariablesManager })));
 const SignaturePresetsManager = lazy(() => import('@/components/dashboard/SignaturePresetsManager').then(m => ({ default: m.SignaturePresetsManager })));
 const OnboardingConfigurator = lazy(() => import('@/components/dashboard/settings/OnboardingConfigurator').then(m => ({ default: m.OnboardingConfigurator })));
+const SetupResetCard = lazy(() => import('@/components/admin/settings/SetupResetCard').then(m => ({ default: m.SetupResetCard })));
 const LeaderboardConfigurator = lazy(() => import('@/components/dashboard/settings/LeaderboardConfigurator').then(m => ({ default: m.LeaderboardConfigurator })));
 const IntegrationsTab = lazy(() => import('@/components/dashboard/IntegrationsTab').then(m => ({ default: m.IntegrationsTab })));
 const StylistLevelsContent = lazy(() => import('@/components/dashboard/settings/StylistLevelsContent').then(m => ({ default: m.StylistLevelsContent })));
@@ -721,7 +722,12 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
             </Card>
           )}
 
-          {activeCategory === 'onboarding' && <OnboardingConfigurator />}
+          {activeCategory === 'onboarding' && (
+            <div className="space-y-6">
+              <OnboardingConfigurator />
+              <SetupResetCard />
+            </div>
+          )}
           {activeCategory === 'leaderboard' && <LeaderboardConfigurator />}
           {activeCategory === 'integrations' && <IntegrationsTab />}
 
