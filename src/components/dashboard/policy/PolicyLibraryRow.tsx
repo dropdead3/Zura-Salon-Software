@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Circle, Lock } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Circle, Lock } from 'lucide-react';
 import type { PolicyLibraryEntry, OrgPolicy } from '@/hooks/policy/usePolicyData';
 import { POLICY_STATUS_META } from '@/hooks/policy/usePolicyData';
 import { SURFACE_META } from '@/hooks/policy/usePolicyApplicability';
@@ -11,6 +11,10 @@ interface Props {
   onClick: () => void;
   consumerLabel?: string;
   showDefaultFallback?: boolean;
+  /** When true, marks this row as the next-action row in setup mode:
+   *  amber tint + chevron pointer. Setup-mode-only; governance mode
+   *  never sets this. */
+  nextPointer?: boolean;
 }
 
 const recommendationLabel: Record<PolicyLibraryEntry['recommendation'], string> = {
