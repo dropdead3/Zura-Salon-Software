@@ -149,8 +149,8 @@ export function StepShell({
           </div>
         )}
 
-        {/* Inline pip progress */}
-        <div className="mt-10">
+        {/* Inline pip progress (mobile/tablet only when side rail mounts) */}
+        <div className={showSideRail ? "mt-10 lg:hidden" : "mt-10"}>
           <SetupProgressPanel
             steps={steps}
             currentStepKey={step.key}
@@ -192,6 +192,7 @@ export function StepShell({
               </>
             )}
           </Button>
+        </div>
         </div>
       </div>
 
