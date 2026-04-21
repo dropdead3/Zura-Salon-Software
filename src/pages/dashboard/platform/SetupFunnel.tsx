@@ -298,7 +298,11 @@ export default function SetupFunnel() {
         );
         const weeklyDrops = new Array(SPARKLINE_WEEKS).fill(0);
         for (const id of droppedIds) {
-          const ts = r.viewedAt.get(id) ?? lastActivityByOrg.get(id) ?? 0;
+          // Wave 11B fix: bucket by *most recent activity* (drop time),
+          // not first view. Falls back to viewedAt only when no other
+          // signal exists.
+          const ts =
+            lastActivityByOrg.get(id) ?? r.viewedAt.get(id) ?? 0;
           if (ts < windowStartMs) continue;
           const idx = Math.min(
             SPARKLINE_WEEKS - 1,
@@ -458,7 +462,7 @@ export default function SetupFunnel() {
         </div>
 
         {/* Top stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
           <StatTile
             icon={<Users className="w-5 h-5 text-primary" />}
             label="Orgs started"
@@ -490,6 +494,10 @@ export default function SetupFunnel() {
           <SourceBreakdownTile
             isLoading={isLoading}
             breakdown={sourceBreakdown}
+            onSelectSource={(s) => {
+              setSource(s as SourceKey);
+              setExpandedStep(null);
+            }}
           />
         </div>
 
@@ -756,20 +764,26 @@ async function downloadDroppedCsvAndLog(args: {
 }) {
   const { stepNumber, stepLabel, rows, names, sources, exportedBy } = args;
 
-  // Write outreach log entries (best-effort, fire-and-await)
+  // Wave 11A: write outreach log via dedicated edge function so RLS is
+  // enforced server-side and errors surface to the user.
   if (rows.length > 0) {
     const logRows = rows.map((r) => ({
       organization_id: r.id,
       step_number: stepNumber,
       step_label: stepLabel,
-      exported_by: exportedBy,
     }));
-    const { error } = await (supabase as any)
-      .from("setup_outreach_log")
-      .insert(logRows);
-    if (error) {
-      console.warn("[SetupFunnel] outreach log write failed:", error);
+    const { data: logResp, error: logErr } = await supabase.functions.invoke(
+      "log-setup-outreach",
+      { body: { rows: logRows } },
+    );
+    if (logErr || (logResp as any)?.error) {
+      const msg = (logErr?.message ?? (logResp as any)?.error ?? "unknown");
+      console.error("[SetupFunnel] outreach log write failed:", msg);
+      toast.error(`Outreach log write failed: ${msg}`);
+      // continue with CSV download regardless — the export is still useful
     }
+    // exportedBy is captured server-side from the JWT; no need to thread it
+    void exportedBy;
   }
 
   // Build CSV via shared util (RFC 4180 escaping)
