@@ -17,7 +17,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin, Upload, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -91,6 +93,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   const defaults = usePolicyProfileDefaults();
   const upsert = useUpsertPolicyOrgProfile();
   const adopt = useAdoptPoliciesFromLibrary();
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
 
   const [step, setStep] = useState<WizardStep>('confirm');
 
@@ -757,6 +761,53 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                   </Label>
                 );
               })}
+
+              {(form.has_existing_handbook || form.has_existing_client_policies) && (
+                <div className="space-y-2 pt-1">
+                  {form.has_existing_handbook && (
+                    <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+                      <Upload className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <p className="font-sans text-xs text-foreground">
+                          We&apos;ll skip drafting a fresh handbook. Upload your current one after setup so we can map it to roles.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await upsert.mutateAsync({ ...form });
+                            onClose();
+                            navigate(dashPath('/admin/handbooks?tab=documents&upload=role'));
+                          }}
+                          className="font-sans text-xs text-primary hover:underline"
+                        >
+                          Upload after setup →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {form.has_existing_client_policies && (
+                    <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+                      <FileText className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <p className="font-sans text-xs text-foreground">
+                          We&apos;ll seed your client-facing policy variants from your existing language. Paste or upload them in the Policies workspace after setup.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await upsert.mutateAsync({ ...form });
+                            onClose();
+                            navigate(dashPath('/admin/policies'));
+                          }}
+                          className="font-sans text-xs text-primary hover:underline"
+                        >
+                          Open Policies workspace →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="pt-4 border-t border-border/60 space-y-4">

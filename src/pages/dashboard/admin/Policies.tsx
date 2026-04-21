@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Loader2, Library, Settings } from 'lucide-react';
+import { Loader2, Library, Settings, FileText, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -186,6 +187,46 @@ export default function Policies() {
         <div className="space-y-8">
           <PageExplainer pageId="policies" />
           <PolicyHealthStrip summary={summary} />
+          {profile?.has_existing_client_policies &&
+            adopted.length > 0 &&
+            adopted.every((p) => !p.current_version_id) && (
+              <Card className="rounded-xl border-primary/30 bg-gradient-to-br from-primary/5 via-card/80 to-card/80">
+                <CardContent className="p-5 flex flex-col md:flex-row md:items-center gap-4 justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className={cn(tokens.heading.card, 'text-sm')}>
+                        Import your existing client policies
+                      </h4>
+                      <p className="font-sans text-xs text-muted-foreground mt-1 max-w-2xl">
+                        You told us you already publish client-facing policies. Open any policy below to paste in your existing language — we&apos;ll seed the variant from there instead of drafting fresh.
+                      </p>
+                    </div>
+                  </div>
+                  {(() => {
+                    const firstUntouched = adopted.find((p) => !p.current_version_id);
+                    if (!firstUntouched) return null;
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="font-sans shrink-0"
+                        onClick={() => {
+                          const next = new URLSearchParams(searchParams);
+                          next.set('policy', firstUntouched.library_key);
+                          setSearchParams(next, { replace: true });
+                        }}
+                      >
+                        Open first policy
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
           <PolicyConflictBanner
             conflicts={summary.surface_conflicts}
             onJumpToPolicy={(key) => {
