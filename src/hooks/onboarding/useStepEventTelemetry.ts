@@ -41,14 +41,16 @@ export function useStepEventTelemetry() {
     }) => {
       const stepKey =
         STEP_KEY_BY_NUMBER[params.step_number] ?? `step_${params.step_number}`;
-      const { error } = await supabase.from("org_setup_step_events").insert({
-        organization_id: params.organization_id,
-        user_id: user?.id ?? null,
-        step_key: stepKey,
-        step_number: params.step_number,
-        event: params.event,
-        metadata: params.metadata ?? {},
-      });
+      const { error } = await (supabase as any)
+        .from("org_setup_step_events")
+        .insert({
+          organization_id: params.organization_id,
+          user_id: user?.id ?? null,
+          step_key: stepKey,
+          step_number: params.step_number,
+          event: params.event,
+          metadata: params.metadata ?? {},
+        });
       if (error) {
         console.warn("[useStepEventTelemetry] insert failed:", error);
       }

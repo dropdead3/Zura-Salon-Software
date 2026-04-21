@@ -20,7 +20,7 @@ export function useOrgSetupDraft(orgId: string | null) {
         .from("org_setup_drafts" as any)
         .select("*")
         .eq("user_id", user.id)
-        .eq("org_id", orgId)
+        .eq("organization_id", orgId)
         .maybeSingle();
       if (error) throw error;
       return data as any;
@@ -42,11 +42,11 @@ export function useOrgSetupDraft(orgId: string | null) {
         .from("org_setup_drafts" as any)
         .upsert({
           user_id: user.id,
-          org_id: orgId,
+          organization_id: orgId,
           step_data: merged,
           current_step: params.currentStep ?? null,
           updated_at: new Date().toISOString(),
-        } as any, { onConflict: "user_id,org_id" });
+        } as any, { onConflict: "user_id,organization_id" });
       if (error) throw error;
       return merged;
     },
