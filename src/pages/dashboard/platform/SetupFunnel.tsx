@@ -533,6 +533,7 @@ export default function SetupFunnel() {
           <SourceBreakdownTile
             isLoading={isLoading}
             breakdown={sourceBreakdown}
+            label={sourceBreakdownLabel}
             onSelectSource={(s) => {
               setSource(s as SourceKey);
               setExpandedStep(null);
@@ -941,10 +942,12 @@ function Sparkline({ values }: { values: number[] }) {
 function SourceBreakdownTile({
   isLoading,
   breakdown,
+  label,
   onSelectSource,
 }: {
   isLoading: boolean;
   breakdown: { source: string; count: number; pct: number }[];
+  label?: string;
   onSelectSource?: (source: string) => void;
 }) {
   return (
@@ -956,6 +959,11 @@ function SourceBreakdownTile({
           </div>
           <div className="min-w-0 flex-1">
             <div className={tokens.kpi.label}>Source mix</div>
+            {label && (
+              <div className="font-sans text-[10px] text-muted-foreground/80 mt-0.5">
+                {label}
+              </div>
+            )}
             {isLoading ? (
               <Skeleton className="h-7 w-32 mt-2" />
             ) : breakdown.length === 0 ? (
