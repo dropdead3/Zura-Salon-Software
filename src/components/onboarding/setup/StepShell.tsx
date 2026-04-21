@@ -44,6 +44,8 @@ export function StepShell({
   steps,
   completedKeys,
   whyWeAsk,
+  activates,
+  activatesHint,
   canAdvance,
   saving,
   isFirst,
