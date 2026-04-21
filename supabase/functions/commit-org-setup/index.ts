@@ -270,14 +270,32 @@ async function executeStepHandler(
   userId: string,
 ): Promise<CommitStepResult> {
   switch (stepKey) {
-    case "step_0_fit_check":
-      // Self-selection only — no DB writes. Off-ramp telemetry handled in UI.
+    case "step_0_fit_check": {
+      // Wave 13F.A — fix B7. Component writes `fit_choice`, not `fit`.
+      // Persist the self-classification so downstream features (rental_heavy,
+      // hybrid_unique) can skip standard-shop assumptions.
+      const fitChoice = data.fit_choice ?? data.fit ?? null; // backward compat
+      const isOffRamp = fitChoice === "not_a_salon";
+      const nonTraditional =
+        fitChoice === "rental_heavy" || fitChoice === "hybrid_unique";
+
+      if (fitChoice && !isOffRamp) {
+        const { error } = await supabase.from("policy_org_profile").upsert({
+          organization_id: orgId,
+          fit_choice: fitChoice,
+          non_traditional_structure: nonTraditional,
+        }, { onConflict: "organization_id" });
+        if (error) throw error;
+      }
       return {
         step_key: stepKey,
         system,
         status: "completed",
-        reason: data.fit === "not_a_salon" ? "self-disqualified" : "fit confirmed",
+        reason: isOffRamp
+          ? "self-disqualified"
+          : `fit confirmed: ${fitChoice ?? "unspecified"}`,
       };
+    }
 
     case "step_1_identity": {
       const updates: Record<string, any> = {};
