@@ -74,9 +74,42 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { organization_id, acknowledged_conflicts = [] } = body ?? {};
+    const { organization_id, acknowledged_conflicts = [], idempotency_key } = body ?? {};
     if (!organization_id) {
       return json({ error: "organization_id required" }, 400, corsHeaders);
+    }
+
+    // Wave 13D.G10 — short-circuit if this exact attempt already ran.
+    // The unique index (organization_id, idempotency_key, system) protects
+    // the audit log from duplicate inserts; we additionally pre-check so
+    // the orchestrator doesn't re-run handlers (which would duplicate
+    // locations and app_interest rows).
+    if (idempotency_key) {
+      const { data: prior } = await supabase
+        .from("org_setup_commit_log")
+        .select("system, status, reason, deep_link")
+        .eq("organization_id", organization_id)
+        .eq("idempotency_key", idempotency_key);
+      if (prior && prior.length > 0) {
+        const results = prior.map((r: any) => ({
+          step_key: `replayed_${r.system}`,
+          system: r.system,
+          status: r.status,
+          reason: r.reason ?? "replay (idempotency)",
+          deep_link: r.deep_link ?? undefined,
+        }));
+        const completed = results.filter((r) => r.status === "completed").length;
+        const failed = results.filter((r) => r.status === "failed").length;
+        return json({
+          success: failed === 0 && completed > 0,
+          partial: failed > 0,
+          completed,
+          failed,
+          total: results.length,
+          results,
+          replayed: true,
+        }, 200, corsHeaders);
+      }
     }
 
     // Verify caller is org admin
@@ -152,6 +185,7 @@ Deno.serve(async (req) => {
           acknowledged_conflicts,
           attempted_by: user.id,
           source: "wizard",
+          idempotency_key: idempotency_key ?? null,
         });
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
@@ -170,6 +204,7 @@ Deno.serve(async (req) => {
           acknowledged_conflicts,
           attempted_by: user.id,
           source: "wizard",
+          idempotency_key: idempotency_key ?? null,
         });
       }
     }
