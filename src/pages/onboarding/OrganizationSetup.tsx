@@ -7,6 +7,7 @@ import { useStepRegistry } from "@/hooks/onboarding/useStepRegistry";
 import { useOrgSetupDraft } from "@/hooks/onboarding/useOrgSetupDraft";
 import { useStepEventTelemetry } from "@/hooks/onboarding/useStepEventTelemetry";
 import { useConflictRules, detectConflicts } from "@/hooks/onboarding/useConflictRules";
+import { useCommitOrgSetup } from "@/hooks/onboarding/useCommitOrgSetup";
 import { OnboardingIntroScreen } from "@/components/onboarding/setup/OnboardingIntroScreen";
 import { StepShell } from "@/components/onboarding/setup/StepShell";
 import { ConflictBanner } from "@/components/onboarding/setup/ConflictBanner";
@@ -14,8 +15,14 @@ import { Step0FitCheck } from "@/components/onboarding/setup/Step0FitCheck";
 import { Step1Identity } from "@/components/onboarding/setup/Step1Identity";
 import { Step2Footprint } from "@/components/onboarding/setup/Step2Footprint";
 import { Step3Team } from "@/components/onboarding/setup/Step3Team";
+import { Step4Compensation } from "@/components/onboarding/setup/Step4Compensation";
+import { Step5Catalog } from "@/components/onboarding/setup/Step5Catalog";
+import { Step6Standards } from "@/components/onboarding/setup/Step6Standards";
+import { Step7Intent } from "@/components/onboarding/setup/Step7Intent";
+import { Step7_5AppRecommendations } from "@/components/onboarding/setup/Step7_5AppRecommendations";
+import { SetupSummary } from "@/components/onboarding/setup/SetupSummary";
+import { SetupCommitResult } from "@/components/onboarding/setup/SetupCommitResult";
 import type { StepRegistryEntry, StepProps } from "@/components/onboarding/setup/types";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const WHY_WE_ASK: Record<string, string> = {
@@ -44,13 +51,19 @@ const STEP_COMPONENTS: Record<string, React.ComponentType<StepProps<any>>> = {
   Step1Identity,
   Step2Footprint,
   Step3Team,
+  Step4Compensation,
+  Step5Catalog,
+  Step6Standards,
+  Step7Intent,
+  Step7_5AppRecommendations,
 };
+
+type CommitResult = Awaited<ReturnType<ReturnType<typeof useCommitOrgSetup>["mutateAsync"]>>;
 
 /**
  * OrganizationSetup — registry-driven wizard host.
- * Renders the intro, then iterates the active step registry. Each step writes
- * to a per-step draft slice; conflicts are surfaced inline; commit happens at
- * the summary step (Wave 3).
+ * Renders the intro, iterates the active step registry, then transitions to
+ * the Summary screen and the CommitResult surface (partial-success contract).
  */
 export default function OrganizationSetup() {
   const [params] = useSearchParams();
@@ -60,6 +73,8 @@ export default function OrganizationSetup() {
   const skipIntro = params.get("skipIntro") === "1";
 
   const [showIntro, setShowIntro] = useState(!skipIntro);
+  const [phase, setPhase] = useState<"steps" | "summary" | "result">("steps");
+  const [commitResult, setCommitResult] = useState<CommitResult | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [stepValid, setStepValid] = useState(false);
   const stepDataRef = useRef<Record<string, unknown>>({});
@@ -68,6 +83,7 @@ export default function OrganizationSetup() {
   const { data: draft, save, isLoading: draftLoading } = useOrgSetupDraft(orgId);
   const { data: rules = [] } = useConflictRules();
   const telemetry = useStepEventTelemetry();
+  const commit = useCommitOrgSetup();
 
   const renderableSteps = useMemo(
     () => steps.filter((s) => STEP_COMPONENTS[s.component_key]),
@@ -96,14 +112,14 @@ export default function OrganizationSetup() {
 
   // Telemetry: viewed
   useEffect(() => {
-    if (!orgId || !currentStep || showIntro) return;
+    if (!orgId || !currentStep || showIntro || phase !== "steps") return;
     telemetry.mutate({
       organization_id: orgId,
       step_number: currentStep.step_order,
       event: "viewed",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgId, currentStep?.key, showIntro]);
+  }, [orgId, currentStep?.key, showIntro, phase]);
 
   const conflicts = useMemo(() => {
     if (!rules.length) return [];
@@ -116,6 +132,7 @@ export default function OrganizationSetup() {
 
   const persist = async (advance: 1 | -1 | 0) => {
     if (!orgId || !currentStep) return;
+    const isLast = currentIndex === renderableSteps.length - 1;
     const nextIndex = Math.max(0, Math.min(renderableSteps.length - 1, currentIndex + advance));
     try {
       if (advance >= 0 && Object.keys(stepDataRef.current).length > 0) {
@@ -131,6 +148,11 @@ export default function OrganizationSetup() {
           step_number: currentStep.step_order,
           event: "completed",
         });
+      }
+      // If we just completed the last step, transition to summary
+      if (advance === 1 && isLast) {
+        setPhase("summary");
+        return;
       }
       setCurrentIndex(nextIndex);
       setStepValid(false);
@@ -153,7 +175,27 @@ export default function OrganizationSetup() {
 
   const handleJump = (stepKey: string) => {
     const idx = renderableSteps.findIndex((s) => s.key === stepKey);
-    if (idx >= 0) setCurrentIndex(idx);
+    if (idx >= 0) {
+      setCurrentIndex(idx);
+      setPhase("steps");
+    }
+  };
+
+  const handleCommit = async () => {
+    if (!orgId) return;
+    const acknowledged = conflicts
+      .filter((c) => c.severity !== "block")
+      .map((c) => c.rule_key);
+    try {
+      const res = await commit.mutateAsync({
+        organization_id: orgId,
+        acknowledged_conflicts: acknowledged,
+      });
+      setCommitResult(res);
+      setPhase("result");
+    } catch (err) {
+      console.error("[OrganizationSetup] commit failed:", err);
+    }
   };
 
   // Loading and gating
@@ -162,38 +204,45 @@ export default function OrganizationSetup() {
   if (!orgId) return <Navigate to="/dashboard" replace />;
   if (registryLoading || draftLoading) return <BootLuxeLoader fullScreen />;
 
-  if (showIntro) {
+  if (showIntro && phase === "steps") {
     return <OnboardingIntroScreen onBegin={() => setShowIntro(false)} />;
   }
 
-  if (!currentStep) {
-    // All renderable steps completed in this wave; future waves render summary
+  if (phase === "result" && commitResult) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <Helmet>
-          <title>Setup almost done — Zura</title>
-        </Helmet>
-        <div className="max-w-md text-center space-y-6">
-          <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Wave 2 milestone
-          </div>
-          <h1 className="font-display text-2xl tracking-wide">
-            You've completed the foundational steps.
-          </h1>
-          <p className="font-sans text-sm text-muted-foreground leading-relaxed">
-            Compensation, catalog, standards, intent, and apps will arrive in
-            the next build wave. Your progress is saved.
-          </p>
-          <Button onClick={() => navigate("/dashboard")}>Go to dashboard</Button>
-        </div>
-      </div>
+      <SetupCommitResult
+        result={commitResult}
+        onContinue={() => navigate("/dashboard")}
+      />
     );
+  }
+
+  if (phase === "summary") {
+    return (
+      <>
+        <Helmet>
+          <title>Final review — Zura setup</title>
+        </Helmet>
+        <SetupSummary
+          orgId={orgId}
+          draftData={draftStepData}
+          steps={renderableSteps}
+          onEditStep={handleJump}
+          onCommit={handleCommit}
+          committing={commit.isPending}
+        />
+      </>
+    );
+  }
+
+  if (!currentStep) {
+    // Shouldn't happen after Wave 3 — defensive fallback
+    setPhase("summary");
+    return <BootLuxeLoader fullScreen />;
   }
 
   const StepComponent = STEP_COMPONENTS[currentStep.component_key];
   const stepBanners = conflicts.filter((c) => {
-    // Only surface conflicts whose triggers include current step or whose
-    // resolution_step is the current step.
     const rule = rules.find((r) => r.key === c.rule_key);
     if (!rule) return false;
     return (
@@ -206,7 +255,7 @@ export default function OrganizationSetup() {
   return (
     <>
       <Helmet>
-        <title>{currentStep.title} — Zura setup</title>
+        <title>{currentStep.title.replace("{{PLATFORM_NAME}}", "Zura")} — Zura setup</title>
       </Helmet>
       <StepShell
         orgId={orgId}
