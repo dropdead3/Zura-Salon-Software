@@ -199,3 +199,48 @@ function json(body: unknown, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+/**
+ * Source-aware follow-up copy. Backfilled orgs already have structural
+ * setup inferred — they just skipped intent + apps. Organic orgs walked
+ * the wizard but bailed. Migrated orgs imported data without setup.
+ */
+function pickFollowupCopy(source: string): {
+  subject: string;
+  headline: string;
+  body: string;
+} {
+  switch (source) {
+    case "backfilled":
+      return {
+        subject: "You skipped intent — two minutes to sharpen Zura",
+        headline: "Tell Zura what you want",
+        body:
+          "We pre-filled your structure from your existing operation. The last two minutes — your intent and apps — is what makes recommendations land. Finish when you have a moment.",
+      };
+    case "migrated":
+      return {
+        subject: "Your data is in — finish the operating layer",
+        headline: "Finish the operating layer",
+        body:
+          "Your appointments and clients are imported. Define your intent and pick your apps so Zura can start recommending the right next move.",
+      };
+    case "organic":
+      return {
+        subject: "Welcome back — two minutes left to finish setup",
+        headline: "Two minutes left",
+        body:
+          "You started strong. Tell us what you want from Zura and pick the apps you'll use — recommendations sharpen the moment you do.",
+      };
+    case "imported":
+    case "invited":
+    case "legacy":
+    default:
+      return {
+        subject: "Finish setting up Zura",
+        headline: "Finish setting up Zura",
+        body:
+          "Two minutes left: tell us what you want from Zura and pick the apps you'll use. Recommendations sharpen the moment you do.",
+      };
+  }
+}
