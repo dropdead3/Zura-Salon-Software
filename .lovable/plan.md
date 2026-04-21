@@ -1,89 +1,78 @@
 
 
-# Flip the polarity of unchecked-state helper copy
+# Audit: What's missing / redundant on Step 2 (Business model)
 
-## The bug
+Short answer: **yes — two gaps and one redundancy worth fixing.** None are urgent bugs; all are structural clarity wins.
 
-Step 2 of the policy setup wizard ("Business model") shows five checkboxes like "We offer hair extensions" with dynamic helper text beneath. The logic in `PolicySetupWizard.tsx` (lines 648–661) reads:
+## 1. Redundant: "packages or memberships" vs "ongoing memberships"
 
-- **Checked** → "N policies active in your library"
-- **Unchecked** → "Hides N policies (X required + Y recommended) from your library"
+Rows 3 and 4 currently read:
 
-The unchecked copy is the source of the confusion. The reader scans the card, sees an empty checkbox next to a verb-led sentence ("Hides 10 policies…"), and their mental model reverses: *"if I check this box, it will hide policies."* The opposite is true — checking the box activates those policies.
+- "We sell packages or memberships" → `offers_packages`
+- "We offer ongoing memberships" → `offers_memberships` (shows "(coming soon)")
 
-Root cause: the helper verb ("Hides") is describing the **current state** (while unchecked, these N policies are hidden), but every other UI convention reads helper text as describing **what checking will do**.
+The first row already says "or memberships." The second row then asks about memberships again, but is marked "coming soon" and has no library attached. For the operator this reads as: *"Didn't I just answer that?"*
 
-## The fix
+**Fix:** Either
 
-Rewrite the unchecked helper to describe what *checking* the box will do — a positive action, matching what every other checkbox on the platform communicates.
+- **(a) Merge** — drop `offers_memberships` for now, let `offers_packages` carry both until the membership-specific library ships. Relabel to just "We sell packages" to make the distinction meaningful when `offers_memberships` returns.
+- **(b) Sharpen** — rename `offers_packages` → "We sell prepaid packages (series of services)" and keep `offers_memberships` → "We sell recurring memberships (monthly/annual)". Different legal surfaces (expiration vs auto-renewal/cancellation), so once memberships ships they *should* be separate.
 
-In `src/components/dashboard/policy/PolicySetupWizard.tsx` (lines 648–658), flip the copy:
+Recommendation: **(b)** long-term, **(a)** until the membership library exists. Today's UI is the worst of both — two rows, one dead.
 
-**Before:**
-```tsx
-if (impact?.hasLibrary && impact.total > 0) {
-  if (checked) {
-    helper = `${impact.total} ${impact.total === 1 ? 'policy' : 'policies'} active in your library`;
-  } else {
-    const parts: string[] = [];
-    if (impact.requiredCount > 0) parts.push(`${impact.requiredCount} required`);
-    if (impact.recommendedCount > 0) parts.push(`${impact.recommendedCount} recommended`);
-    const breakdown = parts.length > 0 ? ` (${parts.join(' + ')})` : '';
-    helper = `Hides ${impact.total} ${impact.total === 1 ? 'policy' : 'policies'}${breakdown} from your library`;
-  }
-  helperEmphasis = hasChanged;
-}
-```
+## 2. Missing: compensation-aware toggles
 
-**After:**
-```tsx
-if (impact?.hasLibrary && impact.total > 0) {
-  const noun = impact.total === 1 ? 'policy' : 'policies';
-  if (checked) {
-    helper = `${impact.total} ${noun} active in your library`;
-  } else {
-    const parts: string[] = [];
-    if (impact.requiredCount > 0) parts.push(`${impact.requiredCount} required`);
-    if (impact.recommendedCount > 0) parts.push(`${impact.recommendedCount} recommended`);
-    const breakdown = parts.length > 0 ? ` (${parts.join(' + ')})` : '';
-    helper = `Adds ${impact.total} ${noun}${breakdown} to your library`;
-  }
-  helperEmphasis = hasChanged;
-}
-```
+The applicability engine (`usePolicyOrgProfile.ts` lines 187–256) already gates policies on:
 
-Two nuances:
+- `uses_tip_pooling` → `requires_tip_pooling`
+- `uses_refund_clawback` → `requires_refund_clawback`
 
-1. **"Hides … from" → "Adds … to"** — describes the action the checkbox performs, not the current hidden state. Matches the mental model of every other checkbox in the wizard (e.g. "We already have an employee handbook" → checking adds context, not removes it).
-2. **`noun` extracted to a local const** — the singular/plural branch was duplicated across both arms; pulling it up makes the two strings symmetric and easier to read.
+But Step 2 never asks the operator about either. So any tip-pooling or clawback policy is silently excluded, even for salons that practice them. This is a real data gap: the wizard promises "drives which policies apply" but skips two drivers.
 
-The checked-state copy ("N policies active in your library") stays — it's already accurate and reads as a status confirmation, not an action.
+**Fix:** Add two rows:
 
-## Files affected
+- "We pool tips across the team" → `uses_tip_pooling`
+- "We claw back commission on refunds" → `uses_refund_clawback`
 
-- `src/components/dashboard/policy/PolicySetupWizard.tsx` — one `else` branch inside the helper builder (lines 648–658), plus a small de-dup of the noun ternary.
+Both are judgment calls {{PLATFORM_NAME}} can't infer from POS data — exactly the shape of toggles Step 2 was built for.
 
-No token changes, no component changes, no doctrine updates.
+## 3. Missing: independent-contractor / booth-rental toggle
+
+Many salons run a hybrid W2 + 1099 model, which changes a large swath of handbook policy (benefits, scheduling, chemical liability, supplies ownership). There's no row for it. Either:
+
+- "We have booth renters or 1099 contractors" → `has_contractors`
+
+Or defer to Step 4 (Compensation) in the org onboarding and read it through. Either is fine — just not silent.
+
+## 4. Not missing but worth naming
+
+Things I checked and confirmed are **already handled elsewhere** — don't re-add here:
+
+- **Location count / multi-location** → read from org context, no toggle needed.
+- **State/jurisdiction** → read from org address (drives state-specific clauses).
+- **Service-under-18 vs minors-as-clients** → `serves_minors` already covers both paths.
 
 ## Acceptance
 
-1. Unchecked "We offer hair extensions" reads: **"Adds 10 policies (8 required + 2 recommended) to your library"** — no more "Hides".
-2. Checked state unchanged: "10 policies active in your library".
-3. Coming-soon rows (e.g. "We offer ongoing memberships" with `!impact.hasLibrary`) unchanged — still shows `"Adds membership-specific terms (coming soon)"`.
-4. Change emphasis (`helperEmphasis`) behavior unchanged — copy still bolds when the user toggles a different value than existing profile.
-5. No regression on the "We serve clients under 18" row, which has no detected flag but uses the same helper builder path.
+1. The "ongoing memberships (coming soon)" row either merges with the packages row or gets a distinct, non-overlapping label.
+2. Step 2 includes tip-pooling and refund-clawback toggles so the applicability engine receives all its inputs.
+3. Contractor/booth-rental is either a Step 2 toggle or explicitly sourced from Step 4 Compensation.
+4. No toggle on Step 2 is "coming soon" — silence-doctrine: ship the row when the library ships.
 
-## Doctrine compliance
+## Files that would change
 
-- **Copy governance**: advisory-first, describes what checking protects/adds. Removes the shame/loss framing ("Hides") which implied the user was turning something off.
-- **UX canon**: checkbox labels describe what checking does. Unchecked helper should preview the positive outcome of checking, not the current negative state.
-- **Silence**: no new copy added, only rephrased.
+- `src/components/dashboard/policy/PolicySetupWizard.tsx` — row list (lines 605–640), `flagImpacts` registry (line 179), form state defaults.
+- `src/hooks/policy/usePolicyProfileDefaults.ts` — detected flags + reasons.
+- `src/hooks/policy/usePolicyOrgProfile.ts` — already has the applicability branches; may need DB column for `uses_tip_pooling` / `uses_refund_clawback` if not present.
+- Possibly a migration on `policy_org_profile` to add the two new columns.
 
 ## Prompt feedback
 
-"These descriptors on the cards are confusing, as it seems like if you check the box, it will hide the policies, when the opposite is true." — excellent diagnostic prompt. You named the surface (descriptors on the cards), the specific user mental-model error (check → hide), and confirmed the actual behavior (opposite). That's a full bug report in one sentence, and it gave me enough to locate the exact branch without having to ask for clarification.
+"Is there anything missing from here?" — open-ended prompts like this are great for a *review-mode* answer, but they burn more round-trips than a scoped one. I had to inspect the wizard, the applicability engine, and the detection hook to give a grounded reply. A five-word sharpener would narrow it fast:
 
-One small sharpening for next time: when the fix is a copy rewrite, naming a directional preference — "make it action-oriented" or "describe what checking does" or even "flip it to Adds instead of Hides" — locks in my phrasing call in one pass. I chose "Adds … to your library" because it mirrors the existing checked-state verb pattern and matches the "staticHelper" copy on every row ("Unlocks…", "Adds…"). If you'd wanted a different frame — e.g. "Protects 10 required scenarios" (leverage framing) or "10 policies will apply to your business" (declarative) — a one-phrase hint would have saved a round trip.
+- "Missing **toggles** only?" → skips copy critique.
+- "Any **redundancy** here?" → skips gap analysis.
+- "Does this **cover our compensation model**?" → directs me straight to the tip-pooling / clawback gap.
 
-Also: this is another **Visual Edits** candidate — rewriting one string template is the zero-credit lane, and the surrounding logic (counts, breakdown) stays identical.
+The "anything missing" frame tends to invite a list; if you want a *ranked* answer ("what's the one thing I'd fix first"), say so — I'll return a single recommendation instead of three. Also: if you have a specific user who got confused on this screen, quoting their reaction ("my manager asked why there are two membership rows") tells me which gap is real vs theoretical.
 
