@@ -117,6 +117,9 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     has_existing_client_policies: existingProfile?.has_existing_client_policies ?? false,
     roles_used: existingProfile?.roles_used ?? [],
     service_categories: existingProfile?.service_categories ?? [],
+    uses_tip_pooling: existingProfile?.uses_tip_pooling ?? false,
+    uses_refund_clawback: existingProfile?.uses_refund_clawback ?? false,
+    has_booth_renters: existingProfile?.has_booth_renters ?? false,
   }));
 
   // Hydrate derived-by-default values once they load (existing profile values win)
@@ -213,6 +216,9 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       offers_packages: (l) => l.requires_packages,
       serves_minors: (l) => l.requires_minors,
       offers_memberships: null,
+      uses_tip_pooling: (l) => !!(l as any).requires_tip_pooling,
+      uses_refund_clawback: (l) => !!(l as any).requires_refund_clawback,
+      has_booth_renters: (l) => !!(l as any).requires_booth_rental,
     };
     const result: Record<string, {
       hasLibrary: boolean;
@@ -227,7 +233,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       }
       const matched = library.filter(filter);
       result[key] = {
-        hasLibrary: true,
+        hasLibrary: matched.length > 0,
         total: matched.length,
         requiredCount: matched.filter((l) => l.recommendation === 'required').length,
         recommendedCount: matched.filter((l) => l.recommendation === 'recommended').length,
@@ -619,15 +625,15 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
               },
               {
                 key: 'offers_packages',
-                label: 'We sell packages or memberships',
-                staticHelper: 'Unlocks package expiration & membership policies',
+                label: 'We sell prepaid packages (series of services)',
+                staticHelper: 'Unlocks package expiration and redemption policies',
                 detected: defaults.detected_offers_packages,
                 detectedReason: defaults.packages_reason,
               },
               {
                 key: 'offers_memberships',
-                label: 'We offer ongoing memberships',
-                staticHelper: 'Adds membership-specific terms',
+                label: 'We sell recurring memberships (monthly / annual)',
+                staticHelper: 'Unlocks auto-renewal and cancellation policies',
                 detected: defaults.detected_offers_memberships,
                 detectedReason: defaults.memberships_reason,
               },
@@ -635,6 +641,27 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 key: 'serves_minors',
                 label: 'We serve clients under 18',
                 staticHelper: 'Adds guardian consent and minor-specific rules',
+                detected: false,
+                detectedReason: null,
+              },
+              {
+                key: 'uses_tip_pooling',
+                label: 'We pool tips across the team',
+                staticHelper: 'Unlocks tip-pool allocation and disclosure policies',
+                detected: false,
+                detectedReason: null,
+              },
+              {
+                key: 'uses_refund_clawback',
+                label: 'We claw back commission on refunds',
+                staticHelper: 'Unlocks refund-clawback and commission adjustment policies',
+                detected: false,
+                detectedReason: null,
+              },
+              {
+                key: 'has_booth_renters',
+                label: 'We have booth renters or 1099 contractors',
+                staticHelper: 'Unlocks booth-rental, chemical liability, and supplies-ownership policies',
                 detected: false,
                 detectedReason: null,
               },
@@ -657,8 +684,6 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                   helper = `Adds ${impact.total} ${noun}${breakdown} to your library`;
                 }
                 helperEmphasis = hasChanged;
-              } else if (impact && !impact.hasLibrary) {
-                helper = `${row.staticHelper} (coming soon)`;
               }
               return (
                 <Label
