@@ -132,6 +132,7 @@ export default function SetupFunnel() {
           events: [],
           commits: [],
           orgNames: new Map<string, string>(),
+          orgSources: new Map<string, string>(),
         };
       }
 
@@ -140,7 +141,7 @@ export default function SetupFunnel() {
         commitsQuery,
       ]);
 
-      // Fetch org names for the affected set in one shot
+      // Fetch org names + sources for the affected set in one shot
       const orgIds = new Set<string>();
       for (const e of (events ?? []) as any[]) orgIds.add(e.organization_id);
       for (const c of (commits ?? []) as any[]) orgIds.add(c.organization_id);
@@ -148,9 +149,15 @@ export default function SetupFunnel() {
       const { data: orgs } = orgIds.size
         ? await supabase
             .from("organizations")
-            .select("id, name")
+            .select("id, name, signup_source")
             .in("id", Array.from(orgIds))
-        : { data: [] as { id: string; name: string }[] };
+        : { data: [] as { id: string; name: string; signup_source: string | null }[] };
+
+      const orgsArr = (orgs ?? []) as {
+        id: string;
+        name: string;
+        signup_source: string | null;
+      }[];
 
       return {
         events: ((events ?? []) as unknown) as Array<{
@@ -166,11 +173,9 @@ export default function SetupFunnel() {
           attempted_at: string;
           system: string;
         }>,
-        orgNames: new Map(
-          ((orgs ?? []) as { id: string; name: string }[]).map((o) => [
-            o.id,
-            o.name,
-          ]),
+        orgNames: new Map(orgsArr.map((o) => [o.id, o.name])),
+        orgSources: new Map(
+          orgsArr.map((o) => [o.id, o.signup_source ?? "legacy"]),
         ),
       };
     },
@@ -464,15 +469,21 @@ export default function SetupFunnel() {
                             Dropped at this step ({row.droppedOrgs.length})
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                            {row.droppedOrgs.slice(0, 60).map((orgId) => (
-                              <div
-                                key={orgId}
-                                className="font-sans text-xs text-foreground rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5 truncate"
-                                title={orgId}
-                              >
-                                {data?.orgNames.get(orgId) ?? orgId.slice(0, 8)}
-                              </div>
-                            ))}
+                            {row.droppedOrgs.slice(0, 60).map((orgId) => {
+                              const src = data?.orgSources.get(orgId) ?? "legacy";
+                              return (
+                                <div
+                                  key={orgId}
+                                  className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
+                                  title={orgId}
+                                >
+                                  <span className="font-sans text-xs text-foreground truncate flex-1">
+                                    {data?.orgNames.get(orgId) ?? orgId.slice(0, 8)}
+                                  </span>
+                                  <SourceBadge source={src} />
+                                </div>
+                              );
+                            })}
                           </div>
                           {row.droppedOrgs.length > 60 && (
                             <p className="font-sans text-xs text-muted-foreground mt-2">
@@ -501,6 +512,29 @@ function Stat({ label, value }: { label: string; value: number }) {
         {value}
       </div>
     </div>
+  );
+}
+
+const SOURCE_BADGE_STYLES: Record<string, string> = {
+  organic: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  invited: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  migrated: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  backfilled: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
+  imported: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+  legacy: "bg-muted text-muted-foreground border-border",
+};
+
+function SourceBadge({ source }: { source: string }) {
+  const style = SOURCE_BADGE_STYLES[source] ?? SOURCE_BADGE_STYLES.legacy;
+  return (
+    <span
+      className={cn(
+        "shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 font-display text-[9px] uppercase tracking-[0.15em]",
+        style,
+      )}
+    >
+      {source}
+    </span>
   );
 }
 
