@@ -156,6 +156,35 @@ export default function OrganizationSetup() {
       return;
     }
     if (!draft) return;
+
+    // Wave 13G.G — reviewMode fast-track: if the migrated draft has every
+    // required step populated, skip the step sequence and land on summary.
+    // If anything required is missing, fall through to normal resume so the
+    // operator isn't dumped into a dead-end summary screen.
+    if (reviewMode) {
+      const draftStepDataLocal = (draft.step_data ?? {}) as Record<string, Record<string, unknown>>;
+      const isPopulated = (val: unknown) => {
+        if (!val || typeof val !== "object") return false;
+        const obj = val as Record<string, unknown>;
+        if (obj.__skipped__ === true) return false;
+        if (obj.backfilled === true) return true;
+        if (obj.__touched !== true) return false;
+        return Object.keys(obj).filter(
+          (k) => k !== "backfilled" && k !== "__skipped__" && k !== "__touched",
+        ).length > 0;
+      };
+      const requiredSteps = renderableSteps.filter((s) => s.required);
+      const allPopulated =
+        requiredSteps.length > 0 &&
+        requiredSteps.every((s) => isPopulated(draftStepDataLocal[s.key]));
+      if (allPopulated) {
+        setShowIntro(false);
+        setPhase("summary");
+        return;
+      }
+      // Otherwise: fall through to normal first-incomplete resume below.
+    }
+
     // Key-based resume (preferred)
     const resumeKey = (draft as any).current_step_key as string | null | undefined;
     if (resumeKey) {
@@ -179,7 +208,7 @@ export default function OrganizationSetup() {
       setCurrentIndex(resumeAt);
       if (resumeAt > 0) setShowIntro(false);
     }
-  }, [draft, renderableSteps, singleStepKey]);
+  }, [draft, renderableSteps, singleStepKey, reviewMode]);
 
   // ── Wave 13D — dwell-time tracking + validation_blocked ────────────────
   // stepEnterAt is reset every time the user lands on a new step. We feed
