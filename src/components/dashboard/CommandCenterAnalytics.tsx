@@ -51,6 +51,7 @@ import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperie
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout, getPinnedVisibilityKey } from '@/hooks/useDashboardLayout';
+import { useSetupIntent } from '@/hooks/onboarding/useSetupIntent';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
