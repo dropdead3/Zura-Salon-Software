@@ -382,6 +382,7 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
               { value: 'missed_maintenance', label: 'Missed maintenance window' },
               { value: 'unauthorized_removal', label: 'Removed by another stylist' },
             ],
+            defaultValue: ['sulfate_shampoo', 'home_color', 'missed_maintenance', 'unauthorized_removal'],
           },
         ],
       },
