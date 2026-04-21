@@ -682,9 +682,16 @@ export function PolicyConfiguratorPanel({
                           key={field.key}
                           field={field}
                           value={values[field.key]}
-                          onChange={(v) =>
-                            setValues((prev) => ({ ...prev, [field.key]: v }))
-                          }
+                          onChange={(v) => {
+                            // Operator typed into a longtext field — flag it
+                            // so the reactive role-token re-substitution
+                            // effect won't overwrite their edit. Operator
+                            // edits are sacred.
+                            if (field.type === 'longtext') {
+                              userEditedFieldsRef.current.add(field.key);
+                            }
+                            setValues((prev) => ({ ...prev, [field.key]: v }));
+                          }}
                         />
                       ))}
                     </div>
