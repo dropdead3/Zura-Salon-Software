@@ -53,20 +53,58 @@ Deno.serve(async (req) => {
   for (const row of due ?? []) {
     processed += 1;
 
-    // Check commit log: latest entry per system
+    // Pre-flight: org still exists and user is still an admin?
+    // 48h+ can pass between enqueue and dispatch; org may have been
+    // deleted or the user demoted in the meantime.
+    const { data: orgExists } = await admin
+      .from("organizations")
+      .select("id")
+      .eq("id", row.organization_id)
+      .maybeSingle();
+    if (!orgExists) {
+      await admin
+        .from("setup_followup_queue")
+        .update({ skipped_at: nowIso, skipped_reason: "org_deleted" })
+        .eq("id", row.id);
+      skipped += 1;
+      continue;
+    }
+
+    const { data: stillAdmin } = await admin.rpc("is_org_admin", {
+      _user_id: row.user_id,
+      _org_id: row.organization_id,
+    });
+    if (!stillAdmin) {
+      await admin
+        .from("setup_followup_queue")
+        .update({ skipped_at: nowIso, skipped_reason: "no_longer_admin" })
+        .eq("id", row.id);
+      skipped += 1;
+      continue;
+    }
+
+    // Check commit log: latest entry per system. We require source='wizard'
+    // so a synthetic backfill 'completed' row doesn't satisfy the gate.
     const { data: log } = await admin
       .from("org_setup_commit_log")
-      .select("system, status, attempted_at")
+      .select("system, status, source, attempted_at")
       .eq("organization_id", row.organization_id)
       .order("attempted_at", { ascending: false });
 
-    const latest = new Map<string, string>();
-    for (const r of (log ?? []) as Array<{ system: string; status: string }>) {
-      if (!latest.has(r.system)) latest.set(r.system, r.status);
+    const latest = new Map<string, { status: string; source: string }>();
+    for (
+      const r of (log ?? []) as Array<
+        { system: string; status: string; source: string }
+      >
+    ) {
+      if (!latest.has(r.system)) {
+        latest.set(r.system, { status: r.status, source: r.source });
+      }
     }
-    const allDone = COMPLETION_SYSTEMS.every(
-      (s) => latest.get(s) === "completed",
-    );
+    const allDone = COMPLETION_SYSTEMS.every((s) => {
+      const entry = latest.get(s);
+      return entry?.status === "completed" && entry.source === "wizard";
+    });
 
     if (allDone) {
       await admin
@@ -232,8 +270,14 @@ function pickFollowupCopy(source: string): {
         body:
           "You started strong. Tell us what you want from Zura and pick the apps you'll use — recommendations sharpen the moment you do.",
       };
-    case "imported":
     case "invited":
+      return {
+        subject: "Your team set you up — finish in two minutes",
+        headline: "Your team set you up — finish the last 2 minutes",
+        body:
+          "Someone on your team got Zura ready for you. Tell us what matters to you and pick the apps you'll use — recommendations sharpen the moment you do.",
+      };
+    case "imported":
     case "legacy":
     default:
       return {

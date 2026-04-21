@@ -298,7 +298,11 @@ export default function SetupFunnel() {
         );
         const weeklyDrops = new Array(SPARKLINE_WEEKS).fill(0);
         for (const id of droppedIds) {
-          const ts = r.viewedAt.get(id) ?? lastActivityByOrg.get(id) ?? 0;
+          // Wave 11B fix: bucket by *most recent activity* (drop time),
+          // not first view. Falls back to viewedAt only when no other
+          // signal exists.
+          const ts =
+            lastActivityByOrg.get(id) ?? r.viewedAt.get(id) ?? 0;
           if (ts < windowStartMs) continue;
           const idx = Math.min(
             SPARKLINE_WEEKS - 1,
@@ -458,7 +462,7 @@ export default function SetupFunnel() {
         </div>
 
         {/* Top stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
           <StatTile
             icon={<Users className="w-5 h-5 text-primary" />}
             label="Orgs started"
@@ -490,6 +494,10 @@ export default function SetupFunnel() {
           <SourceBreakdownTile
             isLoading={isLoading}
             breakdown={sourceBreakdown}
+            onSelectSource={(s) => {
+              setSource(s as SourceKey);
+              setExpandedStep(null);
+            }}
           />
         </div>
 
@@ -756,20 +764,26 @@ async function downloadDroppedCsvAndLog(args: {
 }) {
   const { stepNumber, stepLabel, rows, names, sources, exportedBy } = args;
 
-  // Write outreach log entries (best-effort, fire-and-await)
+  // Wave 11A: write outreach log via dedicated edge function so RLS is
+  // enforced server-side and errors surface to the user.
   if (rows.length > 0) {
     const logRows = rows.map((r) => ({
       organization_id: r.id,
       step_number: stepNumber,
       step_label: stepLabel,
-      exported_by: exportedBy,
     }));
-    const { error } = await (supabase as any)
-      .from("setup_outreach_log")
-      .insert(logRows);
-    if (error) {
-      console.warn("[SetupFunnel] outreach log write failed:", error);
+    const { data: logResp, error: logErr } = await supabase.functions.invoke(
+      "log-setup-outreach",
+      { body: { rows: logRows } },
+    );
+    if (logErr || (logResp as any)?.error) {
+      const msg = (logErr?.message ?? (logResp as any)?.error ?? "unknown");
+      console.error("[SetupFunnel] outreach log write failed:", msg);
+      toast.error(`Outreach log write failed: ${msg}`);
+      // continue with CSV download regardless — the export is still useful
     }
+    // exportedBy is captured server-side from the JWT; no need to thread it
+    void exportedBy;
   }
 
   // Build CSV via shared util (RFC 4180 escaping)
@@ -835,8 +849,8 @@ function StatTile({
 }
 
 /**
- * Sparkline — compact 8-week drop trend per step. Uses semantic foreground
- * tokens (no hardcoded colors) so it respects theme.
+ * Sparkline — compact 8-week drop trend per step. Hover surfaces exact
+ * weekly counts and a delta-vs-prior indicator (Wave 11C).
  */
 function Sparkline({ values }: { values: number[] }) {
   if (!values || values.length === 0) {
@@ -853,6 +867,12 @@ function Sparkline({ values }: { values: number[] }) {
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(" ");
+  const current = values[values.length - 1] ?? 0;
+  const prior = values[values.length - 2] ?? 0;
+  const delta = current - prior;
+  const tooltip = `Last ${values.length} weeks (oldest → newest):\n${values
+    .map((v, i) => `W-${values.length - 1 - i}: ${v}`)
+    .join("\n")}\nThis week vs prior: ${delta >= 0 ? "+" : ""}${delta}`;
   return (
     <svg
       width={W}
@@ -861,6 +881,7 @@ function Sparkline({ values }: { values: number[] }) {
       className="ml-auto block"
       aria-label={`Drops over last ${values.length} weeks`}
     >
+      <title>{tooltip}</title>
       <polyline
         points={points}
         fill="none"
@@ -875,15 +896,17 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 /**
- * SourceBreakdownTile — 5th top-line tile breaking the cohort by acquisition
- * source so platform ops sees attribution health at a glance.
+ * SourceBreakdownTile — 5th top-line tile. Source badges are clickable
+ * and apply the cohort filter for one-click drill-down (Wave 11C).
  */
 function SourceBreakdownTile({
   isLoading,
   breakdown,
+  onSelectSource,
 }: {
   isLoading: boolean;
   breakdown: { source: string; count: number; pct: number }[];
+  onSelectSource?: (source: string) => void;
 }) {
   return (
     <Card className="relative">
@@ -907,7 +930,14 @@ function SourceBreakdownTile({
                     key={b.source}
                     className="flex items-center justify-between gap-2"
                   >
-                    <SourceBadge source={b.source} />
+                    <button
+                      type="button"
+                      onClick={() => onSelectSource?.(b.source)}
+                      className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring/40"
+                      title={`Filter funnel by ${b.source}`}
+                    >
+                      <SourceBadge source={b.source} />
+                    </button>
                     <span className="font-display text-xs tracking-wide tabular-nums text-foreground">
                       {b.pct.toFixed(0)}%
                     </span>
