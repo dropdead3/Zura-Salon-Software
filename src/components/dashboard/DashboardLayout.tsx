@@ -48,7 +48,7 @@ import { IncidentBanner } from '@/components/dashboard/IncidentBanner';
 import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
 import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog';
-import { PostSetupOrientationOverlay } from '@/components/onboarding/PostSetupOrientationOverlay';
+
 import { BackfillWelcomeBanner } from '@/components/onboarding/BackfillWelcomeBanner';
 import { InitialSetupGateBanner } from '@/components/onboarding/setup/InitialSetupGateBanner';
 import { useBackfillTrigger } from '@/hooks/onboarding/useBackfillTrigger';
