@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { BookOpen, Plus, Loader2 } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Upload, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useHandbooks, useCreateHandbook } from '@/hooks/handbook/useHandbookData';
@@ -17,6 +17,7 @@ import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import { HandbookStatusBadge } from '@/components/dashboard/handbook/HandbookStatusBadge';
 import { RoleHandbookGrid } from '@/components/dashboard/handbook/RoleHandbookGrid';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { usePolicyOrgProfile } from '@/hooks/policy/usePolicyOrgProfile';
 import { formatDistanceToNow } from 'date-fns';
 
 interface HandbookDashboardContentProps {
