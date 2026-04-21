@@ -69,6 +69,37 @@ Deno.serve(async (req) => {
       return json({ error: "Organization not found" }, 404, corsHeaders);
     }
 
+    // Wave 13H — B8: log ineligible outcomes too so platform admin can see
+    // *why* nothing's been backfilled, not just that nothing has. Each early
+    // return below threads through this helper before responding.
+    const logIneligible = async (reason: string) => {
+      await supabase.from("org_setup_backfill_attempts").insert({
+        organization_id,
+        attempted_by: user.id,
+        outcome: "ineligible",
+        backfilled_count: 0,
+        pending_count: 0,
+        skipped_count: 0,
+        details: { reason },
+      });
+    };
+
+    if (org.setup_completed_at) {
+      await logIneligible("already_completed");
+      return json(
+        {
+          success: true,
+          backfilled: 0,
+          pending: 0,
+          skipped: 0,
+          results: [],
+          ineligible: "already_completed",
+        },
+        200,
+        corsHeaders,
+      );
+    }
+
     const results: BackfillResult[] = [];
 
     // Read existing draft to preserve any owner-entered data
