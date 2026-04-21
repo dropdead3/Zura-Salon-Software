@@ -17,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tokens } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
@@ -35,12 +34,30 @@ const STEP_LABELS: Record<number, string> = {
 };
 
 type RangeKey = "7d" | "30d" | "90d" | "all";
+type SourceKey =
+  | "all"
+  | "organic"
+  | "invited"
+  | "migrated"
+  | "backfilled"
+  | "imported"
+  | "legacy";
 
 const RANGE_OPTIONS: { key: RangeKey; label: string; days: number | null }[] = [
   { key: "7d", label: "Last 7 days", days: 7 },
   { key: "30d", label: "Last 30 days", days: 30 },
   { key: "90d", label: "Last 90 days", days: 90 },
   { key: "all", label: "All time", days: null },
+];
+
+const SOURCE_OPTIONS: { key: SourceKey; label: string }[] = [
+  { key: "all", label: "All sources" },
+  { key: "organic", label: "Organic" },
+  { key: "invited", label: "Invited" },
+  { key: "migrated", label: "Migrated" },
+  { key: "backfilled", label: "Backfilled" },
+  { key: "imported", label: "Imported" },
+  { key: "legacy", label: "Legacy (pre-source)" },
 ];
 
 interface FunnelRow {
@@ -58,11 +75,12 @@ interface FunnelRow {
  * completion rate, and time-to-commit so platform ops can spot
  * which step is the bottleneck.
  *
- * Wave 6: Cohort filter (7/30/90d/all) + per-step drill-down listing
- * the orgs that dropped off at each stage.
+ * Wave 7: cohort-by-acquisition-source axis. `legacy` = orgs created
+ * before signup_source was tracked (NULL).
  */
 export default function SetupFunnel() {
   const [range, setRange] = useState<RangeKey>("30d");
+  const [source, setSource] = useState<SourceKey>("all");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
   const sinceIso = useMemo(() => {
@@ -72,22 +90,49 @@ export default function SetupFunnel() {
   }, [range]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["platform-setup-funnel", range],
+    queryKey: ["platform-setup-funnel", range, source],
     queryFn: async () => {
+      // Step 1: resolve the org cohort by signup_source
+      let orgCohort: Set<string> | null = null;
+      if (source !== "all") {
+        const orgsQuery = supabase.from("organizations").select("id");
+        if (source === "legacy") {
+          orgsQuery.is("signup_source", null);
+        } else {
+          orgsQuery.eq("signup_source", source);
+        }
+        const { data: cohortOrgs } = await orgsQuery.limit(5000);
+        orgCohort = new Set(
+          ((cohortOrgs ?? []) as { id: string }[]).map((o) => o.id),
+        );
+      }
+
       const eventsQuery = supabase
-        .from("org_setup_step_events" as any)
-        .select("step_number, event, organization_id, created_at")
-        .order("created_at", { ascending: true })
+        .from("org_setup_step_events")
+        .select("step_number, step_key, event, organization_id, occurred_at")
+        .order("occurred_at", { ascending: true })
         .limit(10000);
       const commitsQuery = supabase
-        .from("org_setup_commit_log" as any)
-        .select("org_id, status, attempted_at, system")
+        .from("org_setup_commit_log")
+        .select("organization_id, status, attempted_at, system")
         .order("attempted_at", { ascending: true })
         .limit(10000);
 
       if (sinceIso) {
-        eventsQuery.gte("created_at", sinceIso);
+        eventsQuery.gte("occurred_at", sinceIso);
         commitsQuery.gte("attempted_at", sinceIso);
+      }
+      if (orgCohort && orgCohort.size > 0) {
+        const ids = Array.from(orgCohort);
+        eventsQuery.in("organization_id", ids);
+        commitsQuery.in("organization_id", ids);
+      } else if (orgCohort) {
+        // Cohort selected but empty → return empty result
+        return {
+          events: [],
+          commits: [],
+          orgNames: new Map<string, string>(),
+        };
       }
 
       const [{ data: events }, { data: commits }] = await Promise.all([
@@ -98,7 +143,7 @@ export default function SetupFunnel() {
       // Fetch org names for the affected set in one shot
       const orgIds = new Set<string>();
       for (const e of (events ?? []) as any[]) orgIds.add(e.organization_id);
-      for (const c of (commits ?? []) as any[]) orgIds.add(c.org_id);
+      for (const c of (commits ?? []) as any[]) orgIds.add(c.organization_id);
 
       const { data: orgs } = orgIds.size
         ? await supabase
@@ -109,13 +154,14 @@ export default function SetupFunnel() {
 
       return {
         events: ((events ?? []) as unknown) as Array<{
-          step_number: number;
+          step_number: number | null;
+          step_key: string;
           event: string;
           organization_id: string;
-          created_at: string;
+          occurred_at: string;
         }>,
         commits: ((commits ?? []) as unknown) as Array<{
-          org_id: string;
+          organization_id: string;
           status: string;
           attempted_at: string;
           system: string;
@@ -141,9 +187,11 @@ export default function SetupFunnel() {
       }
     >();
     for (const ev of data.events) {
+      const stepNum = ev.step_number ?? -1;
+      if (stepNum < 0) continue;
       const row =
-        map.get(ev.step_number) ?? {
-          step_number: ev.step_number,
+        map.get(stepNum) ?? {
+          step_number: stepNum,
           viewed: 0,
           completed: 0,
           skipped: 0,
@@ -159,7 +207,7 @@ export default function SetupFunnel() {
         row.completedOrgs.add(ev.organization_id);
       }
       if (ev.event === "skipped") row.skipped += 1;
-      map.set(ev.step_number, row);
+      map.set(stepNum, row);
     }
     return Array.from(map.values())
       .sort((a, b) => a.step_number - b.step_number)
@@ -179,17 +227,17 @@ export default function SetupFunnel() {
     const committedOrgs = new Set(
       data?.commits
         .filter((c) => c.status === "completed")
-        .map((c) => c.org_id) ?? [],
+        .map((c) => c.organization_id) ?? [],
     );
     const firstView = new Map<string, number>();
     const lastCommit = new Map<string, number>();
     for (const e of data?.events ?? []) {
       if (e.event === "viewed" && !firstView.has(e.organization_id)) {
-        firstView.set(e.organization_id, new Date(e.created_at).getTime());
+        firstView.set(e.organization_id, new Date(e.occurred_at).getTime());
       }
     }
     for (const c of data?.commits ?? []) {
-      lastCommit.set(c.org_id, new Date(c.attempted_at).getTime());
+      lastCommit.set(c.organization_id, new Date(c.attempted_at).getTime());
     }
     const durations: number[] = [];
     for (const [orgId, start] of firstView) {
@@ -232,26 +280,49 @@ export default function SetupFunnel() {
             </p>
           </div>
 
-          {/* Cohort range filter */}
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
-            {RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => {
-                  setRange(opt.key);
-                  setExpandedStep(null);
-                }}
-                className={cn(
-                  "px-3 py-1.5 rounded-md font-sans text-xs transition-colors",
-                  range === opt.key
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row items-end gap-2">
+            {/* Cohort range filter */}
+            <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+              {RANGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setRange(opt.key);
+                    setExpandedStep(null);
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md font-sans text-xs transition-colors",
+                    range === opt.key
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {/* Acquisition source filter */}
+            <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 flex-wrap">
+              {SOURCE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setSource(opt.key);
+                    setExpandedStep(null);
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md font-sans text-xs transition-colors",
+                    source === opt.key
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -318,8 +389,7 @@ export default function SetupFunnel() {
                 <TrendingDown className={tokens.empty.icon} />
                 <h3 className={tokens.empty.heading}>No funnel data yet</h3>
                 <p className={tokens.empty.description}>
-                  Once orgs start the wizard in this window, telemetry will
-                  populate here.
+                  No telemetry for this cohort and window yet.
                 </p>
               </div>
             ) : (
