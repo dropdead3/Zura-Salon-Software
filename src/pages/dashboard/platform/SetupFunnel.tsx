@@ -187,6 +187,23 @@ export default function SetupFunnel() {
     staleTime: 60_000,
   });
 
+  // Per-org last activity (max of any event timestamp). Used to weight
+  // dropped orgs hottest-first so platform ops triage warm leads.
+  const lastActivityByOrg = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of data?.events ?? []) {
+      const t = new Date(e.occurred_at).getTime();
+      const prev = m.get(e.organization_id) ?? 0;
+      if (t > prev) m.set(e.organization_id, t);
+    }
+    for (const c of data?.commits ?? []) {
+      const t = new Date(c.attempted_at).getTime();
+      const prev = m.get(c.organization_id) ?? 0;
+      if (t > prev) m.set(c.organization_id, t);
+    }
+    return m;
+  }, [data?.events, data?.commits]);
+
   const funnel: FunnelRow[] = useMemo(() => {
     if (!data?.events) return [];
     const map = new Map<
@@ -226,11 +243,16 @@ export default function SetupFunnel() {
         viewed: r.viewed,
         completed: r.completed,
         skipped: r.skipped,
-        droppedOrgs: Array.from(r.viewedOrgs).filter(
-          (id) => !r.completedOrgs.has(id),
-        ),
+        droppedOrgs: Array.from(r.viewedOrgs)
+          .filter((id) => !r.completedOrgs.has(id))
+          .map((id) => ({
+            id,
+            lastActivityMs: lastActivityByOrg.get(id) ?? 0,
+          }))
+          // Hottest (most recent activity) first — ops triage warm leads
+          .sort((a, b) => b.lastActivityMs - a.lastActivityMs),
       }));
-  }, [data?.events]);
+  }, [data?.events, lastActivityByOrg]);
 
   const totals = useMemo(() => {
     const orgs = new Set(data?.events.map((e) => e.organization_id) ?? []);
