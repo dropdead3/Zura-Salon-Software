@@ -172,6 +172,19 @@ export function PolicyConfiguratorPanel({
   const longtextDefaultsRef = useRef<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
   const [step, setStep] = useState<StepId>('rules');
+  // Wave 28.14 — Interview vs Expert mode for the Rules step.
+  // Persisted per operator so power users land back in their preferred mode.
+  const [rulesMode, setRulesMode] = useState<'interview' | 'expert'>(() => {
+    if (typeof window === 'undefined') return 'interview';
+    const saved = window.localStorage.getItem('policy-configurator-rules-mode');
+    return saved === 'expert' ? 'expert' : 'interview';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('policy-configurator-rules-mode', rulesMode);
+    }
+  }, [rulesMode]);
+  const [recentlyChangedKey, setRecentlyChangedKey] = useState<string | null>(null);
   const [acksOpen, setAcksOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
