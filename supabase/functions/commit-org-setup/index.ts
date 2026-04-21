@@ -442,9 +442,12 @@ async function executeStepHandler(
     case "step_6_standards": {
       // Component writes: tip_distribution_rule (enum), commission_basis,
       // refund_clawback (enum: always|rare|never), has_existing_handbook
-      const usesTipPooling =
-        data.tip_distribution_rule === "pooled" ||
-        data.tip_distribution_rule === "team_based";
+      //
+      // Wave 13F.A — preserve the full tip_distribution_model alongside the
+      // legacy uses_tip_pooling boolean. Pooled and team_based are distinct
+      // operational realities; flattening them loses payroll fidelity.
+      const tipModel: string | null = data.tip_distribution_rule ?? null;
+      const usesTipPooling = tipModel === "pooled" || tipModel === "team_based";
       const usesRefundClawback = data.refund_clawback === "always";
       const commissionBases: string[] = data.commission_basis
         ? [data.commission_basis]
@@ -452,6 +455,7 @@ async function executeStepHandler(
 
       const { error } = await supabase.from("policy_org_profile").upsert({
         organization_id: orgId,
+        tip_distribution_model: tipModel,
         uses_tip_pooling: usesTipPooling,
         uses_refund_clawback: usesRefundClawback,
         commission_basis_in_use: commissionBases,
@@ -482,11 +486,30 @@ async function executeStepHandler(
 
     case "step_7_5_apps": {
       // Component writes: { installed_apps: string[], expressed_interest: string[] }
-      // Tier 3 interest goes to app_interest. Tier 1/2 install activation
-      // is handled by the apps marketplace separately.
-      const interest: string[] = Array.isArray(data.expressed_interest)
-        ? data.expressed_interest
+      //
+      // Wave 13F.A — fix B9. Previously this handler only persisted Tier-3
+      // interest and silently dropped `installed_apps`, leaving the operator's
+      // selection unrecognized by entitlement gates. Now we activate each
+      // installed app in `organization_apps` (idempotent on app_key) and still
+      // record Tier-3 interest in `app_interest`.
+      const installed: string[] = Array.isArray(data.installed_apps)
+        ? data.installed_apps.filter(Boolean)
         : [];
+      const interest: string[] = Array.isArray(data.expressed_interest)
+        ? data.expressed_interest.filter(Boolean)
+        : [];
+
+      let activated = 0;
+      for (const appKey of installed) {
+        const { error } = await supabase.from("organization_apps").upsert({
+          organization_id: orgId,
+          app_key: appKey,
+          activated_at: new Date().toISOString(),
+        }, { onConflict: "organization_id,app_key" });
+        if (error) throw error;
+        activated++;
+      }
+
       for (const appKey of interest) {
         const { error } = await supabase.from("app_interest").upsert({
           organization_id: orgId,
@@ -499,6 +522,7 @@ async function executeStepHandler(
         step_key: stepKey,
         system,
         status: "completed",
+        reason: `${activated} activated, ${interest.length} interest`,
         deep_link: "/dashboard/apps",
       };
     }
