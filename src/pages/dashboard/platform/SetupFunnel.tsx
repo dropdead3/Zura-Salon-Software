@@ -71,6 +71,8 @@ const SOURCE_OPTIONS: { key: SourceKey; label: string }[] = [
 interface DroppedOrg {
   id: string;
   lastActivityMs: number;
+  contacted: boolean;
+  lastContactedMs: number | null;
 }
 
 interface FunnelRow {
@@ -80,6 +82,8 @@ interface FunnelRow {
   skipped: number;
   /** Orgs that viewed this step but never completed it (drop-offs), sorted hottest-first */
   droppedOrgs: DroppedOrg[];
+  /** Weekly drop-off counts (oldest → newest) for sparkline */
+  weeklyDrops: number[];
 }
 
 /**
@@ -92,6 +96,8 @@ interface FunnelRow {
  * before signup_source was tracked (NULL).
  */
 export default function SetupFunnel() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [range, setRange] = useState<RangeKey>("30d");
   const [source, setSource] = useState<SourceKey>("all");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
