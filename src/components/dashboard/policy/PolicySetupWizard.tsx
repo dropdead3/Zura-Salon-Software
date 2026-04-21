@@ -138,11 +138,11 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       service_categories:
         defaults.service_categories.length > 0 ? defaults.service_categories : f.service_categories,
       roles_used: defaults.roles_used.length > 0 ? defaults.roles_used : f.roles_used,
-      // Heuristic toggle defaults — only seed when no existing profile and operator hasn't touched them
-      offers_retail: existingProfile?.offers_retail ?? defaults.detected_offers_retail,
-      offers_extensions: existingProfile?.offers_extensions ?? defaults.detected_offers_extensions,
-      offers_packages: existingProfile?.offers_packages ?? defaults.detected_offers_packages,
-      offers_memberships: existingProfile?.offers_memberships ?? defaults.detected_offers_memberships,
+      // Heuristic toggle defaults — auto-detection always wins (true); explicit operator opt-outs preserved otherwise.
+      offers_retail: defaults.detected_offers_retail || (existingProfile?.offers_retail ?? false),
+      offers_extensions: defaults.detected_offers_extensions || (existingProfile?.offers_extensions ?? false),
+      offers_packages: defaults.detected_offers_packages || (existingProfile?.offers_packages ?? false),
+      offers_memberships: defaults.detected_offers_memberships || (existingProfile?.offers_memberships ?? false),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaults.isLoading]);
