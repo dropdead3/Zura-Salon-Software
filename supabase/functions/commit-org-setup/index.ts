@@ -371,6 +371,7 @@ async function executeStepHandler(
   orgId: string,
   data: any,
   userId: string,
+  fullDraft?: Record<string, any>, // Wave 13H — B2: cross-step re-derivation
 ): Promise<CommitStepResult> {
   switch (stepKey) {
     case "step_0_fit_check": {
