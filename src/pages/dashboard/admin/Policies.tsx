@@ -26,6 +26,12 @@ import { computeHiddenByReason } from '@/lib/policy/applicability-summary';
 import { PolicyHealthStrip } from '@/components/dashboard/policy/PolicyHealthStrip';
 import { PolicyCategoryCard } from '@/components/dashboard/policy/PolicyCategoryCard';
 import { PolicyLibraryCard } from '@/components/dashboard/policy/PolicyLibraryCard';
+import {
+  CORE_FUNCTION_POLICY_KEYS,
+  CORE_FUNCTION_CONSUMERS,
+  isCoreFunctionPolicy,
+  type CoreFunctionPolicyKey,
+} from '@/lib/policy/core-function-policies';
 import { PolicySetupIntro } from '@/components/dashboard/policy/PolicySetupIntro';
 import { PolicySetupWizard } from '@/components/dashboard/policy/PolicySetupWizard';
 import { PolicyConfiguratorPanel } from '@/components/dashboard/policy/PolicyConfiguratorPanel';
@@ -567,8 +573,26 @@ export default function Policies() {
                   </div>
                 ) : (
                   (() => {
-                    const requiredEntries = filteredLibrary.filter((e) => e.recommendation === 'required');
+                    const coreEntries = filteredLibrary.filter((e) => isCoreFunctionPolicy(e.key));
+                    const requiredEntries = filteredLibrary.filter(
+                      (e) => e.recommendation === 'required' && !isCoreFunctionPolicy(e.key),
+                    );
                     const otherEntries = filteredLibrary.filter((e) => e.recommendation !== 'required');
+
+                    // Sort core entries by canonical CORE_FUNCTION_POLICY_KEYS order
+                    const coreSorted = [...coreEntries].sort(
+                      (a, b) =>
+                        CORE_FUNCTION_POLICY_KEYS.indexOf(a.key as CoreFunctionPolicyKey) -
+                        CORE_FUNCTION_POLICY_KEYS.indexOf(b.key as CoreFunctionPolicyKey),
+                    );
+                    const coreVisible = hideAdoptedRequired
+                      ? coreSorted.filter((e) => !adoptedByKey.has(e.key))
+                      : coreSorted;
+                    const coreAdoptedCount = coreEntries.filter((e) => adoptedByKey.has(e.key)).length;
+                    const coreTotal = coreEntries.length;
+                    const corePct = coreTotal > 0 ? Math.round((coreAdoptedCount / coreTotal) * 100) : 0;
+                    const coreComplete = coreTotal > 0 && coreAdoptedCount === coreTotal;
+
                     const requiredAdoptedCount = requiredEntries.filter((e) => adoptedByKey.has(e.key)).length;
                     const requiredTotal = requiredEntries.length;
                     const requiredPct = requiredTotal > 0 ? Math.round((requiredAdoptedCount / requiredTotal) * 100) : 0;
@@ -580,26 +604,99 @@ export default function Policies() {
                     const requiredVisible = hideAdoptedRequired
                       ? requiredSorted.filter((e) => !adoptedByKey.has(e.key))
                       : requiredSorted;
-                    const renderCard = (entry: typeof filteredLibrary[number]) => (
-                      <PolicyLibraryCard
-                        key={entry.id}
-                        entry={entry}
-                        adopted={adoptedByKey.get(entry.key)}
-                        onClick={() => {
-                          const next = new URLSearchParams(searchParams);
-                          next.set('policy', entry.key);
-                          setSearchParams(next, { replace: true });
-                        }}
-                      />
-                    );
+
+                    const renderCard = (entry: typeof filteredLibrary[number]) => {
+                      const isCore = isCoreFunctionPolicy(entry.key);
+                      return (
+                        <PolicyLibraryCard
+                          key={entry.id}
+                          entry={entry}
+                          adopted={adoptedByKey.get(entry.key)}
+                          consumerLabel={
+                            isCore ? CORE_FUNCTION_CONSUMERS[entry.key as CoreFunctionPolicyKey] : undefined
+                          }
+                          showDefaultFallback={isCore}
+                          onClick={() => {
+                            const next = new URLSearchParams(searchParams);
+                            next.set('policy', entry.key);
+                            setSearchParams(next, { replace: true });
+                          }}
+                        />
+                      );
+                    };
+
+                    const anyAdoptedToggle =
+                      coreAdoptedCount > 0 || requiredAdoptedCount > 0;
+
                     return (
                       <div className="space-y-6">
+                        {coreEntries.length > 0 && (
+                          <div className="space-y-3">
+                            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1 border-b border-border/40">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
+                                  Core functions
+                                </h3>
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <span
+                                    className={cn(
+                                      'font-sans text-xs',
+                                      coreComplete ? 'text-primary' : 'text-muted-foreground',
+                                    )}
+                                  >
+                                    {coreAdoptedCount} of {coreTotal} configured
+                                  </span>
+                                  <Progress
+                                    value={corePct}
+                                    className="h-[2px] w-[120px] bg-muted"
+                                    indicatorClassName={coreComplete ? 'bg-primary' : 'bg-primary/70'}
+                                  />
+                                  <span
+                                    className={cn(
+                                      'font-sans text-xs tabular-nums',
+                                      coreComplete ? 'text-primary' : 'text-muted-foreground',
+                                    )}
+                                  >
+                                    {corePct}%
+                                  </span>
+                                </div>
+                                {anyAdoptedToggle && (
+                                  <div className="flex items-center gap-2">
+                                    <Switch
+                                      id="hide-adopted-required"
+                                      checked={hideAdoptedRequired}
+                                      onCheckedChange={setHideAdoptedRequired}
+                                    />
+                                    <Label
+                                      htmlFor="hide-adopted-required"
+                                      className="font-sans text-xs text-muted-foreground cursor-pointer"
+                                    >
+                                      Hide adopted
+                                    </Label>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="font-sans text-xs text-muted-foreground mt-1.5">
+                                These power POS and booking. Defaults work out of the box — configure to make them yours.
+                              </p>
+                            </div>
+                            {coreVisible.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                                {coreVisible.map(renderCard)}
+                              </div>
+                            ) : (
+                              <p className="font-sans text-xs text-muted-foreground py-4">
+                                All core functions configured. Toggle "Hide adopted" off to review them.
+                              </p>
+                            )}
+                          </div>
+                        )}
                         {requiredEntries.length > 0 && (
                           <div className="space-y-3">
                             <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1 border-b border-border/40">
                               <div className="flex items-center gap-3 flex-wrap">
                                 <h3 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
-                                  Required
+                                  Required for governance
                                 </h3>
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                   <span
@@ -624,22 +721,10 @@ export default function Policies() {
                                     {requiredPct}%
                                   </span>
                                 </div>
-                                {requiredAdoptedCount > 0 && (
-                                  <div className="flex items-center gap-2">
-                                    <Switch
-                                      id="hide-adopted-required"
-                                      checked={hideAdoptedRequired}
-                                      onCheckedChange={setHideAdoptedRequired}
-                                    />
-                                    <Label
-                                      htmlFor="hide-adopted-required"
-                                      className="font-sans text-xs text-muted-foreground cursor-pointer"
-                                    >
-                                      Hide adopted
-                                    </Label>
-                                  </div>
-                                )}
                               </div>
+                              <p className="font-sans text-xs text-muted-foreground mt-1.5">
+                                Protect your business. The software runs without these, but your operations and team don't have a written contract.
+                              </p>
                             </div>
                             {requiredVisible.length > 0 ? (
                               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -647,7 +732,7 @@ export default function Policies() {
                               </div>
                             ) : (
                               <p className="font-sans text-xs text-muted-foreground py-4">
-                                All required policies adopted. Toggle "Hide adopted" off to review them.
+                                All governance policies adopted. Toggle "Hide adopted" off to review them.
                               </p>
                             )}
                           </div>
