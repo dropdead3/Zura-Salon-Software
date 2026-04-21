@@ -249,6 +249,125 @@ export function useCreateCompensationPlan() {
   });
 }
 
+export function useCompensationPlan(planId: string | undefined) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  return useQuery({
+    queryKey: ['compensation-plans', orgId, 'one', planId],
+    enabled: !!orgId && !!planId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('compensation_plans' as any)
+        .select('*')
+        .eq('id', planId!)
+        .eq('organization_id', orgId!)
+        .single();
+      if (error) throw error;
+      return data as unknown as CompensationPlan;
+    },
+  });
+}
+
+export function useUpdateCompensationPlan() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      patch: Partial<{
+        name: string;
+        description: string | null;
+        config: Record<string, any>;
+        commission_basis: CommissionBasis;
+        tip_handling: TipHandling;
+        refund_clawback: boolean;
+        addon_treatment: AddonTreatment;
+        is_active: boolean;
+      }>;
+    }) => {
+      const { data, error } = await supabase
+        .from('compensation_plans' as any)
+        .update(input.patch)
+        .eq('id', input.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as CompensationPlan;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compensation-plans'] });
+      toast({ title: 'Plan updated' });
+    },
+    onError: () => {
+      toast({ title: 'Could not update plan', variant: 'destructive' });
+    },
+  });
+}
+
+export function useAssignUserToPlan() {
+  const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (input: { userId: string; planId: string; effectiveFrom?: string }) => {
+      const orgId = effectiveOrganization?.id;
+      if (!orgId) throw new Error('No active organization');
+      const today = input.effectiveFrom ?? new Date().toISOString().slice(0, 10);
+
+      // Close out any current open assignment
+      await supabase
+        .from('user_compensation_assignments' as any)
+        .update({ effective_to: today })
+        .eq('organization_id', orgId)
+        .eq('user_id', input.userId)
+        .is('effective_to', null);
+
+      const { error } = await supabase.from('user_compensation_assignments' as any).insert({
+        organization_id: orgId,
+        user_id: input.userId,
+        plan_id: input.planId,
+        effective_from: today,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-compensation-assignments'] });
+      toast({ title: 'Staff assigned to plan' });
+    },
+    onError: () => {
+      toast({ title: 'Could not assign staff', variant: 'destructive' });
+    },
+  });
+}
+
+export function useUnassignUserFromPlan() {
+  const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const orgId = effectiveOrganization?.id;
+      if (!orgId) throw new Error('No active organization');
+      const today = new Date().toISOString().slice(0, 10);
+      const { error } = await supabase
+        .from('user_compensation_assignments' as any)
+        .update({ effective_to: today })
+        .eq('organization_id', orgId)
+        .eq('user_id', userId)
+        .is('effective_to', null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-compensation-assignments'] });
+      toast({ title: 'Removed from plan' });
+    },
+  });
+}
+
 export function useDeactivateCompensationPlan() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

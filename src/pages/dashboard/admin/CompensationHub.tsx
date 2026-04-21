@@ -1,18 +1,18 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Users, Briefcase, CheckCircle2 } from 'lucide-react';
+import { Plus, Users, Briefcase, CheckCircle2, ChevronRight } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import {
   useCompensationPlans,
   useUserCompensationAssignments,
   PLAN_TYPE_META,
   type CompensationPlan,
-  type CompensationPlanType,
 } from '@/hooks/useCompensationPlans';
 import { CreateCompensationPlanDialog } from '@/components/dashboard/payroll/CreateCompensationPlanDialog';
 
@@ -120,47 +120,50 @@ function PlanCard({ plan, assignedCount }: { plan: CompensationPlan; assignedCou
   const meta = PLAN_TYPE_META[plan.plan_type];
 
   return (
-    <Card className={!plan.is_active ? 'opacity-60' : ''}>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <CardTitle className={tokens.card.title}>{plan.name}</CardTitle>
-              {plan.is_default && (
-                <Badge variant="secondary" className="text-xs">
-                  Default
-                </Badge>
-              )}
-              {!plan.is_active && (
-                <Badge variant="outline" className="text-xs">
-                  Inactive
-                </Badge>
-              )}
+    <Link to={`/dashboard/admin/compensation/${plan.id}`} className="block group">
+      <Card className={'transition-shadow hover:shadow-md ' + (!plan.is_active ? 'opacity-60' : '')}>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <CardTitle className={tokens.card.title}>{plan.name}</CardTitle>
+                {plan.is_default && (
+                  <Badge variant="secondary" className="text-xs">
+                    Default
+                  </Badge>
+                )}
+                {!plan.is_active && (
+                  <Badge variant="outline" className="text-xs">
+                    Inactive
+                  </Badge>
+                )}
+              </div>
+              <CardDescription className="font-sans text-sm">
+                {meta.label} · {meta.short}
+              </CardDescription>
             </div>
-            <CardDescription className="font-sans text-sm">
-              {meta.label} · {meta.short}
-            </CardDescription>
+            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors mt-1" />
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <p className="text-sm text-muted-foreground font-sans mb-4 line-clamp-2">
-          {plan.description || meta.description}
-        </p>
-        <div className="flex items-center justify-between pt-3 border-t border-border/60">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="w-4 h-4" />
-            <span>
-              {assignedCount} {assignedCount === 1 ? 'person' : 'people'}
-            </span>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground font-sans mb-4 line-clamp-2">
+            {plan.description || meta.description}
+          </p>
+          <div className="flex items-center justify-between pt-3 border-t border-border/60">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="w-4 h-4" />
+              <span>
+                {assignedCount} {assignedCount === 1 ? 'person' : 'people'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <BasisChip label={plan.commission_basis.replace(/_/g, ' ')} />
+              <BasisChip label={`tips ${plan.tip_handling.replace(/_/g, ' ')}`} />
+            </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <BasisChip label={plan.commission_basis.replace(/_/g, ' ')} />
-            <BasisChip label={`tips ${plan.tip_handling.replace(/_/g, ' ')}`} />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
