@@ -60,13 +60,18 @@ const SOURCE_OPTIONS: { key: SourceKey; label: string }[] = [
   { key: "legacy", label: "Legacy (pre-source)" },
 ];
 
+interface DroppedOrg {
+  id: string;
+  lastActivityMs: number;
+}
+
 interface FunnelRow {
   step_number: number;
   viewed: number;
   completed: number;
   skipped: number;
-  /** Orgs that viewed this step but never completed it (drop-offs) */
-  droppedOrgs: string[];
+  /** Orgs that viewed this step but never completed it (drop-offs), sorted hottest-first */
+  droppedOrgs: DroppedOrg[];
 }
 
 /**
