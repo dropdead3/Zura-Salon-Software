@@ -71,8 +71,10 @@ export default function OrganizationSetup() {
   const { user, loading: authLoading } = useAuth();
   const orgId = params.get("org");
   const skipIntro = params.get("skipIntro") === "1";
+  const singleStepKey = params.get("step"); // single-step re-entry from settings
+  const returnTo = params.get("returnTo");
 
-  const [showIntro, setShowIntro] = useState(!skipIntro);
+  const [showIntro, setShowIntro] = useState(!skipIntro && !singleStepKey);
   const [phase, setPhase] = useState<"steps" | "summary" | "result">("steps");
   const [commitResult, setCommitResult] = useState<CommitResult | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -98,17 +100,26 @@ export default function OrganizationSetup() {
     [draftStepData],
   );
 
-  // Resume at draft's current_step on first load
+  // Resume at draft's current_step on first load — or jump to single-step from settings
   const resumedRef = useRef(false);
   useEffect(() => {
-    if (resumedRef.current || !draft || !renderableSteps.length) return;
+    if (resumedRef.current || !renderableSteps.length) return;
     resumedRef.current = true;
+    if (singleStepKey) {
+      const idx = renderableSteps.findIndex((s) => s.key === singleStepKey);
+      if (idx >= 0) {
+        setCurrentIndex(idx);
+        setShowIntro(false);
+      }
+      return;
+    }
+    if (!draft) return;
     const resumeAt = draft.current_step;
     if (typeof resumeAt === "number" && resumeAt >= 0 && resumeAt < renderableSteps.length) {
       setCurrentIndex(resumeAt);
       if (resumeAt > 0) setShowIntro(false);
     }
-  }, [draft, renderableSteps.length]);
+  }, [draft, renderableSteps.length, singleStepKey]);
 
   // Telemetry: viewed
   useEffect(() => {
@@ -148,6 +159,12 @@ export default function OrganizationSetup() {
           step_number: currentStep.step_order,
           event: "completed",
         });
+      }
+      // Single-step re-entry: commit just this step and bounce back to settings
+      if (advance === 1 && singleStepKey) {
+        toast.success("Saved");
+        navigate(returnTo || "/dashboard");
+        return;
       }
       // If we just completed the last step, transition to summary
       if (advance === 1 && isLast) {
@@ -265,12 +282,18 @@ export default function OrganizationSetup() {
         whyWeAsk={WHY_WE_ASK[currentStep.key] ?? ""}
         canAdvance={stepValid && !blockingConflict}
         saving={save.isPending}
-        isFirst={currentIndex === 0}
-        isLast={currentIndex === renderableSteps.length - 1}
-        onBack={() => persist(-1)}
+        isFirst={singleStepKey ? false : currentIndex === 0}
+        isLast={singleStepKey ? false : currentIndex === renderableSteps.length - 1}
+        onBack={() => {
+          if (singleStepKey) {
+            navigate(returnTo || "/dashboard");
+            return;
+          }
+          persist(-1);
+        }}
         onNext={() => persist(1)}
-        onSkip={currentStep.required ? handleSkip : undefined}
-        onJumpToStep={handleJump}
+        onSkip={!singleStepKey && currentStep.required ? handleSkip : undefined}
+        onJumpToStep={singleStepKey ? undefined : handleJump}
         banners={
           stepBanners.length > 0
             ? stepBanners.map((c) => (
