@@ -195,7 +195,10 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal',
               value={typeof value === 'string' ? value : ''}
               placeholder={field.placeholder}
               onChange={(e) => onChange(e.target.value)}
-              className={cn('font-sans', sideMode ? 'min-h-[160px]' : 'min-h-[80px]')}
+              className={cn(
+                'font-sans',
+                sideMode ? 'min-h-[160px]' : field.key === 'policy_summary' ? 'min-h-[140px]' : 'min-h-[80px]',
+              )}
             />
           )}
         </div>

@@ -247,7 +247,7 @@ export function PolicyQuestionnaire({
                 value={value}
                 onChange={(v) => onChange(field.key, v, field.type)}
                 audience={audience}
-                helperPlacement="side"
+                helperPlacement="inline"
               />
             </div>
           </details>
@@ -257,7 +257,7 @@ export function PolicyQuestionnaire({
             value={value}
             onChange={(v) => onChange(field.key, v, field.type)}
             audience={audience}
-            helperPlacement="side"
+            helperPlacement="inline"
           />
         )}
       </div>
