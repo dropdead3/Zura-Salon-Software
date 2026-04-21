@@ -12,7 +12,11 @@ interface StepShellProps {
   step: StepRegistryEntry;
   steps: StepRegistryEntry[];
   completedKeys: Set<string>;
+  /** Reason text shown inside the Why-We-Ask disclosure. */
   whyWeAsk: string;
+  /** Wave 13G.E — optional app-activation copy (e.g. "Zura Color Bar"). */
+  activates?: string;
+  activatesHint?: string;
   canAdvance: boolean;
   saving?: boolean;
   isFirst?: boolean;
