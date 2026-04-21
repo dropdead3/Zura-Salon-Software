@@ -92,7 +92,20 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { organization_id, acknowledged_conflicts = [], idempotency_key } = body ?? {};
+    const {
+      organization_id,
+      acknowledged_conflicts = [],
+      idempotency_key,
+      // Wave 13G.B — single-step re-entry from settings. When set, the
+      // orchestrator only runs handlers for these step keys; everything
+      // else is reported as `skipped: caller-scoped`. setup_completed_at
+      // is NOT stamped in scoped mode (the wizard is still in progress).
+      step_keys,
+    } = body ?? {};
+    const scopedKeys: string[] | null =
+      Array.isArray(step_keys) && step_keys.length > 0
+        ? step_keys.filter((k: any) => typeof k === "string")
+        : null;
     if (!organization_id) {
       return json({ error: "organization_id required" }, 400, corsHeaders);
     }
@@ -159,6 +172,17 @@ Deno.serve(async (req) => {
     for (const stepKey of stepOrder) {
       const data = stepData[stepKey];
       const system = SYSTEM_BY_STEP[stepKey] ?? stepKey;
+
+      // Wave 13G.B — scoped re-entry: skip every step not in the caller's list.
+      if (scopedKeys && !scopedKeys.includes(stepKey)) {
+        results.push({
+          step_key: stepKey,
+          system,
+          status: "skipped",
+          reason: "caller-scoped",
+        });
+        continue;
+      }
 
       if (!data || (typeof data === "object" && Object.keys(data).length === 0)) {
         results.push({
@@ -236,7 +260,9 @@ Deno.serve(async (req) => {
     // Wave 13A.B5 — only stamp setup_completed_at on a clean run with real work.
     // Otherwise leave it null so the org stays in the funnel and the user can
     // re-enter from the dashboard.
-    if (success) {
+    // Wave 13G.B — never stamp completion in scoped (single-step) mode; the
+    // wizard isn't actually finished, the operator just patched one slice.
+    if (success && !scopedKeys) {
       await supabase.from("organizations")
         .update({
           setup_completed_at: new Date().toISOString(),
