@@ -633,6 +633,7 @@ export function PolicyConfiguratorPanel({
                 versionId={versionId}
                 rows={applicability}
                 onChange={setApplicability}
+                entry={entry}
               />
             )}
           </TabsContent>
