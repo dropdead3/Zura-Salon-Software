@@ -587,6 +587,59 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
+function formatRecency(ms: number): string {
+  if (!ms) return "—";
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d`;
+  const months = Math.floor(days / 30);
+  return `${months}mo`;
+}
+
+function downloadDroppedCsv(
+  stepNumber: number,
+  stepLabel: string,
+  rows: DroppedOrg[],
+  names: Map<string, string>,
+  sources: Map<string, string>,
+) {
+  const header = [
+    "organization_id",
+    "organization_name",
+    "signup_source",
+    "last_activity_iso",
+    "days_since_activity",
+  ];
+  const csv = [header.join(",")]
+    .concat(
+      rows.map((r) => {
+        const name = (names.get(r.id) ?? "").replace(/"/g, '""');
+        const src = sources.get(r.id) ?? "legacy";
+        const iso = r.lastActivityMs
+          ? new Date(r.lastActivityMs).toISOString()
+          : "";
+        const days = r.lastActivityMs
+          ? Math.floor((Date.now() - r.lastActivityMs) / 86_400_000).toString()
+          : "";
+        return [r.id, `"${name}"`, src, iso, days].join(",");
+      }),
+    )
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `setup-funnel-step${stepNumber}-${stepLabel.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function StatTile({
   icon,
   label,
