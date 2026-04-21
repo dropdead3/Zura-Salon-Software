@@ -37,11 +37,26 @@ interface PolicyRuleFieldProps {
   helperPlacement?: 'inline' | 'side';
 }
 
-function ProvenanceHelper({ field, audience }: { field: RuleField; audience: PolicyAudience }) {
+function ProvenanceHelper({
+  field,
+  audience,
+  sideMode = false,
+}: {
+  field: RuleField;
+  audience: PolicyAudience;
+  sideMode?: boolean;
+}) {
   const line = buildProvenanceLine(field, audience);
   if (!line) return null;
   return (
-    <div className="border-t border-border/40 pt-2 mt-1 flex items-start gap-2 flex-wrap">
+    <div
+      className={cn(
+        'flex items-start gap-2 flex-wrap',
+        sideMode
+          ? 'rounded-lg border border-border/50 bg-muted/30 p-3'
+          : 'border-t border-border/40 pt-2 mt-1',
+      )}
+    >
       {line.showPrefilledBadge && (
         <Badge
           variant="outline"
