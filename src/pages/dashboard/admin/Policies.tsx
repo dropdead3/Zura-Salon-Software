@@ -50,6 +50,22 @@ export default function Policies() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activePolicyKey = searchParams.get('policy');
   const librarySectionRef = useRef<HTMLElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Search query — URL-synced via ?q=
+  const [query, setQuery] = useState<string>(() => searchParams.get('q') ?? '');
+  const [adoptionFilter, setAdoptionFilter] = useState<'all' | 'adopted' | 'not_adopted'>('all');
+
+  // Sync query <-> URL (?q=)
+  useEffect(() => {
+    const current = searchParams.get('q') ?? '';
+    if (current === query) return;
+    const next = new URLSearchParams(searchParams);
+    if (query.trim()) next.set('q', query);
+    else next.delete('q');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   const handleCategoryCardClick = (cat: PolicyCategory) => {
     setActiveCategory((prev) => (prev === cat ? 'all' : cat));
