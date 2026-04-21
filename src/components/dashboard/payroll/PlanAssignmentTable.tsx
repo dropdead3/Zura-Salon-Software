@@ -33,7 +33,7 @@ export function PlanAssignmentTable({ plan }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name, photo_url, role, is_active')
+        .select('user_id, full_name, display_name, photo_url, stylist_level, is_active')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('full_name', { ascending: true });
@@ -64,7 +64,7 @@ export function PlanAssignmentTable({ plan }: Props) {
       return (
         (s.full_name || '').toLowerCase().includes(q) ||
         (s.display_name || '').toLowerCase().includes(q) ||
-        (s.role || '').toLowerCase().includes(q)
+        (s.stylist_level || '').toLowerCase().includes(q)
       );
     });
   }, [staff, search]);
@@ -127,7 +127,7 @@ export function PlanAssignmentTable({ plan }: Props) {
                         {s.display_name || s.full_name}
                       </div>
                       <div className="text-xs text-muted-foreground font-sans truncate">
-                        {s.role || '—'}
+                        {s.stylist_level || '—'}
                       </div>
                     </div>
                   </div>
