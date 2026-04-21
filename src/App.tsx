@@ -99,6 +99,7 @@ const ServicesManager = lazyWithRetry(() => import("./pages/dashboard/admin/Serv
 const AnnouncementBarManager = lazyWithRetry(() => import("./pages/dashboard/admin/AnnouncementBarManager"));
 const StylistLevels = lazyWithRetry(() => import("./pages/dashboard/admin/StylistLevels"));
 const CompensationHub = lazyWithRetry(() => import("./pages/dashboard/admin/CompensationHub"));
+const CompensationPlanEditor = lazyWithRetry(() => import("./pages/dashboard/admin/CompensationPlanEditor"));
 const LocationsManager = lazyWithRetry(() => import("./pages/dashboard/admin/LocationsManager"));
 const WebsiteSectionsHub = lazyWithRetry(() => import("./pages/dashboard/admin/WebsiteSectionsHub"));
 const TeamBirthdays = lazyWithRetry(() => import("./pages/dashboard/admin/TeamBirthdays"));
@@ -362,6 +363,7 @@ function DashboardRoutes() {
       <Route path="admin/accounts" element={<Navigate to="admin/access-hub?tab=invitations" replace />} />
       <Route path="admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
       <Route path="admin/compensation" element={<ProtectedRoute requiredPermission="manage_settings"><CompensationHub /></ProtectedRoute>} />
+      <Route path="admin/compensation/:planId" element={<ProtectedRoute requiredPermission="manage_settings"><CompensationPlanEditor /></ProtectedRoute>} />
       <Route path="admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
       <Route path="admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
       <Route path="admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
