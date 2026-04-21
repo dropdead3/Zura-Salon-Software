@@ -67,6 +67,33 @@ export default function Policies() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
+  // Keyboard shortcuts: "/" focuses the search; Esc clears, then blurs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isTyping =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+      if (e.key === '/' && !isTyping) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        if (query) {
+          e.preventDefault();
+          setQuery('');
+        } else {
+          searchInputRef.current?.blur();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [query]);
+
   const handleCategoryCardClick = (cat: PolicyCategory) => {
     setActiveCategory((prev) => (prev === cat ? 'all' : cat));
     // Defer to next frame so the state-driven scroll target is laid out before scrolling.
