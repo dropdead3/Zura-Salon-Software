@@ -186,10 +186,10 @@ Deno.serve(async (req) => {
     const results: CommitStepResult[] = [];
 
     // Execute per-step commit handlers in registry order (Wave 13F.B — G26)
-    const stepOrder = await loadStepOrder(supabase);
+    const { stepOrder, systemByStep } = await loadRegistry(supabase);
     for (const stepKey of stepOrder) {
       const data = stepData[stepKey];
-      const system = SYSTEM_BY_STEP[stepKey] ?? stepKey;
+      const system = systemByStep[stepKey] ?? SYSTEM_BY_STEP_FALLBACK[stepKey] ?? stepKey;
 
       // Wave 13G.B — scoped re-entry: skip every step not in the caller's list.
       if (scopedKeys && !scopedKeys.includes(stepKey)) {
@@ -212,6 +212,39 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Wave 13H — B6: purely-backfilled-untouched steps are NOT re-applied.
+      // Backfill seeds defaults (e.g. serves_minors:false, tip_distribution_rule:
+      // individual) which would silently overwrite policy_org_profile on commit
+      // if the operator never confirmed them. Step 0 (fit check) and Step 7/7.5
+      // have no backfilled shape so they always pass through.
+      const d = data as Record<string, unknown>;
+      const isPurelyBackfilled =
+        d.backfilled === true &&
+        d.__touched !== true &&
+        d.__skipped__ !== true;
+      if (isPurelyBackfilled) {
+        results.push({
+          step_key: stepKey,
+          system,
+          status: "skipped",
+          reason: "backfill-only, no user confirmation",
+        });
+        // Still record a completion row so the rail and audit trail see
+        // this step as "acknowledged via backfill" — but do NOT run the
+        // handler or write to policy_org_profile.
+        await supabase.from("org_setup_commit_log").insert({
+          organization_id,
+          system,
+          status: "skipped",
+          reason: "backfill-only, no user confirmation",
+          acknowledged_conflicts,
+          attempted_by: user.id,
+          source: "wizard",
+          idempotency_key: idempotency_key ?? null,
+        });
+        continue;
+      }
+
       try {
         const handlerResult = await executeStepHandler(
           supabase,
@@ -220,6 +253,7 @@ Deno.serve(async (req) => {
           organization_id,
           data,
           user.id,
+          stepData, // Wave 13H — B2: full draft for server-side cross-step derivation
         );
         results.push(handlerResult);
 
