@@ -46,6 +46,9 @@ export function Step1Identity({ initialData, onChange, onValidityChange }: StepP
   const [timezone, setTimezone] = useState(
     (initialData?.timezone as string) ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
+  // Wave 13G.A — track whether the user actually changed business_type so the
+  // orchestrator doesn't overwrite a backfilled multi_location with the default.
+  const [businessTypeTouched, setBusinessTypeTouched] = useState(false);
 
   useEffect(() => {
     onChange({
@@ -53,9 +56,11 @@ export function Step1Identity({ initialData, onChange, onValidityChange }: StepP
       legal_name: legalName,
       business_type: businessType,
       timezone,
-    });
+      // Sentinel read by commit-org-setup step_1_identity handler.
+      __touched_business_type: businessTypeTouched,
+    } as Step1Data & { __touched_business_type: boolean });
     onValidityChange(businessName.trim().length > 0);
-  }, [businessName, legalName, businessType, timezone, onChange, onValidityChange]);
+  }, [businessName, legalName, businessType, timezone, businessTypeTouched, onChange, onValidityChange]);
 
   return (
     <div className="space-y-5">
@@ -95,7 +100,10 @@ export function Step1Identity({ initialData, onChange, onValidityChange }: StepP
         <Label className="font-sans text-sm">Business structure</Label>
         <Select
           value={businessType}
-          onValueChange={(v) => setBusinessType(v as Step1Data["business_type"])}
+          onValueChange={(v) => {
+            setBusinessType(v as Step1Data["business_type"]);
+            setBusinessTypeTouched(true);
+          }}
         >
           <SelectTrigger className="font-sans">
             <SelectValue />
