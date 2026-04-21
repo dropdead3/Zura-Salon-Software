@@ -951,9 +951,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
-        <Button variant="ghost" size={tokens.button.inline} onClick={onClose} disabled={isSaving} className="font-sans">
-          Cancel
-        </Button>
+        <Button variant="ghost" size={tokens.button.inline} onClick={handleClose} disabled={isSaving} className="font-sans">
         <div className="flex items-center gap-2">
           {!isFirst && (
             <Button variant="outline" size={tokens.button.inline} onClick={back} disabled={isSaving} className="font-sans">
