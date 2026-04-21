@@ -628,18 +628,36 @@ async function executeStepHandler(
       //   not get re-activated after the operator removed its qualifying input.
       // Wave 13G.F — record Tier-1 declines as `app_interest.status='declined'`
       //   instead of activating; preserves operator autonomy.
+      // Wave 13H — B2: re-derive qualification server-side from steps 3/4/5
+      // so stale client qualified_keys can't cause wrongly-activated apps.
+      const step3 = (fullDraft?.["step_3_team"] ?? {}) as Record<string, any>;
+      const step4 = (fullDraft?.["step_4_compensation"] ?? {}) as Record<string, any>;
+      const step5 = (fullDraft?.["step_5_catalog"] ?? {}) as Record<string, any>;
+      const cats: string[] = Array.isArray(step5.service_categories) ? step5.service_categories : [];
+      const compModels: string[] = Array.isArray(step4.models) ? step4.models : [];
+      const serverQualified = new Set<string>();
+      if (cats.includes("color") || cats.includes("chemical")) serverQualified.add("color_bar");
+      if (compModels.length > 0) serverQualified.add("zura_payroll");
+      if (step3.has_booth_renters === true) serverQualified.add("booth_rental");
+      if (cats.includes("extensions")) serverQualified.add("extensions_tracker");
+
       const installedRaw: string[] = Array.isArray(data.installed_apps)
         ? data.installed_apps.filter(Boolean)
         : [];
       const declined: string[] = Array.isArray(data.declined_apps)
         ? data.declined_apps.filter(Boolean)
         : [];
-      const qualified: string[] | null = Array.isArray(data.qualified_keys)
+      const clientQualified: string[] | null = Array.isArray(data.qualified_keys)
         ? data.qualified_keys.filter(Boolean)
         : null;
-      // Drop installs that no longer qualify (stale draft) and any explicitly declined.
+      // Server-derived takes precedence; fall back to client list only when
+      // we have no server signal (forward-compat for new app keys).
+      const effectiveQualified: Set<string> | null =
+        serverQualified.size > 0
+          ? serverQualified
+          : (clientQualified ? new Set(clientQualified) : null);
       const installed = installedRaw.filter(
-        (k) => (qualified === null || qualified.includes(k)) && !declined.includes(k),
+        (k) => (effectiveQualified === null || effectiveQualified.has(k)) && !declined.includes(k),
       );
       const interest: string[] = Array.isArray(data.expressed_interest)
         ? data.expressed_interest.filter(Boolean)
