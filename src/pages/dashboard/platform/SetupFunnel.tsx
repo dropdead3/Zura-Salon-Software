@@ -132,6 +132,7 @@ export default function SetupFunnel() {
           events: [],
           commits: [],
           orgNames: new Map<string, string>(),
+          orgSources: new Map<string, string>(),
         };
       }
 
@@ -468,15 +469,21 @@ export default function SetupFunnel() {
                             Dropped at this step ({row.droppedOrgs.length})
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                            {row.droppedOrgs.slice(0, 60).map((orgId) => (
-                              <div
-                                key={orgId}
-                                className="font-sans text-xs text-foreground rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5 truncate"
-                                title={orgId}
-                              >
-                                {data?.orgNames.get(orgId) ?? orgId.slice(0, 8)}
-                              </div>
-                            ))}
+                            {row.droppedOrgs.slice(0, 60).map((orgId) => {
+                              const src = data?.orgSources.get(orgId) ?? "legacy";
+                              return (
+                                <div
+                                  key={orgId}
+                                  className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
+                                  title={orgId}
+                                >
+                                  <span className="font-sans text-xs text-foreground truncate flex-1">
+                                    {data?.orgNames.get(orgId) ?? orgId.slice(0, 8)}
+                                  </span>
+                                  <SourceBadge source={src} />
+                                </div>
+                              );
+                            })}
                           </div>
                           {row.droppedOrgs.length > 60 && (
                             <p className="font-sans text-xs text-muted-foreground mt-2">
