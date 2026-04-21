@@ -50,6 +50,7 @@ import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen'
 import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog';
 import { PostSetupOrientationOverlay } from '@/components/onboarding/PostSetupOrientationOverlay';
 import { BackfillWelcomeBanner } from '@/components/onboarding/BackfillWelcomeBanner';
+import { InitialSetupGateBanner } from '@/components/onboarding/setup/InitialSetupGateBanner';
 import { useBackfillTrigger } from '@/hooks/onboarding/useBackfillTrigger';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 
@@ -597,6 +598,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       )}>
         <div className={cn(`flex-1 p-4 lg:px-8 lg:pt-4 ${hideFooter ? 'lg:pb-4' : 'lg:pb-8'}`, hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
           <BackfillWelcomeBanner />
+          <InitialSetupGateBanner />
           {children}
         </div>
       </main>
