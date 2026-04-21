@@ -216,6 +216,9 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       offers_packages: (l) => l.requires_packages,
       serves_minors: (l) => l.requires_minors,
       offers_memberships: null,
+      uses_tip_pooling: (l) => !!(l as any).requires_tip_pooling,
+      uses_refund_clawback: (l) => !!(l as any).requires_refund_clawback,
+      has_booth_renters: (l) => !!(l as any).requires_booth_rental,
     };
     const result: Record<string, {
       hasLibrary: boolean;
@@ -230,7 +233,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       }
       const matched = library.filter(filter);
       result[key] = {
-        hasLibrary: true,
+        hasLibrary: matched.length > 0,
         total: matched.length,
         requiredCount: matched.filter((l) => l.recommendation === 'required').length,
         recommendedCount: matched.filter((l) => l.recommendation === 'recommended').length,
