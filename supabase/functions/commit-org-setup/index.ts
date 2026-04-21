@@ -39,7 +39,10 @@ const STEP_ORDER_FALLBACK = [
   "step_7_5_apps",
 ];
 
-const SYSTEM_BY_STEP: Record<string, string> = {
+// Wave 13H — B9: SYSTEM_BY_STEP is now a fallback only. The registry's
+// `system` column is the source of truth (see migration 13H). Keeping this
+// map handles cold-cache / registry-read-failure cases.
+const SYSTEM_BY_STEP_FALLBACK: Record<string, string> = {
   step_0_fit_check: "fit_check",
   step_1_identity: "identity",
   step_2_footprint: "footprint",
@@ -51,20 +54,35 @@ const SYSTEM_BY_STEP: Record<string, string> = {
   step_7_5_apps: "apps",
 };
 
-async function loadStepOrder(supabase: any): Promise<string[]> {
+/**
+ * Loads {stepKey → system} from setup_step_registry (B9).
+ * Falls back to hardcoded map on any failure so a registry regression
+ * never blocks commit.
+ */
+async function loadRegistry(
+  supabase: any,
+): Promise<{ stepOrder: string[]; systemByStep: Record<string, string> }> {
   const { data, error } = await supabase
     .from("setup_step_registry")
-    .select("key, step_order, deprecated_at")
+    .select("key, step_order, system, deprecated_at")
     .is("deprecated_at", null)
     .order("step_order", { ascending: true });
   if (error || !data || data.length === 0) {
     console.warn(
-      "[commit-org-setup] registry read failed, using STEP_ORDER_FALLBACK:",
+      "[commit-org-setup] registry read failed, using fallbacks:",
       error?.message,
     );
-    return STEP_ORDER_FALLBACK;
+    return {
+      stepOrder: STEP_ORDER_FALLBACK,
+      systemByStep: SYSTEM_BY_STEP_FALLBACK,
+    };
   }
-  return data.map((r: any) => r.key);
+  const stepOrder = data.map((r: any) => r.key);
+  const systemByStep: Record<string, string> = {};
+  for (const r of data) {
+    systemByStep[r.key] = r.system ?? SYSTEM_BY_STEP_FALLBACK[r.key] ?? r.key;
+  }
+  return { stepOrder, systemByStep };
 }
 
 Deno.serve(async (req) => {
