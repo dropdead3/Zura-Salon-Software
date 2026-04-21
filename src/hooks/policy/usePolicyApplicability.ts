@@ -270,20 +270,54 @@ export function defaultVariantForSurface(
 
 /**
  * Seed applicability rows from the org profile (28.3) so freshly adopted
- * policies inherit org reality (roles_used, service_categories, locations).
- * The operator can deselect any chip before saving.
+ * policies inherit org reality (roles_used, service_categories, locations,
+ * compensation_models_in_use). The operator can deselect any chip before
+ * saving.
+ *
+ * `relevantScopes` (optional) filters which scope lanes get seeded — passed
+ * by the editor so policies with narrow scope manifests don't get spurious
+ * rows for irrelevant lanes (e.g., HR policies don't seed Service category).
+ * Wave 28.5+: the Applicability editor always passes this; the param stays
+ * optional for backward compatibility with any callers that don't.
  */
 export function seedApplicabilityFromProfile(
   profile: PolicyOrgProfile | null,
   locations: Array<{ id: string }>,
+  options?: {
+    relevantScopes?: PolicyScopeType[];
+    audienceLocked?: boolean;
+    lockedAudience?: 'internal' | 'external' | 'both';
+  },
 ): ApplicabilityRow[] {
   if (!profile) return [];
+  const allowed = options?.relevantScopes
+    ? new Set<PolicyScopeType>(options.relevantScopes)
+    : null; // null = no filter (all lanes allowed)
+  const allow = (s: PolicyScopeType) => !allowed || allowed.has(s);
   const out: ApplicabilityRow[] = [];
-  (profile.roles_used ?? []).forEach((r) => out.push({ scope_type: 'role', scope_value: r }));
-  (profile.service_categories ?? []).forEach((s) =>
-    out.push({ scope_type: 'service_category', scope_value: s }),
-  );
-  locations.forEach((l) => out.push({ scope_type: 'location', scope_value: l.id }));
+  if (allow('role')) {
+    (profile.roles_used ?? []).forEach((r) =>
+      out.push({ scope_type: 'role', scope_value: r }),
+    );
+  }
+  if (allow('service_category')) {
+    (profile.service_categories ?? []).forEach((s) =>
+      out.push({ scope_type: 'service_category', scope_value: s }),
+    );
+  }
+  if (allow('employment_type')) {
+    (profile.compensation_models_in_use ?? []).forEach((m) =>
+      out.push({ scope_type: 'employment_type', scope_value: m }),
+    );
+  }
+  if (allow('location')) {
+    locations.forEach((l) => out.push({ scope_type: 'location', scope_value: l.id }));
+  }
+  // When the audience is locked by the library, persist a single audience
+  // row so downstream surface-mapping continues to filter correctly.
+  if (options?.audienceLocked && options.lockedAudience) {
+    out.push({ scope_type: 'audience', scope_value: options.lockedAudience });
+  }
   return out;
 }
 
