@@ -21,6 +21,8 @@ interface StepShellProps {
   saving?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
+  /** Wave 13G.G — single-step re-entry (?step=…) hides the side rail. */
+  singleStep?: boolean;
   onBack: () => void;
   onNext: () => void;
   onSkip?: () => void;
@@ -50,6 +52,7 @@ export function StepShell({
   saving,
   isFirst,
   isLast,
+  singleStep,
   onBack,
   onNext,
   onSkip,
@@ -62,9 +65,32 @@ export function StepShell({
   const [skipOpen, setSkipOpen] = useState(false);
   const consequence = STEP_UNLOCK_CONSEQUENCES[step.key];
 
+  // Wave 13G.G — mount the side rail (with completion timestamps) on lg+
+  // for the full multi-step flow. Single-step re-entry stays body-only.
+  const showSideRail = !singleStep;
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-3xl">
+      <div
+        className={
+          showSideRail
+            ? "container mx-auto px-4 sm:px-6 py-6 max-w-6xl lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"
+            : "container mx-auto px-4 sm:px-6 py-6 max-w-3xl"
+        }
+      >
+        {showSideRail && (
+          <aside className="hidden lg:block lg:sticky lg:top-6 lg:self-start">
+            <SetupProgressPanel
+              steps={steps}
+              currentStepKey={step.key}
+              completedKeys={completedKeys}
+              variant="side"
+              onStepClick={onJumpToStep}
+              orgId={orgId}
+            />
+          </aside>
+        )}
+        <div className={showSideRail ? "min-w-0" : undefined}>
         {/* Top bar */}
         <div className="flex items-center justify-between mb-8">
           <Button
@@ -123,8 +149,8 @@ export function StepShell({
           </div>
         )}
 
-        {/* Inline pip progress */}
-        <div className="mt-10">
+        {/* Inline pip progress (mobile/tablet only when side rail mounts) */}
+        <div className={showSideRail ? "mt-10 lg:hidden" : "mt-10"}>
           <SetupProgressPanel
             steps={steps}
             currentStepKey={step.key}
@@ -166,6 +192,7 @@ export function StepShell({
               </>
             )}
           </Button>
+        </div>
         </div>
       </div>
 

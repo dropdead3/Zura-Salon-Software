@@ -14435,6 +14435,7 @@ export type Database = {
       }
       org_setup_step_completion: {
         Row: {
+          attempt_count: number
           completed_at: string | null
           completed_version: number | null
           completion_source: string | null
@@ -14447,6 +14448,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attempt_count?: number
           completed_at?: string | null
           completed_version?: number | null
           completion_source?: string | null
@@ -14459,6 +14461,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attempt_count?: number
           completed_at?: string | null
           completed_version?: number | null
           completion_source?: string | null
@@ -31388,6 +31391,36 @@ export type Database = {
         }[]
       }
       update_preferred_stylists: { Args: never; Returns: number }
+      upsert_org_setup_step_completion: {
+        Args: {
+          p_completed_version: number
+          p_completion_source: string
+          p_data: Json
+          p_organization_id: string
+          p_status: string
+          p_step_key: string
+          p_user_id: string
+        }
+        Returns: {
+          attempt_count: number
+          completed_at: string | null
+          completed_version: number | null
+          completion_source: string | null
+          created_at: string
+          data: Json
+          id: string
+          organization_id: string
+          status: string
+          step_key: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "org_setup_step_completion"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       user_belongs_to_org: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean

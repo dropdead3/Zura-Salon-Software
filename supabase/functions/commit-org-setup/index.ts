@@ -205,17 +205,23 @@ Deno.serve(async (req) => {
         );
         results.push(handlerResult);
 
-        // Mark step completion (best-effort — the table may not exist in all envs)
-        await supabase.from("org_setup_step_completion").upsert({
-          organization_id,
-          step_key: stepKey,
-          status: handlerResult.status === "completed" ? "completed" : "failed",
-          data,
-          completion_source: "wizard",
-          completed_version: 1,
-        }, { onConflict: "organization_id,step_key" }).then(({ error }) => {
-          if (error) console.warn(`[commit-org-setup] step_completion upsert: ${error.message}`);
-        });
+        // Wave 13G.G — atomic upsert via RPC so attempt_count increments
+        // exactly +1 per commit (replaces the heuristic gap-based detection).
+        const { error: completionErr } = await supabase.rpc(
+          "upsert_org_setup_step_completion",
+          {
+            p_organization_id: organization_id,
+            p_step_key: stepKey,
+            p_status: handlerResult.status === "completed" ? "completed" : "failed",
+            p_data: data ?? {},
+            p_completion_source: "wizard",
+            p_completed_version: 1,
+            p_user_id: user.id,
+          },
+        );
+        if (completionErr) {
+          console.warn(`[commit-org-setup] step_completion rpc: ${completionErr.message}`);
+        }
 
         // Audit log — source='wizard' so process-setup-followups can
         // distinguish real wizard completions from synthetic backfills.
