@@ -80,12 +80,17 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // Pull org name + owner email for the nudge copy
+    // Pull org name + signup_source for source-aware copy
     const { data: org } = await admin
       .from("organizations")
-      .select("name")
+      .select("name, signup_source")
       .eq("id", row.organization_id)
       .maybeSingle();
+
+    const source =
+      ((org as { signup_source?: string | null } | null)?.signup_source) ??
+      "legacy";
+    const copy = pickFollowupCopy(source);
 
     const deepLink = `/onboarding/setup?org=${row.organization_id}&step=step_7_intent&skipIntro=1`;
 
@@ -114,11 +119,14 @@ Deno.serve(async (req) => {
               purpose: "transactional",
               idempotency_key: `setup-followup:${row.id}`,
               template: "setup_followup",
-              subject: "Two minutes left to finish setting up Zura",
+              subject: copy.subject,
               data: {
                 org_name: org?.name ?? "your salon",
                 owner_name: ownerName ?? null,
                 deep_link: deepLink,
+                signup_source: source,
+                headline: copy.headline,
+                body: copy.body,
               },
             },
           },
@@ -148,14 +156,14 @@ Deno.serve(async (req) => {
         {
           type: "setup_followup_pending",
           severity: "info",
-          title: "Finish setting up Zura",
-          message:
-            "Two minutes left: tell us what you want from Zura and pick the apps you'll use. Recommendations sharpen the moment you do.",
+          title: copy.headline,
+          message: copy.body,
           metadata: {
             organization_id: row.organization_id,
             user_id: row.user_id,
             org_name: org?.name ?? null,
             deep_link: deepLink,
+            signup_source: source,
           },
         },
         { cooldownMinutes: 60 * 24 * 7 }, // one nudge per week max
