@@ -661,6 +661,7 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             label: 'Blackout periods',
             type: 'longtext',
             placeholder: 'e.g., December, Mother\'s Day week, prom season',
+            defaultValue: 'Time-off requests are not approved during the two weeks leading up to major holidays (Mother\'s Day, Thanksgiving, Christmas, New Year\'s Eve) or during locally-defined peak weeks (prom, wedding season).',
           },
         ],
       },
@@ -738,12 +739,14 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
             helper: 'A clear one-paragraph description of what this policy covers.',
             type: 'longtext',
             required: true,
+            defaultValue: 'This policy documents how {{ORG_NAME}} handles this area of operations. It defines the standard, names who is responsible for decisions, and explains how exceptions are reviewed and recorded so that team members and clients are treated consistently.',
           },
           {
             key: 'who_it_applies_to',
             label: 'Who it applies to',
             type: 'longtext',
             placeholder: 'e.g., All staff. All clients. New clients only.',
+            defaultValue: 'All team members and, where the policy involves guest interactions, all clients of {{ORG_NAME}}. Manager-level exceptions follow the documented authority chain below.',
           },
           {
             key: 'authority_role',
