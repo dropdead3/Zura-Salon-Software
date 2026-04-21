@@ -5,6 +5,10 @@ import type { StepProps } from "./types";
 interface Step7_5Data {
   installed_apps: string[];
   expressed_interest: string[];
+  /** Wave 13G.F — Tier-1 declines (autonomy doctrine). */
+  declined_apps: string[];
+  /** Wave 13G.A — current classifier output, used by orchestrator to drop stale installs. */
+  qualified_keys: string[];
 }
 
 interface AppRec {
@@ -15,12 +19,6 @@ interface AppRec {
   rationale: string;
 }
 
-/**
- * Tier classifier — reads draftData and produces a ranked list. Three confidence tiers.
- *  Tier 1: hard requirement based on what they declared.
- *  Tier 2: strongly recommended, pre-selected.
- *  Tier 3: opportunistic, unchecked.
- */
 function classifyApps(draftData: Record<string, any>): AppRec[] {
   const team = draftData.step_3_team ?? {};
   const comp = draftData.step_4_compensation ?? {};
@@ -31,7 +29,6 @@ function classifyApps(draftData: Record<string, any>): AppRec[] {
   const categories: string[] = cat.service_categories ?? [];
   const out: AppRec[] = [];
 
-  // Tier 1 — operationally required
   if (models.length > 0 && !models.includes("booth_rental")) {
     out.push({
       key: "zura_payroll",
@@ -50,8 +47,6 @@ function classifyApps(draftData: Record<string, any>): AppRec[] {
       rationale: "You offer color and/or chemical services. Color Bar tracks formulas and protects margin on chemical work.",
     });
   }
-
-  // Tier 2 — strongly recommended
   if (intent.includes("grow_team") || (team.team_size_band && team.team_size_band !== "1-3")) {
     out.push({
       key: "zura_connect",
@@ -79,8 +74,6 @@ function classifyApps(draftData: Record<string, any>): AppRec[] {
       rationale: "You operate (or plan to operate) more than one location. This unlocks comparative analytics.",
     });
   }
-
-  // Tier 3 — informational
   if (intent.includes("protect_margin")) {
     out.push({
       key: "capital",
@@ -110,26 +103,51 @@ export function Step7_5AppRecommendations({
   onValidityChange,
 }: StepProps<Step7_5Data>) {
   const apps = useMemo(() => classifyApps(draftData), [draftData]);
+  const qualifiedKeys = useMemo(() => apps.map((a) => a.key), [apps]);
 
+  // Wave 13G.A — intersect saved installs with currently-qualified keys so
+  // a previously-Tier-1 app doesn't stay pre-selected after the operator
+  // edits Step 5 to drop chemical services.
   const initialInstalled = useMemo(() => {
-    if (initialData?.installed_apps) return initialData.installed_apps;
-    // Default: Tier 1 + Tier 2 pre-selected
+    const qualifiedSet = new Set(qualifiedKeys);
+    if (initialData?.installed_apps) {
+      return initialData.installed_apps.filter((k) => qualifiedSet.has(k));
+    }
     return apps.filter((a) => a.tier !== "tier_3").map((a) => a.key);
-  }, [initialData, apps]);
+  }, [initialData, apps, qualifiedKeys]);
 
   const [installed, setInstalled] = useState<string[]>(initialInstalled);
   const [interest, setInterest] = useState<string[]>(initialData?.expressed_interest ?? []);
+  const [declined, setDeclined] = useState<string[]>(initialData?.declined_apps ?? []);
 
   useEffect(() => {
-    onChange({ installed_apps: installed, expressed_interest: interest });
+    onChange({
+      installed_apps: installed,
+      expressed_interest: interest,
+      declined_apps: declined,
+      qualified_keys: qualifiedKeys,
+    });
     onValidityChange(true);
-  }, [installed, interest, onChange, onValidityChange]);
+  }, [installed, interest, declined, qualifiedKeys, onChange, onValidityChange]);
 
   const toggle = (key: string, tier: AppTier) => {
-    if (tier === "tier_1") return; // Hard-block
+    // Wave 13G.F — Tier-1 toggle is now allowed via the explicit "decline" path.
+    // We keep this generic toggle for Tier 2/3 only.
+    if (tier === "tier_1") return;
+    setDeclined((prev) => prev.filter((k) => k !== key));
     setInstalled((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
+  };
+
+  const declineTier1 = (key: string) => {
+    setInstalled((prev) => prev.filter((k) => k !== key));
+    setDeclined((prev) => (prev.includes(key) ? prev : [...prev, key]));
+  };
+
+  const reactivateTier1 = (key: string) => {
+    setDeclined((prev) => prev.filter((k) => k !== key));
+    setInstalled((prev) => (prev.includes(key) ? prev : [...prev, key]));
   };
 
   const expressInterest = (key: string) => {
@@ -150,24 +168,30 @@ export function Step7_5AppRecommendations({
   return (
     <div className="space-y-4">
       <p className="font-sans text-sm text-muted-foreground leading-relaxed">
-        Based on what you've told us. Required apps are locked in. Pre-selected
-        apps are easy to opt out of. Informational ones you can install later.
+        Based on what you've told us. Recommended apps are pre-selected — you can
+        skip any of them. Informational ones are available to install later.
       </p>
 
       <div className="space-y-3">
-        {apps.map((app) => (
-          <AppRecommendationCard
-            key={app.key}
-            appKey={app.key}
-            name={app.name}
-            description={app.description}
-            rationale={app.rationale}
-            tier={app.tier}
-            selected={installed.includes(app.key)}
-            onToggle={() => toggle(app.key, app.tier)}
-            onLearnMore={app.tier === "tier_3" ? () => expressInterest(app.key) : undefined}
-          />
-        ))}
+        {apps.map((app) => {
+          const isDeclined = declined.includes(app.key);
+          return (
+            <AppRecommendationCard
+              key={app.key}
+              appKey={app.key}
+              name={app.name}
+              description={app.description}
+              rationale={app.rationale}
+              tier={app.tier}
+              selected={installed.includes(app.key)}
+              declined={isDeclined}
+              onToggle={() => toggle(app.key, app.tier)}
+              onDecline={app.tier === "tier_1" && !isDeclined ? () => declineTier1(app.key) : undefined}
+              onReactivate={app.tier === "tier_1" && isDeclined ? () => reactivateTier1(app.key) : undefined}
+              onLearnMore={app.tier === "tier_3" ? () => expressInterest(app.key) : undefined}
+            />
+          );
+        })}
       </div>
     </div>
   );
