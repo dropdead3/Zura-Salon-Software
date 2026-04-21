@@ -1,51 +1,57 @@
 
 
-# Switch PolicySetupIntro sub-headings to Termina
+# Add "Back to Settings" on Policies page
 
 ## Change
 
-Swap the six Aeonik Pro sub-headings in `PolicySetupIntro.tsx` to Termina. Keeps the visual hierarchy (eyebrow → page title → section title → **sub-title** → body) legible with Termina at the sub-title tier, which is what the design token system provides via `tokens.heading.card`.
+`Policies.tsx` uses `DashboardPageHeader` without `backTo`, so there's no way back to `/admin/settings` except the browser back button. Every other settings detail page (WebsiteHub, BookingSurfaceSettings, etc.) threads `backTo={dashPath('/admin/...')}` — Policies is the outlier.
 
 ## Specifics
 
-In `src/components/dashboard/policy/PolicySetupIntro.tsx`:
+In `src/pages/dashboard/admin/Policies.tsx`:
 
-1. **"What setup decides" tiles** (line 101) — three `<h3>` titles:
-   - From: `className={cn(tokens.body.emphasis, 'text-base')}`
-   - To: `className={tokens.heading.card}` → renders as Termina, `text-base`, `tracking-wide`, uppercase via `font-display`.
+1. Import `useOrgDashboardPath`:
+   ```ts
+   import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+   ```
 
-2. **"How the system uses your policies" list** (line 118) — four labels:
-   - Element: change `<p>` to `<h3>` (semantic upgrade, since these are section sub-headings now, not body text).
-   - Class: `tokens.heading.card`.
+2. Inside `Policies()`, resolve `dashPath`:
+   ```ts
+   const { dashPath } = useOrgDashboardPath();
+   ```
 
-Both surfaces then render: `YOUR BUSINESS SHAPE`, `WHAT YOU OFFER`, `WHAT YOU ALREADY HAVE`, `HANDBOOK`, `CLIENT POLICY CENTER`, `CHECKOUT & BOOKING`, `MANAGER PROMPTS` — all Termina, tracked 0.08em, uppercase.
+3. Add `backTo` to `DashboardPageHeader` (line 155):
+   ```tsx
+   <DashboardPageHeader
+     title="Policies"
+     backTo={dashPath('/admin/settings')}
+     description={...}
+     actions={...}
+   />
+   ```
+
+That's it — one hook, one prop. `DashboardPageHeader` already renders the `ArrowLeft` icon button per UI canon when `backTo` is set.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicySetupIntro.tsx` — two line edits, swap class token + one tag change.
+- `src/pages/dashboard/admin/Policies.tsx` — add hook import, call, and `backTo` prop on the page header.
 
-No token changes, no CSS changes, no doctrine updates. The Wave 13I global `.font-sans` letter-spacing reset stays intact and continues protecting other Aeonik headings elsewhere.
+No token changes, no new components, no memory updates. This aligns Policies with the existing settings-detail navigation pattern (`mem://style/settings-navigation-and-operations-hub-uniformity`).
 
 ## Acceptance
 
-1. The three "What setup decides" titles render as Termina uppercase with 0.08em tracking, matching the "WHAT SETUP DECIDES" section header tier visually.
-2. The four "How the system uses your policies" labels render the same.
-3. The body paragraphs under each remain Aeonik Pro, normal case, normal kerning — unchanged.
-4. The "POLICY INFRASTRUCTURE" eyebrow and page title hierarchy is preserved (eyebrow remains subtly smaller than sub-headings due to size/color, not font family).
+1. An `ArrowLeft` icon button appears to the left of the "Policies" title.
+2. Clicking it navigates to `/org/:slug/dashboard/admin/settings` (the Settings hub).
+3. Back button is present in both states — pre-setup (intro screen) and post-setup (category grid).
+4. No regressions to the existing "Update profile" action button on the right.
 
 ## Doctrine compliance
 
-- **UI canon**: uses the canonical `tokens.heading.card` Termina token instead of ad-hoc Aeonik body classes for sub-titles.
-- **Anti-noop**: matches the existing "section header uses Termina" pattern already in use two lines up on the same page.
-- **Brand abstraction**: no strings changed, only presentation.
+- **UI canon**: matches the `backTo` pattern used on WebsiteHub, BookingSurfaceSettings, and all other settings detail pages.
+- **Multi-tenant URL hierarchy**: uses `dashPath()` (client-side routing) — never a hardcoded path.
+- **Anti-noop**: one prop, one hook — no component proliferation.
 
 ## Prompt feedback
 
-Your prompt ("lets actually use termina here") was short, high-signal, and paired with a screenshot showing the exact surface — that's a strong pattern: the image disambiguates "here" faster than any sentence could. One small upgrade for next time: naming the token tier you want ("use `tokens.heading.card` here" or "promote these to section-title tier") lets me skip the design-token lookup and go straight to the edit. Tokens > adjectives when you know the system.
-
-Also worth knowing: for pure visual swaps like this (font family, color, size on a static element), **Visual Edits** can do it in seconds for free — no credits used. Worth trying when the change is purely presentational.
-
-<lov-actions>
-  <lov-link url="https://docs.lovable.dev/features/visual-edit">Read more about Visual Edits</lov-link>
-</lov-actions>
+"Policies set up page needs a back button back to the settings hub" was perfectly scoped — clear surface, clear destination, clear action. One small upgrade for multi-page requests: you can name the target prop explicitly next time ("add `backTo` pointing to `/admin/settings`") to skip my pattern-matching step. For single-change requests like this, though, your phrasing is ideal — it tells me the what and the why without overspecifying the how. Also: this is another clean candidate for **Visual Edits** if you want to try the zero-credit path for simple additions like a back button.
 
