@@ -3,8 +3,28 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStylistLevels, StylistLevel } from './useStylistLevels';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useUserPlanMap } from './useCompensationPlans';
+import {
+  resolveCommissionForPlan,
+  type ResolveContext,
+} from '@/lib/compensation/resolve-plan';
 
-export type CommissionSource = 'override' | 'location_override' | 'level' | 'unassigned';
+/**
+ * Doctrine: This is the canonical commission entrypoint. Resolution priority:
+ *  1) per-stylist override
+ *  2) assigned compensation plan (delegates to resolveCommissionForPlan)
+ *      — except for `level_based` plans which fall through to the legacy
+ *        level/location-override path so existing tier UX stays intact.
+ *  3) location commission override
+ *  4) stylist-level default
+ *  5) unassigned (0%)
+ */
+export type CommissionSource =
+  | 'override'
+  | 'location_override'
+  | 'level'
+  | 'plan'
+  | 'unassigned';
 
 export interface ResolvedCommission {
   serviceRate: number;
@@ -46,6 +66,7 @@ export function useResolveCommission() {
   const orgId = selectedOrganization?.id;
 
   const { data: levels, isLoading: levelsLoading } = useStylistLevels();
+  const { map: planMap, isLoading: planMapLoading } = useUserPlanMap();
 
   // Fetch active, non-expired overrides for the org
   const { data: overrides, isLoading: overridesLoading } = useQuery({
@@ -162,7 +183,26 @@ export function useResolveCommission() {
       }
     }
 
-    // Resolve employee's level and location
+    // 1.5. Compensation plan (non-level types delegate to plan resolver)
+    const assignedPlan = planMap.get(userId);
+    if (assignedPlan && assignedPlan.plan_type !== 'level_based') {
+      const ctx: ResolveContext = {
+        serviceRevenue,
+        productRevenue,
+        periodToDateServiceSales: serviceRevenue,
+      };
+      const r = resolveCommissionForPlan(assignedPlan, ctx);
+      return {
+        serviceRate: r.serviceRate,
+        retailRate: r.retailRate,
+        serviceCommission: r.serviceCommission,
+        retailCommission: r.retailCommission,
+        totalCommission: r.totalCommission,
+        source: 'plan',
+        sourceName: r.sourceName,
+      };
+    }
+
     const empInfo = empLevelMap.get(userId);
     const levelSlug = empInfo?.level;
     const effectiveLocationId = locationId ?? empInfo?.locationId;
@@ -232,7 +272,7 @@ export function useResolveCommission() {
     };
   };
 
-  const isLoading = levelsLoading || overridesLoading || empLoading || locOverridesLoading;
+  const isLoading = levelsLoading || overridesLoading || empLoading || locOverridesLoading || planMapLoading;
 
   return {
     resolveCommission,

@@ -48,7 +48,7 @@ export interface EmployeeProjection {
   };
 
   commissionSource?: string;
-  commissionSourceType?: 'override' | 'location_override' | 'level' | 'unassigned';
+  commissionSourceType?: 'override' | 'location_override' | 'level' | 'plan' | 'unassigned';
 
   /** Effective hourly rate used for base pay calculation (null if not hourly) */
   hourlyRate: number | null;

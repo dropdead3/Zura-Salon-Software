@@ -17711,10 +17711,15 @@ export type Database = {
           id: string
           key: string
           recommendation: Database["public"]["Enums"]["policy_recommendation"]
+          requires_booth_rental: boolean
           requires_extensions: boolean
+          requires_hourly_pay: boolean
           requires_minors: boolean
           requires_packages: boolean
+          requires_product_cost_basis: boolean
+          requires_refund_clawback: boolean
           requires_retail: boolean
+          requires_tip_pooling: boolean
           short_description: string
           title: string
           updated_at: string
@@ -17731,10 +17736,15 @@ export type Database = {
           id?: string
           key: string
           recommendation?: Database["public"]["Enums"]["policy_recommendation"]
+          requires_booth_rental?: boolean
           requires_extensions?: boolean
+          requires_hourly_pay?: boolean
           requires_minors?: boolean
           requires_packages?: boolean
+          requires_product_cost_basis?: boolean
+          requires_refund_clawback?: boolean
           requires_retail?: boolean
+          requires_tip_pooling?: boolean
           short_description: string
           title: string
           updated_at?: string
@@ -17751,10 +17761,15 @@ export type Database = {
           id?: string
           key?: string
           recommendation?: Database["public"]["Enums"]["policy_recommendation"]
+          requires_booth_rental?: boolean
           requires_extensions?: boolean
+          requires_hourly_pay?: boolean
           requires_minors?: boolean
           requires_packages?: boolean
+          requires_product_cost_basis?: boolean
+          requires_refund_clawback?: boolean
           requires_retail?: boolean
+          requires_tip_pooling?: boolean
           short_description?: string
           title?: string
           updated_at?: string
@@ -17765,8 +17780,11 @@ export type Database = {
       policy_org_profile: {
         Row: {
           business_type: string | null
+          commission_basis_in_use: string[]
+          compensation_models_in_use: string[]
           created_at: string
           created_by: string | null
+          has_booth_renters: boolean
           has_existing_client_policies: boolean
           has_existing_handbook: boolean
           id: string
@@ -17783,11 +17801,16 @@ export type Database = {
           setup_completed_at: string | null
           team_size_band: string | null
           updated_at: string
+          uses_refund_clawback: boolean
+          uses_tip_pooling: boolean
         }
         Insert: {
           business_type?: string | null
+          commission_basis_in_use?: string[]
+          compensation_models_in_use?: string[]
           created_at?: string
           created_by?: string | null
+          has_booth_renters?: boolean
           has_existing_client_policies?: boolean
           has_existing_handbook?: boolean
           id?: string
@@ -17804,11 +17827,16 @@ export type Database = {
           setup_completed_at?: string | null
           team_size_band?: string | null
           updated_at?: string
+          uses_refund_clawback?: boolean
+          uses_tip_pooling?: boolean
         }
         Update: {
           business_type?: string | null
+          commission_basis_in_use?: string[]
+          compensation_models_in_use?: string[]
           created_at?: string
           created_by?: string | null
+          has_booth_renters?: boolean
           has_existing_client_policies?: boolean
           has_existing_handbook?: boolean
           id?: string
@@ -17825,6 +17853,8 @@ export type Database = {
           setup_completed_at?: string | null
           team_size_band?: string | null
           updated_at?: string
+          uses_refund_clawback?: boolean
+          uses_tip_pooling?: boolean
         }
         Relationships: [
           {
@@ -30683,6 +30713,10 @@ export type Database = {
       }
       recompute_policy_status: {
         Args: { p_policy_id: string }
+        Returns: undefined
+      }
+      refresh_org_compensation_profile: {
+        Args: { p_org_id: string }
         Returns: undefined
       }
       reschedule_booking: {

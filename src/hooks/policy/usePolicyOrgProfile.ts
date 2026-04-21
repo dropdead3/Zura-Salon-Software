@@ -30,15 +30,42 @@ export interface PolicyOrgProfile {
   has_existing_client_policies: boolean;
   roles_used: string[];
   service_categories: string[];
+  // Compensation-derived (auto-maintained by trigger from compensation_plans)
+  compensation_models_in_use: string[];
+  commission_basis_in_use: string[];
+  uses_tip_pooling: boolean;
+  uses_refund_clawback: boolean;
+  has_booth_renters: boolean;
   setup_completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
+/**
+ * Input shape for upserting the profile. Compensation-derived fields are
+ * auto-maintained by a DB trigger when compensation_plans change, so they
+ * remain optional from the client side.
+ */
 export type PolicyOrgProfileInput = Omit<
   PolicyOrgProfile,
-  'id' | 'organization_id' | 'created_at' | 'updated_at' | 'setup_completed_at'
-> & { setup_completed_at?: string | null };
+  | 'id'
+  | 'organization_id'
+  | 'created_at'
+  | 'updated_at'
+  | 'setup_completed_at'
+  | 'compensation_models_in_use'
+  | 'commission_basis_in_use'
+  | 'uses_tip_pooling'
+  | 'uses_refund_clawback'
+  | 'has_booth_renters'
+> & {
+  setup_completed_at?: string | null;
+  compensation_models_in_use?: string[];
+  commission_basis_in_use?: string[];
+  uses_tip_pooling?: boolean;
+  uses_refund_clawback?: boolean;
+  has_booth_renters?: boolean;
+};
 
 export function usePolicyOrgProfile() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -142,7 +169,18 @@ export function useAdoptPoliciesFromLibrary() {
  * profile loads or when the operator hasn't completed setup.
  */
 export function isApplicableToProfile(
-  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages' | 'requires_minors'>,
+  entry: Pick<
+    PolicyLibraryEntry,
+    | 'requires_extensions'
+    | 'requires_retail'
+    | 'requires_packages'
+    | 'requires_minors'
+    | 'requires_tip_pooling'
+    | 'requires_refund_clawback'
+    | 'requires_booth_rental'
+    | 'requires_hourly_pay'
+    | 'requires_product_cost_basis'
+  >,
   profile: PolicyOrgProfile | null | undefined,
 ): boolean {
   if (!profile) return true;
@@ -150,6 +188,24 @@ export function isApplicableToProfile(
   if (entry.requires_retail && !profile.offers_retail) return false;
   if (entry.requires_packages && !profile.offers_packages) return false;
   if (entry.requires_minors && !profile.serves_minors) return false;
+  // Compensation-aware gates
+  if (entry.requires_tip_pooling && !profile.uses_tip_pooling) return false;
+  if (entry.requires_refund_clawback && !profile.uses_refund_clawback) return false;
+  if (entry.requires_booth_rental && !profile.has_booth_renters) return false;
+  if (
+    entry.requires_hourly_pay &&
+    !(profile.compensation_models_in_use ?? []).some((m) =>
+      ['hourly_vs_commission', 'hourly_plus_commission'].includes(m),
+    )
+  ) {
+    return false;
+  }
+  if (
+    entry.requires_product_cost_basis &&
+    !(profile.commission_basis_in_use ?? []).includes('net_of_product_cost')
+  ) {
+    return false;
+  }
   return true;
 }
 
@@ -158,9 +214,34 @@ export function isApplicableToProfile(
  * it IS applicable. Drives the configurator's quiet "no longer applies" banner.
  */
 export function applicabilityReason(
-  entry: Pick<PolicyLibraryEntry, 'requires_extensions' | 'requires_retail' | 'requires_packages' | 'requires_minors'>,
+  entry: Pick<
+    PolicyLibraryEntry,
+    | 'requires_extensions'
+    | 'requires_retail'
+    | 'requires_packages'
+    | 'requires_minors'
+    | 'requires_tip_pooling'
+    | 'requires_refund_clawback'
+    | 'requires_booth_rental'
+    | 'requires_hourly_pay'
+    | 'requires_product_cost_basis'
+  >,
   profile: PolicyOrgProfile | null | undefined,
-): { service: 'extensions' | 'retail' | 'packages' | 'minors'; label: string } | null {
+):
+  | {
+      service:
+        | 'extensions'
+        | 'retail'
+        | 'packages'
+        | 'minors'
+        | 'tip_pooling'
+        | 'refund_clawback'
+        | 'booth_rental'
+        | 'hourly_pay'
+        | 'product_cost_basis';
+      label: string;
+    }
+  | null {
   if (!profile) return null;
   if (entry.requires_extensions && !profile.offers_extensions) {
     return { service: 'extensions', label: 'extensions' };
@@ -173,6 +254,29 @@ export function applicabilityReason(
   }
   if (entry.requires_minors && !profile.serves_minors) {
     return { service: 'minors', label: 'minors (under 18)' };
+  }
+  if (entry.requires_tip_pooling && !profile.uses_tip_pooling) {
+    return { service: 'tip_pooling', label: 'tip pooling' };
+  }
+  if (entry.requires_refund_clawback && !profile.uses_refund_clawback) {
+    return { service: 'refund_clawback', label: 'refund clawback' };
+  }
+  if (entry.requires_booth_rental && !profile.has_booth_renters) {
+    return { service: 'booth_rental', label: 'booth/chair rental' };
+  }
+  if (
+    entry.requires_hourly_pay &&
+    !(profile.compensation_models_in_use ?? []).some((m) =>
+      ['hourly_vs_commission', 'hourly_plus_commission'].includes(m),
+    )
+  ) {
+    return { service: 'hourly_pay', label: 'hourly pay' };
+  }
+  if (
+    entry.requires_product_cost_basis &&
+    !(profile.commission_basis_in_use ?? []).includes('net_of_product_cost')
+  ) {
+    return { service: 'product_cost_basis', label: 'net-of-product-cost commission' };
   }
   return null;
 }
