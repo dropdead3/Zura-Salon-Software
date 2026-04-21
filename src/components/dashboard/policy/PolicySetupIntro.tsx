@@ -115,7 +115,7 @@ export function PolicySetupIntro({ onStart, libraryCount }: Props) {
                 <Icon className={tokens.card.icon} />
               </div>
               <div className="flex-1 min-w-0 space-y-1">
-                <p className={cn(tokens.body.emphasis, 'text-base')}>{label}</p>
+                <h3 className={tokens.heading.card}>{label}</h3>
                 <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
               </div>
             </li>
