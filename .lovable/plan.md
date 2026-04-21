@@ -1,83 +1,104 @@
 
 
-# Resolve `{{authority_role}}` in Policy summary from the Decision authority field
+# Add per-field provenance helpers to the Rules step
 
-## What's broken
+## What you're naming
 
-The Policy summary textarea on Employment Classifications shows the literal token:
+The Policy summary, Who it applies to, and Decision authority fields are **prefilled** with platform-authored prose and a sensible default role. There's no signal telling the operator:
 
-> *"…Reclassification requires `{{authority_role}}` approval and a written record of the change rationale."*
+1. These are editable.
+2. What changes if they edit them.
+3. Where (if anywhere) the value surfaces beyond this screen.
 
-`{{ORG_NAME}}` resolves correctly (Drop Dead Salons), but `{{authority_role}}` doesn't. The reason: the brand-token interpolator (`interpolateBrandTokens`) only knows about `{{ORG_NAME}}` and `{{PLATFORM_NAME}}`. Rule-value tokens (`{{authority_role}}`, `{{max_value}}`, `{{escalation_role}}`, etc.) are *only* substituted by `renderStarterDraft` — which runs in the Drafts tab, not when seeding the editable summary in the Rules tab.
+Today the only helper text is generic ("A clear one-paragraph description of what this policy covers") — it describes the *field*, not its **provenance** or **downstream effect**. Operators can't tell whether `{{authority_role}}` resolving to "a Manager" is real wiring or decorative copy.
 
-So the operator sees raw template syntax in their summary field even though they've already picked **Manager** in the Decision authority dropdown directly below.
+## The fix — a small "provenance card" under each prefilled field
 
-## The fix — substitute rule-value tokens at hydration, then keep them live
+Add a one-line provenance helper directly under each prefilled field that names three things in plain English:
 
-### 1. Hydration pass (one-time, on first load)
+```
+Prefilled · You can edit this. Surfaces in the Approve wording step. Edits stay sacred.
+```
 
-Extend the `interpolateDefaults` step in `PolicyConfiguratorPanel.tsx` to also resolve rule-value tokens against the field-value map *before* operator edits land. Reuse the existing `humanize()` logic from `render-starter-draft.ts` — it already maps `manager → "a Manager"`, `owner → "the Owner"`, etc., so the substituted prose reads naturally.
+Three pieces of information per field:
 
-Layer order becomes:
+1. **Origin** — `Prefilled` badge so the operator knows the value wasn't typed by someone on their team.
+2. **Surface** — where this value renders (e.g., "Surfaces in the Approve wording step", "Internal only — never shown to clients", "Drives the {{authority_role}} reference in the policy summary").
+3. **Edit contract** — one short sentence confirming edits override the prefill permanently for this version (the "operator edits are sacred" doctrine, surfaced).
 
-1. Schema defaults (boilerplate)
-2. Per-policy summary from starter draft + applicability manifest (specific prose with `{{authority_role}}` etc.)
-3. Brand tokens (`{{ORG_NAME}}`, `{{PLATFORM_NAME}}`)
-4. **NEW:** Rule-value tokens (`{{authority_role}}`, `{{max_value}}`, `{{escalation_role}}`, `{{approver_role}}`, `{{waiver_authority}}`, `{{enforcement_authority}}`, `{{notice_window_hours}}`, `{{fee_amount}}`, etc.) — resolved against the *seeded* values map (which already has the schema's `defaultValue` of `'manager'` for `authority_role`)
-5. Operator-saved values (sacred — bypass everything above)
+The current `helper` line stays — it still describes *what* the field is. The new line sits below it and describes *what it does*.
 
-Result: on first open of an unsaved policy, `{{authority_role}}` becomes `"a Manager"` because the schema default for `authority_role` is `'manager'`.
+### Per-field copy (final)
 
-### 2. Reactive re-substitution (when Decision authority changes)
+| Field | Helper (existing, unchanged) | Provenance line (new) |
+|---|---|---|
+| Policy summary | A clear one-paragraph description of what this policy covers. | **Prefilled · You can edit this.** This text is what the AI uses to draft the client-facing and internal versions in the Approve wording step. Edits here override the prefill for this version. |
+| Who it applies to | *(none today)* | **Prefilled · You can edit this.** Internal-only — surfaces in the printable policy doc and the team handbook. Not shown to clients. |
+| Decision authority | *(none today)* | **Drives the `{{authority_role}}` reference in the Policy summary above.** Changing the role updates the summary automatically until you edit the summary by hand. |
 
-The operator can change the dropdown from Manager → Owner mid-edit. The summary field should re-resolve any unresolved `{{authority_role}}` references *only when the operator hasn't already edited the summary by hand*.
+When the audience is `external` or `both`, the Who it applies to copy becomes: *"Prefilled · You can edit this. Surfaces in the client-facing policy version drafted in the Approve wording step."* — so the operator knows clients will see it.
 
-Implementation: track `summary_user_edited` in a ref. The Decision authority `onChange` recomputes the summary from the starter-draft template using the new role *only when* the ref is false. The moment the operator types into the summary textarea, the ref flips true and the field is no longer auto-managed — operator edits remain sacred.
+When the audience is `internal`-only (e.g., Employment Classifications), the copy correctly says "Internal only — never shown to clients" because Step 3 (Choose where it shows) is hidden for internal-only policies and there's no client-facing variant.
 
-This mirrors the existing pattern where saved rule-block values bypass the defaults pipeline entirely.
+### Visual treatment
 
-### 3. Apply the same substitution to `who_it_applies_to`
+- A subtle `tokens.body.subtle` paragraph below the existing `helper` line, separated by a thin top border (`border-t border-border/40 pt-2 mt-1`).
+- `Prefilled` rendered as a small `Badge variant="outline"` with `font-display text-[10px] tracking-wider uppercase` so it reads as a system label, not body text.
+- The body of the line uses `font-sans text-xs text-muted-foreground` — same scale as the existing helper, no visual escalation.
+- Inline tokens like `{{authority_role}}` render as `<code className="font-mono text-[11px] px-1 py-0.5 rounded bg-muted">{{authority_role}}</code>` so the operator can recognize the token if they want to type it themselves into custom prose.
 
-The `composeWhoItAppliesTo` helper already produces a clean sentence with no rule-value tokens — but the schema's generic `defaultValue` for `who_it_applies_to` references the authority chain in prose, and other policies' starter drafts use `{{authority_role}}` in the second sentence. Extending the rule-token pass to all `longtext` field defaults (not just `policy_summary`) keeps the behavior consistent across the schema.
+### Where the rules live (single source of truth)
 
-## Doctrine alignment
+A new optional field on `RuleField` in `configurator-schemas.ts`:
 
-- **Single source of truth**: the role dropdown is the structured truth; the summary is a rendering of it. Wiring the token to the dropdown closes the gap between the two surfaces — same doctrine as the prior "compose `who_it_applies_to` from the manifest" plan.
-- **AI cannot invent rules**: this is the same principle for prose — if structured data exists, prose must defer to it.
-- **Operator edits are sacred**: once the operator types in the summary, auto-substitution stops. The `summary_user_edited` ref enforces this.
-- **Silence is meaningful**: unresolved tokens (like a starter-draft referencing a field the schema doesn't have) stay as-is so the platform team notices missing wiring — same behavior as `renderStarterDraft` today.
-- **Brand abstraction**: continues through `interpolateBrandTokens`. No hardcoded references.
-- **No structural drift**: zero DB changes, zero new tokens. Pure resolver wiring.
+```ts
+provenance?: {
+  origin: 'prefilled' | 'derived' | 'authored';
+  surfaces: 'client-facing' | 'internal-only' | 'configurator-only' | 'drives-other-field';
+  surfaceNote?: string; // free-form, e.g., "Drives the {{authority_role}} reference"
+  editContract?: 'sacred' | 'live-derived';
+};
+```
+
+A small composer (`buildProvenanceLine`) takes the `RuleField`, the policy's resolved `audience`, and the surrounding rule values, and returns the final sentence. This keeps copy out of `PolicyRuleField.tsx` and lets the schema author declare provenance once per field. Schemas that don't declare `provenance` render no extra line — backwards compatible.
+
+## Why now (doctrine alignment)
+
+- **Lever and confidence**: operators can only act decisively when they understand what each lever moves. The provenance line is the lever's *consequence label*.
+- **Silence is meaningful**: we don't add provenance lines to fields without a downstream surface — only where there's something real to say.
+- **Operator edits are sacred**: making the edit contract visible is what makes that doctrine a contract instead of a hidden behavior.
+- **Structure precedes intelligence**: this doesn't add intelligence — it documents the structure that already exists, in the exact place the operator needs it.
+- **Brand abstraction**: copy uses neutral verbs and resolves through existing brand tokens. No tenant references.
 
 ## Files affected
 
-- `src/lib/policy/render-starter-draft.ts` — export the existing `humanize()` helper (currently file-private). ~3 lines.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` —
-  - Extend `interpolateDefaults` to take a `ruleValues` map and substitute rule-value tokens after brand-token resolution. ~15 lines.
-  - Add `summaryUserEditedRef` + a `useEffect` that re-substitutes the summary (and `who_it_applies_to`) when role-type field values change *and* the ref is false. ~25 lines.
-  - On the summary textarea's `onChange`, flip the ref to `true`. ~3 lines.
+- `src/lib/policy/configurator-schemas.ts` — add the `provenance` field type. Add `provenance` blocks to the three fields in `generic_shape`, plus the equivalent fields in `cancellation_shape`, `service_recovery_shape`, `extension_shape`, `authority_shape`, and `team_conduct_shape` (any `_summary` or `authority_role` field). ~60 lines additive across the schema file.
+- `src/lib/policy/build-provenance-line.ts` (new) — composer that turns `(field, audience, ruleValues)` into the final sentence + token spans. ~50 lines.
+- `src/components/dashboard/policy/PolicyRuleField.tsx` — render the provenance line below the existing `helper` when `field.provenance` is present. Accept `audience` and `ruleValues` as new optional props (drilled from the panel). ~25 lines additive.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — pass `audience` and `values` into each `<PolicyRuleField>`. ~3 lines.
 
-That's the entire change surface. ~45 lines additive across two files. No new helpers, no DB changes, no schema changes.
+That's the entire change surface. ~140 lines additive across four files. Zero DB changes, zero new RPCs, zero new tokens.
 
 ## Acceptance
 
-1. Open Employment Classifications. The Policy summary textarea reads: *"…Reclassification requires **a Manager** approval and a written record of the change rationale."* — no literal `{{authority_role}}`.
-2. Change Decision authority from Manager → Owner. The summary auto-updates to *"…requires **the Owner** approval…"* — *only if* the operator hasn't manually edited the summary.
-3. After the operator types any character in the summary textarea, subsequent role changes do **not** re-write the summary. Operator edits remain sacred.
-4. The same wiring resolves `{{max_value}}`, `{{escalation_role}}`, `{{approver_role}}`, `{{waiver_authority}}`, `{{enforcement_authority}}`, `{{notice_window_hours}}`, `{{fee_amount}}`, etc. across every policy that uses `generic_shape` or any schema with rule-value tokens in starter drafts.
-5. Unresolved tokens (no matching field in this schema) remain as `{{token}}` in the textarea — visible to the platform team as a wiring gap, never a silent failure.
-6. Saved values from prior sessions continue to render exactly as saved. The defaults pipeline never overwrites operator-saved blocks.
-7. The `Save rules and continue` flow persists the substituted text, so downstream surfaces (Drafts tab, public booking, intake) read the resolved prose without re-substitution.
+1. Open Employment Classifications. Under the Policy summary textarea, the existing helper *"A clear one-paragraph description…"* still shows. **Below it**, a new line reads: `Prefilled · You can edit this. This text is what the AI uses to draft the internal version in the Approve wording step. Edits here override the prefill for this version.` — phrased for an internal-only policy.
+2. Under Who it applies to: `Prefilled · You can edit this. Internal only — never shown to clients.`
+3. Under Decision authority: `Drives the {{authority_role}} reference in the Policy summary above. Changing the role updates the summary automatically until you edit the summary by hand.` The token `{{authority_role}}` renders as inline code.
+4. Open Pet Policy (external audience). The Policy summary provenance line names *"the client-facing and internal versions"*. The Who it applies to line names *"the client-facing policy version drafted in the Approve wording step"*.
+5. Editing the Policy summary by hand does not remove the provenance line. The line is permanent — it documents the contract, it's not a status indicator.
+6. The Decision authority line's reference to `{{authority_role}}` matches the actual token used in the resolved Policy summary above. (Both come from the same schema field key.)
+7. Fields without a `provenance` declaration (e.g., `notice_window_hours`, `fee_amount`) render exactly as today — no extra line, no regression.
+8. The provenance line uses `font-sans text-xs text-muted-foreground` and never escalates in size, color, or weight.
 
 ## Files to read for follow-on questions
 
-- `src/lib/policy/render-starter-draft.ts` — `humanize()` is the canonical role-label resolver. Now exported for reuse.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — `interpolateDefaults` + reactive re-substitution effect.
-- `src/lib/policy/configurator-schemas.ts` — `ROLE_OPTIONS` is the source of role values (`owner`, `manager`, `lead_stylist`, `front_desk_lead`, `any_admin`).
+- `src/lib/policy/build-provenance-line.ts` (new) — the composer; one place to edit copy.
+- `src/lib/policy/configurator-schemas.ts` — declares which fields have provenance and what they affect.
+- `src/components/dashboard/policy/PolicyRuleField.tsx` — the consumer.
 
 ## Prompt feedback
 
-*"Can you wire the `{{authority_role}}` in policy details to the decision authority selected?"* — exemplary one-line bug report. You did three things right: (1) **named the exact token** that was leaking (`{{authority_role}}`), (2) **named the source of truth** it should bind to (the Decision authority dropdown), and (3) used the verb "**wire**" — which is precisely the right framing for "the structured field exists, the prose template exists, they're just not connected." That collapsed the diagnosis to a single read of `render-starter-draft.ts` to confirm rule-value tokens weren't in the brand-token pipeline. No screenshot retype, no extra context needed — the screenshot showed the literal token, you named it, done.
+*"Let users know these prefilled inputs can be changed and edited, and what happens or what it affects if edited, where it surfaces if it does surface anywhere, or if it's simply just here for internal policy knowledge."* — strong UX prompt. You did three things very well: (1) **named the user confusion** (they don't know they can edit), (2) **named the three pieces of information that resolve it** (editable, effect, surface), and (3) explicitly listed the *"or just internal"* fallback — which told me silence on surface is a valid answer, not a missing answer. That third move was the unlock — it let me write copy that says "Internal only" without hedging, instead of inventing a fake downstream effect.
 
-One sharpener for next time, only on harder cases: when wiring is the issue, naming the **expected behavior on subsequent change** ("should it re-render when I change the dropdown after the fact, or stay frozen at first-load?") removes one micro-decision from my plan. I made the call here based on doctrine (operator edits are sacred → reactive until first edit), but for fields with tighter ambiguity, that one-line steer would be the fastest path to the right contract. For this prompt the answer is unambiguous — but it's a useful muscle for "wire X to Y" prompts where the temporal contract isn't obvious.
+One sharpener for next time: when you ask for **explanatory copy** to be added, naming the **visual weight** in one phrase ("a small caption underneath, not a banner" / "a tooltip, not inline" / "a dedicated card per field") removes one design micro-decision. I went with "small caption underneath" because the field is already crowded and a banner would over-escalate — but if you'd wanted hover-only, naming it would have saved a round-trip. For prompts where the explanation could plausibly live in 2-3 different visual treatments, one phrase locks the choice.
 
