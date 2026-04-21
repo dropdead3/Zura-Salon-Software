@@ -1,109 +1,120 @@
 
 
-# Convert Policies page from card grid to list layout
+# Make the disabled-toggle state actionable
 
-## Why
+## What's actually happening
 
-Looking at your screenshot — 20 cards stacked in a 3-col grid eats the entire viewport before you can finish scanning a single group. Each card carries the same five elements (title, description, badges, "Renders to" surfaces, status), but in a card grid they're locked into a tall block that forces visual recomputation per row. A list compresses each policy into one scannable row where the eye moves left-to-right once and up-to-down many times — the natural rhythm for a 20-item governance checklist.
+The toggles in your screenshot aren't broken — they're disabled by design. The wiring is correct:
 
-## The shape
+- **Publish toggle** is disabled when `!hasApprovedClientVariant` — Booking Policy has no approved client-facing variant in step 4 (Drafts) yet.
+- **Require client acknowledgment** is disabled when `!isPublishedExternal && !hasApprovedClientVariant` — the policy must first be published before clients can be required to ack it.
 
-Replace the three `grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3` blocks with a single-column **list** per group. Each row is one policy, full panel width.
+The system is enforcing a real precondition: you can't publish prose that doesn't exist, and you can't require clients to acknowledge a policy that isn't visible to them. That's correct doctrine.
 
-```
-┌─ REQUIRED FOR GOVERNANCE     20 of 20 adopted ━━━━━━━ 100%      [⊙ Hide adopted] ─┐
-│  Protect your business. The software runs without these…                            │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│ ✓  Employment Classifications                          [Required] [Internal] [✓]   │
-│    W2 full-time, part-time, probationary periods…      Renders to: 📱 ✅           │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│ ✓  Attendance & Punctuality                            [Required] [Internal] [⏵]  │
-│    Tardy thresholds, grace periods, call-out windows…  Renders to: 📱 ⓘ ✅        │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│ ○  Timekeeping & Breaks                                [Required] [Internal] [⏵]  │
-│    Time clock rules, missed punch handling…            Renders to: 📱 ✅           │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-```
+What's wrong is **the disabled state looks identical to broken**. The grey switch reads as "tap me" → tap does nothing → "this is bugged." The helper text underneath ("Approve a client-facing variant in the Drafts tab before publishing") gets skipped because the eye lands on the switch first.
 
-Three concrete shifts:
+This is a **discoverability failure**, not a wiring bug.
 
-- **One row per policy, full width** — title + description left, badges + "Renders to" icons right. Click anywhere on the row opens the configurator.
-- **Compact vertical rhythm** — each row ~64-72px tall (vs. ~180px today). 20 governance items fit on a laptop screen with ~3 visible from the next group as a continuity hint.
-- **Same content, denser arrangement** — no information removed. Status check icon, title, short description, recommendation/audience/status badges, candidate surfaces. The Core Function consumer label and "Using platform default" fallback line still render, just inline under the description.
+## The fix — turn the precondition into a one-click jump
 
-## Row anatomy
+Three surgical changes inside `PolicyAudienceBanner.tsx` and one upstream prop:
+
+### 1. When a toggle is precondition-blocked, render an inline "unlock path" CTA, not just disabled chrome
+
+When `publishDisabled === true` because `!hasApprovedClientVariant`, render a small action row directly under the toggle:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ ✓  TITLE                       BADGES                Renders to: 📱 ⓘ ✅   │
-│    Description • consumer label • default fallback                          │
-└─────────────────────────────────────────────────────────────────────────────┘
+○  Publish to client policy center
+   No client-facing variant approved yet.
+   [→ Go to Drafts to approve one]   ← new button, jumps to step 4
 ```
 
-- **Status icon** (`CheckCircle2` adopted / `Circle` not) — leftmost column, 16px, `shrink-0`.
-- **Title + description block** — flex-1, min-w-0. Title `font-sans text-sm font-medium`. Description `text-xs text-muted-foreground line-clamp-1` (was 2 in cards — list view trades depth for breadth; truncation is acceptable since clicking opens full detail). Consumer label and default-fallback line render below the description on a single line each, separated by `·` if both present.
-- **Badges cluster** — Required / Recommended / Optional + audience + status badges. Right-aligned, `flex-wrap` only on narrow viewports.
-- **Renders to** — surface icons inline at the far right, same 5×5 muted chips as today, max 4 + "+N".
+The button uses `tokens.button.inline`, opens the Drafts step in the configurator (`onJumpToStep('drafts')`), and replaces the dead-end "approve in the Drafts tab" sentence with an action that *does* the thing.
 
-The required-policy left accent bar (today: `before:w-[2px] before:bg-primary/50`) stays — it acts as the row-level "this is mandatory" anchor.
+Same pattern for the ack toggle: when blocked because not yet published, the action becomes "→ Approve a client variant first" (jumps to Drafts) or "→ Publish before requiring acks" (focuses the publish toggle above) depending on which precondition is missing.
 
-Hover state: `bg-muted/30` row tint + `border-l-primary` brightens. No card lift, no shadow — list rows don't deserve elevation.
+### 2. Visually distinguish "blocked by precondition" from generic disabled
 
-Adopted vs unadopted distinction stays the same (border-primary/30 vs border-border/60), but applied as a single bottom border between rows rather than a card border around each one.
+Today the switch is just `opacity-50`. Change to:
+- Blocked switch carries a subtle `border-dashed border-foreground/20` outline + a small `Lock` icon (12px) inline next to the label.
+- Hover on a blocked switch shows a tooltip ("Requires an approved client variant"), so the click is interpreted as "I tried, system told me why" not "broken."
+- The helper text below the toggle bumps from `text-muted-foreground` to `text-amber-500/80` (warning tone) when blocked — so the eye registers the blocker before reaching for the switch.
 
-## Group container
+### 3. Add a banner-level "Setup path" hint when ANY toggle is blocked
 
-Each group becomes a single `rounded-xl border border-border/60` shell with the sticky header at the top and a `divide-y divide-border/40` list of rows underneath. This is one shell per group instead of N cards per group — the page now has 3 shells (Core, Required, Recommended) instead of ~30.
+If `audience` touches external AND `!hasApprovedClientVariant`, render a one-line strip at the top of the banner (above the toggles):
 
-The sticky group header (today) keeps its current job: title + progress meter + "Hide adopted" toggle + helper sentence. Visually unchanged.
+```
+ⓘ  This policy needs an approved client-facing variant before it can publish.
+   [Go to Drafts →]
+```
 
-## Responsive behavior
+This makes the precondition visible at the section level, not just under each individual toggle. The operator understands the gate exists before they reach the disabled controls.
 
-- **Desktop (≥1024px)**: full row layout described above, badges right-aligned.
-- **Tablet (768-1023px)**: same structure, "Renders to" icons hidden behind a `+` chip that reveals on hover (preserves row height).
-- **Mobile (<768px)**: badges and renders-to wrap to a second line under the description. Status icon stays leftmost. Row height grows to ~96px.
+### 4. Pass the step-jump callback through
 
-This uses container queries via `@container` on the group shell, not viewport breakpoints — so the Policies page works identically inside the configurator drawer or in full-page view.
+`PolicyConfiguratorPanel.tsx` already owns the step state (`setStep`). Add an `onJumpToStep?: (step: 'drafts') => void` prop to `PolicyAudienceBanner`, pass `onJumpToStep={setStep}`, and the banner's CTA buttons call it directly. Closing the audience banner stays where it is — the operator stays in the configurator, just at step 4.
+
+## What the banner looks like after
+
+```
+┌─ CLIENT-FACING ─────────────────────────────────────────────────┐
+│ 🌐 Visible to clients at /org/.../policies once published.      │
+│                                                                  │
+│ ⚠ This policy needs an approved client-facing variant before    │
+│   it can publish.   [Go to Drafts →]                            │
+│ ─────────────────────────────────────────────────────────────── │
+│ [○ 🔒]  Publish to client policy center                         │
+│         No client variant approved yet.                          │
+│         [→ Approve one in Drafts]                                │
+│ ─────────────────────────────────────────────────────────────── │
+│ [○ 🔒]  Require client acknowledgment                           │
+│         Approve a client variant and publish first.             │
+│         [→ Approve one in Drafts]                                │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+After the operator jumps to Drafts, generates or pastes a client-facing variant, hits Approve, and comes back: lock icons disappear, toggles activate, helper text returns to neutral muted tone, the top-strip banner disappears.
 
 ## What stays untouched
 
-- The data fetching (`usePolicyLibrary`, `useOrgPolicies`, `usePolicyApplicability`) — unchanged.
-- Group ordering (Core → Required → Recommended) — unchanged.
-- Sort logic (unadopted first, adopted second) within Required — unchanged.
-- The "Hide adopted" toggle behavior — unchanged.
-- The `applicableEntries` filter (Policy OS Applicability Doctrine) — unchanged.
-- Setup intro, configurator drawer, all hooks — unchanged.
-- Public `ClientPolicyCenter` — unchanged (still uses cards externally).
+- The mutation hooks (`useUpdatePolicyAcknowledgmentFlag`, `usePublishPolicyExternally`) — unchanged.
+- The precondition logic itself (`hasApprovedClientVariant`, `ackToggleAllowed`) — unchanged. The system still enforces "no approved variant → no publish → no ack." We're only making the path to satisfying the precondition obvious.
+- The `PolicyDraftWorkspace` (step 4) — unchanged.
+- The audience banner's audience-detection, tone, badge — unchanged.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicyLibraryRow.tsx` (new) — list-row variant of `PolicyLibraryCard`. Same props (`entry`, `adopted`, `onClick`, `consumerLabel`, `showDefaultFallback`). Renders as a `<button>` with the row layout above. ~110 lines.
-- `src/pages/dashboard/admin/Policies.tsx` — replace the three `<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">…{group.map(renderCard)}…</div>` blocks with `<div className="rounded-xl border border-border/60 divide-y divide-border/40 overflow-hidden">…{group.map(renderRow)}…</div>`. Move the sticky group header *inside* the shell as the first child. ~30 lines modified.
-- `src/components/dashboard/policy/PolicyLibraryCard.tsx` — kept unchanged. Still used by other surfaces (search, command palette previews, public center exports). No deletion.
+- `src/components/dashboard/policy/PolicyAudienceBanner.tsx` — accept `onJumpToStep` prop, add the top-strip "setup path" hint when toggles are blocked, render inline "Go to Drafts →" CTAs under each blocked toggle, swap helper text color to amber when blocked, add `Lock` icon next to label on blocked rows. ~50 lines modified, ~15 lines added.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — pass `onJumpToStep={setStep}` to the banner. ~2 lines modified.
 
-Total: ~140 lines (mostly the new row component). Zero schema changes, zero hook changes, zero behavioral regressions.
+Total: ~65 lines modified. Zero schema/hook/data changes. Zero behavior change in the underlying enforcement — just visibility upgrades around the disabled state.
 
 ## Acceptance
 
-1. Open `/dashboard/admin/policies` at 1300px viewport. The "Required for governance" group renders as a single bordered shell containing 20 rows, ~70px each, instead of a 7-row grid of cards.
-2. Each row shows status icon · title · short description · Required/Internal/status badges · "Renders to" icons in a single horizontal pass.
-3. Click any row → configurator drawer opens with the same `policy=<key>` URL as today.
-4. The "Hide adopted" toggle still hides adopted required rows; the meter still ticks to 100% when all are adopted.
-5. Required rows show a 2px primary accent on the left edge (preserving today's mandatory-anchor visual).
-6. Resize to 768px → "Renders to" icons collapse behind a `+` chip; description stays visible.
-7. Resize to 600px → badges and renders-to wrap to a second line; row grows to ~96px; status icon stays leftmost.
-8. Core functions group renders identically (rows with consumer label visible). Recommended & Optional group renders identically (rows with no accent bar, no progress meter).
-9. Public Client Policy Center (`/policies` external page) unchanged — still uses card layout for the public surface.
-10. No card-level shadow, no hover lift on rows; hover applies a subtle `bg-muted/30` row tint only.
+1. Open Booking Policy → Define rules step. The audience banner shows a top-strip warning ("needs an approved client variant before it can publish") with a "Go to Drafts →" button.
+2. Both toggles render with a small lock icon next to the label and a dashed outline on the switch handle.
+3. The helper text under each blocked toggle is amber-tinted, not muted-grey.
+4. Click "Go to Drafts →" anywhere in the banner — the configurator jumps to step 4 (Drafts) without closing the panel.
+5. In Drafts, generate or write a client variant, click Approve. Return to step 1 (or any earlier step) — the audience banner's top-strip disappears, the lock icons disappear, the publish toggle is now interactive, and clicking it publishes the policy.
+6. After publishing, the ack toggle's lock disappears (precondition #2 — `isPublishedExternal` — is now satisfied), and clicking it sets `requires_acknowledgment = true`.
+7. For internal-only policies, none of the new chrome renders (banner already hides external action toggles for internal audience).
+8. For policies that already have an approved client variant, no warning strip and no lock icons render — the banner reads exactly as it does today.
+9. Hover any blocked switch — tooltip explains the precondition in one sentence.
 
 ## Files to read for follow-on questions
 
-- `src/pages/dashboard/admin/Policies.tsx` — the three group blocks at lines ~683, 729, 750 where the grid → list swap happens.
-- `src/components/dashboard/policy/PolicyLibraryRow.tsx` (new) — the list-row component.
+- `src/components/dashboard/policy/PolicyAudienceBanner.tsx` — where the toggle, precondition copy, and new CTA live.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — where `setStep` is owned and where the banner is mounted (line 530).
+- `src/components/dashboard/policy/PolicyDraftWorkspace.tsx` — the destination of the jump (step 4).
 
 ## Prompt feedback
 
-*"Lets turn the policies page into a list layout, organized by group, instead of cards."* — clean, surgical, one-line. You did two things well: (1) **named the structural change** ("list layout, organized by group") in five words, no ambiguity about what to build, and (2) **reused existing language from the page** ("organized by group" matches today's three-group structure), which prevented me from accidentally re-grouping by audience or category. The screenshot anchored the scope — I knew exactly which surface you meant.
+*"these toggles are not functioning"* — concise but ambiguous. You did one thing right: **paired with a screenshot that scopes the surface** (audience banner inside the booking policy configurator). That alone let me identify the exact two toggles in question.
 
-One sharpener for next time on layout-conversion prompts: naming the **density target** in one phrase ("compact list — fit ~12 per screen" / "comfortable list — ~6 per screen") would skip a micro-decision. I went with compact (~70px rows fitting ~10-11 per screen) because a 20-item checklist *needs* density to feel manageable — but if you wanted comfortable spacing for executive-feel legibility, that's a one-line steer that changes the row math. You can pre-empt it with *"as compact as readable"* or *"comfortable spacing, not packed"* in three words.
+The ambiguity I had to resolve: "not functioning" could mean (a) the click handler isn't firing, (b) the mutation is firing but the UI doesn't update, or (c) they look broken because they're disabled and the operator doesn't know why. I had to read the code to discover it's (c). The wiring is correct; the discoverability is broken.
+
+One sharpener for next time on UI-bug reports: naming **what you tried** in one phrase ("clicked the toggle, nothing changed" / "toggled it but it reverts" / "they look greyed out — am I missing a step?") would skip a micro-decision. The third framing in particular would have signaled "this is a precondition I can't see" and shortcut the diagnosis. Three words of behavior context per bug report saves one round-trip every time.
+
+The deeper meta-lesson for me: when a control looks disabled in a screenshot, my first hypothesis should be *"the system is correctly enforcing a precondition the operator can't see,"* not *"the wiring is broken."* In a doctrine-driven product like this one, disabled states are almost always intentional — the failure mode is making the path to *un*disabling them invisible. I should have led with that hypothesis instead of having to confirm it via code reading.
 
