@@ -849,8 +849,8 @@ function StatTile({
 }
 
 /**
- * Sparkline — compact 8-week drop trend per step. Uses semantic foreground
- * tokens (no hardcoded colors) so it respects theme.
+ * Sparkline — compact 8-week drop trend per step. Hover surfaces exact
+ * weekly counts and a delta-vs-prior indicator (Wave 11C).
  */
 function Sparkline({ values }: { values: number[] }) {
   if (!values || values.length === 0) {
@@ -867,6 +867,12 @@ function Sparkline({ values }: { values: number[] }) {
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(" ");
+  const current = values[values.length - 1] ?? 0;
+  const prior = values[values.length - 2] ?? 0;
+  const delta = current - prior;
+  const tooltip = `Last ${values.length} weeks (oldest → newest):\n${values
+    .map((v, i) => `W-${values.length - 1 - i}: ${v}`)
+    .join("\n")}\nThis week vs prior: ${delta >= 0 ? "+" : ""}${delta}`;
   return (
     <svg
       width={W}
@@ -875,6 +881,7 @@ function Sparkline({ values }: { values: number[] }) {
       className="ml-auto block"
       aria-label={`Drops over last ${values.length} weeks`}
     >
+      <title>{tooltip}</title>
       <polyline
         points={points}
         fill="none"
@@ -889,15 +896,17 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 /**
- * SourceBreakdownTile — 5th top-line tile breaking the cohort by acquisition
- * source so platform ops sees attribution health at a glance.
+ * SourceBreakdownTile — 5th top-line tile. Source badges are clickable
+ * and apply the cohort filter for one-click drill-down (Wave 11C).
  */
 function SourceBreakdownTile({
   isLoading,
   breakdown,
+  onSelectSource,
 }: {
   isLoading: boolean;
   breakdown: { source: string; count: number; pct: number }[];
+  onSelectSource?: (source: string) => void;
 }) {
   return (
     <Card className="relative">
@@ -921,7 +930,14 @@ function SourceBreakdownTile({
                     key={b.source}
                     className="flex items-center justify-between gap-2"
                   >
-                    <SourceBadge source={b.source} />
+                    <button
+                      type="button"
+                      onClick={() => onSelectSource?.(b.source)}
+                      className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring/40"
+                      title={`Filter funnel by ${b.source}`}
+                    >
+                      <SourceBadge source={b.source} />
+                    </button>
                     <span className="font-display text-xs tracking-wide tabular-nums text-foreground">
                       {b.pct.toFixed(0)}%
                     </span>
