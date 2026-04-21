@@ -268,7 +268,7 @@ export function PolicyConfiguratorPanel({
   const hasApprovedClientVariant = variantsData.some(
     (v) => v.approved && v.variant_type === 'client',
   );
-  const { effectiveOrganization } = useOrganizationContext();
+  // effectiveOrganization is declared at the top of the component.
   const orgSlug = effectiveOrganization?.slug;
   const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
 
