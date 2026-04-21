@@ -157,6 +157,7 @@ export default function Policies() {
       <DashboardPageHeader
         title="Policies"
         backTo={dashPath('/admin/settings')}
+        className="mb-8"
         description={
           hasProfile
             ? 'The source of truth for every policy your business runs on. Configure once, render everywhere — handbooks, client pages, booking, checkout, and manager decisions.'
