@@ -9,7 +9,7 @@
  * Doctrine: mem://features/policy-os-applicability-doctrine.md
  *           ("Wizard inputs must be derived-by-default.")
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
