@@ -41,10 +41,31 @@ export interface PolicyOrgProfile {
   updated_at: string;
 }
 
+/**
+ * Input shape for upserting the profile. Compensation-derived fields are
+ * auto-maintained by a DB trigger when compensation_plans change, so they
+ * remain optional from the client side.
+ */
 export type PolicyOrgProfileInput = Omit<
   PolicyOrgProfile,
-  'id' | 'organization_id' | 'created_at' | 'updated_at' | 'setup_completed_at'
-> & { setup_completed_at?: string | null };
+  | 'id'
+  | 'organization_id'
+  | 'created_at'
+  | 'updated_at'
+  | 'setup_completed_at'
+  | 'compensation_models_in_use'
+  | 'commission_basis_in_use'
+  | 'uses_tip_pooling'
+  | 'uses_refund_clawback'
+  | 'has_booth_renters'
+> & {
+  setup_completed_at?: string | null;
+  compensation_models_in_use?: string[];
+  commission_basis_in_use?: string[];
+  uses_tip_pooling?: boolean;
+  uses_refund_clawback?: boolean;
+  has_booth_renters?: boolean;
+};
 
 export function usePolicyOrgProfile() {
   const { effectiveOrganization } = useOrganizationContext();
