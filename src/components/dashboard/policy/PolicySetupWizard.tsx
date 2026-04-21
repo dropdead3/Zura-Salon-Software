@@ -17,7 +17,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin, Upload, FileText } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin, Upload, FileText, Lock } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { tokens } from '@/lib/design-tokens';
@@ -29,7 +31,7 @@ import {
   recommendedKeysForProfile,
   type PolicyOrgProfileInput,
 } from '@/hooks/policy/usePolicyOrgProfile';
-import { usePolicyLibrary } from '@/hooks/policy/usePolicyData';
+import { usePolicyLibrary, POLICY_CATEGORY_META, type PolicyCategory } from '@/hooks/policy/usePolicyData';
 import {
   usePolicyProfileDefaults,
   TEAM_BAND_LABELS,
@@ -191,6 +193,95 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     return map;
   }, [library, recommendedKeys]);
 
+  // Set of library keys that are "required" within the recommended set.
+  // Required policies are locked-checked and cannot be excluded.
+  const requiredKeySet = useMemo(() => {
+    const set = new Set<string>();
+    library
+      .filter((l) => recommendedKeys.includes(l.key) && l.recommendation === 'required')
+      .forEach((l) => set.add(l.key));
+    return set;
+  }, [library, recommendedKeys]);
+
+  /**
+   * Operator opt-outs from the recommended set. Local-only (not persisted to
+   * policy_org_profile) — this is a one-shot adoption decision, not an
+   * ongoing profile attribute. Required keys can never be added here.
+   */
+  const [excludedKeys, setExcludedKeys] = useState<Set<string>>(new Set());
+  const [recommendationsRecentlyReset, setRecommendationsRecentlyReset] = useState(false);
+
+  // When the recommended set changes (operator went back to Step 2 and toggled
+  // an offers_* flag), reset opt-outs so new additions surface checked.
+  const recommendedKeysSig = useMemo(() => recommendedKeys.slice().sort().join('|'), [recommendedKeys]);
+  const lastSigRef = useRef<string>(recommendedKeysSig);
+  useEffect(() => {
+    if (lastSigRef.current === recommendedKeysSig) return;
+    const wasInitial = lastSigRef.current === '';
+    lastSigRef.current = recommendedKeysSig;
+    if (wasInitial) return;
+    setExcludedKeys(new Set());
+    setRecommendationsRecentlyReset(true);
+  }, [recommendedKeysSig]);
+
+  const effectiveKeys = useMemo(
+    () => recommendedKeys.filter((k) => !excludedKeys.has(k)),
+    [recommendedKeys, excludedKeys],
+  );
+
+  const togglePolicyExcluded = (key: string) => {
+    if (requiredKeySet.has(key)) return; // defense-in-depth: required cannot be excluded
+    setExcludedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const resetToRecommended = () => {
+    setExcludedKeys(new Set());
+    setRecommendationsRecentlyReset(false);
+  };
+
+  // Group recommended library entries by category for the review accordion.
+  const recommendedByCategoryEntries = useMemo(() => {
+    const byCat = new Map<PolicyCategory, typeof library>();
+    library
+      .filter((l) => recommendedKeys.includes(l.key))
+      .forEach((l) => {
+        const arr = byCat.get(l.category) ?? [];
+        arr.push(l);
+        byCat.set(l.category, arr);
+      });
+    // Sort entries inside each category: required first, then by display_order.
+    byCat.forEach((arr) => {
+      arr.sort((a, b) => {
+        if (a.recommendation !== b.recommendation) {
+          return a.recommendation === 'required' ? -1 : 1;
+        }
+        return a.display_order - b.display_order;
+      });
+    });
+    return (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[])
+      .sort((a, b) => POLICY_CATEGORY_META[a].order - POLICY_CATEGORY_META[b].order)
+      .map((cat) => ({ cat, items: byCat.get(cat) ?? [] }))
+      .filter((g) => g.items.length > 0);
+  }, [library, recommendedKeys]);
+
+  // Compute trigger chips for a policy — which Step 2 toggle unlocked it.
+  const getTriggerChips = (entry: typeof library[number]): string[] => {
+    const chips: string[] = [];
+    if (entry.requires_extensions && form.offers_extensions) chips.push('Extensions');
+    if (entry.requires_retail && form.offers_retail) chips.push('Retail');
+    if (entry.requires_packages && form.offers_packages) chips.push('Packages');
+    if (entry.requires_minors && form.serves_minors) chips.push('Minors');
+    if ((entry as any).requires_tip_pooling && form.uses_tip_pooling) chips.push('Tip pool');
+    if ((entry as any).requires_refund_clawback && form.uses_refund_clawback) chips.push('Refund clawback');
+    if ((entry as any).requires_booth_rental && form.has_booth_renters) chips.push('Booth renters');
+    return chips;
+  };
+
   /**
    * Wave 28.11.6 — expansion prompt (preserved).
    * Detect offers_* flags that flipped false → true since the existing profile.
@@ -338,8 +429,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
       ...form,
       setup_completed_at: new Date().toISOString(),
     });
-    if (recommendedKeys.length > 0) {
-      await adopt.mutateAsync(recommendedKeys);
+    if (effectiveKeys.length > 0) {
+      await adopt.mutateAsync(effectiveKeys);
     }
     onCompleted?.();
     onClose();
@@ -865,16 +956,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
             </div>
 
             <div className="pt-4 border-t border-border/60 space-y-4">
-              <div>
-                <Label className={cn(tokens.kpi.label)}>Recommended policy set</Label>
-                <p className={cn(tokens.stat.xlarge, 'mt-1')}>{recommendedKeys.length}</p>
-                <p className={cn(tokens.body.muted, 'mt-1')}>
-                  Based on your profile. You can browse the full library and add more anytime.
-                </p>
-              </div>
-
               {expansionFlips.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-border/60">
+                <div className="space-y-2">
                   <Label className={cn(tokens.kpi.label)}>What changed</Label>
                   <div className="space-y-2">
                     {expansionFlips.map((f) => (
@@ -910,28 +993,188 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 </div>
               )}
 
-              {recommendedByCategory.size > 0 && (
-                <div className="space-y-2 pt-2 border-t border-border/60">
-                  <Label className={cn(tokens.kpi.label)}>Policies by category</Label>
-                  <p className="font-sans text-xs text-muted-foreground">
-                    Counts of recommended policies in each category — not headcount or location counts.
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {Array.from(recommendedByCategory.entries()).map(([cat, count]) => (
-                      <div
-                        key={cat}
-                        className="flex items-center justify-between p-2 rounded-md bg-muted/50 font-sans text-sm"
+              {/* ── Review the recommended set ──────────────────────── */}
+              {recommendedByCategoryEntries.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="space-y-1">
+                      <Label className={cn(tokens.kpi.label)}>Review the recommended set</Label>
+                      <p className="font-sans text-xs text-muted-foreground">
+                        <span className="text-foreground">{effectiveKeys.length}</span> of{' '}
+                        {recommendedKeys.length} policies selected. Required policies are locked;
+                        uncheck any recommended one you don't want.
+                      </p>
+                    </div>
+                    {excludedKeys.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={resetToRecommended}
+                        className="font-sans text-xs text-primary hover:underline shrink-0"
                       >
-                        <span className="text-muted-foreground">{formatCategoryLabel(cat)}</span>
-                        <span>
-                          <span className="text-foreground">{count}</span>
-                          <span className="text-muted-foreground text-xs ml-1">
-                            {count === 1 ? 'policy' : 'policies'}
-                          </span>
-                        </span>
-                      </div>
-                    ))}
+                        Reset to recommended
+                      </button>
+                    )}
                   </div>
+
+                  {recommendationsRecentlyReset && (
+                    <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+                      <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <p className="font-sans text-xs text-foreground">
+                        Updated recommendations — re-checked everything based on your latest
+                        Step 2 selections.
+                      </p>
+                    </div>
+                  )}
+
+                  <Accordion
+                    type="multiple"
+                    defaultValue={recommendedByCategoryEntries
+                      .slice(0, 1)
+                      .map((g) => g.cat)}
+                    className="border border-border/60 rounded-lg divide-y divide-border/60"
+                  >
+                    {recommendedByCategoryEntries.map((group) => {
+                      const meta = POLICY_CATEGORY_META[group.cat];
+                      const requiredCount = group.items.filter(
+                        (i) => i.recommendation === 'required',
+                      ).length;
+                      const recommendedCount = group.items.length - requiredCount;
+                      return (
+                        <AccordionItem
+                          key={group.cat}
+                          value={group.cat}
+                          className="border-b-0 px-3"
+                        >
+                          <AccordionTrigger className="hover:no-underline py-3">
+                            <div className="flex flex-1 items-center justify-between gap-3 pr-2">
+                              <span className="font-sans text-sm text-foreground text-left">
+                                {meta.label}
+                              </span>
+                              <span className="font-sans text-xs text-muted-foreground shrink-0">
+                                {group.items.length}{' '}
+                                {group.items.length === 1 ? 'policy' : 'policies'}
+                                {requiredCount > 0 && (
+                                  <>
+                                    {' '}
+                                    — <span className="text-foreground">{requiredCount} required</span>
+                                  </>
+                                )}
+                                {recommendedCount > 0 && (
+                                  <>
+                                    {requiredCount > 0 ? ', ' : ' — '}
+                                    <span className="text-foreground">
+                                      {recommendedCount} recommended
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-3">
+                            <div className="space-y-2">
+                              {group.items.map((entry) => {
+                                const isRequired = entry.recommendation === 'required';
+                                const isChecked = !excludedKeys.has(entry.key);
+                                const triggers = getTriggerChips(entry);
+                                const rowId = `policy-row-${entry.key}`;
+                                return (
+                                  <div
+                                    key={entry.key}
+                                    className={cn(
+                                      'flex items-start gap-3 rounded-lg border p-3 transition-colors',
+                                      isRequired
+                                        ? 'border-border/60 bg-muted/20'
+                                        : isChecked
+                                          ? 'border-primary/40 bg-primary/5'
+                                          : 'border-border bg-card hover:bg-muted/30',
+                                    )}
+                                  >
+                                    <div className="pt-0.5">
+                                      {isRequired ? (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div className="relative inline-flex items-center justify-center">
+                                              <Checkbox
+                                                id={rowId}
+                                                checked
+                                                disabled
+                                                aria-label="Required policy — cannot be unchecked"
+                                              />
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="right" className="max-w-xs">
+                                            <p className="font-sans text-xs">
+                                              Required for your business profile — covers a
+                                              regulatory or structural baseline.
+                                            </p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      ) : (
+                                        <Checkbox
+                                          id={rowId}
+                                          checked={isChecked}
+                                          onCheckedChange={() => togglePolicyExcluded(entry.key)}
+                                        />
+                                      )}
+                                    </div>
+                                    <Label
+                                      htmlFor={rowId}
+                                      className={cn(
+                                        'flex-1 min-w-0 space-y-1',
+                                        isRequired ? 'cursor-default' : 'cursor-pointer',
+                                      )}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <span className="font-sans text-sm text-foreground leading-snug">
+                                          {entry.title}
+                                        </span>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                          {isRequired ? (
+                                            <Badge
+                                              variant="default"
+                                              className="text-[10px] py-0.5 px-2"
+                                            >
+                                              <Lock className="w-2.5 h-2.5 mr-1" />
+                                              Required
+                                            </Badge>
+                                          ) : (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-[10px] py-0.5 px-2"
+                                            >
+                                              Recommended
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <p className="font-sans text-xs text-muted-foreground leading-relaxed">
+                                        {entry.short_description}
+                                      </p>
+                                      {triggers.length > 0 && (
+                                        <div className="flex flex-wrap items-center gap-1 pt-1">
+                                          <span className="font-sans text-[10px] text-muted-foreground">
+                                            Because you offer:
+                                          </span>
+                                          {triggers.map((t) => (
+                                            <span
+                                              key={t}
+                                              className="font-sans text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                                            >
+                                              {t}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 </div>
               )}
 
@@ -940,6 +1183,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 automatically — you stay in control of what goes live.
               </p>
             </div>
+
           </div>
         )}
       </div>
@@ -976,7 +1220,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                   Saving…
                 </>
               ) : (
-                <>Save &amp; adopt {recommendedKeys.length}</>
+                <>Save &amp; adopt {effectiveKeys.length}</>
               )}
             </Button>
           )}
