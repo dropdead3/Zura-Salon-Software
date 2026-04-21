@@ -172,15 +172,15 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal',
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <Input
-            id={id}
-            value={typeof value === 'string' ? value : ''}
-            placeholder={field.placeholder}
-            onChange={(e) => onChange(e.target.value)}
-            className="font-sans"
-          />
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <Input
+              id={id}
+              value={typeof value === 'string' ? value : ''}
+              placeholder={field.placeholder}
+              onChange={(e) => onChange(e.target.value)}
+              className="font-sans"
+            />
+          )}
         </div>
       );
 
