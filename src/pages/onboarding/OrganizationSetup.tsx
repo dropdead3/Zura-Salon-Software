@@ -110,6 +110,8 @@ export default function OrganizationSetup() {
   const skipIntro = params.get("skipIntro") === "1";
   const singleStepKey = params.get("step"); // single-step re-entry from settings
   const returnTo = params.get("returnTo");
+  // Wave 13G.G — migrated reviewers fast-track to summary if backfill is complete.
+  const reviewMode = params.get("reviewMode") === "1";
 
   const [showIntro, setShowIntro] = useState(!skipIntro && !singleStepKey);
   const [phase, setPhase] = useState<"steps" | "summary" | "result">("steps");
