@@ -31,6 +31,12 @@ export interface PolicyLibraryEntry {
   requires_retail: boolean;
   requires_packages: boolean;
   requires_minors: boolean;
+  // Compensation-aware applicability gates (Wave 3)
+  requires_tip_pooling?: boolean;
+  requires_refund_clawback?: boolean;
+  requires_booth_rental?: boolean;
+  requires_hourly_pay?: boolean;
+  requires_product_cost_basis?: boolean;
   display_order: number;
   configurator_schema_key: string | null;
 }
