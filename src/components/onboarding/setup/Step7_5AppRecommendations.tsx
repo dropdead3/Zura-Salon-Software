@@ -52,7 +52,7 @@ function classifyApps(draftData: Record<string, any>): AppRec[] {
   }
 
   // Tier 2 — strongly recommended
-  if (intent.includes("grow_team") || team.team_size_band !== "solo") {
+  if (intent.includes("grow_team") || (team.team_size_band && team.team_size_band !== "1-3")) {
     out.push({
       key: "zura_connect",
       name: "Zura Connect",

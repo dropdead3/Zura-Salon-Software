@@ -34,11 +34,10 @@ const COMP_LABEL: Record<string, string> = {
 };
 
 const TEAM_LABEL: Record<string, string> = {
-  solo: "solo operator",
-  small: "small team",
-  medium: "growing team",
-  large: "large team",
-  enterprise: "enterprise team",
+  "1-3": "solo or very small team",
+  "4-10": "small team",
+  "11-25": "mid-size team",
+  "26+": "enterprise team",
 };
 
 export function OperatorProfileSentence({ draftData }: Props) {
