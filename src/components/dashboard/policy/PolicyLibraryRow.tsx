@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Circle, Lock } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Circle, Lock } from 'lucide-react';
 import type { PolicyLibraryEntry, OrgPolicy } from '@/hooks/policy/usePolicyData';
 import { POLICY_STATUS_META } from '@/hooks/policy/usePolicyData';
 import { SURFACE_META } from '@/hooks/policy/usePolicyApplicability';
@@ -11,6 +11,10 @@ interface Props {
   onClick: () => void;
   consumerLabel?: string;
   showDefaultFallback?: boolean;
+  /** When true, marks this row as the next-action row in setup mode:
+   *  amber tint + chevron pointer. Setup-mode-only; governance mode
+   *  never sets this. */
+  nextPointer?: boolean;
 }
 
 const recommendationLabel: Record<PolicyLibraryEntry['recommendation'], string> = {
@@ -31,6 +35,7 @@ export function PolicyLibraryRow({
   onClick,
   consumerLabel,
   showDefaultFallback,
+  nextPointer = false,
 }: Props) {
   const isAdopted = !!adopted;
   const isRequired = entry.recommendation === 'required';
@@ -51,12 +56,16 @@ export function PolicyLibraryRow({
         isRequired &&
           'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-primary/50',
         isRequired && !isAdopted && 'bg-primary/[0.02]',
+        nextPointer &&
+          'bg-amber-500/[0.06] before:!bg-amber-500/70 hover:bg-amber-500/[0.1]',
       )}
     >
       <div className="@container/row px-4 py-3.5 flex items-start gap-3">
         {/* Status icon */}
         {isAdopted ? (
           <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        ) : nextPointer ? (
+          <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
         ) : (
           <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0 mt-0.5" />
         )}
