@@ -77,7 +77,7 @@ const STEP_META: Record<WizardStep, { label: string; description: string }> = {
   },
   model: {
     label: 'Business model',
-    description: 'Tell us how you operate — drives which policies apply.',
+    description: 'Tell us how you operate — drives which policies apply. You can change any of these later as your business evolves.',
   },
   materials: {
     label: 'Materials & review',
