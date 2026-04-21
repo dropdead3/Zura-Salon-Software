@@ -117,6 +117,9 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     has_existing_client_policies: existingProfile?.has_existing_client_policies ?? false,
     roles_used: existingProfile?.roles_used ?? [],
     service_categories: existingProfile?.service_categories ?? [],
+    uses_tip_pooling: existingProfile?.uses_tip_pooling ?? false,
+    uses_refund_clawback: existingProfile?.uses_refund_clawback ?? false,
+    has_booth_renters: existingProfile?.has_booth_renters ?? false,
   }));
 
   // Hydrate derived-by-default values once they load (existing profile values win)
