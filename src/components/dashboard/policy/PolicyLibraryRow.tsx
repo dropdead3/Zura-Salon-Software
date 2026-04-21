@@ -56,12 +56,16 @@ export function PolicyLibraryRow({
         isRequired &&
           'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-primary/50',
         isRequired && !isAdopted && 'bg-primary/[0.02]',
+        nextPointer &&
+          'bg-amber-500/[0.06] before:!bg-amber-500/70 hover:bg-amber-500/[0.1]',
       )}
     >
       <div className="@container/row px-4 py-3.5 flex items-start gap-3">
         {/* Status icon */}
         {isAdopted ? (
           <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        ) : nextPointer ? (
+          <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
         ) : (
           <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0 mt-0.5" />
         )}
