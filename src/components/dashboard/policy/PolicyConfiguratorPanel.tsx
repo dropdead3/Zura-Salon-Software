@@ -659,8 +659,7 @@ export function PolicyConfiguratorPanel({
           )}
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Wave 28.13 — Linear stepper replaces the parallel tab strip.
+        <div className="space-y-8">
               Step labels are operator-outcome verbs; acknowledgments moved
               to a header-link drawer (it's an audit log, not a config step). */}
           <PolicyConfiguratorStepper
