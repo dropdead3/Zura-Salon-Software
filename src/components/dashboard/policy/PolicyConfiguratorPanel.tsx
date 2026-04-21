@@ -396,6 +396,16 @@ export function PolicyConfiguratorPanel({
               Version history
             </button>
           )}
+          {showAcknowledgmentsLink && (
+            <button
+              type="button"
+              onClick={() => setAcksOpen(true)}
+              className="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <FileSignature className="w-3.5 h-3.5" />
+              View client acknowledgments{ackCount > 0 ? ` (${ackCount})` : ''}
+            </button>
+          )}
         </div>
 
         {/* Wave 28.11.3 — Audience-aware banner replaces the stacked
