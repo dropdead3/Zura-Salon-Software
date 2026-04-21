@@ -78,6 +78,10 @@ export function SetupProgressPanel({
         const completion = completionMap[step.key];
         const completedRel = completion ? formatRelativeShort(completion.completed_at) : null;
         const retried = (completion?.attempt_count ?? 1) > 1;
+        // Wave 13I — backfill-sourced completions render as "Inferred" so the
+        // operator can tell at a glance which steps were filled by the system
+        // vs explicitly confirmed by them.
+        const isBackfillSource = completion?.completion_source === "backfill_only";
         return (
           <button
             key={step.key}
@@ -131,8 +135,8 @@ export function SetupProgressPanel({
               */}
               {completed && completedRel && completedKeys.has(step.key) && (
                 <div className="font-sans text-[10px] text-muted-foreground/70 mt-1 leading-snug">
-                  Confirmed {completedRel}
-                  {retried && (
+                  {isBackfillSource ? "Inferred" : "Confirmed"} {completedRel}
+                  {retried && !isBackfillSource && (
                     <span className="text-muted-foreground/60"> · retried</span>
                   )}
                 </div>

@@ -23,6 +23,7 @@ import { Step7_5AppRecommendations } from "@/components/onboarding/setup/Step7_5
 import { SetupSummary } from "@/components/onboarding/setup/SetupSummary";
 import { SetupCommitResult } from "@/components/onboarding/setup/SetupCommitResult";
 import type { StepRegistryEntry, StepProps } from "@/components/onboarding/setup/types";
+import { tokenize } from "@/lib/wizard-tokenize";
 import { toast } from "sonner";
 
 interface WhyWeAskEntry {
@@ -76,8 +77,10 @@ const WHY_WE_ASK: Record<string, WhyWeAskEntry> = {
   },
 };
 
-const PLATFORM_NAME = "Zura";
-const tokenize = (s: string) => s.replace(/\{\{PLATFORM_NAME\}\}/g, PLATFORM_NAME);
+// Wave 13I — B3 closed: tokenize is now imported from @/lib/wizard-tokenize so
+// every brand token in the canonical map (PLATFORM_NAME, MARKETING_OS_NAME,
+// EXECUTIVE_BRIEF_NAME, etc.) resolves uniformly. Adding a new token is a
+// single edit in the helper, not a hunt across the wizard host.
 
 const STEP_COMPONENTS: Record<string, React.ComponentType<StepProps<any>>> = {
   Step0FitCheck,
@@ -455,7 +458,7 @@ export default function OrganizationSetup() {
   return (
     <>
       <Helmet>
-        <title>{tokenize(currentStep.title)} — {PLATFORM_NAME} setup</title>
+        <title>{tokenize(currentStep.title)} — {tokenize("{{PLATFORM_NAME}}")} setup</title>
       </Helmet>
       <StepShell
         orgId={orgId}
