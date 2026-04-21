@@ -153,11 +153,33 @@ export interface PolicySurfaceConflict {
 export interface PolicyHealthSummary {
   total_recommended: number;
   adopted: number;
+  /** Truly done: row has current_version_id AND status ∈ finalized set. */
+  finalized: number;
   configured: number;
   published: number;
   wired: number;
-  by_category: Record<PolicyCategory, { adopted: number; total: number }>;
+  by_category: Record<PolicyCategory, { adopted: number; total: number; finalized: number }>;
   surface_conflicts: PolicySurfaceConflict[];
+}
+
+/**
+ * A policy is "finalized" only when an approved version exists.
+ * Adoption (a row in `policies`) is NOT completion — the wizard
+ * bulk-adopts at status `not_started`/`drafting`, which would falsely
+ * register as "done" if we counted row existence.
+ *
+ * See mem://architecture/structural-enforcement-gates — structure
+ * (an approved version) precedes celebration.
+ */
+export function isPolicyFinalized(p?: OrgPolicy | null): boolean {
+  if (!p) return false;
+  if (!p.current_version_id) return false;
+  return (
+    p.status === 'configured' ||
+    p.status === 'approved_internal' ||
+    p.status === 'published_external' ||
+    p.status === 'wired'
+  );
 }
 
 /**
