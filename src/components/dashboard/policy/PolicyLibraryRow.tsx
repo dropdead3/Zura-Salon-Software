@@ -35,6 +35,7 @@ export function PolicyLibraryRow({
   onClick,
   consumerLabel,
   showDefaultFallback,
+  nextPointer = false,
 }: Props) {
   const isAdopted = !!adopted;
   const isRequired = entry.recommendation === 'required';
