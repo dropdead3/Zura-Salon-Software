@@ -68,7 +68,7 @@ function ProvenanceHelper({ field, audience }: { field: RuleField; audience: Pol
   );
 }
 
-export function PolicyRuleField({ field, value, onChange, audience = 'internal' }: PolicyRuleFieldProps) {
+export function PolicyRuleField({ field, value, onChange, audience = 'internal', helperPlacement = 'inline' }: PolicyRuleFieldProps) {
   const id = `pf-${field.key}`;
 
   const labelEl = (
@@ -84,7 +84,40 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
     <p className="font-sans text-xs text-muted-foreground mt-1">{field.helper}</p>
   ) : null;
 
+  const provenanceLine = buildProvenanceLine(field, audience);
   const provenanceEl = <ProvenanceHelper field={field} audience={audience} />;
+
+  /**
+   * `side` placement: the input occupies a left column (max-w-[640px] for
+   * comfortable reading width) and the provenance helper floats as a slim
+   * right column on xl+ viewports. Below xl, falls back to stacked.
+   * Only activates when there's actually provenance content to show.
+   */
+  const sideMode = helperPlacement === 'side' && !!provenanceLine;
+  const wrap = (input: React.ReactNode) => {
+    if (!sideMode) {
+      return (
+        <>
+          {input}
+          {helperEl}
+          {provenanceEl}
+        </>
+      );
+    }
+    return (
+      <>
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_220px] gap-4 xl:gap-6 items-start">
+          <div className="min-w-0 max-w-[640px]">
+            {input}
+            {helperEl}
+          </div>
+          <div className="xl:pt-1">
+            <ProvenanceHelper field={field} audience={audience} sideMode />
+          </div>
+        </div>
+      </>
+    );
+  };
 
   switch (field.type) {
     case 'number':
