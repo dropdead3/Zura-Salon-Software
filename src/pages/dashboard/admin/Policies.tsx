@@ -527,8 +527,43 @@ export default function Policies() {
                 {filteredLibrary.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <Library className={tokens.empty.icon} />
-                    <h3 className={tokens.empty.heading}>No policies in this category</h3>
-                    <p className={tokens.empty.description}>Try a different filter.</p>
+                    {isSearching ? (
+                      <>
+                        <h3 className={tokens.empty.heading}>
+                          No policies match &ldquo;{query}&rdquo;
+                        </h3>
+                        <p className={tokens.empty.description}>
+                          Check spelling or clear the search to see the full library.
+                          {suggestedCategory && (
+                            <>
+                              {' '}Or jump to the{' '}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setQuery('');
+                                  setActiveCategory(suggestedCategory);
+                                }}
+                                className="font-sans text-foreground underline-offset-2 hover:underline"
+                              >
+                                {POLICY_CATEGORY_META[suggestedCategory].label}
+                              </button>{' '}
+                              category.
+                            </>
+                          )}
+                        </p>
+                        <div className="mt-4 flex items-center justify-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setQuery('')} className="font-sans">
+                            <X className="w-3.5 h-3.5 mr-1" />
+                            Clear search
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className={tokens.empty.heading}>No policies in this category</h3>
+                        <p className={tokens.empty.description}>Try a different filter.</p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   (() => {
