@@ -66,6 +66,8 @@ import {
   usePolicyOrgProfile,
   applicabilityReason,
 } from '@/hooks/policy/usePolicyOrgProfile';
+import { interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface PolicyConfiguratorPanelProps {
   entry: PolicyLibraryEntry & { configurator_schema_key?: string | null };
@@ -82,6 +84,23 @@ function defaultsFromSchema(fields: RuleField[]): Record<string, unknown> {
   return out;
 }
 
+/**
+ * Apply brand-token substitution to schema defaults at hydration time.
+ * Only string values are interpolated; numbers, booleans, arrays, and enum
+ * values pass through untouched. Operator-saved values (fromBlocks) bypass
+ * this entirely — only the platform's authored defaults are resolved.
+ */
+function interpolateDefaults(
+  defaults: Record<string, unknown>,
+  ctx: { orgName?: string; platformName?: string },
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(defaults)) {
+    out[key] = typeof value === 'string' ? interpolateBrandTokens(value, ctx) : value;
+  }
+  return out;
+}
+
 export function PolicyConfiguratorPanel({
   entry,
   alreadyAdopted,
@@ -92,6 +111,7 @@ export function PolicyConfiguratorPanel({
   const adopt = useAdoptAndInitPolicy();
   const { data, isLoading, refetch } = usePolicyConfiguratorData(entry.key);
   const save = useSavePolicyRuleBlocks();
+  const { effectiveOrganization } = useOrganizationContext();
 
   // Wave 28.11.6 — applicability banner. When this policy requires a service
   // the operator's profile says they don't offer (e.g., extensions for a solo
@@ -118,7 +138,11 @@ export function PolicyConfiguratorPanel({
 
   const allFields = useMemo(() => schema.sections.flatMap((s) => s.fields), [schema]);
 
-  // Hydrate values once data arrives.
+  // Hydrate values once data arrives. Brand tokens in schema defaults
+  // ({{ORG_NAME}}, {{PLATFORM_NAME}}) are resolved at this moment so the
+  // editor and the saved record both read concretely. Operator-saved values
+  // (fromBlocks) are sacred — never re-interpolated.
+  const orgNameForTokens = effectiveOrganization?.name ?? undefined;
   useEffect(() => {
     if (!data || hydrated) return;
     const fromBlocks: Record<string, unknown> = {};
@@ -128,10 +152,14 @@ export function PolicyConfiguratorPanel({
         ? (v as { v: unknown }).v
         : v;
     });
-    const seeded = { ...defaultsFromSchema(allFields), ...fromBlocks };
+    const interpolated = interpolateDefaults(defaultsFromSchema(allFields), {
+      orgName: orgNameForTokens,
+      platformName: PLATFORM_NAME,
+    });
+    const seeded = { ...interpolated, ...fromBlocks };
     setValues(seeded);
     setHydrated(true);
-  }, [data, hydrated, allFields]);
+  }, [data, hydrated, allFields, orgNameForTokens]);
 
   const versionId = data?.versionId;
   const versionNumber = data?.versionNumber ?? 1;
@@ -240,7 +268,7 @@ export function PolicyConfiguratorPanel({
   const hasApprovedClientVariant = variantsData.some(
     (v) => v.approved && v.variant_type === 'client',
   );
-  const { effectiveOrganization } = useOrganizationContext();
+  // effectiveOrganization is declared at the top of the component.
   const orgSlug = effectiveOrganization?.slug;
   const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
 

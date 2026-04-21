@@ -40,14 +40,45 @@ function humanize(value: unknown): string {
   return String(value);
 }
 
-export function renderStarterDraft(template: string, ctx: RenderContext): string {
-  if (!template) return '';
+/**
+ * Shared brand-token interpolation. The single source of truth for which
+ * brand tokens exist ({{ORG_NAME}}, {{PLATFORM_NAME}}) and how they resolve.
+ *
+ * Used by:
+ *  - renderStarterDraft (prose templates in the Drafts tab)
+ *  - PolicyConfiguratorPanel hydration (structured-field defaults in Rules)
+ *
+ * Unresolved tokens are returned as-is so authors notice missing wiring.
+ */
+export interface BrandTokenContext {
+  orgName?: string;
+  platformName?: string;
+}
+
+export function interpolateBrandTokens(
+  text: string,
+  ctx: BrandTokenContext = {},
+): string {
+  if (!text) return text;
   const orgName = ctx.orgName?.trim() || 'our salon';
   const platformName = ctx.platformName?.trim() || 'Zura';
-
-  return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
+  return text.replace(/\{\{\s*(ORG_NAME|PLATFORM_NAME)\s*\}\}/g, (_m, key: string) => {
     if (key === 'ORG_NAME') return orgName;
     if (key === 'PLATFORM_NAME') return platformName;
+    return _m;
+  });
+}
+
+export function renderStarterDraft(template: string, ctx: RenderContext): string {
+  if (!template) return '';
+  // First pass: brand tokens via shared helper.
+  const branded = interpolateBrandTokens(template, {
+    orgName: ctx.orgName,
+    platformName: ctx.platformName,
+  });
+  // Second pass: rule-value tokens (schema-field keys).
+  return branded.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
+    if (key === 'ORG_NAME' || key === 'PLATFORM_NAME') return _match; // already handled
     if (key in ctx.ruleValues) return humanize(ctx.ruleValues[key]);
     return _match; // unresolved token — leave as-is so authors notice
   });
