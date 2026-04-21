@@ -1,7 +1,9 @@
 import { Check, X, ArrowRight, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { cn } from "@/lib/utils";
+import { useOrgDashboardPath } from "@/hooks/useOrgDashboardPath";
 
 interface CommitResultRow {
   step_key: string;
@@ -29,8 +31,21 @@ interface SetupCommitResultProps {
  * Failed systems get deep links to the relevant settings page.
  */
 export function SetupCommitResult({ result, onContinue }: SetupCommitResultProps) {
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const failedRows = result.results.filter((r) => r.status === "failed");
   const completedRows = result.results.filter((r) => r.status === "completed");
+
+  // Wave 13A.B4 — route via React Router instead of hard-reloading via
+  // window.location.href, preserving slug context and React Query cache.
+  const goToDeepLink = (deepLink: string) => {
+    // Deep links are written as legacy /dashboard/... paths. Translate to
+    // the active org's slug-scoped path when possible.
+    const subpath = deepLink.startsWith("/dashboard")
+      ? deepLink.slice("/dashboard".length) || "/"
+      : deepLink;
+    navigate(dashPath(subpath));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,7 +101,7 @@ export function SetupCommitResult({ result, onContinue }: SetupCommitResultProps
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => (window.location.href = row.deep_link!)}
+                        onClick={() => goToDeepLink(row.deep_link!)}
                         className="gap-1.5 shrink-0"
                       >
                         Finish

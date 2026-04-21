@@ -2,11 +2,15 @@
  * commit-org-setup
  *
  * Orchestrator for finalizing the org setup wizard.
- * - Reads draft from org_setup_drafts
- * - Runs per-step commit handlers in dependency order
- * - Records partial-success in org_setup_commit_log
- * - Stamps organizations.setup_completed_at regardless of partial failures
- * - Returns { success, completed, failed } so the UI can render SetupCommitResult
+ * - Reads draft from org_setup_drafts (keyed by user_id + organization_id)
+ * - Iterates registry-aligned step keys (step_0_fit_check … step_7_5_apps)
+ * - Each handler maps the component's onChange payload to true DB columns
+ * - Records partial-success in org_setup_commit_log (source='wizard')
+ * - Stamps organizations.setup_completed_at ONLY when failed === 0 && completed > 0
+ * - Returns { success, partial, completed, failed, total, results } for the UI
+ *
+ * Wave 13A/B fixes: B1 (organization_id), B2 (registry keys), B5 (gate
+ * setup_completed_at), and field-shape contract per step against real DB columns.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -20,17 +24,30 @@ interface CommitStepResult {
   deep_link?: string;
 }
 
+// Registry-aligned keys. Must match setup_step_registry.key values.
 const STEP_ORDER = [
-  "fit_check",
-  "identity",
-  "footprint",
-  "team",
-  "compensation",
-  "catalog",
-  "standards",
-  "intent",
-  "apps",
+  "step_0_fit_check",
+  "step_1_identity",
+  "step_2_footprint",
+  "step_3_team",
+  "step_4_compensation",
+  "step_5_catalog",
+  "step_6_standards",
+  "step_7_intent",
+  "step_7_5_apps",
 ];
+
+const SYSTEM_BY_STEP: Record<string, string> = {
+  step_0_fit_check: "fit_check",
+  step_1_identity: "identity",
+  step_2_footprint: "footprint",
+  step_3_team: "team",
+  step_4_compensation: "compensation",
+  step_5_catalog: "catalog",
+  step_6_standards: "standards",
+  step_7_intent: "intent",
+  step_7_5_apps: "apps",
+};
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -71,24 +88,30 @@ Deno.serve(async (req) => {
       return json({ error: "Forbidden" }, 403, corsHeaders);
     }
 
-    // Load draft
-    const { data: draft } = await supabase
+    // Load draft (Wave 13A.B1: column is organization_id, not org_id)
+    const { data: draft, error: draftErr } = await supabase
       .from("org_setup_drafts")
       .select("step_data")
       .eq("user_id", user.id)
-      .eq("org_id", organization_id)
+      .eq("organization_id", organization_id)
       .maybeSingle();
+
+    if (draftErr) {
+      console.error("[commit-org-setup] draft load failed:", draftErr);
+    }
 
     const stepData = (draft?.step_data ?? {}) as Record<string, any>;
     const results: CommitStepResult[] = [];
 
-    // Execute per-step commit handlers in order
+    // Execute per-step commit handlers in registry order
     for (const stepKey of STEP_ORDER) {
       const data = stepData[stepKey];
-      if (!data) {
+      const system = SYSTEM_BY_STEP[stepKey] ?? stepKey;
+
+      if (!data || (typeof data === "object" && Object.keys(data).length === 0)) {
         results.push({
           step_key: stepKey,
-          system: stepKey,
+          system,
           status: "skipped",
           reason: "no draft data",
         });
@@ -99,13 +122,14 @@ Deno.serve(async (req) => {
         const handlerResult = await executeStepHandler(
           supabase,
           stepKey,
+          system,
           organization_id,
           data,
           user.id,
         );
         results.push(handlerResult);
 
-        // Mark step completion
+        // Mark step completion (best-effort — the table may not exist in all envs)
         await supabase.from("org_setup_step_completion").upsert({
           organization_id,
           step_key: stepKey,
@@ -113,9 +137,11 @@ Deno.serve(async (req) => {
           data,
           completion_source: "wizard",
           completed_version: 1,
-        }, { onConflict: "organization_id,step_key" });
+        }, { onConflict: "organization_id,step_key" }).then(({ error }) => {
+          if (error) console.warn(`[commit-org-setup] step_completion upsert: ${error.message}`);
+        });
 
-        // Audit log — mark source='wizard' so process-setup-followups can
+        // Audit log — source='wizard' so process-setup-followups can
         // distinguish real wizard completions from synthetic backfills.
         await supabase.from("org_setup_commit_log").insert({
           organization_id,
@@ -132,13 +158,13 @@ Deno.serve(async (req) => {
         console.error(`[commit-org-setup] step ${stepKey} failed:`, reason);
         results.push({
           step_key: stepKey,
-          system: stepKey,
+          system,
           status: "failed",
           reason,
         });
         await supabase.from("org_setup_commit_log").insert({
           organization_id,
-          system: stepKey,
+          system,
           status: "failed",
           reason,
           acknowledged_conflicts,
@@ -148,32 +174,37 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Stamp setup_completed_at regardless of partial failures
-    await supabase.from("organizations")
-      .update({
-        setup_completed_at: new Date().toISOString(),
-        setup_source: "wizard",
-      })
-      .eq("id", organization_id);
-
-    // Schedule confirmation email +5 minutes (best-effort)
-    const sendAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-    await supabase.functions.invoke("send-setup-confirmation", {
-      body: {
-        organization_id,
-        user_id: user.id,
-        scheduled_for: sendAt,
-        results,
-      },
-    }).catch((e) => console.warn("[commit-org-setup] email schedule failed:", e));
-
     const completed = results.filter((r) => r.status === "completed").length;
     const failed = results.filter((r) => r.status === "failed").length;
     const total = results.filter((r) => r.status !== "skipped").length;
+    const success = failed === 0 && completed > 0;
+
+    // Wave 13A.B5 — only stamp setup_completed_at on a clean run with real work.
+    // Otherwise leave it null so the org stays in the funnel and the user can
+    // re-enter from the dashboard.
+    if (success) {
+      await supabase.from("organizations")
+        .update({
+          setup_completed_at: new Date().toISOString(),
+          setup_source: "wizard",
+        })
+        .eq("id", organization_id);
+
+      // Schedule confirmation email +5 minutes (best-effort)
+      const sendAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      await supabase.functions.invoke("send-setup-confirmation", {
+        body: {
+          organization_id,
+          user_id: user.id,
+          scheduled_for: sendAt,
+          results,
+        },
+      }).catch((e) => console.warn("[commit-org-setup] email schedule failed:", e));
+    }
 
     return json({
-      success: failed === 0,
-      partial: failed > 0,
+      success,
+      partial: failed > 0 || (completed === 0 && total === 0),
       completed,
       failed,
       total,
@@ -189,148 +220,231 @@ Deno.serve(async (req) => {
   }
 });
 
+/**
+ * Per-step handlers. Each one consumes the EXACT shape the React component's
+ * onChange writes (see src/components/onboarding/setup/Step*.tsx) and maps
+ * to the actual DB columns. This is the field-shape contract — handlers must
+ * never silently rename keys.
+ */
 async function executeStepHandler(
   supabase: any,
   stepKey: string,
+  system: string,
   orgId: string,
   data: any,
   userId: string,
 ): Promise<CommitStepResult> {
   switch (stepKey) {
-    case "fit_check":
+    case "step_0_fit_check":
+      // Self-selection only — no DB writes. Off-ramp telemetry handled in UI.
       return {
         step_key: stepKey,
-        system: "fit_check",
+        system,
         status: "completed",
-        reason: "self-selection recorded",
+        reason: data.fit === "not_a_salon" ? "self-disqualified" : "fit confirmed",
       };
 
-    case "identity": {
-      const { error } = await supabase.from("organizations").update({
-        name: data.business_name,
-        legal_name: data.legal_name ?? null,
-        business_type: data.business_type ?? null,
-        timezone: data.timezone ?? null,
-      }).eq("id", orgId);
+    case "step_1_identity": {
+      const updates: Record<string, any> = {};
+      if (data.business_name) updates.name = data.business_name;
+      if (data.legal_name) updates.legal_name = data.legal_name;
+      if (data.business_type) updates.business_type = data.business_type;
+      if (data.timezone) updates.timezone = data.timezone;
+      if (Object.keys(updates).length === 0) {
+        return { step_key: stepKey, system, status: "skipped", reason: "no identity fields" };
+      }
+      const { error } = await supabase.from("organizations").update(updates).eq("id", orgId);
       if (error) throw error;
       return {
         step_key: stepKey,
-        system: "identity",
+        system,
         status: "completed",
         deep_link: "/dashboard/admin/settings?category=business",
       };
     }
 
-    case "footprint": {
-      // Insert any locations not already present
-      const locations = data.locations ?? [];
+    case "step_2_footprint": {
+      // Component writes: { locations: [{name, city, state}], location_count, operating_states }
+      // Idempotency: dedupe by case-insensitive (name, city) within the org's existing locations.
+      const locations = Array.isArray(data.locations) ? data.locations : [];
+      if (locations.length === 0) {
+        return { step_key: stepKey, system, status: "skipped", reason: "no locations" };
+      }
+
+      const { data: existing } = await supabase
+        .from("locations")
+        .select("id, name, city")
+        .eq("organization_id", orgId);
+      const existingKeys = new Set(
+        (existing ?? []).map((l: any) =>
+          `${(l.name ?? "").toLowerCase().trim()}|${(l.city ?? "").toLowerCase().trim()}`
+        ),
+      );
+
+      let inserted = 0;
       for (const loc of locations) {
-        if (loc.id) continue; // existing
+        if (loc.id) continue; // pre-existing reference
+        if (!loc.name?.trim()) continue;
+        const key = `${loc.name.toLowerCase().trim()}|${(loc.city ?? "").toLowerCase().trim()}`;
+        if (existingKeys.has(key)) continue;
         const { error } = await supabase.from("locations").insert({
           organization_id: orgId,
-          name: loc.name,
-          address: loc.address ?? null,
+          name: loc.name.trim(),
           city: loc.city ?? null,
           state: loc.state ?? null,
-          postal_code: loc.postal_code ?? null,
         });
         if (error) throw error;
+        existingKeys.add(key);
+        inserted++;
       }
+
+      // Mirror operating_states onto policy_org_profile for downstream applicability.
+      const operatingStates: string[] = Array.isArray(data.operating_states)
+        ? data.operating_states.filter(Boolean)
+        : Array.from(new Set(locations.map((l: any) => l.state).filter(Boolean)));
+      if (operatingStates.length > 0) {
+        await supabase.from("policy_org_profile").upsert({
+          organization_id: orgId,
+          operating_states: operatingStates,
+          primary_state: operatingStates[0],
+        }, { onConflict: "organization_id" });
+      }
+
       return {
         step_key: stepKey,
-        system: "footprint",
+        system,
         status: "completed",
+        reason: inserted > 0 ? `${inserted} new location(s)` : "no new locations",
         deep_link: "/dashboard/admin/settings?category=locations",
       };
     }
 
-    case "team": {
-      // Just persist team band on org metadata; actual invites come later
+    case "step_3_team": {
+      // Component writes: team_size_band, total_team_count, has_apprentices,
+      // has_booth_renters, has_assistants, has_front_desk, unmodeled_structure
+      const rolesUsed: string[] = [];
+      if (data.has_apprentices) rolesUsed.push("apprentice");
+      if (data.has_booth_renters) rolesUsed.push("booth_renter");
+      if (data.has_assistants) rolesUsed.push("assistant");
+      if (data.has_front_desk) rolesUsed.push("front_desk");
+
+      const { error } = await supabase.from("policy_org_profile").upsert({
+        organization_id: orgId,
+        team_size_band: data.team_size_band ?? null,
+        has_booth_renters: !!data.has_booth_renters,
+        roles_used: rolesUsed,
+      }, { onConflict: "organization_id" });
+      if (error) throw error;
       return {
         step_key: stepKey,
-        system: "team",
+        system,
         status: "completed",
         deep_link: "/dashboard/admin/team-hub",
       };
     }
 
-    case "compensation": {
-      // Seed policy_org_profile with compensation models in use
-      const models = data.compensation_models_in_use ?? [];
+    case "step_4_compensation": {
+      // Component writes: { models: string[], unmodeled_description? }
+      const models: string[] = Array.isArray(data.models) ? data.models : [];
+      const cleanModels = models.filter((m) => m && m !== "__escape__");
       const { error } = await supabase.from("policy_org_profile").upsert({
         organization_id: orgId,
-        compensation_models_in_use: models,
+        compensation_models_in_use: cleanModels,
       }, { onConflict: "organization_id" });
       if (error) throw error;
       return {
         step_key: stepKey,
-        system: "compensation",
+        system,
         status: "completed",
         deep_link: "/dashboard/admin/compensation-hub",
       };
     }
 
-    case "catalog": {
+    case "step_5_catalog": {
+      // Component writes: service_categories[], sells_retail, sells_packages,
+      // sells_memberships, serves_minors, unmodeled_categories?
+      const categories: string[] = Array.isArray(data.service_categories)
+        ? data.service_categories
+        : [];
+      const offersExtensions = categories.includes("extensions");
+
       const { error } = await supabase.from("policy_org_profile").upsert({
         organization_id: orgId,
-        offers_color_services: !!data.offers_color_services,
-        offers_extensions: !!data.offers_extensions,
-        sells_retail: !!data.sells_retail,
-        offers_packages: !!data.offers_packages,
-        offers_memberships: !!data.offers_memberships,
+        service_categories: categories,
+        offers_extensions: offersExtensions,
+        offers_retail: !!data.sells_retail,
+        offers_packages: !!data.sells_packages,
+        offers_memberships: !!data.sells_memberships,
         serves_minors: !!data.serves_minors,
       }, { onConflict: "organization_id" });
       if (error) throw error;
       return {
         step_key: stepKey,
-        system: "catalog",
+        system,
         status: "completed",
         deep_link: "/dashboard/admin/services",
       };
     }
 
-    case "standards": {
+    case "step_6_standards": {
+      // Component writes: tip_distribution_rule (enum), commission_basis,
+      // refund_clawback (enum: always|rare|never), has_existing_handbook
+      const usesTipPooling =
+        data.tip_distribution_rule === "pooled" ||
+        data.tip_distribution_rule === "team_based";
+      const usesRefundClawback = data.refund_clawback === "always";
+      const commissionBases: string[] = data.commission_basis
+        ? [data.commission_basis]
+        : [];
+
       const { error } = await supabase.from("policy_org_profile").upsert({
         organization_id: orgId,
-        tip_handling: data.tip_handling ?? null,
-        commission_basis: data.commission_basis ?? null,
-        refund_clawback: !!data.refund_clawback,
+        uses_tip_pooling: usesTipPooling,
+        uses_refund_clawback: usesRefundClawback,
+        commission_basis_in_use: commissionBases,
         has_existing_handbook: !!data.has_existing_handbook,
       }, { onConflict: "organization_id" });
       if (error) throw error;
       return {
         step_key: stepKey,
-        system: "standards",
+        system,
         status: "completed",
         deep_link: "/dashboard/admin/policy-profile",
       };
     }
 
-    case "intent": {
+    case "step_7_intent": {
+      // Component writes: { intent: string[] }
+      const intent: string[] = Array.isArray(data.intent) ? data.intent : [];
       const { error } = await supabase.from("organizations").update({
-        setup_intent: data.intents ?? [],
+        setup_intent: intent,
       }).eq("id", orgId);
       if (error) throw error;
       return {
         step_key: stepKey,
-        system: "intent",
+        system,
         status: "completed",
       };
     }
 
-    case "apps": {
-      // Track app interest for Tier 3; Tier 1/2 trial activation handled elsewhere
-      const interest = data.tier3_interest ?? [];
+    case "step_7_5_apps": {
+      // Component writes: { installed_apps: string[], expressed_interest: string[] }
+      // Tier 3 interest goes to app_interest. Tier 1/2 install activation
+      // is handled by the apps marketplace separately.
+      const interest: string[] = Array.isArray(data.expressed_interest)
+        ? data.expressed_interest
+        : [];
       for (const appKey of interest) {
-        await supabase.from("app_interest").upsert({
+        const { error } = await supabase.from("app_interest").upsert({
           organization_id: orgId,
           app_key: appKey,
           expressed_by: userId,
         }, { onConflict: "organization_id,app_key" });
+        if (error) throw error;
       }
       return {
         step_key: stepKey,
-        system: "apps",
+        system,
         status: "completed",
         deep_link: "/dashboard/apps",
       };
@@ -339,7 +453,7 @@ async function executeStepHandler(
     default:
       return {
         step_key: stepKey,
-        system: stepKey,
+        system,
         status: "skipped",
         reason: "unknown step",
       };

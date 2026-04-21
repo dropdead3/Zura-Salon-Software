@@ -43,7 +43,21 @@ export function SetupSummary({
   );
   const blocking = allConflicts.some((c) => c.severity === "block");
 
-  const completedSteps = steps.filter((s) => draftData[s.key]);
+  // Wave 13A.B6 — a step is "completed" only if its draft payload has real
+  // fields beyond the soft-skip marker. Required steps must all be completed
+  // before the operator can commit; otherwise the wizard would provision an
+  // empty configuration with confident copy.
+  const isPopulated = (val: unknown) => {
+    if (!val || typeof val !== "object") return false;
+    const obj = val as Record<string, unknown>;
+    if (obj.__skipped__ === true) return false;
+    return Object.keys(obj).filter((k) => k !== "backfilled" && k !== "__skipped__").length > 0;
+  };
+  const completedSteps = steps.filter((s) => isPopulated(draftData[s.key]));
+  const requiredSteps = steps.filter((s) => s.required);
+  const completedRequired = requiredSteps.filter((s) => isPopulated(draftData[s.key]));
+  const missingRequired = requiredSteps.length - completedRequired.length;
+  const canCommit = missingRequired === 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,14 +148,15 @@ export function SetupSummary({
 
         <div className="flex items-center justify-between pt-4 border-t border-border/60">
           <p className="font-sans text-xs text-muted-foreground max-w-sm">
-            Everything is editable from settings. This commits your initial
-            architecture — nothing is locked.
+            {canCommit
+              ? "Everything is editable from settings. This commits your initial architecture — nothing is locked."
+              : `Finish ${missingRequired} required ${missingRequired === 1 ? "step" : "steps"} before committing. Click any step above to complete it.`}
           </p>
           <Button
             type="button"
             onClick={onCommit}
-            disabled={committing || blocking}
-            className={cn("min-w-[180px] gap-2", blocking && "opacity-50")}
+            disabled={committing || blocking || !canCommit}
+            className={cn("min-w-[180px] gap-2", (blocking || !canCommit) && "opacity-50")}
           >
             {committing ? (
               <>

@@ -38,15 +38,20 @@ export function useOrgSetupDraft(orgId: string | null) {
       if (!user?.id || !orgId) throw new Error("Not ready");
       const existing = (query.data?.step_data as Record<string, unknown> | null) ?? {};
       const merged = { ...existing, [params.stepKey]: params.data };
+      // Wave 13D.G7 — never overwrite a previously valid current_step with null.
+      // Only include current_step when caller passed an integer.
+      const upsertRow: Record<string, unknown> = {
+        user_id: user.id,
+        organization_id: orgId,
+        step_data: merged,
+        updated_at: new Date().toISOString(),
+      };
+      if (typeof params.currentStep === "number" && Number.isFinite(params.currentStep)) {
+        upsertRow.current_step = params.currentStep;
+      }
       const { error } = await supabase
         .from("org_setup_drafts" as any)
-        .upsert({
-          user_id: user.id,
-          organization_id: orgId,
-          step_data: merged,
-          current_step: params.currentStep ?? null,
-          updated_at: new Date().toISOString(),
-        } as any, { onConflict: "user_id,organization_id" });
+        .upsert(upsertRow as any, { onConflict: "user_id,organization_id" });
       if (error) throw error;
       return merged;
     },
