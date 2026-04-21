@@ -1053,9 +1053,11 @@ html, body, #root {
     font-weight: 500 !important; /* Termina only has Medium weight - prevent synthetic bolding */
   }
   
-  /* Aeonik Pro (font-sans) should NEVER be uppercase - always normal capitalization */
+  /* Aeonik Pro (font-sans) should NEVER be uppercase and must reset Termina tracking
+     inherited from the global h1-h6 { @apply font-display } cascade. */
   .font-sans {
     text-transform: none !important;
+    letter-spacing: normal;
   }
   
   /* Laguna (serif) should NOT be uppercase */
