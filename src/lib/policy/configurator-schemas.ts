@@ -20,6 +20,24 @@ export type RuleFieldType =
   | 'boolean'
   | 'role';
 
+/**
+ * Per-field provenance metadata (Wave 28.13.x). Drives the small
+ * "Prefilled · You can edit this. Surfaces in…" caption beneath the standard
+ * helper text in the Rules step. Optional — fields without `provenance` render
+ * as before. See `buildProvenanceLine` for the composer.
+ */
+export interface FieldProvenance {
+  /** Where the value originated. */
+  origin: 'prefilled' | 'derived' | 'authored';
+  /** Where the value renders downstream. */
+  surfaces: 'client-facing' | 'internal-only' | 'configurator-only' | 'drives-other-field';
+  /** Free-form override sentence for unusual provenance shapes. */
+  surfaceNote?: string;
+  /** How operator edits behave: `sacred` overrides prefill permanently;
+   *  `live-derived` keeps auto-updating until first manual edit. */
+  editContract?: 'sacred' | 'live-derived';
+}
+
 export interface RuleField {
   key: string;
   label: string;
@@ -30,6 +48,7 @@ export interface RuleField {
   placeholder?: string;
   unit?: string;
   defaultValue?: unknown;
+  provenance?: FieldProvenance;
 }
 
 export interface RuleSection {
