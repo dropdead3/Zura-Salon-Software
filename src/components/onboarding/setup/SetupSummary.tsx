@@ -43,15 +43,21 @@ export function SetupSummary({
   );
   const blocking = allConflicts.some((c) => c.severity === "block");
 
-  // Wave 13A.B6 — a step is "completed" only if its draft payload has real
-  // fields beyond the soft-skip marker. Required steps must all be completed
-  // before the operator can commit; otherwise the wizard would provision an
-  // empty configuration with confident copy.
+  // Wave 13A.B6 / 13G.C — a step is "completed" only if the user actually
+  // touched it (or it was backfilled from existing data). Default-on-mount
+  // payloads no longer count, so the operator can't blow past Steps 2–6
+  // with mount defaults and commit an empty configuration.
   const isPopulated = (val: unknown) => {
     if (!val || typeof val !== "object") return false;
     const obj = val as Record<string, unknown>;
     if (obj.__skipped__ === true) return false;
-    return Object.keys(obj).filter((k) => k !== "backfilled" && k !== "__skipped__").length > 0;
+    // Backfilled steps stay populated (legacy-org flow).
+    if (obj.backfilled === true) return true;
+    // Otherwise require explicit touch.
+    if (obj.__touched !== true) return false;
+    return Object.keys(obj).filter(
+      (k) => k !== "backfilled" && k !== "__skipped__" && k !== "__touched",
+    ).length > 0;
   };
   const completedSteps = steps.filter((s) => isPopulated(draftData[s.key]));
   const requiredSteps = steps.filter((s) => s.required);

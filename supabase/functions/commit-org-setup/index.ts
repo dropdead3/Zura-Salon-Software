@@ -92,7 +92,20 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { organization_id, acknowledged_conflicts = [], idempotency_key } = body ?? {};
+    const {
+      organization_id,
+      acknowledged_conflicts = [],
+      idempotency_key,
+      // Wave 13G.B — single-step re-entry from settings. When set, the
+      // orchestrator only runs handlers for these step keys; everything
+      // else is reported as `skipped: caller-scoped`. setup_completed_at
+      // is NOT stamped in scoped mode (the wizard is still in progress).
+      step_keys,
+    } = body ?? {};
+    const scopedKeys: string[] | null =
+      Array.isArray(step_keys) && step_keys.length > 0
+        ? step_keys.filter((k: any) => typeof k === "string")
+        : null;
     if (!organization_id) {
       return json({ error: "organization_id required" }, 400, corsHeaders);
     }
@@ -159,6 +172,17 @@ Deno.serve(async (req) => {
     for (const stepKey of stepOrder) {
       const data = stepData[stepKey];
       const system = SYSTEM_BY_STEP[stepKey] ?? stepKey;
+
+      // Wave 13G.B — scoped re-entry: skip every step not in the caller's list.
+      if (scopedKeys && !scopedKeys.includes(stepKey)) {
+        results.push({
+          step_key: stepKey,
+          system,
+          status: "skipped",
+          reason: "caller-scoped",
+        });
+        continue;
+      }
 
       if (!data || (typeof data === "object" && Object.keys(data).length === 0)) {
         results.push({
@@ -236,7 +260,9 @@ Deno.serve(async (req) => {
     // Wave 13A.B5 — only stamp setup_completed_at on a clean run with real work.
     // Otherwise leave it null so the org stays in the funnel and the user can
     // re-enter from the dashboard.
-    if (success) {
+    // Wave 13G.B — never stamp completion in scoped (single-step) mode; the
+    // wizard isn't actually finished, the operator just patched one slice.
+    if (success && !scopedKeys) {
       await supabase.from("organizations")
         .update({
           setup_completed_at: new Date().toISOString(),
@@ -317,10 +343,15 @@ async function executeStepHandler(
     }
 
     case "step_1_identity": {
+      // Wave 13G.A — only write business_type when the caller actually
+      // touched it. Default-on-mount used to overwrite multi_location
+      // backfills with single_location.
       const updates: Record<string, any> = {};
       if (data.business_name) updates.name = data.business_name;
       if (data.legal_name) updates.legal_name = data.legal_name;
-      if (data.business_type) updates.business_type = data.business_type;
+      if (data.business_type && data.__touched_business_type === true) {
+        updates.business_type = data.business_type;
+      }
       if (data.timezone) updates.timezone = data.timezone;
       if (Object.keys(updates).length === 0) {
         return { step_key: stepKey, system, status: "skipped", reason: "no identity fields" };
@@ -400,11 +431,23 @@ async function executeStepHandler(
       if (data.has_assistants) rolesUsed.push("assistant");
       if (data.has_front_desk) rolesUsed.push("front_desk");
 
+      // Wave 13G.A — persist total_team_count + unmodeled_structure (was dropped).
+      const totalCount =
+        typeof data.total_team_count === "number" && Number.isFinite(data.total_team_count)
+          ? Math.max(0, Math.round(data.total_team_count))
+          : null;
+      const unmodeledStructure =
+        typeof data.unmodeled_structure === "string" && data.unmodeled_structure.trim()
+          ? data.unmodeled_structure.trim()
+          : null;
+
       const { error } = await supabase.from("policy_org_profile").upsert({
         organization_id: orgId,
         team_size_band: data.team_size_band ?? null,
+        total_team_count: totalCount,
         has_booth_renters: !!data.has_booth_renters,
         roles_used: rolesUsed,
+        unmodeled_structure: unmodeledStructure,
       }, { onConflict: "organization_id" });
       if (error) throw error;
       return {
@@ -419,9 +462,16 @@ async function executeStepHandler(
       // Component writes: { models: string[], unmodeled_description? }
       const models: string[] = Array.isArray(data.models) ? data.models : [];
       const cleanModels = models.filter((m) => m && m !== "__escape__");
+      // Wave 13G.A — persist unmodeled_description (was dropped despite
+      // the component requiring ≥10 chars when __escape__ is selected).
+      const unmodeledComp =
+        typeof data.unmodeled_description === "string" && data.unmodeled_description.trim()
+          ? data.unmodeled_description.trim()
+          : null;
       const { error } = await supabase.from("policy_org_profile").upsert({
         organization_id: orgId,
         compensation_models_in_use: cleanModels,
+        unmodeled_compensation: unmodeledComp,
       }, { onConflict: "organization_id" });
       if (error) throw error;
       return {
@@ -439,6 +489,11 @@ async function executeStepHandler(
         ? data.service_categories
         : [];
       const offersExtensions = categories.includes("extensions");
+      // Wave 13G.A — persist unmodeled_categories (was dropped).
+      const unmodeledCats =
+        typeof data.unmodeled_categories === "string" && data.unmodeled_categories.trim()
+          ? data.unmodeled_categories.trim()
+          : null;
 
       const { error } = await supabase.from("policy_org_profile").upsert({
         organization_id: orgId,
@@ -448,6 +503,7 @@ async function executeStepHandler(
         offers_packages: !!data.sells_packages,
         offers_memberships: !!data.sells_memberships,
         serves_minors: !!data.serves_minors,
+        unmodeled_categories: unmodeledCats,
       }, { onConflict: "organization_id" });
       if (error) throw error;
       return {
@@ -504,16 +560,28 @@ async function executeStepHandler(
     }
 
     case "step_7_5_apps": {
-      // Component writes: { installed_apps: string[], expressed_interest: string[] }
+      // Component writes: { installed_apps: string[], expressed_interest: string[],
+      //                     declined_apps?: string[], qualified_keys?: string[] }
       //
-      // Wave 13F.A — fix B9. Previously this handler only persisted Tier-3
-      // interest and silently dropped `installed_apps`, leaving the operator's
-      // selection unrecognized by entitlement gates. Now we activate each
-      // installed app in `organization_apps` (idempotent on app_key) and still
-      // record Tier-3 interest in `app_interest`.
-      const installed: string[] = Array.isArray(data.installed_apps)
+      // Wave 13F.A — fix B9. Activate every Tier 1/2 install, record Tier 3 interest.
+      // Wave 13G.A — classifier idempotency: intersect installed_apps with the
+      //   freshly-classified `qualified_keys` so a previously-Tier-1 app does
+      //   not get re-activated after the operator removed its qualifying input.
+      // Wave 13G.F — record Tier-1 declines as `app_interest.status='declined'`
+      //   instead of activating; preserves operator autonomy.
+      const installedRaw: string[] = Array.isArray(data.installed_apps)
         ? data.installed_apps.filter(Boolean)
         : [];
+      const declined: string[] = Array.isArray(data.declined_apps)
+        ? data.declined_apps.filter(Boolean)
+        : [];
+      const qualified: string[] | null = Array.isArray(data.qualified_keys)
+        ? data.qualified_keys.filter(Boolean)
+        : null;
+      // Drop installs that no longer qualify (stale draft) and any explicitly declined.
+      const installed = installedRaw.filter(
+        (k) => (qualified === null || qualified.includes(k)) && !declined.includes(k),
+      );
       const interest: string[] = Array.isArray(data.expressed_interest)
         ? data.expressed_interest.filter(Boolean)
         : [];
@@ -534,6 +602,18 @@ async function executeStepHandler(
           organization_id: orgId,
           app_key: appKey,
           expressed_by: userId,
+          status: "interested",
+        }, { onConflict: "organization_id,app_key" });
+        if (error) throw error;
+      }
+
+      // Wave 13G.F — declines recorded for product/lifecycle visibility.
+      for (const appKey of declined) {
+        const { error } = await supabase.from("app_interest").upsert({
+          organization_id: orgId,
+          app_key: appKey,
+          expressed_by: userId,
+          status: "declined",
         }, { onConflict: "organization_id,app_key" });
         if (error) throw error;
       }
@@ -541,7 +621,7 @@ async function executeStepHandler(
         step_key: stepKey,
         system,
         status: "completed",
-        reason: `${activated} activated, ${interest.length} interest`,
+        reason: `${activated} activated, ${interest.length} interest, ${declined.length} declined`,
         deep_link: "/dashboard/apps",
       };
     }

@@ -26,6 +26,8 @@ export function useCommitOrgSetup() {
     mutationFn: async (params: {
       organization_id: string;
       acknowledged_conflicts?: string[];
+      /** Wave 13G.B — when set, the orchestrator runs ONLY these step keys. */
+      step_keys?: string[];
     }) => {
       // crypto.randomUUID is available in all modern browsers and React Native.
       const idempotency_key =
