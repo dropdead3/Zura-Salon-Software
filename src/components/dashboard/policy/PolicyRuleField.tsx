@@ -29,6 +29,12 @@ interface PolicyRuleFieldProps {
   onChange: (next: unknown) => void;
   /** Policy audience — drives the surface sentence in the provenance helper. */
   audience?: PolicyAudience;
+  /**
+   * Wave 28.14.1 — In the questionnaire context the provenance helper renders
+   * as a right-side column on `xl+` viewports so it never pushes the input
+   * downward. Default `inline` preserves Expert-view behavior unchanged.
+   */
+  helperPlacement?: 'inline' | 'side';
 }
 
 function ProvenanceHelper({ field, audience }: { field: RuleField; audience: PolicyAudience }) {
