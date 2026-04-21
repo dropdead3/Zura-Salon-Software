@@ -160,6 +160,12 @@ export default function OrganizationSetup() {
           event: "completed",
         });
       }
+      // Single-step re-entry: commit just this step and bounce back to settings
+      if (advance === 1 && singleStepKey) {
+        toast.success("Saved");
+        navigate(returnTo || "/dashboard");
+        return;
+      }
       // If we just completed the last step, transition to summary
       if (advance === 1 && isLast) {
         setPhase("summary");
