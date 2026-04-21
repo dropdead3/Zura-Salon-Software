@@ -8,6 +8,7 @@
  * The line documents origin (Prefilled), surface (where it renders), and
  * edit contract (operator edits are sacred). See `buildProvenanceLine`.
  */
+import type { ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,13 +30,34 @@ interface PolicyRuleFieldProps {
   onChange: (next: unknown) => void;
   /** Policy audience — drives the surface sentence in the provenance helper. */
   audience?: PolicyAudience;
+  /**
+   * Wave 28.14.1 — In the questionnaire context the provenance helper renders
+   * as a right-side column on `xl+` viewports so it never pushes the input
+   * downward. Default `inline` preserves Expert-view behavior unchanged.
+   */
+  helperPlacement?: 'inline' | 'side';
 }
 
-function ProvenanceHelper({ field, audience }: { field: RuleField; audience: PolicyAudience }) {
+function ProvenanceHelper({
+  field,
+  audience,
+  sideMode = false,
+}: {
+  field: RuleField;
+  audience: PolicyAudience;
+  sideMode?: boolean;
+}) {
   const line = buildProvenanceLine(field, audience);
   if (!line) return null;
   return (
-    <div className="border-t border-border/40 pt-2 mt-1 flex items-start gap-2 flex-wrap">
+    <div
+      className={cn(
+        'flex items-start gap-2 flex-wrap',
+        sideMode
+          ? 'rounded-lg border border-border/50 bg-muted/30 p-3'
+          : 'border-t border-border/40 pt-2 mt-1',
+      )}
+    >
       {line.showPrefilledBadge && (
         <Badge
           variant="outline"
@@ -62,7 +84,7 @@ function ProvenanceHelper({ field, audience }: { field: RuleField; audience: Pol
   );
 }
 
-export function PolicyRuleField({ field, value, onChange, audience = 'internal' }: PolicyRuleFieldProps) {
+export function PolicyRuleField({ field, value, onChange, audience = 'internal', helperPlacement = 'inline' }: PolicyRuleFieldProps) {
   const id = `pf-${field.key}`;
 
   const labelEl = (
@@ -78,7 +100,40 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
     <p className="font-sans text-xs text-muted-foreground mt-1">{field.helper}</p>
   ) : null;
 
+  const provenanceLine = buildProvenanceLine(field, audience);
   const provenanceEl = <ProvenanceHelper field={field} audience={audience} />;
+
+  /**
+   * `side` placement: the input occupies a left column (max-w-[640px] for
+   * comfortable reading width) and the provenance helper floats as a slim
+   * right column on xl+ viewports. Below xl, falls back to stacked.
+   * Only activates when there's actually provenance content to show.
+   */
+  const sideMode = helperPlacement === 'side' && !!provenanceLine;
+  const wrap = (input: ReactNode) => {
+    if (!sideMode) {
+      return (
+        <>
+          {input}
+          {helperEl}
+          {provenanceEl}
+        </>
+      );
+    }
+    return (
+      <>
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_220px] gap-4 xl:gap-6 items-start">
+          <div className="min-w-0 max-w-[640px]">
+            {input}
+            {helperEl}
+          </div>
+          <div className="xl:pt-1">
+            <ProvenanceHelper field={field} audience={audience} sideMode />
+          </div>
+        </div>
+      </>
+    );
+  };
 
   switch (field.type) {
     case 'number':
@@ -88,28 +143,28 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <div className="relative">
-            {field.type === 'currency' && (
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">$</span>
-            )}
-            <Input
-              id={id}
-              type="number"
-              inputMode="decimal"
-              value={num}
-              placeholder={field.placeholder}
-              onChange={(e) => {
-                const v = e.target.value;
-                onChange(v === '' ? null : Number(v));
-              }}
-              className={cn('font-sans', field.type === 'currency' && 'pl-7')}
-            />
-            {field.type === 'percent' && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">%</span>
-            )}
-          </div>
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <div className="relative">
+              {field.type === 'currency' && (
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">$</span>
+              )}
+              <Input
+                id={id}
+                type="number"
+                inputMode="decimal"
+                value={num}
+                placeholder={field.placeholder}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  onChange(v === '' ? null : Number(v));
+                }}
+                className={cn('font-sans', field.type === 'currency' && 'pl-7')}
+              />
+              {field.type === 'percent' && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans text-sm">%</span>
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -118,15 +173,15 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <Input
-            id={id}
-            value={typeof value === 'string' ? value : ''}
-            placeholder={field.placeholder}
-            onChange={(e) => onChange(e.target.value)}
-            className="font-sans"
-          />
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <Input
+              id={id}
+              value={typeof value === 'string' ? value : ''}
+              placeholder={field.placeholder}
+              onChange={(e) => onChange(e.target.value)}
+              className="font-sans"
+            />
+          )}
         </div>
       );
 
@@ -134,15 +189,15 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <Textarea
-            id={id}
-            value={typeof value === 'string' ? value : ''}
-            placeholder={field.placeholder}
-            onChange={(e) => onChange(e.target.value)}
-            className="font-sans min-h-[80px]"
-          />
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <Textarea
+              id={id}
+              value={typeof value === 'string' ? value : ''}
+              placeholder={field.placeholder}
+              onChange={(e) => onChange(e.target.value)}
+              className={cn('font-sans', sideMode ? 'min-h-[160px]' : 'min-h-[80px]')}
+            />
+          )}
         </div>
       );
 
@@ -151,23 +206,23 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <Select
-            value={typeof value === 'string' ? value : ''}
-            onValueChange={(v) => onChange(v)}
-          >
-            <SelectTrigger id={id} className="font-sans">
-              <SelectValue placeholder="Select…" />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="font-sans">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <Select
+              value={typeof value === 'string' ? value : ''}
+              onValueChange={(v) => onChange(v)}
+            >
+              <SelectTrigger id={id} className="font-sans">
+                <SelectValue placeholder="Select…" />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="font-sans">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       );
 
@@ -180,22 +235,22 @@ export function PolicyRuleField({ field, value, onChange, audience = 'internal' 
       return (
         <div className="space-y-1.5">
           {labelEl}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-border p-3 bg-muted/30">
-            {field.options?.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex items-center gap-2 cursor-pointer font-sans text-sm"
-              >
-                <Checkbox
-                  checked={arr.includes(opt.value)}
-                  onCheckedChange={() => toggle(opt.value)}
-                />
-                <span>{opt.label}</span>
-              </label>
-            ))}
-          </div>
-          {helperEl}
-          {provenanceEl}
+          {wrap(
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-border p-3 bg-muted/30">
+              {field.options?.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 cursor-pointer font-sans text-sm"
+                >
+                  <Checkbox
+                    checked={arr.includes(opt.value)}
+                    onCheckedChange={() => toggle(opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       );
     }

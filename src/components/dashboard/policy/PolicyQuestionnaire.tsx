@@ -128,6 +128,38 @@ export function PolicyQuestionnaire({
 
   return (
     <div className="space-y-6">
+      {/* Progress chip strip — moved to TOP (Wave 28.14.1) so orientation lands
+          where the eye starts, not under the navigation row. */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {questions.map((q, i) => {
+          const a = isAnswered(values[q.field.key]);
+          const active = i === safeIndex;
+          const reachable = a || i <= safeIndex;
+          return (
+            <button
+              key={q.field.key}
+              type="button"
+              onClick={() => reachable && setIndex(i)}
+              disabled={!reachable}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-sans text-[10px] transition-colors',
+                active
+                  ? 'bg-primary/10 text-foreground border border-primary/40'
+                  : a
+                    ? 'bg-muted text-foreground hover:bg-muted/80 border border-transparent'
+                    : 'bg-transparent text-muted-foreground/40 border border-transparent cursor-not-allowed',
+              )}
+              title={q.field.label}
+            >
+              <span className="text-[8px]">{a ? '✓' : active ? '⏵' : '○'}</span>
+              <span className="max-w-[120px] truncate">
+                {q.field.question || q.field.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Section + question position */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-display text-[10px] tracking-wider uppercase text-muted-foreground">
@@ -141,7 +173,7 @@ export function PolicyQuestionnaire({
 
       {/* The plain-English question */}
       <div className="space-y-2">
-        <h4 className="font-display text-lg tracking-wide text-foreground">
+        <h4 className="font-display text-xl tracking-wide text-foreground">
           {question}
           {field.required && <span className="text-destructive ml-1">*</span>}
         </h4>
@@ -215,6 +247,7 @@ export function PolicyQuestionnaire({
                 value={value}
                 onChange={(v) => onChange(field.key, v, field.type)}
                 audience={audience}
+                helperPlacement="side"
               />
             </div>
           </details>
@@ -224,12 +257,13 @@ export function PolicyQuestionnaire({
             value={value}
             onChange={(v) => onChange(field.key, v, field.type)}
             audience={audience}
+            helperPlacement="side"
           />
         )}
       </div>
 
-      {/* Navigation row */}
-      <div className="flex items-center justify-between gap-3 pt-2">
+      {/* Navigation row — single row, no progress chips below (those are at top now) */}
+      <div className="flex items-center justify-between gap-3 pt-4 border-t border-border/40">
         <Button
           variant="ghost"
           size="sm"
@@ -261,37 +295,6 @@ export function PolicyQuestionnaire({
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
-      </div>
-
-      {/* Progress chip row — clickable for answered + current; dimmed for pending */}
-      <div className="flex items-center gap-1.5 flex-wrap pt-3 border-t border-border/40">
-        {questions.map((q, i) => {
-          const a = isAnswered(values[q.field.key]);
-          const active = i === safeIndex;
-          const reachable = a || i <= safeIndex;
-          return (
-            <button
-              key={q.field.key}
-              type="button"
-              onClick={() => reachable && setIndex(i)}
-              disabled={!reachable}
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-sans text-[10px] transition-colors',
-                active
-                  ? 'bg-primary/10 text-foreground border border-primary/40'
-                  : a
-                    ? 'bg-muted text-foreground hover:bg-muted/80 border border-transparent'
-                    : 'bg-transparent text-muted-foreground/40 border border-transparent cursor-not-allowed',
-              )}
-              title={q.field.label}
-            >
-              <span className="text-[8px]">{a ? '✓' : active ? '⏵' : '○'}</span>
-              <span className="max-w-[120px] truncate">
-                {q.field.question || q.field.label}
-              </span>
-            </button>
-          );
-        })}
       </div>
     </div>
   );
