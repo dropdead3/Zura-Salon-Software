@@ -79,7 +79,8 @@ const STEP_META: Record<WizardStep, { label: string; description: string }> = {
   },
   model: {
     label: 'Business model',
-    description: 'Tell us how you operate — drives which policies apply. You can change any of these later as your business evolves.',
+    description:
+      'All optional. Check only what applies — every toggle here adds conditional policy modules on top of the baseline library that every salon receives (cancellations, sanitation, payment authorization, employee conduct, etc.). You can change any of these later as your business evolves.',
   },
   materials: {
     label: 'Materials & review',
@@ -775,6 +776,9 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                 </Label>
               );
             })}
+            <p className={cn(tokens.body.muted, 'text-xs pt-3')}>
+              Leave everything unchecked? That's fine — you'll still get the baseline library on the next step.
+            </p>
           </div>
         )}
 
