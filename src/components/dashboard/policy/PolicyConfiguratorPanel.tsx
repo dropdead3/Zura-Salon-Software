@@ -709,7 +709,18 @@ export function PolicyConfiguratorPanel({
               </div>
 
               {rulesMode === 'interview' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] gap-8">
+                <div className="flex flex-col gap-6">
+                  <PolicyLivePreview
+                    schema={schema}
+                    values={values}
+                    recentlyChangedKey={recentlyChangedKey}
+                    libraryKey={entry.key}
+                    category={entry.category}
+                    audience={entry.audience}
+                    orgName={orgNameForTokens}
+                    schemaHasAuthorityRole={schemaHasAuthorityRole}
+                    locationCount={locationCount}
+                  />
                   <PolicyQuestionnaire
                     schema={schema}
                     values={values}
@@ -724,17 +735,6 @@ export function PolicyConfiguratorPanel({
                       setRecentlyChangedKey(key);
                     }}
                     onComplete={handleSaveRules}
-                  />
-                  <PolicyLivePreview
-                    schema={schema}
-                    values={values}
-                    recentlyChangedKey={recentlyChangedKey}
-                    libraryKey={entry.key}
-                    category={entry.category}
-                    audience={entry.audience}
-                    orgName={orgNameForTokens}
-                    schemaHasAuthorityRole={schemaHasAuthorityRole}
-                    locationCount={locationCount}
                   />
                 </div>
               ) : (

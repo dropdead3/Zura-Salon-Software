@@ -14,17 +14,9 @@
  *  - Unresolved tokens render as `{{token}}` so wiring gaps stay visible.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Eye } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import { humanize, interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
 import { getPolicySummaryDefaults } from '@/lib/policy/starter-drafts';
 import { PLATFORM_NAME } from '@/lib/brand';
@@ -157,68 +149,70 @@ export function PolicyLivePreview({
 
   const segments = substituteWithHighlight(composed, values, showHighlight);
 
-  const previewBody = (
-    <div className="font-sans text-sm leading-7 text-foreground whitespace-pre-wrap">
-      {segments.map((seg, i) =>
-        seg.kind === 'mark' ? (
-          <mark
-            key={i}
-            className="bg-primary/20 text-foreground rounded px-0.5 transition-colors duration-700"
-          >
-            {seg.value}
-          </mark>
-        ) : (
-          <span key={i}>{seg.value}</span>
-        ),
-      )}
-    </div>
-  );
+  // Approximate sentence count for the collapsed summary line.
+  const sentenceCount = useMemo(() => {
+    const stripped = composed.replace(/\{\{[^}]+\}\}/g, '').trim();
+    if (!stripped) return 0;
+    return stripped.split(/[.!?]+\s/).filter((s) => s.trim().length > 0).length;
+  }, [composed]);
+
+  const [open, setOpen] = useState(true);
 
   return (
-    <>
-      {/* Inline preview pane — visible only on lg+ to avoid stacking on tablets */}
-      <aside
-        className={cn(
-          'hidden lg:block rounded-xl border border-border bg-card p-6 sticky top-4 self-start',
-          'min-h-[260px] max-h-[calc(100vh-8rem)] overflow-y-auto',
-        )}
-        aria-label="Live policy preview"
-      >
-        <div className="mb-4 flex items-center justify-between gap-2">
+    <aside
+      className={cn(
+        'rounded-xl border border-border bg-card',
+        open ? 'p-6' : 'p-4',
+      )}
+      aria-label="Live policy preview"
+    >
+      <div className={cn('flex items-center justify-between gap-2', open && 'mb-4')}>
+        <div className="flex items-baseline gap-2 min-w-0">
           <h4 className={cn(tokens.card.title, 'text-xs')}>Live preview</h4>
-          <span className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground">
-            Updates as you answer
-          </span>
+          {!open && (
+            <span className="font-sans text-[11px] text-muted-foreground truncate">
+              · {sentenceCount > 0 ? `${sentenceCount} sentence${sentenceCount === 1 ? '' : 's'}` : 'Awaiting answers'}
+            </span>
+          )}
+          {open && (
+            <span className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground">
+              Updates as you answer
+            </span>
+          )}
         </div>
-        {previewBody}
-      </aside>
-
-      {/* Below lg: collapsed bottom-sheet trigger so the questionnaire owns
-          the full viewport width without inline stacking pushing the form
-          off-screen. */}
-      <div className="lg:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full font-sans"
-              type="button"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Preview policy
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className={cn(tokens.card.title, 'text-xs text-left')}>
-                Live preview
-              </SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">{previewBody}</div>
-          </SheetContent>
-        </Sheet>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-sans text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors flex-shrink-0"
+          aria-expanded={open}
+        >
+          {open ? (
+            <>
+              Collapse <ChevronUp className="w-3.5 h-3.5" />
+            </>
+          ) : (
+            <>
+              Expand <ChevronDown className="w-3.5 h-3.5" />
+            </>
+          )}
+        </button>
       </div>
-    </>
+      {open && (
+        <div className="font-sans text-sm leading-7 text-foreground whitespace-pre-wrap min-h-[120px] max-h-[40vh] overflow-y-auto">
+          {segments.map((seg, i) =>
+            seg.kind === 'mark' ? (
+              <mark
+                key={i}
+                className="bg-primary/20 text-foreground rounded px-0.5 transition-colors duration-700"
+              >
+                {seg.value}
+              </mark>
+            ) : (
+              <span key={i}>{seg.value}</span>
+            ),
+          )}
+        </div>
+      )}
+    </aside>
   );
 }
