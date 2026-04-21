@@ -56,6 +56,31 @@ export function InitialSetupGateBanner() {
     staleTime: 60_000,
   });
 
+  // Wave 13G.E — for migrated orgs, check if their draft is meaningfully
+  // backfilled so we can show "Review what we inferred" instead of the
+  // generic "Finish your operator profile" nudge.
+  const { data: draft } = useQuery({
+    queryKey: ["org-setup-draft-backfill-state", orgId, user?.id],
+    queryFn: async () => {
+      if (!orgId || !user?.id) return null;
+      const { data, error } = await supabase
+        .from("org_setup_drafts" as any)
+        .select("step_data")
+        .eq("organization_id", orgId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled:
+      !!orgId &&
+      !!user?.id &&
+      isLeadership &&
+      !isImpersonating &&
+      data?.signup_source === "backfilled",
+    staleTime: 60_000,
+  });
+
   if (
     !user ||
     !orgId ||
@@ -78,6 +103,25 @@ export function InitialSetupGateBanner() {
     navigate(dashPath("/onboarding/organization-setup"));
   };
 
+  // Migrated cohort with at least one backfilled step → reviewer framing.
+  const stepData =
+    (draft?.step_data as Record<string, Record<string, unknown>> | null) ?? null;
+  const hasBackfilledStep =
+    !!stepData &&
+    Object.values(stepData).some(
+      (s) => s && typeof s === "object" && (s as any).backfilled === true,
+    );
+  const isMigratedReview =
+    data.signup_source === "backfilled" && hasBackfilledStep;
+
+  const headline = isMigratedReview
+    ? "Review what we inferred"
+    : "Finish your operator profile";
+  const description = isMigratedReview
+    ? "We pre-filled your structure from existing data. Confirm or adjust the few open items."
+    : "Recommendations stay generic until we know your structure — team, compensation, and what you're optimizing for. Takes about 6 minutes and you can pause anytime.";
+  const ctaLabel = isMigratedReview ? "Review and confirm" : "Continue setup";
+
   return (
     <div className="mb-4 rounded-xl border border-border bg-card/80 backdrop-blur-xl p-5">
       <div className="flex items-start gap-4">
@@ -87,7 +131,7 @@ export function InitialSetupGateBanner() {
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-display text-sm tracking-wide uppercase text-foreground">
-              Finish your operator profile
+              {headline}
             </h3>
             <Button
               type="button"
@@ -101,9 +145,7 @@ export function InitialSetupGateBanner() {
             </Button>
           </div>
           <p className="font-sans text-sm text-muted-foreground leading-relaxed">
-            Recommendations stay generic until we know your structure — team,
-            compensation, and what you're optimizing for. Takes about 6 minutes
-            and you can pause anytime.
+            {description}
           </p>
           <div className="pt-1">
             <Button
@@ -112,7 +154,7 @@ export function InitialSetupGateBanner() {
               onClick={handleStart}
               className="gap-2"
             >
-              Continue setup
+              {ctaLabel}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </div>

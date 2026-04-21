@@ -1,6 +1,10 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STEP_UNLOCK_CONSEQUENCES, type StepRegistryEntry } from "./types";
+import {
+  formatRelativeShort,
+  useOrgSetupStepCompletion,
+} from "@/hooks/onboarding/useOrgSetupStepCompletion";
 
 interface SetupProgressPanelProps {
   steps: StepRegistryEntry[];
@@ -8,6 +12,8 @@ interface SetupProgressPanelProps {
   completedKeys: Set<string>;
   variant?: "side" | "inline";
   onStepClick?: (stepKey: string) => void;
+  /** Wave 13G.E — when provided, side variant queries completion timestamps. */
+  orgId?: string | null;
 }
 
 /**
@@ -16,6 +22,10 @@ interface SetupProgressPanelProps {
  *  - `inline` variant: horizontal step pips below each step body
  *
  * Reads STEP_UNLOCK_CONSEQUENCES so the operator sees what each step unlocks.
+ *
+ * Wave 13G.E — `side` variant additionally reads `org_setup_step_completion`
+ * and renders "Confirmed Xm ago" + retry hint under each completed step.
+ * Honors visibility-contract: no row → no timestamp, no orgId → no query.
  */
 export function SetupProgressPanel({
   steps,
@@ -23,7 +33,14 @@ export function SetupProgressPanel({
   completedKeys,
   variant = "side",
   onStepClick,
+  orgId = null,
 }: SetupProgressPanelProps) {
+  // Only the side variant cares about completion timestamps; inline pips stay lean.
+  const completionEnabled = variant === "side" && !!orgId;
+  const { data: completionMap = {} } = useOrgSetupStepCompletion(
+    completionEnabled ? orgId : null,
+  );
+
   if (variant === "inline") {
     return (
       <div className="flex items-center gap-1.5 justify-center pt-2">
@@ -54,10 +71,13 @@ export function SetupProgressPanel({
       <div className="font-display text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pb-2">
         Setup
       </div>
-      {steps.map((step, i) => {
+      {steps.map((step) => {
         const completed = completedKeys.has(step.key);
         const current = step.key === currentStepKey;
         const unlocks = STEP_UNLOCK_CONSEQUENCES[step.key];
+        const completion = completionMap[step.key];
+        const completedRel = completion ? formatRelativeShort(completion.completed_at) : null;
+        const retried = (completion?.attempt_count ?? 1) > 1;
         return (
           <button
             key={step.key}
@@ -100,6 +120,14 @@ export function SetupProgressPanel({
               >
                 {step.title}
               </div>
+              {completed && completedRel && (
+                <div className="font-sans text-[10px] text-muted-foreground/70 mt-1 leading-snug">
+                  Confirmed {completedRel}
+                  {retried && (
+                    <span className="text-muted-foreground/60"> · retried</span>
+                  )}
+                </div>
+              )}
               {current && unlocks && (
                 <div className="font-sans text-[10px] text-muted-foreground/70 mt-1 leading-snug">
                   Unlocks: {unlocks}
