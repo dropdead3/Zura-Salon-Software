@@ -200,3 +200,61 @@ export function useUpdateVariantBody() {
     },
   });
 }
+
+/**
+ * Persist a platform-authored starter draft as a `policy_variants` row.
+ * Marks the row as `ai_generated=false` with `ai_model='starter'` to
+ * differentiate from AI-generated drafts. Sets `approved=true` immediately
+ * since the operator has explicitly chosen to accept the platform default.
+ *
+ * Doctrine: starter drafts are human-authored. AI cannot invent rules; the
+ * platform-authored prose can't either — both render the same configured truth.
+ */
+export function useApproveStarterDraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      versionId,
+      organizationId,
+      variantType,
+      body_md,
+    }: {
+      versionId: string;
+      organizationId: string;
+      variantType: PolicyVariantType;
+      body_md: string;
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const nowIso = new Date().toISOString();
+      const { error } = await supabase.from('policy_variants').insert({
+        version_id: versionId,
+        organization_id: organizationId,
+        variant_type: variantType,
+        body_md,
+        ai_generated: false,
+        ai_model: 'starter',
+        last_drafted_at: nowIso,
+        approved: true,
+        approved_at: nowIso,
+        approved_by: userData.user?.id ?? null,
+      });
+      if (error) throw error;
+      return { versionId };
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['policy-variants', res.versionId] });
+      toast({
+        title: 'Starter draft approved',
+        description: 'Marked as approved and ready to publish.',
+      });
+    },
+    onError: (e: Error) => {
+      toast({
+        title: 'Could not approve starter',
+        description: e.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
