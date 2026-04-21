@@ -9,7 +9,7 @@
  * Doctrine: mem://features/policy-os-applicability-doctrine.md
  *           ("Wizard inputs must be derived-by-default.")
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -126,30 +126,47 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     has_booth_renters: existingProfile?.has_booth_renters ?? false,
   }));
 
-  // Hydrate derived-by-default values once they load (existing profile values win)
+  // One-shot re-hydration: once both `defaults` and `existingProfile` have
+  // resolved, re-seed the form from the saved profile (judgment + materials)
+  // and from auto-detection (offers_*, derived states/services/roles).
+  // After hydration completes, in-session edits always win — even if
+  // `existingProfile` later refetches (e.g. window refocus).
+  const hasHydratedRef = useRef(false);
   useEffect(() => {
+    if (hasHydratedRef.current) return;
     if (defaults.isLoading) return;
+    if (existingProfile === undefined) return; // query still loading
+    hasHydratedRef.current = true;
+
     setForm((f) => ({
       ...f,
+      // Auto-detected / derived fields
       business_type: existingProfile?.business_type ?? f.business_type ?? defaults.business_type,
-      // States: always reflect derived (operator can't edit — they edit locations instead)
       operating_states:
         defaults.derived_states.length > 0 ? defaults.derived_states : (existingProfile?.operating_states ?? []),
       primary_state:
         defaults.derived_states[0] ?? existingProfile?.primary_state ?? f.primary_state ?? defaults.primary_state,
       team_size_band: existingProfile?.team_size_band ?? f.team_size_band ?? defaults.team_size_band,
-      // Read-only mirrors of catalog/team — always reflect current state for accurate recommendations
       service_categories:
-        defaults.service_categories.length > 0 ? defaults.service_categories : f.service_categories,
-      roles_used: defaults.roles_used.length > 0 ? defaults.roles_used : f.roles_used,
-      // Heuristic toggle defaults — auto-detection always wins (true); explicit operator opt-outs preserved otherwise.
+        defaults.service_categories.length > 0 ? defaults.service_categories : (existingProfile?.service_categories ?? f.service_categories),
+      roles_used:
+        defaults.roles_used.length > 0 ? defaults.roles_used : (existingProfile?.roles_used ?? f.roles_used),
+      // Heuristic offer toggles — auto-detection wins (true); explicit operator opt-outs preserved otherwise.
       offers_retail: defaults.detected_offers_retail || (existingProfile?.offers_retail ?? false),
       offers_extensions: defaults.detected_offers_extensions || (existingProfile?.offers_extensions ?? false),
       offers_packages: defaults.detected_offers_packages || (existingProfile?.offers_packages ?? false),
       offers_memberships: defaults.detected_offers_memberships || (existingProfile?.offers_memberships ?? false),
+      // Pure-judgment toggles (Step 2) — re-seed from saved profile so reopening the wizard remembers them.
+      serves_minors: existingProfile?.serves_minors ?? false,
+      uses_tip_pooling: existingProfile?.uses_tip_pooling ?? false,
+      uses_refund_clawback: existingProfile?.uses_refund_clawback ?? false,
+      has_booth_renters: existingProfile?.has_booth_renters ?? false,
+      // Materials toggles (Step 3) — re-seed from saved profile.
+      has_existing_handbook: existingProfile?.has_existing_handbook ?? false,
+      has_existing_client_policies: existingProfile?.has_existing_client_policies ?? false,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaults.isLoading]);
+  }, [defaults.isLoading, existingProfile]);
 
   const recommendedKeys = useMemo(
     () =>
@@ -279,8 +296,41 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     !!form.team_size_band &&
     (step !== 'confirm' || step1Facts.gaps === 0);
 
-  const next = () => !isLast && setStep(STEP_ORDER[stepIndex + 1]);
-  const back = () => !isFirst && setStep(STEP_ORDER[stepIndex - 1]);
+  /**
+   * Silent auto-save — persists the in-flight form to `policy_org_profile`
+   * without flipping `setup_completed_at` and without surfacing the
+   * "Profile saved" toast. Used on Next/Back/Close so mid-flow state
+   * survives the operator closing the wizard.
+   *
+   * Gated to `hasHydratedRef.current` so we never write the empty initial
+   * form over a pre-existing saved profile before re-hydration completes.
+   */
+  const silentAutoSave = () => {
+    if (!hasHydratedRef.current) return;
+    upsert.mutate(
+      { ...form },
+      {
+        // No-op: silence the success toast; the upsert hook still invalidates
+        // the query cache via its own onSuccess. Errors surface normally.
+        onSuccess: () => {},
+      },
+    );
+  };
+
+  const next = () => {
+    if (isLast) return;
+    silentAutoSave();
+    setStep(STEP_ORDER[stepIndex + 1]);
+  };
+  const back = () => {
+    if (isFirst) return;
+    silentAutoSave();
+    setStep(STEP_ORDER[stepIndex - 1]);
+  };
+  const handleClose = () => {
+    silentAutoSave();
+    onClose();
+  };
 
   const handleFinish = async () => {
     await upsert.mutateAsync({
@@ -901,7 +951,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
-        <Button variant="ghost" size={tokens.button.inline} onClick={onClose} disabled={isSaving} className="font-sans">
+        <Button variant="ghost" size={tokens.button.inline} onClick={handleClose} disabled={isSaving} className="font-sans">
           Cancel
         </Button>
         <div className="flex items-center gap-2">
