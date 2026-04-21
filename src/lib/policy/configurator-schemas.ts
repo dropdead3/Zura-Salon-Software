@@ -122,6 +122,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'notice_window_hours',
             label: 'Notice window (hours)',
+            question: 'How late can a client cancel without paying a fee?',
+            whyItMatters:
+              'This is the notice clients have to give to avoid the cancellation fee. Most salons use 24 hours.',
+            presets: NOTICE_WINDOW_PRESETS,
             helper: 'Cancellations inside this window trigger a fee.',
             type: 'number',
             unit: 'hours',
@@ -131,6 +135,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'reschedule_window_hours',
             label: 'Free reschedule window (hours)',
+            question: 'How much notice do clients need to reschedule for free?',
+            whyItMatters:
+              'Reschedules outside this window cost nothing. Inside it, the cancellation fee may apply.',
+            presets: NOTICE_WINDOW_PRESETS,
             helper: 'Reschedules outside this window are free.',
             type: 'number',
             unit: 'hours',
@@ -144,6 +152,9 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'fee_type',
             label: 'Fee type',
+            question: 'How is the cancellation fee structured?',
+            whyItMatters:
+              'Most salons charge a percentage of the booked service so the fee scales with risk.',
             type: 'select',
             required: true,
             options: [
@@ -157,6 +168,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'fee_amount',
             label: 'Fee amount',
+            question: 'How much is the cancellation fee?',
+            whyItMatters:
+              'For percentage fees, 50% is the most common anchor — it covers half the lost slot without feeling punitive.',
+            presets: CANCELLATION_FEE_PCT_PRESETS,
             helper: 'Percentage (0–100) or dollar amount, depending on fee type.',
             type: 'number',
             defaultValue: 50,
@@ -164,6 +179,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'no_show_fee_amount',
             label: 'No-show fee',
+            question: 'How much is charged when a client no-shows?',
+            whyItMatters:
+              'No-shows cost the full slot. Most salons charge 100% to recover the booked time.',
+            presets: NO_SHOW_FEE_PCT_PRESETS,
             helper: 'Typically 100%. Charged when client never arrives.',
             type: 'number',
             defaultValue: 100,
@@ -188,6 +207,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'waiver_authority',
             label: 'Who can waive a fee?',
+            question: 'Who has the authority to waive a cancellation or no-show fee?',
+            whyItMatters:
+              'Anyone below this role must escalate. Manager-level is the industry default — high enough to protect revenue, low enough to keep the floor moving.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role authorized to waive the cancellation/no-show fee. Anyone below this role must escalate.',
