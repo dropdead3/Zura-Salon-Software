@@ -603,35 +603,72 @@ export default function SetupFunnel() {
                         <div className="px-4 pb-4 pt-2 border-t border-border/60 mt-2">
                           <div className="flex items-center justify-between gap-2 mb-2">
                             <div className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-                              Dropped at this step ({row.droppedOrgs.length}) — hottest first
+                              Dropped at this step ({row.droppedOrgs.length})
+                              {(() => {
+                                const uncontacted = row.droppedOrgs.filter(
+                                  (d) => !d.contacted,
+                                ).length;
+                                if (uncontacted === row.droppedOrgs.length)
+                                  return " — hottest first";
+                                return ` — ${uncontacted} uncontacted, hottest first`;
+                              })()}
                             </div>
                             <button
                               type="button"
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                downloadDroppedCsv(
-                                  row.step_number,
-                                  STEP_LABELS[row.step_number] ?? `step_${row.step_number}`,
-                                  row.droppedOrgs,
-                                  data?.orgNames ?? new Map(),
-                                  data?.orgSources ?? new Map(),
+                                const uncontactedOrgs = row.droppedOrgs.filter(
+                                  (d) => !d.contacted,
+                                );
+                                if (uncontactedOrgs.length === 0) {
+                                  toast.info(
+                                    `All ${row.droppedOrgs.length} orgs contacted within ${OUTREACH_COOLDOWN_DAYS}d cooldown`,
+                                  );
+                                  return;
+                                }
+                                await downloadDroppedCsvAndLog({
+                                  stepNumber: row.step_number,
+                                  stepLabel:
+                                    STEP_LABELS[row.step_number] ??
+                                    `step_${row.step_number}`,
+                                  rows: uncontactedOrgs,
+                                  names: data?.orgNames ?? new Map(),
+                                  sources: data?.orgSources ?? new Map(),
+                                  exportedBy: user?.id ?? null,
+                                });
+                                queryClient.invalidateQueries({
+                                  queryKey: ["platform-setup-outreach"],
+                                });
+                                toast.success(
+                                  `Exported ${uncontactedOrgs.length} orgs · marked as contacted (${OUTREACH_COOLDOWN_DAYS}d cooldown)`,
                                 );
                               }}
                               className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded border border-border/60 hover:border-border"
                             >
-                              Export CSV
+                              Export uncontacted CSV
                             </button>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                             {row.droppedOrgs.slice(0, 60).map((d) => {
                               const src = data?.orgSources.get(d.id) ?? "legacy";
                               const recency = formatRecency(d.lastActivityMs);
+                              const contactedRecency = d.lastContactedMs
+                                ? formatRecency(d.lastContactedMs)
+                                : null;
                               return (
                                 <div
                                   key={d.id}
-                                  className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5"
-                                  title={`${d.id}\nLast activity: ${recency}`}
+                                  className={cn(
+                                    "flex items-center gap-2 rounded-md border px-2.5 py-1.5",
+                                    d.contacted
+                                      ? "border-border/40 bg-muted/10 opacity-60"
+                                      : "border-border/60 bg-muted/20",
+                                  )}
+                                  title={`${d.id}\nLast activity: ${recency}${contactedRecency ? `\nContacted: ${contactedRecency} ago` : ""}`}
                                 >
+                                  {d.contacted && (
+                                    <CheckCheck className="w-3 h-3 text-muted-foreground shrink-0" />
+                                  )}
                                   <span className="font-sans text-xs text-foreground truncate flex-1">
                                     {data?.orgNames.get(d.id) ?? d.id.slice(0, 8)}
                                   </span>
