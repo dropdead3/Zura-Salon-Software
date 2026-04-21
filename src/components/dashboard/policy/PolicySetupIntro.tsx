@@ -92,17 +92,19 @@ export function PolicySetupIntro({ onStart, libraryCount }: Props) {
       {/* Section 2 — What setup decides */}
       <section className="pt-12 border-t border-border/40 space-y-6">
         <h2 className={tokens.heading.section}>What setup decides</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ul className="space-y-4">
           {SETUP_DECISIONS.map(({ icon: Icon, heading, body }) => (
-            <div key={heading} className="space-y-3">
+            <li key={heading} className="flex items-start gap-4">
               <div className={tokens.card.iconBox}>
                 <Icon className={tokens.card.icon} />
               </div>
-              <h3 className={cn(tokens.heading.card, 'min-h-[2lh]')}>{heading}</h3>
-              <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
-            </div>
+              <div className="flex-1 min-w-0 space-y-1">
+                <h3 className={tokens.heading.card}>{heading}</h3>
+                <p className={cn(tokens.body.muted, 'leading-relaxed')}>{body}</p>
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
       {/* Section 3 — How the system uses your policies */}
