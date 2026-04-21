@@ -35,17 +35,17 @@ interface Props {
 const SETUP_DECISIONS = [
   {
     icon: Briefcase,
-    heading: 'Your business shape',
+    heading: 'Business shape',
     body: 'Type, location, team size. Determines which legal frameworks apply — chair rental disclosures in TX differ from CA.',
   },
   {
     icon: Scissors,
-    heading: 'What you offer',
+    heading: 'Services offered',
     body: "Services determine which policies are required vs. noise. A barbershop won't see extension aftercare. A solo stylist won't see manager escalation.",
   },
   {
     icon: FileCheck,
-    heading: 'What you already have',
+    heading: 'Existing documents',
     body: "Existing handbooks, waivers, intake forms — we won't ask you to redo what's already in place.",
   },
 ] as const;
