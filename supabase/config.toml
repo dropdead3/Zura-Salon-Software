@@ -311,3 +311,6 @@ verify_jwt = false
 
 [functions.process-setup-followups]
 verify_jwt = false
+
+[functions.log-setup-outreach]
+verify_jwt = false

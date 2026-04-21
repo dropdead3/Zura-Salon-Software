@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrgSetupCommitLog } from "@/hooks/onboarding/useOrgSetupCommitLog";
+import { useOrgDashboardPath } from "@/hooks/useOrgDashboardPath";
 import { cn } from "@/lib/utils";
 
 interface UnfinishedFromSetupCalloutProps {
@@ -40,6 +41,7 @@ export function UnfinishedFromSetupCallout({
   className,
 }: UnfinishedFromSetupCalloutProps) {
   const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const { data: log = [] } = useOrgSetupCommitLog(orgId);
 
   // Latest entry per system wins
@@ -60,8 +62,18 @@ export function UnfinishedFromSetupCallout({
   if (unfinished.length === 0) return null;
 
   const handleFinish = (row: (typeof unfinished)[number]) => {
+    // Routing doctrine: client-side navigation only. Absolute external URLs
+    // (https://...) are allowed via window.open in a new tab so we never
+    // hard-reload the SPA and drop multi-tenant slug context.
     if (row.deep_link) {
-      window.location.href = row.deep_link;
+      const isAbsolute = /^https?:\/\//i.test(row.deep_link);
+      if (isAbsolute) {
+        window.open(row.deep_link, "_blank", "noopener,noreferrer");
+        return;
+      }
+      // Strip /dashboard prefix if present so dashPath() can re-scope by slug
+      const subpath = row.deep_link.replace(/^\/dashboard/, "");
+      navigate(dashPath(subpath));
       return;
     }
     const stepKey = stepKeyMap[row.system];
