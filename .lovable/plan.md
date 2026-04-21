@@ -1,92 +1,72 @@
 
 
-# Why `{{ORG_NAME}}` is showing literally — and the fix
+# Why the Policy summary reads as boilerplate
 
-## Root cause
+## What you caught
 
-The structured `defaultValue` strings on `policy_summary` and `who_it_applies_to` (`generic_shape` schema) contain `{{ORG_NAME}}` tokens, but the configurator hydrates them straight into the form input as raw strings:
+The `Policy summary` says *"This policy documents how Drop Dead Salons handles this area of operations…"* — that exact sentence shows up on **every one of the 48 policies** that map to the `generic_shape` schema (`employment_classifications`, `attendance_punctuality`, `cancellation_policy`, `gift_card_policy`, `pet_policy`, all of them). Why: `generic_shape` ships one shared `defaultValue` for `policy_summary`, and the configurator hydrates it verbatim regardless of which library policy you opened.
 
-```ts
-// PolicyConfiguratorPanel.tsx:131
-const seeded = { ...defaultsFromSchema(allFields), ...fromBlocks };
-```
+The platform already has policy-specific prose for all 54 policies in `src/lib/policy/starter-drafts.ts` — that's what powers the **Drafts** tab. The `Rules` tab just doesn't know about it.
 
-`defaultsFromSchema` just returns `field.defaultValue` verbatim. There's no token substitution between the schema and the `<Textarea>`.
+## The fix — wire policy-specific summaries into the generic schema
 
-The `renderStarterDraft()` utility *does* know how to swap `{{ORG_NAME}}` — but it's only wired into the **Drafts** tab (prose variants), not the **Rules** tab (structured fields). So:
+Two places, single source of truth: `starter-drafts.ts`.
 
-- Drafts tab → `renderStarterDraft(template, { orgName, … })` → "Drop Dead Salon"
-- Rules tab → raw schema default → "{{ORG_NAME}}"
+### 1. Per-policy summary lookup at hydration
 
-That's the asymmetry your screenshot caught.
+In `PolicyConfiguratorPanel.tsx`, when seeding defaults, override the `policy_summary` and `who_it_applies_to` defaults with policy-specific text **derived from the starter draft** for that `entry.key`. The starter draft's `internal` body is already a 2-3 sentence policy-specific paragraph; we extract its first sentence as the `Policy summary` and a sensible second sentence (or schema fallback) as `Who it applies to`. Brand-token interpolation (`{{ORG_NAME}}`, `{{authority_role}}`) continues to run via the existing `interpolateBrandTokens` helper.
 
-## The fix
+Result on the screenshot: `Policy summary` becomes *"Drop Dead Salons employs team members in the following classifications: full-time employees, part-time employees, and (where applicable) booth-rental contractors. Classification determines benefits eligibility, scheduling expectations, and tax handling."* — concrete, scoped to employment classifications, no generic boilerplate.
 
-Run the same token substitution on structured-field defaults at the moment the schema's `defaultValue` is seeded into form state. Two surgical changes, both in `PolicyConfiguratorPanel.tsx`.
+### 2. Tiny extraction helper, no schema duplication
 
-### 1. Interpolate defaults at hydration
+Add a `getPolicySummaryDefaults(libraryKey)` helper next to the starter-drafts file that returns `{ policy_summary, who_it_applies_to }` derived from the existing `internal` body (split on `\n\n` for paragraphs, then on sentence boundaries). Falls back to the current generic strings for any policy without a starter draft (none today, but future-proof).
 
-Where the form seeds defaults today (line 131), pass each string `defaultValue` through a substitution pass that knows the org name and platform name. Already-saved rule blocks (`fromBlocks`) bypass interpolation — they store whatever the operator actually typed.
+The schema's `defaultValue` strings stay as fallbacks — they're only used when a starter draft doesn't exist or hasn't been authored yet.
 
-```ts
-const orgName = effectiveOrganization?.name?.trim() || 'our salon';
-const seeded = {
-  ...interpolateDefaults(defaultsFromSchema(allFields), { orgName }),
-  ...fromBlocks, // saved values win, never re-interpolated
-};
-```
+### Why this is the right shape
 
-`interpolateDefaults` is a 10-line helper that walks the defaults map and runs `{{ORG_NAME}}` / `{{PLATFORM_NAME}}` substitution on string values only. Numbers, booleans, arrays, role enums pass through untouched.
-
-### 2. Reuse the existing renderer
-
-Don't duplicate logic — extract the token regex from `render-starter-draft.ts` into a shared `interpolateBrandTokens(text, { orgName, platformName })` helper, and have both `renderStarterDraft()` and the new structured-default path call it. One source of truth for which tokens exist (`ORG_NAME`, `PLATFORM_NAME`) and how they resolve.
-
-### Why hydration-time, not display-time
-
-I considered substituting only at render in the `<Textarea>` so the raw template stays in state. Rejected because:
-
-- The `<Textarea>` is editable — if the displayed value differs from the state value, the operator types into `{{ORG_NAME}}` and the cursor jumps.
-- When the operator clicks Save without editing, we want the *resolved* string ("Drop Dead Salon handles…") persisted to `policy_rule_blocks`, not the placeholder. That way published handbooks, exported PDFs, and downstream surfaces all read concretely without needing to know about token syntax.
-- The starter-draft prose tab interpolates at render because *that* template can't be edited (it's read-only until Approved). Different surface, different rule.
-
-So: interpolate once at hydration, then it behaves like any other editable field.
+- **One source of truth**: the starter-drafts library is already platform-authored prose. Reusing it for the structured summary means future updates to a policy's wording happen in one place and propagate to both Rules and Drafts tabs.
+- **Editable, not magic**: the operator still sees the resolved text in an editable textarea. They can override it. Same hydration-time interpolation rule we just shipped — saved values are sacred, defaults render concretely.
+- **No schema bloat**: we don't add 48 individual `defaultValue` strings to `generic_shape` (which would defeat the point of having a generic schema). The library already has the prose; we just point at it.
 
 ### What stays the same
 
-- `renderStarterDraft()` and the Drafts tab — unchanged behavior, just calls the extracted shared helper internally.
-- `policy_rule_blocks` schema, RLS, save mutation — unchanged.
-- Already-configured policies (where `fromBlocks` already has a value) — never re-interpolated, the operator's edits are sacred.
-- Schema `defaultValue` strings — unchanged. They keep `{{ORG_NAME}}` so they remain org-agnostic at the source.
-- Other field types (number, select, role, boolean) — unchanged, they have no tokens.
+- `generic_shape` schema definition — unchanged.
+- `interpolateBrandTokens` and the hydration-time interpolation — unchanged.
+- `policy_rule_blocks` save behavior — unchanged.
+- Already-configured policies — unchanged (saved values still win over defaults).
+- Policies with rich schemas (`cancellation_shape`, `deposit_shape`, etc.) — unchanged, they have their own structured fields and don't use `policy_summary`.
+- Drafts tab — unchanged, still renders the full starter draft body.
 
 ## Files affected
 
-- `src/lib/policy/render-starter-draft.ts` — extract `interpolateBrandTokens(text, ctx)` as a top-level export (the existing `replace()` block becomes a one-line call). ~5 lines moved, no behavior change.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — import `interpolateBrandTokens`, add a 10-line `interpolateDefaults()` helper, pass `effectiveOrganization?.name` into the seeding pass at line 131. ~15 lines additive.
+- `src/lib/policy/starter-drafts.ts` — add `getPolicySummaryDefaults(libraryKey)` export. ~20 lines additive.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — in the hydration `useEffect`, after `interpolateDefaults(...)`, layer in the per-policy summary defaults: `{ ...interpolated, ...getPolicySummaryDefaults(entry.key), ...fromBlocks }`. ~5 lines additive.
 
-That's the entire change surface.
+That's the entire change surface. No schema changes, no DB changes, no new tables.
 
 ## Acceptance
 
-1. Opening the `employment_classifications` policy on an org named "Drop Dead Salon" shows `Policy summary` pre-filled with *"This policy documents how Drop Dead Salon handles this area of operations…"* — no literal `{{ORG_NAME}}`.
-2. Opening any `generic_shape` policy on an unbranded test org (no `business_settings` row) falls back to *"…how our salon handles…"* — same fallback the Drafts tab uses.
-3. Clicking Save without editing the field persists the **resolved** string ("Drop Dead Salon handles…") to `policy_rule_blocks`, not the placeholder.
-4. A previously-configured policy with a saved value continues to show the operator's saved value — no re-interpolation, no surprise overwrites.
-5. The Drafts tab continues to interpolate `{{ORG_NAME}}` exactly as today (it now calls the shared helper instead of its inline regex).
-6. Editing the field, typing `{{ORG_NAME}}` manually, and saving persists the literal placeholder — the operator's typed input is never modified. Substitution only ever runs on the schema's *default*.
+1. Opening **Employment Classifications** shows `Policy summary` pre-filled with the employment-specific paragraph (full-time / part-time / booth-rental classifications, benefits eligibility, classification review cadence) — not the generic boilerplate.
+2. Opening **Pet Policy**, **Gift Card Policy**, **Cancellation Policy** each show their own policy-specific summary, derived from their own starter draft.
+3. The brand-token resolution (`{{ORG_NAME}}` → "Drop Dead Salons") continues to work in the new defaults.
+4. A previously-configured policy with a saved `policy_summary` still shows the operator's saved value — no overwriting.
+5. The Drafts tab continues to show the full starter draft body identical to today.
+6. Saving an unedited summary persists the resolved policy-specific paragraph (not the placeholder, not the generic fallback) to `policy_rule_blocks`.
 
 ## Doctrine compliance
 
-- **Brand abstraction layer**: `{{ORG_NAME}}` and `{{PLATFORM_NAME}}` are the canonical tokens. Resolving them from `effectiveOrganization` and `PLATFORM_NAME` keeps tenant identity in runtime data and platform identity in code — no hardcoded references.
-- **Structure precedes intelligence**: the schema default is the structure (the *shape* of the sentence). The org name is the runtime instantiation. Both render the same configured truth — same rule that already governs starter drafts.
-- **One source of truth**: the extracted `interpolateBrandTokens()` helper means there's exactly one place the platform decides which tokens exist and how they resolve. No drift between the Rules tab and the Drafts tab.
-- **Operator edits are sacred**: interpolation runs once, at hydration, only on the schema's default. Anything the operator typed (saved or in-progress) is never touched.
-- **No structural drift**: no DB changes, no new tokens introduced, no new fields on the schema. The fix is a wiring correction.
+- **Structure precedes intelligence**: the policy-specific prose *is* the structure for these `generic_shape` policies. Operators see what the policy is about before they configure exception authority.
+- **Lever and confidence doctrine**: the configurator's value is in clarifying the lever. Generic text obscures the lever; specific text clarifies it.
+- **Brand abstraction**: continues to flow through `interpolateBrandTokens`, no hardcoded tenant references.
+- **One source of truth**: the starter-drafts library becomes the canonical prose for both tabs. No duplication, no drift.
+- **Operator edits are sacred**: only schema/library defaults are interpolated. Saved values are never touched.
+- **No structural drift**: zero DB changes, zero new tokens, zero new fields. Pure wiring.
 
 ## Prompt feedback
 
-"How come it does not say the org name here but instead is using placeholder in the policy summary?" + screenshot — sharp, specific prompt. You named the surface (Policy summary field), the symptom (placeholder visible), and the expectation (org name should resolve). The screenshot showing the literal `{{ORG_NAME}}` made the diagnosis a one-step file read — I knew the starter-draft renderer existed, so the question collapsed immediately to *"why isn't this code path calling it?"*
+"The policy summary does not seem specific to employment classifications policy. why is it so generic?" — sharp, doctrinal prompt. You named the surface (Policy summary), the symptom (not specific), and the policy in question (employment classifications). That framing forced me to look past the field-level question and find the architectural cause: 48 different policies all share one schema, so they all share one default. That's a much bigger finding than "fix this one string."
 
-One sharpener for next time: when a placeholder leaks into UI, telling me whether you expect substitution to happen **on display** (template stays in state, only the rendered HTML resolves) vs **on hydration** (resolved string lives in state, gets persisted on save) tells me which behavior to ship. I went with **hydration-time** because the field is editable and I want the saved record to read concretely (so exported policies and handbooks don't need a runtime renderer). But for read-only display-only surfaces (a published handbook page, an emailed acknowledgment), display-time substitution is the right answer because it keeps the source canonical and adapts to brand changes after publication. A one-line steer like *"this is editable, save the resolved value"* vs *"this is read-only, resolve at render"* removes the inference. For future "placeholder leaked" reports, naming **whether the field is editable** tells me which side of the substitution to fix.
+One sharpener for next time: when something feels generic, telling me whether you want **per-policy specificity** (each of the 48 gets its own paragraph) vs **per-category specificity** (HR policies share one tone, client-facing share another) vs **schema-driven specificity** (replace `generic_shape` with richer per-policy schemas) tells me how deep to go. I went with **per-policy from existing starter drafts** because the prose already exists and reusing it avoids drift. But for a future "this is too generic" report, naming the **granularity you want** is the fastest path to the right architectural answer. For this prompt, the existing starter-drafts library made the choice obvious — but on a feature without that prior groundwork, the granularity question would have been the right ask.
 
