@@ -458,7 +458,7 @@ export default function SetupFunnel() {
         </div>
 
         {/* Top stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
           <StatTile
             icon={<Users className="w-5 h-5 text-primary" />}
             label="Orgs started"
@@ -486,6 +486,10 @@ export default function SetupFunnel() {
                   ? `${totals.avgTimeMinutes.toFixed(1)} min`
                   : "—"
             }
+          />
+          <SourceBreakdownTile
+            isLoading={isLoading}
+            breakdown={sourceBreakdown}
           />
         </div>
 
@@ -570,6 +574,12 @@ export default function SetupFunnel() {
                               label="Dropped"
                               value={row.droppedOrgs.length}
                             />
+                            <div className="text-right w-16">
+                              <div className="font-sans text-xs text-muted-foreground">
+                                Trend
+                              </div>
+                              <Sparkline values={row.weeklyDrops} />
+                            </div>
                             <div className="text-right w-16">
                               <div className="font-sans text-xs text-muted-foreground">
                                 Rate
