@@ -4,7 +4,7 @@ import { ArrowRight, Settings2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganizationContext } from "@/contexts/OrganizationContext";
-import { useEffectiveRoles } from "@/hooks/useEffectiveUser";
+import { useLeadershipCheck } from "@/hooks/useLeadershipCheck";
 import { useOrgDashboardPath } from "@/hooks/useOrgDashboardPath";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -28,7 +28,7 @@ export function InitialSetupGateBanner() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { effectiveOrganization, isImpersonating } = useOrganizationContext();
-  const { isLeadership } = useEffectiveRoles();
+  const { isLeadership } = useLeadershipCheck();
   const { dashPath } = useOrgDashboardPath();
   const orgId = effectiveOrganization?.id ?? null;
 
