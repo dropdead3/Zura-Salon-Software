@@ -14392,6 +14392,7 @@ export type Database = {
       org_setup_drafts: {
         Row: {
           current_step: number | null
+          current_step_key: string | null
           id: string
           organization_id: string
           started_at: string
@@ -14401,6 +14402,7 @@ export type Database = {
         }
         Insert: {
           current_step?: number | null
+          current_step_key?: string | null
           id?: string
           organization_id: string
           started_at?: string
@@ -14410,6 +14412,7 @@ export type Database = {
         }
         Update: {
           current_step?: number | null
+          current_step_key?: string | null
           id?: string
           organization_id?: string
           started_at?: string
@@ -30623,6 +30626,22 @@ export type Database = {
       }
     }
     Views: {
+      org_setup_funnel_health: {
+        Row: {
+          completed_count: number | null
+          last_event_at: string | null
+          median_completion_dwell_ms: number | null
+          off_ramp_count: number | null
+          skipped_count: number | null
+          step_key: string | null
+          step_number: number | null
+          unique_orgs_completed: number | null
+          unique_orgs_viewed: number | null
+          validation_blocked_count: number | null
+          viewed_count: number | null
+        }
+        Relationships: []
+      }
       products_public: {
         Row: {
           available_online: boolean | null
