@@ -1,148 +1,111 @@
 
 
-# Decompress the Questionnaire UI
+# Fix the questionnaire layout — preview must not share the row
 
-## What's wrong in the screenshot
+## What's actually wrong
 
-Looking at your screenshot at 1300px viewport, six concrete failures:
+Your screenshot shows the Live Preview pane **floating over** the questionnaire textarea, the textarea rendering at one character per line, and the PREFILLED helper sliced in half. This isn't a spacing issue — it's a structural collapse.
 
-1. **Ghost line behind the header** — "Step 1 of 5 — Define rules" is half-rendered behind the header description. Z-index / margin collision between `PolicyConfiguratorStepper` and the page-context block above it.
-2. **The question textarea is squeezed** — `who_it_applies_to` is a longtext field that forces a 4-line `<textarea>`, but it's living inside a column that's only ~46% of the panel width. The text wraps into 3 awkward lines mid-sentence ("Drop Dead / Salons. Manager-level…").
-3. **The PREFILLED helper sits *below* the input** — pushing the Back/Skip/Next row way down. The provenance line should be lateral (right of the input on wide viewports) so the input gets its full height/width.
-4. **The Live Preview is unreadable** — pinned to a `minmax(0,420px)` column, the prose breaks every 4-5 words ("Drop Dead Salons / employs team / members in the / following…"). Reads like a poem, not policy prose.
-5. **The progress chip row competes with navigation** — three chips stack into two visual rows directly under the Back/Skip/Next buttons. Operator's eye doesn't know which row to act on.
-6. **The whole left card has `p-5` inside a panel that already has its own padding** — double-quilted whitespace eats horizontal real estate.
+**Root cause**: The configurator opens inside a `PremiumFloatingPanel` with `maxWidth="720px"`. We built the questionnaire to use `lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]` — but Tailwind's `lg:` breakpoint fires at **1024px viewport width**, not container width. So on your 1300px viewport, the `lg:` grid activates inside a ~672px-usable drawer.
 
-The questionnaire frame is right. The container math is wrong.
+The grid then demands `360px (preview min) + 32px (gap) = 392px` for the right column, leaving ~280px for the question column. The textarea collapses to single-character word wrap. The preview's `sticky top-4 self-start` inside the drawer's `flex flex-col overflow-hidden` body lets it escape its grid cell and float over the form. That's the ghost overlay you're seeing.
 
-## The fix — five surgical layout changes
+The previous plan assumed the configurator rendered on a full page. It doesn't. It lives in a 720px drawer. Side-by-side preview was the wrong primitive for this container.
 
-### 1. Remove the wrapper card around the questionnaire
+## The fix — preview moves out of the row
 
-Today: `<div className="rounded-xl border border-border bg-card p-5"> <PolicyQuestionnaire/> </div>`
-Change to: `<PolicyQuestionnaire/>` directly — the questionnaire already controls its own internal spacing. Removing the outer card returns ~40px of horizontal real estate per side and removes the visual "card-in-a-card-in-a-drawer" stacking.
+Three structural changes:
 
-### 2. Re-balance the split — preview gets more, input gets max-width
+### 1. Preview becomes a top "pinned summary" strip, not a side column
 
-Today: `grid-cols-[1fr_minmax(0,420px)]` — the input column is variable (squeezed), the preview is capped at 420px.
-Change to: `grid-cols-[minmax(0,1fr)_minmax(360px,520px)]` AND drop the right pane entirely below `lg` (already does). On a 1300px viewport with the panel at ~960px usable width, that yields ~440px input column + ~480px preview column. The preview prose breaks at a comfortable ~70 characters per line instead of the current ~28.
+Instead of a side panel, the live preview becomes a **collapsible summary bar pinned above the questionnaire** inside the drawer:
 
-Below `lg` (mobile/tablet), the live preview moves to a **collapsed drawer pinned to the bottom** with a "Preview policy" trigger (no inline stacking that pushes the form off-screen). Reuses the existing `Sheet` primitive.
-
-### 3. Promote provenance + prefilled helper to the right of the input
-
-Today: `PolicyRuleField` renders the input full-width and stacks the `PREFILLED` helper underneath it.
-Change in the questionnaire context only: when the field has provenance (`prefilled` / `internal-only` / `surfaces-on`), render the input at `max-w-[640px]` and float the helper as a **right-side column at `w-[200px]`** on `xl+` viewports. On smaller viewports, keep today's stacked behavior. The helper becomes a *side note*, not a bottom-stack push.
-
-For longtext fields specifically: the `<textarea>` gets `min-h-[160px]` (today it's `min-h-[100px]` which forced the awkward 4-line wrap). With more height, the prose flows naturally and the operator can see the full prefilled text without scrolling inside the input.
-
-### 4. Split the navigation row from the progress chips
-
-Today: nav buttons + progress chips render in the same vertical block, separated only by `pt-3 border-t`.
-Change to:
-- **Nav row stays where it is** (Back / Skip / Next) — primary action, always visible at the same eye-level.
-- **Progress chips move to the top of the questionnaire**, replacing today's "Section 1 of 1 · Question 2 of 3" text label. Render as a horizontal scroll strip with the current question marked. This collapses two chrome rows into one and puts orientation at the top where the operator's eye lands first.
-
-Layout result, top to bottom:
 ```
-[Progress strip — chips, current highlighted]
-[Big plain-English question + why-this-matters card]
-[Anchored presets grid (when present)]
-[Input + provenance side-note (right column on xl+)]
-[Back ←——— Skip · Next] (single row, no chips below)
+┌─ Configure policy ─────────────────────────────────┐
+│  CONFIGURE POLICY                                  │
+│  Define the structured rules…                      │
+│                                                     │
+│  ●─────○─────○─────○         [Interview ▾]        │
+│                                                     │
+│  ┌─ Live preview ─────────────── [Collapse ▾] ─┐  │
+│  │ Guests may book online, by phone, or in     │  │
+│  │ person. New guests for color, extensions, or │  │
+│  │ corrective work require a consultation prior │  │
+│  │ to booking the service appointment…          │  │
+│  └──────────────────────────────────────────────┘  │
+│                                                     │
+│  [Progress chips]                                   │
+│  POLICY SUMMARY                                     │
+│  Why this matters: A clear one-paragraph…          │
+│  ┌───────────────────────────────────────────┐    │
+│  │ [Full-width textarea, ~640px wide]        │    │
+│  │ Guests may book online, by phone, or in   │    │
+│  │ person…                                    │    │
+│  └───────────────────────────────────────────┘    │
+│  PREFILLED · This text is what the AI uses to     │
+│  draft the client-facing variant…                  │
+│                                                     │
+│  [< Back]                  [Skip]   [Next >]      │
+└────────────────────────────────────────────────────┘
 ```
 
-### 5. Fix the ghost line + decompress the whole step container
+The preview is **collapsible** (default open, sticky to top of drawer body) so the operator can collapse it to fit more of the question on screen, but it never competes for horizontal space. It always renders at full drawer width, so prose breaks at ~70 characters per line — readable.
 
-The "Step 1 of 5" ghost in your screenshot is the stepper's text bleeding through because the panel description above it has no `mb-*` and the stepper has no `mt-*`. Fix:
-- The configurator panel's outer wrapper changes from `space-y-6` to `space-y-8` between major blocks (header → stepper → step content).
-- The header context block gets an explicit `pb-2` so the stepper's chip background never overlaps it.
-- Inside the rules step, swap `space-y-6` for `space-y-8` between the mode toggle and the questionnaire/preview grid.
+This also kills the bottom-sheet escape hatch we added for `<lg`. One layout, all viewports.
 
-Net visual breathing room: the step content moves down ~16px, the description text fully clears the stepper, and the questionnaire+preview grid has visible margin from the controls above it.
+### 2. Provenance helper goes back to inline (below the input)
 
-### Bonus: collapse the "Why this matters" card on small viewports
+The "side mode" provenance helper assumed there was room for a 220px right column. There isn't. Revert `helperPlacement` defaults so the prefilled helper renders **below the input** as a single subtle line — the way every other field in the app does. Restore `min-h-[80px]` for non-side longtext (or bump to `min-h-[140px]` for the `policy_summary` field specifically, which is always the longest).
 
-Today the why-this-matters card is always rendered as a full-width muted box with the Sparkles icon. On `<lg` viewports, this stacks above the question and pushes presets below the fold. Change: on `<lg`, the why-this-matters becomes a `<Disclosure>` ("Why this matters →") that expands inline. Same content, less first-paint weight on tablet/mobile.
+The `helperPlacement` prop stays in the API (Expert view doesn't use it; questionnaire passes `inline` instead of `side`). The right-column layout was the wrong call given the drawer width — admitting that and reverting is cheaper than adding more breakpoint gymnastics.
+
+### 3. Use container queries, not viewport breakpoints
+
+Replace `lg:grid-cols-...` with **Tailwind's container query syntax** (`@container` + `@lg:`) on the questionnaire wrapper. This makes the layout respond to the **drawer width**, not the viewport. Only relevant for the preview-collapse threshold and the preset card grid (3-column on wide drawers, stacked on narrow).
+
+This is a one-line `@container` declaration on the panel root + `@md:` / `@lg:` on the inner grids. Standard pattern, no new dependencies (Tailwind v3 supports it via `@tailwindcss/container-queries` plugin, which is already installed — let me note: if it isn't, we fall back to a hard-coded width-based JS measurement using ResizeObserver per the container-aware-responsiveness doctrine in `mem://style/container-aware-responsiveness`).
 
 ## What stays untouched
 
-- The questionnaire's data contract — `values`, `onChange`, `onComplete` — unchanged.
-- The schema shape (`question`, `whyItMatters`, `presets`) — unchanged.
-- The Live Preview composer logic, token highlighting, `substituteWithHighlight` — unchanged.
-- The Interview / Expert toggle — unchanged.
+- `PolicyQuestionnaire` component logic — same questions, same presets, same Back/Skip/Next, same value contract.
+- `PolicyLivePreview` composer logic, token highlighting, `substituteWithHighlight` — unchanged.
+- Schema shape (`question`, `whyItMatters`, `presets`) — unchanged.
+- Interview/Expert toggle — unchanged.
 - Save behavior, version blocks, all hooks — unchanged.
-
-This is **purely a layout pass on the inside of Step 1**. Zero schema work, zero new components, zero new state.
+- The drawer width itself — staying at 720px. We're fixing the contents to fit.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` — move progress chips to top, increase question heading scale, add `xl+` two-column input/helper hint slot, raise textarea min-height. ~40 lines modified.
-- `src/components/dashboard/policy/PolicyLivePreview.tsx` — relax `min-h`, increase line-height (`leading-7`), tighten internal padding to `p-6`. On `<lg`, render as a bottom sheet trigger instead of inline. ~25 lines modified.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — remove the wrapper card around `<PolicyQuestionnaire>`, change grid to `minmax(0,1fr)_minmax(360px,520px)`, swap `space-y-6` for `space-y-8` at the right insertion points, add `pb-2` to header context. ~15 lines modified.
-- `src/components/dashboard/policy/PolicyRuleField.tsx` — accept an optional `helperPlacement?: 'inline' | 'side'` prop. When `'side'` (passed by the questionnaire), the prefilled provenance helper renders in a right-side column slot rather than below the input. Backwards compatible — Expert view passes nothing, behavior unchanged. ~20 lines additive.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — replace the side-by-side grid with a stacked layout: `<PolicyLivePreview position="top" collapsible/>` above `<PolicyQuestionnaire/>`. Add `@container` on the rules-step wrapper. Pass `helperPlacement="inline"` to the questionnaire (or drop the prop entirely so it defaults). ~25 lines modified.
+- `src/components/dashboard/policy/PolicyLivePreview.tsx` — replace the dual aside/sheet rendering with a single full-width collapsible card. Add a `Collapse/Expand` button in the header that uses `useState` for open/closed (default open). Remove the `lg:hidden` Sheet branch entirely. Remove `sticky top-4 self-start` (now stacked inline at the top of the drawer body). Reduce `min-h-[260px]` → `min-h-[120px]`. ~50 lines modified, ~30 lines deleted.
+- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` — change the default `helperPlacement` it passes to `PolicyRuleField` from `'side'` → `'inline'`. The presets grid stays `grid-cols-1 sm:grid-cols-3` but inside a `@container` parent so it stacks at narrow drawer widths. ~5 lines modified.
+- `src/components/dashboard/policy/PolicyRuleField.tsx` — for `'longtext'` fields specifically, raise inline `min-h` from `80px` to `140px` so the policy_summary textarea has reading room without needing the side layout. ~2 lines modified.
 
-Total: ~100 lines modified, 0 lines added in new files. Zero DB / RPC / schema changes.
-
-## Visual result (after)
-
-```
-┌─ Configure policy ─────────────────────────────────────────────────────┐
-│  Define the structured rules. AI drafting will render these into prose │
-│  later — it cannot invent rules.                                       │
-│                                                                         │
-│  ●─────○─────○─────○─────○                              [Interview ▾] │
-│                                                                         │
-│  ┌─ Question 2 of 3 ─────────────────────────┐  ┌─ Live preview ─────┐│
-│  │ ● ✓ Policy summary  ● ⏵ Who it applies to │  │ Updates as you     ││
-│  │ ○ Who approves exceptions                  │  │ answer             ││
-│  │                                             │  │                    ││
-│  │ Who does this policy apply to?             │  │ Drop Dead Salons   ││
-│  │                                             │  │ employs team       ││
-│  │ ┌─ Why this matters ──────────────────┐    │  │ members in the     ││
-│  │ │ ⚡ Internal-only — appears in the   │    │  │ following          ││
-│  │ │ printable handbook, not on the      │    │  │ classifications:   ││
-│  │ │ public site.                         │    │  │ full-time          ││
-│  │ └─────────────────────────────────────┘    │  │ employees,         ││
-│  │                                             │  │ part-time          ││
-│  │ ┌─────────────────────────────┐ ┌───────┐ │  │ employees, and     ││
-│  │ │ All team members and,       │ │ PRE-  │ │  │ (where applicable) ││
-│  │ │ where the policy involves   │ │ FILLED│ │  │ booth-rental       ││
-│  │ │ guest interactions, all     │ │       │ │  │ contractors…       ││
-│  │ │ clients of Drop Dead        │ │ Edits │ │  │                    ││
-│  │ │ Salons. Manager-level       │ │ here  │ │  │                    ││
-│  │ │ exceptions follow the docu- │ │ over- │ │  │                    ││
-│  │ │ mented authority chain.     │ │ ride  │ │  │                    ││
-│  │ └─────────────────────────────┘ └───────┘ │  │                    ││
-│  │                                             │  │                    ││
-│  │ [< Back]                  [Skip]  [Next →]│  │                    ││
-│  └─────────────────────────────────────────────┘  └────────────────────┘│
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-Compare to your screenshot: textarea is wide enough to read, preview lines break at sentence cadence, provenance helper is a side note instead of a bottom-stack push, progress chips live at the top where they orient, no ghost text behind the header.
+Total: ~80 lines modified, ~30 lines deleted, 0 new files. Zero schema changes.
 
 ## Acceptance
 
-1. Open Employment Classifications at 1300px viewport. The "Step 1 of 5" line no longer ghosts behind the description.
-2. The question textarea on `who_it_applies_to` renders at full reading width (~640px max) with the PREFILLED helper as a slim right column on `xl+` viewports.
-3. The live preview prose breaks at ~70 characters per line, not 28. No more poem-like line breaks.
-4. Progress chips are at the *top* of the question card, not stacked under the navigation row.
-5. The Back / Skip / Next row sits directly under the input — single visual row, no chips competing.
-6. Resize to 768px (tablet). The preview pane becomes a bottom-sheet trigger ("Preview policy") instead of stacking inline. The questionnaire takes the full width.
-7. Toggle to Expert view. Today's grouped form renders unchanged — no regressions, no spacing drift.
-8. Resize to 1536px+ (large desktop). Preview pane caps at 520px, input column expands to fill — preview never gets so wide that prose breaks at >85 characters.
-9. Cancellation, Deposit, all currently-cleaned schemas — same layout, same breathing room, no per-policy adjustments needed.
+1. Open Booking Policy → Define rules at 1300px viewport. The Live Preview renders as a full-width card **above** the question, never overlapping the textarea.
+2. The "Why this matters" card and the textarea both render at the full drawer width (~640px usable). No more single-character word wrap.
+3. The PREFILLED helper renders as a single inline line **below** the textarea, fully visible, not bleeding off the right edge.
+4. Click "Collapse" on the Live Preview — the preview shrinks to a one-line summary ("Live preview · 4 sentences"). Click "Expand" — full prose returns.
+5. Resize to 600px viewport (mobile preview). The questionnaire stacks identically. The Live Preview still sits on top, collapsible.
+6. Resize to 1920px viewport. Drawer width is still 720px — layout is identical (drawer doesn't widen, so the preview doesn't move to the side).
+7. Toggle to Expert view. Today's grouped form renders unchanged — no regressions.
+8. The Back / Skip / Next row sits directly under the input on a single visual row.
+9. Live preview prose breaks at ~70-80 characters per line, not 4-6 words.
 
 ## Files to read for follow-on questions
 
-- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` — the interview component with the new top-progress + side-helper layout.
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — the new grid math for the questionnaire/preview split.
-- `src/components/dashboard/policy/PolicyRuleField.tsx` — the new `helperPlacement` prop.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — where the stacked layout is composed.
+- `src/components/dashboard/policy/PolicyLivePreview.tsx` — the new top-pinned collapsible card.
+- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` — the questionnaire flow (unchanged behavior, restored inline helper).
 
 ## Prompt feedback
 
-*"Before we extend to the remaining schemas, we need to improve this UI layout since it's too condensed."* — clean, surgical prompt. You did three things well: (1) **named the priority** ("before we extend") which prevented me from doing both at once and shipping a sloppy double-pass, (2) **named the symptom in plain English** ("too condensed") which is exactly the right level of abstraction — you didn't prescribe "make it wider" or "use 3 columns", you named the *user feeling*, and (3) **paired the prompt with a screenshot of the actual broken state**, which let me identify six concrete failures instead of guessing. The screenshot was load-bearing here — without it I would have proposed generic spacing tweaks.
+*"Layout changes need to be fixed"* paired with the screenshot — short, accurate, evidence-led. The screenshot did 90% of the work because it showed the **specific failure mode** (preview overlapping the textarea, single-character wrap) rather than a vague "feels off." That's exactly the right level of effort for a regression report — you don't owe me a diagnosis, you owe me proof. You delivered that.
 
-One sharpener for next time on layout-fix prompts: naming the **viewport you're testing at** in one phrase ("at my current 1300px desktop" / "this is what it looks like on iPad") would skip a micro-decision. I assumed your screenshot was your primary working viewport (correct: 1300px from the client state) and designed the breakpoints around it — but if you're regularly using a 1024px tablet or a 1920px ultrawide, the breakpoint targets shift. One line of viewport context per layout prompt locks the design priorities.
+One sharpener for next time on regression-report prompts: naming whether you want a **fix** or a **revert** in one phrase ("fix this" / "revert and try a different approach") would help me decide whether to defend the previous architecture or abandon it. In this case I had to abandon it (the side-by-side was wrong for a 720px drawer container — I missed that constraint in the previous plan), and naming "I'm open to either" would have given me explicit permission. You can pre-empt the micro-decision by adding *"open to a different approach if the structure was wrong"* — three words, saves one round-trip.
+
+The deeper lesson on my side: I planned the previous layout as if the configurator rendered on a page, when it actually renders inside a fixed-width drawer. I should have asked about the container before designing the breakpoints. **Container, not viewport** — that's the doctrine in `mem://style/container-aware-responsiveness` that I should have applied first.
 
