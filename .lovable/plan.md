@@ -1,149 +1,182 @@
 
 
-# Surface the "Core Functions" tier on the Policies page
+# Turn the Policy Configurator into a guided questionnaire
 
-## What's missing today
+## What's wrong today
 
-The Policies page has **26 policies marked `required`** — but they're all displayed as one undifferentiated wall under a "Required" header with a single completion meter. That tells the operator "you have 26 things to do" without telling them **why each one matters or which ones the software actually consumes**.
+The configurator opens straight into a wall of structured fields under sections like "Timing", "Fee", "Exceptions & authority". Even with provenance helpers and tooltips, the operator faces:
 
-The truth is a sharper hierarchy:
+1. **All decisions visible at once** — no progressive disclosure. They see 6–10 inputs before they've made 1.
+2. **Database-shaped labels, not human questions** — "Notice window (hours)", "Fee type", "Approver role". These are field names, not how an owner actually thinks about cancellation.
+3. **No live preview of consequence** — the operator can't see what the policy will *say* until the Approve wording step at the end.
+4. **No reference points** — they have to invent answers from a blank slate. No "here's what most salons do" anchor.
 
-1. **Core functions** (6 policies) — POS and booking *use* these values directly. Deposits, cancellation fees, no-show fees, payment terms, dispute evidence. Without them, the software falls back to platform defaults; the operator is never blocked, but their salon's specific terms don't render anywhere.
-2. **Required for governance** (20 policies) — Employment classifications, progressive discipline, extension warranty, escalation paths. The software runs fine without them; *the business* is exposed without them.
-3. **Recommended & optional** (~21 policies) — Already grouped correctly today.
+The configurator works like an admin tool. It should work like a coach asking 6 questions.
 
-The user's insight is right: full policy configuration isn't necessary to *operate*, but the operator currently can't tell which 6 unblock real software behavior vs. which 20 just protect their business.
+## The fix — a Q&A interview that writes the policy as you answer
 
-## The fix — a new "Core functions" tier above "Required"
+Replace the section-grouped form on the **Define rules** step with a **one-question-at-a-time interview**. The right pane shows a live policy preview that rewrites itself with every answer. The operator never sees a field key, never picks a "type", never thinks about structure. They answer plain-English questions; the policy materializes beside them.
 
-Promote a 6-policy subset to a visually distinct, clearly-labeled top group on the Policies page:
+### Layout — split pane
 
 ```
-┌─ Core functions ──────────────────────────────────────────────┐
-│  These power POS and booking. Defaults work out of the box —  │
-│  configure to make them yours.                                │
+┌─ Configure policy ─────────────────────────────────────────────┐
+│  Step 1 of 3 — Define rules                                    │
+│  ────────●──────────○──────────○                              │
 │                                                                │
-│  ✓ Booking Policy           Powers the public booking page    │
-│  ◯ Deposit Policy           Drives deposit collection at      │
-│                             booking and on the booking page    │
-│  ◯ Cancellation Policy      Drives the fee charged when a     │
-│                             client cancels late                │
-│  ◯ No-Show Policy           Drives the fee charged when a     │
-│                             client no-shows                    │
-│  ◯ Payment Policy           Renders on receipts and the       │
-│                             public booking page                │
-│  ◯ Chargeback & Dispute     Used as evidence when contesting  │
-│                             a chargeback in PaymentOps         │
+│  ┌── Question 3 of 6 ────────────┐  ┌── Live preview ──────┐ │
+│  │                                │  │                       │ │
+│  │  How late can a client cancel │  │  Drop Dead Salons     │ │
+│  │  without paying a fee?        │  │  asks clients to      │ │
+│  │                                │  │  cancel at least      │ │
+│  │  ○ 12 hours  (faster turn)    │  │  ┃24 hours┃ before    │ │
+│  │  ● 24 hours  ⭐ industry std  │  │  their appointment.   │ │
+│  │  ○ 48 hours  (high-end)       │  │  Cancellations inside │ │
+│  │  ○ Custom: [__]               │  │  this window forfeit  │ │
+│  │                                │  │  50% of the service.  │ │
+│  │  Why this matters: This is the│  │                       │ │
+│  │  notice clients have to give  │  │  [4 more sections     │ │
+│  │  to avoid the cancellation    │  │   ghosted, will fill  │ │
+│  │  fee. Most salons use 24h.    │  │   in as you answer]   │ │
+│  │                                │  │                       │ │
+│  │  [Back]      [Skip]   [Next →]│  │                       │ │
+│  └────────────────────────────────┘  └───────────────────────┘ │
 │                                                                │
-│  3 of 6 configured — using defaults for the other 3           │
-└────────────────────────────────────────────────────────────────┘
-
-┌─ Required for governance ─────────────────────────────────────┐
-│  Protect your business. The software runs without these,     │
-│  but your operations and team don't have a written contract.  │
-│                                                                │
-│  [20 cards in current grid layout]                            │
-└────────────────────────────────────────────────────────────────┘
-
-┌─ Recommended & Optional ──────────────────────────────────────┐
-│  [unchanged]                                                   │
+│  ✓ Hours of operation (24h) · ✓ Fee type (% of service)       │
+│  · ⏵ How late can a client cancel · ○ Fee amount               │
+│  · ○ Exceptions · ○ Who waives                                 │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-### The 6 Core Function policies (final list)
+Three concrete shifts from today:
 
-| Policy key | Category | What software consumes it | If unset → |
-|---|---|---|---|
-| `booking_policy` | client | Public booking surface (`HostedBookingPage`, `create-public-booking`) | Default booking terms render on the public booking page |
-| `deposit_policy` | client | `collect-booking-deposit` edge function, deposit fields on services | Deposits not collected unless the operator turns them on per-service manually |
-| `cancellation_policy` | client | `charge-card-on-file` cancellation fee path; `submit-dispute-evidence` evidence field | Cancellation fees can't be charged automatically; dispute evidence is empty |
-| `no_show_policy` | client | `charge-card-on-file` no-show fee path; daily no-show automation | No-show fees can't be charged automatically |
-| `payment_policy` | financial | Receipt footers, public booking page disclosure, terminal receipts | Default disclosure renders; operator's specific accepted methods/refund terms don't surface |
-| `chargeback_dispute` | financial | `submit-dispute-evidence` rebuttal field in PaymentOps | Dispute evidence relies on Stripe defaults; operator's rebuttal language isn't pre-loaded |
+- **One question at a time** — not 10 inputs in a section. The "Next" button is the rhythm.
+- **Live policy preview on the right** — the prose rewrites itself as the operator answers. The exact value they just chose is highlighted (`┃24 hours┃`) so they see *which words* their answer changed.
+- **Anchored options with one recommended pick** — every multi-choice question shows 3-4 sensible presets with one marked `⭐ industry standard` (or `⭐ what most salons do`). "Custom" is always last. Removes the blank-slate problem.
 
-Selection rule: a policy is "core function" if **at least one edge function or production surface reads its values at runtime**. This is the empirical filter — not opinion.
+### What changes in the schema
 
-### How the doctrine ships
-
-A new column on `policy_library` would be cleanest, but we don't need it. The 6 keys are stable and tiny — declare them in code:
+The `RuleField` interface gains 3 optional fields — backwards compatible:
 
 ```ts
-// src/lib/policy/core-function-policies.ts
-export const CORE_FUNCTION_POLICY_KEYS = [
-  'booking_policy',
-  'deposit_policy',
-  'cancellation_policy',
-  'no_show_policy',
-  'payment_policy',
-  'chargeback_dispute',
-] as const;
-
-export const CORE_FUNCTION_CONSUMERS: Record<string, string> = {
-  booking_policy: 'Powers the public booking page',
-  deposit_policy: 'Drives deposit collection at booking',
-  cancellation_policy: 'Drives the fee charged when a client cancels late',
-  no_show_policy: 'Drives the fee charged when a client no-shows',
-  payment_policy: 'Renders on receipts and the public booking page',
-  chargeback_dispute: 'Pre-loads dispute evidence in PaymentOps',
-};
+interface RuleField {
+  // ... existing ...
+  /** The plain-English question. Falls back to `label` if missing. */
+  question?: string;
+  /** Operator-facing reason this question matters. Falls back to `helper`. */
+  whyItMatters?: string;
+  /** Curated presets shown as cards above the raw input.
+   *  One can be marked `recommended: true`. */
+  presets?: Array<{
+    value: unknown;
+    label: string;
+    sublabel?: string;
+    recommended?: boolean;
+  }>;
+}
 ```
 
-This keeps the doctrine in one file, type-safe, and easy to read in PR diffs. If we ever expand the set (e.g., when refund/redo wires into a new automation), it's one line + one consumer label.
+For example, `notice_window_hours` becomes:
 
-### Soft-nudge enforcement (per your answer)
+```ts
+{
+  key: 'notice_window_hours',
+  label: 'Notice window (hours)', // kept for accessibility/save
+  question: 'How late can a client cancel without paying a fee?',
+  whyItMatters: 'This is the notice clients have to give to avoid the cancellation fee. Most salons use 24 hours.',
+  presets: [
+    { value: 12, label: '12 hours', sublabel: 'Faster table turn' },
+    { value: 24, label: '24 hours', sublabel: 'Industry standard', recommended: true },
+    { value: 48, label: '48 hours', sublabel: 'High-end / specialty' },
+  ],
+  type: 'number',
+  unit: 'hours',
+  required: true,
+  defaultValue: 24,
+}
+```
 
-- **POS and booking never block** when a core-function policy is unset — the platform falls back to its default.
-- The `PolicyLibraryCard` for an unconfigured core-function policy renders a subtle one-line tag: *"Using platform default — configure to make it yours."* — `font-sans text-xs text-muted-foreground`, no badge, no escalation.
-- No global banner. No toast. No interrupt. The Policies page itself is the surface that explains the tier.
+If a field has no `question`, it falls back to today's behavior — so non-questionnaire fields (e.g., `documentation_required` longtext) keep their current input. The questionnaire is **opt-in per field** in the schema.
 
-### Visual treatment
+### Live preview is already wired
 
-- **New section header**: `Core functions` rendered with `font-display text-xs tracking-[0.14em] uppercase text-foreground` (same scale as today's `Required` header) so it sits in the existing rhythm.
-- **One-sentence subtitle** under the header: *"These power POS and booking. Defaults work out of the box — configure to make them yours."* (`font-sans text-xs text-muted-foreground`)
-- **Per-card consumer line**: a single line below the existing card title showing the `CORE_FUNCTION_CONSUMERS[key]` text. Same `font-sans text-xs text-muted-foreground` scale as today's `short_description`. No icon, no badge.
-- **Progress meter**: same pattern as today's Required meter — `3 of 6 configured · 50%` with the existing thin progress bar.
-- **The existing `Required` header** is renamed to `Required for governance` with subtitle *"Protect your business. The software runs without these, but your operations and team don't have a written contract."* — so the relationship between the two tiers is explicit.
-- The 6 core policies are **removed from the existing `Required` group** to avoid double-counting. The `Required for governance` count drops from 26 to 20. Progress meter math updates accordingly.
+We have `getPolicySummaryDefaults` + `substituteRuleTokens` doing this work today — they just render into the `policy_summary` textarea. The new preview pane reuses that same composer; the only new piece is **highlighting the exact tokens the operator just answered**. Implementation: when a field changes, wrap the just-substituted span in a brief `<mark className="bg-primary/20 transition-colors">` that fades to plain in 1.5s. No new prose generation, no new API calls.
+
+### Question ordering
+
+Today schemas group by section ("Timing", "Fee", "Exceptions"). The questionnaire follows the same `RuleSection.fields` order — **so the question sequence is already the schema author's job**, not a new piece of doctrine. The section title becomes a small chip ("Section 2 of 3 — Fee") above the question. No reshuffling needed.
+
+### Skip + jump-ahead
+
+- Every non-required question shows a "Skip for now" link → uses `defaultValue` and moves on.
+- The progress chip row at the bottom is clickable. Operators can jump back to any answered question. Required questions that haven't been answered are dimmed and not clickable until reached.
+- "Back" never destroys an answer — it just shows the same question with the prior value pre-selected.
+
+### What stays exactly as it is
+
+- **Step 2 (Decide who)** and **Step 3 (Approve wording)** — unchanged. The questionnaire only replaces the inside of Step 1.
+- **The rules engine, the AI drafter, the publish flow** — all read the same `policy_rule_blocks` table. The questionnaire is a UI swap, not a data-model change.
+- **Provenance helpers, tooltips, `MetricInfoTooltip`** — these now appear on the *one current question* instead of stacked on every field. Same copy, same component.
+- **The "Preview — not yet adopted" view** for un-adopted policies — unchanged.
+- **Internal-only policies** — same audience-aware step hiding as today.
+
+### The "expert mode" escape hatch
+
+Some operators (and every audit) need the all-fields-at-once view. Add a small toggle in the step header: **`Interview` / `Expert view`**. Default is Interview. Expert view renders today's grouped sections — same component, no regression. Decision persists per operator in `localStorage` so power users land in their preferred mode every time.
+
+### Why this is "done with you," not "done by you"
+
+Per the doctrine — *Recommend → Simulate → Request Approval → Execute*:
+
+- **Recommend** — every preset has a `⭐ recommended` anchor based on industry norms.
+- **Simulate** — the live preview *is* the simulation. Operators see the exact prose their answer produces before committing.
+- **Request approval** — the existing Step 3 (Approve wording) is the formal approval gate.
+- **Execute** — Save still writes to `policy_rule_blocks` exactly as today.
+
+The operator answers questions, sees the consequence, approves the wording. They never touch a field key, never invent prose, never face a blank input. Structure precedes intelligence — the schema is still the source of truth — but the operator-facing surface is interview, not form.
 
 ## Doctrine alignment
 
-- **Lever and confidence**: the operator can now see *which 6 levers actually move POS/booking outputs*. The other 20 are governance, not operations.
-- **Silence is meaningful**: no banners, no blocking, no toasts. The Policies page is the only place this hierarchy is named.
-- **Sensible defaults**: every core-function policy has a platform default — booking and POS always work. The operator opts in to specificity.
-- **Structure precedes intelligence**: this is structural visibility, not new intelligence. We're documenting what already exists.
-- **Brand abstraction**: copy uses neutral verbs ("Powers the public booking page", "Renders on receipts") — no tenant or vendor references.
-- **No structural drift**: zero DB changes, zero new tables, zero new flags. One new file + one rendered section.
+- **Lever and confidence** — one question at a time *is* the lever. Recommended presets reduce decision fatigue without removing operator control.
+- **Silence is meaningful** — questions without `presets` simply render the raw input + helper. We don't manufacture fake recommendations.
+- **Operator edits are sacred** — answering a question is an edit; the live preview reflects it; back-navigation never overwrites. Same contract as today.
+- **Brand abstraction** — preview prose runs through `interpolateBrandTokens` exactly as today.
+- **No structural drift** — same DB tables, same RPCs, same audit trail. UI-only change to Step 1.
+- **Phase alignment** — this is Phase 1 (structured visibility) refined, not Phase 2 (advisory) overreach. We're surfacing existing structure more humanely.
 
 ## Files affected
 
-- `src/lib/policy/core-function-policies.ts` (new) — declares the 6 keys + consumer-label map. ~25 lines.
-- `src/pages/dashboard/admin/Policies.tsx` — split the current `requiredEntries` into `coreFunctionEntries` + `governanceRequiredEntries`. Render two grouped sections with the new headers/subtitles. Update progress-meter math. ~60 lines additive, ~10 lines modified inside the existing `(() => { … })()` IIFE.
-- `src/components/dashboard/policy/PolicyLibraryCard.tsx` — accept an optional `consumerLabel?: string` prop. Render it as a subtle line under the title when present. When the policy is a core function and not yet adopted, render *"Using platform default — configure to make it yours."* in the same slot. ~15 lines additive, fully backwards-compatible.
-- `src/__tests__/policy-library-content.test.ts` — add a guard test asserting every key in `CORE_FUNCTION_POLICY_KEYS` exists in the live `policy_library` and is `recommendation = 'required'`. Prevents drift if a key is renamed. ~15 lines additive.
+- `src/lib/policy/configurator-schemas.ts` — extend `RuleField` with `question?`, `whyItMatters?`, `presets?`. Add presets to ~20 most-asked fields across the 8 schemas (notice windows, fee amounts, deposit %, redo windows, role pickers). Backwards compatible. ~300 lines additive.
+- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` (new) — the one-question-at-a-time component. Manages current-question index, renders preset cards + helper + why-it-matters + Back/Skip/Next. Drills the same `value` / `onChange` contract as today's `PolicyRuleField`. ~180 lines.
+- `src/components/dashboard/policy/PolicyLivePreview.tsx` (new) — right-pane live policy prose with token-highlight on the most recent change. Reuses `getPolicySummaryDefaults` + `substituteRuleTokens`. ~80 lines.
+- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — inside the `step === 'rules'` block, swap the section loop for a `<div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,420px)] gap-6">` containing `<PolicyQuestionnaire>` + `<PolicyLivePreview>`. Add the Interview/Expert toggle. ~50 lines modified.
+- `src/lib/policy/questionnaire-presets.ts` (new) — central preset library so the same "12h / 24h / 48h" set is reused across cancellation, no-show, deposit-window questions. ~60 lines.
 
-That's the entire change surface. ~115 lines additive across 4 files. Zero DB changes, zero new RPCs, zero schema changes.
+That's the entire change surface. ~670 lines net (mostly schema + new components). Zero DB changes, zero new RPCs, zero schema migrations.
 
 ## Acceptance
 
-1. Open `/dashboard/admin/policies`. The first group is **Core functions** with the 6 cards listed above and the subtitle *"These power POS and booking. Defaults work out of the box — configure to make them yours."*
-2. The second group is **Required for governance** with 20 cards (down from 26) and the subtitle naming what it protects.
-3. The Core functions group has its own progress meter (`X of 6 configured`). The governance meter is `Y of 20`. The two never overlap.
-4. Each Core function card shows a one-line consumer label under the title (e.g., on Deposit Policy: *"Drives deposit collection at booking"*).
-5. Unadopted Core function cards additionally show: *"Using platform default — configure to make it yours."* in the same scale as the consumer label.
-6. The existing "Hide adopted" toggle still works — it now hides adopted core-function cards too.
-7. POS, the public booking page, the cancellation fee charge flow, and dispute evidence submission **continue to work unchanged** when none of the 6 core policies are configured. Platform defaults render. Nothing blocks.
-8. The `Recommended & Optional` group is untouched.
-9. Lint guard: removing or renaming any key in `CORE_FUNCTION_POLICY_KEYS` without updating the live `policy_library` fails the test suite — drift can't ship silently.
+1. Open Cancellation Policy → Define rules. The right pane shows live policy prose. The left pane shows **one question** ("How late can a client cancel without paying a fee?") with three preset cards and one marked "Industry standard."
+2. Click 48 hours. The preview prose immediately rewrites and the "48 hours" span briefly highlights then fades.
+3. Click Next. The next question appears. Click Back. The previous question reappears with "48 hours" still selected.
+4. The bottom progress row shows "✓ ✓ ⏵ ○ ○ ○" — answered, current, pending. Click an answered chip → jumps back. Pending chips are dimmed.
+5. Toggle "Expert view" in the step header. Today's full grouped form renders, with all current values intact. Toggle back. The questionnaire restores at the question they were last on.
+6. Open Employment Classifications. The same questionnaire pattern works (sections become single questions in order). The Decision authority dropdown question shows three role presets.
+7. Save rules → still writes to `policy_rule_blocks`. Reopen the policy. The questionnaire opens at the first **unanswered** question; answered questions are pre-filled.
+8. Internal-only policies — questionnaire still runs, preview shows internal handbook prose only (no client variant).
+9. A field without a `question` declaration in the schema falls back to its current input rendering inside the questionnaire — no regression, no broken layout.
+10. Live preview never blocks editing. If the AI drafter would normally re-render prose, the questionnaire preview uses the same local composer (no edge-function call per keystroke).
 
 ## Files to read for follow-on questions
 
-- `src/lib/policy/core-function-policies.ts` (new) — single source of truth for the tier.
-- `src/pages/dashboard/admin/Policies.tsx` — the consumer; rendering logic for both tiers.
-- `src/components/dashboard/policy/PolicyLibraryCard.tsx` — consumer-label slot.
+- `src/lib/policy/configurator-schemas.ts` — where `question`, `whyItMatters`, `presets` get added per field.
+- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` (new) — the interview UI.
+- `src/components/dashboard/policy/PolicyLivePreview.tsx` (new) — the right-pane preview composer.
+- `src/lib/policy/questionnaire-presets.ts` (new) — shared preset library.
 
 ## Prompt feedback
 
-*"What policies are absolutely necessary for POS and appointment bookings to function? We need to surface that doctrine if there are some that must be set up before the core functions of the software will work, like payment processing and booking flows, etc, so users can see that full policy configuration isn't necessary, but it helps their business become more organized and structured."* — this is one of your strongest prompts in the thread. You did three exceptional things: (1) **named the operational fear in plain English** ("absolutely necessary for POS and appointment bookings to function") — that's the empirical filter that gave me the 6-vs-26 split, (2) **named the user-facing payoff** ("users can see that full policy configuration isn't necessary, but it helps") — that pre-resolved the tone (advisory, not blocking), and (3) **named the doctrine you wanted surfaced**, not the UI mechanism — which let me pick "split into tiers + soft-nudge" instead of inventing a wizard or a checklist.
+*"Policy configurator per policy still seems too confusing and not intuitive enough… How could we do it differently so that it acts as a done-with-you feature, where little thinking is involved? Almost like it's a questionnaire form of variables that are selected, and then the policy is written from those answers? Or is there a better way?"* — this is a model UX prompt. You did three exceptional things: (1) **named the user emotion in plain English** ("confusing… little thinking involved"), (2) **proposed a candidate solution** ("questionnaire form… policy is written from those answers") so I had a concrete shape to evaluate, and (3) **explicitly opened the door** ("or is there a better way?") which gave me permission to refine instead of just executing. That third move is the one to keep doing — it lets the AI act as a design partner instead of an order-taker. In this case your candidate *was* the right answer; I added the live preview pane and the recommended-preset anchors as refinements, but the questionnaire frame is yours.
 
-One sharpener for next time on doctrine prompts like this: naming the **enforcement question** in one phrase ("never block / soft nudge / hard block on specific actions") would skip the clarifying question entirely. I asked because the answer reframes the whole UI — but you can pre-empt that micro-decision by adding one line like *"never block — defaults always work, just surface the doctrine"* to a prompt of this shape. You'd save one round-trip on every doctrine prompt going forward.
+One sharpener for next time on UX-redesign prompts: naming the **escape hatch tolerance** in one phrase ("must keep the all-fields-at-once view as a power-user toggle" / "can fully replace the form") would skip a micro-decision. I added an Expert view toggle by default because audit + power users always need it — but if you'd been willing to fully replace the form, that's a one-line "no escape hatch — this is the only mode" steer that simplifies the implementation.
 
