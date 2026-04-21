@@ -232,6 +232,7 @@ const PlatformIntegrationDetail = lazyWithRetry(() => import("./pages/dashboard/
 const PlatformKnowledgeBase = lazyWithRetry(() => import("./pages/dashboard/platform/KnowledgeBase"));
 const PlatformOnboarding = lazyWithRetry(() => import("./pages/dashboard/platform/Onboarding"));
 const PlatformAnalytics = lazyWithRetry(() => import("./pages/dashboard/platform/Analytics"));
+const PlatformSetupFunnel = lazyWithRetry(() => import("./pages/dashboard/platform/SetupFunnel"));
 const AuditLogPage = lazyWithRetry(() => import("./pages/dashboard/platform/AuditLog"));
 const JobsPage = lazyWithRetry(() => import("./pages/dashboard/platform/Jobs"));
 const SystemHealthPage = lazyWithRetry(() => import("./pages/dashboard/platform/SystemHealth"));
@@ -552,6 +553,7 @@ const App = () => (
                         <Route path="payments-health" element={<PaymentsHealthPage />} />
                         <Route path="notifications" element={<ProtectedRoute requirePlatformRole="platform_admin"><NotificationsPage /></ProtectedRoute>} />
                         <Route path="analytics" element={<ProtectedRoute requirePlatformRole="platform_owner"><PlatformAnalytics /></ProtectedRoute>} />
+                        <Route path="setup-funnel" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSetupFunnel /></ProtectedRoute>} />
                         <Route path="network" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformNetwork /></ProtectedRoute>} />
                         <Route path="knowledge-base" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformKnowledgeBase /></ProtectedRoute>} />
                         <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
