@@ -48,6 +48,7 @@ import { IncidentBanner } from '@/components/dashboard/IncidentBanner';
 import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
 import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog';
+import { PostSetupOrientationOverlay } from '@/components/onboarding/PostSetupOrientationOverlay';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
@@ -599,6 +600,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       <HelpFAB />
       {isLocked && !isImpersonating && <DashboardLockScreen onUnlock={unlock} />}
       <ClockInPromptDialog />
+      <PostSetupOrientationOverlay />
       
       {hasZuraGuidance && <ZuraStickyGuidance />}
     </div>
