@@ -104,10 +104,15 @@ export function readBackfillBanner(
   }
 }
 
-/** Mark banner dismissed */
+/** Mark banner dismissed and enqueue a 48h follow-up nudge (fire-and-forget) */
 export function dismissBackfillBanner(userId: string, orgId: string) {
   localStorage.setItem(
     `${BACKFILL_BANNER_KEY}.${userId}.${orgId}`,
     JSON.stringify({ shown: true }),
   );
+  supabase.functions
+    .invoke("enqueue-setup-followup", { body: { organization_id: orgId } })
+    .catch((err) =>
+      console.warn("[dismissBackfillBanner] enqueue failed:", err),
+    );
 }
