@@ -107,22 +107,23 @@ Deno.serve(async (req) => {
 
         // Mark step completion
         await supabase.from("org_setup_step_completion").upsert({
-          org_id: organization_id,
+          organization_id,
           step_key: stepKey,
           status: handlerResult.status === "completed" ? "completed" : "failed",
           data,
           completion_source: "wizard",
           completed_version: 1,
-        }, { onConflict: "org_id,step_key" });
+        }, { onConflict: "organization_id,step_key" });
 
         // Audit log
         await supabase.from("org_setup_commit_log").insert({
-          org_id: organization_id,
+          organization_id,
           system: handlerResult.system,
           status: handlerResult.status,
           reason: handlerResult.reason ?? null,
           deep_link: handlerResult.deep_link ?? null,
           acknowledged_conflicts,
+          attempted_by: user.id,
         });
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
@@ -134,11 +135,12 @@ Deno.serve(async (req) => {
           reason,
         });
         await supabase.from("org_setup_commit_log").insert({
-          org_id: organization_id,
+          organization_id,
           system: stepKey,
           status: "failed",
           reason,
           acknowledged_conflicts,
+          attempted_by: user.id,
         });
       }
     }
