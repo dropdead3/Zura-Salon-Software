@@ -709,7 +709,7 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
                       <span>{row.label}</span>
                       {row.detected && row.detectedReason && (
                         <span className="font-sans text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                          auto-detected · {row.detectedReason}
+                          Auto-detected · {row.detectedReason.charAt(0).toUpperCase() + row.detectedReason.slice(1)}
                         </span>
                       )}
                     </span>
