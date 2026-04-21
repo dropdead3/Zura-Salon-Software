@@ -28,6 +28,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { tokens } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
+import { useOrgSetupFunnelHealth } from "@/hooks/onboarding/useOrgSetupFunnelHealth";
+import { StepHealthCard } from "@/components/platform/onboarding/StepHealthCard";
 
 const STEP_LABELS: Record<number, string> = {
   0: "Fit check",
@@ -570,6 +572,11 @@ export default function SetupFunnel() {
           />
         </div>
 
+        {/* Step Health (governance signal) */}
+        <div className="mb-6">
+          <StepHealthSection />
+        </div>
+
         {/* Funnel */}
         <Card>
           <CardHeader>
@@ -1052,3 +1059,9 @@ function SourceBreakdownTile({
     </Card>
   );
 }
+
+function StepHealthSection() {
+  const { data, isLoading } = useOrgSetupFunnelHealth();
+  return <StepHealthCard rows={data} isLoading={isLoading} stepLabels={STEP_LABELS} />;
+}
+
