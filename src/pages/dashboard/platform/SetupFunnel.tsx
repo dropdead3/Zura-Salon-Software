@@ -248,9 +248,10 @@ export default function SetupFunnel() {
     if (!data?.events) return [];
     const map = new Map<
       number,
-      Omit<FunnelRow, "droppedOrgs"> & {
+      Omit<FunnelRow, "droppedOrgs" | "weeklyDrops"> & {
         viewedOrgs: Set<string>;
         completedOrgs: Set<string>;
+        viewedAt: Map<string, number>;
       }
     >();
     for (const ev of data.events) {
@@ -264,10 +265,16 @@ export default function SetupFunnel() {
           skipped: 0,
           viewedOrgs: new Set<string>(),
           completedOrgs: new Set<string>(),
+          viewedAt: new Map<string, number>(),
         };
+      const tMs = new Date(ev.occurred_at).getTime();
       if (ev.event === "viewed") {
         row.viewed += 1;
         row.viewedOrgs.add(ev.organization_id);
+        const prev = row.viewedAt.get(ev.organization_id);
+        if (prev === undefined || tMs < prev) {
+          row.viewedAt.set(ev.organization_id, tMs);
+        }
       }
       if (ev.event === "completed") {
         row.completed += 1;
@@ -276,23 +283,75 @@ export default function SetupFunnel() {
       if (ev.event === "skipped") row.skipped += 1;
       map.set(stepNum, row);
     }
+
+    // 8-week sparkline window (oldest → newest)
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const SPARKLINE_WEEKS = 8;
+    const nowMs = Date.now();
+    const windowStartMs = nowMs - SPARKLINE_WEEKS * WEEK_MS;
+
     return Array.from(map.values())
       .sort((a, b) => a.step_number - b.step_number)
-      .map((r) => ({
-        step_number: r.step_number,
-        viewed: r.viewed,
-        completed: r.completed,
-        skipped: r.skipped,
-        droppedOrgs: Array.from(r.viewedOrgs)
-          .filter((id) => !r.completedOrgs.has(id))
-          .map((id) => ({
-            id,
-            lastActivityMs: lastActivityByOrg.get(id) ?? 0,
-          }))
-          // Hottest (most recent activity) first — ops triage warm leads
-          .sort((a, b) => b.lastActivityMs - a.lastActivityMs),
-      }));
-  }, [data?.events, lastActivityByOrg]);
+      .map((r) => {
+        const droppedIds = Array.from(r.viewedOrgs).filter(
+          (id) => !r.completedOrgs.has(id),
+        );
+        const weeklyDrops = new Array(SPARKLINE_WEEKS).fill(0);
+        for (const id of droppedIds) {
+          const ts = r.viewedAt.get(id) ?? lastActivityByOrg.get(id) ?? 0;
+          if (ts < windowStartMs) continue;
+          const idx = Math.min(
+            SPARKLINE_WEEKS - 1,
+            Math.floor((ts - windowStartMs) / WEEK_MS),
+          );
+          weeklyDrops[idx] += 1;
+        }
+        return {
+          step_number: r.step_number,
+          viewed: r.viewed,
+          completed: r.completed,
+          skipped: r.skipped,
+          weeklyDrops,
+          droppedOrgs: droppedIds
+            .map((id) => {
+              const k = `${id}::${r.step_number}`;
+              const lastContactedMs = outreachData?.get(k) ?? null;
+              return {
+                id,
+                lastActivityMs: lastActivityByOrg.get(id) ?? 0,
+                contacted: lastContactedMs !== null,
+                lastContactedMs,
+              };
+            })
+            // Uncontacted first, then hottest
+            .sort((a, b) => {
+              if (a.contacted !== b.contacted) return a.contacted ? 1 : -1;
+              return b.lastActivityMs - a.lastActivityMs;
+            }),
+        };
+      });
+  }, [data?.events, lastActivityByOrg, outreachData]);
+
+  // Source breakdown across the whole cohort (orgs that touched setup)
+  const sourceBreakdown = useMemo(() => {
+    if (!data) return [] as { source: string; count: number; pct: number }[];
+    const orgIds = new Set<string>();
+    for (const e of data.events) orgIds.add(e.organization_id);
+    for (const c of data.commits) orgIds.add(c.organization_id);
+    const counts = new Map<string, number>();
+    for (const id of orgIds) {
+      const src = data.orgSources.get(id) ?? "legacy";
+      counts.set(src, (counts.get(src) ?? 0) + 1);
+    }
+    const total = orgIds.size || 1;
+    return Array.from(counts.entries())
+      .map(([source, count]) => ({
+        source,
+        count,
+        pct: (count / total) * 100,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [data]);
 
   const totals = useMemo(() => {
     const orgs = new Set(data?.events.map((e) => e.organization_id) ?? []);
