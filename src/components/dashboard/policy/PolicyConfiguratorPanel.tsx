@@ -613,6 +613,8 @@ export function PolicyConfiguratorPanel({
                 versionId={versionId}
                 rulesReady={rulesReady}
                 audience={entry.audience}
+                libraryKey={entry.key}
+                ruleValues={values}
               />
             )}
           </TabsContent>
