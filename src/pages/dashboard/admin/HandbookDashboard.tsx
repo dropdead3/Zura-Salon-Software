@@ -33,6 +33,7 @@ export function HandbookDashboardContent({ embedded = false }: HandbookDashboard
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const { data: handbooks = [], isLoading } = useHandbooks();
+  const { data: policyProfile } = usePolicyOrgProfile();
   const createHandbook = useCreateHandbook();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -48,6 +49,10 @@ export function HandbookDashboardContent({ embedded = false }: HandbookDashboard
     navigate(dashPath(`/admin/handbook-wizard/${result.handbook.id}/edit`));
   };
 
+  // Nudge: operator told the wizard they have an existing handbook, but none uploaded yet.
+  const showExistingHandbookNudge =
+    !!policyProfile?.has_existing_handbook && !isLoading && (handbooks as any[]).length === 0;
+
   return (
     <div className="space-y-6">
       {embedded && (
@@ -56,6 +61,35 @@ export function HandbookDashboardContent({ embedded = false }: HandbookDashboard
             One handbook per role. Configure with the wizard or upload an existing document — every staff role gets its own scoped handbook.
           </p>
         </div>
+      )}
+
+      {showExistingHandbookNudge && (
+        <Card className="rounded-xl border-primary/30 bg-gradient-to-br from-primary/5 via-card/80 to-card/80">
+          <CardContent className="p-5 flex flex-col md:flex-row md:items-center gap-4 justify-between">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Upload className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h4 className={cn(tokens.heading.card, 'text-sm')}>
+                  Upload your existing handbook
+                </h4>
+                <p className="font-sans text-xs text-muted-foreground mt-1 max-w-2xl">
+                  You told us you already have a handbook. Upload it to a role below so we can map it instead of drafting fresh.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="font-sans shrink-0"
+              onClick={() => navigate(dashPath('/admin/handbooks?tab=documents&upload=role'))}
+            >
+              Upload now
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Role-first grid is the default surface */}
