@@ -16,6 +16,7 @@ import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { useOpsHubFavorites } from '@/hooks/useOpsHubFavorites';
+import { UnfinishedFromSetupCallout } from '@/components/onboarding/setup/UnfinishedFromSetupCallout';
 
 import {
   ClipboardList,
@@ -321,6 +322,14 @@ export default function TeamHub() {
           description="People management, development, and team operations"
         />
         <PageExplainer pageId="team-hub" />
+
+        {orgId && (
+          <UnfinishedFromSetupCallout
+            orgId={orgId}
+            systems={['team', 'standards']}
+            className="mb-6 mt-2"
+          />
+        )}
 
         {/* Favorites */}
         {favorites.length > 0 && (

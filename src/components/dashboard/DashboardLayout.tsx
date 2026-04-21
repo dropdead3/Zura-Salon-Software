@@ -49,6 +49,8 @@ import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
 import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog';
 import { PostSetupOrientationOverlay } from '@/components/onboarding/PostSetupOrientationOverlay';
+import { BackfillWelcomeBanner } from '@/components/onboarding/BackfillWelcomeBanner';
+import { useBackfillTrigger } from '@/hooks/onboarding/useBackfillTrigger';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
@@ -238,6 +240,8 @@ function NavHistoryArrows() {
 function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }: DashboardLayoutProps) {
   // Global color theme sync — ensures saved theme is applied on every dashboard route
   useColorTheme();
+  // Silently backfill setup for legacy orgs (idempotent, runs once per browser)
+  useBackfillTrigger();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
@@ -592,6 +596,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         !hideSidebar && (sidebarCollapsed ? "lg:ml-24" : "lg:ml-[340px]")
       )}>
         <div className={cn(`flex-1 p-4 lg:px-8 lg:pt-4 ${hideFooter ? 'lg:pb-4' : 'lg:pb-8'}`, hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
+          <BackfillWelcomeBanner />
           {children}
         </div>
       </main>

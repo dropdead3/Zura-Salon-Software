@@ -15,11 +15,14 @@ import {
   type CompensationPlan,
 } from '@/hooks/useCompensationPlans';
 import { CreateCompensationPlanDialog } from '@/components/dashboard/payroll/CreateCompensationPlanDialog';
+import { UnfinishedFromSetupCallout } from '@/components/onboarding/setup/UnfinishedFromSetupCallout';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export default function CompensationHub() {
   const { data: plans, isLoading } = useCompensationPlans(true);
   const { data: assignments } = useUserCompensationAssignments();
   const [createOpen, setCreateOpen] = useState(false);
+  const { effectiveOrganization } = useOrganizationContext();
 
   const assignmentCountByPlan = new Map<string, number>();
   (assignments || []).forEach((a) => {
@@ -43,6 +46,14 @@ export default function CompensationHub() {
             </Button>
           }
         />
+
+        {effectiveOrganization?.id && (
+          <UnfinishedFromSetupCallout
+            orgId={effectiveOrganization.id}
+            systems={['compensation']}
+            className="mb-6"
+          />
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
