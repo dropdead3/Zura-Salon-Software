@@ -356,6 +356,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'approver_role',
             label: 'Who approves a redo?',
+            question: 'Who approves a complimentary redo or refund?',
+            whyItMatters:
+              'Redos are revenue-impacting decisions. Most salons route them through a Manager so the call is consistent across the floor.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role authorized to approve a complimentary redo or refund alternative. Front desk routes requests to this role.',
@@ -614,6 +618,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'authority_role',
             label: 'Who holds this authority',
+            question: 'Who holds this decision authority by default?',
+            whyItMatters:
+              'This role owns the call below the dollar threshold. Anyone above the threshold escalates.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role that owns this decision by default. Anything above the maximum dollar value escalates to the role below.',
@@ -638,6 +646,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'escalation_role',
             label: 'Escalates to',
+            question: 'Who do decisions escalate to above the dollar threshold?',
+            whyItMatters:
+              'When the call exceeds the threshold, this role owns it. Owner-level escalation is the most common pattern.',
+            presets: ESCALATION_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role decisions escalate to when they exceed the maximum dollar value above.',
@@ -734,6 +746,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'enforcement_authority',
             label: 'Who enforces',
+            question: 'Who delivers warnings and documents the conversation?',
+            whyItMatters:
+              'A consistent enforcer keeps the documentation trail clean and the message even-handed.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role responsible for delivering verbal/written warnings and documenting the conversation in the employee file.',
@@ -913,6 +929,10 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
           {
             key: 'authority_role',
             label: 'Decision authority',
+            question: 'Who approves exceptions to this policy?',
+            whyItMatters:
+              'This role signs off on edge cases and their title appears anywhere the policy references the decision-maker.',
+            presets: AUTHORITY_ROLE_PRESETS,
             type: 'role',
             tooltip:
               'The role that approves exceptions to this policy and signs off on edge-case decisions. Their name appears wherever the policy references "{{authority_role}}".',
