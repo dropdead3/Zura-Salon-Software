@@ -145,6 +145,12 @@ export function PolicyConfiguratorPanel({
   // editor and the saved record both read concretely. Operator-saved values
   // (fromBlocks) are sacred — never re-interpolated.
   const orgNameForTokens = effectiveOrganization?.name ?? undefined;
+  const { data: locations = [] } = useLocations();
+  const locationCount = locations.length;
+  const schemaHasAuthorityRole = useMemo(
+    () => allFields.some((f) => f.key === 'authority_role'),
+    [allFields],
+  );
   useEffect(() => {
     if (!data || hydrated) return;
     const fromBlocks: Record<string, unknown> = {};
@@ -156,11 +162,18 @@ export function PolicyConfiguratorPanel({
     });
     // Layer order (lowest precedence first):
     //   1. schema defaultValue (generic boilerplate)
-    //   2. per-policy summary derived from the starter draft (specific prose)
+    //   2. per-policy summary derived from the starter draft + applicability
+    //      manifest (specific prose for both `policy_summary` and
+    //      `who_it_applies_to`)
     //   3. brand-token interpolation across the merged map
     //   4. operator-saved values (sacred — never touched)
     const schemaDefaults = defaultsFromSchema(allFields);
-    const policySpecific = getPolicySummaryDefaults(entry.key);
+    const policySpecific = getPolicySummaryDefaults(entry.key, {
+      category: entry.category,
+      audience: entry.audience,
+      locationCount,
+      schemaHasAuthorityRole,
+    });
     const interpolated = interpolateDefaults(
       { ...schemaDefaults, ...policySpecific },
       { orgName: orgNameForTokens, platformName: PLATFORM_NAME },
@@ -168,7 +181,7 @@ export function PolicyConfiguratorPanel({
     const seeded = { ...interpolated, ...fromBlocks };
     setValues(seeded);
     setHydrated(true);
-  }, [data, hydrated, allFields, orgNameForTokens, entry.key]);
+  }, [data, hydrated, allFields, orgNameForTokens, entry.key, entry.category, entry.audience, locationCount, schemaHasAuthorityRole]);
 
   const versionId = data?.versionId;
   const versionNumber = data?.versionNumber ?? 1;
