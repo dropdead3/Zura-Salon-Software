@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Loader2, Library, Settings, FileText, ArrowRight } from 'lucide-react';
+import { Loader2, Library, Settings, FileText, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
@@ -48,6 +48,15 @@ export default function Policies() {
   const [setupOpen, setSetupOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const activePolicyKey = searchParams.get('policy');
+  const librarySectionRef = useRef<HTMLElement | null>(null);
+
+  const handleCategoryCardClick = (cat: PolicyCategory) => {
+    setActiveCategory((prev) => (prev === cat ? 'all' : cat));
+    // Defer to next frame so the state-driven scroll target is laid out before scrolling.
+    requestAnimationFrame(() => {
+      librarySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   const orgScopeKey = profile?.organization_id ?? 'anon';
   const showAllStorageKey = `policies:show-non-applicable:${orgScopeKey}`;
@@ -240,10 +249,29 @@ export default function Policies() {
               <div>
                 <h2 className={cn(tokens.heading.section)}>By category</h2>
                 <p className="font-sans text-sm text-muted-foreground mt-1">
-                  Six operational domains. Click into any group to see what your business needs.
+                  Six operational domains. Click any group to filter the Library below.
                 </p>
               </div>
             </div>
+            {activeCategory !== 'all' && (
+              <div className="flex items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5">
+                  <span className="font-sans text-xs text-muted-foreground">Showing:</span>
+                  <span className="font-sans text-xs text-foreground">
+                    {POLICY_CATEGORY_META[activeCategory].label}
+                  </span>
+                  <span className="text-muted-foreground/60">·</span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategory('all')}
+                    className="font-sans text-xs text-foreground underline-offset-2 hover:underline inline-flex items-center gap-1"
+                  >
+                    <X className="w-3 h-3" />
+                    Clear filter
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {categoryOrder.map((cat) => (
                 <PolicyCategoryCard
@@ -251,13 +279,14 @@ export default function Policies() {
                   category={cat}
                   adopted={summary.by_category[cat]?.adopted ?? 0}
                   total={summary.by_category[cat]?.total ?? 0}
-                  onClick={() => setActiveCategory(cat)}
+                  isActive={activeCategory === cat}
+                  onClick={() => handleCategoryCardClick(cat)}
                 />
               ))}
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section ref={librarySectionRef} className="space-y-4">
             <div className="flex items-end justify-between flex-wrap gap-2">
               <div>
                 <h2 className={cn(tokens.heading.section)}>Library</h2>
