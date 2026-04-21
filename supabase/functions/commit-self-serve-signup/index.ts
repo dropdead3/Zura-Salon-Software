@@ -115,6 +115,7 @@ Deno.serve(async (req) => {
         name: business_name,
         slug,
         setup_source: "self_serve",
+        signup_source: "organic",
       })
       .select("id, slug")
       .single();

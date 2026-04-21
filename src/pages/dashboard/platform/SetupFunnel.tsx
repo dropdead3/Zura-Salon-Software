@@ -140,7 +140,7 @@ export default function SetupFunnel() {
         commitsQuery,
       ]);
 
-      // Fetch org names for the affected set in one shot
+      // Fetch org names + sources for the affected set in one shot
       const orgIds = new Set<string>();
       for (const e of (events ?? []) as any[]) orgIds.add(e.organization_id);
       for (const c of (commits ?? []) as any[]) orgIds.add(c.organization_id);
@@ -148,9 +148,15 @@ export default function SetupFunnel() {
       const { data: orgs } = orgIds.size
         ? await supabase
             .from("organizations")
-            .select("id, name")
+            .select("id, name, signup_source")
             .in("id", Array.from(orgIds))
-        : { data: [] as { id: string; name: string }[] };
+        : { data: [] as { id: string; name: string; signup_source: string | null }[] };
+
+      const orgsArr = (orgs ?? []) as {
+        id: string;
+        name: string;
+        signup_source: string | null;
+      }[];
 
       return {
         events: ((events ?? []) as unknown) as Array<{
@@ -166,11 +172,9 @@ export default function SetupFunnel() {
           attempted_at: string;
           system: string;
         }>,
-        orgNames: new Map(
-          ((orgs ?? []) as { id: string; name: string }[]).map((o) => [
-            o.id,
-            o.name,
-          ]),
+        orgNames: new Map(orgsArr.map((o) => [o.id, o.name])),
+        orgSources: new Map(
+          orgsArr.map((o) => [o.id, o.signup_source ?? "legacy"]),
         ),
       };
     },
