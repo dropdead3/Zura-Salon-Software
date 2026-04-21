@@ -1,88 +1,84 @@
 
 
-# Wave 13G.E — Inert-surface cleanup
+# Wave 13G.G — Make the cleanup actually visible & exact
 
-The wizard's structural and contract work is complete (13F + 13G.A/B/C/D/F). Five P2 cleanups remain — small, scattered, but each one is the difference between a wizard that *looks* finished and one that *feels* finished. Doing them as a single batch keeps the surface honest.
+13G.E shipped three good ideas (timestamps under steps, migrated reviewer copy, app-activation hints) but each one has a half-built edge:
+
+1. The completion-timestamp surface only renders in `SetupProgressPanel` *side* variant — and **nothing in the wizard mounts the side variant**. We're reading the table for nobody.
+2. `attempt_count` is inferred from `updated_at − created_at > 2s`. Approximate, can't tell 2 retries from 7, breaks for legitimate slow upserts.
+3. "Review and confirm" CTA from `InitialSetupGateBanner` drops migrated operators back into Step 0 of an 8-step sequence even though their data is fully backfilled. Wrong door.
+
+This wave fixes each one cleanly. No overlap, no scope creep.
 
 ---
 
 ## What changes
 
-### 1. `InitialSetupGateBanner` — soften for migrated cohort
-Today: any org without `setup_completed_at` sees the same "Finish your operator profile" nudge — including migrated orgs whose draft is already populated by backfill.
+### 1. Mount the side rail at `lg` and above
 
-Change: when `signup_source = 'backfilled'` AND a draft exists with at least one step carrying `backfilled === true`, swap copy to:
-> **Review what we inferred** — We pre-filled your structure from existing data. Confirm or adjust the few open items.
+`StepShell` becomes a two-column layout at `lg:` breakpoint:
 
-CTA reads "Review and confirm" and routes to the wizard's summary phase (`/onboarding/setup?org=…&skipIntro=1` then jumps to summary if all required steps are populated). Greenfield orgs continue to see the existing copy.
+```text
+lg+:   [ side rail 240px ][ step body 3xl ]
+< lg:  [ step body, inline pips at bottom (today's behavior) ]
+```
 
-Visibility contract preserved: still null when leadership/dismissed/completed.
+- The side rail renders `<SetupProgressPanel variant="side" orgId={orgId} />` so the completion timestamps and "retried" hints (already wired) are finally visible.
+- Inline pip strip stays for `< lg` — mobile/tablet keep the lean pips.
+- Sticky positioning (`lg:sticky lg:top-6`) so the rail stays visible during long steps.
+- Single-step re-entry (`?step=…`) renders body-only with no side rail (timestamps are noise when you're editing one field). Detected via existing `singleStepKey` already in scope.
 
-### 2. `OperatorProfileSentence` — silent until populated
-Today: renders "your business, a 1-location, team, to-be-defined compensation operation" even when Steps 1–4 are untouched. Reads as an indictment on the summary screen.
+Visibility contract preserved: no timestamps yet → rail still renders the step list, just without the "Confirmed Xm ago" lines (existing hook already handles empty data).
 
-Change: render the full sentence only when Steps 1, 2, 3, and 4 are all populated (`__touched === true` OR `backfilled === true`, ignoring `__skipped__`). Otherwise render a single muted line:
-> *Your operator profile will appear here once you complete the structural steps.*
+### 2. Make `attempt_count` exact
 
-Honors silence-as-valid-output.
+- **Migration**: add `attempt_count INT NOT NULL DEFAULT 1` to `public.org_setup_step_completion`.
+- **Orchestrator**: change the upsert in `commit-org-setup/index.ts` (line 209-216) so on conflict it bumps `attempt_count = org_setup_step_completion.attempt_count + 1` via raw upsert with the explicit `ON CONFLICT DO UPDATE SET attempt_count = … + 1`. Since Supabase JS upsert can't increment, switch this single call to `supabase.rpc('upsert_step_completion', { … })` or to two queries (`select` then `update|insert`). Cheapest path: an RPC `upsert_org_setup_step_completion(org_id, step_key, status, data, completion_source, completed_version)` that does the `INSERT … ON CONFLICT … SET attempt_count = … + 1` server-side.
+- **Hook**: `useOrgSetupStepCompletion` selects the new column directly. Drop the `created_at`/`updated_at` heuristic. Display rules unchanged — still suppress unless `> 1`.
+- Backfill: existing rows default to `1`, which matches reality (one synthetic commit per backfilled step).
 
-### 3. `WhyWeAskCallout` — surface app-activation consequences
-Today: generic "why we're asking" text. Step 5 implicitly activates Color Bar; the operator never sees that linkage.
+### 3. Auto-route migrated reviewers to summary
 
-Change: extend the callout to optionally accept an `activates?: string` prop. When set, append a third line below `unlocks`:
-> **Activates: Zura Color Bar** *(installs automatically when you select chemical or color services)*
-
-Wire this in `OrganizationSetup.tsx`'s WHY_WE_ASK by promoting it from a string to an object `{ reason, unlocks?, activates? }` for the two steps that actually trigger app activation:
-- `step_5_catalog` → activates Zura Color Bar (chemical/color)
-- `step_3_team` → activates Zura Payroll (when commission models are present in 4)
-
-Other steps unchanged. Brand strings tokenized.
-
-### 4. `org_setup_step_completion` — wire the consumer
-Today: orchestrator upserts every commit; nothing reads the table.
-
-Change: add a new hook `useOrgSetupStepCompletion(orgId)` that returns `{ stepKey: { completed_at, attempt_count } }`. `SetupProgressPanel` (`side` variant only) shows a tiny relative timestamp under each completed step's title (e.g. "Confirmed 3d ago"). On a fresh wizard the timestamps simply don't exist yet — visibility-contract clean. No noisy retry-count display unless `attempt_count > 1`, in which case append " · 2 retries" in muted text.
-
-This converts a write-only side effect into actual operator feedback. Keeps the existing write path; no orchestrator change.
-
-### 5. `UnfinishedFromSetupCallout` — token migration
-Cosmetic. Replace ad-hoc `bg-card`, `bg-muted/20`, `border-border/60`, and inline padding with the canonical `tokens.card.*` and `tokens.layout.cardPadding` per design-token canon. No behavior change.
+- `InitialSetupGateBanner.handleStart` for the migrated branch routes to `?org=…&skipIntro=1&reviewMode=1` (greenfield path unchanged).
+- `OrganizationSetup`:
+  - read `reviewMode = params.get("reviewMode") === "1"`
+  - in the resume effect, if `reviewMode && draft && allRequiredStepsPopulated(draft)`, set `phase = "summary"` immediately and skip the step sequence.
+  - if `reviewMode` but a required step is *not* populated (rare — backfill missed something), fall through to the normal first-incomplete-step resume (no dead-end).
+- `SetupSummary` already handles "edit one step → jump back → return to summary" via `onEditStep`, so the reviewer can drill into any incomplete area without losing the summary anchor.
 
 ---
 
 ## Files affected
 
-**Frontend**
-- `src/components/onboarding/setup/InitialSetupGateBanner.tsx` — branched copy + CTA for migrated cohort
-- `src/components/onboarding/setup/OperatorProfileSentence.tsx` — populated-gate, placeholder copy
-- `src/components/onboarding/setup/WhyWeAskCallout.tsx` — `activates` prop + render
-- `src/pages/onboarding/OrganizationSetup.tsx` — promote WHY_WE_ASK shape; pass `activates` through
-- `src/components/onboarding/setup/SetupProgressPanel.tsx` — render `last_completed_at` line under completed steps
-- `src/components/onboarding/setup/StepShell.tsx` — pass through new WHY_WE_ASK fields if needed (read-only check first)
-- `src/components/onboarding/setup/UnfinishedFromSetupCallout.tsx` — token migration
+**Database**
+- `supabase/migrations/<new>_step_completion_attempt_count.sql` — add column, create or replace `public.upsert_org_setup_step_completion(...)` RPC with `SECURITY DEFINER` and `is_org_admin` guard.
 
-**Hook (new)**
-- `src/hooks/onboarding/useOrgSetupStepCompletion.ts` — read `org_setup_step_completion` for an org
+**Backend**
+- `supabase/functions/commit-org-setup/index.ts` — replace the single upsert call (lines 209–218) with the new RPC. Behavior identical otherwise.
+
+**Frontend**
+- `src/components/onboarding/setup/StepShell.tsx` — `lg:` two-column grid; render `SetupProgressPanel variant="side"` in left column (suppressed when `singleStepKey` is set, which we'll pass down via existing `orgId`/new optional `singleStep?: boolean` prop).
+- `src/pages/onboarding/OrganizationSetup.tsx` — pass `singleStep={!!singleStepKey}` to `StepShell`; read `reviewMode` flag; auto-jump to summary when applicable.
+- `src/components/onboarding/setup/InitialSetupGateBanner.tsx` — append `&reviewMode=1` to the migrated CTA URL only.
+- `src/hooks/onboarding/useOrgSetupStepCompletion.ts` — select `attempt_count` directly; drop the heuristic.
 
 **Memory**
-- `mem://features/onboarding/wizard-orchestrator-contract.md` — append "Visibility surfaces" notes (gate banner branches, sentence gate, completion timestamps)
-
-No DB migrations. No edge-function changes. No new RLS policies (existing org-scoped policies on `org_setup_step_completion` already cover read).
+- `mem://features/onboarding/wizard-orchestrator-contract.md` — note the new column, RPC contract, and `reviewMode` query param.
 
 ## Acceptance
 
-1. A migrated org with `signup_source='backfilled'` and a backfilled draft sees the "Review what we inferred" banner copy, not the generic nudge.
-2. A user lands on the summary with only Step 1 touched: `OperatorProfileSentence` shows the placeholder line, not the broken sentence.
-3. Step 5 (Catalog) shows "Activates: Zura Color Bar" inside the "Why we're asking" disclosure.
-4. After completing Step 1 once and returning, `SetupProgressPanel` (side variant) shows "Confirmed Xm ago" under the step. After two retries, " · 2 retries" appears.
-5. `UnfinishedFromSetupCallout` renders identically but uses canonical tokens (verify by inspecting one settings page that surfaces it).
-6. No new console warnings, no extra round-trips beyond the one new completion query (cached 60s).
+1. On a `≥lg` viewport, the wizard shows a sticky left rail listing all steps with completion timestamps. On mobile, the rail is hidden and inline pips render as today.
+2. Single-step re-entry (`?step=…`) renders body-only on all viewports — no side rail.
+3. After two genuine commits of Step 1, the side rail under Step 1 reads `Confirmed Xm ago · retried`. After a third commit, it stays `· retried` (display caps at >1; underlying count is exact in DB).
+4. Migrated org clicks "Review and confirm" → lands on `SetupSummary` directly, never sees the step sequence unless they click "Edit" on a row.
+5. Migrated org with one missing required step (incomplete backfill) clicks "Review and confirm" → lands on the first incomplete step, not the summary. No dead-end.
+6. No new console warnings; no duplicate completion rows; `attempt_count` increments by exactly 1 per commit.
 
 ## Doctrine compliance
 
-- **Visibility contracts**: every new surface returns null/placeholder when its precondition is unmet (no completion data → no timestamp; no populated steps → placeholder sentence).
-- **Brand abstraction**: app-activation copy uses `{{PLATFORM_NAME}}` token chain, not hardcoded "Zura."
-- **Anti-noop**: `org_setup_step_completion` writes finally have a consumer.
-- **Alert governance**: zero new alert paths.
-- **Autonomy**: migrated orgs get reviewer framing, not coercive "finish your setup" copy.
+- **Visibility contracts**: side rail hides timestamps when no completion data; reviewer flow falls back to normal resume when data is incomplete.
+- **Anti-noop**: `attempt_count` writes now have a real reader (the rail), and the rail is now actually mounted.
+- **Autonomy**: reviewer flow respects "we'll show you what we inferred, not march you through 8 steps you don't need."
+- **Container-aware**: `lg:` breakpoint follows existing dashboard responsive convention; no viewport-only assumptions about content.
+- **Brand abstraction**: no new brand strings introduced.
 
