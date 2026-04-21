@@ -296,8 +296,41 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
     !!form.team_size_band &&
     (step !== 'confirm' || step1Facts.gaps === 0);
 
-  const next = () => !isLast && setStep(STEP_ORDER[stepIndex + 1]);
-  const back = () => !isFirst && setStep(STEP_ORDER[stepIndex - 1]);
+  /**
+   * Silent auto-save — persists the in-flight form to `policy_org_profile`
+   * without flipping `setup_completed_at` and without surfacing the
+   * "Profile saved" toast. Used on Next/Back/Close so mid-flow state
+   * survives the operator closing the wizard.
+   *
+   * Gated to `hasHydratedRef.current` so we never write the empty initial
+   * form over a pre-existing saved profile before re-hydration completes.
+   */
+  const silentAutoSave = () => {
+    if (!hasHydratedRef.current) return;
+    upsert.mutate(
+      { ...form },
+      {
+        // No-op: silence the success toast; the upsert hook still invalidates
+        // the query cache via its own onSuccess. Errors surface normally.
+        onSuccess: () => {},
+      },
+    );
+  };
+
+  const next = () => {
+    if (isLast) return;
+    silentAutoSave();
+    setStep(STEP_ORDER[stepIndex + 1]);
+  };
+  const back = () => {
+    if (isFirst) return;
+    silentAutoSave();
+    setStep(STEP_ORDER[stepIndex - 1]);
+  };
+  const handleClose = () => {
+    silentAutoSave();
+    onClose();
+  };
 
   const handleFinish = async () => {
     await upsert.mutateAsync({
