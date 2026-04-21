@@ -15266,6 +15266,7 @@ export type Database = {
           setup_completed_at: string | null
           setup_intent: string[]
           setup_source: string | null
+          signup_source: string | null
           slug: string
           source_software: string | null
           status: string | null
@@ -15327,6 +15328,7 @@ export type Database = {
           setup_completed_at?: string | null
           setup_intent?: string[]
           setup_source?: string | null
+          signup_source?: string | null
           slug: string
           source_software?: string | null
           status?: string | null
@@ -15388,6 +15390,7 @@ export type Database = {
           setup_completed_at?: string | null
           setup_intent?: string[]
           setup_source?: string | null
+          signup_source?: string | null
           slug?: string
           source_software?: string | null
           status?: string | null
