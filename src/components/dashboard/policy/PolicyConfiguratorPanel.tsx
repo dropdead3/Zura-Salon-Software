@@ -160,6 +160,14 @@ export function PolicyConfiguratorPanel({
   const nonApplicable = applicabilityReason(entry, orgProfile);
 
   const [values, setValues] = useState<Record<string, unknown>>({});
+  // Tracks longtext fields the operator has manually typed in. Once a key is
+  // in this set, the reactive role-token re-substitution effect will not
+  // overwrite it (operator edits are sacred). Persists across renders.
+  const userEditedFieldsRef = useRef<Set<string>>(new Set());
+  // Snapshot of the platform-authored defaults for longtext fields. Used by
+  // the reactive effect to recompute substitutions from the original template
+  // when a referenced rule value (e.g., `authority_role`) changes.
+  const longtextDefaultsRef = useRef<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
   const [step, setStep] = useState<StepId>('rules');
   const [acksOpen, setAcksOpen] = useState(false);
