@@ -17,7 +17,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Check, Pencil, AlertCircle, MapPin, Upload, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -91,6 +93,8 @@ export function PolicySetupWizard({ onClose, onCompleted }: Props) {
   const defaults = usePolicyProfileDefaults();
   const upsert = useUpsertPolicyOrgProfile();
   const adopt = useAdoptPoliciesFromLibrary();
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
 
   const [step, setStep] = useState<WizardStep>('confirm');
 
