@@ -14388,7 +14388,7 @@ export type Database = {
       }
       org_setup_drafts: {
         Row: {
-          current_step: string | null
+          current_step: number | null
           id: string
           organization_id: string
           started_at: string
@@ -14397,7 +14397,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          current_step?: string | null
+          current_step?: number | null
           id?: string
           organization_id: string
           started_at?: string
@@ -14406,7 +14406,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          current_step?: string | null
+          current_step?: number | null
           id?: string
           organization_id?: string
           started_at?: string
