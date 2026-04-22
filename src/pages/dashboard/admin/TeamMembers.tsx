@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, UsersRound, Mail, Key } from 'lucide-react';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -22,8 +22,10 @@ import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { TeamPinManagementTab } from '@/components/access-hub/TeamPinManagementTab';
 
-type TeamView = 'roster' | 'bulk-roles' | 'invitations' | 'pins';
-const VALID_VIEWS: TeamView[] = ['roster', 'bulk-roles', 'invitations', 'pins'];
+type TeamView = 'roster' | 'invitations' | 'pins';
+const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'pins'];
+type RosterMode = 'card' | 'table';
+const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
 const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
   { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'] },
@@ -92,19 +94,48 @@ export default function TeamMembers() {
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
   const canManage = isSuperAdmin || isPlatformUser;
 
-  const viewParam = searchParams.get('view') as TeamView | null;
+  const viewParam = searchParams.get('view');
+  const modeParam = searchParams.get('mode');
+
+  // Legacy redirect: ?view=bulk-roles → ?mode=table (Roster, Table mode)
+  useEffect(() => {
+    if (viewParam === 'bulk-roles') {
+      const params = new URLSearchParams(searchParams);
+      params.delete('view');
+      params.set('mode', 'table');
+      setSearchParams(params, { replace: true });
+    }
+  }, [viewParam, searchParams, setSearchParams]);
+
   const view: TeamView = VALID_VIEWS.includes(viewParam as TeamView) ? (viewParam as TeamView) : 'roster';
+
+  // Auto-default to table for ≥15 members (only when no explicit URL mode)
+  const autoMode: RosterMode = (members?.length ?? 0) >= 15 ? 'table' : 'card';
+  const persistedMode = (typeof window !== 'undefined' ? (localStorage.getItem(VIEW_MODE_KEY) as RosterMode | null) : null);
+  const rosterMode: RosterMode = (modeParam === 'card' || modeParam === 'table')
+    ? modeParam
+    : (persistedMode ?? autoMode);
+
+  useEffect(() => {
+    if (modeParam === 'card' || modeParam === 'table') {
+      localStorage.setItem(VIEW_MODE_KEY, modeParam);
+    }
+  }, [modeParam]);
 
   const handleViewChange = (next: string) => {
     const v = next as TeamView;
-    if (v === 'roster') {
-      // Drop the param entirely for the default view
-      const params = new URLSearchParams(searchParams);
-      params.delete('view');
-      setSearchParams(params);
-    } else {
-      setSearchParams({ view: v });
-    }
+    const params = new URLSearchParams(searchParams);
+    params.delete('view');
+    params.delete('mode');
+    if (v !== 'roster') params.set('view', v);
+    setSearchParams(params);
+  };
+
+  const handleRosterModeChange = (next: RosterMode) => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('view');
+    params.set('mode', next);
+    setSearchParams(params);
   };
 
   const filtered = useMemo(() => {
@@ -157,10 +188,6 @@ export default function TeamMembers() {
               <Users className="h-4 w-4" />
               Roster
             </TabsTrigger>
-            <TabsTrigger value="bulk-roles" className="gap-2">
-              <UsersRound className="h-4 w-4" />
-              Bulk Roles
-            </TabsTrigger>
             <TabsTrigger value="invitations" className="gap-2">
               <Mail className="h-4 w-4" />
               Invitations
@@ -174,17 +201,49 @@ export default function TeamMembers() {
 
         {view === 'roster' && (
           <>
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+            {/* Card mode: search + categorized list. Table mode: full UserRolesTab (filters, stat tiles, bulk actions, location grouping). */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              {rosterMode === 'card' ? (
+                <div className="relative max-w-md flex-1 min-w-[240px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or email…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              ) : (
+                <div />
+              )}
+
+              <div className="inline-flex items-center gap-1 p-1 rounded-lg border border-border bg-muted/40">
+                <Button
+                  type="button"
+                  variant={rosterMode === 'card' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => handleRosterModeChange('card')}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Cards
+                </Button>
+                <Button
+                  type="button"
+                  variant={rosterMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => handleRosterModeChange('table')}
+                >
+                  <TableIcon className="h-3.5 w-3.5" />
+                  Table
+                </Button>
+              </div>
             </div>
 
-            {isLoading ? (
+            {rosterMode === 'table' ? (
+              <UserRolesTab canManage={canManage} />
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
@@ -242,7 +301,6 @@ export default function TeamMembers() {
           </>
         )}
 
-        {view === 'bulk-roles' && <UserRolesTab canManage={canManage} />}
         {view === 'invitations' && <InvitationsTab canManage={canManage} />}
         {view === 'pins' && <TeamPinManagementTab canManage={canManage} />}
       </div>
