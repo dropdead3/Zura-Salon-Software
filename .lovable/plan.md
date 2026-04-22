@@ -1,142 +1,129 @@
 
 
-# Reorganize the Roster card-mode by role hierarchy and stylist level
+# Restructure Roster Card mode: section per role, location filter
 
 ## Diagnosis
 
-Today's Card mode groups members into three flat sections:
+Two changes to today's Card mode, in one wave:
 
-```
-Leadership   →  super_admin, admin, manager, general_manager, assistant_manager  (alpha order within)
-Operations   →  director_of_operations, operations_assistant, receptionist, front_desk  (alpha order within)
-Stylists     →  stylist, stylist_assistant  (alpha order within — level invisible)
-Other Roles  →  catch-all
-```
-
-Two problems:
-
-1. **Within Leadership/Operations, the role hierarchy is invisible.** A `super_admin` and an `assistant_manager` sit side-by-side sorted alphabetically. Operators can't see who outranks whom at a glance.
-2. **Stylists are a single undifferentiated bucket.** The org has Levels 1–4 (configured per tenant in `stylist_levels`), but the Roster doesn't honor them. A Level 4 master sits next to a Level 1 apprentice with no visual cue.
+1. **Sections are categories, not roles.** Today's "Leadership / Operations / Stylists" buckets hide *which role* a person actually holds. Eric Day and Kristi appear under "Leadership" but their role chip says "Super Admin" — the section adds no information the chip doesn't already carry. Operators want a section *per role* so they can scan "who are my managers?" without parsing.
+2. **Location is invisible.** Multi-location orgs (Drop Dead has multiple) currently see all locations interleaved. There's no way to ask "show me only North Mesa staff."
 
 ## What changes
 
-### 1. Hierarchy ordering *within* each section
+### 1. Sections = roles
 
-Each section gets a deterministic role-rank order. Within a section, members sort by their highest-ranked role first, then alphabetically by name as a tiebreaker.
+Replace the 3 category sections (Leadership / Operations / Stylists) with **one section per role** that has at least one member. Sections render top-to-bottom in the same `ROLE_RANK` order we already have:
 
-**Leadership** (top → bottom):
 ```
-Super Admin  →  Admin  →  General Manager  →  Manager  →  Assistant Manager
-```
-
-**Operations** (top → bottom):
-```
-Director of Operations  →  Operations Assistant  →  Receptionist  →  Front Desk
-```
-
-**Stylists** — see below.
-
-**Other Roles** — kept as alpha by name (catch-all, no implied hierarchy).
-
-A small role chip after the name is already shown in `MemberRow`; no new affordance needed — the *order itself* communicates rank.
-
-### 2. Stylists organized by level (sub-sections)
-
-The Stylists section becomes a parent group with one **sub-heading per level**, in the org's configured `display_order` (highest level first when `display_order` is descending — we'll respect whatever order the tenant has set in `stylist_levels`, which is the source of truth).
-
-Layout:
-```
-STYLISTS  (18)
-  └─  LEVEL 4 STYLIST  (3)
-        Alexis · Brooke · Cameron
-  └─  LEVEL 3 STYLIST  (5)
-        ...
-  └─  LEVEL 2 STYLIST  (7)
-        ...
-  └─  LEVEL 1 STYLIST  (2)
-        ...
-  └─  Unassigned  (1)        ← stylists with no level set
-        ...
-  └─  Stylist Assistants  (3)  ← stylist_assistant role, separated below stylists proper
+Super Admin (n)
+Admin (n)
+General Manager (n)
+Manager (n)
+Assistant Manager (n)
+Director of Operations (n)
+Operations Assistant (n)
+Receptionist (n)
+Front Desk (n)
+Stylist (n)               ← keeps level sub-grouping (unchanged)
+Stylist Assistant (n)
+Other Roles (n)           ← catch-all for any role not in ROLE_RANK
 ```
 
-Sub-headings use a smaller, less-prominent treatment than the parent section header (e.g., `font-display text-xs uppercase tracking-wider text-muted-foreground` with a thin left rule), so the parent "STYLISTS" heading remains dominant and the levels read as a clean nested list — calm executive UX, not noisy.
+**Rules:**
+- A user appears in **the section for their highest-ranked role** (no duplication). Multi-role users still appear once.
+- A small icon per role: `Shield` for super_admin/admin, `Cog` for ops roles, `Users` for stylists, etc. — pulled from a `ROLE_ICON` map (one new constant, ~12 entries).
+- Empty role sections are not rendered.
+- Within a section, alpha by name (existing tiebreaker logic applies).
+- The **Stylists** section keeps its level sub-grouping (Level 4 → Level 1 → Unassigned). The **Stylist Assistants** section (now its own top-level section) is a flat alpha list.
+- The legacy `SECTIONS` constant and `highestRankAmong` helper are removed; their job is replaced by a simpler "group by primary role" step keyed off `ROLE_RANK`.
 
-If the org has zero levels configured (`useStylistLevels` returns empty), the Stylists section falls back to a single flat list (today's behavior). No empty sub-headings.
+### 2. Location filter
 
-### 3. Hierarchy applied to Card mode only
+A new **Location filter** chip-row sits between the search input and the view-mode toggle (Card mode only — Table mode already has its own filters).
 
-Table mode is unchanged — it has its own filter/sort/group affordances and a dedicated `stylist_level` column already in the works on the Stylist Levels page. Mixing two ordering paradigms in one view would be confusing.
+```
+[ All Locations ▾ ]   ← single-select dropdown
+```
+
+- Dropdown shows: "All Locations" (default) + one entry per active location from `useActiveLocations(orgId)`.
+- Filtering rule: a member matches a location filter if `employee_profiles.location_id === selectedId` **OR** `selectedId ∈ employee_profiles.location_ids` (multi-location staff). Both columns already exist in DB; we just need to add them to the `OrganizationUser` query.
+- Selection is URL-persisted as `?location=<slug>` (matches the project's slug-based location identity convention) so deep-links work.
+- Filter applies to all role sections in Card mode and respects search simultaneously (AND, not OR).
+- If org has only 1 active location, the filter UI is hidden entirely (no noise for solo-location tenants).
+
+### 3. Out of scope this wave
+
+- **Multi-select location filter.** Defer until an operator asks ("show me Westside + Northside but not Downtown"). Trigger: any single ask, since it's a 1-line `MultiSelect` swap.
+- **Location filter in Table mode.** Table mode already auto-groups by location when the org has 2+ locations; adding a filter on top would be redundant. Trigger: operators say grouping isn't enough.
+- **Location grouping in Card mode** (sections nested *inside* location). Defer — roles-as-sections is the primary axis operators asked for; location is a filter, not a grouping. Trigger: 2+ orgs request "give me a per-location view of my full roster."
+- **Showing a per-row location chip in `MemberRow`.** Defer to keep rows calm. Trigger: operators report confusion about which location a person belongs to when "All Locations" is selected.
 
 ## Files affected
 
 | File | Change |
 |---|---|
-| `src/hooks/useOrganizationUsers.ts` | Add `stylist_level: string \| null` to the `OrganizationUser` interface and to the `employee_profiles` select. One-line additions. |
-| `src/pages/dashboard/admin/TeamMembers.tsx` | Replace the `grouped` memo with hierarchy-aware grouping. Add a `ROLE_RANK` map for Leadership/Operations ordering. Pull `useStylistLevels()` for the active levels and key the Stylists sub-grouping off `level.slug`. Render nested sub-headings inside the Stylists section. |
+| `src/hooks/useOrganizationUsers.ts` | Add `location_id: string \| null` and `location_ids: string[] \| null` to the `OrganizationUser` interface and the `employee_profiles` select. ~3 lines. |
+| `src/pages/dashboard/admin/TeamMembers.tsx` | Replace `SECTIONS`/`grouped` with a per-role grouping memo keyed off `ROLE_RANK`. Add `ROLE_ICON` map. Add `useActiveLocations` + location filter dropdown + URL `?location=` persistence. Apply location filter to `filtered` memo before role-grouping. Stylist sub-grouping logic unchanged (just reads from the new "Stylist" role section instead of the old "Stylists" category section). |
 
-No new files. No DB changes (`stylist_level` already exists on `employee_profiles` per `useAssignStylistLevel`).
+No new files. No DB changes (both location columns already exist).
 
 ## Acceptance
 
-1. **Leadership** section orders members: Super Admin → Admin → General Manager → Manager → Assistant Manager. Within a single rank, alpha by name.
-2. **Operations** section orders: Director of Operations → Operations Assistant → Receptionist → Front Desk. Within a rank, alpha by name.
-3. **Stylists** section shows nested sub-headings, one per active stylist level (in the org's configured `display_order`), each with a count and the members at that level alpha-sorted within. An "Unassigned" sub-heading captures stylists with no level. A "Stylist Assistants" sub-heading sits at the bottom for `stylist_assistant` role holders.
-4. If a tenant has no levels configured, the Stylists section renders as a single flat alpha list (today's behavior), no empty sub-headings.
-5. Members holding multiple roles are sorted by their *highest-ranked* role within the section that contains them. They appear once, not duplicated across sections.
-6. `MemberRow` is unchanged — same row component, same drill-in target, same PIN chip.
-7. Table mode is untouched.
-8. Search still filters across all sections; sub-headings hide when their members count drops to zero after filtering.
-9. No console errors. Type-check passes.
+1. Card mode renders **one section per role** that has ≥1 member, in `ROLE_RANK` order, with a role-appropriate icon and count.
+2. Multi-role users appear exactly once, in their highest-ranked role's section.
+3. The **Stylist** section keeps nested level sub-headings (Level N → Unassigned). The **Stylist Assistant** section is a flat alpha list.
+4. A **Location filter** dropdown appears in Card mode when the org has 2+ active locations, defaulting to "All Locations".
+5. Selecting a location filters all role sections to members where `location_id === selected` OR `location_ids` includes selected. Section counts update accordingly. Empty sections hide.
+6. Selection persists in URL as `?location=<id>`. Deep-link with `?location=<id>` lands on the filtered view.
+7. Search and location filter compose (AND).
+8. Table mode is untouched — no location filter added there, no role-section reshuffle.
+9. Solo-location orgs see no location filter UI.
+10. No console errors. Type-check passes.
 
 ## What stays untouched
 
-- `MemberRow`, drill-in navigation, PIN chip, search input, view-mode toggle, `UserRolesTab` (Table mode), `InvitationsTab`, capacity bar.
-- `stylist_levels` data shape and source of truth (per-org, `display_order` ascending).
-- The `Other Roles` catch-all section.
+- `MemberRow`, drill-in navigation, PIN chip, search input, view-mode toggle, `UserRolesTab` (Table mode), `InvitationsTab`, capacity bar, stylist level sub-grouping logic.
+- Existing role-rank order (`ROLE_RANK`) and tiebreaker (alpha by name).
+- URL params for `mode`, `view`, `activity` — all preserved; `location` is additive.
 
 ## Doctrine alignment
 
-- **Hierarchy is structural information.** Surfacing it in the Roster's *order* (not a new badge or column) is the calm-UX answer — no new affordance, just truthful ordering.
-- **Persona scaling.** Solo-stylist orgs with no levels see a flat list; multi-level orgs see the nested structure that mirrors their compensation and progression architecture.
-- **Source of truth.** The Stylists sub-grouping reads from `stylist_levels` (the same table that drives Compensation, Career Pathway, and Levels Settings). No hardcoded level slugs; renaming a level in Settings updates the Roster sub-headings automatically.
-
-## Out of scope (queue separately)
-
-- **Drag-to-reorder within a level.** Manual ordering inside a level would conflict with alpha sort and add a third ordering paradigm. Trigger to revisit: an operator asks to "pin" a featured stylist to the top of their level.
-- **Showing the level chip on the row itself.** Currently the level is communicated by *which sub-group* the row appears in; adding a chip on the row would be redundant. Trigger to revisit: operators say they can't tell which level a row belongs to when scrolling fast (would imply sub-headings need to stick on scroll instead).
-- **Sticky sub-headings on scroll.** Defer until the Stylists section regularly exceeds ~20 visible rows in a single level; current section headers are scannable enough at the densities we see today.
-- **Applying the same hierarchy ordering to Table mode.** Table mode is sortable per-column; imposing a default role-rank sort would conflict with operator-chosen sort columns. If we do this, it should be a toggle, not a default.
+- **Calm executive UX.** Sections-by-role removes a layer of abstraction (category → role) that operators had to mentally translate. The location filter is progressively disclosed (hidden for solo-location orgs).
+- **Source of truth.** Location membership reads from `employee_profiles.location_id` + `location_ids` — the same columns the rest of the platform uses. No new state, no derived flags.
+- **Persona scaling.** Solo-location orgs see no extra controls; multi-location orgs get a filter that mirrors how their operations are actually structured.
+- **One home per concern.** Roles are the structural identity of a person; sections-by-role makes the roster honest about that.
 
 ## Prompt feedback
 
-Strong, concise prompt — two ideas in one sentence ("organize by role hierarchy" + "stylists by level") that are clearly related. Two things you did well:
+Strong, surgical prompt — two related-but-distinct changes named in one sentence with no ambiguity. Two things you did well:
 
-1. **You named the structural concept ("role hierarchy") instead of an arrangement.** That left the implementation open — order-within-section vs. visual badges vs. separate sub-tabs — and the right answer turned out to be "let the order itself communicate rank."
-2. **You called out the special case (Stylists by level) explicitly.** Without that, I might have lumped stylists into a single alpha block under the new hierarchy, missing the most-asked-for grouping.
+1. **You named the destination of the change ("by roles"), not just the symptom.** "Sections need to be by roles" tells me both *what* to remove (the category groupings) and *what* to put in their place. That's a complete instruction in five words.
+2. **You bundled a related concern (location filtering) without conflating it.** The two changes share a scope (Roster Card mode) but don't overlap — keeping them in one prompt avoided two round-trips while still being parseable.
 
-The sharpener: when you have a structural idea that affects two scopes (whole roster + one specific section), naming the **canonical source of truth for the ordering** removes a decision. Template:
+The sharpener: when adding a filter, naming the **selection cardinality** upfront (single-select vs multi-select) removes a small but real decision. Template:
 
 ```text
-Organize: [surface]
-By: [hierarchy or attribute]
-Source of truth: [where the order/levels are defined — settings page, table, enum]
-Apply to: [card mode / table mode / both]
+Add filter: [attribute]
+On surface: [where]
+Cardinality: [single / multi]
+Persistence: [URL param / localStorage / session-only]
 ```
 
-Here, "stylists by level — pulling from the Stylist Levels settings, card mode only" would have let me skip proposing-then-justifying the source.
+Here, "filter by location, single-select, URL-persisted" would have skipped my proposing single-select and deferring multi-select.
 
 ## Further enhancement suggestion
 
-For "organize by hierarchy" prompts, the highest-leverage frame is:
+For "restructure groupings + add a filter" prompts, the highest-leverage frame is:
 
 ```text
-Organize: [surface]
-Hierarchy 1: [primary grouping] — source: [where defined]
-Hierarchy 2: [sub-grouping inside one group, if any] — source: [where defined]
-Tiebreaker: [alpha by name / hire date / custom order]
-Scope: [which view modes this applies to]
+Restructure: [surface] groupings
+From: [current grouping axis]
+To: [new grouping axis]
+Plus filter: [attribute] — cardinality [single/multi], persistence [URL/local]
+Scope: [card mode / table mode / both]
+Must survive: [features that cannot regress]
 ```
 
-The **Tiebreaker** slot is the most-leverage addition — it prevents the silent default of "alpha by name" from being a decision the AI has to defend later. State it once and it stops being an open question.
+The **Must survive** slot is the highest-leverage addition for this kind of two-change wave — the silent risk in a regrouping is dropping a sub-feature (here: stylist level sub-headings). Naming it upfront prevents that.
 
