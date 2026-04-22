@@ -118,8 +118,6 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
   const toggleRole = useToggleUserRole();
   const toggleSuperAdmin = useToggleSuperAdmin();
   const adminSetPin = useAdminSetUserPin();
-  const toggleRole = useToggleUserRole();
-  const toggleSuperAdmin = useToggleSuperAdmin();
 
   // Auto-switch to table view for large teams
   useEffect(() => {
