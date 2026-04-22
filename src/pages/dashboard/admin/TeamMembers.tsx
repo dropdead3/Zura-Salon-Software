@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -16,14 +17,14 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTeamPinStatus } from '@/hooks/useUserPin';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
-import { TeamPinManagementTab } from '@/components/access-hub/TeamPinManagementTab';
 
-type TeamView = 'roster' | 'invitations' | 'pins';
-const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'pins'];
+type TeamView = 'roster' | 'invitations';
+const VALID_VIEWS: TeamView[] = ['roster', 'invitations'];
 type RosterMode = 'card' | 'table';
 const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
@@ -39,7 +40,7 @@ function roleLabel(role: string) {
   return role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-function MemberRow({ user, onClick }: { user: OrganizationUser; onClick: () => void }) {
+function MemberRow({ user, hasPin, onClick }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void }) {
   const name = user.display_name || user.full_name || 'Unnamed';
   const initials = name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
   const primaryRole = user.roles?.[0];
@@ -75,6 +76,26 @@ function MemberRow({ user, onClick }: { user: OrganizationUser; onClick: () => v
           )}
         </div>
       </div>
+      {hasPin !== undefined && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(
+                'inline-flex items-center justify-center h-7 w-7 rounded-md border shrink-0',
+                hasPin
+                  ? 'bg-primary/10 border-primary/30 text-primary'
+                  : 'bg-muted/40 border-border text-muted-foreground/60',
+              )}
+              aria-label={hasPin ? 'PIN set' : 'No PIN'}
+            >
+              <Key className="h-3.5 w-3.5" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {hasPin ? 'Quick-login PIN set' : 'No PIN set — manage in Security'}
+          </TooltipContent>
+        </Tooltip>
+      )}
       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
     </button>
   );
@@ -86,6 +107,7 @@ export default function TeamMembers() {
   const { effectiveOrganization } = useOrganizationContext();
   const { roles, isPlatformUser } = useAuth();
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
+  const { data: pinTeam = [] } = useTeamPinStatus();
   const capacity = useBusinessCapacity();
   const [search, setSearch] = useState('');
   const [seatsDialogOpen, setSeatsDialogOpen] = useState(false);
@@ -97,12 +119,20 @@ export default function TeamMembers() {
   const viewParam = searchParams.get('view');
   const modeParam = searchParams.get('mode');
 
-  // Legacy redirect: ?view=bulk-roles → ?mode=table (Roster, Table mode)
+  // Legacy redirects:
+  //   ?view=bulk-roles → ?mode=table (Roster, Table mode)
+  //   ?view=pins      → ?mode=table&activity=pins (Roster, Table mode, PIN Activity expanded)
   useEffect(() => {
     if (viewParam === 'bulk-roles') {
       const params = new URLSearchParams(searchParams);
       params.delete('view');
       params.set('mode', 'table');
+      setSearchParams(params, { replace: true });
+    } else if (viewParam === 'pins') {
+      const params = new URLSearchParams(searchParams);
+      params.delete('view');
+      params.set('mode', 'table');
+      params.set('activity', 'pins');
       setSearchParams(params, { replace: true });
     }
   }, [viewParam, searchParams, setSearchParams]);
@@ -127,6 +157,7 @@ export default function TeamMembers() {
     const params = new URLSearchParams(searchParams);
     params.delete('view');
     params.delete('mode');
+    params.delete('activity');
     if (v !== 'roster') params.set('view', v);
     setSearchParams(params);
   };
@@ -137,6 +168,12 @@ export default function TeamMembers() {
     params.set('mode', next);
     setSearchParams(params);
   };
+
+  const pinByUser = useMemo(() => {
+    const m = new Map<string, boolean>();
+    pinTeam.forEach(p => m.set(p.user_id, p.has_pin));
+    return m;
+  }, [pinTeam]);
 
   const filtered = useMemo(() => {
     if (!members) return [];
@@ -192,16 +229,12 @@ export default function TeamMembers() {
               <Mail className="h-4 w-4" />
               Invitations
             </TabsTrigger>
-            <TabsTrigger value="pins" className="gap-2">
-              <Key className="h-4 w-4" />
-              PIN Management
-            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {view === 'roster' && (
           <>
-            {/* Card mode: search + categorized list. Table mode: full UserRolesTab (filters, stat tiles, bulk actions, location grouping). */}
+            {/* Card mode: search + categorized list. Table mode: full UserRolesTab (filters, stat tiles, bulk actions, location grouping, PIN column, PIN activity). */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
               {rosterMode === 'card' ? (
                 <div className="relative max-w-md flex-1 min-w-[240px]">
@@ -271,6 +304,7 @@ export default function TeamMembers() {
                           <MemberRow
                             key={m.user_id}
                             user={m}
+                            hasPin={pinByUser.get(m.user_id)}
                             onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
                           />
                         ))}
@@ -290,6 +324,7 @@ export default function TeamMembers() {
                         <MemberRow
                           key={m.user_id}
                           user={m}
+                          hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
                         />
                       ))}
@@ -302,7 +337,6 @@ export default function TeamMembers() {
         )}
 
         {view === 'invitations' && <InvitationsTab canManage={canManage} />}
-        {view === 'pins' && <TeamPinManagementTab canManage={canManage} />}
       </div>
 
       <AddUserSeatsDialog open={seatsDialogOpen} onOpenChange={setSeatsDialogOpen} capacity={capacity} />

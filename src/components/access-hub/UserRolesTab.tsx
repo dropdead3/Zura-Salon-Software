@@ -801,6 +801,17 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
           userName={responsibilityDialog.userName}
         />
       )}
+
+      {/* Admin Set/Change/Clear PIN Dialog */}
+      <AdminSetPinDialog
+        open={!!pinDialog}
+        onOpenChange={(open) => !open && setPinDialog(null)}
+        member={pinDialog?.target ?? null}
+        mode={pinDialog?.mode === 'clear' ? 'clear' : 'set'}
+      />
+
+      {/* PIN Activity panel — collapsible org-wide change history */}
+      {canManage && <PinActivityPanel />}
     </div>
   );
 }
