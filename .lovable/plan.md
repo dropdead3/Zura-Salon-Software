@@ -1,76 +1,61 @@
 
 
-# Fix the Tone dropdown — use the shared SelectItem's `description` prop
+# Strip the route slug from surface descriptions
 
-## What's actually broken
+## What's wrong
 
-The previous fix (`textValue`) didn't land because Radix's `<SelectValue>` mirrors **everything inside `<SelectPrimitive.ItemText>`** into the trigger — `textValue` only changes the announce/search string, not what gets visually rendered. The label + description stack is currently being passed as `children`, which means it's all inside `ItemText`, which means the trigger displays the entire stacked block (centered by the trigger's flex layout).
+The `client_page` surface description reads: **"Public client-facing policy page (/book/:org/policies)."** That parenthetical is a route pattern with a placeholder variable — it's how an engineer documents a path, not how an operator thinks about where their policy shows up. The title above it ("Client Policy Page") already says everything the operator needs.
 
-Meanwhile the shared primitive `src/components/ui/select.tsx` already solved this exact case — `SelectItem` accepts a `description` prop that renders the description **outside** `SelectPrimitive.ItemText`. Anything outside `ItemText` does not leak into the trigger. The caller just isn't using that prop.
+While I'm in there, two of the other six surface descriptions use slightly stiff phrasing worth a light pass — but the only outright leak is the slug.
 
 ## What ships
 
-A 5-line edit inside the existing `<Select>` block. No primitive changes, no new components, no new tokens.
+A copy-only edit to `SURFACE_META` in `src/hooks/policy/usePolicyApplicability.ts`. No structural changes, no logic changes, no token changes.
 
-### The change
+### Description rewrites
 
-Replace lines 170-184 in `src/components/dashboard/policy/PolicySurfaceEditor.tsx`:
+| Surface | Current | Replace with |
+|---|---|---|
+| `client_page` | "Public client-facing policy page (/book/:org/policies)." | "Shown on your public policy page that clients can browse anytime." |
+| `handbook` | "Internal team-facing handbook section." | "Lives in the staff handbook for your team to reference." |
+| `booking` | "Inline disclosure shown before a client confirms a booking." | "Shown to clients right before they confirm a booking." |
+| `checkout` | "Rules enforced at checkout (deposits, fees, surcharges)." | "Applied at checkout — deposits, fees, and surcharges." |
+| `intake` | "Required acknowledgment during consultation or intake form." | "Clients agree to this during consultation or intake." |
+| `manager` | "Quick-reference card surfaced when staff need to make exception calls." | "Quick reference for managers when staff need an exception call." |
+| `sop` | "Step-by-step procedural reference for staff execution." | "Step-by-step guide your team follows to do this consistently." |
 
-```tsx
-{allowedVariants.map((v) => (
-  <SelectItem
-    key={v}
-    value={v}
-    description={VARIANT_META[v].description}
-  >
-    {VARIANT_META[v].label}
-  </SelectItem>
-))}
-```
+The `client_page` change is the operator's actual ask. The other six are minor: removing words like "surface," "render," "execution," and route patterns; landing each on a sentence a salon owner reads naturally.
 
-That's it. The label is the only child (so it's the only thing in `ItemText`, so it's the only thing the trigger displays). The description rides along via the prop, rendered as a sibling span inside the menu item — visible in the dropdown, invisible in the trigger.
+### What stays untouched
 
-The current shared primitive renders description **inline** to the right of the label (`flex items-center gap-2`). For a long description like "Plain-language version for clients." this could push the menu item width too wide on smaller dropdowns. If we want the stacked label-over-description look the operator currently sees in the menu, we need to also wrap description in a small layout tweak inside the primitive — but that's a primitive change with cross-codebase impact.
-
-## Decision: which menu look do you want
-
-**Option A — inline description (zero primitive risk):**
-Menu items show "Client · Plain-language version for clients." on a single line (label, then muted description after a separator). Trigger shows just "Client". Zero primitive changes. Lowest risk, ships immediately.
-
-**Option B — stacked description (matches current menu look):**
-Menu items show label on top, description on a smaller muted line below. Trigger shows just "Client". Requires modifying the shared primitive's `description` slot from `flex items-center gap-2` to `flex flex-col` — affects every other Select in the codebase that uses the `description` prop. I'll grep first to confirm the blast radius, but at minimum we'd want to make stacking opt-in via a second prop (`descriptionPlacement="below"`) rather than a global change.
-
-**Recommendation: ship Option A first** because it is the only change that's truly local and risk-free. If you want the stacked look back, file it as a follow-up that touches the primitive intentionally with the right prop API. The screenshot you uploaded shows the menu currently displays in a stacked layout because the description is inside `children` — once we move it to the prop, the menu changes look. That's the unavoidable tradeoff of routing it through the shared primitive.
-
-## What stays untouched
-
-- `src/components/ui/select.tsx` — unchanged.
-- The trigger styling, the surface card layout, the save logic.
-- All other Selects in the codebase.
+- `label` and `shortLabel` for every surface — those already work for operators.
+- `audience`, `defaultVariant`, `icon` — pure data fields.
+- The compatibility logic (`isSurfaceCompatibleWithAudience`) and every consumer of `SURFACE_META`.
+- All other policy components.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicySurfaceEditor.tsx` — lines 170–184 collapsed to ~6 lines. Zero behavior change.
+- `src/hooks/policy/usePolicyApplicability.ts` — 7 description strings updated. ~7 lines modified.
 
-Total: ~10 lines modified, 0 files created, 0 schema changes.
+Total: ~7 lines modified, 0 files created, 0 schema changes, 0 logic changes.
 
 ## Acceptance
 
-1. Open `/org/drop-dead-salons/dashboard/admin/policies?policy=booking_policy` → enable any surface → the **Written for** trigger displays only the variant label ("Client") on a single line, left-aligned, chevron flush right. No description visible inside the trigger pill.
-2. Open the dropdown → each option shows "Client" as the primary text with the description rendered alongside in a muted style (inline per Option A, or stacked if you choose Option B).
-3. Picking a different option updates the trigger to show only the new label.
-4. No other dropdown in the dashboard shifts visually.
+1. Open `/org/drop-dead-salons/dashboard/admin/policies?policy=booking_policy` → Surface mapping → the **Client Policy Page** card description no longer contains `(/book/:org/policies)` or any route pattern.
+2. The other six surface cards read naturally to a non-technical operator (no "render," no "surface," no "execution").
+3. Surface mapping behavior is unchanged: toggling, tone selection, save still work identically.
+4. Three other consumers of `SURFACE_META` (`PolicyLibraryRow`, `PolicyLibraryCard`, `PolicyConflictBanner`, `ConflictRow`) display the same descriptions in their tooltips/badges — they'll inherit the cleaner copy automatically.
 
 ## Files to read for follow-on questions
 
-- `src/components/dashboard/policy/PolicySurfaceEditor.tsx` — the only file changed.
-- `src/components/ui/select.tsx` — confirms the `description` prop already exists and how it renders.
+- `src/hooks/policy/usePolicyApplicability.ts` — the only file changed.
+- The four `SURFACE_META` consumers listed above — unchanged but worth knowing they share this dictionary.
 
 ## Prompt feedback
 
-Tight prompt with a useful constraint: **"inside the bubble"** told me the trigger pill itself is what's still wrong, which immediately ruled out the menu items as the failure point and pointed me at the trigger's content rendering. The screenshot confirmed the symptom (label + description still stacked inside the pill). Two-word location anchors like that are high-leverage — they keep me from re-investigating the parts that already work.
+Sharp prompt with one move that made the diagnosis trivial: **"the slug page"** — naming the specific offending element by its category (it's a slug, not a description, not a label) told me you'd already identified the leak as a routing detail rather than a copy-tone problem. That distinction matters because the fix for "this description sounds stiff" is different from the fix for "this exposes engineering implementation." You named the second category, which is the more important one to scrub.
 
-The sharpener: when a previous fix didn't land, naming **what the previous fix was supposed to do** in three words ("textValue didn't help" / "still showing both") would let me skip re-deriving the prior attempt. I had to re-read the file to remember what I shipped last turn before I could see why it didn't take. A one-line "the textValue thing didn't work" upfront saves one read. Same shape as a bug report: *what you tried, what you expected, what you got*.
+The sharpener: **"right?"** invites a binary yes/no, which I want to answer with more than yes — the better answer is "yes, and here are the other six descriptions in the same dictionary that need the same operator-translation pass while the file is open." When you spot one leak in a shared dictionary (`SURFACE_META`, `VARIANT_META`, status enums), it's worth widening the ask to "audit the whole dictionary for the same problem" — single-item edits in shared registries leave half the codebase still showing the bad pattern. Next time, instead of *"we don't need to show the slug here, right?"* try *"audit the SURFACE_META descriptions for engineering leaks"* — that frames the work at the right scope (the registry, not just one card) and saves a follow-up round.
 
-The deeper meta-lesson on my side: when I propose a fix and it doesn't take, my instinct is to add another patch on top. That instinct is wrong. The right move is to **re-read the underlying primitive before patching the caller again** — because the second-most-likely cause of a Radix select trigger showing children verbatim is that the primitive *already* exposes the right escape hatch and the caller isn't using it. In this case the shared `SelectItem` had a `description` prop the whole time. Patching at the call site without reading the primitive would have led to a third round of "still broken." Read the floor before re-stacking the ceiling.
+The deeper meta-lesson on my side: when an operator points to one bad description in a card, my instinct is to fix that one card. That instinct is wrong. The right move is to ask *"is this a one-off string, or is this string coming from a shared dictionary that's leaking the same pattern in five other places?"* In this case `SURFACE_META` is consumed by four other components (`PolicyLibraryRow`, `PolicyLibraryCard`, `PolicyConflictBanner`, `ConflictRow`) — fixing it at the dictionary level cleans all five surfaces at once. Patching at the consumer would have left the slug visible everywhere else and required four more rounds. Same pattern as the primitive vs. caller fix from the last UI bug: trace the string to its source, fix it there, let everything downstream inherit the cleaner version.
 
