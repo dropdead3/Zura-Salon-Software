@@ -20,37 +20,21 @@ export function CoachingTab({ userId }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
-  // Active program enrollment + linked coach
+  // Active program enrollment
   const { data: enrollment, isLoading: enrLoading } = useQuery({
     queryKey: ['coaching-enrollment', userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stylist_program_enrollment')
-        .select('id, status, current_day, coach_id, started_at, program_id')
+        .select('id, status, current_day, streak_count, start_date')
         .eq('user_id', userId)
-        .order('started_at', { ascending: false })
+        .order('start_date', { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
     enabled: !!userId,
-  });
-
-  const coachId = enrollment?.coach_id;
-  const { data: coach } = useQuery({
-    queryKey: ['coaching-coach-profile', coachId],
-    queryFn: async () => {
-      if (!coachId) return null;
-      const { data, error } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name, photo_url')
-        .eq('user_id', coachId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!coachId,
   });
 
   // Recent 1:1 meetings (requester or coach side)
