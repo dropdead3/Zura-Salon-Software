@@ -527,6 +527,8 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
               onSelectionChange={setSelectedUsers}
               locations={locationList}
               onOpenResponsibilities={(userId, userName) => setResponsibilityDialog({ userId, userName })}
+              pinStatusByUser={pinStatusByUser}
+              onOpenPinDialog={openPinDialog}
             />
           </div>
         )}
