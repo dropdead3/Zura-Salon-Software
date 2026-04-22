@@ -40,7 +40,9 @@ export function SidebarLockButton({ isCollapsed = false, inFooter = true }: Side
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          {buttonContent}
+          <div className="relative flex justify-center">
+            {buttonContent}
+          </div>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8} className="font-sans">
           Lock Dashboard
