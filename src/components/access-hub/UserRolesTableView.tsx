@@ -70,6 +70,10 @@ interface UserRolesTableViewProps {
   onSelectionChange: (selected: Set<string>) => void;
   locations: LocationInfo[];
   onOpenResponsibilities: (userId: string, userName: string) => void;
+  /** PIN status by user_id; if undefined, the PIN column is hidden. */
+  pinStatusByUser?: Map<string, PinStatusEntry>;
+  /** Open the shared AdminSetPinDialog for a given user + mode. */
+  onOpenPinDialog?: (userId: string, mode: PinAction) => void;
 }
 
 export function UserRolesTableView({
