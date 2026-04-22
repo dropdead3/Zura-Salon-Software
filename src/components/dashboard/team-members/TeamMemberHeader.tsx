@@ -1,12 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, MapPin, Calendar } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Mail, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
-import { useNavigate } from 'react-router-dom';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import type { OrganizationUser } from '@/hooks/useOrganizationUsers';
 
 interface Props {
@@ -19,15 +17,24 @@ function roleLabel(role: string) {
 }
 
 export function TeamMemberHeader({ member, profile }: Props) {
-  const navigate = useNavigate();
-  const { dashPath } = useOrgDashboardPath();
-  const { isEntitled: connectEnabled } = useConnectEntitlement();
-
   const name = member.display_name || member.full_name || 'Unnamed';
   const initials = name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
   const primaryRole = member.roles?.[0];
   const hireDate = profile?.hire_date ? format(new Date(profile.hire_date), 'MMM yyyy') : null;
   const jobTitle = profile?.job_title;
+  const hasEmail = !!member.email;
+
+  const emailButton = (
+    <Button
+      variant="outline"
+      size={tokens.button.card as any}
+      onClick={() => { if (hasEmail) window.location.href = `mailto:${member.email}`; }}
+      disabled={!hasEmail}
+      className="gap-1.5 shrink-0"
+    >
+      <Mail className="h-4 w-4" /> Email
+    </Button>
+  );
 
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-4 p-5 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm">
@@ -62,15 +69,15 @@ export function TeamMemberHeader({ member, profile }: Props) {
         </div>
       </div>
 
-      {connectEnabled && (
-        <Button
-          variant="outline"
-          size={tokens.button.card as any}
-          onClick={() => navigate(dashPath('/team-chat'))}
-          className="gap-1.5 shrink-0"
-        >
-          <MessageCircle className="h-4 w-4" /> Message
-        </Button>
+      {hasEmail ? emailButton : (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="shrink-0">{emailButton}</span>
+            </TooltipTrigger>
+            <TooltipContent>No email on file</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );
