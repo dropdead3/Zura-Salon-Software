@@ -231,6 +231,35 @@ export function UserRolesTableView({
                         <ResponsibilityBadges userId={user.user_id} />
                       </div>
                     </TableCell>
+                    {showPinColumn && (() => {
+                      const pin = pinStatusByUser!.get(user.user_id);
+                      const hasPin = !!pin?.has_pin;
+                      const isOwnerProtected = !!pin?.is_primary_owner;
+                      return (
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              'gap-1 text-[10px] px-1.5 py-0.5',
+                              hasPin
+                                ? 'border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10'
+                                : 'border-border text-muted-foreground bg-muted/40',
+                            )}
+                          >
+                            <Key className="w-2.5 h-2.5" />
+                            {hasPin ? 'Set' : 'Not set'}
+                          </Badge>
+                          {isOwnerProtected && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Lock className="w-3 h-3 text-muted-foreground inline-block ml-1.5" />
+                              </TooltipTrigger>
+                              <TooltipContent>Account Owner — only they can change their PIN</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                      );
+                    })()}
                     {canManage && (
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -247,6 +276,44 @@ export function UserRolesTableView({
                           >
                             <Award className="w-3.5 h-3.5" />
                           </Button>
+                          {showPinColumn && (() => {
+                            const pin = pinStatusByUser!.get(user.user_id);
+                            const hasPin = !!pin?.has_pin;
+                            const isOwnerProtected = !!pin?.is_primary_owner;
+                            if (isOwnerProtected) return null;
+                            return (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {!hasPin ? (
+                                    <DropdownMenuItem onClick={() => onOpenPinDialog!(user.user_id, 'set')}>
+                                      <Plus className="w-4 h-4 mr-2" />
+                                      Set PIN
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <>
+                                      <DropdownMenuItem onClick={() => onOpenPinDialog!(user.user_id, 'set')}>
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Change PIN
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() => onOpenPinDialog!(user.user_id, 'clear')}
+                                        className="text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Clear PIN
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            );
+                          })()}
                         </div>
                       </TableCell>
                     )}
