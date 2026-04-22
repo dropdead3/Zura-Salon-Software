@@ -36,7 +36,7 @@ import {
   isCoreFunctionPolicy,
   type CoreFunctionPolicyKey,
 } from '@/lib/policy/core-function-policies';
-import type { PolicyLibraryEntry, OrgPolicy } from '@/hooks/policy/usePolicyData';
+import { isPolicyFinalized, type PolicyLibraryEntry, type OrgPolicy } from '@/hooks/policy/usePolicyData';
 
 interface Props {
   /** Library entries already filtered to applicability (no phantom
@@ -75,12 +75,18 @@ export function PoliciesSetupMode({
     (e) => e.recommendation === 'required' && !isCoreFunctionPolicy(e.key),
   );
 
-  const coreAdopted = coreEntries.filter((e) => adoptedByKey.has(e.key)).length;
+  // Completion counts use *finalization* — an approved version must
+  // exist. A row in `policies` with status `drafting` does NOT count.
+  const coreAdopted = coreEntries.filter((e) =>
+    isPolicyFinalized(adoptedByKey.get(e.key)),
+  ).length;
   const coreTotal = coreEntries.length;
   const corePct = coreTotal > 0 ? Math.round((coreAdopted / coreTotal) * 100) : 0;
   const coreComplete = coreTotal > 0 && coreAdopted === coreTotal;
 
-  const requiredAdopted = requiredEntries.filter((e) => adoptedByKey.has(e.key)).length;
+  const requiredAdopted = requiredEntries.filter((e) =>
+    isPolicyFinalized(adoptedByKey.get(e.key)),
+  ).length;
   const requiredTotal = requiredEntries.length;
   const requiredPct =
     requiredTotal > 0 ? Math.round((requiredAdopted / requiredTotal) * 100) : 0;
@@ -89,12 +95,15 @@ export function PoliciesSetupMode({
   const totalRequired = coreTotal + requiredTotal;
   const overallPct = totalRequired > 0 ? Math.round((totalAdopted / totalRequired) * 100) : 0;
 
-  // The single "Next →" pointer — first unadopted Core row, or once
-  // Core is 100%, the first unadopted Required row.
+  // The single "Next →" pointer — first not-finalized Core row, or once
+  // Core is 100%, the first not-finalized Required row. Drafting rows
+  // qualify (they're touched but not done).
   const nextPointerKey = (() => {
-    const firstCore = coreEntries.find((e) => !adoptedByKey.has(e.key));
+    const firstCore = coreEntries.find((e) => !isPolicyFinalized(adoptedByKey.get(e.key)));
     if (firstCore) return firstCore.key;
-    const firstRequired = requiredEntries.find((e) => !adoptedByKey.has(e.key));
+    const firstRequired = requiredEntries.find(
+      (e) => !isPolicyFinalized(adoptedByKey.get(e.key)),
+    );
     return firstRequired?.key ?? null;
   })();
 
