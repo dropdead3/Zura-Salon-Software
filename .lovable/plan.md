@@ -1,77 +1,88 @@
 
 
-# Wire Bookings & Payments into POS settings — as a read-only summary, not a duplicate editor
+# Three enhancements to the POS Cancellations & Fees tab
 
-## The honest answer to your question
+These are additive polish on top of the read-only summary that just shipped. Each one strengthens the source-of-truth contract without re-introducing a write path.
 
-**Smart? Yes — as a jump-link summary card. Dangerous? Yes — if you mean "duplicate the editor here too."**
+## 1. Anchor scrolling on jump-link
 
-Here's the trap. The POS settings page (`/admin/settings?category=terminals`) is already 7 tabs deep: Location Set Up, Hardware, Connectivity, Tipping, Receipts, Display, Afterpay. The operator is there configuring **how the terminal physically behaves**. The cancellation cut-off and no-show fee are **business rules**, not terminal behavior. Different mental model, same data only at the moment of charge.
+Today the jump-link from POS settings → Bookings & Payments sets `?category=bookings-payments&anchor=<section>` but the destination page does nothing with the `anchor` param. The cross-surface handoff dumps the operator at the top of the page and they have to find the section themselves.
 
-The Wave 28.16 plan establishes **Bookings & Payments at `/admin/settings?category=bookings-payments` as the single source of truth** for the booking quartet. If we *also* let operators edit the no-show fee from inside the POS settings tabs, we now have two surfaces writing to `policy_rule_blocks` for `no_show_policy` and the source-of-truth doctrine collapses immediately. That's the Square-pattern win we just bought, thrown away one wave later.
+**Fix:** add a `useEffect` in the Bookings & Payments page that reads `searchParams.get('anchor')`, finds the matching section by `id`, and calls `scrollIntoView({ behavior: 'smooth', block: 'start' })` once data has loaded. Apply matching `id` attributes to each section wrapper (`payment`, `cancellation`, `no-show`, `online-booking`).
 
-What's actually smart is treating POS settings as a **read-only contextual reference** to the rules that govern its behavior, with a single jump-link to edit them.
+Also add a brief flash highlight (250ms `bg-primary/5` ring) on the targeted section so the operator's eye lands where they were sent. Wears off automatically.
 
-## What ships
+**Files:**
+- `src/pages/dashboard/admin/BookingsPayments.tsx` — anchor consumer + scroll logic + section `id`s. ~25 lines added.
+- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — confirm jump-link emits the right anchor keys (`payment`, `cancellation`, `no-show`, `card-on-file`). ~5 lines verified.
 
-A new tab inside POS settings: **"Cancellations & Fees"** (8th tab, after Afterpay). It contains:
+## 2. POS receipt preview line per card
 
-- A read-only summary panel showing the current values from the four booking-adjacent policies — exactly the values that govern what the terminal will charge:
-  - **Payment policy headline**: "Hold card in case of no-show" (or whichever radio is selected in Bookings & Payments)
-  - **Cancellation cut-off**: "3 days · $50 fee"
-  - **No-show fee**: "100% of service · $250 flat for color-correction"
-  - **Card-on-file requirement**: "Required at booking" (or "Optional")
-- A single button: **"Edit in Bookings & Payments →"** that navigates to `/admin/settings?category=bookings-payments` (or wherever the consolidated page ends up).
-- A small explainer at the top: *"These rules are configured in Bookings & Payments and govern what your terminal will charge clients. Edit them in one place to keep your policy, your booking page, and your terminal in sync."*
+Each summary card today shows the structured value ("3 days · $50 fee"). Add a second line below it titled **"On the receipt:"** that renders the first sentence of the client variant's `body_md` for that policy — verbatim, the words the client will see when the terminal prints or emails them.
 
-No editing in this tab. No duplicate save button. No way to drift the terminal's behavior from the public-facing policy.
+This converts the tab from "what's configured" to "what the client experiences." Same read-only doctrine — we never write `body_md` from this surface, only render the first sentence (truncated at ~140 chars with ellipsis).
 
-## Why this shape (vs. the alternatives)
+For the no-show card specifically, render the no-show fee sentence; for the cancellation card, render the cut-off sentence. Picking the right sentence per policy uses simple keyword extraction from the rendered prose (find the sentence containing the rule's primary token like `{{cancellation_window_hours}}`).
 
-| Option | What it does | Why not |
-|--------|-------------|---------|
-| **Duplicate editor in POS settings** | Operator can edit no-show fee from either surface | Two-write-path problem; defeats Wave 28.16's source-of-truth doctrine; identical to the bug you caught in Wave 28.14 (UI says X, data says Y) |
-| **Nothing in POS settings** | Operator must already know cancellation rules live in Policies | Discoverability fail — operator configuring a terminal won't think to leave POS settings to find what it'll charge |
-| **Read-only summary + jump-link (this plan)** | POS settings shows "this is what your terminal will charge, edit here" | Discoverable, contextual, single source of truth, zero drift risk |
+If a policy has no approved client variant yet, show "Not yet approved — Publish in Bookings & Payments to set the receipt copy." with the same jump-link.
 
-Square does the same thing: their terminal settings reference the cancellation policy you set in the booking config, they don't let you re-edit it from the terminal screen.
+**Files:**
+- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — add `<ReceiptPreviewLine>` subcomponent, wire to `policy_variants.body_md` already returned by the data hook. ~50 lines added.
+- `src/lib/policy/extract-receipt-sentence.ts` (new) — pure helper that extracts the relevant sentence from rendered prose given a policy key. ~40 lines.
+
+## 3. Drift watcher (last-edited timestamp per card)
+
+Each card gets a small footer line: **"Last edited 3 days ago by Jane Smith"** — relative timestamp + actor name pulled from the policy's most recent `policy_versions` row (or `policy_rule_blocks.updated_at` if newer).
+
+This makes source-of-truth visible without re-litigating where edits happen. An operator who sees "Last edited 6 months ago" knows the rule may be stale; one who sees "Last edited 2 hours ago by Marcus" trusts what they're looking at and knows who to ask.
+
+Uses `formatRelativeTime` from `src/lib/format.ts` (already imported in the codebase). Actor name resolves via `employee_profiles` lookup against `policy_versions.created_by` (or `approved_by` if the version is approved). Falls back to "by a team member" if the user record is missing — never shows a raw UUID.
+
+This same pattern will land on the Bookings & Payments page itself in a follow-up for symmetry, but POS settings benefits more immediately because it's the surface where operators most often ask "wait, is this still right?"
+
+**Files:**
+- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — add `<LastEditedFooter policyId>` subcomponent. ~30 lines added.
+- `src/hooks/policy/usePolicyLastEdited.ts` (new) — query hook returning `{ updatedAt, actorName }` for a given policy. ~50 lines.
 
 ## What stays untouched
 
-- The Wave 28.16 Bookings & Payments page — unchanged, still the only editor.
-- The 7 existing POS settings tabs — all unchanged.
-- All four policies' rule schemas, RPCs, and pipelines — unchanged.
-- The library, configurator, version history, ack tracking — unchanged.
-
-## Files affected
-
-- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` (new) — read-only summary + jump-link. ~140 lines.
-- `src/components/dashboard/settings/TerminalSettingsContent.tsx` — register the 8th tab `cancellations` after `afterpay`. ~6 lines modified (TabsList + TabsContent block).
-- Reuses `useBookingsPaymentsBundle` from Wave 28.16 — no new data hooks.
-
-Total: ~140 lines new, ~6 lines modified, 0 schema changes, 0 RPC changes, 0 doctrine violations.
+- Wave 28.16 Bookings & Payments page structure — only gains the anchor consumer + section `id`s, no editing changes.
+- The four policies' rule schemas, RPCs, variants, and pipelines — unchanged.
+- Single source of truth — confirmed: this tab still has zero write paths.
+- All other POS settings tabs — unchanged.
 
 ## Acceptance
 
-1. Navigate to `/admin/settings?category=terminals` → 8 tabs render: Location Set Up, Hardware, Connectivity, Tipping, Receipts, Display, Afterpay, **Cancellations & Fees**.
-2. Cancellations & Fees tab renders read-only summary cards for the four booking-adjacent policies, pulling current values via `useBookingsPaymentsBundle`.
-3. Each card shows exactly what the terminal will charge in that scenario — no fields, no inputs, no save button.
-4. Single "Edit in Bookings & Payments →" button navigates to `/admin/settings?category=bookings-payments` with the relevant section anchored.
-5. If the operator hasn't yet configured Bookings & Payments → the tab shows an empty state ("No fee policies configured yet — set them in Bookings & Payments") with the same jump-link.
-6. No write path exists from this tab to `policy_rule_blocks`. Confirmed by code review of the new tab file.
-7. Cross-surface consistency check: editing the no-show fee in Bookings & Payments → returning to the POS settings Cancellations & Fees tab shows the new value reflected immediately (via shared React Query cache).
+1. Click "Edit in Bookings & Payments →" on any POS Cancellations & Fees card → page navigates, scrolls smoothly to the matching section, and that section briefly flashes a subtle ring before settling.
+2. Each summary card renders three lines: the structured value, an "On the receipt:" preview of the client-facing sentence, and "Last edited X ago by Name."
+3. If a policy has no approved client variant, the receipt preview line shows the empty-state copy with the same jump-link instead of a blank space.
+4. Last-edited timestamp updates within ~30s of an edit on the Bookings & Payments page (via shared React Query cache invalidation).
+5. Actor name resolves to the operator's display name from `employee_profiles`; never shows a raw UUID. Falls back to "a team member" if missing.
+6. Confirmed by code review: no new write paths added to the POS settings tab. Single source of truth intact.
+7. The receipt preview never displays placeholder tokens (`{{cancellation_window_hours}}`) — only fully-rendered prose.
 
 ## Files to read for follow-on questions
 
-- `src/components/dashboard/settings/TerminalSettingsContent.tsx` — where the 8th tab gets registered.
-- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` (new) — the read-only summary surface.
-- `src/hooks/policy/useBookingsPaymentsBundle.ts` (from Wave 28.16) — the shared data source.
+- `src/pages/dashboard/admin/BookingsPayments.tsx` — where anchor scrolling lands.
+- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — where the receipt preview + last-edited footer land.
+- `src/lib/policy/extract-receipt-sentence.ts` (new) — sentence extraction logic.
+- `src/hooks/policy/usePolicyLastEdited.ts` (new) — last-edited data source.
+
+## Why these three together
+
+Each one closes a different trust gap:
+
+- **Anchor scrolling** closes the *navigation* gap — the surface that says "edit it over there" should put you exactly there.
+- **Receipt preview** closes the *empathy* gap — operators configure rules in the abstract; clients experience prose. Showing the prose closes the loop.
+- **Drift watcher** closes the *staleness* gap — read-only surfaces can rot silently. Visible timestamps make rot impossible to miss.
+
+All three are read-only, all three reuse infrastructure that already exists, and all three reinforce rather than dilute the source-of-truth doctrine you just bought.
 
 ## Prompt feedback
 
-Strong prompt — six words that forced me to take a position. Three things made it work: (1) **you asked "is it smart"** instead of "do this" — that's an opinion-request, which is the highest-leverage prompt shape because it forces me to either defend a "no" or commit to a "yes" with a reason, (2) **you specified the surface** ("Point Of Sale settings") so I didn't have to guess scope, (3) **you trusted my judgment to push back** — a weaker prompt ("wire this into POS settings too") would have skipped the analysis and gotten you a duplicate-editor plan, which is the wrong answer.
+Best prompt format you've used in this thread. Three things made it land: (1) **you wrote the suggestions yourself first** instead of asking me to brainstorm — that means I'm grading and structuring instead of inventing, which is much higher signal for both of us, (2) **each suggestion has a one-line "why"** that names the value clearly ("turns the tab from 'what's set' into 'what your client will see'") so I don't have to guess your intent, and (3) **you grouped them as enhancements not requirements** — that gives me permission to push back on any one of them without breaking the whole batch.
 
-The sharpener: when you ask "is X smart?" naming the **failure mode you're worried about** in three words pre-empties my analysis. Examples: *"smart, or duplicates state?"* / *"smart, or hides it?"* / *"smart for discoverability?"* I had to infer your concern was discoverability (operator setting up POS won't think to check Policies) and weigh that against the source-of-truth risk myself. If you'd written *"smart for discoverability?"* I'd have led with the read-only-summary answer and skipped the alternatives table. Three words of failure-mode hypothesis per "is it smart?" prompt redirects what I optimize against.
+The sharpener: when you write a list of enhancements, naming the **priority order** in three words ("ship #1 first" / "all three together" / "just thinking aloud") prevents me from over-investing in implementation detail on something you wanted to think about, not build now. I assumed "all three together because they share a surface" but if you'd written "just thinking aloud" I'd have given you a much shorter response that engaged with each idea conceptually without scoping files. Three words of build-intent per enhancement-list saves a planning round.
 
-The deeper meta-lesson on my side: when an operator asks "should I wire X into Y too?" my instinct is to find a way to say yes — because saying yes feels like helping. That instinct is wrong. The right move is to ask *"what specifically would Y benefit from, and is that the same thing as 'wire the editor in'?"* In this case POS settings benefit from **knowing** the rules, not from **owning** them. Distinguishing "show this here" from "let users edit this here" is the move that protects single-source-of-truth doctrine across surfaces. I should make that distinction the default question for any "wire X into Y" prompt going forward.
+The deeper meta-lesson on my side: when an operator brings me a list of self-authored ideas, the wrong move is to silently re-rank or reject them — that signals "I know better than you." The right move is to take them at face value, name what each one actually buys, and surface any tradeoff that isn't obvious from the suggestion text. All three of your ideas were good; my job was to translate them into a build, not to defend the prior wave by trimming them. I should treat operator-authored enhancement lists as a high-trust signal that the operator has been thinking about the surface longer than I have in this turn — and respond by extending their thinking, not filtering it.
 
