@@ -158,6 +158,7 @@ export default function TeamMembers() {
   const { effectiveOrganization } = useOrganizationContext();
   const { roles, isPlatformUser } = useAuth();
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
+  const { data: activeLocations = [] } = useActiveLocations(effectiveOrganization?.id);
   const { data: pinTeam = [] } = useTeamPinStatus();
   const { data: stylistLevels = [] } = useStylistLevels();
   const capacity = useBusinessCapacity();
@@ -227,42 +228,66 @@ export default function TeamMembers() {
     return m;
   }, [pinTeam]);
 
+  // Location filter (URL-persisted as ?location=<id>)
+  const locationParam = searchParams.get('location') ?? 'all';
+  const showLocationFilter = activeLocations.length >= 2;
+  const selectedLocation = showLocationFilter ? locationParam : 'all';
+
+  const handleLocationChange = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === 'all') params.delete('location');
+    else params.set('location', next);
+    setSearchParams(params);
+  };
+
   const filtered = useMemo(() => {
     if (!members) return [];
     const q = search.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter(m =>
-      (m.full_name || '').toLowerCase().includes(q) ||
-      (m.display_name || '').toLowerCase().includes(q) ||
-      (m.email || '').toLowerCase().includes(q),
-    );
-  }, [members, search]);
-
-  const grouped = useMemo(() => {
-    // For each section, collect members whose roles intersect, then sort by:
-    //   1. Highest-ranked role within that section's role set (ROLE_RANK ascending)
-    //   2. Alpha by display_name/full_name as tiebreaker
-    // A member is placed in the FIRST section whose roles they match (top-down through SECTIONS),
-    // so multi-role users appear once.
-    const assigned = new Set<string>();
-    const sections = SECTIONS.map(s => {
-      const sectionMembers = filtered.filter(m => {
-        if (assigned.has(m.user_id)) return false;
-        const matches = m.roles.some(r => s.roles.includes(r));
-        if (matches) assigned.add(m.user_id);
-        return matches;
-      });
-      sectionMembers.sort((a, b) => {
-        const ra = highestRankAmong(a.roles, s.roles);
-        const rb = highestRankAmong(b.roles, s.roles);
-        if (ra !== rb) return ra - rb;
-        return compareByName(a, b);
-      });
-      return { ...s, members: sectionMembers };
+    return members.filter(m => {
+      if (q) {
+        const matchesSearch =
+          (m.full_name || '').toLowerCase().includes(q) ||
+          (m.display_name || '').toLowerCase().includes(q) ||
+          (m.email || '').toLowerCase().includes(q);
+        if (!matchesSearch) return false;
+      }
+      if (selectedLocation !== 'all') {
+        const inPrimary = m.location_id === selectedLocation;
+        const inMulti = Array.isArray(m.location_ids) && m.location_ids.includes(selectedLocation);
+        if (!inPrimary && !inMulti) return false;
+      }
+      return true;
     });
-    const other = filtered
-      .filter(m => !assigned.has(m.user_id))
-      .sort(compareByName);
+  }, [members, search, selectedLocation]);
+
+  /**
+   * Group members into one section per role (highest-ranked role wins for multi-role users),
+   * preserving ROLE_RANK order. Members not matching any ranked role fall into `other`.
+   * Within each section, sort alpha by name.
+   */
+  const grouped = useMemo(() => {
+    const byRole = new Map<string, OrganizationUser[]>();
+    const other: OrganizationUser[] = [];
+    for (const m of filtered) {
+      const primary = primaryRoleOf(m.roles);
+      if (primary) {
+        const arr = byRole.get(primary) ?? [];
+        arr.push(m);
+        byRole.set(primary, arr);
+      } else {
+        other.push(m);
+      }
+    }
+    const sections = Object.entries(ROLE_RANK)
+      .sort(([, a], [, b]) => a - b)
+      .map(([role]) => ({
+        role,
+        label: roleLabel(role),
+        icon: ROLE_ICON[role] ?? Users,
+        members: (byRole.get(role) ?? []).slice().sort(compareByName),
+      }))
+      .filter(s => s.members.length > 0);
+    other.sort(compareByName);
     return { sections, other };
   }, [filtered]);
 
