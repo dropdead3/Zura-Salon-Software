@@ -805,15 +805,37 @@ export default function Policies() {
           return (
             <div className="space-y-8">
               <PageExplainer pageId="policies" />
-              {setupComplete ? (
-                <PoliciesGovernanceMode
-                  summary={summary}
-                  scopeKey={orgScopeKey}
-                  topBanners={topBannersNode}
-                  categorySection={categorySectionNode}
-                  librarySection={librarySectionNode}
-                />
-              ) : (
+              {setupComplete ? (() => {
+                // Required client-facing policies (audience external|both),
+                // applicable to this org. Drives the "published to clients"
+                // sub-meter inside the celebration strip.
+                const externalRequired = requiredApplicable.filter(
+                  (l) => l.audience === 'external' || l.audience === 'both',
+                );
+                const externalRequiredTotal = externalRequired.length;
+                const externalPublishedCount = externalRequired.filter((l) => {
+                  const p = adoptedByKey.get(l.key);
+                  return p?.status === 'published_external' || p?.status === 'wired';
+                }).length;
+                return (
+                  <PoliciesGovernanceMode
+                    summary={summary}
+                    scopeKey={orgScopeKey}
+                    externalRequiredTotal={externalRequiredTotal}
+                    externalPublishedCount={externalPublishedCount}
+                    onJumpToPublishing={() => {
+                      setActiveAudience('external');
+                      setAdoptionFilter('all');
+                      requestAnimationFrame(() => {
+                        librarySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      });
+                    }}
+                    topBanners={topBannersNode}
+                    categorySection={categorySectionNode}
+                    librarySection={librarySectionNode}
+                  />
+                );
+              })() : (
                 <PoliciesSetupMode
                   applicableLibrary={profileApplicableLibrary}
                   adoptedByKey={adoptedByKey}
