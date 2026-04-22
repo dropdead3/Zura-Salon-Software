@@ -107,12 +107,17 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     type: 'assign' | 'remove';
     role: string;
   } | null>(null);
+  const [pinDialog, setPinDialog] = useState<{ target: AdminSetPinTarget; mode: PinAction } | null>(null);
 
   const { data: users = [], isLoading } = useAllUsersWithRoles();
   const { data: accounts } = useAccountApprovals();
   const { data: canApproveAdmin } = useCanApproveAdmin();
   const { data: roles = [] } = useRoles();
   const { data: locations = [] } = useActiveLocations();
+  const { data: pinTeam = [] } = useTeamPinStatus();
+  const toggleRole = useToggleUserRole();
+  const toggleSuperAdmin = useToggleSuperAdmin();
+  const adminSetPin = useAdminSetUserPin();
   const toggleRole = useToggleUserRole();
   const toggleSuperAdmin = useToggleSuperAdmin();
 
