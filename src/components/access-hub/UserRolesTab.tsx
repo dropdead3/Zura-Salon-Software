@@ -25,15 +25,19 @@ import { tokens } from '@/lib/design-tokens';
 import { ResponsibilityBadges } from './ResponsibilityBadges';
 import { AssignResponsibilityDialog } from './AssignResponsibilityDialog';
 import { UserRolesFilterBar } from './UserRolesFilterBar';
-import { UserRolesTableView } from './UserRolesTableView';
+import { UserRolesTableView, type PinAction, type PinStatusEntry } from './UserRolesTableView';
+import { AdminSetPinDialog, type AdminSetPinTarget } from './AdminSetPinDialog';
+import { PinActivityPanel } from './PinActivityPanel';
 import { useAllUsersWithRoles, useToggleUserRole, ROLE_LABELS } from '@/hooks/useUserRoles';
 import { useRoles } from '@/hooks/useRoles';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
+import { useTeamPinStatus, useAdminSetUserPin } from '@/hooks/useUserPin';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import type { UserWithRoles } from '@/hooks/useUserRoles';
 
@@ -103,14 +107,17 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     type: 'assign' | 'remove';
     role: string;
   } | null>(null);
+  const [pinDialog, setPinDialog] = useState<{ target: AdminSetPinTarget; mode: PinAction } | null>(null);
 
   const { data: users = [], isLoading } = useAllUsersWithRoles();
   const { data: accounts } = useAccountApprovals();
   const { data: canApproveAdmin } = useCanApproveAdmin();
   const { data: roles = [] } = useRoles();
   const { data: locations = [] } = useActiveLocations();
+  const { data: pinTeam = [] } = useTeamPinStatus();
   const toggleRole = useToggleUserRole();
   const toggleSuperAdmin = useToggleSuperAdmin();
+  const adminSetPin = useAdminSetUserPin();
 
   // Auto-switch to table view for large teams
   useEffect(() => {
@@ -131,6 +138,39 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
 
   const getAccountInfo = (userId: string) => {
     return accounts?.find(a => a.user_id === userId);
+  };
+
+  const pinStatusByUser = useMemo(() => {
+    const map = new Map<string, PinStatusEntry>();
+    pinTeam.forEach(p => map.set(p.user_id, { user_id: p.user_id, has_pin: p.has_pin, is_primary_owner: p.is_primary_owner }));
+    return map;
+  }, [pinTeam]);
+
+  const openPinDialog = (userId: string, mode: PinAction) => {
+    const pin = pinStatusByUser.get(userId);
+    const teamMember = pinTeam.find(p => p.user_id === userId);
+    const user = users.find(u => u.user_id === userId);
+    if (!pin || !user) return;
+    const name = teamMember?.name || formatDisplayName(user.full_name || '', user.display_name);
+    setPinDialog({ target: { user_id: userId, name, has_pin: pin.has_pin, is_primary_owner: pin.is_primary_owner }, mode });
+  };
+
+  const handleBulkClearPins = async () => {
+    const userIds = Array.from(selectedUsers).filter(id => {
+      const pin = pinStatusByUser.get(id);
+      return pin?.has_pin && !pin.is_primary_owner;
+    });
+    if (userIds.length === 0) {
+      toast.info('No eligible PINs to clear (Account Owner is protected).');
+      return;
+    }
+    try {
+      await Promise.all(userIds.map(id => adminSetPin.mutateAsync({ targetUserId: id, pin: null, reason: 'Bulk clear from Roster' })));
+      setSelectedUsers(new Set());
+      toast.success(`Cleared ${userIds.length} PIN${userIds.length === 1 ? '' : 's'}`);
+    } catch (err) {
+      console.error('Bulk clear PIN error:', err);
+    }
   };
 
   const locationList = useMemo(() => 
@@ -487,6 +527,8 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
               onSelectionChange={setSelectedUsers}
               locations={locationList}
               onOpenResponsibilities={(userId, userName) => setResponsibilityDialog({ userId, userName })}
+              pinStatusByUser={pinStatusByUser}
+              onOpenPinDialog={openPinDialog}
             />
           </div>
         )}
@@ -624,9 +666,9 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
 
       {/* Bulk Actions Bar */}
       {canManage && selectedUsers.size > 0 && viewMode === 'table' && (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20 flex-wrap">
           <span className="text-sm font-medium">{selectedUsers.size} selected</span>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
             {roles.filter(r => r.name !== 'super_admin').map(role => (
               <Button
                 key={`assign-${role.name}`}
@@ -639,6 +681,16 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                 + {role.display_name}
               </Button>
             ))}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive"
+              onClick={handleBulkClearPins}
+              disabled={adminSetPin.isPending}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Clear PINs
+            </Button>
           </div>
           <Button
             variant="ghost"
@@ -690,6 +742,8 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
           onSelectionChange={setSelectedUsers}
           locations={locationList}
           onOpenResponsibilities={(userId, userName) => setResponsibilityDialog({ userId, userName })}
+          pinStatusByUser={pinStatusByUser}
+          onOpenPinDialog={openPinDialog}
         />
       ) : (
         // Flat card view
