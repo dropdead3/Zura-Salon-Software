@@ -678,28 +678,30 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     const isActive = location.pathname === resolvedHref;
                     const label = getNavLabel(singleItem);
                     return (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <a
-                            href={resolvedHref}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
-                              onNavClick();
-                            }}
-                            className={cn(
-                              "inline-flex items-center justify-center px-2 py-2 mx-auto rounded-full",
-                              "transition-all duration-300 text-sm",
-                              isActive
-                                ? "bg-foreground/10 text-foreground"
-                                : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
-                            )}
-                          >
-                            <Icon className="w-4 h-4" />
-                          </a>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
-                      </Tooltip>
+                      <div className="flex justify-center">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={resolvedHref}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
+                                onNavClick();
+                              }}
+                              className={cn(
+                                "inline-flex items-center justify-center px-2 py-2 rounded-full",
+                                "transition-all duration-300 text-sm",
+                                isActive
+                                  ? "bg-foreground/10 text-foreground"
+                                  : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
+                              )}
+                            >
+                              <Icon className="w-4 h-4" />
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
+                        </Tooltip>
+                      </div>
                     );
                   }
 
