@@ -177,7 +177,7 @@ export const SURFACE_META: Record<
   handbook: {
     label: 'Employee Handbook',
     shortLabel: 'Handbook',
-    description: 'Internal team-facing handbook section.',
+    description: 'Lives in the staff handbook for your team to reference.',
     defaultVariant: 'internal',
     icon: Book,
     audience: 'internal',
@@ -185,7 +185,7 @@ export const SURFACE_META: Record<
   client_page: {
     label: 'Client Policy Page',
     shortLabel: 'Client',
-    description: 'Public client-facing policy page (/book/:org/policies).',
+    description: 'Shown on your public policy page that clients can browse anytime.',
     defaultVariant: 'client',
     icon: Globe,
     audience: 'external',
@@ -193,7 +193,7 @@ export const SURFACE_META: Record<
   booking: {
     label: 'Booking Disclosure',
     shortLabel: 'Booking',
-    description: 'Inline disclosure shown before a client confirms a booking.',
+    description: 'Shown to clients right before they confirm a booking.',
     defaultVariant: 'disclosure',
     icon: CalendarCheck,
     audience: 'external',
@@ -201,7 +201,7 @@ export const SURFACE_META: Record<
   checkout: {
     label: 'Checkout Enforcement',
     shortLabel: 'Checkout',
-    description: 'Rules enforced at checkout (deposits, fees, surcharges).',
+    description: 'Applied at checkout — deposits, fees, and surcharges.',
     defaultVariant: 'disclosure',
     icon: CreditCard,
     audience: 'external',
@@ -209,7 +209,7 @@ export const SURFACE_META: Record<
   intake: {
     label: 'Consultation / Intake',
     shortLabel: 'Intake',
-    description: 'Required acknowledgment during consultation or intake form.',
+    description: 'Clients agree to this during consultation or intake.',
     defaultVariant: 'client',
     icon: ClipboardList,
     audience: 'both',
@@ -217,7 +217,7 @@ export const SURFACE_META: Record<
   manager: {
     label: 'Manager Decision Card',
     shortLabel: 'Manager',
-    description: 'Quick-reference card surfaced when staff need to make exception calls.',
+    description: 'Quick reference for managers when staff need an exception call.',
     defaultVariant: 'manager_note',
     icon: ShieldAlert,
     audience: 'internal',
@@ -225,7 +225,7 @@ export const SURFACE_META: Record<
   sop: {
     label: 'Standard Operating Procedure',
     shortLabel: 'SOP',
-    description: 'Step-by-step procedural reference for staff execution.',
+    description: 'Step-by-step guide your team follows to do this consistently.',
     defaultVariant: 'internal',
     icon: ListChecks,
     audience: 'internal',
