@@ -125,12 +125,14 @@ export function PoliciesSetupMode({
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div>
             <p className="font-display text-xs tracking-[0.14em] uppercase text-muted-foreground">
-              You're {totalAdopted} of {totalRequired} adopted
+              You're {totalAdopted} of {totalRequired} finalized
             </p>
             <p className="font-sans text-xs text-muted-foreground mt-1">
               {coreTotal} core function{coreTotal === 1 ? '' : 's'}
               <span className="mx-1.5 text-muted-foreground/40">·</span>
               {requiredTotal} governance polic{requiredTotal === 1 ? 'y' : 'ies'}
+              <span className="mx-1.5 text-muted-foreground/40">·</span>
+              <span className="italic">finalized = approved version exists</span>
             </p>
           </div>
           <span className="font-display text-3xl tracking-wide text-foreground tabular-nums">
