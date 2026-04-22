@@ -29,10 +29,11 @@ export function SidebarClockButton({ isCollapsed = false, inFooter = true }: Sid
       onClick={handleClick}
       disabled={busy}
       className={cn(
-        "flex items-center gap-3 text-sm font-sans cursor-pointer w-full",
+        "flex items-center gap-3 text-sm font-sans cursor-pointer",
+        !isCollapsed && "w-full",
         "transition-all duration-200 ease-out", isCollapsed ? "rounded-full" : "rounded-lg",
         isCollapsed
-          ? cn("px-2 py-2.5 justify-center", inFooter ? "mx-0" : "mx-2")
+          ? cn("px-2 py-2.5 justify-center mx-auto", inFooter ? "" : "")
           : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
         isClockedIn
           ? "text-success-foreground hover:bg-success/30"
