@@ -1,90 +1,70 @@
 
 
-# Fix the Tone variant dropdown trigger
+# Translate the Surface Mapping panel into operator language
 
-## What's broken
+## What's wrong
 
-Both screenshots show the same bug. The trigger shows the variant **name centered** with a **description line beneath it**, also centered. That's not how a select trigger should look — triggers should display the current value as a single line, left-aligned, with the chevron sitting flush right.
+The surface mapping editor leaks engineering vocabulary into an operator-facing panel. A salon owner reading this screen sees:
 
-The cause is in `src/components/dashboard/policy/PolicySurfaceEditor.tsx` (lines 166–181). Each `<SelectItem>` wraps its children in `<div className="flex flex-col"><span>label</span><span>description</span></div>`. Radix's `<SelectValue>` mirrors the **selected item's children verbatim** into the trigger — so the two-line stacked content from the menu item leaks into the trigger and gets centered by the trigger's `justify-between` flex layout treating the multi-line block as a single item.
+1. **"Save surfaces"** — "surfaces" is a developer term. Operators don't think in surfaces; they think in *places where the policy shows up*.
+2. **"What happens next: AI drafting (Wave 28.6) will render the same configured rules into the right tone for each active surface. The Handbook OS, Client Policy Center, and booking flow then read from these mappings."** — this sentence contains four pieces of internal language: *AI drafting (Wave 28.6)*, *render*, *active surface*, *mappings*. "Wave 28.6" is a build milestone reference that should never reach a customer. "Handbook OS" and "Client Policy Center" are product-internal feature names that don't yet exist in the operator's mental model.
+3. **"Tone variant"** — accurate but technical. An operator picking "Client" vs "Internal" doesn't think of these as *variants*; they think of them as *who will read this*.
+4. **"Pick where this policy renders. Each surface gets its own tone — the same rules, rewritten for the audience."** — "renders" and "surface" again.
 
-This is the only place in the codebase using this stacked label+description pattern inside a `SelectItem`, so the fix is local to one file.
+The pattern: every label was written by an engineer describing the data model, not by a person describing the operator's job.
 
 ## What ships
 
-Two surgical changes inside the existing `<Select>` block (no new files, no token changes, no API changes).
+A copy-only pass on `PolicySurfaceEditor.tsx`. No structural changes, no token changes, no logic changes. Same components, same layout, same data flow — just plain-English labels.
 
-### 1. Decouple trigger display from menu item display
+### Specific replacements
 
-Add `textValue` to each `<SelectItem>` so Radix knows the canonical text representation, and structure the item so the trigger renders only the label (single line, left-aligned) while the dropdown still shows label + description stacked.
+| Current | Replace with | Why |
+|---|---|---|
+| **Header CTA**: "Save surfaces" | "Save changes" | Universal save vocabulary. Salon owners save changes; engineers save surfaces. |
+| **Top hint**: "Pick where this policy renders. Each surface gets its own tone — the same rules, rewritten for the audience." | "Choose where clients and staff see this policy. Each place uses its own wording — the same rules, written for the right audience." | Removes "renders" and "surface". Makes the audience choice the headline. |
+| **Card label**: "Tone variant" | "Written for" | An operator selecting "Client" is choosing the audience, not a tone variant. |
+| **Footer banner**: "What happens next: AI drafting (Wave 28.6) will render the same configured rules into the right tone for each active surface. The Handbook OS, Client Policy Center, and booking flow then read from these mappings." | "What happens next: once you publish, the rules you set above will appear in each place you turned on — written in the right tone for staff or clients. Your booking page, client policy page, and staff handbook all read from this single source." | Removes "Wave 28.6", "render", "active surface", "mappings". Replaces internal product names ("Handbook OS", "Client Policy Center") with descriptive phrases ("staff handbook", "client policy page"). Names the moment of effect ("once you publish") so the operator knows the change isn't immediate. |
+| **Active badge**: "Active" | "On" | Matches the Switch toggle's mental model. The Switch is on/off, not active/inactive. |
+| **Empty fallback warnings** (existing): two info banners reference "the Drafts tab" and "Client variant" | Keep "the Drafts tab" reference (it's a real tab name visible to the operator). Change "Client variant" → "Client wording" for consistency with the new vocabulary. | Preserves real navigation breadcrumbs; only swaps the technical term. |
 
-Pattern (the standard Radix shadcn solution):
+### What stays untouched
 
-```tsx
-<SelectTrigger className="h-9 font-sans text-sm justify-between">
-  <SelectValue placeholder="Select tone" />
-</SelectTrigger>
-<SelectContent>
-  {allowedVariants.map((v) => (
-    <SelectItem
-      key={v}
-      value={v}
-      textValue={VARIANT_META[v].label}
-      className="font-sans text-sm"
-    >
-      <div className="flex flex-col gap-0.5 py-0.5">
-        <span className="text-foreground">{VARIANT_META[v].label}</span>
-        <span className="text-xs text-muted-foreground">
-          {VARIANT_META[v].description}
-        </span>
-      </div>
-    </SelectItem>
-  ))}
-</SelectContent>
-```
-
-The key change: `textValue={VARIANT_META[v].label}` tells Radix the trigger should display only the label string, not the rich children. The dropdown menu still renders the full stacked label+description (great for picking), but the trigger reverts to single-line, left-aligned, properly truncated behavior.
-
-### 2. Trigger alignment polish
-
-Confirm `<SelectTrigger>` keeps its default `justify-between` (chevron flush right) and the value text is left-aligned. The base trigger in `src/components/ui/select.tsx` already handles this correctly once the children are a single text node — no modification to the shared `SelectTrigger` component needed.
-
-## Why not change the shared `SelectTrigger` component
-
-Tempting, but wrong. The shared `SelectTrigger` works correctly for every other select in the codebase. This bug is caused by a caller pattern (rich children in `SelectItem` without `textValue`), not by the primitive. Fixing it at the call site preserves the shared component's contract and prevents regressions in the dozens of other selects using simple string children.
-
-## What stays untouched
-
-- `src/components/ui/select.tsx` — unchanged.
-- `src/components/platform/ui/PlatformSelect.tsx` — unchanged.
-- All other `<Select>` instances across the dashboard — unchanged.
-- The fallback warning banners below the trigger (lines 186–201) — unchanged.
-- `VARIANT_META` and the variant filtering logic — unchanged.
+- The whole component structure, layout, and styling.
+- The Switch / Select / Badge components.
+- The save logic, the data hooks, the variant filtering.
+- The `VARIANT_META` and `SURFACE_META` data — the labels inside those dictionaries already use operator-friendly names ("Client", "Internal", etc.) and don't need to change.
+- All other policy components.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicySurfaceEditor.tsx` — replace lines ~160–181 with the corrected `<Select>` block. ~10 lines modified.
+- `src/components/dashboard/policy/PolicySurfaceEditor.tsx` — copy-only edits in 6 locations (~12 lines modified). Zero structural change.
 
-Total: ~10 lines modified, 0 files created, 0 files deleted, 0 schema changes, 0 token changes.
+Total: ~12 lines modified, 0 files created, 0 files deleted, 0 schema changes, 0 logic changes.
 
 ## Acceptance
 
-1. Open any policy in the configurator (e.g., `/dashboard/admin/policies?policy=booking_policy`) → click the Surface mapping editor → enable any surface → the **Tone variant** trigger displays a single-line, left-aligned label (e.g., "Client") with the chevron flush right. No description visible inside the trigger.
-2. Click the trigger → the dropdown menu shows each option as a stacked label + description (the rich picker UX is preserved).
-3. Pick a different option → the trigger updates to show only the new label, single line, left-aligned.
-4. No other dropdown in the dashboard shifts visually (verified by reading the unchanged `select.tsx` primitive — no shared-component changes).
-5. Keyboard navigation (arrow keys, type-ahead) works correctly because `textValue` provides the canonical search/announce string.
+1. Open `/org/drop-dead-salons/dashboard/admin/policies?policy=booking_policy` → click into Surface mapping (now functionally renamed in copy though the tab title may still say "Surfaces" elsewhere — out of scope for this pass unless you want it included).
+2. The footer banner reads the new "What happens next" copy with no reference to "Wave 28.6", "render", "surface", "mappings", "Handbook OS", or "Client Policy Center".
+3. The header CTA reads **Save changes** (not "Save surfaces").
+4. Each card's tone selector is labeled **Written for** (not "Tone variant").
+5. Each enabled card's badge reads **On** (not "Active").
+6. The two fallback info banners read naturally to a non-technical operator (no "variant" terminology).
+7. No layout shift, no visual regression, no behavior change. Save still works, switches still toggle, dropdowns still pick.
+
+## Adjacent question worth answering before shipping
+
+The tab title in the parent panel may also say "Surfaces" or "Surface Mapping" — if so, we should rename it to **"Where it shows"** or **"Where this policy appears"** in the same pass. I haven't read the parent file yet; one extra read on confirmation and we'll include it. Say "include the tab name" and I'll add it to this scope.
 
 ## Files to read for follow-on questions
 
 - `src/components/dashboard/policy/PolicySurfaceEditor.tsx` — the only file changed.
-- `src/components/ui/select.tsx` — the underlying primitive, unchanged but worth referencing to confirm the trigger's flex layout works correctly with single-line children.
 
 ## Prompt feedback
 
-Tight, sharp prompt. Three things made it land: (1) **screenshots showed the exact failure mode** so I didn't have to reproduce it — the centered, stacked text in the trigger is unambiguous, (2) **"selectors" plural** told me to look at multiple instances, not just one, which I did before scoping (turned out to be a single file), (3) **no over-specification** — you didn't say "make it left-aligned" or "remove the description"; you let me diagnose the root cause instead of patching the symptom. A weaker prompt ("remove the description from the dropdown") would have fixed the visual but left the underlying caller-pattern bug in place to recur on the next select that wants stacked items.
+Strong prompt for two reasons: (1) **you flagged the specific phrase that broke the trust** ("'Save surfaces' verbiage isn't understood by salon owners") — that anchors my analysis on a real operator confusion instead of letting me speculate about copy preferences, and (2) **you paired it with a screenshot** showing the surrounding context, so I could see the "Wave 28.6" leak and the "Handbook OS / Client Policy Center" feature-name leak that you may or may not have noticed yet but are part of the same problem. Naming one symptom let me catch the disease.
 
-The sharpener: when filing a UI bug with screenshots, naming the **expected behavior** in three words pre-empties one round of inference. Examples: *"trigger should single-line"* / *"match other selects"* / *"chevron should right"*. I had to infer "should match every other dropdown trigger in the dashboard" from context — your ask was clear enough that I landed there, but on a more ambiguous bug ("the colors are off") three words of expected-state would save me from guessing which axis is wrong (hue, contrast, saturation, dark mode). Three words of expected behavior per UI bug saves a diagnostic round.
+The sharpener: when reviewing copy, naming the **operator's mental model in three words** ("they think audiences" / "they think places" / "they think outcomes") would let me know which axis to optimize against. I had to infer that salon owners think in *places where the policy shows up* and *audiences*, not in *surfaces* and *variants*. If you'd written "they think audiences," I'd have led with the "Written for" relabel and skipped the alternatives reasoning. Three words of mental-model orientation per copy review saves a translation round.
 
-The deeper meta-lesson on my side: when a UI bug has an obvious symptom, my instinct is to patch the symptom at the leaf component. That instinct is wrong about half the time. The right move is to ask *"is this the primitive misbehaving, or a caller using the primitive incorrectly?"* and fix at the level of the actual fault. In this case the primitive (`SelectTrigger`) is correct; the caller (`PolicySurfaceEditor`) was passing rich children without `textValue`. Patching the primitive would have introduced regressions for every other `Select` in the codebase. Diagnosing the layer before fixing is the move that protects shared infrastructure across surfaces — same principle as the source-of-truth doctrine from the last three waves, applied at the component level instead of the data level.
+The deeper meta-lesson on my side: when an operator flags one piece of confusing copy, my instinct is to translate just that phrase. That instinct is wrong about half the time. The right move is to ask *"is this an isolated bad word, or a vocabulary leak from the build into the product?"* and audit the whole panel for the same engineering-voice tells. In this case "Save surfaces" was the canary — "Wave 28.6", "render", "Handbook OS", "Client Policy Center", and "Tone variant" were all the same disease. Translating one without the others would leave the operator still confused on the next sentence. Vocabulary leaks travel in packs; spot one, audit the room.
 
