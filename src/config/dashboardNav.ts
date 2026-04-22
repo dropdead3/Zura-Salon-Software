@@ -96,7 +96,7 @@ export const myToolsNavItems: DashboardNavItem[] = [
 // ─── SECTION: ops (operations hub) ───────────────────────────────────────────
 
 export const opsNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: LayoutGrid, permission: 'view_team_overview' },
 ];
 
 // ─── SECTION: data (analytics & reports) ─────────────────────────────────────
@@ -205,7 +205,7 @@ export interface HubLinkConfig {
 
 export const hubLinksConfig: HubLinkConfig[] = [
   { href: '/dashboard/admin/analytics', icon: TrendingUp, label: 'Analytics Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
-  { href: '/dashboard/admin/team-hub', icon: Users, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
+  { href: '/dashboard/admin/team-hub', icon: LayoutGrid, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/admin/access-hub', icon: Shield, label: 'Roles & Controls Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
 ];
 
