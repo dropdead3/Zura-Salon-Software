@@ -1,8 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, ChevronRight, Circle, Lock } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Circle, Clock, Lock } from 'lucide-react';
 import type { PolicyLibraryEntry, OrgPolicy } from '@/hooks/policy/usePolicyData';
-import { POLICY_STATUS_META } from '@/hooks/policy/usePolicyData';
+import { POLICY_STATUS_META, isPolicyFinalized } from '@/hooks/policy/usePolicyData';
 import { SURFACE_META } from '@/hooks/policy/usePolicyApplicability';
 
 interface Props {
@@ -38,6 +38,9 @@ export function PolicyLibraryRow({
   nextPointer = false,
 }: Props) {
   const isAdopted = !!adopted;
+  const isFinalized = isPolicyFinalized(adopted);
+  // "In progress" = row exists, version not yet approved.
+  const isInProgress = isAdopted && !isFinalized;
   const isRequired = entry.recommendation === 'required';
   const status = adopted?.status;
   const statusMeta = status ? POLICY_STATUS_META[status] : null;
@@ -55,17 +58,21 @@ export function PolicyLibraryRow({
         'transition-colors hover:bg-muted/30',
         isRequired &&
           'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-primary/50',
-        isRequired && !isAdopted && 'bg-primary/[0.02]',
+        isRequired && !isFinalized && 'bg-primary/[0.02]',
         nextPointer &&
           'bg-amber-500/[0.06] before:!bg-amber-500/70 hover:bg-amber-500/[0.1]',
       )}
     >
       <div className="@container/row px-4 py-3.5 flex items-start gap-3">
-        {/* Status icon */}
-        {isAdopted ? (
+        {/* Status icon — three states: finalized (✓), in-progress (clock),
+            not started (empty circle). The "Next →" amber chevron overrides
+            for not-yet-finalized rows that are the current target. */}
+        {isFinalized ? (
           <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         ) : nextPointer ? (
           <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+        ) : isInProgress ? (
+          <Clock className="w-4 h-4 text-amber-500/80 shrink-0 mt-0.5" />
         ) : (
           <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0 mt-0.5" />
         )}

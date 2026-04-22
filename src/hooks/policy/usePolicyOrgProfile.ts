@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { usePolicyLibrary, useOrgPolicies, type PolicyLibraryEntry } from './usePolicyData';
+import { usePolicyLibrary, useOrgPolicies, isPolicyFinalized, type PolicyLibraryEntry } from './usePolicyData';
 
 export interface PolicyOrgProfile {
   id: string;
@@ -316,20 +316,26 @@ export function useApplicableRequiredPolicies() {
   const { data: profile, isLoading: profileLoading } = usePolicyOrgProfile();
 
   return useMemo(() => {
-    const adoptedKeys = new Set(adopted.map((p) => p.library_key));
+    const adoptedByKey = new Map(adopted.map((p) => [p.library_key, p] as const));
     const applicableRequired = library.filter(
       (l) => l.recommendation === 'required' && isApplicableToProfile(l, profile),
     );
-    const adoptedCount = applicableRequired.filter((l) => adoptedKeys.has(l.key)).length;
+    const adoptedCount = applicableRequired.filter((l) => adoptedByKey.has(l.key)).length;
+    const finalizedCount = applicableRequired.filter((l) =>
+      isPolicyFinalized(adoptedByKey.get(l.key)),
+    ).length;
     const total = applicableRequired.length;
-    const pct = total > 0 ? Math.round((adoptedCount / total) * 100) : 0;
-    const missing = applicableRequired.filter((l) => !adoptedKeys.has(l.key));
+    const pct = total > 0 ? Math.round((finalizedCount / total) * 100) : 0;
+    const missing = applicableRequired.filter((l) => !isPolicyFinalized(adoptedByKey.get(l.key)));
     return {
       total,
+      /** Touched (a row exists in `policies`). Useful for "have they engaged?" surfaces. */
       adopted: adoptedCount,
+      /** Truly done (approved version exists). The completion bar that matters. */
+      finalized: finalizedCount,
       pct,
       missing,
-      isComplete: total > 0 && adoptedCount === total,
+      isComplete: total > 0 && finalizedCount === total,
       isLoading: libLoading || adoptedLoading || profileLoading,
     };
   }, [library, adopted, profile, libLoading, adoptedLoading, profileLoading]);

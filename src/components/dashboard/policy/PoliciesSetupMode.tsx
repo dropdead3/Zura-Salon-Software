@@ -36,7 +36,7 @@ import {
   isCoreFunctionPolicy,
   type CoreFunctionPolicyKey,
 } from '@/lib/policy/core-function-policies';
-import type { PolicyLibraryEntry, OrgPolicy } from '@/hooks/policy/usePolicyData';
+import { isPolicyFinalized, type PolicyLibraryEntry, type OrgPolicy } from '@/hooks/policy/usePolicyData';
 
 interface Props {
   /** Library entries already filtered to applicability (no phantom
@@ -75,12 +75,18 @@ export function PoliciesSetupMode({
     (e) => e.recommendation === 'required' && !isCoreFunctionPolicy(e.key),
   );
 
-  const coreAdopted = coreEntries.filter((e) => adoptedByKey.has(e.key)).length;
+  // Completion counts use *finalization* — an approved version must
+  // exist. A row in `policies` with status `drafting` does NOT count.
+  const coreAdopted = coreEntries.filter((e) =>
+    isPolicyFinalized(adoptedByKey.get(e.key)),
+  ).length;
   const coreTotal = coreEntries.length;
   const corePct = coreTotal > 0 ? Math.round((coreAdopted / coreTotal) * 100) : 0;
   const coreComplete = coreTotal > 0 && coreAdopted === coreTotal;
 
-  const requiredAdopted = requiredEntries.filter((e) => adoptedByKey.has(e.key)).length;
+  const requiredAdopted = requiredEntries.filter((e) =>
+    isPolicyFinalized(adoptedByKey.get(e.key)),
+  ).length;
   const requiredTotal = requiredEntries.length;
   const requiredPct =
     requiredTotal > 0 ? Math.round((requiredAdopted / requiredTotal) * 100) : 0;
@@ -89,12 +95,15 @@ export function PoliciesSetupMode({
   const totalRequired = coreTotal + requiredTotal;
   const overallPct = totalRequired > 0 ? Math.round((totalAdopted / totalRequired) * 100) : 0;
 
-  // The single "Next →" pointer — first unadopted Core row, or once
-  // Core is 100%, the first unadopted Required row.
+  // The single "Next →" pointer — first not-finalized Core row, or once
+  // Core is 100%, the first not-finalized Required row. Drafting rows
+  // qualify (they're touched but not done).
   const nextPointerKey = (() => {
-    const firstCore = coreEntries.find((e) => !adoptedByKey.has(e.key));
+    const firstCore = coreEntries.find((e) => !isPolicyFinalized(adoptedByKey.get(e.key)));
     if (firstCore) return firstCore.key;
-    const firstRequired = requiredEntries.find((e) => !adoptedByKey.has(e.key));
+    const firstRequired = requiredEntries.find(
+      (e) => !isPolicyFinalized(adoptedByKey.get(e.key)),
+    );
     return firstRequired?.key ?? null;
   })();
 
@@ -116,12 +125,14 @@ export function PoliciesSetupMode({
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div>
             <p className="font-display text-xs tracking-[0.14em] uppercase text-muted-foreground">
-              You're {totalAdopted} of {totalRequired} adopted
+              You're {totalAdopted} of {totalRequired} finalized
             </p>
             <p className="font-sans text-xs text-muted-foreground mt-1">
               {coreTotal} core function{coreTotal === 1 ? '' : 's'}
               <span className="mx-1.5 text-muted-foreground/40">·</span>
               {requiredTotal} governance polic{requiredTotal === 1 ? 'y' : 'ies'}
+              <span className="mx-1.5 text-muted-foreground/40">·</span>
+              <span className="italic">finalized = approved version exists</span>
             </p>
           </div>
           <span className="font-display text-3xl tracking-wide text-foreground tabular-nums">
@@ -163,7 +174,7 @@ export function PoliciesSetupMode({
                     coreComplete ? 'text-primary' : 'text-muted-foreground',
                   )}
                 >
-                  {coreAdopted} of {coreTotal} configured
+                  {coreAdopted} of {coreTotal} finalized
                 </span>
                 <Progress
                   value={corePct}
@@ -230,7 +241,7 @@ export function PoliciesSetupMode({
                       : 'text-muted-foreground',
                   )}
                 >
-                  {requiredAdopted} of {requiredTotal} adopted
+                  {requiredAdopted} of {requiredTotal} finalized
                 </span>
                 <Progress
                   value={requiredPct}

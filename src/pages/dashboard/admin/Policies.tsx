@@ -13,6 +13,7 @@ import {
   usePolicyLibrary,
   useOrgPolicies,
   usePolicyHealthSummary,
+  isPolicyFinalized,
   POLICY_CATEGORY_META,
   type PolicyCategory,
 } from '@/hooks/policy/usePolicyData';
@@ -276,24 +277,30 @@ export default function Policies() {
         (() => {
           // ─── Mode split ─────────────────────────────────────────
           // Setup mode runs until both Core AND Required (filtered
-          // by applicability) are 100% adopted. Once both hit 100%,
-          // governance mode renders. If a profile change later adds
-          // applicable policies, the meter dips and setup returns.
+          // by applicability) have been *finalized* — meaning each
+          // policy has an approved version (current_version_id set
+          // AND status ∈ {configured, approved_internal, published_external, wired}).
+          // Row existence alone is NOT completion: the wizard
+          // bulk-adopts at status `drafting`, which would falsely
+          // celebrate "done" the moment onboarding ends.
+          // See mem://architecture/structural-enforcement-gates.
           const coreApplicable = profileApplicableLibrary.filter((l) =>
             isCoreFunctionPolicy(l.key),
           );
           const requiredApplicable = profileApplicableLibrary.filter(
             (l) => l.recommendation === 'required' && !isCoreFunctionPolicy(l.key),
           );
-          const coreAdoptedCount = coreApplicable.filter((l) => adoptedByKey.has(l.key)).length;
-          const requiredAdoptedCount = requiredApplicable.filter((l) =>
-            adoptedByKey.has(l.key),
+          const coreFinalizedCount = coreApplicable.filter((l) =>
+            isPolicyFinalized(adoptedByKey.get(l.key)),
+          ).length;
+          const requiredFinalizedCount = requiredApplicable.filter((l) =>
+            isPolicyFinalized(adoptedByKey.get(l.key)),
           ).length;
           const setupComplete =
             coreApplicable.length > 0 &&
             requiredApplicable.length > 0 &&
-            coreAdoptedCount === coreApplicable.length &&
-            requiredAdoptedCount === requiredApplicable.length;
+            coreFinalizedCount === coreApplicable.length &&
+            requiredFinalizedCount === requiredApplicable.length;
 
           // ─── Banners shared across both modes ────────────────────
           const topBannersNode = (
@@ -798,15 +805,37 @@ export default function Policies() {
           return (
             <div className="space-y-8">
               <PageExplainer pageId="policies" />
-              {setupComplete ? (
-                <PoliciesGovernanceMode
-                  summary={summary}
-                  scopeKey={orgScopeKey}
-                  topBanners={topBannersNode}
-                  categorySection={categorySectionNode}
-                  librarySection={librarySectionNode}
-                />
-              ) : (
+              {setupComplete ? (() => {
+                // Required client-facing policies (audience external|both),
+                // applicable to this org. Drives the "published to clients"
+                // sub-meter inside the celebration strip.
+                const externalRequired = requiredApplicable.filter(
+                  (l) => l.audience === 'external' || l.audience === 'both',
+                );
+                const externalRequiredTotal = externalRequired.length;
+                const externalPublishedCount = externalRequired.filter((l) => {
+                  const p = adoptedByKey.get(l.key);
+                  return p?.status === 'published_external' || p?.status === 'wired';
+                }).length;
+                return (
+                  <PoliciesGovernanceMode
+                    summary={summary}
+                    scopeKey={orgScopeKey}
+                    externalRequiredTotal={externalRequiredTotal}
+                    externalPublishedCount={externalPublishedCount}
+                    onJumpToPublishing={() => {
+                      setActiveAudience('external');
+                      setAdoptionFilter('all');
+                      requestAnimationFrame(() => {
+                        librarySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      });
+                    }}
+                    topBanners={topBannersNode}
+                    categorySection={categorySectionNode}
+                    librarySection={librarySectionNode}
+                  />
+                );
+              })() : (
                 <PoliciesSetupMode
                   applicableLibrary={profileApplicableLibrary}
                   adoptedByKey={adoptedByKey}

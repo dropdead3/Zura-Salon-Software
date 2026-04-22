@@ -1,17 +1,18 @@
 /**
  * PoliciesGovernanceMode — full governance dashboard mode.
  *
- * Activates when Core + Required adoption hits 100%. Renders the
- * full-fidelity layout (4-tile health strip + category cards +
- * library list with all filters) — what today's page shows by
- * default, but only after the operator has earned it.
+ * Activates when Core + Required *finalization* hits 100% (each
+ * required policy has an approved version, not just a row in
+ * `policies`). Renders the full-fidelity layout (4-tile health
+ * strip + category cards + library list with all filters).
  *
- * Includes a one-time "✓ Core + Required complete" celebration
- * strip. Dismissal persists in localStorage; reappears only if
- * completion drops below 100% and returns.
+ * Includes a one-time "All required policies finalized" strip with
+ * a "Published to clients" sub-meter that jumps to the unpublished
+ * client-facing rows. Dismissal persists in localStorage; the strip
+ * reappears only if completion drops below 100% and returns.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { CheckCircle2, X } from 'lucide-react';
+import { CheckCircle2, X, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { PolicyHealthStrip } from './PolicyHealthStrip';
@@ -22,6 +23,14 @@ interface Props {
   /** Stable scope key for the celebration dismissal flag — usually
    *  the org id. Anonymous orgs share a scope. */
   scopeKey: string;
+  /** Total client-facing required policies (audience=external|both)
+   *  in the operator's applicable set. Drives the "published" sub-meter. */
+  externalRequiredTotal: number;
+  /** How many of those are actually published_external|wired. */
+  externalPublishedCount: number;
+  /** Jump-link handler — host page filters library to
+   *  audience=external AND status≠published_external. */
+  onJumpToPublishing: () => void;
   /** Optional banners (existing-policies import, conflict) the host
    *  page wants rendered above the celebration strip. */
   topBanners?: ReactNode;
@@ -34,6 +43,9 @@ interface Props {
 export function PoliciesGovernanceMode({
   summary,
   scopeKey,
+  externalRequiredTotal,
+  externalPublishedCount,
+  onJumpToPublishing,
   topBanners,
   categorySection,
   librarySection,
@@ -57,6 +69,9 @@ export function PoliciesGovernanceMode({
     }
   };
 
+  const hasPublishingWork =
+    externalRequiredTotal > 0 && externalPublishedCount < externalRequiredTotal;
+
   return (
     <div className="space-y-8">
       {topBanners}
@@ -73,11 +88,34 @@ export function PoliciesGovernanceMode({
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="font-display text-xs tracking-[0.14em] uppercase text-foreground">
-              Core + Required complete
+              All required policies finalized
             </h4>
             <p className="font-sans text-xs text-muted-foreground mt-1">
-              Your operations and team now have a written contract. From here, manage versions and roll out updates.
+              Each required policy has an approved version. Manage updates and publish to clients from the library below.
             </p>
+            {externalRequiredTotal > 0 && (
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <span className="font-sans text-xs text-muted-foreground">
+                  <span className="text-foreground tabular-nums">
+                    {externalPublishedCount} of {externalRequiredTotal}
+                  </span>{' '}
+                  published to clients
+                </span>
+                {hasPublishingWork && (
+                  <>
+                    <span className="text-muted-foreground/40">·</span>
+                    <button
+                      type="button"
+                      onClick={onJumpToPublishing}
+                      className="font-sans text-xs text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                    >
+                      Review publishing
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <Button
             variant="ghost"
