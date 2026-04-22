@@ -45,11 +45,13 @@ interface Props {
   values: Record<string, unknown>;
   /** Called when an inline chip is committed. Parent persists via save_policy_rule_blocks. */
   onRuleChange: (key: string, next: unknown) => void;
+  /** When provided, renders ONLY this variant (Wave 28.18 tabbed reframe). */
+  activeVariant?: PolicyVariantType;
   disabled?: boolean;
 }
 
 /** Variant types valid for a given audience. */
-function variantsForAudience(audience: PolicyAudience): PolicyVariantType[] {
+export function variantsForAudience(audience: PolicyAudience): PolicyVariantType[] {
   if (audience === 'internal') return ['internal', 'manager_note'];
   if (audience === 'external') return ['client', 'disclosure'];
   return ['internal', 'client', 'disclosure', 'manager_note'];
@@ -140,9 +142,12 @@ export function InlineRuleEditor({
   fields,
   values,
   onRuleChange,
+  activeVariant,
   disabled,
 }: Props) {
-  const allowedTypes = variantsForAudience(audience);
+  const allowedTypes = activeVariant
+    ? [activeVariant]
+    : variantsForAudience(audience);
   const { data: variants = [] } = usePolicyVariants(versionId);
   const { effectiveOrganization } = useOrganizationContext();
   const generate = useGenerateDraftVariant();
