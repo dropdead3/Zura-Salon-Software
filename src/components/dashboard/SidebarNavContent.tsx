@@ -846,17 +846,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
       {/* Fixed Footer Navigation - always at bottom */}
       <div className="mt-auto shrink-0 flex flex-col gap-2 pt-2">
-        {/* Beta Badge */}
-        {isCollapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="mx-2 flex items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/15 p-1.5 cursor-default">
-                <FlaskConical className="h-3.5 w-3.5 text-amber-600" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>Beta Testing V.1.1</TooltipContent>
-          </Tooltip>
-        ) : (
+        {/* Beta Badge - only shown when expanded; hidden when collapsed to avoid looking like a button */}
+        {!isCollapsed && (
           <div className="mx-3 flex items-center justify-center">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 cursor-default">
               <FlaskConical className="h-3 w-3 text-amber-600" />
