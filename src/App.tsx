@@ -94,6 +94,8 @@ const PolicyConflictCenter = lazyWithRetry(() => import("./pages/dashboard/admin
 const HandbookDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookDashboard"));
 const HandbookWizard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookWizard"));
 const AdminSettings = lazyWithRetry(() => import("./pages/dashboard/admin/Settings"));
+const TeamMembers = lazyWithRetry(() => import("./pages/dashboard/admin/TeamMembers"));
+const TeamMemberDetail = lazyWithRetry(() => import("./pages/dashboard/admin/TeamMemberDetail"));
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/dashboard/admin/Announcements"));
 const HomepageStylists = lazyWithRetry(() => import("./pages/dashboard/admin/HomepageStylists"));
 const AccountManagement = lazyWithRetry(() => import("./pages/dashboard/admin/AccountManagement"));
@@ -369,6 +371,8 @@ function DashboardRoutes() {
       <Route path="admin/compensation" element={<ProtectedRoute requiredPermission="manage_settings"><CompensationHub /></ProtectedRoute>} />
       <Route path="admin/compensation/:planId" element={<ProtectedRoute requiredPermission="manage_settings"><CompensationPlanEditor /></ProtectedRoute>} />
       <Route path="admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
+      <Route path="admin/team-members" element={<ProtectedRoute requiredPermission="manage_settings"><TeamMembers /></ProtectedRoute>} />
+      <Route path="admin/team-members/:userId" element={<ProtectedRoute requiredPermission="manage_settings"><TeamMemberDetail /></ProtectedRoute>} />
       <Route path="admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
       <Route path="admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
       <Route path="admin/build" element={<ProtectedRoute requiredPermission="view_dashboard_build"><DashboardBuild /></ProtectedRoute>} />
