@@ -24,9 +24,9 @@ const VALID_TABS: TabValue[] = ['modules', 'role-access', 'permissions', 'role-c
 
 // Legacy tab values that have been relocated → new destinations
 const LEGACY_REDIRECTS: Record<string, string> = {
-  'user-roles': 'admin/team-members?view=bulk-roles',
+  'user-roles': 'admin/team-members?mode=table',
   'invitations': 'admin/team-members?view=invitations',
-  'pins': 'admin/team-members?view=pins',
+  'pins': 'admin/team-members?mode=table&activity=pins',
   'chat': 'team-chat',
 };
 
