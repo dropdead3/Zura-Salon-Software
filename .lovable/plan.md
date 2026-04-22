@@ -1,55 +1,145 @@
 
-# Restore icon centering on the collapsed sidebar without re-introducing the wide tooltip trigger
+# Shift the collapsed section tooltips farther off the rail with a local tooltip offset
 
-## What's wrong now
+## What’s wrong now
 
-The previous edit swapped the collapsed single-item section link in `SidebarNavContent.tsx` from `flex … mx-2 width: calc(100% - 16px)` to `inline-flex … mx-auto`. That fixed the tooltip anchor for Operations Hub but broke icon centering for **every collapsed section that renders through this branch** — Operations Hub, Insights, Connect, Settings (the four icons in the screenshot are now hugging the left edge of the rail instead of sitting centered under the Command Center icon).
+Your latest screenshot is useful because it isolates the remaining issue cleanly: the icon centering is fixed again, but the tooltip bubble is still visually too close to the sidebar edge.
 
-Root cause: `inline-flex` with `mx-auto` only centers when the element has a defined width inside a block parent. The parent row here is `flex`-based, so `mx-auto` on an inline-flex child collapses to the left. The wide trigger was doing two jobs at once — anchoring the tooltip and centering the icon — and removing it killed the second job.
+At this point the problem is no longer trigger width or icon alignment. In `src/components/dashboard/SidebarNavContent.tsx`, the collapsed non-main single-item section branch already uses a compact centered trigger, but its tooltip still renders with:
 
-## The fix
+```tsx
+<TooltipContent side="right" sideOffset={8}>
+```
 
-Keep the trigger compact (so the tooltip anchors correctly) **and** wrap it in a centering container (so the icon sits under the Command Center icon). Two layers, two responsibilities.
+That `8` is still too small for this branch, so the tooltip appears to hug the rail.
+
+## What to ship
+
+Make this a positioning-only fix in the correct branch, without touching centering again.
 
 ### Edit — `src/components/dashboard/SidebarNavContent.tsx`
 
-In the `isCollapsed && sectionId !== 'main'` → `filteredItems.length === 1` branch:
+In the branch:
 
-1. Wrap the `<TooltipTrigger asChild>` block in a `<div className="flex justify-center">` so the row centers its child.
-2. Restore the `<a>` trigger to a compact pill: `inline-flex items-center justify-center px-2 py-2 rounded-full` (no `mx-auto`, no inline width style).
-3. Leave `sideOffset={8}` on the `TooltipContent` unchanged.
+```tsx
+isCollapsed && sectionId !== 'main'
+```
 
-Result: the icon pill is centered by its parent flex container (matches Command Center / Schedule alignment), and the tooltip anchors to the pill's right edge (matches Schedule's tooltip gap).
+inside:
 
-## Why this works
+```tsx
+if (filteredItems.length === 1) { ... }
+```
 
-- **Command Center / Schedule** are centered because their parent rows already center them, and their triggers are compact pills. We're now matching both properties.
-- The previous fix matched only the trigger compactness and lost the centering. This adds the missing wrapper.
-- No `sideOffset` change. No primitive change. No other file touched.
+change the tooltip offset for that section-icon tooltip only.
+
+### Exact change
+
+Either inline:
+
+```tsx
+<TooltipContent side="right" sideOffset={20}>{label}</TooltipContent>
+```
+
+or define a small local constant near the sidebar constants:
+
+```tsx
+const COLLAPSED_SECTION_TOOLTIP_OFFSET = 20;
+```
+
+and use:
+
+```tsx
+<TooltipContent side="right" sideOffset={COLLAPSED_SECTION_TOOLTIP_OFFSET}>
+  {label}
+</TooltipContent>
+```
+
+## Why this is the right fix
+
+- The current regression loop came from mixing two different concerns: centering and tooltip spacing.
+- Centering is now handled by the wrapper + compact trigger.
+- The only remaining defect in your screenshot is the tooltip’s final x-position.
+- A local `sideOffset` increase moves the tooltip farther right without rebreaking icon alignment.
+- This affects only the collapsed non-main single-item section icons:
+  - Operations Hub
+  - Insights
+  - Connect
+  - Settings
+
+It does **not** change:
+- Command Center
+- Schedule
+- Appointments
+- Transactions
+- global tooltip behavior
 
 ## What stays untouched
 
 - `src/components/ui/tooltip.tsx` — unchanged
+- trigger classes and centering wrapper in `SidebarNavContent.tsx` — unchanged
 - `CollapsibleNavGroup.tsx` — unchanged
-- Schedule, Command Center, Appointments and Transactions — unchanged
-- Expanded sidebar behavior — unchanged
-- `sideOffset={8}` — unchanged
+- main navigation tooltip spacing — unchanged
+- expanded sidebar layout — unchanged
 
 ## Files affected
 
-- `src/components/dashboard/SidebarNavContent.tsx` — wrap trigger in centering div, drop `mx-auto` from the `<a>`. ~3 lines modified.
+- `src/components/dashboard/SidebarNavContent.tsx`
+
+Expected scope: 1–2 lines changed.
 
 ## Acceptance
 
-1. Collapse the sidebar. The Operations Hub, Insights, Connect, and Settings icons sit **vertically centered under the Command Center icon** (same horizontal axis).
-2. Hover Operations Hub → tooltip appears with the **same gap** from the rail as Schedule's tooltip.
-3. Schedule, Command Center, Appointments and Transactions remain unchanged.
-4. Active-state pill on a section icon wraps the icon (not stretched).
+1. Collapse the sidebar.
+2. Hover Operations Hub.
+3. The tooltip bubble opens with clearly visible breathing room between the rail and the tooltip.
+4. The Operations Hub icon stays centered.
+5. Insights, Connect, and Settings inherit the same improved spacing.
+6. Command Center, Schedule, Appointments, and Transactions remain visually unchanged.
+
+## Technical note
+
+This is intentionally a branch-local override, not a global tooltip change. The user’s screenshot shows the issue is specific to the collapsed section-icon branch, so the safest fix is to adjust only that branch’s `sideOffset`.
 
 ## Prompt feedback
 
-Sharp catch and a clean report: "that did not fix it, that made it worse, none of the icons are center aligned." Three things in one sentence — outcome (didn't fix), regression (made it worse), and the specific symptom (centering broke). That's the ideal shape for a regression report. It tells me (a) the prior change failed its primary goal, (b) it introduced a new defect, and (c) exactly what the new defect looks like — without me having to guess from the screenshot. I could open the right file and reason about the right two CSS properties immediately.
+Good prompt. You did two things well:
+1. you stated the exact remaining symptom,
+2. you attached a screenshot that proves the problem is now spacing-only, not alignment.
 
-The sharpener: when a fix introduces a regression, the highest-leverage addition is **"and now [X] which used to work is broken."** You did this implicitly ("none of the icons are center aligned") but making it explicit — *"centering used to work, now it doesn't"* — locks in the constraint that the next fix must preserve both properties (tooltip gap **and** centering), not trade one for the other. Without that framing, an AI can fall into a ping-pong loop: fix A breaks B, fix B breaks A. Naming both invariants up front forces the fix to satisfy both simultaneously.
+That’s strong debugging language because it narrows the fix from “sidebar is broken” to “tooltip x-offset is still too small.”
 
-The deeper meta-lesson on my side: the previous edit conflated two concerns into one CSS rule. The wide trigger was doing double duty — anchoring tooltips **and** centering icons — and I removed it without replacing the centering job. When a single style is doing two jobs, removing it requires adding two replacements, not one. Anytime I'm about to delete a style that "obviously" only does one thing, I should ask: what *else* is this load-bearing for? Layout properties (`width`, `flex`, `margin`, `position`) almost always do more than they appear to. The fix here is structurally simple — separate the two responsibilities into two layers (wrapper centers, child anchors) — but I only get there by recognizing the conflation up front.
+## Better prompt framing for next time
+
+An even stronger version would be:
+
+- “Centering is fixed.”
+- “Only the tooltip offset is still wrong.”
+- “Increase the Operations Hub collapsed tooltip offset without changing icon alignment.”
+
+That format separates:
+- what is already correct,
+- what is still wrong,
+- what must not regress.
+
+## Further enhancement suggestion
+
+When a UI bug has gone through multiple rounds, the highest-leverage prompt format is:
+
+```text
+What is fixed:
+What is still broken:
+What must remain unchanged:
+Reference item:
+```
+
+Example:
+
+```text
+What is fixed: icon centering
+What is still broken: Operations Hub tooltip is still too close to the rail
+What must remain unchanged: current icon alignment
+Reference item: make this branch feel like Schedule, but farther right if needed
+```
+
+That structure prevents the next pass from “fixing” the wrong layer again.
