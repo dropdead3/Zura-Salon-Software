@@ -200,8 +200,8 @@ export const STARTER_DRAFTS: Record<string, StarterDraftSet> = {
 
   // ─── Both-audience: shared ─────────────────────────────────────────────
   chargeback_dispute: {
-    client: `**Chargebacks & disputes**\n\nIf you have a concern about a charge, please contact us first — we want to make it right. Disputing a valid charge with your bank without contacting us may result in restricted future booking privileges.`,
-    internal: `**Chargeback handling**\n\nAll chargebacks are reviewed within 48 hours by management. Documentation (signed consultation, service record, photos, payment receipt) is gathered for response. Guests with chargebacks for valid charges are flagged in the system; future bookings require pre-payment.`,
+    client: `**Chargebacks & disputes**\n\nIf you have a concern about a charge, please contact us first — we want to make it right. {{?auto_ban_on_dispute}}Disputing a valid charge with your bank without contacting us first will result in your future booking privileges being restricted.{{/auto_ban_on_dispute}}{{^auto_ban_on_dispute}}If you dispute a valid charge with your bank without contacting us, we may restrict future booking privileges on a case-by-case basis.{{/auto_ban_on_dispute}}\n\nAuto-restrict on chargeback: {{auto_ban_on_dispute}}.`,
+    internal: `**Chargeback handling**\n\nAll chargebacks are reviewed within 48 hours by management. Documentation (signed consultation, service record, photos, payment receipt) is gathered for response. {{?auto_ban_on_dispute}}Guests with chargebacks are automatically flagged in the system and blocked from new bookings.{{/auto_ban_on_dispute}}{{^auto_ban_on_dispute}}Guests with chargebacks for valid charges are flagged manually; future bookings then require pre-payment.{{/auto_ban_on_dispute}}\n\nAuto-restrict on chargeback: {{auto_ban_on_dispute}}.`,
     manager_note: `**Decision card — chargeback**\n\nGather: signed consultation, service notes, ticket, payment receipt. Submit response within 48 hours. After resolution, flag the guest record so future bookings require pre-payment.`,
   },
 

@@ -14,6 +14,7 @@
  */
 import { Fragment, useMemo, useState } from 'react';
 import { Pencil, Save, X, Sparkles, RotateCcw, Loader2 } from 'lucide-react';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -31,8 +32,14 @@ import type { PolicyAudience } from '@/hooks/policy/usePolicyData';
 import type { RuleField } from '@/lib/policy/configurator-schemas';
 import { getStarterDraftSet } from '@/lib/policy/starter-drafts';
 import { interpolateBrandTokens, processConditionalSections } from '@/lib/policy/render-starter-draft';
+import {
+  extractExternalBindingKeys,
+  getExternalRuleBinding,
+} from '@/lib/policy/external-rule-bindings';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface Props {
   versionId: string;
@@ -171,6 +178,74 @@ export function InlineRuleEditor({
   }, [variants]);
 
   const orgName = effectiveOrganization?.name;
+  const orgId = effectiveOrganization?.id;
+  const queryClient = useQueryClient();
+
+  // ─── External rule bindings ──────────────────────────────────────────
+  // Some inline tokens are backed by org-scoped settings outside
+  // `policy_rule_blocks` (e.g. `auto_ban_on_dispute` lives in
+  // `backroom_settings`). Discover which external bindings are referenced
+  // by *any* variant in the current set and fetch their live values, so
+  // both `processConditionalSections` and chip mounting see the truth.
+  const externalKeys = useMemo(() => {
+    const set = new Set<string>();
+    allowedTypes.forEach((vt) => {
+      const row = variantByType.get(vt);
+      const text = row?.body_md ?? starterSet?.[vt] ?? '';
+      extractExternalBindingKeys(text).forEach((k) => set.add(k));
+    });
+    return Array.from(set);
+  }, [allowedTypes, variantByType, starterSet]);
+
+  const externalQueries = useQueries({
+    queries: externalKeys.map((key) => ({
+      queryKey: ['policy-external-rule', orgId, key],
+      queryFn: async () => {
+        const binding = getExternalRuleBinding(key);
+        if (!binding || !orgId) return null;
+        return await binding.read(orgId);
+      },
+      enabled: !!orgId,
+      staleTime: 30_000,
+    })),
+  });
+
+  const externalValues = useMemo(() => {
+    const out: Record<string, unknown> = {};
+    externalKeys.forEach((key, i) => {
+      const data = externalQueries[i]?.data;
+      if (data !== undefined && data !== null) out[key] = data;
+    });
+    return out;
+  }, [externalKeys, externalQueries]);
+
+  /** Merged values: external bindings overlay rule-block values for any
+   *  shared key. External wins because it is the live system-of-record. */
+  const mergedValues = useMemo(
+    () => ({ ...values, ...externalValues }),
+    [values, externalValues],
+  );
+
+  /**
+   * Apply an external chip's onChange — writes through the binding then
+   * invalidates the binding's keys so the chip + the standalone settings
+   * card re-render in sync.
+   */
+  const handleExternalChange = async (key: string, next: unknown) => {
+    const binding = getExternalRuleBinding(key);
+    if (!binding || !orgId) return;
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      await binding.write(orgId, next, userId);
+      binding.invalidateKeys(orgId).forEach((qk) => {
+        queryClient.invalidateQueries({ queryKey: qk });
+      });
+      toast({ title: 'Setting saved' });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      toast({ title: 'Could not save', description: message, variant: 'destructive' });
+    }
+  };
 
   /**
    * Resolve the active body for a variant. Priority:
@@ -180,17 +255,16 @@ export function InlineRuleEditor({
    */
   const getBody = (vt: PolicyVariantType): string | null => {
     const row = variantByType.get(vt);
-    if (row?.body_md) return row.body_md;
-    const starter = starterSet?.[vt];
-    if (!starter) return null;
+    const raw = row?.body_md ?? starterSet?.[vt];
+    if (!raw) return null;
     // Pass 1: brand tokens ({{ORG_NAME}}, {{PLATFORM_NAME}}).
-    const branded = interpolateBrandTokens(starter, { orgName, platformName: PLATFORM_NAME });
+    const branded = interpolateBrandTokens(raw, { orgName, platformName: PLATFORM_NAME });
     // Pass 2: conditional section tags ({{?key}}…{{/key}}, {{^key}}…{{/key}}).
     // Run here so the disclosure / internal / client variants resolve to a
-    // single clean sentence based on the current rule values, while leaving
-    // any remaining `{{key}}` substitution tokens intact for `parseSegments`
-    // to mount as `RuleChipPopover` chips downstream.
-    return processConditionalSections(branded, values);
+    // single clean sentence based on the current rule values (including
+    // external bindings), while leaving any remaining `{{key}}` substitution
+    // tokens intact for `parseSegments` to mount as `RuleChipPopover` chips.
+    return processConditionalSections(branded, mergedValues);
   };
 
   const handleStartEditText = (vt: PolicyVariantType) => {
@@ -301,6 +375,21 @@ export function InlineRuleEditor({
                         </Fragment>
                       );
                     }
+                    // External binding takes precedence over schema fields —
+                    // the binding owns its own field definition + write path.
+                    const external = getExternalRuleBinding(seg.value);
+                    if (external) {
+                      return (
+                        <RuleChipPopover
+                          key={i}
+                          field={external.field}
+                          value={mergedValues[seg.value]}
+                          audience={audience}
+                          onChange={(next) => handleExternalChange(seg.value, next)}
+                          disabled={disabled}
+                        />
+                      );
+                    }
                     const field = fieldsByKey.get(seg.value);
                     if (!field) {
                       return (
@@ -316,7 +405,7 @@ export function InlineRuleEditor({
                       <RuleChipPopover
                         key={i}
                         field={field}
-                        value={values[seg.value]}
+                        value={mergedValues[seg.value]}
                         audience={audience}
                         onChange={(next) => onRuleChange(seg.value, next)}
                         disabled={disabled}
