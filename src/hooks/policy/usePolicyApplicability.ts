@@ -177,7 +177,7 @@ export const SURFACE_META: Record<
   handbook: {
     label: 'Employee Handbook',
     shortLabel: 'Handbook',
-    description: 'Internal team-facing handbook section.',
+    description: 'Lives in the staff handbook for your team to reference.',
     defaultVariant: 'internal',
     icon: Book,
     audience: 'internal',
