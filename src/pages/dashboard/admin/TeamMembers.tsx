@@ -18,6 +18,7 @@ import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganiza
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamPinStatus } from '@/hooks/useUserPin';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
@@ -29,15 +30,48 @@ type RosterMode = 'card' | 'table';
 const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
 const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
-  { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'] },
+  { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'general_manager', 'manager', 'assistant_manager'] },
   { label: 'Operations', icon: Cog, roles: ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'] },
   { label: 'Stylists', icon: Users, roles: ['stylist', 'stylist_assistant'] },
 ];
+
+// Role hierarchy ranks (lower = higher rank, displayed first within a section)
+const ROLE_RANK: Record<string, number> = {
+  super_admin: 0,
+  admin: 1,
+  general_manager: 2,
+  manager: 3,
+  assistant_manager: 4,
+  director_of_operations: 10,
+  operations_assistant: 11,
+  receptionist: 12,
+  front_desk: 13,
+  stylist: 20,
+  stylist_assistant: 21,
+};
 
 const CATEGORIZED_ROLES = SECTIONS.flatMap(s => s.roles);
 
 function roleLabel(role: string) {
   return role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+/** Returns the highest-ranked role a user holds among a candidate set, or Infinity if none match. */
+function highestRankAmong(userRoles: string[], candidates: string[]): number {
+  let best = Infinity;
+  for (const r of userRoles) {
+    if (candidates.includes(r)) {
+      const rank = ROLE_RANK[r] ?? 999;
+      if (rank < best) best = rank;
+    }
+  }
+  return best;
+}
+
+function compareByName(a: OrganizationUser, b: OrganizationUser): number {
+  const an = (a.display_name || a.full_name || '').toLowerCase();
+  const bn = (b.display_name || b.full_name || '').toLowerCase();
+  return an.localeCompare(bn);
 }
 
 function MemberRow({ user, hasPin, onClick }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void }) {
@@ -108,6 +142,7 @@ export default function TeamMembers() {
   const { roles, isPlatformUser } = useAuth();
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data: pinTeam = [] } = useTeamPinStatus();
+  const { data: stylistLevels = [] } = useStylistLevels();
   const capacity = useBusinessCapacity();
   const [search, setSearch] = useState('');
   const [seatsDialogOpen, setSeatsDialogOpen] = useState(false);
@@ -187,13 +222,95 @@ export default function TeamMembers() {
   }, [members, search]);
 
   const grouped = useMemo(() => {
-    const sections = SECTIONS.map(s => ({
-      ...s,
-      members: filtered.filter(m => m.roles.some(r => s.roles.includes(r))),
-    }));
-    const other = filtered.filter(m => !m.roles.some(r => CATEGORIZED_ROLES.includes(r)));
+    // For each section, collect members whose roles intersect, then sort by:
+    //   1. Highest-ranked role within that section's role set (ROLE_RANK ascending)
+    //   2. Alpha by display_name/full_name as tiebreaker
+    // A member is placed in the FIRST section whose roles they match (top-down through SECTIONS),
+    // so multi-role users appear once.
+    const assigned = new Set<string>();
+    const sections = SECTIONS.map(s => {
+      const sectionMembers = filtered.filter(m => {
+        if (assigned.has(m.user_id)) return false;
+        const matches = m.roles.some(r => s.roles.includes(r));
+        if (matches) assigned.add(m.user_id);
+        return matches;
+      });
+      sectionMembers.sort((a, b) => {
+        const ra = highestRankAmong(a.roles, s.roles);
+        const rb = highestRankAmong(b.roles, s.roles);
+        if (ra !== rb) return ra - rb;
+        return compareByName(a, b);
+      });
+      return { ...s, members: sectionMembers };
+    });
+    const other = filtered
+      .filter(m => !assigned.has(m.user_id))
+      .sort(compareByName);
     return { sections, other };
   }, [filtered]);
+
+  /**
+   * Build the Stylists section's nested sub-groups by level.
+   * Sub-headings follow the org's configured `display_order` (ascending = Level 1 → Level N
+   * per stylist_levels source of truth). Stylists with no level fall into "Unassigned".
+   * `stylist_assistant` role-holders are split into their own bottom sub-section.
+   * If the org has no levels configured, returns null and the caller renders a flat list.
+   */
+  const stylistSubGroups = useMemo(() => {
+    const stylistsSection = grouped.sections.find(s => s.label === 'Stylists');
+    if (!stylistsSection || stylistsSection.members.length === 0) return null;
+
+    // Split assistants out first
+    const assistants = stylistsSection.members.filter(m =>
+      m.roles.includes('stylist_assistant') && !m.roles.includes('stylist'),
+    );
+    const stylistsOnly = stylistsSection.members.filter(m => m.roles.includes('stylist'));
+
+    if (stylistLevels.length === 0) {
+      // Fall back to flat list when org has no levels configured
+      return null;
+    }
+
+    // Build a slug → label map and group stylists by their stylist_level slug
+    const byLevelSlug = new Map<string, OrganizationUser[]>();
+    const unassigned: OrganizationUser[] = [];
+    for (const m of stylistsOnly) {
+      const slug = m.stylist_level;
+      if (slug && stylistLevels.some(l => l.slug === slug)) {
+        const arr = byLevelSlug.get(slug) ?? [];
+        arr.push(m);
+        byLevelSlug.set(slug, arr);
+      } else {
+        unassigned.push(m);
+      }
+    }
+
+    const levelGroups = stylistLevels
+      .map(level => ({
+        key: level.slug,
+        label: level.label,
+        members: (byLevelSlug.get(level.slug) ?? []).slice().sort(compareByName),
+      }))
+      .filter(g => g.members.length > 0);
+
+    if (unassigned.length > 0) {
+      levelGroups.push({
+        key: '__unassigned',
+        label: 'Unassigned',
+        members: unassigned.sort(compareByName),
+      });
+    }
+
+    if (assistants.length > 0) {
+      levelGroups.push({
+        key: '__assistants',
+        label: 'Stylist Assistants',
+        members: assistants.sort(compareByName),
+      });
+    }
+
+    return levelGroups;
+  }, [grouped.sections, stylistLevels]);
 
   return (
     <DashboardLayout>
@@ -292,6 +409,8 @@ export default function TeamMembers() {
                 {grouped.sections.map(section => {
                   if (section.members.length === 0) return null;
                   const SIcon = section.icon;
+                  const isStylists = section.label === 'Stylists';
+                  const useSubGroups = isStylists && stylistSubGroups && stylistSubGroups.length > 0;
                   return (
                     <div key={section.label} className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b border-border/60">
@@ -299,16 +418,41 @@ export default function TeamMembers() {
                         <h2 className="font-display text-sm uppercase tracking-wider text-foreground">{section.label}</h2>
                         <span className="text-xs text-muted-foreground">({section.members.length})</span>
                       </div>
-                      <div className="space-y-2">
-                        {section.members.map(m => (
-                          <MemberRow
-                            key={m.user_id}
-                            user={m}
-                            hasPin={pinByUser.get(m.user_id)}
-                            onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                          />
-                        ))}
-                      </div>
+                      {useSubGroups ? (
+                        <div className="space-y-5">
+                          {stylistSubGroups!.map(sub => (
+                            <div key={sub.key} className="space-y-2 pl-3 border-l border-border/60">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-display text-xs uppercase tracking-wider text-muted-foreground">
+                                  {sub.label}
+                                </h3>
+                                <span className="text-[10px] text-muted-foreground/70">({sub.members.length})</span>
+                              </div>
+                              <div className="space-y-2">
+                                {sub.members.map(m => (
+                                  <MemberRow
+                                    key={m.user_id}
+                                    user={m}
+                                    hasPin={pinByUser.get(m.user_id)}
+                                    onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {section.members.map(m => (
+                            <MemberRow
+                              key={m.user_id}
+                              user={m}
+                              hasPin={pinByUser.get(m.user_id)}
+                              onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
