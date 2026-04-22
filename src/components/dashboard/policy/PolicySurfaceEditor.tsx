@@ -139,7 +139,7 @@ export function PolicySurfaceEditor({
                     </h5>
                     {enabled && (
                       <Badge variant="secondary" className="font-sans text-[10px]">
-                        Active
+                        On
                       </Badge>
                     )}
                   </div>
@@ -156,7 +156,7 @@ export function PolicySurfaceEditor({
               {enabled && (
                 <div className="mt-4 space-y-2">
                   <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-3 items-center">
-                    <label className="font-sans text-xs text-muted-foreground">Tone variant</label>
+                    <label className="font-sans text-xs text-muted-foreground">Written for</label>
                     <Select
                       value={variant}
                       onValueChange={(v) =>
@@ -192,7 +192,7 @@ export function PolicySurfaceEditor({
                     <div className="flex items-start gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5">
                       <Info className="w-3 h-3 text-muted-foreground mt-0.5 flex-shrink-0" />
                       <p className="font-sans text-[11px] text-muted-foreground">
-                        No approved <span className="text-foreground">{VARIANT_META[variant].label}</span> draft yet — this surface will render the <span className="text-foreground">Client</span> variant as a fallback.
+                        No approved <span className="text-foreground">{VARIANT_META[variant].label}</span> draft yet — this surface will use the <span className="text-foreground">Client</span> wording as a fallback.
                       </p>
                     </div>
                   )}
@@ -200,7 +200,7 @@ export function PolicySurfaceEditor({
                     <div className="flex items-start gap-1.5 rounded-md border border-foreground/20 bg-muted/40 px-2 py-1.5">
                       <Info className="w-3 h-3 text-foreground mt-0.5 flex-shrink-0" />
                       <p className="font-sans text-[11px] text-muted-foreground">
-                        No approved draft for this tone — this surface won't render until a variant is approved in the Drafts tab.
+                        No approved draft for this tone — this surface won't show until wording is approved in the Drafts tab.
                       </p>
                     </div>
                   )}
@@ -215,10 +215,10 @@ export function PolicySurfaceEditor({
         <div className="flex items-start gap-2">
           <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
           <p className="font-sans text-xs text-muted-foreground">
-            <span className="text-foreground font-medium">What happens next:</span> AI drafting
-            (Wave 28.6) will render the same configured rules into the right tone for each
-            active surface. The Handbook OS, Client Policy Center, and booking flow then read
-            from these mappings.
+            <span className="text-foreground font-medium">What happens next:</span> once you
+            publish, the rules you set above will appear in each place you turned on — written
+            in the right tone for staff or clients. Your booking page, client policy page, and
+            staff handbook all read from this single source.
           </p>
         </div>
       </div>
@@ -237,7 +237,7 @@ export function PolicySurfaceEditor({
           ) : (
             <Save className="w-4 h-4 mr-2" />
           )}
-          Save surfaces
+          Save changes
         </Button>
       </div>
     </div>
