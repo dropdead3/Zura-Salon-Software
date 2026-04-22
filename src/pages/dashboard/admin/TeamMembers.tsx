@@ -193,7 +193,7 @@ export default function TeamMembers() {
         )}
       </div>
 
-      <AddUserSeatsDialog open={seatsDialogOpen} onOpenChange={setSeatsDialogOpen} />
+      <AddUserSeatsDialog open={seatsDialogOpen} onOpenChange={setSeatsDialogOpen} capacity={capacity} />
     </DashboardLayout>
   );
 }
