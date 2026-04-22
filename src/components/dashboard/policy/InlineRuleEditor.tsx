@@ -243,79 +243,16 @@ export function InlineRuleEditor({
 
         const segments = body ? parseSegments(body) : [];
 
+        // Build a single-line meta string: "Starter draft · Last edited 2h ago · AI"
+        const metaParts: string[] = [];
+        if (row?.approved) metaParts.push('Approved');
+        else if (row) metaParts.push('Awaiting approval');
+        else if (isStarter) metaParts.push('Starter draft');
+        if (row?.last_drafted_at) metaParts.push(`Last edited ${timeAgo(row.last_drafted_at)}`);
+        if (row?.ai_generated) metaParts.push('AI generated');
+
         return (
           <section key={vt} className="space-y-3">
-            <header className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-display text-xs tracking-wider uppercase text-foreground">
-                  {meta.label}
-                </h4>
-                {row?.approved && (
-                  <Badge variant="outline" className="font-sans text-[10px] text-primary border-primary/30">
-                    <CheckCircle2 className="w-2.5 h-2.5 mr-1" />
-                    Approved
-                  </Badge>
-                )}
-                {row && !row.approved && (
-                  <Badge variant="outline" className="font-sans text-[10px] text-muted-foreground">
-                    Awaiting approval
-                  </Badge>
-                )}
-                {isStarter && (
-                  <Badge variant="outline" className="font-sans text-[10px] text-muted-foreground border-border">
-                    <FileText className="w-2.5 h-2.5 mr-1" />
-                    Starter
-                  </Badge>
-                )}
-                {row?.ai_generated && (
-                  <Badge variant="outline" className="font-sans text-[10px] text-muted-foreground">
-                    AI
-                  </Badge>
-                )}
-                {row?.last_drafted_at && (
-                  <span className="font-sans text-[10px] text-muted-foreground/70">
-                    Last drafted {timeAgo(row.last_drafted_at)}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                {!isEditing && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleStartEditText(vt)}
-                      disabled={disabled}
-                      className="h-8 font-sans"
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                      Edit text
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleRegenerate(vt)}
-                      disabled={disabled || isPending}
-                      className="h-8 font-sans"
-                    >
-                      {isPending ? (
-                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                      ) : row?.body_md ? (
-                        <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                      ) : (
-                        <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                      )}
-                      {row?.body_md ? 'Regenerate' : 'AI version'}
-                    </Button>
-                  </>
-                )}
-              </div>
-            </header>
-
-            <p className="font-sans text-xs text-muted-foreground -mt-1">
-              {meta.description}
-            </p>
-
             {isEditing ? (
               <div className="space-y-2">
                 <Textarea
@@ -352,42 +289,77 @@ export function InlineRuleEditor({
             ) : (
               <div
                 className={cn(
-                  'rounded-xl border border-border bg-card/60 p-5',
-                  'font-sans text-sm text-foreground/90 leading-relaxed',
+                  'rounded-xl border border-border bg-card/60 overflow-hidden',
                 )}
               >
-                {segments.map((seg, i) => {
-                  if (seg.kind === 'text') {
+                {/* Prose body */}
+                <div className="p-5 font-sans text-sm text-foreground/90 leading-relaxed">
+                  {segments.map((seg, i) => {
+                    if (seg.kind === 'text') {
+                      return (
+                        <Fragment key={i}>
+                          {renderText(seg.value, `${vt}-${i}`)}
+                        </Fragment>
+                      );
+                    }
+                    const field = fieldsByKey.get(seg.value);
+                    if (!field) {
+                      return (
+                        <code
+                          key={i}
+                          className="font-mono text-[11px] px-1 py-0.5 rounded bg-muted text-muted-foreground"
+                        >
+                          {`{{${seg.value}}}`}
+                        </code>
+                      );
+                    }
                     return (
-                      <Fragment key={i}>
-                        {renderText(seg.value, `${vt}-${i}`)}
-                      </Fragment>
-                    );
-                  }
-                  // token segment
-                  const field = fieldsByKey.get(seg.value);
-                  if (!field) {
-                    // Unresolved token — leave as-is so authors notice missing wiring.
-                    return (
-                      <code
+                      <RuleChipPopover
                         key={i}
-                        className="font-mono text-[11px] px-1 py-0.5 rounded bg-muted text-muted-foreground"
-                      >
-                        {`{{${seg.value}}}`}
-                      </code>
+                        field={field}
+                        value={values[seg.value]}
+                        audience={audience}
+                        onChange={(next) => onRuleChange(seg.value, next)}
+                        disabled={disabled}
+                      />
                     );
-                  }
-                  return (
-                    <RuleChipPopover
-                      key={i}
-                      field={field}
-                      value={values[seg.value]}
-                      audience={audience}
-                      onChange={(next) => onRuleChange(seg.value, next)}
+                  })}
+                </div>
+
+                {/* Footer: meta line + per-variant actions */}
+                <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-t border-border/60 bg-muted/20">
+                  <span className="font-sans text-[11px] text-muted-foreground">
+                    {metaParts.length > 0 ? metaParts.join(' · ') : meta.description}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleStartEditText(vt)}
                       disabled={disabled}
-                    />
-                  );
-                })}
+                      className="h-8 font-sans"
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                      Edit text
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleRegenerate(vt)}
+                      disabled={disabled || isPending}
+                      className="h-8 font-sans"
+                    >
+                      {isPending ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : row?.body_md ? (
+                        <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      {row?.body_md ? 'Regenerate' : 'AI version'}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </section>
