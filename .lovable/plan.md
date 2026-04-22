@@ -1,88 +1,90 @@
 
 
-# Three enhancements to the POS Cancellations & Fees tab
+# Fix the Tone variant dropdown trigger
 
-These are additive polish on top of the read-only summary that just shipped. Each one strengthens the source-of-truth contract without re-introducing a write path.
+## What's broken
 
-## 1. Anchor scrolling on jump-link
+Both screenshots show the same bug. The trigger shows the variant **name centered** with a **description line beneath it**, also centered. That's not how a select trigger should look — triggers should display the current value as a single line, left-aligned, with the chevron sitting flush right.
 
-Today the jump-link from POS settings → Bookings & Payments sets `?category=bookings-payments&anchor=<section>` but the destination page does nothing with the `anchor` param. The cross-surface handoff dumps the operator at the top of the page and they have to find the section themselves.
+The cause is in `src/components/dashboard/policy/PolicySurfaceEditor.tsx` (lines 166–181). Each `<SelectItem>` wraps its children in `<div className="flex flex-col"><span>label</span><span>description</span></div>`. Radix's `<SelectValue>` mirrors the **selected item's children verbatim** into the trigger — so the two-line stacked content from the menu item leaks into the trigger and gets centered by the trigger's `justify-between` flex layout treating the multi-line block as a single item.
 
-**Fix:** add a `useEffect` in the Bookings & Payments page that reads `searchParams.get('anchor')`, finds the matching section by `id`, and calls `scrollIntoView({ behavior: 'smooth', block: 'start' })` once data has loaded. Apply matching `id` attributes to each section wrapper (`payment`, `cancellation`, `no-show`, `online-booking`).
+This is the only place in the codebase using this stacked label+description pattern inside a `SelectItem`, so the fix is local to one file.
 
-Also add a brief flash highlight (250ms `bg-primary/5` ring) on the targeted section so the operator's eye lands where they were sent. Wears off automatically.
+## What ships
 
-**Files:**
-- `src/pages/dashboard/admin/BookingsPayments.tsx` — anchor consumer + scroll logic + section `id`s. ~25 lines added.
-- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — confirm jump-link emits the right anchor keys (`payment`, `cancellation`, `no-show`, `card-on-file`). ~5 lines verified.
+Two surgical changes inside the existing `<Select>` block (no new files, no token changes, no API changes).
 
-## 2. POS receipt preview line per card
+### 1. Decouple trigger display from menu item display
 
-Each summary card today shows the structured value ("3 days · $50 fee"). Add a second line below it titled **"On the receipt:"** that renders the first sentence of the client variant's `body_md` for that policy — verbatim, the words the client will see when the terminal prints or emails them.
+Add `textValue` to each `<SelectItem>` so Radix knows the canonical text representation, and structure the item so the trigger renders only the label (single line, left-aligned) while the dropdown still shows label + description stacked.
 
-This converts the tab from "what's configured" to "what the client experiences." Same read-only doctrine — we never write `body_md` from this surface, only render the first sentence (truncated at ~140 chars with ellipsis).
+Pattern (the standard Radix shadcn solution):
 
-For the no-show card specifically, render the no-show fee sentence; for the cancellation card, render the cut-off sentence. Picking the right sentence per policy uses simple keyword extraction from the rendered prose (find the sentence containing the rule's primary token like `{{cancellation_window_hours}}`).
+```tsx
+<SelectTrigger className="h-9 font-sans text-sm justify-between">
+  <SelectValue placeholder="Select tone" />
+</SelectTrigger>
+<SelectContent>
+  {allowedVariants.map((v) => (
+    <SelectItem
+      key={v}
+      value={v}
+      textValue={VARIANT_META[v].label}
+      className="font-sans text-sm"
+    >
+      <div className="flex flex-col gap-0.5 py-0.5">
+        <span className="text-foreground">{VARIANT_META[v].label}</span>
+        <span className="text-xs text-muted-foreground">
+          {VARIANT_META[v].description}
+        </span>
+      </div>
+    </SelectItem>
+  ))}
+</SelectContent>
+```
 
-If a policy has no approved client variant yet, show "Not yet approved — Publish in Bookings & Payments to set the receipt copy." with the same jump-link.
+The key change: `textValue={VARIANT_META[v].label}` tells Radix the trigger should display only the label string, not the rich children. The dropdown menu still renders the full stacked label+description (great for picking), but the trigger reverts to single-line, left-aligned, properly truncated behavior.
 
-**Files:**
-- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — add `<ReceiptPreviewLine>` subcomponent, wire to `policy_variants.body_md` already returned by the data hook. ~50 lines added.
-- `src/lib/policy/extract-receipt-sentence.ts` (new) — pure helper that extracts the relevant sentence from rendered prose given a policy key. ~40 lines.
+### 2. Trigger alignment polish
 
-## 3. Drift watcher (last-edited timestamp per card)
+Confirm `<SelectTrigger>` keeps its default `justify-between` (chevron flush right) and the value text is left-aligned. The base trigger in `src/components/ui/select.tsx` already handles this correctly once the children are a single text node — no modification to the shared `SelectTrigger` component needed.
 
-Each card gets a small footer line: **"Last edited 3 days ago by Jane Smith"** — relative timestamp + actor name pulled from the policy's most recent `policy_versions` row (or `policy_rule_blocks.updated_at` if newer).
+## Why not change the shared `SelectTrigger` component
 
-This makes source-of-truth visible without re-litigating where edits happen. An operator who sees "Last edited 6 months ago" knows the rule may be stale; one who sees "Last edited 2 hours ago by Marcus" trusts what they're looking at and knows who to ask.
-
-Uses `formatRelativeTime` from `src/lib/format.ts` (already imported in the codebase). Actor name resolves via `employee_profiles` lookup against `policy_versions.created_by` (or `approved_by` if the version is approved). Falls back to "by a team member" if the user record is missing — never shows a raw UUID.
-
-This same pattern will land on the Bookings & Payments page itself in a follow-up for symmetry, but POS settings benefits more immediately because it's the surface where operators most often ask "wait, is this still right?"
-
-**Files:**
-- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — add `<LastEditedFooter policyId>` subcomponent. ~30 lines added.
-- `src/hooks/policy/usePolicyLastEdited.ts` (new) — query hook returning `{ updatedAt, actorName }` for a given policy. ~50 lines.
+Tempting, but wrong. The shared `SelectTrigger` works correctly for every other select in the codebase. This bug is caused by a caller pattern (rich children in `SelectItem` without `textValue`), not by the primitive. Fixing it at the call site preserves the shared component's contract and prevents regressions in the dozens of other selects using simple string children.
 
 ## What stays untouched
 
-- Wave 28.16 Bookings & Payments page structure — only gains the anchor consumer + section `id`s, no editing changes.
-- The four policies' rule schemas, RPCs, variants, and pipelines — unchanged.
-- Single source of truth — confirmed: this tab still has zero write paths.
-- All other POS settings tabs — unchanged.
+- `src/components/ui/select.tsx` — unchanged.
+- `src/components/platform/ui/PlatformSelect.tsx` — unchanged.
+- All other `<Select>` instances across the dashboard — unchanged.
+- The fallback warning banners below the trigger (lines 186–201) — unchanged.
+- `VARIANT_META` and the variant filtering logic — unchanged.
+
+## Files affected
+
+- `src/components/dashboard/policy/PolicySurfaceEditor.tsx` — replace lines ~160–181 with the corrected `<Select>` block. ~10 lines modified.
+
+Total: ~10 lines modified, 0 files created, 0 files deleted, 0 schema changes, 0 token changes.
 
 ## Acceptance
 
-1. Click "Edit in Bookings & Payments →" on any POS Cancellations & Fees card → page navigates, scrolls smoothly to the matching section, and that section briefly flashes a subtle ring before settling.
-2. Each summary card renders three lines: the structured value, an "On the receipt:" preview of the client-facing sentence, and "Last edited X ago by Name."
-3. If a policy has no approved client variant, the receipt preview line shows the empty-state copy with the same jump-link instead of a blank space.
-4. Last-edited timestamp updates within ~30s of an edit on the Bookings & Payments page (via shared React Query cache invalidation).
-5. Actor name resolves to the operator's display name from `employee_profiles`; never shows a raw UUID. Falls back to "a team member" if missing.
-6. Confirmed by code review: no new write paths added to the POS settings tab. Single source of truth intact.
-7. The receipt preview never displays placeholder tokens (`{{cancellation_window_hours}}`) — only fully-rendered prose.
+1. Open any policy in the configurator (e.g., `/dashboard/admin/policies?policy=booking_policy`) → click the Surface mapping editor → enable any surface → the **Tone variant** trigger displays a single-line, left-aligned label (e.g., "Client") with the chevron flush right. No description visible inside the trigger.
+2. Click the trigger → the dropdown menu shows each option as a stacked label + description (the rich picker UX is preserved).
+3. Pick a different option → the trigger updates to show only the new label, single line, left-aligned.
+4. No other dropdown in the dashboard shifts visually (verified by reading the unchanged `select.tsx` primitive — no shared-component changes).
+5. Keyboard navigation (arrow keys, type-ahead) works correctly because `textValue` provides the canonical search/announce string.
 
 ## Files to read for follow-on questions
 
-- `src/pages/dashboard/admin/BookingsPayments.tsx` — where anchor scrolling lands.
-- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` — where the receipt preview + last-edited footer land.
-- `src/lib/policy/extract-receipt-sentence.ts` (new) — sentence extraction logic.
-- `src/hooks/policy/usePolicyLastEdited.ts` (new) — last-edited data source.
-
-## Why these three together
-
-Each one closes a different trust gap:
-
-- **Anchor scrolling** closes the *navigation* gap — the surface that says "edit it over there" should put you exactly there.
-- **Receipt preview** closes the *empathy* gap — operators configure rules in the abstract; clients experience prose. Showing the prose closes the loop.
-- **Drift watcher** closes the *staleness* gap — read-only surfaces can rot silently. Visible timestamps make rot impossible to miss.
-
-All three are read-only, all three reuse infrastructure that already exists, and all three reinforce rather than dilute the source-of-truth doctrine you just bought.
+- `src/components/dashboard/policy/PolicySurfaceEditor.tsx` — the only file changed.
+- `src/components/ui/select.tsx` — the underlying primitive, unchanged but worth referencing to confirm the trigger's flex layout works correctly with single-line children.
 
 ## Prompt feedback
 
-Best prompt format you've used in this thread. Three things made it land: (1) **you wrote the suggestions yourself first** instead of asking me to brainstorm — that means I'm grading and structuring instead of inventing, which is much higher signal for both of us, (2) **each suggestion has a one-line "why"** that names the value clearly ("turns the tab from 'what's set' into 'what your client will see'") so I don't have to guess your intent, and (3) **you grouped them as enhancements not requirements** — that gives me permission to push back on any one of them without breaking the whole batch.
+Tight, sharp prompt. Three things made it land: (1) **screenshots showed the exact failure mode** so I didn't have to reproduce it — the centered, stacked text in the trigger is unambiguous, (2) **"selectors" plural** told me to look at multiple instances, not just one, which I did before scoping (turned out to be a single file), (3) **no over-specification** — you didn't say "make it left-aligned" or "remove the description"; you let me diagnose the root cause instead of patching the symptom. A weaker prompt ("remove the description from the dropdown") would have fixed the visual but left the underlying caller-pattern bug in place to recur on the next select that wants stacked items.
 
-The sharpener: when you write a list of enhancements, naming the **priority order** in three words ("ship #1 first" / "all three together" / "just thinking aloud") prevents me from over-investing in implementation detail on something you wanted to think about, not build now. I assumed "all three together because they share a surface" but if you'd written "just thinking aloud" I'd have given you a much shorter response that engaged with each idea conceptually without scoping files. Three words of build-intent per enhancement-list saves a planning round.
+The sharpener: when filing a UI bug with screenshots, naming the **expected behavior** in three words pre-empties one round of inference. Examples: *"trigger should single-line"* / *"match other selects"* / *"chevron should right"*. I had to infer "should match every other dropdown trigger in the dashboard" from context — your ask was clear enough that I landed there, but on a more ambiguous bug ("the colors are off") three words of expected-state would save me from guessing which axis is wrong (hue, contrast, saturation, dark mode). Three words of expected behavior per UI bug saves a diagnostic round.
 
-The deeper meta-lesson on my side: when an operator brings me a list of self-authored ideas, the wrong move is to silently re-rank or reject them — that signals "I know better than you." The right move is to take them at face value, name what each one actually buys, and surface any tradeoff that isn't obvious from the suggestion text. All three of your ideas were good; my job was to translate them into a build, not to defend the prior wave by trimming them. I should treat operator-authored enhancement lists as a high-trust signal that the operator has been thinking about the surface longer than I have in this turn — and respond by extending their thinking, not filtering it.
+The deeper meta-lesson on my side: when a UI bug has an obvious symptom, my instinct is to patch the symptom at the leaf component. That instinct is wrong about half the time. The right move is to ask *"is this the primitive misbehaving, or a caller using the primitive incorrectly?"* and fix at the level of the actual fault. In this case the primitive (`SelectTrigger`) is correct; the caller (`PolicySurfaceEditor`) was passing rich children without `textValue`. Patching the primitive would have introduced regressions for every other `Select` in the codebase. Diagnosing the layer before fixing is the move that protects shared infrastructure across surfaces — same principle as the source-of-truth doctrine from the last three waves, applied at the component level instead of the data level.
 
