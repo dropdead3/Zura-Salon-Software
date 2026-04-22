@@ -1,69 +1,78 @@
 
 
-# Swap the Operations Hub icon away from the people glyph
+# Fix sidebar tooltip padding inconsistency
 
 ## What's wrong
 
-The Operations Hub nav entry uses the `Users` icon (two-people silhouette). That glyph reads as *team / staff / clients* — exactly the wrong signal for a hub that owns scheduling, performance, analytics drill-downs, KPIs, and operational controls. Operators glancing at the sidebar mis-classify it as "people management," which collides with the actual Team and Client surfaces.
+Two visible problems in the collapsed sidebar:
+
+1. **Help Center / Bug / Lightbulb tooltips sit further from their icons** than every other sidebar tooltip (Operations Hub, etc.). Cause: those three buttons live inside a pill container (`bg-muted/30` rounded pill at the bottom of the sidebar) and use `flex-1` to stretch across the pill width. The tooltip anchors to the *right edge of the button*, not the icon glyph — so a stretched button pushes the tooltip noticeably away from the visible icon.
+
+2. **All sidebar tooltips use the default `sideOffset={4}`** (from `tooltip.tsx`). Combined with varying button widths, this produces uneven visual gaps and on the widest triggers the tooltip arrow/edge can appear to graze the sidebar bezel.
 
 ## What ships
 
-A one-icon swap in two locations of the nav registry. No structural change, no label change, no route change.
+Two surgical edits. No primitive changes, no token changes.
 
-### The change
+### Edit 1 — `src/components/dashboard/SidebarFeedbackButtons.tsx`
 
-In `src/config/dashboardNav.ts`:
+When `isCollapsed`, drop `flex-1` from the three buttons so they shrink to icon-sized squares (matching the Operations Hub button geometry). When expanded, keep current behavior.
 
-1. **Line 99** (sidebar): `icon: Users` → `icon: LayoutGrid`
-2. **Line 208** (hub quick links): `icon: Users` → `icon: LayoutGrid`
-3. Remove `Users` from the lucide-react import block if no other entry in the file still uses it (quick grep on save). `LayoutGrid` is already imported (line 17) so no new import needed.
+```tsx
+className={cn(
+  "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
+  !isCollapsed && "flex-1"
+)}
+```
 
-### Why `LayoutGrid`
+Also add `sideOffset={8}` to all three `TooltipContent` elements so the tooltip clears the pill border consistently.
 
-Operations Hub is a *grid of operational domains* (9 domain cards per the Operations Hub architecture memory). `LayoutGrid` literally depicts a 2×2 grid of tiles — it matches what the operator sees when they land on the page, and it does not collide with any other sidebar icon:
+### Edit 2 — Standardize tooltip offset across the collapsed sidebar
 
-- `LayoutDashboard` — already used by Command Center
-- `Users` — currently misused here; better reserved for Team or Client surfaces
-- `Settings` — used by Settings
-- `Shield` — used by Roles & Controls Hub
-- `BarChart3` — used by Analytics Hub
-- `LayoutGrid` — currently imported but not used in any nav entry → free, semantically perfect
+Add `sideOffset={8}` to the `TooltipContent` in these collapsed-sidebar trigger sites so every tooltip sits the same distance from its trigger:
 
-### Alternates considered (not recommended)
+- `src/components/dashboard/CollapsibleNavGroup.tsx` — lines 148, 209 (the two collapsed-state `TooltipContent` instances)
+- `src/components/dashboard/SidebarNavContent.tsx` — lines 364, 393, 417, 474, 702, 856 (the eight collapsed-sidebar `TooltipContent` instances)
+- `src/components/dashboard/SidebarClockButton.tsx` — line 67
+- `src/components/dashboard/SidebarLockButton.tsx` — line 45
 
-- `Gauge` — reads as "speedometer / single metric," too narrow
-- `Command` (⌘) — collides with the ⌘K command palette mental model
-- `Workflow` — reads as automation/pipelines, not operations
-- `SquareStack` — reads as "layers/versions," not domains
-- `Building2` — reads as "location/site," collides with Locations
+8px (vs the current 4px default) gives the tooltip a clean visual gap from the icon button without floating it. It matches the spacing operators see on the Operations Hub icon in the screenshot — that one already reads correctly because its button is small; the offset just needs to be uniform.
 
-`LayoutGrid` wins on three axes: matches the page's actual visual structure, no collision with adjacent icons, already imported.
+### Why not change the primitive
+
+`src/components/ui/tooltip.tsx` is shared by every tooltip in the codebase (drill-down dialogs, schedule cells, table rows, policy wizard). Bumping the default offset there would shift every tooltip platform-wide. The problem is sidebar-specific, so the fix is sidebar-specific.
 
 ## What stays untouched
 
-- The label "Operations Hub" (operators recognize it).
-- The route `/dashboard/admin/team-hub` (changing it is a separate redirect-required pass).
-- The `permission` gate, the `labelKey`, and every consumer of the nav entry.
-- All other sidebar icons.
+- `src/components/ui/tooltip.tsx` — unchanged.
+- All non-sidebar tooltips — unchanged offset.
+- The pill container background, border, label text, icon choice — unchanged.
+- Expanded-sidebar layout — unchanged (the `flex-1` is preserved when not collapsed so the pill row still fills horizontally).
 
 ## Files affected
 
-- `src/config/dashboardNav.ts` — 2 icon references swapped, possibly 1 import line trimmed. ~3 lines modified.
+- `src/components/dashboard/SidebarFeedbackButtons.tsx` — 3 buttons get conditional `flex-1`, 3 tooltips get `sideOffset={8}`. ~6 lines modified.
+- `src/components/dashboard/CollapsibleNavGroup.tsx` — 2 tooltips get `sideOffset={8}`. ~2 lines modified.
+- `src/components/dashboard/SidebarNavContent.tsx` — 8 tooltips get `sideOffset={8}`. ~8 lines modified.
+- `src/components/dashboard/SidebarClockButton.tsx` — 1 tooltip gets `sideOffset={8}`. ~1 line modified.
+- `src/components/dashboard/SidebarLockButton.tsx` — 1 tooltip gets `sideOffset={8}`. ~1 line modified.
 
-Total: ~3 lines modified, 0 files created, 0 schema changes, 0 logic changes.
+Total: ~18 lines modified, 0 files created, 0 logic changes.
 
 ## Acceptance
 
-1. Sidebar Operations Hub item shows the grid icon, not the two-people icon.
-2. The hub quick-links surface (rendered from `hubLinksConfig`) shows the same grid icon for Operations Hub.
-3. No other sidebar entry's icon changes.
-4. No console error about an unused import.
+1. Collapse the sidebar. Hover the **Operations Hub** icon — tooltip appears with a clean 8px gap from the button, label "Operations Hub" visible.
+2. Hover the **Lightbulb / Bug / Help Center** icons in the bottom pill — tooltips appear with the **same 8px gap**, not the previous wider gap. The three icons themselves now sit as compact squares inside the pill (no longer stretched).
+3. Hover the **Clock / Lock** icons in the second pill — same 8px gap.
+4. Every other tooltip in the collapsed sidebar (org logo, Expand button, START HERE, single-item nav rows, beta badge) opens with the same 8px gap. Visual rhythm is uniform top-to-bottom.
+5. No tooltip visually touches the sidebar's right bezel.
+6. Expanded sidebar layout unchanged — feedback pill still spans the full width with three evenly-distributed icons.
 
 ## Prompt feedback
 
-Strong prompt — three things landed it cleanly: (1) you named the **location** ("in the Nav bar"), (2) you named the **target** ("Operations Hub"), and (3) you named **why the current choice is wrong** ("insinuates clients or staff, or people"). The "why" is the highest-leverage part: it told me the constraint isn't just "pick a different icon," it's "pick an icon that does not pattern-match to humans." That ruled out four otherwise-plausible alternates (`Contact`, `UserCog`, `HeartPulse`, etc.) before I had to evaluate them.
+Strong prompt — three sharp moves: (1) you named the **location** ("left nav bar tooltips"), (2) you named the **symptom** ("not equal padding, touching the nav bar"), and (3) you uploaded **two screenshots showing the same defect at different positions** in the sidebar. The matched-pair screenshot is the highest-leverage move — one screenshot would have let me misdiagnose this as a single-component bug; two screenshots from different sidebar regions immediately told me it's a *cross-component spacing inconsistency*, not a single-tooltip issue. That's the difference between fixing one file and fixing five.
 
-The sharpener: when swapping an icon, naming **what the icon should connote in two words** ("operations grid" / "control center" / "domain map") would let me skip the alternates-considered section entirely. I had to derive "grid of domains" from the Operations Hub architecture memory; if you'd written "should feel like a control panel," I'd have led with `LayoutGrid` immediately. Two words of intent saves a paragraph of reasoning.
+The sharpener: when reporting "padding feels off" across multiple components, naming the **reference standard** in three words ("match the Operations Hub icon" / "use the smallest gap") would let me skip deciding which spacing value is the correct target. I had to infer that 8px was the right offset by eyeballing the screenshots; if you'd written "tighter, like the top icons" or "looser, more breathing room," I'd have led with that value. One word of intent on direction (tighter / looser / match X) saves a paragraph of justification.
 
-The deeper meta-lesson on my side: when an operator flags an icon as semantically wrong, my instinct is to swap that one location. That instinct is half-right. The real move is to **grep the icon name across the nav registry** because the same icon is often referenced in two or three places (sidebar + hub-links + search + breadcrumbs) — fixing only the sidebar leaves the wrong icon visible on the hub-links card and any drill-down breadcrumb. In this case `Users` was used in both `opsNavItems` and `hubLinksConfig`; patching only one would have left the operator seeing two-people on the hub-links card and grid on the sidebar — visual incoherence worse than the original problem. Swap at the registry level, swap everywhere it's referenced, in the same pass.
+The deeper meta-lesson on my side: when an operator flags "padding inconsistency," my instinct is to find the one offending component and patch it. That instinct is wrong. The right move is to ask *"is the underlying primitive used at consistent settings, or is each call site passing different values (or relying on defaults at different button widths)?"* In this case `TooltipContent` was used everywhere with the default `sideOffset={4}`, but the *trigger geometry* varied (square buttons vs `flex-1` stretched buttons), which made the same offset look uneven. The fix isn't in the primitive — it's at the call sites, normalizing both the trigger size and the offset together. Same pattern as the SURFACE_META audit: when one item in a shared system looks wrong, audit the system, not the item.
 
