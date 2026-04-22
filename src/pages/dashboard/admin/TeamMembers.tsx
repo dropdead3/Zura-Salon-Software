@@ -18,6 +18,7 @@ import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganiza
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamPinStatus } from '@/hooks/useUserPin';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
@@ -29,15 +30,48 @@ type RosterMode = 'card' | 'table';
 const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
 const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
-  { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'] },
+  { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'general_manager', 'manager', 'assistant_manager'] },
   { label: 'Operations', icon: Cog, roles: ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'] },
   { label: 'Stylists', icon: Users, roles: ['stylist', 'stylist_assistant'] },
 ];
+
+// Role hierarchy ranks (lower = higher rank, displayed first within a section)
+const ROLE_RANK: Record<string, number> = {
+  super_admin: 0,
+  admin: 1,
+  general_manager: 2,
+  manager: 3,
+  assistant_manager: 4,
+  director_of_operations: 10,
+  operations_assistant: 11,
+  receptionist: 12,
+  front_desk: 13,
+  stylist: 20,
+  stylist_assistant: 21,
+};
 
 const CATEGORIZED_ROLES = SECTIONS.flatMap(s => s.roles);
 
 function roleLabel(role: string) {
   return role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+/** Returns the highest-ranked role a user holds among a candidate set, or Infinity if none match. */
+function highestRankAmong(userRoles: string[], candidates: string[]): number {
+  let best = Infinity;
+  for (const r of userRoles) {
+    if (candidates.includes(r)) {
+      const rank = ROLE_RANK[r] ?? 999;
+      if (rank < best) best = rank;
+    }
+  }
+  return best;
+}
+
+function compareByName(a: OrganizationUser, b: OrganizationUser): number {
+  const an = (a.display_name || a.full_name || '').toLowerCase();
+  const bn = (b.display_name || b.full_name || '').toLowerCase();
+  return an.localeCompare(bn);
 }
 
 function MemberRow({ user, hasPin, onClick }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void }) {
