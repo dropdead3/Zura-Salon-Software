@@ -140,6 +140,39 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     return accounts?.find(a => a.user_id === userId);
   };
 
+  const pinStatusByUser = useMemo(() => {
+    const map = new Map<string, PinStatusEntry>();
+    pinTeam.forEach(p => map.set(p.user_id, { user_id: p.user_id, has_pin: p.has_pin, is_primary_owner: p.is_primary_owner }));
+    return map;
+  }, [pinTeam]);
+
+  const openPinDialog = (userId: string, mode: PinAction) => {
+    const pin = pinStatusByUser.get(userId);
+    const teamMember = pinTeam.find(p => p.user_id === userId);
+    const user = users.find(u => u.user_id === userId);
+    if (!pin || !user) return;
+    const name = teamMember?.name || formatDisplayName(user.full_name || '', user.display_name);
+    setPinDialog({ target: { user_id: userId, name, has_pin: pin.has_pin, is_primary_owner: pin.is_primary_owner }, mode });
+  };
+
+  const handleBulkClearPins = async () => {
+    const userIds = Array.from(selectedUsers).filter(id => {
+      const pin = pinStatusByUser.get(id);
+      return pin?.has_pin && !pin.is_primary_owner;
+    });
+    if (userIds.length === 0) {
+      toast.info('No eligible PINs to clear (Account Owner is protected).');
+      return;
+    }
+    try {
+      await Promise.all(userIds.map(id => adminSetPin.mutateAsync({ targetUserId: id, pin: null, reason: 'Bulk clear from Roster' })));
+      setSelectedUsers(new Set());
+      toast.success(`Cleared ${userIds.length} PIN${userIds.length === 1 ? '' : 's'}`);
+    } catch (err) {
+      console.error('Bulk clear PIN error:', err);
+    }
+  };
+
   const locationList = useMemo(() => 
     locations.map(l => ({ id: l.id, name: l.name })),
     [locations]
