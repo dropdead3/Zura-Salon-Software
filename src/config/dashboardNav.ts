@@ -96,7 +96,7 @@ export const myToolsNavItems: DashboardNavItem[] = [
 // ─── SECTION: ops (operations hub) ───────────────────────────────────────────
 
 export const opsNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: LayoutGrid, permission: 'view_team_overview' },
 ];
 
 // ─── SECTION: data (analytics & reports) ─────────────────────────────────────
