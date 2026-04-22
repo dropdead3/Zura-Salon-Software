@@ -132,7 +132,7 @@ export function renderStarterDraft(template: string, ctx: RenderContext): string
     platformName: ctx.platformName,
   });
   // Second pass: conditional section tags ({{?key}}…{{/key}}, {{^key}}…{{/key}}).
-  const sectioned = processSections(branded, ctx.ruleValues);
+  const sectioned = processConditionalSections(branded, ctx.ruleValues);
   // Third pass: rule-value tokens (schema-field keys).
   return sectioned.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
     if (key === 'ORG_NAME' || key === 'PLATFORM_NAME') return _match; // already handled
