@@ -31,7 +31,7 @@ import {
 import type { PolicyAudience } from '@/hooks/policy/usePolicyData';
 import type { RuleField } from '@/lib/policy/configurator-schemas';
 import { getStarterDraftSet } from '@/lib/policy/starter-drafts';
-import { interpolateBrandTokens } from '@/lib/policy/render-starter-draft';
+import { interpolateBrandTokens, processConditionalSections } from '@/lib/policy/render-starter-draft';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PLATFORM_NAME } from '@/lib/brand';
 
@@ -179,7 +179,14 @@ export function InlineRuleEditor({
     if (row?.body_md) return row.body_md;
     const starter = starterSet?.[vt];
     if (!starter) return null;
-    return interpolateBrandTokens(starter, { orgName, platformName: PLATFORM_NAME });
+    // Pass 1: brand tokens ({{ORG_NAME}}, {{PLATFORM_NAME}}).
+    const branded = interpolateBrandTokens(starter, { orgName, platformName: PLATFORM_NAME });
+    // Pass 2: conditional section tags ({{?key}}…{{/key}}, {{^key}}…{{/key}}).
+    // Run here so the disclosure / internal / client variants resolve to a
+    // single clean sentence based on the current rule values, while leaving
+    // any remaining `{{key}}` substitution tokens intact for `parseSegments`
+    // to mount as `RuleChipPopover` chips downstream.
+    return processConditionalSections(branded, values);
   };
 
   const handleStartEditText = (vt: PolicyVariantType) => {

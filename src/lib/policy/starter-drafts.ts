@@ -91,9 +91,9 @@ export const STARTER_DRAFTS: Record<string, StarterDraftSet> = {
 
   // ─── Booking / consultation ────────────────────────────────────────────
   booking_policy: {
-    internal: `**Booking policy**\n\nGuests may book {{booking_channels}}. New guests for {{consultation_required_for}} require a consultation prior to booking the service appointment.{{?require_card_on_file}} The booking system collects a card on file for cancellation and no-show enforcement.{{/require_card_on_file}} Service durations and pricing are confirmed at consultation, not at booking.`,
-    client: `**Booking with us**\n\nYou can book {{booking_channels}}. New to {{consultation_required_for}}? We'll start with a consultation to make sure we plan the right service for you.{{?require_card_on_file}} We hold a card on file when you book — it's only charged if our cancellation or no-show policy applies.{{/require_card_on_file}}`,
-    disclosure: `{{?require_card_on_file}}A card on file is required to confirm your booking. It is only charged in accordance with our cancellation and no-show policies.{{/require_card_on_file}}{{^require_card_on_file}}This booking does not require a card on file.{{/require_card_on_file}}`,
+    internal: `**Booking policy**\n\nCard-on-file requirement: {{require_card_on_file}}. Guests may book {{booking_channels}}. New guests for {{consultation_required_for}} require a consultation prior to booking the service appointment.{{?require_card_on_file}} The booking system collects a card on file for cancellation and no-show enforcement.{{/require_card_on_file}} Service durations and pricing are confirmed at consultation, not at booking.`,
+    client: `**Booking with us**\n\nCard on file at booking: {{require_card_on_file}}. You can book {{booking_channels}}. New to {{consultation_required_for}}? We'll start with a consultation to make sure we plan the right service for you.{{?require_card_on_file}} We hold a card on file when you book — it's only charged if our cancellation or no-show policy applies.{{/require_card_on_file}}`,
+    disclosure: `Card-on-file requirement: {{require_card_on_file}}. {{?require_card_on_file}}A card on file is required to confirm your booking and is only charged in accordance with our cancellation and no-show policies.{{/require_card_on_file}}{{^require_card_on_file}}This booking does not require a card on file at the time of booking.{{/require_card_on_file}}`,
   },
 
   consultation_policy: {

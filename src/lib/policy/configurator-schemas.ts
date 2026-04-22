@@ -73,6 +73,16 @@ export interface RuleField {
     sublabel?: string;
     recommended?: boolean;
   }>;
+  /**
+   * Optional override for how this field's current value is humanized when
+   * rendered as an inline chip. Keys are the *stringified* value (e.g.
+   * `'true'`, `'false'`, `'manager'`). Falls back to the generic `humanize()`
+   * helper when a key is absent.
+   *
+   * Use when the generic boolean labels ('yes' / 'no') don't read naturally
+   * inside the surrounding sentence — e.g. "Card-on-file requirement: required".
+   */
+  humanizeAs?: Record<string, string>;
 }
 
 export interface RuleSection {
@@ -912,6 +922,7 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
               'When on, the booking surface collects a card on file before confirming. New services default to requiring a card; existing services are not modified retroactively.',
             type: 'boolean',
             defaultValue: false,
+            humanizeAs: { true: 'required', false: 'not required' },
             provenance: {
               origin: 'derived',
               surfaces: 'client-facing',

@@ -37,7 +37,15 @@ export function RuleChipPopover({ field, value, audience, onChange, disabled }: 
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<unknown>(value);
 
-  const display = humanize(value);
+  // Honor field-level `humanizeAs` overrides so booleans can read as
+  // "required / not required" inside the surrounding sentence rather than
+  // the generic "yes / no". Falls through to the shared humanize helper.
+  const humanizeKey =
+    value === null || value === undefined ? '' : String(value);
+  const display =
+    field.humanizeAs && humanizeKey in field.humanizeAs
+      ? field.humanizeAs[humanizeKey]
+      : humanize(value);
   const isUnset = value === null || value === undefined || value === '';
 
   return (
