@@ -69,6 +69,51 @@ export function interpolateBrandTokens(
   });
 }
 
+/**
+ * Truthiness for section tags. Mirrors mustache semantics, with a salon-aware
+ * twist: empty arrays and the strings 'no'/'false' are treated as falsy so
+ * configured "off" values don't accidentally render the truthy block.
+ */
+function isTruthy(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const v = value.trim().toLowerCase();
+    if (v === '' || v === 'false' || v === 'no' || v === '0') return false;
+    return true;
+  }
+  if (Array.isArray(value)) return value.length > 0;
+  return true;
+}
+
+/**
+ * Process mustache-style section tags before token substitution:
+ *   {{?key}}…{{/key}}  — render block when value is truthy
+ *   {{^key}}…{{/key}}  — render block when value is falsy
+ * Adjacent whitespace is collapsed so the surrounding sentence stays clean
+ * regardless of whether the block renders.
+ */
+function processSections(template: string, ruleValues: Record<string, unknown>): string {
+  const sectionRe = /\{\{\s*([?^])\s*([a-zA-Z0-9_]+)\s*\}\}([\s\S]*?)\{\{\s*\/\s*\2\s*\}\}/g;
+  let out = template;
+  let prev: string;
+  do {
+    prev = out;
+    out = out.replace(sectionRe, (_m, sigil: string, key: string, body: string) => {
+      const truthy = isTruthy(ruleValues[key]);
+      const keep = sigil === '?' ? truthy : !truthy;
+      return keep ? body : '';
+    });
+  } while (out !== prev);
+  // Collapse whitespace artifacts left behind by removed blocks.
+  return out
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/ +([.,;:!?])/g, '$1')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function renderStarterDraft(template: string, ctx: RenderContext): string {
   if (!template) return '';
   // First pass: brand tokens via shared helper.
@@ -76,8 +121,10 @@ export function renderStarterDraft(template: string, ctx: RenderContext): string
     orgName: ctx.orgName,
     platformName: ctx.platformName,
   });
-  // Second pass: rule-value tokens (schema-field keys).
-  return branded.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
+  // Second pass: conditional section tags ({{?key}}…{{/key}}, {{^key}}…{{/key}}).
+  const sectioned = processSections(branded, ctx.ruleValues);
+  // Third pass: rule-value tokens (schema-field keys).
+  return sectioned.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
     if (key === 'ORG_NAME' || key === 'PLATFORM_NAME') return _match; // already handled
     if (key in ctx.ruleValues) return humanize(ctx.ruleValues[key]);
     return _match; // unresolved token — leave as-is so authors notice
