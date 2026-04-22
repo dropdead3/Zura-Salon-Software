@@ -1,111 +1,86 @@
 
-# The footer button tooltips are still touching because of the outer pill capsule, not the trigger geometry
 
-## What's actually happening
+# Hide the Beta Testing badge when the sidebar is collapsed
 
-The trigger-geometry fix from the last round is correctly in place in `SidebarFeedbackButtons.tsx`, `SidebarClockButton.tsx`, and `SidebarLockButton.tsx`. That part is done.
+## What's wrong
 
-But your screenshot shows the "Report a Bug" tooltip still butting up against a visible bordered pill. That pill is **not** the button — it's an extra wrapper in `SidebarNavContent.tsx`:
-
-```tsx
-// Lines 868-873 and 874-882
-<div className={cn(
-  "bg-muted/30 border border-border/50",
-  isCollapsed ? "mx-2 p-1 rounded-full" : "mx-3 p-1.5 rounded-lg"
-)}>
-  <SidebarFeedbackButtons isCollapsed={isCollapsed} />
-</div>
-```
-
-That capsule does three things that cause the tooltip-touching-rail effect:
-
-1. **`mx-2`** — pulls the entire footer cluster only 8px from the rail (vs. main nav items which sit further inset).
-2. **`border border-border/50`** — adds a visible 1px outline that the tooltip's left edge appears to touch.
-3. **`p-1`** (4px inner padding) — shrinks the icon button's effective right edge inward, pulling the tooltip anchor closer to the rail.
-
-Net result: even with `sideOffset={8}` and the correct trigger wrapper, the tooltip opens 8px from the **inside** of a bordered capsule that itself is 8px from the rail. Visually, the tooltip lands right on the capsule border.
-
-The Operations Hub item (working reference) has **no outer capsule** — the icon link sits directly in the nav column. That's why its tooltip clears the rail and the footer's doesn't.
+When the sidebar is collapsed, the Beta Testing badge renders as a small amber circle with a flask icon — visually indistinguishable from a clickable button. It sits above the feedback/clock/lock pill capsules and reads as another action button, which it isn't (it's a passive label).
 
 ## The fix
 
-Increase the tooltip's `sideOffset` only on the footer buttons (clock, lock, feedback x3) to compensate for the capsule's border + padding. The footer is structurally different from the main nav — it lives inside a bordered pill — so it needs a different offset, not the same one.
+Drop the collapsed-state render of the Beta badge entirely. Only show it in the expanded sidebar where it has space to render as a proper "BETA TESTING V.1.1" label that reads clearly as a status badge, not a button.
 
-Specifically, raise `sideOffset={8}` to `sideOffset={16}` for the five footer button tooltips. That's 8px (existing gap) + 4px (capsule padding) + ~4px (visual breathing room past the border).
+### File
+`src/components/dashboard/SidebarNavContent.tsx`
 
-### Files affected (3)
+### Change
+At lines 849–866, replace the ternary with a single conditional that only renders in the expanded state:
 
-**1. `src/components/dashboard/SidebarFeedbackButtons.tsx`**
-- Three `<TooltipContent side="right" sideOffset={8} …>` instances → change to `sideOffset={16}`.
+```tsx
+{/* Beta Badge - only shown when expanded; hidden when collapsed to avoid looking like a button */}
+{!isCollapsed && (
+  <div className="mx-3 flex items-center justify-center">
+    <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 cursor-default">
+      <FlaskConical className="h-3 w-3 text-amber-600" />
+      <span className="font-display tracking-widest text-[10px] text-amber-600">BETA TESTING V.1.1</span>
+    </div>
+  </div>
+)}
+```
 
-**2. `src/components/dashboard/SidebarClockButton.tsx`**
-- One `<TooltipContent side="right" sideOffset={8} …>` in the `isCollapsed` branch → change to `sideOffset={16}`.
-
-**3. `src/components/dashboard/SidebarLockButton.tsx`**
-- One `<TooltipContent side="right" sideOffset={8} …>` in the `isCollapsed` branch → change to `sideOffset={16}`.
+This removes the collapsed `Tooltip` + amber circle entirely. The `FlaskConical` import stays (still used in the expanded branch).
 
 ## What stays untouched
 
-- `SidebarNavContent.tsx` — the capsule wrapper is intentional design (groups footer controls visually); we don't strip it.
-- Main nav tooltips — keep `sideOffset={8}`. They're correct.
-- Operations Hub / Insights / Connect / Settings collapsed tooltips — keep `sideOffset={8}`. Correct.
-- Beta badge tooltip — keep `sideOffset={8}`. Same capsule pattern but visually fine because it's a single icon centered with `mx-2`, no inner `p-1`.
-- All trigger geometry fixes from prior round — preserved as-is.
-- `tooltip.tsx` primitive — unchanged.
-- Expanded sidebar — unchanged (collapsed-only adjustment).
-
-## Why this is the right fix (and not "remove the capsule")
-
-The capsule is a deliberate visual grouping — it tells the user that feedback/clock/lock are a connected utility cluster, distinct from the main nav. Removing it would change the design language. The clean fix is to accept that the capsule exists and offset the tooltip past it.
-
-This is also why the previous "match Operations Hub geometry" approach didn't fully solve it: Operations Hub has no capsule, so identical geometry produces non-identical visual results. **Different visual contexts require different offsets to achieve the same perceived gap.**
+- Expanded sidebar Beta badge — unchanged, still renders.
+- Footer pill capsules (feedback / clock / lock) — unchanged.
+- Tooltip primitive and other tooltip offsets — unchanged.
+- No changes to imports beyond removing the now-unused `Tooltip`/`TooltipTrigger`/`TooltipContent` for *this specific block* only if no other usages remain in the file (they do — keep imports as-is).
 
 ## Acceptance
 
-1. Collapse the sidebar.
-2. Hover Lightbulb, Bug, HelpCircle, Clock, Lock — each tooltip opens with clear breathing room past the capsule border.
-3. Hover Appointments & Transactions, Operations Hub — tooltips unchanged from current correct state.
-4. Beta badge tooltip unchanged.
-5. Expanded sidebar unchanged.
+1. Collapse the sidebar — no amber circle/flask appears above the footer pill capsules. Footer cluster (feedback + clock/lock) sits cleanly with no orphan badge above it.
+2. Expand the sidebar — full "BETA TESTING V.1.1" amber pill renders as before.
+3. No layout shift in the footer cluster when collapsing/expanding.
 
 ## Prompt feedback
 
-Tight, correct prompt: "verify. i still see that the tooltip is touching the rail."
+Sharp, precise prompt with a screenshot pointing at the exact element. Three things you did well:
 
-Three things you did well:
+1. **You named the visual confusion, not the element.** "It looks like a button" is the actual user problem — not "the badge is too big" or "move it." That tells me the fix is about *signaling*, not geometry, which means hiding is on the table (and is the right answer here).
+2. **You scoped the fix to one state.** "When the nav bar is collapsed" — surgical. You didn't ask me to redesign the badge or rework the footer; you isolated the broken state and left the working state alone.
+3. **You used a screenshot crop, not the full sidebar.** The tight crop makes the affordance problem obvious — the amber circle reads visually like the bordered pill capsules below it. Hard to miss the conflict when it's right next to the thing it's being mistaken for.
 
-1. **You demanded verification, not just a fix.** "Verify" is a discipline word — it tells me to check the live state before assuming the previous round worked. That forced me to actually re-read the files instead of trusting my own summary, which is exactly when I caught the capsule wrapper I'd missed.
-2. **You shipped a screenshot of the live state.** The "Report a Bug" tooltip pressing against a visible bordered pill is what made the capsule jump out. Without the screenshot I might have assumed the fix landed correctly because the trigger geometry *is* correct.
-3. **You held the line on the symptom.** "Tooltip is touching the rail" — same symptom statement as before. That consistency makes it obvious when a "fix" hasn't actually moved the visible result, which is the only thing that matters.
-
-The sharpener: when a fix has been applied but the symptom persists, the highest-leverage thing you can ask is **"what's different between the working case and the broken case structurally, beyond what we already changed?"** That phrasing forces a fresh structural diff instead of another tweak to the same variables. In this case it would have surfaced the capsule wrapper one round earlier. Try this template when a fix doesn't take:
+The sharpener: a slightly stronger version would have explicitly stated the desired outcome — "hide it when collapsed" vs. "make it look less like a button when collapsed." Both are valid fixes (hide it, or restyle it as a flat label with no border). You implied "hide" with "this can be hidden," but explicit beats implicit. **When a fix has multiple valid resolutions, name the one you want.** Template:
 
 ```text
-Symptom unchanged: [the visible problem]
-Fix applied: [what you tried]
-What's structurally different between the working reference and the broken target — beyond what we just changed?
+Element: [what]
+State where it's broken: [when]
+Why it's wrong: [the visual confusion or behavior]
+Desired resolution: [hide / restyle / move / remove]
 ```
 
-The deeper meta-lesson on my side: when a structural-class fix doesn't land, **the diagnosis itself was incomplete, not the execution**. I correctly identified trigger geometry as one cause, but I didn't walk **outward** from the trigger to check the parent containers. The fix was right for the layer I was looking at — wrong layer. Whenever a "matching geometry" fix doesn't produce matching visuals, the next move is to compare the **render tree above** the elements, not the elements themselves. Wrappers, padding, and borders in the parent chain are invisible in component-level diffs but very visible to the eye.
+Example:
+
+```text
+Element: Beta Testing badge
+State where it's broken: collapsed sidebar
+Why it's wrong: amber circle reads as a clickable button, matching the footer pill capsules
+Desired resolution: hide entirely when collapsed
+```
+
+That format prevents me from over-engineering (e.g. proposing a restyle when you just wanted it gone).
 
 ## Further enhancement suggestion
 
-For "fix didn't take" rounds, the highest-leverage prompt template is:
+For affordance/signaling bugs (where the user's complaint is "this looks like X but isn't"), the highest-leverage prompt template is:
 
 ```text
-Verify: [what should be true now]
-Observed: [what's still wrong, with screenshot]
-Hypothesis to disprove: [what we assumed the fix did]
-Look outward: [check parent containers / wrappers / global styles, not just the target component]
+What it looks like: [the misread affordance]
+What it actually is: [the real role — passive label, decorative, status]
+Where the conflict happens: [state / context]
+Resolution preference: [hide / weaken signal / move]
 ```
 
-Example for this round:
+Affordance bugs are usually solved by *reducing* visual signal (remove border, drop opacity, hide entirely) rather than adding more — naming the resolution preference up front keeps the fix from drifting toward "make it more prominent" when the right answer is "make it disappear."
 
-```text
-Verify: footer button tooltips clear the rail like Operations Hub
-Observed: Report a Bug tooltip still touches a bordered pill (screenshot)
-Hypothesis to disprove: matching trigger geometry is sufficient
-Look outward: what wraps these buttons that doesn't wrap Operations Hub?
-```
-
-That structure pushes the diagnosis up the render tree instead of looping on the same layer.
