@@ -188,10 +188,6 @@ export default function TeamMembers() {
               <Users className="h-4 w-4" />
               Roster
             </TabsTrigger>
-            <TabsTrigger value="bulk-roles" className="gap-2">
-              <UsersRound className="h-4 w-4" />
-              Bulk Roles
-            </TabsTrigger>
             <TabsTrigger value="invitations" className="gap-2">
               <Mail className="h-4 w-4" />
               Invitations
@@ -205,17 +201,49 @@ export default function TeamMembers() {
 
         {view === 'roster' && (
           <>
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+            {/* Card mode: search + categorized list. Table mode: full UserRolesTab (filters, stat tiles, bulk actions, location grouping). */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              {rosterMode === 'card' ? (
+                <div className="relative max-w-md flex-1 min-w-[240px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or email…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              ) : (
+                <div />
+              )}
+
+              <div className="inline-flex items-center gap-1 p-1 rounded-lg border border-border bg-muted/40">
+                <Button
+                  type="button"
+                  variant={rosterMode === 'card' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => handleRosterModeChange('card')}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Cards
+                </Button>
+                <Button
+                  type="button"
+                  variant={rosterMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => handleRosterModeChange('table')}
+                >
+                  <TableIcon className="h-3.5 w-3.5" />
+                  Table
+                </Button>
+              </div>
             </div>
 
-            {isLoading ? (
+            {rosterMode === 'table' ? (
+              <UserRolesTab canManage={canManage} />
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
@@ -273,7 +301,6 @@ export default function TeamMembers() {
           </>
         )}
 
-        {view === 'bulk-roles' && <UserRolesTab canManage={canManage} />}
         {view === 'invitations' && <InvitationsTab canManage={canManage} />}
         {view === 'pins' && <TeamPinManagementTab canManage={canManage} />}
       </div>
