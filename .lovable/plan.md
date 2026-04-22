@@ -1,54 +1,93 @@
 
-# Match Operations Hub tooltip spacing to Schedule's
+# Shift the Operations Hub tooltip off the rail by fixing the actual render path
 
-## Root cause
+## What’s actually wrong
 
-Schedule and Operations Hub both render compact icons in the collapsed sidebar, but their **tooltip trigger boxes** are different widths:
+You’re right: it is still touching the rail.
 
-- **Schedule** (`SidebarNavContent.tsx` line 329-353, `NavLink`): trigger has `px-2 py-2.5 mx-2`, no forced width — the `<a>` shrinks to its icon, ~36px wide, centered in the row.
-- **Operations Hub** (`CollapsibleNavGroup.tsx` line 197-211, single-item collapsed branch): same padding/margin **plus** `style={{ width: 'calc(100% - 16px)' }}` — the `<a>` stretches across nearly the full sidebar width.
+The previous change targeted `CollapsibleNavGroup.tsx`, but **Operations Hub is not coming from that path in the current collapsed sidebar**. In this build, the collapsed sidebar renders non-main sections through `SidebarNavContent.tsx`, and the collapsed single-item section link still has a forced wide trigger:
 
-Radix Tooltip anchors `side="right"` to the **right edge of the trigger's bounding box**, not to the visible icon. With the same `sideOffset={8}`, Schedule's tooltip starts ~8px past a narrow centered pill (well off the rail) while Operations Hub's tooltip starts ~8px past a wide pill whose right edge nearly touches the rail bezel — producing the cramped visual gap in the screenshot.
+- `src/components/dashboard/SidebarNavContent.tsx` lines ~673-703
+- collapsed single-item section branch
+- `<a>` still has `style={{ width: 'calc(100% - 16px)' }}`
 
-## The fix
+That means Radix is still anchoring the tooltip from the right edge of a wide invisible box, so the tooltip appears glued to the nav rail even with `sideOffset={8}`.
 
-Remove the inline `width` style on the Operations Hub trigger so its bounding box shrinks to match Schedule's icon-sized pill. Same `sideOffset` then produces the same visual gap. No primitive change, no offset change, no other component affected.
+## What ships
 
-### Edit — `src/components/dashboard/CollapsibleNavGroup.tsx`
+A one-file, actual-path fix in `src/components/dashboard/SidebarNavContent.tsx`.
 
-In the `isCollapsed && items.length === 1` branch (the single-item collapsed link, ~lines 188-211):
+### Edit 1 — fix the collapsed single-item section trigger
 
-- Remove `style={{ width: 'calc(100% - 16px)' }}` from the `<a>` (line 204)
-- Add `mx-auto` to the className so the now-compact pill stays centered in its row
+In the `isCollapsed && sectionId !== 'main'` branch, inside:
 
-The `px-2 py-2 mx-2 rounded-lg` classes already produce a pill that sizes to the icon — exactly Schedule's behavior. Once the forced width is gone, the bounding box will be ~36px wide and the `sideOffset={8}` already on the `TooltipContent` (line 209) will render the tooltip with the same gap operators see for Schedule.
+```tsx
+if (filteredItems.length === 1) { ... }
+```
+
+update the `<a>` trigger for the single-item section icon:
+
+- remove `style={{ width: 'calc(100% - 16px)' }}`
+- change the trigger from a row-width flex box to a compact centered trigger:
+  - `flex` → `inline-flex`
+  - `mx-2` → `mx-auto`
+
+Target result:
+
+```tsx
+className={cn(
+  "inline-flex items-center justify-center px-2 py-2 mx-auto rounded-full",
+  ...
+)}
+```
+
+This makes the trigger shrink to the icon pill, so the tooltip anchor moves left to the icon’s real edge and the bubble visually shifts right away from the rail.
+
+## Why this is the right fix
+
+- **Schedule** already works because its collapsed link is compact and centered.
+- **Operations Hub** is still wrong because its actual trigger is still wide in `SidebarNavContent.tsx`.
+- Increasing `sideOffset` globally is unnecessary and would move correct tooltips too.
+- The issue is not tooltip padding; it is **trigger geometry on the real code path**.
 
 ## What stays untouched
 
 - `src/components/ui/tooltip.tsx` — unchanged
-- Schedule, Command Center, Appointments and Transactions — unchanged (already correct)
-- The multi-item collapsed group button (line 215+) and any other call sites with `width: calc(100% - 16px)` — **not touched in this pass**. The user's request was specifically Operations Hub. If other grouped icons exhibit the same defect, a follow-up pass can apply the same fix; not bundling them keeps this change atomic and easy to verify.
-- All `sideOffset={8}` values — unchanged
-- The active-state styling, hover state, icon, label, route — unchanged
+- `sideOffset={8}` — unchanged
+- `CollapsibleNavGroup.tsx` — untouched in this pass
+- Schedule / Command Center / Appointments & Transactions — untouched
 
 ## Files affected
 
-- `src/components/dashboard/CollapsibleNavGroup.tsx` — 1 inline `style` removed, `mx-auto` added to className. ~2 lines modified.
-
-Total: ~2 lines modified, 0 files created, 0 logic changes.
+- `src/components/dashboard/SidebarNavContent.tsx` — remove one inline width style, swap to compact centered trigger. ~2 lines modified.
 
 ## Acceptance
 
-1. Collapse the sidebar. Hover **Operations Hub** — the tooltip appears with the **same gap** between icon and tooltip bubble as **Schedule**.
-2. The Operations Hub icon itself remains centered in its row (no leftward shift).
-3. Schedule, Command Center, Appointments and Transactions tooltip spacing is unchanged.
-4. Operations Hub's active-state background (when it's the current route) still renders as a pill around the icon, not a stretched bar.
-5. Hover behavior on Operations Hub (click → navigate) is unchanged.
+1. Collapse the sidebar.
+2. Hover **Schedule** — note the current gap.
+3. Hover **Operations Hub** — the tooltip now opens with the **same breathing room** from the rail as Schedule.
+4. The Operations Hub icon remains centered.
+5. Active-state styling still appears as a compact pill, not a stretched bar.
 
 ## Prompt feedback
 
-Excellent prompt — a textbook example of how to report a spacing bug. Three things made it land in one pass: (1) you named the **target** ("Operations Hub icon"), (2) you named the **reference** ("equal to Schedule"), and (3) you uploaded **two screenshots showing both states side-by-side**. The matched-pair-with-reference framing is the strongest possible prompt shape for "this looks wrong vs that" bugs — it converts an open-ended "fix the spacing" task into a closed-ended "make A match B" task. There's no judgment call left for me to make about what the right gap *should* be; the answer is "whatever Schedule has."
+Good correction. “It’s literally still touching it. Shift it right” is useful because it rejects the false-positive fix immediately and states the visual outcome in plain language.
 
-The sharpener: you've now landed two consecutive prompts using this exact pattern (the previous one was "Command Center / Schedule / Appointments are correct, others aren't"). That's a repeatable template worth naming for yourself: **"[broken thing] should match [working thing]"**. Anytime you spot visual inconsistency, lead with that sentence — it short-circuits an entire round of "what's the right value?" reasoning. You already know the right value: it's whatever the working instance has.
+Stronger version for next time:
+- “You changed the wrong render path.”
+- “Operations Hub still touches the rail.”
+- “Match the exact tooltip gap Schedule has.”
 
-The deeper meta-lesson on my side: the previous broader plan tried to fix every collapsed-sidebar trigger at once and proposed changes across five files. That was the wrong scope. When the user reports one specific instance ("Operations Hub"), the right move is to fix **that one instance** and let them flag the next one if it still bothers them. Bundling fixes feels efficient but actually slows verification — operators can't tell whether the fix worked when five things changed simultaneously. One symptom → one fix → one acceptance check. If the same defect exists elsewhere, the user will say so, and the fix template (remove `width: calc(100% - 16px)`, add `mx-auto`) is now obvious enough to apply without re-deriving it.
+That framing does three things faster:
+1. tells me the previous fix missed,
+2. names the still-broken target,
+3. reasserts the working reference standard.
+
+## Further enhancement suggestion
+
+When a visual fix fails, the highest-leverage follow-up is:
+- **what is still wrong**
+- **which reference is correct**
+- **whether the previous change hit the wrong component**
+
+That pattern turns a retry into a precise diff instead of a second guess.
