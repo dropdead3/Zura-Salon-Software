@@ -142,6 +142,7 @@ export default function TeamMembers() {
   const { roles, isPlatformUser } = useAuth();
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data: pinTeam = [] } = useTeamPinStatus();
+  const { data: stylistLevels = [] } = useStylistLevels();
   const capacity = useBusinessCapacity();
   const [search, setSearch] = useState('');
   const [seatsDialogOpen, setSeatsDialogOpen] = useState(false);
@@ -221,13 +222,95 @@ export default function TeamMembers() {
   }, [members, search]);
 
   const grouped = useMemo(() => {
-    const sections = SECTIONS.map(s => ({
-      ...s,
-      members: filtered.filter(m => m.roles.some(r => s.roles.includes(r))),
-    }));
-    const other = filtered.filter(m => !m.roles.some(r => CATEGORIZED_ROLES.includes(r)));
+    // For each section, collect members whose roles intersect, then sort by:
+    //   1. Highest-ranked role within that section's role set (ROLE_RANK ascending)
+    //   2. Alpha by display_name/full_name as tiebreaker
+    // A member is placed in the FIRST section whose roles they match (top-down through SECTIONS),
+    // so multi-role users appear once.
+    const assigned = new Set<string>();
+    const sections = SECTIONS.map(s => {
+      const sectionMembers = filtered.filter(m => {
+        if (assigned.has(m.user_id)) return false;
+        const matches = m.roles.some(r => s.roles.includes(r));
+        if (matches) assigned.add(m.user_id);
+        return matches;
+      });
+      sectionMembers.sort((a, b) => {
+        const ra = highestRankAmong(a.roles, s.roles);
+        const rb = highestRankAmong(b.roles, s.roles);
+        if (ra !== rb) return ra - rb;
+        return compareByName(a, b);
+      });
+      return { ...s, members: sectionMembers };
+    });
+    const other = filtered
+      .filter(m => !assigned.has(m.user_id))
+      .sort(compareByName);
     return { sections, other };
   }, [filtered]);
+
+  /**
+   * Build the Stylists section's nested sub-groups by level.
+   * Sub-headings follow the org's configured `display_order` (ascending = Level 1 → Level N
+   * per stylist_levels source of truth). Stylists with no level fall into "Unassigned".
+   * `stylist_assistant` role-holders are split into their own bottom sub-section.
+   * If the org has no levels configured, returns null and the caller renders a flat list.
+   */
+  const stylistSubGroups = useMemo(() => {
+    const stylistsSection = grouped.sections.find(s => s.label === 'Stylists');
+    if (!stylistsSection || stylistsSection.members.length === 0) return null;
+
+    // Split assistants out first
+    const assistants = stylistsSection.members.filter(m =>
+      m.roles.includes('stylist_assistant') && !m.roles.includes('stylist'),
+    );
+    const stylistsOnly = stylistsSection.members.filter(m => m.roles.includes('stylist'));
+
+    if (stylistLevels.length === 0) {
+      // Fall back to flat list when org has no levels configured
+      return null;
+    }
+
+    // Build a slug → label map and group stylists by their stylist_level slug
+    const byLevelSlug = new Map<string, OrganizationUser[]>();
+    const unassigned: OrganizationUser[] = [];
+    for (const m of stylistsOnly) {
+      const slug = m.stylist_level;
+      if (slug && stylistLevels.some(l => l.slug === slug)) {
+        const arr = byLevelSlug.get(slug) ?? [];
+        arr.push(m);
+        byLevelSlug.set(slug, arr);
+      } else {
+        unassigned.push(m);
+      }
+    }
+
+    const levelGroups = stylistLevels
+      .map(level => ({
+        key: level.slug,
+        label: level.label,
+        members: (byLevelSlug.get(level.slug) ?? []).slice().sort(compareByName),
+      }))
+      .filter(g => g.members.length > 0);
+
+    if (unassigned.length > 0) {
+      levelGroups.push({
+        key: '__unassigned',
+        label: 'Unassigned',
+        members: unassigned.sort(compareByName),
+      });
+    }
+
+    if (assistants.length > 0) {
+      levelGroups.push({
+        key: '__assistants',
+        label: 'Stylist Assistants',
+        members: assistants.sort(compareByName),
+      });
+    }
+
+    return levelGroups;
+  }, [grouped.sections, stylistLevels]);
 
   return (
     <DashboardLayout>
