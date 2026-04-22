@@ -13,12 +13,16 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowRight, CreditCard, CalendarX, UserX, ShieldCheck, Loader2 } from 'lucide-react';
+import { ArrowRight, CreditCard, CalendarX, UserX, ShieldCheck, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { usePolicyConfiguratorData, type PolicyRuleBlock } from '@/hooks/policy/usePolicyConfigurator';
+import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
+import { usePolicyLastEdited } from '@/hooks/policy/usePolicyLastEdited';
+import { extractReceiptSentence } from '@/lib/policy/extract-receipt-sentence';
+import { formatRelativeTime } from '@/lib/format';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
