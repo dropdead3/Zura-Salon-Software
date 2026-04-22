@@ -13,9 +13,8 @@
  * chip back into static text within that variant only.
  */
 import { Fragment, useMemo, useState } from 'react';
-import { Pencil, Save, X, FileText, Sparkles, RotateCcw, CheckCircle2, Loader2 } from 'lucide-react';
+import { Pencil, Save, X, Sparkles, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { RuleChipPopover } from './RuleChipPopover';
