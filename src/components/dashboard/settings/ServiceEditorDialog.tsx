@@ -35,6 +35,7 @@ import { BookingSurfacePreview } from './BookingSurfacePreview';
 import { ServiceFormsLinkagePanel } from './ServiceFormsLinkagePanel';
 import { ServiceAuditLogPanel } from './ServiceAuditLogPanel';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { useBookingPolicyConfig } from '@/hooks/policy/useBookingPolicyConfig';
 
 interface ServiceEditorDialogProps {
   open: boolean;
