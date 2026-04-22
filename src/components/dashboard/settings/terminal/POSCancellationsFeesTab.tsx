@@ -381,6 +381,10 @@ export function POSCancellationsFeesTab() {
           icon={CreditCard}
           isLoading={payment.isLoading}
           rows={paymentRows}
+          policyId={payment.data?.policyId}
+          versionId={payment.data?.versionId || undefined}
+          policyKey="payment_policy"
+          onJump={() => goToBookingsPayments('payment')}
         />
         <PolicySummaryCard
           title="Cancellation policy"
@@ -388,6 +392,10 @@ export function POSCancellationsFeesTab() {
           icon={CalendarX}
           isLoading={cancellation.isLoading}
           rows={cancellationRows}
+          policyId={cancellation.data?.policyId}
+          versionId={cancellation.data?.versionId || undefined}
+          policyKey="cancellation_policy"
+          onJump={() => goToBookingsPayments('cancellation')}
         />
         <PolicySummaryCard
           title="No-show policy"
@@ -395,6 +403,10 @@ export function POSCancellationsFeesTab() {
           icon={UserX}
           isLoading={noShow.isLoading}
           rows={noShowRows}
+          policyId={noShow.data?.policyId}
+          versionId={noShow.data?.versionId || undefined}
+          policyKey="no_show_policy"
+          onJump={() => goToBookingsPayments('no-show')}
         />
         <PolicySummaryCard
           title="Booking rules"
@@ -402,6 +414,10 @@ export function POSCancellationsFeesTab() {
           icon={ShieldCheck}
           isLoading={booking.isLoading}
           rows={bookingRows}
+          policyId={booking.data?.policyId}
+          versionId={booking.data?.versionId || undefined}
+          policyKey="booking_policy"
+          onJump={() => goToBookingsPayments('card-on-file')}
         />
       </div>
     </div>
