@@ -59,7 +59,7 @@ const categoriesMap: Record<string, { id: string; label: string; description: st
   'my-profile': { id: 'my-profile', label: 'My Profile', description: 'Manage your profile photo, bio, specialties, and professional details visible to clients and teammates.', icon: Users },
   'business': { id: 'business', label: 'Business', description: 'Configure your business name, logo, address, EIN, and other organization-level identity details.', icon: Building2 },
   'email': { id: 'email', label: 'Email', description: 'Customize email templates, merge variables, sender signatures, and default communication settings.', icon: Mail },
-  'users': { id: 'users', label: 'Users', description: 'Add, remove, and manage team members. Assign roles and control access levels across the organization.', icon: Users },
+  'users': { id: 'users', label: 'Team Members', description: "Manage every team member's profile, role, schedule, services, compensation, level, and access — all in one place.", icon: Users },
   'onboarding': { id: 'onboarding', label: 'Onboarding', description: 'Define onboarding task lists, handbooks, and role-specific configuration for new team members.', icon: Rocket },
   'leaderboard': { id: 'leaderboard', label: 'Leaderboard', description: 'Set scoring weights for KPIs, configure achievement badges, and customize how team performance is ranked.', icon: Trophy },
   'integrations': { id: 'integrations', label: 'Integrations', description: 'Connect and manage third-party services such as POS systems, payment processors, and marketing platforms.', icon: Plug },
@@ -128,6 +128,7 @@ export default function Settings() {
   const handleCategoryClick = (id: string) => {
     if (id === 'my-profile') navigate(dashPath('/profile'));
     else if (id === 'business') setActiveCategory('business' as SettingsCategory);
+    else if (id === 'users') navigate(dashPath('/admin/team-members'));
     else if (id === 'access-hub') navigate(dashPath('/admin/access-hub'));
     else if (id === 'data-import') navigate(dashPath('/admin/data-import'));
     else if (id === 'zura-config') navigate(dashPath('/admin/zura-config'));
