@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, UsersRound, Mail, Key } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -17,6 +18,12 @@ import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
+import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
+import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
+import { TeamPinManagementTab } from '@/components/access-hub/TeamPinManagementTab';
+
+type TeamView = 'roster' | 'bulk-roles' | 'invitations' | 'pins';
+const VALID_VIEWS: TeamView[] = ['roster', 'bulk-roles', 'invitations', 'pins'];
 
 const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
   { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'] },
