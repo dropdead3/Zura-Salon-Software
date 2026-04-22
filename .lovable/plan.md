@@ -1,116 +1,142 @@
 
 
-# Fold PIN Management into the Roster
+# Reorganize the Roster card-mode by role hierarchy and stylist level
 
-## Diagnosis (Surface → Assertion → Lever → Gap → Affordance)
+## Diagnosis
 
-- **Surface**: `/dashboard/admin/team-members` — currently has 3 sub-tabs (`Roster · Invitations · PIN Management`).
-- **Assertion**: PIN Management is a parallel "list of people" surface — same roster, different overlay (PIN status + reset action). It's the same teaching as last wave's Roster + Bulk Roles redundancy.
-- **Gap**: Operators see two list-of-people tabs (Roster and PIN Management) and have to context-switch. Per-person PIN setting already exists on the Team Member Detail → Security tab (canonical editor). The standalone tab only adds two things worth keeping: (a) at-a-glance PIN status per person across the team, and (b) the org-wide PIN change history changelog.
-- **Desired affordance**: One list. PIN status becomes a column/indicator on the Roster; the "Set/Change/Clear PIN" dialog is reachable inline; the org-wide PIN change history moves to a collapsible Activity panel under the roster (or the team member detail's Security tab — whichever is its true home).
+Today's Card mode groups members into three flat sections:
+
+```
+Leadership   →  super_admin, admin, manager, general_manager, assistant_manager  (alpha order within)
+Operations   →  director_of_operations, operations_assistant, receptionist, front_desk  (alpha order within)
+Stylists     →  stylist, stylist_assistant  (alpha order within — level invisible)
+Other Roles  →  catch-all
+```
+
+Two problems:
+
+1. **Within Leadership/Operations, the role hierarchy is invisible.** A `super_admin` and an `assistant_manager` sit side-by-side sorted alphabetically. Operators can't see who outranks whom at a glance.
+2. **Stylists are a single undifferentiated bucket.** The org has Levels 1–4 (configured per tenant in `stylist_levels`), but the Roster doesn't honor them. A Level 4 master sits next to a Level 1 apprentice with no visual cue.
 
 ## What changes
 
-The `pins` view goes away. Final Team Members tabs drop from 3 → 2:
+### 1. Hierarchy ordering *within* each section
 
+Each section gets a deterministic role-rank order. Within a section, members sort by their highest-ranked role first, then alphabetically by name as a tiebreaker.
+
+**Leadership** (top → bottom):
 ```
-[ Roster ]   [ Invitations ]
+Super Admin  →  Admin  →  General Manager  →  Manager  →  Assistant Manager
 ```
 
-PIN affordances absorbed into the Roster:
+**Operations** (top → bottom):
+```
+Director of Operations  →  Operations Assistant  →  Receptionist  →  Front Desk
+```
 
-1. **Card mode** — each `MemberRow` gains a small PIN-status indicator (a `Key` icon chip: filled = PIN set, outlined/muted = no PIN). No inline action — clicking the row goes to the detail page (Security tab) as today. Calm executive surface.
-2. **Table mode** — adds a **PIN column** between Roles and Actions. Cell shows: `Set` / `Not set` chip. The Actions column gets a "PIN" item in its dropdown (Set / Change / Clear) opening the same dialog `TeamPinManagementTab` uses today. Bulk-select gains a "Clear PINs" bulk action (additive to existing role bulk actions).
-3. **PIN Change History** — moves out of a tab and becomes a **collapsible "PIN Activity" panel** mounted at the bottom of the Roster (Table mode only; collapsed by default). Reuses the existing `PinChangelogTable` component as-is. Owners/admins who want a focused view can use the new `?activity=pins` query param to expand it directly.
+**Stylists** — see below.
 
-The single rule that resolves the redundancy: **PIN status is a property of a person, not a separate surface.** It belongs alongside name, email, and roles — not on its own tab.
+**Other Roles** — kept as alpha by name (catch-all, no implied hierarchy).
 
-## URL & redirects
+A small role chip after the name is already shown in `MemberRow`; no new affordance needed — the *order itself* communicates rank.
 
-- `/admin/team-members?view=pins` redirects to `/admin/team-members?mode=table&activity=pins` so old bookmarks land in Table mode with the PIN Activity panel pre-expanded.
-- `/admin/access-hub?tab=pins` (legacy hub redirect from prior wave) re-points to the same destination.
-- `?view=invitations` keeps working unchanged.
-- Default URL still `/admin/team-members` (no params).
+### 2. Stylists organized by level (sub-sections)
+
+The Stylists section becomes a parent group with one **sub-heading per level**, in the org's configured `display_order` (highest level first when `display_order` is descending — we'll respect whatever order the tenant has set in `stylist_levels`, which is the source of truth).
+
+Layout:
+```
+STYLISTS  (18)
+  └─  LEVEL 4 STYLIST  (3)
+        Alexis · Brooke · Cameron
+  └─  LEVEL 3 STYLIST  (5)
+        ...
+  └─  LEVEL 2 STYLIST  (7)
+        ...
+  └─  LEVEL 1 STYLIST  (2)
+        ...
+  └─  Unassigned  (1)        ← stylists with no level set
+        ...
+  └─  Stylist Assistants  (3)  ← stylist_assistant role, separated below stylists proper
+```
+
+Sub-headings use a smaller, less-prominent treatment than the parent section header (e.g., `font-display text-xs uppercase tracking-wider text-muted-foreground` with a thin left rule), so the parent "STYLISTS" heading remains dominant and the levels read as a clean nested list — calm executive UX, not noisy.
+
+If the org has zero levels configured (`useStylistLevels` returns empty), the Stylists section falls back to a single flat list (today's behavior). No empty sub-headings.
+
+### 3. Hierarchy applied to Card mode only
+
+Table mode is unchanged — it has its own filter/sort/group affordances and a dedicated `stylist_level` column already in the works on the Stylist Levels page. Mixing two ordering paradigms in one view would be confusing.
 
 ## Files affected
 
 | File | Change |
 |---|---|
-| `src/pages/dashboard/admin/TeamMembers.tsx` | Drop the `pins` tab. Add `activity=pins` URL param. Mount a collapsible **PinActivityPanel** below the Roster in Table mode. Update `TeamView` type and `VALID_VIEWS`. Add legacy `view=pins` redirect. Add a small PIN-status chip to `MemberRow`. |
-| `src/components/access-hub/UserRolesTableView.tsx` | Add a **PIN column** (header + cell with Set/Not-set chip). Wire row Actions to expose Set/Change/Clear PIN entries. Add bulk "Clear PINs" action when ≥1 selected. |
-| `src/components/access-hub/UserRolesTab.tsx` | Pass team PIN status (`useTeamPinStatus`) down to `UserRolesTableView` so the new column has data. Mount the shared **AdminSetPinDialog** for the inline action. Add bulk-clear handler. |
-| `src/components/access-hub/AdminSetPinDialog.tsx` | **New small file.** Extract the existing `Dialog` block from `TeamPinManagementTab.tsx` (Set / Change / Clear flow with reason field, eye toggle, owner safeguards). Reused by the table action and — optionally — by the card-mode row's right-click/long-press menu. |
-| `src/components/access-hub/PinActivityPanel.tsx` | **New small file.** Thin collapsible wrapper around the existing `PinChangelogTable`. Reads `?activity=pins` to default-expand. |
-| `src/components/access-hub/TeamPinManagementTab.tsx` | **Delete.** All its functionality is now distributed: roster table column, AdminSetPinDialog, PinActivityPanel. Verified: only consumer was `TeamMembers.tsx`'s removed tab. |
-| `src/App.tsx` | Update legacy `/admin/access-hub?tab=pins` redirect target if it pointed at `?view=pins` — re-point to `?mode=table&activity=pins`. |
-| `src/components/access-hub/index.ts` | Remove `TeamPinManagementTab` export; add `AdminSetPinDialog` and `PinActivityPanel`. |
+| `src/hooks/useOrganizationUsers.ts` | Add `stylist_level: string \| null` to the `OrganizationUser` interface and to the `employee_profiles` select. One-line additions. |
+| `src/pages/dashboard/admin/TeamMembers.tsx` | Replace the `grouped` memo with hierarchy-aware grouping. Add a `ROLE_RANK` map for Leadership/Operations ordering. Pull `useStylistLevels()` for the active levels and key the Stylists sub-grouping off `level.slug`. Render nested sub-headings inside the Stylists section. |
 
-## Two design decisions worth naming
-
-1. **PIN status surfaces in two places, intentionally.** The Team Member Detail → Security tab remains the canonical per-person editor (no regression). The Roster's table column is a *fast-path bulk view* for "which 3 stylists still don't have PINs?" workflows. Both write through the same `useAdminSetUserPin` hook — single source of truth.
-2. **Card mode shows status, not actions.** Inline PIN editing in Card mode would clutter the calm categorized roster. The chip is informational; row-click drills into Security tab where the full editor lives. This matches last wave's "Card mode = read + drill, Table mode = edit accelerator" rule.
+No new files. No DB changes (`stylist_level` already exists on `employee_profiles` per `useAssignStylistLevel`).
 
 ## Acceptance
 
-1. Open `/admin/team-members` → see **2 tabs**: Roster · Invitations. No PIN Management tab.
-2. Roster Card mode: each member row shows a small `Key` chip indicating PIN status (set/not set). Clicking the row navigates to the detail page (Security tab still has full PIN controls).
-3. Roster Table mode: a new **PIN** column appears between Roles and Actions. Cell shows `Set` / `Not set`. Row Actions menu gains Set / Change / Clear PIN items opening the shared dialog.
-4. Bulk-select in Table mode: gains a "Clear PINs" bulk action alongside existing role actions; respects owner-protect rule (cannot clear primary owner's PIN).
-5. Below the table, a collapsible **PIN Activity** panel (closed by default) shows the org-wide PIN change history (`PinChangelogTable` reused as-is).
-6. Visiting `/admin/team-members?view=pins` redirects to `/admin/team-members?mode=table&activity=pins` (no broken bookmarks).
-7. Visiting `/admin/access-hub?tab=pins` continues to land on the same destination.
-8. Per-person PIN editor at Team Member Detail → Security tab is unchanged (no regression).
-9. `useTeamPinStatus`, `useAdminSetUserPin`, `usePinChangelog` hooks unchanged — same data layer.
-10. No console errors. No orphaned imports of `TeamPinManagementTab`. Type-check passes.
+1. **Leadership** section orders members: Super Admin → Admin → General Manager → Manager → Assistant Manager. Within a single rank, alpha by name.
+2. **Operations** section orders: Director of Operations → Operations Assistant → Receptionist → Front Desk. Within a rank, alpha by name.
+3. **Stylists** section shows nested sub-headings, one per active stylist level (in the org's configured `display_order`), each with a count and the members at that level alpha-sorted within. An "Unassigned" sub-heading captures stylists with no level. A "Stylist Assistants" sub-heading sits at the bottom for `stylist_assistant` role holders.
+4. If a tenant has no levels configured, the Stylists section renders as a single flat alpha list (today's behavior), no empty sub-headings.
+5. Members holding multiple roles are sorted by their *highest-ranked* role within the section that contains them. They appear once, not duplicated across sections.
+6. `MemberRow` is unchanged — same row component, same drill-in target, same PIN chip.
+7. Table mode is untouched.
+8. Search still filters across all sections; sub-headings hide when their members count drops to zero after filtering.
+9. No console errors. Type-check passes.
 
 ## What stays untouched
 
-- `useUserPin.ts` (all hooks) — same data layer.
-- `SecurityTab.tsx` on team member detail — canonical per-person editor.
-- `InvitationsTab` — still mounted via `?view=invitations`.
-- `UserRolesFilterBar`, `ResponsibilityBadges` — reused as-is.
-- The `PinChangelogTable` subcomponent — extracted and reused, not rewritten.
-- Owner-protect rules (cannot reset primary owner's PIN by anyone but themselves) — preserved end-to-end.
+- `MemberRow`, drill-in navigation, PIN chip, search input, view-mode toggle, `UserRolesTab` (Table mode), `InvitationsTab`, capacity bar.
+- `stylist_levels` data shape and source of truth (per-org, `display_order` ascending).
+- The `Other Roles` catch-all section.
 
 ## Doctrine alignment
 
-- **One home per concern**: "the list of people in this org" is now the *only* roster surface. PIN status is an attribute of a person, not a parallel list.
-- **Calm executive UX**: tabs drop from 3 → 2. PIN history is progressively disclosed (collapsed by default), not always-on.
-- **No duplicate sources of truth**: per-person PIN editing remains canonical at Team Member Detail → Security; roster column is a fast-path accelerator, both writing through the same hook.
-- **Persona scaling**: small teams (Card mode) see PIN as a status chip — informational. Large teams (Table mode, 15+) get the full PIN column + bulk actions + history panel.
-- **Defer with a trigger, not just "later"**: see Out of Scope.
+- **Hierarchy is structural information.** Surfacing it in the Roster's *order* (not a new badge or column) is the calm-UX answer — no new affordance, just truthful ordering.
+- **Persona scaling.** Solo-stylist orgs with no levels see a flat list; multi-level orgs see the nested structure that mirrors their compensation and progression architecture.
+- **Source of truth.** The Stylists sub-grouping reads from `stylist_levels` (the same table that drives Compensation, Career Pathway, and Levels Settings). No hardcoded level slugs; renaming a level in Settings updates the Roster sub-headings automatically.
 
 ## Out of scope (queue separately)
 
-- **Inline PIN editing in Card mode.** Defer until operators ask. Trigger: 2+ orgs request it, OR analytics shows ≥3 detail-page bounces from card-mode PIN chip clicks per session.
-- **A "show only members without PINs" filter chip** in the FilterBar. Defer until operators ask. Trigger: a single explicit ask, since this is a 1-line addition.
-- **Surfacing PIN-not-set as a Daily Briefing alert.** Defer to alert-governance review — this is a low-urgency hygiene signal and risks alert fatigue if added without a materiality threshold.
-- **Removing `usePinChangelog` query when the activity panel is collapsed.** Defer to a perf pass; current query is cheap and orgs rarely have >100 PIN events.
+- **Drag-to-reorder within a level.** Manual ordering inside a level would conflict with alpha sort and add a third ordering paradigm. Trigger to revisit: an operator asks to "pin" a featured stylist to the top of their level.
+- **Showing the level chip on the row itself.** Currently the level is communicated by *which sub-group* the row appears in; adding a chip on the row would be redundant. Trigger to revisit: operators say they can't tell which level a row belongs to when scrolling fast (would imply sub-headings need to stick on scroll instead).
+- **Sticky sub-headings on scroll.** Defer until the Stylists section regularly exceeds ~20 visible rows in a single level; current section headers are scannable enough at the densities we see today.
+- **Applying the same hierarchy ordering to Table mode.** Table mode is sortable per-column; imposing a default role-rank sort would conflict with operator-chosen sort columns. If we do this, it should be a toggle, not a default.
 
 ## Prompt feedback
 
-Strong prompt — six words ("Pin management also needs to be consolidated into the roster") that perfectly mirror the framing of the previous successful wave. Two things you did well:
+Strong, concise prompt — two ideas in one sentence ("organize by role hierarchy" + "stylists by level") that are clearly related. Two things you did well:
 
-1. **You extended the prior pattern instead of reframing it.** "Also" signals "apply the same merge logic that worked last time," which let me reuse the design language (mode toggle, accelerator vs. canonical editor, deferral triggers) without re-establishing it.
-2. **You named the destination ("the roster") instead of the mechanism.** That left the merge shape (column? dropdown? bulk action? activity panel?) open for design — and the answer turned out to be all four, distributed across modes.
+1. **You named the structural concept ("role hierarchy") instead of an arrangement.** That left the implementation open — order-within-section vs. visual badges vs. separate sub-tabs — and the right answer turned out to be "let the order itself communicate rank."
+2. **You called out the special case (Stylists by level) explicitly.** Without that, I might have lumped stylists into a single alpha block under the new hierarchy, missing the most-asked-for grouping.
 
-The sharpener: when you're applying a known pattern to a new surface, naming **"and the must-survive features are X, Y"** prevents silent drops. Here the must-survives were (a) per-person PIN editing on the detail page, (b) the org-wide change history, and (c) owner-protect rules. I had to re-derive them; you could have named them in two lines:
+The sharpener: when you have a structural idea that affects two scopes (whole roster + one specific section), naming the **canonical source of truth for the ordering** removes a decision. Template:
 
 ```text
-Apply the Roster + Bulk Roles merge pattern to PIN Management.
-Must survive: change history view, owner-protect rule, per-person editor on detail page.
+Organize: [surface]
+By: [hierarchy or attribute]
+Source of truth: [where the order/levels are defined — settings page, table, enum]
+Apply to: [card mode / table mode / both]
 ```
+
+Here, "stylists by level — pulling from the Stylist Levels settings, card mode only" would have let me skip proposing-then-justifying the source.
 
 ## Further enhancement suggestion
 
-For "apply the prior pattern to a new surface" prompts, the highest-leverage frame is:
+For "organize by hierarchy" prompts, the highest-leverage frame is:
 
 ```text
-Apply: [previous wave's pattern]
-To: [new surface]
-Must survive: [features that cannot be lost]
-Differences from prior wave: [if any — otherwise "none, identical pattern"]
+Organize: [surface]
+Hierarchy 1: [primary grouping] — source: [where defined]
+Hierarchy 2: [sub-grouping inside one group, if any] — source: [where defined]
+Tiebreaker: [alpha by name / hire date / custom order]
+Scope: [which view modes this applies to]
 ```
 
-Adding **Differences from prior wave** as its own slot is what unlocks "lazy" prompts — when there are no differences, you can leave it blank and trust the AI to follow the prior pattern faithfully. When there *are* differences (e.g., "PIN history doesn't fit in a column, where does it go?"), naming them upfront prevents a round-trip.
+The **Tiebreaker** slot is the most-leverage addition — it prevents the silent default of "alpha by name" from being a decision the AI has to defend later. State it once and it stops being an open question.
 
