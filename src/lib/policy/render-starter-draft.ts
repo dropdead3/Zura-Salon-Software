@@ -91,10 +91,20 @@ function isTruthy(value: unknown): boolean {
  * Process mustache-style section tags before token substitution:
  *   {{?key}}…{{/key}}  — render block when value is truthy
  *   {{^key}}…{{/key}}  — render block when value is falsy
+ *
+ * Exported so other surfaces (e.g. `InlineRuleEditor`) can apply the
+ * conditional-block pass independently of the brand and rule-value passes —
+ * specifically when they need to keep `{{key}}` tokens intact for chip
+ * mounting downstream. This is the second of the three render passes
+ * (brand → sections → rule values) and is safe to call on its own.
+ *
  * Adjacent whitespace is collapsed so the surrounding sentence stays clean
  * regardless of whether the block renders.
  */
-function processSections(template: string, ruleValues: Record<string, unknown>): string {
+export function processConditionalSections(
+  template: string,
+  ruleValues: Record<string, unknown>,
+): string {
   const sectionRe = /\{\{\s*([?^])\s*([a-zA-Z0-9_]+)\s*\}\}([\s\S]*?)\{\{\s*\/\s*\2\s*\}\}/g;
   let out = template;
   let prev: string;
