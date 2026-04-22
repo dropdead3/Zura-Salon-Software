@@ -26,14 +26,14 @@ export function SidebarFeedbackButtons({
 
   return (
     <>
-      <div className={cn("flex gap-1", isCollapsed && "flex-col items-center")}>
+      <div className={cn("flex gap-1", isCollapsed && "flex-col")}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => openDialog('feature_request')}
               className={cn(
                 "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
-                isCollapsed ? "self-center" : "flex-1"
+                !isCollapsed && "flex-1"
               )}
             >
               <Lightbulb className="h-4 w-4" />
@@ -48,7 +48,7 @@ export function SidebarFeedbackButtons({
               onClick={() => openDialog('bug_report')}
               className={cn(
                 "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
-                isCollapsed ? "self-center" : "flex-1"
+                !isCollapsed && "flex-1"
               )}
             >
               <Bug className="h-4 w-4" />
@@ -63,7 +63,7 @@ export function SidebarFeedbackButtons({
               to={dashPath('/help')}
               className={cn(
                 "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
-                isCollapsed ? "self-center" : "flex-1"
+                !isCollapsed && "flex-1"
               )}
             >
               <HelpCircle className="h-4 w-4" />

@@ -195,12 +195,13 @@ export function CollapsibleNavGroup({
                       onNavClick();
                     }}
                     className={cn(
-                      "inline-flex items-center justify-center px-2 py-2 mx-auto rounded-lg",
+                      "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
                       "transition-all duration-200 text-sm",
                       isActive
                         ? "bg-foreground/10 text-foreground"
                         : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
                     )}
+                    style={{ width: 'calc(100% - 16px)' }}
                   >
                     <Icon className="w-4 h-4" />
                   </a>
@@ -215,12 +216,13 @@ export function CollapsibleNavGroup({
               <PopoverTrigger asChild>
                 <button
                   className={cn(
-                    "inline-flex items-center justify-center px-2 py-2 mx-auto rounded-lg",
+                    "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
                     "transition-all duration-200 text-sm",
                     active
                       ? "bg-foreground/10 text-foreground"
                       : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
                   )}
+                  style={{ width: 'calc(100% - 16px)' }}
                 >
                   <GroupIcon className="w-4 h-4" />
                 </button>

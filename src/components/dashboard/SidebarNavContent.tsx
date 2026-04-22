@@ -357,7 +357,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="relative inline-flex w-fit mx-auto">
+            <div className="relative">
               {linkContent}
             </div>
           </TooltipTrigger>
@@ -461,7 +461,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     to={dashPath('/onboarding')}
                     onClick={onNavClick}
                     className={cn(
-                      "inline-flex items-center justify-center px-2 py-2.5 mx-auto text-sm font-sans w-fit",
+                      "flex items-center justify-center px-2 py-2.5 mx-2 text-sm font-sans",
                       "transition-all duration-300 ease-out rounded-full",
                       location.pathname === '/dashboard/onboarding'
                         ? "bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm" 
@@ -688,12 +688,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                               onNavClick();
                             }}
                             className={cn(
-                              "inline-flex items-center justify-center px-2 py-2 mx-auto rounded-full",
+                              "flex items-center justify-center px-2 py-2 mx-2 rounded-full",
                               "transition-all duration-300 text-sm",
                               isActive
                                 ? "bg-foreground/10 text-foreground"
                                 : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
                             )}
+                            style={{ width: 'calc(100% - 16px)' }}
                           >
                             <Icon className="w-4 h-4" />
                           </a>
@@ -709,12 +710,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       <PopoverTrigger asChild>
                         <button
                           className={cn(
-                            "inline-flex items-center justify-center px-2 py-2 mx-auto rounded-full",
+                            "flex items-center justify-center px-2 py-2 mx-2 rounded-full",
                             "transition-all duration-300 text-sm",
                             isAnyActive
                               ? "bg-foreground/10 text-foreground"
                               : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
                           )}
+                          style={{ width: 'calc(100% - 16px)' }}
                         >
                           <SectionIcon className="w-4 h-4" />
                         </button>
@@ -847,7 +849,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         {isCollapsed ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="mx-auto inline-flex w-fit items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/15 p-1.5 cursor-default">
+              <div className="mx-2 flex items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/15 p-1.5 cursor-default">
                 <FlaskConical className="h-3.5 w-3.5 text-amber-600" />
               </div>
             </TooltipTrigger>
