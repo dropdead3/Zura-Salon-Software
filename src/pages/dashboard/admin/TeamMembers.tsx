@@ -37,13 +37,7 @@ const VALID_VIEWS: TeamView[] = ['roster', 'invitations'];
 type RosterMode = 'card' | 'table';
 const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
-const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
-  { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'general_manager', 'manager', 'assistant_manager'] },
-  { label: 'Operations', icon: Cog, roles: ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'] },
-  { label: 'Stylists', icon: Users, roles: ['stylist', 'stylist_assistant'] },
-];
-
-// Role hierarchy ranks (lower = higher rank, displayed first within a section)
+// Role hierarchy ranks (lower = higher rank, displayed first across sections)
 const ROLE_RANK: Record<string, number> = {
   super_admin: 0,
   admin: 1,
@@ -58,19 +52,34 @@ const ROLE_RANK: Record<string, number> = {
   stylist_assistant: 21,
 };
 
-const CATEGORIZED_ROLES = SECTIONS.flatMap(s => s.roles);
+// Per-role icon for section headers
+const ROLE_ICON: Record<string, LucideIcon> = {
+  super_admin: Crown,
+  admin: Shield,
+  general_manager: Briefcase,
+  manager: Briefcase,
+  assistant_manager: Briefcase,
+  director_of_operations: Cog,
+  operations_assistant: Cog,
+  receptionist: Headphones,
+  front_desk: Phone,
+  stylist: Users,
+  stylist_assistant: UserPlus,
+};
 
 function roleLabel(role: string) {
   return role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-/** Returns the highest-ranked role a user holds among a candidate set, or Infinity if none match. */
-function highestRankAmong(userRoles: string[], candidates: string[]): number {
-  let best = Infinity;
+/** Returns the user's highest-ranked (lowest numeric) role from ROLE_RANK, or null if none match. */
+function primaryRoleOf(userRoles: string[]): string | null {
+  let best: string | null = null;
+  let bestRank = Infinity;
   for (const r of userRoles) {
-    if (candidates.includes(r)) {
-      const rank = ROLE_RANK[r] ?? 999;
-      if (rank < best) best = rank;
+    const rank = ROLE_RANK[r];
+    if (rank !== undefined && rank < bestRank) {
+      bestRank = rank;
+      best = r;
     }
   }
   return best;
