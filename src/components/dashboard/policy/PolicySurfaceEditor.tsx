@@ -112,8 +112,8 @@ export function PolicySurfaceEditor({
       <div className="flex items-start gap-2">
         <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
         <p className="font-sans text-xs text-muted-foreground">
-          Pick where this policy renders. Each surface gets its own tone — the same rules,
-          rewritten for the audience.
+          Choose where clients and staff see this policy. Each place uses its own wording —
+          the same rules, written for the right audience.
         </p>
       </div>
 
