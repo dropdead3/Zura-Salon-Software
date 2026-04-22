@@ -33,7 +33,6 @@ import type { RuleField } from '@/lib/policy/configurator-schemas';
 import { getStarterDraftSet } from '@/lib/policy/starter-drafts';
 import { interpolateBrandTokens, processConditionalSections } from '@/lib/policy/render-starter-draft';
 import {
-  EXTERNAL_RULE_BINDINGS,
   extractExternalBindingKeys,
   getExternalRuleBinding,
 } from '@/lib/policy/external-rule-bindings';
