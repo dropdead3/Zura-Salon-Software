@@ -377,14 +377,32 @@ export default function TeamMembers() {
             {/* Card mode: search + categorized list. Table mode: full UserRolesTab (filters, stat tiles, bulk actions, location grouping, PIN column, PIN activity). */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
               {rosterMode === 'card' ? (
-                <div className="relative max-w-md flex-1 min-w-[240px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name or email…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
+                <div className="flex items-center gap-2 flex-1 min-w-[240px] flex-wrap">
+                  <div className="relative max-w-md flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name or email…"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  {showLocationFilter && (
+                    <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                      <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {activeLocations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               ) : (
                 <div />
