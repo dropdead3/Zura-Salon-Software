@@ -666,9 +666,9 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
 
       {/* Bulk Actions Bar */}
       {canManage && selectedUsers.size > 0 && viewMode === 'table' && (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20 flex-wrap">
           <span className="text-sm font-medium">{selectedUsers.size} selected</span>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
             {roles.filter(r => r.name !== 'super_admin').map(role => (
               <Button
                 key={`assign-${role.name}`}
@@ -681,6 +681,16 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                 + {role.display_name}
               </Button>
             ))}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive"
+              onClick={handleBulkClearPins}
+              disabled={adminSetPin.isPending}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Clear PINs
+            </Button>
           </div>
           <Button
             variant="ghost"
