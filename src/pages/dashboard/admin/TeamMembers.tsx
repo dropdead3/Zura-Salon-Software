@@ -292,31 +292,20 @@ export default function TeamMembers() {
   }, [filtered]);
 
   /**
-   * Build the Stylists section's nested sub-groups by level.
-   * Sub-headings follow the org's configured `display_order` (ascending = Level 1 → Level N
-   * per stylist_levels source of truth). Stylists with no level fall into "Unassigned".
-   * `stylist_assistant` role-holders are split into their own bottom sub-section.
-   * If the org has no levels configured, returns null and the caller renders a flat list.
+   * Build the Stylist section's nested sub-groups by level.
+   * Sub-headings follow the org's configured `display_order` from `stylist_levels`.
+   * Stylists with no level fall into "Unassigned".
+   * (Stylist Assistants are now their own top-level role section, not nested here.)
+   * Returns null when the org has no levels configured → caller renders a flat list.
    */
   const stylistSubGroups = useMemo(() => {
-    const stylistsSection = grouped.sections.find(s => s.label === 'Stylists');
+    const stylistsSection = grouped.sections.find(s => s.role === 'stylist');
     if (!stylistsSection || stylistsSection.members.length === 0) return null;
+    if (stylistLevels.length === 0) return null;
 
-    // Split assistants out first
-    const assistants = stylistsSection.members.filter(m =>
-      m.roles.includes('stylist_assistant') && !m.roles.includes('stylist'),
-    );
-    const stylistsOnly = stylistsSection.members.filter(m => m.roles.includes('stylist'));
-
-    if (stylistLevels.length === 0) {
-      // Fall back to flat list when org has no levels configured
-      return null;
-    }
-
-    // Build a slug → label map and group stylists by their stylist_level slug
     const byLevelSlug = new Map<string, OrganizationUser[]>();
     const unassigned: OrganizationUser[] = [];
-    for (const m of stylistsOnly) {
+    for (const m of stylistsSection.members) {
       const slug = m.stylist_level;
       if (slug && stylistLevels.some(l => l.slug === slug)) {
         const arr = byLevelSlug.get(slug) ?? [];
@@ -340,14 +329,6 @@ export default function TeamMembers() {
         key: '__unassigned',
         label: 'Unassigned',
         members: unassigned.sort(compareByName),
-      });
-    }
-
-    if (assistants.length > 0) {
-      levelGroups.push({
-        key: '__assistants',
-        label: 'Stylist Assistants',
-        members: assistants.sort(compareByName),
       });
     }
 
