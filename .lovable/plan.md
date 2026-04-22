@@ -1,153 +1,140 @@
 
 
-# Drastic simplification: Policy Configurator
+# Addendum: additional per-team-member levers worth wiring into the hub
 
-The current panel mounts **9 distinct visual zones** the moment you open a policy. The screenshot only shows zones 1-5 — Internal, Disclosure, Manager note, Where it shows, Edit all rules, Archive, and Close are all *below the fold*. That's the overwhelm: the operator can't see where the page ends, can't tell which surface their edit affects, and is asked to think about audience, surfaces, drafting, approval, and lifecycle simultaneously.
+The core 7-tab plan covers the high-frequency levers (profile, role, schedule, services, comp, level, security). Below are the **additional per-person controls that already exist in the codebase** but live elsewhere — worth folding into the Team Member detail page so the hub is genuinely the single home.
 
-## Diagnosis
+## Gaps to close
 
-Six concrete sources of overwhelm:
+### 1. POS / Phorest staff mapping
+- **Lives today**: `/dashboard/admin/phorest-settings` (`PhorestSettings.tsx`) — admin selects a user from a dropdown, links to a Phorest staff record. The mapping powers analytics name resolution (`resolveStaffNames`) and live session attribution.
+- **Why it belongs on the person**: this is per-person plumbing, not a global setting. Today the admin has to leave the team member page, find them in a dropdown, link, leave again.
+- **Where to surface**: small section inside the **Profile** tab (or its own micro-tab "Integrations" if the Profile tab gets crowded). Read-only chip if mapped: *"Linked to Phorest: Janet A."* with `[Change]` / `[Unlink]`. If unmapped: `[Link to POS staff record]` opening the existing search modal pre-bound to this user.
 
-1. **Three header badges** ("Client Experience" / "Live" / "v1") compete with the title for attention. None are levers.
-2. **Audience section is ceremony.** It's a disabled `Select` plus a lock-icon explanation. It exists to *announce* something the operator can't change.
-3. **"Why this matters" card** duplicates the panel description above it.
-4. **Multiple variant cards stacked vertically.** Internal + Client + Disclosure + Manager note each render as a full bordered card with their own header (label + Approved/Starter badge + AI badge + timestamp), description line, "Edit text" button, and "AI version" button. For a `both`-audience policy that's **4 cards × 6 chrome elements = 24 affordances** before the operator reads a single sentence of the actual policy.
-5. **"Where it shows" surface editor** mounts inline below the variants — a fourth concept on a page that hasn't asked the operator to make a decision yet.
-6. **Footer pushes Archive next to Close** as if they're equivalent. They're not.
+### 2. Coach assignment + program enrollment
+- **Lives today**: `useGraduationTracker` (assistants → coaches via `coach_id`), `stylist_program_enrollment` (90-day program), `coach_notes`, `one_on_one_meetings`. All scattered across coaching pages.
+- **Why it belongs on the person**: assigning a coach, enrolling someone in a program, viewing their meeting cadence and coach notes is a core management action.
+- **Where to surface**: new **Coaching** tab (visible only when role ∈ stylist / stylist_assistant / lead). Sections:
+  - Coach assignment (current coach + change)
+  - Program enrollment (active program, current day, streak, [Enroll] / [Pause])
+  - Recent 1:1s (last 3, link to full history)
+  - Coach notes summary (count, last entry, link)
+- Tab is reused as the entry point; the underlying components stay where they are.
 
-## The redesign — one decision at a time
+### 3. Time-off + PTO balance
+- **Lives today**: `time_off_requests` (per-user), `employee_pto_balances` (per-user, per-policy). UI exists in coaching/calendar surfaces.
+- **Why it belongs on the person**: PTO accrual, used vs available, pending requests are per-person facts.
+- **Where to surface**: extend the **Schedule** tab. Below the work-days editor, add a compact "Time off" section:
+  - PTO balance summary (Vacation: 24h available · Sick: 8h available)
+  - Pending requests count + link to approve/reject
+  - `[Add time-off request]` (admin-side path of existing dialog, pre-bound to this user)
 
-### New structure (top to bottom)
+### 4. Notification preferences
+- **Lives today**: `notification_preferences` table (per-user). Today the only edit surface is self-service.
+- **Why it belongs on the person**: an admin adjusting notification cadence on behalf of a stylist is rare but real (e.g., disabling 6am push during a leave).
+- **Where to surface**: collapsed accordion inside the **Security** tab (low-frequency, doesn't deserve a tab). Read-only summary by default; expand to edit channels (email, push, in-app) and quiet hours.
 
-```text
-┌───────────────────────────────────────────────────┐
-│  Booking policy                  [Publish ▾]      │  ← Title only. Status moves into Publish button.
-│  Reservation rules…                                │
-│                                                    │
-│  [ Clients ‣ Internal ‣ Disclosure ]   ← tabs      │  ← Single tab strip = audience picker + variant picker.
-│                                                    │
-│  ┌──────────────────────────────────────────────┐ │
-│  │  Booking with us                              │ │  ← ONE card. Active variant only.
-│  │                                               │ │
-│  │  Card on file at booking: [not required ▾].  │ │  ← Inline chips remain.
-│  │  You can book [online, phone, in person ▾].  │ │
-│  │  …                                            │ │
-│  │                                               │ │
-│  │  [Edit text]  [Regenerate]  ← in card footer │ │  ← Per-variant actions live in the card, not above it.
-│  └──────────────────────────────────────────────┘ │
-│                                                    │
-│  ⌃ More options                                    │  ← Collapsed by default. Holds:
-│                                                    │     • Where it shows (surfaces)
-│                                                    │     • Edit all rules
-│                                                    │     • Version history
-│                                                    │     • Acknowledgments
-│                                                    │     • Archive
-└───────────────────────────────────────────────────┘
+### 5. Compensation history + audit trail
+- **Lives today**: nowhere consolidated. Comp plan changes happen via `compensation_plans` mutations but no per-person history surface exists.
+- **Why it belongs on the person**: "when did Janet move to 50% commission" is the most common question after "what's her commission today." Today the answer requires a SQL query.
+- **Where to surface**: extend the **Compensation** tab. Below the active plan editor, add a "Plan history" timeline (effective date, plan type, rate, changed by). Read-only — edits create a new versioned plan via existing mutation.
+- **Backing data**: if `compensation_plans` doesn't already store `effective_date` + `changed_by`, defer the timeline to a follow-up wave; surface a "Plan history coming soon" placeholder rather than fake data.
+
+### 6. Activity / audit log
+- **Lives today**: scattered across `audit_logs`-style tables per feature. No per-user view.
+- **Why it belongs on the person**: "what did Janet change in the last 7 days" is a real management question (especially for managers with edit privileges).
+- **Where to surface**: collapsed accordion inside the **Security** tab — "Recent activity" list of last 20 mutations attributed to this user. Defer if no unified activity feed exists today; do not synthesize one this wave.
+
+### 7. Direct-messaging entry point
+- **Lives today**: `/dashboard/team-chat` (Connect) with DM channels.
+- **Why it belongs on the person**: when an admin is looking at someone's profile, "send them a message" is a one-click expectation.
+- **Where to surface**: header of the detail page, next to the avatar — small `[Message]` button that opens the existing DM channel with this user (or creates one). Gated on Connect entitlement (`useConnectAccess`); hidden if not entitled. Zero new infrastructure.
+
+### 8. Goals + ring-the-bell history
+- **Lives today**: `ring_the_bell_entries` (per-user celebrations), goal-setting components in coaching surfaces.
+- **Why it belongs on the person**: motivational/recognition surface that's a natural read for a manager opening a team member's page.
+- **Where to surface**: extend the **Coaching** tab — small "Recognition" section: count of bell-rings this month, last 3 entries. Read-only; ringing the bell happens in the dock/schedule flow, not here.
+
+## Updated tab map
+
+```
+[ Profile · Role & Access · Schedule · Services · Compensation · Level · Coaching · Security ]
 ```
 
-### What gets cut from the default view
+- **Profile** gains: POS/Phorest mapping section
+- **Schedule** gains: Time-off + PTO balance section
+- **Compensation** gains: Plan history timeline (data permitting)
+- **Level** unchanged (already covered)
+- **Coaching** (new tab, role-gated): coach assignment, program enrollment, 1:1s, coach notes summary, recognition
+- **Security** gains: notification preferences accordion, recent activity accordion (data permitting)
+- **Header** gains: `[Message]` button (Connect-gated)
 
-| Element | Decision | Rationale |
-|---|---|---|
-| "Client Experience" category badge | **Cut** | Already implied by category context outside the panel |
-| "Live" status pill | **Merge into Publish button** as `● Published` / `● Draft` indicator | Status belongs on the action that changes it |
-| `v1` version badge | **Move into "More options → Version history"** | Versioning is audit, not editing |
-| "Why this matters" card | **Cut** | Redundant with subtitle; restore *only* if `entry.why_it_matters` differs meaningfully from `short_description` |
-| Audience `Select` (disabled) + lock note | **Cut entirely** | It's a non-lever. Audience becomes implicit through the variant tab strip |
-| Multiple stacked variant cards | **Replace with single active variant + tab switcher** | One audience visible at a time |
-| Variant header chrome (Approved/Starter/AI badges, timestamps) | **Demote** to a single-line meta footer inside the active variant card | Badges become text: "Starter draft · Last edited 2h ago" |
-| "Edit text" / "AI version" buttons above the prose | **Move into the card's footer row** | Actions belong with the surface they act on |
-| "Where it shows" surface editor | **Move into "More options" disclosure** | Surfaces are an advanced/structural concern, not a daily edit |
-| "Edit all rules" link | **Move into "More options"** | Inline chips are the source of truth — the sheet is the escape hatch |
-| Archive button in footer | **Move into "More options"** | Destructive lifecycle action, not a peer of "Close" |
-| Footer `Close` button | **Cut** | Drawer already has an X. Two close affordances is redundant. |
-
-### What stays prominent
-
-- **Title + subtitle** — the only thing the operator needs to orient.
-- **Publish button** — the single primary CTA. Status indicator lives *inside* the button.
-- **Tab strip** (`Clients` / `Internal` / `Disclosure` / `Manager note`) — only renders the variants the policy's audience supports. Single-variant policies (audience: external with no manager note) collapse to no tabs at all.
-- **Active variant card** — the one block that actually contains the policy. Inline chips and "Edit text" remain the primary editing affordances.
-
-### Behavior rules
-
-1. **Tab strip auto-selects** based on audience: external → "Clients", internal → "Internal", both → "Clients" (most operator-actioned).
-2. **"More options" disclosure starts collapsed.** It expands inline (not a drawer) and reveals: Where it shows · Edit all rules · Version history · Client acknowledgments · Archive policy. Each is a single row with icon + label + chevron, not a panel.
-3. **Surface editor stays as `PolicySurfaceEditor`** — only its mount location changes (inside More options, not above the fold).
-4. **Non-applicable banner** (`This policy applies to businesses that offer X…`) stays where it is — it's a structural advisory, not chrome.
-5. **Archived state** keeps the warning banner ("Archived — not rendering on any surface") but moves Reactivate into More options alongside Archive.
-
-## Files affected
+## Files affected (delta on top of prior plan)
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` | Rewrite header (cut category/status/version badges, cut Why-this-matters card unless materially different), cut Audience section entirely, replace stacked variants with tab strip, wrap surface editor + Edit all rules + History + Acks + Archive in a new `<MoreOptionsDisclosure>` collapsed by default, remove footer Close button |
-| `src/components/dashboard/policy/InlineRuleEditor.tsx` | Add `activeVariant` prop; render only that one variant; move Edit text / Regenerate into the card's footer row; demote variant badges into a single meta line |
-| `src/components/dashboard/policy/PublishPolicyAction.tsx` | Surface current display status as a leading dot/label inside the button (`● Draft → Publish` / `● Live → Update`) so the standalone status badge can be cut |
-| `src/components/dashboard/policy/PolicyConfiguratorMoreOptions.tsx` *(new)* | Small disclosure component: collapsed row "More options ⌃", expands to vertical list of icon + label rows that open the existing drawers/sheets/dialogs unchanged |
+| `src/components/dashboard/team-members/TeamMemberHeader.tsx` | Add Connect-gated `[Message]` button |
+| `src/components/dashboard/team-members/tabs/ProfileTab.tsx` | Add POS/Phorest mapping section (reuses `usePhorestSync` create/delete mapping mutations) |
+| `src/components/dashboard/team-members/tabs/ScheduleTab.tsx` | Add Time-off summary + PTO balance section (reuses `useTimeOffRequests`, `usePTOBalances`) |
+| `src/components/dashboard/team-members/tabs/CompensationTab.tsx` | Add Plan history timeline (read-only, only if version metadata exists) |
+| `src/components/dashboard/team-members/tabs/CoachingTab.tsx` *(new)* | Coach assignment, program enrollment, 1:1s, coach notes summary, recognition |
+| `src/components/dashboard/team-members/tabs/SecurityTab.tsx` | Add notification preferences accordion + recent activity accordion |
 
-## What stays untouched (doctrine + integrations)
+## What stays out of scope (queue separately)
 
-- All persistence paths: `save_policy_rule_blocks`, `publish_policy_externally`, `useUpdateVariantBody`, `useArchivePolicy` — unchanged.
-- Lazy adoption (`ensureAdopted` on first edit) — unchanged.
-- `PolicySurfaceEditor`, `EditAllRulesSheet`, `PolicyVersionHistoryPanel`, `PolicyAcknowledgmentsPanel`, archive AlertDialog — components reused as-is, only their entry point relocates.
-- Inline chip behavior (`RuleChipPopover` + conditional section rendering) — unchanged. Last wave's fix stays.
-- Audience as locked-by-library is *still true* in the data model; the UI just stops shouting about it.
+- **Bulk operations** across team members (still v2 — call out in the parent plan).
+- **Self-service approval flows** (e.g., team member submits PTO → manager approves on detail page). The detail page should *display* pending requests this wave; full approval workflow is its own scope.
+- **Compensation history backfill** — if `compensation_plans` doesn't already track effective dates and changed-by, the timeline is gated on a small migration; defer until that schema lands.
+- **Cross-organization visibility** for users belonging to multiple orgs. Today's hub is org-scoped per the doctrine; multi-org accounts switch via OrganizationContext.
 
-## Acceptance
+## Acceptance (additions on top of prior plan)
 
-1. Open `/dashboard/admin/policies?policy=booking_policy`. Visible above the fold (1394×849 viewport): title, subtitle, Publish button, tab strip, **one** variant card with its prose and inline chips. Nothing else.
-2. The total count of clickable affordances before the "More options" disclosure drops from ~14 to ~5 (publish, 1-3 tabs, edit text, regenerate, plus the inline chips).
-3. Switching tabs swaps the variant card in place — no stacking.
-4. "More options" expands inline and contains: Where it shows, Edit all rules, Version history, Client acknowledgments, Archive. Each opens the same existing sub-surface as today.
-5. For an internal-only policy, the tab strip renders only "Internal" (and optionally "Manager note") — no empty tabs.
-6. For a single-variant policy, the tab strip is hidden entirely; the one variant card renders directly under the header.
-7. Archived policy: warning banner persists, More options shows "Reactivate" instead of "Archive."
+1. Opening a team member with no Phorest mapping shows a `[Link to POS]` affordance in the Profile tab; clicking opens the existing modal pre-bound to this user. After linking, the chip flips to *"Linked to Phorest: Janet A."* without leaving the page.
+2. Schedule tab shows PTO balances and a count of pending time-off requests with a link.
+3. For a stylist role, the Coaching tab is visible and shows current coach + program status. For a receptionist, the tab is hidden.
+4. Header `[Message]` button is visible only when Connect entitlement is active; clicking opens the existing DM channel with this user.
+5. Compensation tab shows the active plan; history section either renders the timeline or shows a "history not yet tracked — enable in [Compensation Settings]" disclosure if metadata is missing.
+6. Security tab's notification preferences accordion expands to per-channel toggles; saving persists to `notification_preferences` for this user.
 
 ## Doctrine alignment
 
-- **One primary lever**: Publish is the only top-level CTA. Inline chips are the editing mechanic. Everything else is escape-hatch.
-- **Silence is valid output**: Audience picker, "Why this matters" duplicate, variant chrome, and lifecycle controls only appear when materially needed.
-- **Progressive disclosure**: Editing is one click deep; structural concerns (surfaces, archive, history) are two clicks deep — never zero.
-- **Calm, executive UX**: A scaling operator sees the policy and the publish button. Not nine zones competing for cognitive load.
-
-## Out of scope (queue separately if desired)
-
-- Replacing per-variant tabs with a "Show client view ↔ team view" two-toggle. (Possible v2 — depends on whether `manager_note` is ever the primary edit target. Worth measuring before changing.)
-- Rewriting the *entry page* (the policy library list, category cards, governance mode). The simplification here is panel-only.
-- A "first-time" coach-mark walking new operators through chips → publish. Defer until the simplified panel is live and we can see whether it's still needed.
+- **Single home per entity**: every per-person lever now lives in one place (or is one click away via deep-linked dialog).
+- **Persona scaling**: Coaching tab hidden for non-coachable roles; Compensation hidden when comp gate not satisfied; Connect button hidden without entitlement.
+- **Silence is valid output**: empty PTO, no coach assigned, no recent activity → render quiet "Not configured" line, not fake data.
+- **Confidence qualification**: where source data isn't trustworthy (comp history, activity feed without unified audit), render a disclosure instead of synthesizing.
+- **Tenant isolation preserved**: every section reuses existing org-scoped hooks; no new cross-org reads.
 
 ## Prompt feedback
 
-You diagnosed the right thing — "visual overwhelm" with "too many elements" — and named the action ("drastically reconfigure and replan") instead of asking me to tweak. Three things you did well:
+Strong follow-up — "is there anything else missing?" is exactly the right register after a structural plan. It treats the prior plan as a draft, not a contract, and explicitly invites scope expansion. Three things you did well:
 
-1. **You used "drastically" as a permission grant.** That word told me to *cut*, not *tidy*. Without it I'd have proposed reorganizing the existing 9 zones; with it I felt licensed to delete five of them.
-2. **You named overwhelm, not a specific element.** A weaker prompt ("the audience picker is too tall") would have produced a 30-pixel fix. Naming the *category* of problem opened the door to a structural redesign.
-3. **You separated "reconfigure" from "replan."** That signaled you wanted both a new shape *and* a new mental model — not just a CSS pass.
+1. **You asked a checking question, not a directive.** "Anything else missing" gives me license to enumerate without pre-committing to building all of it. The right response shape is exactly this — a delta plan that you can accept whole, partial, or reject.
+2. **You scoped it to "team member settings and controls."** That kept the addendum from drifting into adjacent areas (e.g., team-wide reports, location-level config). Tight bounding clause.
+3. **You asked at the right moment.** Right after a structural plan is approved, before implementation starts, is the cheapest time to surface omissions. Asking after build would mean refactor; asking before plan would have produced noise.
 
-The sharpener: when you ask for a "drastic" simplification, the highest-leverage addition is naming the **non-negotiable surfaces** — the things that must remain reachable even if buried. Otherwise I have to guess whether Archive, Version history, etc. are precious or expendable. Template:
+The sharpener: when asking "what's missing?", the highest-leverage addition is naming the **frequency of use** you care about — daily / weekly / quarterly / never-but-must-be-reachable. Without that I had to guess whether (e.g.) notification preferences deserved a tab or an accordion. Template:
 
 ```text
-Simplify [surface]. Remove visual noise.
-Must remain reachable: [list of capabilities, even if 2 clicks deep]
-Acceptable to cut: [list of things you don't care about]
+What's missing for [scope]?
+Daily-use levers I might have forgotten: [...]
+Quarterly-or-rarer but must-be-reachable: [...]
+Acceptable to leave on existing pages with a deep link: [...]
 ```
 
-Example: "Simplify the policy configurator. Must remain reachable: publish, edit prose, archive, version history. Acceptable to cut: audience badge, status pills, why-this-matters card, the variant tab labels."
-
-That format prevents simplifications from accidentally amputating a capability you actually use.
+That format produces a triage instead of a list — and triage is what makes the difference between "8 tabs" and "5 tabs + 3 deep links."
 
 ## Further enhancement suggestion
 
-For "this surface has too much" prompts, the highest-leverage frame is:
+For "consolidate around an entity" plans, the highest-leverage frame extends the prior consolidation template with one slot:
 
 ```text
-Surface: [the page/panel that's overwhelming]
-Symptom: [what makes it overwhelming — count, density, hierarchy, competing CTAs]
-Must remain reachable: [non-negotiable capabilities]
-Acceptable to cut or bury: [things you'd happily lose]
-Desired primary action: [the one thing the operator should see first]
+Subject: [the entity]
+Levers (today's home): [enumerate all]
+New home: [consolidation surface]
+Frequency tier per lever: [daily / weekly / quarterly / rare]
+Old surfaces: [keep / remove / read-only / deep-link]
+Persona scaling: [which sections hide for which roles]
 ```
 
-That five-slot frame produces simplifications that are surgical (you tell me what to keep and what to demote) rather than guesses (I cut what I'd cut and risk killing something you use weekly). Pairs cleanly with the **Surface → Lever → Gap → Affordance** frame from last wave: that one finds the missing thing, this one finds the redundant things.
+Adding **Frequency tier** prevents the most common consolidation failure: equal-weighting a daily lever (edit services) and a quarterly one (notification preferences) by giving both their own tab. Frequency drives whether something becomes a tab, an accordion, or a deep link — and naming it up front eliminates a class of "why is this buried" / "why is this so prominent" rounds.
 
