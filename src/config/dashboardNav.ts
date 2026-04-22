@@ -205,7 +205,7 @@ export interface HubLinkConfig {
 
 export const hubLinksConfig: HubLinkConfig[] = [
   { href: '/dashboard/admin/analytics', icon: TrendingUp, label: 'Analytics Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
-  { href: '/dashboard/admin/team-hub', icon: Users, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
+  { href: '/dashboard/admin/team-hub', icon: LayoutGrid, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/admin/access-hub', icon: Shield, label: 'Roles & Controls Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
 ];
 
