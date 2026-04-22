@@ -163,7 +163,7 @@ export default function TeamMembers() {
             </TabsTrigger>
             <TabsTrigger value="invitations" className="gap-2">
               <Mail className="h-4 w-4" />
-              Invitations & Approvals
+              Invitations
             </TabsTrigger>
             <TabsTrigger value="pins" className="gap-2">
               <Key className="h-4 w-4" />
