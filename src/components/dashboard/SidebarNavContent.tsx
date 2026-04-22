@@ -678,9 +678,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     const isActive = location.pathname === resolvedHref;
                     const label = getNavLabel(singleItem);
                     return (
-                      <div className="flex justify-center">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative flex justify-center">
                             <a
                               href={resolvedHref}
                               onClick={(e) => {
@@ -698,10 +698,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                             >
                               <Icon className="w-4 h-4" />
                             </a>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
-                        </Tooltip>
-                      </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
+                      </Tooltip>
                     );
                   }
 
