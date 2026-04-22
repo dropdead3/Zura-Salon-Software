@@ -24,39 +24,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ExternalLink,
-  History,
-  FileSignature,
   Archive,
   RotateCcw,
   Loader2,
-  Sparkles,
-  Settings2,
-  Users,
-  MessageSquare,
-  MapPin,
-  Lock,
 } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { LuxeLoader } from '@/components/ui/loaders/LuxeLoader';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
-import { InlineRuleEditor } from './InlineRuleEditor';
+import { InlineRuleEditor, variantsForAudience } from './InlineRuleEditor';
 import { EditAllRulesSheet } from './EditAllRulesSheet';
 import { PublishPolicyAction } from './PublishPolicyAction';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
+import { PolicyConfiguratorMoreOptions } from './PolicyConfiguratorMoreOptions';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { useArchivePolicy } from '@/hooks/policy/useArchivePolicy';
 import { usePolicyAcknowledgmentCount } from '@/hooks/policy/usePolicyAcknowledgmentCount';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,9 +69,12 @@ import {
   type SurfaceMappingRow,
   defaultVariantForSurface,
 } from '@/hooks/policy/usePolicyApplicability';
-import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
 import {
-  POLICY_CATEGORY_META,
+  usePolicyVariants,
+  VARIANT_LABELS,
+  type PolicyVariantType,
+} from '@/hooks/policy/usePolicyDrafter';
+import {
   POLICY_DISPLAY_STATUS_META,
   getDisplayStatus,
   type PolicyLibraryEntry,
@@ -387,10 +375,14 @@ export function PolicyConfiguratorPanel({
   const { data: ackCount = 0 } = usePolicyAcknowledgmentCount(data?.policyId ?? null);
   const showAcknowledgmentsLink = (!isInternalOnly || ackCount > 0) && !!data?.policyId;
   const isArchived = data?.status === 'archived';
-  const categoryMeta = POLICY_CATEGORY_META[entry.category];
 
   const displayStatus = getDisplayStatus(data ?? null);
   const displayMeta = POLICY_DISPLAY_STATUS_META[displayStatus];
+
+  // Tab strip — variants this policy's audience supports.
+  const variantTabs = useMemo(() => variantsForAudience(audience), [audience]);
+  const defaultTab: PolicyVariantType = isExternal ? 'client' : 'internal';
+  const [activeVariant, setActiveVariant] = useState<PolicyVariantType>(defaultTab);
 
   // Loading guard — only show the loader while the initial fetch is in
   // flight on an already-adopted policy. Lazy-adopted policies render
@@ -408,42 +400,16 @@ export function PolicyConfiguratorPanel({
   };
 
   return (
-    <div className="space-y-8">
-      {/* ─── Header ──────────────────────────────────────────────────────── */}
-      <div className="space-y-4 pb-2">
+    <div className="space-y-6">
+      {/* ─── Header: title + subtitle + Publish ─────────────────────────── */}
+      <div className="space-y-3 pb-1">
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex-1 min-w-[260px] space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="font-sans text-xs">
-                {categoryMeta.label}
-              </Badge>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'font-sans text-xs',
-                  displayMeta.tone === 'success' && 'border-primary/40 text-primary',
-                  displayMeta.tone === 'warning' && 'border-warning/40 text-warning',
-                )}
-              >
-                {displayMeta.label}
-              </Badge>
-              {data?.policyId && (
-                <Badge variant="outline" className="font-sans text-xs text-muted-foreground">
-                  v{versionNumber}
-                </Badge>
-              )}
-              {isArchived && (
-                <Badge variant="outline" className="font-sans text-xs text-muted-foreground">
-                  Archived
-                </Badge>
-              )}
-            </div>
+          <div className="flex-1 min-w-[260px] space-y-1.5">
             <h3 className={cn(tokens.heading.section)}>{entry.title}</h3>
             <p className="font-sans text-sm text-muted-foreground">
               {entry.short_description}
             </p>
           </div>
-          {/* ─── Single CTA ─── */}
           {!showInitialLoader && (
             <PublishPolicyAction
               policyId={data?.policyId ?? ''}
@@ -453,6 +419,8 @@ export function PolicyConfiguratorPanel({
               ruleValues={values}
               isPublishedExternal={!!data?.isPublishedExternal}
               requiresAcknowledgment={!!data?.requiresAcknowledgment}
+              displayStatusLabel={displayMeta.label}
+              displayStatusTone={displayMeta.tone === 'success' ? 'success' : displayMeta.tone === 'warning' ? 'warning' : 'neutral'}
               onAfter={async () => {
                 await ensureAdopted();
                 refetch();
@@ -461,18 +429,6 @@ export function PolicyConfiguratorPanel({
             />
           )}
         </div>
-
-        {entry.why_it_matters && (
-          <div className="rounded-lg border border-border bg-muted/40 p-3">
-            <div className="flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-              <p className="font-sans text-xs text-muted-foreground">
-                <span className="text-foreground font-medium">Why this matters:</span>{' '}
-                {entry.why_it_matters}
-              </p>
-            </div>
-          </div>
-        )}
 
         {nonApplicable && (
           <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
@@ -499,39 +455,26 @@ export function PolicyConfiguratorPanel({
           </div>
         )}
 
-        <div className="flex items-center gap-4 flex-wrap text-xs">
-          {hasApprovedClientVariant && publicPolicyUrl && (
-            <a
-              href={publicPolicyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-sans text-primary hover:underline"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              View on public policy page
-            </a>
-          )}
-          {data?.policyId && (
-            <button
-              type="button"
-              onClick={() => setHistoryOpen(true)}
-              className="inline-flex items-center gap-1.5 font-sans text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <History className="w-3.5 h-3.5" />
-              Version history
-            </button>
-          )}
-          {showAcknowledgmentsLink && (
-            <button
-              type="button"
-              onClick={() => setAcksOpen(true)}
-              className="inline-flex items-center gap-1.5 font-sans text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <FileSignature className="w-3.5 h-3.5" />
-              View client acknowledgments{ackCount > 0 ? ` (${ackCount})` : ''}
-            </button>
-          )}
-        </div>
+        {isArchived && (
+          <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
+            <p className="font-sans text-xs text-muted-foreground">
+              <span className="text-foreground font-medium">Archived</span> — this
+              policy is not rendering on any surface. History is preserved.
+            </p>
+          </div>
+        )}
+
+        {hasApprovedClientVariant && publicPolicyUrl && (
+          <a
+            href={publicPolicyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            View on public policy page
+          </a>
+        )}
       </div>
 
       {showInitialLoader ? (
@@ -539,82 +482,86 @@ export function PolicyConfiguratorPanel({
           <LuxeLoader size="md" />
         </div>
       ) : (
-        <div className="space-y-10">
-          {/* ─── Audience ─── */}
-          <section className="space-y-3">
-            <SectionHeader
-              icon={<Users className="w-4 h-4" />}
-              title="Who sees this"
-              note="Audience controls which surfaces this policy can render on. Internal-only policies skip the public policy page."
-            />
-            <div className="rounded-xl border border-border bg-card/60 p-4 flex items-center gap-4 flex-wrap">
-              <Select value={audience} disabled>
-                <SelectTrigger className="font-sans w-56">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="internal" className="font-sans">Internal team</SelectItem>
-                  <SelectItem value="external" className="font-sans">Clients</SelectItem>
-                  <SelectItem value="both" className="font-sans">Both</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="font-sans text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                <Lock className="w-3 h-3" />
-                Audience is set by the policy library and locked for this wave.
-              </p>
+        <div className="space-y-5">
+          {/* ─── Tab strip (only when more than one variant) ─── */}
+          {variantTabs.length > 1 && (
+            <div
+              role="tablist"
+              className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted/60 border border-border/60"
+            >
+              {variantTabs.map((vt) => {
+                const isActive = vt === activeVariant;
+                return (
+                  <button
+                    key={vt}
+                    role="tab"
+                    aria-selected={isActive}
+                    type="button"
+                    onClick={() => setActiveVariant(vt)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-md font-sans text-xs transition-colors',
+                      isActive
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {VARIANT_LABELS[vt].label}
+                  </button>
+                );
+              })}
             </div>
-          </section>
-
-          {/* ─── Policy text (inline chips) ─── */}
-          <section className="space-y-3">
-            <SectionHeader
-              icon={<MessageSquare className="w-4 h-4" />}
-              title="Policy text"
-              note="Click any pill to change the underlying rule. Click 'Edit text' to rewrite the prose directly. AI cannot invent rules — pills are the source of truth."
-            />
-            <InlineRuleEditor
-              versionId={versionId ?? ''}
-              libraryKey={entry.key}
-              audience={audience}
-              fields={allFields}
-              values={values}
-              onRuleChange={handleRuleChange}
-              disabled={isArchived}
-            />
-            <div className="flex items-center justify-end pt-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setAllRulesOpen(true)}
-                className="font-sans text-muted-foreground hover:text-foreground"
-              >
-                <Settings2 className="w-3.5 h-3.5 mr-1.5" />
-                Edit all rules
-              </Button>
-            </div>
-          </section>
-
-          {/* ─── Where it shows (external-touching only) ─── */}
-          {isExternal && versionId && surfaces !== null && (
-            <section className="space-y-3">
-              <SectionHeader
-                icon={<MapPin className="w-4 h-4" />}
-                title="Where it shows"
-                note="Surfaces this policy renders on. Toggle each on or off and pick the voice variant per surface."
-              />
-              <PolicySurfaceEditor
-                versionId={versionId}
-                candidateSurfaces={entry.candidate_surfaces ?? []}
-                policyAudience={entry.audience}
-                rows={surfaces}
-                onChange={setSurfaces}
-              />
-            </section>
           )}
+
+          {/* ─── Active variant card ─── */}
+          <InlineRuleEditor
+            versionId={versionId ?? ''}
+            libraryKey={entry.key}
+            audience={audience}
+            fields={allFields}
+            values={values}
+            onRuleChange={handleRuleChange}
+            activeVariant={activeVariant}
+            disabled={isArchived}
+          />
+
+          {/* ─── More options (collapsed escape hatch) ─── */}
+          <PolicyConfiguratorMoreOptions
+            hasPolicy={!!data?.policyId}
+            isArchived={isArchived}
+            showSurfaces={isExternal && !!versionId && surfaces !== null}
+            surfacesContent={
+              isExternal && versionId && surfaces !== null ? (
+                <PolicySurfaceEditor
+                  versionId={versionId}
+                  candidateSurfaces={entry.candidate_surfaces ?? []}
+                  policyAudience={entry.audience}
+                  rows={surfaces}
+                  onChange={setSurfaces}
+                />
+              ) : null
+            }
+            onEditAllRules={() => setAllRulesOpen(true)}
+            onOpenHistory={() => setHistoryOpen(true)}
+            showAcknowledgments={showAcknowledgmentsLink}
+            acknowledgmentCount={ackCount}
+            onOpenAcknowledgments={() => setAcksOpen(true)}
+            onArchive={() => setArchiveDialogOpen(true)}
+            onReactivate={() =>
+              data?.policyId &&
+              archive.mutate(
+                {
+                  policyId: data.policyId,
+                  currentVersionId: data.versionId || null,
+                  nextStatus: 'drafting',
+                },
+                { onSuccess: () => refetch() },
+              )
+            }
+          />
         </div>
       )}
 
-      {/* ─── Drawers ─── */}
+      {/* ─── Drawers / sheets ─── */}
       <PremiumFloatingPanel open={historyOpen} onOpenChange={setHistoryOpen} maxWidth="640px">
         <div className={tokens.drawer.header}>
           <h2 className={cn(tokens.heading.section)}>Version history</h2>
@@ -659,61 +606,6 @@ export function PolicyConfiguratorPanel({
         }}
       />
 
-      {/* ─── Footer (lifecycle actions) ─── */}
-      <Separator />
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          {data?.policyId && !isArchived && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setArchiveDialogOpen(true)}
-              disabled={archive.isPending}
-              className="font-sans text-muted-foreground hover:text-destructive"
-            >
-              <Archive className="w-4 h-4 mr-2" />
-              Archive policy
-            </Button>
-          )}
-          {data?.policyId && isArchived && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                archive.mutate(
-                  {
-                    policyId: data.policyId,
-                    currentVersionId: data.versionId || null,
-                    nextStatus: 'drafting',
-                  },
-                  { onSuccess: () => refetch() },
-                )
-              }
-              disabled={archive.isPending}
-              className="font-sans"
-            >
-              {archive.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <RotateCcw className="w-4 h-4 mr-2" />
-              )}
-              Reactivate
-            </Button>
-          )}
-          {isArchived && (
-            <Badge
-              variant="outline"
-              className="font-sans text-xs text-muted-foreground border-border/60"
-            >
-              Archived — not rendering on any surface
-            </Badge>
-          )}
-        </div>
-        <Button variant="outline" size="sm" onClick={onClose} className="font-sans">
-          Close
-        </Button>
-      </div>
-
       <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -727,7 +619,7 @@ export function PolicyConfiguratorPanel({
               </span>
               <span className="block text-xs text-muted-foreground">
                 History — versions, approved variants, and acknowledgments — is
-                preserved. You can reactivate any time from this panel.
+                preserved. You can reactivate any time from More options.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -766,27 +658,3 @@ export function PolicyConfiguratorPanel({
   );
 }
 
-/** Section header for the three editor blocks. */
-function SectionHeader({
-  icon,
-  title,
-  note,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  note: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground/70 flex-shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0 space-y-0.5 pt-0.5">
-        <h4 className="font-display text-xs tracking-wider uppercase text-foreground">
-          {title}
-        </h4>
-        <p className="font-sans text-xs text-muted-foreground leading-relaxed">{note}</p>
-      </div>
-    </div>
-  );
-}

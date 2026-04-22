@@ -53,6 +53,10 @@ interface Props {
   requiresAcknowledgment: boolean;
   /** Library default for ack — drives the smart-default toggle initial state. */
   defaultRequiresAck?: boolean;
+  /** Display status string — surfaces inside the button label as a leading dot. */
+  displayStatusLabel?: string;
+  /** Tone hint for the leading dot ('success' = published/live, 'warning' = drafting). */
+  displayStatusTone?: 'success' | 'warning' | 'neutral';
   onAfter?: () => void;
   disabled?: boolean;
 }
@@ -72,6 +76,8 @@ export function PublishPolicyAction({
   isPublishedExternal,
   requiresAcknowledgment,
   defaultRequiresAck,
+  displayStatusLabel,
+  displayStatusTone = 'neutral',
   onAfter,
   disabled,
 }: Props) {
@@ -200,10 +206,24 @@ export function PublishPolicyAction({
       >
         {running ? (
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : displayStatusLabel ? (
+          <span
+            className={
+              'mr-2 inline-block w-1.5 h-1.5 rounded-full ' +
+              (displayStatusTone === 'success'
+                ? 'bg-emerald-400'
+                : displayStatusTone === 'warning'
+                  ? 'bg-amber-400'
+                  : 'bg-muted-foreground/60')
+            }
+            aria-hidden
+          />
         ) : (
           <CheckCircle2 className="w-4 h-4 mr-2" />
         )}
-        Publish policy
+        {displayStatusLabel
+          ? `${displayStatusLabel} · Publish`
+          : 'Publish policy'}
       </Button>
       <Popover open={optionsOpen} onOpenChange={setOptionsOpen}>
         <PopoverTrigger asChild>
