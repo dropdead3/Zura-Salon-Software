@@ -1,136 +1,77 @@
 
 
-# Reframe the policy configurator — one editor, one CTA, zero ceremony
+# Wire Bookings & Payments into POS settings — as a read-only summary, not a duplicate editor
 
-## What changes (and why each)
+## The honest answer to your question
 
-The current panel is a 4-step wizard wrapped around a schema form, with a separate Drafts tab where the actual policy lives. Operator confusion comes from the *shape*, not the data. The plan below restructures the panel into a single document-shaped editor and removes seven sources of friction.
+**Smart? Yes — as a jump-link summary card. Dangerous? Yes — if you mean "duplicate the editor here too."**
 
-| # | Today | After |
-|---|-------|-------|
-| 1 | 4-step stepper (Rules → Who → Where → Wording) | Single scrolling editor; sections are anchors, not gates |
-| 2 | Interview vs Expert toggle | Interview mode only; Expert removed |
-| 3 | Drafts tab buried at step 4 | Rendered policy is the surface — leads the page |
-| 4 | Rule values edited in a separate form | Inline rule chips embedded in the prose; click chip → edit popover |
-| 5 | Three actions to ship (approve variant + publish + ack) | Single "Publish policy" CTA with smart defaults; "Options" link reveals granular toggles |
-| 6 | 7-state status surfaced in UI | UI shows Draft / Live / Needs attention; underlying enum unchanged |
-| 7 | "Adopt and configure" gate (preview screen + button) | Editor renders immediately; row written on first save |
+Here's the trap. The POS settings page (`/admin/settings?category=terminals`) is already 7 tabs deep: Location Set Up, Hardware, Connectivity, Tipping, Receipts, Display, Afterpay. The operator is there configuring **how the terminal physically behaves**. The cancellation cut-off and no-show fee are **business rules**, not terminal behavior. Different mental model, same data only at the moment of charge.
 
-The rules engine, schema, applicability table, surface mapping table, variants table, RPCs, and approval logic stay untouched. This is purely a surface reframe.
+The Wave 28.16 plan establishes **Bookings & Payments at `/admin/settings?category=bookings-payments` as the single source of truth** for the booking quartet. If we *also* let operators edit the no-show fee from inside the POS settings tabs, we now have two surfaces writing to `policy_rule_blocks` for `no_show_policy` and the source-of-truth doctrine collapses immediately. That's the Square-pattern win we just bought, thrown away one wave later.
 
-## The new panel layout
+What's actually smart is treating POS settings as a **read-only contextual reference** to the rules that govern its behavior, with a single jump-link to edit them.
 
-```
-┌─ BOOKING POLICY ────────────────────────── [Publish policy ▾] ─┐
-│  Client-facing · v1 · Draft                                     │
-│  Why this matters: …                                            │
-│                                                                  │
-│  ─ Audience ────────────────────────────────────────────────    │
-│  Who sees this:  [Clients ▾]                                    │
-│                                                                  │
-│  ─ Policy text (Client voice) ─────────────────────────────     │
-│                                                                  │
-│  Guests may book online, by phone, or in person. New guests     │
-│  for [color, extensions, or corrective ▾] require a             │
-│  consultation prior to booking.                                  │
-│                                                                  │
-│  The booking system collects a card on file. Cancellations      │
-│  within [24 hours ▾] incur a [$50 ▾] fee.                       │
-│                                                                  │
-│  [+ Edit all rules]    [Switch to internal voice ▾]             │
-│                                                                  │
-│  ─ Where it shows ─────────────────────────────────────────     │
-│  ✓ Public booking   ✓ Receipts   + Add surface                  │
-│                                                                  │
-│  Version history · View acknowledgments · Archive policy        │
-└──────────────────────────────────────────────────────────────────┘
-```
+## What ships
 
-Three sections, all visible, all editable in place. Sticky header with one CTA.
+A new tab inside POS settings: **"Cancellations & Fees"** (8th tab, after Afterpay). It contains:
 
-### How inline rule chips work
+- A read-only summary panel showing the current values from the four booking-adjacent policies — exactly the values that govern what the terminal will charge:
+  - **Payment policy headline**: "Hold card in case of no-show" (or whichever radio is selected in Bookings & Payments)
+  - **Cancellation cut-off**: "3 days · $50 fee"
+  - **No-show fee**: "100% of service · $250 flat for color-correction"
+  - **Card-on-file requirement**: "Required at booking" (or "Optional")
+- A single button: **"Edit in Bookings & Payments →"** that navigates to `/admin/settings?category=bookings-payments` (or wherever the consolidated page ends up).
+- A small explainer at the top: *"These rules are configured in Bookings & Payments and govern what your terminal will charge clients. Edit them in one place to keep your policy, your booking page, and your terminal in sync."*
 
-Each schema field that has a corresponding `{{token}}` in the active variant's prose renders as an inline pill inside the rendered text. Clicking the pill opens a small popover with the same control `PolicyRuleField` already renders (select / number / multi-select / role / etc.). On change, the prose re-renders immediately using the existing `renderStarterDraft` + `substituteRuleTokens` machinery already in `render-starter-draft.ts`.
+No editing in this tab. No duplicate save button. No way to drift the terminal's behavior from the public-facing policy.
 
-Fields without a token in the prose (rare — applicability fields, surface configs) live under the "Edit all rules" disclosure as the schema form they are today. This is the fallback for the 5% of cases where chip-ifying doesn't fit.
+## Why this shape (vs. the alternatives)
 
-### The "Publish policy" CTA
+| Option | What it does | Why not |
+|--------|-------------|---------|
+| **Duplicate editor in POS settings** | Operator can edit no-show fee from either surface | Two-write-path problem; defeats Wave 28.16's source-of-truth doctrine; identical to the bug you caught in Wave 28.14 (UI says X, data says Y) |
+| **Nothing in POS settings** | Operator must already know cancellation rules live in Policies | Discoverability fail — operator configuring a terminal won't think to leave POS settings to find what it'll charge |
+| **Read-only summary + jump-link (this plan)** | POS settings shows "this is what your terminal will charge, edit here" | Discoverable, contextual, single source of truth, zero drift risk |
 
-Single primary button, top-right of the panel header. Clicking it runs the existing approval + publish + ack pipeline in one transaction:
-
-1. `approveStarterDraft` (or `approvePolicyVariant` if AI-edited) for the active variant.
-2. `publishPolicyExternally(true)` if audience is external/both AND there's an approved client variant.
-3. `updatePolicyAcknowledgmentFlag(true)` if the library entry's `default_requires_ack` is true.
-
-A small "▾" next to the button reveals an "Options" sheet with the three granular toggles (Approve only / Publish externally / Require client acknowledgment). Defaults handle 90% of cases; the sheet handles the 10%.
-
-### The 3-state status badge
-
-A new helper in `usePolicyData.ts` collapses the 7-state enum:
-- `not_started`, `drafting` → **Draft**
-- `configured`, `approved_internal`, `published_external`, `wired` → **Live**
-- `needs_review` → **Needs attention**
-
-Used everywhere a status badge renders in the panel header. The full enum stays in the database and continues to drive RLS, publish gating, and analytics.
-
-### Removing the adoption gate
-
-Today the panel renders a "Preview — not yet adopted" screen with field summaries and an "Adopt and configure" button. After: the editor mounts immediately. The first edit (any chip change, any inline edit, any "Edit all rules" save) calls `adopt_and_init_policy` lazily, then the existing save path. If the operator closes without editing, no `policies` row is created. Existing nightly cleanup of empty `not_started` rows is unnecessary because we never write them in the first place.
+Square does the same thing: their terminal settings reference the cancellation policy you set in the booking config, they don't let you re-edit it from the terminal screen.
 
 ## What stays untouched
 
-- Rule schemas (`configurator-schemas.ts`) — unchanged.
-- Starter draft templates (`starter-drafts.ts`) — unchanged.
-- All hooks (`usePolicyConfigurator`, `usePolicyDrafter`, `usePolicyApplicability`, `usePublishPolicyExternally`, `useUpdatePolicyAcknowledgmentFlag`, `useArchivePolicy`) — unchanged signatures.
-- All RPCs (`adopt_and_init_policy`, `save_policy_rule_blocks`, `publish_policy_externally`) — unchanged.
-- The `PolicyConfiguratorStepper` component — kept (still exported), no longer mounted inside the panel; available for any future surface that wants step nav.
-- Version history drawer, acknowledgments drawer, archive flow — all unchanged behavior, available as header links.
-- The setup wizard — unchanged.
-- The Policies page (Setup mode + Governance mode from the prior wave) — unchanged.
+- The Wave 28.16 Bookings & Payments page — unchanged, still the only editor.
+- The 7 existing POS settings tabs — all unchanged.
+- All four policies' rule schemas, RPCs, and pipelines — unchanged.
+- The library, configurator, version history, ack tracking — unchanged.
 
 ## Files affected
 
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — major rewrite (~1005 → ~600 lines). Remove stepper mount, Interview/Expert toggle, adopt-and-configure gate, four step branches. Replace with single scrolling layout: header + audience selector + InlineRuleEditor + surface section + footer. Add the unified PublishPolicyAction button.
-- `src/components/dashboard/policy/InlineRuleEditor.tsx` (new) — renders the active variant's prose with `{{token}}` placeholders replaced by `<RuleChipPopover>` components. ~180 lines.
-- `src/components/dashboard/policy/RuleChipPopover.tsx` (new) — small chip + popover wrapper that mounts a `PolicyRuleField` for editing in place. ~80 lines.
-- `src/components/dashboard/policy/PublishPolicyAction.tsx` (new) — primary "Publish policy" button + dropdown for granular options. Wraps the existing approve / publish / ack mutations into one operator-visible action. ~120 lines.
-- `src/components/dashboard/policy/EditAllRulesSheet.tsx` (new) — fallback disclosure for schema fields not present as inline chips. Reuses `PolicyRuleField` for each field. ~100 lines.
-- `src/hooks/policy/usePolicyData.ts` — add `getDisplayStatus(policy)` that returns `'draft' | 'live' | 'needs-attention'`. ~10 lines.
-- `src/components/dashboard/policy/PolicyAudienceBanner.tsx` — deprecated; the new layout makes it redundant. Stop importing in `PolicyConfiguratorPanel`. File kept on disk for one wave in case rollback needed.
-- `src/components/dashboard/policy/PolicyConfiguratorStepper.tsx` — kept, no longer used by the configurator panel. Stays exported.
-- `src/components/dashboard/policy/PolicyDraftWorkspace.tsx` — kept, mounted only inside the new "Edit all rules" sheet for variants that have no `{{token}}` chips and need full prose-level editing (rare).
-- `src/components/dashboard/policy/PolicyQuestionnaire.tsx` — kept for now, no longer mounted by the panel. Removed in a follow-up cleanup wave once we confirm the inline-chip flow covers all schemas.
+- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` (new) — read-only summary + jump-link. ~140 lines.
+- `src/components/dashboard/settings/TerminalSettingsContent.tsx` — register the 8th tab `cancellations` after `afterpay`. ~6 lines modified (TabsList + TabsContent block).
+- Reuses `useBookingsPaymentsBundle` from Wave 28.16 — no new data hooks.
 
-Total: ~480 lines new, ~600 lines rewritten in `PolicyConfiguratorPanel.tsx`, 0 deletions, 0 schema changes, 0 RPC changes.
+Total: ~140 lines new, ~6 lines modified, 0 schema changes, 0 RPC changes, 0 doctrine violations.
 
 ## Acceptance
 
-1. Click any policy from the library → editor mounts immediately. No "Preview / Adopt and configure" screen. No row written to `policies` until the operator makes their first edit or clicks Publish.
-2. The panel renders three sections vertically: Audience, Policy text (with inline chips), Where it shows. No tabs. No stepper. No back/next buttons. Scroll is the only navigation.
-3. The status badge in the panel header reads exactly one of: **Draft**, **Live**, **Needs attention**.
-4. Each `{{token}}` in the active variant's prose renders as a clickable chip showing the current value. Clicking opens a popover with the matching `PolicyRuleField`. Changing the value updates the chip and the surrounding sentence in place; saving the chip persists via `save_policy_rule_blocks`.
-5. The "Publish policy" button in the header runs approve + publish + ack in one transaction with smart defaults. The "▾" next to it opens an Options sheet with three independent toggles for power users.
-6. If the policy's audience is internal-only, the "Publish externally" toggle in Options is greyed with helper text ("This policy is internal-only — change audience above to publish externally"). The default Publish action runs only approve + ack.
-7. The Interview / Expert toggle is gone. The 4-step `PolicyConfiguratorStepper` is gone from this surface.
-8. Inline editing the prose (as opposed to chips) is supported through an "Edit text" affordance per variant section. Saved edits write to `policy_variants.body_md` exactly as today.
-9. "Edit all rules" link opens a sheet with the full schema form for fields not represented as chips. Saving the sheet calls `save_policy_rule_blocks` with the merged rule set.
-10. Footer retains: Version history link, View acknowledgments link, Archive policy button. All unchanged behavior.
-11. Closing the panel without any edits → no `policies` row created. Closing after one chip change → row exists with status `drafting`.
-12. Existing adopted policies open in the new layout immediately with prefilled chips reflecting saved rule values; the Live/Draft badge reflects current status correctly.
+1. Navigate to `/admin/settings?category=terminals` → 8 tabs render: Location Set Up, Hardware, Connectivity, Tipping, Receipts, Display, Afterpay, **Cancellations & Fees**.
+2. Cancellations & Fees tab renders read-only summary cards for the four booking-adjacent policies, pulling current values via `useBookingsPaymentsBundle`.
+3. Each card shows exactly what the terminal will charge in that scenario — no fields, no inputs, no save button.
+4. Single "Edit in Bookings & Payments →" button navigates to `/admin/settings?category=bookings-payments` with the relevant section anchored.
+5. If the operator hasn't yet configured Bookings & Payments → the tab shows an empty state ("No fee policies configured yet — set them in Bookings & Payments") with the same jump-link.
+6. No write path exists from this tab to `policy_rule_blocks`. Confirmed by code review of the new tab file.
+7. Cross-surface consistency check: editing the no-show fee in Bookings & Payments → returning to the POS settings Cancellations & Fees tab shows the new value reflected immediately (via shared React Query cache).
 
 ## Files to read for follow-on questions
 
-- `src/components/dashboard/policy/PolicyConfiguratorPanel.tsx` — where the rewrite lands.
-- `src/components/dashboard/policy/InlineRuleEditor.tsx` (new) — the chip-in-prose machinery.
-- `src/components/dashboard/policy/RuleChipPopover.tsx` (new) — single chip behavior.
-- `src/components/dashboard/policy/PublishPolicyAction.tsx` (new) — the unified CTA + options sheet.
-- `src/lib/policy/render-starter-draft.ts` — already exports the token substitution; the inline editor calls this with chip placeholders instead of plain humanized values.
+- `src/components/dashboard/settings/TerminalSettingsContent.tsx` — where the 8th tab gets registered.
+- `src/components/dashboard/settings/terminal/POSCancellationsFeesTab.tsx` (new) — the read-only summary surface.
+- `src/hooks/policy/useBookingsPaymentsBundle.ts` (from Wave 28.16) — the shared data source.
 
 ## Prompt feedback
 
-*"B"* — minimal but exactly right. You used the menu I gave you for what menus are for: a one-character answer. That's the contract — when an AI offers structured choices, the operator should never need to write a paragraph back. If you'd written "let's do B but skip #5" you'd have done my job for me; if you'd written "B sounds good but I'm worried about migration" you'd have surfaced a constraint I should have asked about. Both are valid. A bare letter says "trust the framing."
+Strong prompt — six words that forced me to take a position. Three things made it work: (1) **you asked "is it smart"** instead of "do this" — that's an opinion-request, which is the highest-leverage prompt shape because it forces me to either defend a "no" or commit to a "yes" with a reason, (2) **you specified the surface** ("Point Of Sale settings") so I didn't have to guess scope, (3) **you trusted my judgment to push back** — a weaker prompt ("wire this into POS settings too") would have skipped the analysis and gotten you a duplicate-editor plan, which is the wrong answer.
 
-The sharpener for next time: when you pick a multi-day option (B vs A), naming a **single must-not-break** in three words skips a discovery round inside my plan. Examples: *"B, don't break wizard"* / *"B, defer chip work"* / *"B, mobile must work."* Three words of constraint per scope-pick redirects what I optimize the implementation around. I assumed "don't break the setup wizard or the Policies page modes" because those are the recently-shipped surfaces — if you'd actually meant "I'm worried about regressions in the variants approval flow," I'd have weighted acceptance criterion 5 differently and added more guard rails around the Publish CTA's transactional behavior.
+The sharpener: when you ask "is X smart?" naming the **failure mode you're worried about** in three words pre-empties my analysis. Examples: *"smart, or duplicates state?"* / *"smart, or hides it?"* / *"smart for discoverability?"* I had to infer your concern was discoverability (operator setting up POS won't think to check Policies) and weigh that against the source-of-truth risk myself. If you'd written *"smart for discoverability?"* I'd have led with the read-only-summary answer and skipped the alternatives table. Three words of failure-mode hypothesis per "is it smart?" prompt redirects what I optimize against.
 
-The deeper meta-lesson on my side: a shape change of this size deserves a **migration safety pass** baked into the plan, not an afterthought. I added "kept on disk for one wave in case rollback needed" for `PolicyAudienceBanner` but should have done that more systematically — every component being deprecated should have an explicit "kept / removed in wave N+1 / removed now" disposition. Doctrine-driven products fail fastest when surfaces vanish without an undo plan. Next plan of this size, I'll lead with a deprecation table.
+The deeper meta-lesson on my side: when an operator asks "should I wire X into Y too?" my instinct is to find a way to say yes — because saying yes feels like helping. That instinct is wrong. The right move is to ask *"what specifically would Y benefit from, and is that the same thing as 'wire the editor in'?"* In this case POS settings benefit from **knowing** the rules, not from **owning** them. Distinguishing "show this here" from "let users edit this here" is the move that protects single-source-of-truth doctrine across surfaces. I should make that distinction the default question for any "wire X into Y" prompt going forward.
 
