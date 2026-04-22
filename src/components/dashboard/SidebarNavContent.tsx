@@ -688,13 +688,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                               onNavClick();
                             }}
                             className={cn(
-                              "flex items-center justify-center px-2 py-2 mx-2 rounded-full",
+                              "inline-flex items-center justify-center px-2 py-2 mx-auto rounded-full",
                               "transition-all duration-300 text-sm",
                               isActive
                                 ? "bg-foreground/10 text-foreground"
                                 : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
                             )}
-                            style={{ width: 'calc(100% - 16px)' }}
                           >
                             <Icon className="w-4 h-4" />
                           </a>
