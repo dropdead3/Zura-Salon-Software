@@ -91,24 +91,15 @@ export function CoachingTab({ userId }: Props) {
           <CardDescription>Active program enrollment and the coach guiding this team member.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {coach ? (
-            <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/60">
-              <div>
-                <p className="font-sans text-sm font-medium text-foreground">{coach.display_name || coach.full_name}</p>
-                <p className="font-sans text-xs text-muted-foreground">Active coach</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => navigate(dashPath('/admin/graduation-tracker'))} className="gap-1.5">
-                <ExternalLink className="h-3.5 w-3.5" /> Manage
-              </Button>
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-dashed border-border/60">
+            <div>
+              <p className="font-sans text-sm font-medium text-foreground">Coach assignment</p>
+              <p className={tokens.body.muted + ' text-xs'}>Coach assignments are managed in the Graduation Tracker.</p>
             </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-dashed border-border/60">
-              <p className={tokens.body.muted + ' text-sm'}>No coach assigned.</p>
-              <Button variant="outline" size="sm" onClick={() => navigate(dashPath('/admin/graduation-tracker'))} className="gap-1.5">
-                Assign coach
-              </Button>
-            </div>
-          )}
+            <Button variant="outline" size="sm" onClick={() => navigate(dashPath('/admin/graduation-tracker'))} className="gap-1.5">
+              <ExternalLink className="h-3.5 w-3.5" /> Open
+            </Button>
+          </div>
 
           {enrollment ? (
             <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/60">
