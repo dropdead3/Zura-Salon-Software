@@ -24,39 +24,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ExternalLink,
-  History,
-  FileSignature,
   Archive,
   RotateCcw,
   Loader2,
-  Sparkles,
-  Settings2,
-  Users,
-  MessageSquare,
-  MapPin,
-  Lock,
 } from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { LuxeLoader } from '@/components/ui/loaders/LuxeLoader';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
-import { InlineRuleEditor } from './InlineRuleEditor';
+import { InlineRuleEditor, variantsForAudience } from './InlineRuleEditor';
 import { EditAllRulesSheet } from './EditAllRulesSheet';
 import { PublishPolicyAction } from './PublishPolicyAction';
 import { PolicySurfaceEditor } from './PolicySurfaceEditor';
+import { PolicyConfiguratorMoreOptions } from './PolicyConfiguratorMoreOptions';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
 import { useArchivePolicy } from '@/hooks/policy/useArchivePolicy';
 import { usePolicyAcknowledgmentCount } from '@/hooks/policy/usePolicyAcknowledgmentCount';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,9 +69,12 @@ import {
   type SurfaceMappingRow,
   defaultVariantForSurface,
 } from '@/hooks/policy/usePolicyApplicability';
-import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
 import {
-  POLICY_CATEGORY_META,
+  usePolicyVariants,
+  VARIANT_LABELS,
+  type PolicyVariantType,
+} from '@/hooks/policy/usePolicyDrafter';
+import {
   POLICY_DISPLAY_STATUS_META,
   getDisplayStatus,
   type PolicyLibraryEntry,
