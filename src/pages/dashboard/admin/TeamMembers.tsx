@@ -450,10 +450,10 @@ export default function TeamMembers() {
                 {grouped.sections.map(section => {
                   if (section.members.length === 0) return null;
                   const SIcon = section.icon;
-                  const isStylists = section.label === 'Stylists';
+                  const isStylists = section.role === 'stylist';
                   const useSubGroups = isStylists && stylistSubGroups && stylistSubGroups.length > 0;
                   return (
-                    <div key={section.label} className="space-y-3">
+                    <div key={section.role} className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b border-border/60">
                         <SIcon className="h-4 w-4 text-primary" />
                         <h2 className="font-display text-sm uppercase tracking-wider text-foreground">{section.label}</h2>
