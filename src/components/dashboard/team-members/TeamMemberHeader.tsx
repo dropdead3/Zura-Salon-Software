@@ -1,12 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, MapPin, Calendar } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Mail, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
-import { useNavigate } from 'react-router-dom';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import type { OrganizationUser } from '@/hooks/useOrganizationUsers';
 
 interface Props {
