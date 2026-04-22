@@ -1,31 +1,62 @@
 /**
- * Policy Configurator panel (Wave 28.4 → expanded in 28.5)
+ * Policy Configurator panel — Wave 28.15 reframe.
  *
- * Three-tab editor:
- *  - Rules: schema-driven decision tree (28.4)
- *  - Applicability: who this policy applies to (28.5)
- *  - Surfaces: where it renders + tone variant (28.5)
+ * Square/Apple-inspired single-surface editor. The 4-step wizard, the
+ * Interview/Expert toggle, and the "Adopt and configure" preview gate are
+ * gone. The operator sees ONE scrolling page:
  *
- * One panel handles all 47 policies via the configurator_schema_key on each
- * library entry. Adopts the policy if it hasn't been adopted yet, then loads
- * existing rule blocks, applicability, and surface mappings for editing.
+ *   ┌─ Header ────── Status badge · [Publish policy ▾] ─┐
+ *   │ Title · Why this matters · header links            │
+ *   │ ─ Audience: [Clients ▾]                            │
+ *   │ ─ Policy text (chips inline; click to edit value)  │
+ *   │ ─ Where it shows                                   │
+ *   │ ─ Footer: Edit all rules · History · Acks · Archv  │
+ *
+ * Doctrine preserved:
+ *   • AI cannot invent rules — chips edit structured values, prose just renders them.
+ *   • Adoption is lazy: no `policies` row is written until the operator
+ *     commits an edit (chip change, text edit, surface mapping, publish, etc).
+ *   • Audience drives variant filtering (internal-only hides surfaces step
+ *     entirely; PublishPolicyAction greys out external publish).
+ *   • Approval/publish/ack remain three database mutations — only the operator
+ *     surface is consolidated into one button.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Save, Sparkles, ExternalLink, History, FileSignature, Archive, Check, RotateCcw, ChevronRight, ChevronLeft } from 'lucide-react';
+import {
+  ExternalLink,
+  History,
+  FileSignature,
+  Archive,
+  RotateCcw,
+  Loader2,
+  Sparkles,
+  Settings2,
+  Users,
+  MessageSquare,
+  MapPin,
+  Lock,
+} from 'lucide-react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { LuxeLoader } from '@/components/ui/loaders/LuxeLoader';
 import { PolicyVersionHistoryPanel } from './PolicyVersionHistoryPanel';
 import { PolicyAcknowledgmentsPanel } from './PolicyAcknowledgmentsPanel';
-import { PolicyConfiguratorStepper } from './PolicyConfiguratorStepper';
-import { STEP_META, getVisibleSteps, type StepId } from '@/lib/policy/configurator-steps';
+import { InlineRuleEditor } from './InlineRuleEditor';
+import { EditAllRulesSheet } from './EditAllRulesSheet';
+import { PublishPolicyAction } from './PublishPolicyAction';
+import { PolicySurfaceEditor } from './PolicySurfaceEditor';
 import { useUpdatePolicyAcknowledgmentFlag } from '@/hooks/policy/useUpdatePolicyAcknowledgmentFlag';
-import { usePublishPolicyExternally } from '@/hooks/policy/usePublishPolicyExternally';
 import { useArchivePolicy } from '@/hooks/policy/useArchivePolicy';
 import { usePolicyAcknowledgmentCount } from '@/hooks/policy/usePolicyAcknowledgmentCount';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,13 +70,6 @@ import {
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { PolicyRuleField } from './PolicyRuleField';
-import { PolicyQuestionnaire } from './PolicyQuestionnaire';
-import { PolicyLivePreview } from './PolicyLivePreview';
-import { PolicyApplicabilityEditor } from './PolicyApplicabilityEditor';
-import { PolicySurfaceEditor } from './PolicySurfaceEditor';
-import { PolicyDraftWorkspace } from './PolicyDraftWorkspace';
-import { PolicyAudienceBanner } from './PolicyAudienceBanner';
 import {
   getConfiguratorSchema,
   type RuleField,
@@ -56,16 +80,17 @@ import {
   useSavePolicyRuleBlocks,
 } from '@/hooks/policy/usePolicyConfigurator';
 import {
-  usePolicyApplicability,
   usePolicySurfaceMappings,
-  type ApplicabilityRow,
   type SurfaceMappingRow,
-  SURFACE_META,
   defaultVariantForSurface,
 } from '@/hooks/policy/usePolicyApplicability';
 import { usePolicyVariants } from '@/hooks/policy/usePolicyDrafter';
-import type { PolicyLibraryEntry } from '@/hooks/policy/usePolicyData';
-import { POLICY_CATEGORY_META } from '@/hooks/policy/usePolicyData';
+import {
+  POLICY_CATEGORY_META,
+  POLICY_DISPLAY_STATUS_META,
+  getDisplayStatus,
+  type PolicyLibraryEntry,
+} from '@/hooks/policy/usePolicyData';
 import {
   usePolicyOrgProfile,
   applicabilityReason,
@@ -90,17 +115,7 @@ function defaultsFromSchema(fields: RuleField[]): Record<string, unknown> {
   return out;
 }
 
-/**
- * Apply brand-token + rule-value substitution to schema defaults at hydration.
- * Only string values are interpolated; numbers, booleans, arrays, and enum
- * values pass through untouched. Operator-saved values (fromBlocks) bypass
- * this entirely — only the platform's authored defaults are resolved.
- *
- * Rule-value tokens (`{{authority_role}}`, `{{max_value}}`, `{{escalation_role}}`,
- * etc.) are substituted from the seeded `ruleValues` map using `humanize()`
- * so role values like `manager` render as "a Manager". Unresolved tokens are
- * left as-is so the platform team notices missing wiring (silence is meaningful).
- */
+/** Apply brand-token + rule-value substitution to schema defaults at hydration. */
 function interpolateDefaults(
   defaults: Record<string, unknown>,
   ctx: { orgName?: string; platformName?: string; ruleValues?: Record<string, unknown> },
@@ -119,12 +134,6 @@ function interpolateDefaults(
   return out;
 }
 
-/**
- * Substitute `{{rule_field_key}}` tokens with the humanized current value
- * from the rule-values map. Brand tokens ({{ORG_NAME}}, {{PLATFORM_NAME}})
- * are skipped — handled by `interpolateBrandTokens`. Unresolved tokens are
- * preserved verbatim so wiring gaps remain visible.
- */
 function substituteRuleTokens(
   text: string,
   ruleValues: Record<string, unknown>,
@@ -153,57 +162,21 @@ export function PolicyConfiguratorPanel({
   const save = useSavePolicyRuleBlocks();
   const { effectiveOrganization } = useOrganizationContext();
 
-  // Wave 28.11.6 — applicability banner. When this policy requires a service
-  // the operator's profile says they don't offer (e.g., extensions for a solo
-  // stylist), surface a soft "no longer applies" note. Adoption is still
-  // permitted — operator chose to deep-link here. See doctrine:
-  // mem://features/policy-os-applicability-doctrine
   const { data: orgProfile } = usePolicyOrgProfile();
   const nonApplicable = applicabilityReason(entry, orgProfile);
 
   const [values, setValues] = useState<Record<string, unknown>>({});
-  // Tracks longtext fields the operator has manually typed in. Once a key is
-  // in this set, the reactive role-token re-substitution effect will not
-  // overwrite it (operator edits are sacred). Persists across renders.
   const userEditedFieldsRef = useRef<Set<string>>(new Set());
-  // Snapshot of the platform-authored defaults for longtext fields. Used by
-  // the reactive effect to recompute substitutions from the original template
-  // when a referenced rule value (e.g., `authority_role`) changes.
   const longtextDefaultsRef = useRef<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
-  const [step, setStep] = useState<StepId>('rules');
-  // Wave 28.14 — Interview vs Expert mode for the Rules step.
-  // Persisted per operator so power users land back in their preferred mode.
-  const [rulesMode, setRulesMode] = useState<'interview' | 'expert'>(() => {
-    if (typeof window === 'undefined') return 'interview';
-    const saved = window.localStorage.getItem('policy-configurator-rules-mode');
-    return saved === 'expert' ? 'expert' : 'interview';
-  });
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('policy-configurator-rules-mode', rulesMode);
-    }
-  }, [rulesMode]);
-  const [recentlyChangedKey, setRecentlyChangedKey] = useState<string | null>(null);
   const [acksOpen, setAcksOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [allRulesOpen, setAllRulesOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const updateAckFlag = useUpdatePolicyAcknowledgmentFlag();
-  const publish = usePublishPolicyExternally();
   const archive = useArchivePolicy();
 
-  // Wave 28.11.5 — autonomy boundary: NEVER silently adopt on configurator
-  // open. The library is segmented by audience (28.11.3) which incentivizes
-  // exploration; auto-adopt would write a `policies` row for every card the
-  // operator inspects. Adoption now requires explicit consent (CTA below).
-  // The `adopt` mutation is invoked from `handleAdopt` only.
-
   const allFields = useMemo(() => schema.sections.flatMap((s) => s.fields), [schema]);
-
-  // Hydrate values once data arrives. Brand tokens in schema defaults
-  // ({{ORG_NAME}}, {{PLATFORM_NAME}}) are resolved at this moment so the
-  // editor and the saved record both read concretely. Operator-saved values
-  // (fromBlocks) are sacred — never re-interpolated.
   const orgNameForTokens = effectiveOrganization?.name ?? undefined;
   const { data: locations = [] } = useLocations();
   const locationCount = locations.length;
@@ -211,22 +184,42 @@ export function PolicyConfiguratorPanel({
     () => allFields.some((f) => f.key === 'authority_role'),
     [allFields],
   );
+
+  // ─── Lazy adoption ───────────────────────────────────────────────────────
+  // Wave 28.15 doctrine: opening the panel is exploration, not commitment.
+  // The first edit (chip change, text edit, surface mapping, publish) calls
+  // adopt_and_init_policy if no row exists. Closing without edits writes nothing.
+  const adoptingRef = useRef(false);
+  const ensureAdopted = async (): Promise<boolean> => {
+    if (data?.policyId) return true;
+    if (adoptingRef.current) return false;
+    adoptingRef.current = true;
+    try {
+      await adopt.mutateAsync(entry.key);
+      await refetch();
+      return true;
+    } finally {
+      adoptingRef.current = false;
+    }
+  };
+
+  // Hydrate values once data arrives. Brand tokens in schema defaults are
+  // resolved at this moment so the editor and the saved record both read
+  // concretely. Operator-saved values (fromBlocks) are sacred.
   useEffect(() => {
-    if (!data || hydrated) return;
+    if (hydrated) return;
+    // We hydrate even without a `data` row (lazy adoption case) so the editor
+    // mounts immediately on first open. Schema defaults + brand tokens give
+    // the operator a fully-rendered draft to react to.
     const fromBlocks: Record<string, unknown> = {};
-    data.blocks.forEach((b) => {
-      const v = b.value as { v?: unknown } | unknown;
-      fromBlocks[b.block_key] = v && typeof v === 'object' && 'v' in (v as object)
-        ? (v as { v: unknown }).v
-        : v;
-    });
-    // Layer order (lowest precedence first):
-    //   1. schema defaultValue (generic boilerplate)
-    //   2. per-policy summary derived from the starter draft + applicability
-    //      manifest (specific prose for both `policy_summary` and
-    //      `who_it_applies_to`)
-    //   3. brand-token + rule-value interpolation across the merged map
-    //   4. operator-saved values (sacred — never touched)
+    if (data) {
+      data.blocks.forEach((b) => {
+        const v = b.value as { v?: unknown } | unknown;
+        fromBlocks[b.block_key] = v && typeof v === 'object' && 'v' in (v as object)
+          ? (v as { v: unknown }).v
+          : v;
+      });
+    }
     const schemaDefaults = defaultsFromSchema(allFields);
     const policySpecific = getPolicySummaryDefaults(entry.key, {
       category: entry.category,
@@ -235,8 +228,6 @@ export function PolicyConfiguratorPanel({
       schemaHasAuthorityRole,
     });
     const mergedDefaults = { ...schemaDefaults, ...policySpecific };
-    // Snapshot the original (pre-substitution) longtext defaults so the
-    // reactive effect can recompute from the template when role values change.
     const longtextSnapshot: Record<string, string> = {};
     allFields.forEach((f) => {
       if (f.type === 'longtext') {
@@ -245,9 +236,6 @@ export function PolicyConfiguratorPanel({
       }
     });
     longtextDefaultsRef.current = longtextSnapshot;
-    // Rule-value tokens resolve against the *seeded* values map: schema
-    // defaults for role fields take precedence at hydration, but any
-    // operator-saved block value wins (per layer-4 sacredness).
     const ruleValuesForTokens = { ...schemaDefaults, ...fromBlocks };
     const interpolated = interpolateDefaults(mergedDefaults, {
       orgName: orgNameForTokens,
@@ -256,18 +244,28 @@ export function PolicyConfiguratorPanel({
     });
     const seeded = { ...interpolated, ...fromBlocks };
     setValues(seeded);
-    // Any operator-saved longtext value is treated as already user-edited:
-    // the reactive effect must not overwrite saved prose.
     Object.keys(fromBlocks).forEach((k) => {
       const field = allFields.find((f) => f.key === k);
       if (field?.type === 'longtext') userEditedFieldsRef.current.add(k);
     });
-    setHydrated(true);
-  }, [data, hydrated, allFields, orgNameForTokens, entry.key, entry.category, entry.audience, locationCount, schemaHasAuthorityRole]);
+    // Only mark hydrated once we've either loaded data or confirmed there is
+    // no row to load (i.e., the data fetch completed and returned null).
+    if (!isLoading) setHydrated(true);
+  }, [
+    data,
+    hydrated,
+    isLoading,
+    allFields,
+    orgNameForTokens,
+    entry.key,
+    entry.category,
+    entry.audience,
+    locationCount,
+    schemaHasAuthorityRole,
+  ]);
 
-  // Reactive re-substitution: when a role-type field value changes, recompute
-  // longtext fields from their original templates — but only for longtext
-  // fields the operator hasn't manually edited. Operator edits are sacred.
+  // Reactive re-substitution of longtext fields when role-type values change,
+  // skipping any field the operator has manually edited.
   useEffect(() => {
     if (!hydrated) return;
     const longtextDefaults = longtextDefaultsRef.current;
@@ -289,36 +287,16 @@ export function PolicyConfiguratorPanel({
       }
       return changed ? next : prev;
     });
-    // Re-run when any role-type field value changes. Tracking only the
-    // role-type subset avoids a re-render loop on the very longtext fields
-    // we're rewriting.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hydrated,
     orgNameForTokens,
-    // Spread role-field values into deps so any role change triggers re-sub.
     ...allFields.filter((f) => f.type === 'role').map((f) => values[f.key]),
   ]);
 
-  const versionId = data?.versionId;
-  const versionNumber = data?.versionNumber ?? 1;
-  const ready = !isLoading && !!versionId && hydrated;
-
-  // Heal-on-open: if the policy was adopted (e.g. via the Setup Wizard's bulk
-  // adopt before the version-row backfill landed) but has no open draft
-  // version, invoke adopt_and_init_policy once to materialize a v1 draft, then
-  // refetch. Guarded by a ref so it fires at most once per panel open and only
-  // when we have confirmed data shape (loaded but missing versionId on an
-  // already-adopted policy). Doctrine: silence is meaningful only when
-  // intentional — an indefinite spinner is unintentional silence.
+  // Heal-on-open: an adopted policy without a draft version (legacy state)
+  // gets a v1 draft materialized once.
   const healAttempted = useRef(false);
-  const isHealing =
-    alreadyAdopted &&
-    !isLoading &&
-    !!data?.policyId &&
-    !versionId &&
-    (healAttempted.current || adopt.isPending);
-
   useEffect(() => {
     if (
       alreadyAdopted &&
@@ -336,16 +314,51 @@ export function PolicyConfiguratorPanel({
     }
   }, [alreadyAdopted, isLoading, data, adopt, entry.key, refetch]);
 
-  /* ---- Applicability state (28.5) ---- */
-  const { data: applicabilityRows = [] } = usePolicyApplicability(versionId);
-  const [applicability, setApplicability] = useState<ApplicabilityRow[] | null>(null);
-  useEffect(() => {
-    if (versionId && applicability === null) {
-      setApplicability(applicabilityRows);
-    }
-  }, [applicabilityRows, applicability, versionId]);
+  const versionId = data?.versionId;
+  const versionNumber = data?.versionNumber ?? 1;
 
-  /* ---- Surface mapping state (28.5) ---- */
+  // ─── Persist a single rule chip edit ─────────────────────────────────────
+  // Strategy: optimistic local update + debounced save_policy_rule_blocks.
+  // Adoption happens lazily on the first chip change.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const persistAllRules = (next: Record<string, unknown>, vId: string) => {
+    const blocks = allFields
+      .map((f) => ({
+        block_key: f.key,
+        rule_type: f.type,
+        value: { v: next[f.key] ?? null },
+        required: !!f.required,
+      }))
+      .filter((b) => b.value.v !== null && b.value.v !== '');
+    save.mutate({ versionId: vId, blocks });
+  };
+
+  const handleRuleChange = async (key: string, next: unknown) => {
+    setValues((prev) => {
+      const merged = { ...prev, [key]: next };
+      // schedule save
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(async () => {
+        const ok = await ensureAdopted();
+        if (!ok) return;
+        // re-read versionId via refetched data after adoption
+        const liveVersionId = (await refetch()).data?.versionId;
+        if (liveVersionId) persistAllRules(merged, liveVersionId);
+      }, 400);
+      return merged;
+    });
+  };
+
+  // Audience selector — local state mirrors entry.audience (the library
+  // entry is the source of truth for now). Wave 28.15 surfaces it as a
+  // visible choice; a follow-up wave can persist per-policy overrides.
+  // For this wave, audience is read-only display because flipping it
+  // requires schema migration on per-policy audience overrides.
+  const audience = entry.audience;
+  const isInternalOnly = audience === 'internal';
+  const isExternal = audience !== 'internal';
+
+  // Surface mapping state
   const { data: surfaceRows = [] } = usePolicySurfaceMappings(versionId);
   const [surfaces, setSurfaces] = useState<SurfaceMappingRow[] | null>(null);
   useEffect(() => {
@@ -355,10 +368,6 @@ export function PolicyConfiguratorPanel({
       setSurfaces(surfaceRows);
       return;
     }
-    // Wave 28.11.5 — audience-aware seed: use `defaultVariantForSurface` so
-    // 'both'-audience surfaces (intake) seed an internal-only policy with
-    // the `internal` variant rather than the meta default `client`, which
-    // the audience filter would otherwise strip.
     const seeded: SurfaceMappingRow[] = (entry.candidate_surfaces ?? []).map((s) => ({
       surface: s,
       variant_type: defaultVariantForSurface(s, entry.audience),
@@ -368,91 +377,91 @@ export function PolicyConfiguratorPanel({
     setSurfaces(seeded);
   }, [surfaceRows, surfaces, versionId, entry.candidate_surfaces, entry.audience]);
 
-  const handleSaveRules = () => {
-    if (!versionId) return;
-    const blocks = allFields
-      .map((f) => ({
-        block_key: f.key,
-        rule_type: f.type,
-        value: { v: values[f.key] ?? null },
-        required: !!f.required,
-      }))
-      .filter((b) => b.value.v !== null && b.value.v !== '');
-    // Advance to the next step on success so the operator's "Save and continue"
-    // CTA fulfills its implied next step. Wave 28.13: tabs replaced by stepper.
-    save.mutate(
-      { versionId, blocks },
-      { onSuccess: () => setStep('applicability') },
-    );
-  };
-
-  const categoryMeta = POLICY_CATEGORY_META[entry.category];
-
-  /* Wave 28.13 — internal-only policies hide the Surfaces step (dead UI).
-     Acknowledgments moves to a header-link drawer (no longer a step) but is
-     still surfaced when the audience touches external OR when at least one
-     historical ack row exists (audit immutability per Wave 28.10.1). */
-  const isInternalOnly = entry.audience === 'internal';
-  const visibleSteps = useMemo(() => getVisibleSteps(entry.audience), [entry.audience]);
-
-  // Clamp step if operator landed on a step the audience doesn't allow
-  // (e.g., audience flipped to internal-only after the panel mounted).
-  useEffect(() => {
-    if (isInternalOnly && step === 'surfaces') {
-      setStep('rules');
-    }
-  }, [isInternalOnly, step]);
-
-  /* Counters / completion signals */
-  const applicabilityCount = applicability?.length ?? 0;
-  const surfacesActiveCount = (surfaces ?? []).filter((s) => s.enabled).length;
+  // Variant + display state
   const { data: variantsData = [] } = usePolicyVariants(versionId);
-  const approvedVariantCount = variantsData.filter((v) => v.approved).length;
   const hasApprovedClientVariant = variantsData.some(
     (v) => v.approved && v.variant_type === 'client',
   );
-  // effectiveOrganization is declared at the top of the component.
   const orgSlug = effectiveOrganization?.slug;
   const publicPolicyUrl = orgSlug ? `/org/${orgSlug}/policies` : null;
-
-  /* Wave 28.11.5 — historical ack visibility (audit immutability).
-     Show acks link whenever count > 0 even if audience changed to internal-only. */
   const { data: ackCount = 0 } = usePolicyAcknowledgmentCount(data?.policyId ?? null);
   const showAcknowledgmentsLink = (!isInternalOnly || ackCount > 0) && !!data?.policyId;
   const isArchived = data?.status === 'archived';
-  const ackToggleAllowed =
-    !!data?.isPublishedExternal && hasApprovedClientVariant && !isArchived;
+  const categoryMeta = POLICY_CATEGORY_META[entry.category];
 
-  /* Required-rule readiness for drafter */
-  const rulesReady = useMemo(() => {
-    return allFields
-      .filter((f) => f.required)
-      .every((f) => {
-        const v = values[f.key];
-        return v !== null && v !== undefined && v !== '';
-      });
-  }, [allFields, values]);
+  const displayStatus = getDisplayStatus(data ?? null);
+  const displayMeta = POLICY_DISPLAY_STATUS_META[displayStatus];
+
+  // Loading guard — only show the loader while the initial fetch is in
+  // flight on an already-adopted policy. Lazy-adopted policies render
+  // immediately from schema defaults.
+  const showInitialLoader = alreadyAdopted && !hydrated;
+
+  const handleSaveAllRules = async (next: Record<string, unknown>) => {
+    setValues(next);
+    const ok = await ensureAdopted();
+    if (!ok) return;
+    const liveVersionId = (await refetch()).data?.versionId;
+    if (!liveVersionId) return;
+    persistAllRules(next, liveVersionId);
+    setAllRulesOpen(false);
+  };
 
   return (
     <div className="space-y-8">
-      {/* Header context */}
-      <div className="space-y-3 pb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="font-sans text-xs">
-            {categoryMeta.label}
-          </Badge>
-          {ready && (
-            <Badge variant="outline" className="font-sans text-xs">
-              v{versionNumber} · draft
-            </Badge>
+      {/* ─── Header ──────────────────────────────────────────────────────── */}
+      <div className="space-y-4 pb-2">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex-1 min-w-[260px] space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="font-sans text-xs">
+                {categoryMeta.label}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'font-sans text-xs',
+                  displayMeta.tone === 'success' && 'border-primary/40 text-primary',
+                  displayMeta.tone === 'warning' && 'border-amber-500/40 text-amber-600 dark:text-amber-400',
+                )}
+              >
+                {displayMeta.label}
+              </Badge>
+              {data?.policyId && (
+                <Badge variant="outline" className="font-sans text-xs text-muted-foreground">
+                  v{versionNumber}
+                </Badge>
+              )}
+              {isArchived && (
+                <Badge variant="outline" className="font-sans text-xs text-muted-foreground">
+                  Archived
+                </Badge>
+              )}
+            </div>
+            <h3 className={cn(tokens.heading.section)}>{entry.title}</h3>
+            <p className="font-sans text-sm text-muted-foreground">
+              {entry.short_description}
+            </p>
+          </div>
+          {/* ─── Single CTA ─── */}
+          {!showInitialLoader && (
+            <PublishPolicyAction
+              policyId={data?.policyId ?? ''}
+              versionId={versionId ?? ''}
+              libraryKey={entry.key}
+              audience={audience}
+              ruleValues={values}
+              isPublishedExternal={!!data?.isPublishedExternal}
+              requiresAcknowledgment={!!data?.requiresAcknowledgment}
+              onAfter={async () => {
+                await ensureAdopted();
+                refetch();
+              }}
+              disabled={isArchived}
+            />
           )}
         </div>
-        <div>
-          <h3 className={cn(tokens.heading.section, 'mb-1')}>{entry.title}</h3>
-          <p className="font-sans text-sm text-muted-foreground">
-            {entry.short_description}
-          </p>
-        </div>
+
         {entry.why_it_matters && (
           <div className="rounded-lg border border-border bg-muted/40 p-3">
             <div className="flex items-start gap-2">
@@ -464,6 +473,7 @@ export function PolicyConfiguratorPanel({
             </div>
           </div>
         )}
+
         {nonApplicable && (
           <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
             <p className="font-sans text-xs text-muted-foreground">
@@ -488,13 +498,14 @@ export function PolicyConfiguratorPanel({
             </p>
           </div>
         )}
-        <div className="flex items-center gap-4 flex-wrap">
+
+        <div className="flex items-center gap-4 flex-wrap text-xs">
           {hasApprovedClientVariant && publicPolicyUrl && (
             <a
               href={publicPolicyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-sans text-xs text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 font-sans text-primary hover:underline"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               View on public policy page
@@ -504,7 +515,7 @@ export function PolicyConfiguratorPanel({
             <button
               type="button"
               onClick={() => setHistoryOpen(true)}
-              className="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 font-sans text-muted-foreground hover:text-foreground transition-colors"
             >
               <History className="w-3.5 h-3.5" />
               Version history
@@ -514,51 +525,101 @@ export function PolicyConfiguratorPanel({
             <button
               type="button"
               onClick={() => setAcksOpen(true)}
-              className="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 font-sans text-muted-foreground hover:text-foreground transition-colors"
             >
               <FileSignature className="w-3.5 h-3.5" />
               View client acknowledgments{ackCount > 0 ? ` (${ackCount})` : ''}
             </button>
           )}
         </div>
-
-        {/* Wave 28.11.3 — Audience-aware banner replaces the stacked
-            Publish + Require-ack toggles. Renders only the actions that
-            apply to this policy's audience, killing dead UI for handbook
-            policies and grouping client-facing actions under one context. */}
-        {data?.policyId && (
-          <PolicyAudienceBanner
-            audience={entry.audience}
-            publicPolicyUrl={publicPolicyUrl}
-            isPublishedExternal={!!data.isPublishedExternal}
-            publishDisabled={publish.isPending || !hasApprovedClientVariant}
-            onPublishChange={(checked) =>
-              publish.mutate(
-                { policyId: data.policyId, publish: checked },
-                { onSuccess: () => refetch() },
-              )
-            }
-            requiresClientAck={!!data.requiresAcknowledgment}
-            ackDisabled={updateAckFlag.isPending || (!data.requiresAcknowledgment && !ackToggleAllowed)}
-            onClientAckChange={(checked) =>
-              updateAckFlag.mutate(
-                { policyId: data.policyId, requiresAcknowledgment: checked },
-                { onSuccess: () => refetch() },
-              )
-            }
-            hasApprovedClientVariant={hasApprovedClientVariant}
-            onJumpToStep={setStep}
-          />
-        )}
       </div>
 
-      {/* Version History — luxury glass bento floating drawer */}
+      {showInitialLoader ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <LuxeLoader size="md" />
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {/* ─── Audience ─── */}
+          <section className="space-y-3">
+            <SectionHeader
+              icon={<Users className="w-4 h-4" />}
+              title="Who sees this"
+              note="Audience controls which surfaces this policy can render on. Internal-only policies skip the public policy page."
+            />
+            <div className="rounded-xl border border-border bg-card/60 p-4 flex items-center gap-4 flex-wrap">
+              <Select value={audience} disabled>
+                <SelectTrigger className="font-sans w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="internal" className="font-sans">Internal team</SelectItem>
+                  <SelectItem value="external" className="font-sans">Clients</SelectItem>
+                  <SelectItem value="both" className="font-sans">Both</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="font-sans text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                <Lock className="w-3 h-3" />
+                Audience is set by the policy library and locked for this wave.
+              </p>
+            </div>
+          </section>
+
+          {/* ─── Policy text (inline chips) ─── */}
+          <section className="space-y-3">
+            <SectionHeader
+              icon={<MessageSquare className="w-4 h-4" />}
+              title="Policy text"
+              note="Click any pill to change the underlying rule. Click 'Edit text' to rewrite the prose directly. AI cannot invent rules — pills are the source of truth."
+            />
+            <InlineRuleEditor
+              versionId={versionId ?? ''}
+              libraryKey={entry.key}
+              audience={audience}
+              fields={allFields}
+              values={values}
+              onRuleChange={handleRuleChange}
+              disabled={isArchived}
+            />
+            <div className="flex items-center justify-end pt-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAllRulesOpen(true)}
+                className="font-sans text-muted-foreground hover:text-foreground"
+              >
+                <Settings2 className="w-3.5 h-3.5 mr-1.5" />
+                Edit all rules
+              </Button>
+            </div>
+          </section>
+
+          {/* ─── Where it shows (external-touching only) ─── */}
+          {isExternal && versionId && surfaces !== null && (
+            <section className="space-y-3">
+              <SectionHeader
+                icon={<MapPin className="w-4 h-4" />}
+                title="Where it shows"
+                note="Surfaces this policy renders on. Toggle each on or off and pick the voice variant per surface."
+              />
+              <PolicySurfaceEditor
+                versionId={versionId}
+                candidateSurfaces={entry.candidate_surfaces ?? []}
+                policyAudience={entry.audience}
+                rows={surfaces}
+                onChange={setSurfaces}
+              />
+            </section>
+          )}
+        </div>
+      )}
+
+      {/* ─── Drawers ─── */}
       <PremiumFloatingPanel open={historyOpen} onOpenChange={setHistoryOpen} maxWidth="640px">
         <div className={tokens.drawer.header}>
           <h2 className={cn(tokens.heading.section)}>Version history</h2>
           <p className="font-sans text-sm text-muted-foreground mt-1">
-            Every saved version of {entry.title}, newest first. Expand any version to see
-            what changed.
+            Every saved version of {entry.title}, newest first.
           </p>
         </div>
         <div className={tokens.drawer.body}>
@@ -566,323 +627,12 @@ export function PolicyConfiguratorPanel({
         </div>
       </PremiumFloatingPanel>
 
-      <Separator />
-
-      {/* Wave 28.11.5 — Adopt-and-configure gate. Operators browsing the
-          audience-segmented library should not silently write `policies` rows
-          on every card click. Until they explicitly click "Adopt and
-          configure", we render a read-only schema preview instead of mounting
-          the editor surface. */}
-      {!alreadyAdopted && !data?.policyId ? (
-        <div className="space-y-5">
-          <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-4">
-            <div className="space-y-1">
-              <h4 className="font-display text-xs tracking-wider uppercase text-muted-foreground">
-                Preview — not yet adopted
-              </h4>
-              <p className="font-sans text-sm text-foreground">
-                Review the rules this policy will configure. Adoption creates a
-                draft version you can edit, publish, and archive — nothing is
-                surfaced to staff or clients until you choose to.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {schema.sections.map((section) => (
-                <div
-                  key={section.title}
-                  className="rounded-lg border border-border/60 bg-card/60 p-3"
-                >
-                  <h5 className="font-display text-[11px] tracking-wider uppercase text-foreground">
-                    {section.title}
-                  </h5>
-                  {section.description && (
-                    <p className="font-sans text-xs text-muted-foreground mt-1">
-                      {section.description}
-                    </p>
-                  )}
-                  <ul className="mt-2 space-y-1">
-                    {section.fields.map((f) => (
-                      <li
-                        key={f.key}
-                        className="font-sans text-xs text-muted-foreground flex items-start gap-2"
-                      >
-                        <span className="text-foreground">•</span>
-                        <span>
-                          <span className="text-foreground">{f.label}</span>
-                          {f.required && (
-                            <span className="ml-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                              required
-                            </span>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="font-sans"
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={() =>
-                adopt.mutate(entry.key, {
-                  onSuccess: () => refetch(),
-                })
-              }
-              disabled={adopt.isPending}
-              className="font-sans"
-            >
-              {adopt.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Check className="w-4 h-4 mr-2" />
-              )}
-              Adopt and configure
-            </Button>
-          </div>
-        </div>
-      ) : !ready ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <LuxeLoader size="md" />
-          {isHealing && (
-            <p className="font-sans text-xs text-muted-foreground">
-              Initializing draft version…
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Wave 28.13 — Linear stepper replaces the parallel tab strip.
-              Step labels are operator-outcome verbs; acknowledgments moved
-              to a header-link drawer (it's an audit log, not a config step). */}
-          <PolicyConfiguratorStepper
-            steps={visibleSteps}
-            activeStep={step}
-            completedSteps={{
-              rules: !!data && data.blocks.length > 0,
-              applicability: applicabilityCount > 0,
-              surfaces: surfacesActiveCount > 0,
-              drafts: approvedVariantCount > 0,
-            }}
-            onStepClick={setStep}
-          />
-
-          {/* ---- Step 1 · Define rules ---- */}
-          {step === 'rules' && (
-            <div className="space-y-8">
-              {/* Interview / Expert toggle */}
-              <div className="flex items-center justify-end">
-                <div className="inline-flex items-center rounded-full border border-border bg-muted/40 p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setRulesMode('interview')}
-                    className={cn(
-                      'font-sans text-xs px-3 py-1 rounded-full transition-colors',
-                      rulesMode === 'interview'
-                        ? 'bg-card text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    Interview
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRulesMode('expert')}
-                    className={cn(
-                      'font-sans text-xs px-3 py-1 rounded-full transition-colors',
-                      rulesMode === 'expert'
-                        ? 'bg-card text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    Expert view
-                  </button>
-                </div>
-              </div>
-
-              {rulesMode === 'interview' ? (
-                <div className="flex flex-col gap-6">
-                  <PolicyLivePreview
-                    schema={schema}
-                    values={values}
-                    recentlyChangedKey={recentlyChangedKey}
-                    libraryKey={entry.key}
-                    category={entry.category}
-                    audience={entry.audience}
-                    orgName={orgNameForTokens}
-                    schemaHasAuthorityRole={schemaHasAuthorityRole}
-                    locationCount={locationCount}
-                  />
-                  <PolicyQuestionnaire
-                    schema={schema}
-                    values={values}
-                    audience={entry.audience}
-                    saving={save.isPending}
-                    ctaLabel={STEP_META.rules.cta}
-                    onChange={(key, v, fieldType) => {
-                      if (fieldType === 'longtext') {
-                        userEditedFieldsRef.current.add(key);
-                      }
-                      setValues((prev) => ({ ...prev, [key]: v }));
-                      setRecentlyChangedKey(key);
-                    }}
-                    onComplete={handleSaveRules}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-6">
-                    {schema.sections.map((section) => (
-                      <div key={section.title} className="space-y-4">
-                        <div>
-                          <h5 className="font-display text-xs tracking-wider uppercase text-foreground">
-                            {section.title}
-                          </h5>
-                          {section.description && (
-                            <p className="font-sans text-xs text-muted-foreground mt-1">
-                              {section.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-                          {section.fields.map((field) => (
-                            <PolicyRuleField
-                              key={field.key}
-                              field={field}
-                              value={values[field.key]}
-                              audience={entry.audience}
-                              onChange={(v) => {
-                                if (field.type === 'longtext') {
-                                  userEditedFieldsRef.current.add(field.key);
-                                }
-                                setValues((prev) => ({ ...prev, [field.key]: v }));
-                                setRecentlyChangedKey(field.key);
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Separator />
-                  <div className="flex items-center justify-end gap-3">
-                    <Button
-                      size="sm"
-                      onClick={handleSaveRules}
-                      disabled={save.isPending}
-                      className="font-sans"
-                    >
-                      {save.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      {STEP_META.rules.cta}
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* ---- Step 2 · Decide who ---- */}
-          {step === 'applicability' && versionId && applicability !== null && (
-            <div className="space-y-6">
-              <PolicyApplicabilityEditor
-                versionId={versionId}
-                rows={applicability}
-                onChange={setApplicability}
-                onSaved={() => setStep(isInternalOnly ? 'drafts' : 'surfaces')}
-                entry={entry}
-              />
-              <div className="flex items-center justify-start">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStep('rules')}
-                  className="font-sans text-muted-foreground"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* ---- Step 3 · Choose where it shows (skipped for internal-only) ---- */}
-          {step === 'surfaces' && !isInternalOnly && versionId && surfaces !== null && (
-            <div className="space-y-6">
-              <PolicySurfaceEditor
-                versionId={versionId}
-                candidateSurfaces={entry.candidate_surfaces ?? []}
-                policyAudience={entry.audience}
-                rows={surfaces}
-                onChange={setSurfaces}
-                onSaved={() => setStep('drafts')}
-              />
-              <div className="flex items-center justify-start">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStep('applicability')}
-                  className="font-sans text-muted-foreground"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* ---- Step 4 · Approve wording ---- */}
-          {step === 'drafts' && versionId && (
-            <div className="space-y-6">
-              <PolicyDraftWorkspace
-                versionId={versionId}
-                rulesReady={rulesReady}
-                audience={entry.audience}
-                libraryKey={entry.key}
-                ruleValues={values}
-              />
-              <div className="flex items-center justify-start">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setStep(isInternalOnly ? 'applicability' : 'surfaces')
-                  }
-                  className="font-sans text-muted-foreground"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Acknowledgments — luxury glass bento floating drawer (relocated from
-          tab strip in Wave 28.13). Audit-immutable: continues to render even
-          after audience flips to internal-only when historical acks exist. */}
       {data?.policyId && (
         <PremiumFloatingPanel open={acksOpen} onOpenChange={setAcksOpen} maxWidth="720px">
           <div className={tokens.drawer.header}>
             <h2 className={cn(tokens.heading.section)}>Client acknowledgments</h2>
             <p className="font-sans text-sm text-muted-foreground mt-1">
-              Every signature collected for {entry.title}, with timestamp and
-              policy version. Read-only audit log.
+              Read-only audit log of every signature collected for {entry.title}.
             </p>
           </div>
           <div className={tokens.drawer.body}>
@@ -894,10 +644,24 @@ export function PolicyConfiguratorPanel({
         </PremiumFloatingPanel>
       )}
 
-      {/* Footer — Wave 28.11.5 lifecycle actions (archive / reactivate). Only
-          shown after adoption since archive applies to existing policies only. */}
+      <EditAllRulesSheet
+        open={allRulesOpen}
+        onOpenChange={setAllRulesOpen}
+        schema={schema}
+        values={values}
+        audience={audience}
+        saving={save.isPending || adopt.isPending}
+        onSave={handleSaveAllRules}
+        onFieldEdit={(field) => {
+          if (field.type === 'longtext') {
+            userEditedFieldsRef.current.add(field.key);
+          }
+        }}
+      />
+
+      {/* ─── Footer (lifecycle actions) ─── */}
       <Separator />
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           {data?.policyId && !isArchived && (
             <Button
@@ -950,8 +714,6 @@ export function PolicyConfiguratorPanel({
         </Button>
       </div>
 
-      {/* Archive confirmation — destructive-ish action: disables surface
-          mappings and stops client-facing renders. Reversible via Reactivate. */}
       <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1000,6 +762,31 @@ export function PolicyConfiguratorPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+/** Section header for the three editor blocks. */
+function SectionHeader({
+  icon,
+  title,
+  note,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  note: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground/70 flex-shrink-0">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0 space-y-0.5 pt-0.5">
+        <h4 className="font-display text-xs tracking-wider uppercase text-foreground">
+          {title}
+        </h4>
+        <p className="font-sans text-xs text-muted-foreground leading-relaxed">{note}</p>
+      </div>
     </div>
   );
 }
