@@ -140,6 +140,9 @@ export function UserRolesTableView({
               <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Location</TableHead>
             )}
             <TableHead className={tokens.table?.columnHeader || 'font-sans text-sm font-medium'}>Roles</TableHead>
+            {showPinColumn && (
+              <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm font-medium', 'w-[100px]')}>PIN</TableHead>
+            )}
             {canManage && (
               <TableHead className={cn(tokens.table?.columnHeader || 'font-sans text-sm font-medium', 'w-[80px]')}>Actions</TableHead>
             )}
