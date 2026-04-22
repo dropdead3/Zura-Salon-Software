@@ -175,7 +175,7 @@ export interface PolicyHealthSummary {
  */
 export type PolicyDisplayStatus = 'draft' | 'live' | 'needs-attention';
 
-export function getDisplayStatus(p?: OrgPolicy | null): PolicyDisplayStatus {
+export function getDisplayStatus(p?: { status?: PolicyStatus | string | null } | null): PolicyDisplayStatus {
   if (!p) return 'draft';
   if (p.status === 'needs_review') return 'needs-attention';
   if (

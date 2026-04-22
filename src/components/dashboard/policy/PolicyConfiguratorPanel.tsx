@@ -422,7 +422,7 @@ export function PolicyConfiguratorPanel({
                 className={cn(
                   'font-sans text-xs',
                   displayMeta.tone === 'success' && 'border-primary/40 text-primary',
-                  displayMeta.tone === 'warning' && 'border-amber-500/40 text-amber-600 dark:text-amber-400',
+                  displayMeta.tone === 'warning' && 'border-warning/40 text-warning',
                 )}
               >
                 {displayMeta.label}
