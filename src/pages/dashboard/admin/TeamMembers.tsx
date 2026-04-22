@@ -22,8 +22,10 @@ import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { TeamPinManagementTab } from '@/components/access-hub/TeamPinManagementTab';
 
-type TeamView = 'roster' | 'bulk-roles' | 'invitations' | 'pins';
-const VALID_VIEWS: TeamView[] = ['roster', 'bulk-roles', 'invitations', 'pins'];
+type TeamView = 'roster' | 'invitations' | 'pins';
+const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'pins'];
+type RosterMode = 'card' | 'table';
+const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
 const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
   { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'] },
