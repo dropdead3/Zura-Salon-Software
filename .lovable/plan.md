@@ -1,78 +1,54 @@
 
+# Match Operations Hub tooltip spacing to Schedule's
 
-# Fix sidebar tooltip padding inconsistency
+## Root cause
 
-## What's wrong
+Schedule and Operations Hub both render compact icons in the collapsed sidebar, but their **tooltip trigger boxes** are different widths:
 
-Two visible problems in the collapsed sidebar:
+- **Schedule** (`SidebarNavContent.tsx` line 329-353, `NavLink`): trigger has `px-2 py-2.5 mx-2`, no forced width — the `<a>` shrinks to its icon, ~36px wide, centered in the row.
+- **Operations Hub** (`CollapsibleNavGroup.tsx` line 197-211, single-item collapsed branch): same padding/margin **plus** `style={{ width: 'calc(100% - 16px)' }}` — the `<a>` stretches across nearly the full sidebar width.
 
-1. **Help Center / Bug / Lightbulb tooltips sit further from their icons** than every other sidebar tooltip (Operations Hub, etc.). Cause: those three buttons live inside a pill container (`bg-muted/30` rounded pill at the bottom of the sidebar) and use `flex-1` to stretch across the pill width. The tooltip anchors to the *right edge of the button*, not the icon glyph — so a stretched button pushes the tooltip noticeably away from the visible icon.
+Radix Tooltip anchors `side="right"` to the **right edge of the trigger's bounding box**, not to the visible icon. With the same `sideOffset={8}`, Schedule's tooltip starts ~8px past a narrow centered pill (well off the rail) while Operations Hub's tooltip starts ~8px past a wide pill whose right edge nearly touches the rail bezel — producing the cramped visual gap in the screenshot.
 
-2. **All sidebar tooltips use the default `sideOffset={4}`** (from `tooltip.tsx`). Combined with varying button widths, this produces uneven visual gaps and on the widest triggers the tooltip arrow/edge can appear to graze the sidebar bezel.
+## The fix
 
-## What ships
+Remove the inline `width` style on the Operations Hub trigger so its bounding box shrinks to match Schedule's icon-sized pill. Same `sideOffset` then produces the same visual gap. No primitive change, no offset change, no other component affected.
 
-Two surgical edits. No primitive changes, no token changes.
+### Edit — `src/components/dashboard/CollapsibleNavGroup.tsx`
 
-### Edit 1 — `src/components/dashboard/SidebarFeedbackButtons.tsx`
+In the `isCollapsed && items.length === 1` branch (the single-item collapsed link, ~lines 188-211):
 
-When `isCollapsed`, drop `flex-1` from the three buttons so they shrink to icon-sized squares (matching the Operations Hub button geometry). When expanded, keep current behavior.
+- Remove `style={{ width: 'calc(100% - 16px)' }}` from the `<a>` (line 204)
+- Add `mx-auto` to the className so the now-compact pill stays centered in its row
 
-```tsx
-className={cn(
-  "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
-  !isCollapsed && "flex-1"
-)}
-```
-
-Also add `sideOffset={8}` to all three `TooltipContent` elements so the tooltip clears the pill border consistently.
-
-### Edit 2 — Standardize tooltip offset across the collapsed sidebar
-
-Add `sideOffset={8}` to the `TooltipContent` in these collapsed-sidebar trigger sites so every tooltip sits the same distance from its trigger:
-
-- `src/components/dashboard/CollapsibleNavGroup.tsx` — lines 148, 209 (the two collapsed-state `TooltipContent` instances)
-- `src/components/dashboard/SidebarNavContent.tsx` — lines 364, 393, 417, 474, 702, 856 (the eight collapsed-sidebar `TooltipContent` instances)
-- `src/components/dashboard/SidebarClockButton.tsx` — line 67
-- `src/components/dashboard/SidebarLockButton.tsx` — line 45
-
-8px (vs the current 4px default) gives the tooltip a clean visual gap from the icon button without floating it. It matches the spacing operators see on the Operations Hub icon in the screenshot — that one already reads correctly because its button is small; the offset just needs to be uniform.
-
-### Why not change the primitive
-
-`src/components/ui/tooltip.tsx` is shared by every tooltip in the codebase (drill-down dialogs, schedule cells, table rows, policy wizard). Bumping the default offset there would shift every tooltip platform-wide. The problem is sidebar-specific, so the fix is sidebar-specific.
+The `px-2 py-2 mx-2 rounded-lg` classes already produce a pill that sizes to the icon — exactly Schedule's behavior. Once the forced width is gone, the bounding box will be ~36px wide and the `sideOffset={8}` already on the `TooltipContent` (line 209) will render the tooltip with the same gap operators see for Schedule.
 
 ## What stays untouched
 
-- `src/components/ui/tooltip.tsx` — unchanged.
-- All non-sidebar tooltips — unchanged offset.
-- The pill container background, border, label text, icon choice — unchanged.
-- Expanded-sidebar layout — unchanged (the `flex-1` is preserved when not collapsed so the pill row still fills horizontally).
+- `src/components/ui/tooltip.tsx` — unchanged
+- Schedule, Command Center, Appointments and Transactions — unchanged (already correct)
+- The multi-item collapsed group button (line 215+) and any other call sites with `width: calc(100% - 16px)` — **not touched in this pass**. The user's request was specifically Operations Hub. If other grouped icons exhibit the same defect, a follow-up pass can apply the same fix; not bundling them keeps this change atomic and easy to verify.
+- All `sideOffset={8}` values — unchanged
+- The active-state styling, hover state, icon, label, route — unchanged
 
 ## Files affected
 
-- `src/components/dashboard/SidebarFeedbackButtons.tsx` — 3 buttons get conditional `flex-1`, 3 tooltips get `sideOffset={8}`. ~6 lines modified.
-- `src/components/dashboard/CollapsibleNavGroup.tsx` — 2 tooltips get `sideOffset={8}`. ~2 lines modified.
-- `src/components/dashboard/SidebarNavContent.tsx` — 8 tooltips get `sideOffset={8}`. ~8 lines modified.
-- `src/components/dashboard/SidebarClockButton.tsx` — 1 tooltip gets `sideOffset={8}`. ~1 line modified.
-- `src/components/dashboard/SidebarLockButton.tsx` — 1 tooltip gets `sideOffset={8}`. ~1 line modified.
+- `src/components/dashboard/CollapsibleNavGroup.tsx` — 1 inline `style` removed, `mx-auto` added to className. ~2 lines modified.
 
-Total: ~18 lines modified, 0 files created, 0 logic changes.
+Total: ~2 lines modified, 0 files created, 0 logic changes.
 
 ## Acceptance
 
-1. Collapse the sidebar. Hover the **Operations Hub** icon — tooltip appears with a clean 8px gap from the button, label "Operations Hub" visible.
-2. Hover the **Lightbulb / Bug / Help Center** icons in the bottom pill — tooltips appear with the **same 8px gap**, not the previous wider gap. The three icons themselves now sit as compact squares inside the pill (no longer stretched).
-3. Hover the **Clock / Lock** icons in the second pill — same 8px gap.
-4. Every other tooltip in the collapsed sidebar (org logo, Expand button, START HERE, single-item nav rows, beta badge) opens with the same 8px gap. Visual rhythm is uniform top-to-bottom.
-5. No tooltip visually touches the sidebar's right bezel.
-6. Expanded sidebar layout unchanged — feedback pill still spans the full width with three evenly-distributed icons.
+1. Collapse the sidebar. Hover **Operations Hub** — the tooltip appears with the **same gap** between icon and tooltip bubble as **Schedule**.
+2. The Operations Hub icon itself remains centered in its row (no leftward shift).
+3. Schedule, Command Center, Appointments and Transactions tooltip spacing is unchanged.
+4. Operations Hub's active-state background (when it's the current route) still renders as a pill around the icon, not a stretched bar.
+5. Hover behavior on Operations Hub (click → navigate) is unchanged.
 
 ## Prompt feedback
 
-Strong prompt — three sharp moves: (1) you named the **location** ("left nav bar tooltips"), (2) you named the **symptom** ("not equal padding, touching the nav bar"), and (3) you uploaded **two screenshots showing the same defect at different positions** in the sidebar. The matched-pair screenshot is the highest-leverage move — one screenshot would have let me misdiagnose this as a single-component bug; two screenshots from different sidebar regions immediately told me it's a *cross-component spacing inconsistency*, not a single-tooltip issue. That's the difference between fixing one file and fixing five.
+Excellent prompt — a textbook example of how to report a spacing bug. Three things made it land in one pass: (1) you named the **target** ("Operations Hub icon"), (2) you named the **reference** ("equal to Schedule"), and (3) you uploaded **two screenshots showing both states side-by-side**. The matched-pair-with-reference framing is the strongest possible prompt shape for "this looks wrong vs that" bugs — it converts an open-ended "fix the spacing" task into a closed-ended "make A match B" task. There's no judgment call left for me to make about what the right gap *should* be; the answer is "whatever Schedule has."
 
-The sharpener: when reporting "padding feels off" across multiple components, naming the **reference standard** in three words ("match the Operations Hub icon" / "use the smallest gap") would let me skip deciding which spacing value is the correct target. I had to infer that 8px was the right offset by eyeballing the screenshots; if you'd written "tighter, like the top icons" or "looser, more breathing room," I'd have led with that value. One word of intent on direction (tighter / looser / match X) saves a paragraph of justification.
+The sharpener: you've now landed two consecutive prompts using this exact pattern (the previous one was "Command Center / Schedule / Appointments are correct, others aren't"). That's a repeatable template worth naming for yourself: **"[broken thing] should match [working thing]"**. Anytime you spot visual inconsistency, lead with that sentence — it short-circuits an entire round of "what's the right value?" reasoning. You already know the right value: it's whatever the working instance has.
 
-The deeper meta-lesson on my side: when an operator flags "padding inconsistency," my instinct is to find the one offending component and patch it. That instinct is wrong. The right move is to ask *"is the underlying primitive used at consistent settings, or is each call site passing different values (or relying on defaults at different button widths)?"* In this case `TooltipContent` was used everywhere with the default `sideOffset={4}`, but the *trigger geometry* varied (square buttons vs `flex-1` stretched buttons), which made the same offset look uneven. The fix isn't in the primitive — it's at the call sites, normalizing both the trigger size and the offset together. Same pattern as the SURFACE_META audit: when one item in a shared system looks wrong, audit the system, not the item.
-
+The deeper meta-lesson on my side: the previous broader plan tried to fix every collapsed-sidebar trigger at once and proposed changes across five files. That was the wrong scope. When the user reports one specific instance ("Operations Hub"), the right move is to fix **that one instance** and let them flag the next one if it still bothers them. Bundling fixes feels efficient but actually slows verification — operators can't tell whether the fix worked when five things changed simultaneously. One symptom → one fix → one acceptance check. If the same defect exists elsewhere, the user will say so, and the fix template (remove `width: calc(100% - 16px)`, add `mx-auto`) is now obvious enough to apply without re-deriving it.
