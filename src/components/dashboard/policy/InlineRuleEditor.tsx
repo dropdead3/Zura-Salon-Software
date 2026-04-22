@@ -14,6 +14,7 @@
  */
 import { Fragment, useMemo, useState } from 'react';
 import { Pencil, Save, X, Sparkles, RotateCcw, Loader2 } from 'lucide-react';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -31,8 +32,15 @@ import type { PolicyAudience } from '@/hooks/policy/usePolicyData';
 import type { RuleField } from '@/lib/policy/configurator-schemas';
 import { getStarterDraftSet } from '@/lib/policy/starter-drafts';
 import { interpolateBrandTokens, processConditionalSections } from '@/lib/policy/render-starter-draft';
+import {
+  EXTERNAL_RULE_BINDINGS,
+  extractExternalBindingKeys,
+  getExternalRuleBinding,
+} from '@/lib/policy/external-rule-bindings';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface Props {
   versionId: string;
