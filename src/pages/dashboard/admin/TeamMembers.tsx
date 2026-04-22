@@ -409,6 +409,8 @@ export default function TeamMembers() {
                 {grouped.sections.map(section => {
                   if (section.members.length === 0) return null;
                   const SIcon = section.icon;
+                  const isStylists = section.label === 'Stylists';
+                  const useSubGroups = isStylists && stylistSubGroups && stylistSubGroups.length > 0;
                   return (
                     <div key={section.label} className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b border-border/60">
@@ -416,16 +418,41 @@ export default function TeamMembers() {
                         <h2 className="font-display text-sm uppercase tracking-wider text-foreground">{section.label}</h2>
                         <span className="text-xs text-muted-foreground">({section.members.length})</span>
                       </div>
-                      <div className="space-y-2">
-                        {section.members.map(m => (
-                          <MemberRow
-                            key={m.user_id}
-                            user={m}
-                            hasPin={pinByUser.get(m.user_id)}
-                            onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                          />
-                        ))}
-                      </div>
+                      {useSubGroups ? (
+                        <div className="space-y-5">
+                          {stylistSubGroups!.map(sub => (
+                            <div key={sub.key} className="space-y-2 pl-3 border-l border-border/60">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-display text-xs uppercase tracking-wider text-muted-foreground">
+                                  {sub.label}
+                                </h3>
+                                <span className="text-[10px] text-muted-foreground/70">({sub.members.length})</span>
+                              </div>
+                              <div className="space-y-2">
+                                {sub.members.map(m => (
+                                  <MemberRow
+                                    key={m.user_id}
+                                    user={m}
+                                    hasPin={pinByUser.get(m.user_id)}
+                                    onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {section.members.map(m => (
+                            <MemberRow
+                              key={m.user_id}
+                              user={m}
+                              hasPin={pinByUser.get(m.user_id)}
+                              onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
