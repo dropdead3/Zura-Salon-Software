@@ -94,19 +94,48 @@ export default function TeamMembers() {
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
   const canManage = isSuperAdmin || isPlatformUser;
 
-  const viewParam = searchParams.get('view') as TeamView | null;
+  const viewParam = searchParams.get('view');
+  const modeParam = searchParams.get('mode');
+
+  // Legacy redirect: ?view=bulk-roles → ?mode=table (Roster, Table mode)
+  useEffect(() => {
+    if (viewParam === 'bulk-roles') {
+      const params = new URLSearchParams(searchParams);
+      params.delete('view');
+      params.set('mode', 'table');
+      setSearchParams(params, { replace: true });
+    }
+  }, [viewParam, searchParams, setSearchParams]);
+
   const view: TeamView = VALID_VIEWS.includes(viewParam as TeamView) ? (viewParam as TeamView) : 'roster';
+
+  // Auto-default to table for ≥15 members (only when no explicit URL mode)
+  const autoMode: RosterMode = (members?.length ?? 0) >= 15 ? 'table' : 'card';
+  const persistedMode = (typeof window !== 'undefined' ? (localStorage.getItem(VIEW_MODE_KEY) as RosterMode | null) : null);
+  const rosterMode: RosterMode = (modeParam === 'card' || modeParam === 'table')
+    ? modeParam
+    : (persistedMode ?? autoMode);
+
+  useEffect(() => {
+    if (modeParam === 'card' || modeParam === 'table') {
+      localStorage.setItem(VIEW_MODE_KEY, modeParam);
+    }
+  }, [modeParam]);
 
   const handleViewChange = (next: string) => {
     const v = next as TeamView;
-    if (v === 'roster') {
-      // Drop the param entirely for the default view
-      const params = new URLSearchParams(searchParams);
-      params.delete('view');
-      setSearchParams(params);
-    } else {
-      setSearchParams({ view: v });
-    }
+    const params = new URLSearchParams(searchParams);
+    params.delete('view');
+    params.delete('mode');
+    if (v !== 'roster') params.set('view', v);
+    setSearchParams(params);
+  };
+
+  const handleRosterModeChange = (next: RosterMode) => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('view');
+    params.set('mode', next);
+    setSearchParams(params);
   };
 
   const filtered = useMemo(() => {
