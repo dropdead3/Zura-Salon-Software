@@ -91,7 +91,100 @@ interface PolicySummaryCardProps {
   rows: Array<{ label: string; value: string | null | undefined }>;
 }
 
-function PolicySummaryCard({ title, description, icon: Icon, isLoading, rows }: PolicySummaryCardProps) {
+// ─── Receipt preview line ───────────────────────────────────────────────────
+
+interface ReceiptPreviewLineProps {
+  versionId: string | undefined;
+  policyKey: string;
+  onJump: () => void;
+}
+
+function ReceiptPreviewLine({ versionId, policyKey, onJump }: ReceiptPreviewLineProps) {
+  const { data: variants, isLoading } = usePolicyVariants(versionId);
+
+  if (!versionId) return null;
+  if (isLoading) return null;
+
+  const clientVariant = (variants ?? []).find(
+    (v) => v.variant_type === 'client' && v.approved,
+  );
+  const sentence = clientVariant
+    ? extractReceiptSentence(clientVariant.body_md, policyKey)
+    : null;
+
+  if (!sentence) {
+    return (
+      <div className="mt-3 pt-3 border-t border-border/40 space-y-1">
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground/70">
+          On the receipt
+        </div>
+        <button
+          type="button"
+          onClick={onJump}
+          className="text-xs text-muted-foreground italic text-left hover:text-foreground transition-colors"
+        >
+          Not yet approved — Publish in Bookings &amp; Payments to set the receipt copy.
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border/40 space-y-1">
+      <div className="text-[11px] uppercase tracking-wide text-muted-foreground/70">
+        On the receipt
+      </div>
+      <p className="text-xs text-foreground/80 leading-relaxed">&ldquo;{sentence}&rdquo;</p>
+    </div>
+  );
+}
+
+// ─── Last-edited footer ─────────────────────────────────────────────────────
+
+interface LastEditedFooterProps {
+  policyId: string | undefined;
+}
+
+function LastEditedFooter({ policyId }: LastEditedFooterProps) {
+  const { data, isLoading } = usePolicyLastEdited(policyId);
+
+  if (!policyId || isLoading || !data?.updatedAt) return null;
+
+  return (
+    <div className="mt-3 pt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
+      <Clock className="w-3 h-3" />
+      <span>
+        Last edited {formatRelativeTime(data.updatedAt)} by {data.actorName}
+      </span>
+    </div>
+  );
+}
+
+// ─── Policy summary card ────────────────────────────────────────────────────
+
+interface PolicySummaryCardProps {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  isLoading: boolean;
+  rows: Array<{ label: string; value: string | null | undefined }>;
+  policyId: string | undefined;
+  versionId: string | undefined;
+  policyKey: string;
+  onJump: () => void;
+}
+
+function PolicySummaryCard({
+  title,
+  description,
+  icon: Icon,
+  isLoading,
+  rows,
+  policyId,
+  versionId,
+  policyKey,
+  onJump,
+}: PolicySummaryCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -114,11 +207,15 @@ function PolicySummaryCard({ title, description, icon: Icon, isLoading, rows }: 
             Loading current rules…
           </div>
         ) : (
-          <div className="space-y-0">
-            {rows.map((r) => (
-              <SummaryRow key={r.label} label={r.label} value={r.value} />
-            ))}
-          </div>
+          <>
+            <div className="space-y-0">
+              {rows.map((r) => (
+                <SummaryRow key={r.label} label={r.label} value={r.value} />
+              ))}
+            </div>
+            <ReceiptPreviewLine versionId={versionId} policyKey={policyKey} onJump={onJump} />
+            <LastEditedFooter policyId={policyId} />
+          </>
         )}
       </CardContent>
     </Card>
