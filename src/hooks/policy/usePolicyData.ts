@@ -246,14 +246,20 @@ export function usePolicyHealthSummary() {
       isApplicableToProfile(l, profile),
   );
 
+  const adoptedByKey = new Map<string, OrgPolicy>();
+  adopted.forEach((p) => adoptedByKey.set(p.library_key, p));
+
   const by_category = (Object.keys(POLICY_CATEGORY_META) as PolicyCategory[]).reduce(
     (acc, cat) => {
       const total = recommendedLibrary.filter((l) => l.category === cat).length;
       const adoptedCount = adopted.filter((p) => p.category === cat).length;
-      acc[cat] = { adopted: adoptedCount, total };
+      const finalizedCount = adopted.filter(
+        (p) => p.category === cat && isPolicyFinalized(p),
+      ).length;
+      acc[cat] = { adopted: adoptedCount, total, finalized: finalizedCount };
       return acc;
     },
-    {} as Record<PolicyCategory, { adopted: number; total: number }>,
+    {} as Record<PolicyCategory, { adopted: number; total: number; finalized: number }>,
   );
 
   // Surface conflict detection: group by (surface, category), flag groups with 2+ policies
@@ -283,6 +289,7 @@ export function usePolicyHealthSummary() {
   const summary: PolicyHealthSummary = {
     total_recommended: recommendedLibrary.length,
     adopted: adopted.length,
+    finalized: adopted.filter((p) => isPolicyFinalized(p)).length,
     configured: adopted.filter(
       (p) =>
         p.status === 'configured' ||
