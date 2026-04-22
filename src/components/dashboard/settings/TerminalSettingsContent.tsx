@@ -41,6 +41,7 @@ import { ZuraPayActivationChecklist } from './terminal/ZuraPayActivationChecklis
 import { ZuraPayReceiptsTab } from './terminal/ZuraPayReceiptsTab';
 import { ZuraPayTippingTab } from './terminal/ZuraPayTippingTab';
 import { ZuraPayAfterpayTab } from './terminal/ZuraPayAfterpayTab';
+import { POSCancellationsFeesTab } from './terminal/POSCancellationsFeesTab';
 
 // Lightweight error boundary for individual tabs
 class TabErrorBoundary extends React.Component<
@@ -450,6 +451,7 @@ export function TerminalSettingsContent() {
           <TabsTrigger value="receipts" className="font-sans">Receipts</TabsTrigger>
           <TabsTrigger value="display" className="font-sans">Display</TabsTrigger>
           <TabsTrigger value="afterpay" className="font-sans">Afterpay</TabsTrigger>
+          <TabsTrigger value="cancellations" className="font-sans">Cancellations & Fees</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
@@ -532,6 +534,12 @@ export function TerminalSettingsContent() {
         <TabsContent value="afterpay" className="mt-6">
           <TabErrorBoundary tabName="Afterpay" key={activeTab === 'afterpay' ? 'afterpay-active' : 'afterpay'}>
             <ZuraPayAfterpayTab />
+          </TabErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="cancellations" className="mt-6">
+          <TabErrorBoundary tabName="Cancellations & Fees" key={activeTab === 'cancellations' ? 'cancellations-active' : 'cancellations'}>
+            <POSCancellationsFeesTab />
           </TabErrorBoundary>
         </TabsContent>
 
