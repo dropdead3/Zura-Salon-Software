@@ -163,6 +163,42 @@ export interface PolicyHealthSummary {
 }
 
 /**
+ * Wave 28.15 — Collapse the 7-state PolicyStatus enum into 3 user-facing
+ * states for badges/headers. The full enum stays in the database to drive
+ * RLS, publish gating, and analytics; this is a render-layer projection.
+ *
+ *   not_started, drafting          → 'draft'
+ *   needs_review                   → 'needs-attention'
+ *   configured, approved_internal,
+ *   published_external, wired      → 'live'
+ *   archived                       → 'draft' (UI treats archived as inert)
+ */
+export type PolicyDisplayStatus = 'draft' | 'live' | 'needs-attention';
+
+export function getDisplayStatus(p?: { status?: PolicyStatus | string | null } | null): PolicyDisplayStatus {
+  if (!p) return 'draft';
+  if (p.status === 'needs_review') return 'needs-attention';
+  if (
+    p.status === 'configured' ||
+    p.status === 'approved_internal' ||
+    p.status === 'published_external' ||
+    p.status === 'wired'
+  ) {
+    return 'live';
+  }
+  return 'draft';
+}
+
+export const POLICY_DISPLAY_STATUS_META: Record<
+  PolicyDisplayStatus,
+  { label: string; tone: 'neutral' | 'success' | 'warning' }
+> = {
+  draft: { label: 'Draft', tone: 'neutral' },
+  live: { label: 'Live', tone: 'success' },
+  'needs-attention': { label: 'Needs attention', tone: 'warning' },
+};
+
+/**
  * A policy is "finalized" only when an approved version exists.
  * Adoption (a row in `policies`) is NOT completion — the wizard
  * bulk-adopts at status `not_started`/`drafting`, which would falsely
