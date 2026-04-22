@@ -171,15 +171,10 @@ export function PolicySurfaceEditor({
                           <SelectItem
                             key={v}
                             value={v}
-                            textValue={VARIANT_META[v].label}
+                            description={VARIANT_META[v].description}
                             className="font-sans text-sm"
                           >
-                            <div className="flex flex-col gap-0.5 py-0.5">
-                              <span className="text-foreground">{VARIANT_META[v].label}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {VARIANT_META[v].description}
-                              </span>
-                            </div>
+                            {VARIANT_META[v].label}
                           </SelectItem>
                         ))}
                       </SelectContent>
