@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, UsersRound, Mail, Key } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -17,6 +18,12 @@ import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
+import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
+import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
+import { TeamPinManagementTab } from '@/components/access-hub/TeamPinManagementTab';
+
+type TeamView = 'roster' | 'bulk-roles' | 'invitations' | 'pins';
+const VALID_VIEWS: TeamView[] = ['roster', 'bulk-roles', 'invitations', 'pins'];
 
 const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
   { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'] },
@@ -75,13 +82,30 @@ export default function TeamMembers() {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
-  const { roles } = useAuth();
+  const { roles, isPlatformUser } = useAuth();
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const capacity = useBusinessCapacity();
   const [search, setSearch] = useState('');
   const [seatsDialogOpen, setSeatsDialogOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
+  const canManage = isSuperAdmin || isPlatformUser;
+
+  const viewParam = searchParams.get('view') as TeamView | null;
+  const view: TeamView = VALID_VIEWS.includes(viewParam as TeamView) ? (viewParam as TeamView) : 'roster';
+
+  const handleViewChange = (next: string) => {
+    const v = next as TeamView;
+    if (v === 'roster') {
+      // Drop the param entirely for the default view
+      const params = new URLSearchParams(searchParams);
+      params.delete('view');
+      setSearchParams(params);
+    } else {
+      setSearchParams({ view: v });
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!members) return [];
@@ -126,71 +150,101 @@ export default function TeamMembers() {
           <UserCapacityBar capacity={capacity} onAddSeats={() => setSeatsDialogOpen(true)} />
         )}
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        {/* Sub-navigation */}
+        <Tabs value={view} onValueChange={handleViewChange}>
+          <TabsList>
+            <TabsTrigger value="roster" className="gap-2">
+              <Users className="h-4 w-4" />
+              Roster
+            </TabsTrigger>
+            <TabsTrigger value="bulk-roles" className="gap-2">
+              <UsersRound className="h-4 w-4" />
+              Bulk Roles
+            </TabsTrigger>
+            <TabsTrigger value="invitations" className="gap-2">
+              <Mail className="h-4 w-4" />
+              Invitations & Approvals
+            </TabsTrigger>
+            <TabsTrigger value="pins" className="gap-2">
+              <Key className="h-4 w-4" />
+              PIN Management
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Users className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-              <p className={tokens.body.muted}>No team members match your search.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-8">
-            {grouped.sections.map(section => {
-              if (section.members.length === 0) return null;
-              const SIcon = section.icon;
-              return (
-                <div key={section.label} className="space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-border/60">
-                    <SIcon className="h-4 w-4 text-primary" />
-                    <h2 className="font-display text-sm uppercase tracking-wider text-foreground">{section.label}</h2>
-                    <span className="text-xs text-muted-foreground">({section.members.length})</span>
+        {view === 'roster' && (
+          <>
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or email…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Users className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className={tokens.body.muted}>No team members match your search.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-8">
+                {grouped.sections.map(section => {
+                  if (section.members.length === 0) return null;
+                  const SIcon = section.icon;
+                  return (
+                    <div key={section.label} className="space-y-3">
+                      <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+                        <SIcon className="h-4 w-4 text-primary" />
+                        <h2 className="font-display text-sm uppercase tracking-wider text-foreground">{section.label}</h2>
+                        <span className="text-xs text-muted-foreground">({section.members.length})</span>
+                      </div>
+                      <div className="space-y-2">
+                        {section.members.map(m => (
+                          <MemberRow
+                            key={m.user_id}
+                            user={m}
+                            onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {grouped.other.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <h2 className="font-display text-sm uppercase tracking-wider text-muted-foreground">Other Roles</h2>
+                      <span className="text-xs text-muted-foreground">({grouped.other.length})</span>
+                    </div>
+                    <div className="space-y-2">
+                      {grouped.other.map(m => (
+                        <MemberRow
+                          key={m.user_id}
+                          user={m}
+                          onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {section.members.map(m => (
-                      <MemberRow
-                        key={m.user_id}
-                        user={m}
-                        onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-            {grouped.other.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/60">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <h2 className="font-display text-sm uppercase tracking-wider text-muted-foreground">Other Roles</h2>
-                  <span className="text-xs text-muted-foreground">({grouped.other.length})</span>
-                </div>
-                <div className="space-y-2">
-                  {grouped.other.map(m => (
-                    <MemberRow
-                      key={m.user_id}
-                      user={m}
-                      onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                    />
-                  ))}
-                </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
+
+        {view === 'bulk-roles' && <UserRolesTab canManage={canManage} />}
+        {view === 'invitations' && <InvitationsTab canManage={canManage} />}
+        {view === 'pins' && <TeamPinManagementTab canManage={canManage} />}
       </div>
 
       <AddUserSeatsDialog open={seatsDialogOpen} onOpenChange={setSeatsDialogOpen} capacity={capacity} />
