@@ -47,7 +47,7 @@ export function SidebarFeedbackButtons({
               </button>
             )}
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={16} className="font-sans">Request a Feature</TooltipContent>
+          <TooltipContent side="right" sideOffset={20} className="font-sans">Request a Feature</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -70,7 +70,7 @@ export function SidebarFeedbackButtons({
               </button>
             )}
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={16} className="font-sans">Report a Bug</TooltipContent>
+          <TooltipContent side="right" sideOffset={20} className="font-sans">Report a Bug</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -93,7 +93,7 @@ export function SidebarFeedbackButtons({
               </Link>
             )}
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={16} className="font-sans">Help Center</TooltipContent>
+          <TooltipContent side="right" sideOffset={20} className="font-sans">Help Center</TooltipContent>
         </Tooltip>
       </div>
 
