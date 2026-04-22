@@ -90,8 +90,11 @@ export function UserRolesTableView({
   onSelectionChange,
   locations,
   onOpenResponsibilities,
+  pinStatusByUser,
+  onOpenPinDialog,
 }: UserRolesTableViewProps) {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const showPinColumn = !!pinStatusByUser && !!onOpenPinDialog;
 
   const locationMap = new Map(locations.map(l => [l.id, l.name]));
 
