@@ -174,7 +174,7 @@ export function PoliciesSetupMode({
                     coreComplete ? 'text-primary' : 'text-muted-foreground',
                   )}
                 >
-                  {coreAdopted} of {coreTotal} configured
+                  {coreAdopted} of {coreTotal} finalized
                 </span>
                 <Progress
                   value={corePct}
@@ -241,7 +241,7 @@ export function PoliciesSetupMode({
                       : 'text-muted-foreground',
                   )}
                 >
-                  {requiredAdopted} of {requiredTotal} adopted
+                  {requiredAdopted} of {requiredTotal} finalized
                 </span>
                 <Progress
                   value={requiredPct}
