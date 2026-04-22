@@ -893,6 +893,97 @@ const SCHEMAS: Record<string, ConfiguratorSchema> = {
     ],
   },
 
+  booking_policy_shape: {
+    key: 'booking_policy_shape',
+    label: 'Booking policy rules',
+    description:
+      'How clients can book, what consultations are gated, and whether a card on file is required to confirm a booking.',
+    sections: [
+      {
+        title: 'Booking commitment',
+        fields: [
+          {
+            key: 'require_card_on_file',
+            label: 'Require a card on file to confirm online bookings',
+            question: 'Should clients save a card on file when booking online?',
+            whyItMatters:
+              'A card on file is the structural lever that makes your cancellation and no-show policies enforceable. Without it, a no-show fee is unrecoverable.',
+            tooltip:
+              'When on, the booking surface collects a card on file before confirming. New services default to requiring a card; existing services are not modified retroactively.',
+            type: 'boolean',
+            defaultValue: false,
+            provenance: {
+              origin: 'derived',
+              surfaces: 'client-facing',
+              surfaceNote:
+                'Drives the card-on-file disclosure clients see at booking, and the per-service default for new services.',
+              editContract: 'sacred',
+            },
+          },
+          {
+            key: 'consultation_required_for',
+            label: 'Consultation required before booking',
+            question: 'Which service categories require a consultation before booking?',
+            whyItMatters:
+              'New guests for these services start with a consultation so scope, price, and timing are confirmed before the chair is committed.',
+            type: 'multiselect',
+            options: [
+              { value: 'color', label: 'Color' },
+              { value: 'extensions', label: 'Extensions' },
+              { value: 'corrective', label: 'Corrective work' },
+              { value: 'chemical', label: 'Chemical services' },
+              { value: 'cuts', label: 'Cuts' },
+            ],
+            defaultValue: ['color', 'extensions', 'corrective'],
+          },
+        ],
+      },
+      {
+        title: 'Booking surfaces',
+        fields: [
+          {
+            key: 'booking_channels',
+            label: 'How clients can book',
+            question: 'Which booking channels do you offer?',
+            whyItMatters:
+              'These are the channels referenced in the client-facing booking instructions.',
+            type: 'multiselect',
+            options: [
+              { value: 'online', label: 'Online' },
+              { value: 'phone', label: 'By phone' },
+              { value: 'in_person', label: 'In person' },
+            ],
+            defaultValue: ['online', 'phone', 'in_person'],
+          },
+        ],
+      },
+      {
+        title: 'Decision authority',
+        fields: [
+          {
+            key: 'authority_role',
+            label: 'Who approves booking exceptions',
+            question: 'Who approves exceptions to the booking policy?',
+            whyItMatters:
+              'This role signs off on edge cases (out-of-window holds, waived card requirements, etc.) and their title appears wherever the policy references the decision-maker.',
+            presets: AUTHORITY_ROLE_PRESETS,
+            type: 'role',
+            options: ROLE_OPTIONS,
+            defaultValue: 'manager',
+            required: true,
+            provenance: {
+              origin: 'derived',
+              surfaces: 'drives-other-field',
+              surfaceNote:
+                'Drives the {{authority_role}} reference in booking-policy wording.',
+              editContract: 'live-derived',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
   generic_shape: {
     key: 'generic_shape',
     label: 'General policy details',

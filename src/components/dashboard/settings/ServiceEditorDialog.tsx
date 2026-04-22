@@ -35,6 +35,7 @@ import { BookingSurfacePreview } from './BookingSurfacePreview';
 import { ServiceFormsLinkagePanel } from './ServiceFormsLinkagePanel';
 import { ServiceAuditLogPanel } from './ServiceAuditLogPanel';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { useBookingPolicyConfig } from '@/hooks/policy/useBookingPolicyConfig';
 
 interface ServiceEditorDialogProps {
   open: boolean;
@@ -50,6 +51,10 @@ interface ServiceEditorDialogProps {
 export function ServiceEditorDialog({
   open, onOpenChange, onSubmit, isPending, categories, initialData, mode, presetCategory,
 }: ServiceEditorDialogProps) {
+  // Org-level booking policy default — drives the initial value of
+  // require_card_on_file when CREATING a new service. Existing services
+  // retain whatever was previously saved on the row.
+  const { requireCardOnFile: orgRequireCardOnFileDefault } = useBookingPolicyConfig();
   const [activeTab, setActiveTab] = useState('details');
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [name, setName] = useState('');
@@ -164,7 +169,7 @@ export function ServiceEditorDialog({
         setDepositType('percentage');
         setDepositAmount('');
         setDepositAmountFlat('');
-        setRequireCardOnFile(false);
+        setRequireCardOnFile(orgRequireCardOnFileDefault);
         // Wave 1
         setIncludeFromPrefix(false);
         setOnlineName('');
@@ -753,6 +758,11 @@ export function ServiceEditorDialog({
                           <MetricInfoTooltip description="Clients must save a payment method before this service can be booked. Enables automatic no-show and cancellation fee collection." />
                         </div>
                         <p className={tokens.body.muted}>Require a saved card to confirm bookings for this service</p>
+                        {mode === 'create' && orgRequireCardOnFileDefault && (
+                          <p className={cn(tokens.body.muted, 'text-[11px] mt-1 italic')}>
+                            Default from your organization's Booking Policy. You can override per service.
+                          </p>
+                        )}
                       </div>
                       <Switch checked={requireCardOnFile} onCheckedChange={setRequireCardOnFile} />
                     </div>
