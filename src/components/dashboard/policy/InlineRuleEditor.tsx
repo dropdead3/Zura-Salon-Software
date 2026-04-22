@@ -376,6 +376,21 @@ export function InlineRuleEditor({
                         </Fragment>
                       );
                     }
+                    // External binding takes precedence over schema fields —
+                    // the binding owns its own field definition + write path.
+                    const external = getExternalRuleBinding(seg.value);
+                    if (external) {
+                      return (
+                        <RuleChipPopover
+                          key={i}
+                          field={external.field}
+                          value={mergedValues[seg.value]}
+                          audience={audience}
+                          onChange={(next) => handleExternalChange(seg.value, next)}
+                          disabled={disabled}
+                        />
+                      );
+                    }
                     const field = fieldsByKey.get(seg.value);
                     if (!field) {
                       return (
@@ -391,7 +406,7 @@ export function InlineRuleEditor({
                       <RuleChipPopover
                         key={i}
                         field={field}
-                        value={values[seg.value]}
+                        value={mergedValues[seg.value]}
                         audience={audience}
                         onChange={(next) => onRuleChange(seg.value, next)}
                         disabled={disabled}
