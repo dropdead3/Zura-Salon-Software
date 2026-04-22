@@ -31,36 +31,45 @@ export function SidebarFeedbackButtons({
           <TooltipTrigger asChild>
             <button
               onClick={() => openDialog('feature_request')}
-              className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out"
+              className={cn(
+                "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
+                !isCollapsed && "flex-1"
+              )}
             >
               <Lightbulb className="h-4 w-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="font-sans">Request a Feature</TooltipContent>
+          <TooltipContent side="right" sideOffset={8} className="font-sans">Request a Feature</TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => openDialog('bug_report')}
-              className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out"
+              className={cn(
+                "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
+                !isCollapsed && "flex-1"
+              )}
             >
               <Bug className="h-4 w-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="font-sans">Report a Bug</TooltipContent>
+          <TooltipContent side="right" sideOffset={8} className="font-sans">Report a Bug</TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
               to={dashPath('/help')}
-              className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out"
+              className={cn(
+                "flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all duration-200 ease-out",
+                !isCollapsed && "flex-1"
+              )}
             >
               <HelpCircle className="h-4 w-4" />
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="right" className="font-sans">Help Center</TooltipContent>
+          <TooltipContent side="right" sideOffset={8} className="font-sans">Help Center</TooltipContent>
         </Tooltip>
       </div>
 

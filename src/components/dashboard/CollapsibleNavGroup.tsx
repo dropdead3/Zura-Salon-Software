@@ -145,7 +145,7 @@ export function CollapsibleNavGroup({
               <Icon className="w-4 h-4" />
             </a>
           </TooltipTrigger>
-          <TooltipContent side="right">{label}</TooltipContent>
+          <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
         </Tooltip>
       );
     }
@@ -206,7 +206,7 @@ export function CollapsibleNavGroup({
                     <Icon className="w-4 h-4" />
                   </a>
                 </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
+                <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
               </Tooltip>
             );
           }

@@ -64,7 +64,7 @@ export function SidebarClockButton({ isCollapsed = false, inFooter = true }: Sid
         <TooltipTrigger asChild>
           {buttonContent}
         </TooltipTrigger>
-        <TooltipContent side="right" className="font-sans">
+        <TooltipContent side="right" sideOffset={8} className="font-sans">
           {label}
           {isClockedIn && todayTotalHours > 0 && ` (${todayTotalHours}h today)`}
         </TooltipContent>

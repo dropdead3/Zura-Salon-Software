@@ -361,7 +361,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               {linkContent}
             </div>
           </TooltipTrigger>
-          <TooltipContent side="right" className="font-sans">
+          <TooltipContent side="right" sideOffset={8} className="font-sans">
             {displayLabel}
             {badgeCount !== undefined && badgeCount > 0 && ` (${badgeCount})`}
           </TooltipContent>
@@ -390,7 +390,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     className="h-6 w-auto max-w-[32px]"
                   />
                 </TooltipTrigger>
-                <TooltipContent side="right">{orgName}</TooltipContent>
+                <TooltipContent side="right" sideOffset={8}>{orgName}</TooltipContent>
               </Tooltip>
             ) : (
               <OrganizationLogo
@@ -414,7 +414,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">Expand sidebar</TooltipContent>
+              <TooltipContent side="right" sideOffset={8}>Expand sidebar</TooltipContent>
             </Tooltip>
           ) : (
             <Button
@@ -471,7 +471,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     <Rocket className="w-4 h-4" />
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent side="right">
+                <TooltipContent side="right" sideOffset={8}>
                   START HERE {onboardingProgress && `(${onboardingProgress.percentage}%)`}
                 </TooltipContent>
               </Tooltip>
@@ -699,7 +699,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                             <Icon className="w-4 h-4" />
                           </a>
                         </TooltipTrigger>
-                        <TooltipContent side="right">{label}</TooltipContent>
+                        <TooltipContent side="right" sideOffset={8}>{label}</TooltipContent>
                       </Tooltip>
                     );
                   }
@@ -853,7 +853,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <FlaskConical className="h-3.5 w-3.5 text-amber-600" />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right">Beta Testing V.1.1</TooltipContent>
+            <TooltipContent side="right" sideOffset={8}>Beta Testing V.1.1</TooltipContent>
           </Tooltip>
         ) : (
           <div className="mx-3 flex items-center justify-center">
