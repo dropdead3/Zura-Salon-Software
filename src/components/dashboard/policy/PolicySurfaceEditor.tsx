@@ -163,14 +163,19 @@ export function PolicySurfaceEditor({
                         updateSurface(surface, { variant_type: v as PolicyVariantType })
                       }
                     >
-                      <SelectTrigger className="h-9 font-sans text-sm">
-                        <SelectValue />
+                      <SelectTrigger className="h-9 font-sans text-sm justify-between">
+                        <SelectValue placeholder="Select tone" />
                       </SelectTrigger>
                       <SelectContent>
                         {allowedVariants.map((v) => (
-                          <SelectItem key={v} value={v} className="font-sans text-sm">
-                            <div className="flex flex-col">
-                              <span>{VARIANT_META[v].label}</span>
+                          <SelectItem
+                            key={v}
+                            value={v}
+                            textValue={VARIANT_META[v].label}
+                            className="font-sans text-sm"
+                          >
+                            <div className="flex flex-col gap-0.5 py-0.5">
+                              <span className="text-foreground">{VARIANT_META[v].label}</span>
                               <span className="text-xs text-muted-foreground">
                                 {VARIANT_META[v].description}
                               </span>
