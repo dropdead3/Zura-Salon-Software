@@ -11,7 +11,14 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { User, Crown, Lock, ChevronDown, ChevronRight, Award } from 'lucide-react';
+import { User, Crown, Lock, ChevronDown, ChevronRight, Award, Key, Pencil, Plus, Trash2, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { tokens } from '@/lib/design-tokens';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
 import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
@@ -19,6 +26,14 @@ import { ResponsibilityBadges } from './ResponsibilityBadges';
 import { cn } from '@/lib/utils';
 import type { UserWithRoles } from '@/hooks/useUserRoles';
 import type { Database } from '@/integrations/supabase/types';
+
+export interface PinStatusEntry {
+  user_id: string;
+  has_pin: boolean;
+  is_primary_owner?: boolean;
+}
+
+export type PinAction = 'set' | 'clear';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
