@@ -94,6 +94,8 @@ const PolicyConflictCenter = lazyWithRetry(() => import("./pages/dashboard/admin
 const HandbookDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookDashboard"));
 const HandbookWizard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookWizard"));
 const AdminSettings = lazyWithRetry(() => import("./pages/dashboard/admin/Settings"));
+const TeamMembers = lazyWithRetry(() => import("./pages/dashboard/admin/TeamMembers"));
+const TeamMemberDetail = lazyWithRetry(() => import("./pages/dashboard/admin/TeamMemberDetail"));
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/dashboard/admin/Announcements"));
 const HomepageStylists = lazyWithRetry(() => import("./pages/dashboard/admin/HomepageStylists"));
 const AccountManagement = lazyWithRetry(() => import("./pages/dashboard/admin/AccountManagement"));
