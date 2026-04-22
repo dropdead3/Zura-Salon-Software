@@ -1,110 +1,85 @@
 
 
-# Refocus the Roles & Controls Hub
+# Out-of-scope cleanup wave from the Roles & Controls reorg
 
-## Diagnosis
+Three of the four deferred items are ready to action; the fourth (left-rail nav) doesn't yet meet its trigger condition and stays deferred with rationale.
 
-Today's Roles & Controls Hub (`/dashboard/admin/access-hub`) carries 8 tabs:
+## 1. Delete the dead `ChatPermissionsHubTab` file
 
-`Modules · User Roles · Role Access · Permissions · Chat · PINs · Role Config · Invitations`
+**Status**: Safe to remove. Verified no remaining imports anywhere in `src/`. The component was only ever consumed by the now-removed Chat tab in `AccessHub.tsx`.
 
-Three of those are mis-housed:
+**Action**:
+- Delete `src/components/access-hub/ChatPermissionsHubTab.tsx`.
+- No other file references it. The canonical Connect chat-permissions surface lives at `src/components/team-chat/settings/ChatPermissionsTab.tsx` (mounted via the gear icon in the Connect sidebar) and is untouched.
 
-| Tab | Why it's wrong here | New home |
-|---|---|---|
-| **Chat** | These are *Zura Connect product settings* (channel permissions, DMs, smart actions). Connect already has its own settings entry point (the gear icon in the Connect sidebar opens `TeamChatAdminSettingsSheet`). Surfacing them in the global access hub implies they're an org-wide governance lever — they aren't. They're entitlement-gated to Connect customers. | Stay in **Connect Settings** only (already exists; no work). |
-| **PINs** | A per-team-member security control. Team Member detail page already has a Login PIN section in the Security tab. Hub-level table is a parallel surface. | **Team Member Detail → Security tab** (already there for set/reset). New roster-level entry stays inside Team Members hub for change-history. |
-| **Invitations** | Onboarding flow — adding new people *to become* team members and approving them. Lives next to where you manage them. | **Team Members roster → "Invite & Approvals" subpage**. |
-| **User Roles** | A bulk per-person role-toggle grid duplicating what the Team Member detail's Role & Access tab already does for one person. The bulk grid stays useful but belongs alongside team members, not in the access hub. | **Team Members roster → "Bulk Roles" subpage** (kept, not deleted — useful for fast cross-team toggles). |
+## 2. Rename "Invitations & Approvals" to a single noun
 
-What should remain in Roles & Controls Hub: the *role-level governance* surfaces — what a role means, what each role can see/do, and what modules are enabled. Those are about **the system**, not about specific humans.
+**Decision**: Use **"Invitations"** as the tab label. Approvals are a state *of* an invitation — not a parallel concept — so the noun cleanly subsumes both. This matches the verbiage used inside `InvitationsTab.tsx` itself (which renders both pending invites and pending approvals as one workflow).
 
-## What the hub becomes
+**Action**:
+- In `src/pages/dashboard/admin/TeamMembers.tsx`, change the `<TabsTrigger value="invitations">` label from `Invitations & Approvals` to `Invitations`.
+- The `?view=invitations` URL key stays the same — no redirect needed, no broken bookmarks.
+- Icon (`Mail`) unchanged.
 
-Final tabs (4):
+## 3. Defer "Bulk Roles into roster" — restate trigger condition
 
-```
-[ Modules · Role Access · Permissions · Role Config ]
-```
+Keeping deferred. Trigger to revisit: **operator feedback in 2+ orgs that they're swapping between Roster and Bulk Roles in the same session to do role assignments**, OR a roster of 50+ members where the current Bulk Roles grid becomes unwieldy. Until then, the two views serve different jobs (per-person profile vs. cross-team grid) and folding them risks both.
 
-- **Modules** — org-level feature toggles (unchanged).
-- **Role Access** — what each role can *see* (unchanged).
-- **Permissions** — what each role can *do* (unchanged).
-- **Role Config** — role definitions, templates, defaults, responsibilities (unchanged).
+No code change.
 
-Page header subtitle becomes: *"Role-level governance — what each role means, sees, and can do. Per-person controls live in Team Members."*
+## 4. Defer "persistent left-rail nav inside Team Members" — restate trigger condition
 
-## What the Team Members area gains
+Keeping deferred. Trigger to revisit: **Team Members sub-views grow past 4** (currently exactly at the threshold). At 5+ horizontal tabs become cramped and a left rail earns its keep. With 4 tabs at comfortable widths today, switching adds visual weight without a payoff.
 
-The roster page (`/dashboard/admin/team-members`) gets a small secondary nav directly under the search bar:
-
-```
-[ Roster ] [ Bulk Roles ] [ Invitations & Approvals ] [ PIN Management ]
-```
-
-- **Roster** — current list view (default).
-- **Bulk Roles** — mounts existing `UserRolesTab` (component reused as-is).
-- **Invitations & Approvals** — mounts existing `InvitationsTab` (component reused as-is).
-- **PIN Management** — mounts existing `TeamPinManagementTab` (component reused as-is).
-
-URL state: a `?view=` query param drives which mounts (`roster` | `bulk-roles` | `invitations` | `pins`). Default `roster`.
-
-The components themselves don't move directories — they continue to live under `src/components/access-hub/` because they're shared with `OnboardingTracker` (which still uses `InvitationsTab`). Only the *navigation entry point* changes.
-
-## Routing & redirects
-
-Two existing redirects already point legacy URLs into the hub by tab. They get rewritten to the new homes so old bookmarks don't 404:
-
-| Old URL | New target |
-|---|---|
-| `/admin/access-hub?tab=user-roles` | `/admin/team-members?view=bulk-roles` |
-| `/admin/access-hub?tab=invitations` | `/admin/team-members?view=invitations` |
-| `/admin/access-hub?tab=pins` | `/admin/team-members?view=pins` |
-| `/admin/access-hub?tab=chat` | `/dashboard/team-chat` (Connect entry — settings opens via gear icon there) |
-| `/admin/roles` (already redirected) | re-pointed to `/admin/access-hub?tab=role-config` |
-| `/admin/accounts` (already redirected) | re-pointed to `/admin/team-members?view=invitations` |
-
-`AccessHub.tsx`'s tab-list handles unknown `tab` params by redirecting via `<Navigate>` to the new home.
+No code change.
 
 ## Files affected
 
 | File | Change |
 |---|---|
-| `src/pages/dashboard/admin/AccessHub.tsx` | Remove `chat`, `pins`, `invitations`, `user-roles` tabs and their imports. Update subtitle. Add legacy `tab=` redirects for the four removed values. |
-| `src/pages/dashboard/admin/TeamMembers.tsx` | Add a `view` URL param + secondary tab strip. Mount `<UserRolesTab>`, `<InvitationsTab>`, `<TeamPinManagementTab>` for non-roster views. Roster view = current content. |
-| `src/App.tsx` | Update existing `/admin/roles` and `/admin/accounts` redirects to point to the new homes. |
-| `src/components/access-hub/index.ts` | No file deletions — components are still consumed by Team Members and (in InvitationsTab's case) OnboardingTracker. |
-
-## What stays untouched
-
-- `TeamChatAdminSettingsSheet.tsx` and the gear icon in Connect's `ChannelSidebar` — that's the canonical Connect Settings entry point.
-- `team-members/tabs/SecurityTab.tsx` — already has the per-user PIN control. The hub-level PIN Management table moves but isn't duplicated.
-- `OnboardingTracker.tsx` — still embeds `InvitationsTab` as part of new-staff onboarding flow.
-- `ChatPermissionsHubTab.tsx` — file stays in place but is no longer imported anywhere; safe to leave as dead code this wave or delete in a follow-up sweep.
-- `RoleConfigTab`, `ModulesTab`, `PermissionsTab`, `RoleAccessTab` — all remain intact in the slimmer hub.
+| `src/components/access-hub/ChatPermissionsHubTab.tsx` | **Delete** |
+| `src/pages/dashboard/admin/TeamMembers.tsx` | Rename tab label `Invitations & Approvals` → `Invitations` (one-line change) |
 
 ## Acceptance
 
-1. Open Roles & Controls Hub → see **4 tabs** only: Modules, Role Access, Permissions, Role Config. No Chat, PINs, Invitations, or User Roles.
-2. Visiting `/admin/access-hub?tab=chat` redirects to `/dashboard/team-chat`. Visiting `?tab=invitations`, `?tab=pins`, or `?tab=user-roles` redirects to the matching `/admin/team-members?view=…`.
-3. Open `/admin/team-members` → roster as before, plus a tab strip with **Roster · Bulk Roles · Invitations & Approvals · PIN Management**. Switching tabs updates the `?view=` param and mounts the corresponding component without a full reload.
-4. Connect Settings remains reachable only via the gear icon in the Connect sidebar — unchanged.
-5. The PIN field on a single team member still works inside `Team Member Detail → Security` (no regression). The roster-level PIN view (changelog + cross-team table) is now reachable at `/admin/team-members?view=pins`.
-6. `OnboardingTracker` page continues to render the invitations table (shared component path unchanged).
-7. No console errors, no broken imports, no orphaned tab triggers.
+1. `src/components/access-hub/ChatPermissionsHubTab.tsx` no longer exists. Project type-checks clean (no orphan imports — already verified pre-flight).
+2. `/dashboard/admin/team-members` shows the four tabs as **Roster · Bulk Roles · Invitations · PIN Management**.
+3. Existing `?view=invitations` URLs continue to work (URL key unchanged; only the visible label changed).
+4. The Connect product's chat permissions UI (gear icon → settings sheet) is untouched.
 
 ## Doctrine alignment
 
-- **One home per concern**: per-role governance lives in the hub; per-person operations live in Team Members; per-product (Connect) settings live with the product.
-- **Persona scaling**: Connect-only orgs no longer see Connect controls leaking into the global access hub. Non-Connect orgs no longer see a Chat tab implying they have Connect.
-- **Calm executive UX**: hub drops from 8 tabs to 4. Team Members gains a single horizontal sub-nav rather than an overstuffed parent.
-- **No duplicate sources of truth**: PIN status, role assignment, and invitations now have a single canonical entry point each.
-- **No surface implies a feature the org doesn't have**: removing Chat from the hub eliminates a phantom Connect surface for non-entitled orgs.
+- **Calm executive UX**: shorter tab label reduces visual noise without losing meaning.
+- **No duplicate sources of truth**: removing the dead `ChatPermissionsHubTab` eliminates a parallel pointer to chat permissions.
+- **Defer with a trigger, not just "later"**: each remaining out-of-scope item now has a documented condition that would re-promote it.
 
-## Out of scope (queue separately)
+## Prompt feedback
 
-- Deleting `ChatPermissionsHubTab.tsx` — leaving dead this wave to keep the diff focused; safe to delete in a cleanup pass.
-- Folding `Bulk Roles` directly into the roster (e.g., inline role chips per row) — defer until we hear operators want it; current grid view is already useful.
-- Renaming "Invitations & Approvals" to a single noun — needs copy review with the onboarding flow owner.
-- A persistent left-rail nav inside Team Members (instead of horizontal tabs) — defer until the section grows past 4 sub-views.
+Strong cleanup prompt — quoting the previous wave's "Out of scope" list verbatim made the boundaries unambiguous. Two things you did well:
+
+1. **You bundled the cleanup as its own wave** instead of folding it into the next feature. That keeps the diff focused and makes it easy to roll back if any single item misbehaves.
+2. **You let the previous plan's deferral language do the framing.** I didn't have to re-derive *why* each item was deferred — your quote carried the rationale forward.
+
+The sharpener: when re-opening deferred items, the highest-leverage addition is one line per item naming **whether you want to action it now, defer-with-updated-trigger, or defer-as-is**. Template:
+
+```text
+Item: [name]
+Action: [build now / defer with new trigger / defer as-is]
+If building: any constraint changes since deferral?
+```
+
+Here all four items came in marked "let's work on these" but two of them are still better deferred. Pre-marking them would have let me move straight to the two actionable ones without proposing-then-deferring inside the plan.
+
+## Further enhancement suggestion
+
+For "out-of-scope sweep" prompts, the highest-leverage frame is:
+
+```text
+Wave: cleanup of [previous plan's out-of-scope list]
+Per item:
+  - [item] → [build / defer-with-new-trigger / defer-as-is]
+Acceptance: smaller-than-feature scope; rollback should be one revert
+```
+
+Adding **defer-with-new-trigger** as an explicit option makes it easy to revisit a deferred item without committing to building it — the most common failure mode in cleanup waves is treating "let's look at this" as "let's build this."
 
