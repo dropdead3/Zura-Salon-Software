@@ -16,6 +16,8 @@ export interface OrganizationUser {
   is_super_admin: boolean | null;
   hire_date: string | null;
   stylist_level: string | null;
+  location_id: string | null;
+  location_ids: string[] | null;
   roles: AppRole[];
 }
 
@@ -28,7 +30,7 @@ export function useOrganizationUsers(organizationId: string | undefined) {
       // Get all employee profiles for the organization
       const { data: profiles, error: profilesError } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name, email, photo_url, phone, is_active, is_super_admin, hire_date, stylist_level')
+        .select('user_id, full_name, display_name, email, photo_url, phone, is_active, is_super_admin, hire_date, stylist_level, location_id, location_ids')
         .eq('organization_id', organizationId)
         .order('full_name');
 

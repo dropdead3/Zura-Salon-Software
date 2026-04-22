@@ -9,7 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon } from 'lucide-react';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, type LucideIcon } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -29,13 +37,7 @@ const VALID_VIEWS: TeamView[] = ['roster', 'invitations'];
 type RosterMode = 'card' | 'table';
 const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
-const SECTIONS: { label: string; icon: typeof Shield; roles: string[] }[] = [
-  { label: 'Leadership', icon: Shield, roles: ['super_admin', 'admin', 'general_manager', 'manager', 'assistant_manager'] },
-  { label: 'Operations', icon: Cog, roles: ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'] },
-  { label: 'Stylists', icon: Users, roles: ['stylist', 'stylist_assistant'] },
-];
-
-// Role hierarchy ranks (lower = higher rank, displayed first within a section)
+// Role hierarchy ranks (lower = higher rank, displayed first across sections)
 const ROLE_RANK: Record<string, number> = {
   super_admin: 0,
   admin: 1,
@@ -50,19 +52,34 @@ const ROLE_RANK: Record<string, number> = {
   stylist_assistant: 21,
 };
 
-const CATEGORIZED_ROLES = SECTIONS.flatMap(s => s.roles);
+// Per-role icon for section headers
+const ROLE_ICON: Record<string, LucideIcon> = {
+  super_admin: Crown,
+  admin: Shield,
+  general_manager: Briefcase,
+  manager: Briefcase,
+  assistant_manager: Briefcase,
+  director_of_operations: Cog,
+  operations_assistant: Cog,
+  receptionist: Headphones,
+  front_desk: Phone,
+  stylist: Users,
+  stylist_assistant: UserPlus,
+};
 
 function roleLabel(role: string) {
   return role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-/** Returns the highest-ranked role a user holds among a candidate set, or Infinity if none match. */
-function highestRankAmong(userRoles: string[], candidates: string[]): number {
-  let best = Infinity;
+/** Returns the user's highest-ranked (lowest numeric) role from ROLE_RANK, or null if none match. */
+function primaryRoleOf(userRoles: string[]): string | null {
+  let best: string | null = null;
+  let bestRank = Infinity;
   for (const r of userRoles) {
-    if (candidates.includes(r)) {
-      const rank = ROLE_RANK[r] ?? 999;
-      if (rank < best) best = rank;
+    const rank = ROLE_RANK[r];
+    if (rank !== undefined && rank < bestRank) {
+      bestRank = rank;
+      best = r;
     }
   }
   return best;
@@ -141,6 +158,7 @@ export default function TeamMembers() {
   const { effectiveOrganization } = useOrganizationContext();
   const { roles, isPlatformUser } = useAuth();
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
+  const { data: activeLocations = [] } = useActiveLocations(effectiveOrganization?.id);
   const { data: pinTeam = [] } = useTeamPinStatus();
   const { data: stylistLevels = [] } = useStylistLevels();
   const capacity = useBusinessCapacity();
@@ -210,71 +228,84 @@ export default function TeamMembers() {
     return m;
   }, [pinTeam]);
 
+  // Location filter (URL-persisted as ?location=<id>)
+  const locationParam = searchParams.get('location') ?? 'all';
+  const showLocationFilter = activeLocations.length >= 2;
+  const selectedLocation = showLocationFilter ? locationParam : 'all';
+
+  const handleLocationChange = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === 'all') params.delete('location');
+    else params.set('location', next);
+    setSearchParams(params);
+  };
+
   const filtered = useMemo(() => {
     if (!members) return [];
     const q = search.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter(m =>
-      (m.full_name || '').toLowerCase().includes(q) ||
-      (m.display_name || '').toLowerCase().includes(q) ||
-      (m.email || '').toLowerCase().includes(q),
-    );
-  }, [members, search]);
-
-  const grouped = useMemo(() => {
-    // For each section, collect members whose roles intersect, then sort by:
-    //   1. Highest-ranked role within that section's role set (ROLE_RANK ascending)
-    //   2. Alpha by display_name/full_name as tiebreaker
-    // A member is placed in the FIRST section whose roles they match (top-down through SECTIONS),
-    // so multi-role users appear once.
-    const assigned = new Set<string>();
-    const sections = SECTIONS.map(s => {
-      const sectionMembers = filtered.filter(m => {
-        if (assigned.has(m.user_id)) return false;
-        const matches = m.roles.some(r => s.roles.includes(r));
-        if (matches) assigned.add(m.user_id);
-        return matches;
-      });
-      sectionMembers.sort((a, b) => {
-        const ra = highestRankAmong(a.roles, s.roles);
-        const rb = highestRankAmong(b.roles, s.roles);
-        if (ra !== rb) return ra - rb;
-        return compareByName(a, b);
-      });
-      return { ...s, members: sectionMembers };
+    return members.filter(m => {
+      if (q) {
+        const matchesSearch =
+          (m.full_name || '').toLowerCase().includes(q) ||
+          (m.display_name || '').toLowerCase().includes(q) ||
+          (m.email || '').toLowerCase().includes(q);
+        if (!matchesSearch) return false;
+      }
+      if (selectedLocation !== 'all') {
+        const inPrimary = m.location_id === selectedLocation;
+        const inMulti = Array.isArray(m.location_ids) && m.location_ids.includes(selectedLocation);
+        if (!inPrimary && !inMulti) return false;
+      }
+      return true;
     });
-    const other = filtered
-      .filter(m => !assigned.has(m.user_id))
-      .sort(compareByName);
+  }, [members, search, selectedLocation]);
+
+  /**
+   * Group members into one section per role (highest-ranked role wins for multi-role users),
+   * preserving ROLE_RANK order. Members not matching any ranked role fall into `other`.
+   * Within each section, sort alpha by name.
+   */
+  const grouped = useMemo(() => {
+    const byRole = new Map<string, OrganizationUser[]>();
+    const other: OrganizationUser[] = [];
+    for (const m of filtered) {
+      const primary = primaryRoleOf(m.roles);
+      if (primary) {
+        const arr = byRole.get(primary) ?? [];
+        arr.push(m);
+        byRole.set(primary, arr);
+      } else {
+        other.push(m);
+      }
+    }
+    const sections = Object.entries(ROLE_RANK)
+      .sort(([, a], [, b]) => a - b)
+      .map(([role]) => ({
+        role,
+        label: roleLabel(role),
+        icon: ROLE_ICON[role] ?? Users,
+        members: (byRole.get(role) ?? []).slice().sort(compareByName),
+      }))
+      .filter(s => s.members.length > 0);
+    other.sort(compareByName);
     return { sections, other };
   }, [filtered]);
 
   /**
-   * Build the Stylists section's nested sub-groups by level.
-   * Sub-headings follow the org's configured `display_order` (ascending = Level 1 → Level N
-   * per stylist_levels source of truth). Stylists with no level fall into "Unassigned".
-   * `stylist_assistant` role-holders are split into their own bottom sub-section.
-   * If the org has no levels configured, returns null and the caller renders a flat list.
+   * Build the Stylist section's nested sub-groups by level.
+   * Sub-headings follow the org's configured `display_order` from `stylist_levels`.
+   * Stylists with no level fall into "Unassigned".
+   * (Stylist Assistants are now their own top-level role section, not nested here.)
+   * Returns null when the org has no levels configured → caller renders a flat list.
    */
   const stylistSubGroups = useMemo(() => {
-    const stylistsSection = grouped.sections.find(s => s.label === 'Stylists');
+    const stylistsSection = grouped.sections.find(s => s.role === 'stylist');
     if (!stylistsSection || stylistsSection.members.length === 0) return null;
+    if (stylistLevels.length === 0) return null;
 
-    // Split assistants out first
-    const assistants = stylistsSection.members.filter(m =>
-      m.roles.includes('stylist_assistant') && !m.roles.includes('stylist'),
-    );
-    const stylistsOnly = stylistsSection.members.filter(m => m.roles.includes('stylist'));
-
-    if (stylistLevels.length === 0) {
-      // Fall back to flat list when org has no levels configured
-      return null;
-    }
-
-    // Build a slug → label map and group stylists by their stylist_level slug
     const byLevelSlug = new Map<string, OrganizationUser[]>();
     const unassigned: OrganizationUser[] = [];
-    for (const m of stylistsOnly) {
+    for (const m of stylistsSection.members) {
       const slug = m.stylist_level;
       if (slug && stylistLevels.some(l => l.slug === slug)) {
         const arr = byLevelSlug.get(slug) ?? [];
@@ -298,14 +329,6 @@ export default function TeamMembers() {
         key: '__unassigned',
         label: 'Unassigned',
         members: unassigned.sort(compareByName),
-      });
-    }
-
-    if (assistants.length > 0) {
-      levelGroups.push({
-        key: '__assistants',
-        label: 'Stylist Assistants',
-        members: assistants.sort(compareByName),
       });
     }
 
@@ -354,14 +377,32 @@ export default function TeamMembers() {
             {/* Card mode: search + categorized list. Table mode: full UserRolesTab (filters, stat tiles, bulk actions, location grouping, PIN column, PIN activity). */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
               {rosterMode === 'card' ? (
-                <div className="relative max-w-md flex-1 min-w-[240px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name or email…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
+                <div className="flex items-center gap-2 flex-1 min-w-[240px] flex-wrap">
+                  <div className="relative max-w-md flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name or email…"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  {showLocationFilter && (
+                    <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                      <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {activeLocations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               ) : (
                 <div />
@@ -409,10 +450,10 @@ export default function TeamMembers() {
                 {grouped.sections.map(section => {
                   if (section.members.length === 0) return null;
                   const SIcon = section.icon;
-                  const isStylists = section.label === 'Stylists';
+                  const isStylists = section.role === 'stylist';
                   const useSubGroups = isStylists && stylistSubGroups && stylistSubGroups.length > 0;
                   return (
-                    <div key={section.label} className="space-y-3">
+                    <div key={section.role} className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b border-border/60">
                         <SIcon className="h-4 w-4 text-primary" />
                         <h2 className="font-display text-sm uppercase tracking-wider text-foreground">{section.label}</h2>
