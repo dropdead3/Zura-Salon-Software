@@ -117,13 +117,50 @@ function CardOverlays({
 
   return (
     <>
+      {/* Subtle top-down sheen — adds depth without shifting category color */}
+      <div
+        className="absolute inset-0 pointer-events-none z-[1]"
+        style={{
+          background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)',
+        }}
+      />
+      {/* Inner highlight ring — "lit edge" for premium dimension */}
+      <div
+        className="absolute inset-0 pointer-events-none z-[2] rounded-[10px]"
+        style={{
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+        }}
+      />
+      {/* Left accent spine — uses category text color when available */}
+      {useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
+        <div
+          className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-sm pointer-events-none z-[3]"
+          style={{
+            backgroundColor: catColor.text,
+            opacity: 0.7,
+          }}
+        />
+      )}
       {isNoShow && (
-        <div className="absolute inset-0 bg-destructive/20 z-10 pointer-events-none" />
+        <>
+          <div className="absolute inset-0 bg-destructive/12 z-10 pointer-events-none" />
+          <span className="absolute top-1.5 left-1.5 h-2 w-2 rounded-full bg-destructive ring-1 ring-background z-20 pointer-events-none" />
+        </>
       )}
       {isCancelled && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-current opacity-50" />
-        </div>
+        <>
+          {/* Diagonal hatch pattern — reads as "cancelled" faster than dim alone */}
+          <div
+            className="absolute inset-0 pointer-events-none z-10"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 7px)',
+              opacity: 0.06,
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-current opacity-50" />
+          </div>
+        </>
       )}
       {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -245,9 +282,11 @@ function GridContent({
                 <RebookSkippedDot label={declinedReasonLabel} />
               )}
               <span className={cn(
-                'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-                badge.bg, badge.text, badge.border
+                'inline-flex items-center gap-1 text-[10px] px-1.5 py-[1px] rounded-full font-medium whitespace-nowrap border backdrop-blur-[2px]',
+                'bg-white/55 dark:bg-black/25',
+                badge.text, badge.border, 'border-opacity-40'
               )}>
+                <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
                 {statusLabel}
               </span>
             </div>
@@ -266,7 +305,7 @@ function GridContent({
           {showClientAvatar && (
             <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
-                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0 border',
+                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0 border ring-1 ring-white/70 dark:ring-black/40 shadow-sm',
                 appointment.is_new_client
                   ? 'bg-amber-100 text-amber-700 border-transparent dark:bg-amber-900/40 dark:text-amber-300'
                   : 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/25'
@@ -290,9 +329,11 @@ function GridContent({
                 <RebookSkippedDot label={declinedReasonLabel} />
               )}
               <span className={cn(
-                'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-                badge.bg, badge.text, badge.border
+                'inline-flex items-center gap-1 text-[10px] px-1.5 py-[1px] rounded-full font-medium whitespace-nowrap border backdrop-blur-[2px]',
+                'bg-white/55 dark:bg-black/25',
+                badge.text, badge.border, 'border-opacity-40'
               )}>
+                <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
                 {statusLabel}
               </span>
             </div>
@@ -301,7 +342,7 @@ function GridContent({
           {showClientAvatar && (
             <div className="absolute bottom-1 right-1 z-20">
               <span className={cn(
-                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0 border',
+                'h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0 border ring-1 ring-white/70 dark:ring-black/40 shadow-sm',
                 appointment.is_new_client
                   ? 'bg-amber-100 text-amber-700 border-transparent dark:bg-amber-900/40 dark:text-amber-300'
                   : 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/25'
@@ -522,7 +563,7 @@ export function AppointmentCardContent({
   // Every card is a fully rounded pill on all four corners — overlap cards
   // visually "kiss" via column-width math in the views, not by stripping
   // corners or borders here.
-  const roundingClass = 'rounded-lg';
+  const roundingClass = 'rounded-[10px]';
   // ─── All hooks run unconditionally ────────────────────────
   const { resolvedTheme } = useDashboardTheme();
   const isDark = resolvedTheme === 'dark';
@@ -635,15 +676,16 @@ export function AppointmentCardContent({
       className={cn(
         'h-full w-full cursor-pointer transition-all duration-200 ease-out overflow-hidden group relative',
         roundingClass,
-        'hover:shadow-md hover:z-20 hover:brightness-[1.08]',
+        'shadow-[0_1px_2px_rgba(15,23,42,0.06),0_4px_12px_-6px_rgba(15,23,42,0.12)]',
+        'hover:shadow-[0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)] hover:-translate-y-[0.5px] hover:z-20',
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
         // Restored original left accent on every status-colored card.
         !useCategoryColor && !displayGradient && 'border-l-4',
         isCancelled && 'opacity-60',
-        isNoShow && 'ring-2 ring-destructive ring-inset',
-        isSelected && 'ring-2 ring-primary/60 ring-inset',
+        isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
+        isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',
         displayGradient && 'shadow-lg',
         appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',
       )}

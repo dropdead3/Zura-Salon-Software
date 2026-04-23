@@ -43,7 +43,7 @@ export function StylistBadge({ stylistProfile, assistantNames, assistantProfiles
         <div className={cn('z-10 shrink-0 flex items-center -space-x-1', className)}>
           {/* Stylist avatar */}
           {stylistProfile.photo_url ? (
-            <Avatar className={cn(dim, 'ring-1 ring-background')}>
+            <Avatar className={cn(dim, 'ring-1 ring-white/70 dark:ring-black/40 shadow-sm')}>
               <AvatarImage src={stylistProfile.photo_url} />
               <AvatarFallback className={cn(textSize, 'bg-muted/80')}>
                 {getStylistInitials(stylistProfile)}
@@ -53,7 +53,7 @@ export function StylistBadge({ stylistProfile, assistantNames, assistantProfiles
             <span className={cn(
               dim,
               textSize,
-              'rounded-full flex items-center justify-center font-medium ring-1 ring-background',
+              'rounded-full flex items-center justify-center font-medium ring-1 ring-white/70 dark:ring-black/40 shadow-sm',
               'bg-muted/80 backdrop-blur-sm text-muted-foreground',
             )}>
               {getStylistInitials(stylistProfile)}
