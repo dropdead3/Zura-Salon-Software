@@ -472,6 +472,7 @@ const App = () => (
             <AuthProvider>
               <ThemeInitializer />
               <AnimationIntensityInitializer />
+              {import.meta.env.DEV && <ThemeIntegrityHud />}
               <TooltipProvider delayDuration={0}>
                 <Toaster />
                 <Sonner />
