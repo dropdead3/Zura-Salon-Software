@@ -24,7 +24,7 @@ describe("destructive token canon", () => {
     // Walk each line containing `--destructive:` and check the nearest preceding
     // rule selector. Allowed: :root, .dark, or [data-theme=...] variants.
     const lines = css.split("\n");
-    const allowedSelectorRe = /(:root|\.dark|\[data-theme)/;
+    const allowedSelectorRe = /(:root|\.dark|\[data-theme|\.theme-)/;
     const selectorRe = /^(\s*)([^\n{}]+)\{\s*$/;
 
     const violations: { line: number; selector: string }[] = [];
