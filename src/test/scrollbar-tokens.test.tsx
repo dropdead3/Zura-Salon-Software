@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { tokens } from "@/lib/design-tokens";
-import { extractRuleBody, readIndexCss } from "./scrollbar-tokens.fixtures";
+import { extractRuleBody, readIndexCss } from "@/test/css-rule";
 
 describe("scrollbar token canon", () => {
   it("Radix ScrollArea thumb className uses muted-foreground + primary tokens", () => {
