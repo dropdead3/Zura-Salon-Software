@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { Coffee, Moon } from 'lucide-react';
+import { Coffee, Moon, CircleX, Users } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -46,15 +46,22 @@ const BLOCK_TYPE_CONFIG: Record<string, {
     border: 'border-l-muted-foreground/40',
     text: 'text-muted-foreground',
   },
+  block: {
+    icon: CircleX,
+    label: 'Block',
+    bg: 'bg-muted/40',
+    border: 'border-l-muted-foreground/40',
+    text: 'text-muted-foreground',
+  },
   blocked: {
-    icon: Moon,
+    icon: CircleX,
     label: 'Blocked',
     bg: 'bg-muted/40',
-    border: 'border-l-muted-foreground/30',
+    border: 'border-l-muted-foreground/40',
     text: 'text-muted-foreground',
   },
   meeting: {
-    icon: Coffee,
+    icon: Users,
     label: 'Meeting',
     bg: 'bg-primary/15',
     border: 'border-l-primary',
@@ -63,10 +70,10 @@ const BLOCK_TYPE_CONFIG: Record<string, {
 };
 
 const DEFAULT_CONFIG = {
-  icon: Coffee,
+  icon: CircleX,
   label: 'Block',
   bg: 'bg-muted/40',
-  border: 'border-l-muted-foreground/30',
+  border: 'border-l-muted-foreground/40',
   text: 'text-muted-foreground',
 };
 
