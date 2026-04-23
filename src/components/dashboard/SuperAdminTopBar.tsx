@@ -259,7 +259,7 @@ export function SuperAdminTopBar({
                   )}>
                     <Icon className="w-3 h-3" />
                     <span className="hidden 2xl:inline">{badge.label}</span>
-                    <span className="hidden xl:inline 2xl:hidden">{badge.shortLabel}</span>
+                    <span className="hidden xl:inline 2xl:hidden text-sm">{badge.shortLabel}</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-[260px] text-xs">
