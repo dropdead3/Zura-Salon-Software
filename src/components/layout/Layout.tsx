@@ -5,6 +5,26 @@ import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
 
+const DASHBOARD_THEME_CLASSES = [
+  'theme-zura',
+  'theme-bone',
+  'theme-rosewood',
+  'theme-sage',
+  'theme-jade',
+  'theme-marine',
+  'theme-cognac',
+  'theme-noir',
+  'theme-neon',
+  'theme-matrix',
+  'theme-peach',
+  'theme-orchid',
+  'theme-cream',
+  'theme-rose',
+  'theme-ocean',
+  'theme-ember',
+  'theme-prism',
+];
+
 function getIsEditorPreview() {
   if (typeof window === 'undefined') return false;
   return new URLSearchParams(window.location.search).has('preview');
@@ -30,7 +50,7 @@ export function Layout({ children }: LayoutProps) {
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.classList.remove('dark');
-    root.classList.remove('theme-rosewood', 'theme-sage', 'theme-marine', 'theme-zura', 'theme-cognac', 'theme-noir', 'theme-neon', 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
+    root.classList.remove(...DASHBOARD_THEME_CLASSES);
     root.classList.add('theme-bone');
   }
 
@@ -42,7 +62,7 @@ export function Layout({ children }: LayoutProps) {
     root.classList.remove('dark');
     
     // Ensure bone theme is applied
-    root.classList.remove('theme-rosewood', 'theme-sage', 'theme-marine', 'theme-zura', 'theme-cognac', 'theme-noir', 'theme-neon', 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
+    root.classList.remove(...DASHBOARD_THEME_CLASSES);
     root.classList.add('theme-bone');
 
     // Add editor-preview class for scrollbar hiding

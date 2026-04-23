@@ -2,6 +2,8 @@ import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRouteZone } from '@/lib/route-utils';
 
+const CLEAR_CUSTOM_THEME_EVENT = 'dashboard-theme:clear-custom-overrides';
+
 /**
  * Helper: strip all non-platform custom CSS vars from documentElement.
  * Preserves --platform-* vars so platform theme isn't nuked.
@@ -26,15 +28,22 @@ function clearOrgThemeVars() {
 export function ThemeInitializer() {
   const zone = useRouteZone();
   const appliedVarsRef = useRef<string[]>([]);
+  const loadTokenRef = useRef(0);
+
+  const clearAppliedVars = useCallback(() => {
+    if (appliedVarsRef.current.length === 0) return;
+
+    appliedVarsRef.current.forEach((key) => {
+      document.documentElement.style.removeProperty(`--${key}`);
+    });
+    appliedVarsRef.current = [];
+  }, []);
 
   const loadCustomTheme = useCallback(async () => {
+    const loadToken = ++loadTokenRef.current;
+
     if (zone !== 'org-dashboard') {
-      if (appliedVarsRef.current.length > 0) {
-        appliedVarsRef.current.forEach((key) => {
-          document.documentElement.style.removeProperty(`--${key}`);
-        });
-        appliedVarsRef.current = [];
-      }
+      clearAppliedVars();
       return;
     }
 
@@ -52,6 +61,12 @@ export function ThemeInitializer() {
         console.error('Error loading custom theme:', error);
         return;
       }
+
+      if (loadToken !== loadTokenRef.current) {
+        return;
+      }
+
+      clearAppliedVars();
 
       const applied: string[] = [];
 
@@ -79,7 +94,7 @@ export function ThemeInitializer() {
     } catch (error) {
       console.error('Error initializing custom theme:', error);
     }
-  }, [zone]);
+  }, [clearAppliedVars, zone]);
 
   useEffect(() => {
     loadCustomTheme();
@@ -90,6 +105,7 @@ export function ThemeInitializer() {
       if (event === 'SIGNED_IN') {
         loadCustomTheme();
       } else if (event === 'SIGNED_OUT') {
+        loadTokenRef.current += 1;
         clearOrgThemeVars();
         appliedVarsRef.current = [];
       }
@@ -99,6 +115,19 @@ export function ThemeInitializer() {
       subscription.unsubscribe();
     };
   }, [loadCustomTheme]);
+
+  useEffect(() => {
+    const handleClearCustomTheme = () => {
+      loadTokenRef.current += 1;
+      clearAppliedVars();
+    };
+
+    window.addEventListener(CLEAR_CUSTOM_THEME_EVENT, handleClearCustomTheme);
+
+    return () => {
+      window.removeEventListener(CLEAR_CUSTOM_THEME_EVENT, handleClearCustomTheme);
+    };
+  }, [clearAppliedVars]);
 
   return null;
 }

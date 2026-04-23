@@ -8,6 +8,7 @@ export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marin
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
+const CLEAR_CUSTOM_THEME_EVENT = 'dashboard-theme:clear-custom-overrides';
 
 const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
@@ -85,6 +86,11 @@ function clearInlineThemeOverrides() {
   });
 }
 
+function clearCustomThemeSources() {
+  clearInlineThemeOverrides();
+  window.dispatchEvent(new CustomEvent(CLEAR_CUSTOM_THEME_EVENT));
+}
+
 function applyTheme(theme: ColorTheme) {
   const html = document.documentElement;
   // Also strip any legacy theme classes that may still be on the element
@@ -142,7 +148,7 @@ export function useColorTheme() {
 
   const setColorTheme = useCallback((theme: ColorTheme) => {
     // 1. Instant DOM + localStorage update
-    clearInlineThemeOverrides();
+    clearCustomThemeSources();
     applyTheme(theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
 
