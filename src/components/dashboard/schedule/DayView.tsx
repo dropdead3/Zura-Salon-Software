@@ -285,12 +285,18 @@ function AppointmentCard({
   // Flush edges: no inner gutter between overlapping cards
   const isFirstCol = columnIndex === 0;
   const isLastCol = columnIndex === totalOverlapping - 1;
-  const leftOffset = isFirstCol ? 1 : 0;
-  const rightPad = isLastCol ? 1 : 0;
+  const isOverlapping = totalOverlapping > 1;
 
-  const shrunkWidth = isDragOverlay ? undefined : (isHoveredRight && totalOverlapping <= 1)
-    ? `calc(${widthPercent * 0.7}%)`
-    : `calc(${widthPercent}% - ${leftOffset + rightPad}px)`;
+  // For overlapping cards: exact equal-width columns, no offsets, butt up flush.
+  // For single cards: keep the hover-shrink affordance for the right-edge grip.
+  const cardWidth = isDragOverlay
+    ? undefined
+    : isOverlapping
+      ? `${widthPercent}%`
+      : isHoveredRight
+        ? `calc(${widthPercent * 0.7}%)`
+        : `${widthPercent}%`;
+  const cardLeft = isOverlapping ? `${leftPercent}%` : `${leftPercent}%`;
 
   return (
     <div
@@ -304,8 +310,8 @@ function AppointmentCard({
       style={{
         ...(isDragOverlay ? { position: 'relative', width: '200px', height: style.height } : style),
         ...(!isDragOverlay ? {
-          left: `calc(${leftPercent}% + ${leftOffset}px)`,
-          width: shrunkWidth,
+          left: cardLeft,
+          width: cardWidth,
           transition: 'width 200ms ease-out',
         } : {}),
       }}
@@ -326,7 +332,9 @@ function AppointmentCard({
         serviceLookup={serviceLookup}
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
-        
+        isOverlapping={isOverlapping}
+        isFirstOverlapCol={isFirstCol}
+        isLastOverlapCol={isLastCol}
         useShortLabels={useShortLabels}
         declinedReasonLabel={declinedReasonLabel}
         connectInactive={connectInactive}
