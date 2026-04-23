@@ -54,9 +54,12 @@ for (const token of TOKENS) {
   }
 
   describe(`semantic token canon: --${token}`, () => {
-    it(`no raw hex or rgba literal on a line mentioning '${token}' in index.css`, () => {
-      const hexOnLine = new RegExp(`${token}[^\\n;]*#[0-9a-fA-F]{3,8}\\b`);
-      const rgbaOnLine = new RegExp(`${token}[^\\n;]*\\brgba?\\(\\s*\\d`);
+    it(`no raw hex or rgba literal in a --${token} declaration in index.css`, () => {
+      // Scoped to `--${token}` (the custom-property prefix), not the bare
+      // word — CSS shorthand like `background: rgba(...)` on an unthemed
+      // marketing surface is unrelated to the `--background` token canon.
+      const hexOnLine = new RegExp(`--${token}(-foreground)?[^\\n;]*#[0-9a-fA-F]{3,8}\\b`);
+      const rgbaOnLine = new RegExp(`--${token}(-foreground)?[^\\n;]*\\brgba?\\(\\s*\\d`);
       expect(indexCss).not.toMatch(hexOnLine);
       expect(indexCss).not.toMatch(rgbaOnLine);
     });
