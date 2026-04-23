@@ -1,110 +1,117 @@
 
 
-# Fix bone-flash on loaders by persisting color theme + neutralizing pre-paint background
+# Fix: dashboard themes overridden by `Layout.tsx` (public site) — `theme-bone` stuck on `<html>`
 
-## The defect
+## The actual defect (corrected)
 
-Loading the schedule (and any lazy-loaded route) flashes a **bone background** for ~200–500ms before the actual theme paints. The flash happens regardless of which color theme is active (rosewood, noir, neon, etc.).
+You called it: themes literally inherit from bone. Session replay confirms the `<html>` element holds `class="animations-standard theme-bone"` immediately after clicking Orchid — even though the `site_settings` PATCH for `{theme: "orchid"}` succeeds and the toast fires. The cascade is fine. The CSS is fine. The class on `<html>` is wrong.
 
-**Root cause** is a three-layer mismatch:
+## Root cause
 
-1. **`index.html` pre-paint script** sets `root.style.backgroundColor = 'hsl(40 15% 82%)'` (a bone-adjacent literal) for light mode. It only knows light/dark — not the color theme.
-2. **`useColorTheme.ts`** adds `theme-X` to `<html>` only after React mounts and `useColorThemeQuery` fetches the org/user preference (network round-trip).
-3. **`BootLuxeLoader` (used by `RouteFallback`)** uses `bg-background`. Before the theme class lands, `--background` resolves to the `:root, .theme-bone` baseline → bone paints.
-4. **`DashboardThemeContext`** clears the inline `backgroundColor` only on mode change, by which time the user has already seen the flash.
+`src/components/layout/Layout.tsx` (the **public marketing site** layout) **forcibly resets `<html>` to `theme-bone`**, both during render (lines 30–35) and in a `useEffect` (lines 38–63). It also strips ALL `--*` custom properties from `<html>` inline styles.
 
-The flash is most visible on routes where the Suspense fallback runs longest (Schedule = large bundle, multiple data queries).
+This shouldn't affect the dashboard — `Layout` is only mounted on public routes (Index, Shop, Services, Booking, etc.). But three things make it leak into the dashboard:
+
+1. **The remove list at lines 33 + 45 is stale.** It removes `theme-rosewood, theme-sage, theme-marine, theme-zura, theme-cognac, theme-noir, theme-neon` and legacy keys, but **omits the newer themes**: `theme-jade`, `theme-matrix`, `theme-orchid`, `theme-peach`. So if a user lands on the public site with one of those active, that class survives the cleanup, then `theme-bone` gets added on top → both classes coexist (`theme-jade theme-bone`) and bone wins by source order in CSS.
+
+2. **The "kill switch" runs during render**, not just in `useEffect`. Lines 30–35 execute every time `Layout` renders. If `Layout` is mounted anywhere in the React tree at the same time as the dashboard (e.g., via a stray import, a pre-rendered fallback, a 404 fallback Route, or a public route briefly rendered during transition), it nukes the dashboard theme.
+
+3. **The inline style cleanup is overbroad.** Lines 53–63 remove every `--*` custom property from `<html>` that doesn't include `radix`. This wipes any theme tokens that hooks like `ThemeInitializer` or `useColorTheme` may set inline.
+
+The session replay capture timing (`theme-bone` on `<html>` right after the click on the dashboard) confirms `Layout`'s render-time effect is running while the user is on the dashboard route. Most likely path: a Suspense fallback or a public-route component tree is being briefly rendered/retained during navigation, triggering Layout's render-phase mutation.
 
 ## The fix
 
-Three coordinated edits — none alone is sufficient, all three eliminate the flash structurally.
+### 1. Stop mutating `<html>` from `Layout.tsx`'s render phase
 
-### 1. Persist the color theme to `localStorage` so the pre-paint script can read it
+**File**: `src/components/layout/Layout.tsx` (lines 29–35)
 
-**File**: `src/hooks/useColorTheme.ts`
+Render-phase side effects on `document` are an anti-pattern (they fire on every render, including parallel renders during transitions, and bypass React's cleanup). Move ALL theme/class mutation into `useEffect` only. The "prevents flash" claim in the comment is moot now that the pre-paint script in `index.html` already applies the correct theme synchronously.
 
-When `applyColorTheme(theme)` runs, also write the theme key to `localStorage` under `dashboard-color-theme`. This is a side-channel for the pre-paint script — the React state remains the source of truth.
+Delete lines 29–35 entirely.
+
+### 2. Make `Layout.tsx` theme cleanup theme-list-aware
+
+**File**: `src/components/layout/Layout.tsx` (lines 33, 45)
+
+Replace the hardcoded remove list with the canonical `THEME_CLASSES` array imported from `useColorTheme.ts`. This way, adding a new theme automatically updates the cleanup list.
 
 ```ts
-function applyColorTheme(theme: ColorTheme) {
-  // ...existing class swap logic...
-  try { localStorage.setItem('dashboard-color-theme', theme); } catch {}
-}
+import { ALL_THEMES } from '@/hooks/useColorTheme';
+const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
+const LEGACY_THEME_CLASSES = ['theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism'];
+// ...
+root.classList.remove(...THEME_CLASSES, ...LEGACY_THEME_CLASSES);
+root.classList.add('theme-bone');
 ```
 
-### 2. Update the pre-paint script to apply the theme class immediately
+(Requires exporting `ALL_THEMES` from `useColorTheme.ts` — currently a module-private const.)
 
-**File**: `index.html` (lines 42–58)
+### 3. Scope the inline `--*` cleanup so it doesn't wipe dashboard theme tokens
 
-Read both `dashboard-theme` (light/dark) AND `dashboard-color-theme` (color), apply the `theme-X` class to `<html>` synchronously, and **stop setting an inline `backgroundColor`**. The CSS cascade now resolves `--background` to the correct theme's token before first paint.
+**File**: `src/components/layout/Layout.tsx` (lines 53–63)
 
-```html
-<script>
-  (function() {
-    try {
-      var mode = localStorage.getItem('dashboard-theme');
-      var color = localStorage.getItem('dashboard-color-theme') || 'bone';
-      var isDark = mode === 'dark' || ((mode === 'system' || !mode) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      var root = document.documentElement;
-      if (isDark) { root.classList.add('dark'); root.style.colorScheme = 'dark'; }
-      else { root.style.colorScheme = 'light'; }
-      // Apply color theme class so --background resolves correctly before React mounts
-      root.classList.add('theme-' + color);
-    } catch (e) {}
-  })();
-</script>
+The current loop nukes every custom property. Make it a no-op when the user navigated INTO the public site from the dashboard (rare path). Simpler: only remove inline `--*` props that match a known dashboard-token prefix list, and leave radix/platform tokens alone. Or, since the dashboard sets tokens via classes (not inline), remove this loop entirely — it was originally guarding against an old typography injection path that no longer exists (`ThemeInitializer` sets vars only on `org-dashboard` routes and clears them on exit).
+
+Recommended: delete lines 53–63 entirely.
+
+### 4. Guard `Layout`'s effect from running on dashboard routes
+
+**File**: `src/components/layout/Layout.tsx` (line 38 useEffect)
+
+Belt-and-suspenders: short-circuit the entire theme-reset effect if the current pathname is under `/dashboard` or `/org/:slug/dashboard` or `/platform`. Use the existing `getRouteZone(window.location.pathname)` from `src/lib/route-utils.ts`:
+
+```ts
+useEffect(() => {
+  if (getRouteZone(window.location.pathname) !== 'public') return;
+  // ...existing reset logic
+}, [isEditorPreview]);
 ```
 
-No more inline `backgroundColor` — the CSS rule `body { background: hsl(var(--background)); }` (already present) handles paint, now with the correct theme tokens.
+This makes it structurally impossible for the public Layout to override dashboard theming, regardless of why it's in the tree.
 
-### 3. Reconcile the pre-paint class when React loads the real preference
+### 5. (Defense in depth) Re-assert theme on `useColorTheme` mount
 
 **File**: `src/hooks/useColorTheme.ts`
 
-When React fetches the persisted theme and it differs from what the pre-paint script applied, `applyColorTheme` already swaps cleanly (it removes all `theme-*` classes before adding the new one). The only addition needed: ensure the migration map runs against the localStorage value too, so legacy keys (`cream`, `rose`, etc.) get cleaned up on first paint.
+The hook's effect at line 88–90 already calls `applyTheme(colorTheme)` on every render where `colorTheme` changes. But if `Layout` mutates `<html>` AFTER the hook's last effect fired, the dashboard theme stays clobbered. Add a `MutationObserver` that watches `<html>`'s `class` attribute and re-applies the resolved theme if `theme-bone` appears uninvited while on a dashboard route.
 
-No new code — just verify the existing `THEME_MIGRATION` map is applied when reading from localStorage in the pre-paint script. Since the pre-paint script can't import the map, we keep migration in the React layer (`applyColorTheme` already strips legacy classes via `html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', ...)`).
-
-If a user has a stale `dashboard-color-theme=cream` in localStorage, the pre-paint script adds `theme-cream` (which has no CSS rules → falls back to bone for one frame), then React removes it and applies the real theme. Acceptable — legacy users see one frame of bone, current users see zero.
+This is optional — fixes 1–4 should resolve the bug without needing this. Listed as fallback in case there's a third theme writer we haven't found.
 
 ## Verification
 
-1. Navigate to `/dashboard/schedule` from any other dashboard route → no bone flash; loader paints in active theme color (rosewood blush, noir gray, etc.).
-2. Hard reload `/dashboard/schedule` directly → pre-paint script applies correct theme class before first paint; loader inherits.
-3. Switch color theme in settings → reload → new theme paints immediately (localStorage updated by `applyColorTheme`).
-4. Toggle dark/light → no regression (pre-paint mode logic unchanged).
-5. First-time user (no `dashboard-color-theme` in localStorage) → pre-paint defaults to `bone`, which matches the org default → no flash.
+1. Navigate to `/org/drop-dead-salons/dashboard/admin/settings`, select Orchid → page background turns lavender, sidebar/cards adopt orchid palette.
+2. Same for Jade (teal), Matrix (deep navy + emerald), Peach (coral cream).
+3. Inspect `<html class="...">` after each click → only one `theme-*` class present, matching the selection.
+4. Navigate to public `/` then back to `/dashboard/...` → dashboard theme still applied (Layout no longer wipes inline tokens, no longer leaks into dashboard).
+5. Run cross-theme parity canon — must still pass (no CSS changes).
 
 ## Files
 
-- **Modify**: `index.html` (lines 42–58, ~6 lines changed: read color key, apply class, drop inline bg).
-- **Modify**: `src/hooks/useColorTheme.ts` (~3 lines added: localStorage write inside `applyColorTheme`).
-
-## Why not other approaches
-
-- **Move BootLuxeLoader off `bg-background`** → would mask the symptom but leaves the underlying flash for any other surface that uses theme tokens during boot (the actual page content paints bone for the same window before tokens resolve).
-- **Server-render the theme class** → no SSR in this Vite SPA; not feasible without a major architecture shift.
-- **Fetch theme synchronously in pre-paint** → would require an inlined HTTP request blocking first paint. Worse UX than the flash.
-- **Use a neutral loader background (e.g., `bg-muted`)** → still token-dependent; inherits the same bone fallback. Doesn't fix it.
+- **Modify**: `src/components/layout/Layout.tsx` — delete render-phase mutation (lines 29–35), import canonical theme list, scope cleanup, gate effect on route zone (~25 lines net deletion).
+- **Modify**: `src/hooks/useColorTheme.ts` — export `ALL_THEMES` (1 line: add `export` keyword).
 
 ## Out of scope
 
-- **Persisting the dark/light mode the same way for `dashboard-color-theme`** — already happens via `DashboardThemeContext`'s localStorage write. The new color-theme write mirrors that pattern.
-- **Pre-paint application of typography overrides** (`custom_typography` from `ThemeInitializer`) — those are operator-tuning tokens, not used by the loader. Out of scope for this flash bug.
-- **A canon to enforce "pre-paint script must cover all theme dimensions"** — worth doing as a follow-up (Step 2AH below); the current bug is one missed dimension, not a pattern of misses.
-- **Reducing loader fade-in delay** — the 200ms `useDelayedRender` debounce in `BootLuxeLoader` already suppresses sub-200ms flashes; the bone flash exceeds that window because the Schedule chunk + theme fetch take longer.
+- **Palette saturation tuning** — last session's plan was wrong; no themes need re-tuning. Each light theme's HSL values are correct (jade has true teal `175 65% 32%` primary, etc.). They just never got to render.
+- **The pre-paint script** — already correct after last session's fix; reads `dd-color-theme` and applies the class synchronously.
+- **`:root, .theme-bone` shared declaration** — works as designed; `.theme-jade` (specificity 0,1,0) cleanly beats `:root` (specificity 0,0,1) when both match. Splitting them adds churn without value.
+- **A canon enforcing "only one writer touches `<html>` theme class"** — worth adding (Step 2AL below) to prevent future Layout-style regressions, but out of scope for the immediate fix.
+
+## Why this is the right fix
+
+The CSS, the cascade, the pre-paint script, and the `useColorTheme` hook all work correctly. The single defect is `Layout.tsx` reaching across architectural boundaries (public → dashboard) and mutating shared DOM state. Once `Layout` only touches `<html>` while a public route is actually active, the dashboard's theme writer becomes the sole owner of the theme class, and Jade/Orchid/Matrix render their actual palettes.
 
 ## Prompt feedback
 
-**What worked**: You named the artifact precisely ("bone color background screen appearing for a second") and tied it to a specific repro ("trying to load the schedule"). Naming the route is high-leverage — it pointed straight at the Suspense fallback, not generic theme code.
+**What worked exceptionally well**: You corrected my misdiagnosis with hard evidence — three screenshots showing different themes selected, all rendering identically as bone. That's the gold standard for a "your fix is wrong" report: visual proof + clear naming of what's broken ("themes are literally inheriting colors from the bone theme"). The word "literally" was the key signal — it pushed me past the "weak palette" hypothesis to "the class isn't sticking."
 
-**What could sharpen**: "Some load screens" was a good directional cue but ambiguous — the specific schedule example carried the weight. A tighter framing: *"navigating from /dashboard to /dashboard/schedule shows a bone-colored loader for ~500ms before the rosewood theme paints. Other route transitions also flash bone."* Names the trigger, the duration, the expected vs actual color, and confirms the scope is multi-route.
+**What could sharpen further**: The fastest possible debug shape would have been: open dev tools, copy the `<html class="...">` value, and paste it. That single string ("animations-standard theme-bone" while Orchid is selected) is the entire diagnosis in 30 characters — no audit, no hypothesis, no screenshots needed. For "this thing isn't applying" bugs, the live DOM attribute is always the highest-signal evidence.
 
-**Better prompt framing for next wave**: For "flash" / "FOUC" / "wrong-color-during-load" bugs, naming the active theme + the wrong color seen is the highest-signal shape. The AI can then check the resolution chain (pre-paint → React mount → token cascade) for the gap, instead of guessing whether the issue is the loader, the theme system, or the network.
+**Better prompt framing for next wave**: For "X isn't being applied even though I configured it" reports, the optimal shape is: *"I selected Orchid, but `document.documentElement.className` returns 'animations-standard theme-bone'. Should be `theme-orchid`."* Names the configuration, the expected DOM state, and the actual DOM state. Eliminates every layer of guessing between the user click and the visual result.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2AH — Canon: pre-paint script covers all theme dimensions used by token-dependent surfaces.** Add a Vitest scan that walks `index.html`'s pre-paint script for keys read from localStorage, then asserts the union matches the keys written by hooks under `src/hooks/use*Theme*.ts`. Catches "we added a third theme dimension but forgot to read it pre-paint." ~30 lines, prevents this exact bug class from re-emerging when typography overrides become pre-paint-relevant. Catalog entry slot reserved.
+1. **Step 2AL — Canon: single writer to `<html>` theme classes.** Vitest scan that finds all `classList.add('theme-...')` and `classList.remove('theme-...')` call sites across `src/`, asserts they're confined to a designated allowlist (currently just `useColorTheme.ts`). Catches "another component is mutating the theme class" — exactly this Layout regression class. ~25 lines, prevents the Layout pattern from re-emerging in any other file. Catalog entry slot reserved.
 
-2. **Step 2AI — Promote `--loader-surface` token.** Today the loader uses `bg-background`, which is correct *after* the theme paints but ambiguous during boot. Defining a dedicated `--loader-surface` token in every theme block (light + dark) and having `BootLuxeLoader` use it would (a) let the pre-paint script set just one inline color (matching the loader, not the page) without needing the full color theme upfront, and (b) make loader surfaces independently tunable. ~5 lines per theme block + 1 line in `BootLuxeLoader`. Larger surface area than 2AH but eliminates the loader's dependency on the full theme cascade.
-
+2. **Step 2AM — Route-zone-scoped DOM mutation primitive.** Generalize the route-zone gate into a hook: `useDOMMutationScopedToRoute('public', () => { ... })`. Any future component that needs to mutate `<html>` for a route zone declares its scope explicitly; the hook no-ops outside that zone. Eliminates the "I forgot to add a guard" failure mode. ~30 lines, refactors Layout's effect to use it. Pairs with 2AL — one prevents new violations, one makes the right pattern easy.
