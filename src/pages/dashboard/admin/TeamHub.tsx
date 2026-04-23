@@ -17,6 +17,7 @@ import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { useOpsHubFavorites } from '@/hooks/useOpsHubFavorites';
 import { UnfinishedFromSetupCallout } from '@/components/onboarding/setup/UnfinishedFromSetupCallout';
+import { Divider } from '@/components/ui/Divider';
 
 import {
   ClipboardList,
