@@ -299,12 +299,12 @@ export const colorThemes = [
     description: 'Premium magenta & violet jewel',
     lightPreview: {
       bg: 'hsl(280 30% 97%)',
-      accent: 'hsl(200 60% 90%)',
+      accent: 'hsl(285 35% 90%)',
       primary: 'hsl(290 75% 55%)',
     },
     darkPreview: {
       bg: 'hsl(265 35% 5%)',
-      accent: 'hsl(200 50% 16%)',
+      accent: 'hsl(285 30% 16%)',
       primary: 'hsl(290 90% 65%)',
     },
   },
