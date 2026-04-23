@@ -74,14 +74,28 @@ const baselineColorTokens = new Set(
   ),
 );
 
+/**
+ * Selectors that match the theme-selector regex but exist for non-color
+ * primitive plumbing (animation multipliers, dark-mode elevation overrides).
+ * They're structurally not "themes" and shouldn't be parity-checked.
+ */
+const STRUCTURAL_NON_THEME_SELECTORS = new Set<string>([
+  ":root",  // animation + elevation primitives only
+  ".dark",  // dark-mode elevation overrides only
+]);
+
 // Only theme-defining selectors that actually declare ≥1 color token.
 // Filters out:
+//   - the baseline itself (compared against, not asserted)
+//   - structural primitive selectors (`:root`, `.dark`) per
+//     STRUCTURAL_NON_THEME_SELECTORS
 //   - descendant utility selectors (`.dark .hover-lift`) that match the
 //     theme regex but aren't theme blocks
 //   - decorative-gradient blocks (`html.theme-*`) that only declare
 //     `--mesh-gradient` — structurally distinct from color theme blocks
 const themeSelectors = extractThemeSelectors(indexCss).filter((sel) => {
   if (sel === BASELINE_THEME) return false;
+  if (STRUCTURAL_NON_THEME_SELECTORS.has(sel)) return false;
   const body = extractRuleBody(indexCss, sel);
   if (!body) return false;
   const declared = extractDefinedTokens(body);
