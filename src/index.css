@@ -1540,64 +1540,64 @@ html, body, #root {
   }
 
   .dark.theme-orchid {
-    --background: 30 18% 6%;
+    --background: 30 16% 5%;
     --foreground: 40 25% 95%;
 
-    --card: 30 16% 9%;
+    --card: 30 14% 10%;
     --card-foreground: 40 25% 95%;
 
-    --popover: 30 16% 9%;
+    --popover: 30 14% 10%;
     --popover-foreground: 40 25% 95%;
 
-    --primary: 38 65% 64%;
+    --primary: 36 52% 62%;
     --primary-foreground: 30 30% 10%;
 
-    --secondary: 345 32% 58%;
+    --secondary: 345 45% 64%;
     --secondary-foreground: 40 25% 95%;
 
-    --muted: 30 12% 14%;
-    --muted-strong: 30 14% 11%;
+    --muted: 30 10% 15%;
+    --muted-strong: 30 12% 12%;
     --muted-foreground: 40 12% 65%;
 
-    --accent: 345 22% 22%;
+    --accent: 345 28% 20%;
     --accent-foreground: 40 25% 95%;
 
     --oat: 30 14% 28%;
     --oat-foreground: 40 25% 88%;
 
-    --gold: 38 70% 62%;
+    --gold: 36 55% 60%;
     --gold-foreground: 30 100% 10%;
 
-    --chart-1: 38 65% 64%;
-    --chart-2: 345 32% 58%;
-    --chart-3: 38 60% 54%;
-    --chart-4: 345 38% 50%;
+    --chart-1: 36 52% 62%;
+    --chart-2: 345 45% 64%;
+    --chart-3: 36 48% 52%;
+    --chart-4: 345 50% 56%;
     --chart-5: 25 45% 62%;
 
     --success: 145 50% 25%;
     --success-foreground: 145 60% 75%;
 
-    --warning: 38 85% 55%;
+    --warning: 36 80% 58%;
     --warning-foreground: 38 90% 75%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 14% 18%;
+    --border: 30 12% 20%;
     --input: 30 12% 16%;
-    --ring: 38 65% 64%;
+    --ring: 36 52% 62%;
 
-    --sidebar-background: 30 16% 8%;
+    --sidebar-background: 30 14% 7%;
     --sidebar-foreground: 40 25% 95%;
-    --sidebar-primary: 38 65% 64%;
+    --sidebar-primary: 36 52% 62%;
     --sidebar-primary-foreground: 30 30% 10%;
-    --sidebar-accent: 345 22% 22%;
+    --sidebar-accent: 345 28% 20%;
     --sidebar-accent-foreground: 40 25% 95%;
-    --sidebar-border: 30 14% 18%;
-    --sidebar-ring: 38 65% 64%;
+    --sidebar-border: 30 12% 20%;
+    --sidebar-ring: 36 52% 62%;
 
-    --card-inner: 30 14% 11%;
-    --card-inner-deep: 30 14% 8%;
+    --card-inner: 30 12% 12%;
+    --card-inner-deep: 30 12% 9%;
   }
 }
 
@@ -3104,10 +3104,10 @@ html.dark.theme-peach {
 
 html.dark.theme-orchid {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(38 65% 38% / 0.22) 0px, transparent 50%),
-    radial-gradient(at 82% 78%, hsl(345 40% 40% / 0.22) 0px, transparent 50%),
-    radial-gradient(at 78% 18%, hsl(38 65% 38% / 0.12) 0px, transparent 45%),
-    radial-gradient(at 22% 82%, hsl(345 40% 40% / 0.12) 0px, transparent 45%);
+    radial-gradient(at 18% 22%, hsl(38 45% 18% / 0.18) 0px, transparent 48%),
+    radial-gradient(at 82% 18%, hsl(345 35% 16% / 0.14) 0px, transparent 45%),
+    radial-gradient(at 78% 82%, hsl(345 38% 18% / 0.16) 0px, transparent 48%),
+    radial-gradient(at 22% 78%, hsl(38 40% 15% / 0.12) 0px, transparent 45%);
 }
 
 /* Reduce motion: keep mesh static (it already is, but disable any future transitions) */
