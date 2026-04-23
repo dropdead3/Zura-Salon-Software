@@ -54,8 +54,8 @@ export const tokens = {
   kpi: {
     /** KPI tile container (rounded, bordered, padded) */
     tile: 'rounded-lg border border-border/50 bg-muted/30 p-4 flex flex-col gap-1',
-    /** KPI tile label: Termina, 11px, uppercase, tracked, muted */
-    label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider',
+    /** KPI tile label: Termina, 11px, uppercase, asymmetric tracking (0.18em), muted */
+    label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-[0.18em]',
     /** KPI tile value: Termina, xl, medium — tabular for column alignment */
     value: 'font-display text-xl font-medium tabular-nums',
     /** KPI trend badge: 10px, medium */
