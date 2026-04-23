@@ -28,7 +28,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-xl border bg-card text-card-foreground",
+          // Premium material: rounded glass + specular top-edge stroke (Wave 1 depth)
+          "rounded-xl border bg-card text-card-foreground premium-surface",
           inferredInteractive && "hover-lift",
           inferredGlow && "card-glow",
           className
