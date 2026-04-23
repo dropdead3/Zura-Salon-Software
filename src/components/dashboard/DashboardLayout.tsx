@@ -466,7 +466,8 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   return (
     <div
       className={cn(
-        "bg-background transition-[padding-top] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        // bg-background removed — let html mesh gradient (body::before) show through
+        "transition-[padding-top] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
         hideFooter ? "h-screen overflow-hidden flex flex-col" : "min-h-screen",
         isImpersonating && "pt-[44px] god-mode-active"
       )}
