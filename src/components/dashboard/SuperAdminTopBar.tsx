@@ -173,6 +173,17 @@ export function SuperAdminTopBar({
       )}
       onMouseLeave={onHeaderHoverEnd}
     >
+      {/* Extended blur zone */}
+      <div
+        className={cn("absolute inset-0 -bottom-8 pointer-events-none", hideFooter && !headerHovered && "opacity-0")}
+        style={{
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+        }}
+      />
+
       {/* ── Three-Zone Bar ── */}
       <div className="relative w-full max-w-none flex items-center h-14 px-6 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full overflow-x-hidden">
 

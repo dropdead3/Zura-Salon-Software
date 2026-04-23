@@ -756,14 +756,12 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                           const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
                           return (
                             <button key={themeOption.id} onClick={() => {
-                              // 1. Primary: dashboard theme (single source of truth via DB)
                               setColorTheme(themeOption.id);
-                              toast({ title: 'Dashboard theme updated', description: `"${themeOption.name}" is now active` });
-                              // 2. Secondary: best-effort palette syncs (independent, no toasts)
                               const mappedName = COLOR_THEME_TO_CATEGORY_MAP[themeOption.id];
                               const matched = categoryThemes?.find(t => t.name === mappedName);
                               if (matched) {
                                 applyCategoryTheme.mutate(matched);
+                                toast({ title: 'Theme updated', description: `Service colors synced to "${mappedName}"` });
                               }
                               syncSplashToTheme(themeOption.id);
                             }}

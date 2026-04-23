@@ -240,69 +240,6 @@ html, body, #root {
     --card-inner-deep: 0 0% 9%;
   }
 
-  /* ===== THEME: ROSEWOOD (Pale Blush Pastel) ===== */
-  .theme-rosewood {
-    --background: 350 45% 93%;
-    --foreground: 350 35% 12%;
-
-    --card: 350 42% 95%;
-    --card-foreground: 350 35% 12%;
-
-    --popover: 350 42% 95%;
-    --popover-foreground: 350 35% 12%;
-
-    --primary: 345 60% 46%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 350 38% 88%;
-    --secondary-foreground: 350 35% 12%;
-
-    --muted: 350 32% 87%;
-    --muted-strong: 350 28% 78%;
-    --muted-foreground: 350 20% 32%;
-
-    --accent: 350 45% 84%;
-    --accent-foreground: 350 35% 12%;
-
-    --oat: 350 35% 80%;
-    --oat-foreground: 350 30% 22%;
-
-    --gold: 42 75% 45%;
-    --gold-foreground: 45 100% 97%;
-
-    /* Chart colors for data visualization */
-    --chart-1: 345 50% 40%;
-    --chart-2: 145 55% 42%;
-    --chart-3: 217 85% 55%;
-    --chart-4: 43 95% 50%;
-    --chart-5: 280 75% 55%;
-
-    --success: 145 40% 85%;
-    --success-foreground: 145 50% 30%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 32 80% 30%;
-
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 350 30% 76%;
-    --input: 350 30% 84%;
-    --ring: 345 60% 46%;
-
-    --sidebar-background: 350 42% 91%;
-    --sidebar-foreground: 350 35% 12%;
-    --sidebar-primary: 345 60% 46%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 38% 87%;
-    --sidebar-accent-foreground: 350 35% 12%;
-    --sidebar-border: 350 30% 76%;
-    --sidebar-ring: 345 60% 46%;
-
-    --card-inner: 350 35% 90%;
-    --card-inner-deep: 350 30% 86%;
-  }
-
   .dark.theme-rosewood {
     --background: 350 15% 6%;
     --foreground: 350 20% 92%;
@@ -367,30 +304,30 @@ html, body, #root {
 
   /* ===== THEME: SAGE (Mint Green Pastel) ===== */
   .theme-sage {
-    --background: 145 32% 92%;
-    --foreground: 145 25% 10%;
+    --background: 145 10% 82%;
+    --foreground: 145 15% 8%;
 
-    --card: 145 28% 94%;
-    --card-foreground: 145 25% 10%;
+    --card: 145 8% 85%;
+    --card-foreground: 145 15% 8%;
 
-    --popover: 145 28% 94%;
-    --popover-foreground: 145 25% 10%;
+    --popover: 145 8% 85%;
+    --popover-foreground: 145 15% 8%;
 
-    --primary: 145 50% 38%;
+    --primary: 145 45% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 25% 86%;
-    --secondary-foreground: 145 25% 10%;
+    --secondary: 145 7% 78%;
+    --secondary-foreground: 145 15% 8%;
 
-    --muted: 145 22% 85%;
-    --muted-strong: 145 20% 76%;
-    --muted-foreground: 145 18% 28%;
+    --muted: 145 5% 72%;
+    --muted-strong: 145 5% 65%;
+    --muted-foreground: 145 4% 30%;
 
-    --accent: 145 32% 82%;
-    --accent-foreground: 145 25% 10%;
+    --accent: 145 8% 76%;
+    --accent-foreground: 145 15% 8%;
 
-    --oat: 145 25% 76%;
-    --oat-foreground: 145 28% 22%;
+    --oat: 145 10% 68%;
+    --oat-foreground: 145 18% 25%;
 
     --gold: 38 70% 38%;
     --gold-foreground: 45 100% 97%;
@@ -411,21 +348,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 22% 72%;
-    --input: 145 22% 82%;
-    --ring: 145 50% 38%;
+    --border: 145 5% 65%;
+    --input: 145 5% 74%;
+    --ring: 145 45% 42%;
 
-    --sidebar-background: 145 30% 90%;
-    --sidebar-foreground: 145 25% 10%;
-    --sidebar-primary: 145 50% 38%;
+    --sidebar-background: 145 8% 83%;
+    --sidebar-foreground: 145 15% 8%;
+    --sidebar-primary: 145 45% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 28% 85%;
-    --sidebar-accent-foreground: 145 25% 10%;
-    --sidebar-border: 145 22% 72%;
-    --sidebar-ring: 145 50% 38%;
+    --sidebar-accent: 145 7% 78%;
+    --sidebar-accent-foreground: 145 15% 8%;
+    --sidebar-border: 145 5% 65%;
+    --sidebar-ring: 145 45% 42%;
 
-    --card-inner: 145 25% 88%;
-    --card-inner-deep: 145 22% 84%;
+    --card-inner: 145 5% 80%;
+    --card-inner-deep: 145 3% 76%;
   }
 
   .dark.theme-sage {
@@ -615,30 +552,30 @@ html, body, #root {
 
   /* ===== THEME: MARINE (Deep navy & electric blue) ===== */
   .theme-marine {
-    --background: 218 55% 94%;
-    --foreground: 220 45% 10%;
+    --background: 218 35% 97%;
+    --foreground: 220 40% 10%;
 
-    --card: 218 52% 96%;
-    --card-foreground: 220 45% 10%;
+    --card: 218 30% 99%;
+    --card-foreground: 220 40% 10%;
 
-    --popover: 218 52% 96%;
-    --popover-foreground: 220 45% 10%;
+    --popover: 218 30% 99%;
+    --popover-foreground: 220 40% 10%;
 
-    --primary: 218 100% 52%;
+    --primary: 218 100% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 218 48% 89%;
-    --secondary-foreground: 220 45% 10%;
+    --secondary: 218 30% 93%;
+    --secondary-foreground: 220 40% 10%;
 
-    --muted: 218 42% 88%;
-    --muted-strong: 218 38% 78%;
-    --muted-foreground: 220 28% 32%;
+    --muted: 218 25% 90%;
+    --muted-strong: 218 25% 82%;
+    --muted-foreground: 220 20% 35%;
 
-    --accent: 218 65% 86%;
-    --accent-foreground: 220 50% 16%;
+    --accent: 218 60% 92%;
+    --accent-foreground: 220 50% 18%;
 
-    --oat: 218 40% 82%;
-    --oat-foreground: 220 35% 22%;
+    --oat: 218 25% 86%;
+    --oat-foreground: 220 30% 25%;
 
     --gold: 38 70% 38%;
     --gold-foreground: 45 100% 97%;
@@ -659,21 +596,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 218 42% 78%;
-    --input: 218 42% 86%;
-    --ring: 218 100% 52%;
+    --border: 218 25% 88%;
+    --input: 218 25% 90%;
+    --ring: 218 100% 56%;
 
-    --sidebar-background: 218 55% 92%;
-    --sidebar-foreground: 220 45% 10%;
-    --sidebar-primary: 218 100% 52%;
+    --sidebar-background: 218 30% 96%;
+    --sidebar-foreground: 220 45% 12%;
+    --sidebar-primary: 218 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 218 60% 87%;
-    --sidebar-accent-foreground: 220 50% 16%;
-    --sidebar-border: 218 42% 78%;
-    --sidebar-ring: 218 100% 52%;
+    --sidebar-accent: 218 50% 92%;
+    --sidebar-accent-foreground: 220 50% 18%;
+    --sidebar-border: 218 25% 88%;
+    --sidebar-ring: 218 100% 56%;
 
-    --card-inner: 218 52% 91%;
-    --card-inner-deep: 218 48% 87%;
+    --card-inner: 218 30% 96%;
+    --card-inner-deep: 218 28% 93%;
   }
 
   .dark.theme-marine {
@@ -740,30 +677,30 @@ html, body, #root {
 
   /* ===== THEME: ZURA (Brand Violet/Purple) ===== */
   .theme-zura {
-    --background: 265 45% 93%;
-    --foreground: 260 30% 10%;
+    --background: 260 25% 95%;
+    --foreground: 260 20% 8%;
 
-    --card: 265 42% 95%;
-    --card-foreground: 260 30% 10%;
+    --card: 260 20% 97%;
+    --card-foreground: 260 20% 8%;
 
-    --popover: 265 42% 95%;
-    --popover-foreground: 260 30% 10%;
+    --popover: 260 20% 97%;
+    --popover-foreground: 260 20% 8%;
 
-    --primary: 270 75% 52%;
+    --primary: 270 70% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 265 38% 88%;
-    --secondary-foreground: 260 30% 10%;
+    --secondary: 260 15% 90%;
+    --secondary-foreground: 260 20% 8%;
 
-    --muted: 265 32% 87%;
-    --muted-strong: 265 30% 78%;
-    --muted-foreground: 260 22% 38%;
+    --muted: 260 12% 90%;
+    --muted-strong: 260 12% 84%;
+    --muted-foreground: 260 10% 45%;
 
-    --accent: 265 45% 84%;
-    --accent-foreground: 260 30% 10%;
+    --accent: 260 20% 88%;
+    --accent-foreground: 260 20% 8%;
 
-    --oat: 265 38% 80%;
-    --oat-foreground: 260 35% 22%;
+    --oat: 260 18% 85%;
+    --oat-foreground: 260 22% 25%;
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 90% 15%;
@@ -784,21 +721,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 265 32% 76%;
-    --input: 265 32% 86%;
-    --ring: 270 75% 52%;
+    --border: 260 12% 85%;
+    --input: 260 15% 92%;
+    --ring: 270 70% 55%;
 
-    --sidebar-background: 265 42% 91%;
-    --sidebar-foreground: 260 30% 10%;
-    --sidebar-primary: 270 75% 52%;
+    --sidebar-background: 260 18% 93%;
+    --sidebar-foreground: 260 20% 8%;
+    --sidebar-primary: 270 70% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 265 38% 87%;
-    --sidebar-accent-foreground: 260 30% 10%;
-    --sidebar-border: 265 32% 76%;
-    --sidebar-ring: 270 75% 52%;
+    --sidebar-accent: 260 15% 88%;
+    --sidebar-accent-foreground: 260 20% 8%;
+    --sidebar-border: 260 12% 85%;
+    --sidebar-ring: 270 70% 55%;
 
-    --card-inner: 265 38% 90%;
-    --card-inner-deep: 265 32% 86%;
+    --card-inner: 260 15% 92%;
+    --card-inner-deep: 260 18% 88%;
   }
 
   .dark.theme-zura {
@@ -865,30 +802,30 @@ html, body, #root {
 
   /* ===== THEME: COGNAC (Bourbon amber & leather) ===== */
   .theme-cognac {
-    --background: 28 50% 91%;
-    --foreground: 20 35% 10%;
+    --background: 25 30% 94%;
+    --foreground: 20 25% 8%;
 
-    --card: 28 48% 93%;
-    --card-foreground: 20 35% 10%;
+    --card: 25 25% 96%;
+    --card-foreground: 20 25% 8%;
 
-    --popover: 28 48% 93%;
-    --popover-foreground: 20 35% 10%;
+    --popover: 25 25% 96%;
+    --popover-foreground: 20 25% 8%;
 
-    --primary: 28 75% 40%;
+    --primary: 28 70% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 28 42% 86%;
-    --secondary-foreground: 20 35% 10%;
+    --secondary: 25 18% 88%;
+    --secondary-foreground: 20 25% 8%;
 
-    --muted: 28 35% 85%;
-    --muted-strong: 28 32% 76%;
-    --muted-foreground: 22 25% 32%;
+    --muted: 25 14% 88%;
+    --muted-strong: 25 14% 82%;
+    --muted-foreground: 20 12% 45%;
 
-    --accent: 28 50% 80%;
-    --accent-foreground: 20 35% 10%;
+    --accent: 25 22% 85%;
+    --accent-foreground: 20 25% 8%;
 
-    --oat: 28 42% 76%;
-    --oat-foreground: 22 38% 22%;
+    --oat: 25 20% 82%;
+    --oat-foreground: 20 28% 25%;
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 90% 15%;
@@ -908,21 +845,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 28 35% 74%;
-    --input: 28 38% 84%;
-    --ring: 28 75% 40%;
+    --border: 25 14% 83%;
+    --input: 25 18% 90%;
+    --ring: 28 70% 42%;
 
-    --sidebar-background: 28 48% 89%;
-    --sidebar-foreground: 22 35% 10%;
-    --sidebar-primary: 28 75% 40%;
+    --sidebar-background: 25 20% 91%;
+    --sidebar-foreground: 24 25% 8%;
+    --sidebar-primary: 28 70% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 28 45% 84%;
-    --sidebar-accent-foreground: 22 35% 10%;
-    --sidebar-border: 28 35% 74%;
-    --sidebar-ring: 28 75% 40%;
+    --sidebar-accent: 25 18% 86%;
+    --sidebar-accent-foreground: 24 25% 8%;
+    --sidebar-border: 25 14% 83%;
+    --sidebar-ring: 28 70% 42%;
 
-    --card-inner: 28 42% 88%;
-    --card-inner-deep: 28 38% 84%;
+    --card-inner: 25 18% 90%;
+    --card-inner-deep: 25 20% 86%;
   }
 
   .dark.theme-cognac {
@@ -988,30 +925,30 @@ html, body, #root {
 
   /* ===== THEME: NOIR (Pure Monochrome) ===== */
   .theme-noir {
-    --background: 0 0% 92%;
-    --foreground: 0 0% 6%;
+    --background: 0 0% 96%;
+    --foreground: 0 0% 8%;
 
-    --card: 0 0% 96%;
-    --card-foreground: 0 0% 6%;
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 8%;
 
-    --popover: 0 0% 96%;
-    --popover-foreground: 0 0% 6%;
+    --popover: 0 0% 98%;
+    --popover-foreground: 0 0% 8%;
 
-    --primary: 0 0% 6%;
+    --primary: 0 0% 8%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 86%;
-    --secondary-foreground: 0 0% 6%;
+    --secondary: 0 0% 90%;
+    --secondary-foreground: 0 0% 8%;
 
-    --muted: 0 0% 84%;
-    --muted-strong: 0 0% 74%;
-    --muted-foreground: 0 0% 32%;
+    --muted: 0 0% 90%;
+    --muted-strong: 0 0% 84%;
+    --muted-foreground: 0 0% 42%;
 
-    --accent: 0 0% 80%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 0 0% 88%;
+    --accent-foreground: 0 0% 8%;
 
-    --oat: 0 0% 76%;
-    --oat-foreground: 0 0% 20%;
+    --oat: 0 0% 84%;
+    --oat-foreground: 0 0% 25%;
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 90% 15%;
@@ -1031,21 +968,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 76%;
-    --input: 0 0% 86%;
-    --ring: 0 0% 6%;
+    --border: 0 0% 85%;
+    --input: 0 0% 92%;
+    --ring: 0 0% 8%;
 
-    --sidebar-background: 0 0% 90%;
-    --sidebar-foreground: 0 0% 6%;
-    --sidebar-primary: 0 0% 6%;
+    --sidebar-background: 0 0% 94%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 82%;
-    --sidebar-accent-foreground: 0 0% 6%;
-    --sidebar-border: 0 0% 76%;
-    --sidebar-ring: 0 0% 6%;
+    --sidebar-accent: 0 0% 88%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 0 0% 88%;
-    --card-inner-deep: 0 0% 84%;
+    --card-inner: 0 0% 92%;
+    --card-inner-deep: 0 0% 88%;
   }
 
   .dark.theme-noir {
@@ -1110,30 +1047,30 @@ html, body, #root {
   }
 
   .theme-neon {
-    --background: 330 55% 94%;
-    --foreground: 330 35% 10%;
+    --background: 330 15% 97%;
+    --foreground: 0 0% 8%;
 
-    --card: 330 50% 96%;
-    --card-foreground: 330 35% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
 
-    --popover: 330 50% 96%;
-    --popover-foreground: 330 35% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
 
-    --primary: 330 95% 52%;
+    --primary: 330 95% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 330 48% 89%;
-    --secondary-foreground: 330 35% 10%;
+    --secondary: 330 30% 92%;
+    --secondary-foreground: 0 0% 8%;
 
-    --muted: 330 42% 88%;
-    --muted-strong: 330 40% 78%;
-    --muted-foreground: 330 28% 34%;
+    --muted: 330 20% 92%;
+    --muted-strong: 330 20% 86%;
+    --muted-foreground: 330 10% 40%;
 
-    --accent: 330 60% 84%;
-    --accent-foreground: 330 35% 10%;
+    --accent: 330 35% 90%;
+    --accent-foreground: 0 0% 8%;
 
-    --oat: 330 45% 80%;
-    --oat-foreground: 330 35% 22%;
+    --oat: 330 20% 86%;
+    --oat-foreground: 330 15% 25%;
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 90% 15%;
@@ -1153,21 +1090,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 330 42% 76%;
-    --input: 330 42% 86%;
-    --ring: 330 95% 52%;
+    --border: 330 25% 85%;
+    --input: 330 20% 92%;
+    --ring: 330 95% 55%;
 
-    --sidebar-background: 330 50% 92%;
-    --sidebar-foreground: 330 35% 10%;
-    --sidebar-primary: 330 95% 52%;
+    --sidebar-background: 330 20% 95%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 330 95% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 330 55% 87%;
-    --sidebar-accent-foreground: 330 35% 10%;
-    --sidebar-border: 330 42% 76%;
-    --sidebar-ring: 330 95% 52%;
+    --sidebar-accent: 330 35% 90%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 330 25% 85%;
+    --sidebar-ring: 330 95% 55%;
 
-    --card-inner: 330 48% 90%;
-    --card-inner-deep: 330 42% 86%;
+    --card-inner: 330 20% 94%;
+    --card-inner-deep: 330 25% 89%;
   }
 
   .dark.theme-neon {
@@ -1356,30 +1293,30 @@ html, body, #root {
 
   /* ===== THEME: PEACH (Coral peach on warm cream — sorbet) ===== */
   .theme-peach {
-    --background: 22 75% 92%;
-    --foreground: 18 40% 12%;
+    --background: 25 50% 96%;
+    --foreground: 18 35% 12%;
 
-    --card: 22 70% 94%;
-    --card-foreground: 18 40% 12%;
+    --card: 25 40% 98%;
+    --card-foreground: 18 35% 12%;
 
-    --popover: 22 70% 94%;
-    --popover-foreground: 18 40% 12%;
+    --popover: 25 40% 98%;
+    --popover-foreground: 18 35% 12%;
 
-    --primary: 18 80% 55%;
+    --primary: 18 75% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 22 60% 86%;
-    --secondary-foreground: 18 40% 12%;
+    --secondary: 22 35% 88%;
+    --secondary-foreground: 18 35% 12%;
 
-    --muted: 22 50% 86%;
-    --muted-strong: 22 48% 76%;
-    --muted-foreground: 18 32% 32%;
+    --muted: 22 25% 90%;
+    --muted-strong: 22 28% 82%;
+    --muted-foreground: 18 25% 35%;
 
-    --accent: 18 70% 82%;
-    --accent-foreground: 18 40% 12%;
+    --accent: 18 50% 88%;
+    --accent-foreground: 18 35% 12%;
 
-    --oat: 22 55% 74%;
-    --oat-foreground: 18 38% 22%;
+    --oat: 22 30% 75%;
+    --oat-foreground: 18 30% 22%;
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
@@ -1399,21 +1336,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 22 50% 74%;
-    --input: 22 52% 84%;
-    --ring: 18 80% 55%;
+    --border: 22 25% 82%;
+    --input: 22 25% 88%;
+    --ring: 18 75% 58%;
 
-    --sidebar-background: 22 70% 90%;
-    --sidebar-foreground: 18 40% 12%;
-    --sidebar-primary: 18 80% 55%;
+    --sidebar-background: 25 40% 93%;
+    --sidebar-foreground: 18 35% 12%;
+    --sidebar-primary: 18 75% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 22 65% 84%;
-    --sidebar-accent-foreground: 18 40% 12%;
-    --sidebar-border: 22 50% 74%;
-    --sidebar-ring: 18 80% 55%;
+    --sidebar-accent: 22 32% 87%;
+    --sidebar-accent-foreground: 18 35% 12%;
+    --sidebar-border: 22 25% 82%;
+    --sidebar-ring: 18 75% 58%;
 
-    --card-inner: 22 60% 88%;
-    --card-inner-deep: 22 52% 84%;
+    --card-inner: 25 30% 93%;
+    --card-inner-deep: 22 28% 90%;
   }
 
   .dark.theme-peach {
@@ -1498,7 +1435,7 @@ html, body, #root {
     --muted-strong: 280 22% 84%;
     --muted-foreground: 280 20% 35%;
 
-    --accent: 285 35% 90%;
+    --accent: 200 60% 90%;
     --accent-foreground: 280 40% 10%;
 
     --oat: 280 22% 75%;
@@ -1559,7 +1496,7 @@ html, body, #root {
     --muted-strong: 270 25% 13%;
     --muted-foreground: 280 18% 65%;
 
-    --accent: 285 30% 16%;
+    --accent: 200 50% 16%;
     --accent-foreground: 280 25% 92%;
 
     --oat: 270 22% 28%;
@@ -1788,11 +1725,9 @@ html, body, #root {
      read as a real material instead of a flat div. Composes with `bg-card`
      and works in both light + dark themes. */
   .premium-surface {
-    /* Light-mode: high opacity so authored --card hue actually reads
-       through the glass material. Dark mode override below stays at 0.95. */
-    background-color: hsl(var(--card) / 0.97);
-    backdrop-filter: blur(12px) saturate(1.15);
-    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    background-color: hsl(var(--card) / 0.92);
+    backdrop-filter: blur(12px) saturate(1.05);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
     box-shadow:
       inset 0 1px 0 0 hsl(var(--foreground) / 0.04),
       var(--elevation-1);
@@ -2191,19 +2126,8 @@ html, body, #root {
 
 /* Custom scrollbar */
 @layer utilities {
-  /* Minimal scrollbar utility (4px) — token-driven, matches global canon */
-  .scrollbar-minimal {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-  }
-
-  .scrollbar-minimal:hover {
-    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
-  }
-
   .scrollbar-minimal::-webkit-scrollbar {
     width: 4px;
-    height: 4px;
   }
 
   .scrollbar-minimal::-webkit-scrollbar-track {
@@ -2211,21 +2135,17 @@ html, body, #root {
   }
 
   .scrollbar-minimal::-webkit-scrollbar-thumb {
-    background-color: transparent;
+    background: transparent;
     border-radius: 9999px;
-    transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1);
+    transition: background 0.3s ease;
   }
 
   .scrollbar-minimal:hover::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.25);
+    background: rgba(0, 0, 0, 0.15);
   }
 
   .scrollbar-minimal:hover::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.45);
-  }
-
-  .scrollbar-minimal:hover::-webkit-scrollbar-thumb:active {
-    background-color: hsl(var(--primary) / 0.5);
+    background: rgba(0, 0, 0, 0.25);
   }
 
   .scrollbar-hide {
@@ -2237,19 +2157,18 @@ html, body, #root {
     display: none;
   }
 
-  /* Thin scrollbar utility (6px) — token-driven, matches global canon */
+  /* Thin scrollbar utility */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
 
   .scrollbar-thin:hover {
-    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -2257,21 +2176,17 @@ html, body, #root {
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 9999px;
-    transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1);
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.3s ease;
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.25);
+    background: rgba(0, 0, 0, 0.15);
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.45);
-  }
-
-  .scrollbar-thin:hover::-webkit-scrollbar-thumb:active {
-    background-color: hsl(var(--primary) / 0.5);
+    background: rgba(0, 0, 0, 0.25);
   }
 
   /* 3D Flip Card Utilities */
@@ -2764,8 +2679,15 @@ html {
 }
 
 /* Firefox: thin scrollbar on all elements (does not create gutters) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+*:hover {
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+}
+
 /* ZuraLoader disco shimmer */
-/* intentional literal: stylized white glow pulse, theme-independent by design */
 @keyframes zura-disco {
   0%, 100% { opacity: 0.15; transform: scale(0.95); box-shadow: 0 0 0px rgba(255,255,255,0); }
   25% { opacity: 1; transform: scale(1.12); box-shadow: 0 0 12px rgba(255,255,255,0.6); }
@@ -2865,8 +2787,6 @@ html {
 }
 
 /* ── Glass-morphism card ───────────────────────────────────────────────────── */
-/* intentional literal: marketing-surface is a dark cinematic canvas with fixed
-   white-glass aesthetic — deliberately scoped outside the themed dashboard tokens. */
 .marketing-surface .mkt-glass {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(24px);
@@ -2894,7 +2814,6 @@ html {
   100% { transform: translateY(100%); opacity: 0; }
 }
 
-/* intentional literal: marketing-surface cinematic canvas — see .mkt-glass above. */
 @keyframes mktPulseAmber {
   0%, 100% { border-color: rgba(255, 255, 255, 0.06); box-shadow: none; }
   50% { border-color: hsl(38 92% 50%); box-shadow: 0 0 20px hsl(38 92% 50% / 0.25); }

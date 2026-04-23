@@ -38,36 +38,21 @@
     <!-- Theme Color -->
     <meta name="theme-color" content="#1a1a1a" />
 
-    <!-- Pre-paint theme init: prevents bone/white/black flash before React mounts.
-         Slug-aware: prefers org-scoped theme hint when /org/<slug>/ is in the URL,
-         so the right org's theme paints first instead of leaking the previous org's.
-         Pairs with useColorTheme.applyTheme(), which writes the same slug-keyed cache. -->
+    <!-- Pre-paint theme init: prevents white/black flash before React mounts -->
     <script>
       (function() {
         try {
-          var mode = localStorage.getItem('dashboard-theme');
+          var theme = localStorage.getItem('dashboard-theme');
+          var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
           var root = document.documentElement;
-          var isDark = mode === 'dark' || ((mode === 'system' || !mode) && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (isDark) {
             root.classList.add('dark');
+            root.style.backgroundColor = 'hsl(0 0% 4%)';
             root.style.colorScheme = 'dark';
           } else {
+            root.style.backgroundColor = 'hsl(40 15% 82%)';
             root.style.colorScheme = 'light';
           }
-          // Resolve theme: slug-scoped hint > generic hint > 'zura' default.
-          var color = null;
-          var match = window.location.pathname.match(/^\/org\/([^/]+)/);
-          if (match && match[1]) {
-            color = localStorage.getItem('dd-color-theme:slug:' + match[1]);
-          }
-          if (!color) {
-            color = localStorage.getItem('dd-color-theme');
-          }
-          if (!color) {
-            color = 'zura';
-          }
-          // Apply color theme class so --background resolves correctly before React mounts.
-          root.classList.add('theme-' + color);
         } catch (e) {}
       })();
     </script>

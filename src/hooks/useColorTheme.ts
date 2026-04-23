@@ -1,31 +1,14 @@
-import { useEffect, useLayoutEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
 export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marine' | 'cognac' | 'noir' | 'neon' | 'matrix' | 'peach' | 'orchid';
 
-// Generic key — used only as a pre-paint hint on index.html before any org
-// context is known. Once an org resolves, an org-scoped key takes over.
-const GENERIC_THEME_STORAGE_KEY = 'dd-color-theme';
+const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 
-function orgScopedKey(orgId: string): string {
-  return `dd-color-theme:${orgId}`;
-}
-
-function slugScopedKey(slug: string): string {
-  return `dd-color-theme:slug:${slug}`;
-}
-
-/** Parse the current org slug from the URL (matches the pre-paint script). */
-function currentSlugFromUrl(): string | null {
-  if (typeof window === 'undefined') return null;
-  const m = window.location.pathname.match(/^\/org\/([^/]+)/);
-  return m?.[1] ?? null;
-}
-
-export const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
+const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 // Migration map for renamed theme keys (legacy → current)
@@ -48,105 +31,28 @@ type ColorThemeSettings = Record<string, unknown> & {
   theme: ColorTheme;
 };
 
-function applyTheme(theme: ColorTheme, orgId?: string | null) {
+function applyTheme(theme: ColorTheme) {
   const html = document.documentElement;
-  // Skip DOM mutation if already correct — avoids needless reflow + class churn.
-  const targetClass = `theme-${theme}`;
-  const alreadyApplied =
-    html.classList.contains(targetClass) &&
-    !THEME_CLASSES.some((c) => c !== targetClass && html.classList.contains(c));
-  if (!alreadyApplied) {
-    html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism');
-    html.classList.add(targetClass);
+  // Also strip any legacy theme classes that may still be on the element
+  html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism');
+  html.classList.add(`theme-${theme}`);
+}
+
+function getLocalTheme(): ColorTheme {
+  const saved = localStorage.getItem(THEME_STORAGE_KEY);
+  const migrated = migrateLegacyTheme(saved);
+  if (migrated) {
+    // Persist the migrated value so we don't pay this cost again
+    if (saved !== migrated) {
+      try { localStorage.setItem(THEME_STORAGE_KEY, migrated); } catch { /* ignore */ }
+    }
+    return migrated;
   }
-  // Side-channel writes:
-  //  - org-scoped key (authoritative per org once orgId is known)
-  //  - slug-scoped key (pre-paint hint for index.html on next hard load)
-  //  - generic key (legacy fallback hint)
-  try {
-    if (orgId) localStorage.setItem(orgScopedKey(orgId), theme);
-    const slug = currentSlugFromUrl();
-    if (slug) localStorage.setItem(slugScopedKey(slug), theme);
-    localStorage.setItem(GENERIC_THEME_STORAGE_KEY, theme);
-  } catch { /* ignore */ }
+  return 'zura';
 }
 
-function readOrgLocalTheme(orgId: string | undefined): ColorTheme | null {
-  if (!orgId) return null;
-  try {
-    return migrateLegacyTheme(localStorage.getItem(orgScopedKey(orgId)));
-  } catch {
-    return null;
-  }
-}
-
-function readGenericLocalTheme(): ColorTheme {
-  try {
-    const saved = localStorage.getItem(GENERIC_THEME_STORAGE_KEY);
-    return migrateLegacyTheme(saved) ?? 'zura';
-  } catch {
-    return 'zura';
-  }
-}
-
-// Apply generic localStorage theme immediately on module load (prevents flash
-// before any org context resolves). Once an org loads, it will override.
-applyTheme(readGenericLocalTheme());
-
-// Optimistic intent lock window (ms). During this window after a user click,
-// the DOM-sync effect will refuse to revert <html> back to a stale DB value
-// that disagrees with the user's most recent intent.
-const OPTIMISTIC_INTENT_LOCK_MS = 3000;
-
-// Track the user's most recent theme click across hook instances. This is
-// module-scoped on purpose: multiple `useColorTheme` consumers (settings
-// picker + DashboardLayout) need to share the same intent so a competing
-// in-flight refetch in instance B can't undo a click made in instance A.
-const lastUserIntent: { theme: ColorTheme | null; orgId: string | null; at: number } = {
-  theme: null,
-  orgId: null,
-  at: 0,
-};
-
-// Self-heal latch: only attempt the one-shot DB repair once per (org, session)
-// so we don't spam writes if the DB legitimately holds 'bone'.
-const selfHealLatchedFor = new Set<string>();
-
-const isDev =
-  typeof import.meta !== 'undefined' &&
-  typeof (import.meta as { env?: { DEV?: boolean } }).env?.DEV === 'boolean'
-    ? (import.meta as { env: { DEV: boolean } }).env.DEV
-    : false;
-
-// Module-scoped snapshot of the most recent integrity state. Read by the
-// dev-only `ThemeIntegrityHud` so the resolver hook stays effect/ref-free.
-type ThemeIntegritySnapshot = {
-  orgId: string | null;
-  source: 'db' | 'org-cache' | 'generic' | 'intent-lock' | 'pre-paint-fix';
-  theme: ColorTheme;
-  at: number;
-};
-let lastThemeIntegrity: ThemeIntegritySnapshot | null = null;
-
-export function getLastThemeIntegrity(): ThemeIntegritySnapshot | null {
-  return lastThemeIntegrity;
-}
-
-function logThemeIntegrity(
-  orgId: string | undefined | null,
-  source: ThemeIntegritySnapshot['source'],
-  theme: ColorTheme,
-) {
-  lastThemeIntegrity = { orgId: orgId ?? null, source, theme, at: Date.now() };
-  if (!isDev) return;
-  // eslint-disable-next-line no-console
-  console.debug('[theme]', {
-    orgId: orgId ?? null,
-    source,
-    theme,
-    htmlClass: document.documentElement.className,
-  });
-}
+// Apply localStorage theme immediately on module load (prevents flash)
+applyTheme(getLocalTheme());
 
 export function useColorTheme() {
   const orgId = useSettingsOrgId();
@@ -154,139 +60,50 @@ export function useColorTheme() {
   const queryKey = ['site-settings', orgId, SITE_SETTINGS_KEY];
 
   // DB-backed query (source of truth when available)
-  const { data: dbSettings, isSuccess: dbLoaded, isLoading: dbLoading } =
-    useSiteSettings<ColorThemeSettings>(SITE_SETTINGS_KEY);
+  const { data: dbSettings, isSuccess: dbLoaded } = useSiteSettings<ColorThemeSettings>(SITE_SETTINGS_KEY);
 
   const updateSetting = useUpdateSiteSetting<ColorThemeSettings>();
 
-  // Resolve theme. Strict ownership rules:
-  //  1. If DB has resolved with a value, DB wins.
-  //  2. Else if we have an orgId, use the org-scoped local cache (never the
-  //     generic cache — that's another org's leftover).
-  //  3. Else (no org context yet) fall back to the generic pre-paint hint.
+  // Derive current theme: DB > localStorage fallback, with legacy migration
   const dbTheme = migrateLegacyTheme(dbSettings?.theme as string | undefined);
-  let colorTheme: ColorTheme;
-  let resolvedSource: 'db' | 'org-cache' | 'generic';
-  if (dbTheme) {
-    colorTheme = dbTheme;
-    resolvedSource = 'db';
-  } else if (orgId) {
-    colorTheme = readOrgLocalTheme(orgId) ?? 'zura';
-    resolvedSource = 'org-cache';
-  } else {
-    colorTheme = readGenericLocalTheme();
-    resolvedSource = 'generic';
-  }
+  const colorTheme: ColorTheme = dbTheme ?? getLocalTheme();
 
-  // Latch so legacy-key migration runs at most once per (org, session).
-  const migrationLatchedFor = useRef<string | null>(null);
-
-  // When DB resolves, persist to org-scoped local cache and run one-time
-  // legacy migration if needed.
+  // Sync from DB to localStorage + DOM when DB data arrives
   useEffect(() => {
-    if (!dbLoaded || !dbTheme || !orgId) return;
-    try { localStorage.setItem(orgScopedKey(orgId), dbTheme); } catch { /* ignore */ }
+    if (dbLoaded && dbTheme) {
+      localStorage.setItem(THEME_STORAGE_KEY, dbTheme);
 
-    if (migrationLatchedFor.current === orgId) return;
-    const raw = dbSettings?.theme as string | undefined;
-    if (raw && raw in LEGACY_THEME_MIGRATION && raw !== dbTheme) {
-      migrationLatchedFor.current = orgId;
-      updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: dbTheme } });
-    } else {
-      migrationLatchedFor.current = orgId;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbLoaded, dbTheme, dbSettings?.theme, orgId]);
-
-  // One-shot DB self-heal: if the DB resolved to 'bone' but the org-scoped
-  // local cache already holds a different (user-chosen) theme, the previous
-  // click(s) never reached the DB. Repair once per (org, session).
-  useEffect(() => {
-    if (!dbLoaded || !orgId) return;
-    if (selfHealLatchedFor.has(orgId)) return;
-    const localChoice = readOrgLocalTheme(orgId);
-    if (dbTheme === 'bone' && localChoice && localChoice !== 'bone') {
-      selfHealLatchedFor.add(orgId);
-      if (isDev) {
-        // eslint-disable-next-line no-console
-        console.debug('[theme] self-heal', { orgId, dbTheme, localChoice });
+      // If the DB row still holds a legacy key, transparently rewrite it
+      const raw = dbSettings?.theme as string | undefined;
+      if (raw && raw !== dbTheme && orgId) {
+        updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: dbTheme } });
       }
-      queryClient.setQueryData(queryKey, { theme: localChoice });
-      updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: localChoice } });
-    } else {
-      selfHealLatchedFor.add(orgId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbLoaded, dbTheme, orgId]);
+  }, [dbLoaded, dbTheme, dbSettings?.theme, orgId, updateSetting]);
 
-  // Apply the resolved theme to DOM SYNCHRONOUSLY before paint. Use
-  // useLayoutEffect so the class swap happens in the same commit phase as
-  // the React render — this bridges the gap between the index.html
-  // pre-paint script (which can only guess based on URL slug) and the
-  // first DB-resolved render (which knows the authoritative theme).
-  // Honor the optimistic intent lock so an in-flight refetch can't revert
-  // <html> back to the prior DB value within the lock window.
-  useLayoutEffect(() => {
-    const intent = lastUserIntent;
-    const now = Date.now();
-    const lockActive =
-      intent.theme !== null &&
-      intent.orgId === (orgId ?? null) &&
-      now - intent.at < OPTIMISTIC_INTENT_LOCK_MS;
-
-    if (lockActive && colorTheme !== intent.theme) {
-      // Stale resolution lost the race against the user's recent click.
-      // Re-pin the DOM and cache to the user's intent and bail.
-      applyTheme(intent.theme as ColorTheme, orgId);
-      queryClient.setQueryData(queryKey, { theme: intent.theme });
-      logThemeIntegrity(orgId, 'intent-lock', intent.theme as ColorTheme);
-      return;
-    }
-
-    applyTheme(colorTheme, orgId);
-    logThemeIntegrity(orgId, resolvedSource, colorTheme);
-  }, [colorTheme, orgId, resolvedSource, queryClient, queryKey]);
+  // Always apply the resolved theme to DOM
+  useEffect(() => {
+    applyTheme(colorTheme);
+  }, [colorTheme]);
 
   const setColorTheme = useCallback((theme: ColorTheme) => {
-    // 0. Record user intent so the DOM-sync effect won't revert this click
-    // when a stale in-flight refetch resolves.
-    lastUserIntent.theme = theme;
-    lastUserIntent.orgId = orgId ?? null;
-    lastUserIntent.at = Date.now();
+    // 1. Instant DOM + localStorage update
+    applyTheme(theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
 
-    // 1. Instant DOM + scoped localStorage update
-    applyTheme(theme, orgId);
-
-    // 2. Cancel any in-flight refetch that could resolve with the prior value
-    //    and overwrite our optimistic cache write.
-    queryClient.cancelQueries({ queryKey });
-
-    // 3. Optimistic query cache update (all consumers reactively get new value)
+    // 2. Optimistic query cache update (all consumers reactively get new value)
     queryClient.setQueryData(queryKey, { theme });
 
-    // 4. Persist to DB — skip if DB already matches (no-op guard).
-    if (orgId && theme !== dbTheme) {
-      updateSetting.mutate(
-        { key: SITE_SETTINGS_KEY, value: { theme } },
-        {
-          onSuccess: () => {
-            // Re-confirm cache to the user's intent in case any concurrent
-            // refetch landed between steps 3 and the PATCH completion.
-            queryClient.setQueryData(queryKey, { theme });
-          },
-        },
-      );
+    // 3. Persist to DB
+    if (orgId) {
+      updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme } });
     }
-  }, [orgId, queryClient, queryKey, updateSetting, dbTheme]);
+  }, [orgId, queryClient, queryKey, updateSetting]);
 
   return {
     colorTheme,
     setColorTheme,
-    // `mounted` is true when either the DB has resolved OR we have an org-scoped
-    // local cache to trust. While the DB is still loading and there's no org
-    // cache, hold off on rendering "selected" UI to avoid showing the wrong
-    // card during org switches / God Mode.
-    mounted: dbLoaded || (!!orgId && !!readOrgLocalTheme(orgId)) || (!orgId && !dbLoading),
+    mounted: true, // Always true — localStorage applies synchronously on module load
   };
 }
 
@@ -313,9 +130,9 @@ export const colorThemes = [
     name: 'Zura',
     description: 'Brand violet & purple',
     lightPreview: {
-      bg: 'hsl(265 45% 93%)',
-      accent: 'hsl(265 45% 84%)',
-      primary: 'hsl(270 75% 52%)',
+      bg: 'hsl(260 25% 95%)',
+      accent: 'hsl(260 20% 88%)',
+      primary: 'hsl(270 70% 55%)',
     },
     darkPreview: {
       bg: 'hsl(230 25% 5%)',
@@ -343,9 +160,9 @@ export const colorThemes = [
     name: 'Rosewood',
     description: 'Rich rose & burgundy',
     lightPreview: {
-      bg: 'hsl(350 45% 93%)',
-      accent: 'hsl(350 45% 84%)',
-      primary: 'hsl(345 60% 46%)',
+      bg: 'hsl(350 22% 95%)',
+      accent: 'hsl(350 25% 85%)',
+      primary: 'hsl(345 55% 42%)',
     },
     darkPreview: {
       bg: 'hsl(345 18% 6%)',
@@ -358,9 +175,9 @@ export const colorThemes = [
     name: 'Sage',
     description: 'Calming mint green',
     lightPreview: {
-      bg: 'hsl(145 32% 92%)',
-      accent: 'hsl(145 32% 82%)',
-      primary: 'hsl(145 50% 38%)',
+      bg: 'hsl(145 25% 96%)',
+      accent: 'hsl(145 25% 82%)',
+      primary: 'hsl(145 45% 42%)',
     },
     darkPreview: {
       bg: 'hsl(145 12% 6%)',
@@ -388,9 +205,9 @@ export const colorThemes = [
     name: 'Marine',
     description: 'Deep navy & gold',
     lightPreview: {
-      bg: 'hsl(218 55% 94%)',
-      accent: 'hsl(218 65% 86%)',
-      primary: 'hsl(218 100% 52%)',
+      bg: 'hsl(218 35% 97%)',
+      accent: 'hsl(218 60% 92%)',
+      primary: 'hsl(218 100% 56%)',
     },
     darkPreview: {
       bg: 'hsl(220 50% 7%)',
@@ -403,9 +220,9 @@ export const colorThemes = [
     name: 'Cognac',
     description: 'Bourbon amber & leather',
     lightPreview: {
-      bg: 'hsl(28 50% 91%)',
-      accent: 'hsl(28 50% 80%)',
-      primary: 'hsl(28 75% 40%)',
+      bg: 'hsl(28 25% 93%)',
+      accent: 'hsl(28 22% 82%)',
+      primary: 'hsl(28 70% 42%)',
     },
     darkPreview: {
       bg: 'hsl(24 18% 6%)',
@@ -418,9 +235,9 @@ export const colorThemes = [
     name: 'Noir',
     description: 'Pure monochrome minimal',
     lightPreview: {
-      bg: 'hsl(0 0% 92%)',
-      accent: 'hsl(0 0% 80%)',
-      primary: 'hsl(0 0% 6%)',
+      bg: 'hsl(0 0% 96%)',
+      accent: 'hsl(0 0% 88%)',
+      primary: 'hsl(0 0% 8%)',
     },
     darkPreview: {
       bg: 'hsl(0 0% 4%)',
@@ -433,9 +250,9 @@ export const colorThemes = [
     name: 'Neon',
     description: 'Hot pink & black',
     lightPreview: {
-      bg: 'hsl(330 55% 94%)',
-      accent: 'hsl(330 60% 84%)',
-      primary: 'hsl(330 95% 52%)',
+      bg: 'hsl(330 15% 97%)',
+      accent: 'hsl(330 35% 90%)',
+      primary: 'hsl(330 95% 55%)',
     },
     darkPreview: {
       bg: 'hsl(0 0% 4%)',
@@ -463,9 +280,9 @@ export const colorThemes = [
     name: 'Peach',
     description: 'Coral peach & warm cream',
     lightPreview: {
-      bg: 'hsl(22 75% 92%)',
-      accent: 'hsl(18 70% 82%)',
-      primary: 'hsl(18 80% 55%)',
+      bg: 'hsl(25 50% 96%)',
+      accent: 'hsl(18 50% 88%)',
+      primary: 'hsl(18 75% 58%)',
     },
     darkPreview: {
       bg: 'hsl(18 25% 6%)',
@@ -479,12 +296,12 @@ export const colorThemes = [
     description: 'Premium magenta & violet jewel',
     lightPreview: {
       bg: 'hsl(280 30% 97%)',
-      accent: 'hsl(285 35% 90%)',
+      accent: 'hsl(200 60% 90%)',
       primary: 'hsl(290 75% 55%)',
     },
     darkPreview: {
       bg: 'hsl(265 35% 5%)',
-      accent: 'hsl(285 30% 16%)',
+      accent: 'hsl(200 50% 16%)',
       primary: 'hsl(290 90% 65%)',
     },
   },

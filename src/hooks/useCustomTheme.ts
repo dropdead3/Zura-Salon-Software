@@ -223,16 +223,6 @@ export type ThemePresetKey = keyof typeof themePresets;
 
 export type CustomTheme = Record<string, string>;
 
-// Canonical list of all editable color token keys — exported for shared cleanup
-// (used by ThemeInitializer to reconcile stale inline overrides on <html>).
-export const ALL_CUSTOM_THEME_KEYS: string[] = [
-  ...editableTokens.core,
-  ...editableTokens.brand,
-  ...editableTokens.special,
-  ...editableTokens.ui,
-  ...editableTokens.sidebar,
-].map((t) => t.key);
-
 // Convert HSL string to hex for color picker
 export function hslStringToHex(hslString: string): string {
   if (!hslString || hslString === 'transparent') return '#ffffff';
@@ -309,18 +299,6 @@ function removeCSSVariable(varName: string): void {
   document.documentElement.style.removeProperty(`--${varName}`);
 }
 
-/**
- * Canonical cleanup helper: strips every editor-managed color token from the
- * inline style layer of <html>. Used by the editor lifecycle (unmount) and
- * available to other reconcilers that need to guarantee built-in theme
- * classes win over leaked editor overrides.
- */
-export function clearCustomThemeVariables(): void {
-  ALL_CUSTOM_THEME_KEYS.forEach((key) => {
-    removeCSSVariable(key);
-  });
-}
-
 export function useCustomTheme() {
   const [customTheme, setCustomTheme] = useState<CustomTheme | null>(null);
   const [pendingChanges, setPendingChanges] = useState<CustomTheme>({});
@@ -364,19 +342,7 @@ export function useCustomTheme() {
     
     fetchTheme();
   }, []);
-
-  // Unmount cleanup: when the editor surface is unmounted (e.g. user
-  // navigates away from the Design System), strip every managed inline
-  // override so production dashboard surfaces fall back to class-based
-  // built-in themes. Without this, saved editor presets leak globally and
-  // outrank .theme-jade / .theme-matrix / .theme-orchid via inline > class
-  // CSS precedence.
-  useEffect(() => {
-    return () => {
-      clearCustomThemeVariables();
-    };
-  }, []);
-
+  
   // Apply theme overrides to CSS variables
   const applyTheme = useCallback((theme: CustomTheme) => {
     Object.entries(theme).forEach(([key, value]) => {
@@ -385,7 +351,7 @@ export function useCustomTheme() {
       }
     });
   }, []);
-
+  
   // Set a single variable (for live preview)
   const setVariable = useCallback((key: string, hexValue: string) => {
     const hslValue = hexToHslString(hexValue);

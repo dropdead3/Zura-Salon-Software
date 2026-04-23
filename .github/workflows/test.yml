@@ -1,4 +1,4 @@
-name: Check
+name: Test
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  check:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,9 +14,4 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      # Unified gate: Stylelint canon → ESLint → Vitest, fail-fast.
-      # Mirrors the local `npm run check` script so contributors hit the
-      # same wall locally that CI hits in PR review.
-      - run: bunx stylelint "src/**/*.css"
-      - run: bun run lint
       - run: bun run test

@@ -42,12 +42,6 @@ export const typographyTokens = {
 export type TypographyCategory = keyof typeof typographyTokens;
 export type TypographyTheme = Record<string, string>;
 
-// Canonical list of all typography token keys — exported for shared cleanup
-// (used by ThemeInitializer to reconcile stale inline overrides on <html>).
-export const ALL_TYPOGRAPHY_KEYS: string[] = Object.values(typographyTokens)
-  .flat()
-  .map((t) => t.key);
-
 // Get current computed value of a CSS variable
 function getCSSVariable(varName: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`).trim();
@@ -62,17 +56,6 @@ function setCSSVariable(varName: string, value: string): void {
 // Remove CSS variable override (revert to stylesheet value)
 function removeCSSVariable(varName: string): void {
   document.documentElement.style.removeProperty(`--${varName}`);
-}
-
-/**
- * Canonical cleanup helper: strips every editor-managed typography token
- * from the inline style layer of <html>. Used by the editor lifecycle
- * (unmount) and available to other reconcilers.
- */
-export function clearTypographyVariables(): void {
-  ALL_TYPOGRAPHY_KEYS.forEach((key) => {
-    removeCSSVariable(key);
-  });
 }
 
 // Get all current values
@@ -134,16 +117,7 @@ export function useTypographyTheme() {
     
     fetchTheme();
   }, []);
-
-  // Unmount cleanup: strip every managed typography override when the editor
-  // unmounts so leaving the Design System restores the built-in dashboard
-  // typography. See useCustomTheme for the same doctrine on color tokens.
-  useEffect(() => {
-    return () => {
-      clearTypographyVariables();
-    };
-  }, []);
-
+  
   // Apply theme overrides to CSS variables
   const applyTheme = useCallback((theme: TypographyTheme) => {
     Object.entries(theme).forEach(([key, value]) => {
@@ -152,7 +126,7 @@ export function useTypographyTheme() {
       }
     });
   }, []);
-
+  
   // Set a single variable (for live preview)
   const setVariable = useCallback((key: string, value: string) => {
     setCSSVariable(key, value);

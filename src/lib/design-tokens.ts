@@ -222,8 +222,8 @@ export const tokens = {
     trackV: 'h-full w-2.5 border-l-[3px] border-l-transparent',
     /** Horizontal track sizing — transparent border creates floating inset */
     trackH: 'h-2.5 flex-col border-t-[3px] border-t-transparent',
-    /** Thumb: rounded pill, soft floating appearance — aligned to global canon (muted-foreground) */
-    thumb: 'relative flex-1 rounded-full bg-muted-foreground/25 hover:bg-muted-foreground/45 active:bg-primary/50 transition-colors duration-[180ms]',
+    /** Thumb: rounded pill, soft floating appearance */
+    thumb: 'relative flex-1 rounded-full bg-foreground/15 hover:bg-foreground/30',
   },
 
   // ========================================
