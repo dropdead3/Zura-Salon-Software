@@ -22,10 +22,13 @@ The gate runs two tools in sequence, fail-fast:
 
 ## Running locally
 
-- `bun run test` — fast Vitest iteration.
-- `bunx stylelint "src/**/*.css"` — targeted CSS lint.
-- `npm run check` — runs both in sequence once the `check` script is added to
-  `package.json` (see the Step 2I manual-action list).
+- `npm run check` — runs Stylelint → ESLint → Vitest in sequence, fail-fast.
+  This is the unified gate; CI runs the same chain.
+- `bun run test` — fast Vitest iteration during development.
+- `bunx stylelint "src/**/*.css"` — targeted CSS lint when iterating on tokens.
+
+The `check` script requires the `package.json` edits listed at the bottom of
+this file (Step 2S manual actions) — once those land, `check` is real.
 
 ## Pre-commit hook (Husky + lint-staged)
 
