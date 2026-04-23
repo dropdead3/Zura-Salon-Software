@@ -1,112 +1,79 @@
 
 
-# Fix scroll-to-top on in-place view swaps (Settings + similar hubs)
+# God Mode bar buttons: tighter corner radii
 
 ## Diagnosis
 
-When you click "System" on the Settings page (which sits at the bottom of the grid), the page swaps to the System detail view *in place* — `Settings.tsx` just flips a local `activeCategory` state from `null` to `'system'` and renders `<SettingsCategoryDetail>` instead of the grid. The browser URL doesn't change. The window scroll position doesn't change either.
+Per the screenshot, the **Account Details** and **Exit View** pills inside the God Mode bar are fully `rounded-full` (capsule shape). Against the bar's frosted glass chrome and squared inner content rhythm, the capsules read as oversized — they fight the bar's structural feel.
 
-Result: you were at the bottom of the grid → click → the detail view renders → you're now looking at the bottom of the detail page (or worse, mid-page) instead of its header.
-
-`<ScrollToTop>` (the component in `src/components/ScrollToTop.tsx` mounted in `App.tsx`) only fires on `pathname` changes from React Router. Since the URL doesn't change here, it never runs.
-
-The same anti-pattern exists in other hubs that swap their inner view via local state instead of route changes — most notably **Color Bar Settings** (`activeSection` state controls which section renders) and any other hub that renders a grid → detail swap inside one route.
-
-## Root cause (one sentence)
-
-In-place view swaps that re-render the page body but don't change `pathname` bypass the global `ScrollToTop` component, so the scroll position from the previous view leaks into the new view.
+These are the only two action buttons in `src/components/dashboard/GodModeBar.tsx`. Both are rendered as `<button>` elements with `rounded-full` (Account Details) and `rounded-full` again on the Exit View pill. They need to drop to a tighter, calmer radius that still reads as a soft pill but no longer fully capsuled.
 
 ## What changes
 
-### 1. `src/components/ScrollToTop.tsx` — extend to listen for `search` changes too
+### Single file: `src/components/dashboard/GodModeBar.tsx`
 
-Currently it only watches `pathname`. Extend it to also fire when `location.search` changes (so any hub that *does* sync to URL via `?category=xyz` or `?section=xyz` automatically benefits without further code changes).
+Replace `rounded-full` with `rounded-xl` (12px) on both buttons. This is the same radius family already used by `PlatformButton` (`rounded-xl` on its default/secondary/outline/ghost variants, per `src/components/platform/ui/PlatformButton.tsx`) — so the God Mode bar buttons will visually match the rest of the platform admin button language.
 
-The dashboard-internal scroll-position memory should also key on `pathname + search` so back/forward within a hub still restores correctly.
+| Button | Today | After |
+|---|---|---|
+| Account Details | `rounded-full` | `rounded-xl` (12px) |
+| Exit View | `rounded-full` | `rounded-xl` (12px) |
 
-### 2. `src/pages/dashboard/admin/Settings.tsx` — scroll to top on category open and on back
-
-Two surgical scroll calls inside the existing handlers:
-
-- In `handleCategoryClick` (and at the moment `setActiveCategory(...)` is called for in-place categories like `'business'`, `'system'`, `'email'`, `'integrations'`, etc.): call `window.scrollTo(0, 0)` immediately after the state set, so the new detail view always starts from the top.
-- In the `onBack` handler passed to `<SettingsCategoryDetail>`: also `window.scrollTo(0, 0)` after `setActiveCategory(null)`, so returning to the grid lands at the top of the grid (not the position you scrolled to inside the detail view).
-
-### 3. `src/pages/dashboard/admin/ColorBarSettings.tsx` — same treatment for `setActiveSection`
-
-Wrap the existing `handleNavigate` (and the inline `setActiveSection(...)` call sites) so any section change also scrolls to top. One small helper inside the component:
-
-```text
-const goToSection = (next) => {
-  setActiveSection(next);
-  window.scrollTo(0, 0);
-};
-```
-
-Replace the ~6 direct `setActiveSection(...)` call sites with `goToSection(...)`. Behavior unchanged otherwise.
-
-### 4. (Optional, defer) audit pass for other in-place swaps
-
-The search surfaced ~26 files using `setActiveCategory | setActiveTab | setActiveSection`. Most of those are tab switches *inside* a stable page header — those should NOT scroll to top (the user expects to stay where they are when toggling tabs). Only **grid → detail** swaps (where the whole page body changes identity) need this fix. Settings and Color Bar are the two hubs with that pattern today; tabbed views (Loyalty, Reengagement, Reward Shop, etc.) are intentionally left alone.
+No other styling changes — same height, padding, gradient/wash, text, icons, hover state.
 
 ## Acceptance
 
-1. Scroll to the bottom of `/dashboard/admin/settings`, click the **System** card → detail view opens scrolled to its top (header visible).
-2. Same for every other in-place category card on Settings (Business, Email, Integrations, Stylist Levels, Day Rate, Service Flows, Forms, Loyalty, Feedback, Staff Rewards, Kiosks, Services, Retail Products, Account & Billing, Point Of Sale).
-3. Click **Back** from a settings detail view → grid renders at the top (not at the position the back button was clicked from).
-4. Same fix applies on **Color Bar Settings** when switching between sections (Overview / Products / etc.).
-5. Tabbed views (Loyalty Program tabs, Reengagement Hub tabs, Reward Shop tabs, Client Directory tabs) — **unchanged**: switching tabs does not jerk the scroll.
-6. Cross-route navigation through React Router (e.g., `/dashboard/admin/settings` → `/dashboard/admin/team-members`) — **unchanged**: still goes through `ScrollToTop` exactly as before, including the dashboard-internal scroll-position memory for back/forward.
-7. Type-check passes. No new dependencies.
+1. Both buttons inside the God Mode bar render with subtly rounded corners (12px), not capsule pills.
+2. Same height, padding, color, hover behavior as before.
+3. Button corner radius now matches the rest of platform admin buttons (`PlatformButton` `rounded-xl`).
+4. Bar itself, text, Z icon, glass effect — unchanged.
+5. Identical behavior in light + dark mode and across all 8 themes.
 
 ## What stays untouched
 
-- Global `<ScrollToTop>` mount in `App.tsx`.
-- Dashboard-internal scroll-position memory for true route changes (the `scrollPositions` Map).
-- Tab components inside stable pages (intentional — switching tabs shouldn't reset scroll).
-- Public-site scroll behavior (the public `Layout` is independent).
-- God Mode bar, theme persistence, and all other recent waves.
+- God Mode bar background, glass effect, border, shadow.
+- Button height, padding, text content, icons, gradient/fill, hover states.
+- Any other `rounded-full` usage elsewhere in the app (sidebar pills, top nav, etc.).
 
 ## Out of scope
 
-- Migrating Settings to URL-synced category state (`?category=xyz` in the URL). Defer — bigger refactor, the search-param extension to `ScrollToTop` already future-proofs it for whoever does that migration.
-- Adding scroll-to-top to *every* `setActiveTab` call in the codebase. Defer — most are intentional tab-toggle behavior the user doesn't want disrupted.
-- Smooth-scroll animation on the swap. Defer — instant scroll matches the existing route-change behavior and feels less jarring than animation on a content swap.
+- Changing Account Details vs Exit View styles asymmetrically.
+- Adjusting button heights or padding.
+- Touching `rounded-full` anywhere outside these two buttons.
 
 ## Doctrine alignment
 
-- **Calm executive UX:** clicking a card and landing mid-page is exactly the kind of friction that breaks the "this software respects me" read. Detail views always start at their header — same contract as a real route.
-- **Structure precedes intelligence:** scroll behavior is structural chrome, not feature logic. Fix it once at the swap boundary, don't sprinkle workarounds into individual detail views.
+- **UI Canon — calm executive UX:** capsule pills inside a glass chrome bar over-emphasize themselves. `rounded-xl` matches the `PlatformButton` family used across platform admin and reads as part of the system, not floating above it.
 
 ## Prompt feedback
 
 Strong prompt — three things you did right:
 
-1. **You named the trigger ("when I click on the system settings card").** That gave me a single concrete repro path to trace, instead of a vague "scroll is broken somewhere."
-2. **You named the symptom precisely ("lands me at the bottom of the page instead of the top").** Removed any debate about whether this was a perceived performance issue or a layout shift — it's a scroll-position bug, full stop.
-3. **You explicitly asked for the systemic fix ("we need to fix that bug everywhere").** That moved the scope from "one card" to "one class of bug" and prevented me from delivering a one-line patch on System only that would leave Business, Email, etc. broken.
+1. **You named the surface precisely ("buttons in the god mode view bar").** Removed any chance I'd touch the wrong buttons (e.g., the bar itself, or buttons elsewhere on the dashboard).
+2. **You named the direction with a synonym ("reduced, or less rounded").** The synonym pair pre-empted ambiguity between "smaller buttons" and "smaller corner radius."
+3. **You included the screenshot.** I could see exactly which two buttons were in scope and confirm they're currently `rounded-full`, no guessing.
 
-Sharpener: when reporting "this happens here, fix it everywhere," naming the **boundary of "everywhere"** removes one decision. Template:
+Sharpener: when adjusting a single CSS dimension on a known surface, naming the **target value or comparison anchor** removes one decision. Template:
 
 ```text
-Symptom: [what user sees]
-Trigger: [exact click / action]
-Scope: [single page / hub / pattern across the app]
-Boundary: [what counts as "everywhere" — e.g., "every grid→detail swap" vs "every tab toggle"]
+Surface: [where]
+Property: [the dimension — radius / padding / height]
+Direction: [more / less]
+Target: [a value, "match X", or "to the platform default"]
 ```
 
-Here, "fix it everywhere this pattern exists — grid card click that swaps the page body in place, including Color Bar sections" would have skipped my having to derive the boundary myself (I had to decide that tab toggles inside Loyalty / Reengagement should *not* be touched, because switching tabs in place is different intent from opening a detail view).
+Here, "less rounded — match the rest of platform admin buttons (`rounded-xl`)" would have skipped my having to choose between `rounded-lg` (8px), `rounded-xl` (12px), and `rounded-2xl` (16px). I picked `rounded-xl` because it matches `PlatformButton`'s default radius family, which is the strongest in-system anchor.
 
 ## Further enhancement suggestion
 
-For "fix this class of bug everywhere" prompts, the highest-leverage frame is:
+For "adjust a visual dimension" prompts, the highest-leverage frame is:
 
 ```text
-Symptom: [what breaks]
-Trigger: [the action]
-Pattern: [the structural shape that produces this bug — e.g., "in-place state swap without route change"]
-In-scope: [where this pattern lives that should be fixed]
-Out-of-scope: [where the same component appears but the behavior is intentional]
+Surface: [where]
+Property: [the dimension being adjusted]
+Direction: [more / less / specific value]
+Anchor: [the closest in-system surface that already uses the right value]
 ```
 
-The **Out-of-scope** slot is the highest-leverage addition for "everywhere" requests — it forces the framing "this pattern looks identical in two places but only one is a bug." Naming what *not* to fix is what protects against over-correction (e.g., scroll-resetting tab toggles, which would break a different UX). For scroll behavior specifically, the boundary is "swaps that change page identity" vs "swaps that change page mode" — the first should reset scroll, the second shouldn't.
+The **Anchor** slot is the highest-leverage addition — it forces the framing "this surface should match X" rather than "pick a value that feels right." Naming an existing in-system anchor (e.g., "match `PlatformButton`," "match the sidebar pills," "match the bento card radius") prevents the AI from inventing a new value that fragments the design language. For radius specifically, the platform has a small set of canonized values (`rounded-lg`, `rounded-xl`, `rounded-[14px]`, `rounded-[22px]`) — naming which family the change should land in is the fastest path to a coherent result.
 
