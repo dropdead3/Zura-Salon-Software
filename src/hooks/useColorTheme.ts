@@ -3,13 +3,28 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
-export type ColorTheme = 'zura' | 'cream' | 'rose' | 'sage' | 'ocean' | 'ember' | 'noir' | 'neon';
+export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'marine' | 'cognac' | 'noir' | 'neon';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 
-const ALL_THEMES: ColorTheme[] = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir', 'neon'];
+const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'marine', 'cognac', 'noir', 'neon'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
+
+// Migration map for renamed theme keys (legacy → current)
+const LEGACY_THEME_MIGRATION: Record<string, ColorTheme> = {
+  cream: 'bone',
+  rose: 'rosewood',
+  ocean: 'marine',
+  ember: 'cognac',
+};
+
+function migrateLegacyTheme(value: string | null | undefined): ColorTheme | null {
+  if (!value) return null;
+  if (LEGACY_THEME_MIGRATION[value]) return LEGACY_THEME_MIGRATION[value];
+  if ((ALL_THEMES as string[]).includes(value)) return value as ColorTheme;
+  return null;
+}
 
 type ColorThemeSettings = Record<string, unknown> & {
   theme: ColorTheme;
@@ -17,13 +32,21 @@ type ColorThemeSettings = Record<string, unknown> & {
 
 function applyTheme(theme: ColorTheme) {
   const html = document.documentElement;
-  html.classList.remove(...THEME_CLASSES);
+  // Also strip any legacy theme classes that may still be on the element
+  html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
   html.classList.add(`theme-${theme}`);
 }
 
 function getLocalTheme(): ColorTheme {
-  const saved = localStorage.getItem(THEME_STORAGE_KEY) as ColorTheme | null;
-  if (saved && ALL_THEMES.includes(saved)) return saved;
+  const saved = localStorage.getItem(THEME_STORAGE_KEY);
+  const migrated = migrateLegacyTheme(saved);
+  if (migrated) {
+    // Persist the migrated value so we don't pay this cost again
+    if (saved !== migrated) {
+      try { localStorage.setItem(THEME_STORAGE_KEY, migrated); } catch { /* ignore */ }
+    }
+    return migrated;
+  }
   return 'zura';
 }
 
@@ -40,16 +63,22 @@ export function useColorTheme() {
 
   const updateSetting = useUpdateSiteSetting<ColorThemeSettings>();
 
-  // Derive current theme: DB > localStorage fallback
-  const dbTheme = dbSettings?.theme;
-  const colorTheme: ColorTheme = dbTheme && ALL_THEMES.includes(dbTheme) ? dbTheme : getLocalTheme();
+  // Derive current theme: DB > localStorage fallback, with legacy migration
+  const dbTheme = migrateLegacyTheme(dbSettings?.theme as string | undefined);
+  const colorTheme: ColorTheme = dbTheme ?? getLocalTheme();
 
   // Sync from DB to localStorage + DOM when DB data arrives
   useEffect(() => {
-    if (dbLoaded && dbTheme && ALL_THEMES.includes(dbTheme)) {
+    if (dbLoaded && dbTheme) {
       localStorage.setItem(THEME_STORAGE_KEY, dbTheme);
+
+      // If the DB row still holds a legacy key, transparently rewrite it
+      const raw = dbSettings?.theme as string | undefined;
+      if (raw && raw !== dbTheme && orgId) {
+        updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: dbTheme } });
+      }
     }
-  }, [dbLoaded, dbTheme]);
+  }, [dbLoaded, dbTheme, dbSettings?.theme, orgId, updateSetting]);
 
   // Always apply the resolved theme to DOM
   useEffect(() => {
@@ -80,11 +109,11 @@ export function useColorTheme() {
 // Map system color themes to matching service category quick themes
 export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   zura: 'Lavender Fields',
-  cream: 'Neutral Elegance',
-  rose: 'Rose Garden',
+  bone: 'Neutral Elegance',
+  rosewood: 'Rose Garden',
   sage: 'Herb Garden',
-  ocean: 'Ocean Avenue',
-  ember: 'Sunset Bloom',
+  marine: 'Ocean Avenue',
+  cognac: 'Sunset Bloom',
   noir: 'Neutral Elegance',
   neon: 'Rose Garden',
 };
@@ -107,33 +136,33 @@ export const colorThemes = [
     },
   },
   {
-    id: 'cream' as ColorTheme,
-    name: 'Cream',
-    description: 'Warm cream & oat tones',
+    id: 'bone' as ColorTheme,
+    name: 'Bone',
+    description: 'Warm bone & cognac accents',
     lightPreview: {
-      bg: 'hsl(40 30% 96%)',
-      accent: 'hsl(35 35% 82%)',
-      primary: 'hsl(0 0% 8%)',
+      bg: 'hsl(36 22% 92%)',
+      accent: 'hsl(32 28% 78%)',
+      primary: 'hsl(28 55% 42%)',
     },
     darkPreview: {
-      bg: 'hsl(0 0% 4%)',
-      accent: 'hsl(35 25% 30%)',
-      primary: 'hsl(40 20% 92%)',
+      bg: 'hsl(30 12% 6%)',
+      accent: 'hsl(30 18% 22%)',
+      primary: 'hsl(28 55% 55%)',
     },
   },
   {
-    id: 'rose' as ColorTheme,
-    name: 'Rose',
-    description: 'Soft blush pink palette',
+    id: 'rosewood' as ColorTheme,
+    name: 'Rosewood',
+    description: 'Rich rose & burgundy',
     lightPreview: {
-      bg: 'hsl(350 30% 97%)',
-      accent: 'hsl(350 30% 85%)',
-      primary: 'hsl(350 60% 55%)',
+      bg: 'hsl(350 22% 95%)',
+      accent: 'hsl(350 25% 85%)',
+      primary: 'hsl(345 55% 42%)',
     },
     darkPreview: {
-      bg: 'hsl(350 15% 6%)',
-      accent: 'hsl(350 20% 25%)',
-      primary: 'hsl(350 55% 60%)',
+      bg: 'hsl(345 18% 6%)',
+      accent: 'hsl(345 22% 22%)',
+      primary: 'hsl(345 60% 58%)',
     },
   },
   {
@@ -152,33 +181,33 @@ export const colorThemes = [
     },
   },
   {
-    id: 'ocean' as ColorTheme,
-    name: 'Ocean',
-    description: 'Cool blue tones',
+    id: 'marine' as ColorTheme,
+    name: 'Marine',
+    description: 'Deep navy & gold',
     lightPreview: {
-      bg: 'hsl(210 30% 97%)',
-      accent: 'hsl(210 28% 85%)',
-      primary: 'hsl(210 60% 50%)',
+      bg: 'hsl(218 22% 95%)',
+      accent: 'hsl(218 25% 84%)',
+      primary: 'hsl(218 65% 35%)',
     },
     darkPreview: {
-      bg: 'hsl(210 15% 6%)',
-      accent: 'hsl(210 18% 25%)',
-      primary: 'hsl(210 55% 55%)',
+      bg: 'hsl(218 25% 6%)',
+      accent: 'hsl(218 22% 22%)',
+      primary: 'hsl(218 70% 55%)',
     },
   },
   {
-    id: 'ember' as ColorTheme,
-    name: 'Ember',
-    description: 'Warm amber & burnt orange',
+    id: 'cognac' as ColorTheme,
+    name: 'Cognac',
+    description: 'Bourbon amber & leather',
     lightPreview: {
-      bg: 'hsl(25 30% 94%)',
-      accent: 'hsl(25 25% 85%)',
-      primary: 'hsl(25 80% 50%)',
+      bg: 'hsl(28 25% 93%)',
+      accent: 'hsl(28 22% 82%)',
+      primary: 'hsl(28 70% 42%)',
     },
     darkPreview: {
-      bg: 'hsl(20 20% 5%)',
-      accent: 'hsl(20 25% 18%)',
-      primary: 'hsl(25 75% 55%)',
+      bg: 'hsl(24 18% 6%)',
+      accent: 'hsl(28 22% 20%)',
+      primary: 'hsl(28 70% 52%)',
     },
   },
   {

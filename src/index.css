@@ -74,11 +74,11 @@ html, body, #root {
 }
 
 @layer base {
-  /* ===== THEME: CREAM (Default) ===== */
+  /* ===== THEME: BONE (Default — warm bone & cognac accents) ===== */
   :root,
-  .theme-cream {
-    /* Light cream luxury palette */
-    --background: 40 15% 82%;
+  .theme-bone {
+    /* Warm hospitality neutral with cognac accent */
+    --background: 36 18% 88%;
     --foreground: 0 0% 6%;
 
     --card: 40 12% 85%;
@@ -87,10 +87,10 @@ html, body, #root {
     --popover: 40 12% 85%;
     --popover-foreground: 0 0% 6%;
 
-    --primary: 0 0% 8%;
-    --primary-foreground: 40 30% 96%;
+    --primary: 28 55% 42%;
+    --primary-foreground: 36 30% 96%;
 
-    --secondary: 40 10% 78%;
+    --secondary: 36 12% 80%;
     --secondary-foreground: 0 0% 6%;
 
     --muted: 40 8% 72%;
@@ -117,18 +117,18 @@ html, body, #root {
     --warning-foreground: 32 80% 30%;
 
     /* Chart colors for data visualization */
-    --chart-1: 0 0% 25%;
-    --chart-2: 145 60% 40%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 43 96% 50%;
-    --chart-5: 280 87% 55%;
+    --chart-1: 28 55% 42%;
+    --chart-2: 38 70% 45%;
+    --chart-3: 145 50% 40%;
+    --chart-4: 24 35% 30%;
+    --chart-5: 280 50% 55%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
     --border: 40 8% 65%;
     --input: 40 8% 74%;
-    --ring: 0 0% 8%;
+    --ring: 28 55% 42%;
 
     --radius: 0.75rem;
 
@@ -163,20 +163,20 @@ html, body, #root {
     --leading-loose: 2;
 
     /* Sidebar */
-    --sidebar-background: 40 12% 83%;
-    --sidebar-foreground: 0 0% 6%;
-    --sidebar-primary: 0 0% 8%;
-    --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 10% 78%;
-    --sidebar-accent-foreground: 0 0% 6%;
-    --sidebar-border: 40 8% 65%;
-    --sidebar-ring: 0 0% 8%;
+    --sidebar-background: 36 14% 86%;
+    --sidebar-foreground: 24 25% 8%;
+    --sidebar-primary: 28 55% 42%;
+    --sidebar-primary-foreground: 36 30% 96%;
+    --sidebar-accent: 36 12% 80%;
+    --sidebar-accent-foreground: 24 25% 8%;
+    --sidebar-border: 32 10% 68%;
+    --sidebar-ring: 28 55% 42%;
 
-    --card-inner: 40 8% 80%;
-    --card-inner-deep: 40 5% 76%;
+    --card-inner: 36 10% 84%;
+    --card-inner-deep: 36 8% 80%;
   }
 
-  .dark.theme-cream,
+  .dark.theme-bone,
   .dark:not([class*="theme-"]) {
     --background: 0 0% 4%;
     --foreground: 40 20% 92%;
@@ -187,10 +187,10 @@ html, body, #root {
     --popover: 0 0% 11%;
     --popover-foreground: 40 20% 92%;
 
-    --primary: 40 20% 92%;
-    --primary-foreground: 0 0% 4%;
+    --primary: 28 55% 55%;
+    --primary-foreground: 30 12% 6%;
 
-    --secondary: 0 0% 16%;
+    --secondary: 30 10% 16%;
     --secondary-foreground: 40 20% 92%;
 
     --muted: 0 0% 20%;
@@ -214,27 +214,27 @@ html, body, #root {
     --warning-foreground: 38 90% 75%;
 
     /* Chart colors for data visualization */
-    --chart-1: 40 25% 75%;
-    --chart-2: 145 55% 55%;
-    --chart-3: 217 85% 65%;
-    --chart-4: 43 95% 60%;
-    --chart-5: 280 75% 70%;
+    --chart-1: 28 60% 60%;
+    --chart-2: 38 75% 60%;
+    --chart-3: 145 45% 55%;
+    --chart-4: 30 35% 70%;
+    --chart-5: 280 55% 70%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 20% 92%;
 
     --border: 0 0% 28%;
     --input: 0 0% 14%;
-    --ring: 40 20% 92%;
+    --ring: 28 55% 55%;
 
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 40 20% 92%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 16%;
-    --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 0 0% 28%;
-    --sidebar-ring: 40 20% 92%;
+    --sidebar-background: 30 12% 10%;
+    --sidebar-foreground: 36 18% 92%;
+    --sidebar-primary: 28 55% 55%;
+    --sidebar-primary-foreground: 30 12% 6%;
+    --sidebar-accent: 30 12% 16%;
+    --sidebar-accent-foreground: 36 18% 92%;
+    --sidebar-border: 30 10% 28%;
+    --sidebar-ring: 28 55% 55%;
 
     --card-inner: 0 0% 8%;
     --card-inner-deep: 0 0% 5%;
