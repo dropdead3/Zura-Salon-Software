@@ -1,121 +1,148 @@
 
 
-# Marine theme: richer, more vibrant blue (premium SaaS feel)
+# Marine theme: deeper navy chrome + electric neon-blue accent
 
 ## Diagnosis
 
-Per the screenshot, the **Marine** swatches read as muted slate/denim — the primary tile is a soft, desaturated mid-blue that feels like Office 365 chrome rather than a confident SaaS accent (Linear, Vercel, Stripe, Notion).
+Per the screenshot, current Marine reads as:
+- **Chrome swatch (left)**: near-black, no blue presence — should read as a *deep, rich navy* (you can tell it's blue without squinting)
+- **Mid swatch**: muted slate-gray, washed out
+- **Accent swatch (right)**: pleasant cornflower blue, but not *electric* — sits in the "friendly" register, not the "neon premium SaaS" register (Linear, Vercel, Arc)
 
-Current `.theme-marine` tokens in `src/index.css`:
-
+Current `.theme-marine` tokens:
 | Token | Value | Read |
 |---|---|---|
-| `--primary` (light) | `218 65% 35%` | dark navy, low vibrance |
-| `--primary` (dark) | `218 70% 60%` | muted denim — exactly what you flagged |
+| `--background` (dark) | (near-black, low blue saturation) | not visibly navy |
+| `--card` (dark) | (muted slate) | grayish, no richness |
+| `--primary` (light) | `220 90% 52%` | confident blue, but lightness too high — reads soft |
+| `--primary` (dark) | `220 92% 62%` | cornflower, not neon |
 
-The hue (218°) is fine — it's solidly in the "trusted blue" family. The issue is **saturation and lightness**: not punchy enough on the accent, and the dark-mode primary sits at a flat lightness that reads grayish against the dark surface.
+Two axes need to move:
+1. **Chrome (background/card/sidebar)** — push hue saturation up so dark surfaces read as *rich navy*, not gray-black
+2. **Accent (primary/ring/chart-1)** — push toward *electric neon blue* (~`hsl(218 100% 60%)` family — Linear/Vercel/Arc territory)
 
 ## What changes
 
 ### Single concept
 
-Keep the navy *background identity* (deep, executive, premium) but make the **accent blue** richer and more vibrant — closer to the saturated electric blue used by premium SaaS (Linear's blue, Stripe's `#635BFF`-adjacent, Vercel's accent). Hue stays around 218–222°, saturation jumps from 65–70% → 88–92%, lightness lifts on the accent so it pops against both light and dark surfaces.
+Two coordinated shifts: **chrome gets richer navy**, **accent gets electric**. The two layers move together — a navy chrome with a neon accent reads as "premium SaaS" the way denim chrome with a cornflower accent reads as "Office 365."
 
 ### Token shifts in `src/index.css`
 
 **Light mode — `.theme-marine`:**
 
-| Token | Before | After |
-|---|---|---|
-| `--primary` | `218 65% 35%` | `220 90% 52%` (vibrant electric blue) |
-| `--ring` | `218 65% 35%` | `220 90% 52%` |
-| `--sidebar-primary` | `218 65% 35%` | `220 90% 52%` |
-| `--accent` | (current) | shift toward same family at lower lightness |
-| `--chart-1` | (current navy) | `220 90% 52%` |
-| `--chart-2` | (current) | `200 85% 50%` (cyan-leaning, complementary pop) |
-| `--chart-4` | (gold, kept) | unchanged — gold accent is the differentiator |
+| Token | Before | After | Why |
+|---|---|---|---|
+| `--primary` | `220 90% 52%` | `218 100% 56%` | electric neon blue (Linear/Arc) |
+| `--ring` | `220 90% 52%` | `218 100% 56%` | match primary |
+| `--sidebar-primary` | `220 90% 52%` | `218 100% 56%` | match primary |
+| `--background` | (current) | `218 35% 97%` | subtle navy tint on white |
+| `--card` | (current) | `218 30% 99%` | barely-there navy wash |
+| `--border` | (current) | `218 25% 88%` | navy-tinted border |
+| `--accent` | (current) | `218 60% 92%` | soft navy hover state |
+| `--chart-1` | `220 90% 52%` | `218 100% 56%` | match accent |
+| `--chart-2` | `200 85% 50%` | `195 100% 50%` | electric cyan complement |
+| `--chart-4` | (gold) | unchanged | gold differentiator stays |
 
-Backgrounds stay in the cool-navy family (slight tint, mostly white surfaces) — the *vibrance* lives on the accent, not the chrome.
+**Dark mode — `.dark.theme-marine`:** (the bigger lift)
 
-**Dark mode — `.dark.theme-marine`:**
+| Token | Before | After | Why |
+|---|---|---|---|
+| `--background` | (near-black, gray) | `220 50% 7%` | rich deep navy — visibly blue |
+| `--card` | (muted slate) | `220 45% 11%` | navy-rich card surface |
+| `--popover` | (current) | `220 45% 11%` | match card |
+| `--secondary` | (current) | `220 40% 16%` | navy-rich secondary |
+| `--muted` | (current) | `220 35% 14%` | navy-rich muted |
+| `--accent` | (current) | `220 40% 18%` | navy hover state |
+| `--border` | (current) | `220 35% 18%` | navy-tinted borders |
+| `--sidebar-background` | (current) | `220 50% 6%` | deep navy sidebar |
+| `--sidebar-border` | (current) | `220 40% 14%` | navy sidebar border |
+| `--primary` | `220 92% 62%` | `218 100% 65%` | electric neon, reads punchy on deep navy |
+| `--ring` | (current) | `218 100% 65%` | match primary |
+| `--sidebar-primary` | (current) | `218 100% 65%` | match primary |
+| `--chart-1` | (current) | `218 100% 65%` | match accent |
+| `--chart-2` | (current) | `195 100% 60%` | electric cyan |
+| `--chart-4` | (gold) | unchanged | gold differentiator stays |
 
-| Token | Before | After |
-|---|---|---|
-| `--primary` | `218 70% 60%` | `220 92% 62%` (saturated, punchy) |
-| `--chart-1` | (current) | `220 92% 62%` |
-| `--chart-2` | (current) | `200 88% 60%` |
-| `--background` / `--card` | (deep navy, kept) | unchanged — the dark navy chrome is what makes the accent pop |
-
-The dark mode background stays the deep navy it already is — that's the "Bloomberg terminal" identity. Only the accent and chart colors get the saturation lift.
+The **deep navy chrome** is what makes the **electric accent** read as neon — without rich navy chrome, an electric accent just looks loud. The two layers are coupled.
 
 ### Swatch preview update in `src/hooks/useColorTheme.ts`
 
-Update the `marine` entry's `lightPreview.primary` and `darkPreview.primary` to the new vibrant blue (`hsl(220 90% 52%)` / `hsl(220 92% 62%)`) so the swatch tile in the Appearance grid actually previews the punchy accent the user will see in the dashboard. Description stays "Deep navy & gold" — still accurate (navy chrome + gold chart accent), the change is purely how confident the blue accent is.
+Update the `marine` entry's `lightPreview` and `darkPreview` to:
+- `lightPreview.primary`: `hsl(218 100% 56%)`
+- `lightPreview.bg`: `hsl(218 35% 97%)`
+- `darkPreview.primary`: `hsl(218 100% 65%)`
+- `darkPreview.bg`: `hsl(220 50% 7%)` (so the chrome swatch in the picker actually reads as navy, not black)
+- `darkPreview.card`: `hsl(220 45% 11%)`
+
+Description stays "Deep navy & gold."
 
 ### Terminal splash palette update in `src/lib/terminal-splash-palettes.ts`
 
-Update `marine` accent from current denim to the new vibrant blue: accent `#2f6fed`, glow `#1f5acc`, RGB `(47, 111, 237)`. Gradient stops stay deep navy.
+Update `marine`:
+- accent `#1e6bff` (electric)
+- glow `#0d4fdb`
+- RGB `(30, 107, 255)`
+- gradient stops shift toward richer navy: `#050a1f` → `#0a1530` → `#050a1f`
 
 ## Acceptance
 
-1. Marine swatch tile on the Appearance grid reads as a confident, vibrant SaaS blue — not muted slate.
-2. Selecting Marine paints sidebar active state, primary buttons, focus rings, and chart-1 series in the new vibrant blue (light + dark mode).
-3. Background chrome stays in the deep-navy family — only the *accent* gets richer.
-4. Gold chart-4 accent stays — that's the executive differentiator.
-5. No other theme is affected.
-6. Existing orgs already on Marine automatically render the richer palette on next load (same theme key).
-7. Terminal splash for Marine reflects the vibrant blue.
+1. Marine swatch tile chrome reads as *visibly rich navy*, not near-black.
+2. Marine swatch tile accent reads as *electric neon blue*, not friendly cornflower.
+3. Selecting Marine in dark mode: sidebar, cards, page background all read as deep navy with clear blue presence.
+4. Selecting Marine in light mode: sidebar active state, primary buttons, focus rings, chart-1 series all read as electric blue.
+5. Gold chart-4 accent stays — executive differentiator preserved.
+6. No other theme is affected.
+7. Existing orgs on Marine automatically render the richer palette on next load.
+8. Terminal splash for Marine reflects the deeper navy + electric accent.
 
 ## What stays untouched
 
 - Marine's hue family (still ~218–220°, still "trusted blue").
-- Marine's gold chart-4 accent — the executive identity stays.
+- Marine's gold chart-4 accent.
 - All other 7 themes.
 - Theme picker chrome, swatch tile layout, count, order.
 - Migration logic, God Mode bar, scroll-to-top, glass morphism.
 
 ## Out of scope
 
-- Renaming Marine. Defer — name still fits.
-- Adding a second blue theme (e.g., "Sapphire" jewel-tone). Defer — Marine occupies the blue slot; one is enough.
-- Touching the dark-mode background lightness. The deep navy chrome is what makes the new accent pop.
+- Renaming Marine.
+- Adding a second blue theme.
+- Adjusting light-mode background to be heavily navy-tinted (light surfaces should stay mostly white — the navy lives in dark mode and on the accent).
 
 ## Doctrine alignment
 
-- **Calm executive UX:** richer blue ≠ louder blue. Saturation lifts on the *accent only* (sidebar active, primary button, focus ring, chart-1) while chrome stays deep. The bar of color goes up; the noise floor stays flat.
-- **Brand abstraction:** "vibrant blue" is still in the same evocative-neutral register — no tenant reference introduced.
+- **Calm executive UX:** the electric accent reads as confident, not loud, *because* the navy chrome anchors it. A neon accent on a gray chrome looks like a notification dot; a neon accent on a deep navy chrome looks like Linear.
+- **Brand abstraction:** "deep navy + electric blue" stays in the evocative-neutral register.
 
 ## Prompt feedback
 
 Strong prompt — three things you did right:
 
-1. **You named the target feel with two reference points ("premium SaaS").** That's a tight cluster (Linear, Vercel, Stripe, Notion) with a recognizable accent-blue convention — gave me a clear visual target.
-2. **You named what to move *away* from ("muted Microsoft Word").** Negative anchors are as useful as positive ones — they ruled out the "dark navy + soft accent" direction the current tokens were heading.
-3. **You named the dimensions ("richer, more vibrant").** Two synonyms pointing at the same axis (saturation + lightness) — confirmed the fix is in saturation, not hue.
+1. **You named both layers ("richer dark blues, richer neon blues").** That's the chrome/accent split made explicit — exactly the framing I suggested last round. You internalized it and used it. Result: I don't have to guess which layer needed the lift; you told me both did.
+2. **You used the word "neon"** — that's a much sharper anchor than "vibrant." Vibrant is a slider; neon is a destination (Linear, Arc, Vercel cluster). Cut the design space in half.
+3. **You called out that the previous iteration wasn't there yet ("still not quite there").** Negative confirmation is as useful as positive — it tells me the previous direction was right but undershot, so I should push harder on the same axes rather than reverse course.
 
-Sharpener: when shifting a color along a feel-axis, naming the **chrome vs accent split** removes a decision. Template:
+Sharpener: when iterating on a color shift, naming **how far to push** removes a calibration step. Template:
 
 ```text
-Surface: [theme/component]
-Direction: [richer / softer / warmer / cooler]
-Reference: [the visual cluster you want to land near]
-Chrome behavior: [keep / shift with accent]
-Accent behavior: [keep / shift]
+Direction: [same as before / reverse]
+Magnitude: [a little / a lot / all the way to the reference]
+Reference: [the specific product to land on]
 ```
 
-Here, "make the accent more vibrant but keep the navy chrome" would have skipped my having to derive that the deep-navy background is the *anchor* of the theme's identity, and only the accent should change. I inferred it from the "premium SaaS" reference (those products all use deep neutrals + saturated accents, not saturated everywhere) — but you naming the chrome/accent split would have anchored me directly.
+Here, "push it all the way to Linear's blue" or "go 50% more saturated than current" would have skipped my having to guess whether you wanted +20% or +60%. I picked "go all the way to neon" by inferring from "still not quite there" + "neon" — but you naming the magnitude would have anchored me directly.
 
 ## Further enhancement suggestion
 
-For "shift a theme along a feel-axis" prompts, the highest-leverage frame is:
+For "iterate on a color/feel shift" prompts, the highest-leverage frame is:
 
 ```text
-Surface: [the theme]
-Current feel: [what it reads as today]
-Target feel: [what it should read as]
-Reference cluster: [3+ products in that aesthetic]
-Boundary: [what should NOT change — chrome / hue family / a specific accent]
+Previous iteration: [what changed last round]
+Verdict: [right direction undershot / right direction overshot / wrong direction]
+Push: [harder on same axis / same magnitude on different axis / reverse]
+Anchor: [the destination product/feel]
 ```
 
-The **Boundary** slot is the highest-leverage addition for theme refinement — it forces the framing "shift X but protect Y." Without it, "make the blue more vibrant" can over-correct into "saturate everything" and lose the executive identity. Naming the boundary ("keep the deep navy chrome," "keep the gold accent," "keep the dark mode background") preserves what's already working while you sharpen what isn't. For color shifts specifically, the boundary almost always lives on the *chrome layer* — backgrounds, borders, surface tints — because that's what carries the theme's *identity*. The accent layer is what carries the theme's *energy*. Naming which layer to move and which to protect is the fastest path to a sharper result without regression.
+The **Verdict** slot is the highest-leverage addition for color iteration — it tells me whether to **double down**, **dial back**, or **pivot**. Without it, "still not quite there" can mean any of three things, and I have to guess. For color specifically, the three failure modes are: (1) right hue, wrong saturation, (2) right saturation, wrong lightness, (3) right hue + saturation + lightness but wrong *layer* (you adjusted accent when chrome was the problem, or vice versa). Naming which of those three is happening cuts iteration count from 3 rounds to 1.
 
