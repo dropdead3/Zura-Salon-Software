@@ -155,6 +155,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
+import { ChromeElbow } from '@/components/dashboard/ChromeElbow';
 import { ViewAsPopover } from '@/components/dashboard/ViewAsPopover';
 import { ZuraCommandSurface } from '@/components/command-surface/ZuraCommandSurface';
 import { useCommandMenu } from '@/hooks/useCommandMenu';
