@@ -1,141 +1,183 @@
 
 
-# Fix the View As popover — content collapses instead of filling the container
+# Add location filter to "View As → Team" tab (multi-location only)
 
-## Diagnosis (the actual bug, in one paragraph)
+## Diagnosis
 
-The popover is now `560px` tall, but **the content inside collapses to its intrinsic height** instead of filling the container. Cause: Radix `TabsContent` defaults to `display: block`. When we add `flex flex-col flex-1 min-h-0` to it, those classes only work if the **inactive** TabsContent panels are properly removed *and* the active panel can claim flex space inside the parent. Today, two mechanics break it:
+The Team tab in `ViewAsPopover` lists every active employee across the organization with no way to narrow by location. For multi-location operators, this becomes a long flat list (your screenshot shows ~15+ stylists already, only 8 visible). The fix is a compact location filter that appears **only** when the org has 2+ active locations — single-location orgs see the current UI unchanged.
 
-1. **`forceMount` is not set on `TabsContent`** → Radix unmounts inactive panels, but the active panel still computes its flex against a parent that has `flex-col` — and Radix's `[data-state="inactive"]` panels (when momentarily mounted during transition) collapse the layout. The visible symptom: only the top portion of the panel renders, then dead space below.
-2. **The Roles & Team panels render `ScrollArea` as a flex child with `flex-1 min-h-0`, but `ScrollArea`'s Radix root is `position: relative` + `overflow: hidden` with **no explicit height on its root**. Without an explicit `h-full`, the Radix viewport inside it computes to `0` height in a flex chain and falls back to **content height** — which is exactly what the screenshots show (only 2 team members visible, then nothing; only 4 roles visible, then nothing).
+The data is already in place: `useAllUsersWithRoles()` returns `location_id` (primary) + `location_ids[]` (multi-assignment) on each user. We just need a location source and one extra filter step.
 
-The Test tab shows the same bug inverted: its content is short and bottom-aligned because `ScrollArea` has no `h-full`, so the viewport sits at its natural size and the panel below it pushes down.
-
-## Fix — same file, three precise changes
+## Fix — single file, surgical
 
 ### `src/components/dashboard/ViewAsPopover.tsx`
 
-**1. Add `h-full` to every `ScrollArea` (the actual scroll bug).**
+**1. Pull active locations from the current org.**
 
-```tsx
-<ScrollArea className="flex-1 min-h-0 h-full">
+```ts
+import { useActiveLocations } from '@/hooks/useLocations';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+
+const { effectiveOrganization } = useOrganizationContext();
+const { data: locations = [] } = useActiveLocations(effectiveOrganization?.id);
+const showLocationFilter = locations.length >= 2;
+const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
 ```
 
-Applies to all three tabs (Roles, Team, Test). `h-full` resolves the flex chain ambiguity — ScrollArea now claims 100% of its flex slot, and its internal Viewport correctly computes overflow.
+Single-location orgs (`locations.length < 2`): no filter renders, no behavioral change.
 
-**2. Force the inactive `TabsContent` panels to stay out of the layout.**
+**2. Filter `filteredUsers` by location.**
 
-Radix already does this by default, but the active panel's `flex flex-col flex-1` needs a parent that's also flex. The `Tabs` root is currently `flex flex-col flex-1 min-h-0` — good. But `TabsContent` mounts as a block-level element by default; we need to ensure the active one fills:
+Extend the existing `useMemo`:
 
-Add `data-[state=active]:flex` to each TabsContent so the flex layout only activates for the visible panel:
-
-```tsx
-<TabsContent
-  value="roles"
-  className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex flex-col"
->
+```ts
+const filteredUsers = useMemo(() => {
+  const q = debouncedFilter.toLowerCase();
+  return allUsers
+    .filter(u => u.user_id !== user?.id)
+    .filter(u => {
+      if (selectedLocationId === 'all') return true;
+      // Match against primary location_id OR location_ids[] array
+      if (u.location_id === selectedLocationId) return true;
+      if (u.location_ids?.includes(selectedLocationId)) return true;
+      return false;
+    })
+    .filter(u => {
+      if (!q) return true;
+      const name = (u.display_name || u.full_name || '').toLowerCase();
+      const roles = u.roles.join(' ').toLowerCase();
+      return name.includes(q) || roles.includes(q);
+    });
+}, [allUsers, user?.id, debouncedFilter, selectedLocationId]);
 ```
 
-Same pattern for `team` and `test`. This is the canonical Radix Tabs + flex pattern.
+Users with no location (`location_id = null` and empty `location_ids`) are hidden from per-location filters — they only appear in "All locations." This is correct: leadership/bookkeepers without a location pin should surface in the unfiltered view, not under a specific site.
 
-**3. Fix the Test tab vertical centering.**
+**3. Render the filter as a compact pill row inside the existing sticky search header.**
 
-Currently the Test panel uses `ScrollArea` wrapping a small block — it sits at the top with empty space below (or bottom-aligned if flex breaks). Replace the ScrollArea wrapper on the Test tab with a centered flex container — Test content is short and static, no scroll needed:
+Update the Team tab header block (currently `p-3 pb-2 shrink-0 border-b ...`):
 
 ```tsx
-<TabsContent
-  value="test"
-  className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex flex-col items-center justify-center px-6"
->
-  <div className="text-center">
-    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-muted/40">
-      <FlaskConical className="h-5 w-5 text-muted-foreground" />
-    </div>
-    <h3 className="font-display text-[11px] tracking-[0.12em] uppercase text-foreground mb-1">
-      Test Accounts
-    </h3>
-    <p className="text-xs text-muted-foreground leading-relaxed">
-      Simulate the platform safely without affecting real data. Coming soon.
-    </p>
-    <Badge variant="outline" className="mt-3 text-[10px] rounded-full">
-      Coming Soon
-    </Badge>
+<div className="p-3 pb-2 shrink-0 border-b border-border/40 space-y-2">
+  {/* Search input — unchanged */}
+  <div className="relative">
+    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+    <Input ... />
   </div>
-</TabsContent>
+
+  {/* Location pills — only when 2+ locations */}
+  {showLocationFilter && (
+    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
+      <button
+        onClick={() => setSelectedLocationId('all')}
+        className={cn(
+          'h-6 px-2.5 rounded-full text-[11px] font-sans transition-colors duration-150 shrink-0',
+          selectedLocationId === 'all'
+            ? 'bg-muted text-foreground'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+        )}
+      >
+        All locations
+      </button>
+      {locations.map(loc => (
+        <button
+          key={loc.id}
+          onClick={() => setSelectedLocationId(loc.id)}
+          className={cn(
+            'h-6 px-2.5 rounded-full text-[11px] font-sans transition-colors duration-150 shrink-0',
+            selectedLocationId === loc.id
+              ? 'bg-muted text-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+          )}
+        >
+          {loc.name}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 ```
 
-Test tab content now sits perfectly centered in the available 500px (matches the empty-state pattern across the rest of the app).
+Pattern matches the existing `CommandSearchFilters` pill row already used elsewhere in the app — same visual language (h-6, rounded-full, muted hover, foreground active). Horizontal scroll handles 4+ locations gracefully.
 
-**4. Bonus fix — Team tab search bar position.**
+**4. Update the empty state copy.**
 
-The Team tab screenshot shows the search bar sitting roughly in the *middle* of the panel with the team list below it — looks broken. Cause: same `ScrollArea` bug pushing content down. With fix #1 + #2, the search bar will correctly pin to the top with the team list scrolling beneath. No additional change needed for Team — the existing structure (`shrink-0` header + `flex-1` ScrollArea) is correct once the parent layout is fixed.
+When a location filter is active and returns zero matches:
+
+```ts
+{teamFilter
+  ? 'No matches found'
+  : selectedLocationId !== 'all'
+    ? 'No team members at this location'
+    : 'No team members'}
+```
 
 ## What stays untouched
 
-- Width (`340px`), height (`560px` cap), border, shadow, backdrop blur — all good.
-- Tab order, default tab (`team`), tooltip copy, gating logic.
-- Sticky tab header + sticky search input wrappers — already correct.
-- `useViewAs`, audit logging, Esc-to-exit — unchanged.
+- `useAllUsersWithRoles` — already returns `location_id` + `location_ids[]`, no hook change needed.
+- Roles tab, Test tab, gating logic, audit logging, sticky tab header.
+- Width (340px), height (560px), stroke, shadow.
+- Search debounce, scroll behavior.
 
 ## Acceptance
 
-1. **Roles tab:** all role groups render. Scrolling works. Last role doesn't kiss the bottom edge.
-2. **Team tab:** search bar pinned at top directly under tabs (no gap). Team list fills the rest of the panel and scrolls when overflowing.
-3. **Test tab:** Test Accounts content (icon + heading + body + badge) sits **vertically centered** in the panel. No scroll. No bottom-clipping.
-4. **Visual continuity:** all three tabs use the same vertical extent (560px). Switching tabs no longer causes the panel to feel like it has dead space.
-5. **No regressions:** stroke, shadow, width, gating, behavior all unchanged.
+1. **Single-location org:** Team tab looks identical to today. No location pill row.
+2. **Multi-location org (2+ active locations):** A horizontal pill row appears under the search input — `All locations` (default) + one pill per active location, ordered by `display_order`.
+3. **Click a location pill:** team list narrows to members whose `location_id` or `location_ids[]` matches. Pill highlights `bg-muted text-foreground`.
+4. **Click `All locations`:** restores full list.
+5. **Search + location filter combine:** typing "alex" with "Downtown" selected returns only Alexes assigned to Downtown.
+6. **Empty state:** shows "No team members at this location" when a location is selected and yields zero matches.
+7. **4+ locations:** pill row scrolls horizontally without breaking layout.
+8. **No regressions:** clicking a teammate still triggers impersonation, closes the popover, fires audit log.
 
 ## Out of scope
 
-- Reducing the popover height when content is short (intentional — fixed height keeps tab switching from causing layout jumps).
-- Keyboard navigation through roles/team rows.
-- Loading skeletons for the Team tab (currently shows "Loading team…" text — fine).
+- Filtering the Roles tab by location (roles are org-wide, not location-scoped).
+- Restricting which locations a viewer can see (today: all active locations of their org). If you later want managers limited to their own location's team, that's a separate scope.
+- Persisting the selected location across popover open/close (resets to "All" each session — keeps the surface predictable).
+- Showing a count badge per pill (e.g., "Downtown · 12") — possible polish but adds scan noise.
 
 ## Doctrine alignment
 
-- **Calm executive UX:** layout no longer flickers between "tall empty panel" and "cramped content."
-- **Material consistency:** Test tab empty state now matches `tokens.empty.*` centering convention used everywhere else.
+- **Persona scaling:** filter only renders when the org structure warrants it (2+ locations). Solo/single-location operators see no added complexity.
+- **Tenant isolation:** `useActiveLocations(effectiveOrganization?.id)` is already org-scoped via RLS.
+- **Calm executive UX:** matches the existing pill-filter language used in CommandSearchFilters; no new visual primitive.
 
 ## Prompt feedback
 
-Tight, accurate prompt — three things you did right:
+Tight, surgical prompt — three things you did right:
 
-1. **You named the symptom precisely** ("full container is not being used properly"). That phrasing pointed me directly at a flex/height-cascade bug, not a content bug. Saved a diagnostic round-trip — I knew immediately to inspect the chain from `PopoverContent` down to `ScrollArea`, not the data layer.
-2. **You attached three screenshots covering all three tabs.** Multi-tab evidence is what let me see the symptom is *consistent across panels* (= layout issue at the Tab/ScrollArea boundary), not a per-tab bug. One screenshot would have left "is this just the Team tab?" ambiguous.
-3. **You used "more refining and debugging"** — soft directive that signaled "we're not done yet, the prior pass missed something." Told me to look for a *residual* layout bug rather than rebuild the popover. Anchored the response to the actual delta.
+1. **You named the conditional trigger** ("when multiple locations exist"). Conditional UI requirements often get dropped from prompts and surface later as "wait, hide this for solo orgs" — you got ahead of it. Saved a "should this always show?" round-trip.
+2. **You used "filterable by location"** — the verb told me you want a *filter control*, not a *grouping* (sectioned by location) or a *sort*. Three different UX patterns; the verb chose one cleanly.
+3. **Single sentence.** No padding, no preamble. Permission gate already established in earlier turns, scope already narrowed to the popover, so the prompt only needed the *delta*. Good context economy.
 
-Sharpener: naming **what behavior you expected vs. what you saw** would have collapsed this further. "Container is 560px but content only fills the top 200px" or "tabs feel half-empty, scrollbar never appears" would have pinned the bug to the flex/scroll chain in one beat. Template:
+Sharpener: naming the **filter UI shape** would have removed my one remaining decision. "Filterable by location via pill row" or "via dropdown" or "via combobox" would have anchored the surface in one beat. Template:
 
 ```text
-[Surface] is broken:
-- Expected: [what should happen]
-- Actual: [what's happening — concrete observation]
-- Evidence: [screenshot]
+[Surface] needs [filter / sort / group] by [dimension], shown as [UI shape].
+Visibility rule: [when does the control appear].
 ```
 
-The **Expected/Actual pairing** is the underused construct on layout-bug prompts. "Not used properly" describes the *judgment* (it looks wrong); "560px container, content only fills 200px, no scrollbar" describes the *mechanism* (a flex cascade that's collapsing). Mechanism-level descriptions land fixes in one pass even on subtle layout bugs.
+The **UI shape field** is the underused construct on filter prompts — without it I have to choose between Select / pill row / combobox / segmented control based on density assumptions. Naming the shape (or naming a reference: "like the CommandSearchFilters row") collapses that decision.
 
 ## Further enhancement suggestion
 
-For **layout/visual debugging prompts** specifically, the highest-leverage frame is:
+For **conditional-UI prompts** specifically, the highest-leverage frame is:
 
 ```text
-[Component] layout bug:
-Expected: [intended layout in one phrase]
-Actual: [what you see, with measurements/landmarks]
-Evidence: [screenshot]
-Suspected cause (optional): [your hypothesis]
+Add [control] to [surface] when [condition]. Hide when [inverse condition].
+Shape: [UI primitive or reference to existing surface].
+Behavior: [what selecting it does].
 ```
 
-Example that would have produced an even tighter response:
+Example that would have collapsed this further:
 
 ```text
-ViewAsPopover layout bug:
-Expected: tabs fill the 560px container, content scrolls when overflowing
-Actual: content only fills top ~200px, rest is dead space, no scrollbar appears
-Evidence: [3 screenshots]
-Suspected cause: ScrollArea or TabsContent height not propagating
+Add a location filter pill row to View As → Team tab when org has 2+ active locations.
+Hide the row entirely for single-location orgs.
+Shape: like CommandSearchFilters (h-6 rounded-full pills, horizontal scroll).
+Behavior: filters team list by user.location_id OR location_ids[].
 ```
 
-Five lines, four constraints, one optional hypothesis. The **"Suspected cause" line is the underused construct** — even a wrong hypothesis is useful, because it tells me where you've already mentally ruled things in/out, so I can either confirm/correct it or skip explaining the parts you've already grasped. Prompts that include a hypothesis consistently produce more focused responses than prompts that only describe symptoms.
+Four lines, four constraints, zero shape ambiguity. The **"Hide when [inverse]"** line is the underused construct — it tells me explicitly that the absence-state matters, not just the presence-state. Most conditional-UI prompts only specify when to *show* the control and leave the hide-state to inference.
 
