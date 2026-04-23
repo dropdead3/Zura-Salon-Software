@@ -1,95 +1,93 @@
 
 
-# Add "Neon" theme — hot pink + black
+# Theme the God Mode bar to the active organization
 
-A new color theme joining the existing 7 (Zura, Cream, Rose, Sage, Ocean, Ember, Noir). Hot pink primary (`330 95% 55%`) on near-black surfaces — bold, high-contrast, club aesthetic. Distinct from **Rose** (soft blush) by being saturated and electric, and from **Noir** (pure monochrome) by carrying a chromatic accent.
+## Diagnosis
 
-## Palette
+The God Mode bar (`src/components/dashboard/GodModeBar.tsx`) is hardcoded to the platform's violet/purple palette (`from-violet-950 via-purple-900 to-violet-950`, `bg-violet-500`, `text-violet-300`, etc.). When an operator impersonates an org whose theme is Neon (hot pink), Cream, Ocean, etc., the bar still reads platform-violet — it visually disowns the org you're viewing as.
 
-**Light mode** — warm-white background, hot pink primary, near-black text. Used rarely but must look intentional.
-**Dark mode** (primary use) — deep black background (`0 0% 4%`), hot pink primary (`330 95% 60%`), pink-tinted surfaces.
+The fix: when `isImpersonating` is true, the bar should pick up the impersonated org's `--primary` token so the chrome reads as part of the org you're inside, not the platform you came from. Violet stays the fallback (and is also the right answer when the org's theme *is* Zura/violet).
 
-Anchor tokens:
-```
---primary:        330 95% 55% (light) / 330 95% 60% (dark)   ← hot pink
---background:     330 15% 97% (light) / 0 0% 4% (dark)
---accent:         330 35% 90% (light) / 330 25% 18% (dark)
---ring:           330 95% 55% / 330 95% 60%
---chart-1..5:     pink → magenta → fuchsia ramp
-```
+## What changes
 
-All other tokens (success, warning, destructive, oat, gold, border, sidebar) follow the same structural pattern as existing themes — only hue/saturation shift.
+### Single file: `src/components/dashboard/GodModeBar.tsx`
 
-## Files affected
+Replace hardcoded violet/purple Tailwind utilities with theme-token-driven inline styles + semantic tokens. The bar will read from CSS variables already set by the active dashboard theme (`--primary`, `--primary-foreground`, `--border`).
 
-| File | Change |
-|---|---|
-| `src/index.css` | Add `.theme-neon` (light) and `.dark.theme-neon` blocks after the noir blocks (~lines 985+). Mirrors the structure of every other theme — full token set for both modes. |
-| `src/hooks/useColorTheme.ts` | Add `'neon'` to `ColorTheme` type, `ALL_THEMES` array, `COLOR_THEME_TO_CATEGORY_MAP` (mapped to `'Rose Garden'` quick theme), and a new entry in the `colorThemes` metadata array with name "Neon", description "Hot pink & black", and light/dark previews. |
-| `src/components/layout/Layout.tsx` | Add `'theme-neon'` to the two `classList.remove(...)` calls so cream-mode public routes correctly strip it. |
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Add `'neon'` to the `validSchemes` array. |
-| `src/lib/terminal-splash-palettes.ts` | Add `neon` palette entry: gradient stops `['#0a0408', '#3d1024', '#0a0408']`, accent `#ff2d8a`, glow `#d4206e`, RGB `255, 45, 138`. Required — `terminalPalettes` is typed `Record<ColorTheme, TerminalPalette>` so omitting it is a type error. |
-| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Add `neon: '#FF2D8A'` to the email accent color map. |
+**Before → After mapping:**
 
-No DB changes. No new components. No migrations.
+| Element | Today | After |
+|---|---|---|
+| Background | `bg-gradient-to-r from-violet-950 via-purple-900 to-violet-950` | Inline `linear-gradient` using `hsl(var(--primary) / 0.95)` → `hsl(var(--primary) / 0.85)` → `hsl(var(--primary) / 0.95)` over a near-black base, so even light themes stay legible |
+| Border | `border-violet-500/40` | `border-[hsl(var(--primary)/0.4)]` |
+| Shadow | `shadow-[...rgba(139,92,246,0.3)]` | `shadow-[0_4px_20px_-4px_hsl(var(--primary)/0.3)]` (inline style — Tailwind can't tokenize arbitrary shadows) |
+| "God Mode" label + Z icon | `text-violet-300` | `text-[hsl(var(--primary-foreground)/0.85)]` |
+| Divider | `bg-violet-500/40` | `bg-[hsl(var(--primary)/0.4)]` |
+| "Viewing as:" label | `text-violet-200/80` | `text-[hsl(var(--primary-foreground)/0.75)]` |
+| Org name | `text-white` | `text-[hsl(var(--primary-foreground))]` |
+| Account ID | `text-violet-400/70` | `text-[hsl(var(--primary-foreground)/0.6)]` |
+| Account Details button | `text-violet-300 hover:text-white hover:bg-violet-500/20` | Theme-token equivalents via inline styles for hover (`onMouseEnter`/`onMouseLeave`) or a small CSS-var-driven utility |
+| Exit View button | `bg-violet-500 hover:bg-violet-400 shadow-violet-500/30` | `bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] shadow-[hsl(var(--primary)/0.3)]` |
+
+**Why a near-black gradient base regardless of theme:** the bar must always read as an *override* layer (system chrome, not content). A pure `--primary` flood would look washed in light themes (Cream) and indistinguishable from page chrome in violet themes. The gradient sandwich keeps the bar visually distinct as a system layer while the *accent* color picks up the org theme.
+
+**Mechanism:** `--primary` is already set by the active org's theme class (`.theme-neon`, `.theme-cream`, `.theme-ocean`, etc.) which is applied to `<html>` by the existing `useColorTheme` flow during impersonation. No new context, no new state — just consume what's already in the DOM.
 
 ## Acceptance
 
-1. The Appearance settings panel (`/admin/settings`) shows Neon as an 8th color theme card with hot pink + black previews.
-2. Selecting Neon applies hot pink primary across sidebar, buttons, focus rings, charts, and the Z floating action button.
-3. Theme persists via existing `useColorTheme` flow (localStorage + `site_settings`) — no bespoke logic needed.
-4. Dark mode is the intended showcase; light mode is functional and legible.
-5. Terminal splash screens render with hot pink accent when Neon is active.
-6. Public marketing routes (Layout.tsx) still force cream theme — Neon does not leak to public surfaces.
-7. Email branding accent picks up hot pink when org theme is Neon.
-8. Type-check passes (`ColorTheme` union updated everywhere it's referenced).
+1. Impersonating a **Neon**-themed org → God Mode bar reads hot-pink-on-near-black with hot-pink Exit button and shadow.
+2. Impersonating a **Cream**-themed org → bar reads cream/oat-accented on near-black; remains legible.
+3. Impersonating a **Zura** (violet) org → bar looks identical to today (violet), so no visual regression for the default theme.
+4. Same applies to **Rose, Sage, Ocean, Ember, Noir** — each picks up its own primary.
+5. Mobile/desktop layout unchanged. Animation unchanged. Click handlers unchanged. Z-index unchanged.
+6. The 44px / 40px height and `--god-mode-offset` CSS var are untouched — Sheet, Dialog, ZuraCommandSurface, PremiumFloatingPanel offsets all keep working.
+7. Type-check passes. No new dependencies.
 
 ## What stays untouched
 
-- Theme switching mechanism (`useColorTheme`, `applyTheme`, `THEME_CLASSES`).
-- Existing 7 themes — unchanged.
-- Platform admin theme isolation (Neon is org-side only).
-- Light/Dark/System mode toggle — orthogonal to color theme.
+- `PlatformContextBanner` (a separate banner used elsewhere — different surface, not part of this ask).
+- `--god-mode-offset` CSS var and all components that read it.
+- Animation, layout, click behavior, mobile breakpoint logic.
+- The "God Mode" label text — the bar still announces itself as God Mode; only the *color* respects the org.
 
-## Naming choice
+## Doctrine alignment
 
-"Neon" over "Hot Pink" because: (a) consistent one-word naming with the other 7 themes, (b) signals the *aesthetic* (electric, club, late-night) not just the color, (c) leaves room for the theme to evolve toward a broader neon palette without renaming.
+- **Complete UX simulation** (god-mode-governance memory): when you're "viewing as" an org, every chrome element should reflect that org's identity. The bar is the one piece of system chrome that *also* needs to remind you you're impersonating — so we keep the "God Mode" label and the structural prominence, but let the color belong to the org. Identity through color, role through structure.
+- **Calm executive UX:** consistent theming across the bar and the dashboard reduces visual context-switching cost when moving between orgs in rapid succession.
 
 ## Out of scope
 
-- A second neon variant (cyan, lime). Trigger: operator asks for "more neons."
-- Animated/glow effects on Neon-themed surfaces. Trigger: explicit ask — current discipline is calm executive UX, glow effects would break that.
-- Per-component neon-specific overrides. The token system handles propagation; bespoke overrides would fragment the theme architecture.
+- A toggle to force the platform-violet bar regardless of org theme. Defer until an operator says the themed bar makes it harder to spot they're in God Mode (current contrast on near-black base should keep "I am impersonating" obvious).
+- Theming `PlatformContextBanner` (the in-flow banner). Different surface, different ergonomics — handle separately if the user asks.
+- Animating the color transition when switching between impersonated orgs. Defer — switching orgs is already a navigation event, color shift is implicit.
 
 ## Prompt feedback
 
-Tight, concrete prompt — six words that fully specify the ask. Two strengths:
+Tight, single-concept prompt — eight words that fully scope the change and name the desired behavior. Two strengths:
 
-1. **You named the colors, not an emotion.** "Hot pink and black" gives me the palette directly; "edgy theme" or "bold theme" would have left me guessing primary/background/accent and risked landing on something off-tone.
-2. **You phrased it as an addition, not a replacement.** "Can we make a..." signals it joins the existing themes rather than reskinning one — no ambiguity about scope.
+1. **You named the *behavior* ("respect the org theme color"), not a specific color.** That left the implementation open and let me reach for `--primary` (the right token) instead of hardcoding any single hue. Naming the behavior beats naming the value when the value should be dynamic.
+2. **You scoped it to the right surface (the bar) without bleeding into adjacent ones.** No mention of the in-flow banner, header, or sidebar — the surgical scope kept the change a single-file edit.
 
-Sharpener: when adding to a known set (themes, levels, roles, statuses), naming the **anchor tokens** removes one decision. Template:
+Sharpener: when asking a piece of chrome to inherit from a system, naming the **fallback behavior** removes one decision. Template:
 
 ```text
-Add: [item] to [set]
-Primary: [color/value]
-Background: [color/value]
-Mode emphasis: [light / dark / both equally]
-Tone (optional): [calm / electric / editorial — informs accent + chart palette]
+Make: [surface] respect [system value]
+Fallback when [system value] is unset: [behavior]
+Identity preservation: [what about the surface must NOT change so it still reads as itself]
 ```
 
-Here, "Hot pink primary on near-black, dark-mode-first, electric tone" would have skipped my proposing-then-defending dark-mode emphasis and the Neon vs Hot Pink naming.
+Here, "respect the org theme color, fall back to violet, but keep the dark base so it still reads as system chrome" would have skipped my proposing-then-defending the near-black gradient base.
 
 ## Further enhancement suggestion
 
-For "add a variant to a typed set" prompts, the highest-leverage frame is:
+For "make X respect Y" prompts (where Y is a dynamic system value), the highest-leverage frame is:
 
 ```text
-Add: [variant name] to [set]
-Anchor: [the one token that defines this variant — primary color, hierarchy rank, tier price]
-Differentiator: [what makes it not-X, where X is the closest existing variant]
-Mode/scope: [where it applies — dark only, all modes, specific persona]
+Bind: [property of X] to [token / state / context value]
+Where defined: [the source of truth — CSS var, context, prop]
+Fallback: [what to render if the source is empty]
+Invariant: [the part of X's identity that must survive the rebinding]
 ```
 
-The **Differentiator** slot is the most-leverage addition — it forces the framing "how is this not Rose? not Noir?" upfront, which is exactly the question that determines whether the variant earns its place in the set or just adds noise. State the differentiator and the variant's identity becomes self-evident.
+The **Invariant** slot is the most-leverage addition — it forces you to name what makes the surface still recognizable as *itself* after the rebinding. For chrome that announces a system mode (God Mode, dev mode, debug mode), the invariant is usually "must remain visually distinct from content" — naming it prevents the AI from over-themeing into invisibility.
 
