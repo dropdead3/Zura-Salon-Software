@@ -1,43 +1,77 @@
 
 
-# Step 3 follow-up — Apply Divider system to Operations Hub
+# Match Operations Hub cards + dividers to Settings page
 
-The Divider primitives shipped in Step 3 (`<Divider variant="hairline" />` and `<Divider variant="inset" />`), but the Operations Hub at `/dashboard/admin/team-hub` wasn't swept to use them. This applies the dividers where they belong.
+Two mismatches to fix on `/dashboard/admin/team-hub` so it visually equals `/dashboard/admin/settings`:
 
-## Scope
+## Gap analysis
 
-Audit `team-hub` page and its section components. Place dividers at two intentional break points:
+| Element | Settings page (target) | Operations Hub (current) |
+|---|---|---|
+| Card hover | `hover:border-primary/30 hover:shadow-md` (calm: tints border, soft shadow) | `hover:shadow-lg hover:-translate-y-1` (bouncy: lifts + heavy shadow) |
+| Section divider | `border-b border-border/50 pb-2` **underline beneath the H2** (left-aligned, full width of header) | Centered 60% fade-out hairline **above** each section (`::before` gradient) |
 
-- **`inset`** between top-level page sections (Today's Operations → Quick Actions → Categories → etc.) — gives editorial breathing room.
-- **`hairline`** inside multi-section cards that currently butt content against borders (header/body splits, sub-section breaks).
+## Changes
 
-## Plan
+### 1. Card hover — adopt Settings treatment
 
-1. Open `src/pages/dashboard/admin/team-hub.tsx` (or equivalent Operations Hub page) to map the section sequence.
-2. Insert `<Divider variant="inset" />` between top-level sections.
-3. Identify any internal card splits (e.g. `OperationsQuickStats` header-to-grid, category groups) and add `<Divider variant="hairline" />` where the current treatment is a bare `border-b` or no separation.
-4. Import `Divider` from `@/components/ui/Divider` in each touched file.
+In `src/pages/dashboard/admin/TeamHub.tsx`, three card components use the lift hover. Replace on each:
 
-## Files expected to touch
+- `ManagementCard` (line 91)
+- `HubGatewayCard` (line 137)
+- `renderFavoriteCard` (line 290)
 
-- `src/pages/dashboard/admin/team-hub.tsx` (page-level inset dividers)
-- 1–2 section components if internal hairlines are warranted (will confirm during build)
+**From:** `group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50`
 
-## What stays untouched
+**To:** `group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md`
 
-- All other Steps 1, 2 work (elevation, specular highlights, primitive itself).
-- Dashboard home, schedule, analytics — Operations Hub only this pass.
-- Card structure, data, layout grid.
+(Drops the `-translate-y-1` lift and the `shadow-lg`; adds `border-primary/30` tint and `shadow-md` to match Settings.)
 
-## Acceptance
+The favorite card variant keeps its amber border/background; only the hover bits change.
 
-1. Walking down `/dashboard/admin/team-hub` shows clear, intentional breaks between top-level sections via the centered fade-out divider.
-2. No section feels jammed against the next.
-3. Hairline dividers (if added) read as quiet internal splits, not heavy borders.
+### 2. Divider — adopt Settings underline pattern
 
-## Out of scope
+Refactor `CategorySection` (line 170). Current implementation: centered `::before` fade above the section. Target: an underline directly beneath the H2 heading, matching Settings' `border-b border-border/50 pb-2`.
 
-- Sweeping dividers into other dashboard pages (separate pass if you want it).
-- Restyling the divider itself (already shipped in Step 3).
-- Touching Step 4+ (tabular numerics is next in the sequence).
+```tsx
+function CategorySection({ title, children }: CategorySectionProps) {
+  const validChildren = React.Children.toArray(children).filter(Boolean);
+  if (validChildren.length === 0) return null;
+  return (
+    <section className="space-y-4">
+      <h2 className="font-display text-xs uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">
+        {title}
+      </h2>
+      <div className="grid gap-3 items-stretch sm:grid-cols-2 lg:grid-cols-3">
+        {validChildren}
+      </div>
+    </section>
+  );
+}
+```
+
+Outer page-level vertical rhythm shifts to `space-y-8` on the parent wrapper (matches Settings' `space-y-8` between section blocks).
+
+### Files touched
+
+- `src/pages/dashboard/admin/TeamHub.tsx` (only file)
+
+### What stays untouched
+
+- Card content, icon boxes, stat badges, favorite star button.
+- Step 3 `Divider` primitive (`src/components/ui/Divider.tsx`) — still available for inside-card splits elsewhere; just not used by section breaks here.
+- All other Step 1–3 work (elevation tokens, specular highlights).
+- Settings page itself (it's the target; no changes there).
+
+### Acceptance
+
+1. Hovering an Operations Hub card tints its border violet and adds a soft shadow — no lift, no jump.
+2. Each section heading sits above a thin underline that runs the full width of the grid, identical to Settings.
+3. Side-by-side, both pages read as siblings.
+
+### Out of scope
+
+- Changing Settings to match OpsHub (going the other direction).
+- Sweeping this card hover/divider style into Apps marketplace, Reports, or other card-grid pages (separate pass if desired).
+- Touching the queued Step 4+ work.
 
