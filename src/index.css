@@ -1768,7 +1768,42 @@ html, body, #root {
       var(--elevation-1);
   }
 
-  /* ───────── Wave 1: macOS-style focus ring with offset ─────────
+  /* ───────── Step 1D: Divider system ─────────
+     Two utilities for intentional section breaks.
+     - Hairline: tight inside-card splits (rows, list items, header/body).
+     - Inset:    centered 60%-width fade for between-section breathing.
+       Reads as editorial whitespace, not a flat border slammed across the page. */
+  .divider-hairline {
+    border: 0;
+    border-top: 1px solid hsl(var(--border) / 0.4);
+    width: 100%;
+    height: 0;
+    margin: 0;
+  }
+  .divider-inset {
+    border: 0;
+    height: 1px;
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+    background: linear-gradient(
+      to right,
+      hsl(var(--border) / 0) 0%,
+      hsl(var(--border) / 0.5) 50%,
+      hsl(var(--border) / 0) 100%
+    );
+  }
+  .dark .divider-hairline {
+    border-top-color: hsl(var(--border) / 0.5);
+  }
+  .dark .divider-inset {
+    background: linear-gradient(
+      to right,
+      hsl(var(--border) / 0) 0%,
+      hsl(var(--border) / 0.6) 50%,
+      hsl(var(--border) / 0) 100%
+    );
+  }
      2px ring + 2px transparent offset reads as proper focus, not "border replacement". */
   .focus-ring-premium:focus-visible,
   *:focus-visible:not([data-radix-collection-item]) {
