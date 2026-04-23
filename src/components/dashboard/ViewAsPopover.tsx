@@ -164,8 +164,8 @@ export function ViewAsPopover() {
           </div>
 
           {/* === Roles Tab === */}
-          <TabsContent value="roles" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
-            <ScrollArea className="flex-1 min-h-0">
+          <TabsContent value="roles" className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex flex-col">
+            <ScrollArea className="flex-1 min-h-0 h-full">
               <div className="p-3 pb-4 space-y-3">
                 {grouped.map(group => (
                   <div key={group.value} className="pt-2 first:pt-0">
