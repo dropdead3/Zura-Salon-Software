@@ -88,7 +88,7 @@ const ManagementCard = React.forwardRef<HTMLAnchorElement, ManagementCardProps>(
   function ManagementCard({ href, icon: Icon, title, description, stat, statLabel, isFavorited, onToggleFavorite }, ref) {
     return (
       <Link to={href} ref={ref}>
-        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 relative")}>
+        <Card className={cn(tokens.card.wrapper, "group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md relative")}>
           {onToggleFavorite && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }}
