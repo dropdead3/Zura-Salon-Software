@@ -582,6 +582,13 @@ export function AppointmentCardContent({
   const isNoShow = appointment.status === 'no_show';
   const isCancelled = appointment.status === 'cancelled';
 
+  // For overlap cards, suppress shared inner-edge borders so two adjacent
+  // cards don't draw a doubled seam. The left accent is rendered as an
+  // inset strip element (see gridContent), not as a real border, so the
+  // physical card box can still butt up flush against its neighbor.
+  const suppressLeftEdge = isOverlapping && !isFirstOverlapCol;
+  const suppressRightEdge = isOverlapping && !isLastOverlapCol;
+
   const cardStyle = useMemo(() => {
     if (variant === 'agenda') return {};
     if (displayGradient) {
@@ -595,10 +602,11 @@ export function AppointmentCardContent({
         backgroundColor: darkStyle.fill,
         color: darkStyle.text,
         borderColor: darkStyle.fill,
-        borderWidth: '1px',
+        borderTopWidth: '1px',
+        borderBottomWidth: '1px',
+        borderLeftWidth: suppressLeftEdge ? '0px' : '1px',
+        borderRightWidth: suppressRightEdge ? '0px' : '1px',
         borderStyle: 'solid' as const,
-        borderLeftColor: darkStyle.accent,
-        borderLeftWidth: '4px',
         transition: 'background-color 150ms ease, box-shadow 150ms ease',
       };
     }
@@ -610,17 +618,18 @@ export function AppointmentCardContent({
         backgroundColor: boostedBg,
         color: boostedText,
         borderColor: lightTokens.stroke,
-        borderWidth: '1px',
+        borderTopWidth: '1px',
+        borderBottomWidth: '1px',
+        borderLeftWidth: suppressLeftEdge ? '0px' : '1px',
+        borderRightWidth: suppressRightEdge ? '0px' : '1px',
         borderStyle: 'solid' as const,
-        borderLeftColor: lightTokens.stroke,
-        borderLeftWidth: '4px',
         boxShadow: 'none',
         opacity: 1,
         backdropFilter: 'none',
       };
     }
     return {};
-  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact]);
+  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact, suppressLeftEdge, suppressRightEdge]);
 
   // ─── Agenda variant ─────────────────────────────────────────
   if (variant === 'agenda') {
