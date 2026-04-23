@@ -50,6 +50,12 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#4a9e66',
     92, 184, 122,
   ),
+  jade: palette(
+    ['#04141a', '#0a3338', '#04141a'],
+    '#1cb39c',
+    '#149782',
+    28, 179, 156,
+  ),
   marine: palette(
     ['#050a1f', '#0a1530', '#050a1f'],
     '#1e6bff',

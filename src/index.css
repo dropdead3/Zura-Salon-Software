@@ -427,6 +427,129 @@ html, body, #root {
     --card-inner-deep: 145 3% 5%;
   }
 
+  /* ===== THEME: JADE (Premium teal jewel-tone & gold) ===== */
+  .theme-jade {
+    --background: 180 20% 95%;
+    --foreground: 180 30% 8%;
+
+    --card: 180 15% 97%;
+    --card-foreground: 180 30% 8%;
+
+    --popover: 180 15% 97%;
+    --popover-foreground: 180 30% 8%;
+
+    --primary: 175 65% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 178 18% 88%;
+    --secondary-foreground: 180 30% 8%;
+
+    --muted: 178 12% 90%;
+    --muted-strong: 178 14% 82%;
+    --muted-foreground: 180 15% 35%;
+
+    --accent: 178 25% 85%;
+    --accent-foreground: 180 30% 8%;
+
+    --oat: 178 18% 75%;
+    --oat-foreground: 180 25% 22%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 175 65% 32%;
+    --chart-2: 185 55% 45%;
+    --chart-3: 155 45% 40%;
+    --chart-4: 42 75% 45%;
+    --chart-5: 220 60% 50%;
+
+    --success: 158 50% 88%;
+    --success-foreground: 158 55% 28%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 178 15% 82%;
+    --input: 178 15% 88%;
+    --ring: 175 65% 32%;
+
+    --sidebar-background: 178 18% 92%;
+    --sidebar-foreground: 180 30% 8%;
+    --sidebar-primary: 175 65% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 178 20% 86%;
+    --sidebar-accent-foreground: 180 30% 8%;
+    --sidebar-border: 178 15% 82%;
+    --sidebar-ring: 175 65% 32%;
+
+    --card-inner: 178 14% 93%;
+    --card-inner-deep: 178 12% 90%;
+  }
+
+  .dark.theme-jade {
+    --background: 180 35% 6%;
+    --foreground: 178 25% 92%;
+
+    --card: 180 30% 11%;
+    --card-foreground: 178 25% 92%;
+
+    --popover: 180 30% 11%;
+    --popover-foreground: 178 25% 92%;
+
+    --primary: 172 70% 45%;
+    --primary-foreground: 180 35% 6%;
+
+    --secondary: 178 25% 16%;
+    --secondary-foreground: 178 25% 92%;
+
+    --muted: 180 22% 18%;
+    --muted-strong: 180 22% 13%;
+    --muted-foreground: 178 18% 65%;
+
+    --accent: 178 30% 16%;
+    --accent-foreground: 178 25% 92%;
+
+    --oat: 178 25% 28%;
+    --oat-foreground: 178 25% 88%;
+
+    --gold: 42 75% 50%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 172 70% 55%;
+    --chart-2: 185 65% 60%;
+    --chart-3: 155 50% 55%;
+    --chart-4: 42 80% 55%;
+    --chart-5: 220 70% 65%;
+
+    --success: 158 45% 25%;
+    --success-foreground: 158 50% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 180 22% 18%;
+    --input: 180 22% 16%;
+    --ring: 172 70% 45%;
+
+    --sidebar-background: 180 35% 5%;
+    --sidebar-foreground: 178 25% 92%;
+    --sidebar-primary: 172 70% 45%;
+    --sidebar-primary-foreground: 180 35% 6%;
+    --sidebar-accent: 180 28% 13%;
+    --sidebar-accent-foreground: 178 25% 92%;
+    --sidebar-border: 180 22% 18%;
+    --sidebar-ring: 172 70% 45%;
+
+    --card-inner: 180 25% 9%;
+    --card-inner-deep: 180 25% 7%;
+  }
+
   /* ===== THEME: MARINE (Deep navy & electric blue) ===== */
   .theme-marine {
     --background: 218 35% 97%;

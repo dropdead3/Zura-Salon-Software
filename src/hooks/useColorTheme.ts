@@ -3,12 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
-export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'marine' | 'cognac' | 'noir' | 'neon';
+export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marine' | 'cognac' | 'noir' | 'neon';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 
-const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'marine', 'cognac', 'noir', 'neon'];
+const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 // Migration map for renamed theme keys (legacy → current)
@@ -112,6 +112,7 @@ export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   bone: 'Neutral Elegance',
   rosewood: 'Rose Garden',
   sage: 'Herb Garden',
+  jade: 'Herb Garden',
   marine: 'Ocean Avenue',
   cognac: 'Sunset Bloom',
   noir: 'Neutral Elegance',
@@ -178,6 +179,21 @@ export const colorThemes = [
       bg: 'hsl(145 12% 6%)',
       accent: 'hsl(145 15% 25%)',
       primary: 'hsl(145 40% 50%)',
+    },
+  },
+  {
+    id: 'jade' as ColorTheme,
+    name: 'Jade',
+    description: 'Deep teal jewel & gold',
+    lightPreview: {
+      bg: 'hsl(180 20% 95%)',
+      accent: 'hsl(178 25% 85%)',
+      primary: 'hsl(175 65% 32%)',
+    },
+    darkPreview: {
+      bg: 'hsl(180 35% 6%)',
+      accent: 'hsl(178 30% 16%)',
+      primary: 'hsl(172 70% 45%)',
     },
   },
   {
