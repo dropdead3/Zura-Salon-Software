@@ -76,6 +76,20 @@ checks. Until this is configured, the gate reports but does not block merge.
 
 ## Step 2S manual actions (package.json edits)
 
+> **Bundled PR checklist**: When the `package.json` edits below land, the
+> same PR should also delete this entire section, plus:
+> - Drop the "The `check` script requires…" caveat paragraph in *Running
+>   locally* (currently lines 30–31).
+> - Replace `bunx stylelint "src/**/*.css"` with `npm run lint:css` in the
+>   *Running locally* bullet list (currently line 28).
+> - Soften the Husky pre-commit intro from "Once Husky is installed (via the
+>   `prepare` script on `npm install`), a pre-commit hook…" to "On every
+>   commit, a pre-commit hook runs **lint-staged** against staged files
+>   only:" (currently line 35).
+>
+> Do **not** strip those caveats without applying the `package.json` edits —
+> the docs would become confidently wrong instead of accurately conditional.
+
 `package.json` is read-only in the Lovable sandbox. To complete the local
 `npm run check` loop, apply these edits in your local checkout / PR:
 
