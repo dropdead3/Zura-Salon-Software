@@ -768,7 +768,14 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                               className={cn("relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
                                 isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50")}>
                               <div className="flex items-center gap-1.5 w-full">
-                                <div className="w-8 h-8 rounded-lg border border-border" style={{ backgroundColor: preview.bg }} />
+                                <div
+                                  className="w-8 h-8 rounded-lg border border-border"
+                                  style={
+                                    themeOption.id === 'prism'
+                                      ? { backgroundImage: 'linear-gradient(90deg, hsl(290 90% 60%), hsl(200 90% 60%), hsl(145 75% 50%), hsl(48 95% 60%), hsl(15 90% 62%))' }
+                                      : { backgroundColor: preview.bg }
+                                  }
+                                />
                                 <div className="w-8 h-8 rounded-lg border border-border" style={{ backgroundColor: preview.accent }} />
                                 <div className="w-8 h-8 rounded-lg border border-border" style={{ backgroundColor: preview.primary }} />
                               </div>

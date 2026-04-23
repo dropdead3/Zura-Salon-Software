@@ -1465,7 +1465,7 @@ html, body, #root {
 
     --sidebar-background: 280 25% 94%;
     --sidebar-foreground: 280 40% 10%;
-    --sidebar-primary: 290 75% 55%;
+    --sidebar-primary: 200 80% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 280 25% 88%;
     --sidebar-accent-foreground: 280 40% 10%;
@@ -1526,7 +1526,7 @@ html, body, #root {
 
     --sidebar-background: 265 35% 4%;
     --sidebar-foreground: 280 25% 92%;
-    --sidebar-primary: 290 90% 65%;
+    --sidebar-primary: 200 90% 60%;
     --sidebar-primary-foreground: 265 35% 5%;
     --sidebar-accent: 270 28% 13%;
     --sidebar-accent-foreground: 280 25% 92%;
