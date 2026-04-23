@@ -2700,6 +2700,7 @@ html {
 
 /* Firefox: thin scrollbar on all elements (does not create gutters) */
 /* ZuraLoader disco shimmer */
+/* intentional literal: stylized white glow pulse, theme-independent by design */
 @keyframes zura-disco {
   0%, 100% { opacity: 0.15; transform: scale(0.95); box-shadow: 0 0 0px rgba(255,255,255,0); }
   25% { opacity: 1; transform: scale(1.12); box-shadow: 0 0 12px rgba(255,255,255,0.6); }
@@ -2799,6 +2800,8 @@ html {
 }
 
 /* ── Glass-morphism card ───────────────────────────────────────────────────── */
+/* intentional literal: marketing-surface is a dark cinematic canvas with fixed
+   white-glass aesthetic — deliberately scoped outside the themed dashboard tokens. */
 .marketing-surface .mkt-glass {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(24px);
@@ -2826,6 +2829,7 @@ html {
   100% { transform: translateY(100%); opacity: 0; }
 }
 
+/* intentional literal: marketing-surface cinematic canvas — see .mkt-glass above. */
 @keyframes mktPulseAmber {
   0%, 100% { border-color: rgba(255, 255, 255, 0.06); box-shadow: none; }
   50% { border-color: hsl(38 92% 50%); box-shadow: 0 0 20px hsl(38 92% 50% / 0.25); }
