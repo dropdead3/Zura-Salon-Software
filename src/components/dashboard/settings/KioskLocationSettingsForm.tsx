@@ -435,7 +435,14 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
                       <SelectItem key={theme.id} value={theme.id}>
                         <div className="flex items-center gap-2">
                           <div className="flex gap-0.5">
-                            <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: `hsl(${preview.bg})` }} />
+                            <span
+                              className="w-3 h-3 rounded-full border border-border/50"
+                              style={
+                                theme.id === 'prism'
+                                  ? { backgroundImage: 'linear-gradient(90deg, hsl(290 90% 60%), hsl(200 90% 60%), hsl(145 75% 50%), hsl(48 95% 60%), hsl(15 90% 62%))' }
+                                  : { backgroundColor: `hsl(${preview.bg})` }
+                              }
+                            />
                             <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: `hsl(${preview.primary})` }} />
                             <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: `hsl(${preview.accent})` }} />
                           </div>
