@@ -29,6 +29,8 @@ const TOKENS = [
   "primary", "secondary", "accent", "muted",
   // Form/chrome
   "border", "input", "ring",
+  // Chart palette (Step 2M: all 11 themes redefine; routed through hsl(var(--chart-*)))
+  "chart-1", "chart-2", "chart-3", "chart-4", "chart-5",
 ] as const;
 
 const indexCss = readIndexCss();
