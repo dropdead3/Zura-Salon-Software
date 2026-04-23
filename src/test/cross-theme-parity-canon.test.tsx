@@ -7,28 +7,32 @@ import {
 } from "@/test/css-rule";
 
 /**
- * Cross-theme parity canon (Step 2R). Every theme selector that defines
+ * Cross-theme parity canon (Step 2R + 2T). Every theme selector that defines
  * design-token state must define the same color-token surface as the
  * baseline theme (`.theme-bone`, the default applied to `<html>`).
  *
- * Why `.theme-bone` and not `:root`: this codebase's `:root` blocks only
- * declare animation and elevation primitives — the design-token baseline
- * lives in `.theme-bone` (the "Cream Editorial Luxury" default per the
- * file header). Treating `.theme-bone` as the baseline matches how the
- * runtime actually resolves tokens.
+ * Step 2T graduated `--mesh-gradient` from "decorative-optional" to a
+ * first-class baseline token. Gradient tokens live in `html.theme-*` blocks
+ * (higher CSS specificity than `.theme-*` color blocks). The canon now
+ * merges co-applied selectors — `.theme-bone` + `html.theme-bone` — into a
+ * single token surface because runtime resolves both against the same
+ * `<html class="theme-bone">` element.
+ *
+ * Why `.theme-bone` and not `:root`: `:root` blocks here only declare
+ * animation and elevation primitives — the design-token baseline lives in
+ * `.theme-bone` (the "Cream Editorial Luxury" default per the file header).
  *
  * Why split BASELINE_ONLY_TOKENS out: typography (font-size-*, leading-*,
  * tracking-*, font-weight-*) and radius primitives are theme-invariant
- * by design — declared once in `.theme-bone`, inherited everywhere. They
- * shouldn't trigger parity failures. This is structural, not a per-theme
- * exception, so it lives in the test rather than in ALLOWLIST_OMISSIONS.
+ * by design — declared once in `.theme-bone`, inherited everywhere.
  *
  * ALLOWLIST_OMISSIONS is for the genuinely per-theme case (e.g., a print
- * theme that has no sidebar). Empty by default — entries get added with a
- * comment explaining why a specific theme legitimately omits a token.
+ * theme that has no sidebar). Empty by default.
  */
 
-const BASELINE_THEME = ".theme-bone";
+const BASELINE_THEME_NAME = "bone";
+const BASELINE_COLOR_SELECTOR = `.theme-${BASELINE_THEME_NAME}`;
+const BASELINE_GRADIENT_SELECTOR = `html.theme-${BASELINE_THEME_NAME}`;
 
 /**
  * Tokens defined only in the baseline theme by structural intent. Typography,
@@ -47,32 +51,12 @@ const BASELINE_ONLY_TOKENS = new Set<string>([
 ]);
 
 /**
- * Per-theme decorative tokens that MAY appear in any theme without parity
- * implications — they're optional theme accents, not part of the canonical
- * color surface. Distinct from BASELINE_ONLY_TOKENS (which are baseline-only)
- * and ALLOWLIST_OMISSIONS (which are per-theme exceptions).
- */
-const DECORATIVE_OPTIONAL_TOKENS = new Set<string>([
-  "mesh-gradient", // background-image accent, defined per-theme in html.theme-* blocks
-]);
-
-/**
- * Per-theme deliberate omissions of color tokens. Empty by default —
- * the strictest starting position. Entries get added with a one-line
- * comment naming the reason.
+ * Per-theme deliberate omissions of color tokens. Empty by default.
+ * Entries get added with a one-line comment naming the reason.
  */
 const ALLOWLIST_OMISSIONS: Record<string, string[]> = {
   // Example: ".theme-print": ["sidebar-background"], // print has no sidebar
 };
-
-const indexCss = readIndexCss();
-const baselineBody = extractRuleBody(indexCss, BASELINE_THEME) ?? "";
-const baselineTokens = new Set(extractDefinedTokens(baselineBody));
-const baselineColorTokens = new Set(
-  [...baselineTokens].filter(
-    (t) => !BASELINE_ONLY_TOKENS.has(t) && !DECORATIVE_OPTIONAL_TOKENS.has(t),
-  ),
-);
 
 /**
  * Selectors that match the theme-selector regex but exist for non-color
@@ -84,32 +68,60 @@ const STRUCTURAL_NON_THEME_SELECTORS = new Set<string>([
   ".dark",  // dark-mode elevation overrides only
 ]);
 
-// Only theme-defining selectors that actually declare ≥1 color token.
-// Filters out:
-//   - the baseline itself (compared against, not asserted)
-//   - structural primitive selectors (`:root`, `.dark`) per
-//     STRUCTURAL_NON_THEME_SELECTORS
-//   - descendant utility selectors (`.dark .hover-lift`) that match the
-//     theme regex but aren't theme blocks
-//   - decorative-gradient blocks (`html.theme-*`) that only declare
-//     `--mesh-gradient` — structurally distinct from color theme blocks
-const themeSelectors = extractThemeSelectors(indexCss).filter((sel) => {
-  if (sel === BASELINE_THEME) return false;
-  if (STRUCTURAL_NON_THEME_SELECTORS.has(sel)) return false;
-  const body = extractRuleBody(indexCss, sel);
-  if (!body) return false;
-  const declared = extractDefinedTokens(body);
-  const colorTokens = declared.filter(
-    (t) => !DECORATIVE_OPTIONAL_TOKENS.has(t),
-  );
-  return colorTokens.length > 0;
-});
+const indexCss = readIndexCss();
 
-for (const selector of themeSelectors) {
-  describe(`cross-theme parity canon: ${selector}`, () => {
-    const body = extractRuleBody(indexCss, selector) ?? "";
-    const themeTokens = new Set(extractDefinedTokens(body));
-    const allowed = new Set(ALLOWLIST_OMISSIONS[selector] ?? []);
+/**
+ * Returns the merged token set for a theme, unioning the color selector
+ * (`.theme-name`) and the gradient selector (`html.theme-name`). Mirrors
+ * runtime: both selectors apply to the same `<html class="theme-name">`.
+ */
+function mergedThemeTokens(themeName: string): Set<string> {
+  const colorBody = extractRuleBody(indexCss, `.theme-${themeName}`) ?? "";
+  const gradientBody = extractRuleBody(indexCss, `html.theme-${themeName}`) ?? "";
+  return new Set([
+    ...extractDefinedTokens(colorBody),
+    ...extractDefinedTokens(gradientBody),
+  ]);
+}
+
+const baselineTokens = mergedThemeTokens(BASELINE_THEME_NAME);
+const baselineColorTokens = new Set(
+  [...baselineTokens].filter((t) => !BASELINE_ONLY_TOKENS.has(t)),
+);
+
+/**
+ * Theme selectors to assert. We collect distinct theme *names* from both
+ * `.theme-*` and `html.theme-*` shapes (deduplicated), then run parity on
+ * each name's merged surface. Filters out:
+ *   - the baseline itself
+ *   - structural primitives (`:root`, `.dark`)
+ *   - dark variants (`html.dark.theme-*`) — those are a separate cross-mode
+ *     concern (Step 2V), not cross-theme parity
+ *   - descendant utility selectors that match the regex but aren't theme blocks
+ */
+const allSelectors = extractThemeSelectors(indexCss);
+const themeNames = new Set<string>();
+for (const sel of allSelectors) {
+  if (STRUCTURAL_NON_THEME_SELECTORS.has(sel)) continue;
+  // Skip dark variants — cross-mode parity is its own canon.
+  if (sel.startsWith("html.dark.theme-")) continue;
+  const m = sel.match(/^(?:html\.)?\.?theme-([\w-]+)$/) ?? sel.match(/theme-([\w-]+)/);
+  if (!m) continue;
+  if (m[1] === BASELINE_THEME_NAME) continue;
+  // Only include if the merged surface is non-empty (filters descendant utility hits).
+  const merged = mergedThemeTokens(m[1]);
+  if (merged.size === 0) continue;
+  themeNames.add(m[1]);
+}
+
+for (const themeName of themeNames) {
+  const selectorLabel = `.theme-${themeName} (+ html.theme-${themeName})`;
+  describe(`cross-theme parity canon: ${selectorLabel}`, () => {
+    const themeTokens = mergedThemeTokens(themeName);
+    const allowed = new Set([
+      ...(ALLOWLIST_OMISSIONS[`.theme-${themeName}`] ?? []),
+      ...(ALLOWLIST_OMISSIONS[`html.theme-${themeName}`] ?? []),
+    ]);
 
     it("defines every color token the baseline theme defines", () => {
       const missing = [...baselineColorTokens]
@@ -118,18 +130,17 @@ for (const selector of themeSelectors) {
         .sort();
       expect(
         missing,
-        `${selector} missing color tokens defined by ${BASELINE_THEME}: ${missing.join(", ")}`,
+        `${selectorLabel} missing color tokens defined by baseline (${BASELINE_COLOR_SELECTOR} + ${BASELINE_GRADIENT_SELECTOR}): ${missing.join(", ")}`,
       ).toEqual([]);
     });
 
     it("introduces no tokens unknown to the baseline theme", () => {
       const extras = [...themeTokens]
         .filter((t) => !baselineTokens.has(t))
-        .filter((t) => !DECORATIVE_OPTIONAL_TOKENS.has(t))
         .sort();
       expect(
         extras,
-        `${selector} defines tokens not in ${BASELINE_THEME}: ${extras.join(", ")}`,
+        `${selectorLabel} defines tokens not in baseline: ${extras.join(", ")}`,
       ).toEqual([]);
     });
   });
