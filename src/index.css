@@ -2586,10 +2586,13 @@ html, body, #root {
   }
 }
 
-/* ===== Custom Scrollbars — Floating Handles, No Gutter ===== */
+/* ===== Custom Scrollbars — Floating Handles, Themed, No Gutter =====
+   Hover-reveal pattern: thumb is invisible at rest, fades in on parent hover.
+   Uses --muted-foreground so thumb color adapts to light/dark + theme accent.
+   Smooth 180ms transition matches hover choreography tempo. */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   background: transparent;
 }
 
@@ -2604,34 +2607,36 @@ html, body, #root {
 ::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 9999px;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   background-clip: padding-box;
+  transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.3);
+  background-color: hsl(var(--muted-foreground) / 0.25);
   background-clip: padding-box;
 }
 
 *:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.45);
+  background-color: hsl(var(--muted-foreground) / 0.45);
   background-clip: padding-box;
 }
 
 *:hover::-webkit-scrollbar-thumb:active {
-  background: rgba(128, 128, 128, 0.55);
+  background-color: hsl(var(--primary) / 0.5);
   background-clip: padding-box;
 }
 
-/* Firefox — hover-reveal: transparent by default, visible on hover */
+/* Firefox — hover-reveal: transparent by default, themed on hover */
 * {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
 
 *:hover {
-  scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
 }
+
 
 /* ===== SYNTHETIC BOLD PREVENTION =====
    Aeonik Pro (font-sans) and Termina (font-display) only ship weights 400 & 500.
