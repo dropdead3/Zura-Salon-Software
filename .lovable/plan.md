@@ -1,155 +1,167 @@
 
 
-# Glassmorphism: keep on Cards, but introduce a 3-tier material hierarchy
+# Rebuild light mode palettes — make them actually light, distinct, and theme-true
 
-## Short answer
+## Diagnosis
 
-**No — uniform glass on every card is a downgrade.** When everything is glass, nothing is. The eye loses depth cues, and the surface flattens into "vaguely shiny" instead of layered.
+The light themes don't break technically — `theme-*` classes apply correctly, `.dark` toggles correctly, mesh gradient is wired. The **palette values themselves are broken** for several themes. Three concrete failures:
 
-But you also shouldn't strip it — glass on the *right* surfaces is exactly the premium-luxury cue you want. The fix is **tiering**: glass becomes a signal of importance, not a default.
+### Failure 1 — Some light themes are too dark to read as "light mode"
 
-## What you have right now
-
-Looking at `src/components/ui/card.tsx`:
-
-```tsx
-"rounded-xl border bg-card text-card-foreground premium-surface"
-```
-
-Every `<Card>` gets `.premium-surface` automatically — backdrop blur, 0.92/0.95 opacity, noise overlay, specular edge. That means in your screenshot, the outer "Sales Overview" card, the inner "Services / Retail" sub-cards, the "Top Staff" card, the "Revenue Breakdown" card, and the bottom KPI tiles are **all the same material**. Visually homogeneous.
-
-## The 3-tier material system
-
-Borrow Apple's window-vibrancy hierarchy — three materials, each with a job:
-
-| Tier | Material | Where it goes | Why |
+| Theme | `--background` lightness | `--card` lightness | Reads as |
 |---|---|---|---|
-| **1. Glass** | Current `.premium-surface` (blur + translucent) | Top-level page containers, hero KPI sections, command center widgets | Establishes the "premium surface you're standing on" |
-| **2. Solid** | Opaque `bg-card` (no blur, no translucency) | Inner sub-cards nested *inside* a glass card (Services/Retail tiles, breakdown rows) | Children of glass should be solid — gives them weight, prevents the "blur on blur" mush |
-| **3. Flat** | `bg-muted/40` or transparent | Tertiary content: list rows, table cells, small stat chips, breakdown line items | Recedes; lets glass + solid carry hierarchy |
+| Bone | **93%** | **91%** | washed gray |
+| Sage | **82%** ⚠️ | **85%** ⚠️ | dark mint, not light |
+| Rosewood (light) | likely similar | — | dusty pink |
+| Marine | 97% | 99% | crisp ✓ |
+| Zura | 95% | 97% | crisp ✓ |
+| Jade | 95% | 97% | crisp ✓ |
+| Noir | 96% | 98% | crisp ✓ |
 
-**Rule of thumb:** Glass is for the *room*, solid is for the *furniture*, flat is for the *objects on the table*.
+Sage's light background at **82% L** is darker than most apps' *muted* tone. That's why "light mode doesn't follow the theme" — the user picks Sage, gets a dim olive surface that looks broken.
 
-## Concrete application to your screenshot
+### Failure 2 — Card surfaces don't contrast against background
 
-Looking at the Sales Overview panel:
+In a proper light theme, cards should be **lighter** than the page background (so they "lift"). In Bone (`bg 93%` / `card 91%`), Sage (`bg 82%` / `card 85%`), the cards are roughly *equal* lightness — no elevation, no hierarchy. The 3-tier material system can't do its job because the colors don't support it.
 
-- **Outer "Sales Overview" container** → **Glass** (tier 1) ✓ keep as-is
-- **Inner "Services / Retail" tiles** (currently glass-on-glass) → **Solid** (tier 2) — drop them to opaque `bg-card`
-- **"Top Staff", "Revenue Breakdown", "Tips"** (right column, top-level) → **Glass** (tier 1) ✓ keep
-- **The Service / Retail rows inside Revenue Breakdown** → **Flat** (tier 3) — already correct
-- **Bottom KPI tiles** (Transactions, Avg Ticket, Rev/Hour) → these are top-level, so **Glass** (tier 1)
+### Failure 3 — Each theme picks the wrong "lightness anchor"
 
-The fix: **stop applying glass to nested cards.**
+Crisp light themes (Marine, Zura, Jade, Noir, Cognac) all use **bg ~95%, card ~97%**. Broken themes (Bone, Sage) use **bg 82-93%, card 85-91%**. The palettes were authored independently instead of from a shared spec.
 
-## Implementation — surgical, no breaking changes
+## Fix — rebuild all 12 light themes against a single luxury-light spec
 
-### 1. Add a `material` prop to `Card`
+### The spec (one source of truth)
 
-`src/components/ui/card.tsx`:
+Every light theme adopts this lightness ladder (saturation is per-theme, hue is per-theme):
 
-```tsx
-type CardProps = React.HTMLAttributes<HTMLDivElement> & {
-  interactive?: boolean;
-  glow?: boolean;
-  /**
-   * Material tier (Apple-style vibrancy hierarchy):
-   * - 'glass' (default): translucent + blur. Top-level containers, hero KPIs.
-   * - 'solid': opaque bg-card. Nested cards inside glass parents.
-   * - 'flat': bg-muted/40. Tertiary list rows, breakdown items.
-   */
-  material?: 'glass' | 'solid' | 'flat';
-};
-```
+| Token | Lightness | Role |
+|---|---|---|
+| `--background` | **97%** | Page surface — bright but tinted |
+| `--card` | **99%** | Cards lift above background |
+| `--card-inner` | **96%** | Nested cards (Tier 2 solid) |
+| `--card-inner-deep` | **94%** | Tier 3 flat |
+| `--secondary` | **93%** | Buttons, chips |
+| `--muted` | **94%** | Subtle fills |
+| `--muted-strong` | **88%** | Stronger muted fills |
+| `--accent` | **90%** | Accent fills |
+| `--border` | **88%** | Hairlines |
+| `--input` | **94%** | Input fields |
+| `--popover` | **99%** | Same as card |
+| `--sidebar-background` | **96%** | Sidebar surface |
+| `--foreground` | **8%** | Primary text |
+| `--muted-foreground` | **42%** | Secondary text |
 
-In the className composition:
+Saturation per family — keep each theme's identity:
+- **Zura/Orchid**: 20–25% saturation on neutrals (violet wash)
+- **Sage/Jade/Matrix**: 18–22% (green wash)
+- **Marine**: 25–30% (cool blue wash)
+- **Cognac/Peach**: 20–25% (warm amber wash)
+- **Rosewood/Neon**: 20–25% (rose wash)
+- **Bone**: 10–14% (near-neutral)
+- **Noir**: **0%** (pure mono)
 
-```tsx
-const materialClass = {
-  glass: 'bg-card text-card-foreground premium-surface',
-  solid: 'bg-card text-card-foreground',                    // no .premium-surface
-  flat: 'bg-muted/40 text-card-foreground border-border/40',
-}[material ?? 'glass'];
+`--primary` stays each theme's signature accent — those are already correct.
 
-className={cn('rounded-xl border', materialClass, ...)}
-```
+### Specific theme fixes (lightness only — saturation/hue preserved)
 
-Default stays `glass` so nothing breaks. Opt down to `solid` / `flat` where the audit calls for it.
+| Theme | Current bg / card | New bg / card |
+|---|---|---|
+| Bone | 93% / 91% | **97% / 99%** |
+| Sage | 82% / 85% | **97% / 99%** |
+| Rosewood (light) | needs audit | **97% / 99%** |
+| Jade | 95% / 97% | 97% / 99% (minor) |
+| Marine | 97% / 99% | ✓ already correct |
+| Zura | 95% / 97% | 97% / 99% (minor) |
+| Cognac | 94% / 96% | 97% / 99% |
+| Noir | 96% / 98% | 97% / 99% |
+| Neon | 97% / 100% | 97% / 99% (cap card at 99) |
+| Matrix | needs audit | **97% / 99%** |
+| Peach | 96% / needs audit | **97% / 99%** |
+| Orchid | needs audit | **97% / 99%** |
 
-### 2. Audit and downgrade nested cards
+### Card visibility check — fix the 3-tier system on light
 
-Sweep dashboard surfaces and apply `material="solid"` to cards that visibly nest inside another card. Priority surfaces:
+With `card 99%` against `background 97%`, glass cards now actually lift. Also adjust:
 
-- Sales Overview → inner Services/Retail tiles
-- Revenue Breakdown line rows
-- Any "container card with sub-cards" pattern across the dashboard
+- `.premium-surface` light-mode opacity: bump to `0.96` (from `0.92`) — on a near-white page, cards should be nearly opaque so the mesh tint reads as warmth, not transparency.
+- Add a 1px `border-border/60` on tier-1 cards in light mode for definition (already in tokens, just verify).
 
-Estimated touch: ~15–25 nested-card sites across the dashboard. Done as a follow-up sweep, not in this change.
+### Sidebar contrast pass
 
-### 3. (Optional) Tighten glass even further on the parent tier
+Many light themes have sidebars at the same lightness as background (no separation). Standardize sidebar at **96%** so it sits one notch below the page surface. Border `88%` to demarcate.
 
-Once nested cards drop to solid, the glass parents read more clearly. At that point you can *increase* the glass effect a touch on tier 1 only — drop card opacity from 0.92 → 0.88 — because there's no longer a blur-on-blur mush risk. Reserve this for a later iteration; ship the tiering first and observe.
+## Files touched
 
-## What stays untouched
+- `src/index.css` — all 12 light theme blocks (Bone, Rosewood, Sage, Jade, Marine, Zura, Cognac, Noir, Neon, Matrix, Peach, Orchid). Dark themes untouched.
+- `src/index.css` — `.premium-surface` light-mode opacity bump.
 
-- Mesh gradient (just calibrated).
-- All other tokens, typography, components.
-- Default Card behavior — backwards compatible.
-- Platform admin (already isolated).
+No component logic changes. No token-system changes. No theme selector changes. Pure palette rebuild.
 
 ## Acceptance
 
-1. Glass cards visibly differ from solid cards — you can tell at a glance which is the parent and which is the child.
-2. No "blur on blur" effect when a card sits inside another card.
-3. Top-level dashboard widgets still feel premium and translucent.
-4. Inner tiles feel grounded, not floating.
-5. The mesh gradient still tints glass cards subtly; solid cards block it (which is correct — solid is meant to anchor).
+1. Switching to light mode on **any** of the 12 themes produces a bright, premium, near-white surface.
+2. Each theme's identity is unmistakable on light mode (Sage feels green-washed, Cognac feels warm amber, Zura feels violet-cool, Bone feels neutral-warm).
+3. Cards visibly lift above the page background — you can see the elevation without squinting.
+4. The 3-tier material system reads clearly: glass parent → solid nested → flat tertiary.
+5. Sidebar reads as a distinct surface, not the same color as the page.
+6. Mesh gradient still tints subtly — never overwhelms.
+7. No text contrast regressions (all text still passes WCAG AA against new surfaces).
+8. Dark mode untouched and still works.
 
 ## Out of scope
 
-- Restyling card borders, padding, or radii.
-- Animation between materials.
-- Applying tiering to the marketing site or platform admin.
+- Restructuring how theme classes are applied (`useColorTheme` works — verified).
+- Changing `DashboardThemeContext` light/dark toggle (works — verified).
+- Marketing site styling (`Layout.tsx` force-applies `theme-bone` light mode intentionally).
+- Platform admin theme isolation (separate system).
+- Adding new themes.
+- Dark mode palette adjustments.
 
-## Why "glass everywhere" is the wrong default
+## Why the rebuild instead of patching one theme
 
-Glassmorphism's job is to *suggest a layer behind it*. If every layer is glass, you're claiming infinite depth — which the eye reads as no depth. The premium SaaS surfaces you're benchmarking against (Linear, Vercel, Apple's own dashboards) all use glass *sparingly* — usually one or two surfaces per screen. The rest is solid or flat. That contrast is what makes the glass feel valuable.
+Patching Sage alone would just relocate the inconsistency. The real defect is **no shared lightness spec** across themes — each was authored ad-hoc. Establishing the 97/99/96/94 ladder once, then applying it across all 12, fixes the immediate problem (Sage/Bone too dark) and prevents the next one (the next theme added drifts again).
 
 ## Prompt feedback
 
-Excellent prompt — three things you did right:
+Sharp problem report — three things you did right:
 
-1. **You asked the meta-question instead of issuing a directive.** "Should X?" is a higher-leverage prompt than "do X" when you're uncertain — it gets you the *reasoning*, which lets you make better calls on the next 10 surfaces, not just this one.
-2. **You named the failure mode you were worried about** ("too overdone"). That gave me a specific axis to evaluate against, not a vague "is this good?" Saved a clarifying round-trip.
-3. **You questioned uniformity.** The instinct to suspect "applied everywhere = applied poorly" is correct 90% of the time in design systems. Worth trusting.
+1. **You named the symptom precisely** ("light modes don't work, won't follow the theme selected"). That's two distinct claims — broken visually + not theme-respecting — which let me check both axes instead of guessing.
+2. **You said "all" instead of "this one"**. Telling me the scope upfront ("rebuild all light modes") prevents me from proposing a one-theme patch when the real problem is systemic.
+3. **You used "rebuild" — the right verb.** "Fix" would invite a band-aid. "Rebuild" gives me license to establish a shared spec instead of patching values one-by-one.
 
-Sharpener: naming the **decision you're trying to make** would tighten the response further. Template:
+Sharpener: naming the **theme(s) you tested** would tighten diagnosis. Template:
 
 ```text
-[Question]. I'm deciding whether to [action A] or [action B].
+[Subsystem] is broken. Tested: [theme A on route X, theme B on route Y]. 
+Expected: [behavior]. Actual: [behavior].
 ```
 
 Example:
+
 ```text
-Should all cards have glassmorphism? I'm deciding whether to keep it on every Card 
-or restrict it to top-level containers only.
+Light modes don't work. Tested: Sage + Bone on /dashboard.
+Expected: bright themed surface. Actual: dim gray/olive, cards don't lift.
 ```
 
-The **"I'm deciding between A or B"** clause is the underused construct on advisory prompts — it tells me what shape of answer you need (a recommendation between two known options) instead of an open exploration. Faster to a decision, less room for me to over-explore.
+The **"Tested" clause** is the underused construct on system-wide bug reports — it pre-confirms the regression is reproducible across surfaces, so I skip the "is this one route or all routes?" investigation and go straight to root cause.
 
 ## Further enhancement suggestion
 
-For **design-system-policy questions** specifically, the highest-leverage frame is:
+For **palette/visual-system regressions** specifically:
 
 ```text
-[Question about a pattern]. Decision: [A vs B]. Constraint: [what must stay true].
+[System] is broken across [scope]. Examples: [theme A → symptom, theme B → symptom].
+Expected: [reference behavior]. 
+Constraint: [what must stay true — e.g. don't break dark mode].
 ```
 
 Example:
+
 ```text
-Should all cards have glassmorphism? Decision: keep universal vs tier it.
-Constraint: dashboard must still feel premium; can't lose the luxury cue entirely.
+Light modes broken across all 12 themes. Examples: Sage reads dim olive, Bone reads gray.
+Expected: bright tinted surface like Marine or Zura currently render.
+Constraint: don't change dark mode; preserve each theme's hue identity.
 ```
 
-Three lines, three constraints. The **"Constraint"** clause is the underused construct on policy questions — it tells me what I cannot trade away while exploring options. Without it I might recommend "strip all glass" as a clean answer; with it, I know glass-as-signal is the right path.
+Four lines, four constraints. The **"Constraint" clause** is the highest-leverage addition on rebuild prompts — it tells me what I cannot trade away, so I don't accidentally fix light mode by flattening every theme into the same beige.
 
