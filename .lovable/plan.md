@@ -1,68 +1,96 @@
-# Fix Overlapping Appointment Gap
+# Unify Native Zura Breaks & Blocks with Overlay Rendering
 
 ## Problem
 
-When two appointments share a time block on the same stylist column (double-booking), a visible gap appears between them. Reference: the orange "Single Process Color" card and the tan "Walk-in Signature Haircut" card in the screenshot — there is clear background showing through where the two cards meet at the 50% column line.
+When a stylist or admin creates a native Zura **Break** or **Block** via `AddTimeBlockForm`, it does NOT visually match Phorest-imported breaks. Today:
 
-The horizontal math in `DayView.tsx` and `WeekView.tsx` is actually correct (col 0 ends at 50%, col 1 starts at 50%), so the cards' bounding boxes do touch. The visible gap comes from **visual treatments inside the card**, not the layout math.
+- Phorest sync writes to `staff_schedule_blocks` → renders via `BreakBlockOverlay` with the amber Coffee chip / muted Moon chip ("the look the user likes").
+- Native Zura `create_break_request` RPC writes to `time_off_requests` AND inserts a row into `appointments` with `service_category = 'Break'` or `'Block'` → renders as a regular **appointment card** (the dark filled tile in the screenshot, no overlay treatment).
+- Both also use the same generic Coffee icon — there is no visual differentiation between **Break** (rest period) and **Block** (admin/non-service time).
 
-## Root Cause
+Result: native blocks look like appointments, not like the cleaner overlay chip Phorest produces.
 
-In `src/components/dashboard/schedule/AppointmentCardContent.tsx` line 626, every grid card uses `rounded-lg` (8px on all four corners). When two cards sit edge-to-edge:
+## Goals
 
-- Col 0 right edge has its top-right and bottom-right corners curved inward
-- Col 1 left edge has its top-left and bottom-left corners curved inward
-- The two arcs curve away from each other, leaving a diamond-shaped sliver of background visible at the shared boundary
+1. Native Zura breaks & blocks render through the **same `BreakBlockOverlay` pipeline** as Phorest blocks — pixel-identical look.
+2. Visual differentiation:
+   - **Break / Lunch** → Coffee icon, amber wash (unchanged).
+   - **Block** → `CircleX` (or `Ban`) icon, muted slate wash — communicates "blocked / unavailable" rather than "resting".
+3. No double-rendering. A native block must not show as both an appointment card AND an overlay chip.
+4. The settings preview (`CalendarColorPreview`) reflects the new Block icon.
 
-Secondary contributors:
-- `ring-offset-1` on the selected state pushes the visible card inward by 1px on every side, widening the gap when one card is selected
-- The `border-l-4` colored accent only renders on the left edge, so col 1 gets a 4px solid bar at the meeting line while col 0 has nothing — making the gap feel asymmetric
+## Approach
 
-## Solution
+### 1. Native blocks write to `staff_schedule_blocks` (new path)
 
-Make adjacent edges of overlapping cards square and visually flush. Outer edges (the ones not touching another card) keep the rounded corners.
+Update the `create_break_request` RPC (new migration) so that when the request is auto-approved AND not full-day, it inserts into **`staff_schedule_blocks`** instead of `appointments`. This is the canonical break/block table (already used by Phorest, already overlay-rendered, already RLS-scoped, already realtime-friendly via the existing `useStaffScheduleBlocks` hook).
 
-### 1. Pass overlap position into `AppointmentCardContent`
+Mapping:
+- `block_type` ← lowercased `p_block_mode` (`'break'` or `'block'`) — matches the keys already in `BLOCK_TYPE_CONFIG`.
+- `label` ← `INITCAP(p_reason)` (e.g. "Lunch", "Admin Tasks").
+- `source` ← `'zura'` (new, distinguishes from `'phorest'`).
+- `user_id`, `location_id`, `block_date`, `start_time`, `end_time`, `organization_id` mapped directly.
 
-`AppointmentCardContent` (and `WeekAppointmentCard`'s inline render) needs to know whether it's a left-edge, middle, or right-edge card in the overlap stack. Add two optional props:
+Full-day blocks continue to live only in `time_off_requests` (no overlay needed — the entire day is hidden by existing capacity logic).
 
-- `isFirstCol?: boolean` (default true)
-- `isLastCol?: boolean` (default true)
+### 2. Stop creating appointment-row duplicates
 
-Both default true so non-overlapping cards (the common case) keep `rounded-lg` on all four corners.
+Remove the `INSERT INTO appointments` branch from `create_break_request`. This eliminates the "looks like an appointment card" rendering entirely.
 
-### 2. Square the inner corners
+Backfill / cleanup migration: delete any existing rows in `appointments` where `import_source = 'time_off'` AND `service_category IN ('Break','Block')` — these were the legacy duplicates. (Safe: source of truth is `time_off_requests`.)
 
-Replace the unconditional `rounded-lg` on the outer card div (line 626) with conditional rounding:
+### 3. Add `CircleX` icon for Blocks
 
-- `isFirstCol && isLastCol` → `rounded-lg` (no overlap, all corners round)
-- `isFirstCol && !isLastCol` → `rounded-l-lg` (left-edge card; right edge square)
-- `!isFirstCol && isLastCol` → `rounded-r-lg` (right-edge card; left edge square)
-- `!isFirstCol && !isLastCol` → no rounding (middle card)
+Update `BLOCK_TYPE_CONFIG` in `src/components/dashboard/schedule/BreakBlockOverlay.tsx`:
+- `block` → icon `CircleX` (lucide), keep muted slate wash.
+- `blocked` → same as `block` (alias).
+- `off` → keep Moon (full-day, different semantic).
+- `break` / `lunch` → unchanged Coffee + amber.
+- `meeting` → keep Coffee + primary tint, OR swap to `Users` icon for clarity (recommend `Users`).
 
-Apply the same conditional to the multi-service color band overlay on line 650 (currently hardcoded `rounded-lg`) so the colored bands match the card silhouette.
+### 4. Mirror in `CalendarColorPreview`
 
-### 3. Drop the 1-pixel inset
+Update `BLOCK_CONFIG` in `src/components/dashboard/settings/CalendarColorPreview.tsx` to use the same `CircleX` for Block so the settings preview matches the live schedule.
 
-In `DayView.tsx` (lines 286–293) and `WeekView.tsx` (lines 218–224), the `leftOffset = isFirstCol ? 1 : 0` / `rightPad = isLastCol ? 1 : 0` insets pull the entire overlap stack 1px in from each side of the column. This is fine for the outer column edges but contributes nothing to the inner meeting point. Keep the outer 1px for column breathing room (it prevents the card from kissing the column divider) — no change needed here. The fix is purely in the corner radius.
+### 5. `dock/useDockAppointments` filter
 
-### 4. Tighten the selected ring
+The `.not('service_category', 'in', '("Block","Break")')` filter becomes a no-op once appointments no longer carry those categories. Leave it in place as a defensive guard for any legacy rows that survived backfill — no change required.
 
-On line 634 of `AppointmentCardContent.tsx`, change `ring-2 ring-primary/60 ring-offset-1` to `ring-2 ring-primary/60 ring-inset` so selecting a card no longer pushes its silhouette inward and re-opens the gap.
+## Files Changed
 
-### 5. Wire the props through
+**Migrations (new):**
+- `supabase/migrations/<timestamp>_native_breaks_to_overlay.sql` — replaces `create_break_request` RPC; backfills/deletes legacy appointment duplicates.
 
-- `DayView.tsx` line 961: pass `isFirstCol={columnIndex === 0}` and `isLastCol={columnIndex === totalOverlapping - 1}` to `<AppointmentCard>`, then forward them through to `<AppointmentCardContent>` inside the `AppointmentCard` wrapper (line 317).
-- `WeekView.tsx`: the WeekAppointmentCard already computes `isFirstCol`/`isLastCol` locally (lines 218–219). Apply the same conditional `rounded-*` directly on its card div.
+**Code:**
+- `src/components/dashboard/schedule/BreakBlockOverlay.tsx` — `CircleX` for `block`/`blocked`, optional `Users` for `meeting`.
+- `src/components/dashboard/settings/CalendarColorPreview.tsx` — mirror the icon change in the Block sample tile.
 
-## Files to Edit
+**No changes needed:**
+- `useStaffScheduleBlocks.ts` — already returns the right shape.
+- `DayView.tsx` / `WeekView.tsx` — already render via `BreakBlockOverlay`.
+- `AddTimeBlockForm.tsx` — calls the RPC; behavior is identical from the form's perspective.
 
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — conditional corner radius, `ring-inset`, accept `isFirstCol`/`isLastCol` props
-- `src/components/dashboard/schedule/DayView.tsx` — pass `isFirstCol`/`isLastCol` from `getOverlapInfo` through `AppointmentCard` to `AppointmentCardContent`
-- `src/components/dashboard/schedule/WeekView.tsx` — apply conditional corner radius on the overlapping card silhouette
+## Edge Cases & Guardrails
+
+- **Pending approvals**: If the org requires approval (`time_off_requires_approval = true`), no overlay row is inserted (status = `pending`). Once an admin approves, we'll need a follow-up trigger or a small extension to `respond_to_time_off_request` to materialize the overlay row. Plan note: include this trigger in the same migration so approve-flow stays consistent.
+- **Tenant isolation**: New rows carry `organization_id` from the RPC param; `staff_schedule_blocks` already has org-scoped RLS — no policy changes needed.
+- **Realtime**: `useStaffScheduleBlocks` uses 30s `staleTime` and already invalidates on the existing query keys; manually invalidate `['staff-schedule-blocks']` from `useCreateBreakRequest` so the new block appears immediately without waiting for poll.
+- **Phorest write-back safety**: Native blocks have `source = 'zura'` and no `phorest_id`; the existing Phorest-write kill switch (`PHOREST_WRITES_GLOBALLY_DISABLED`) is unaffected.
 
 ## Out of Scope
 
-- Color, shadow, hover, drag, and z-index behavior remain unchanged
-- Single (non-overlapping) appointments render identically
-- BreakBlockOverlay and AssistantBlockOverlay are not affected (they don't stack horizontally)
+- No change to full-day time-off rendering (still handled by capacity/agenda layer).
+- No change to `time_off_requests` schema or approval UI.
+- No new permissions or roles.
+
+---
+
+## Prompt Coaching
+
+Strong points in your prompt:
+- You correctly identified the visual target ("the way Phorest ones look") and gave a clear icon directive ("circle X for blocked").
+- You used the right vocabulary (native vs. synced).
+
+Sharper next time:
+- Mention whether you want **block_type taxonomy expanded** (e.g. add `meeting`, `training` as first-class types with their own icons) or just visual parity. That decision affects the migration scope.
+- Specify behavior for the **approval flow** (does a pending block show on the calendar at all?). Stating this upfront prevents a follow-up ticket.
