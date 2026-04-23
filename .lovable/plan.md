@@ -1,171 +1,138 @@
 
 
-# Make Rose Gold an actual two-tone theme (gold + dusty pink, distinct roles)
+# Fix Rose Gold dark mode — calmer mesh + cleaner duotone
 
-## The problem
+## What's wrong (visible in your screenshot)
 
-Right now Rose Gold reads as **one color in different shades** — everything pulls from the same warm pink hue (`18°`/`350°`, both rose-adjacent), so chips, buttons, accents, and backgrounds all look like the same fabric in different lightnesses. That's monochromatic, not duotone.
+Three issues stack to make dark mode read as a heavy, muddy brown wash:
 
-A real two-tone theme means **two visually distinct colors** showing up side by side in the UI — you should be able to point at a card and say "that piece is gold, that piece is pink." Currently you can't.
+1. **Mesh gradient is 2× too bright.** Rose Gold's dark mesh uses `38 65% 38%` lightness at `0.22` opacity. Every other dark theme uses `~18% lightness` at `0.18` opacity. That's why the page glows orange-brown from corner to corner instead of sitting back as a quiet ambient tint.
+2. **Gold primary is over-saturated for dark.** `38 65% 64%` reads as bright caramel-yellow, not metallic gold — it competes with text and creates that "everything is gold" feeling you see in the KPI numbers.
+3. **Pink secondary is invisible.** At `345 32% 58%`, the dusty pink sits in the same mid-luminance zone as the gold mesh, so it gets absorbed into the brown wash. There's no pink presence anywhere on screen — the duotone collapses back to monotone gold.
 
-## Root cause
+The light mode works because the bright canvas gives both colors room to breathe. Dark mode is fighting itself.
 
-Three tokens are doing all the visible "color" work in the dashboard, and right now all three resolve to the same warm pink family:
+## The fix
 
-- `--primary` → rose gold (warm pink)
-- `--secondary` → dusty pink (still warm pink, ~30° away)
-- `--accent` → rose gold wash (same warm pink)
+### 1. Calm the mesh gradient (biggest visual impact)
 
-When `primary`, `secondary`, AND `accent` all sit in the same hue family, the UI has nothing to contrast against itself. To get true duotone you need **two genuinely different hues** mapped to different roles, plus enough saturation that they actually read as different on screen.
+Bring Rose Gold dark mesh in line with every other dark theme — deep, low-opacity tints that suggest the palette without dominating it.
 
-## The fix: two real anchor colors with role separation
+**Current (too loud):**
+```css
+html.dark.theme-orchid {
+  --mesh-gradient:
+    radial-gradient(at 18% 22%, hsl(38 65% 38% / 0.22) 0px, transparent 50%),
+    radial-gradient(at 82% 78%, hsl(345 40% 40% / 0.22) 0px, transparent 50%),
+    ...
+}
+```
 
-### Anchor 1 — Champagne Gold (warm metallic yellow-gold)
-- **Hue: `38°`** (true champagne gold, not pink)
-- Light mode primary: `38 55% 58%` — warm metallic gold
-- Dark mode primary: `38 65% 64%` — brighter gold for dark surfaces
-- **Role**: Primary CTAs, active nav, KPI accents, pinned/starred states, ring focus
+**New (matches sibling themes):**
+```css
+html.dark.theme-orchid {
+  --mesh-gradient:
+    radial-gradient(at 18% 22%, hsl(38 45% 18% / 0.18) 0px, transparent 48%),
+    radial-gradient(at 82% 18%, hsl(345 35% 16% / 0.14) 0px, transparent 45%),
+    radial-gradient(at 78% 82%, hsl(345 38% 18% / 0.16) 0px, transparent 48%),
+    radial-gradient(at 22% 78%, hsl(38 40% 15% / 0.12) 0px, transparent 45%);
+}
+```
 
-### Anchor 2 — Dusty Rose Pink (cool muted pink)
-- **Hue: `345°`** (true dusty rose, pulled cooler so it doesn't blend into the gold)
-- Light mode secondary: `345 38% 72%` — visible dusty pink, not a near-white
-- Dark mode secondary: `345 32% 58%` — saturated dusty pink for dark surfaces
-- **Role**: Secondary buttons, chip backgrounds, hover fills, badges, tags, soft accent surfaces
+What changes:
+- Lightness drops from `38%/40%` → `15-18%` (matches every other dark theme)
+- Opacity drops from `0.22` → `0.18/0.16/0.14/0.12` (matches the standard 4-stop falloff)
+- Pink moved to two of the four corners so the page reads gold-on-top, pink-on-bottom (or alternating), not all-gold
 
-These two hues sit **~53° apart** on the color wheel — far enough that they read as two distinct colors, close enough that they still feel like one designed family (warm metals + warm florals).
+Result: the canvas goes from "glowing orange-brown" to "warm near-black with subtle gold/pink hints in the corners" — same vibe as Cognac or Rosewood dark, just with the gold + pink character.
 
-### Role split (the part that was missing)
+### 2. Refine the gold primary
 
-| Token | Color | What it controls |
-|---|---|---|
-| `--primary` | **Champagne Gold** | Primary CTA buttons, active state highlights, ring focus, pinned indicators, primary text emphasis |
-| `--secondary` | **Dusty Rose Pink** | Secondary buttons, chip fills, badge backgrounds, tag pills, soft surface accents |
-| `--accent` | **Dusty Rose Pink (lighter)** | Hover states, accent surface tint, subtle background washes |
-| `--ring` | **Champagne Gold** | Focus rings (matches primary) |
-| `--muted` | warm neutral | Flat tier (no color identity, just a quiet surface) |
-| `--background` | warm cream | Page backdrop with subtle gold undertone |
-| `--card` | warmer near-white | Card surfaces lift cleanly above background |
-| `--border` | warm hairline | Hairline divider |
+Drop saturation slightly and shift hue 2° warmer so it reads as **metallic champagne** instead of caramel-yellow.
 
-The key shift: **`--primary` and `--secondary` use genuinely different hues now**, and `--accent` is anchored to the pink side instead of doubling up on gold. That's what makes the duotone visible — when the UI renders a primary button next to a secondary chip next to an accent surface, you see gold, pink, and pink-wash side by side instead of three near-identical warm-pink shades.
+| Token | Current | New | Why |
+|---|---|---|---|
+| `--primary` | `38 65% 64%` | `36 52% 62%` | Less saturated, slightly warmer hue → reads metallic, not neon |
+| `--ring` | `38 65% 64%` | `36 52% 62%` | Match primary |
+| `--sidebar-primary` | `38 65% 64%` | `36 52% 62%` | Match primary |
+| `--gold` | `38 70% 62%` | `36 55% 60%` | Match primary character |
+| `--chart-1` | `38 65% 64%` | `36 52% 62%` | Match primary |
+| `--chart-3` | `38 60% 54%` | `36 48% 52%` | Match primary tone |
+| `--warning` | `38 85% 55%` | `36 80% 58%` | Slight shift to align with new gold |
 
-### Light mode palette
+### 3. Boost pink so the duotone actually appears
 
-| Token | Value | Reads as |
-|---|---|---|
-| `--background` | `40 30% 97%` | warm cream page (slight gold undertone) |
-| `--card` | `40 28% 99%` | near-white with warm tint |
-| `--card-inner` | `40 22% 96%` | nested surface |
-| `--card-inner-deep` / `--muted` | `40 18% 94%` | flat tier |
-| `--popover` | `40 28% 99%` | matches card |
-| `--sidebar-background` | `40 22% 96%` | one notch below page |
-| `--foreground` | `30 30% 14%` | deep warm brown-black |
-| `--muted-foreground` | `30 18% 42%` | muted warm gray |
-| `--primary` | `38 55% 58%` | **champagne gold** |
-| `--primary-foreground` | `30 30% 12%` | dark text on gold |
-| `--secondary` | `345 38% 72%` | **dusty rose pink** (visibly pink, not near-white) |
-| `--secondary-foreground` | `30 30% 14%` | dark text on pink |
-| `--accent` | `345 30% 88%` | dusty pink wash (hover/soft accent) |
-| `--accent-foreground` | `30 30% 14%` | dark text on accent |
-| `--border` | `40 20% 88%` | warm hairline |
-| `--input` | `40 18% 94%` | field fill |
-| `--ring` | `38 55% 58%` | matches gold primary |
-| `--destructive` | `0 70% 55%` | unchanged red |
+The pink needs more saturation and slightly lighter luminance to escape the gold wash and become visible as a distinct color.
 
-### Dark mode palette
+| Token | Current | New | Why |
+|---|---|---|---|
+| `--secondary` | `345 32% 58%` | `345 45% 64%` | Higher saturation + lift → reads as actual pink, not muddy mauve |
+| `--accent` | `345 22% 22%` | `345 28% 20%` | Slightly more saturated pink shadow surface |
+| `--sidebar-accent` | `345 22% 22%` | `345 28% 20%` | Match accent |
+| `--chart-2` | `345 32% 58%` | `345 45% 64%` | Match secondary |
+| `--chart-4` | `345 38% 50%` | `345 50% 56%` | Brighter pink for chart variety |
 
-Gold gets brighter/more saturated to retain metallic quality. Pink keeps moderate saturation so it reads as actual pink, not gray.
+### 4. Lift surface contrast slightly
 
-| Token | Value | Reads as |
-|---|---|---|
-| `--background` | `30 18% 6%` | warm near-black |
-| `--card` | `30 16% 9%` | lifted dark surface |
-| `--card-inner` | `30 14% 11%` | nested |
-| `--muted` | `30 12% 14%` | flat |
-| `--popover` | `30 16% 9%` | matches card |
-| `--sidebar-background` | `30 16% 8%` | sidebar surface |
-| `--foreground` | `40 25% 95%` | warm cream text |
-| `--muted-foreground` | `40 12% 65%` | muted warm gray |
-| `--primary` | `38 65% 64%` | **brighter champagne gold** |
-| `--primary-foreground` | `30 30% 10%` | dark text on gold |
-| `--secondary` | `345 32% 58%` | **dusty rose pink** (dark-mode visible) |
-| `--secondary-foreground` | `40 25% 95%` | cream text on pink |
-| `--accent` | `345 22% 22%` | dusty pink shadow (subtle dark wash) |
-| `--accent-foreground` | `40 25% 95%` | cream text on accent |
-| `--border` | `30 14% 18%` | warm hairline |
-| `--ring` | `38 65% 64%` | matches gold primary |
+The current backgrounds are too close in lightness, which makes cards blur into the page. One small adjustment opens the elevation ladder.
 
-## Mesh gradient update
+| Token | Current | New | Why |
+|---|---|---|---|
+| `--background` | `30 18% 6%` | `30 16% 5%` | Slightly deeper page so cards lift more |
+| `--card` | `30 16% 9%` | `30 14% 10%` | Slightly less saturated, better lift |
+| `--card-inner` | `30 14% 11%` | `30 12% 12%` | Cleaner nested tier |
+| `--muted` | `30 12% 14%` | `30 10% 15%` | Less brown saturation, more neutral |
+| `--border` | `30 14% 18%` | `30 12% 20%` | Slightly more visible hairline |
 
-The ambient mesh background (lines 2927 and 3025 in `src/index.css`) needs to use **both** anchor colors so the page feels duotone even at the macro level. Today it's all one warm pink wash. New version:
-
-- Top-left radial: champagne gold (`hsla(38, 55%, 58%, 0.18)` light / `0.22` dark)
-- Bottom-right radial: dusty rose pink (`hsla(345, 38%, 72%, 0.18)` light / `0.22` dark)
-- Centerpiece: warm cream/near-black base
-
-This gives the page itself a soft gold-to-pink wash that reinforces the duotone identity before any UI renders on top.
-
-## Theme picker swatch
-
-The picker swatch in `src/hooks/useColorTheme.ts` currently shows a single rose-pink swatch. Update to show **both** colors so the duotone is visible at selection time:
-
-- `lightSwatch`: gradient or split swatch — gold (`#C9963F`) → dusty pink (`#D5919E`)
-- `darkSwatch`: gold (`#D8A556`) → dusty pink (`#B5717E`)
-
-If swatch infrastructure only supports one color, use the gold (`#C9963F` light / `#D8A556` dark) since that's the primary and will be the most visible accent in the live UI.
+The hue stays warm (`30°`) so the rose-gold identity is preserved, but lower saturation on neutrals stops them from reading as "brown" and lets the gold + pink accents pop.
 
 ## Files touched
 
 | File | Change |
 |---|---|
-| `src/index.css` | Replace `.theme-orchid` + `.dark.theme-orchid` token blocks with new gold + pink palette. Update mesh gradient blocks (lines ~2927 and ~3025) to use both anchor colors. |
-| `src/hooks/useColorTheme.ts` | Update Rose Gold theme metadata: swatch hex values, description ("Champagne gold & dusty rose"). |
-| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Update `THEME_ACCENT_DEFAULTS['orchid']` hex to new gold (`#C9963F`). |
+| `src/index.css` | Rewrite `.dark.theme-orchid` token block (lines 1542-1601). Rewrite `html.dark.theme-orchid` mesh gradient (lines 3105-3111). |
 
-CSS class key stays `.theme-orchid` — same migration-safe approach as before.
+Light mode untouched. Class key untouched. No migration needed.
 
 ## Acceptance
 
-1. Selecting Rose Gold renders **two visibly different colors** in the live dashboard at the same time:
-   - Primary CTAs read as **warm metallic gold**.
-   - Secondary chips, badges, and hover fills read as **dusty rose pink**.
-2. You can point at any analytics card and identify the gold pieces vs the pink pieces — they don't all blur together as "warm pink shades."
-3. The mesh background gradient shows both colors (gold corner + pink corner) instead of one uniform wash.
-4. The theme picker swatch shows both colors (or at minimum the gold, since it's primary and most visible).
-5. Light and dark modes both maintain the duotone — pink doesn't disappear into gray on dark, gold doesn't wash out to beige on light.
-6. Cards still lift cleanly above background (97%/99% lightness ladder preserved).
-7. WCAG AA text contrast passes on all primary, secondary, and accent surfaces.
+1. Dark mode page no longer reads as a uniform orange-brown wash — backgrounds are warm near-black with subtle ambient tinting, matching the calm of other dark themes (Cognac, Rosewood, Cream Lux).
+2. Gold primary CTAs and KPI numbers read as **metallic champagne**, not bright caramel-yellow. They feel premium, not cartoonish.
+3. Pink secondary chips, badges, and accent surfaces are **actually visible** as pink — you can point at the secondary buttons and see a clearly different color from the gold.
+4. Cards lift cleanly above the background — the elevation ladder reads at a glance.
+5. Light mode is unchanged and still looks good.
+6. Mesh gradient still suggests gold + pink at the macro level, but quietly — it's an ambient hint, not a saturation bomb.
+7. WCAG AA text contrast passes on all surfaces (gold-on-dark, pink-on-dark, text-on-gold, text-on-pink).
 8. No other theme is touched.
 
 ## Out of scope
 
-- Changing which UI roles map to which token (Tailwind's `bg-secondary`, `bg-accent`, `bg-primary` semantics stay as-is — we're only changing what colors those tokens resolve to).
-- Renaming the CSS class from `.theme-orchid`.
-- Adding a third accent color.
-- Touching mesh gradients or palettes for any other theme.
+- Light mode adjustments (you said it looks good — leaving it alone).
+- Touching any other theme's dark mode.
+- Renaming the CSS class.
+- Changing role assignments (gold stays primary, pink stays secondary).
+- Modifying the mesh gradient pattern/positions globally — only Rose Gold's dark mesh is rewritten.
 
 ## Prompt feedback
 
-This was a sharp, surgical correction — three things you did right:
+Solid, well-targeted correction — three things you did right:
 
-1. **You named the failure mode precisely.** "Monochromatic" is the exact technical word for what was wrong, and using it told me immediately the issue is hue diversity, not lightness or saturation.
-2. **You restated the original intent in different words.** "Some components are gold and some are pink" is a totally different framing from "duotone theme" — the second framing made it concrete (two colors visible side by side in the UI) instead of abstract (a design concept).
-3. **You caught the regression on the live preview.** Rather than accepting the previous output, you tested it visually and reported back. That's exactly the right loop for design work.
+1. **You scoped the problem to one mode.** "Dark mode looks horrible, light mode looks good" is far more actionable than "the theme looks bad" — it tells me exactly which palette block to touch and which to leave alone, cutting the work in half.
+2. **You attached a screenshot of the broken state.** That single image saved 3-4 rounds of "what specifically looks wrong?" — I could see the brown wash, the over-saturated gold KPIs, and the missing pink immediately.
+3. **You used aesthetic language ("prettier")** instead of prescribing specific HSL values. That gives me license to diagnose the root cause (mesh + saturation + pink invisibility) instead of getting locked to a single fix that might not address what's actually wrong.
 
-Sharpener: when correcting a color/visual regression, calling out **a specific UI element** that should differ would tighten the fix. Template:
+Sharpener: when reporting a "looks bad" issue, naming **which specific element bothers you most** would tighten the diagnosis. Template:
 
 ```text
-[Theme] is [wrong attribute] — should be [right attribute].
-For example, [specific component A] should be [color X], 
-and [specific component B] should be [color Y].
+[Theme] in [mode] looks [adjective] — specifically, 
+[component X] reads as [wrong quality] when it should be [right quality].
 ```
 
 Example:
 ```text
-Rose Gold is monochromatic — should be true two-tone.
-For example, primary CTA buttons should be metallic gold, 
-and chip backgrounds / badges should be dusty pink.
+Rose Gold in dark mode looks muddy — specifically, the whole page reads as one brown wash 
+and I can't see the pink anywhere. The gold KPI numbers also feel too bright/yellow.
 ```
 
-The **"for example, [component] should be [color]"** clause is the underused construct on color-correction prompts. It removes the last layer of interpretation — without it I have to guess which UI roles get which color (and I might invert them, e.g., putting pink on the primary CTA, which would feel washed out and lose the metallic luxury cue you're after).
+The **"specifically, [element] reads as [quality]"** clause is the underused construct on aesthetic-correction prompts — without it I have to guess whether the issue is the mesh, the primary color, the pink visibility, or all three (it was all three this time). Naming the element you noticed first would let me prioritize the fix even faster.
 
