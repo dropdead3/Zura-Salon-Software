@@ -59,11 +59,16 @@ export function readIndexCss(): string {
 /**
  * Returns every theme-defining selector in `cssSource`, deduplicated and in
  * source order. Matches the canon's allowlist: `:root`, `.dark`,
- * `.theme-*`, `[data-theme="..."]`. Used by per-theme completeness canons
- * to iterate the actual themes present in the file rather than hardcoding.
+ * `.theme-*`, `html.theme-*`, `html.dark.theme-*`, `[data-theme="..."]`.
+ *
+ * The `html.theme-*` and `html.dark.theme-*` shapes exist to host gradient
+ * tokens at a higher CSS specificity tier than the plain `.theme-*` color
+ * blocks (Step 2T). The cross-theme parity canon merges co-applied selectors
+ * (`.theme-bone` + `html.theme-bone`) into a single token surface because
+ * runtime resolves both against the same `<html class="theme-bone">` element.
  */
 export function extractThemeSelectors(cssSource: string): string[] {
-  const allowedSelectorRe = /(:root|\.dark|\[data-theme[^\]]*\]|\.theme-[\w-]+)/;
+  const allowedSelectorRe = /(:root|\.dark|\[data-theme[^\]]*\]|html\.dark\.theme-[\w-]+|html\.theme-[\w-]+|\.theme-[\w-]+)/;
   const selectorRe = /^(\s*)([^\n{}]+)\{\s*$/gm;
   const seen = new Set<string>();
   const out: string[] = [];
