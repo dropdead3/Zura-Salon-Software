@@ -33,10 +33,10 @@ const palette = (
 
 export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
   bone: palette(
-    ['#0a0a08', '#2d2820', '#0a0a08'],
-    '#c8b896',
-    '#a89776',
-    200, 184, 150,
+    ['#0a0a0a', '#2a2826', '#0a0a0a'],
+    '#a8a195',
+    '#8a8378',
+    168, 161, 149,
   ),
   rosewood: palette(
     ['#140a0c', '#3d1a24', '#140a0c'],
