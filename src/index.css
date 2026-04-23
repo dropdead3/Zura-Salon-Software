@@ -74,53 +74,26 @@ html, body, #root {
 }
 
 @layer base {
-  /* ===== THEME: BONE (Default — warm bone & cognac accents) ===== */
+  /* ===== THEME: BONE (Default — soft desert tan & sand) ===== */
   :root,
   .theme-bone {
-    /* Warm hospitality neutral with cognac accent */
-    --background: 36 18% 88%;
+    /* Soft desert tan / sand neutral */
+    --background: 40 25% 92%;
     --foreground: 0 0% 6%;
 
-    --card: 40 12% 85%;
+    --card: 42 18% 89%;
     --card-foreground: 0 0% 6%;
 
-    --popover: 40 12% 85%;
+    --popover: 42 18% 89%;
     --popover-foreground: 0 0% 6%;
 
-    --primary: 28 55% 42%;
+    --primary: 38 32% 58%;
     --primary-foreground: 36 30% 96%;
-
-    --secondary: 36 12% 80%;
-    --secondary-foreground: 0 0% 6%;
-
-    --muted: 40 8% 72%;
-    --muted-strong: 40 8% 65%;
-    --muted-foreground: 0 0% 30%;
-
-    --accent: 40 12% 76%;
-    --accent-foreground: 0 0% 6%;
-
-    /* Oat/Tan accent - soft warm neutral */
-    --oat: 35 18% 68%;
-    --oat-foreground: 30 20% 25%;
-
-    /* Gold accent - for premium badges */
-    --gold: 38 70% 38%;
-    --gold-foreground: 45 100% 97%;
-
-    /* Success/Available - pastel green */
-    --success: 145 40% 85%;
-    --success-foreground: 145 50% 30%;
-
-    /* Warning - amber */
-    --warning: 38 92% 50%;
-    --warning-foreground: 32 80% 30%;
-
-    /* Chart colors for data visualization */
-    --chart-1: 28 55% 42%;
-    --chart-2: 38 70% 45%;
+...
+    --chart-1: 38 32% 58%;
+    --chart-2: 45 50% 55%;
     --chart-3: 145 50% 40%;
-    --chart-4: 24 35% 30%;
+    --chart-4: 35 25% 45%;
     --chart-5: 280 50% 55%;
 
     --destructive: 0 62% 50%;
@@ -128,7 +101,7 @@ html, body, #root {
 
     --border: 40 8% 65%;
     --input: 40 8% 74%;
-    --ring: 28 55% 42%;
+    --ring: 38 32% 58%;
 
     --radius: 0.75rem;
 
@@ -165,12 +138,12 @@ html, body, #root {
     /* Sidebar */
     --sidebar-background: 36 14% 86%;
     --sidebar-foreground: 24 25% 8%;
-    --sidebar-primary: 28 55% 42%;
+    --sidebar-primary: 38 32% 58%;
     --sidebar-primary-foreground: 36 30% 96%;
     --sidebar-accent: 36 12% 80%;
     --sidebar-accent-foreground: 24 25% 8%;
     --sidebar-border: 32 10% 68%;
-    --sidebar-ring: 28 55% 42%;
+    --sidebar-ring: 38 32% 58%;
 
     --card-inner: 36 10% 84%;
     --card-inner-deep: 36 8% 80%;
@@ -187,7 +160,7 @@ html, body, #root {
     --popover: 0 0% 11%;
     --popover-foreground: 40 20% 92%;
 
-    --primary: 28 55% 55%;
+    --primary: 38 38% 65%;
     --primary-foreground: 30 12% 6%;
 
     --secondary: 30 10% 16%;
@@ -214,8 +187,8 @@ html, body, #root {
     --warning-foreground: 38 90% 75%;
 
     /* Chart colors for data visualization */
-    --chart-1: 28 60% 60%;
-    --chart-2: 38 75% 60%;
+    --chart-1: 38 38% 65%;
+    --chart-2: 45 50% 65%;
     --chart-3: 145 45% 55%;
     --chart-4: 30 35% 70%;
     --chart-5: 280 55% 70%;
@@ -225,16 +198,16 @@ html, body, #root {
 
     --border: 0 0% 28%;
     --input: 0 0% 14%;
-    --ring: 28 55% 55%;
+    --ring: 38 38% 65%;
 
     --sidebar-background: 30 12% 10%;
     --sidebar-foreground: 36 18% 92%;
-    --sidebar-primary: 28 55% 55%;
+    --sidebar-primary: 38 38% 65%;
     --sidebar-primary-foreground: 30 12% 6%;
     --sidebar-accent: 30 12% 16%;
     --sidebar-accent-foreground: 36 18% 92%;
     --sidebar-border: 30 10% 28%;
-    --sidebar-ring: 28 55% 55%;
+    --sidebar-ring: 38 38% 65%;
 
     --card-inner: 0 0% 8%;
     --card-inner-deep: 0 0% 5%;
