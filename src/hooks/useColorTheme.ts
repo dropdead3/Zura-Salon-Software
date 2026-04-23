@@ -185,14 +185,14 @@ export const colorThemes = [
     name: 'Marine',
     description: 'Deep navy & gold',
     lightPreview: {
-      bg: 'hsl(218 22% 95%)',
-      accent: 'hsl(218 25% 84%)',
-      primary: 'hsl(220 90% 52%)',
+      bg: 'hsl(218 35% 97%)',
+      accent: 'hsl(218 60% 92%)',
+      primary: 'hsl(218 100% 56%)',
     },
     darkPreview: {
-      bg: 'hsl(218 25% 6%)',
-      accent: 'hsl(218 22% 22%)',
-      primary: 'hsl(220 92% 62%)',
+      bg: 'hsl(220 50% 7%)',
+      accent: 'hsl(220 45% 11%)',
+      primary: 'hsl(218 100% 65%)',
     },
   },
   {
