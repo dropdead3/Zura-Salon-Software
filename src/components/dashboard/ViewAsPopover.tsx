@@ -18,6 +18,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Eye, EyeOff, Search, FlaskConical, Users, Shield } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
