@@ -676,15 +676,16 @@ export function AppointmentCardContent({
       className={cn(
         'h-full w-full cursor-pointer transition-all duration-200 ease-out overflow-hidden group relative',
         roundingClass,
-        'hover:shadow-md hover:z-20 hover:brightness-[1.08]',
+        'shadow-[0_1px_2px_rgba(15,23,42,0.06),0_4px_12px_-6px_rgba(15,23,42,0.12)]',
+        'hover:shadow-[0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)] hover:-translate-y-[0.5px] hover:z-20',
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
         // Restored original left accent on every status-colored card.
         !useCategoryColor && !displayGradient && 'border-l-4',
         isCancelled && 'opacity-60',
-        isNoShow && 'ring-2 ring-destructive ring-inset',
-        isSelected && 'ring-2 ring-primary/60 ring-inset',
+        isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
+        isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',
         displayGradient && 'shadow-lg',
         appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',
       )}
