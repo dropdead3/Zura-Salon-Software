@@ -1,169 +1,123 @@
 
-# Fix the actual remaining root cause: a hook-order violation is corrupting theme state during org resolution, so light-mode palettes never stabilize correctly
+# Fix the theme rendering bug at its actual root cause: `<html>` is being held on `theme-bone` by the pre-paint script while React crashes before `useColorTheme` can replace it
 
-## What's actually broken
+## What's actually happening (proven by network + error logs)
 
-This is no longer primarily a palette-authoring problem.
+Three pieces of evidence converge on a single root cause:
 
-The strongest signal now is the runtime error already present in the app:
+1. **Network panel (20:30:34)**: `GET /site_settings → {theme: "neon"}` for org `fa23cd95-…` (Drop Dead Salons), followed by `PATCH /site_settings → 204` setting it to whatever was just clicked.
+2. **Runtime error (still firing)**: `Uncaught Error: Should have a queue. … at useState at useBaseQuery at useQuery at useSiteSettings at RevenueDisplayProvider`.
+3. **Screenshot**: picker shows Zura selected, toast says "Zura is now active", but every surface (page bg, sidebar, top nav, picker tile background) is bone/oat — not Zura's lavender, not neon's hot pink, not the DB value, not the click value. **Bone.**
 
-```text
-Uncaught Error: Should have a queue. This is likely a bug in React.
-...
-at useBackfillOrgSetup
-at useBackfillTrigger
-at DashboardLayoutInner
+The only thing that authors `theme-bone` on `<html>` independent of `useColorTheme` is the pre-paint script in `index.html` (lines 42–58):
+
+```html
+var color = localStorage.getItem('dd-color-theme') || 'zura';
+…
+root.classList.add('theme-' + color);
 ```
 
-That error pattern usually means **hook order changed between renders**. In this codebase, the critical offender is the org resolver used by the theme system.
+This script runs once on hard load. For users who previously had `bone` saved in the generic localStorage key (or whose generic key is empty during a browser-storage quirk), `<html>` gets `class="theme-bone"` immediately at first paint. `useColorTheme.applyTheme()` is supposed to overwrite this within the first React commit — but **`useColorTheme` never runs**, because `RevenueDisplayProvider` crashes upstream with "Should have a queue", which prevents `DashboardLayout` (and therefore `useColorTheme`) from ever mounting.
 
-## Root cause
+The "Should have a queue" error is a Fast Refresh hook-count drift: the previous fix added 3 hooks (`useEffect` + 2 `useRef`) to `useSettingsOrgId`, and any fiber that mounted before that file was hot-reloaded still has the old hook layout. `useQuery`'s internal `useState` reads the wrong slot → throw.
 
-### `useSettingsOrgId()` violates the Rules of Hooks
-Current file: `src/hooks/useSettingsOrgId.ts`
+So the visible symptom (everything looks bone) is the union of two failures:
+- pre-paint script paints bone on first load (for this user, this org)
+- React tree crashes at `RevenueDisplayProvider` so `applyTheme` never gets to swap in the right theme class
 
-It currently does this:
+A hard reload would mask the runtime error temporarily, but the deeper persistence-vs-pre-paint mismatch remains for any org whose DB theme ≠ the generic localStorage hint.
 
-- early returns before hooks when `explicitOrgId` exists
-- calls `useOrganizationContext()`
-- only calls `useContext(PublicOrgContext)` if no dashboard org exists
+## Why prior rounds didn't catch this
 
-That means the hook call graph changes depending on:
-- whether an explicit org id is passed
-- whether `effectiveOrganization` is available yet
-- whether God Mode / org switching changes context timing
-
-Since `useColorTheme`, `useSiteSettings`, and `useUpdateSiteSetting` all depend on `useSettingsOrgId`, the entire theme pipeline can become unstable exactly when org context changes.
-
-That matches the current symptom:
-- the database PATCH succeeds
-- the picker updates
-- the rendered dashboard still falls back to the wrong palette
-- God Mode / org switching makes it worse
-
-## Why this explains the theme failure better than the previous fixes
-
-The network logs now show `org_color_theme` writes succeeding (Matrix, Neon, Zura). So persistence is no longer the main blocker.
-
-If the resolver hook is corrupting render state during org/context transitions, then:
-- `useColorTheme()` may apply the wrong class at the wrong time
-- query/cache state can drift across renders
-- React can preserve stale state slots from a prior render path
-- downstream hooks in `DashboardLayoutInner` can become misaligned
-
-That is exactly the kind of bug that makes "the selected card says Zura, but the surfaces still look Bone" keep surviving otherwise-correct fixes.
+Every previous round assumed `useColorTheme` was actually running. The combination of "DB writes succeed", "picker shows correct selection", and "rendered surfaces are bone" only makes sense if the picker is rendering inside a React subtree that survives the crash (settings detail uses its own hook instances), while the global `useColorTheme` mount in `DashboardLayout` never gets reached.
 
 ## Implementation plan
 
-### 1. Fix `useSettingsOrgId()` to be hook-safe
+### 1. Make `useSettingsOrgId` truly hook-stable across Fast Refresh
 **File:** `src/hooks/useSettingsOrgId.ts`
 
-Refactor so it always calls hooks in the same order on every render:
+The current version added `useEffect` + 2× `useRef` for dev-only logging. That's the trigger for the HMR hook-count drift. Move the dev logger out of the hook entirely:
 
-- call `useOrganizationContext()` unconditionally
-- call `useContext(PublicOrgContext)` unconditionally
-- resolve priority afterward:
-  1. `explicitOrgId`
-  2. dashboard org
-  3. public org
-  4. `undefined`
+- Remove the `useEffect` and both `useRef` calls.
+- The hook becomes exactly two `useContext` calls + a pure expression.
+- Replace the in-hook logger with a tiny module-scoped `Map<orgId, lastSource>` that gets compared and logged inside the resolved `return` path (not as a hook). No React state involved.
 
-No early return before hooks. No conditional `useContext()`.
+Result: the hook returns to a 2-hook signature that's stable across HMR and matches every prior version of the file.
 
-### 2. Re-stabilize `useColorTheme()` on top of the fixed org resolver
+### 2. Make `useColorTheme` resilient to the pre-paint mismatch
 **File:** `src/hooks/useColorTheme.ts`
 
-After the org resolver is fixed, tighten theme application so the dashboard only commits a resolved org theme when the org identity is stable.
+Two small additions:
 
-Specifically:
-- keep DB as org source of truth
-- use org-scoped cache only as fallback before DB resolves
-- avoid re-applying generic fallback once a dashboard org is known
-- ensure DOM theme application is driven by the resolved org id from the now-stable hook path
+a. **Detect pre-paint mismatch on first DB resolution.** When `dbLoaded` first becomes true and `dbTheme` is non-null, check `<html>` class list. If the DOM theme class doesn't match `dbTheme`, force `applyTheme(dbTheme, orgId)` immediately (one-shot per org). This bridges the gap between the pre-paint script and the React commit.
 
-### 3. Audit other shared hooks for the same pattern
-Inspect hooks that resolve org context, branch between dashboard/public providers, or have early returns before hook calls. Remove any other hidden conditional-hook bugs.
+b. **Run `applyTheme` synchronously during `useColorTheme`'s body** when `colorTheme` differs from the current DOM class — *not* only inside `useEffect`. The effect runs after commit; for theme classes, we want the swap to happen the same render so layout/paint don't flash bone. Use a `useLayoutEffect` instead of `useEffect` for the DOM-sync.
 
-### 4. Add regression coverage for org resolution + theme stability
-**New test:** `src/test/use-settings-org-id-hook-order.test.tsx`
+### 3. Move the pre-paint hint to be org-scoped-aware
+**File:** `index.html`
 
-Assert:
-- switching from no org → dashboard org does not change hook order
-- switching between orgs in God Mode does not throw
-- theme resolution stays tied to the active org
-- successful `org_color_theme` updates are reflected in the rendered theme state
+Currently the pre-paint reads `localStorage.getItem('dd-color-theme')` (generic). After the user lands on `/org/<slug>/dashboard/...`, the better hint is the org-scoped key `dd-color-theme:<orgId>`. We don't know `orgId` at pre-paint time, but we DO know the URL slug.
 
-### 5. Add a dev-only guard for future regressions
-- console warning when org source changes from public/dashboard during a mounted dashboard session
-- a tiny invariant inside theme resolution showing `{ orgId, source, theme }`
+Change the script to:
+- Parse `/org/<slug>/` from `location.pathname`.
+- If a slug is present, look up `dd-color-theme:slug:<slug>` (a new convention).
+- Fall back to the generic key if no slug match.
+
+In `useColorTheme.ts`, also write `dd-color-theme:slug:<slug>` whenever an org's effective slug is known. This eliminates the cross-org pre-paint flash.
+
+### 4. Move dev-only theme integrity HUD out of the resolver hook
+**New file:** `src/components/_dev/ThemeIntegrityHud.tsx` (DEV builds only)
+
+A tiny fixed-corner component mounted in `App.tsx` under `import.meta.env.DEV`. Reads:
+- `<html>` class list
+- Computed `--background` from `getComputedStyle`
+- Resolved org id (via `useSettingsOrgId`)
+- Last theme source written to a module-scoped variable in `useColorTheme.ts`
+
+Renders one line of text. No effect on production.
+
+This replaces the in-hook console logger entirely so the resolver hook stays 2-hook-pure.
+
+### 5. Verify
+- Hard reload `/org/drop-dead-salons/dashboard/admin/settings`.
+- Confirm no "Should have a queue" runtime error.
+- Click each affected theme: Zura, Rosewood, Sage, Marine, Cognac, Noir, Neon, Peach.
+- After each click: page bg, mesh tint, sidebar, top nav, card surfaces all match the selected theme's hue family.
+- Switch orgs in God Mode. Confirm theme tracks the impersonated org.
+- Reload mid-session. Confirm the saved theme renders without a bone flash.
 
 ## Files to modify
 
-- `src/hooks/useSettingsOrgId.ts`
-- `src/hooks/useColorTheme.ts`
-- `src/test/use-settings-org-id-hook-order.test.tsx` (new)
-
-## Verification
-
-1. Open `/org/drop-dead-salons/dashboard/admin/settings`
-2. In light mode, click each: Zura, Rosewood, Sage, Marine, Cognac, Noir, Neon, Peach
-3. Confirm after each click:
-   - selected card matches rendered dashboard palette
-   - top mesh tint changes correctly
-   - page background, main card, sidebar, and top chrome follow the selected theme
-4. Switch orgs in God Mode:
-   - no React runtime error
-   - no theme drift
-   - no cross-org palette leakage
-5. Refresh: saved org theme persists correctly
+- `src/hooks/useSettingsOrgId.ts` — strip `useEffect` + `useRef`s
+- `src/hooks/useColorTheme.ts` — `useLayoutEffect`, pre-paint mismatch detection, slug-keyed cache write
+- `index.html` — slug-aware pre-paint script
+- `src/components/_dev/ThemeIntegrityHud.tsx` (new) — dev HUD
+- `src/App.tsx` — mount HUD in DEV
 
 ## Out of scope
 
-- Re-tuning palettes (already done; tokens are correct)
+- Re-tuning palette HSL values (already correct)
 - Touching `index.css` token blocks
 - Re-architecting `useSiteSettings`
 - Editor-side `useCustomTheme` / `useTypographyTheme`
 
 ## Why this is the right fix
 
-The current evidence now points upstream of palette tuning:
-
-- DB writes are succeeding
-- the bug survives multiple CSS/persistence passes
-- the app already has a React hook-state corruption error
-- the shared org resolver used by the theme system is breaking hook-order rules
-
-Until that resolver is fixed, the theme system can keep behaving nondeterministically no matter how many palette tokens are adjusted.
+Persistence is working. The picker is wired correctly. The CSS tokens are correct. The only remaining gap is **the moment between "page paints" and "useColorTheme runs"** — and right now that gap is being filled by `theme-bone` from a pre-paint script that doesn't know which org the user belongs to. Layering on top: a Fast Refresh artifact crashing the React tree means even when `useColorTheme` *would* run, it doesn't get to. Steps 1–3 close both gaps directly.
 
 ## Further enhancement suggestions
 
-1. **Theme + Org dev inspector HUD.** A 60×60 fixed corner badge on dev builds showing:
-   - active org id and source (`dashboard` / `public` / `explicit`)
-   - resolved color theme + light/dark mode
-   - current `<html>` class list
-   - whether theme came from DB, org-scoped cache, or generic fallback
-   
-   One glance answers every "why is the wrong theme rendering" question and surfaces org-resolver drift instantly.
-
-2. **Hook-safety canon (Vitest + ESLint).** Codify a project-wide canon that shared resolver hooks (theme, auth, org, site settings) must never branch hook calls by context availability.
-   - ESLint rule: no early-return-before-hook in `src/hooks/useSettings*`, `src/hooks/useColor*`, `src/hooks/useOrg*`, `src/contexts/*`
-   - Vitest assertion: rendering each shared resolver under both providers and neither provider must not change hook count
-   - Add to Canon Pattern registry per `mem://architecture/canon-pattern.md`
-
-3. **Single-writer canon for `<html>` theme classes.** A Vitest rule asserting only `useColorTheme.applyTheme` and the public marketing `Layout.tsx` write `theme-*` classes. Any new writer must be allowlisted explicitly. This prevents future regressions where a second consumer silently competes for DOM ownership.
-
-4. **Org-context transition logger (dev only).** When `effectiveOrganization.id` changes mid-session (God Mode switch, route change), log the transition with `{ from, to, trigger, mountedHooks }`. This makes resolver-related render bugs traceable in two console scrolls.
-
-5. **Theme-coherence canon.** Preview swatches in `useColorTheme.ts` must stay within tolerance of the real CSS token family in `index.css`. Add a Vitest snapshot that parses both sources and asserts hue-family alignment, preventing the "picker looks distinct, live page looks samey" mismatch from returning.
+1. **Theme + Org dev HUD** (built into step 4) — visible source of truth for every theme question going forward.
+2. **Single-writer canon for `<html>` theme classes**: Vitest assertion that only `useColorTheme.applyTheme`, `Layout.tsx` (public), and the `index.html` pre-paint script may write `theme-*`. Any new writer requires explicit allowlisting.
+3. **Hook-stability canon for resolver hooks**: ESLint rule forbidding `useEffect`/`useRef`/`useState` in `useSettingsOrgId.ts`, `useEffectiveUserId.ts`, and other shared resolver hooks. Plus a Vitest snapshot of each resolver's hook count.
+4. **Pre-paint contract test**: a Vitest test that parses `index.html`, extracts the pre-paint script, and asserts (a) it reads slug-scoped storage when a slug is in the URL, (b) it never hardcodes a fallback theme other than the documented default, (c) it doesn't apply `dark` when the resolved theme already implies a mode.
+5. **Theme-coherence canon**: assert the picker's preview swatches stay within tolerance of the real CSS token family in `index.css`, so a future palette tune in one place is mirrored in the other.
 
 ## Prompt feedback
 
 What you did well:
-- you kept pressure on the actual rendered result instead of accepting "saved successfully" as proof
-- "That still did not solve it" was short, but in this case it correctly forced a deeper root-cause pass
+- "That still did not fix it" with a fresh screenshot kept the loop tight and forced a deeper root-cause pass instead of another palette tweak.
 
 A stronger version next time:
-- include whether you switched orgs / used God Mode right before seeing it
-- include whether the mesh tint, card background, and sidebar are all wrong or only some surfaces are wrong
-
-That would have pointed faster to a shared state/resolver bug instead of another CSS pass.
+- Note whether the page was hard-reloaded since the last fix. The "Should have a queue" error is a Fast Refresh artifact that disappears on hard reload — knowing this would have isolated the persistent symptom from the HMR symptom in one round.
+- Note what color the **page background behind the picker grid** actually looks like (lavender vs oat vs hot-pink). The picker tiles themselves render their own swatches so they're not a reliable signal of the active theme.
