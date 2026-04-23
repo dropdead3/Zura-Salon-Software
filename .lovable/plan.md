@@ -1,88 +1,78 @@
 
 
-# Step 2H — Wire the canon into the default check gate, and extend it to raw hex
+# Step 2I — Commit-time gate, and the first non-scrollbar CSS-canon test
 
-Two enhancements, both extending the Step 2G foundation. Part A closes the "easy to forget" loophole by routing Stylelint through the same gate Vitest uses. Part B broadens the ban from `rgba(` to the full raw-color family (`rgb(`, `rgba(`, raw hex) — same regression class, same plugin, one expanded matcher.
+Two enhancements, same foundation. Part A makes the Stylelint + Vitest canon fail at commit time so nobody has to remember to run it. Part B finally gives `css-rule.ts` a second consumer — the scrollbar fixture shim can then be deleted, proving the Step 2G generalization was worth it.
 
-## Part A — Route Stylelint through the default check gate
+**Priority read**: Part A is the must-have (authoring-time enforcement is the whole point of a canon). Part B is the proof-of-reuse that unblocks shim deletion.
 
-**The gap**
-`npm run lint:css` exists but no one runs it. CI doesn't run it. The Vitest suite doesn't run it. It's a flashlight that lives in a drawer.
+## Part A — Husky + lint-staged pre-commit gate
 
-**The fix**
-Add a composite `"check"` script that runs both Vitest and Stylelint, and wire the existing test script (or the `check` umbrella) to call it. Whichever the team already treats as the "green bar" command now fails if a raw `rgba` slips into `index.css`.
+**What ships**
 
-**Files**
+1. `package.json` — add devDeps `husky`, `lint-staged`; add scripts `"prepare": "husky"` and `"check": "npm run lint:css && vitest run"`. (Composite `check` was deferred from Step 2H; include it now so the hook and manual runs share one target.)
+2. `.husky/pre-commit` — one line: `npx lint-staged`.
+3. `.lintstagedrc.json` — two globs:
+   - `"src/**/*.css"`: `stylelint`
+   - `"src/**/*.{ts,tsx}"`: `eslint --max-warnings=0`
+   - Vitest runs via `check` (manual / CI), **not** in the commit hook — too slow for staged-file scope and the test suite isn't file-scoped yet. Hook stays under ~2s on realistic commits.
 
-1. `package.json` — two script additions:
-   - `"lint:css": "stylelint 'src/**/*.css'"` (already present from Step 2G).
-   - `"check": "npm run lint:css && npx vitest run"` — new. Single composite command that the team (and any future pre-commit or CI hook) can call.
-   - If `"test"` currently just runs Vitest, leave it alone — `check` is the strict gate, `test` stays fast for iteration.
-
-**Why a composite `check` script and not overloading `test`?**
-Vitest-only runs are the fast iteration loop (watch mode, single-file filter). `check` is the strict pre-flight: both gates must pass. Two commands, two purposes, no overloading.
+**Why lint-staged and not just the hook calling `npm run check`**
+Lint-staged scopes to staged files only, so editing one component doesn't re-lint 800 CSS files. The hook stays fast enough that nobody feels tempted to `--no-verify`.
 
 **Acceptance (Part A)**
 
-1. `npm run check` runs Stylelint first, then Vitest, and returns non-zero if either fails.
-2. Inserting `color: rgba(0, 0, 0, 0.3);` into a non-token rule in `src/index.css` causes `npm run check` to fail at the Stylelint step before Vitest runs.
-3. `npm run test` still runs Vitest only (unchanged fast loop).
-4. Stylelint runtime on the full `src/**/*.css` glob stays under 3s (measured during Step 2G).
+1. Fresh clone + `npm install` auto-runs `husky` via the `prepare` script; `.husky/pre-commit` is executable.
+2. Staging `src/index.css` with a raw `rgba(0,0,0,0.3)` in a non-token rule causes `git commit` to fail at the pre-commit hook.
+3. Staging only `README.md` skips both linters (nothing matches the globs).
+4. `npm run check` runs both gates manually and returns non-zero if either fails.
+5. Hook completes in under 3s on a realistic 5-file commit.
 
-## Part B — Extend the plugin to raw hex
+## Part B — First non-scrollbar canon test: `destructive` routes through HSL
 
-**The gap**
-The current rule name is `zura/no-raw-rgba-outside-tokens`. It catches `rgb(` and `rgba(` with literal integer args. It does **not** catch:
-- `#fff`, `#000`, `#ffffff`, `#00000080` (3/4/6/8-digit hex).
-- Hex with uppercase letters (`#FFF`, `#ABC123`).
+**What we're asserting**
 
-Same regression class (theme-blind literal), same fix (`hsl(var(--token) / alpha)`), same escape hatch (`/* intentional literal: <reason> */`).
+Every CSS rule that uses the word `destructive` in a property value resolves through `hsl(var(--destructive))` or `hsl(var(--destructive-foreground))` — never a raw hex, raw `rgba`, or `red-*` Tailwind-color literal. The bug this catches: someone writes `color: #dc2626` or `background: red` for a "destructive red" surface, bypassing the theme and breaking all 13 theme palettes.
 
-**The fix — extend, don't duplicate**
+**Scope**
 
-Keep the plugin file and rule name (the ecosystem already references it), but broaden the matcher and rename the rule to reflect the wider scope.
+- `src/index.css` — today, `--destructive` appears only inside `:root` / `.dark` / theme-scope blocks (all 13 themes). No out-of-token usages exist. The test encodes this as a canon: **any future `destructive` reference outside a token-definition block must be through `hsl(var(--destructive*))`.**
+- Not checked: `.tsx` files or `tailwind.config.ts`. Tailwind's `bg-destructive` / `text-destructive` utilities are already HSL-routed via the config; they're a separate surface with its own guarantees.
 
 **Files**
 
-1. `tools/stylelint-plugins/no-raw-rgba-outside-tokens.cjs` — rename the exported rule to `zura/no-raw-colors-outside-tokens` (more accurate) and extend `LITERAL_RE`:
-   ```js
-   const LITERAL_RE = /(\brgba?\(\s*\d)|(#[0-9a-fA-F]{3,8}\b)/;
-   ```
-   The rest of the plugin (parent-selector check, preceding-comment escape hatch) is unchanged — it's declaration-level logic that doesn't care which literal triggered the match. Update the reported message to:
-   > `"Raw color literal (rgb/rgba/hex) outside token definition. Use hsl(var(--token) / alpha) or annotate with /* intentional literal: <reason> */ above this line."`
+1. `src/test/destructive-token.test.tsx` — new. Three assertions using the generalized `@/test/css-rule` primitives:
+   - **Every `--destructive` declaration lives in a token-definition block** (`:root`, `.dark`, or a theme-scope selector like `[data-theme="..."]`). Parse `index.css`, find every line containing `--destructive:`, assert each is inside an allowed parent-selector context. Uses `extractAllRuleBodies` to cover multi-theme blocks.
+   - **No raw hex or rgba literal appears on the same line as the word `destructive`** anywhere in `index.css`. Regex guard: `/destructive[^;]*#[0-9a-fA-F]/` and `/destructive[^;]*rgba?\(/` both return no matches. Catches someone writing `/* destructive */ color: #dc2626;`.
+   - **Tailwind config routes `destructive` through HSL.** Read `tailwind.config.ts` as a string, assert the `destructive` block contains `hsl(var(--destructive))` and `hsl(var(--destructive-foreground))`. Catches a future config edit that hardcodes the color.
 
-2. `.stylelintrc.cjs` — update the rule key from `"zura/no-raw-rgba-outside-tokens": true` to `"zura/no-raw-colors-outside-tokens": true`. Single-line swap.
+2. `src/test/scrollbar-tokens.fixtures.ts` — **delete**. With two consumers of `@/test/css-rule`, the shim has served its purpose. `src/test/scrollbar-tokens.test.tsx` migrates its import from `./scrollbar-tokens.fixtures` to `@/test/css-rule` (one-line change).
 
-3. **No changes to `src/index.css`** until we run the rule and see what fails. Expected outcomes:
-   - **Token definitions** in `:root` / `.dark` — exempt by selector, no changes.
-   - **Hex inside `intentional literal` blocks** (Step 2F annotations for `zura-disco`, `mkt-glass`) — already allowed by the escape-hatch check.
-   - **New violations** — handled case-by-case with the same three-bucket categorization from Step 2F (fix / annotate / delete). Most likely candidates: shadow utilities, gradient stops, debug outlines.
+3. `src/test/scrollbar-tokens.test.tsx` — update the import path. No other changes.
 
-**Why extend the same plugin instead of adding a second one?**
-The logic is identical — parent-selector check and preceding-comment check are the canon, not the matcher. One plugin, one rule, one matcher regex. Adding a second plugin would duplicate the 40 lines of context-walking code.
-
-**Why a regex that also catches hex inside `url(#gradient-id)` or SVG ID refs?**
-It won't in practice — `#gradient-id` isn't hex (letters beyond `a-f`). The `\b` word boundary and the 3–8 digit constraint keep SVG fragment IDs out of scope. If any false positive surfaces during the audit pass, it gets an `/* intentional literal: SVG fragment reference */` annotation and we move on.
+**Why this test, specifically**
+User picked `--destructive` in the original suggestion. It's the right choice because: (a) it's cross-cutting (every theme redefines it), (b) the failure mode is visible (red buttons turn invisible in half the themes), and (c) it proves the css-rule primitives handle both single-rule and multi-rule extraction.
 
 **Acceptance (Part B)**
 
-1. `npx stylelint 'src/**/*.css'` passes after the audit pass.
-2. Inserting `background: #000;` into a non-token, non-annotated rule fails with the documented message.
-3. Inserting the same line preceded by `/* intentional literal: true-black scrim */` passes.
-4. Inserting `background: #000;` inside `:root` or `.dark` passes (token definitions).
-5. The rule still catches all Step 2G cases (`rgba(0, 0, 0, 0.3)` in a non-token rule).
-6. SVG `url(#...)` references in CSS `background-image` values do not trigger false positives (or are annotated if they do).
+1. `npx vitest run src/test/destructive-token` passes on the current codebase.
+2. Inserting `color: #dc2626; /* destructive */` into a new `.danger` rule causes the test to fail with a clear message.
+3. Changing `tailwind.config.ts` `destructive.DEFAULT` from `"hsl(var(--destructive))"` to `"#dc2626"` causes the tailwind-config assertion to fail.
+4. `src/test/scrollbar-tokens.fixtures.ts` is deleted; `scrollbar-tokens.test.tsx` imports from `@/test/css-rule`; both test suites still pass.
+5. Combined canon test files (scrollbar + destructive) stay under 150 lines total — the helper does the heavy lifting, not the tests.
 
 ## Technical notes
 
-- **Rule rename is a breaking change to `.stylelintrc.cjs`** but nothing else references the old key. Single-config-line edit.
-- **Expected audit scope** — `git grep -nE '#[0-9a-fA-F]{3,8}\b' src/index.css` outside `:root` / `.dark` will surface the real list. Could be zero (if the codebase has been disciplined about hex), could be a handful. Plan covers the pattern, not a pre-written diff.
-- **The `check` script is the lever that makes all of this real.** Without it, Stylelint is the same flashlight-in-a-drawer. With it, the canon fails the same gate tests fail.
+- **Husky v9 syntax**: `.husky/pre-commit` is a plain shell script with no `husky.sh` sourcing (changed in v9). One line, one command.
+- **`prepare` script timing**: `npm install` runs `prepare` automatically, so contributors get the hook with zero extra steps. The `prepare` script is a no-op on CI (`husky` detects `CI=true` and skips).
+- **Why not put Vitest in the hook**: A failing test in an unrelated file would block an unrelated commit. Vitest lives in `check` (manual + CI); the hook is lint-only.
+- **Shim deletion is safe now**: Step 2G kept the shim as a back-compat layer "until a second consumer exists." Part B creates that consumer, so the shim has no reason to live.
+- **What I did NOT verify** (flagging honestly): I have not audited `.tsx` files for raw `#dc2626` / `red-600` usages. If the user wants that covered, it's a separate lint rule (ESLint custom, different plugin architecture) — Step 2J territory, not bundled here.
 
 ## Out of scope
 
-- Wiring `npm run check` into a pre-commit hook or CI pipeline — that's a separate decision the user makes when they're ready to enforce beyond local runs.
-- Extending to `hsl(` literals (`hsl(210, 20%, 50%)` without a token) — different regression shape (not theme-blind, just un-tokenized); likely Step 2I if ever needed.
-- Extending to `.tsx` inline styles or `styled-components` — the project doesn't use either.
-- Deleting the `scrollbar-tokens.fixtures.ts` shim — still no second consumer of `src/test/css-rule.ts`; keep the shim until one exists.
+- Wiring `npm run check` into CI (GitHub Actions / similar) — needs a `.yml` the project doesn't have yet; separate decision.
+- Auditing `.tsx` files for hardcoded destructive colors — different tool (ESLint), different step.
+- Expanding the destructive test to other semantic tokens (`--warning`, `--success`) — same pattern, easy follow-up, but scope creep here. Land the pattern first with one token.
+- Running the hook against `.md` / config files — globs are deliberately narrow.
 
