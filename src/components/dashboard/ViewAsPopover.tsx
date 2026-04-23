@@ -308,10 +308,10 @@ export function ViewAsPopover() {
               )}
             </div>
             <ScrollArea className="flex-1 min-h-0 h-full">
-              <div className="p-3 pb-4 space-y-0.5">
+              <div className="p-3 pb-4 space-y-3">
                 {usersLoading ? (
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
-                ) : filteredUsers.length === 0 ? (
+                ) : groupedUsers.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6">
                     {teamFilter
                       ? 'No matches found'
@@ -320,45 +320,54 @@ export function ViewAsPopover() {
                         : 'No team members'}
                   </p>
                 ) : (
-                  filteredUsers.map(member => {
-                    const displayName = formatDisplayName(member.full_name || '', member.display_name);
-                    const initials = getInitials(displayName);
-                    const primaryBadge = member.roles.length > 0
-                      ? getRoleBadgeConfig(member.roles[0])
-                      : null;
+                  groupedUsers.map(group => (
+                    <div key={group.label} className="pt-2 first:pt-0">
+                      <p className="font-display text-[10px] tracking-[0.12em] uppercase text-muted-foreground/60 mb-1 px-1">
+                        {group.label}
+                      </p>
+                      <div className="space-y-0.5">
+                        {group.users.map(member => {
+                          const displayName = formatDisplayName(member.full_name || '', member.display_name);
+                          const initials = getInitials(displayName);
+                          const primaryBadge = member.roles.length > 0
+                            ? getRoleBadgeConfig(member.roles[0])
+                            : null;
 
-                    return (
-                      <button
-                        key={member.user_id}
-                        onClick={() => {
-                          setViewAsUser({
-                            id: member.user_id,
-                            full_name: displayName,
-                            roles: member.roles,
-                          });
-                          setOpen(false);
-                          setTeamFilter('');
-                        }}
-                        className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/70 hover:text-foreground transition-colors duration-150"
-                      >
-                        <Avatar className="h-7 w-7">
-                          {member.photo_url && <AvatarImage src={member.photo_url} alt={displayName} />}
-                          <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 text-left min-w-0">
-                          <p className="text-sm truncate">{displayName}</p>
-                          {primaryBadge && (
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {primaryBadge.label}
-                              {member.roles.length > 1 && ` +${member.roles.length - 1}`}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })
+                          return (
+                            <button
+                              key={member.user_id}
+                              onClick={() => {
+                                setViewAsUser({
+                                  id: member.user_id,
+                                  full_name: displayName,
+                                  roles: member.roles,
+                                });
+                                setOpen(false);
+                                setTeamFilter('');
+                              }}
+                              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/70 hover:text-foreground transition-colors duration-150"
+                            >
+                              <Avatar className="h-7 w-7">
+                                {member.photo_url && <AvatarImage src={member.photo_url} alt={displayName} />}
+                                <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 text-left min-w-0">
+                                <p className="text-sm truncate">{displayName}</p>
+                                {primaryBadge && (
+                                  <p className="text-[10px] text-muted-foreground truncate">
+                                    {primaryBadge.label}
+                                    {member.roles.length > 1 && ` +${member.roles.length - 1}`}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </ScrollArea>
