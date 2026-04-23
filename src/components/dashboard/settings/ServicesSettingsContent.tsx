@@ -816,9 +816,30 @@ export function ServicesSettingsContent() {
                                         {abbr}
                                       </button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-4" align="start" onClick={(e) => e.stopPropagation()}>
-                                      <div className="space-y-3">
+                                    <PopoverContent className="w-[420px] p-4" align="start" onClick={(e) => e.stopPropagation()}>
+                                      <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
                                         <p className={tokens.body.emphasis}>{cat.category_name}</p>
+
+                                        {/* Theme Palettes — gradients aligned to each system color theme */}
+                                        <div className="space-y-1">
+                                          <p className={tokens.label.tiny}>Theme Palettes</p>
+                                          <div className="grid grid-cols-6 gap-1.5">
+                                            {THEME_GRADIENT_OPTIONS.map(g => (
+                                              <Tooltip key={g.id}>
+                                                <TooltipTrigger asChild>
+                                                  <button
+                                                    className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary')}
+                                                    style={{ background: g.background }}
+                                                    onClick={() => handleColorChange(cat.id, `gradient:${g.id}`)}
+                                                  />
+                                                </TooltipTrigger>
+                                                <TooltipContent><p className="text-xs">{g.name}</p></TooltipContent>
+                                              </Tooltip>
+                                            ))}
+                                          </div>
+                                        </div>
+                                        <div className="h-px bg-border" />
+
                                         <div className="space-y-1">
                                           <p className={tokens.label.tiny}>Special Styles</p>
                                           <div className="flex gap-2 flex-wrap">
@@ -839,11 +860,11 @@ export function ServicesSettingsContent() {
                                         <div className="h-px bg-border" />
                                         <div className="space-y-1">
                                           <p className={tokens.label.tiny}>Solid Colors</p>
-                                          <div className="grid grid-cols-6 gap-1.5">
+                                          <div className="grid grid-cols-12 gap-1">
                                             {CATEGORY_PALETTE.map(c => (
                                               <button
                                                 key={c}
-                                                className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
+                                                className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform border border-border/30', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
                                                 style={{ backgroundColor: c }}
                                                 onClick={() => handleColorChange(cat.id, c)}
                                               />
@@ -1221,9 +1242,30 @@ export function ServicesSettingsContent() {
                                           {abbr}
                                         </button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-auto p-4" align="start">
-                                        <div className="space-y-3">
+                                      <PopoverContent className="w-[420px] p-4" align="start">
+                                        <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
                                           <p className={tokens.body.emphasis}>{cat.category_name}</p>
+
+                                          {/* Theme Palettes — gradients aligned to each system color theme */}
+                                          <div className="space-y-1">
+                                            <p className={tokens.label.tiny}>Theme Palettes</p>
+                                            <div className="grid grid-cols-6 gap-1.5">
+                                              {THEME_GRADIENT_OPTIONS.map(g => (
+                                                <Tooltip key={g.id}>
+                                                  <TooltipTrigger asChild>
+                                                    <button
+                                                      className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary')}
+                                                      style={{ background: g.background }}
+                                                      onClick={() => handleColorChange(cat.id, `gradient:${g.id}`)}
+                                                    />
+                                                  </TooltipTrigger>
+                                                  <TooltipContent><p className="text-xs">{g.name}</p></TooltipContent>
+                                                </Tooltip>
+                                              ))}
+                                            </div>
+                                          </div>
+                                          <div className="h-px bg-border" />
+
                                           <div className="space-y-1">
                                             <p className={tokens.label.tiny}>Special Styles</p>
                                             <div className="flex gap-2 flex-wrap">
@@ -1244,11 +1286,11 @@ export function ServicesSettingsContent() {
                                           <div className="h-px bg-border" />
                                           <div className="space-y-1">
                                             <p className={tokens.label.tiny}>Solid Colors</p>
-                                            <div className="grid grid-cols-6 gap-1.5">
+                                            <div className="grid grid-cols-12 gap-1">
                                               {CATEGORY_PALETTE.map(c => (
                                                 <button
                                                   key={c}
-                                                  className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
+                                                  className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform border border-border/30', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
                                                   style={{ backgroundColor: c }}
                                                   onClick={() => handleColorChange(cat.id, c)}
                                                 />
