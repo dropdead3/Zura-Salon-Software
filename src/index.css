@@ -1704,6 +1704,22 @@ html, body, #root {
     border-color: hsl(var(--primary) / 0.3);
   }
 
+  /* Dark mode only: fill comes up ~3% and picks up a whisper of primary.
+     Layered gradient = flat lighten + primary wash, composited over bg-card.
+     Keeps premium-surface's translucent base intact since we target
+     background-image (not background-color). */
+  .dark .hover-lift {
+    transition: box-shadow 220ms cubic-bezier(0.32, 0.72, 0, 1),
+                border-color 220ms cubic-bezier(0.32, 0.72, 0, 1),
+                background-image 220ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .dark .hover-lift:hover {
+    background-image:
+      linear-gradient(hsl(var(--primary) / 0.04), hsl(var(--primary) / 0.04)),
+      linear-gradient(hsl(var(--foreground) / 0.03), hsl(var(--foreground) / 0.03));
+  }
+
   /* ───────── Wave 1: Premium material surface ─────────
      Adds top-edge specular highlight + frosted noise texture so cards
      read as a real material instead of a flat div. Composes with `bg-card`
