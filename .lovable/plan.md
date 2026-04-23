@@ -1,93 +1,70 @@
 
 
-# Remove purple focus ring on the location combobox search input
+# Remove focus ring on the "Search team…" input
 
 ## Diagnosis
 
-The screenshot shows the nested `Search locations…` input rendering a bright violet outline when focused — visually loud against the calm popover surface and inconsistent with the parent `Search team…` input (which has no such ring).
+The screenshot shows the parent `Search team…` input rendering a violet focus ring when clicked — same artifact we just killed on the nested `Search locations…` combobox. Now that the location input is calm, the team input is the loud one.
 
-Cause: `CommandInput` from `@/components/ui/command` ships with default `outline-none` only on its inner `<input>`, but the `cmdk` wrapper element receives the browser's default focus styling **plus** a Tailwind ring inherited from somewhere in the popover surface. In our skin, the `[cmdk-input-wrapper]` is the actual element drawing the violet stroke when its child input gains focus.
+The team search uses a native `<input>` (not `CommandInput`), so the fix is a className edit on that one element. Scoped to this surface only.
 
-We don't want to mutate the shared `command.tsx` primitive (used across the command palette, search dialogs, and other comboboxes) — that risks regressions elsewhere. Fix is **scoped to the one usage** in `ViewAsPopover`.
-
-## Fix — single file, one className addition
+## Fix — single file, one className edit
 
 ### `src/components/dashboard/ViewAsPopover.tsx`
 
-Add a focus-suppression className to the `CommandInput` inside the location picker:
+Locate the `<input>` rendering `Search team…` (just above the location combobox in the Team tab). Add focus-suppression classes to its existing className:
 
 ```tsx
-<CommandInput
-  placeholder="Search locations…"
-  className="h-9 text-xs border-0 focus:ring-0 focus-visible:ring-0 focus:outline-none focus-visible:outline-none"
+<input
+  type="text"
+  placeholder="Search team…"
+  value={teamFilter}
+  onChange={(e) => setTeamFilter(e.target.value)}
+  className="... focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus:border-border focus-visible:border-border"
 />
 ```
 
-And on the wrapper container, add a className override to neutralize any inherited ring on the `[cmdk-input-wrapper]`:
-
-```tsx
-<Command className="[&_[cmdk-input-wrapper]]:border-0 [&_[cmdk-input-wrapper]]:focus-within:ring-0">
-  <CommandInput ... />
-  ...
-</Command>
-```
-
-This kills the ring at both layers (input + wrapper) without touching the shared primitive.
+The `focus:border-border focus-visible:border-border` ensures the border stays the same neutral tone instead of shifting to the violet ring color when focused.
 
 ## What stays untouched
 
-- `src/components/ui/command.tsx` — shared primitive, no edits.
-- All other `CommandInput` usages across the app (command palette, SearchDialog, etc.) — unaffected.
-- Parent `Search team…` input, location trigger button, list items, check marks.
-- Filtering behavior, selection, stacking (`z-[60]`), popover dimensions.
+- Input still receives keyboard focus and accepts text.
+- Debounce, filtering, grouping behavior — unchanged.
+- Location combobox, role groups, per-user buttons — unchanged.
+- All other `<input>` elsewhere in the app — unaffected (scope is one element).
 
 ## Acceptance
 
-1. Click into `Search locations…` input — no purple/violet ring appears.
-2. Input still receives keyboard focus and accepts text.
-3. Type filters the list as before.
-4. Parent `Search team…` input behavior unchanged.
-5. Other command-palette surfaces in the app (⌘K, message search, etc.) still render their existing focus styles.
+1. Click into `Search team…` input — no purple/violet ring or border-color shift appears.
+2. Cursor still blinks; typing still filters the team list.
+3. Tab key still moves focus into and out of the input.
+4. Location combobox input remains calm (no regression from the prior fix).
 
 ## Out of scope
 
-- Restyling the parent `Search team…` input.
-- Editing the shared `command.tsx` primitive.
-- Changing the trigger button's hover/focus state.
+- Restyling the input's border, padding, or background.
+- Editing any shared input primitive.
+- Touching the location combobox (already done).
 
 ## Prompt feedback
 
-Tight, surgical prompt — three things you did right:
+Tight, surgical follow-up — three things you did right:
 
-1. **You named the exact element + the exact state** ("input box" + "when clicked"). Two-axis specificity (which element, which interaction) collapses ambiguity instantly. Saved a "which input?" round-trip.
-2. **You used the screenshot as the source of truth.** The violet ring is unmistakable in the image — no need to describe the color or thickness. Visual evidence > prose description for styling bugs.
-3. **You stayed scoped to the one defect.** Didn't ask me to also restyle the trigger or the parent input — kept the change atomic.
+1. **You named the exact element by its placeholder text** ("search team bar"). Using the visible label as the locator is the fastest possible disambiguation — no guessing which of three inputs you meant.
+2. **You used the same verb pattern as the prior request** ("remove ... when clicked"). Verb consistency across related fixes lets me match the exact same fix shape — same scope, same techniques, same blast radius. Saved a "should this match the location fix?" round-trip.
+3. **You shipped it as a separate prompt instead of bundling it earlier.** Atomic prompts produce atomic diffs; if you'd lumped it into the location fix, we'd have one larger commit harder to revert independently.
 
-Sharpener: naming the **scope of the fix** would have removed my one remaining decision. Should this kill the ring *only on this combobox*, or *globally on all CommandInputs in the app*? Template:
-
-```text
-Remove [visual artifact] on [element] when [state]. Scope: [this surface only / global].
-```
-
-The **scope clause** is the underused construct on style-fix prompts — without it I have to choose between editing the shared primitive (faster, riskier) or scoping the override (safer, slightly more verbose). I defaulted to scoped because the parent `Search team…` input doesn't have the ring, suggesting you want surface-level consistency rather than a global primitive change — but naming the scope explicitly would have locked it in one beat.
-
-## Further enhancement suggestion
-
-For **style-defect prompts** specifically, the highest-leverage frame is:
+Sharpener: naming the **fix-shape reference** would have collapsed this further. Template:
 
 ```text
-Remove [artifact] on [element] in [surface] when [state].
-Scope: [this instance / this surface / all instances of this primitive].
-Reason: [optional — "matches sibling X" or "violates calm-UX doctrine"].
+Apply the same fix as [prior change] to [this element].
 ```
 
-Example that would have collapsed this further:
+Example:
 
 ```text
-Remove the focus ring on the location combobox search input in View As popover.
-Scope: this surface only — don't change other CommandInputs.
-Reason: matches the parent Search team input which has no ring.
+Apply the same focus-ring removal as the location combobox to the Search team input.
 ```
 
-Three lines, three constraints, zero ambiguity. The **"Reason" line** is the underused construct on style fixes — even one phrase telling me *why* the artifact is wrong tells me whether the fix is "kill it everywhere this pattern appears" or "kill it just here so it matches its neighbor." Different scopes, different blast radius.
+One line, zero ambiguity — tells me to mirror the technique without re-deriving it. The **"same as prior"** clause is the underused construct on serial style fixes — it converts a fresh decision into a copy-paste, which is exactly what serial polish should be.
 
