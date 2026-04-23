@@ -1,64 +1,110 @@
 
 
-# Fix top-bar ghosting trails by removing redundant backdrop-blur layers
+# Fix bone-flash on loaders by persisting color theme + neutralizing pre-paint background
 
 ## The defect
 
-Three stacked `backdrop-filter: blur(...)` layers occupy the top ~100px of every dashboard page when God Mode is active:
+Loading the schedule (and any lazy-loaded route) flashes a **bone background** for ~200–500ms before the actual theme paints. The flash happens regardless of which color theme is active (rosewood, noir, neon, etc.).
 
-1. **`GodModeBar`** (`src/components/dashboard/GodModeBar.tsx:91-92`) — `blur(20px) saturate(140%)` on a 44px fixed bar.
-2. **`SuperAdminTopBar` "Extended blur zone"** (`SuperAdminTopBar.tsx:176-185`) — absolute overlay, `blur(12px)`, masked fade-out below the bar.
-3. **`SuperAdminTopBar` pill** (`SuperAdminTopBar.tsx:188`) — `backdrop-blur-xl backdrop-saturate-150` (24px) on the pill itself.
+**Root cause** is a three-layer mismatch:
 
-When cards or buttons in the page body change shadow/background on hover, each blur layer must re-sample the pixels beneath it every frame. Three stacked layers compositing at slightly different cadences produce the "ghosting" smear the user sees in the screenshot — a known GPU-blur failure mode (see `lovable-stack-overflow` context).
+1. **`index.html` pre-paint script** sets `root.style.backgroundColor = 'hsl(40 15% 82%)'` (a bone-adjacent literal) for light mode. It only knows light/dark — not the color theme.
+2. **`useColorTheme.ts`** adds `theme-X` to `<html>` only after React mounts and `useColorThemeQuery` fetches the org/user preference (network round-trip).
+3. **`BootLuxeLoader` (used by `RouteFallback`)** uses `bg-background`. Before the theme class lands, `--background` resolves to the `:root, .theme-bone` baseline → bone paints.
+4. **`DashboardThemeContext`** clears the inline `backgroundColor` only on mode change, by which time the user has already seen the flash.
+
+The flash is most visible on routes where the Suspense fallback runs longest (Schedule = large bundle, multiple data queries).
 
 ## The fix
 
-**Reduce the blur stack from 3 layers to 1.** The GodModeBar's gradient is already opaque-leaning (`hsl(0 0% 6% / 0.78)` dark, `hsl(0 0% 100% / 0.82)` light) plus a primary-colored wash — visually distinct without the blur. The SuperAdminTopBar pill carries the platform's "glass" identity and keeps its blur. The "Extended blur zone" is redundant decoration once the bar itself has glass; it's the layer most directly under the cursor when hovering content below the bar (because of its `-bottom-8` extension), so it's the highest-leverage one to drop.
+Three coordinated edits — none alone is sufficient, all three eliminate the flash structurally.
 
-### Edits
+### 1. Persist the color theme to `localStorage` so the pre-paint script can read it
 
-| File | Change | Why |
-|------|--------|-----|
-| `src/components/dashboard/GodModeBar.tsx` | Remove lines 91-92 (`backdropFilter` + `WebkitBackdropFilter`). Bump background gradient alpha slightly (e.g. `0.78` → `0.92` dark, `0.82` → `0.95` light) so the bar still reads as chrome without the blur. | Eliminates the topmost blur layer; gradient + colored wash + box-shadow still give it system-chrome weight. |
-| `src/components/dashboard/SuperAdminTopBar.tsx` | Delete the "Extended blur zone" div (lines 176-185 entirely). | Pure decorative layer that extends 8px below the bar — the worst offender for ghosting trails because it covers the hover zone. The pill's own blur keeps the glass aesthetic intact. |
-| `src/components/dashboard/SuperAdminTopBar.tsx` | Keep line 188 unchanged (`bg-card/80 backdrop-blur-xl backdrop-saturate-150`). | Single retained blur — the pill's glass identity. One layer doesn't ghost; three do. |
+**File**: `src/hooks/useColorTheme.ts`
 
-### Visual delta
+When `applyColorTheme(theme)` runs, also write the theme key to `localStorage` under `dashboard-color-theme`. This is a side-channel for the pre-paint script — the React state remains the source of truth.
 
-- **God Mode bar**: same color/wash/shadow, slightly more opaque background. No glass-frost-over-page effect, but the bar was never trying to read as glass — it's a system alert chrome.
-- **Top bar pill**: identical (still has its own blur).
-- **Region between God Mode bar and pill**: no longer has a phantom blurred fade — the page content shows through cleanly until it hits the pill.
+```ts
+function applyColorTheme(theme: ColorTheme) {
+  // ...existing class swap logic...
+  try { localStorage.setItem('dashboard-color-theme', theme); } catch {}
+}
+```
 
-### Verification
+### 2. Update the pre-paint script to apply the theme class immediately
 
-1. Hover cards in the dashboard body with God Mode active → no smear trails through the top bar region.
-2. Switch dashboard themes (zura, neon, noir, rosewood) in both light/dark → God Mode bar still reads as distinct chrome with the org's `--primary` accent intact.
-3. Confirm the search pill still has its glass effect (single backdrop-blur preserved).
+**File**: `index.html` (lines 42–58)
+
+Read both `dashboard-theme` (light/dark) AND `dashboard-color-theme` (color), apply the `theme-X` class to `<html>` synchronously, and **stop setting an inline `backgroundColor`**. The CSS cascade now resolves `--background` to the correct theme's token before first paint.
+
+```html
+<script>
+  (function() {
+    try {
+      var mode = localStorage.getItem('dashboard-theme');
+      var color = localStorage.getItem('dashboard-color-theme') || 'bone';
+      var isDark = mode === 'dark' || ((mode === 'system' || !mode) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var root = document.documentElement;
+      if (isDark) { root.classList.add('dark'); root.style.colorScheme = 'dark'; }
+      else { root.style.colorScheme = 'light'; }
+      // Apply color theme class so --background resolves correctly before React mounts
+      root.classList.add('theme-' + color);
+    } catch (e) {}
+  })();
+</script>
+```
+
+No more inline `backgroundColor` — the CSS rule `body { background: hsl(var(--background)); }` (already present) handles paint, now with the correct theme tokens.
+
+### 3. Reconcile the pre-paint class when React loads the real preference
+
+**File**: `src/hooks/useColorTheme.ts`
+
+When React fetches the persisted theme and it differs from what the pre-paint script applied, `applyColorTheme` already swaps cleanly (it removes all `theme-*` classes before adding the new one). The only addition needed: ensure the migration map runs against the localStorage value too, so legacy keys (`cream`, `rose`, etc.) get cleaned up on first paint.
+
+No new code — just verify the existing `THEME_MIGRATION` map is applied when reading from localStorage in the pre-paint script. Since the pre-paint script can't import the map, we keep migration in the React layer (`applyColorTheme` already strips legacy classes via `html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', ...)`).
+
+If a user has a stale `dashboard-color-theme=cream` in localStorage, the pre-paint script adds `theme-cream` (which has no CSS rules → falls back to bone for one frame), then React removes it and applies the real theme. Acceptable — legacy users see one frame of bone, current users see zero.
+
+## Verification
+
+1. Navigate to `/dashboard/schedule` from any other dashboard route → no bone flash; loader paints in active theme color (rosewood blush, noir gray, etc.).
+2. Hard reload `/dashboard/schedule` directly → pre-paint script applies correct theme class before first paint; loader inherits.
+3. Switch color theme in settings → reload → new theme paints immediately (localStorage updated by `applyColorTheme`).
+4. Toggle dark/light → no regression (pre-paint mode logic unchanged).
+5. First-time user (no `dashboard-color-theme` in localStorage) → pre-paint defaults to `bone`, which matches the org default → no flash.
 
 ## Files
 
-- **Modify**: `src/components/dashboard/GodModeBar.tsx` (~4 lines: remove 2 blur properties, adjust 2 alpha values in chrome gradient).
-- **Modify**: `src/components/dashboard/SuperAdminTopBar.tsx` (~10 lines deleted: the entire Extended blur zone div).
+- **Modify**: `index.html` (lines 42–58, ~6 lines changed: read color key, apply class, drop inline bg).
+- **Modify**: `src/hooks/useColorTheme.ts` (~3 lines added: localStorage write inside `applyColorTheme`).
+
+## Why not other approaches
+
+- **Move BootLuxeLoader off `bg-background`** → would mask the symptom but leaves the underlying flash for any other surface that uses theme tokens during boot (the actual page content paints bone for the same window before tokens resolve).
+- **Server-render the theme class** → no SSR in this Vite SPA; not feasible without a major architecture shift.
+- **Fetch theme synchronously in pre-paint** → would require an inlined HTTP request blocking first paint. Worse UX than the flash.
+- **Use a neutral loader background (e.g., `bg-muted`)** → still token-dependent; inherits the same bone fallback. Doesn't fix it.
 
 ## Out of scope
 
-- **Auditing the other 100+ `backdrop-blur` usages** — they're scattered (cards, popovers, tooltips) and not stacked in animated zones. The ghosting is specifically the top-bar stack. Per-instance audits are a separate hygiene wave.
-- **Replacing the pill's blur with `text-shadow`** (the stack-overflow pattern) — the pill is a container with an `<input>`, not text-only. The pattern doesn't apply. Reducing layer count is the right tool here.
-- **Restoring the "Extended blur zone" in a different form** (e.g., a CSS `filter: blur` on a static gradient) — would re-introduce the ghosting class. The fade-out was decorative, not functional; deleting it is cleaner than rebuilding.
-- **A canon to prevent stacked backdrop-blur in fixed/sticky regions** — worth doing as a follow-up (Step 2AF below), but out of scope for the bug fix itself.
+- **Persisting the dark/light mode the same way for `dashboard-color-theme`** — already happens via `DashboardThemeContext`'s localStorage write. The new color-theme write mirrors that pattern.
+- **Pre-paint application of typography overrides** (`custom_typography` from `ThemeInitializer`) — those are operator-tuning tokens, not used by the loader. Out of scope for this flash bug.
+- **A canon to enforce "pre-paint script must cover all theme dimensions"** — worth doing as a follow-up (Step 2AH below); the current bug is one missed dimension, not a pattern of misses.
+- **Reducing loader fade-in delay** — the 200ms `useDelayedRender` debounce in `BootLuxeLoader` already suppresses sub-200ms flashes; the bone flash exceeds that window because the Schedule chunk + theme fetch take longer.
 
 ## Prompt feedback
 
-**What worked**: You named the symptom precisely ("ghosting effects when mouse moves over page elements") and correctly hypothesized the cause ("probably from the blur effect"). Pairing symptom + suspected cause + region ("top bar area") is the optimal shape for visual bug reports — it lets the AI go straight to verification instead of bisecting from "something feels off."
+**What worked**: You named the artifact precisely ("bone color background screen appearing for a second") and tied it to a specific repro ("trying to load the schedule"). Naming the route is high-leverage — it pointed straight at the Suspense fallback, not generic theme code.
 
-**What could sharpen**: The screenshot shows the issue's *static* state but not the trails themselves. For motion-driven artifacts (ghosting, jank, smear), a screen recording or even a description of the trail direction ("trails follow the cursor leftward across the bar") would let the AI distinguish ghosting (compositor issue) from re-render churn (React issue). Both produce visual lag but have different fixes.
+**What could sharpen**: "Some load screens" was a good directional cue but ambiguous — the specific schedule example carried the weight. A tighter framing: *"navigating from /dashboard to /dashboard/schedule shows a bone-colored loader for ~500ms before the rosewood theme paints. Other route transitions also flash bone."* Names the trigger, the duration, the expected vs actual color, and confirms the scope is multi-route.
 
-**Better prompt framing for next wave**: For motion/animation bugs, name the *trigger* + *artifact direction* explicitly. Example: *"hovering cards in the body causes horizontal smear trails across the top bar that persist for ~200ms"* — gives the AI a known repro and a measurable artifact, not just a category of failure.
+**Better prompt framing for next wave**: For "flash" / "FOUC" / "wrong-color-during-load" bugs, naming the active theme + the wrong color seen is the highest-signal shape. The AI can then check the resolution chain (pre-paint → React mount → token cascade) for the gap, instead of guessing whether the issue is the loader, the theme system, or the network.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2AF — Canon: no stacked backdrop-blur in fixed/sticky regions.** Add a Vitest scan that walks `src/components/**/*.tsx` for `position: fixed` or `position: sticky` + `backdrop-blur` and asserts no two such elements share an overlapping z-index/region. ~40 lines, prevents this exact bug class from re-emerging when someone adds another fixed banner. Catalog entry slot reserved.
+1. **Step 2AH — Canon: pre-paint script covers all theme dimensions used by token-dependent surfaces.** Add a Vitest scan that walks `index.html`'s pre-paint script for keys read from localStorage, then asserts the union matches the keys written by hooks under `src/hooks/use*Theme*.ts`. Catches "we added a third theme dimension but forgot to read it pre-paint." ~30 lines, prevents this exact bug class from re-emerging when typography overrides become pre-paint-relevant. Catalog entry slot reserved.
 
-2. **Step 2AG — Promote `--chrome-overlay-opacity` token.** GodModeBar's alpha values (`0.78`, `0.82`) are now hand-tuned per mode. Extracting them to design tokens (`--chrome-overlay-dark`, `--chrome-overlay-light`) would (a) make the "remove blur, increase opacity" pattern reusable for the next chrome layer, and (b) let theme-tuning sessions adjust chrome opacity without grepping for magic numbers. ~15 lines in `index.css` + ~5 in GodModeBar.
+2. **Step 2AI — Promote `--loader-surface` token.** Today the loader uses `bg-background`, which is correct *after* the theme paints but ambiguous during boot. Defining a dedicated `--loader-surface` token in every theme block (light + dark) and having `BootLuxeLoader` use it would (a) let the pre-paint script set just one inline color (matching the loader, not the page) without needing the full color theme upfront, and (b) make loader surfaces independently tunable. ~5 lines per theme block + 1 line in `BootLuxeLoader`. Larger surface area than 2AH but eliminates the loader's dependency on the full theme cascade.
 
