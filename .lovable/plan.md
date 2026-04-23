@@ -1,118 +1,124 @@
 
 
-# Step 2N + 2O — Sidebar canon, and a token-shape-aware config assertion
+# Step 2P + 2Q — Per-theme completeness canon, and shared `css-rule.ts` helpers
 
-Two enhancements, one shared root cause. The current Vitest config assertion assumes every token is (a) a flat top-level Tailwind block and (b) has a `-foreground` pair. Sidebar tokens and chart tokens both break that assumption — sidebar nests `DEFAULT` for the base, chart nests numbered variants. Fixing the assertion shape closes both.
+Two enhancements, one shared dependency. Part A (Step 2P) needs to know what counts as a "theme" in `index.css`, which is a parsing concern that belongs in `css-rule.ts`. Once that helper lands, Part B (Step 2Q) cleanly promotes the config-shape resolver alongside it — both helpers are CSS/Tailwind structural knowledge that doesn't belong in a single test file.
 
-## Findings from pre-flight audit
+**Note on prior state**: The current `semantic-token-canon.test.tsx` still uses the inline `configBlockRe` flat-block regex (the shape-aware `findConfigReference` from the Step 2N+2O summary isn't actually present in the file). Step 2Q therefore both **introduces** the shape-aware helper *and* places it in the shared module — one move, not two.
 
-**Sidebar tokens** — 8 tokens, all 11 themes redefine the full set, `tailwind.config.ts` has a `sidebar` block routing everything through `hsl(var(--sidebar-*))`. Candidate 1 (same canon as semantic tokens), with two shape adjustments: (a) base token is `--sidebar-background` not `--sidebar`, (b) foreground is `--sidebar-foreground` not `--sidebar-background-foreground`.
+## Part A — `extractThemeSelectors()` in `css-rule.ts` (Step 2P prerequisite)
 
-**Chart tokens** — 5 tokens, all themes redefine, Tailwind nests them as `chart: { "1": "hsl(var(--chart-1))", ... }`. No `-foreground` pair. Current regex doesn't match nested shape.
+**What ships**
 
-## Part A — Token-shape-aware config assertion (Step 2O)
-
-**What changes**
-
-The `it.skipIf(!configBlock)` assertion currently looks for `${token}: { ... }` at the top level. We replace that with a shape-aware lookup that handles three patterns:
-
-1. **Flat with foreground pair** (current default): `destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" }` — applies to `destructive`, `success`, `warning`, `info`, `primary`, `secondary`, `accent`, `muted`, `card`, `popover`.
-2. **Flat without foreground**: `border: "hsl(var(--border))"`, `input: "hsl(var(--input))"`, `ring: "hsl(var(--ring))"`, `background: "hsl(var(--background))"`, `foreground: "hsl(var(--foreground))"` — top-level string mapping, no nested object.
-3. **Nested numbered**: `chart: { "1": "hsl(var(--chart-1))", "2": ... }` — child keys are quoted numerics; parent key is the family name (not the token name).
-
-**Implementation approach**
-
-Add a small `findConfigReference(token)` helper at the top of the test file that returns the matched config snippet (or null). It tries each shape in order and returns the first match. The assertion then becomes:
+A helper in `src/test/css-rule.ts` that scans CSS source and returns the list of theme-defining selectors:
 
 ```ts
-const configRef = findConfigReference(token);
-it.skipIf(!configRef)(
-  `tailwind.config.ts routes ${token} through hsl(var(--${token}))`,
-  () => {
-    expect(configRef).toContain(`hsl(var(--${token}))`);
-    // Foreground pair only required when token has one (semantic family)
-    if (TOKENS_WITH_FOREGROUND.has(token)) {
-      expect(configRef).toContain(`hsl(var(--${token}-foreground))`);
-    }
-    expect(configRef).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
-    expect(configRef).not.toMatch(/\brgba?\(\s*\d/);
-  },
-);
+export function extractThemeSelectors(cssSource: string): string[]
 ```
 
-A `TOKENS_WITH_FOREGROUND` set lists which tokens actually have foreground pairs. Tokens not in the set skip the foreground check (chart, border, input, ring, background, foreground itself).
+Returns selectors matching the existing canon's allowlist: `:root`, `.dark`, `.theme-*`, `[data-theme="..."]`. Deduplicated, in source order.
 
-**Acceptance (Part A)**
+**Implementation shape**
 
-1. The 5 chart tokens previously skipped now run their config assertion and pass.
-2. The 6 form/chrome/surface tokens currently passing still pass (no regression).
-3. Vitest reporter shows fewer skips overall — the only remaining skips are tokens genuinely absent from the config.
-4. Inserting `chart: { "1": "#ff0000" }` in `tailwind.config.ts` fails the chart-1 assertion with a clear message.
+Reuses the same selector regex the existing test already uses (line 71–72 of the test file). One ~10-line function. Exported alongside `extractRuleBody` and `extractAllRuleBodies`.
 
-## Part B — Sidebar token canon (Step 2N)
+## Part B — Promote `findConfigReference()` to `css-rule.ts` (Step 2Q)
 
-**What changes**
+**What ships**
 
-Two pieces, both small:
+The shape-aware Tailwind config resolver, introduced and placed directly in the shared module. Handles four shapes:
 
-**1. Add sidebar tokens to the `TOKENS` array** in `src/test/semantic-token-canon.test.tsx`:
+1. **Flat with foreground**: `destructive: { DEFAULT: ..., foreground: ... }`
+2. **Flat string**: `border: "hsl(var(--border))"`
+3. **Nested numbered**: `chart: { "1": ..., "2": ... }`
+4. **Nested named (sidebar hybrid)**: `sidebar: { DEFAULT: "hsl(var(--sidebar-background))", primary: ... }`
 
 ```ts
-const TOKENS = [
-  // ... existing 15 tokens ...
-  "sidebar-background", "sidebar-foreground",
-  "sidebar-primary", "sidebar-accent",
-  "sidebar-border", "sidebar-ring",
-] as const;
+export function findConfigReference(
+  configSource: string,
+  token: string
+): string | null
 ```
 
-Six entries (not eight) — `sidebar-primary-foreground` and `sidebar-accent-foreground` are auto-covered by the `(-foreground)?` regex inside the existing assertions. Same trick the current code uses for `destructive` covering `destructive-foreground`.
+Returns the matched config substring (block or line) or `null` if the token isn't routed in config. Pure function; no FS access (caller passes `tailwindConfig`).
 
-**2. Update the foreground-pair set** so `sidebar-primary` and `sidebar-accent` get foreground assertions, but `sidebar-background`, `sidebar-foreground`, `sidebar-border`, `sidebar-ring` skip the foreground check (they have no pair).
+**Why introduce it directly in the shared module**: The Step 2P canon will be the second consumer immediately. Introducing it as a local helper just to promote it in the same step is wasted motion.
 
-**Why six entries, not one parameterized "sidebar"**: The shape is genuinely different per sub-token. Bundling them as one parametric token would obscure failures — a regression in `--sidebar-border` should report as such, not as a generic "sidebar" failure. Six entries, six reporter lines, debuggability preserved.
+## Part C — Per-theme completeness canon (Step 2P)
 
-**Config-shape note**: Sidebar's Tailwind block uses `DEFAULT: "hsl(var(--sidebar-background))"` for the base mapping. Pattern 2 in Part A handles this — the helper finds `hsl(var(--sidebar-background))` inside the nested `sidebar` block via plain string contains, without needing a top-level `sidebar-background` block.
+**What ships**
 
-**Acceptance (Part B)**
+A new test file: `src/test/theme-completeness-canon.test.tsx` (~50 lines).
 
-1. Sidebar tokens in CSS pass all three canon assertions across all 11 themes.
-2. Removing `--sidebar-primary` from a single theme fails the "every declaration sits in a token-definition selector" test (or its sibling — depends which theme is broken).
-3. Inserting `--sidebar-background: #ff0000;` somewhere fails the hex-literal assertion.
-4. Reporter shows 6 new sidebar suites; total visible suites grows from ~20 to ~26.
+**The invariant**: Every theme selector that defines *any* token from a required-set must define *all* tokens in that set. Catches the "Cream forgot `--chart-3`" regression.
+
+**Required-set definition**
+
+Two parameterized sets, matching the families the existing canon already guards:
+
+- **Semantic family**: `destructive`, `success`, `warning`, `info`, `primary`, `secondary`, `accent`, `muted`, `card`, `popover`, `background`, `foreground`, `border`, `input`, `ring`
+- **Chart family**: `chart-1` through `chart-5`
+- **Sidebar family**: `sidebar-background`, `sidebar-foreground`, `sidebar-primary`, `sidebar-accent`, `sidebar-border`, `sidebar-ring`
+
+**Test shape (per family)**
+
+```text
+For each theme selector returned by extractThemeSelectors():
+  Extract the rule body
+  If the body defines ANY token in the family:
+    Assert it defines ALL tokens in the family
+  Else: skip (theme inherits this family)
+```
+
+Failure messages list the missing tokens by name, scoped to the offending theme selector — debuggable at a glance.
+
+**Why "any → all" not "all → all"**: Some themes legitimately inherit (e.g., a hypothetical light variant inheriting chart palette from `:root`). The canon shouldn't force every theme to redefine every family — only force consistency within a family if the theme touched it at all.
+
+## Part D — Refactor existing test to consume the shared helpers
+
+`src/test/semantic-token-canon.test.tsx` updates:
+
+1. Import `findConfigReference` from `@/test/css-rule`.
+2. Replace the inline `configBlockRe` / `configBlock` lookup (lines 46–47, 90–103) with the helper.
+3. Add a `TOKENS_WITH_FOREGROUND` set so the foreground assertion only runs when applicable (chart/border/input/ring/background/foreground skip it).
+4. Update the file-level comment to reference shape-aware lookup.
+
+This is the same change the Step 2N+2O summary described, but actually applied to the file since prior state shows it wasn't.
 
 ## Combined acceptance
 
-1. `bun run test src/test/semantic-token-canon` — all assertions pass on current codebase.
-2. Skip count drops to near-zero (only tokens genuinely absent from CSS or Tailwind config skip).
-3. Test file stays under 130 lines.
-4. No changes outside `src/test/semantic-token-canon.test.tsx`.
+1. `bun run test src/test/semantic-token-canon` — all assertions pass, skips drop to near-zero (only `--info` if genuinely absent from CSS).
+2. `bun run test src/test/theme-completeness-canon` — passes on current codebase across all themes × all three families.
+3. Deleting `--chart-3` from a single `.theme-cream` block fails the chart-family completeness test with a message naming both the theme and the missing token.
+4. Adding a new theme that defines `--primary` but forgets `--secondary` fails the semantic-family completeness test.
+5. `findConfigReference` and `extractThemeSelectors` exported from `@/test/css-rule`, both consumed by at least one test file.
+6. No file exceeds ~130 lines.
 
 ## Technical notes
 
-- **The `findConfigReference` helper is the keystone** — a ~20-line function that takes a token name and returns the matched config substring. Once it exists, both sidebar and chart slot in cleanly. Future canons (e.g., a hypothetical surface-tokens family with similar nesting) reuse it.
-- **`TOKENS_WITH_FOREGROUND` is the explicit allowlist** — no auto-detection, no inference. The set is a literal: `new Set(["destructive", "success", "warning", "info", "primary", "secondary", "accent", "muted", "card", "popover", "sidebar-primary", "sidebar-accent"])`. Anything outside this set skips the foreground check by design, not by accident.
-- **Why not refactor the file structure** — the test is now ~125 lines after both parts. Still a single parameterized loop, single helper, easy to read. Splitting into multiple files (one per token family) would be premature.
-- **Sidebar tokens use the sidebar Tailwind block via shape pattern 2/3 hybrid** — `sidebar.DEFAULT` maps to `--sidebar-background`, child keys map by name. The helper handles this with a single regex over the `sidebar:` block contents, not by splitting into sub-cases.
+- **Two helpers, one module promotion** — `extractThemeSelectors` and `findConfigReference` both live in `css-rule.ts` because both encode structural knowledge about the project's CSS / Tailwind shape that isn't test-specific. Future canons reuse them; the shape rules don't get re-derived.
+- **The "any → all" rule is the key design choice in 2P** — it permits intentional inheritance while catching forgetful overrides. Pure "every theme defines every token" would generate false positives the moment someone adds a single-purpose theme variant.
+- **Family-aware, not token-aware** — completeness is a family property (chart palette is meaningful as a set of 5; sidebar is meaningful as a set of 6). One token from a family in a theme implies intent to redefine the family.
+- **No Stylelint counterpart needed** — completeness is inherently cross-rule (requires looking at all declarations within a theme block), which Stylelint's per-rule model handles poorly. Vitest is the right gate here.
 
 ## Out of scope
 
-- **Auto-detecting `TOKENS_WITH_FOREGROUND` from the CSS** — same reasoning as the auto-generated `TOKENS` array rejected in Step 2K. Explicit list beats inference; the maintenance cost is one line per new token.
-- **Asserting that themes which redefine `--sidebar-background` also redefine all 7 sibling tokens** — a "completeness per theme" canon is a different shape (cross-token dependency, not per-token shape). Worth a future step if a theme ever forgets one. Currently all 11 themes are complete; nothing to enforce.
-- **Renaming or restructuring `semantic-token-canon.test.tsx`** despite now covering chart and sidebar families — naming churn without value. The file's job is "shadcn-style cross-cutting tokens"; that's still accurate.
-- **Stylelint additions for sidebar/chart** — the existing `no-raw-rgba-outside-tokens` plugin already covers these (it scans all `.css` rules, not just specific token names). No new plugin needed.
+- **Auto-discovering token families from CSS** — same reasoning as the rejected auto-`TOKENS` array. Explicit family lists are the contract.
+- **Asserting that every theme defines `:root`'s full token set** — different canon (cross-theme parity, not within-family completeness). Possible future step if regressions appear.
+- **Migrating the scrollbar fixture shim** — already retired in Step 2I. Not relevant.
+- **Renaming `semantic-token-canon.test.tsx`** — its scope is unchanged; the new file handles the new invariant.
 
 ## Prompt feedback
 
-**What worked**: You sequenced Step 2O *after* 2N in the prompt but the technical dependency runs the other way — Part A (config-shape fix) is a prerequisite for Part B's sidebar work to assert cleanly. Recognizing that and bundling them with the shared root cause keeps this a single coherent change instead of two half-fixes. Your prompt left enough room for that reordering by not over-specifying file-by-file diffs.
+**What worked**: You correctly identified the dependency ordering ("2P needs the helper *first*") and the threshold rationale for 2Q ("two consumers = promote"). That framing means the AI doesn't have to relitigate whether to extract — it's a stated rule.
 
-**What could sharpen**: You phrased Step 2O as "tighten the regex" — accurate but understates the work. The real change is "make the config assertion shape-aware," which is a small architectural improvement rather than a regex tweak. A tighter framing: *"The current assertion assumes flat blocks with foreground pairs; teach it the shapes shadcn actually uses (nested numbered, nested DEFAULT, flat-no-pair)."* That framing surfaces the reusability — sidebar and chart aren't two regex bugs, they're two cases of the same shape gap.
+**What could sharpen**: The prompt described 2P as "~40 lines after that" — accurate for the test file alone, but the helper plus the test plus the existing-file refactor (to consume the new shared helper) is closer to ~80 lines total across three files. A tighter framing: *"~40 lines for the new test, ~10 for the helper, plus refactor the existing test to consume both helpers."* Surfacing the refactor explicitly avoids the trap of shipping the shared helper without rewiring the existing consumer.
 
-**Better prompt framing for next wave**: When two enhancements share a root cause (as 2N and 2O did), naming it explicitly in the prompt — e.g., *"Both fail for the same reason: assertion assumes flat config shape. Fix the shape-awareness, then sidebar and chart fall out of it."* — saves the AI from re-deriving the dependency. You already wrote it as two steps; framing it as "one root cause, two beneficiaries" would be even tighter.
+**Better prompt framing for next wave**: When promoting a helper to a shared module, the prompt should always include "and rewire all existing consumers" as a checklist item. Otherwise the helper exists in two places (shared + inline) for one step, which is the worst of both worlds.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2P — Per-theme completeness canon.** Currently the canon checks each token in isolation ("is `--sidebar-primary` defined somewhere reasonable?"). It doesn't check that *every theme* defines *every required token*. A new test iterating themes × tokens would catch a future Cream theme forgetting `--chart-3`. ~40 lines, parameterized the same way; requires extracting theme selectors from `index.css` first (a small helper in `css-rule.ts`).
+1. **Step 2R — Cross-theme parity canon.** Stronger than 2P's within-family completeness: assert every non-`:root` theme selector defines exactly the same token set as `:root` (modulo deliberate omissions in an allowlist). Catches a future theme that adds a custom token nobody else has, or omits one quietly. ~30 lines once `extractThemeSelectors` exists.
 
-2. **Step 2Q — Move `findConfigReference` to `css-rule.ts`.** If 2P ships, the helper has two consumers. That's the threshold for promoting it from local-helper to shared-utility (matching the rule that finally killed the scrollbar shim in Step 2I). Small refactor, zero new behavior, one less duplication.
+2. **Step 2S — `npm run check` script + Husky wiring (deferred from Step 2I).** The CI workflow exists per Step 2J, but the local `npm run check` script and Husky pre-commit hook were left as manual actions. Worth a session to land them so the local→CI loop is closed end-to-end. Mostly `package.json` edits plus a Husky install step.
 
