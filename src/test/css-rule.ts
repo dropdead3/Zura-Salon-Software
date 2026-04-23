@@ -55,3 +55,66 @@ export function readCssFile(relativePath: string): string {
 export function readIndexCss(): string {
   return readCssFile("index.css");
 }
+
+/**
+ * Returns every theme-defining selector in `cssSource`, deduplicated and in
+ * source order. Matches the canon's allowlist: `:root`, `.dark`,
+ * `.theme-*`, `[data-theme="..."]`. Used by per-theme completeness canons
+ * to iterate the actual themes present in the file rather than hardcoding.
+ */
+export function extractThemeSelectors(cssSource: string): string[] {
+  const allowedSelectorRe = /(:root|\.dark|\[data-theme[^\]]*\]|\.theme-[\w-]+)/;
+  const selectorRe = /^(\s*)([^\n{}]+)\{\s*$/gm;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = selectorRe.exec(cssSource)) !== null) {
+    const sel = m[2].trim();
+    const hit = sel.match(allowedSelectorRe);
+    if (hit && !seen.has(sel)) {
+      seen.add(sel);
+      out.push(sel);
+    }
+  }
+  return out;
+}
+
+/**
+ * Shape-aware Tailwind config resolver. Returns the matched config substring
+ * for `token` (block or single line) or `null` if the token isn't routed
+ * through the config. Pure — caller passes the config source.
+ *
+ * Handles four shapes shadcn projects actually use:
+ * 1. Flat with foreground:  `destructive: { DEFAULT: ..., foreground: ... }`
+ * 2. Flat string:           `border: "hsl(var(--border))"`
+ * 3. Nested numbered:       `chart: { "1": "hsl(var(--chart-1))", ... }`
+ * 4. Nested named (sidebar): `sidebar: { DEFAULT: "hsl(var(--sidebar-background))", primary: ..., border: ... }`
+ *
+ * The strategy: for hyphenated tokens (chart-1, sidebar-primary), inspect the
+ * family block (chart, sidebar) and confirm the specific `--token` reference
+ * appears inside it. For flat tokens, try the block form first, then fall
+ * back to the single-line string form.
+ */
+export function findConfigReference(configSource: string, token: string): string | null {
+  // Family-prefixed tokens (chart-1, sidebar-primary, sidebar-background)
+  const familyMatch = token.match(/^(chart|sidebar)-/);
+  if (familyMatch) {
+    const family = familyMatch[1];
+    const blockRe = new RegExp(`${family}\\s*:\\s*\\{[^}]*\\}`);
+    const block = configSource.match(blockRe)?.[0];
+    if (block && block.includes(`hsl(var(--${token}))`)) return block;
+    return null;
+  }
+
+  // Flat block (destructive, primary, muted, card, popover, ...)
+  const blockRe = new RegExp(`(?:^|\\s)${token}\\s*:\\s*\\{[^}]*\\}`);
+  const block = configSource.match(blockRe)?.[0];
+  if (block) return block;
+
+  // Flat string (border, input, ring, background, foreground)
+  const lineRe = new RegExp(`(?:^|\\s)${token}\\s*:\\s*"hsl\\(var\\(--${token}\\)\\)"`);
+  const line = configSource.match(lineRe)?.[0];
+  if (line) return line;
+
+  return null;
+}
