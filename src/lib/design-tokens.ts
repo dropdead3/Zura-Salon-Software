@@ -124,14 +124,38 @@ export const tokens = {
   layout: {
     /** Canonical dashboard page padding — use on the first child inside DashboardLayout.
      *  Provides responsive horizontal padding, vertical breathing room, and section spacing.
-     *  Rule: Every dashboard page MUST wrap its content in this token. */
-    pageContainer: 'px-6 pb-6 lg:px-8 lg:pb-8 pt-4 lg:pt-6 space-y-6',
+     *  Rule: Every dashboard page MUST wrap its content in this token.
+     *
+     *  Vertical rhythm: 4px baseline grid.
+     *  - Page-level section gap: space-y-8 (32px) ← applied here
+     *  - Within-section gap:     space-y-4 (16px) ← use rhythm.section
+     *  - Tight stack (label+value): space-y-1 (4px) ← use rhythm.tight
+     */
+    pageContainer: 'px-6 pb-6 lg:px-8 lg:pb-8 pt-4 lg:pt-6 space-y-8',
     /** Card base styling */
     cardBase: 'rounded-xl',
     /** Standard card padding */
     cardPadding: 'p-6',
     /** Filter strip row — right-aligns filter controls. Use below page headers or section headers. */
     filterRow: 'flex items-center justify-end gap-3 flex-wrap',
+  },
+
+  // ========================================
+  // VERTICAL RHYTHM TOKENS (4px baseline grid)
+  // ========================================
+  /**
+   * Use these instead of arbitrary `space-y-*` choices.
+   * The grid is 4px-based; pick the slot, not the pixel value.
+   */
+  rhythm: {
+    /** Page-level section gap (32px) — between top-level sections inside a page. */
+    page: 'space-y-8',
+    /** Within-section gap (16px) — between cards/blocks inside one section. */
+    section: 'space-y-4',
+    /** Card-internal gap (12px) — between rows inside a single card. */
+    card: 'space-y-3',
+    /** Tight stack (4px) — label above value, header above subheader. */
+    tight: 'space-y-1',
   },
 
   // ========================================
