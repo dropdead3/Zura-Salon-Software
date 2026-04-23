@@ -1,124 +1,147 @@
 
 
-# Step 2P + 2Q — Per-theme completeness canon, and shared `css-rule.ts` helpers
+# Step 2R + 2S — Cross-theme parity canon, and local check loop
 
-Two enhancements, one shared dependency. Part A (Step 2P) needs to know what counts as a "theme" in `index.css`, which is a parsing concern that belongs in `css-rule.ts`. Once that helper lands, Part B (Step 2Q) cleanly promotes the config-shape resolver alongside it — both helpers are CSS/Tailwind structural knowledge that doesn't belong in a single test file.
+Two enhancements riding the Step 2P/2Q foundation. Part A adds the next canon layer up (cross-theme parity, building on within-family completeness). Part B closes the local→CI gap so violations surface before push.
 
-**Note on prior state**: The current `semantic-token-canon.test.tsx` still uses the inline `configBlockRe` flat-block regex (the shape-aware `findConfigReference` from the Step 2N+2O summary isn't actually present in the file). Step 2Q therefore both **introduces** the shape-aware helper *and* places it in the shared module — one move, not two.
+## Part A — Cross-theme parity canon (Step 2R)
 
-## Part A — `extractThemeSelectors()` in `css-rule.ts` (Step 2P prerequisite)
+**The invariant**: Every non-`:root` theme selector defines exactly the same token set as `:root`, modulo a deliberate-omission allowlist. Catches the "theme adds a one-off custom token" or "theme quietly omits one" regressions that within-family completeness can't see.
 
-**What ships**
+**Why this is distinct from 2P**: Step 2P enforces *within-family* completeness ("if you touch chart, define all 5 charts"). 2R enforces *cross-theme parity* ("if `:root` defines `--my-special-token`, every theme defines it too, or it's allowlisted"). Different invariant, different failure mode.
 
-A helper in `src/test/css-rule.ts` that scans CSS source and returns the list of theme-defining selectors:
-
-```ts
-export function extractThemeSelectors(cssSource: string): string[]
-```
-
-Returns selectors matching the existing canon's allowlist: `:root`, `.dark`, `.theme-*`, `[data-theme="..."]`. Deduplicated, in source order.
-
-**Implementation shape**
-
-Reuses the same selector regex the existing test already uses (line 71–72 of the test file). One ~10-line function. Exported alongside `extractRuleBody` and `extractAllRuleBodies`.
-
-## Part B — Promote `findConfigReference()` to `css-rule.ts` (Step 2Q)
-
-**What ships**
-
-The shape-aware Tailwind config resolver, introduced and placed directly in the shared module. Handles four shapes:
-
-1. **Flat with foreground**: `destructive: { DEFAULT: ..., foreground: ... }`
-2. **Flat string**: `border: "hsl(var(--border))"`
-3. **Nested numbered**: `chart: { "1": ..., "2": ... }`
-4. **Nested named (sidebar hybrid)**: `sidebar: { DEFAULT: "hsl(var(--sidebar-background))", primary: ... }`
+**New shared helper in `src/test/css-rule.ts`**
 
 ```ts
-export function findConfigReference(
-  configSource: string,
-  token: string
-): string | null
+export function extractDefinedTokens(ruleBody: string): string[]
 ```
 
-Returns the matched config substring (block or line) or `null` if the token isn't routed in config. Pure function; no FS access (caller passes `tailwindConfig`).
+Scans a rule body for `--token-name:` declarations and returns the deduplicated, sorted list of token names (without the leading `--`). ~8 lines. Pure function, no FS.
 
-**Why introduce it directly in the shared module**: The Step 2P canon will be the second consumer immediately. Introducing it as a local helper just to promote it in the same step is wasted motion.
+**New test file: `src/test/cross-theme-parity-canon.test.tsx`** (~50 lines)
 
-## Part C — Per-theme completeness canon (Step 2P)
+Shape:
 
-**What ships**
+```ts
+const ALLOWLIST_OMISSIONS: Record<string, string[]> = {
+  // Per-theme deliberate omissions. Empty by default.
+  // Example: ".theme-print": ["sidebar-background"] // print theme has no sidebar
+};
 
-A new test file: `src/test/theme-completeness-canon.test.tsx` (~50 lines).
+const rootBody = extractRuleBody(indexCss, ":root");
+const rootTokens = new Set(extractDefinedTokens(rootBody));
+const themeSelectors = extractThemeSelectors(indexCss).filter(s => s !== ":root");
 
-**The invariant**: Every theme selector that defines *any* token from a required-set must define *all* tokens in that set. Catches the "Cream forgot `--chart-3`" regression.
+for (const selector of themeSelectors) {
+  describe(`cross-theme parity: ${selector}`, () => {
+    const body = extractRuleBody(indexCss, selector);
+    const themeTokens = new Set(extractDefinedTokens(body));
+    const allowedOmissions = new Set(ALLOWLIST_OMISSIONS[selector] ?? []);
 
-**Required-set definition**
+    it(`defines all :root tokens (modulo allowlist)`, () => {
+      const missing = [...rootTokens]
+        .filter(t => !themeTokens.has(t))
+        .filter(t => !allowedOmissions.has(t));
+      expect(missing, `${selector} missing tokens defined in :root: ${missing.join(", ")}`).toEqual([]);
+    });
 
-Two parameterized sets, matching the families the existing canon already guards:
-
-- **Semantic family**: `destructive`, `success`, `warning`, `info`, `primary`, `secondary`, `accent`, `muted`, `card`, `popover`, `background`, `foreground`, `border`, `input`, `ring`
-- **Chart family**: `chart-1` through `chart-5`
-- **Sidebar family**: `sidebar-background`, `sidebar-foreground`, `sidebar-primary`, `sidebar-accent`, `sidebar-border`, `sidebar-ring`
-
-**Test shape (per family)**
-
-```text
-For each theme selector returned by extractThemeSelectors():
-  Extract the rule body
-  If the body defines ANY token in the family:
-    Assert it defines ALL tokens in the family
-  Else: skip (theme inherits this family)
+    it(`introduces no tokens unknown to :root`, () => {
+      const extras = [...themeTokens]
+        .filter(t => !rootTokens.has(t));
+      expect(extras, `${selector} defines tokens not in :root: ${extras.join(", ")}`).toEqual([]);
+    });
+  });
+}
 ```
 
-Failure messages list the missing tokens by name, scoped to the offending theme selector — debuggable at a glance.
+**Why an allowlist, not auto-discovery**: Same reasoning as the explicit `TOKENS` array (Step 2K) and explicit family lists (Step 2P). Deliberate omissions are rare and should be stated, not inferred. An empty allowlist is the strictest starting position; entries get added with a comment explaining why.
 
-**Why "any → all" not "all → all"**: Some themes legitimately inherit (e.g., a hypothetical light variant inheriting chart palette from `:root`). The canon shouldn't force every theme to redefine every family — only force consistency within a family if the theme touched it at all.
+**Pre-flight expectation**: The first test run will reveal the actual parity state. If `:root` and theme selectors don't currently match, the canon's initial commit either (a) reflects the gap as allowlist entries with TODO comments, or (b) flags real regressions to fix in a follow-up step. The plan commits to running it and reporting; the codebase decides the cleanup scope.
 
-## Part D — Refactor existing test to consume the shared helpers
+## Part B — Local `npm run check` + Husky pre-commit hook (Step 2S)
 
-`src/test/semantic-token-canon.test.tsx` updates:
+**Files (and why each)**
 
-1. Import `findConfigReference` from `@/test/css-rule`.
-2. Replace the inline `configBlockRe` / `configBlock` lookup (lines 46–47, 90–103) with the helper.
-3. Add a `TOKENS_WITH_FOREGROUND` set so the foreground assertion only runs when applicable (chart/border/input/ring/background/foreground skip it).
-4. Update the file-level comment to reference shape-aware lookup.
+1. **`package.json`** — Add three scripts and a `prepare` hook:
+   ```json
+   "scripts": {
+     "lint:css": "stylelint \"src/**/*.css\"",
+     "check": "npm run lint:css && npm run lint && vitest run",
+     "prepare": "husky"
+   }
+   ```
+   Existing `lint` (ESLint) and `test` scripts are reused as-is. `check` is the unified gate.
 
-This is the same change the Step 2N+2O summary described, but actually applied to the file since prior state shows it wasn't.
+2. **`.husky/pre-commit`** — One-line hook:
+   ```sh
+   npx lint-staged
+   ```
+   Runs lint-staged (already configured per the existing `docs/ci.md` spec) — Stylelint on staged CSS, ESLint on staged TS/TSX. Vitest stays out of the hook intentionally (per the existing docs: a failing test on an unrelated file would block commits to files the contributor didn't touch).
+
+3. **`package.json`** — Add `lint-staged` and `husky` devDependencies plus a `lint-staged` config block:
+   ```json
+   "lint-staged": {
+     "*.css": "stylelint",
+     "*.{ts,tsx}": "eslint --max-warnings=0"
+   }
+   ```
+
+**CI workflow update**: Replace `bunx stylelint "src/**/*.css"` with `bun run check` in `.github/workflows/test.yml` so local and CI run the same command. One-line change.
+
+**Why Husky over a bare `.git/hooks/pre-commit`**: Husky is the standard, survives clones (registered via `prepare`), and matches what `docs/ci.md` already documents. No reinvention.
+
+**Acceptance (Part B)**
+
+1. `npm run check` runs Stylelint → ESLint → Vitest in sequence and fails fast on the first error.
+2. After `npm install`, `.husky/pre-commit` is registered and runs on staged files.
+3. Committing a file with a Stylelint violation (raw `rgba` outside a token block) is blocked locally.
+4. `git commit --no-verify` bypasses the hook (already documented in `docs/ci.md`).
+5. CI runs `bun run check` and matches local behavior — same gates, same order.
 
 ## Combined acceptance
 
-1. `bun run test src/test/semantic-token-canon` — all assertions pass, skips drop to near-zero (only `--info` if genuinely absent from CSS).
-2. `bun run test src/test/theme-completeness-canon` — passes on current codebase across all themes × all three families.
-3. Deleting `--chart-3` from a single `.theme-cream` block fails the chart-family completeness test with a message naming both the theme and the missing token.
-4. Adding a new theme that defines `--primary` but forgets `--secondary` fails the semantic-family completeness test.
-5. `findConfigReference` and `extractThemeSelectors` exported from `@/test/css-rule`, both consumed by at least one test file.
+1. `npm run check` — passes on the current codebase end-to-end.
+2. `bun run test src/test/cross-theme-parity-canon` — passes (or surfaces the gap as documented allowlist entries).
+3. `extractDefinedTokens` exported from `@/test/css-rule`, consumed by the new test.
+4. CI workflow uses `bun run check` instead of inline stylelint command.
+5. Husky pre-commit hook wired and runs lint-staged.
 6. No file exceeds ~130 lines.
+
+## Files
+
+- **Modify**: `src/test/css-rule.ts` (add `extractDefinedTokens`)
+- **Create**: `src/test/cross-theme-parity-canon.test.tsx`
+- **Modify**: `package.json` (scripts, devDependencies, lint-staged config, prepare hook)
+- **Create**: `.husky/pre-commit`
+- **Modify**: `.github/workflows/test.yml` (swap inline stylelint for `bun run check`)
 
 ## Technical notes
 
-- **Two helpers, one module promotion** — `extractThemeSelectors` and `findConfigReference` both live in `css-rule.ts` because both encode structural knowledge about the project's CSS / Tailwind shape that isn't test-specific. Future canons reuse them; the shape rules don't get re-derived.
-- **The "any → all" rule is the key design choice in 2P** — it permits intentional inheritance while catching forgetful overrides. Pure "every theme defines every token" would generate false positives the moment someone adds a single-purpose theme variant.
-- **Family-aware, not token-aware** — completeness is a family property (chart palette is meaningful as a set of 5; sidebar is meaningful as a set of 6). One token from a family in a theme implies intent to redefine the family.
-- **No Stylelint counterpart needed** — completeness is inherently cross-rule (requires looking at all declarations within a theme block), which Stylelint's per-rule model handles poorly. Vitest is the right gate here.
+- **`extractDefinedTokens` is the third helper in `css-rule.ts`** — alongside `extractThemeSelectors` and `findConfigReference`. The module's identity has settled: it's the structural-CSS-knowledge module, not a generic utility dump. New helpers join only when they encode CSS shape rules.
+- **Two parity assertions per theme, not one** — "missing from theme" and "extra in theme" are different failure modes with different remediations. Splitting them gives two clear reporter lines per theme instead of one combined diff.
+- **`ALLOWLIST_OMISSIONS` is per-selector, not per-token** — because the same token might be intentionally omitted in one theme but required in another. The shape (selector → tokens) matches how the omissions actually arise.
+- **Husky 9+ syntax** — modern Husky doesn't need `husky install` anymore; `prepare: "husky"` is the full setup. Avoids the deprecated shebang + chmod dance.
+- **`vitest run` not `vitest`** — `check` runs once and exits; the watcher is for dev iteration. Critical for CI parity.
 
 ## Out of scope
 
-- **Auto-discovering token families from CSS** — same reasoning as the rejected auto-`TOKENS` array. Explicit family lists are the contract.
-- **Asserting that every theme defines `:root`'s full token set** — different canon (cross-theme parity, not within-family completeness). Possible future step if regressions appear.
-- **Migrating the scrollbar fixture shim** — already retired in Step 2I. Not relevant.
-- **Renaming `semantic-token-canon.test.tsx`** — its scope is unchanged; the new file handles the new invariant.
+- **Asserting parity *values*** (e.g., "every theme's `--primary` is a valid HSL triple") — different canon (format validation per theme), different complexity. The Stylelint plugin already enforces "no raw rgba/hex"; HSL-shape validation is a future step if regressions appear.
+- **Auto-detecting allowlist entries from a "// canon-omit" comment in CSS** — explicit allowlist beats inline magic. Same reasoning as every prior canon's explicit lists.
+- **Migrating to a single config-driven canon framework** — three test files at this size is fine; a framework for three files is over-engineering. Revisit at ~6 files.
+- **Adding Prettier to `npm run check`** — formatting is a separate concern; conflating it with correctness gates dilutes both. If desired, add `format:check` as its own step later.
+- **Changing the existing `lint` ESLint behavior** — `check` consumes it as-is. ESLint config tuning is a separate session.
 
 ## Prompt feedback
 
-**What worked**: You correctly identified the dependency ordering ("2P needs the helper *first*") and the threshold rationale for 2Q ("two consumers = promote"). That framing means the AI doesn't have to relitigate whether to extract — it's a stated rule.
+**What worked**: You correctly framed 2R as "the next layer up" — naming the layering (within-family → cross-theme) explicitly anchors the new canon's scope without overlapping the existing one. You also flagged 2S as "still deferred" with the specific origin step (2I) — that historical pointer prevents re-deriving the deferral context.
 
-**What could sharpen**: The prompt described 2P as "~40 lines after that" — accurate for the test file alone, but the helper plus the test plus the existing-file refactor (to consume the new shared helper) is closer to ~80 lines total across three files. A tighter framing: *"~40 lines for the new test, ~10 for the helper, plus refactor the existing test to consume both helpers."* Surfacing the refactor explicitly avoids the trap of shipping the shared helper without rewiring the existing consumer.
+**What could sharpen**: For 2R you wrote *"~30 lines on top of extractThemeSelectors + a new extractDefinedTokens(body) helper."* Accurate for the test, but the helper itself plus the inevitable allowlist tuning (if the codebase isn't already perfectly parity-clean) could push the actual delta higher. A tighter framing: *"~40 lines for the test, ~8 for the helper, plus possible allowlist entries depending on what the first run reveals."* Surfacing the "first run determines cleanup scope" reality up front prevents the "why didn't you finish the cleanup?" round-trip.
 
-**Better prompt framing for next wave**: When promoting a helper to a shared module, the prompt should always include "and rewire all existing consumers" as a checklist item. Otherwise the helper exists in two places (shared + inline) for one step, which is the worst of both worlds.
+**Better prompt framing for next wave**: When a canon is being added to a codebase that may already violate it, the prompt should explicitly acknowledge two outcomes — "passes immediately" vs "reveals existing gaps" — and state the preferred handling for each (allowlist + TODO vs immediate fix). You did this implicitly with "modulo a deliberate-omission allowlist"; making it explicit ("first run will either pass or surface entries — list each surfaced entry as an allowlist with a TODO") removes ambiguity about the deliverable.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2R — Cross-theme parity canon.** Stronger than 2P's within-family completeness: assert every non-`:root` theme selector defines exactly the same token set as `:root` (modulo deliberate omissions in an allowlist). Catches a future theme that adds a custom token nobody else has, or omits one quietly. ~30 lines once `extractThemeSelectors` exists.
+1. **Step 2T — Drive existing allowlist entries to zero.** If 2R's first run produces allowlist entries with TODOs, a follow-up step audits each entry: is the omission intentional (keep + document the why) or an oversight (fix the theme + remove the entry)? Closes the "allowlist as graveyard" failure mode where TODOs accumulate without resolution. Scope depends entirely on what 2R reveals; could be 0 entries (no work) or ~10 (one focused session).
 
-2. **Step 2S — `npm run check` script + Husky wiring (deferred from Step 2I).** The CI workflow exists per Step 2J, but the local `npm run check` script and Husky pre-commit hook were left as manual actions. Worth a session to land them so the local→CI loop is closed end-to-end. Mostly `package.json` edits plus a Husky install step.
+2. **Step 2U — Surface `npm run check` in `docs/ci.md`'s "Running locally" section.** Once 2S lands, the docs should reflect that `npm run check` is real (currently the section says "once the `check` script is added"). Two-line edit; keeps onboarding docs in sync with the actual command surface. High-leverage cleanup.
 
