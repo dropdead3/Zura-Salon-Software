@@ -770,10 +770,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                               <div className="flex items-center gap-1.5 w-full">
                                 <div
                                   className="w-8 h-8 rounded-lg border border-border"
-                                  style={
-                                    themeOption.id === 'prism'
-                                      ? { backgroundImage: 'linear-gradient(90deg, hsl(290 90% 60%), hsl(200 90% 60%), hsl(145 75% 50%), hsl(48 95% 60%), hsl(15 90% 62%))' }
-                                      : { backgroundColor: preview.bg }
+                                  style={{ backgroundColor: preview.bg }
                                   }
                                 />
                                 <div className="w-8 h-8 rounded-lg border border-border" style={{ backgroundColor: preview.accent }} />
