@@ -32,17 +32,17 @@ const palette = (
 });
 
 export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
-  cream: palette(
+  bone: palette(
     ['#0a0a08', '#2d2820', '#0a0a08'],
     '#b8a77a',
     '#9e8d64',
     184, 167, 122,
   ),
-  rose: palette(
+  rosewood: palette(
     ['#140a0c', '#3d1a24', '#140a0c'],
-    '#d4728a',
-    '#b85a72',
-    212, 114, 138,
+    '#c45872',
+    '#a8425c',
+    196, 88, 114,
   ),
   sage: palette(
     ['#0a100c', '#1a3d26', '#0a100c'],
@@ -50,11 +50,11 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#4a9e66',
     92, 184, 122,
   ),
-  ocean: palette(
-    ['#0a0c14', '#1a2640', '#0a0c14'],
-    '#4a8ad4',
-    '#3a72b8',
-    74, 138, 212,
+  marine: palette(
+    ['#08101c', '#152848', '#08101c'],
+    '#3a72c4',
+    '#2a5aa8',
+    58, 114, 196,
   ),
   zura: palette(
     ['#0a0a14', '#1a1040', '#0a0a14'],
@@ -62,11 +62,11 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#7c3aed',
     139, 92, 246,
   ),
-  ember: palette(
+  cognac: palette(
     ['#140a04', '#3d2010', '#140a04'],
-    '#d4872a',
-    '#b87020',
-    212, 135, 42,
+    '#c47820',
+    '#a86518',
+    196, 120, 32,
   ),
   noir: palette(
     ['#080808', '#1a1a1a', '#080808'],
@@ -83,5 +83,5 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
 };
 
 export function getTerminalPalette(theme: ColorTheme): TerminalPalette {
-  return terminalPalettes[theme] ?? terminalPalettes.cream;
+  return terminalPalettes[theme] ?? terminalPalettes.bone;
 }

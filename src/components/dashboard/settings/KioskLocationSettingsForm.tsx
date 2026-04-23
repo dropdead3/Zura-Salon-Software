@@ -123,7 +123,7 @@ interface KioskLocationSettingsFormProps {
 }
 
 export function KioskLocationSettingsForm({ locationId, orgId, locationName, onPreviewOpen }: KioskLocationSettingsFormProps) {
-  const [themePreset, setThemePreset] = useState<ColorTheme | 'custom'>('cream');
+  const [themePreset, setThemePreset] = useState<ColorTheme | 'custom'>('bone');
   const [logoSource, setLogoSource] = useState<LogoSource>('auto');
   const [customLogoUrl, setCustomLogoUrl] = useState<string>('');
   const { data: locations = [] } = useLocations();
@@ -271,7 +271,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
         location_badge_position: DEFAULT_KIOSK_SETTINGS.location_badge_position,
         location_badge_style: DEFAULT_KIOSK_SETTINGS.location_badge_style,
       });
-      setThemePreset('cream');
+      setThemePreset('bone');
       setLogoSource('auto');
     }
   }, [kioskSettings, businessSettings]);
