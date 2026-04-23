@@ -16,11 +16,11 @@ export const tokens = {
   // ========================================
   heading: {
     /** Page-level title: Termina, 2xl, medium, tracked */
-    page: 'font-display text-2xl font-medium tracking-[0.08em]',
-    /** Section header inside a page: Termina, base, uppercase, asymmetric tracking (0.12em) */
-    section: 'font-display text-base font-medium tracking-[0.12em] uppercase',
-    /** Card title: Termina, base, card-tier tracking (0.08em) */
-    card: 'font-display text-base font-medium tracking-[0.08em]',
+    page: 'font-display text-2xl font-medium tracking-wide',
+    /** Section header inside a page: Termina, base, uppercase, tracked */
+    section: 'font-display text-base font-medium tracking-wide uppercase',
+    /** Card title: Termina, base, tracked */
+    card: 'font-display text-base font-medium tracking-wide',
     /** Small subsection label: uppercase, tiny, muted */
     subsection: 'font-display text-xs font-medium text-muted-foreground/60 uppercase tracking-[0.15em]',
   },
@@ -42,10 +42,10 @@ export const tokens = {
   },
 
   stat: {
-    /** Large stat value (dashboard KPIs) — tabular for column alignment */
-    large: 'font-display text-2xl font-medium tabular-nums',
-    /** Extra-large stat value (hero metrics) — tabular for column alignment */
-    xlarge: 'font-display text-3xl font-medium tabular-nums',
+    /** Large stat value (dashboard KPIs) */
+    large: 'font-display text-2xl font-medium',
+    /** Extra-large stat value (hero metrics) */
+    xlarge: 'font-display text-3xl font-medium',
   },
 
   // ========================================
@@ -54,10 +54,10 @@ export const tokens = {
   kpi: {
     /** KPI tile container (rounded, bordered, padded) */
     tile: 'rounded-lg border border-border/50 bg-muted/30 p-4 flex flex-col gap-1',
-    /** KPI tile label: Termina, 11px, uppercase, asymmetric tracking (0.18em), muted */
-    label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-[0.18em]',
-    /** KPI tile value: Termina, xl, medium — tabular for column alignment */
-    value: 'font-display text-xl font-medium tabular-nums',
+    /** KPI tile label: Termina, 11px, uppercase, tracked, muted */
+    label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider',
+    /** KPI tile value: Termina, xl, medium */
+    value: 'font-display text-xl font-medium',
     /** KPI trend badge: 10px, medium */
     change: 'text-[10px] font-medium',
     /** Info icon pinned to top-right of KPI tile */
@@ -70,10 +70,10 @@ export const tokens = {
   platformKpi: {
     /** Dark-themed KPI tile container */
     tile: 'rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 flex flex-col gap-1',
-    /** Dark-themed KPI tile label: Termina, 11px, uppercase, asymmetric tracking (0.18em) */
-    label: 'font-display text-[11px] font-medium text-slate-400 uppercase tracking-[0.18em]',
-    /** Dark-themed KPI tile value: Termina, xl, medium — tabular for column alignment */
-    value: 'font-display text-xl font-medium text-white tabular-nums',
+    /** Dark-themed KPI tile label: Termina, 11px, uppercase, tracked */
+    label: 'font-display text-[11px] font-medium text-slate-400 uppercase tracking-wider',
+    /** Dark-themed KPI tile value: Termina, xl, medium */
+    value: 'font-display text-xl font-medium text-white',
     /** KPI trend badge: 10px, medium */
     change: 'text-[10px] font-medium',
     /** Info icon pinned to top-right of KPI tile */
@@ -124,38 +124,14 @@ export const tokens = {
   layout: {
     /** Canonical dashboard page padding — use on the first child inside DashboardLayout.
      *  Provides responsive horizontal padding, vertical breathing room, and section spacing.
-     *  Rule: Every dashboard page MUST wrap its content in this token.
-     *
-     *  Vertical rhythm: 4px baseline grid.
-     *  - Page-level section gap: space-y-8 (32px) ← applied here
-     *  - Within-section gap:     space-y-4 (16px) ← use rhythm.section
-     *  - Tight stack (label+value): space-y-1 (4px) ← use rhythm.tight
-     */
-    pageContainer: 'px-6 pb-6 lg:px-8 lg:pb-8 pt-4 lg:pt-6 space-y-8',
+     *  Rule: Every dashboard page MUST wrap its content in this token. */
+    pageContainer: 'px-6 pb-6 lg:px-8 lg:pb-8 pt-4 lg:pt-6 space-y-6',
     /** Card base styling */
     cardBase: 'rounded-xl',
     /** Standard card padding */
     cardPadding: 'p-6',
     /** Filter strip row — right-aligns filter controls. Use below page headers or section headers. */
     filterRow: 'flex items-center justify-end gap-3 flex-wrap',
-  },
-
-  // ========================================
-  // VERTICAL RHYTHM TOKENS (4px baseline grid)
-  // ========================================
-  /**
-   * Use these instead of arbitrary `space-y-*` choices.
-   * The grid is 4px-based; pick the slot, not the pixel value.
-   */
-  rhythm: {
-    /** Page-level section gap (32px) — between top-level sections inside a page. */
-    page: 'space-y-8',
-    /** Within-section gap (16px) — between cards/blocks inside one section. */
-    section: 'space-y-4',
-    /** Card-internal gap (12px) — between rows inside a single card. */
-    card: 'space-y-3',
-    /** Tight stack (4px) — label above value, header above subheader. */
-    tight: 'space-y-1',
   },
 
   // ========================================

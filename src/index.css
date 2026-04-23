@@ -1666,58 +1666,13 @@ html, body, #root {
     @apply scale-x-100;
   }
 
-  /* ───────── Elevation scale (Step 1C) ─────────
-     Four-step Z-depth system. Use via `var(--elevation-N)` in box-shadow.
-     - 0: flat (sunken/inset surfaces)
-     - 1: resting card (1px ambient — felt, not seen)
-     - 2: hover/active card lift
-     - 3: floating panels, popovers, drawers */
-  :root {
-    --elevation-0: none;
-    --elevation-1: 0 1px 2px 0 hsl(var(--foreground) / 0.04);
-    --elevation-2: 0 4px 12px -2px hsl(var(--foreground) / 0.08);
-    --elevation-3: 0 12px 32px -6px hsl(var(--foreground) / 0.12);
-  }
-  .dark {
-    --elevation-1: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
-    --elevation-2: 0 4px 14px -2px hsl(0 0% 0% / 0.32);
-    --elevation-3: 0 16px 40px -8px hsl(0 0% 0% / 0.45);
-  }
-
-  .elevation-0 { box-shadow: var(--elevation-0); }
-  .elevation-1 { box-shadow: var(--elevation-1); }
-  .elevation-2 { box-shadow: var(--elevation-2); }
-  .elevation-3 { box-shadow: var(--elevation-3); }
-
-  /* Subtle lift effect on hover — shadow + border tint, no translateY.
-     Resting state uses --elevation-1; hover upgrades to --elevation-2 and
-     tints the border with a hint of primary. 220ms cubic-bezier for a
-     choreographed, premium feel (vs. the previous abrupt 150ms ease-out). */
+  /* Subtle lift effect on hover — shadow only, no translateY, 150ms */
   .hover-lift {
-    transition: box-shadow 220ms cubic-bezier(0.32, 0.72, 0, 1),
-                border-color 220ms cubic-bezier(0.32, 0.72, 0, 1);
-    box-shadow: var(--elevation-1);
+    @apply transition-shadow duration-150 ease-out;
   }
 
   .hover-lift:hover {
-    box-shadow: var(--elevation-2);
-    border-color: hsl(var(--primary) / 0.3);
-  }
-
-  /* Dark mode only: fill comes up ~3% and picks up a whisper of primary.
-     Layered gradient = flat lighten + primary wash, composited over bg-card.
-     Keeps premium-surface's translucent base intact since we target
-     background-image (not background-color). */
-  .dark .hover-lift {
-    transition: box-shadow 220ms cubic-bezier(0.32, 0.72, 0, 1),
-                border-color 220ms cubic-bezier(0.32, 0.72, 0, 1),
-                background-image 220ms cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  .dark .hover-lift:hover {
-    background-image:
-      linear-gradient(hsl(var(--primary) / 0.04), hsl(var(--primary) / 0.04)),
-      linear-gradient(hsl(var(--foreground) / 0.03), hsl(var(--foreground) / 0.03));
+    box-shadow: 0 8px 20px -6px hsl(var(--foreground) / 0.12);
   }
 
   /* ───────── Wave 1: Premium material surface ─────────
@@ -1730,7 +1685,7 @@ html, body, #root {
     -webkit-backdrop-filter: blur(12px) saturate(1.1);
     box-shadow:
       inset 0 1px 0 0 hsl(var(--foreground) / 0.04),
-      var(--elevation-1);
+      0 1px 2px 0 hsl(var(--foreground) / 0.04);
     position: relative;
   }
   .premium-surface::before {
@@ -1747,114 +1702,21 @@ html, body, #root {
   .dark .premium-surface::before {
     opacity: 0.4;
   }
-
-  /* Step 1A: Specular top-edge highlight.
-     1px inner light catch on the top edge — reads as polished material
-     instead of a flat translucent rectangle. Uses padding + mask trick
-     so the gradient only paints a 1px ring on the top, not the whole face. */
-  .premium-surface::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    padding: 1px;
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--foreground) / 0.10),
-      hsl(var(--foreground) / 0) 28%
-    );
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-  }
-  .dark .premium-surface::after {
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--foreground) / 0.14),
-      hsl(var(--foreground) / 0) 28%
-    );
-  }
-
   .dark .premium-surface {
     background-color: hsl(var(--card) / 0.95);
     box-shadow:
       inset 0 1px 0 0 hsl(var(--foreground) / 0.06),
-      var(--elevation-1);
+      0 1px 2px 0 hsl(0 0% 0% / 0.2);
   }
 
-  /* ───────── Step 1D: Divider system ─────────
-     Two utilities for intentional section breaks.
-     - Hairline: tight inside-card splits (rows, list items, header/body).
-     - Inset:    centered 60%-width fade for between-section breathing.
-       Reads as editorial whitespace, not a flat border slammed across the page. */
-  .divider-hairline {
-    border: 0;
-    border-top: 1px solid hsl(var(--border) / 0.4);
-    width: 100%;
-    height: 0;
-    margin: 0;
-  }
-  .divider-inset {
-    border: 0;
-    height: 1px;
-    width: 60%;
-    margin-left: auto;
-    margin-right: auto;
-    background: linear-gradient(
-      to right,
-      hsl(var(--border) / 0) 0%,
-      hsl(var(--border) / 0.5) 50%,
-      hsl(var(--border) / 0) 100%
-    );
-  }
-  .dark .divider-hairline {
-    border-top-color: hsl(var(--border) / 0.5);
-  }
-  .dark .divider-inset {
-    background: linear-gradient(
-      to right,
-      hsl(var(--border) / 0) 0%,
-      hsl(var(--border) / 0.6) 50%,
-      hsl(var(--border) / 0) 100%
-    );
-  }
-
-  /* ───────── Wave 2: Choreographed focus ring ─────────
-     Calm primary-tinted ring (2px) + 2px offset. Fades in over 180ms
-     via box-shadow (additive, no layout shift, no outline snap).
-     Matches the 220ms cubic-bezier hover choreography for coherent motion.
-
-     Two layers:
-     - inner 2px transparent offset (box-shadow spread)
-     - outer 2px primary ring (box-shadow spread with primary tint)
-
-     Applied globally to :focus-visible, excluding Radix collection items
-     (menus/selects handle their own focus styling). */
+  /* ───────── Wave 1: macOS-style focus ring with offset ─────────
+     2px ring + 2px transparent offset reads as proper focus, not "border replacement". */
   .focus-ring-premium:focus-visible,
   *:focus-visible:not([data-radix-collection-item]) {
-    outline: none;
-    box-shadow:
-      0 0 0 2px hsl(var(--background)),
-      0 0 0 4px hsl(var(--ring) / 0.6);
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
     border-radius: inherit;
-    transition: box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1);
   }
-
-  /* Interactive cards: preserve elevation + add focus ring simultaneously.
-     Without this, the hover-lift shadow would be overwritten by the ring. */
-  .hover-lift:focus-visible {
-    box-shadow:
-      0 0 0 2px hsl(var(--background)),
-      0 0 0 4px hsl(var(--ring) / 0.6),
-      var(--elevation-2);
-  }
-
 
   /* Reduced motion: disable all custom animations */
   @media (prefers-reduced-motion: reduce) {
@@ -1870,11 +1732,7 @@ html, body, #root {
       transition: none !important;
       box-shadow: none !important;
     }
-    *:focus-visible {
-      transition: none !important;
-    }
     .premium-surface::before { display: none; }
-    .premium-surface::after { display: none; }
   }
 
   /* Card hover glow */
@@ -2586,13 +2444,10 @@ html, body, #root {
   }
 }
 
-/* ===== Custom Scrollbars — Floating Handles, Themed, No Gutter =====
-   Hover-reveal pattern: thumb is invisible at rest, fades in on parent hover.
-   Uses --muted-foreground so thumb color adapts to light/dark + theme accent.
-   Smooth 180ms transition matches hover choreography tempo. */
+/* ===== Custom Scrollbars — Floating Handles, No Gutter ===== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   background: transparent;
 }
 
@@ -2607,36 +2462,34 @@ html, body, #root {
 ::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 9999px;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   background-clip: padding-box;
-  transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 0.25);
+  background: rgba(128, 128, 128, 0.3);
   background-clip: padding-box;
 }
 
 *:hover::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--muted-foreground) / 0.45);
+  background: rgba(128, 128, 128, 0.45);
   background-clip: padding-box;
 }
 
 *:hover::-webkit-scrollbar-thumb:active {
-  background-color: hsl(var(--primary) / 0.5);
+  background: rgba(128, 128, 128, 0.55);
   background-clip: padding-box;
 }
 
-/* Firefox — hover-reveal: transparent by default, themed on hover */
+/* Firefox — hover-reveal: transparent by default, visible on hover */
 * {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
 
 *:hover {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
 }
-
 
 /* ===== SYNTHETIC BOLD PREVENTION =====
    Aeonik Pro (font-sans) and Termina (font-display) only ship weights 400 & 500.

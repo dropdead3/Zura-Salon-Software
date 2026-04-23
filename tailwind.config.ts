@@ -169,10 +169,6 @@ export default {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
-        "skeleton-shimmer": {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(100%)" },
-        },
         "swing": {
           "0%, 100%": { transform: "rotate(0deg)" },
           "20%": { transform: "rotate(12deg)" },

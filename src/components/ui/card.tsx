@@ -31,11 +31,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const inferredGlow =
       glow ?? (typeof className === 'string' && (className.includes('premium-card') || className.includes('feature-card')));
 
-    // Step 1C: non-glass tiers get --elevation-1 resting shadow.
-    // Glass tier already inherits elevation-1 via .premium-surface.
     const materialClass =
       material === 'solid'
-        ? 'bg-card text-card-foreground elevation-1'
+        ? 'bg-card text-card-foreground'
         : material === 'flat'
           ? 'bg-muted/40 text-card-foreground border-border/40'
           : 'bg-card text-card-foreground premium-surface';
