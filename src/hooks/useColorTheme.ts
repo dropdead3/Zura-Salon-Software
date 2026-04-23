@@ -369,17 +369,17 @@ export const colorThemes = [
   },
   {
     id: 'orchid' as ColorTheme,
-    name: 'Orchid',
-    description: 'Premium magenta & violet jewel',
+    name: 'Rose Gold',
+    description: 'Rose gold & dusty pink duotone',
     lightPreview: {
-      bg: 'hsl(280 30% 97%)',
-      accent: 'hsl(200 60% 90%)',
-      primary: 'hsl(290 75% 55%)',
+      bg: 'hsl(15 22% 97%)',
+      accent: 'hsl(350 20% 93%)',
+      primary: 'hsl(18 45% 62%)',
     },
     darkPreview: {
-      bg: 'hsl(265 35% 5%)',
-      accent: 'hsl(200 50% 16%)',
-      primary: 'hsl(290 90% 65%)',
+      bg: 'hsl(15 18% 6%)',
+      accent: 'hsl(350 14% 16%)',
+      primary: 'hsl(18 55% 68%)',
     },
   },
 ];
