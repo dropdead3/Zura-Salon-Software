@@ -421,9 +421,30 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
     return items;
   };
 
-  const HideNumbersToggle = () => {
+  const HideNumbersToggle = ({ iconOnly = false }: { iconOnly?: boolean } = {}) => {
     const { hideNumbers, toggleHideNumbers } = useHideNumbers();
-    
+
+    if (iconOnly) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground transition-all duration-150"
+              onClick={toggleHideNumbers}
+              aria-label={hideNumbers ? 'Show monetary values' : 'Hide monetary values'}
+            >
+              {hideNumbers ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            {hideNumbers ? 'Show monetary values' : 'Hide monetary values'}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
     return (
       <Tooltip>
         <TooltipTrigger asChild>

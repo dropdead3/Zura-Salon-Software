@@ -70,7 +70,10 @@ export const ACCOUNT_OWNER_BADGE: RoleBadgeConfig = {
   label: 'Account Owner',
   shortLabel: 'Owner',
   icon: Gem,
-  colorClasses: 'bg-gradient-to-r from-stone-700 via-stone-600 to-stone-700 text-amber-100 border-amber-400/30 dark:from-stone-800 dark:via-stone-700 dark:to-stone-800 dark:text-amber-200 dark:border-amber-500/30',
+  // Theme-aware: tints adapt to active dashboard theme via --primary token.
+  // Light: soft primary wash + deep primary text; Dark: subtle wash + light primary text.
+  colorClasses:
+    'bg-[hsl(var(--primary)/0.12)] text-[color-mix(in_srgb,hsl(var(--primary))_45%,black)] border-[hsl(var(--primary)/0.35)] dark:bg-[hsl(var(--primary)/0.18)] dark:text-[color-mix(in_srgb,hsl(var(--primary))_85%,white)] dark:border-[hsl(var(--primary)/0.45)]',
   order: 0,
 };
 
