@@ -14,8 +14,9 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      # Stylelint canon gate. Invoked directly (not via npm script) because
-      # package.json is not editable in this environment; when a lint:css
-      # script is added, swap to `bun run lint:css`.
+      # Unified gate: Stylelint canon → ESLint → Vitest, fail-fast.
+      # Mirrors the local `npm run check` script so contributors hit the
+      # same wall locally that CI hits in PR review.
       - run: bunx stylelint "src/**/*.css"
+      - run: bun run lint
       - run: bun run test
