@@ -25,7 +25,9 @@ interface OrganizationContextValue {
   isLoading: boolean;
 }
 
-const OrganizationContext = createContext<OrganizationContextValue | undefined>(undefined);
+// Exported so resolver hooks (e.g. useSettingsOrgId) can read the context
+// without throwing when called from routes that don't mount the provider.
+export const OrganizationContext = createContext<OrganizationContextValue | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: React.ReactNode }) {
   const { user, isPlatformUser } = useAuth();
