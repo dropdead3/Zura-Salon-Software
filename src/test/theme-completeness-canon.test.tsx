@@ -33,22 +33,31 @@ const indexCss = readIndexCss();
 const themeSelectors = extractThemeSelectors(indexCss);
 
 for (const [familyName, tokens] of Object.entries(FAMILIES)) {
+  // Filter the family to tokens actually defined somewhere in the CSS.
+  // Tokens absent from every theme are out-of-scope (matches the
+  // semantic-token-canon's `existsInCss` skip rule). Listing them in
+  // FAMILIES still documents the intended set; the canon just doesn't
+  // force a theme to define a token nobody else defines either.
+  const presentTokens = tokens.filter((t) =>
+    new RegExp(`--${t}\\s*:`).test(indexCss),
+  );
+
   describe(`theme completeness canon: ${familyName} family`, () => {
     for (const selector of themeSelectors) {
       it(`${selector} — defines all-or-none of ${familyName} family`, () => {
         const body = extractRuleBody(indexCss, selector);
-        if (!body) return; // selector match without a body shouldn't happen, but guard anyway
+        if (!body) return;
 
-        const defined = tokens.filter((t) =>
+        const defined = presentTokens.filter((t) =>
           new RegExp(`--${t}\\s*:`).test(body),
         );
         // Inheriting (defines none) is allowed.
         if (defined.length === 0) return;
 
-        const missing = tokens.filter((t) => !defined.includes(t));
+        const missing = presentTokens.filter((t) => !defined.includes(t));
         expect(
           missing,
-          `${selector} defines ${defined.length}/${tokens.length} ${familyName} tokens; missing: ${missing.join(", ")}`,
+          `${selector} defines ${defined.length}/${presentTokens.length} ${familyName} tokens; missing: ${missing.join(", ")}`,
         ).toEqual([]);
       });
     }
