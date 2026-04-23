@@ -89,7 +89,34 @@ html, body, #root {
 
     --primary: 38 32% 58%;
     --primary-foreground: 36 30% 96%;
-...
+
+    --secondary: 36 12% 80%;
+    --secondary-foreground: 0 0% 6%;
+
+    --muted: 40 8% 72%;
+    --muted-strong: 40 8% 65%;
+    --muted-foreground: 0 0% 30%;
+
+    --accent: 40 12% 76%;
+    --accent-foreground: 0 0% 6%;
+
+    /* Oat/Tan accent - soft warm neutral */
+    --oat: 35 18% 68%;
+    --oat-foreground: 30 20% 25%;
+
+    /* Gold accent - for premium badges */
+    --gold: 38 70% 38%;
+    --gold-foreground: 45 100% 97%;
+
+    /* Success/Available - pastel green */
+    --success: 145 40% 85%;
+    --success-foreground: 145 50% 30%;
+
+    /* Warning - amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
+    /* Chart colors for data visualization */
     --chart-1: 38 32% 58%;
     --chart-2: 45 50% 55%;
     --chart-3: 145 50% 40%;
