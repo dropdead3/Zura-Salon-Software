@@ -204,7 +204,7 @@ export function SuperAdminTopBar({
         className={cn(
           "relative w-full max-w-none flex items-center h-14 px-6 overflow-x-hidden",
           chromeMode
-            ? "bg-transparent"
+            ? "bg-transparent border-0 rounded-none"
             : "bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full"
         )}
       >

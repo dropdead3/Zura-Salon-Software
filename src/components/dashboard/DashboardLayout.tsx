@@ -155,7 +155,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
-import { ChromeElbow } from '@/components/dashboard/ChromeElbow';
+import { DashboardChromeMask } from '@/components/dashboard/DashboardChromeMask';
 import { ViewAsPopover } from '@/components/dashboard/ViewAsPopover';
 import { ZuraCommandSurface } from '@/components/command-surface/ZuraCommandSurface';
 import { useCommandMenu } from '@/hooks/useCommandMenu';
@@ -168,6 +168,49 @@ import { useChaChingDetector } from '@/hooks/useChaChingDetector';
 function ChaChingDetectorMount() {
   useChaChingDetector();
   return null;
+}
+
+/**
+ * DashboardChromeWrapper — the single welded L surface.
+ * Renders one `.chrome-l` div with an SVG mask cutting the inner
+ * top-right quadrant (with a rounded concave elbow). All children
+ * (sidebar content, top-bar content) sit unstyled inside it; the
+ * wrapper owns the background, blur, border (via inset shadow), and
+ * drop shadow — producing one continuous silhouette with zero seams.
+ */
+function DashboardChromeWrapper({
+  children,
+  isImpersonating,
+  sidebarWidthPx,
+  topbarHeightPx,
+}: {
+  children: React.ReactNode;
+  isImpersonating: boolean;
+  sidebarWidthPx: number;
+  topbarHeightPx: number;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  return (
+    <>
+      <DashboardChromeMask
+        sidebarWidthPx={sidebarWidthPx}
+        topbarHeightPx={topbarHeightPx}
+        containerRef={containerRef}
+      />
+      <div
+        ref={containerRef}
+        className="chrome-l hidden lg:block fixed left-3 bottom-3 right-3 z-[60] pointer-events-none"
+        style={{
+          top: isImpersonating ? '56px' : '12px',
+          // Apply the SVG mask so the L silhouette is cut from the rect
+          maskImage: 'url(#chrome-l-mask)',
+          WebkitMaskImage: 'url(#chrome-l-mask)',
+        }}
+      >
+        {children}
+      </div>
+    </>
+  );
 }
 
 interface DashboardLayoutProps {
@@ -491,23 +534,19 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       <ZuraCommandSurface open={commandOpen} onOpenChange={setCommandOpen} />
 
       {/* ── L-Shape Dashboard Chrome (desktop) ─────────────────
-          One welded surface: vertical leg (sidebar) + horizontal leg
-          (top bar) joined at a concave inner elbow. Both legs share
-          --sidebar-width so the joint stays glued during collapse. */}
+          ONE welded surface painted as a single element with an SVG mask
+          that cuts the inner top-right quadrant — producing a true L
+          silhouette with a concave rounded inner elbow. No double borders,
+          no joint seam. */}
       {showChromeL && (
-        <div
-          className="dashboard-chrome hidden lg:block fixed left-3 bottom-3 right-3 z-[60] pointer-events-none"
-          style={{
-            top: isImpersonating ? '56px' : '12px',
-          }}
+        <DashboardChromeWrapper
+          isImpersonating={isImpersonating}
+          sidebarWidthPx={hideSidebar ? 0 : sidebarCollapsed ? 64 : 320}
+          topbarHeightPx={56}
         >
-          {/* Vertical leg — sidebar */}
+          {/* Vertical leg content — sidebar (no own surface; chrome owns it) */}
           <aside
-            data-chrome-leg
-            className={cn(
-              "absolute top-0 bottom-0 left-0 pointer-events-auto overflow-hidden",
-              "bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-xl shadow-sm"
-            )}
+            className="absolute top-0 bottom-0 left-0 pointer-events-auto overflow-hidden chrome-l-content-sidebar"
             style={{ width: 'var(--sidebar-width)' }}
           >
             <SidebarNavContent
@@ -537,13 +576,9 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
             />
           </aside>
 
-          {/* Horizontal leg — top bar */}
+          {/* Horizontal leg content — top bar (no own surface; chrome owns it) */}
           <div
-            data-chrome-leg
-            className={cn(
-              "absolute top-0 right-0 pointer-events-auto overflow-hidden",
-              "bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-xl shadow-sm"
-            )}
+            className="absolute top-0 right-0 pointer-events-auto overflow-hidden chrome-l-content-topbar"
             style={{
               left: 'var(--sidebar-width)',
               height: 'var(--chrome-top-bar-height)',
@@ -570,10 +605,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
               viewAsUser={viewAsUser as any}
             />
           </div>
-
-          {/* Concave inner elbow — sculpted joint between the two legs */}
-          <ChromeElbow />
-        </div>
+        </DashboardChromeWrapper>
       )}
 
       {/* Mobile / fallback top bar (lg:hidden via SuperAdminTopBar's own classes) */}
