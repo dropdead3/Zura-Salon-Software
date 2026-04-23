@@ -1,81 +1,88 @@
 
 
-# Step 2G — Lock the rgba-literal canon with a lint rule, and generalize the CSS rule fixture
+# Step 2H — Wire the canon into the default check gate, and extend it to raw hex
 
-Two enhancements, same spirit as Step 2F: **make the canon enforceable at authoring time, not just at test time.** The Vitest suite catches regressions in two named utilities; a stylelint rule catches them in any utility, the moment they're typed.
+Two enhancements, both extending the Step 2G foundation. Part A closes the "easy to forget" loophole by routing Stylelint through the same gate Vitest uses. Part B broadens the ban from `rgba(` to the full raw-color family (`rgb(`, `rgba(`, raw hex) — same regression class, same plugin, one expanded matcher.
 
-## Part A — Stylelint rule banning `rgba(` outside token definitions
+## Part A — Route Stylelint through the default check gate
 
-**What we're protecting**
-Every `rgba(0, 0, 0, …)` or `rgba(255, 255, 255, …)` in `src/index.css` that lives outside a token definition block is a theme-blind literal. Step 2E fixed three. Step 2F annotated the intentional ones (`zura-disco`, `mkt-glass`). A lint rule locks the door.
+**The gap**
+`npm run lint:css` exists but no one runs it. CI doesn't run it. The Vitest suite doesn't run it. It's a flashlight that lives in a drawer.
 
-**Approach — add Stylelint, minimal config, one custom plugin**
-
-The project has no Stylelint today (only ESLint for JS/TS — see `eslint.config.js`). We'll add it narrowly, scoped to `src/index.css` only, with one rule that matters.
+**The fix**
+Add a composite `"check"` script that runs both Vitest and Stylelint, and wire the existing test script (or the `check` umbrella) to call it. Whichever the team already treats as the "green bar" command now fails if a raw `rgba` slips into `index.css`.
 
 **Files**
 
-1. `package.json` — add devDependencies: `stylelint`, `stylelint-config-standard`, plus a script `"lint:css": "stylelint 'src/**/*.css'"`.
-2. `.stylelintrc.cjs` — config extending `stylelint-config-standard` but relaxing rules that fight Tailwind (`at-rule-no-unknown` off for `@tailwind`, `@apply`, `@layer`, `@screen`; `no-descending-specificity` off; `selector-class-pattern` off for our kebab-case utilities). Register our custom plugin.
-3. `tools/stylelint-plugins/no-raw-rgba-outside-tokens.cjs` — custom rule. Logic:
-   - Walk every `Declaration` node.
-   - If the value contains `rgba(` or `rgb(` with literal integer args (not `var(--…)`):
-     - Walk up to the parent rule.
-     - If the parent selector is `:root` or `.dark` (or any selector starting with `:root` / `.dark `), allow it — those are token definitions.
-     - If the declaration is preceded by a comment containing `intentional literal` (case-insensitive), allow it — this is the Step 2F escape hatch (`zura-disco`, `mkt-glass`).
-     - Otherwise, report with message: `"Raw rgba/rgb literal outside token definition. Use hsl(var(--token) / alpha) or annotate with /* intentional literal: <reason> */ above this line."`
-   - Rule name: `zura/no-raw-rgba-outside-tokens`. Severity configurable; we ship it as `error`.
+1. `package.json` — two script additions:
+   - `"lint:css": "stylelint 'src/**/*.css'"` (already present from Step 2G).
+   - `"check": "npm run lint:css && npx vitest run"` — new. Single composite command that the team (and any future pre-commit or CI hook) can call.
+   - If `"test"` currently just runs Vitest, leave it alone — `check` is the strict gate, `test` stays fast for iteration.
+
+**Why a composite `check` script and not overloading `test`?**
+Vitest-only runs are the fast iteration loop (watch mode, single-file filter). `check` is the strict pre-flight: both gates must pass. Two commands, two purposes, no overloading.
 
 **Acceptance (Part A)**
 
-1. `npm run lint:css` passes on the current `src/index.css` (the Step 2F annotations are respected).
-2. Inserting `color: rgba(0, 0, 0, 0.3);` into a new `.foo` rule fails lint with the documented message.
-3. The same insertion preceded by `/* intentional literal: true-black scrim per design */` passes.
-4. Adding the same rule inside `:root` or `.dark` passes (token definitions are the canon's source).
-5. Lint runs in under 2 seconds on the current `index.css`.
-6. Existing `rgba` literals inside `:root` and `.dark` (the token definitions themselves) are untouched — they're the whole point of having the rule.
+1. `npm run check` runs Stylelint first, then Vitest, and returns non-zero if either fails.
+2. Inserting `color: rgba(0, 0, 0, 0.3);` into a non-token rule in `src/index.css` causes `npm run check` to fail at the Stylelint step before Vitest runs.
+3. `npm run test` still runs Vitest only (unchanged fast loop).
+4. Stylelint runtime on the full `src/**/*.css` glob stays under 3s (measured during Step 2G).
 
-## Part B — Generalize the CSS rule fixture into `src/test/css-rule.ts`
+## Part B — Extend the plugin to raw hex
 
-**What we're generalizing**
-`src/test/scrollbar-tokens.fixtures.ts` contains `extractRuleBody(cssSource, selector)` and `readIndexCss()`. Both are useful beyond scrollbars the moment we write any other CSS-canon test (the user's example: "all `--destructive` usages route through HSL", but the same shape applies to elevation shadows, focus rings, glass surfaces, etc.).
+**The gap**
+The current rule name is `zura/no-raw-rgba-outside-tokens`. It catches `rgb(` and `rgba(` with literal integer args. It does **not** catch:
+- `#fff`, `#000`, `#ffffff`, `#00000080` (3/4/6/8-digit hex).
+- Hex with uppercase letters (`#FFF`, `#ABC123`).
 
-**Approach — promote, don't duplicate**
+Same regression class (theme-blind literal), same fix (`hsl(var(--token) / alpha)`), same escape hatch (`/* intentional literal: <reason> */`).
 
-1. **Create** `src/test/css-rule.ts` with the primitives:
-   - `extractRuleBody(cssSource: string, selector: string): string | null` — moved as-is.
-   - `readCssFile(relativePath: string): string` — generalized from `readIndexCss`. Takes a path relative to `src/`, reads once, caches by path (Map-based cache so multiple files can be tested in one run).
-   - `readIndexCss(): string` — kept as a thin convenience wrapper over `readCssFile("index.css")` so nothing downstream breaks.
-   - Also add `extractAllRuleBodies(cssSource, selector): string[]` — plural variant for cases where the same selector appears in multiple `@media` / `@layer` contexts. Not strictly needed today but one extra line and avoids a re-refactor next time.
+**The fix — extend, don't duplicate**
 
-2. **Rewrite** `src/test/scrollbar-tokens.fixtures.ts` as a two-line re-export for back-compat:
-   ```ts
-   // Deprecated: prefer src/test/css-rule.ts. Kept as re-export to avoid touching existing tests.
-   export { extractRuleBody, readIndexCss } from "./css-rule";
+Keep the plugin file and rule name (the ecosystem already references it), but broaden the matcher and rename the rule to reflect the wider scope.
+
+**Files**
+
+1. `tools/stylelint-plugins/no-raw-rgba-outside-tokens.cjs` — rename the exported rule to `zura/no-raw-colors-outside-tokens` (more accurate) and extend `LITERAL_RE`:
+   ```js
+   const LITERAL_RE = /(\brgba?\(\s*\d)|(#[0-9a-fA-F]{3,8}\b)/;
    ```
-   This keeps `src/test/scrollbar-tokens.test.tsx` working with zero edits.
+   The rest of the plugin (parent-selector check, preceding-comment escape hatch) is unchanged — it's declaration-level logic that doesn't care which literal triggered the match. Update the reported message to:
+   > `"Raw color literal (rgb/rgba/hex) outside token definition. Use hsl(var(--token) / alpha) or annotate with /* intentional literal: <reason> */ above this line."`
 
-3. **No changes** to `scrollbar-tokens.test.tsx` — its imports continue to resolve via the re-export. When the next CSS-canon test is written, it imports directly from `@/test/css-rule` and we can eventually delete the shim.
+2. `.stylelintrc.cjs` — update the rule key from `"zura/no-raw-rgba-outside-tokens": true` to `"zura/no-raw-colors-outside-tokens": true`. Single-line swap.
+
+3. **No changes to `src/index.css`** until we run the rule and see what fails. Expected outcomes:
+   - **Token definitions** in `:root` / `.dark` — exempt by selector, no changes.
+   - **Hex inside `intentional literal` blocks** (Step 2F annotations for `zura-disco`, `mkt-glass`) — already allowed by the escape-hatch check.
+   - **New violations** — handled case-by-case with the same three-bucket categorization from Step 2F (fix / annotate / delete). Most likely candidates: shadow utilities, gradient stops, debug outlines.
+
+**Why extend the same plugin instead of adding a second one?**
+The logic is identical — parent-selector check and preceding-comment check are the canon, not the matcher. One plugin, one rule, one matcher regex. Adding a second plugin would duplicate the 40 lines of context-walking code.
+
+**Why a regex that also catches hex inside `url(#gradient-id)` or SVG ID refs?**
+It won't in practice — `#gradient-id` isn't hex (letters beyond `a-f`). The `\b` word boundary and the 3–8 digit constraint keep SVG fragment IDs out of scope. If any false positive surfaces during the audit pass, it gets an `/* intentional literal: SVG fragment reference */` annotation and we move on.
 
 **Acceptance (Part B)**
 
-1. `npx vitest run src/test/scrollbar-tokens` still passes with zero test-file edits.
-2. `src/test/css-rule.ts` exports `extractRuleBody`, `extractAllRuleBodies`, `readCssFile`, `readIndexCss`.
-3. `readCssFile` caches per-path (calling it twice with the same path reads disk once; a different path reads disk a second time).
-4. The back-compat shim in `scrollbar-tokens.fixtures.ts` is ≤5 lines and re-exports only.
+1. `npx stylelint 'src/**/*.css'` passes after the audit pass.
+2. Inserting `background: #000;` into a non-token, non-annotated rule fails with the documented message.
+3. Inserting the same line preceded by `/* intentional literal: true-black scrim */` passes.
+4. Inserting `background: #000;` inside `:root` or `.dark` passes (token definitions).
+5. The rule still catches all Step 2G cases (`rgba(0, 0, 0, 0.3)` in a non-token rule).
+6. SVG `url(#...)` references in CSS `background-image` values do not trigger false positives (or are annotated if they do).
 
 ## Technical notes
 
-- **Why Stylelint and not an ESLint rule on template literals?** `index.css` is CSS, not TS. ESLint can't parse it without a CSS parser plugin; Stylelint is the native tool. Scoping it to `src/**/*.css` keeps it from stepping on the existing ESLint setup.
-- **Why a custom plugin vs. `declaration-property-value-disallowed-list`?** The built-in allow/disallow rules can't do "allow only inside `:root` / `.dark`, or when annotated." The logic is context-dependent; a 40-line custom rule is the right tool.
-- **CI**: not wired here — the user's preference has been "Vitest + npm script, no CI infra changes" (per Step 2F). `lint:css` is available as a script; wiring it into a pre-commit or CI gate is a separate decision the user can call when ready.
-- **Escape-hatch convention**: `/* intentional literal: <reason> */` must be on the line immediately above the offending declaration. Matching the exact comment text we already use in Step 2F keeps the convention single-sourced.
+- **Rule rename is a breaking change to `.stylelintrc.cjs`** but nothing else references the old key. Single-config-line edit.
+- **Expected audit scope** — `git grep -nE '#[0-9a-fA-F]{3,8}\b' src/index.css` outside `:root` / `.dark` will surface the real list. Could be zero (if the codebase has been disciplined about hex), could be a handful. Plan covers the pattern, not a pre-written diff.
+- **The `check` script is the lever that makes all of this real.** Without it, Stylelint is the same flashlight-in-a-drawer. With it, the canon fails the same gate tests fail.
 
 ## Out of scope
 
-- Running lint in CI or a pre-commit hook (wire it when the user decides).
-- Expanding the rule to cover raw hex (`#fff`, `#000`) — different regression class, Step 2H if we ever see it.
-- Adding Stylelint to any file other than `src/**/*.css` (no `.tsx` inline styles, no `styled-components` — would be scope creep).
-- Deleting the `scrollbar-tokens.fixtures.ts` shim now — free to remove once a second consumer exists, not before.
-- Writing the "all `--destructive` uses route through HSL" test — that's the *reason* we generalize, not part of this step.
+- Wiring `npm run check` into a pre-commit hook or CI pipeline — that's a separate decision the user makes when they're ready to enforce beyond local runs.
+- Extending to `hsl(` literals (`hsl(210, 20%, 50%)` without a token) — different regression shape (not theme-blind, just un-tokenized); likely Step 2I if ever needed.
+- Extending to `.tsx` inline styles or `styled-components` — the project doesn't use either.
+- Deleting the `scrollbar-tokens.fixtures.ts` shim — still no second consumer of `src/test/css-rule.ts`; keep the shim until one exists.
 
