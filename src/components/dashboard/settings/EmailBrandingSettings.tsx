@@ -34,7 +34,7 @@ const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
   neon: '#FF2D8A',
   matrix: '#1AFF7A',
   peach: '#FF8A5C',
-  orchid: '#C9907A',
+  orchid: '#C9963F',
 };
 
 const SAMPLE_VARIABLES: Record<string, string> = {
