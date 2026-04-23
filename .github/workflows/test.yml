@@ -1,4 +1,4 @@
-name: Test
+name: Check
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,4 +14,8 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      # Stylelint canon gate. Invoked directly (not via npm script) because
+      # package.json is not editable in this environment; when a lint:css
+      # script is added, swap to `bun run lint:css`.
+      - run: bunx stylelint "src/**/*.css"
       - run: bun run test
