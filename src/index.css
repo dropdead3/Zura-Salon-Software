@@ -1727,6 +1727,40 @@ html, body, #root {
   .dark .premium-surface::before {
     opacity: 0.4;
   }
+
+  /* Step 1A: Specular top-edge highlight.
+     1px inner light catch on the top edge — reads as polished material
+     instead of a flat translucent rectangle. Uses padding + mask trick
+     so the gradient only paints a 1px ring on the top, not the whole face. */
+  .premium-surface::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    padding: 1px;
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--foreground) / 0.10),
+      hsl(var(--foreground) / 0) 28%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  .dark .premium-surface::after {
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--foreground) / 0.14),
+      hsl(var(--foreground) / 0) 28%
+    );
+  }
+
   .dark .premium-surface {
     background-color: hsl(var(--card) / 0.95);
     box-shadow:
@@ -1758,6 +1792,7 @@ html, body, #root {
       box-shadow: none !important;
     }
     .premium-surface::before { display: none; }
+    .premium-surface::after { display: none; }
   }
 
   /* Card hover glow */
