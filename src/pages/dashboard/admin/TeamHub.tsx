@@ -289,7 +289,7 @@ export default function TeamHub() {
     const IconComp = ICON_MAP[fav.icon] || Users;
     return (
       <Link key={fav.href} to={fav.href}>
-        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-amber-500/30 bg-amber-500/[0.06] dark:bg-amber-500/[0.08] relative")}>
+        <Card className={cn(tokens.card.wrapper, "group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md border-amber-500/30 bg-amber-500/[0.06] dark:bg-amber-500/[0.08] relative")}>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(fav.href, fav.label, fav.icon); }}
             className="absolute top-2 right-2 z-10 p-1 rounded-md text-amber-500 opacity-100 transition-all"
