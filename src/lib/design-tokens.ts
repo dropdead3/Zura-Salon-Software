@@ -42,10 +42,10 @@ export const tokens = {
   },
 
   stat: {
-    /** Large stat value (dashboard KPIs) */
-    large: 'font-display text-2xl font-medium',
-    /** Extra-large stat value (hero metrics) */
-    xlarge: 'font-display text-3xl font-medium',
+    /** Large stat value (dashboard KPIs) — tabular for column alignment */
+    large: 'font-display text-2xl font-medium tabular-nums',
+    /** Extra-large stat value (hero metrics) — tabular for column alignment */
+    xlarge: 'font-display text-3xl font-medium tabular-nums',
   },
 
   // ========================================
@@ -56,8 +56,8 @@ export const tokens = {
     tile: 'rounded-lg border border-border/50 bg-muted/30 p-4 flex flex-col gap-1',
     /** KPI tile label: Termina, 11px, uppercase, tracked, muted */
     label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider',
-    /** KPI tile value: Termina, xl, medium */
-    value: 'font-display text-xl font-medium',
+    /** KPI tile value: Termina, xl, medium — tabular for column alignment */
+    value: 'font-display text-xl font-medium tabular-nums',
     /** KPI trend badge: 10px, medium */
     change: 'text-[10px] font-medium',
     /** Info icon pinned to top-right of KPI tile */
@@ -72,8 +72,8 @@ export const tokens = {
     tile: 'rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 flex flex-col gap-1',
     /** Dark-themed KPI tile label: Termina, 11px, uppercase, tracked */
     label: 'font-display text-[11px] font-medium text-slate-400 uppercase tracking-wider',
-    /** Dark-themed KPI tile value: Termina, xl, medium */
-    value: 'font-display text-xl font-medium text-white',
+    /** Dark-themed KPI tile value: Termina, xl, medium — tabular for column alignment */
+    value: 'font-display text-xl font-medium text-white tabular-nums',
     /** KPI trend badge: 10px, medium */
     change: 'text-[10px] font-medium',
     /** Info icon pinned to top-right of KPI tile */
