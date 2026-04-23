@@ -299,8 +299,11 @@ export function ViewAsPopover() {
                     sideOffset={4}
                     className="w-[300px] p-0 z-[60] rounded-lg border border-border/60 bg-popover/95 backdrop-blur-xl"
                   >
-                    <Command>
-                      <CommandInput placeholder="Search locations…" className="h-9 text-xs" />
+                    <Command className="[&_[cmdk-input-wrapper]]:border-0 [&_[cmdk-input-wrapper]]:focus-within:ring-0 [&_[cmdk-input-wrapper]]:focus-within:outline-none">
+                      <CommandInput
+                        placeholder="Search locations…"
+                        className="h-9 text-xs border-0 ring-0 focus:ring-0 focus-visible:ring-0 focus:outline-none focus-visible:outline-none"
+                      />
                       <CommandList className="max-h-[280px]">
                         <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">
                           No locations found
