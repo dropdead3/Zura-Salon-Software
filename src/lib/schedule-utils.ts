@@ -57,6 +57,48 @@ export interface OverlapInfo {
 }
 
 /**
+ * Seam-safe overlap column layout.
+ *
+ * Returns left/width as CSS calc strings so adjacent columns physically
+ * touch. We add a 1px width "kiss" to each non-last column so browser
+ * subpixel rounding cannot reveal the underlying grid background as a
+ * 1px hairline between cards. The next column's `left` already sits at
+ * its column boundary, so the extra pixel just hides the seam under the
+ * neighbor — there is no visible doubling.
+ *
+ * Use ONLY when totalOverlapping > 1.
+ */
+export interface OverlapColumnLayout {
+  left: string;
+  width: string;
+  isFirstOverlapCol: boolean;
+  isLastOverlapCol: boolean;
+  isOverlapping: boolean;
+}
+
+export function getOverlapColumnLayout(
+  columnIndex: number,
+  totalOverlapping: number,
+): OverlapColumnLayout {
+  const widthPercent = 100 / Math.max(1, totalOverlapping);
+  const leftPercent = columnIndex * widthPercent;
+  const isFirstOverlapCol = columnIndex === 0;
+  const isLastOverlapCol = columnIndex === totalOverlapping - 1;
+  const isOverlapping = totalOverlapping > 1;
+  // Add 1px to the width of every non-last column to seal subpixel seams.
+  const width = isOverlapping && !isLastOverlapCol
+    ? `calc(${widthPercent}% + 1px)`
+    : `${widthPercent}%`;
+  return {
+    left: `${leftPercent}%`,
+    width,
+    isFirstOverlapCol,
+    isLastOverlapCol,
+    isOverlapping,
+  };
+}
+
+/**
  * Compute pixel-snapped render metrics for the current-time indicator and
  * the "past" overlay rectangle, ensuring both share an identical pixel boundary.
  *
