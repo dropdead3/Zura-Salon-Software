@@ -1825,14 +1825,36 @@ html, body, #root {
     );
   }
 
-  /* ───────── Wave 1: macOS-style focus ring with offset ─────────
-     2px ring + 2px transparent offset reads as proper focus, not "border replacement". */
+  /* ───────── Wave 2: Choreographed focus ring ─────────
+     Calm primary-tinted ring (2px) + 2px offset. Fades in over 180ms
+     via box-shadow (additive, no layout shift, no outline snap).
+     Matches the 220ms cubic-bezier hover choreography for coherent motion.
+
+     Two layers:
+     - inner 2px transparent offset (box-shadow spread)
+     - outer 2px primary ring (box-shadow spread with primary tint)
+
+     Applied globally to :focus-visible, excluding Radix collection items
+     (menus/selects handle their own focus styling). */
   .focus-ring-premium:focus-visible,
   *:focus-visible:not([data-radix-collection-item]) {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
+    outline: none;
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 4px hsl(var(--ring) / 0.6);
     border-radius: inherit;
+    transition: box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1);
   }
+
+  /* Interactive cards: preserve elevation + add focus ring simultaneously.
+     Without this, the hover-lift shadow would be overwritten by the ring. */
+  .hover-lift:focus-visible {
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 4px hsl(var(--ring) / 0.6),
+      var(--elevation-2);
+  }
+
 
   /* Reduced motion: disable all custom animations */
   @media (prefers-reduced-motion: reduce) {
@@ -1847,6 +1869,9 @@ html, body, #root {
     .hover-lift:hover {
       transition: none !important;
       box-shadow: none !important;
+    }
+    *:focus-visible {
+      transition: none !important;
     }
     .premium-surface::before { display: none; }
     .premium-surface::after { display: none; }
