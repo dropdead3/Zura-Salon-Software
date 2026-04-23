@@ -225,6 +225,14 @@ export default function ColorBarSettings() {
     }
   }, [searchParams, setSearchParams, queryClient, orgId]);
 
+  // In-place section swap helper. Pathname doesn't change here, so the
+  // global ScrollToTop won't fire — reset scroll so each section opens
+  // at its header instead of inheriting the previous section's offset.
+  const goToSection = useCallback((next: ColorBarSection) => {
+    setActiveSection(next);
+    window.scrollTo(0, 0);
+  }, []);
+
   const handleNavigate = useCallback((section: string) => {
     if (section.includes(':')) {
       const [sec, tab] = section.split(':');
@@ -234,6 +242,7 @@ export default function ColorBarSettings() {
       setActiveSection(section as ColorBarSection);
       setSubTab(undefined);
     }
+    window.scrollTo(0, 0);
   }, []);
 
   const bannerHealth = useMemo(() => {
@@ -281,7 +290,7 @@ export default function ColorBarSettings() {
       <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
         {/* Inventory reconciliation banner — shown when any location requires recount after suspension */}
         <InventoryReconciliationBanner
-          onBegin={() => setActiveSection('products')}
+          onBegin={() => goToSection('products')}
         />
 
         {/* Setup Banner — persistent across all sections */}
@@ -290,7 +299,7 @@ export default function ColorBarSettings() {
           wizardCompleted={wizardCompleted}
           onNavigate={handleNavigate}
           onResumeSetup={() => {
-            setActiveSection('overview');
+            goToSection('overview');
             setShowWizardFromBanner(true);
           }}
         />
@@ -351,7 +360,7 @@ export default function ColorBarSettings() {
                         const btn = (
                           <button
                             key={s.id}
-                            onClick={() => setActiveSection(s.id)}
+                            onClick={() => goToSection(s.id)}
                             className={cn(
                               'w-full flex items-center rounded-lg text-sm font-sans transition-colors text-left',
                               navCollapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
@@ -413,7 +422,7 @@ export default function ColorBarSettings() {
           <div className="lg:hidden w-full mb-4">
             <select
               value={activeSection}
-              onChange={(e) => setActiveSection(e.target.value as ColorBarSection)}
+              onChange={(e) => goToSection(e.target.value as ColorBarSection)}
               className="w-full rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm font-sans text-foreground"
             >
               {sectionsByGroup.map((group) => (
