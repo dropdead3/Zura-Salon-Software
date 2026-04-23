@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { useColorTheme, ColorTheme } from '@/hooks/useColorTheme';
 
 const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
-  bone: '#A8763A',
+  'cream-lux': '#A8763A',
   rosewood: '#A53D5C',
   sage: '#4A9C6D',
   jade: '#1CB39C',
