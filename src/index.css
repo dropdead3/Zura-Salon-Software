@@ -240,6 +240,69 @@ html, body, #root {
     --card-inner-deep: 0 0% 9%;
   }
 
+  /* ===== THEME: ROSEWOOD (Pale Blush Pastel) ===== */
+  .theme-rosewood {
+    --background: 350 25% 95%;
+    --foreground: 350 30% 12%;
+
+    --card: 350 22% 97%;
+    --card-foreground: 350 30% 12%;
+
+    --popover: 350 22% 97%;
+    --popover-foreground: 350 30% 12%;
+
+    --primary: 345 55% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 350 20% 90%;
+    --secondary-foreground: 350 30% 12%;
+
+    --muted: 350 18% 88%;
+    --muted-strong: 350 15% 80%;
+    --muted-foreground: 350 12% 35%;
+
+    --accent: 350 30% 88%;
+    --accent-foreground: 350 30% 12%;
+
+    --oat: 350 22% 82%;
+    --oat-foreground: 350 25% 25%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    /* Chart colors for data visualization */
+    --chart-1: 345 50% 40%;
+    --chart-2: 145 55% 42%;
+    --chart-3: 217 85% 55%;
+    --chart-4: 43 95% 50%;
+    --chart-5: 280 75% 55%;
+
+    --success: 145 40% 85%;
+    --success-foreground: 145 50% 30%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 350 18% 80%;
+    --input: 350 18% 86%;
+    --ring: 345 55% 48%;
+
+    --sidebar-background: 350 22% 94%;
+    --sidebar-foreground: 350 30% 12%;
+    --sidebar-primary: 345 55% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 350 20% 90%;
+    --sidebar-accent-foreground: 350 30% 12%;
+    --sidebar-border: 350 18% 80%;
+    --sidebar-ring: 345 55% 48%;
+
+    --card-inner: 350 18% 92%;
+    --card-inner-deep: 350 15% 88%;
+  }
+
   .dark.theme-rosewood {
     --background: 350 15% 6%;
     --foreground: 350 20% 92%;
