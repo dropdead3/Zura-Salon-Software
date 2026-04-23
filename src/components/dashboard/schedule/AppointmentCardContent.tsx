@@ -514,6 +514,8 @@ export function AppointmentCardContent({
   useShortLabels = false,
   declinedReasonLabel = null,
   connectInactive = false,
+  isFirstCol = true,
+  isLastCol = true,
   onClick,
 }: AppointmentCardContentProps) {
   // ─── All hooks run unconditionally ────────────────────────
@@ -627,8 +629,6 @@ export function AppointmentCardContent({
   // Conditional corner radius — square the inner edges of overlapping cards
   // so they butt flush against each other (no rounded-corner gap).
   // Default true → non-overlapping cards keep all four corners rounded.
-  const isFirstCol = (props as any).isFirstCol ?? true;
-  const isLastCol = (props as any).isLastCol ?? true;
   const radiusClass =
     isFirstCol && isLastCol
       ? 'rounded-lg'
