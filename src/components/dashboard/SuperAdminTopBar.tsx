@@ -65,7 +65,7 @@ interface SuperAdminTopBarProps {
   onHeaderHoverEnd: () => void;
   filterNavItems: (items: NavItem[]) => NavItem[];
   ViewAsToggle: React.ComponentType<{ asMenuItem?: boolean }>;
-  HideNumbersToggle: React.ComponentType;
+  HideNumbersToggle: React.ComponentType<{ iconOnly?: boolean }>;
   roleBadges: RoleBadgeConfig[];
   onSearchClick: () => void;
   isSearchOpen?: boolean;
@@ -207,41 +207,43 @@ export function SuperAdminTopBar({
           )}
         </div>
 
-        {/* ── RIGHT ZONE: Admin Controls (never wraps) ── */}
-        <div className="flex items-center gap-2 shrink-0 flex-nowrap">
+        {/* ── RIGHT ZONE: Three logical groups separated by dividers ── */}
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
 
-          {/* Show/Hide $ — always visible */}
+          {/* ── Group 1: Admin tools (icon-only) ── */}
           {(isPlatformUser || isAdmin) && (
-            <div className="flex">
-              <HideNumbersToggle />
-            </div>
+            <>
+              <HideNumbersToggle iconOnly />
+
+              {/* Page Explainers toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-9 w-9 rounded-full transition-all duration-150",
+                      showInfotainers
+                        ? "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    onClick={() => toggleInfotainers(!showInfotainers)}
+                    disabled={isToggling}
+                    aria-label={showInfotainers ? 'Hide page explainers' : 'Show page explainers'}
+                  >
+                    {showInfotainers ? <BookOpen className="w-4 h-4" /> : <BookX className="w-4 h-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {showInfotainers ? 'Hide page explainers' : 'Show page explainers (resets dismissed)'}
+                </TooltipContent>
+              </Tooltip>
+
+              <div className="h-5 w-px bg-border/60 mx-1.5" aria-hidden />
+            </>
           )}
 
-          {/* Page Explainers toggle — admin only */}
-          {(isPlatformUser || isAdmin) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-9 w-9 rounded-full transition-all duration-150",
-                    showInfotainers
-                      ? "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  onClick={() => toggleInfotainers(!showInfotainers)}
-                  disabled={isToggling}
-                >
-                  {showInfotainers ? <BookOpen className="w-4 h-4" /> : <BookX className="w-4 h-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                {showInfotainers ? 'Hide page explainers' : 'Show page explainers (resets dismissed)'}
-              </TooltipContent>
-            </Tooltip>
-          )}
-
+          {/* ── Group 2: Identity & simulation (labeled pills) ── */}
           {/* Primary role badge — only highest-priority shown */}
           {(isPlatformUser || isAdmin) && roleBadges.length > 0 && (() => {
             const badge = roleBadges[0];
@@ -274,12 +276,18 @@ export function SuperAdminTopBar({
           {/* View As — Tier 0, always visible */}
           {isAdmin && <ViewAsToggle />}
 
-          {/* Theme toggle — visible ≥xl, in overflow below */}
+          {/* Divider before system/personal cluster (only render if Group 2 had content) */}
+          {(isPlatformUser || isAdmin) && (
+            <div className="h-5 w-px bg-border/60 mx-1.5" aria-hidden />
+          )}
+
+          {/* ── Group 3: System & personal ── */}
+          {/* Theme toggle — visible ≥xl */}
           <div className="hidden xl:flex">
             <ThemeToggle />
           </div>
 
-          {/* Notifications — Tier 0 */}
+          {/* Notifications */}
           <NotificationsPanel unreadCount={unreadCount} />
 
           {/* Avatar menu — Tier 0 */}
