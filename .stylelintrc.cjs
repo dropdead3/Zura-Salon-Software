@@ -44,6 +44,11 @@ module.exports = {
       { ignorePseudoElements: ["webkit-scrollbar", "webkit-scrollbar-thumb", "webkit-scrollbar-track", "webkit-scrollbar-corner"] },
     ],
     "selector-pseudo-class-no-unknown": [true, { ignorePseudoClasses: ["global"] }],
+    // Stylistic rules disabled — the CSS is hand-authored and compact by design
+    "at-rule-empty-line-before": null,
+    "declaration-block-single-line-max-declarations": null,
+    "length-zero-no-unit": null,
+    "selector-not-notation": null,
 
     // The canon rule
     "zura/no-raw-rgba-outside-tokens": true,

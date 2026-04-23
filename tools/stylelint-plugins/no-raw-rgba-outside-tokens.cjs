@@ -40,18 +40,25 @@ function isTokenDefinitionSelector(selector) {
   });
 }
 
+function checkPrecedingComment(node) {
+  // The immediately-preceding sibling comment (if any) is the authoritative
+  // annotation. We allow `intentional literal` on either the decl itself or
+  // on any ancestor (a @keyframes block, a rule) — so that one comment can
+  // cover every declaration inside.
+  const prev = node.prev();
+  if (prev && prev.type === "comment" && /intentional\s+literal/i.test(prev.text)) {
+    return true;
+  }
+  return false;
+}
+
 function hasIntentionalLiteralComment(decl) {
-  // Walk previous siblings, skipping whitespace-only nodes, looking for the
-  // most recent comment. If it mentions "intentional literal", allow.
-  let prev = decl.prev();
-  while (prev) {
-    if (prev.type === "comment") {
-      return /intentional\s+literal/i.test(prev.text);
-    }
-    // Any non-comment node between the decl and the comment invalidates it
-    // — except other decls, which happens in real CSS. We only care about
-    // the *immediately* preceding comment, so stop at the first non-comment.
-    return false;
+  // Check the decl and every ancestor up to the root for a preceding
+  // "intentional literal" comment.
+  let node = decl;
+  while (node && node.type !== "root") {
+    if (checkPrecedingComment(node)) return true;
+    node = node.parent;
   }
   return false;
 }
