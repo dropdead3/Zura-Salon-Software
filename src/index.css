@@ -144,63 +144,29 @@ html, body, #root {
 
     --primary: 30 16% 65%;
     --primary-foreground: 30 12% 6%;
-...
-    /* Chart colors for data visualization */
-    --chart-1: 30 16% 65%;
-    --chart-2: 35 22% 60%;
-    --chart-3: 145 45% 55%;
-    --chart-4: 30 35% 70%;
-    --chart-5: 280 55% 70%;
 
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 40 20% 92%;
+    --secondary: 30 10% 16%;
+    --secondary-foreground: 40 20% 92%;
 
-    --border: 0 0% 28%;
-    --input: 0 0% 14%;
-    --ring: 30 16% 65%;
+    --muted: 0 0% 20%;
+    --muted-strong: 0 0% 14%;
+    --muted-foreground: 40 10% 60%;
 
-    --sidebar-background: 30 12% 10%;
-    --sidebar-foreground: 36 18% 92%;
-    --sidebar-primary: 30 16% 65%;
-    --sidebar-primary-foreground: 30 12% 6%;
-    --sidebar-accent: 30 12% 16%;
-    --sidebar-accent-foreground: 36 18% 92%;
-    --sidebar-border: 30 10% 28%;
-    --sidebar-ring: 30 16% 65%;
+    --accent: 40 30% 85%;
+    --accent-foreground: 0 0% 4%;
 
-    --card-inner: 0 0% 8%;
-    --card-inner-deep: 0 0% 5%;
-  }
+    --oat: 35 25% 30%;
+    --oat-foreground: 35 30% 85%;
 
-  /* ===== THEME: ROSEWOOD (Rich rose & burgundy) ===== */
-  .theme-rosewood {
-    --background: 350 12% 82%;
-    --foreground: 350 20% 8%;
-
-    --card: 350 10% 85%;
-    --card-foreground: 350 20% 8%;
-
-    --popover: 350 10% 85%;
-    --popover-foreground: 350 20% 8%;
-
-    --primary: 345 55% 42%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 350 8% 78%;
-    --secondary-foreground: 350 20% 8%;
-
-    --muted: 350 6% 72%;
-    --muted-strong: 350 6% 65%;
-    --muted-foreground: 350 5% 30%;
-
-    --accent: 350 10% 76%;
-    --accent-foreground: 350 20% 8%;
-
-    --oat: 350 14% 68%;
-    --oat-foreground: 350 20% 25%;
-
-    --gold: 38 70% 38%;
+    --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
+
+    --success: 145 35% 25%;
+    --success-foreground: 145 45% 75%;
+
+    /* Warning - amber */
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
 
     /* Chart colors for data visualization */
     --chart-1: 345 55% 42%;
