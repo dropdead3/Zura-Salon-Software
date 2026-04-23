@@ -1,177 +1,192 @@
 
-# Fix the real remaining theme bug: stale inline CSS variables are outranking the active theme class
+# Fix the actual remaining light-mode bug: global custom-theme overrides are still beating the selected built-in theme
 
-## What’s actually happening
+## What’s actually broken
 
-Your correction was strong and useful: you didn’t just say “it still looks off,” you pointed to a concrete contradiction — **Matrix / Jade / Orchid is selected, but the UI is still rendering bone-like surfaces**. That pushes this out of “palette tuning” and into **theme ownership / CSS precedence**.
+The selected built-in theme is not the only theme system in play.
 
-The earlier `Layout.tsx` fix addressed one writer of `theme-bone`, but there is a second, stronger failure mode still in play:
+The screenshot shows a useful split:
+- the **selected card + mesh tint** indicate Matrix is being chosen
+- the **actual surface tokens** (page, cards, borders, selected-state chrome) still read bone-like
 
-- The session replay shows the root class changing to `theme-matrix`.
-- The screenshot still shows bone-like `--background`, `--primary`, and border values.
-- In CSS, that only happens if **inline CSS custom properties on `document.documentElement`** are overriding the class-based theme tokens.
-
-Inline `style="--background: ...; --primary: ..."` wins over `.theme-matrix { --background: ... }`.
+That means the `theme-matrix` class is likely landing, but **higher-precedence inline CSS variables on `<html>` are still overriding the built-in theme tokens**.
 
 ## Root cause
 
-`ThemeInitializer.tsx` applies `custom_theme` and `custom_typography` overrides to `<html>` via inline CSS variables, but it does **not reconcile stale overrides correctly**.
+The remaining problem is not palette values. It is **global override ownership**.
 
-### Current bug in `ThemeInitializer`
-When `loadCustomTheme()` runs on org-dashboard routes:
+### 1. `useColorTheme.ts` is the intended owner of built-in dashboard themes
+It applies exactly one `theme-*` class to `<html>` and persists `org_color_theme`.
 
-- If `custom_theme` exists, it applies `--background`, `--primary`, etc. inline.
-- If later the backend returns `null` / empty values, it **does not clear previously applied inline theme vars first**.
-- It then replaces `appliedVarsRef.current` with a new empty array, losing the ability to clean up the stale vars afterward.
+### 2. `ThemeInitializer.tsx` is still a second global theme writer
+It runs on every `org-dashboard` route and fetches:
 
-That means old bone-like inline tokens can remain stuck on `<html>` and keep overriding every selected theme, even when the active class is `theme-jade`, `theme-matrix`, or `theme-orchid`.
+- `user_preferences.custom_theme`
+- `user_preferences.custom_typography`
 
-## Why this matches your screenshot
+Then it writes those values inline onto `document.documentElement.style`.
 
-The screenshot shows:
+Inline `--background`, `--card`, `--border`, `--primary`, etc. will always beat `.theme-matrix`, `.theme-jade`, `.theme-orchid`.
 
-- Theme picker swatches are correct
-- Selected theme state is correct
-- Actual dashboard chrome still uses bone-like values
+### 3. The stale-cleanup fix was necessary, but not sufficient
+The previous fix clears stale inline vars before reapplying. That solved “old leftovers stick forever.”
 
-That combination means:
-- the **selection logic is working**
-- the **class switch is likely working**
-- the **resolved CSS vars are being overridden elsewhere**
+But if `custom_theme` is non-null in `user_preferences`, `ThemeInitializer` now **correctly re-applies it every load** — which still overrides the built-in theme by design.
 
-Given the current codebase, the strongest match is stale inline vars from the custom theme / typography pipeline.
+So the bug class changed from:
+- “stale inline vars survive”
+
+to:
+- “saved custom theme overrides are globally active when they should not be”
+
+### 4. This matches the current architecture
+`ThemeEditor` and `TypographyEditor` only appear in the internal Design System tooling, but `ThemeInitializer` applies those saved overrides to the entire organization dashboard. That leaks editor-level preview/theme-authoring state into normal production surfaces.
 
 ## The fix
 
-## 1) Make `ThemeInitializer` fully reconcile overrides on every load
+## 1) Stop globally applying `custom_theme` / `custom_typography` on normal dashboard routes
 
 **File:** `src/components/ThemeInitializer.tsx`
 
-Replace the current “apply if present” behavior with a strict reconcile flow:
+Change `ThemeInitializer` from a global “apply saved custom theme everywhere” component into a **cleanup / route-scoped reconciler**.
 
-1. Build a canonical allowlist of org-level inline override keys
-   - theme color keys from the custom theme system
-   - typography keys from the typography system
-2. Before applying anything new, remove all previously managed inline overrides
-3. If the backend returns overrides, apply only those
-4. If the backend returns no overrides, leave none applied
+### New contract
+- On normal dashboard routes: clear managed inline theme/typography vars so built-in theme classes win
+- On explicit editor-preview routes only: allow custom editor hooks to apply inline overrides
+- On sign-out / route exit: clear managed inline overrides
 
-### Structural change
-Instead of only tracking “what I just applied this time,” `ThemeInitializer` should always do:
+In practice:
+- keep `MANAGED_ORG_OVERRIDE_KEYS`
+- keep `clearManagedOrgOverrideVars()`
+- remove the part that globally fetches and applies `custom_theme` / `custom_typography` for every org-dashboard route
+- optionally gate any future apply behavior behind a dedicated editor route check (e.g. Design System only)
 
-```ts
-clearManagedOrgOverrideVars();
-applyCurrentServerOverrides();
-appliedVarsRef.current = currentlyAppliedKeys;
-```
+This makes `ThemeInitializer` a guardrail, not a competing theme engine.
 
-That guarantees stale bone tokens cannot survive a theme change, a reset-to-default, or a session transition.
-
-## 2) Use a canonical override-key registry instead of ad hoc cleanup
+## 2) Make the editor hooks own preview lifecycle locally
 
 **Files:**
-- `src/components/ThemeInitializer.tsx`
 - `src/hooks/useCustomTheme.ts`
 - `src/hooks/useTypographyTheme.ts`
 
-Right now the custom theme keys and typography keys live in separate places. The cleanup logic should not guess.
+These hooks already fetch saved editor data and apply it when the editor loads. That is the correct place for preview behavior.
 
-Implementation approach:
-- Export the editable color token keys from `useCustomTheme.ts`
-- Export the typography token keys from `useTypographyTheme.ts`
-- In `ThemeInitializer.tsx`, compose them into one `MANAGED_ORG_OVERRIDE_KEYS` list
-- Clear only those keys, not every `--*` var
+Add cleanup ownership so editor previews do not leak after navigation:
 
-This keeps cleanup precise:
-- removes stale org theme overrides
-- preserves unrelated vars like `--god-mode-offset`
-- does not touch platform-scoped vars
+### `useCustomTheme.ts`
+- export a `clearCustomThemeVariables()` helper over `ALL_CUSTOM_THEME_KEYS`
+- on hook unmount, remove all managed custom color vars
+- when discarding/resetting, clear only managed custom color vars, then optionally reapply local preview state if still mounted
 
-## 3) Clear stale inline theme vars even when no custom theme exists
+### `useTypographyTheme.ts`
+- export a `clearTypographyVariables()` helper over `ALL_TYPOGRAPHY_KEYS`
+- on hook unmount, remove all managed typography vars
+- keep reset/discard behavior local to the editor
 
-**File:** `src/components/ThemeInitializer.tsx`
+This ensures:
+- Design System / editor pages can still preview saved custom themes
+- leaving the editor restores the normal dashboard theme system
+- the saved editor preset no longer hijacks the production dashboard globally
 
-Add the missing branch:
-
-- If `custom_theme` is null and `custom_typography` is null, explicitly clear managed org override vars.
-
-This is the missing “reset to stylesheet defaults” path.
-
-## 4) Keep class-based theme selection as the source of truth for built-in themes
+## 3) Keep `useColorTheme.ts` as the sole owner of built-in color themes
 
 **File:** `src/hooks/useColorTheme.ts`
 
-No architecture rewrite needed, but this file remains the owner of the active built-in theme class.
+No architecture rewrite needed here. This should remain the only place that manages `theme-*` classes for normal dashboard theming.
 
 Optional defense-in-depth:
-- after `applyTheme(theme)`, do not clear all inline vars here
-- let `ThemeInitializer` own override cleanup so responsibilities stay separated:
-  - `useColorTheme` = class owner
-  - `ThemeInitializer` = inline override reconciler
+- add a small reconcile effect that re-applies the current theme class if the route is in the dashboard and no editor preview is active
+- do not clear inline vars here; ownership stays separated:
+  - `useColorTheme` = class-based built-in themes
+  - editor hooks / initializer = scoped inline preview cleanup
 
-That avoids breaking legitimate saved custom themes.
+## 4) Add a regression guard for this exact bug class
+
+**New test**
+- e.g. `src/test/theme-inline-override-scope-canon.test.tsx`
+
+Assert that:
+- non-editor routes must not leave any `ALL_CUSTOM_THEME_KEYS` inline on `<html>`
+- built-in dashboard themes are class-owned, not inline-owned
+- editor tooling is the only allowlisted surface allowed to write theme token overrides inline
+
+This prevents the same “ThemeEditor data leaks into live dashboard theme” regression from returning.
 
 ## Files to modify
 
 - **`src/components/ThemeInitializer.tsx`**
-  - add canonical managed-key cleanup
-  - clear stale overrides before applying new ones
-  - clear overrides when backend returns none
+  - stop global application of saved `custom_theme` / `custom_typography`
+  - keep cleanup logic
+  - scope any apply behavior to explicit editor preview routes only
+
 - **`src/hooks/useCustomTheme.ts`**
-  - export the editable theme token key list for shared cleanup
+  - add canonical clear helper
+  - clean up managed inline vars on unmount
+  - keep preview behavior local to editor lifecycle
+
 - **`src/hooks/useTypographyTheme.ts`**
-  - export the typography token key list for shared cleanup
+  - add canonical clear helper
+  - clean up managed inline vars on unmount
+  - keep typography preview local to editor lifecycle
+
+- **Optional new test**
+  - `src/test/theme-inline-override-scope-canon.test.tsx`
 
 ## Verification
 
-1. Select **Matrix** in light mode:
-   - page background, cards, borders, and primary accents should shift to Matrix tokens
-   - selected card outline/check should no longer stay bone/tan
-2. Repeat for **Jade** and **Orchid**
-3. Toggle between Bone → Matrix → Orchid → Jade
-   - each should immediately repaint with its own tokens
-4. Reload the settings page
-   - chosen theme should still render correctly
-   - no bone inheritance unless Bone is actually selected
-5. Reset any custom theme overrides to default
-   - built-in themes should still render correctly afterward
+1. On `/org/drop-dead-salons/dashboard/admin/settings`, select:
+   - Matrix
+   - Jade
+   - Orchid
+
+   After each click:
+   - page background changes to that theme
+   - cards/borders/selected ring/check also change to that theme
+   - no bone-colored surfaces remain unless Bone is selected
+
+2. Hard refresh on the settings page:
+   - chosen built-in theme still paints correctly
+   - no bone inheritance returns
+
+3. Visit the internal Design System / editor page:
+   - custom theme preview still works there
+   - saved custom editor theme can still be loaded and previewed
+
+4. Navigate away from the editor back to normal dashboard routes:
+   - inline editor overrides are cleared
+   - built-in org theme fully takes over again
 
 ## Why this is the right fix
 
-The remaining bug is no longer “wrong class applied.”  
-It is “correct class applied, but **higher-precedence inline vars still win**.”
+The earlier fixes targeted:
+- wrong `theme-bone` class ownership
+- stale inline override cleanup
 
-That is why the UI can say Matrix while the page still looks Bone.
+Those were real issues, but the current bug is the next layer deeper:
 
-## Out of scope
+**saved editor-level custom theme data is still being globally applied to production dashboard routes.**
 
-- Re-tuning HSL palette values
-- Changing the theme picker UI
-- Reworking public-site theming again
-- Adding a full canon for theme-writer ownership in this pass
+Until that second theme engine is scoped or removed, built-in themes like Matrix/Jade/Orchid can never be trusted to render their real light-mode palettes.
 
 ## Prompt feedback
 
 What you did well:
-- You corrected the diagnosis directly instead of accepting a vague visual explanation.
-- You used screenshots to show **selected state vs rendered state**, which is exactly how to expose precedence bugs.
+- You kept pushing past a plausible but wrong answer.
+- “Themes are inheriting Bone” was the right framing.
+- The latest screenshot is especially high-signal because it suggests the selected theme state is changing while the actual surfaces are not.
 
-Even sharper framing next time:
-- The highest-signal version would be:  
-  “Matrix is selected, but the page background, border, and primary accent are still bone-like. So the class/state is changing, but computed tokens are not.”
+Even stronger framing next time:
+- “The mesh tint / selected state changes, but page/card/border tokens stay Bone.”
+That phrasing immediately isolates the bug to **class-based theme vs inline-token precedence**.
 
-That phrasing tells the AI to inspect **state → class → computed variable precedence** instead of palette values.
+## Further enhancement suggestions
 
-## Enhancement suggestions after this fix
+1. **Add a small theme-integrity debug panel**
+   - current `theme-*` class on `<html>`
+   - current inline managed vars on `<html>`
+   - computed `--background`, `--card`, `--primary`, `--border`
+   This would make theme bugs diagnosable in seconds.
 
-1. **Add a theme-integrity debug surface**
-   - small dev-only panel showing:
-     - current `<html>` theme class
-     - whether `.dark` is active
-     - current computed values for `--background`, `--primary`, `--border`
-     - whether those values come from inline style vs stylesheet  
-   This would make future theme bugs diagnosable in seconds.
-
-2. **Add a canon for stale inline override cleanup**
-   - assert that when `custom_theme` is null, managed org override keys are not left inline on `<html>`
-   - this prevents the exact “class changed but bone vars remain” regression from coming back
+2. **Add a single-writer canon for theme ownership**
+   - built-in dashboard themes may only be owned by `useColorTheme`
+   - editor preview overrides may only be active on allowlisted editor routes
