@@ -2855,196 +2855,196 @@ html.theme-orchid body::before {
 
 html.theme-zura {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(270 55% 88% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(290 50% 90% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(250 45% 88% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(280 40% 92% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(270 60% 86% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(290 55% 88% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(250 50% 86% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(280 45% 90% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-bone {
   --mesh-gradient:
-    radial-gradient(at 20% 25%, hsl(35 28% 88% / 0.6) 0px, transparent 55%),
-    radial-gradient(at 80% 20%, hsl(28 22% 90% / 0.5) 0px, transparent 50%),
-    radial-gradient(at 75% 80%, hsl(40 18% 86% / 0.45) 0px, transparent 55%),
-    radial-gradient(at 25% 75%, hsl(30 25% 92% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 20% 25%, hsl(35 32% 86% / 0.75) 0px, transparent 65%),
+    radial-gradient(at 80% 20%, hsl(28 26% 88% / 0.65) 0px, transparent 60%),
+    radial-gradient(at 75% 80%, hsl(40 22% 84% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 25% 75%, hsl(30 28% 90% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-rosewood {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(350 40% 90% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(340 45% 88% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(355 35% 86% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(345 30% 92% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(350 45% 88% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(340 50% 86% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(355 40% 84% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(345 35% 90% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-sage {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(145 35% 84% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(155 30% 86% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(135 28% 82% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(150 25% 88% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(145 40% 82% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(155 35% 84% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(135 32% 80% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(150 30% 86% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-jade {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(180 35% 88% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(170 40% 86% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(190 30% 84% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(175 28% 90% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(180 40% 86% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(170 45% 84% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(190 35% 82% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(175 32% 88% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-marine {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(218 60% 90% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(208 55% 92% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(225 50% 88% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(215 45% 93% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(218 65% 88% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(208 60% 90% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(225 55% 86% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(215 50% 91% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-cognac {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(28 45% 86% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(20 40% 88% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(35 38% 84% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(25 35% 90% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(28 50% 84% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(20 45% 86% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(35 42% 82% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(25 40% 88% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-noir {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(0 0% 92% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(0 0% 89% / 0.4) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(0 0% 91% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(0 0% 94% / 0.35) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(0 0% 90% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(0 0% 87% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(0 0% 89% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(0 0% 92% / 0.5) 0px, transparent 60%);
 }
 
 html.theme-neon {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(330 55% 92% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(320 45% 90% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(340 50% 88% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(325 40% 94% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(330 60% 90% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(320 50% 88% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(340 55% 86% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(325 45% 92% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-matrix {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(220 40% 92% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(145 35% 90% / 0.4) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(210 35% 88% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(150 30% 92% / 0.35) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(220 45% 90% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(145 40% 88% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(210 40% 86% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(150 35% 90% / 0.5) 0px, transparent 60%);
 }
 
 html.theme-peach {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(25 70% 90% / 0.6) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(15 65% 92% / 0.5) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(30 55% 88% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(20 60% 93% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(25 75% 88% / 0.75) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(15 70% 90% / 0.65) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(30 60% 86% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(20 65% 91% / 0.55) 0px, transparent 60%);
 }
 
 html.theme-orchid {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(290 55% 92% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(200 60% 92% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(280 50% 90% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(310 45% 94% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(290 60% 90% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(200 65% 90% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(280 55% 88% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(310 50% 92% / 0.55) 0px, transparent 60%);
 }
 
 /* ── Dark themes — deeper, lower-opacity tints ──── */
 
 html.dark.theme-zura {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(270 50% 18% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(290 45% 14% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(250 45% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(280 40% 12% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(270 55% 22% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(290 50% 18% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(250 50% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(280 45% 16% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-bone {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(35 18% 14% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(28 15% 12% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(40 18% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(30 20% 13% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(35 22% 18% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(28 18% 16% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(40 22% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(30 24% 17% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-rosewood {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(350 35% 16% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(340 40% 14% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(355 30% 18% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(345 28% 13% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(350 40% 20% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(340 45% 18% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(355 35% 22% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(345 32% 17% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-sage {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(145 25% 14% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(155 22% 12% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(135 20% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(150 18% 13% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(145 30% 18% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(155 26% 16% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(135 24% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(150 22% 17% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-jade {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(180 40% 14% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(170 45% 12% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(190 35% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(175 30% 13% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(180 45% 18% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(170 50% 16% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(190 40% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(175 35% 17% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-marine {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(218 60% 14% / 0.6) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(208 55% 12% / 0.5) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(225 50% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(215 45% 13% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(218 65% 18% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(208 60% 16% / 0.6) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(225 55% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(215 50% 17% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-cognac {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(28 35% 14% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(20 30% 12% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(35 28% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(25 25% 13% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(28 40% 18% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(20 35% 16% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(35 32% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(25 28% 17% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-noir {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(0 0% 11% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(0 0% 9% / 0.4) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(0 0% 12% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(0 0% 10% / 0.35) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(0 0% 14% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(0 0% 12% / 0.5) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(0 0% 15% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(0 0% 13% / 0.45) 0px, transparent 60%);
 }
 
 html.dark.theme-neon {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(330 45% 14% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(320 40% 12% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(340 42% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(325 35% 11% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(330 50% 18% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(320 45% 16% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(340 47% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(325 40% 15% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-matrix {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(220 50% 12% / 0.6) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(145 40% 10% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(210 45% 14% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(150 35% 11% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(220 55% 16% / 0.7) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(145 45% 14% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(210 50% 18% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(150 40% 15% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-peach {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(25 35% 14% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(15 30% 12% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(30 28% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(20 32% 11% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(25 40% 18% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(15 35% 16% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(30 32% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(20 36% 15% / 0.5) 0px, transparent 60%);
 }
 
 html.dark.theme-orchid {
   --mesh-gradient:
-    radial-gradient(at 18% 22%, hsl(290 50% 14% / 0.55) 0px, transparent 55%),
-    radial-gradient(at 82% 18%, hsl(200 50% 12% / 0.45) 0px, transparent 50%),
-    radial-gradient(at 78% 82%, hsl(280 45% 16% / 0.5) 0px, transparent 55%),
-    radial-gradient(at 22% 78%, hsl(310 40% 13% / 0.4) 0px, transparent 50%);
+    radial-gradient(at 18% 22%, hsl(290 55% 18% / 0.65) 0px, transparent 65%),
+    radial-gradient(at 82% 18%, hsl(200 55% 16% / 0.55) 0px, transparent 60%),
+    radial-gradient(at 78% 82%, hsl(280 50% 20% / 0.6) 0px, transparent 65%),
+    radial-gradient(at 22% 78%, hsl(310 45% 17% / 0.5) 0px, transparent 60%);
 }
 
 /* Reduce motion: keep mesh static (it already is, but disable any future transitions) */
