@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
@@ -30,6 +31,59 @@ function migrateLegacyTheme(value: string | null | undefined): ColorTheme | null
 type ColorThemeSettings = Record<string, unknown> & {
   theme: ColorTheme;
 };
+
+const THEME_OVERRIDE_KEYS = [
+  'background',
+  'foreground',
+  'card',
+  'card-foreground',
+  'popover',
+  'popover-foreground',
+  'primary',
+  'primary-foreground',
+  'secondary',
+  'secondary-foreground',
+  'muted',
+  'muted-strong',
+  'muted-foreground',
+  'accent',
+  'accent-foreground',
+  'oat',
+  'oat-foreground',
+  'gold',
+  'gold-foreground',
+  'success',
+  'success-foreground',
+  'warning',
+  'warning-foreground',
+  'destructive',
+  'destructive-foreground',
+  'chart-1',
+  'chart-2',
+  'chart-3',
+  'chart-4',
+  'chart-5',
+  'border',
+  'input',
+  'ring',
+  'sidebar-background',
+  'sidebar-foreground',
+  'sidebar-primary',
+  'sidebar-primary-foreground',
+  'sidebar-accent',
+  'sidebar-accent-foreground',
+  'sidebar-border',
+  'sidebar-ring',
+  'card-inner',
+  'card-inner-deep',
+] as const;
+
+function clearInlineThemeOverrides() {
+  const html = document.documentElement;
+  THEME_OVERRIDE_KEYS.forEach((key) => {
+    html.style.removeProperty(`--${key}`);
+  });
+}
 
 function applyTheme(theme: ColorTheme) {
   const html = document.documentElement;
@@ -88,6 +142,7 @@ export function useColorTheme() {
 
   const setColorTheme = useCallback((theme: ColorTheme) => {
     // 1. Instant DOM + localStorage update
+    clearInlineThemeOverrides();
     applyTheme(theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
 
@@ -98,6 +153,22 @@ export function useColorTheme() {
     if (orgId) {
       updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme } });
     }
+
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('user_preferences')
+        .upsert(
+          {
+            user_id: user.id,
+            custom_theme: null,
+            updated_at: new Date().toISOString(),
+          } as never,
+          { onConflict: 'user_id' }
+        );
+    })();
   }, [orgId, queryClient, queryKey, updateSetting]);
 
   return {

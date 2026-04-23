@@ -496,7 +496,7 @@ function ThemeTab() {
       await activateTheme.mutateAsync(themeId);
       // Apply color scheme
       const LEGACY_MAP: Record<string, ColorTheme> = { cream: 'bone', rose: 'rosewood', ocean: 'marine', ember: 'cognac' };
-      const validSchemes = ['zura', 'bone', 'rosewood', 'sage', 'marine', 'cognac', 'noir', 'neon', 'cream', 'rose', 'ocean', 'ember'];
+      const validSchemes = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid', 'cream', 'rose', 'ocean', 'ember'];
       if (validSchemes.includes(theme.color_scheme)) {
         const raw = theme.color_scheme as string;
         const colorThemeId = (LEGACY_MAP[raw] ?? raw) as ColorTheme;
