@@ -37,6 +37,8 @@ export const Sparkline = React.forwardRef<SVGSVGElement, SparklineProps>(
     },
     ref
   ) => {
+    const gradientId = React.useId();
+
     if (!data || data.length < 2) {
       return (
         <svg
@@ -63,7 +65,6 @@ export const Sparkline = React.forwardRef<SVGSVGElement, SparklineProps>(
 
     const linePath = points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
     const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
-    const gradientId = React.useId();
 
     return (
       <svg
