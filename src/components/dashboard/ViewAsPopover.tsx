@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Eye, EyeOff, Search, FlaskConical, Users, Shield } from 'lucide-react';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -50,6 +51,8 @@ export function ViewAsPopover() {
 
   const { data: allRoles = [] } = useRoles();
   const { data: allUsers = [], isLoading: usersLoading } = useAllUsersWithRoles();
+  const { data: profile } = useEmployeeProfile();
+  const canImpersonate = !!(profile?.is_super_admin || profile?.is_primary_owner);
 
   // Grouped roles
   const grouped = useMemo(() => {
@@ -72,6 +75,9 @@ export function ViewAsPopover() {
         return name.includes(q) || roles.includes(q);
       });
   }, [allUsers, user?.id, debouncedFilter]);
+
+  // Defense-in-depth gate: only super admins / account owners may use this surface.
+  if (!canImpersonate) return null;
 
   // Active impersonation — show exit button
   if (isViewingAs || isViewingAsUser) {
@@ -112,7 +118,7 @@ export function ViewAsPopover() {
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent side="bottom">Impersonate a role or team member</TooltipContent>
+        <TooltipContent side="bottom">View the dashboard as a team member</TooltipContent>
       </Tooltip>
 
       {open && createPortal(
@@ -131,7 +137,7 @@ export function ViewAsPopover() {
         style={{ maxHeight: 'min(420px, var(--radix-popover-content-available-height))' }}
       >
         <div className="silver-shine-inner block bg-card rounded-[calc(theme(borderRadius.xl)-1px)] overflow-hidden flex flex-col" style={{ maxHeight: 'inherit' }}>
-        <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
+        <Tabs defaultValue="team" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
           {/* Header */}
           <div className="px-3 pt-3 pb-2">
             <TabsList className="grid w-full grid-cols-3 h-10">

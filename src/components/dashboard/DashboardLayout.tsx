@@ -448,10 +448,12 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   };
 
   const isPrimaryOwner = (employeeProfile as any)?.is_primary_owner ?? false;
+  const isSuperAdmin = (employeeProfile as any)?.is_super_admin ?? false;
+  const canImpersonateTeam = isSuperAdmin || isPrimaryOwner;
   const roleBadges = buildRoleBadges(roles as AppRole[], isPrimaryOwner);
 
   const ViewAsToggle = () => {
-    if (!isAdmin && !isPlatformUser) return null;
+    if (!canImpersonateTeam) return null;
     return <ViewAsPopover />;
   };
 
