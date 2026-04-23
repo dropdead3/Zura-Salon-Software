@@ -53,7 +53,6 @@ export function ViewAsPopover() {
   const { data: allUsers = [], isLoading: usersLoading } = useAllUsersWithRoles();
   const { data: profile } = useEmployeeProfile();
   const canImpersonate = !!(profile?.is_super_admin || profile?.is_primary_owner);
-  if (!canImpersonate) return null;
 
   // Grouped roles
   const grouped = useMemo(() => {
@@ -76,6 +75,9 @@ export function ViewAsPopover() {
         return name.includes(q) || roles.includes(q);
       });
   }, [allUsers, user?.id, debouncedFilter]);
+
+  // Defense-in-depth gate: only super admins / account owners may use this surface.
+  if (!canImpersonate) return null;
 
   // Active impersonation — show exit button
   if (isViewingAs || isViewingAsUser) {
