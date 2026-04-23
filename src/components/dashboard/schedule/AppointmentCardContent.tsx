@@ -329,9 +329,11 @@ function GridContent({
                 <RebookSkippedDot label={declinedReasonLabel} />
               )}
               <span className={cn(
-                'text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border',
-                badge.bg, badge.text, badge.border
+                'inline-flex items-center gap-1 text-[10px] px-1.5 py-[1px] rounded-full font-medium whitespace-nowrap border backdrop-blur-[2px]',
+                'bg-white/55 dark:bg-black/25',
+                badge.text, badge.border, 'border-opacity-40'
               )}>
+                <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
                 {statusLabel}
               </span>
             </div>
