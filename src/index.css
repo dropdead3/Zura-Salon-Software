@@ -1804,6 +1804,8 @@ html, body, #root {
       hsl(var(--border) / 0) 100%
     );
   }
+
+  /* ───────── Wave 1: macOS-style focus ring with offset ─────────
      2px ring + 2px transparent offset reads as proper focus, not "border replacement". */
   .focus-ring-premium:focus-visible,
   *:focus-visible:not([data-radix-collection-item]) {
