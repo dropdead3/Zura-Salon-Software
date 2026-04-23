@@ -45,7 +45,7 @@ export function GodModeBar() {
         background:
           'linear-gradient(to right, hsl(0 0% 6% / 0.78), hsl(var(--primary) / 0.78), hsl(0 0% 6% / 0.78))',
         borderBottomColor: 'hsl(var(--primary) / 0.4)',
-        boxShadow: 'none',
+        boxShadow: '0 4px 20px -4px hsl(var(--primary) / 0.35)',
         // Z icon matches the bar's primary accent (hot pink in Neon, etc.).
         iconColor: 'hsl(var(--primary))',
         // Text uses near-white — primary-foreground resolves to near-black under
@@ -64,7 +64,7 @@ export function GodModeBar() {
         background:
           'linear-gradient(to right, hsl(0 0% 100% / 0.82), hsl(var(--primary) / 0.42), hsl(0 0% 100% / 0.82))',
         borderBottomColor: 'hsl(var(--primary) / 0.35)',
-        boxShadow: 'none',
+        boxShadow: '0 2px 12px -4px hsl(var(--primary) / 0.25)',
         iconColor: 'hsl(0 0% 8%)',
         labelColor: 'hsl(0 0% 8%)',
         dividerBg: 'hsl(var(--primary) / 0.35)',
