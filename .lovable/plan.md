@@ -1,128 +1,188 @@
 
 
-# Bone dark mode: restore correct cool oat tokens (remove rosewood contamination)
+# New theme: **Jade** — premium teal/mint jewel-tone
 
 ## Diagnosis
 
-The `.dark.theme-bone` block in `src/index.css` (lines 179–247) is **contaminated with Rosewood values**. Roughly half the dark-mode tokens use rose hues (345°, 350°) and inverted lightness — these don't belong to Bone.
+The palette already has **Sage** (mid-mint green, hue 145°, soft pastel-leaning). A second green-family theme must differentiate on three axes or it will read as "Sage 2":
 
-| Token | Current (wrong) | Reads as |
+| Axis | Sage | Jade (new) |
 |---|---|---|
-| `--border` | `350 6% 65%` | bright pinkish-gray (way too light for dark mode) |
-| `--input` | `350 6% 74%` | bright pinkish-gray |
-| `--ring` | `345 55% 42%` | **rose pink** focus rings |
-| `--chart-1` | `345 55% 42%` | **rose pink** chart series |
-| `--chart-2` | `345 35% 60%` | rose pink |
-| `--sidebar-background` | `350 10% 83%` | **LIGHT pink sidebar** in dark mode |
-| `--sidebar-foreground` | `350 20% 8%` | dark text on light sidebar (inverted) |
-| `--sidebar-primary` | `345 55% 42%` | rose pink |
-| `--sidebar-border` | `350 6% 65%` | bright pinkish |
-| `--card-inner` | `350 6% 80%` | bright pinkish (way too light) |
-| `--accent` | `40 30% 85%` | bright cream (too light) |
+| Hue | 145° (true green, leaf) | 175° (teal, spa/jewel) |
+| Saturation register | medium pastel | deep jewel-tone |
+| Feel | calming, herbal, soft | premium, oceanic, luxury (Tiffany / Aman / Four Seasons) |
+| Anchor reference | sage leaf, eucalyptus | jade stone, deep teal velvet, emerald sea |
 
-This is why:
-1. Bone in dark mode has **bright strokes/borders** — borders are at 65–74% lightness instead of ~18%.
-2. The schedule looks off — appointment cards inherit chart-1/chart-2 (rose pink) and ring/border tokens (pinkish-bright).
-3. There are also **duplicate `--success` / `--warning` blocks** (lines 209–214 and 223–227).
+Hue 175° sits at the **teal/cyan-green boundary** — distinctly bluer than mint, distinctly greener than ocean. Pairs naturally with the system's gold accent (chart-4) for the "jewel + warm metal" pairing that reads as luxury hospitality.
 
-## Fix
+## What changes
 
-Rewrite `.dark.theme-bone` (lines 179–247) with proper cool-oat dark tokens — mirror Zura's dark structure, swap palette to oat/cool-gray (hue 30°, low saturation 8–16%), and restore the correct dark-mode lightness range (4–18% for chrome, 60–70% for accents).
+### Single concept
 
-### Corrected dark mode tokens
+Add an **8th theme called Jade** — premium deep-teal jewel-tone with gold accent. Slots between Sage (calming green) and Marine (electric blue) in the spectrum. Reads as Tiffany / spa / Aman, not as "another mint."
 
-| Token | Fixed value |
-|---|---|
-| `--background` | `0 0% 4%` (kept) |
-| `--foreground` | `40 20% 92%` (kept) |
-| `--card` | `0 0% 11%` (kept) |
-| `--popover` | `0 0% 11%` (kept) |
-| `--primary` | `30 16% 65%` (kept — cool oat) |
-| `--secondary` | `30 10% 16%` (kept) |
-| `--muted` | `0 0% 20%` (kept) |
-| `--muted-strong` | `0 0% 14%` (kept) |
-| `--muted-foreground` | `40 10% 60%` (kept) |
-| `--accent` | `30 12% 16%` (was `40 30% 85%` — fix: dark hover surface) |
-| `--accent-foreground` | `40 20% 92%` (was `0 0% 4%` — fix: light text on dark accent) |
-| `--oat` | `35 25% 30%` (kept) |
-| `--gold` | `42 75% 45%` (kept) |
-| `--chart-1` | `30 16% 65%` (was rose `345 55% 42%`) |
-| `--chart-2` | `35 22% 60%` (was rose `345 35% 60%`) |
-| `--chart-3` | `28 55% 45%` (kept) |
-| `--chart-4` | `38 70% 45%` (kept — gold differentiator) |
-| `--chart-5` | `280 50% 50%` (kept) |
-| `--border` | `30 8% 18%` (was bright pink `350 6% 65%`) |
-| `--input` | `30 8% 22%` (was bright pink `350 6% 74%`) |
-| `--ring` | `30 16% 65%` (was rose `345 55% 42%`) |
-| `--sidebar-background` | `0 0% 6%` (was light pink `350 10% 83%`) |
-| `--sidebar-foreground` | `40 20% 92%` (was dark `350 20% 8%`) |
-| `--sidebar-primary` | `30 16% 65%` (was rose) |
-| `--sidebar-primary-foreground` | `30 12% 6%` |
-| `--sidebar-accent` | `30 8% 14%` (was light `350 8% 78%`) |
-| `--sidebar-accent-foreground` | `40 20% 92%` (was dark `350 20% 8%`) |
-| `--sidebar-border` | `30 8% 16%` (was bright pink) |
-| `--sidebar-ring` | `30 16% 65%` (was rose) |
-| `--card-inner` | `0 0% 13%` (was light pink `350 6% 80%`) |
-| `--card-inner-deep` | `0 0% 9%` (was light pink `350 4% 76%`) |
+### 1. `src/hooks/useColorTheme.ts`
 
-Also: **remove the duplicate `--success` / `--warning` block** at lines 223–227 (already declared at 209–214).
+- Add `'jade'` to `ColorTheme` union and `ALL_THEMES` array
+- Add `jade: 'Herb Garden'` (closest match) to `COLOR_THEME_TO_CATEGORY_MAP`
+- Append entry to `colorThemes` array:
+
+```ts
+{
+  id: 'jade' as ColorTheme,
+  name: 'Jade',
+  description: 'Deep teal jewel & gold',
+  lightPreview: {
+    bg: 'hsl(180 20% 95%)',
+    accent: 'hsl(178 25% 85%)',
+    primary: 'hsl(175 65% 32%)',
+  },
+  darkPreview: {
+    bg: 'hsl(180 35% 6%)',
+    accent: 'hsl(178 30% 16%)',
+    primary: 'hsl(172 70% 45%)',
+  },
+}
+```
+
+### 2. `src/index.css` — add `.theme-jade` + `.dark.theme-jade` blocks
+
+Mirror Sage's structure, swap palette to deep teal jewel-tone:
+
+**Light mode `.theme-jade` core tokens:**
+
+| Token | Value | Why |
+|---|---|---|
+| `--background` | `180 20% 95%` | cool teal-tinted off-white |
+| `--card` | `180 15% 97%` | barely-tinted card surface |
+| `--popover` | `180 15% 97%` | match card |
+| `--primary` | `175 65% 32%` | deep jade — saturated, jewel-tone, not pastel |
+| `--primary-foreground` | `0 0% 100%` | white on jade |
+| `--secondary` | `178 18% 88%` | soft teal surface |
+| `--muted` | `178 12% 90%` | quieter teal |
+| `--muted-foreground` | `180 15% 35%` | readable teal-gray text |
+| `--accent` | `178 25% 85%` | hover state |
+| `--gold` | `42 75% 45%` | gold pairing (matches doctrine) |
+| `--chart-1` | `175 65% 32%` | match primary |
+| `--chart-2` | `185 55% 45%` | brighter cyan-teal complement |
+| `--chart-3` | `155 45% 40%` | green-jade bridge |
+| `--chart-4` | `42 75% 45%` | gold differentiator (executive accent) |
+| `--chart-5` | `220 60% 50%` | deep blue contrast |
+| `--border` | `178 15% 82%` | teal-tinted border |
+| `--input` | `178 15% 88%` | teal-tinted input |
+| `--ring` | `175 65% 32%` | match primary |
+| `--sidebar-background` | `178 18% 92%` | soft teal sidebar |
+| `--sidebar-primary` | `175 65% 32%` | match primary |
+| `--sidebar-accent` | `178 20% 86%` | active state |
+| `--sidebar-border` | `178 15% 82%` | match border |
+
+**Dark mode `.dark.theme-jade` core tokens:**
+
+| Token | Value | Why |
+|---|---|---|
+| `--background` | `180 35% 6%` | rich deep-teal chrome (visibly teal, not gray-black) |
+| `--card` | `180 30% 11%` | teal-rich card surface |
+| `--popover` | `180 30% 11%` | match card |
+| `--primary` | `172 70% 45%` | luminous jade — pops on dark teal |
+| `--primary-foreground` | `180 35% 6%` | dark-teal text on jade button |
+| `--secondary` | `178 25% 16%` | teal-rich secondary |
+| `--muted` | `180 22% 18%` | quieter teal |
+| `--muted-foreground` | `178 18% 65%` | readable text |
+| `--accent` | `178 30% 16%` | hover state |
+| `--gold` | `42 75% 50%` | gold pairing |
+| `--chart-1` | `172 70% 55%` | match primary, slightly brighter for charts |
+| `--chart-2` | `185 65% 60%` | bright cyan-teal |
+| `--chart-3` | `155 50% 55%` | green-jade bridge |
+| `--chart-4` | `42 80% 55%` | gold |
+| `--chart-5` | `220 70% 65%` | deep blue contrast |
+| `--border` | `180 22% 18%` | teal-tinted border |
+| `--input` | `180 22% 16%` | teal-tinted input |
+| `--ring` | `172 70% 45%` | match primary |
+| `--sidebar-background` | `180 35% 5%` | deep teal sidebar |
+| `--sidebar-primary` | `172 70% 45%` | match primary |
+| `--sidebar-accent` | `180 28% 13%` | active state |
+| `--sidebar-border` | `180 22% 18%` | match border |
+| `--card-inner` | `180 25% 9%` | nested card |
+| `--card-inner-deep` | `180 25% 7%` | deepest nested |
+
+(Full token blocks will mirror the structure of `.theme-sage` / `.dark.theme-sage` for completeness — `--success`, `--warning`, `--destructive`, `--oat`, all sidebar tokens, etc.)
+
+### 3. `src/lib/terminal-splash-palettes.ts`
+
+Add `jade` palette entry:
+
+```ts
+jade: palette(
+  ['#04141a', '#0a3338', '#04141a'],
+  '#1cb39c',   // luminous teal accent
+  '#149782',   // deeper glow
+  28, 179, 156,
+),
+```
 
 ## Acceptance
 
-1. Bone in dark mode: borders, strokes, and dividers read as **subtle dark dividers** (~18% lightness), not bright pink lines.
-2. Bone in dark mode: sidebar reads as **deep dark surface** (~6% lightness), not a light pink panel.
-3. Bone in dark mode: focus rings, primary buttons, chart-1 series read as **cool oat**, not rose pink.
-4. Schedule appointment cards in dark mode bone: borders/strokes calm and dark, no bright pink leakage.
-5. Light mode bone unchanged.
-6. Rosewood theme unchanged (it has its own block correctly defined further down).
-7. No duplicate token declarations in `.dark.theme-bone`.
+1. New **Jade** swatch appears in theme picker as the 8th option (after Neon, or grouped with greens after Sage — order to confirm).
+2. Jade swatch reads as **deep jewel teal**, distinctly bluer than Sage and distinctly greener than Marine — no confusion with either.
+3. Selecting Jade in light mode: sidebar, primary buttons, focus rings, chart-1 series read as **deep jade** with gold chart-4 accent.
+4. Selecting Jade in dark mode: chrome reads as **rich deep-teal** (visibly teal, not gray), accent pops as **luminous jade**.
+5. Theme persists to `site_settings` via existing `useColorTheme` flow.
+6. Terminal splash for Jade shows deep teal gradient + luminous teal accent.
+7. No other theme is affected.
+8. All 8 themes render correctly side-by-side in the Appearance grid.
 
 ## What stays untouched
 
-- Light-mode `.theme-bone` block (lines 77–177) — already correct from prior pass.
-- Rosewood, Sage, Marine, Cognac, Noir, Neon, Zura blocks — all separate from this fix.
-- Theme picker swatches in `useColorTheme.ts` — already match the correct oat values.
-- Terminal splash palette — already correct.
+- All 7 existing themes.
+- Theme picker chrome, swatch tile layout, persistence flow, migration logic.
+- Gold accent system (chart-4) — Jade adopts it like Marine and Bone.
+- BookingThemeProvider, DashboardThemeContext, ThemeInitializer — Jade flows through existing infrastructure.
 
 ## Out of scope
 
-- Any change to other themes.
-- Adjusting the light-mode bone tokens.
-- Changing the chrome darkness floor (background stays `0 0% 4%`).
+- Renaming or retiring any existing theme.
+- Adding theme to public booking surface palette presets (separate system; can follow if requested).
+- Adjusting Sage to make room — Jade is a distinct sibling, not a replacement.
 
-## Root cause note
+## Doctrine alignment
 
-Likely happened during an earlier multi-theme edit where Rosewood's dark block was duplicated as a starting point for Bone's dark block and only partially overwritten. The light-mode block was rewritten cleanly; the dark-mode block kept the rosewood inheritance for ~12 tokens. Worth a quick scan of other themes' dark blocks (Sage, Marine, Cognac, Noir, Neon) to confirm none have the same contamination — but those are out of scope unless you flag them.
+- **Calm executive UX:** jewel-tone teal + gold reads as luxury hospitality (Aman, Four Seasons, Tiffany), not loud.
+- **Brand abstraction:** "Jade" is evocative-neutral, no tenant association.
+- **Differentiation discipline:** explicit hue/saturation/feel separation from Sage prevents the Bone/Cognac duplication problem from earlier this session.
 
 ## Prompt feedback
 
-Strong prompt — three things you did right:
+Solid prompt — three things you did right:
 
-1. **You named two surfaces affected ("stroke color in bone theme... same with the schedule").** That told me the issue isn't isolated to one component — it's a *token-level* leak, not a component bug. Cut my search space from "find the broken component" to "find the broken token."
-2. **You diagnosed the cause structurally ("Something got changed in the color files that should not have been").** You gave me the verdict (regression, not intended change) and the layer (color tokens). I went straight to `index.css` instead of debugging individual stroke usages.
-3. **You used "way too bright"** — that's a specific failure mode (lightness wrong), not a vague "looks off." Told me to look at the lightness channel of the contaminated tokens, which is exactly where rosewood's 65–83% lightness leaked into bone's dark-mode chrome.
+1. **You named the register ("premium")** — that's a *quality anchor* that ruled out the pastel/casual end of the mint-teal spectrum and pointed me at jewel-tone luxury (Aman, Tiffany, Four Seasons cluster). Without "premium," I might have built another soft pastel like Sage.
+2. **You named two adjacent hues ("mint/teal")** — the slash signals "somewhere between these two," which is exactly the teal jewel-tone band (175°). If you'd said "mint" alone, I'd have gone closer to Sage and risked the duplication problem we just fixed with Bone/Cognac. The slash bought you the differentiation gap.
+3. **You used "create"** — explicit signal it's a *new theme*, not a tweak to Sage. Saved a clarification round.
 
-Sharpener: when reporting a regression, naming **what changed recently** (or "this used to look like X") narrows the diff. Template:
+Sharpener: naming the **adjacency you want to avoid** removes the biggest risk on a "new color" prompt — duplication with an existing one. Template:
 
 ```text
-Surface: [where you see it]
-Symptom: [the failure mode]
-Recent change: [what you asked for last that touched this area]
-Suspected layer: [tokens / component / config]
+New theme: [name or feel]
+Register: [premium / casual / playful / minimal]
+Anchor: [real-world reference — Tiffany, Aman, jade stone]
+Differentiate from: [the closest existing theme — "distinctly bluer than Sage"]
+Pair with: [accent direction — gold, copper, neutral]
 ```
 
-Here, "the bone theme dark mode strokes are too bright — last edit was the bone palette refresh, suspect the dark-mode tokens didn't get fully rewritten" would have pointed me directly at the `.dark.theme-bone` block instead of needing to scan the whole file. You gave me enough to find it fast — this is purely a sharpener.
+Here, "premium mint/teal — distinctly bluer than Sage, paired with gold like Marine" would have locked in the differentiation axis and the accent-pairing in one line, removing my need to infer both. You gave me enough to land it, but the **"distinctly different from X"** slot is the highest-leverage addition for any new-color prompt because color-space duplication is the #1 failure mode (we lived it twice this session with Bone/Cognac and Bone yellow→oat).
 
 ## Further enhancement suggestion
 
-For "regression" prompts specifically, the highest-leverage frame is:
+For "add a new theme" prompts specifically:
 
 ```text
-Was: [how it looked before — "calm dark borders"]
-Is: [how it looks now — "bright pink strokes"]
-Last touched: [the recent change you remember]
-Scope: [one theme / one mode / one component]
+Name suggestion: [optional — leave blank to let me name it]
+Hue family: [mint, teal, jade, emerald, ocean]
+Register: [pastel / mid / jewel-tone / deep]
+Real-world anchor: [Tiffany blue, jade stone, spa, Aman, eucalyptus]
+Differentiate from: [the closest existing theme by name + axis]
+Pair with: [gold / silver / copper / neutral]
+Mood: [calm / energetic / executive / playful]
 ```
 
-The **Was/Is** pairing is the highest-leverage addition — it tells me the *delta* directly instead of making me infer it from the failure mode. For token regressions specifically, naming the scope (`"only dark mode, only bone"`) confirms the contamination is *block-local* and prevents me from over-fixing into adjacent themes. You can also add a **suspected layer** (tokens vs component vs config) — for color regressions the answer is almost always "tokens," but naming it shaves a step. Combined with verdict structure ("less X, more Y") from prior rounds, this gives you a 4-element regression template that consistently lands the fix in one iteration.
+The **"Differentiate from + axis"** field is the single most valuable addition. For colors, "make it teal" leaves a 60° hue band open; "make it teal, distinctly bluer than Sage" closes it to a 15° band. Same number of words, 4× the precision. Combined with the **register** field (pastel vs jewel-tone), these two constraints alone usually land the theme in one iteration without follow-ups. The **mood** field is a tiebreaker when register + hue still leave two valid directions (e.g., "jewel-tone teal" could be Tiffany-playful or Aman-calm — naming "executive calm" picks the lane).
 
