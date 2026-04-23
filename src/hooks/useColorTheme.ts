@@ -8,7 +8,7 @@ export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marin
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 
-const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
+export const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 // Migration map for renamed theme keys (legacy → current)
