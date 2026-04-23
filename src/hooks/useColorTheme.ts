@@ -301,16 +301,16 @@ export const colorThemes = [
   {
     id: 'orchid' as ColorTheme,
     name: 'Rose Gold',
-    description: 'Rose gold & dusty pink duotone',
+    description: 'Champagne gold & dusty rose',
     lightPreview: {
-      bg: 'hsl(15 22% 97%)',
-      accent: 'hsl(350 20% 93%)',
-      primary: 'hsl(18 45% 62%)',
+      bg: 'hsl(40 30% 97%)',
+      accent: 'hsl(345 38% 72%)',
+      primary: 'hsl(38 55% 58%)',
     },
     darkPreview: {
-      bg: 'hsl(15 18% 6%)',
-      accent: 'hsl(350 14% 16%)',
-      primary: 'hsl(18 55% 68%)',
+      bg: 'hsl(30 18% 6%)',
+      accent: 'hsl(345 32% 58%)',
+      primary: 'hsl(38 65% 64%)',
     },
   },
   {
