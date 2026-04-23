@@ -88,7 +88,7 @@ const ManagementCard = React.forwardRef<HTMLAnchorElement, ManagementCardProps>(
   function ManagementCard({ href, icon: Icon, title, description, stat, statLabel, isFavorited, onToggleFavorite }, ref) {
     return (
       <Link to={href} ref={ref}>
-        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 relative")}>
+        <Card className={cn(tokens.card.wrapper, "group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md relative")}>
           {onToggleFavorite && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }}
@@ -134,7 +134,7 @@ interface HubGatewayCardProps {
 function HubGatewayCard({ href, icon: Icon, title, description, isFavorited, onToggleFavorite }: HubGatewayCardProps) {
   return (
     <Link to={href}>
-      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm relative")}>
+      <Card className={cn(tokens.card.wrapper, "group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md bg-card/60 backdrop-blur-sm relative")}>
         {onToggleFavorite && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }}
@@ -171,8 +171,10 @@ function CategorySection({ title, children }: CategorySectionProps) {
   const validChildren = React.Children.toArray(children).filter(Boolean);
   if (validChildren.length === 0) return null;
   return (
-    <section className="space-y-3 [&:not(:first-of-type)]:mt-10 [&:not(:first-of-type)]:pt-10 [&:not(:first-of-type)]:border-t-0 relative before:content-[''] before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 before:w-3/5 before:h-px before:bg-[linear-gradient(to_right,transparent,hsl(var(--border)/0.6),transparent)] [&:first-of-type]:before:hidden [&:first-of-type]:mt-0 [&:first-of-type]:pt-0">
-      <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">{title}</h2>
+    <section className="space-y-4">
+      <h2 className="font-display text-xs uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">
+        {title}
+      </h2>
       <div className="grid gap-3 items-stretch sm:grid-cols-2 lg:grid-cols-3">
         {validChildren}
       </div>
@@ -287,7 +289,7 @@ export default function TeamHub() {
     const IconComp = ICON_MAP[fav.icon] || Users;
     return (
       <Link key={fav.href} to={fav.href}>
-        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-amber-500/30 bg-amber-500/[0.06] dark:bg-amber-500/[0.08] relative")}>
+        <Card className={cn(tokens.card.wrapper, "group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md border-amber-500/30 bg-amber-500/[0.06] dark:bg-amber-500/[0.08] relative")}>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(fav.href, fav.label, fav.icon); }}
             className="absolute top-2 right-2 z-10 p-1 rounded-md text-amber-500 opacity-100 transition-all"
@@ -316,7 +318,7 @@ export default function TeamHub() {
 
   return (
     <DashboardLayout>
-      <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
+      <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto space-y-8")}>
         <DashboardPageHeader
           title="Operations Hub"
           description="People management, development, and team operations"
