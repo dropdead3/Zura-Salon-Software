@@ -495,9 +495,11 @@ function ThemeTab() {
     try {
       await activateTheme.mutateAsync(themeId);
       // Apply color scheme
-      const validSchemes = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir', 'neon'];
+      const LEGACY_MAP: Record<string, ColorTheme> = { cream: 'bone', rose: 'rosewood', ocean: 'marine', ember: 'cognac' };
+      const validSchemes = ['zura', 'bone', 'rosewood', 'sage', 'marine', 'cognac', 'noir', 'neon', 'cream', 'rose', 'ocean', 'ember'];
       if (validSchemes.includes(theme.color_scheme)) {
-        const colorThemeId = theme.color_scheme as ColorTheme;
+        const raw = theme.color_scheme as string;
+        const colorThemeId = (LEGACY_MAP[raw] ?? raw) as ColorTheme;
         setColorTheme(colorThemeId);
         const mappedName = COLOR_THEME_TO_CATEGORY_MAP[colorThemeId];
         const matched = categoryThemes?.find(t => t.name === mappedName);

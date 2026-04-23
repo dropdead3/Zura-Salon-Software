@@ -252,7 +252,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   });
 
   // Theme preset state - now uses global themes
-  const [themePreset, setThemePreset] = useState<ColorTheme | 'custom'>('cream');
+  const [themePreset, setThemePreset] = useState<ColorTheme | 'custom'>('bone');
 
   // Apply preset colors
   const applyPreset = (preset: ColorTheme | 'custom') => {

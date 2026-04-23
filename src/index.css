@@ -74,11 +74,11 @@ html, body, #root {
 }
 
 @layer base {
-  /* ===== THEME: CREAM (Default) ===== */
+  /* ===== THEME: BONE (Default — warm bone & cognac accents) ===== */
   :root,
-  .theme-cream {
-    /* Light cream luxury palette */
-    --background: 40 15% 82%;
+  .theme-bone {
+    /* Warm hospitality neutral with cognac accent */
+    --background: 36 18% 88%;
     --foreground: 0 0% 6%;
 
     --card: 40 12% 85%;
@@ -87,10 +87,10 @@ html, body, #root {
     --popover: 40 12% 85%;
     --popover-foreground: 0 0% 6%;
 
-    --primary: 0 0% 8%;
-    --primary-foreground: 40 30% 96%;
+    --primary: 28 55% 42%;
+    --primary-foreground: 36 30% 96%;
 
-    --secondary: 40 10% 78%;
+    --secondary: 36 12% 80%;
     --secondary-foreground: 0 0% 6%;
 
     --muted: 40 8% 72%;
@@ -117,18 +117,18 @@ html, body, #root {
     --warning-foreground: 32 80% 30%;
 
     /* Chart colors for data visualization */
-    --chart-1: 0 0% 25%;
-    --chart-2: 145 60% 40%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 43 96% 50%;
-    --chart-5: 280 87% 55%;
+    --chart-1: 28 55% 42%;
+    --chart-2: 38 70% 45%;
+    --chart-3: 145 50% 40%;
+    --chart-4: 24 35% 30%;
+    --chart-5: 280 50% 55%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
     --border: 40 8% 65%;
     --input: 40 8% 74%;
-    --ring: 0 0% 8%;
+    --ring: 28 55% 42%;
 
     --radius: 0.75rem;
 
@@ -163,20 +163,20 @@ html, body, #root {
     --leading-loose: 2;
 
     /* Sidebar */
-    --sidebar-background: 40 12% 83%;
-    --sidebar-foreground: 0 0% 6%;
-    --sidebar-primary: 0 0% 8%;
-    --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 10% 78%;
-    --sidebar-accent-foreground: 0 0% 6%;
-    --sidebar-border: 40 8% 65%;
-    --sidebar-ring: 0 0% 8%;
+    --sidebar-background: 36 14% 86%;
+    --sidebar-foreground: 24 25% 8%;
+    --sidebar-primary: 28 55% 42%;
+    --sidebar-primary-foreground: 36 30% 96%;
+    --sidebar-accent: 36 12% 80%;
+    --sidebar-accent-foreground: 24 25% 8%;
+    --sidebar-border: 32 10% 68%;
+    --sidebar-ring: 28 55% 42%;
 
-    --card-inner: 40 8% 80%;
-    --card-inner-deep: 40 5% 76%;
+    --card-inner: 36 10% 84%;
+    --card-inner-deep: 36 8% 80%;
   }
 
-  .dark.theme-cream,
+  .dark.theme-bone,
   .dark:not([class*="theme-"]) {
     --background: 0 0% 4%;
     --foreground: 40 20% 92%;
@@ -187,10 +187,10 @@ html, body, #root {
     --popover: 0 0% 11%;
     --popover-foreground: 40 20% 92%;
 
-    --primary: 40 20% 92%;
-    --primary-foreground: 0 0% 4%;
+    --primary: 28 55% 55%;
+    --primary-foreground: 30 12% 6%;
 
-    --secondary: 0 0% 16%;
+    --secondary: 30 10% 16%;
     --secondary-foreground: 40 20% 92%;
 
     --muted: 0 0% 20%;
@@ -214,34 +214,34 @@ html, body, #root {
     --warning-foreground: 38 90% 75%;
 
     /* Chart colors for data visualization */
-    --chart-1: 40 25% 75%;
-    --chart-2: 145 55% 55%;
-    --chart-3: 217 85% 65%;
-    --chart-4: 43 95% 60%;
-    --chart-5: 280 75% 70%;
+    --chart-1: 28 60% 60%;
+    --chart-2: 38 75% 60%;
+    --chart-3: 145 45% 55%;
+    --chart-4: 30 35% 70%;
+    --chart-5: 280 55% 70%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 20% 92%;
 
     --border: 0 0% 28%;
     --input: 0 0% 14%;
-    --ring: 40 20% 92%;
+    --ring: 28 55% 55%;
 
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 40 20% 92%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 16%;
-    --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 0 0% 28%;
-    --sidebar-ring: 40 20% 92%;
+    --sidebar-background: 30 12% 10%;
+    --sidebar-foreground: 36 18% 92%;
+    --sidebar-primary: 28 55% 55%;
+    --sidebar-primary-foreground: 30 12% 6%;
+    --sidebar-accent: 30 12% 16%;
+    --sidebar-accent-foreground: 36 18% 92%;
+    --sidebar-border: 30 10% 28%;
+    --sidebar-ring: 28 55% 55%;
 
     --card-inner: 0 0% 8%;
     --card-inner-deep: 0 0% 5%;
   }
 
-  /* ===== THEME: ROSE (Blush Pink Pastel) ===== */
-  .theme-rose {
+  /* ===== THEME: ROSEWOOD (Rich rose & burgundy) ===== */
+  .theme-rosewood {
     --background: 350 12% 82%;
     --foreground: 350 20% 8%;
 
@@ -251,7 +251,7 @@ html, body, #root {
     --popover: 350 10% 85%;
     --popover-foreground: 350 20% 8%;
 
-    --primary: 350 60% 55%;
+    --primary: 345 55% 42%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 350 8% 78%;
@@ -271,11 +271,11 @@ html, body, #root {
     --gold-foreground: 45 100% 97%;
 
     /* Chart colors for data visualization */
-    --chart-1: 350 20% 30%;
-    --chart-2: 145 60% 40%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 43 96% 50%;
-    --chart-5: 280 87% 55%;
+    --chart-1: 345 55% 42%;
+    --chart-2: 345 35% 60%;
+    --chart-3: 28 55% 45%;
+    --chart-4: 38 70% 45%;
+    --chart-5: 280 50% 50%;
 
     --success: 145 40% 85%;
     --success-foreground: 145 50% 30%;
@@ -288,22 +288,22 @@ html, body, #root {
 
     --border: 350 6% 65%;
     --input: 350 6% 74%;
-    --ring: 350 60% 55%;
+    --ring: 345 55% 42%;
 
     --sidebar-background: 350 10% 83%;
     --sidebar-foreground: 350 20% 8%;
-    --sidebar-primary: 350 60% 55%;
+    --sidebar-primary: 345 55% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 350 8% 78%;
     --sidebar-accent-foreground: 350 20% 8%;
     --sidebar-border: 350 6% 65%;
-    --sidebar-ring: 350 60% 55%;
+    --sidebar-ring: 345 55% 42%;
 
     --card-inner: 350 6% 80%;
     --card-inner-deep: 350 4% 76%;
   }
 
-  .dark.theme-rose {
+  .dark.theme-rosewood {
     --background: 350 15% 6%;
     --foreground: 350 20% 92%;
 
@@ -313,8 +313,8 @@ html, body, #root {
     --popover: 350 15% 13%;
     --popover-foreground: 350 20% 92%;
 
-    --primary: 350 55% 60%;
-    --primary-foreground: 350 15% 6%;
+    --primary: 345 60% 58%;
+    --primary-foreground: 345 18% 6%;
 
     --secondary: 350 10% 18%;
     --secondary-foreground: 350 20% 92%;
@@ -350,16 +350,16 @@ html, body, #root {
 
     --border: 350 8% 28%;
     --input: 350 10% 16%;
-    --ring: 350 55% 60%;
+    --ring: 345 60% 58%;
 
     --sidebar-background: 350 15% 12%;
     --sidebar-foreground: 350 20% 92%;
-    --sidebar-primary: 350 55% 60%;
-    --sidebar-primary-foreground: 350 15% 6%;
+    --sidebar-primary: 345 60% 58%;
+    --sidebar-primary-foreground: 345 18% 6%;
     --sidebar-accent: 350 10% 18%;
     --sidebar-accent-foreground: 350 20% 92%;
     --sidebar-border: 350 8% 28%;
-    --sidebar-ring: 350 55% 60%;
+    --sidebar-ring: 345 60% 58%;
 
     --card-inner: 350 5% 8%;
     --card-inner-deep: 350 3% 5%;
@@ -490,8 +490,8 @@ html, body, #root {
     --card-inner-deep: 145 3% 5%;
   }
 
-  /* ===== THEME: OCEAN (Soft Blue Pastel) ===== */
-  .theme-ocean {
+  /* ===== THEME: MARINE (Deep navy & gold) ===== */
+  .theme-marine {
     --background: 210 12% 82%;
     --foreground: 210 20% 8%;
 
@@ -501,7 +501,7 @@ html, body, #root {
     --popover: 210 10% 85%;
     --popover-foreground: 210 20% 8%;
 
-    --primary: 210 60% 50%;
+    --primary: 218 65% 35%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 8% 78%;
@@ -521,11 +521,11 @@ html, body, #root {
     --gold-foreground: 45 100% 97%;
 
     /* Chart colors for data visualization */
-    --chart-1: 210 25% 30%;
-    --chart-2: 145 60% 40%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 43 96% 50%;
-    --chart-5: 280 87% 55%;
+    --chart-1: 218 65% 35%;
+    --chart-2: 218 50% 55%;
+    --chart-3: 42 75% 45%;
+    --chart-4: 38 70% 50%;
+    --chart-5: 200 45% 50%;
 
     --success: 145 40% 85%;
     --success-foreground: 145 50% 30%;
@@ -538,22 +538,22 @@ html, body, #root {
 
     --border: 210 6% 65%;
     --input: 210 6% 74%;
-    --ring: 210 60% 50%;
+    --ring: 218 65% 35%;
 
     --sidebar-background: 210 10% 83%;
-    --sidebar-foreground: 210 20% 8%;
-    --sidebar-primary: 210 60% 50%;
+    --sidebar-foreground: 218 25% 8%;
+    --sidebar-primary: 218 65% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 8% 78%;
-    --sidebar-accent-foreground: 210 20% 8%;
+    --sidebar-accent-foreground: 218 25% 8%;
     --sidebar-border: 210 6% 65%;
-    --sidebar-ring: 210 60% 50%;
+    --sidebar-ring: 218 65% 35%;
 
     --card-inner: 210 6% 80%;
     --card-inner-deep: 210 4% 76%;
   }
 
-  .dark.theme-ocean {
+  .dark.theme-marine {
     --background: 210 15% 6%;
     --foreground: 210 20% 92%;
 
@@ -740,8 +740,8 @@ html, body, #root {
     --card-inner-deep: 230 20% 4%;
   }
 
-  /* ===== THEME: EMBER (Warm Amber / Burnt Orange) ===== */
-  .theme-ember {
+  /* ===== THEME: COGNAC (Bourbon amber & leather) ===== */
+  .theme-cognac {
     --background: 25 30% 94%;
     --foreground: 20 25% 8%;
 
@@ -751,7 +751,7 @@ html, body, #root {
     --popover: 25 25% 96%;
     --popover-foreground: 20 25% 8%;
 
-    --primary: 25 80% 50%;
+    --primary: 28 70% 42%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 25 18% 88%;
@@ -770,11 +770,11 @@ html, body, #root {
     --gold: 42 75% 45%;
     --gold-foreground: 45 90% 15%;
 
-    --chart-1: 25 70% 50%;
-    --chart-2: 145 55% 45%;
-    --chart-3: 217 85% 55%;
-    --chart-4: 43 95% 50%;
-    --chart-5: 0 65% 55%;
+    --chart-1: 28 70% 42%;
+    --chart-2: 38 70% 50%;
+    --chart-3: 24 45% 30%;
+    --chart-4: 18 60% 45%;
+    --chart-5: 145 35% 40%;
 
     --success: 145 55% 92%;
     --success-foreground: 145 55% 30%;
@@ -787,22 +787,22 @@ html, body, #root {
 
     --border: 25 14% 83%;
     --input: 25 18% 90%;
-    --ring: 25 80% 50%;
+    --ring: 28 70% 42%;
 
     --sidebar-background: 25 20% 91%;
-    --sidebar-foreground: 20 25% 8%;
-    --sidebar-primary: 25 80% 50%;
+    --sidebar-foreground: 24 25% 8%;
+    --sidebar-primary: 28 70% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 25 18% 86%;
-    --sidebar-accent-foreground: 20 25% 8%;
+    --sidebar-accent-foreground: 24 25% 8%;
     --sidebar-border: 25 14% 83%;
-    --sidebar-ring: 25 80% 50%;
+    --sidebar-ring: 28 70% 42%;
 
     --card-inner: 25 18% 90%;
     --card-inner-deep: 25 20% 86%;
   }
 
-  .dark.theme-ember {
+  .dark.theme-cognac {
     --background: 20 20% 5%;
     --foreground: 25 18% 92%;
 
@@ -812,7 +812,7 @@ html, body, #root {
     --popover: 20 18% 10%;
     --popover-foreground: 25 18% 92%;
 
-    --primary: 25 75% 55%;
+    --primary: 28 70% 52%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 20 14% 15%;
@@ -831,11 +831,11 @@ html, body, #root {
     --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
 
-    --chart-1: 25 65% 60%;
-    --chart-2: 145 55% 55%;
-    --chart-3: 217 85% 65%;
-    --chart-4: 43 95% 60%;
-    --chart-5: 0 65% 60%;
+    --chart-1: 28 70% 60%;
+    --chart-2: 38 75% 60%;
+    --chart-3: 24 50% 50%;
+    --chart-4: 18 65% 55%;
+    --chart-5: 145 40% 55%;
 
     --success: 145 35% 25%;
     --success-foreground: 145 45% 75%;
@@ -848,16 +848,16 @@ html, body, #root {
 
     --border: 20 14% 20%;
     --input: 20 14% 13%;
-    --ring: 25 75% 55%;
+    --ring: 28 70% 52%;
 
     --sidebar-background: 20 18% 8%;
     --sidebar-foreground: 25 18% 92%;
-    --sidebar-primary: 25 75% 55%;
+    --sidebar-primary: 28 70% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 25 18% 18%;
     --sidebar-accent-foreground: 25 18% 92%;
     --sidebar-border: 20 14% 20%;
-    --sidebar-ring: 25 75% 55%;
+    --sidebar-ring: 28 70% 52%;
 
     --card-inner: 20 14% 7%;
     --card-inner-deep: 20 18% 4%;

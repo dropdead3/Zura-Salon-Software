@@ -23,12 +23,12 @@ import { cn } from '@/lib/utils';
 import { useColorTheme, ColorTheme } from '@/hooks/useColorTheme';
 
 const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
-  cream: '#1A1A1A',
-  rose: '#DB5A6E',
+  bone: '#A8763A',
+  rosewood: '#A53D5C',
   sage: '#4A9C6D',
-  ocean: '#3B82F6',
+  marine: '#1F4D8F',
   zura: '#8B5CF6',
-  ember: '#D4872A',
+  cognac: '#B8651F',
   noir: '#1A1A1A',
   neon: '#FF2D8A',
 };

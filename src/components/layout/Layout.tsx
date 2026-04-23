@@ -30,8 +30,8 @@ export function Layout({ children }: LayoutProps) {
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.classList.remove('dark');
-    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura', 'theme-ember', 'theme-noir', 'theme-neon');
-    root.classList.add('theme-cream');
+    root.classList.remove('theme-rosewood', 'theme-sage', 'theme-marine', 'theme-zura', 'theme-cognac', 'theme-noir', 'theme-neon', 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
+    root.classList.add('theme-bone');
   }
 
   // Force light mode and reset any dashboard theme overrides for public website
@@ -41,9 +41,9 @@ export function Layout({ children }: LayoutProps) {
     // Remove dark mode class
     root.classList.remove('dark');
     
-    // Ensure cream theme is applied
-    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura', 'theme-ember', 'theme-noir', 'theme-neon');
-    root.classList.add('theme-cream');
+    // Ensure bone theme is applied
+    root.classList.remove('theme-rosewood', 'theme-sage', 'theme-marine', 'theme-zura', 'theme-cognac', 'theme-noir', 'theme-neon', 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
+    root.classList.add('theme-bone');
 
     // Add editor-preview class for scrollbar hiding
     if (isEditorPreview) {
@@ -109,7 +109,7 @@ export function Layout({ children }: LayoutProps) {
   // Parallax creates gaps/dark edges inside the viewport bento box.
   if (isEditorPreview) {
     return (
-      <div className="min-h-screen flex flex-col relative theme-cream bg-background" style={{ colorScheme: 'light' }}>
+      <div className="min-h-screen flex flex-col relative theme-bone bg-background" style={{ colorScheme: 'light' }}>
         <Header />
         <main className="flex-1 bg-background">
           {children}
@@ -123,7 +123,7 @@ export function Layout({ children }: LayoutProps) {
   // Editor preview in view mode OR public site: full layout with footer reveal
 
   return (
-    <div className="min-h-screen flex flex-col relative theme-cream bg-secondary" style={{ colorScheme: 'light' }}>
+    <div className="min-h-screen flex flex-col relative theme-bone bg-secondary" style={{ colorScheme: 'light' }}>
       {/* Fixed footer that reveals as content scrolls */}
       <div 
         ref={footerRef}
