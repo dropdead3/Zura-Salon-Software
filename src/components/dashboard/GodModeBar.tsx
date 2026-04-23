@@ -60,9 +60,11 @@ export function GodModeBar() {
         detailsHoverBg: 'hsl(var(--primary) / 0.25)',
       }
     : {
-        // Light: clean white base with soft primary wash — slightly translucent for glass effect.
+        // Light: deeper primary at the edges fading to a soft near-white center —
+        // anchors the GOD MODE logo + Exit View button in brand color while keeping
+        // the "Viewing as:" copy on a calm, readable middle band.
         background:
-          'linear-gradient(to right, hsl(0 0% 100% / 0.82), hsl(var(--primary) / 0.42), hsl(0 0% 100% / 0.82))',
+          'linear-gradient(to right, hsl(var(--primary) / 0.55) 0%, hsl(var(--primary) / 0.18) 50%, hsl(var(--primary) / 0.55) 100%)',
         borderBottomColor: 'hsl(var(--primary) / 0.35)',
         boxShadow: '0 2px 12px -4px hsl(var(--primary) / 0.25)',
         iconColor: 'hsl(0 0% 8%)',
