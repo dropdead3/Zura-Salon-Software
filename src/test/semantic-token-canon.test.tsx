@@ -1,24 +1,26 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { readIndexCss } from "@/test/css-rule";
+import { readIndexCss, findConfigReference } from "@/test/css-rule";
 
 /**
  * Semantic-token canon. The full shadcn cross-cutting token set — semantic
  * status (`destructive`, `success`, `warning`, `info`), core surfaces
  * (`background`, `foreground`, `card`, `popover`), interactive
- * (`primary`, `secondary`, `accent`, `muted`), and form/chrome
- * (`border`, `input`, `ring`) — is redefined by every theme. A raw hex or
- * rgba in a `--token` declaration would bypass the theme and break one or
- * more palettes (e.g. destructive red invisible on a red-heavy theme).
+ * (`primary`, `secondary`, `accent`, `muted`), form/chrome
+ * (`border`, `input`, `ring`), chart palette, and sidebar family —
+ * is redefined by every theme. A raw hex or rgba in a `--token` declaration
+ * would bypass the theme and break one or more palettes.
  *
  * The hex/rgba rule targets `--<token>` declarations specifically, not every
  * English occurrence of the word (CSS shorthand like `background: rgba(...)`
  * in a marketing-surface class is legitimately unrelated to `--background`).
  *
- * Parameterized: one set of assertions per token. Tokens absent from CSS are
- * skipped cleanly via `describe.skip`. Tokens absent from the Tailwind config
- * skip only the config assertion (first two still run).
+ * The config assertion uses shape-aware lookup (`findConfigReference`) so
+ * flat blocks, flat strings, nested numbered (chart) and nested named
+ * (sidebar) shapes all resolve cleanly. Foreground-pair assertion only runs
+ * for tokens in `TOKENS_WITH_FOREGROUND` — others (border, chart, etc.)
+ * have no foreground pair by design.
  */
 const TOKENS = [
   // Semantic status
@@ -29,9 +31,26 @@ const TOKENS = [
   "primary", "secondary", "accent", "muted",
   // Form/chrome
   "border", "input", "ring",
-  // Chart palette (Step 2M: all 11 themes redefine; routed through hsl(var(--chart-*)))
+  // Chart palette
   "chart-1", "chart-2", "chart-3", "chart-4", "chart-5",
+  // Sidebar family (Step 2N)
+  "sidebar-background", "sidebar-foreground",
+  "sidebar-primary", "sidebar-accent",
+  "sidebar-border", "sidebar-ring",
 ] as const;
+
+/**
+ * Explicit allowlist: tokens that have a `--<token>-foreground` pair in CSS
+ * AND a `foreground:` mapping in the Tailwind config. Anything outside this
+ * set skips the foreground assertion by design (border/input/ring/chart-*
+ * have no pair; background/foreground are themselves the pair).
+ */
+const TOKENS_WITH_FOREGROUND = new Set<string>([
+  "destructive", "success", "warning", "info",
+  "primary", "secondary", "accent", "muted",
+  "card", "popover",
+  "sidebar-primary", "sidebar-accent",
+]);
 
 const indexCss = readIndexCss();
 const tailwindConfig = fs.readFileSync(
@@ -42,13 +61,9 @@ const tailwindConfig = fs.readFileSync(
 for (const token of TOKENS) {
   const declRe = new RegExp(`--${token}(-foreground)?\\s*:`);
   const existsInCss = declRe.test(indexCss);
-
-  const configBlockRe = new RegExp(`${token}\\s*:\\s*\\{[^}]*\\}`);
-  const configBlock = tailwindConfig.match(configBlockRe)?.[0];
+  const configRef = findConfigReference(tailwindConfig, token);
 
   if (!existsInCss) {
-    // Canon applies to tokens that exist. If neither CSS nor config define
-    // it, skip the whole suite loudly so the reporter shows the intent.
     describe.skip(`semantic token canon: --${token} (not defined in index.css)`, () => {
       it("skipped", () => {});
     });
@@ -57,9 +72,6 @@ for (const token of TOKENS) {
 
   describe(`semantic token canon: --${token}`, () => {
     it(`no raw hex or rgba literal in a --${token} declaration in index.css`, () => {
-      // Scoped to `--${token}` (the custom-property prefix), not the bare
-      // word — CSS shorthand like `background: rgba(...)` on an unthemed
-      // marketing surface is unrelated to the `--background` token canon.
       const hexOnLine = new RegExp(`--${token}(-foreground)?[^\\n;]*#[0-9a-fA-F]{3,8}\\b`);
       const rgbaOnLine = new RegExp(`--${token}(-foreground)?[^\\n;]*\\brgba?\\(\\s*\\d`);
       expect(indexCss).not.toMatch(hexOnLine);
@@ -87,18 +99,16 @@ for (const token of TOKENS) {
       ).toEqual([]);
     });
 
-    it.skipIf(!configBlock)(
-      `tailwind.config.ts routes ${token} through hsl(var(--${token}*))`,
+    it.skipIf(!configRef)(
+      `tailwind.config.ts routes ${token} through hsl(var(--${token}))`,
       () => {
-        if (!configBlock) {
-          // eslint-disable-next-line no-console
-          console.info(`[canon] --${token} has no block in tailwind.config.ts; skipping config assertion.`);
-          return;
+        if (!configRef) return;
+        expect(configRef).toContain(`hsl(var(--${token}))`);
+        if (TOKENS_WITH_FOREGROUND.has(token)) {
+          expect(configRef).toContain(`hsl(var(--${token}-foreground))`);
         }
-        expect(configBlock).toContain(`hsl(var(--${token}))`);
-        expect(configBlock).toContain(`hsl(var(--${token}-foreground))`);
-        expect(configBlock).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
-        expect(configBlock).not.toMatch(/\brgba?\(\s*\d/);
+        expect(configRef).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+        expect(configRef).not.toMatch(/\brgba?\(\s*\d/);
       },
     );
   });
