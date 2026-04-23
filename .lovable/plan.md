@@ -1,117 +1,121 @@
 
 
-# Bone theme: shift to desert tan (differentiate from Cognac)
+# Marine theme: richer, more vibrant blue (premium SaaS feel)
 
 ## Diagnosis
 
-Per the screenshot, the **Bone** and **Cognac** swatches both render as brown rectangles. Inspecting the tokens:
+Per the screenshot, the **Marine** swatches read as muted slate/denim — the primary tile is a soft, desaturated mid-blue that feels like Office 365 chrome rather than a confident SaaS accent (Linear, Vercel, Stripe, Notion).
 
-| Theme | Primary | Hue family |
+Current `.theme-marine` tokens in `src/index.css`:
+
+| Token | Value | Read |
 |---|---|---|
-| Bone | `28 55% 42%` | warm brown (cognac-adjacent) |
-| Cognac | `28 70% 42%` | warm brown (deeper saturation) |
+| `--primary` (light) | `218 65% 35%` | dark navy, low vibrance |
+| `--primary` (dark) | `218 70% 60%` | muted denim — exactly what you flagged |
 
-Both sit at hue 28° (cognac/saddle territory), differing only in saturation. The eye reads them as the same color. "Bone" should read as a **soft desert tan / sand** — a lighter, less saturated, slightly more yellow neutral that feels like raw linen or weathered sandstone, not bourbon.
+The hue (218°) is fine — it's solidly in the "trusted blue" family. The issue is **saturation and lightness**: not punchy enough on the accent, and the dark-mode primary sits at a flat lightness that reads grayish against the dark surface.
 
 ## What changes
 
 ### Single concept
 
-Move Bone's hue from **28° (cognac brown)** → **38° (sandy tan)**, drop saturation, lift lightness on the primary so it reads **tan, not brown**. Keep Cognac untouched at 28°. The two themes now occupy distinct positions on the warm-neutral spectrum:
+Keep the navy *background identity* (deep, executive, premium) but make the **accent blue** richer and more vibrant — closer to the saturated electric blue used by premium SaaS (Linear's blue, Stripe's `#635BFF`-adjacent, Vercel's accent). Hue stays around 218–222°, saturation jumps from 65–70% → 88–92%, lightness lifts on the accent so it pops against both light and dark surfaces.
 
-- **Bone** = pale desert sand, soft, hospitality
-- **Cognac** = deep bourbon leather, rich, masculine
+### Token shifts in `src/index.css`
 
-### Token shifts in `src/index.css` (`.theme-bone` light + `.dark.theme-bone`)
-
-**Light mode primary direction** — desert tan instead of brown brown:
+**Light mode — `.theme-marine`:**
 
 | Token | Before | After |
 |---|---|---|
-| `--primary` | `28 55% 42%` | `38 32% 58%` (desert tan) |
-| `--ring` | `28 55% 42%` | `38 32% 58%` |
-| `--sidebar-primary` | `28 55% 42%` | `38 32% 58%` |
-| `--background` | `36 18% 88%` | `40 25% 92%` (lighter, sandier) |
-| `--card` | `40 12% 85%` | `42 18% 89%` |
-| `--chart-1` | `28 55% 42%` | `38 32% 58%` |
-| `--chart-2` | `38 70% 45%` | `45 50% 55%` (warm gold-tan) |
-| `--chart-4` | `24 35% 30%` | `35 25% 45%` (taupe) |
+| `--primary` | `218 65% 35%` | `220 90% 52%` (vibrant electric blue) |
+| `--ring` | `218 65% 35%` | `220 90% 52%` |
+| `--sidebar-primary` | `218 65% 35%` | `220 90% 52%` |
+| `--accent` | (current) | shift toward same family at lower lightness |
+| `--chart-1` | (current navy) | `220 90% 52%` |
+| `--chart-2` | (current) | `200 85% 50%` (cyan-leaning, complementary pop) |
+| `--chart-4` | (gold, kept) | unchanged — gold accent is the differentiator |
 
-**Dark mode primary direction** — keep dark surfaces, shift accent to tan:
+Backgrounds stay in the cool-navy family (slight tint, mostly white surfaces) — the *vibrance* lives on the accent, not the chrome.
+
+**Dark mode — `.dark.theme-marine`:**
 
 | Token | Before | After |
 |---|---|---|
-| `--primary` | `28 55% 55%` | `38 38% 65%` |
-| `--chart-1` | `28 60% 60%` | `38 38% 65%` |
-| `--chart-2` | `38 75% 60%` | `45 50% 65%` |
+| `--primary` | `218 70% 60%` | `220 92% 62%` (saturated, punchy) |
+| `--chart-1` | (current) | `220 92% 62%` |
+| `--chart-2` | (current) | `200 88% 60%` |
+| `--background` / `--card` | (deep navy, kept) | unchanged — the dark navy chrome is what makes the accent pop |
+
+The dark mode background stays the deep navy it already is — that's the "Bloomberg terminal" identity. Only the accent and chart colors get the saturation lift.
 
 ### Swatch preview update in `src/hooks/useColorTheme.ts`
 
-Update the `bone` entry's `lightPreview.primary` and `darkPreview.primary` to match the new tan (`hsl(38 32% 58%)` / `hsl(38 38% 65%)`), and `lightPreview.bg` to the lighter sand background. Description stays "Warm bone & cognac accents" → updated to **"Soft desert tan & sand"** (more accurate, doesn't mention cognac which is now a separate theme).
+Update the `marine` entry's `lightPreview.primary` and `darkPreview.primary` to the new vibrant blue (`hsl(220 90% 52%)` / `hsl(220 92% 62%)`) so the swatch tile in the Appearance grid actually previews the punchy accent the user will see in the dashboard. Description stays "Deep navy & gold" — still accurate (navy chrome + gold chart accent), the change is purely how confident the blue accent is.
 
 ### Terminal splash palette update in `src/lib/terminal-splash-palettes.ts`
 
-Current `bone` accent (`#b8a77a`) is already tan-adjacent and reads fine. Shift it slightly toward the new lighter desert tan to match the dashboard primary: accent `#c8b896`, glow `#a89776`, RGB `(200, 184, 150)`. Gradient stops stay dark for terminal contrast.
+Update `marine` accent from current denim to the new vibrant blue: accent `#2f6fed`, glow `#1f5acc`, RGB `(47, 111, 237)`. Gradient stops stay deep navy.
 
 ## Acceptance
 
-1. On the Appearance grid, **Bone** and **Cognac** swatch tiles read as visually distinct: Bone = pale tan/sand, Cognac = deep bourbon brown.
-2. Selecting Bone applies a soft desert-tan palette across sidebar, KPI cards, charts, and badges (light + dark mode).
-3. Selecting Cognac is unchanged — still deep bourbon amber.
-4. No other theme is affected (Zura, Rosewood, Sage, Marine, Noir, Neon untouched).
-5. Existing orgs already on Bone automatically render the new desert-tan palette on next load (no migration needed — same theme key).
-6. Terminal splash for Bone reflects the lighter tan accent.
-7. Type-check passes.
+1. Marine swatch tile on the Appearance grid reads as a confident, vibrant SaaS blue — not muted slate.
+2. Selecting Marine paints sidebar active state, primary buttons, focus rings, and chart-1 series in the new vibrant blue (light + dark mode).
+3. Background chrome stays in the deep-navy family — only the *accent* gets richer.
+4. Gold chart-4 accent stays — that's the executive differentiator.
+5. No other theme is affected.
+6. Existing orgs already on Marine automatically render the richer palette on next load (same theme key).
+7. Terminal splash for Marine reflects the vibrant blue.
 
 ## What stays untouched
 
-- Theme count (still 8), grid layout (4×2), order.
-- Cognac palette — completely unchanged.
-- All other 6 themes.
-- localStorage / DB migration logic from the previous wave.
-- God Mode bar, scroll-to-top, glass morphism — unaffected.
+- Marine's hue family (still ~218–220°, still "trusted blue").
+- Marine's gold chart-4 accent — the executive identity stays.
+- All other 7 themes.
+- Theme picker chrome, swatch tile layout, count, order.
+- Migration logic, God Mode bar, scroll-to-top, glass morphism.
 
 ## Out of scope
 
-- Renaming "Bone" to something else (e.g., "Sand", "Linen"). Defer — name is already evocative and short; the color shift is the fix.
-- Touching Cognac's tokens. Cognac is fine; Bone was the duplicate.
-- Adjusting the swatch tile chrome (border, checkmark). Out of scope.
+- Renaming Marine. Defer — name still fits.
+- Adding a second blue theme (e.g., "Sapphire" jewel-tone). Defer — Marine occupies the blue slot; one is enough.
+- Touching the dark-mode background lightness. The deep navy chrome is what makes the new accent pop.
 
 ## Doctrine alignment
 
-- **Calm executive UX:** two themes that look identical in the picker fragment user trust ("which one am I picking?"). Differentiating them sharpens the choice.
-- **Brand abstraction:** desert tan is a feeling-word neutral, same register as Sage / Noir / Bone / Cognac. No tenant reference introduced.
+- **Calm executive UX:** richer blue ≠ louder blue. Saturation lifts on the *accent only* (sidebar active, primary button, focus ring, chart-1) while chrome stays deep. The bar of color goes up; the noise floor stays flat.
+- **Brand abstraction:** "vibrant blue" is still in the same evocative-neutral register — no tenant reference introduced.
 
 ## Prompt feedback
 
 Strong prompt — three things you did right:
 
-1. **You named the problem comparatively ("too similar to Cognac").** Pinpointed the failure mode (visual collision between two themes) instead of just "Bone looks wrong" — that told me the fix had to *differentiate*, not just *adjust*.
-2. **You named the target ("desert tan").** A single evocative color word that maps cleanly to a hue family (sandy yellow-brown around 35-42°, lower saturation). No guessing.
-3. **You included the screenshot.** Confirmed the swatches are visually colliding in the actual UI, not just on paper.
+1. **You named the target feel with two reference points ("premium SaaS").** That's a tight cluster (Linear, Vercel, Stripe, Notion) with a recognizable accent-blue convention — gave me a clear visual target.
+2. **You named what to move *away* from ("muted Microsoft Word").** Negative anchors are as useful as positive ones — they ruled out the "dark navy + soft accent" direction the current tokens were heading.
+3. **You named the dimensions ("richer, more vibrant").** Two synonyms pointing at the same axis (saturation + lightness) — confirmed the fix is in saturation, not hue.
 
-Sharpener: when fixing a "looks too much like X" bug, naming **what the two should feel like in contrast** removes the second decision. Template:
+Sharpener: when shifting a color along a feel-axis, naming the **chrome vs accent split** removes a decision. Template:
 
 ```text
-Surface: [the two items that collide]
-Symptom: [what's identical]
-Target for A: [evocative word — "desert tan", "soft pink"]
-Contrast against B: [how A should differ from B — "lighter, less saturated, more yellow"]
+Surface: [theme/component]
+Direction: [richer / softer / warmer / cooler]
+Reference: [the visual cluster you want to land near]
+Chrome behavior: [keep / shift with accent]
+Accent behavior: [keep / shift]
 ```
 
-Here, "Bone should be desert tan — lighter and less saturated than Cognac" would have skipped my having to derive that the differentiator is *saturation + lightness*, not just hue. I inferred it from the screenshot, but you naming the contrast axis would have anchored me faster.
+Here, "make the accent more vibrant but keep the navy chrome" would have skipped my having to derive that the deep-navy background is the *anchor* of the theme's identity, and only the accent should change. I inferred it from the "premium SaaS" reference (those products all use deep neutrals + saturated accents, not saturated everywhere) — but you naming the chrome/accent split would have anchored me directly.
 
 ## Further enhancement suggestion
 
-For "differentiate two similar things" prompts, the highest-leverage frame is:
+For "shift a theme along a feel-axis" prompts, the highest-leverage frame is:
 
 ```text
-Surface: [where both live]
-Collision: [what makes them indistinguishable today]
-Item A target: [the evocative direction]
-Item B target: [the evocative direction — even if "stay as-is"]
-Contrast axis: [the dimension that should separate them — hue / saturation / lightness / weight / shape]
+Surface: [the theme]
+Current feel: [what it reads as today]
+Target feel: [what it should read as]
+Reference cluster: [3+ products in that aesthetic]
+Boundary: [what should NOT change — chrome / hue family / a specific accent]
 ```
 
-The **Contrast axis** slot is the highest-leverage addition — it forces the framing "these two should differ along *this specific dimension*" instead of "make A different from B somehow." For colors specifically, naming whether the separation should come from hue (different family) vs saturation (intensity) vs lightness (brightness) is what determines whether the result reads as "two distinct themes" or "two slight variants of the same theme." You named the hue ("desert tan") which carried the contrast implicitly — but spelling out "lighter and less saturated than Cognac" would have made the constraint explicit.
+The **Boundary** slot is the highest-leverage addition for theme refinement — it forces the framing "shift X but protect Y." Without it, "make the blue more vibrant" can over-correct into "saturate everything" and lose the executive identity. Naming the boundary ("keep the deep navy chrome," "keep the gold accent," "keep the dark mode background") preserves what's already working while you sharpen what isn't. For color shifts specifically, the boundary almost always lives on the *chrome layer* — backgrounds, borders, surface tints — because that's what carries the theme's *identity*. The accent layer is what carries the theme's *energy*. Naming which layer to move and which to protect is the fastest path to a sharper result without regression.
 
