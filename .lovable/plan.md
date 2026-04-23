@@ -1,126 +1,171 @@
 
 
-# Reorder themes + rename Bone → Cream Lux
+# Make Rose Gold an actual two-tone theme (gold + dusty pink, distinct roles)
 
-## Final order (11 visible + Marine appended)
+## The problem
 
-1. Zura
-2. **Cream Lux** (renamed from Bone)
-3. Neon
-4. Rosewood
-5. Rose Gold
-6. Peach
-7. Cognac
-8. Jade
-9. Sage
-10. Matrix
-11. Noir
-12. Marine *(kept, appended at end)*
+Right now Rose Gold reads as **one color in different shades** — everything pulls from the same warm pink hue (`18°`/`350°`, both rose-adjacent), so chips, buttons, accents, and backgrounds all look like the same fabric in different lightnesses. That's monochromatic, not duotone.
 
-This order is applied wherever themes are rendered: the Settings color picker, the Kiosk theme picker, the Website settings preview grid.
+A real two-tone theme means **two visually distinct colors** showing up side by side in the UI — you should be able to point at a card and say "that piece is gold, that piece is pink." Currently you can't.
 
-## Rename: `bone` → `cream-lux` (full rename)
+## Root cause
 
-Per your decision, the rename goes deep — TypeScript key, CSS class, display label, and a legacy migration so any existing user/org on `bone` auto-upgrades silently to `cream-lux` on next load.
+Three tokens are doing all the visible "color" work in the dashboard, and right now all three resolve to the same warm pink family:
 
-### TypeScript changes
+- `--primary` → rose gold (warm pink)
+- `--secondary` → dusty pink (still warm pink, ~30° away)
+- `--accent` → rose gold wash (same warm pink)
 
-**`src/hooks/useColorTheme.ts`**
-- `ColorTheme` union: replace `'bone'` with `'cream-lux'`
-- `ALL_THEMES` array: reordered + renamed
-- `LEGACY_THEME_MIGRATION` map: add `bone: 'cream-lux'` (and keep existing `cream: 'cream-lux'`, retargeted from old `bone`)
-- `colorThemes` metadata array: reordered, with the renamed entry:
-  ```ts
-  { id: 'cream-lux', name: 'Cream Lux', description: 'Cool desert gray & oat', ... }
-  ```
-- `COLOR_THEME_TO_CATEGORY_MAP`: replace `bone` key with `cream-lux`
-- `applyTheme()` legacy class strip list: add `'theme-bone'` to the removal set
-- Default fallback in `getLocalTheme()`: still returns `'zura'` (unchanged)
+When `primary`, `secondary`, AND `accent` all sit in the same hue family, the UI has nothing to contrast against itself. To get true duotone you need **two genuinely different hues** mapped to different roles, plus enough saturation that they actually read as different on screen.
 
-### CSS changes (`src/index.css`)
+## The fix: two real anchor colors with role separation
 
-5 selectors to rewrite:
-- Line 79: `.theme-bone` → `.theme-cream-lux`
-- Line 241: `.dark.theme-bone` → `.dark.theme-cream-lux`
-- Line 2896: `html.theme-bone body::before` → `html.theme-cream-lux body::before`
-- Line 2927: `html.theme-bone` (mesh gradient block) → `html.theme-cream-lux`
-- Line 3025: `html.dark.theme-bone` (mesh gradient dark) → `html.dark.theme-cream-lux`
+### Anchor 1 — Champagne Gold (warm metallic yellow-gold)
+- **Hue: `38°`** (true champagne gold, not pink)
+- Light mode primary: `38 55% 58%` — warm metallic gold
+- Dark mode primary: `38 65% 64%` — brighter gold for dark surfaces
+- **Role**: Primary CTAs, active nav, KPI accents, pinned/starred states, ring focus
 
-Palette values themselves are untouched — same near-neutral oat tones, just a new selector name.
+### Anchor 2 — Dusty Rose Pink (cool muted pink)
+- **Hue: `345°`** (true dusty rose, pulled cooler so it doesn't blend into the gold)
+- Light mode secondary: `345 38% 72%` — visible dusty pink, not a near-white
+- Dark mode secondary: `345 32% 58%` — saturated dusty pink for dark surfaces
+- **Role**: Secondary buttons, chip backgrounds, hover fills, badges, tags, soft accent surfaces
 
-### Other files touched
+These two hues sit **~53° apart** on the color wheel — far enough that they read as two distinct colors, close enough that they still feel like one designed family (warm metals + warm florals).
 
-- **`src/components/layout/Layout.tsx`** — `DASHBOARD_THEME_CLASSES` array: replace `'theme-bone'` with `'theme-cream-lux'`. Default theme application in marketing layout (`root.classList.add('theme-bone')`) → `root.classList.add('theme-cream-lux')`. Add `'theme-bone'` to a legacy-strip list so any leftover class on `documentElement` is removed before apply.
-- **`src/components/dashboard/settings/WebsiteSettingsContent.tsx`** — `validSchemes` array: add `'cream-lux'`, keep `'bone'` for legacy. `LEGACY_MAP`: add `bone: 'cream-lux'`.
-- **`src/components/dashboard/settings/EmailBrandingSettings.tsx`** — `THEME_ACCENT_DEFAULTS` map: replace `bone` key with `cream-lux` (same hex `#A8763A`).
-- **`src/components/dashboard/settings/KioskLocationSettingsForm.tsx`** — useState defaults `'bone'` → `'cream-lux'`.
-- **`src/components/kiosk/KioskSettingsDialog.tsx`** — useState default `'bone'` → `'cream-lux'`.
-- **`src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx`** — three function param defaults `colorTheme = 'bone'` → `colorTheme = 'cream-lux'`.
-- **`src/lib/terminal-splash-palettes.ts`** — `terminalPalettes` object: rename `bone:` key to `'cream-lux':`. Fallback in `getTerminalPalette()`: `terminalPalettes.bone` → `terminalPalettes['cream-lux']`.
+### Role split (the part that was missing)
 
-### Migration safety net
+| Token | Color | What it controls |
+|---|---|---|
+| `--primary` | **Champagne Gold** | Primary CTA buttons, active state highlights, ring focus, pinned indicators, primary text emphasis |
+| `--secondary` | **Dusty Rose Pink** | Secondary buttons, chip fills, badge backgrounds, tag pills, soft surface accents |
+| `--accent` | **Dusty Rose Pink (lighter)** | Hover states, accent surface tint, subtle background washes |
+| `--ring` | **Champagne Gold** | Focus rings (matches primary) |
+| `--muted` | warm neutral | Flat tier (no color identity, just a quiet surface) |
+| `--background` | warm cream | Page backdrop with subtle gold undertone |
+| `--card` | warmer near-white | Card surfaces lift cleanly above background |
+| `--border` | warm hairline | Hairline divider |
 
-Three-layer fallback ensures no user sees a broken theme:
+The key shift: **`--primary` and `--secondary` use genuinely different hues now**, and `--accent` is anchored to the pink side instead of doubling up on gold. That's what makes the duotone visible — when the UI renders a primary button next to a secondary chip next to an accent surface, you see gold, pink, and pink-wash side by side instead of three near-identical warm-pink shades.
 
-1. **Local storage migration**: `migrateLegacyTheme('bone')` returns `'cream-lux'`, then re-persists.
-2. **DB migration**: When the DB row holds `bone`, the existing rewrite logic in `useColorTheme` (lines 137–140) fires and writes back `cream-lux` transparently.
-3. **CSS class strip**: `applyTheme()` strips `.theme-bone` before adding `.theme-cream-lux`, so no double-class state.
+### Light mode palette
 
-No SQL migration needed — the org-level `site_settings` row is rewritten on next load by any user who visits.
+| Token | Value | Reads as |
+|---|---|---|
+| `--background` | `40 30% 97%` | warm cream page (slight gold undertone) |
+| `--card` | `40 28% 99%` | near-white with warm tint |
+| `--card-inner` | `40 22% 96%` | nested surface |
+| `--card-inner-deep` / `--muted` | `40 18% 94%` | flat tier |
+| `--popover` | `40 28% 99%` | matches card |
+| `--sidebar-background` | `40 22% 96%` | one notch below page |
+| `--foreground` | `30 30% 14%` | deep warm brown-black |
+| `--muted-foreground` | `30 18% 42%` | muted warm gray |
+| `--primary` | `38 55% 58%` | **champagne gold** |
+| `--primary-foreground` | `30 30% 12%` | dark text on gold |
+| `--secondary` | `345 38% 72%` | **dusty rose pink** (visibly pink, not near-white) |
+| `--secondary-foreground` | `30 30% 14%` | dark text on pink |
+| `--accent` | `345 30% 88%` | dusty pink wash (hover/soft accent) |
+| `--accent-foreground` | `30 30% 14%` | dark text on accent |
+| `--border` | `40 20% 88%` | warm hairline |
+| `--input` | `40 18% 94%` | field fill |
+| `--ring` | `38 55% 58%` | matches gold primary |
+| `--destructive` | `0 70% 55%` | unchanged red |
 
-## Files touched (summary)
+### Dark mode palette
+
+Gold gets brighter/more saturated to retain metallic quality. Pink keeps moderate saturation so it reads as actual pink, not gray.
+
+| Token | Value | Reads as |
+|---|---|---|
+| `--background` | `30 18% 6%` | warm near-black |
+| `--card` | `30 16% 9%` | lifted dark surface |
+| `--card-inner` | `30 14% 11%` | nested |
+| `--muted` | `30 12% 14%` | flat |
+| `--popover` | `30 16% 9%` | matches card |
+| `--sidebar-background` | `30 16% 8%` | sidebar surface |
+| `--foreground` | `40 25% 95%` | warm cream text |
+| `--muted-foreground` | `40 12% 65%` | muted warm gray |
+| `--primary` | `38 65% 64%` | **brighter champagne gold** |
+| `--primary-foreground` | `30 30% 10%` | dark text on gold |
+| `--secondary` | `345 32% 58%` | **dusty rose pink** (dark-mode visible) |
+| `--secondary-foreground` | `40 25% 95%` | cream text on pink |
+| `--accent` | `345 22% 22%` | dusty pink shadow (subtle dark wash) |
+| `--accent-foreground` | `40 25% 95%` | cream text on accent |
+| `--border` | `30 14% 18%` | warm hairline |
+| `--ring` | `38 65% 64%` | matches gold primary |
+
+## Mesh gradient update
+
+The ambient mesh background (lines 2927 and 3025 in `src/index.css`) needs to use **both** anchor colors so the page feels duotone even at the macro level. Today it's all one warm pink wash. New version:
+
+- Top-left radial: champagne gold (`hsla(38, 55%, 58%, 0.18)` light / `0.22` dark)
+- Bottom-right radial: dusty rose pink (`hsla(345, 38%, 72%, 0.18)` light / `0.22` dark)
+- Centerpiece: warm cream/near-black base
+
+This gives the page itself a soft gold-to-pink wash that reinforces the duotone identity before any UI renders on top.
+
+## Theme picker swatch
+
+The picker swatch in `src/hooks/useColorTheme.ts` currently shows a single rose-pink swatch. Update to show **both** colors so the duotone is visible at selection time:
+
+- `lightSwatch`: gradient or split swatch — gold (`#C9963F`) → dusty pink (`#D5919E`)
+- `darkSwatch`: gold (`#D8A556`) → dusty pink (`#B5717E`)
+
+If swatch infrastructure only supports one color, use the gold (`#C9963F` light / `#D8A556` dark) since that's the primary and will be the most visible accent in the live UI.
+
+## Files touched
 
 | File | Change |
 |---|---|
-| `src/hooks/useColorTheme.ts` | Type, arrays, metadata, migration map |
-| `src/index.css` | 5 CSS selectors |
-| `src/components/layout/Layout.tsx` | Class array + default apply |
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Valid schemes + legacy map |
-| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Accent defaults map |
-| `src/components/dashboard/settings/KioskLocationSettingsForm.tsx` | useState default |
-| `src/components/kiosk/KioskSettingsDialog.tsx` | useState default |
-| `src/components/dashboard/settings/terminal/S710CheckoutSimulator.tsx` | 3 param defaults |
-| `src/lib/terminal-splash-palettes.ts` | Palette key rename |
+| `src/index.css` | Replace `.theme-orchid` + `.dark.theme-orchid` token blocks with new gold + pink palette. Update mesh gradient blocks (lines ~2927 and ~3025) to use both anchor colors. |
+| `src/hooks/useColorTheme.ts` | Update Rose Gold theme metadata: swatch hex values, description ("Champagne gold & dusty rose"). |
+| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Update `THEME_ACCENT_DEFAULTS['orchid']` hex to new gold (`#C9963F`). |
+
+CSS class key stays `.theme-orchid` — same migration-safe approach as before.
 
 ## Acceptance
 
-1. The theme picker on `/dashboard/admin/settings` renders themes in the exact order: Zura, Cream Lux, Neon, Rosewood, Rose Gold, Peach, Cognac, Jade, Sage, Matrix, Noir, Marine.
-2. The renamed theme appears as **"Cream Lux"** with the same description, swatches, and visual identity it had as Bone.
-3. Selecting Cream Lux applies `.theme-cream-lux` class and pulls the same near-neutral oat palette as before.
-4. Existing users/orgs whose stored value is `bone` are auto-migrated to `cream-lux` on next page load — no broken state, no flash of wrong theme.
-5. Marine is still selectable, just appears last in the list.
-6. Kiosk theme picker, Website settings color scheme dropdown, and Terminal splash simulator all use the new key + ordering.
-7. No grep hits for the literal string `'bone'` or `"bone"` remain in the codebase except inside `LEGACY_THEME_MIGRATION` and the `validSchemes` legacy allowlist (intentional, for migration).
-8. Build passes. No TypeScript errors.
+1. Selecting Rose Gold renders **two visibly different colors** in the live dashboard at the same time:
+   - Primary CTAs read as **warm metallic gold**.
+   - Secondary chips, badges, and hover fills read as **dusty rose pink**.
+2. You can point at any analytics card and identify the gold pieces vs the pink pieces — they don't all blur together as "warm pink shades."
+3. The mesh background gradient shows both colors (gold corner + pink corner) instead of one uniform wash.
+4. The theme picker swatch shows both colors (or at minimum the gold, since it's primary and most visible).
+5. Light and dark modes both maintain the duotone — pink doesn't disappear into gray on dark, gold doesn't wash out to beige on light.
+6. Cards still lift cleanly above background (97%/99% lightness ladder preserved).
+7. WCAG AA text contrast passes on all primary, secondary, and accent surfaces.
+8. No other theme is touched.
 
 ## Out of scope
 
-- Adding new themes.
-- Changing palette values for any theme (Cream Lux keeps Bone's exact HSL tokens — this is a rename only).
-- Reordering themes in the database service-category map (pure UI/picker order change).
-- A SQL migration to rewrite all `bone` rows in bulk — the lazy in-app migration is sufficient and zero-risk.
-- Changing the marketing site's default light theme behavior (still applies the renamed class via the same mechanism).
+- Changing which UI roles map to which token (Tailwind's `bg-secondary`, `bg-accent`, `bg-primary` semantics stay as-is — we're only changing what colors those tokens resolve to).
+- Renaming the CSS class from `.theme-orchid`.
+- Adding a third accent color.
+- Touching mesh gradients or palettes for any other theme.
 
 ## Prompt feedback
 
-Crisp request — three things you did right:
+This was a sharp, surgical correction — three things you did right:
 
-1. **You gave the explicit final order in one line.** No ambiguity, no "roughly", no "something like" — just the sequence. That removes 90% of the back-and-forth.
-2. **You named the rename target precisely** ("rename to Cream Lux and all its code base"). The "and all its code base" phrase is the key — it tells me to chase every reference, not just the display label, which is exactly the trap that creates half-renamed orphans.
-3. **You combined two related changes into one request.** Reordering and renaming touch the same surface area, so doing them together avoids two passes through the same files.
+1. **You named the failure mode precisely.** "Monochromatic" is the exact technical word for what was wrong, and using it told me immediately the issue is hue diversity, not lightness or saturation.
+2. **You restated the original intent in different words.** "Some components are gold and some are pink" is a totally different framing from "duotone theme" — the second framing made it concrete (two colors visible side by side in the UI) instead of abstract (a design concept).
+3. **You caught the regression on the live preview.** Rather than accepting the previous output, you tested it visually and reported back. That's exactly the right loop for design work.
 
-Sharpener: when reordering a list, calling out **what's missing** is the highest-leverage addition. Template:
+Sharpener: when correcting a color/visual regression, calling out **a specific UI element** that should differ would tighten the fix. Template:
 
 ```text
-Reorder [list] to: [explicit order]. 
-[Item X] is intentionally [excluded / appended / replaced].
+[Theme] is [wrong attribute] — should be [right attribute].
+For example, [specific component A] should be [color X], 
+and [specific component B] should be [color Y].
 ```
 
 Example:
 ```text
-Reorder themes to: Zura, Cream Lux, Neon, Rosewood, Rose Gold, Peach, Cognac, Jade, Sage, Matrix, Noir.
-Marine is intentionally appended at the end.
+Rose Gold is monochromatic — should be true two-tone.
+For example, primary CTA buttons should be metallic gold, 
+and chip backgrounds / badges should be dusty pink.
 ```
 
-The **"intentionally [disposition]"** clause is the underused construct on reorder prompts — without it I have to interrupt with a clarifying question (which I just did re: Marine), costing you a round-trip. Naming the disposition of the omitted item upfront would have saved that.
+The **"for example, [component] should be [color]"** clause is the underused construct on color-correction prompts. It removes the last layer of interpretation — without it I have to guess which UI roles get which color (and I might invert them, e.g., putting pink on the primary CTA, which would feel washed out and lose the metallic luxury cue you're after).
 
