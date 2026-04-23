@@ -275,7 +275,7 @@ export function ViewAsPopover() {
                   value={teamFilter}
                   onChange={e => setTeamFilter(e.target.value)}
                   autoCapitalize="off"
-                  className="h-8 pl-8 text-xs bg-muted/50 border-border/60 rounded-lg"
+                  className="h-8 pl-8 text-xs bg-muted/50 border-border/60 rounded-lg focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus-visible:ring-offset-0 focus:border-border/60 focus-visible:border-border/60"
                 />
               </div>
               {showLocationFilter && (
