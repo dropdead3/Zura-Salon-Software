@@ -131,30 +131,18 @@ function CardOverlays({
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
         }}
       />
-      {/* Corner-wrapping accent frame — traces top corners + ~14px down each side */}
+      {/* Corner-wrapping accent — single bordered box masked to reveal only top ~14px,
+          producing one continuous stroke that traces both rounded corners */}
       {useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
-        <>
-          {/* Full top stroke wrapping both rounded corners */}
-          <div
-            className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
-            style={{
-              borderTop: `1.5px solid ${catColor.text}`,
-              borderLeft: '1.5px solid transparent',
-              borderRight: '1.5px solid transparent',
-              borderBottom: '1.5px solid transparent',
-              opacity: 0.75,
-            }}
-          />
-          {/* Short vertical extensions down each side (~14px) */}
-          <div
-            className="absolute top-0 left-0 w-[1.5px] h-3.5 pointer-events-none z-[3]"
-            style={{ backgroundColor: catColor.text, opacity: 0.75 }}
-          />
-          <div
-            className="absolute top-0 right-0 w-[1.5px] h-3.5 pointer-events-none z-[3]"
-            style={{ backgroundColor: catColor.text, opacity: 0.75 }}
-          />
-        </>
+        <div
+          className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
+          style={{
+            border: `1.5px solid ${catColor.text}`,
+            opacity: 0.75,
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 14px, transparent 14px)',
+            maskImage: 'linear-gradient(to bottom, black 0px, black 14px, transparent 14px)',
+          }}
+        />
       )}
       {isNoShow && (
         <>
@@ -712,21 +700,16 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Corner-wrapping accent frame for status-colored cards (uses currentColor from statusColors.text) */}
+      {/* Corner-wrapping accent — single masked bordered box, inherits status color via currentColor */}
       {!useCategoryColor && !displayGradient && (
-        <>
-          <div
-            className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
-            style={{
-              borderTop: '1.5px solid currentColor',
-              borderLeft: '1.5px solid transparent',
-              borderRight: '1.5px solid transparent',
-              borderBottom: '1.5px solid transparent',
-            }}
-          />
-          <div className="absolute top-0 left-0 w-[1.5px] h-3.5 pointer-events-none z-[3] bg-current" />
-          <div className="absolute top-0 right-0 w-[1.5px] h-3.5 pointer-events-none z-[3] bg-current" />
-        </>
+        <div
+          className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
+          style={{
+            border: '1.5px solid currentColor',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 14px, transparent 14px)',
+            maskImage: 'linear-gradient(to bottom, black 0px, black 14px, transparent 14px)',
+          }}
+        />
       )}
 
       {/* Multi-service color bands */}
