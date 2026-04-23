@@ -1,94 +1,117 @@
 
 
-# Fix God Mode bar contrast: dark-mode text + Z icon color
+# Per-user dark/light mode — persists per identity, not per browser
 
 ## Diagnosis
 
-Per the screenshot (dark mode + Neon theme), two bugs:
+Today's `DashboardThemeContext` reads/writes a single `localStorage` key (`'dashboard-theme'`). On a shared device, whatever the last user (or the account owner during setup) picked sticks for the next user. The mode is **device-scoped**, not **user-scoped**.
 
-1. **Text is invisible.** The dark-mode `chrome` config uses `hsl(var(--primary-foreground) / *)` for the GOD MODE label, "Viewing as:", org name, and Account ID. With Neon active, `--primary-foreground` resolves to a near-black value (because it's designed for black-text-on-pink-button contrast). On the bar's near-black-with-pink-wash background, near-black text disappears — exactly what the screenshot shows.
-2. **Z icon is the wrong color.** The icon currently uses `chrome.iconColor` (also `--primary-foreground` in dark mode). It should match the bar's identity — the org's primary accent (hot pink).
+The color palette (Neon, Ocean, etc.) intentionally stays org-scoped via `site_settings` — that's a brand decision the owner makes for everyone. Light/dark is a personal comfort preference and should travel with the user.
 
-The previous wave conflated "foreground for the primary pill" (black) with "foreground over the bar's mixed background" (white). They're different surfaces and need different contrast tokens.
+`user_preferences` already exists, keyed on `user_id` with RLS ("Users can view/update their own preferences"). The pattern to mirror is `AnimationIntensityInitializer`: synchronous localStorage apply on boot → server refresh on `SIGNED_IN` → reset on `SIGNED_OUT`.
 
 ## What changes
 
-### Single file: `src/components/dashboard/GodModeBar.tsx`
+### 1. Migration — add column to `user_preferences`
 
-Update the **dark-mode** branch of the `chrome` object only. Light mode stays as-is (already correct — dark text on white wash).
+```sql
+ALTER TABLE public.user_preferences
+  ADD COLUMN dashboard_theme text NOT NULL DEFAULT 'system'
+    CHECK (dashboard_theme IN ('light', 'dark', 'system'));
+```
 
-| Element | Today (broken) | After |
-|---|---|---|
-| Z icon color | `hsl(var(--primary-foreground) / 0.95)` | `hsl(var(--primary))` — matches the bar's accent (hot pink in Neon, violet in Zura, etc.) |
-| GOD MODE label | `hsl(var(--primary-foreground) / 0.9)` | `hsl(0 0% 95%)` — near-white, always legible on near-black sandwich |
-| "Viewing as:" | `hsl(var(--primary-foreground) / 0.75)` | `hsl(0 0% 95% / 0.75)` |
-| Org name | `hsl(var(--primary-foreground))` | `hsl(0 0% 100%)` — pure white for the most prominent text |
-| Account ID | `hsl(var(--primary-foreground) / 0.6)` | `hsl(0 0% 95% / 0.6)` |
-| Account Details idle | `hsl(var(--primary-foreground) / 0.85)` | `hsl(0 0% 95% / 0.85)` |
-| Account Details hover | `hsl(var(--primary-foreground))` | `hsl(0 0% 100%)` |
+Existing rows backfill to `'system'` (respects OS preference, matching the existing context default behavior). RLS already covers the new column.
 
-**Unchanged:**
-- Light mode `chrome` block — already uses `hsl(0 0% 8%)` for dark text on white wash. Correct.
-- Bar background gradient (dark sandwich + primary wash) — that part is right.
-- Border, shadow, divider colors — keyed off `--primary`, correct.
-- Exit View pill — keeps `bg: hsl(var(--primary))`, `color: hsl(var(--primary-foreground))`. That surface *does* want primary-foreground (black text on pink pill is the correct contrast).
+### 2. `src/contexts/DashboardThemeContext.tsx` — load from + write to `user_preferences`
 
-## Why hardcode near-white in dark mode (not a token)
+Mirror the `AnimationIntensityInitializer` pattern inside the provider:
 
-The dark-mode bar is a fixed visual layer: near-black base + primary wash. Text on it always needs to be near-white for legibility, regardless of which org theme is active. There's no `--bar-foreground` token, and inventing one would over-engineer for a single surface. Hardcoding `hsl(0 0% 95%)` here is the pragmatic answer — same pattern we already use for the dark-mode background base (`hsl(0 0% 6%)` is hardcoded for the same reason).
+- Boot: read `localStorage['dashboard-theme']` synchronously (avoids flash) — unchanged.
+- After mount: fetch `user_preferences.dashboard_theme` for `auth.uid()`. If present and different from the localStorage value, apply it (updates DOM `.dark` class + localStorage cache).
+- `setTheme(newTheme)`:
+  - Apply to DOM + localStorage immediately (already happens).
+  - **Also** upsert to `user_preferences` (`{ user_id, dashboard_theme }`) when a user is authenticated. Silent failure is acceptable (next reconnect re-syncs).
+- Subscribe to `supabase.auth.onAuthStateChange`:
+  - `SIGNED_IN` → re-fetch the new user's stored mode and apply.
+  - `SIGNED_OUT` → reset to the org-default fallback (`'system'`) so the next person at the device starts neutral, not on the previous user's preference.
+
+### 3. Pre-paint script in `index.html` — unchanged
+
+Still keys off `localStorage['dashboard-theme']`. After auth resolves and the per-user value loads, the context updates. Worst-case flash window is identical to today's (which is already gated by localStorage cache of the most recent user on this device).
+
+### 4. No changes to `useColorTheme` (palette stays org-scoped)
+
+The Neon/Ocean/etc. choice continues to come from `site_settings.org_color_theme` — owner's call, applies to all staff. Only the light/dark axis becomes per-user.
+
+## Why this scope
+
+- **Light/dark = personal comfort.** Two stylists on the same iPad should each see their own preference after PIN or password sign-in.
+- **Color palette = brand identity.** Owner's call, applies org-wide. Splitting this would let staff fragment the brand.
+- The split mirrors how the system already treats `animation_intensity` (per-user) vs `org_color_theme` (org-scoped).
+
+## PIN quick-entry behavior
+
+All PIN-based entry paths (StaffLogin, kiosk admin, Dock) ultimately resolve a Supabase auth session for the staff user. Once `auth.uid()` is set, `onAuthStateChange('SIGNED_IN')` fires and the per-user mode loads. No special PIN-path handling needed.
 
 ## Acceptance
 
-1. Drop Dead in **dark mode + Neon** → GOD MODE label, "Viewing as:", "Drop Dead Salons", and "Account ID: 1000" all read as near-white text and are clearly legible against the pink wash. Z icon renders in hot pink, matching the bar's accent.
-2. Drop Dead in **dark mode + Zura (violet)** → same near-white text; Z icon renders in violet.
-3. Drop Dead in **dark mode + any other theme** (Cream, Rose, Sage, Ocean, Ember, Noir) → text near-white; Z icon picks up that theme's primary.
-4. **Light mode** → unchanged; dark text on soft accent wash continues to work.
-5. Exit View pill → unchanged in both modes (primary fill, primary-foreground text).
-6. Mobile/desktop layout, animation, click handlers, `--god-mode-offset`, z-index → all unchanged.
-7. Type-check passes.
+1. User A signs in on iPad → toggles to dark → signs out. User B signs in on the same iPad → starts in their saved mode (or `'system'` if first time), not User A's dark.
+2. User A signs in on a desktop they've never used → their preferred mode loads from the server within ~1 frame of auth resolving (brief flash possible if they previously picked something different on another device — same caveat as `AnimationIntensityInitializer`).
+3. Toggling the mode in the UI updates immediately (DOM + localStorage) and persists to `user_preferences` in the background.
+4. If the `user_preferences` write fails (offline, RLS), the local change still applies; sync happens on next successful write.
+5. Org color palette (Neon, Ocean, etc.) remains owner-controlled and unchanged.
+6. Type-check passes. Existing `useDashboardTheme()` consumers (15 files) need no changes — same hook surface.
 
 ## What stays untouched
 
-- Light mode `chrome` block.
-- All structural styling (height, padding, gradient direction, border, shadow recipe).
-- `useDashboardTheme` integration, `isDark` branching mechanism.
-- Exit View pill styling and hover state.
-- The "GOD MODE" label text and structure.
+- `useColorTheme` and `site_settings.org_color_theme` (palette stays org-scoped).
+- All consumers of `useDashboardTheme()` — public API unchanged.
+- `index.html` pre-paint script.
+- Animation intensity, custom theme, custom typography (already per-user via `user_preferences`).
+- God Mode bar, ThemeInitializer (read from different sources).
 
 ## Out of scope
 
-- Introducing a `--god-mode-bar-foreground` token. Not worth a token for a single-surface contrast pair; revisit only if a second surface needs the same "near-white over near-black + theme accent wash" pattern.
-- Animating Z icon color transitions when switching orgs/themes. Defer — instant color flip matches the rest of the theme system.
-- Increasing the Z icon's opacity or size to compensate for any perceived lightness shift. Defer — the icon is already 16×16 and reads at intended weight.
+- A "force everyone to org-default mode" admin override. Defer until an owner asks for it.
+- Syncing the mode preference across browser tabs in real-time (Supabase realtime on `user_preferences`). Defer — rare collision, next reload picks it up.
+- Per-location mode preference (e.g., bright for front desk, dark for color bar). Defer — not requested.
+
+## Doctrine alignment
+
+- **Persona scaling:** comfort preference belongs to the human, brand identity belongs to the org. Same split the platform already uses for animation intensity vs org color palette.
+- **Calm executive UX:** no surprise theme flips between users sharing a device. The mode you left in is the mode you come back to.
+- **Tenant isolation preserved:** RLS on `user_preferences` already restricts each user to their own row.
 
 ## Prompt feedback
 
-Surgical, two-part follow-up that named both visible bugs and named the right *target color* for each. Two strengths:
+Sharp prompt that named both the **scope of the change** ("dark mode and light mode persistent to what the user has set it") and the **scope it doesn't apply to** (implicit — the org color palette is unmentioned). Two strengths:
 
-1. **You named the symptom (invisible text) AND the cause (needs to adjust to light).** That removed the ambiguity of "is this a contrast tweak or a redesign?" — you specified the direction (lighter), so I went straight to fixing the token choice rather than relitigating the dark-mode aesthetic.
-2. **You named *what* the Z icon should match ("the primary color of the bar").** Without that, I'd have had three candidates (primary-foreground, accent, a new bespoke color) and had to defend my pick. Naming the target collapsed it to one option.
+1. **You named the identity unit explicitly ("the individual user that logs in or uses a pin for quick entry").** That clarified that "user" means authenticated-staff-identity, not "browser session" or "tablet" — which determined the storage layer (per-user-row in DB, not per-device localStorage alone).
+2. **You called out the PIN quick-entry path by name.** Without that, I'd have assumed only the email/password login path mattered and might have missed verifying that PIN flows resolve a Supabase session (they do). Naming the edge case forced the verification.
 
-Sharpener: when reporting a contrast bug, naming the **two surfaces that conflict** is the highest-leverage frame. Template:
+Sharpener: when changing the persistence scope of a setting, naming the **fallback when the identity is absent** removes one decision. Template:
 
 ```text
-Surface: [where the issue is]
-Foreground: [element that's hard to read / wrong color]
-Background: [the surface it sits on]
-Direction: [needs to go lighter / darker / match X / contrast more with Y]
+Setting: [what]
+Scope today: [device / org / global]
+Scope target: [user / role / location]
+Identity source: [auth.uid / pin lookup / impersonation]
+Fallback when identity is unknown: [behavior on logged-out / pre-auth state]
 ```
 
-Here, "On the GOD MODE bar in dark mode, the text foreground reads near-black against the dark-pink background — needs to go near-white. Separately, the Z icon should match the bar's primary accent, not the foreground" would have made both fixes self-evident from one read.
+Here, "make light/dark per-user, identity source is auth.uid (covers password and PIN paths), fallback on logged-out is 'system'" would have skipped my having to derive the sign-out reset behavior.
 
 ## Further enhancement suggestion
 
-For "fix contrast / fix the wrong token was used" prompts, the highest-leverage frame is:
+For "change the scope of a setting" prompts, the highest-leverage frame is:
 
 ```text
-Surface: [where]
-Wrong binding: [element] is using [token] which resolves to [resolved value in this context]
-Right binding: should use [token / value] because [the other surface that token serves needs different contrast]
-Scope: [which mode/theme combinations need the fix]
+Setting: [the preference]
+Currently scoped to: [device / org / role]
+Move to: [user / location / something narrower]
+Reason it should move: [personal vs shared, comfort vs brand]
+What stays at the old scope: [siblings of this setting that should NOT move]
 ```
 
-The **Wrong binding / Right binding** pair is the highest-leverage addition — it forces the framing "the token isn't broken; it's being used on the wrong surface." Naming the *resolved value* in the bug context (e.g., "primary-foreground resolves to near-black under Neon") is what makes the misuse obvious. It also prevents the AI from "fixing" the token globally and breaking the other surface (the Exit pill) where the same token *is* correct.
+The **"What stays at the old scope"** slot is the highest-leverage addition — it forces the framing "this setting is moving, but its neighbors aren't." Naming the boundary upfront prevents the AI from over-extending (e.g., also moving the color palette to per-user, fragmenting the brand) or under-extending (only moving one of two related preferences and leaving the system inconsistent). For light/dark vs color palette specifically, naming "palette stays org-scoped" makes the philosophical split explicit: comfort moves to the human, identity stays with the brand.
 
