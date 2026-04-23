@@ -1842,6 +1842,8 @@ html, body, #root {
     .hover-lift:hover {
       transition: none !important;
       box-shadow: none !important;
+      border-color: inherit !important;
+      background-color: inherit !important;
     }
     .premium-surface::before { display: none; }
     .premium-surface::after { display: none; }
