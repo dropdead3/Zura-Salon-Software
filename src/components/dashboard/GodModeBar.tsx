@@ -147,7 +147,7 @@ export function GodModeBar() {
               onClick={handleViewDetails}
               onMouseEnter={() => setDetailsHover(true)}
               onMouseLeave={() => setDetailsHover(false)}
-              className="h-7 px-3 rounded-lg text-xs font-sans font-medium transition-colors duration-200 flex items-center gap-1.5"
+              className="h-7 px-3 rounded-md text-xs font-sans font-medium transition-colors duration-200 flex items-center gap-1.5"
               style={{
                 color: detailsHover ? chrome.detailsHover : chrome.detailsIdle,
                 background: detailsHover ? chrome.detailsHoverBg : 'transparent',
@@ -163,7 +163,7 @@ export function GodModeBar() {
             onMouseEnter={() => setExitHover(true)}
             onMouseLeave={() => setExitHover(false)}
             className={cn(
-              "rounded-lg font-sans font-medium transition-all duration-200 flex items-center gap-1.5",
+              "rounded-md font-sans font-medium transition-all duration-200 flex items-center gap-1.5",
               isMobile ? "h-7 px-3 text-xs" : "h-7 px-4 text-xs"
             )}
             style={{
