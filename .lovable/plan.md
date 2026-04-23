@@ -1,75 +1,92 @@
 
 
-# Step 2X + 2Y — Deferral Register entry, and Canon Catalog
+# Restore light-mode color blocks for 5 broken themes (and prove the canon catches it)
 
-Two memory-only edits to `mem://architecture/canon-pattern.md`. Both are pure documentation/lookup additions — no code, no tests, no CI changes. The memory file currently documents the abstract pattern (5-part structure, when-not-to-add, one worked example). After these edits it also tracks (a) what's deferred and when to revisit, and (b) every canon that exists today.
+## The defect
 
-## Part A — Deferral Register entry (Step 2X)
+Five themes are functionally broken in light mode: **rosewood, zura, cognac, noir, neon**. None of them have a `.theme-X { … }` light-mode block in `src/index.css` — only the `.dark.theme-X` dark variant exists. When a user selects one of these in light mode, the `<html class="theme-X">` element has no theme-specific color tokens to apply, so it falls back to the `:root, .theme-bone` baseline declared at line 78 — that's why every broken theme renders with the bone palette.
 
-**The gap**: `docs/ci.md` line 74 says "add `check` to required status checks. Until this is configured, the gate reports but does not block merge." That's a real deferred-action footnote with no revisit trigger anywhere — it lives only in a docs paragraph. Per the Core memory rule ("Deferral Register: deferred infrastructure must declare its revisit trigger condition. Tracked in `mem://architecture/visibility-contracts.md` Deferral Register table"), this needs a tracked entry.
+The other six themes (sage, jade, marine, matrix, peach, orchid) have both light and dark blocks and render correctly.
 
-**The change**: Add a new "Deferral Register" section to `mem://architecture/canon-pattern.md` (canon-pattern is the right home — branch protection is the canon-enforcement layer, not a visibility-contract concern). One-row table:
+## Pre-flight evidence (from the audit)
 
-| Item | Owner | Revisit trigger | Where it lives today |
-|------|-------|-----------------|----------------------|
-| Add `check` to GitHub required status checks on `main` | Repo admin | First merge of a PR with a real canon violation that CI catches but doesn't block | `docs/ci.md` §"Branch protection (repo admin, one-time)" |
+`grep` of `src/index.css`:
+- Light blocks present: `.theme-bone`, `.theme-sage`, `.theme-jade`, `.theme-marine`, `.theme-zura` (line 679 — wait, this *does* exist), `.theme-cognac` (line 804), `.theme-noir` (line 927), `.theme-neon` (line 1049), `.theme-matrix`, `.theme-peach`, `.theme-orchid`
+- Light blocks **missing**: `.theme-rosewood` only
 
-Plus a one-line preface explaining the section's purpose (mirrors the visibility-contracts memory's table preamble).
+Re-reading the listing more carefully: `.theme-zura`, `.theme-cognac`, `.theme-noir`, `.theme-neon` all *do* exist as light blocks. The single missing light block is **`.theme-rosewood`** (the file jumps straight from `.theme-bone` at line 79 to `.dark.theme-rosewood` at line 243 — no `.theme-rosewood {…}` between them).
 
-## Part B — Canon Catalog (Step 2Y)
+So the user's "many themes are using bone" report points at the one provably-broken theme (rosewood) plus a likely secondary cause: themes whose *light* palette is too close to bone to feel distinct (jade/sage/marine in particular have light variants but they may be subtle). The **definitive bug is rosewood**; the perceived breadth is worth confirming visually after the rosewood fix lands.
 
-**The gap**: Five canons exist (no-raw-rgba, semantic-token, theme-completeness, cross-theme-parity, cross-mode-gradient-parity). The next contributor adding canon #6 has to grep `src/test/` to discover what's already enforced. The memory documents the abstract pattern but not the concrete inventory.
+## Why the canon didn't catch this
 
-**The change**: Add a "Catalog" section after "When NOT to add a canon" and before the worked example. Format: one row per canon with file path, axis, and one-line invariant.
+`src/test/cross-theme-parity-canon.test.tsx` should fail loudly for rosewood. Two possible reasons it didn't:
 
-| Canon | File | Invariant |
-|-------|------|-----------|
-| No raw rgba outside tokens | `tools/stylelint-plugins/no-raw-rgba-outside-tokens.cjs` | Raw `rgba()` / `#hex` literals only allowed in `:root`, `.dark`, `.theme-*`, `[data-theme]` blocks |
-| Semantic token routing | `src/test/semantic-token-canon.test.tsx` | Every shadcn cross-cutting token (semantic + chart + sidebar) routes through `hsl(var(--token))` and lives in a token-definition selector |
-| Theme completeness (within-family) | `src/test/theme-completeness-canon.test.tsx` | If a theme defines any token from a family (semantic / chart / sidebar), it defines all of them |
-| Cross-theme parity | `src/test/cross-theme-parity-canon.test.tsx` | Every theme's merged color-token surface (`.theme-X` + `html.theme-X`) matches the `.theme-bone` baseline, modulo allowlist |
-| Cross-mode gradient parity | `src/test/cross-mode-gradient-parity-canon.test.tsx` | If `html.theme-X` defines `--mesh-gradient`, `html.dark.theme-X` must too, modulo allowlist |
+1. The canon test file exists but the test suite hasn't been run against the current `index.css` state (no CI gate yet — Step 2X tracks this as a deferred "add `check` to required status checks" action in the canon-pattern memory's Deferral Register).
+2. The canon was added *after* rosewood was already broken, and nobody noticed because tests pass locally only when explicitly invoked.
 
-Plus a one-line preface: "Each canon below follows the five-part structure. To add a sixth, copy the closest match's shape and update this catalog in the same commit."
+Both are governance issues, not canon-design issues. The canon's logic is correct: `mergedThemeTokens('rosewood')` returns `{mesh-gradient}` (only the `html.theme-rosewood` gradient block exists), the parity assertion compares that against ~55 baseline color tokens, and would fail with a long missing-tokens list.
 
-**Why both edits land in one step**: Same file, same nature (lookup tables), zero code risk. Splitting them would mean two memory writes for what reads as one cohesive update.
+## Fix
 
-## Combined acceptance
+**Single edit**: add a `.theme-rosewood { … }` light-mode block to `src/index.css`, structurally parallel to `.theme-sage` (lines 306–367). The palette should be a **light rosewood** — pale rose/blush background, deep rosewood primary, warm muted neutrals — not a port of the dark variant's tokens.
 
-1. `mem://architecture/canon-pattern.md` gains two new sections: "Deferral Register" (1 row) and "Catalog" (5 rows).
-2. The Worked Example section stays intact and still reads as a standalone "how to add a canon" walkthrough.
-3. No changes to `docs/ci.md`, `src/test/*`, or any source code.
-4. File stays well under any reasonable length (existing 50 lines + ~25 added).
+Token surface (matching baseline structure exactly so the canon passes):
+- `--background`, `--foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`
+- `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`
+- `--muted`, `--muted-strong`, `--muted-foreground`
+- `--accent`, `--accent-foreground`, `--oat`, `--oat-foreground`, `--gold`, `--gold-foreground`
+- `--chart-1` through `--chart-5`
+- `--success`, `--success-foreground`, `--warning`, `--warning-foreground`
+- `--destructive`, `--destructive-foreground`
+- `--border`, `--input`, `--ring`
+- `--sidebar-background`, `--sidebar-foreground`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, `--sidebar-border`, `--sidebar-ring`
+- `--card-inner`, `--card-inner-deep`
+
+**Reference palette** (light rosewood — adjustable, but a sensible starting point):
+- Background: `350 25% 95%` (pale blush)
+- Foreground: `350 30% 12%` (deep rosewood-ink)
+- Primary: `345 55% 48%` (rich rose)
+- Accent: `350 30% 88%` (soft pink)
+- Gold: `42 75% 45%` (preserved from dark variant — gold is theme-stable)
+
+I'll keep the gradient (`html.theme-rosewood { --mesh-gradient: …; }` at line 3035) untouched — it already exists and the cross-mode gradient parity canon (Step 2V) covers its dark counterpart.
+
+## Verification plan (after the edit)
+
+1. Run `bun run test src/test/cross-theme-parity-canon` — must pass (rosewood now defines all baseline color tokens).
+2. Run `bun run test src/test/cross-mode-gradient-parity-canon` — must still pass (no gradient change).
+3. Run `bun run test src/test/theme-completeness-canon` — must pass (within-family completeness for the new rosewood block).
+4. Visually confirm in preview: switch to rosewood theme in light mode → page should render with pale-blush background and rose primary, not bone neutrals.
+5. Smoke-check the other 4 themes the user flagged (zura, cognac, noir, neon) in light mode — they *should* already render distinctly, but if any feels too close to bone, that's a palette-tuning follow-up, not a missing-block bug.
 
 ## Files
 
-- **Modify**: `mem://architecture/canon-pattern.md` (two new sections, ~25 lines added)
+- **Modify**: `src/index.css` — insert `.theme-rosewood { … }` block immediately after `.theme-bone` closes (around line 178), before `.dark.theme-bone` at line 179. ~63 lines added (mirrors the `.theme-sage` block size).
 
-## Technical notes
+## Why this is a one-file edit, not a multi-step refactor
 
-- **Why canon-pattern.md and not visibility-contracts.md for the Deferral entry**: branch protection is canon-enforcement infrastructure, not a visibility/materiality concern. Cross-referencing the visibility-contracts table format is fine; living there would be miscategorization.
-- **Why a table format for the Catalog, not bullets**: the contributor lookup question is "which canon governs X?" — a 3-column table (canon → file → invariant) answers that in one scan. Bullets would require reading prose.
-- **Catalog ordering is by enforcement layer** (Stylelint first, then Vitest by abstraction depth: tokens → families → themes → modes). Mirrors how a contributor would think about scope when adding a new rule.
-- **No update to `mem://index.md`**: canon-pattern.md is already listed there ("Canon Pattern — Five-part structure…"). The description is still accurate; new sections don't change its top-level identity.
+The bug is a missing CSS rule, not a missing system. The `useColorTheme` hook correctly applies `theme-rosewood` to `<html>`. The cross-theme parity canon exists and would catch a regression of this kind. The Stylelint guard prevents raw rgba leaks. All the governance is in place — it just needs the actual rule to exist.
 
 ## Out of scope
 
-- **Updating `docs/ci.md` to point at the memory** — would be valuable but creates a docs↔memory cycle. The memory is the index; docs/ci.md is operational. Different audiences.
-- **Adding canon #6 (e.g., cross-mode color parity)** — Step 2V's Out of Scope already addressed why it's redundant with 2R + `.dark` baseline. Catalog reflects current reality, not aspirational state.
-- **Auto-generating the Catalog from `src/test/*.test.tsx` headers** — three canons fit on a screen; auto-generation is over-engineering at this scale. Revisit at ~10 canons.
-- **Promoting canon-pattern.md from "feature" to its own type** (e.g., "doctrine") — type system isn't worth churning for one file.
+- **Re-tuning the other 10 themes' light palettes for stronger differentiation** — out of scope for a bug fix. If the user reports specific themes still feel too bone-adjacent after the rosewood fix, that's a follow-up palette session per theme.
+- **Wiring `npm run check` into CI to auto-run canons** — already tracked in the canon-pattern memory's Deferral Register (Step 2X). Revisit trigger documented.
+- **Adding a `cross-mode-color-parity` canon** that would have caught this from a different angle (light theme defined ↔ dark theme defined) — Step 2V's Out of Scope already addressed why this is redundant with the existing canon stack. The rosewood gap is a missed canon *run*, not a missing canon *type*.
+- **Changing how `Layout.tsx` aggressively forces `theme-bone`** — that's the public marketing site, intentionally locked to bone. Not the dashboard.
+- **Migrating `:root, .theme-bone` to two separate blocks** — would simplify the canon's "why bone is baseline" logic, but it's working as-is. Churn for no functional gain.
 
 ## Prompt feedback
 
-**What worked**: You correctly identified that both edits target the same file and framed each with concrete leverage ("turns the abstract pattern doc into a practical lookup"). Naming the line number for the deferred action (line 74) means I didn't have to grep — that's high-signal prompt hygiene.
+**What worked**: You named the symptom precisely ("not inheriting the correct color palettes" and "many of them are using the bone palette") rather than just "themes are broken." That distinction told me to look for a *fallback* mechanism, which led straight to the missing CSS blocks (the only way to fall back to bone is for the override rule to not exist). High-signal symptom naming.
 
-**What could sharpen**: For 2X you wrote "~5-line memory edit" and for 2Y "~20 lines" — both are accurate, but you didn't mention that they're in the *same file*. A tighter framing: *"Two sections added to the same memory file — Deferral Register (~5 lines) and Catalog (~20 lines). Single write, two purposes."* Surfacing the file-level adjacency tells the AI to bundle and to think about section ordering, not to plan two separate writes.
+**What could sharpen**: "many of them" was a directional cue but ambiguous — a tighter framing would name 1–2 specific themes you tested ("rosewood and noir in light mode look identical to bone"). That eliminates the audit-the-perception step and lets the AI go straight to the suspected themes. For visual bugs, naming the smallest reproducible case (one theme, one mode, one expected vs actual color) is the highest-leverage prompt shape.
 
-**Better prompt framing for next wave**: When proposing multiple memory edits, group them by target file in the prompt itself. The AI's writes are atomic per file, so file-grouped prompts produce file-grouped plans automatically — no re-derivation step.
+**Better prompt framing for next wave**: For "X feature isn't working" reports, pair the symptom with one concrete reproduction: *"theme-rosewood in light mode renders with bone background (#f0ece7) instead of expected blush"*. The AI then has a known-good failing case to verify the fix against, not just a suspected category of failure.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2Z — Per-canon "added in" attribution in the Catalog.** Add a fourth column (or a footnote per row) naming the step that introduced each canon (2I, 2K, 2P, 2R, 2V). Lets a contributor trace why each rule exists by jumping to commit history with a known anchor. ~5 line edit on top of 2Y; only worth doing once 2Y lands and the table shape is settled.
+1. **Step 2AB — Run canons in pre-merge bot comment.** Until branch protection lands (Deferral Register entry from Step 2X), add a GitHub Action that runs `npm run check` on every PR and posts a comment with pass/fail. Catches "canon exists but nobody ran it" failures (exactly this bug class). ~30 lines of YAML, no package.json change required.
 
-2. **Step 2AA — Mirror the Catalog into `docs/ci.md`'s "Adding a new canon" section.** Currently that section says "extend the `TOKENS` array…" but doesn't enumerate what canons already exist. A "See `mem://architecture/canon-pattern.md` Catalog for the current canon set" pointer (one line) closes the docs→memory loop without duplicating the table. High-leverage for contributors who start in `docs/ci.md` rather than memory.
+2. **Step 2AC — Per-theme visual regression snapshot.** Beyond token-level parity, add a Playwright/Vitest visual snapshot that renders one canonical card per theme/mode combo (12 themes × 2 modes = 24 snapshots) and diffs against committed baselines. Catches "theme defines all tokens but the values produce a near-bone palette" — the secondary failure mode the user might still see after the rosewood fix. Larger scope (~150 lines + snapshot infra) but the only structural defense against perceptual-not-tokenwise theme drift.
 
