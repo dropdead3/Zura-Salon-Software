@@ -318,7 +318,7 @@ export default function TeamHub() {
 
   return (
     <DashboardLayout>
-      <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
+      <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto space-y-8")}>
         <DashboardPageHeader
           title="Operations Hub"
           description="People management, development, and team operations"
