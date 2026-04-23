@@ -1870,6 +1870,9 @@ html, body, #root {
       transition: none !important;
       box-shadow: none !important;
     }
+    *:focus-visible {
+      transition: none !important;
+    }
     .premium-surface::before { display: none; }
     .premium-surface::after { display: none; }
   }
