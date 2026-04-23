@@ -1,77 +1,81 @@
 
 
-# Step 2F — Catch the next scrollbar-class regression before it ships
+# Step 2G — Lock the rgba-literal canon with a lint rule, and generalize the CSS rule fixture
 
-Two enhancements, bundled because they share a root cause: **hardcoded `rgba(0,0,0,…)` / `rgba(255,255,255,…)` values don't respond to theme, and we have no automated net to catch them.** Step 2E fixed the three known scrollbar offenders. This step finds the rest and locks in the canon.
+Two enhancements, same spirit as Step 2F: **make the canon enforceable at authoring time, not just at test time.** The Vitest suite catches regressions in two named utilities; a stylelint rule catches them in any utility, the moment they're typed.
 
-## Part A — Audit and fix remaining hardcoded rgba in `index.css`
+## Part A — Stylelint rule banning `rgba(` outside token definitions
 
-Goal: every color value in `index.css` either (a) resolves through an HSL token, or (b) has a documented reason to be literal (e.g., a pure-black overlay on a modal scrim where theme-awareness would be wrong).
+**What we're protecting**
+Every `rgba(0, 0, 0, …)` or `rgba(255, 255, 255, …)` in `src/index.css` that lives outside a token definition block is a theme-blind literal. Step 2E fixed three. Step 2F annotated the intentional ones (`zura-disco`, `mkt-glass`). A lint rule locks the door.
 
-**Approach**
+**Approach — add Stylelint, minimal config, one custom plugin**
 
-1. Grep `src/index.css` for `rgba(0,` `rgba(255,` `rgba(128,` and any raw hex (`#[0-9a-f]{3,8}`) outside of `:root` / `.dark` token definitions.
-2. Categorize each hit into one of three buckets:
-   - **Fix** — surface color that should follow theme (scrollbar variants, hover fills, borders, shadows on tinted surfaces). Rewrite to `hsl(var(--token) / alpha)`.
-   - **Keep, annotate** — intentional literal (modal scrims, blur overlays where pure black is the design intent, SVG pattern fills). Add a `/* intentional literal: <reason> */` comment above the line.
-   - **Delete** — dead rule (duplicate, overridden, or orphaned from a removed component). Remove.
-3. Produce a short inline comment block at the top of any rewritten section noting which token family it resolves to, so the next reader knows not to hardcode again.
-
-**Expected scope**
-Based on the Step 2E discovery, likely 4–8 more sites — scrollbar corner rules, a few `.card-glow` / `.elevation-*` shadows, maybe a backdrop or focus-ring fallback. I'll only know the exact list after the grep; the plan covers the pattern, not an exhaustive pre-written diff.
-
-**Acceptance (Part A)**
-
-1. `git grep 'rgba(0, 0, 0'` and `git grep 'rgba(255, 255, 255'` in `src/index.css` return only annotated "intentional literal" hits.
-2. Toggling dark mode on any page shows no invisible/wrong-color element that was previously hardcoded.
-3. No visual change on light-mode surfaces (token values are chosen to match current appearance at the default theme).
-
-## Part B — Visual regression snapshot for scrollbars
-
-Goal: if anyone future-edits `tokens.scrollbar.thumb`, `.scrollbar-thin`, `.scrollbar-minimal`, the native `::-webkit-scrollbar` block, or the Firefox `scrollbar-color` rules, a test fails before the PR lands.
-
-**Approach — computed-style assertion, not pixel diff**
-
-Pixel-diff visual regression (Playwright/Chromatic) is out of scope — it requires CI infra this project doesn't have. Instead, add a Vitest + jsdom test that asserts the *computed CSS tokens* on a rendered scrollable surface. This catches the exact regression class we just fixed (token family swap, hardcoded fallback sneaking back in) without needing a rendering browser.
+The project has no Stylelint today (only ESLint for JS/TS — see `eslint.config.js`). We'll add it narrowly, scoped to `src/index.css` only, with one rule that matters.
 
 **Files**
 
-1. `vitest.config.ts`, `src/test/setup.ts`, `tsconfig.app.json` — per the frontend-testing-setup guide, only if not already present. (I'll check first; if the project already has Vitest configured, skip.)
-2. `src/test/scrollbar-tokens.test.tsx` — new. Three assertions:
-   - **Radix ScrollArea thumb** renders with classes containing `bg-muted-foreground/25`, `hover:bg-muted-foreground/45`, `active:bg-primary/50`. Renders `<ScrollArea>` with tall content, queries the thumb, asserts `className` includes the canonical tokens. This catches regressions in `tokens.scrollbar.thumb` directly.
-   - **`.scrollbar-thin` utility** — mount a `<div className="scrollbar-thin">`, read the stylesheet rule via `document.styleSheets`, assert the `:hover::-webkit-scrollbar-thumb` rule's `background-color` property string contains `--muted-foreground`. (jsdom parses CSS rules even though it doesn't render them.)
-   - **`.scrollbar-minimal` utility** — same as above, 4px width, same token family.
-3. `src/test/scrollbar-tokens.fixtures.ts` — small helper that reads a class rule out of `document.styleSheets` by selector, since jsdom's CSSOM is awkward. Keeps the test readable.
+1. `package.json` — add devDependencies: `stylelint`, `stylelint-config-standard`, plus a script `"lint:css": "stylelint 'src/**/*.css'"`.
+2. `.stylelintrc.cjs` — config extending `stylelint-config-standard` but relaxing rules that fight Tailwind (`at-rule-no-unknown` off for `@tailwind`, `@apply`, `@layer`, `@screen`; `no-descending-specificity` off; `selector-class-pattern` off for our kebab-case utilities). Register our custom plugin.
+3. `tools/stylelint-plugins/no-raw-rgba-outside-tokens.cjs` — custom rule. Logic:
+   - Walk every `Declaration` node.
+   - If the value contains `rgba(` or `rgb(` with literal integer args (not `var(--…)`):
+     - Walk up to the parent rule.
+     - If the parent selector is `:root` or `.dark` (or any selector starting with `:root` / `.dark `), allow it — those are token definitions.
+     - If the declaration is preceded by a comment containing `intentional literal` (case-insensitive), allow it — this is the Step 2F escape hatch (`zura-disco`, `mkt-glass`).
+     - Otherwise, report with message: `"Raw rgba/rgb literal outside token definition. Use hsl(var(--token) / alpha) or annotate with /* intentional literal: <reason> */ above this line."`
+   - Rule name: `zura/no-raw-rgba-outside-tokens`. Severity configurable; we ship it as `error`.
 
-**Why this works**
+**Acceptance (Part A)**
 
-- Token-family regressions (the exact bug Step 2E fixed: `foreground` vs `muted-foreground`) show up as a string mismatch in the className or the rule body. Test fails loudly.
-- Hardcoded `rgba(...)` creeping back in fails the `toContain('--muted-foreground')` assertion.
-- No browser needed, runs in <1s, no CI infra changes.
+1. `npm run lint:css` passes on the current `src/index.css` (the Step 2F annotations are respected).
+2. Inserting `color: rgba(0, 0, 0, 0.3);` into a new `.foo` rule fails lint with the documented message.
+3. The same insertion preceded by `/* intentional literal: true-black scrim per design */` passes.
+4. Adding the same rule inside `:root` or `.dark` passes (token definitions are the canon's source).
+5. Lint runs in under 2 seconds on the current `index.css`.
+6. Existing `rgba` literals inside `:root` and `.dark` (the token definitions themselves) are untouched — they're the whole point of having the rule.
 
-**What this deliberately doesn't test**
+## Part B — Generalize the CSS rule fixture into `src/test/css-rule.ts`
 
-- Actual rendered pixel color (needs headless browser).
-- Hover-state timing / transitions (functional, not visual-canon).
-- macOS overlay scrollbar auto-hide (system-governed).
+**What we're generalizing**
+`src/test/scrollbar-tokens.fixtures.ts` contains `extractRuleBody(cssSource, selector)` and `readIndexCss()`. Both are useful beyond scrollbars the moment we write any other CSS-canon test (the user's example: "all `--destructive` usages route through HSL", but the same shape applies to elevation shadows, focus rings, glass surfaces, etc.).
+
+**Approach — promote, don't duplicate**
+
+1. **Create** `src/test/css-rule.ts` with the primitives:
+   - `extractRuleBody(cssSource: string, selector: string): string | null` — moved as-is.
+   - `readCssFile(relativePath: string): string` — generalized from `readIndexCss`. Takes a path relative to `src/`, reads once, caches by path (Map-based cache so multiple files can be tested in one run).
+   - `readIndexCss(): string` — kept as a thin convenience wrapper over `readCssFile("index.css")` so nothing downstream breaks.
+   - Also add `extractAllRuleBodies(cssSource, selector): string[]` — plural variant for cases where the same selector appears in multiple `@media` / `@layer` contexts. Not strictly needed today but one extra line and avoids a re-refactor next time.
+
+2. **Rewrite** `src/test/scrollbar-tokens.fixtures.ts` as a two-line re-export for back-compat:
+   ```ts
+   // Deprecated: prefer src/test/css-rule.ts. Kept as re-export to avoid touching existing tests.
+   export { extractRuleBody, readIndexCss } from "./css-rule";
+   ```
+   This keeps `src/test/scrollbar-tokens.test.tsx` working with zero edits.
+
+3. **No changes** to `scrollbar-tokens.test.tsx` — its imports continue to resolve via the re-export. When the next CSS-canon test is written, it imports directly from `@/test/css-rule` and we can eventually delete the shim.
 
 **Acceptance (Part B)**
 
-1. `npx vitest run src/test/scrollbar-tokens` passes on the current codebase.
-2. Reverting `tokens.scrollbar.thumb` to its pre-Step-2E `bg-foreground/15` value causes the test to fail with a clear message naming the expected token.
-3. Replacing `hsl(var(--muted-foreground) / 0.25)` in `.scrollbar-thin` with a hardcoded `rgba(0,0,0,0.15)` causes that test to fail.
-4. Test file is under 80 lines including the fixture helper — readable, not clever.
+1. `npx vitest run src/test/scrollbar-tokens` still passes with zero test-file edits.
+2. `src/test/css-rule.ts` exports `extractRuleBody`, `extractAllRuleBodies`, `readCssFile`, `readIndexCss`.
+3. `readCssFile` caches per-path (calling it twice with the same path reads disk once; a different path reads disk a second time).
+4. The back-compat shim in `scrollbar-tokens.fixtures.ts` is ≤5 lines and re-exports only.
 
 ## Technical notes
 
-- Vitest + jsdom is already the sanctioned testing stack for this project (see `<useful-context>`). If `vitest.config.ts` doesn't exist yet, I'll scaffold it per the guide in one shot; if it does, I'll only add the test file.
-- Part A is pure `src/index.css` edits — no token changes, no component changes.
-- The two parts are independent; if Part A surfaces nothing worth fixing (grep returns only legitimate literals), Part A becomes "add the annotation comments and move on," and Part B is still worth shipping.
+- **Why Stylelint and not an ESLint rule on template literals?** `index.css` is CSS, not TS. ESLint can't parse it without a CSS parser plugin; Stylelint is the native tool. Scoping it to `src/**/*.css` keeps it from stepping on the existing ESLint setup.
+- **Why a custom plugin vs. `declaration-property-value-disallowed-list`?** The built-in allow/disallow rules can't do "allow only inside `:root` / `.dark`, or when annotated." The logic is context-dependent; a 40-line custom rule is the right tool.
+- **CI**: not wired here — the user's preference has been "Vitest + npm script, no CI infra changes" (per Step 2F). `lint:css` is available as a script; wiring it into a pre-commit or CI gate is a separate decision the user can call when ready.
+- **Escape-hatch convention**: `/* intentional literal: <reason> */` must be on the line immediately above the offending declaration. Matching the exact comment text we already use in Step 2F keeps the convention single-sourced.
 
 ## Out of scope
 
-- Playwright / Chromatic / any pixel-diff tooling.
-- Testing shadows, borders, or other token families (scope creep — scrollbars are the concrete regression class we just hit).
-- Adding a lint rule to ban `rgba(` outside token definitions (possible Step 2G; too heavy for this wave).
-- Refactoring `.scrollbar-hide` or other intentionally-literal utilities.
+- Running lint in CI or a pre-commit hook (wire it when the user decides).
+- Expanding the rule to cover raw hex (`#fff`, `#000`) — different regression class, Step 2H if we ever see it.
+- Adding Stylelint to any file other than `src/**/*.css` (no `.tsx` inline styles, no `styled-components` — would be scope creep).
+- Deleting the `scrollbar-tokens.fixtures.ts` shim now — free to remove once a second consumer exists, not before.
+- Writing the "all `--destructive` uses route through HSL" test — that's the *reason* we generalize, not part of this step.
 
