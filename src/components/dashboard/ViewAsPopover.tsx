@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import '@/styles/silver-shine.css';
 import { createPortal } from 'react-dom';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -133,13 +132,21 @@ export function ViewAsPopover() {
       <PopoverContent
         align="end"
         sideOffset={16}
-        className="z-[46] w-80 p-0 silver-shine-border rounded-xl shadow-2xl overflow-hidden"
-        style={{ maxHeight: 'min(420px, var(--radix-popover-content-available-height))' }}
+        className={cn(
+          "z-[46] w-[340px] p-0 rounded-xl overflow-hidden",
+          "bg-popover/95 backdrop-blur-xl",
+          "border border-border/60",
+          "shadow-[0_20px_60px_-12px_rgba(0,0,0,0.5),inset_0_1px_0_hsl(var(--foreground)/0.04)]",
+          "flex flex-col"
+        )}
+        style={{
+          maxHeight: 'min(560px, var(--radix-popover-content-available-height, 560px))',
+          height: 'min(560px, var(--radix-popover-content-available-height, 560px))',
+        }}
       >
-        <div className="silver-shine-inner block bg-card rounded-[calc(theme(borderRadius.xl)-1px)] overflow-hidden flex flex-col" style={{ maxHeight: 'inherit' }}>
-        <Tabs defaultValue="team" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
-          {/* Header */}
-          <div className="px-3 pt-3 pb-2">
+        <Tabs defaultValue="team" className="w-full flex flex-col flex-1 min-h-0">
+          {/* Header — sticky tabs */}
+          <div className="px-3 pt-3 pb-2 shrink-0 border-b border-border/40">
             <TabsList className="grid w-full grid-cols-3 h-10">
               <TabsTrigger value="roles" className="text-xs py-1.5 gap-1">
                 <Shield className="w-3.5 h-3.5" />
@@ -159,9 +166,9 @@ export function ViewAsPopover() {
           {/* === Roles Tab === */}
           <TabsContent value="roles" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
             <ScrollArea className="flex-1 min-h-0">
-              <div className="p-3 space-y-3">
+              <div className="p-3 pb-4 space-y-3">
                 {grouped.map(group => (
-                  <div key={group.value}>
+                  <div key={group.value} className="pt-2 first:pt-0">
                     <p className="font-display text-[10px] tracking-[0.12em] uppercase text-muted-foreground/60 mb-1 px-1">
                       {group.label}
                     </p>
@@ -175,7 +182,7 @@ export function ViewAsPopover() {
                               setViewAsRole(role.name as AppRole);
                               setOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/50 transition-colors duration-150 text-sm"
+                            className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/70 hover:text-foreground transition-colors duration-150 text-sm"
                           >
                             <IconComp className="w-4 h-4 text-muted-foreground" />
                             <span className="flex-1 text-left font-sans">{role.display_name}</span>
@@ -194,7 +201,7 @@ export function ViewAsPopover() {
 
           {/* === Team Tab === */}
           <TabsContent value="team" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
-            <div className="p-3 pb-1">
+            <div className="p-3 pb-2 shrink-0 border-b border-border/40">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
@@ -207,7 +214,7 @@ export function ViewAsPopover() {
               </div>
             </div>
             <ScrollArea className="flex-1 min-h-0">
-              <div className="px-3 pb-3 space-y-0.5">
+              <div className="p-3 pb-4 space-y-0.5">
                 {usersLoading ? (
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
                 ) : filteredUsers.length === 0 ? (
@@ -234,7 +241,7 @@ export function ViewAsPopover() {
                           setOpen(false);
                           setTeamFilter('');
                         }}
-                        className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/50 transition-colors duration-150"
+                        className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/70 hover:text-foreground transition-colors duration-150"
                       >
                         <Avatar className="h-7 w-7">
                           {member.photo_url && <AvatarImage src={member.photo_url} alt={displayName} />}
@@ -279,7 +286,6 @@ export function ViewAsPopover() {
             </ScrollArea>
           </TabsContent>
         </Tabs>
-        </div>
       </PopoverContent>
     </Popover>
   );
