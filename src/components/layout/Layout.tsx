@@ -4,6 +4,11 @@ import { Footer } from "./Footer";
 import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
+import { ALL_THEMES } from "@/hooks/useColorTheme";
+import { getRouteZone } from "@/lib/route-utils";
+
+const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
+const LEGACY_THEME_CLASSES = ['theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism'];
 
 function getIsEditorPreview() {
   if (typeof window === 'undefined') return false;
@@ -26,41 +31,26 @@ export function Layout({ children }: LayoutProps) {
   const [showFooter, setShowFooter] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
 
-  // Immediately force light mode during render (before useEffect) to prevent flash
-  if (typeof document !== 'undefined') {
-    const root = document.documentElement;
-    root.classList.remove('dark');
-    root.classList.remove('theme-rosewood', 'theme-sage', 'theme-marine', 'theme-zura', 'theme-cognac', 'theme-noir', 'theme-neon', 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
-    root.classList.add('theme-bone');
-  }
-
-  // Force light mode and reset any dashboard theme overrides for public website
+  // Force light/bone theme on the public marketing site only.
+  // Guarded by route zone so this never leaks into dashboard/platform routes
+  // (e.g., during transitions where Layout may briefly co-exist in the tree).
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (getRouteZone(window.location.pathname) !== 'public') return;
+
     const root = document.documentElement;
-    
+
     // Remove dark mode class
     root.classList.remove('dark');
-    
-    // Ensure bone theme is applied
-    root.classList.remove('theme-rosewood', 'theme-sage', 'theme-marine', 'theme-zura', 'theme-cognac', 'theme-noir', 'theme-neon', 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
+
+    // Ensure bone theme is applied (clear all known + legacy theme classes)
+    root.classList.remove(...THEME_CLASSES, ...LEGACY_THEME_CLASSES);
     root.classList.add('theme-bone');
 
     // Add editor-preview class for scrollbar hiding
     if (isEditorPreview) {
       root.classList.add('editor-preview');
     }
-    
-    // Clear any custom CSS variable overrides from dashboard theme
-    const style = root.style;
-    const propsToRemove: string[] = [];
-    for (let i = 0; i < style.length; i++) {
-      const prop = style[i];
-      // Only remove custom properties that could be from dashboard theme
-      if (prop.startsWith('--') && !prop.includes('radix')) {
-        propsToRemove.push(prop);
-      }
-    }
-    propsToRemove.forEach(prop => style.removeProperty(prop));
 
     return () => {
       if (isEditorPreview) {
