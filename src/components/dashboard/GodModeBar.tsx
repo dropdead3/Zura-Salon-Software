@@ -41,9 +41,9 @@ export function GodModeBar() {
 
   const chrome = isDark
     ? {
-        // Dark: near-black sandwich with primary accent wash through the middle.
+        // Dark: near-black sandwich with primary accent wash — slightly translucent for glass effect.
         background:
-          'linear-gradient(to right, hsl(0 0% 6%), hsl(var(--primary) / 0.85), hsl(0 0% 6%)), hsl(0 0% 6%)',
+          'linear-gradient(to right, hsl(0 0% 6% / 0.78), hsl(var(--primary) / 0.78), hsl(0 0% 6% / 0.78))',
         borderBottomColor: 'hsl(var(--primary) / 0.4)',
         boxShadow: '0 4px 20px -4px hsl(var(--primary) / 0.35)',
         // Z icon matches the bar's primary accent (hot pink in Neon, etc.).
@@ -60,9 +60,9 @@ export function GodModeBar() {
         detailsHoverBg: 'hsl(var(--primary) / 0.25)',
       }
     : {
-        // Light: clean white base with a soft primary accent wash + hairline.
+        // Light: clean white base with soft primary wash — slightly translucent for glass effect.
         background:
-          'linear-gradient(to right, hsl(0 0% 100%), hsl(var(--primary) / 0.45), hsl(0 0% 100%)), hsl(0 0% 100%)',
+          'linear-gradient(to right, hsl(0 0% 100% / 0.82), hsl(var(--primary) / 0.42), hsl(0 0% 100% / 0.82))',
         borderBottomColor: 'hsl(var(--primary) / 0.35)',
         boxShadow: '0 2px 12px -4px hsl(var(--primary) / 0.25)',
         iconColor: 'hsl(0 0% 8%)',
@@ -88,6 +88,8 @@ export function GodModeBar() {
         background: chrome.background,
         borderBottomColor: chrome.borderBottomColor,
         boxShadow: chrome.boxShadow,
+        backdropFilter: 'blur(20px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(140%)',
       }}
     >
       <div className="h-full max-w-screen-2xl mx-auto px-4 lg:px-6 flex items-center justify-between gap-3">
