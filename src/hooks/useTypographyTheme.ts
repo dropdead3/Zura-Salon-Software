@@ -64,6 +64,17 @@ function removeCSSVariable(varName: string): void {
   document.documentElement.style.removeProperty(`--${varName}`);
 }
 
+/**
+ * Canonical cleanup helper: strips every editor-managed typography token
+ * from the inline style layer of <html>. Used by the editor lifecycle
+ * (unmount) and available to other reconcilers.
+ */
+export function clearTypographyVariables(): void {
+  ALL_TYPOGRAPHY_KEYS.forEach((key) => {
+    removeCSSVariable(key);
+  });
+}
+
 // Get all current values
 function getAllCurrentValues(): TypographyTheme {
   const values: TypographyTheme = {};

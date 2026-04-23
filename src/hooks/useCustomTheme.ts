@@ -309,6 +309,18 @@ function removeCSSVariable(varName: string): void {
   document.documentElement.style.removeProperty(`--${varName}`);
 }
 
+/**
+ * Canonical cleanup helper: strips every editor-managed color token from the
+ * inline style layer of <html>. Used by the editor lifecycle (unmount) and
+ * available to other reconcilers that need to guarantee built-in theme
+ * classes win over leaked editor overrides.
+ */
+export function clearCustomThemeVariables(): void {
+  ALL_CUSTOM_THEME_KEYS.forEach((key) => {
+    removeCSSVariable(key);
+  });
+}
+
 export function useCustomTheme() {
   const [customTheme, setCustomTheme] = useState<CustomTheme | null>(null);
   const [pendingChanges, setPendingChanges] = useState<CustomTheme>({});
