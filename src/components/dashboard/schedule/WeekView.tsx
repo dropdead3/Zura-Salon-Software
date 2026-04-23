@@ -212,16 +212,17 @@ function WeekAppointmentCard({
   const pixelHeight = parseInt(style.height);
   const size = getCardSize(appointment.start_time, appointment.end_time, undefined, pixelHeight);
 
-  // Overlap layout
+  // Overlap layout — flush edges, no inner gutter
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
   const isFirstCol = columnIndex === 0;
   const isLastCol = columnIndex === totalOverlapping - 1;
-  const leftOffset = isFirstCol ? 1 : 0;
-  const rightPad = isLastCol ? 1 : 0;
-  const cardWidth = (isHoveredRight && totalOverlapping <= 1)
-    ? `calc(${widthPercent * 0.7}%)`
-    : `calc(${widthPercent}% - ${leftOffset + rightPad}px)`;
+  const isOverlapping = totalOverlapping > 1;
+  const cardWidth = isOverlapping
+    ? `${widthPercent}%`
+    : isHoveredRight
+      ? `calc(${widthPercent * 0.7}%)`
+      : `${widthPercent}%`;
 
   return (
     <div
@@ -229,7 +230,7 @@ function WeekAppointmentCard({
       style={{
         top: style.top,
         height: style.height,
-        left: `calc(${leftPercent}% + ${leftOffset}px)`,
+        left: `${leftPercent}%`,
         width: cardWidth,
         transition: 'width 200ms ease-out',
       }}
@@ -248,7 +249,9 @@ function WeekAppointmentCard({
         assistantNamesMap={assistantNamesMap}
         assistantProfilesMap={assistantProfilesMap}
         categoryColors={categoryColors}
-        
+        isOverlapping={isOverlapping}
+        isFirstOverlapCol={isFirstCol}
+        isLastOverlapCol={isLastCol}
         showStylistBadge
         showClientPhone={false}
         showClientAvatar={false}
