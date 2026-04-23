@@ -43,7 +43,7 @@ export function GodModeBar() {
     ? {
         // Dark: near-black sandwich with primary accent wash through the middle.
         background:
-          'linear-gradient(to right, hsl(0 0% 6%), hsl(var(--primary) / 0.55), hsl(0 0% 6%))',
+          'linear-gradient(to right, hsl(0 0% 6%), hsl(var(--primary) / 0.85), hsl(0 0% 6%)), hsl(0 0% 6%)',
         borderBottomColor: 'hsl(var(--primary) / 0.4)',
         boxShadow: '0 4px 20px -4px hsl(var(--primary) / 0.35)',
         // Z icon matches the bar's primary accent (hot pink in Neon, etc.).
@@ -62,7 +62,7 @@ export function GodModeBar() {
     : {
         // Light: clean white base with a soft primary accent wash + hairline.
         background:
-          'linear-gradient(to right, hsl(0 0% 100%), hsl(var(--primary) / 0.18), hsl(0 0% 100%))',
+          'linear-gradient(to right, hsl(0 0% 100%), hsl(var(--primary) / 0.45), hsl(0 0% 100%)), hsl(0 0% 100%)',
         borderBottomColor: 'hsl(var(--primary) / 0.35)',
         boxShadow: '0 2px 12px -4px hsl(var(--primary) / 0.25)',
         iconColor: 'hsl(0 0% 8%)',
