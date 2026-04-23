@@ -30,6 +30,7 @@ const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
   zura: '#8B5CF6',
   ember: '#D4872A',
   noir: '#1A1A1A',
+  neon: '#FF2D8A',
 };
 
 const SAMPLE_VARIABLES: Record<string, string> = {

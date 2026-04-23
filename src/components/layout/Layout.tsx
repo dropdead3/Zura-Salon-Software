@@ -30,7 +30,7 @@ export function Layout({ children }: LayoutProps) {
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.classList.remove('dark');
-    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura', 'theme-ember', 'theme-noir');
+    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura', 'theme-ember', 'theme-noir', 'theme-neon');
     root.classList.add('theme-cream');
   }
 
@@ -42,7 +42,7 @@ export function Layout({ children }: LayoutProps) {
     root.classList.remove('dark');
     
     // Ensure cream theme is applied
-    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura', 'theme-ember', 'theme-noir');
+    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean', 'theme-zura', 'theme-ember', 'theme-noir', 'theme-neon');
     root.classList.add('theme-cream');
 
     // Add editor-preview class for scrollbar hiding

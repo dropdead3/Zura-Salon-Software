@@ -495,7 +495,7 @@ function ThemeTab() {
     try {
       await activateTheme.mutateAsync(themeId);
       // Apply color scheme
-      const validSchemes = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir'];
+      const validSchemes = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir', 'neon'];
       if (validSchemes.includes(theme.color_scheme)) {
         const colorThemeId = theme.color_scheme as ColorTheme;
         setColorTheme(colorThemeId);
