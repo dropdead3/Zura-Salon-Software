@@ -191,19 +191,110 @@ export function getOverlapInfo<T extends { id: string; start_time: string; end_t
   appointments: T[],
   target: T,
 ): OverlapInfo {
-  const targetStart = parseTimeToMinutes(target.start_time);
-  const targetEnd = parseTimeToMinutes(target.end_time);
+  const map = buildOverlapLayoutMap(appointments);
+  const entry = map.get(target.id);
+  if (!entry) return { columnIndex: 0, totalOverlapping: 1 };
+  return { columnIndex: entry.columnIndex, totalOverlapping: entry.totalColumns };
+}
 
-  const overlapping = appointments.filter((apt) => {
-    const aptStart = parseTimeToMinutes(apt.start_time);
-    const aptEnd = parseTimeToMinutes(apt.end_time);
-    return !(aptEnd <= targetStart || aptStart >= targetEnd);
+/**
+ * Cluster-aware overlap layout — single source of truth for scheduler packing.
+ *
+ * Per-appointment overlap math is unstable: two cards in the same visual
+ * conflict cluster can compute different totals when one only overlaps a
+ * subset of the cluster. This helper guarantees that every appointment in
+ * the same connected overlap cluster shares the same `totalColumns`, so all
+ * cards in the stack render against an identical column system.
+ *
+ * Algorithm:
+ *  1. Sort appointments by start, then by end.
+ *  2. Walk in time order. Group connected overlaps into clusters using a
+ *     running "cluster end" — any new appointment that starts before the
+ *     cluster's max end belongs to the same cluster.
+ *  3. Inside each cluster, assign columns via first-fit interval packing
+ *     (place each appointment in the lowest-index column whose previous
+ *     occupant has already ended).
+ *  4. After packing, the cluster's `totalColumns = max(columnIndex) + 1`
+ *     is broadcast to every appointment in that cluster.
+ */
+export interface OverlapLayoutEntry {
+  columnIndex: number;
+  totalColumns: number;
+  clusterId: number;
+  isOverlapping: boolean;
+}
+
+export function buildOverlapLayoutMap<
+  T extends { id: string; start_time: string; end_time: string },
+>(appointments: T[]): Map<string, OverlapLayoutEntry> {
+  const result = new Map<string, OverlapLayoutEntry>();
+  if (appointments.length === 0) return result;
+
+  // Stable sort: start asc, then end asc, then id for determinism.
+  const sorted = [...appointments].sort((a, b) => {
+    const as = parseTimeToMinutes(a.start_time);
+    const bs = parseTimeToMinutes(b.start_time);
+    if (as !== bs) return as - bs;
+    const ae = parseTimeToMinutes(a.end_time);
+    const be = parseTimeToMinutes(b.end_time);
+    if (ae !== be) return ae - be;
+    return a.id.localeCompare(b.id);
   });
 
-  overlapping.sort(
-    (a, b) => parseTimeToMinutes(a.start_time) - parseTimeToMinutes(b.start_time),
-  );
-  const columnIndex = overlapping.findIndex((apt) => apt.id === target.id);
+  let clusterId = 0;
+  let clusterStart = 0;
+  let clusterAppts: { apt: T; start: number; end: number; col: number }[] = [];
+  let columnEnds: number[] = []; // end-minute of last appointment placed in each column
+  let clusterMaxEnd = -Infinity;
 
-  return { columnIndex, totalOverlapping: overlapping.length };
+  const flushCluster = () => {
+    if (clusterAppts.length === 0) return;
+    const totalColumns = columnEnds.length;
+    for (const item of clusterAppts) {
+      result.set(item.apt.id, {
+        columnIndex: item.col,
+        totalColumns,
+        clusterId,
+        isOverlapping: totalColumns > 1,
+      });
+    }
+    clusterId += 1;
+    clusterAppts = [];
+    columnEnds = [];
+    clusterMaxEnd = -Infinity;
+  };
+
+  for (const apt of sorted) {
+    const start = parseTimeToMinutes(apt.start_time);
+    const end = parseTimeToMinutes(apt.end_time);
+
+    // If this appointment starts at/after the cluster's max end, the
+    // current cluster is closed and a new one begins.
+    if (start >= clusterMaxEnd) {
+      flushCluster();
+    }
+
+    // First-fit: find lowest column whose previous appointment has ended
+    // by `start`. If none, open a new column.
+    let col = -1;
+    for (let i = 0; i < columnEnds.length; i++) {
+      if (columnEnds[i] <= start) {
+        col = i;
+        break;
+      }
+    }
+    if (col === -1) {
+      col = columnEnds.length;
+      columnEnds.push(end);
+    } else {
+      columnEnds[col] = end;
+    }
+
+    clusterAppts.push({ apt, start, end, col });
+    if (end > clusterMaxEnd) clusterMaxEnd = end;
+    clusterStart = start;
+  }
+  flushCluster();
+
+  return result;
 }
