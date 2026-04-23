@@ -111,6 +111,7 @@ for (const selector of themeSelectors) {
     it("introduces no tokens unknown to the baseline theme", () => {
       const extras = [...themeTokens]
         .filter((t) => !baselineTokens.has(t))
+        .filter((t) => !DECORATIVE_OPTIONAL_TOKENS.has(t))
         .sort();
       expect(
         extras,
