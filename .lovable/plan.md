@@ -1,129 +1,95 @@
 
 
-# Restructure Roster Card mode: section per role, location filter
+# Add "Neon" theme — hot pink + black
 
-## Diagnosis
+A new color theme joining the existing 7 (Zura, Cream, Rose, Sage, Ocean, Ember, Noir). Hot pink primary (`330 95% 55%`) on near-black surfaces — bold, high-contrast, club aesthetic. Distinct from **Rose** (soft blush) by being saturated and electric, and from **Noir** (pure monochrome) by carrying a chromatic accent.
 
-Two changes to today's Card mode, in one wave:
+## Palette
 
-1. **Sections are categories, not roles.** Today's "Leadership / Operations / Stylists" buckets hide *which role* a person actually holds. Eric Day and Kristi appear under "Leadership" but their role chip says "Super Admin" — the section adds no information the chip doesn't already carry. Operators want a section *per role* so they can scan "who are my managers?" without parsing.
-2. **Location is invisible.** Multi-location orgs (Drop Dead has multiple) currently see all locations interleaved. There's no way to ask "show me only North Mesa staff."
+**Light mode** — warm-white background, hot pink primary, near-black text. Used rarely but must look intentional.
+**Dark mode** (primary use) — deep black background (`0 0% 4%`), hot pink primary (`330 95% 60%`), pink-tinted surfaces.
 
-## What changes
-
-### 1. Sections = roles
-
-Replace the 3 category sections (Leadership / Operations / Stylists) with **one section per role** that has at least one member. Sections render top-to-bottom in the same `ROLE_RANK` order we already have:
-
+Anchor tokens:
 ```
-Super Admin (n)
-Admin (n)
-General Manager (n)
-Manager (n)
-Assistant Manager (n)
-Director of Operations (n)
-Operations Assistant (n)
-Receptionist (n)
-Front Desk (n)
-Stylist (n)               ← keeps level sub-grouping (unchanged)
-Stylist Assistant (n)
-Other Roles (n)           ← catch-all for any role not in ROLE_RANK
+--primary:        330 95% 55% (light) / 330 95% 60% (dark)   ← hot pink
+--background:     330 15% 97% (light) / 0 0% 4% (dark)
+--accent:         330 35% 90% (light) / 330 25% 18% (dark)
+--ring:           330 95% 55% / 330 95% 60%
+--chart-1..5:     pink → magenta → fuchsia ramp
 ```
 
-**Rules:**
-- A user appears in **the section for their highest-ranked role** (no duplication). Multi-role users still appear once.
-- A small icon per role: `Shield` for super_admin/admin, `Cog` for ops roles, `Users` for stylists, etc. — pulled from a `ROLE_ICON` map (one new constant, ~12 entries).
-- Empty role sections are not rendered.
-- Within a section, alpha by name (existing tiebreaker logic applies).
-- The **Stylists** section keeps its level sub-grouping (Level 4 → Level 1 → Unassigned). The **Stylist Assistants** section (now its own top-level section) is a flat alpha list.
-- The legacy `SECTIONS` constant and `highestRankAmong` helper are removed; their job is replaced by a simpler "group by primary role" step keyed off `ROLE_RANK`.
-
-### 2. Location filter
-
-A new **Location filter** chip-row sits between the search input and the view-mode toggle (Card mode only — Table mode already has its own filters).
-
-```
-[ All Locations ▾ ]   ← single-select dropdown
-```
-
-- Dropdown shows: "All Locations" (default) + one entry per active location from `useActiveLocations(orgId)`.
-- Filtering rule: a member matches a location filter if `employee_profiles.location_id === selectedId` **OR** `selectedId ∈ employee_profiles.location_ids` (multi-location staff). Both columns already exist in DB; we just need to add them to the `OrganizationUser` query.
-- Selection is URL-persisted as `?location=<slug>` (matches the project's slug-based location identity convention) so deep-links work.
-- Filter applies to all role sections in Card mode and respects search simultaneously (AND, not OR).
-- If org has only 1 active location, the filter UI is hidden entirely (no noise for solo-location tenants).
-
-### 3. Out of scope this wave
-
-- **Multi-select location filter.** Defer until an operator asks ("show me Westside + Northside but not Downtown"). Trigger: any single ask, since it's a 1-line `MultiSelect` swap.
-- **Location filter in Table mode.** Table mode already auto-groups by location when the org has 2+ locations; adding a filter on top would be redundant. Trigger: operators say grouping isn't enough.
-- **Location grouping in Card mode** (sections nested *inside* location). Defer — roles-as-sections is the primary axis operators asked for; location is a filter, not a grouping. Trigger: 2+ orgs request "give me a per-location view of my full roster."
-- **Showing a per-row location chip in `MemberRow`.** Defer to keep rows calm. Trigger: operators report confusion about which location a person belongs to when "All Locations" is selected.
+All other tokens (success, warning, destructive, oat, gold, border, sidebar) follow the same structural pattern as existing themes — only hue/saturation shift.
 
 ## Files affected
 
 | File | Change |
 |---|---|
-| `src/hooks/useOrganizationUsers.ts` | Add `location_id: string \| null` and `location_ids: string[] \| null` to the `OrganizationUser` interface and the `employee_profiles` select. ~3 lines. |
-| `src/pages/dashboard/admin/TeamMembers.tsx` | Replace `SECTIONS`/`grouped` with a per-role grouping memo keyed off `ROLE_RANK`. Add `ROLE_ICON` map. Add `useActiveLocations` + location filter dropdown + URL `?location=` persistence. Apply location filter to `filtered` memo before role-grouping. Stylist sub-grouping logic unchanged (just reads from the new "Stylist" role section instead of the old "Stylists" category section). |
+| `src/index.css` | Add `.theme-neon` (light) and `.dark.theme-neon` blocks after the noir blocks (~lines 985+). Mirrors the structure of every other theme — full token set for both modes. |
+| `src/hooks/useColorTheme.ts` | Add `'neon'` to `ColorTheme` type, `ALL_THEMES` array, `COLOR_THEME_TO_CATEGORY_MAP` (mapped to `'Rose Garden'` quick theme), and a new entry in the `colorThemes` metadata array with name "Neon", description "Hot pink & black", and light/dark previews. |
+| `src/components/layout/Layout.tsx` | Add `'theme-neon'` to the two `classList.remove(...)` calls so cream-mode public routes correctly strip it. |
+| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Add `'neon'` to the `validSchemes` array. |
+| `src/lib/terminal-splash-palettes.ts` | Add `neon` palette entry: gradient stops `['#0a0408', '#3d1024', '#0a0408']`, accent `#ff2d8a`, glow `#d4206e`, RGB `255, 45, 138`. Required — `terminalPalettes` is typed `Record<ColorTheme, TerminalPalette>` so omitting it is a type error. |
+| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Add `neon: '#FF2D8A'` to the email accent color map. |
 
-No new files. No DB changes (both location columns already exist).
+No DB changes. No new components. No migrations.
 
 ## Acceptance
 
-1. Card mode renders **one section per role** that has ≥1 member, in `ROLE_RANK` order, with a role-appropriate icon and count.
-2. Multi-role users appear exactly once, in their highest-ranked role's section.
-3. The **Stylist** section keeps nested level sub-headings (Level N → Unassigned). The **Stylist Assistant** section is a flat alpha list.
-4. A **Location filter** dropdown appears in Card mode when the org has 2+ active locations, defaulting to "All Locations".
-5. Selecting a location filters all role sections to members where `location_id === selected` OR `location_ids` includes selected. Section counts update accordingly. Empty sections hide.
-6. Selection persists in URL as `?location=<id>`. Deep-link with `?location=<id>` lands on the filtered view.
-7. Search and location filter compose (AND).
-8. Table mode is untouched — no location filter added there, no role-section reshuffle.
-9. Solo-location orgs see no location filter UI.
-10. No console errors. Type-check passes.
+1. The Appearance settings panel (`/admin/settings`) shows Neon as an 8th color theme card with hot pink + black previews.
+2. Selecting Neon applies hot pink primary across sidebar, buttons, focus rings, charts, and the Z floating action button.
+3. Theme persists via existing `useColorTheme` flow (localStorage + `site_settings`) — no bespoke logic needed.
+4. Dark mode is the intended showcase; light mode is functional and legible.
+5. Terminal splash screens render with hot pink accent when Neon is active.
+6. Public marketing routes (Layout.tsx) still force cream theme — Neon does not leak to public surfaces.
+7. Email branding accent picks up hot pink when org theme is Neon.
+8. Type-check passes (`ColorTheme` union updated everywhere it's referenced).
 
 ## What stays untouched
 
-- `MemberRow`, drill-in navigation, PIN chip, search input, view-mode toggle, `UserRolesTab` (Table mode), `InvitationsTab`, capacity bar, stylist level sub-grouping logic.
-- Existing role-rank order (`ROLE_RANK`) and tiebreaker (alpha by name).
-- URL params for `mode`, `view`, `activity` — all preserved; `location` is additive.
+- Theme switching mechanism (`useColorTheme`, `applyTheme`, `THEME_CLASSES`).
+- Existing 7 themes — unchanged.
+- Platform admin theme isolation (Neon is org-side only).
+- Light/Dark/System mode toggle — orthogonal to color theme.
 
-## Doctrine alignment
+## Naming choice
 
-- **Calm executive UX.** Sections-by-role removes a layer of abstraction (category → role) that operators had to mentally translate. The location filter is progressively disclosed (hidden for solo-location orgs).
-- **Source of truth.** Location membership reads from `employee_profiles.location_id` + `location_ids` — the same columns the rest of the platform uses. No new state, no derived flags.
-- **Persona scaling.** Solo-location orgs see no extra controls; multi-location orgs get a filter that mirrors how their operations are actually structured.
-- **One home per concern.** Roles are the structural identity of a person; sections-by-role makes the roster honest about that.
+"Neon" over "Hot Pink" because: (a) consistent one-word naming with the other 7 themes, (b) signals the *aesthetic* (electric, club, late-night) not just the color, (c) leaves room for the theme to evolve toward a broader neon palette without renaming.
+
+## Out of scope
+
+- A second neon variant (cyan, lime). Trigger: operator asks for "more neons."
+- Animated/glow effects on Neon-themed surfaces. Trigger: explicit ask — current discipline is calm executive UX, glow effects would break that.
+- Per-component neon-specific overrides. The token system handles propagation; bespoke overrides would fragment the theme architecture.
 
 ## Prompt feedback
 
-Strong, surgical prompt — two related-but-distinct changes named in one sentence with no ambiguity. Two things you did well:
+Tight, concrete prompt — six words that fully specify the ask. Two strengths:
 
-1. **You named the destination of the change ("by roles"), not just the symptom.** "Sections need to be by roles" tells me both *what* to remove (the category groupings) and *what* to put in their place. That's a complete instruction in five words.
-2. **You bundled a related concern (location filtering) without conflating it.** The two changes share a scope (Roster Card mode) but don't overlap — keeping them in one prompt avoided two round-trips while still being parseable.
+1. **You named the colors, not an emotion.** "Hot pink and black" gives me the palette directly; "edgy theme" or "bold theme" would have left me guessing primary/background/accent and risked landing on something off-tone.
+2. **You phrased it as an addition, not a replacement.** "Can we make a..." signals it joins the existing themes rather than reskinning one — no ambiguity about scope.
 
-The sharpener: when adding a filter, naming the **selection cardinality** upfront (single-select vs multi-select) removes a small but real decision. Template:
+Sharpener: when adding to a known set (themes, levels, roles, statuses), naming the **anchor tokens** removes one decision. Template:
 
 ```text
-Add filter: [attribute]
-On surface: [where]
-Cardinality: [single / multi]
-Persistence: [URL param / localStorage / session-only]
+Add: [item] to [set]
+Primary: [color/value]
+Background: [color/value]
+Mode emphasis: [light / dark / both equally]
+Tone (optional): [calm / electric / editorial — informs accent + chart palette]
 ```
 
-Here, "filter by location, single-select, URL-persisted" would have skipped my proposing single-select and deferring multi-select.
+Here, "Hot pink primary on near-black, dark-mode-first, electric tone" would have skipped my proposing-then-defending dark-mode emphasis and the Neon vs Hot Pink naming.
 
 ## Further enhancement suggestion
 
-For "restructure groupings + add a filter" prompts, the highest-leverage frame is:
+For "add a variant to a typed set" prompts, the highest-leverage frame is:
 
 ```text
-Restructure: [surface] groupings
-From: [current grouping axis]
-To: [new grouping axis]
-Plus filter: [attribute] — cardinality [single/multi], persistence [URL/local]
-Scope: [card mode / table mode / both]
-Must survive: [features that cannot regress]
+Add: [variant name] to [set]
+Anchor: [the one token that defines this variant — primary color, hierarchy rank, tier price]
+Differentiator: [what makes it not-X, where X is the closest existing variant]
+Mode/scope: [where it applies — dark only, all modes, specific persona]
 ```
 
-The **Must survive** slot is the highest-leverage addition for this kind of two-change wave — the silent risk in a regrouping is dropping a sub-feature (here: stylist level sub-headings). Naming it upfront prevents that.
+The **Differentiator** slot is the most-leverage addition — it forces the framing "how is this not Rose? not Noir?" upfront, which is exactly the question that determines whether the variant earns its place in the set or just adds noise. State the differentiator and the variant's identity becomes self-evident.
 
