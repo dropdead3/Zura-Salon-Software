@@ -49,7 +49,7 @@ function StatusBar() {
   );
 }
 
-function SplashScreen({ businessName, orgLogoUrl, splashImageUrl, colorTheme = 'bone' }: { businessName: string; orgLogoUrl?: string | null; splashImageUrl?: string | null; colorTheme?: ColorTheme }) {
+function SplashScreen({ businessName, orgLogoUrl, splashImageUrl, colorTheme = 'cream-lux' }: { businessName: string; orgLogoUrl?: string | null; splashImageUrl?: string | null; colorTheme?: ColorTheme }) {
   const p = getTerminalPalette(colorTheme);
 
   // If an actual splash image has been uploaded, show it full-bleed
@@ -173,7 +173,7 @@ function CartScreen({ items, total }: { items: SimCartItem[]; total: number }) {
   );
 }
 
-function TipScreen({ total, tipPercentages = [20, 25, 30], colorTheme = 'bone' }: { total: number; tipPercentages?: number[]; colorTheme?: ColorTheme }) {
+function TipScreen({ total, tipPercentages = [20, 25, 30], colorTheme = 'cream-lux' }: { total: number; tipPercentages?: number[]; colorTheme?: ColorTheme }) {
   const p = getTerminalPalette(colorTheme);
   const [selected, setSelected] = useState<number | null>(null);
   useEffect(() => {
@@ -379,7 +379,7 @@ export function S710CheckoutSimulator({
   tipPercentages = [20, 25, 30],
   tipEnabled = true,
   receiptSlogan,
-  colorTheme = 'bone',
+  colorTheme = 'cream-lux',
   onScreenChange,
 }: S710SimulatorProps) {
   const p = useMemo(() => getTerminalPalette(colorTheme), [colorTheme]);

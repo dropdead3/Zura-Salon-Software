@@ -7,7 +7,8 @@ import { PageTransition } from "./PageTransition";
 
 const DASHBOARD_THEME_CLASSES = [
   'theme-zura',
-  'theme-bone',
+  'theme-cream-lux',
+  'theme-bone', // legacy — strip if leftover from old persisted state
   'theme-rosewood',
   'theme-sage',
   'theme-jade',
@@ -51,7 +52,7 @@ export function Layout({ children }: LayoutProps) {
     const root = document.documentElement;
     root.classList.remove('dark');
     root.classList.remove(...DASHBOARD_THEME_CLASSES);
-    root.classList.add('theme-bone');
+    root.classList.add('theme-cream-lux');
   }
 
   // Force light mode and reset any dashboard theme overrides for public website
@@ -63,7 +64,7 @@ export function Layout({ children }: LayoutProps) {
     
     // Ensure bone theme is applied
     root.classList.remove(...DASHBOARD_THEME_CLASSES);
-    root.classList.add('theme-bone');
+    root.classList.add('theme-cream-lux');
 
     // Add editor-preview class for scrollbar hiding
     if (isEditorPreview) {
@@ -129,7 +130,7 @@ export function Layout({ children }: LayoutProps) {
   // Parallax creates gaps/dark edges inside the viewport bento box.
   if (isEditorPreview) {
     return (
-      <div className="min-h-screen flex flex-col relative theme-bone bg-background" style={{ colorScheme: 'light' }}>
+      <div className="min-h-screen flex flex-col relative theme-cream-lux bg-background" style={{ colorScheme: 'light' }}>
         <Header />
         <main className="flex-1 bg-background">
           {children}
@@ -143,7 +144,7 @@ export function Layout({ children }: LayoutProps) {
   // Editor preview in view mode OR public site: full layout with footer reveal
 
   return (
-    <div className="min-h-screen flex flex-col relative theme-bone bg-secondary" style={{ colorScheme: 'light' }}>
+    <div className="min-h-screen flex flex-col relative theme-cream-lux bg-secondary" style={{ colorScheme: 'light' }}>
       {/* Fixed footer that reveals as content scrolls */}
       <div 
         ref={footerRef}
