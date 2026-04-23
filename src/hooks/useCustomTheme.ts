@@ -364,7 +364,19 @@ export function useCustomTheme() {
     
     fetchTheme();
   }, []);
-  
+
+  // Unmount cleanup: when the editor surface is unmounted (e.g. user
+  // navigates away from the Design System), strip every managed inline
+  // override so production dashboard surfaces fall back to class-based
+  // built-in themes. Without this, saved editor presets leak globally and
+  // outrank .theme-jade / .theme-matrix / .theme-orchid via inline > class
+  // CSS precedence.
+  useEffect(() => {
+    return () => {
+      clearCustomThemeVariables();
+    };
+  }, []);
+
   // Apply theme overrides to CSS variables
   const applyTheme = useCallback((theme: CustomTheme) => {
     Object.entries(theme).forEach(([key, value]) => {
@@ -373,7 +385,7 @@ export function useCustomTheme() {
       }
     });
   }, []);
-  
+
   // Set a single variable (for live preview)
   const setVariable = useCallback((key: string, hexValue: string) => {
     const hslValue = hexToHslString(hexValue);

@@ -134,7 +134,16 @@ export function useTypographyTheme() {
     
     fetchTheme();
   }, []);
-  
+
+  // Unmount cleanup: strip every managed typography override when the editor
+  // unmounts so leaving the Design System restores the built-in dashboard
+  // typography. See useCustomTheme for the same doctrine on color tokens.
+  useEffect(() => {
+    return () => {
+      clearTypographyVariables();
+    };
+  }, []);
+
   // Apply theme overrides to CSS variables
   const applyTheme = useCallback((theme: TypographyTheme) => {
     Object.entries(theme).forEach(([key, value]) => {
@@ -143,7 +152,7 @@ export function useTypographyTheme() {
       }
     });
   }, []);
-  
+
   // Set a single variable (for live preview)
   const setVariable = useCallback((key: string, value: string) => {
     setCSSVariable(key, value);
