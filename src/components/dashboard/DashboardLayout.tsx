@@ -155,7 +155,6 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
-import { DashboardChromeMask } from '@/components/dashboard/DashboardChromeMask';
 import { ViewAsPopover } from '@/components/dashboard/ViewAsPopover';
 import { ZuraCommandSurface } from '@/components/command-surface/ZuraCommandSurface';
 import { useCommandMenu } from '@/hooks/useCommandMenu';
@@ -172,44 +171,34 @@ function ChaChingDetectorMount() {
 
 /**
  * DashboardChromeWrapper — the single welded L surface.
- * Renders one `.chrome-l` div with an SVG mask cutting the inner
- * top-right quadrant (with a rounded concave elbow). All children
- * (sidebar content, top-bar content) sit unstyled inside it; the
- * wrapper owns the background, blur, border (via inset shadow), and
- * drop shadow — producing one continuous silhouette with zero seams.
+ *
+ * One `.chrome-l` div clipped via CSS `clip-path: polygon(...)` driven by
+ * `--sidebar-width` and `--chrome-top-bar-height` so the inner top-right
+ * quadrant is cut out. The polygon is mitered at the inner corner; a small
+ * `.chrome-l-elbow` patch paints a quarter-circle of the same surface to
+ * create the visible 16px concave curve. The wrapper owns background,
+ * blur, perimeter line (via inset box-shadow), and drop shadow (via a
+ * parent `filter: drop-shadow`, since clip-path clips box-shadow).
  */
 function DashboardChromeWrapper({
   children,
   isImpersonating,
-  sidebarWidthPx,
-  topbarHeightPx,
 }: {
   children: React.ReactNode;
   isImpersonating: boolean;
-  sidebarWidthPx: number;
-  topbarHeightPx: number;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
   return (
-    <>
-      <DashboardChromeMask
-        sidebarWidthPx={sidebarWidthPx}
-        topbarHeightPx={topbarHeightPx}
-        containerRef={containerRef}
-      />
-      <div
-        ref={containerRef}
-        className="chrome-l hidden lg:block fixed left-3 bottom-3 right-3 z-[60] pointer-events-none"
-        style={{
-          top: isImpersonating ? '56px' : '12px',
-          // Apply the SVG mask so the L silhouette is cut from the rect
-          maskImage: 'url(#chrome-l-mask)',
-          WebkitMaskImage: 'url(#chrome-l-mask)',
-        }}
-      >
+    <div
+      className="chrome-l-shadow hidden lg:block fixed left-3 bottom-3 right-3 z-[60]"
+      style={{ top: isImpersonating ? '56px' : '12px' }}
+    >
+      <div className="chrome-l absolute inset-0">
         {children}
+        {/* Concave elbow patch: paints a quarter-circle of chrome surface
+            at the joint, hiding the polygon's mitered inner corner. */}
+        <div className="chrome-l-elbow" aria-hidden="true" />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -539,11 +528,8 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           silhouette with a concave rounded inner elbow. No double borders,
           no joint seam. */}
       {showChromeL && (
-        <DashboardChromeWrapper
-          isImpersonating={isImpersonating}
-          sidebarWidthPx={hideSidebar ? 0 : sidebarCollapsed ? 64 : 320}
-          topbarHeightPx={56}
-        >
+        <DashboardChromeWrapper isImpersonating={isImpersonating}>
+
           {/* Vertical leg content — sidebar (no own surface; chrome owns it) */}
           <aside
             className="absolute top-0 bottom-0 left-0 pointer-events-auto overflow-hidden chrome-l-content-sidebar"
