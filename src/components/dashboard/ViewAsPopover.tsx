@@ -18,6 +18,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Eye, EyeOff, Search, FlaskConical, Users, Shield } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -46,11 +48,15 @@ export function ViewAsPopover() {
 
   const [open, setOpen] = useState(false);
   const [teamFilter, setTeamFilter] = useState('');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const debouncedFilter = useDebounce(teamFilter, 200);
 
   const { data: allRoles = [] } = useRoles();
   const { data: allUsers = [], isLoading: usersLoading } = useAllUsersWithRoles();
   const { data: profile } = useEmployeeProfile();
+  const { effectiveOrganization } = useOrganizationContext();
+  const { data: locations = [] } = useActiveLocations(effectiveOrganization?.id);
+  const showLocationFilter = locations.length >= 2;
   const canImpersonate = !!(profile?.is_super_admin || profile?.is_primary_owner);
 
   // Grouped roles
@@ -68,12 +74,18 @@ export function ViewAsPopover() {
     return allUsers
       .filter(u => u.user_id !== user?.id)
       .filter(u => {
+        if (selectedLocationId === 'all') return true;
+        if (u.location_id === selectedLocationId) return true;
+        if (u.location_ids?.includes(selectedLocationId)) return true;
+        return false;
+      })
+      .filter(u => {
         if (!q) return true;
         const name = (u.display_name || u.full_name || '').toLowerCase();
         const roles = u.roles.join(' ').toLowerCase();
         return name.includes(q) || roles.includes(q);
       });
-  }, [allUsers, user?.id, debouncedFilter]);
+  }, [allUsers, user?.id, debouncedFilter, selectedLocationId]);
 
   // Defense-in-depth gate: only super admins / account owners may use this surface.
   if (!canImpersonate) return null;
@@ -201,7 +213,7 @@ export function ViewAsPopover() {
 
           {/* === Team Tab === */}
           <TabsContent value="team" className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex flex-col">
-            <div className="p-3 pb-2 shrink-0 border-b border-border/40">
+            <div className="p-3 pb-2 shrink-0 border-b border-border/40 space-y-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
@@ -212,6 +224,37 @@ export function ViewAsPopover() {
                   className="h-8 pl-8 text-xs bg-muted/50 border-border/60 rounded-lg"
                 />
               </div>
+              {showLocationFilter && (
+                <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLocationId('all')}
+                    className={cn(
+                      'h-6 px-2.5 rounded-full text-[11px] font-sans transition-colors duration-150 shrink-0',
+                      selectedLocationId === 'all'
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                    )}
+                  >
+                    All locations
+                  </button>
+                  {locations.map(loc => (
+                    <button
+                      key={loc.id}
+                      type="button"
+                      onClick={() => setSelectedLocationId(loc.id)}
+                      className={cn(
+                        'h-6 px-2.5 rounded-full text-[11px] font-sans transition-colors duration-150 shrink-0',
+                        selectedLocationId === loc.id
+                          ? 'bg-muted text-foreground'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      )}
+                    >
+                      {loc.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <ScrollArea className="flex-1 min-h-0 h-full">
               <div className="p-3 pb-4 space-y-0.5">
@@ -219,7 +262,11 @@ export function ViewAsPopover() {
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
                 ) : filteredUsers.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6">
-                    {teamFilter ? 'No matches found' : 'No team members'}
+                    {teamFilter
+                      ? 'No matches found'
+                      : selectedLocationId !== 'all'
+                        ? 'No team members at this location'
+                        : 'No team members'}
                   </p>
                 ) : (
                   filteredUsers.map(member => {
