@@ -38,21 +38,23 @@
     <!-- Theme Color -->
     <meta name="theme-color" content="#1a1a1a" />
 
-    <!-- Pre-paint theme init: prevents white/black flash before React mounts -->
+    <!-- Pre-paint theme init: prevents bone/white/black flash before React mounts -->
     <script>
       (function() {
         try {
-          var theme = localStorage.getItem('dashboard-theme');
-          var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var mode = localStorage.getItem('dashboard-theme');
+          var color = localStorage.getItem('dd-color-theme') || 'zura';
+          var isDark = mode === 'dark' || ((mode === 'system' || !mode) && window.matchMedia('(prefers-color-scheme: dark)').matches);
           var root = document.documentElement;
           if (isDark) {
             root.classList.add('dark');
-            root.style.backgroundColor = 'hsl(0 0% 4%)';
             root.style.colorScheme = 'dark';
           } else {
-            root.style.backgroundColor = 'hsl(40 15% 82%)';
             root.style.colorScheme = 'light';
           }
+          // Apply color theme class so --background resolves correctly before React mounts.
+          // CSS body { background: hsl(var(--background)) } handles paint with the correct token.
+          root.classList.add('theme-' + color);
         } catch (e) {}
       })();
     </script>
