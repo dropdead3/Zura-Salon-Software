@@ -88,6 +88,8 @@ export function GodModeBar() {
         background: chrome.background,
         borderBottomColor: chrome.borderBottomColor,
         boxShadow: chrome.boxShadow,
+        backdropFilter: 'blur(20px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(140%)',
       }}
     >
       <div className="h-full max-w-screen-2xl mx-auto px-4 lg:px-6 flex items-center justify-between gap-3">
