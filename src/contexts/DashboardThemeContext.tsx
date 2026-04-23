@@ -64,10 +64,86 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     root.style.backgroundColor = '';
   }, [resolvedTheme]);
 
+  // Track whether we're applying a remote (server-fetched) value so we don't
+  // immediately echo it back as a write.
+  const isApplyingRemoteRef = useRef(false);
+
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem(STORAGE_KEY, newTheme);
   };
+
+  // Fetch the per-user preference after auth resolves and apply it.
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFromServer = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('dashboard_theme')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (error || cancelled) return;
+        const value = (data as { dashboard_theme?: string } | null)?.dashboard_theme;
+        if (value === 'light' || value === 'dark' || value === 'system') {
+          isApplyingRemoteRef.current = true;
+          setThemeState(value);
+          localStorage.setItem(STORAGE_KEY, value);
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+
+    loadFromServer();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        loadFromServer();
+      } else if (event === 'SIGNED_OUT') {
+        // Reset to neutral default so the next user on a shared device
+        // doesn't inherit the previous user's mode.
+        isApplyingRemoteRef.current = true;
+        setThemeState('system');
+        localStorage.setItem(STORAGE_KEY, 'system');
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Persist user-driven changes to user_preferences. Skip writes that
+  // originated from a remote fetch.
+  useEffect(() => {
+    if (isApplyingRemoteRef.current) {
+      isApplyingRemoteRef.current = false;
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        await supabase
+          .from('user_preferences')
+          .upsert(
+            { user_id: user.id, dashboard_theme: theme, updated_at: new Date().toISOString() } as never,
+            { onConflict: 'user_id' }
+          );
+      } catch {
+        /* silent — local change still applies, next write resyncs */
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [theme]);
 
   const value = useMemo(() => ({
     theme,
