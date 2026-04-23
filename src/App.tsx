@@ -24,6 +24,7 @@ import { AnimationIntensityInitializer } from "./components/AnimationIntensityIn
 import { I18nLocaleSync } from "./components/I18nLocaleSync";
 import { DevContextBridge } from "./dev/DevContextBridge";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ThemeIntegrityHud } from "./components/_dev/ThemeIntegrityHud";
 
 import { OrgDashboardRoute, LegacyDashboardRedirect } from "./components/OrgDashboardRoute";
 
