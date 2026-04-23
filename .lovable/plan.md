@@ -1,127 +1,75 @@
 
 
-# Step 2V + 2W — Cross-mode gradient parity, and Step 2S/2U bundling
+# Step 2X + 2Y — Deferral Register entry, and Canon Catalog
 
-Two enhancements. Part A adds the symmetric (light↔dark) gradient parity canon. Part B reframes 2W honestly: package.json is sandbox-read-only, so the "single PR bundle" must be split into a sandbox half (docs ready-to-strip) and a manual half (the package.json apply), with a clear handoff.
+Two memory-only edits to `mem://architecture/canon-pattern.md`. Both are pure documentation/lookup additions — no code, no tests, no CI changes. The memory file currently documents the abstract pattern (5-part structure, when-not-to-add, one worked example). After these edits it also tracks (a) what's deferred and when to revisit, and (b) every canon that exists today.
 
-## Part A — Cross-mode gradient parity canon (Step 2V)
+## Part A — Deferral Register entry (Step 2X)
 
-**The invariant**: For every theme name `X`, if `html.theme-X` defines `--mesh-gradient`, then `html.dark.theme-X` must also define `--mesh-gradient`. Symmetric to 2T (cross-theme parity for gradients), but on the light↔dark axis instead of the cross-theme axis.
+**The gap**: `docs/ci.md` line 74 says "add `check` to required status checks. Until this is configured, the gate reports but does not block merge." That's a real deferred-action footnote with no revisit trigger anywhere — it lives only in a docs paragraph. Per the Core memory rule ("Deferral Register: deferred infrastructure must declare its revisit trigger condition. Tracked in `mem://architecture/visibility-contracts.md` Deferral Register table"), this needs a tracked entry.
 
-**Pre-flight evidence**: All 12 themes (`zura`, `bone`, `rosewood`, `sage`, `jade`, `marine`, `cognac`, `noir`, `neon`, `matrix`, `peach`, `orchid`) have both `html.theme-X` and `html.dark.theme-X` blocks at lines 3019–3107 and 3117–3205. Canon will pass on first run; failure mode is a future theme adding a light gradient without a dark companion.
+**The change**: Add a new "Deferral Register" section to `mem://architecture/canon-pattern.md` (canon-pattern is the right home — branch protection is the canon-enforcement layer, not a visibility-contract concern). One-row table:
 
-**New test file**: `src/test/cross-mode-gradient-parity-canon.test.tsx` (~40 lines)
+| Item | Owner | Revisit trigger | Where it lives today |
+|------|-------|-----------------|----------------------|
+| Add `check` to GitHub required status checks on `main` | Repo admin | First merge of a PR with a real canon violation that CI catches but doesn't block | `docs/ci.md` §"Branch protection (repo admin, one-time)" |
 
-Shape:
+Plus a one-line preface explaining the section's purpose (mirrors the visibility-contracts memory's table preamble).
 
-```ts
-const GRADIENT_TOKEN = "mesh-gradient";
-const ALLOWLIST_DARK_OMISSIONS: Record<string, string[]> = {
-  // Per-theme intentional dark omissions (e.g., a hypothetical OLED-pure theme
-  // that intentionally has no dark gradient). Empty by default.
-};
+## Part B — Canon Catalog (Step 2Y)
 
-const lightSelectors = extractThemeSelectors(indexCss)
-  .filter(s => s.startsWith("html.theme-"));
+**The gap**: Five canons exist (no-raw-rgba, semantic-token, theme-completeness, cross-theme-parity, cross-mode-gradient-parity). The next contributor adding canon #6 has to grep `src/test/` to discover what's already enforced. The memory documents the abstract pattern but not the concrete inventory.
 
-for (const lightSel of lightSelectors) {
-  const themeName = lightSel.slice("html.theme-".length);
-  const darkSel = `html.dark.theme-${themeName}`;
-  describe(`cross-mode gradient parity: ${themeName}`, () => {
-    const lightTokens = new Set(extractDefinedTokens(extractRuleBody(indexCss, lightSel) ?? ""));
-    if (!lightTokens.has(GRADIENT_TOKEN)) return; // light has no gradient → no symmetry required
+**The change**: Add a "Catalog" section after "When NOT to add a canon" and before the worked example. Format: one row per canon with file path, axis, and one-line invariant.
 
-    const darkBody = extractRuleBody(indexCss, darkSel);
-    const darkTokens = new Set(extractDefinedTokens(darkBody ?? ""));
-    const allowed = new Set(ALLOWLIST_DARK_OMISSIONS[darkSel] ?? []);
+| Canon | File | Invariant |
+|-------|------|-----------|
+| No raw rgba outside tokens | `tools/stylelint-plugins/no-raw-rgba-outside-tokens.cjs` | Raw `rgba()` / `#hex` literals only allowed in `:root`, `.dark`, `.theme-*`, `[data-theme]` blocks |
+| Semantic token routing | `src/test/semantic-token-canon.test.tsx` | Every shadcn cross-cutting token (semantic + chart + sidebar) routes through `hsl(var(--token))` and lives in a token-definition selector |
+| Theme completeness (within-family) | `src/test/theme-completeness-canon.test.tsx` | If a theme defines any token from a family (semantic / chart / sidebar), it defines all of them |
+| Cross-theme parity | `src/test/cross-theme-parity-canon.test.tsx` | Every theme's merged color-token surface (`.theme-X` + `html.theme-X`) matches the `.theme-bone` baseline, modulo allowlist |
+| Cross-mode gradient parity | `src/test/cross-mode-gradient-parity-canon.test.tsx` | If `html.theme-X` defines `--mesh-gradient`, `html.dark.theme-X` must too, modulo allowlist |
 
-    it(`html.dark.theme-${themeName} defines --${GRADIENT_TOKEN} (or is allowlisted)`, () => {
-      const omitted = !darkTokens.has(GRADIENT_TOKEN) && !allowed.has(GRADIENT_TOKEN);
-      expect(omitted, `${darkSel} missing --${GRADIENT_TOKEN} (light variant defines it)`).toBe(false);
-    });
-  });
-}
-```
+Plus a one-line preface: "Each canon below follows the five-part structure. To add a sixth, copy the closest match's shape and update this catalog in the same commit."
 
-**Why a separate test file, not a new family in cross-theme-parity-canon**: different axis (light↔dark within a theme vs. theme-vs-baseline across themes). Bundling them would mean one test file with two unrelated invariants — readers would have to disambiguate which assertion is failing. Separate files = separate failure messages = clearer signal.
-
-**Why parameterize on the gradient token only, not all tokens**: dark-mode color tokens already get parity from Step 2R via `STRUCTURAL_NON_THEME_SELECTORS` and the `.dark` baseline. The cross-mode gap is *specifically* gradients, because gradients live in the `html.theme-*` / `html.dark.theme-*` selectors that 2R deliberately excludes. Scope = the actual gap.
-
-**Acceptance (Part A)**
-
-1. `bun run test src/test/cross-mode-gradient-parity-canon` passes on current codebase (12 themes × 1 token = 12 assertions, all pass).
-2. Deleting `--mesh-gradient` from any single `html.dark.theme-*` block fails the canon with that theme named.
-3. Adding a new light theme that defines `--mesh-gradient` *without* a corresponding dark block surfaces as a missing-rule failure (the `darkBody` extraction returns null, the assertion fails on the missing token).
-4. File is ~50 lines or less.
-
-## Part B — Step 2W: honest framing of the bundle
-
-**The constraint that reshapes 2W**: `package.json` is read-only in the Lovable sandbox (confirmed: no `check`/`prepare`/`lint:css` scripts, no `husky`/`lint-staged` deps). The "one PR that bundles package.json + docs" you proposed is the right end-state, but it can't ship from here. The honest move is to split 2W into two coordinated halves:
-
-**2W-sandbox (this session)**: Make the docs *ready-to-strip*. The current `docs/ci.md` Step 2S section is a checklist of manual edits a developer applies in a real PR. We add a short banner at the top of that section documenting *what the bundled PR should remove from this file*, so the developer doing the package.json apply has a one-glance checklist of doc cleanup that ships in the same PR. No docs are stripped here — that would create the "confidently wrong" doc state Step 2U was designed to prevent.
-
-**2W-manual (real PR, outside sandbox)**: The developer applies the package.json edits *and* executes the doc cleanup the banner enumerates, in one commit. The pre-flight check from the original Step 2U plan (read package.json, verify scripts/deps present, then strip) becomes the developer's checklist instead of an AI gate.
-
-**The banner addition** (top of Step 2S section in `docs/ci.md`, ~10 lines):
-
-```markdown
-> **Bundled PR checklist**: When the package.json edits below land, the same
-> PR should also remove this section in its entirety, plus:
-> - Line 30–31: drop the "The `check` script requires…" caveat paragraph.
-> - Line 28: replace `bunx stylelint "src/**/*.css"` with `npm run lint:css`.
-> - Line 35: soften "Once Husky is installed (via the `prepare` script…)" to
->   "On every commit, a pre-commit hook runs lint-staged against staged files."
->
-> Don't strip the caveats without applying the package.json edits — the docs
-> would be confidently wrong instead of accurately conditional.
-```
-
-**Why this framing is the right adaptation**: your prompt's instinct ("bundle to eliminate doc-lag") is correct. The adaptation is recognizing that the AI doing the bundling can only deliver one half from the sandbox. Surfacing the other half as a tightly-scoped checklist preserves the bundling discipline without faking the sandbox's capabilities.
-
-**Acceptance (Part B)**
-
-1. `docs/ci.md` Step 2S section gains a "Bundled PR checklist" banner enumerating the four doc edits that ship alongside the package.json apply.
-2. No existing caveats are stripped (they remain accurate while package.json is unchanged).
-3. The banner is dismissible mentally — once the bundled PR lands, the entire Step 2S section (banner included) gets deleted; no orphaned banner.
-4. ~10 lines added, zero lines removed.
+**Why both edits land in one step**: Same file, same nature (lookup tables), zero code risk. Splitting them would mean two memory writes for what reads as one cohesive update.
 
 ## Combined acceptance
 
-1. `bun run test src/test/cross-mode-gradient-parity-canon` — 12 passing assertions.
-2. `docs/ci.md` Step 2S section gains the bundled-PR checklist banner.
-3. `extractThemeSelectors` and `extractDefinedTokens` consumed by the new test (no new helpers needed — Step 2T already extended both for `html.theme-*`).
-4. No file exceeds ~130 lines.
+1. `mem://architecture/canon-pattern.md` gains two new sections: "Deferral Register" (1 row) and "Catalog" (5 rows).
+2. The Worked Example section stays intact and still reads as a standalone "how to add a canon" walkthrough.
+3. No changes to `docs/ci.md`, `src/test/*`, or any source code.
+4. File stays well under any reasonable length (existing 50 lines + ~25 added).
 
 ## Files
 
-- **Create**: `src/test/cross-mode-gradient-parity-canon.test.tsx` (~50 lines)
-- **Modify**: `docs/ci.md` (add ~10-line banner inside the existing Step 2S section; no removals)
+- **Modify**: `mem://architecture/canon-pattern.md` (two new sections, ~25 lines added)
 
 ## Technical notes
 
-- **Reuses existing helpers, no `css-rule.ts` changes.** Step 2T already taught `extractThemeSelectors` to recognize `html.theme-*` and `html.dark.theme-*`. Step 2V is the first canon to consume the dark-variant selectors directly. Validates the helper extension was sized correctly.
-- **The `if (!lightTokens.has(GRADIENT_TOKEN)) return;` early return is intentional**, mirroring 2P's "any → all" doctrine. A theme that has no light gradient shouldn't be required to have a dark one. Symmetry is enforced *only when there's something to be symmetric about*.
-- **Why the allowlist exists despite being empty**: same reasoning as 2R's `ALLOWLIST_OMISSIONS`. Future "OLED-pure" theme variants may legitimately omit dark gradients; the slot is reserved so the precedent is established before the first omission lands.
-- **Why 2W can't fully execute from sandbox**: the AI's tool surface excludes package.json mutation. Honest framing > faked completion. The banner is the "deliverable from here" half.
+- **Why canon-pattern.md and not visibility-contracts.md for the Deferral entry**: branch protection is canon-enforcement infrastructure, not a visibility/materiality concern. Cross-referencing the visibility-contracts table format is fine; living there would be miscategorization.
+- **Why a table format for the Catalog, not bullets**: the contributor lookup question is "which canon governs X?" — a 3-column table (canon → file → invariant) answers that in one scan. Bullets would require reading prose.
+- **Catalog ordering is by enforcement layer** (Stylelint first, then Vitest by abstraction depth: tokens → families → themes → modes). Mirrors how a contributor would think about scope when adding a new rule.
+- **No update to `mem://index.md`**: canon-pattern.md is already listed there ("Canon Pattern — Five-part structure…"). The description is still accurate; new sections don't change its top-level identity.
 
 ## Out of scope
 
-- **Light↔dark color-token parity** (e.g., "if light defines `--primary`, dark must define `--primary`"). Already covered indirectly by Step 2R + the `.dark` baseline. Adding a third canon would be redundant.
-- **Asserting gradient *value* parity** (e.g., the dark gradient is "appropriately darker" than the light one). Subjective; doesn't fit the canon model. Stays in design review.
-- **Auto-applying package.json edits via a separate tool surface** (e.g., a manual-action runbook). Out of scope; user has the runbook in `docs/ci.md` already.
-- **Renaming the existing cross-theme parity canon** to clarify the axis. The new file's name (`cross-mode-…`) does the disambiguation; renaming the existing one is churn.
+- **Updating `docs/ci.md` to point at the memory** — would be valuable but creates a docs↔memory cycle. The memory is the index; docs/ci.md is operational. Different audiences.
+- **Adding canon #6 (e.g., cross-mode color parity)** — Step 2V's Out of Scope already addressed why it's redundant with 2R + `.dark` baseline. Catalog reflects current reality, not aspirational state.
+- **Auto-generating the Catalog from `src/test/*.test.tsx` headers** — three canons fit on a screen; auto-generation is over-engineering at this scale. Revisit at ~10 canons.
+- **Promoting canon-pattern.md from "feature" to its own type** (e.g., "doctrine") — type system isn't worth churning for one file.
 
 ## Prompt feedback
 
-**What worked**: You correctly framed 2V as "*symmetric* to 2T" — naming the symmetry explicitly tells the AI not to invent a new pattern, just rotate the axis. You also caught the leverage in 2W's bundling (eliminate doc-lag), which is the right doctrine for any deferred-doc-edit step.
+**What worked**: You correctly identified that both edits target the same file and framed each with concrete leverage ("turns the abstract pattern doc into a practical lookup"). Naming the line number for the deferred action (line 74) means I didn't have to grep — that's high-signal prompt hygiene.
 
-**What could sharpen**: For 2W you wrote "one PR that adds the scripts + deps + lint-staged config AND strips the now-stale docs/ci.md caveats." Strong intent, but it didn't acknowledge that the sandbox-bound AI can only deliver one half. A tighter framing: *"bundle in the real PR — and from this session, ship the doc edits *prepared for that bundle* (e.g., a banner enumerating exactly what the PR should remove)."* That framing tells the AI to deliver the sandbox-shippable preparation rather than over-promising the full bundle.
+**What could sharpen**: For 2X you wrote "~5-line memory edit" and for 2Y "~20 lines" — both are accurate, but you didn't mention that they're in the *same file*. A tighter framing: *"Two sections added to the same memory file — Deferral Register (~5 lines) and Catalog (~20 lines). Single write, two purposes."* Surfacing the file-level adjacency tells the AI to bundle and to think about section ordering, not to plan two separate writes.
 
-**Better prompt framing for next wave**: For any step that depends on an external file edit (read-only sandbox files, third-party API changes, infra deploys), explicitly split the prompt into "sandbox half" and "external half" with the AI's deliverable scoped to the sandbox half plus a tightly-scoped checklist for the external half. Avoids the "AI claimed it landed but only half did" failure mode.
+**Better prompt framing for next wave**: When proposing multiple memory edits, group them by target file in the prompt itself. The AI's writes are atomic per file, so file-grouped prompts produce file-grouped plans automatically — no re-derivation step.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2X — Branch protection runbook entry.** `docs/ci.md` line 74 references "GitHub repo settings → Branches → `main`, add `check` to required status checks" but doesn't surface this as a tracked deferred action. Worth adding to the `mem://architecture/canon-pattern.md` Deferral Register so the "until configured, the gate reports but does not block merge" state has a documented revisit trigger. ~5-line memory edit.
+1. **Step 2Z — Per-canon "added in" attribution in the Catalog.** Add a fourth column (or a footnote per row) naming the step that introduced each canon (2I, 2K, 2P, 2R, 2V). Lets a contributor trace why each rule exists by jumping to commit history with a known anchor. ~5 line edit on top of 2Y; only worth doing once 2Y lands and the table shape is settled.
 
-2. **Step 2Y — Canon catalog in `mem://architecture/canon-pattern.md`.** Steps 2I–2V have produced 4 distinct canons (no-raw-rgba, semantic-token, theme-completeness, cross-theme-parity, cross-mode-gradient-parity). The canon-pattern memory documents the abstract structure; a "Catalog" subsection listing each canon with its file path and one-line invariant would make the memory a practical lookup instead of just a pattern doc. ~20 lines, high-leverage onboarding artifact for the next contributor adding canon #6.
+2. **Step 2AA — Mirror the Catalog into `docs/ci.md`'s "Adding a new canon" section.** Currently that section says "extend the `TOKENS` array…" but doesn't enumerate what canons already exist. A "See `mem://architecture/canon-pattern.md` Catalog for the current canon set" pointer (one line) closes the docs→memory loop without duplicating the table. High-leverage for contributors who start in `docs/ci.md` rather than memory.
 
