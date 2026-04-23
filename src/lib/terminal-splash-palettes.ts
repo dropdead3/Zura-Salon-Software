@@ -98,7 +98,7 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#e6754a',
     255, 138, 92,
   ),
-  prism: palette(
+  orchid: palette(
     ['#0a0414', '#1a0833', '#0a0414'],
     '#c43eff',
     '#9d2adb',

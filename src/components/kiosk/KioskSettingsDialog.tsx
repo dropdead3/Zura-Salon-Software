@@ -730,10 +730,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                 <div className="flex gap-1">
                                   <div
                                     className="w-4 h-4 rounded-full border border-white/20"
-                                    style={
-                                      theme.id === 'prism'
-                                        ? { backgroundImage: 'linear-gradient(90deg, hsl(290 90% 60%), hsl(200 90% 60%), hsl(145 75% 50%), hsl(48 95% 60%), hsl(15 90% 62%))' }
-                                        : { backgroundColor: `hsl(${preview.bg})` }
+                                    style={{ backgroundColor: `hsl(${preview.bg})` }
                                     }
                                   />
                                   <div 

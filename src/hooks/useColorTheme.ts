@@ -3,12 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
-export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marine' | 'cognac' | 'noir' | 'neon' | 'matrix' | 'peach' | 'prism';
+export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marine' | 'cognac' | 'noir' | 'neon' | 'matrix' | 'peach' | 'orchid';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 
-const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'prism'];
+const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 // Migration map for renamed theme keys (legacy → current)
@@ -17,6 +17,7 @@ const LEGACY_THEME_MIGRATION: Record<string, ColorTheme> = {
   rose: 'rosewood',
   ocean: 'marine',
   ember: 'cognac',
+  prism: 'orchid',
 };
 
 function migrateLegacyTheme(value: string | null | undefined): ColorTheme | null {
@@ -33,7 +34,7 @@ type ColorThemeSettings = Record<string, unknown> & {
 function applyTheme(theme: ColorTheme) {
   const html = document.documentElement;
   // Also strip any legacy theme classes that may still be on the element
-  html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember');
+  html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism');
   html.classList.add(`theme-${theme}`);
 }
 
@@ -119,7 +120,7 @@ export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   neon: 'Rose Garden',
   matrix: 'Herb Garden',
   peach: 'Sunset Bloom',
-  prism: 'Lavender Fields',
+  orchid: 'Lavender Fields',
 };
 
 // Theme metadata for UI
@@ -290,9 +291,9 @@ export const colorThemes = [
     },
   },
   {
-    id: 'prism' as ColorTheme,
-    name: 'Prism',
-    description: 'Iridescent spectrum',
+    id: 'orchid' as ColorTheme,
+    name: 'Orchid',
+    description: 'Premium magenta & violet jewel',
     lightPreview: {
       bg: 'hsl(280 30% 97%)',
       accent: 'hsl(200 60% 90%)',

@@ -1414,8 +1414,8 @@ html, body, #root {
     --card-inner-deep: 18 22% 7%;
   }
 
-  /* ===== THEME: PRISM (Iridescent magenta anchor + spectrum charts) ===== */
-  .theme-prism {
+  /* ===== THEME: ORCHID (Premium magenta-violet jewel) ===== */
+  .theme-orchid {
     --background: 280 30% 97%;
     --foreground: 280 40% 10%;
 
@@ -1445,10 +1445,10 @@ html, body, #root {
     --gold-foreground: 45 100% 97%;
 
     --chart-1: 290 75% 55%;
-    --chart-2: 200 80% 50%;
-    --chart-3: 145 65% 45%;
-    --chart-4: 42 90% 55%;
-    --chart-5: 15 85% 58%;
+    --chart-2: 270 65% 55%;
+    --chart-3: 310 60% 55%;
+    --chart-4: 42 75% 50%;
+    --chart-5: 260 55% 50%;
 
     --success: 145 50% 88%;
     --success-foreground: 145 55% 28%;
@@ -1465,7 +1465,7 @@ html, body, #root {
 
     --sidebar-background: 280 25% 94%;
     --sidebar-foreground: 280 40% 10%;
-    --sidebar-primary: 200 80% 45%;
+    --sidebar-primary: 290 75% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 280 25% 88%;
     --sidebar-accent-foreground: 280 40% 10%;
@@ -1476,7 +1476,7 @@ html, body, #root {
     --card-inner-deep: 280 20% 91%;
   }
 
-  .dark.theme-prism {
+  .dark.theme-orchid {
     --background: 265 35% 5%;
     --foreground: 280 25% 92%;
 
@@ -1506,10 +1506,10 @@ html, body, #root {
     --gold-foreground: 45 100% 97%;
 
     --chart-1: 290 90% 65%;
-    --chart-2: 200 90% 60%;
-    --chart-3: 145 75% 55%;
-    --chart-4: 48 95% 60%;
-    --chart-5: 15 90% 62%;
+    --chart-2: 270 75% 65%;
+    --chart-3: 310 75% 65%;
+    --chart-4: 48 85% 60%;
+    --chart-5: 260 65% 60%;
 
     --success: 145 50% 25%;
     --success-foreground: 145 60% 75%;
@@ -1526,7 +1526,7 @@ html, body, #root {
 
     --sidebar-background: 265 35% 4%;
     --sidebar-foreground: 280 25% 92%;
-    --sidebar-primary: 200 90% 60%;
+    --sidebar-primary: 290 90% 65%;
     --sidebar-primary-foreground: 265 35% 5%;
     --sidebar-accent: 270 28% 13%;
     --sidebar-accent-foreground: 280 25% 92%;
