@@ -267,23 +267,24 @@ export function ViewAsPopover() {
           </TabsContent>
 
           {/* === Test Accounts Tab === */}
-          <TabsContent value="test" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
-            <ScrollArea className="flex-1 min-h-0">
-              <div className="px-6 py-8 text-center">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-muted/40">
-                  <FlaskConical className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <h3 className="font-display text-[11px] tracking-[0.12em] uppercase text-foreground mb-1">
-                  Test Accounts
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Simulate the platform safely without affecting real data. Coming soon.
-                </p>
-                <Badge variant="outline" className="mt-3 text-[10px] rounded-full">
-                  Coming Soon
-                </Badge>
+          <TabsContent
+            value="test"
+            className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex flex-col items-center justify-center px-6"
+          >
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+                <FlaskConical className="h-5 w-5 text-muted-foreground" />
               </div>
-            </ScrollArea>
+              <h3 className="font-display text-[11px] tracking-[0.12em] uppercase text-foreground mb-1">
+                Test Accounts
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Simulate the platform safely without affecting real data. Coming soon.
+              </p>
+              <Badge variant="outline" className="mt-3 text-[10px] rounded-full">
+                Coming Soon
+              </Badge>
+            </div>
           </TabsContent>
         </Tabs>
       </PopoverContent>
