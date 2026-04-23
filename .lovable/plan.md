@@ -1,48 +1,62 @@
 
 
 ## Goal
-Convert the vertical left accent spine into a horizontal **top cap** that runs across the top edge of every appointment card.
+Replace the flat top cap with a **corner-wrapping frame** — the accent color traces the rounded top-left and top-right corners and runs a short distance down each side, matching the reference screenshot.
 
 ## What changes
 File: `src/components/dashboard/schedule/AppointmentCardContent.tsx`
 
-### 1. Category-color cards — swap spine for top cap
-Replace the current absolutely-positioned vertical strip (`left-0 top-1 bottom-1 w-[3px]`) with a horizontal cap pinned to the top edge:
+### 1. Category-color cards — swap flat cap for corner frame
+Replace the current flat horizontal strip (`absolute left-1 right-1 top-0 h-[3px]`) with a true frame that wraps the top corners. Implementation: a single absolutely-positioned `<div>` filling the card, styled as a transparent box with **top + partial left/right borders** and matching `border-radius` so the stroke naturally follows the rounded corners.
 
+```jsx
+<div
+  className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
+  style={{
+    border: '1.5px solid transparent',
+    borderTopColor: catColor.text,
+    // partial side wrap — fades out ~14px down each side
+    borderImage: `linear-gradient(
+      to bottom,
+      ${catColor.text} 0px,
+      ${catColor.text} 14px,
+      transparent 14px
+    ) 1 / 1.5px / 0 stretch`,
+    opacity: 0.75,
+  }}
+/>
 ```
-absolute left-1 right-1 top-0 h-[3px] rounded-b-sm pointer-events-none z-[3]
-```
 
-- Sits flush against the top edge (`top-0`)
-- Inset `1px` from left/right so it respects the card's `rounded-[10px]` corners
-- `rounded-b-sm` softens the bottom of the cap so it visually melts into the card body
-- Still uses `catColor.text` at `0.7` opacity — same color identity, new orientation
-- Conditions stay identical (`useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES…`)
+If `border-image` proves fiddly with rounded corners, fall back to **two stacked elements**:
+- One absolute `inset-0` div with `rounded-[10px]`, transparent fill, and a 1.5px top border in `catColor.text` (gives the full top wrap including corners).
+- Two short vertical strips (`absolute top-0 left-0 w-[1.5px] h-3.5` and same on right) in `catColor.text` to extend the wrap a touch down each side.
 
-### 2. Status-color cards — swap `border-l-4` for `border-t-4`
-In the main grid container className (line 685):
-- Replace `'border-l-4'` with `'border-t-4'`
-- Same conditional (`!useCategoryColor && !displayGradient`)
-- Uses the existing `statusColors.border` color, just on the top edge instead of left
+The two-element fallback is more reliable across browsers and respects the existing `rounded-[10px]` perfectly.
 
-### 3. Inner highlight ring — preserve the lit edge
-Keep the inset top highlight (`inset 0 1px 0 rgba(255,255,255,0.18)`). It sits *under* the new cap visually and reads as a subtle gloss line right below the colored cap — adds depth without conflict.
+### 2. Status-color cards — same treatment
+Currently uses `border-t-4` on the main grid container (line 685). Drop the `border-t-4` and instead render the same corner-frame element conditionally for status-colored cards, using `statusColors.border` resolved to a CSS color. This keeps both code paths visually unified.
+
+### 3. Tuning values
+- Stroke weight: `1.5px` (matches reference — thinner than current 3px cap, reads as a frame not a slab)
+- Side wrap depth: `14px` (about 1/3 of a standard card's visible top region — matches the reference proportion)
+- Opacity: `0.75` for category color, full opacity for status color (status colors are already muted)
+- Corner radius on the frame element matches the card: `rounded-[10px]`
 
 ## What stays exactly the same
-- Card radius, shadow, hover lift, sheen overlay, selected glow
+- Card radius, shadow stack, hover lift, sheen overlay, lit-edge inner ring
 - 1px overlap gap math in `schedule-utils.ts`
-- All status pills, NC/RC chips, stylist avatars
-- Cancelled hatch + no-show dot + selected ring
-- Multi-service inner band wrapper
+- All status pills, NC/RC chips, stylist avatars, multi-service bands
+- Cancelled hatch, no-show ring/dot, selected glow
 - Day / Week / Agenda variant structure
 
 ## QA
-- Every card shows a thin colored cap across its top edge instead of a stripe down its left side
-- Cap respects the rounded top corners (no color bleeding past the radius)
-- Both category-colored cards (pastel) and status-colored cards (Conf/Unconf/etc.) get the same cap treatment
-- Overlap pairs: caps sit cleanly on each card; the 1px gap between cards is preserved
-- Selected / no-show / cancelled cards still render correctly
+- Top corners show the colored stroke wrapping cleanly around the radius (no square bleed past the curve)
+- Stroke continues ~14px down the left and right edges, then stops cleanly
+- Bottom of card has no accent — frame is open at the bottom
+- Both category cards (pastel) and status cards (Conf/Unconf/etc.) use the same wrap treatment
+- 1px overlap gap between adjacent cards is preserved — the frame does not bleed across the gap
+- Selected ring sits cleanly inside the frame; no-show dot still anchors top-left without colliding with the wrap
 
 ## Enhancement suggestion
-After this lands, consider promoting the top cap into a reusable `<CardAccentCap />` primitive (with `color` + `position` props). That way the same accent language can extend to drag previews, coverage blocks, and break overlays — keeping the schedule's visual grammar consistent across every overlay surface.
+After this lands, the corner-wrap is the natural moment to introduce a `<CardCornerFrame color={...} wrapDepth={14} />` primitive. Then drag previews, coverage blocks, break overlays, and AI suggestion ghosts can all share the same accent grammar with one prop change — and the wrap depth becomes a single design token (`tokens.schedule.cornerWrapPx`) instead of a magic number scattered across files.
 
