@@ -1167,6 +1167,375 @@ html, body, #root {
     --card-inner: 330 15% 6%;
     --card-inner-deep: 330 15% 3%;
   }
+
+  /* ===== THEME: MATRIX (Neon emerald on deep navy — cyberpunk terminal) ===== */
+  .theme-matrix {
+    --background: 220 30% 96%;
+    --foreground: 220 40% 8%;
+
+    --card: 220 25% 98%;
+    --card-foreground: 220 40% 8%;
+
+    --popover: 220 25% 98%;
+    --popover-foreground: 220 40% 8%;
+
+    --primary: 145 75% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 88%;
+    --secondary-foreground: 220 40% 8%;
+
+    --muted: 220 15% 90%;
+    --muted-strong: 220 18% 82%;
+    --muted-foreground: 220 25% 30%;
+
+    --accent: 145 35% 88%;
+    --accent-foreground: 220 40% 8%;
+
+    --oat: 220 18% 75%;
+    --oat-foreground: 220 30% 22%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 145 75% 32%;
+    --chart-2: 220 70% 40%;
+    --chart-3: 175 60% 38%;
+    --chart-4: 42 75% 45%;
+    --chart-5: 280 55% 50%;
+
+    --success: 145 50% 88%;
+    --success-foreground: 145 55% 28%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 82%;
+    --input: 220 15% 88%;
+    --ring: 145 75% 32%;
+
+    --sidebar-background: 220 25% 92%;
+    --sidebar-foreground: 220 40% 8%;
+    --sidebar-primary: 145 75% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 22% 86%;
+    --sidebar-accent-foreground: 220 40% 8%;
+    --sidebar-border: 220 15% 82%;
+    --sidebar-ring: 145 75% 32%;
+
+    --card-inner: 220 18% 93%;
+    --card-inner-deep: 220 15% 90%;
+  }
+
+  .dark.theme-matrix {
+    --background: 220 50% 5%;
+    --foreground: 145 25% 92%;
+
+    --card: 220 45% 9%;
+    --card-foreground: 145 25% 92%;
+
+    --popover: 220 45% 9%;
+    --popover-foreground: 145 25% 92%;
+
+    --primary: 145 90% 50%;
+    --primary-foreground: 220 50% 5%;
+
+    --secondary: 220 35% 14%;
+    --secondary-foreground: 145 25% 92%;
+
+    --muted: 220 30% 16%;
+    --muted-strong: 220 32% 12%;
+    --muted-foreground: 220 20% 65%;
+
+    --accent: 145 40% 14%;
+    --accent-foreground: 145 25% 92%;
+
+    --oat: 220 25% 28%;
+    --oat-foreground: 220 22% 88%;
+
+    --gold: 42 80% 55%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 145 90% 55%;
+    --chart-2: 200 85% 60%;
+    --chart-3: 175 70% 50%;
+    --chart-4: 42 80% 55%;
+    --chart-5: 280 70% 65%;
+
+    --success: 145 50% 25%;
+    --success-foreground: 145 60% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 30% 16%;
+    --input: 220 30% 14%;
+    --ring: 145 90% 50%;
+
+    --sidebar-background: 220 50% 4%;
+    --sidebar-foreground: 145 25% 92%;
+    --sidebar-primary: 145 90% 50%;
+    --sidebar-primary-foreground: 220 50% 5%;
+    --sidebar-accent: 220 35% 12%;
+    --sidebar-accent-foreground: 145 25% 92%;
+    --sidebar-border: 220 30% 16%;
+    --sidebar-ring: 145 90% 50%;
+
+    --card-inner: 220 40% 7%;
+    --card-inner-deep: 220 40% 5%;
+  }
+
+  /* ===== THEME: PEACH (Coral peach on warm cream — sorbet) ===== */
+  .theme-peach {
+    --background: 25 50% 96%;
+    --foreground: 18 35% 12%;
+
+    --card: 25 40% 98%;
+    --card-foreground: 18 35% 12%;
+
+    --popover: 25 40% 98%;
+    --popover-foreground: 18 35% 12%;
+
+    --primary: 18 75% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 22 35% 88%;
+    --secondary-foreground: 18 35% 12%;
+
+    --muted: 22 25% 90%;
+    --muted-strong: 22 28% 82%;
+    --muted-foreground: 18 25% 35%;
+
+    --accent: 18 50% 88%;
+    --accent-foreground: 18 35% 12%;
+
+    --oat: 22 30% 75%;
+    --oat-foreground: 18 30% 22%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 18 75% 58%;
+    --chart-2: 8 70% 62%;
+    --chart-3: 35 70% 58%;
+    --chart-4: 42 75% 50%;
+    --chart-5: 340 60% 60%;
+
+    --success: 158 50% 88%;
+    --success-foreground: 158 55% 28%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 22 25% 82%;
+    --input: 22 25% 88%;
+    --ring: 18 75% 58%;
+
+    --sidebar-background: 25 40% 93%;
+    --sidebar-foreground: 18 35% 12%;
+    --sidebar-primary: 18 75% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 22 32% 87%;
+    --sidebar-accent-foreground: 18 35% 12%;
+    --sidebar-border: 22 25% 82%;
+    --sidebar-ring: 18 75% 58%;
+
+    --card-inner: 25 30% 93%;
+    --card-inner-deep: 22 28% 90%;
+  }
+
+  .dark.theme-peach {
+    --background: 18 25% 6%;
+    --foreground: 25 30% 92%;
+
+    --card: 18 22% 11%;
+    --card-foreground: 25 30% 92%;
+
+    --popover: 18 22% 11%;
+    --popover-foreground: 25 30% 92%;
+
+    --primary: 18 85% 65%;
+    --primary-foreground: 18 25% 6%;
+
+    --secondary: 18 18% 16%;
+    --secondary-foreground: 25 30% 92%;
+
+    --muted: 18 15% 18%;
+    --muted-strong: 18 18% 13%;
+    --muted-foreground: 25 20% 65%;
+
+    --accent: 18 22% 16%;
+    --accent-foreground: 25 30% 92%;
+
+    --oat: 18 22% 28%;
+    --oat-foreground: 25 25% 88%;
+
+    --gold: 42 80% 55%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 18 85% 65%;
+    --chart-2: 8 75% 65%;
+    --chart-3: 35 75% 60%;
+    --chart-4: 42 80% 55%;
+    --chart-5: 340 65% 65%;
+
+    --success: 158 45% 25%;
+    --success-foreground: 158 50% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 18 18% 18%;
+    --input: 18 18% 16%;
+    --ring: 18 85% 65%;
+
+    --sidebar-background: 18 25% 5%;
+    --sidebar-foreground: 25 30% 92%;
+    --sidebar-primary: 18 85% 65%;
+    --sidebar-primary-foreground: 18 25% 6%;
+    --sidebar-accent: 18 20% 13%;
+    --sidebar-accent-foreground: 25 30% 92%;
+    --sidebar-border: 18 18% 18%;
+    --sidebar-ring: 18 85% 65%;
+
+    --card-inner: 18 22% 9%;
+    --card-inner-deep: 18 22% 7%;
+  }
+
+  /* ===== THEME: PRISM (Iridescent magenta anchor + spectrum charts) ===== */
+  .theme-prism {
+    --background: 280 30% 97%;
+    --foreground: 280 40% 10%;
+
+    --card: 280 25% 98%;
+    --card-foreground: 280 40% 10%;
+
+    --popover: 280 25% 98%;
+    --popover-foreground: 280 40% 10%;
+
+    --primary: 290 75% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 280 25% 90%;
+    --secondary-foreground: 280 40% 10%;
+
+    --muted: 280 18% 92%;
+    --muted-strong: 280 22% 84%;
+    --muted-foreground: 280 20% 35%;
+
+    --accent: 200 60% 90%;
+    --accent-foreground: 280 40% 10%;
+
+    --oat: 280 22% 75%;
+    --oat-foreground: 280 30% 22%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 290 75% 55%;
+    --chart-2: 200 80% 50%;
+    --chart-3: 145 65% 45%;
+    --chart-4: 42 90% 55%;
+    --chart-5: 15 85% 58%;
+
+    --success: 145 50% 88%;
+    --success-foreground: 145 55% 28%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 280 20% 85%;
+    --input: 280 20% 90%;
+    --ring: 290 75% 55%;
+
+    --sidebar-background: 280 25% 94%;
+    --sidebar-foreground: 280 40% 10%;
+    --sidebar-primary: 290 75% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 280 25% 88%;
+    --sidebar-accent-foreground: 280 40% 10%;
+    --sidebar-border: 280 20% 85%;
+    --sidebar-ring: 290 75% 55%;
+
+    --card-inner: 280 22% 94%;
+    --card-inner-deep: 280 20% 91%;
+  }
+
+  .dark.theme-prism {
+    --background: 265 35% 5%;
+    --foreground: 280 25% 92%;
+
+    --card: 270 30% 10%;
+    --card-foreground: 280 25% 92%;
+
+    --popover: 270 30% 10%;
+    --popover-foreground: 280 25% 92%;
+
+    --primary: 290 90% 65%;
+    --primary-foreground: 265 35% 5%;
+
+    --secondary: 270 25% 16%;
+    --secondary-foreground: 280 25% 92%;
+
+    --muted: 270 22% 18%;
+    --muted-strong: 270 25% 13%;
+    --muted-foreground: 280 18% 65%;
+
+    --accent: 200 50% 16%;
+    --accent-foreground: 280 25% 92%;
+
+    --oat: 270 22% 28%;
+    --oat-foreground: 280 25% 88%;
+
+    --gold: 42 85% 60%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 290 90% 65%;
+    --chart-2: 200 90% 60%;
+    --chart-3: 145 75% 55%;
+    --chart-4: 48 95% 60%;
+    --chart-5: 15 90% 62%;
+
+    --success: 145 50% 25%;
+    --success-foreground: 145 60% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 22% 18%;
+    --input: 270 22% 16%;
+    --ring: 290 90% 65%;
+
+    --sidebar-background: 265 35% 4%;
+    --sidebar-foreground: 280 25% 92%;
+    --sidebar-primary: 290 90% 65%;
+    --sidebar-primary-foreground: 265 35% 5%;
+    --sidebar-accent: 270 28% 13%;
+    --sidebar-accent-foreground: 280 25% 92%;
+    --sidebar-border: 270 22% 18%;
+    --sidebar-ring: 290 90% 65%;
+
+    --card-inner: 270 28% 8%;
+    --card-inner-deep: 270 28% 6%;
+  }
 }
 
 @layer utilities {

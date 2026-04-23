@@ -3,12 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
-export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marine' | 'cognac' | 'noir' | 'neon';
+export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marine' | 'cognac' | 'noir' | 'neon' | 'matrix' | 'peach' | 'prism';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 
-const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon'];
+const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'prism'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 // Migration map for renamed theme keys (legacy → current)
@@ -117,6 +117,9 @@ export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   cognac: 'Sunset Bloom',
   noir: 'Neutral Elegance',
   neon: 'Rose Garden',
+  matrix: 'Herb Garden',
+  peach: 'Sunset Bloom',
+  prism: 'Lavender Fields',
 };
 
 // Theme metadata for UI
@@ -254,6 +257,51 @@ export const colorThemes = [
       bg: 'hsl(0 0% 4%)',
       accent: 'hsl(330 25% 18%)',
       primary: 'hsl(330 95% 60%)',
+    },
+  },
+  {
+    id: 'matrix' as ColorTheme,
+    name: 'Matrix',
+    description: 'Neon emerald on deep navy',
+    lightPreview: {
+      bg: 'hsl(220 30% 96%)',
+      accent: 'hsl(145 35% 88%)',
+      primary: 'hsl(145 75% 32%)',
+    },
+    darkPreview: {
+      bg: 'hsl(220 50% 5%)',
+      accent: 'hsl(145 40% 14%)',
+      primary: 'hsl(145 90% 50%)',
+    },
+  },
+  {
+    id: 'peach' as ColorTheme,
+    name: 'Peach',
+    description: 'Coral peach & warm cream',
+    lightPreview: {
+      bg: 'hsl(25 50% 96%)',
+      accent: 'hsl(18 50% 88%)',
+      primary: 'hsl(18 75% 58%)',
+    },
+    darkPreview: {
+      bg: 'hsl(18 25% 6%)',
+      accent: 'hsl(18 22% 16%)',
+      primary: 'hsl(18 85% 65%)',
+    },
+  },
+  {
+    id: 'prism' as ColorTheme,
+    name: 'Prism',
+    description: 'Iridescent spectrum',
+    lightPreview: {
+      bg: 'hsl(280 30% 97%)',
+      accent: 'hsl(200 60% 90%)',
+      primary: 'hsl(290 75% 55%)',
+    },
+    darkPreview: {
+      bg: 'hsl(265 35% 5%)',
+      accent: 'hsl(200 50% 16%)',
+      primary: 'hsl(290 90% 65%)',
     },
   },
 ];
