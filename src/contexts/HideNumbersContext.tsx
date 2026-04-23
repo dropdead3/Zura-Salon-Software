@@ -200,12 +200,21 @@ export function BlurredAmount({
       quickHide();
     }
   };
+
+  // Wave 1: subtle crossfade on value change for premium "data is alive" feel.
+  // Keyed on stringified children — when the formatted value changes, the span
+  // re-mounts with a 220ms fade-in. Cheap, no framer-motion dep needed here.
+  const valueKey = typeof children === 'string' || typeof children === 'number'
+    ? String(children)
+    : undefined;
+  const animatedClass = valueKey !== undefined ? 'animate-fade-in-fast' : '';
   
   if (!hideNumbers) {
     if (disableTooltip) {
       return (
         <Component 
-          className={cn(className, 'cursor-pointer')} 
+          key={valueKey}
+          className={cn(className, animatedClass, 'cursor-pointer')} 
           onDoubleClick={handleDoubleClick}
         >
           {children}
@@ -217,7 +226,8 @@ export function BlurredAmount({
         <Tooltip>
           <TooltipTrigger asChild>
             <Component 
-              className={cn(className, 'cursor-pointer')} 
+              key={valueKey}
+              className={cn(className, animatedClass, 'cursor-pointer')} 
               onDoubleClick={handleDoubleClick}
             >
               {children}

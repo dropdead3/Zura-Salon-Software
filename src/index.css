@@ -1662,6 +1662,45 @@ html, body, #root {
     box-shadow: 0 8px 20px -6px hsl(var(--foreground) / 0.12);
   }
 
+  /* ───────── Wave 1: Premium material surface ─────────
+     Adds top-edge specular highlight + frosted noise texture so cards
+     read as a real material instead of a flat div. Composes with `bg-card`
+     and works in both light + dark themes. */
+  .premium-surface {
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--foreground) / 0.04),
+      0 1px 2px 0 hsl(var(--foreground) / 0.04);
+    position: relative;
+  }
+  .premium-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    /* 2% frosted-glass noise — kills banding on backdrop-blur surfaces */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/></svg>");
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+  }
+  .dark .premium-surface::before {
+    opacity: 0.4;
+  }
+  .dark .premium-surface {
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--foreground) / 0.06),
+      0 1px 2px 0 hsl(0 0% 0% / 0.2);
+  }
+
+  /* ───────── Wave 1: macOS-style focus ring with offset ─────────
+     2px ring + 2px transparent offset reads as proper focus, not "border replacement". */
+  .focus-ring-premium:focus-visible,
+  *:focus-visible:not([data-radix-collection-item]) {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
   /* Reduced motion: disable all custom animations */
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-in,
@@ -1676,6 +1715,7 @@ html, body, #root {
       transition: none !important;
       box-shadow: none !important;
     }
+    .premium-surface::before { display: none; }
   }
 
   /* Card hover glow */

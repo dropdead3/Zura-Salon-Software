@@ -88,6 +88,21 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      transitionTimingFunction: {
+        // Premium spring-feel easings (Wave 1 motion choreography)
+        spring: "cubic-bezier(0.32, 0.72, 0, 1)",          // Apple-style overshoot
+        "spring-linear": "cubic-bezier(0.16, 1, 0.3, 1)",  // Linear-style ease-out
+        "spring-soft": "cubic-bezier(0.22, 1, 0.36, 1)",   // Notion-style soft landing
+      },
+      boxShadow: {
+        // 3-tier premium shadow ladder
+        "premium-rest": "0 1px 2px 0 hsl(var(--foreground) / 0.04), 0 1px 3px 0 hsl(var(--foreground) / 0.06)",
+        "premium-hover": "0 4px 8px -2px hsl(var(--foreground) / 0.08), 0 8px 16px -4px hsl(var(--foreground) / 0.10)",
+        "premium-drag": "0 12px 24px -6px hsl(var(--foreground) / 0.16), 0 20px 40px -10px hsl(var(--foreground) / 0.18)",
+        // Inner specular highlight for "material" reads
+        "inner-highlight": "inset 0 1px 0 0 hsl(var(--foreground) / 0.04)",
+        "inner-highlight-strong": "inset 0 1px 0 0 hsl(var(--foreground) / 0.08)",
+      },
       borderRadius: {
         none: "0",
         xs: "2px",
