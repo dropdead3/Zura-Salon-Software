@@ -48,11 +48,15 @@ export function ViewAsPopover() {
 
   const [open, setOpen] = useState(false);
   const [teamFilter, setTeamFilter] = useState('');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const debouncedFilter = useDebounce(teamFilter, 200);
 
   const { data: allRoles = [] } = useRoles();
   const { data: allUsers = [], isLoading: usersLoading } = useAllUsersWithRoles();
   const { data: profile } = useEmployeeProfile();
+  const { effectiveOrganization } = useOrganizationContext();
+  const { data: locations = [] } = useActiveLocations(effectiveOrganization?.id);
+  const showLocationFilter = locations.length >= 2;
   const canImpersonate = !!(profile?.is_super_admin || profile?.is_primary_owner);
 
   // Grouped roles
@@ -70,12 +74,18 @@ export function ViewAsPopover() {
     return allUsers
       .filter(u => u.user_id !== user?.id)
       .filter(u => {
+        if (selectedLocationId === 'all') return true;
+        if (u.location_id === selectedLocationId) return true;
+        if (u.location_ids?.includes(selectedLocationId)) return true;
+        return false;
+      })
+      .filter(u => {
         if (!q) return true;
         const name = (u.display_name || u.full_name || '').toLowerCase();
         const roles = u.roles.join(' ').toLowerCase();
         return name.includes(q) || roles.includes(q);
       });
-  }, [allUsers, user?.id, debouncedFilter]);
+  }, [allUsers, user?.id, debouncedFilter, selectedLocationId]);
 
   // Defense-in-depth gate: only super admins / account owners may use this surface.
   if (!canImpersonate) return null;
