@@ -100,6 +100,44 @@ export function ViewAsPopover() {
       });
   }, [allUsers, user?.id, debouncedFilter, selectedLocationId]);
 
+  // Bucket filtered users by highest-priority role
+  const groupedUsers = useMemo(() => {
+    const buckets = new Map<string, typeof filteredUsers>();
+    const labels: string[] = [];
+    for (const { label } of TEAM_ROLE_ORDER) {
+      if (!buckets.has(label)) {
+        buckets.set(label, []);
+        labels.push(label);
+      }
+    }
+    buckets.set(OTHER_GROUP_LABEL, []);
+    labels.push(OTHER_GROUP_LABEL);
+
+    for (const u of filteredUsers) {
+      let placed = false;
+      for (const { key, label } of TEAM_ROLE_ORDER) {
+        if (u.roles.includes(key)) {
+          buckets.get(label)!.push(u);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) buckets.get(OTHER_GROUP_LABEL)!.push(u);
+    }
+
+    for (const [, list] of buckets) {
+      list.sort((a, b) => {
+        const an = (a.display_name || a.full_name || '').toLowerCase();
+        const bn = (b.display_name || b.full_name || '').toLowerCase();
+        return an.localeCompare(bn);
+      });
+    }
+
+    return labels
+      .map(label => ({ label, users: buckets.get(label)! }))
+      .filter(g => g.users.length > 0);
+  }, [filteredUsers]);
+
   // Defense-in-depth gate: only super admins / account owners may use this surface.
   if (!canImpersonate) return null;
 
