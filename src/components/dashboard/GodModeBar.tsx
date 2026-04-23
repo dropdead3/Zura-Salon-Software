@@ -163,7 +163,7 @@ export function GodModeBar() {
             onMouseEnter={() => setExitHover(true)}
             onMouseLeave={() => setExitHover(false)}
             className={cn(
-              "rounded-lg font-sans font-medium transition-all duration-200 flex items-center gap-1.5",
+              "rounded-md font-sans font-medium transition-all duration-200 flex items-center gap-1.5",
               isMobile ? "h-7 px-3 text-xs" : "h-7 px-4 text-xs"
             )}
             style={{
