@@ -1,22 +1,24 @@
+import fs from "node:fs";
+import path from "node:path";
+
 /**
- * Reads a CSS rule body out of document.styleSheets by selector.
- * jsdom parses CSS rules but does not render them — so we assert on
- * the rule text, not computed styles.
+ * Extracts a CSS rule body (the `{...}` portion) for a given selector from
+ * a raw CSS source string. We parse the source file directly instead of
+ * loading it into jsdom, because jsdom's CSS parser trips on modern syntax
+ * (e.g. `@layer`, Tailwind directives, `color-mix()`).
  */
-export function findCssRuleText(selector: string): string | null {
-  for (const sheet of Array.from(document.styleSheets)) {
-    let rules: CSSRuleList | null = null;
-    try {
-      rules = sheet.cssRules;
-    } catch {
-      continue; // cross-origin sheet
-    }
-    if (!rules) continue;
-    for (const rule of Array.from(rules)) {
-      if (rule instanceof CSSStyleRule && rule.selectorText === selector) {
-        return rule.cssText;
-      }
-    }
-  }
-  return null;
+export function extractRuleBody(cssSource: string, selector: string): string | null {
+  // Escape regex metacharacters in the selector
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Allow whitespace around selector, match until the matching close brace
+  const re = new RegExp(`${escaped}\\s*\\{([^}]*)\\}`, "m");
+  const match = cssSource.match(re);
+  return match ? match[1] : null;
+}
+
+let cachedIndexCss: string | null = null;
+export function readIndexCss(): string {
+  if (cachedIndexCss) return cachedIndexCss;
+  cachedIndexCss = fs.readFileSync(path.resolve(__dirname, "../index.css"), "utf8");
+  return cachedIndexCss;
 }
