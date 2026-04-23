@@ -131,15 +131,30 @@ function CardOverlays({
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
         }}
       />
-      {/* Left accent spine — uses category text color when available */}
+      {/* Corner-wrapping accent frame — traces top corners + ~14px down each side */}
       {useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
-        <div
-          className="absolute left-1 right-1 top-0 h-[3px] rounded-b-sm pointer-events-none z-[3]"
-          style={{
-            backgroundColor: catColor.text,
-            opacity: 0.7,
-          }}
-        />
+        <>
+          {/* Full top stroke wrapping both rounded corners */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
+            style={{
+              borderTop: `1.5px solid ${catColor.text}`,
+              borderLeft: '1.5px solid transparent',
+              borderRight: '1.5px solid transparent',
+              borderBottom: '1.5px solid transparent',
+              opacity: 0.75,
+            }}
+          />
+          {/* Short vertical extensions down each side (~14px) */}
+          <div
+            className="absolute top-0 left-0 w-[1.5px] h-3.5 pointer-events-none z-[3]"
+            style={{ backgroundColor: catColor.text, opacity: 0.75 }}
+          />
+          <div
+            className="absolute top-0 right-0 w-[1.5px] h-3.5 pointer-events-none z-[3]"
+            style={{ backgroundColor: catColor.text, opacity: 0.75 }}
+          />
+        </>
       )}
       {isNoShow && (
         <>
@@ -681,8 +696,6 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
-        // Top accent cap on every status-colored card.
-        !useCategoryColor && !displayGradient && 'border-t-4',
         isCancelled && 'opacity-60',
         isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
         isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',
