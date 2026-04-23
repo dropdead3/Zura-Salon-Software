@@ -46,6 +46,7 @@ import { useServiceFormCounts } from '@/hooks/useServiceFormCounts';
 import {
   getCategoryAbbreviation as getAbbr,
   SPECIAL_GRADIENTS,
+  THEME_GRADIENTS,
   isGradientMarker,
   getGradientFromMarker,
   getContrastingTextColor,
