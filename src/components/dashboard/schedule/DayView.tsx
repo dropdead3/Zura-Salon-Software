@@ -326,7 +326,8 @@ function AppointmentCard({
         serviceLookup={serviceLookup}
         assistantNamesMap={assistantNamesMap}
         categoryColors={categoryColors}
-        
+        isFirstCol={isFirstCol}
+        isLastCol={isLastCol}
         useShortLabels={useShortLabels}
         declinedReasonLabel={declinedReasonLabel}
         connectInactive={connectInactive}
