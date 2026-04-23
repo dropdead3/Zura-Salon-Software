@@ -71,6 +71,10 @@ export interface AppointmentCardContentProps {
   showClientPhone?: boolean;
   showClientAvatar?: boolean;
   useShortLabels?: boolean;
+  /** Overlap edge metadata — used to make double-booked cards butt up flush */
+  isFirstOverlapCol?: boolean;
+  isLastOverlapCol?: boolean;
+  isOverlapping?: boolean;
   /** Wave 21.3 Layer 2 — when set on a completed appointment, render a muted "rebook skipped" dot */
   declinedReasonLabel?: string | null;
   /** Wave 22.2 — surfaces a "Setup needed" pill for pre-checkout appointments
@@ -510,8 +514,21 @@ export function AppointmentCardContent({
   useShortLabels = false,
   declinedReasonLabel = null,
   connectInactive = false,
+  isFirstOverlapCol = true,
+  isLastOverlapCol = true,
+  isOverlapping = false,
   onClick,
 }: AppointmentCardContentProps) {
+  // Edge-aware rounding so overlap cards butt up flush at shared edges
+  const roundingClass = !isOverlapping
+    ? 'rounded-lg'
+    : isFirstOverlapCol && isLastOverlapCol
+      ? 'rounded-lg'
+      : isFirstOverlapCol
+        ? 'rounded-l-lg'
+        : isLastOverlapCol
+          ? 'rounded-r-lg'
+          : 'rounded-none';
   // ─── All hooks run unconditionally ────────────────────────
   const { resolvedTheme } = useDashboardTheme();
   const isDark = resolvedTheme === 'dark';
@@ -623,7 +640,8 @@ export function AppointmentCardContent({
   const gridContent = (
     <div
       className={cn(
-        'h-full w-full rounded-lg cursor-pointer transition-all duration-200 ease-out overflow-hidden group',
+        'h-full w-full cursor-pointer transition-all duration-200 ease-out overflow-hidden group',
+        roundingClass,
         'hover:shadow-md hover:z-20 hover:brightness-[1.08]',
         !displayGradient && 'border-l-4',
         !useCategoryColor && !displayGradient && statusColors.bg,
@@ -631,7 +649,7 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.text,
         isCancelled && 'opacity-60',
         isNoShow && 'ring-2 ring-destructive ring-inset',
-        isSelected && 'ring-2 ring-primary/60 ring-offset-1',
+        isSelected && 'ring-2 ring-primary/60 ring-inset',
         displayGradient && 'shadow-lg',
         appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',
       )}
@@ -647,7 +665,7 @@ export function AppointmentCardContent({
 
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
-        <div className="absolute inset-0 flex flex-col overflow-hidden rounded-lg">
+        <div className={cn('absolute inset-0 flex flex-col overflow-hidden', roundingClass)}>
           {serviceBands.map((band, i) => {
             const bandDark = isDark ? getDarkCategoryStyle(band.color.bg) : null;
             return (
