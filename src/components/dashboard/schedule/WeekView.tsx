@@ -66,7 +66,7 @@ const ZOOM_CONFIG: Record<string, { interval: number }> = {
 
 const MIN_ROW_HEIGHT = 20;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getOverlapColumnLayout, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapColumnLayout, getCurrentTimeRenderMetrics, formatMinutesAs12h, buildOverlapLayoutMap } from '@/lib/schedule-utils';
 
 function WeekSlot({
   hour,
@@ -618,30 +618,36 @@ export function WeekView({
                     slotInterval={slotInterval}
                   />
 
-                  {/* Appointments */}
-                  {dayAppointments.map((apt) => {
-                    const { columnIndex, totalOverlapping } = getOverlapInfo(dayAppointments, apt);
-                    return (
-                      <WeekAppointmentCard
-                        key={apt.id}
-                        appointment={apt}
-                        hoursStart={hoursStart}
-                        slotInterval={slotInterval}
-                        rowHeight={ROW_HEIGHT}
-                        onClick={() => onAppointmentClick(apt)}
-                        categoryColors={categoryColors}
-                        isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                        hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                        colorBy={colorBy}
-                        serviceLookup={serviceLookup}
-                        assistantNamesMap={assistantNamesMap}
-                        assistantProfilesMap={assistantProfilesMap}
-                        columnIndex={columnIndex}
-                        totalOverlapping={totalOverlapping}
-                        connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
-                      />
-                    );
-                  })}
+                  {/* Appointments — cluster-aware overlap layout so all
+                      cards in the same conflict cluster share totalColumns. */}
+                  {(() => {
+                    const overlapLayout = buildOverlapLayoutMap(dayAppointments);
+                    return dayAppointments.map((apt) => {
+                      const layout = overlapLayout.get(apt.id);
+                      const columnIndex = layout?.columnIndex ?? 0;
+                      const totalOverlapping = layout?.totalColumns ?? 1;
+                      return (
+                        <WeekAppointmentCard
+                          key={apt.id}
+                          appointment={apt}
+                          hoursStart={hoursStart}
+                          slotInterval={slotInterval}
+                          rowHeight={ROW_HEIGHT}
+                          onClick={() => onAppointmentClick(apt)}
+                          categoryColors={categoryColors}
+                          isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                          hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                          colorBy={colorBy}
+                          serviceLookup={serviceLookup}
+                          assistantNamesMap={assistantNamesMap}
+                          assistantProfilesMap={assistantProfilesMap}
+                          columnIndex={columnIndex}
+                          totalOverlapping={totalOverlapping}
+                          connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
+                        />
+                      );
+                    });
+                  })()}
 
                   {/* Current time indicator */}
                   {isCurrentDay && currentTimeVisible && (

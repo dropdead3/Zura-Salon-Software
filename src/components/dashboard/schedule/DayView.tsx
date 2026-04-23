@@ -83,7 +83,7 @@ interface DayViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getOverlapColumnLayout, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapColumnLayout, getCurrentTimeRenderMetrics, formatMinutesAs12h, buildOverlapLayoutMap } from '@/lib/schedule-utils';
 import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 
 // Categories that display the X pattern overlay
@@ -957,44 +957,52 @@ export function DayView({
                      />
 
 
-                     {stylistAppointments.map((apt) => {
-                       const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
-                       // Check if any confirmed time block overlaps this appointment
-                       const aptStartMin = parseTimeToMinutes(apt.start_time);
-                       const aptEndMin = parseTimeToMinutes(apt.end_time);
-                       const hasCoverage = assistantTimeBlocks.some(b =>
-                         b.status === 'confirmed' &&
-                         parseTimeToMinutes(b.start_time) < aptEndMin &&
-                         parseTimeToMinutes(b.end_time) > aptStartMin &&
-                         (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
-                       );
-                       return (
-                       <AppointmentCard
-                         key={apt.id}
-                         appointment={apt}
-                         hoursStart={hoursStart}
-                         onClick={() => onAppointmentClick(apt)}
-                         isSelected={apt.id === selectedAppointmentId}
-                         columnIndex={columnIndex}
-                         totalOverlapping={totalOverlapping}
-                         categoryColors={categoryColors}
-                         isAssisting={assistedAppointmentIds?.has(apt.id) || false}
-                         hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
-                         colorBy={colorBy}
-                         serviceLookup={serviceLookup}
-                         assistantNamesMap={assistantNamesMap}
-                         assistantProfilesMap={assistantProfilesMap}
-                         hasCoverageScheduled={hasCoverage}
-                         date={date}
-                         rowHeight={ROW_HEIGHT}
-                         slotInterval={slotInterval}
-                         zoomLevel={zoomLevel}
-                         useShortLabels={sortedStylists.length >= 3}
-                         declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
-                         connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
-                       />
-                       );
-                     })}
+                     {(() => {
+                       // Cluster-aware overlap layout: every appointment in
+                       // the same conflict cluster shares the same totalColumns,
+                       // so widths add up to 100% with no drift.
+                       const overlapLayout = buildOverlapLayoutMap(stylistAppointments);
+                       return stylistAppointments.map((apt) => {
+                         const layout = overlapLayout.get(apt.id);
+                         const columnIndex = layout?.columnIndex ?? 0;
+                         const totalOverlapping = layout?.totalColumns ?? 1;
+                         // Check if any confirmed time block overlaps this appointment
+                         const aptStartMin = parseTimeToMinutes(apt.start_time);
+                         const aptEndMin = parseTimeToMinutes(apt.end_time);
+                         const hasCoverage = assistantTimeBlocks.some(b =>
+                           b.status === 'confirmed' &&
+                           parseTimeToMinutes(b.start_time) < aptEndMin &&
+                           parseTimeToMinutes(b.end_time) > aptStartMin &&
+                           (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
+                         );
+                         return (
+                         <AppointmentCard
+                           key={apt.id}
+                           appointment={apt}
+                           hoursStart={hoursStart}
+                           onClick={() => onAppointmentClick(apt)}
+                           isSelected={apt.id === selectedAppointmentId}
+                           columnIndex={columnIndex}
+                           totalOverlapping={totalOverlapping}
+                           categoryColors={categoryColors}
+                           isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                           hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
+                           colorBy={colorBy}
+                           serviceLookup={serviceLookup}
+                           assistantNamesMap={assistantNamesMap}
+                           assistantProfilesMap={assistantProfilesMap}
+                           hasCoverageScheduled={hasCoverage}
+                           date={date}
+                           rowHeight={ROW_HEIGHT}
+                           slotInterval={slotInterval}
+                           zoomLevel={zoomLevel}
+                           useShortLabels={sortedStylists.length >= 3}
+                           declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
+                           connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
+                         />
+                         );
+                       });
+                     })()}
 
                      {/* Admin Meeting Cards */}
                      {adminMeetings
