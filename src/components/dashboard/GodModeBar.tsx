@@ -41,9 +41,9 @@ export function GodModeBar() {
 
   const chrome = isDark
     ? {
-        // Dark: near-black sandwich with primary accent wash through the middle.
+        // Dark: near-black sandwich with primary accent wash — slightly translucent for glass effect.
         background:
-          'linear-gradient(to right, hsl(0 0% 6%), hsl(var(--primary) / 0.85), hsl(0 0% 6%)), hsl(0 0% 6%)',
+          'linear-gradient(to right, hsl(0 0% 6% / 0.78), hsl(var(--primary) / 0.78), hsl(0 0% 6% / 0.78))',
         borderBottomColor: 'hsl(var(--primary) / 0.4)',
         boxShadow: '0 4px 20px -4px hsl(var(--primary) / 0.35)',
         // Z icon matches the bar's primary accent (hot pink in Neon, etc.).
