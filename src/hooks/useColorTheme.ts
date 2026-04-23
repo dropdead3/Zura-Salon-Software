@@ -71,18 +71,29 @@ export function useColorTheme() {
   const dbTheme = migrateLegacyTheme(dbSettings?.theme as string | undefined);
   const colorTheme: ColorTheme = dbTheme ?? getLocalTheme();
 
-  // Sync from DB to localStorage + DOM when DB data arrives
-  useEffect(() => {
-    if (dbLoaded && dbTheme) {
-      localStorage.setItem(THEME_STORAGE_KEY, dbTheme);
+  // Latch so legacy-key migration runs at most once per (org, session).
+  const migrationLatchedFor = useRef<string | null>(null);
 
-      // If the DB row still holds a legacy key, transparently rewrite it
-      const raw = dbSettings?.theme as string | undefined;
-      if (raw && raw !== dbTheme && orgId) {
-        updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: dbTheme } });
-      }
+  // Sync from DB to localStorage + DOM when DB data arrives.
+  // Only rewrite the DB row when it holds an actual *legacy* key
+  // (cream/rose/ocean/ember/prism), and only once per org per session.
+  // Critically: do NOT include `updateSetting` in deps — its identity changes
+  // on every mutation settle and would re-fire this effect, racing user clicks.
+  useEffect(() => {
+    if (!dbLoaded || !dbTheme || !orgId) return;
+    localStorage.setItem(THEME_STORAGE_KEY, dbTheme);
+
+    if (migrationLatchedFor.current === orgId) return;
+    const raw = dbSettings?.theme as string | undefined;
+    if (raw && raw in LEGACY_THEME_MIGRATION && raw !== dbTheme) {
+      migrationLatchedFor.current = orgId;
+      updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: dbTheme } });
+    } else {
+      // Mark as resolved even if no migration was needed, so we don't re-check.
+      migrationLatchedFor.current = orgId;
     }
-  }, [dbLoaded, dbTheme, dbSettings?.theme, orgId, updateSetting]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbLoaded, dbTheme, dbSettings?.theme, orgId]);
 
   // Always apply the resolved theme to DOM
   useEffect(() => {
@@ -97,11 +108,11 @@ export function useColorTheme() {
     // 2. Optimistic query cache update (all consumers reactively get new value)
     queryClient.setQueryData(queryKey, { theme });
 
-    // 3. Persist to DB
-    if (orgId) {
+    // 3. Persist to DB — but skip the write if DB already matches (no-op guard)
+    if (orgId && theme !== dbTheme) {
       updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme } });
     }
-  }, [orgId, queryClient, queryKey, updateSetting]);
+  }, [orgId, queryClient, queryKey, updateSetting, dbTheme]);
 
   return {
     colorTheme,
