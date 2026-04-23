@@ -57,19 +57,13 @@ export interface OverlapInfo {
 }
 
 /**
- * Overlap column layout — fully rounded cards that visually "kiss".
+ * Overlap column layout — fully rounded cards separated by a 1px gutter.
  *
  * Each card keeps its full rounded-lg + 1px stroke on all four sides.
- * To eliminate the slot of background that would otherwise appear between
- * two side-by-side rounded pills, we extend each non-last column's width
- * by OVERLAP_KISS_PX into its right neighbor. The kiss value matches the
- * corner radius of `rounded-lg` (~8px tangent), so the rounded edges meet
- * with no visible white sliver.
- *
- * z-index: leftmost column wins, decreasing rightward, so the rounded
- * right edge of column N sits over column N+1's left stroke.
+ * Cards do NOT overlap; instead, every non-last column is trimmed by
+ * OVERLAP_GAP_PX so a hairline of background shows between neighbors.
  */
-const OVERLAP_KISS_PX = 8;
+const OVERLAP_GAP_PX = 1;
 
 export interface OverlapColumnLayout {
   left: string;
@@ -89,16 +83,13 @@ export function getOverlapColumnLayout(
   const isFirstOverlapCol = columnIndex === 0;
   const isLastOverlapCol = columnIndex === totalOverlapping - 1;
   const isOverlapping = totalOverlapping > 1;
-  // Extend each non-last overlap column into its right neighbor by the
-  // kiss amount so the rounded edges visually touch with no background
-  // sliver. Last column stays exact so it does not bleed past the stylist
-  // column's right edge.
+  // Trim each non-last overlap column by the gap so neighbors sit flush
+  // with a 1px hairline between them — no overlap, no merged seams.
   const width = isOverlapping && !isLastOverlapCol
-    ? `calc(${widthPercent}% + ${OVERLAP_KISS_PX}px)`
+    ? `calc(${widthPercent}% - ${OVERLAP_GAP_PX}px)`
     : `${widthPercent}%`;
-  // Leftmost column gets the highest z; decreasing rightward.
-  // Base 10 matches the `z-10` baseline used by absolutely-positioned cards.
-  const zIndex = isOverlapping ? 10 + (totalOverlapping - columnIndex) : 10;
+  // Equal z baseline — no overlap means no stacking concerns.
+  const zIndex = 10;
   return {
     left: `${leftPercent}%`,
     width,
