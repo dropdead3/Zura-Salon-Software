@@ -42,10 +42,10 @@ export const tokens = {
   },
 
   stat: {
-    /** Large stat value (dashboard KPIs) */
-    large: 'font-display text-2xl font-medium',
-    /** Extra-large stat value (hero metrics) */
-    xlarge: 'font-display text-3xl font-medium',
+    /** Large stat value (dashboard KPIs) — tabular for column alignment */
+    large: 'font-display text-2xl font-medium tabular-nums',
+    /** Extra-large stat value (hero metrics) — tabular for column alignment */
+    xlarge: 'font-display text-3xl font-medium tabular-nums',
   },
 
   // ========================================
