@@ -1,129 +1,128 @@
 
 
-# Bone theme: cool desert gray-oat (drop the yellow)
+# Bone dark mode: restore correct cool oat tokens (remove rosewood contamination)
 
 ## Diagnosis
 
-Per the screenshot, the **Bone** accent swatch reads as a yellow-mustard tan — leans warm/yellow ("vomit" register) rather than the calm, cool, oat-linen feel the name implies.
+The `.dark.theme-bone` block in `src/index.css` (lines 179–247) is **contaminated with Rosewood values**. Roughly half the dark-mode tokens use rose hues (345°, 350°) and inverted lightness — these don't belong to Bone.
 
-Current `.theme-bone` primary tokens:
-
-| Mode | Value | Read |
+| Token | Current (wrong) | Reads as |
 |---|---|---|
-| Light | `38 32% 58%` | yellow-warm tan, mustard-leaning |
-| Dark | `38 38% 65%` | yellow-warm tan, brighter mustard |
+| `--border` | `350 6% 65%` | bright pinkish-gray (way too light for dark mode) |
+| `--input` | `350 6% 74%` | bright pinkish-gray |
+| `--ring` | `345 55% 42%` | **rose pink** focus rings |
+| `--chart-1` | `345 55% 42%` | **rose pink** chart series |
+| `--chart-2` | `345 35% 60%` | rose pink |
+| `--sidebar-background` | `350 10% 83%` | **LIGHT pink sidebar** in dark mode |
+| `--sidebar-foreground` | `350 20% 8%` | dark text on light sidebar (inverted) |
+| `--sidebar-primary` | `345 55% 42%` | rose pink |
+| `--sidebar-border` | `350 6% 65%` | bright pinkish |
+| `--card-inner` | `350 6% 80%` | bright pinkish (way too light) |
+| `--accent` | `40 30% 85%` | bright cream (too light) |
 
-Hue 38° sits in the **yellow-orange** family (sunflower/mustard territory). For "cool desert gray / oat," the hue needs to drop toward **30–32°** (true neutral oat) AND saturation needs to fall significantly so the color reads as a *neutral with a hint of warmth* rather than a *warm color*.
+This is why:
+1. Bone in dark mode has **bright strokes/borders** — borders are at 65–74% lightness instead of ~18%.
+2. The schedule looks off — appointment cards inherit chart-1/chart-2 (rose pink) and ring/border tokens (pinkish-bright).
+3. There are also **duplicate `--success` / `--warning` blocks** (lines 209–214 and 223–227).
 
-## What changes
+## Fix
 
-### Single concept
+Rewrite `.dark.theme-bone` (lines 179–247) with proper cool-oat dark tokens — mirror Zura's dark structure, swap palette to oat/cool-gray (hue 30°, low saturation 8–16%), and restore the correct dark-mode lightness range (4–18% for chrome, 60–70% for accents).
 
-Shift Bone from **warm yellow tan** → **cool desert gray-oat**: lower hue toward neutral (38° → 30°), drop saturation hard (32% → 12%), keep lightness similar. The result reads as raw oat / weathered linen / cool sandstone — a near-neutral with a barely-there warm undertone, not a yellow.
+### Corrected dark mode tokens
 
-### Token shifts in `src/index.css`
+| Token | Fixed value |
+|---|---|
+| `--background` | `0 0% 4%` (kept) |
+| `--foreground` | `40 20% 92%` (kept) |
+| `--card` | `0 0% 11%` (kept) |
+| `--popover` | `0 0% 11%` (kept) |
+| `--primary` | `30 16% 65%` (kept — cool oat) |
+| `--secondary` | `30 10% 16%` (kept) |
+| `--muted` | `0 0% 20%` (kept) |
+| `--muted-strong` | `0 0% 14%` (kept) |
+| `--muted-foreground` | `40 10% 60%` (kept) |
+| `--accent` | `30 12% 16%` (was `40 30% 85%` — fix: dark hover surface) |
+| `--accent-foreground` | `40 20% 92%` (was `0 0% 4%` — fix: light text on dark accent) |
+| `--oat` | `35 25% 30%` (kept) |
+| `--gold` | `42 75% 45%` (kept) |
+| `--chart-1` | `30 16% 65%` (was rose `345 55% 42%`) |
+| `--chart-2` | `35 22% 60%` (was rose `345 35% 60%`) |
+| `--chart-3` | `28 55% 45%` (kept) |
+| `--chart-4` | `38 70% 45%` (kept — gold differentiator) |
+| `--chart-5` | `280 50% 50%` (kept) |
+| `--border` | `30 8% 18%` (was bright pink `350 6% 65%`) |
+| `--input` | `30 8% 22%` (was bright pink `350 6% 74%`) |
+| `--ring` | `30 16% 65%` (was rose `345 55% 42%`) |
+| `--sidebar-background` | `0 0% 6%` (was light pink `350 10% 83%`) |
+| `--sidebar-foreground` | `40 20% 92%` (was dark `350 20% 8%`) |
+| `--sidebar-primary` | `30 16% 65%` (was rose) |
+| `--sidebar-primary-foreground` | `30 12% 6%` |
+| `--sidebar-accent` | `30 8% 14%` (was light `350 8% 78%`) |
+| `--sidebar-accent-foreground` | `40 20% 92%` (was dark `350 20% 8%`) |
+| `--sidebar-border` | `30 8% 16%` (was bright pink) |
+| `--sidebar-ring` | `30 16% 65%` (was rose) |
+| `--card-inner` | `0 0% 13%` (was light pink `350 6% 80%`) |
+| `--card-inner-deep` | `0 0% 9%` (was light pink `350 4% 76%`) |
 
-**Light mode — `.theme-bone`:**
-
-| Token | Before | After | Why |
-|---|---|---|---|
-| `--primary` | `38 32% 58%` | `30 14% 55%` | cool oat-gray, drops yellow |
-| `--ring` | `38 32% 58%` | `30 14% 55%` | match primary |
-| `--sidebar-primary` | `38 32% 58%` | `30 14% 55%` | match primary |
-| `--background` | `40 25% 92%` | `35 12% 93%` | cool sand wash, less yellow |
-| `--card` | `42 18% 89%` | `35 10% 91%` | cool oat surface |
-| `--border` | (current) | `30 12% 82%` | neutral oat border |
-| `--accent` | (current) | `30 15% 88%` | soft oat hover |
-| `--chart-1` | `38 32% 58%` | `30 14% 55%` | match primary |
-| `--chart-2` | `45 50% 55%` | `35 22% 60%` | warm taupe (still warm but desaturated) |
-| `--chart-4` | `35 25% 45%` | `28 15% 40%` | cool taupe-brown |
-
-**Dark mode — `.dark.theme-bone`:**
-
-| Token | Before | After | Why |
-|---|---|---|---|
-| `--primary` | `38 38% 65%` | `30 16% 65%` | cool oat, no yellow |
-| `--ring` | (current) | `30 16% 65%` | match primary |
-| `--sidebar-primary` | (current) | `30 16% 65%` | match primary |
-| `--chart-1` | `38 38% 65%` | `30 16% 65%` | match primary |
-| `--chart-2` | `45 50% 65%` | `35 22% 60%` | warm taupe (desaturated) |
-
-Background/card/sidebar dark surfaces stay where they are — the issue is the *accent yellowness*, not the chrome.
-
-### Swatch preview update in `src/hooks/useColorTheme.ts`
-
-Update the `bone` entry's previews to match the new oat-gray:
-- `lightPreview.primary`: `hsl(30 14% 55%)`
-- `lightPreview.bg`: `hsl(35 12% 93%)`
-- `darkPreview.primary`: `hsl(30 16% 65%)`
-
-Description: **"Cool desert gray & oat"** (more accurate — explicitly "cool" to differentiate from Cognac's warm bourbon).
-
-### Terminal splash palette update in `src/lib/terminal-splash-palettes.ts`
-
-Update `bone`:
-- accent `#a8a195` (cool oat-gray)
-- glow `#8a8378`
-- RGB `(168, 161, 149)`
-- gradient stops shift cooler: `#0a0a0a` → `#2a2826` → `#0a0a0a`
+Also: **remove the duplicate `--success` / `--warning` block** at lines 223–227 (already declared at 209–214).
 
 ## Acceptance
 
-1. Bone swatch tile reads as a **cool, neutral oat-gray** — not yellow, not mustard.
-2. Visually distinct from Cognac (warm bourbon brown) — the contrast axis is now hue *and* saturation.
-3. Selecting Bone applies the cool oat palette across sidebar, KPI cards, charts, and badges (light + dark mode).
-4. Cognac unchanged.
-5. No other theme affected.
-6. Existing orgs on Bone automatically render the cooler palette on next load.
-7. Terminal splash for Bone reflects the cool oat accent.
+1. Bone in dark mode: borders, strokes, and dividers read as **subtle dark dividers** (~18% lightness), not bright pink lines.
+2. Bone in dark mode: sidebar reads as **deep dark surface** (~6% lightness), not a light pink panel.
+3. Bone in dark mode: focus rings, primary buttons, chart-1 series read as **cool oat**, not rose pink.
+4. Schedule appointment cards in dark mode bone: borders/strokes calm and dark, no bright pink leakage.
+5. Light mode bone unchanged.
+6. Rosewood theme unchanged (it has its own block correctly defined further down).
+7. No duplicate token declarations in `.dark.theme-bone`.
 
 ## What stays untouched
 
-- All other 7 themes.
-- Theme picker chrome, swatch tile layout, count, order.
-- Migration logic, God Mode bar, glass morphism.
+- Light-mode `.theme-bone` block (lines 77–177) — already correct from prior pass.
+- Rosewood, Sage, Marine, Cognac, Noir, Neon, Zura blocks — all separate from this fix.
+- Theme picker swatches in `useColorTheme.ts` — already match the correct oat values.
+- Terminal splash palette — already correct.
 
 ## Out of scope
 
-- Renaming "Bone" — name still fits oat-gray better than it fit mustard tan.
-- Touching dark-mode chrome backgrounds.
-- Any change to Cognac.
+- Any change to other themes.
+- Adjusting the light-mode bone tokens.
+- Changing the chrome darkness floor (background stays `0 0% 4%`).
 
-## Doctrine alignment
+## Root cause note
 
-- **Calm executive UX:** cool oat-gray is a quieter accent than warm mustard tan — sits closer to a neutral, fights less for attention. Aligns with "calm" register.
-- **Brand abstraction:** "cool desert gray / oat" stays in evocative-neutral register.
+Likely happened during an earlier multi-theme edit where Rosewood's dark block was duplicated as a starting point for Bone's dark block and only partially overwritten. The light-mode block was rewritten cleanly; the dark-mode block kept the rosewood inheritance for ~12 tokens. Worth a quick scan of other themes' dark blocks (Sage, Marine, Cognac, Noir, Neon) to confirm none have the same contamination — but those are out of scope unless you flag them.
 
 ## Prompt feedback
 
 Strong prompt — three things you did right:
 
-1. **You named the failure mode evocatively ("yellow vomit").** Crude but precise — instantly told me the problem is *yellowness*, not lightness or saturation in the abstract. Negative anchors with strong emotional valence are the fastest way to rule out a hue family.
-2. **You named the target with two reference words ("cool desert gray, oat").** "Cool" = temperature direction. "Desert gray" = hue family (near-neutral with warm undertone). "Oat" = specific color anchor. Three independent constraints in three words.
-3. **You used the verdict implicitly ("needs to be less X, more Y").** Right direction was wrong — pivot, not double-down. That told me to *change hue family*, not just *adjust saturation*.
+1. **You named two surfaces affected ("stroke color in bone theme... same with the schedule").** That told me the issue isn't isolated to one component — it's a *token-level* leak, not a component bug. Cut my search space from "find the broken component" to "find the broken token."
+2. **You diagnosed the cause structurally ("Something got changed in the color files that should not have been").** You gave me the verdict (regression, not intended change) and the layer (color tokens). I went straight to `index.css` instead of debugging individual stroke usages.
+3. **You used "way too bright"** — that's a specific failure mode (lightness wrong), not a vague "looks off." Told me to look at the lightness channel of the contaminated tokens, which is exactly where rosewood's 65–83% lightness leaked into bone's dark-mode chrome.
 
-Sharpener: the verdict structure ("less X, more Y") is great. Adding a **boundary** ("but keep it warm enough to feel like sand, not concrete") would have prevented over-correction into pure neutral gray. Template:
+Sharpener: when reporting a regression, naming **what changed recently** (or "this used to look like X") narrows the diff. Template:
 
 ```text
-Less: [the failure mode]
-More: [the target feel]
-Anchor: [a specific real-world reference — oat, linen, sandstone]
-Boundary: [what NOT to lose — "still has warmth", "still desert not arctic"]
+Surface: [where you see it]
+Symptom: [the failure mode]
+Recent change: [what you asked for last that touched this area]
+Suspected layer: [tokens / component / config]
 ```
 
-Here, "less yellow, more cool oat — but still warm enough to feel like dry desert sand, not cold concrete" would have given me the *floor* (don't go fully neutral) as well as the direction.
+Here, "the bone theme dark mode strokes are too bright — last edit was the bone palette refresh, suspect the dark-mode tokens didn't get fully rewritten" would have pointed me directly at the `.dark.theme-bone` block instead of needing to scan the whole file. You gave me enough to find it fast — this is purely a sharpener.
 
 ## Further enhancement suggestion
 
-For "wrong color family" prompts, the highest-leverage frame is:
+For "regression" prompts specifically, the highest-leverage frame is:
 
 ```text
-Current hue family: [what it reads as today — "yellow", "warm brown"]
-Target hue family: [where to land — "cool gray with warm undertone"]
-Real-world anchor: [oat, linen, sandstone, concrete, fog]
-Saturation direction: [more / less / same]
-Temperature boundary: [the floor — "still warm" or "go fully cool"]
+Was: [how it looked before — "calm dark borders"]
+Is: [how it looks now — "bright pink strokes"]
+Last touched: [the recent change you remember]
+Scope: [one theme / one mode / one component]
 ```
 
-The **Temperature boundary** is the highest-leverage addition for cool/warm shifts — it tells me whether you want a *neutral* (saturation → 0) or a *near-neutral with character* (saturation 10–15%). Without it, "less yellow" could mean "cool gray" (boring), "cool oat" (what you wanted), or "blue-tinted gray" (over-correction). Naming the floor — "still warm enough to feel like sand" — keeps the result on-target. For neutrals specifically, the `saturation 10–18%` band is the "neutral with character" sweet spot; below 10% it reads as flat gray, above 20% it starts asserting a hue. Naming the band you want (or the anchor that lives in it — oat, linen, fog) cuts iteration count.
+The **Was/Is** pairing is the highest-leverage addition — it tells me the *delta* directly instead of making me infer it from the failure mode. For token regressions specifically, naming the scope (`"only dark mode, only bone"`) confirms the contamination is *block-local* and prevents me from over-fixing into adjacent themes. You can also add a **suspected layer** (tokens vs component vs config) — for color regressions the answer is almost always "tokens," but naming it shaves a step. Combined with verdict structure ("less X, more Y") from prior rounds, this gives you a 4-element regression template that consistently lands the fix in one iteration.
 
