@@ -24,6 +24,19 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
+// Order users by their highest-priority role. Lower index = appears first.
+const TEAM_ROLE_ORDER: { key: AppRole; label: string }[] = [
+  { key: 'super_admin' as AppRole, label: 'Admin' },
+  { key: 'admin' as AppRole,       label: 'Admin' },
+  { key: 'manager' as AppRole,     label: 'Manager' },
+  { key: 'stylist' as AppRole,     label: 'Stylists' },
+  { key: 'assistant' as AppRole,   label: 'Assistants' },
+  { key: 'booth_renter' as AppRole,label: 'Booth Renters' },
+  { key: 'receptionist' as AppRole,label: 'Front Desk' },
+];
+
+const OTHER_GROUP_LABEL = 'Other';
+
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -86,6 +99,44 @@ export function ViewAsPopover() {
         return name.includes(q) || roles.includes(q);
       });
   }, [allUsers, user?.id, debouncedFilter, selectedLocationId]);
+
+  // Bucket filtered users by highest-priority role
+  const groupedUsers = useMemo(() => {
+    const buckets = new Map<string, typeof filteredUsers>();
+    const labels: string[] = [];
+    for (const { label } of TEAM_ROLE_ORDER) {
+      if (!buckets.has(label)) {
+        buckets.set(label, []);
+        labels.push(label);
+      }
+    }
+    buckets.set(OTHER_GROUP_LABEL, []);
+    labels.push(OTHER_GROUP_LABEL);
+
+    for (const u of filteredUsers) {
+      let placed = false;
+      for (const { key, label } of TEAM_ROLE_ORDER) {
+        if (u.roles.includes(key)) {
+          buckets.get(label)!.push(u);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) buckets.get(OTHER_GROUP_LABEL)!.push(u);
+    }
+
+    for (const [, list] of buckets) {
+      list.sort((a, b) => {
+        const an = (a.display_name || a.full_name || '').toLowerCase();
+        const bn = (b.display_name || b.full_name || '').toLowerCase();
+        return an.localeCompare(bn);
+      });
+    }
+
+    return labels
+      .map(label => ({ label, users: buckets.get(label)! }))
+      .filter(g => g.users.length > 0);
+  }, [filteredUsers]);
 
   // Defense-in-depth gate: only super admins / account owners may use this surface.
   if (!canImpersonate) return null;
@@ -257,10 +308,10 @@ export function ViewAsPopover() {
               )}
             </div>
             <ScrollArea className="flex-1 min-h-0 h-full">
-              <div className="p-3 pb-4 space-y-0.5">
+              <div className="p-3 pb-4 space-y-3">
                 {usersLoading ? (
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
-                ) : filteredUsers.length === 0 ? (
+                ) : groupedUsers.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6">
                     {teamFilter
                       ? 'No matches found'
@@ -269,45 +320,54 @@ export function ViewAsPopover() {
                         : 'No team members'}
                   </p>
                 ) : (
-                  filteredUsers.map(member => {
-                    const displayName = formatDisplayName(member.full_name || '', member.display_name);
-                    const initials = getInitials(displayName);
-                    const primaryBadge = member.roles.length > 0
-                      ? getRoleBadgeConfig(member.roles[0])
-                      : null;
+                  groupedUsers.map(group => (
+                    <div key={group.label} className="pt-2 first:pt-0">
+                      <p className="font-display text-[10px] tracking-[0.12em] uppercase text-muted-foreground/60 mb-1 px-1">
+                        {group.label}
+                      </p>
+                      <div className="space-y-0.5">
+                        {group.users.map(member => {
+                          const displayName = formatDisplayName(member.full_name || '', member.display_name);
+                          const initials = getInitials(displayName);
+                          const primaryBadge = member.roles.length > 0
+                            ? getRoleBadgeConfig(member.roles[0])
+                            : null;
 
-                    return (
-                      <button
-                        key={member.user_id}
-                        onClick={() => {
-                          setViewAsUser({
-                            id: member.user_id,
-                            full_name: displayName,
-                            roles: member.roles,
-                          });
-                          setOpen(false);
-                          setTeamFilter('');
-                        }}
-                        className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/70 hover:text-foreground transition-colors duration-150"
-                      >
-                        <Avatar className="h-7 w-7">
-                          {member.photo_url && <AvatarImage src={member.photo_url} alt={displayName} />}
-                          <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 text-left min-w-0">
-                          <p className="text-sm truncate">{displayName}</p>
-                          {primaryBadge && (
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {primaryBadge.label}
-                              {member.roles.length > 1 && ` +${member.roles.length - 1}`}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })
+                          return (
+                            <button
+                              key={member.user_id}
+                              onClick={() => {
+                                setViewAsUser({
+                                  id: member.user_id,
+                                  full_name: displayName,
+                                  roles: member.roles,
+                                });
+                                setOpen(false);
+                                setTeamFilter('');
+                              }}
+                              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-muted/70 hover:text-foreground transition-colors duration-150"
+                            >
+                              <Avatar className="h-7 w-7">
+                                {member.photo_url && <AvatarImage src={member.photo_url} alt={displayName} />}
+                                <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 text-left min-w-0">
+                                <p className="text-sm truncate">{displayName}</p>
+                                {primaryBadge && (
+                                  <p className="text-[10px] text-muted-foreground truncate">
+                                    {primaryBadge.label}
+                                    {member.roles.length > 1 && ` +${member.roles.length - 1}`}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </ScrollArea>
