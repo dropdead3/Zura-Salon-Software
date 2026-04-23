@@ -135,6 +135,7 @@ export function SuperAdminTopBar({
   onSearchClick,
   isSearchOpen,
   searchBarRef,
+  chromeMode = false,
   isAdmin,
   isPlatformUser,
   isStylistRole,
@@ -152,7 +153,9 @@ export function SuperAdminTopBar({
   const { showInfotainers, toggleInfotainers, isToggling } = useInfotainerSettings();
   const location = useLocation();
   const { direction: scrollDir, isAtTop } = useScrollDirection();
-  const autoHidden = !hideFooter && !isAtTop && scrollDir === 'down';
+  // Auto-hide-on-scroll is disabled in chromeMode — the L is rigid;
+  // the top bar can't slide independently or it tears the joint.
+  const autoHidden = !chromeMode && !hideFooter && !isAtTop && scrollDir === 'down';
 
   const showNextClient = isStylistRole || isStylistAssistantRole;
   const currentUserId = isViewingAsUser && viewAsUser ? viewAsUser.id : user?.id;
@@ -160,38 +163,51 @@ export function SuperAdminTopBar({
   return (
     <div
       className={cn(
-        "dashboard-top-bar hidden lg:block z-30 pt-3 pb-3 pr-3",
-        // Left offset must clear the fixed sidebar (collapsed: 16 + 3 + 5 spacing; expanded: 80 + 3 + 5)
-        sidebarCollapsed ? "pl-24" : "pl-[340px]",
-        "transition-[padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        hideFooter
-          ? cn(
-              "fixed right-0 left-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
-              isImpersonating ? "top-[44px]" : "top-0",
-              headerHovered ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-full opacity-0 pointer-events-none"
-            )
+        chromeMode
+          ? "relative w-full h-full"
           : cn(
-              "sticky transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
-              isImpersonating ? "top-[44px]" : "top-0",
-              autoHidden && "-translate-y-[calc(100%+12px)] opacity-0 pointer-events-none"
-            ),
-        hideFooter && "shrink-0"
+              "dashboard-top-bar hidden lg:block z-30 pt-3 pb-3 pr-3",
+              // Left offset must clear the fixed sidebar
+              sidebarCollapsed ? "pl-24" : "pl-[340px]",
+              "transition-[padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              hideFooter
+                ? cn(
+                    "fixed right-0 left-0 z-50 transition-all duration-300 ease-in-out overflow-hidden",
+                    isImpersonating ? "top-[44px]" : "top-0",
+                    headerHovered ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-full opacity-0 pointer-events-none"
+                  )
+                : cn(
+                    "sticky transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
+                    isImpersonating ? "top-[44px]" : "top-0",
+                    autoHidden && "-translate-y-[calc(100%+12px)] opacity-0 pointer-events-none"
+                  ),
+              hideFooter && "shrink-0"
+            )
       )}
       onMouseLeave={onHeaderHoverEnd}
     >
-      {/* Extended blur zone */}
-      <div
-        className={cn("absolute inset-0 -bottom-8 pointer-events-none", hideFooter && !headerHovered && "opacity-0")}
-        style={{
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
-        }}
-      />
+      {/* Extended blur zone — legacy mode only; chrome owns blur in L-mode */}
+      {!chromeMode && (
+        <div
+          className={cn("absolute inset-0 -bottom-8 pointer-events-none", hideFooter && !headerHovered && "opacity-0")}
+          style={{
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+          }}
+        />
+      )}
 
       {/* ── Three-Zone Bar ── */}
-      <div className="relative w-full max-w-none flex items-center h-14 px-6 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full overflow-x-hidden">
+      <div
+        className={cn(
+          "relative w-full max-w-none flex items-center h-14 px-6 overflow-x-hidden",
+          chromeMode
+            ? "bg-transparent"
+            : "bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full"
+        )}
+      >
 
         {/* ── LEFT ZONE: Nav + Search ── */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
