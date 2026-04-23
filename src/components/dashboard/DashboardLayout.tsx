@@ -463,6 +463,13 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   // Compute sidebar offset for dialog centering (half the sidebar's occupied width)
   const sidebarOffset = hideSidebar ? '0px' : sidebarCollapsed ? '48px' : '170px';
 
+  // Single source of truth for the L-shape's vertical leg width.
+  // Top bar's left edge tracks this variable so the joint never tears.
+  const sidebarWidthPx = hideSidebar ? '0px' : sidebarCollapsed ? '64px' : '320px';
+
+  // Show welded L-shape chrome on desktop when both top bar + sidebar are visible
+  const showChromeL = !hideTopBar && !hideSidebar;
+
   return (
     <div
       className={cn(
@@ -471,7 +478,10 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         hideFooter ? "h-screen overflow-hidden flex flex-col" : "min-h-screen",
         isImpersonating && "pt-[44px] god-mode-active"
       )}
-      style={{ '--sidebar-offset': sidebarOffset } as React.CSSProperties}
+      style={{
+        '--sidebar-offset': sidebarOffset,
+        '--sidebar-width': sidebarWidthPx,
+      } as React.CSSProperties}
     >
       {/* God Mode Bar — system-level layer above everything */}
       <GodModeBar />
@@ -479,8 +489,94 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       {/* Command Surface (⌘K) */}
       <ZuraCommandSurface open={commandOpen} onOpenChange={setCommandOpen} />
 
-      {/* Dashboard Top Bar — search, nav arrows, account, view toggles */}
-      {!hideTopBar && (
+      {/* ── L-Shape Dashboard Chrome (desktop) ─────────────────
+          One welded surface: vertical leg (sidebar) + horizontal leg
+          (top bar) joined at a concave inner elbow. Both legs share
+          --sidebar-width so the joint stays glued during collapse. */}
+      {showChromeL && (
+        <div
+          className="dashboard-chrome hidden lg:block fixed left-3 bottom-3 right-3 z-[60] pointer-events-none"
+          style={{
+            top: isImpersonating ? '56px' : '12px',
+          }}
+        >
+          {/* Vertical leg — sidebar */}
+          <aside
+            data-chrome-leg
+            className={cn(
+              "absolute top-0 bottom-0 left-0 pointer-events-auto overflow-hidden",
+              "bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-xl shadow-sm"
+            )}
+            style={{ width: 'var(--sidebar-width)' }}
+          >
+            <SidebarNavContent
+              mainNavItems={mainNavItems}
+              growthNavItems={growthNavItems}
+              statsNavItems={statsNavItems}
+              housekeepingNavItems={housekeepingNavItems}
+              managerNavItems={managerNavItems}
+              websiteNavItems={websiteNavItems}
+              adminOnlyNavItems={adminOnlyNavItems}
+              appsNavItems={appsNavItems}
+              footerNavItems={footerNavItems}
+              isPlatformUser={isPlatformUser}
+              isMultiOrgOwner={isMultiOrgOwner}
+              unreadCount={unreadCount}
+              roles={roles}
+              effectiveIsCoach={effectiveIsCoach}
+              filterNavItems={filterNavItems}
+              onNavClick={handleNavClick}
+              isOnboardingComplete={isOnboardingComplete}
+              onboardingProgress={onboardingProgress}
+              isCollapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebarCollapsed}
+              greeting={sidebarGreeting}
+              subtitle={sidebarSubtitle}
+              firstName={firstName}
+            />
+          </aside>
+
+          {/* Horizontal leg — top bar */}
+          <div
+            data-chrome-leg
+            className={cn(
+              "absolute top-0 right-0 pointer-events-auto overflow-hidden",
+              "bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-xl shadow-sm"
+            )}
+            style={{
+              left: 'var(--sidebar-width)',
+              height: 'var(--chrome-top-bar-height)',
+            }}
+          >
+            <SuperAdminTopBar
+              sidebarCollapsed={sidebarCollapsed}
+              hideFooter={hideFooter}
+              headerHovered={headerHovered}
+              onHeaderHoverEnd={() => setHeaderHovered(false)}
+              filterNavItems={filterNavItems}
+              ViewAsToggle={ViewAsToggle}
+              HideNumbersToggle={HideNumbersToggle}
+              roleBadges={roleBadges}
+              onSearchClick={() => setCommandOpen(true)}
+              isSearchOpen={commandOpen}
+              searchBarRef={searchBarRef}
+              chromeMode
+              isAdmin={isAdmin}
+              isPlatformUser={isPlatformUser}
+              isStylistRole={roles.includes('stylist') || roles.includes('booth_renter')}
+              isStylistAssistantRole={roles.includes('stylist_assistant')}
+              isViewingAsUser={isViewingAsUser}
+              viewAsUser={viewAsUser as any}
+            />
+          </div>
+
+          {/* Concave inner elbow — sculpted joint between the two legs */}
+          <ChromeElbow />
+        </div>
+      )}
+
+      {/* Mobile / fallback top bar (lg:hidden via SuperAdminTopBar's own classes) */}
+      {!hideTopBar && !showChromeL && (
         <SuperAdminTopBar
           sidebarCollapsed={sidebarCollapsed}
           hideFooter={hideFooter}
@@ -500,45 +596,6 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           isViewingAsUser={isViewingAsUser}
           viewAsUser={viewAsUser as any}
         />
-      )}
-
-      {!hideSidebar && (
-      <aside 
-        className={cn(
-          "hidden lg:fixed lg:bottom-3 lg:left-3 lg:z-[60] lg:block lg:border lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,top,background-color,border-color,border-radius] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isImpersonating ? "lg:top-[56px]" : "lg:top-3",
-          sidebarCollapsed
-            ? "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-[32px]"
-            : "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-xl",
-          sidebarCollapsed ? "lg:w-16" : "lg:w-80"
-        )}
-      >
-        <SidebarNavContent
-          mainNavItems={mainNavItems}
-          growthNavItems={growthNavItems}
-          statsNavItems={statsNavItems}
-          housekeepingNavItems={housekeepingNavItems}
-          managerNavItems={managerNavItems}
-          websiteNavItems={websiteNavItems}
-          adminOnlyNavItems={adminOnlyNavItems}
-          appsNavItems={appsNavItems}
-          footerNavItems={footerNavItems}
-          isPlatformUser={isPlatformUser}
-          isMultiOrgOwner={isMultiOrgOwner}
-          unreadCount={unreadCount}
-          roles={roles}
-          effectiveIsCoach={effectiveIsCoach}
-          filterNavItems={filterNavItems}
-          onNavClick={handleNavClick}
-          isOnboardingComplete={isOnboardingComplete}
-          onboardingProgress={onboardingProgress}
-          isCollapsed={sidebarCollapsed}
-          onToggleCollapse={toggleSidebarCollapsed}
-          greeting={sidebarGreeting}
-          subtitle={sidebarSubtitle}
-          firstName={firstName}
-        />
-      </aside>
       )}
 
       <AnimatePresence>
@@ -595,9 +652,11 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       </AnimatePresence>
 
       <main className={cn(
-        "flex-1 flex flex-col transition-[margin] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "flex-1 flex flex-col transition-[margin,padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
         hideFooter ? "min-h-0 overflow-hidden" : "min-h-screen",
-        !hideSidebar && (sidebarCollapsed ? "lg:ml-24" : "lg:ml-[340px]")
+        // In L-mode the top bar is fixed inside the chrome — push content down to clear it
+        showChromeL && "lg:pt-[68px]",
+        !hideSidebar && (sidebarCollapsed ? "lg:ml-[88px]" : "lg:ml-[344px]")
       )}>
         <div className={cn(`flex-1 p-4 lg:px-8 lg:pt-4 ${hideFooter ? 'lg:pb-4' : 'lg:pb-8'}`, hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
           <BackfillWelcomeBanner />
