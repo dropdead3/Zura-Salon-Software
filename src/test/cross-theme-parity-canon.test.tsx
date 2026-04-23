@@ -47,6 +47,16 @@ const BASELINE_ONLY_TOKENS = new Set<string>([
 ]);
 
 /**
+ * Per-theme decorative tokens that MAY appear in any theme without parity
+ * implications — they're optional theme accents, not part of the canonical
+ * color surface. Distinct from BASELINE_ONLY_TOKENS (which are baseline-only)
+ * and ALLOWLIST_OMISSIONS (which are per-theme exceptions).
+ */
+const DECORATIVE_OPTIONAL_TOKENS = new Set<string>([
+  "mesh-gradient", // background-image accent, defined per-theme in html.theme-* blocks
+]);
+
+/**
  * Per-theme deliberate omissions of color tokens. Empty by default —
  * the strictest starting position. Entries get added with a one-line
  * comment naming the reason.
@@ -59,17 +69,26 @@ const indexCss = readIndexCss();
 const baselineBody = extractRuleBody(indexCss, BASELINE_THEME) ?? "";
 const baselineTokens = new Set(extractDefinedTokens(baselineBody));
 const baselineColorTokens = new Set(
-  [...baselineTokens].filter((t) => !BASELINE_ONLY_TOKENS.has(t)),
+  [...baselineTokens].filter(
+    (t) => !BASELINE_ONLY_TOKENS.has(t) && !DECORATIVE_OPTIONAL_TOKENS.has(t),
+  ),
 );
 
-// Only theme-defining selectors that actually declare ≥1 design token.
-// Filters out descendant utility selectors like `.dark .hover-lift` that
-// match the theme regex but aren't theme blocks.
+// Only theme-defining selectors that actually declare ≥1 color token.
+// Filters out:
+//   - descendant utility selectors (`.dark .hover-lift`) that match the
+//     theme regex but aren't theme blocks
+//   - decorative-gradient blocks (`html.theme-*`) that only declare
+//     `--mesh-gradient` — structurally distinct from color theme blocks
 const themeSelectors = extractThemeSelectors(indexCss).filter((sel) => {
   if (sel === BASELINE_THEME) return false;
   const body = extractRuleBody(indexCss, sel);
   if (!body) return false;
-  return extractDefinedTokens(body).length > 0;
+  const declared = extractDefinedTokens(body);
+  const colorTokens = declared.filter(
+    (t) => !DECORATIVE_OPTIONAL_TOKENS.has(t),
+  );
+  return colorTokens.length > 0;
 });
 
 for (const selector of themeSelectors) {
