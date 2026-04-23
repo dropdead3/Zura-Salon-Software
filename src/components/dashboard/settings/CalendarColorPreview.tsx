@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { Coffee, Moon } from 'lucide-react';
+import { Coffee, CircleX } from 'lucide-react';
 import {
   getCategoryColor,
   SPECIAL_GRADIENTS,
@@ -94,9 +94,9 @@ const BLOCK_CONFIG: Record<string, { icon: typeof Coffee; bg: string; border: st
     text: 'text-amber-900 dark:text-amber-200',
   },
   Block: {
-    icon: Moon,
+    icon: CircleX,
     bg: 'bg-muted/40',
-    border: 'border-l-muted-foreground/30',
+    border: 'border-l-muted-foreground/40',
     text: 'text-muted-foreground',
   },
 };

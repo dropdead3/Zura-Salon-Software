@@ -314,6 +314,7 @@ export function useCreateBreakRequest() {
       queryClient.invalidateQueries({ queryKey: ['time-off-requests'] });
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-schedule-blocks'] });
       const result = data?.[0];
       if (result?.status === 'approved') {
         toast.success('Time block scheduled');
