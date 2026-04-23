@@ -138,16 +138,16 @@ export const colorThemes = [
   {
     id: 'bone' as ColorTheme,
     name: 'Bone',
-    description: 'Soft desert tan & sand',
+    description: 'Cool desert gray & oat',
     lightPreview: {
-      bg: 'hsl(40 25% 92%)',
-      accent: 'hsl(38 22% 80%)',
-      primary: 'hsl(38 32% 58%)',
+      bg: 'hsl(35 12% 93%)',
+      accent: 'hsl(30 15% 88%)',
+      primary: 'hsl(30 14% 55%)',
     },
     darkPreview: {
       bg: 'hsl(30 12% 6%)',
-      accent: 'hsl(30 18% 22%)',
-      primary: 'hsl(38 38% 65%)',
+      accent: 'hsl(30 14% 22%)',
+      primary: 'hsl(30 16% 65%)',
     },
   },
   {
