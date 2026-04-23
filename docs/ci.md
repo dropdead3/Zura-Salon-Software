@@ -73,3 +73,35 @@ that's a repo-admin capability covered in the internal runbook.
 
 In GitHub repo settings → Branches → `main`, add `check` to required status
 checks. Until this is configured, the gate reports but does not block merge.
+
+## Step 2S manual actions (package.json edits)
+
+`package.json` is read-only in the Lovable sandbox. To complete the local
+`npm run check` loop, apply these edits in your local checkout / PR:
+
+1. Add scripts:
+   ```json
+   "scripts": {
+     "lint:css": "stylelint \"src/**/*.css\"",
+     "check": "npm run lint:css && npm run lint && vitest run",
+     "prepare": "husky"
+   }
+   ```
+
+2. Add lint-staged config:
+   ```json
+   "lint-staged": {
+     "*.css": "stylelint",
+     "*.{ts,tsx}": "eslint --max-warnings=0"
+   }
+   ```
+
+3. Add devDependencies:
+   ```bash
+   npm install --save-dev husky lint-staged
+   ```
+
+4. After `npm install`, the `prepare` hook auto-registers `.husky/pre-commit`
+   (already present in this repo) so staged-file linting runs on every commit.
+
+CI is already updated to run the same `lint:css → lint → test` chain.
