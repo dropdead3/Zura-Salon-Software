@@ -134,7 +134,7 @@ interface HubGatewayCardProps {
 function HubGatewayCard({ href, icon: Icon, title, description, isFavorited, onToggleFavorite }: HubGatewayCardProps) {
   return (
     <Link to={href}>
-      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm relative")}>
+      <Card className={cn(tokens.card.wrapper, "group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md bg-card/60 backdrop-blur-sm relative")}>
         {onToggleFavorite && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }}
