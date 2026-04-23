@@ -1,144 +1,152 @@
 
 
-# Step 2K — Full shadcn token coverage, and CI onboarding docs
+# Step 2L + 2M — Canon pattern memory, and chart-token invariant decision
 
-Two enhancements, same Step 2J foundation. Part A is a two-line change that extends canon coverage from 4 semantic tokens to 15 (every shadcn token redefined per theme). Part B converts tribal knowledge about the Check gate into onboarding material.
+Two enhancements riding the Step 2K foundation. Part A captures the canon pattern as durable architecture memory so future sessions don't re-derive it from step history. Part B answers one specific question — *what's the invariant for chart tokens?* — and ships whatever canon (or non-canon) that answer dictates.
 
-**Priority read**: Part A is the mechanical win (the infrastructure already exists — we're just feeding it more tokens). Part B is the human-layer completion so new contributors don't learn the gate by breaking it.
+**Priority read**: Part A is the institutional-memory win (one file, zero code, high cross-session ROI). Part B is the last semantic family on the canon roadmap; finishing it closes the Step 2 arc cleanly.
 
-## Part A — Extend TOKENS array to full shadcn set
-
-**What we're asserting**
-
-Same three rules already proven on `destructive` / `success` / `warning` / `info`, now applied to every shadcn token that every theme redefines:
-
-- **Core surfaces**: `background`, `foreground`, `card`, `popover`
-- **Interactive**: `primary`, `secondary`, `accent`, `muted`
-- **Form/chrome**: `border`, `input`, `ring`
-
-The canon catches: (a) a new theme forgetting to redefine one of these, (b) a raw `#hex` or `rgba()` sneaking onto any line mentioning the token, (c) a Tailwind config edit that bypasses HSL routing.
-
-**Why this scope, not more**
-
-These 11 tokens (plus the existing 4) are the shadcn-standard set that `tailwind.config.ts` routes through `hsl(var(--token))`. Every theme in `index.css` must redefine all of them or the theme renders broken. Tokens outside this set (chart colors, sidebar tokens, custom surface tokens) follow different conventions and deserve their own canon if ever needed — not bundled here.
-
-**Pre-flight reality check (will happen during implementation)**
-
-Before expanding the array, I'll:
-1. Grep `src/index.css` for which of the 11 tokens actually exist. The existing `describe.skip` branch handles missing tokens cleanly, but knowing up front lets me flag any surprises.
-2. Grep `tailwind.config.ts` for which tokens have config blocks. The existing `it.skipIf(!configBlock)` branch handles missing config entries.
-3. If any raw hex/rgba violations surface on the first pass, triage them using the Step 2F three-bucket pattern: **fix** (route through HSL), **annotate** (`/* intentional literal: <reason> */`), or **delete** (dead code).
-
-Expected outcome: most tokens pass cleanly (the codebase has been disciplined). A handful may need annotations where hex is intentional (e.g., glass-morphism overlays, gradient stops). Zero "fix" cases likely, since any raw literal here would already be breaking at least one theme visually.
-
-**File**
-
-`src/test/semantic-token-canon.test.tsx` — one change:
-
-```ts
-const TOKENS = [
-  "destructive", "success", "warning", "info",
-  "background", "foreground",
-  "card", "popover",
-  "primary", "secondary", "accent", "muted",
-  "border", "input", "ring",
-] as const;
-```
-
-Nothing else changes — `describe.skip` and `it.skipIf` handle gaps, and the parameterized assertions are already token-agnostic.
-
-**Comment update**: Update the file-level doc comment from "Cross-cutting tokens (`--destructive`, `--success`, `--warning`, `--info`)" to reflect the expanded set. Two-sentence tweak.
-
-**Acceptance (Part A)**
-
-1. `npx vitest run src/test/semantic-token-canon` passes on current codebase.
-2. Reporter shows 15 token suites (or fewer with visible skips for any token missing from CSS).
-3. Deleting `--primary: 220 85% 55%;` from a single `.theme-*` block in `index.css` fails the "every `--primary` declaration sits in a token-definition selector" test with a clear line-number violation.
-4. Any tokens requiring `/* intentional literal: ... */` annotations are documented inline in `index.css` with the reason.
-5. Total test file stays under 100 lines (parameterization continues to pay for itself).
-
-## Part B — `docs/ci.md` onboarding doc
+## Part A — `mem://architecture/canon-pattern.md`
 
 **What ships**
 
-A single `docs/ci.md` (~3 paragraphs, ~60 lines) documenting the Check gate in contributor-facing language. Not a spec, not doctrine — just enough for a new contributor to understand: what runs, where, why, and how to escape when the build is on fire.
+One memory file documenting the five-part structure every canon shipped in Steps 2E–2K has followed. Not a how-to guide, not a step log — a pattern reference future sessions consult before adding a new canon.
 
 **Structure**
 
 ```markdown
-# CI Gate — `check`
+---
+name: Canon Pattern
+description: Five-part structure for every authoring-time canon (CSS tokens, design rules, etc.). Used to add new canons without re-deriving from step history.
+type: feature
+---
 
-## What runs
-Brief description of Stylelint (CSS canon: no raw hex/rgba outside token blocks)
-and Vitest (semantic-token canon, scrollbar canon). Points to
-tools/stylelint-plugins/ and src/test/semantic-token-canon.test.tsx as the
-authoritative sources.
+# Canon Pattern
 
-## Running locally
-- `npm run check` runs the same gate CI runs (once the script lands).
-- `npm run test` for fast Vitest iteration.
-- `npx stylelint "src/**/*.css"` for targeted lint runs.
+Every canon shipped in Steps 2E–2K follows the same five-part structure.
+New canons should match this shape or document why they don't.
 
-## Pre-commit hook (Husky + lint-staged)
-What the hook does (lint-staged runs stylelint on staged .css files, eslint on
-staged .ts/.tsx). Why Vitest is deliberately not in the hook (unrelated-file
-failures would block unrelated commits). Note: hook requires running
-`npm install` after first clone to auto-install via the `prepare` script.
+## 1. Invariant
+The single rule being guarded. One sentence. Example: "Every shadcn cross-cutting
+token routes through hsl(var(--token)) — no raw hex/rgba in --token declarations."
 
-## Emergency override
-`git commit --no-verify` bypasses the hook. Rules of use:
-1. Only when the hook is blocking an urgent fix and the failure is known-safe.
-2. Immediately follow up with a separate commit that fixes the skipped check.
-3. CI will still catch it — override is a delay, not an escape.
+## 2. Vitest assertion
+Test file in src/test/ using @/test/css-rule helpers. Parameterized via
+describe.each when the canon covers multiple tokens. Existing reference:
+src/test/semantic-token-canon.test.tsx.
 
-## Adding a new canon
-Points to src/test/semantic-token-canon.test.tsx as the extension point for
-new semantic tokens. Points to tools/stylelint-plugins/ for new CSS-level
-rules. Links to the step-by-step pattern in recent canon additions.
+## 3. Stylelint rule (if applicable)
+Custom plugin in tools/stylelint-plugins/, registered in .stylelintrc.cjs.
+Required when the canon can be violated at authoring time in a .css file
+(not just at test-time). Existing reference:
+tools/stylelint-plugins/no-raw-rgba-outside-tokens.cjs.
+
+## 4. CI gate entry
+The canon must run in .github/workflows/test.yml as part of the `check` job.
+Stylelint runs first (fail-fast), then Vitest. No canon ships without CI
+enforcement — local-only canons rot.
+
+## 5. Override protocol
+Two escape hatches, both intentional:
+- Stylelint: /* intentional literal: <reason> */ comment immediately above
+  the offending declaration.
+- Pre-commit hook: git commit --no-verify (delay, not escape — CI still catches).
+Document the override in docs/ci.md, not in the canon itself.
+
+## When NOT to add a canon
+- The rule has fewer than ~3 known violation cases historically.
+- The rule is enforceable by TypeScript's type system.
+- The rule applies to a single file (use a code review comment).
+- The rule is aesthetic preference without measurable regression cost.
 ```
 
-**What I'm deliberately not doing**
+**Index update**
 
-- No attempt to document Husky/lint-staged setup itself — that's in the manual-action list from Step 2I, and until those land, documenting them invites confusion. The doc references them as "once installed" so it's accurate either way.
-- No GitHub Actions workflow deep-dive — the `.github/workflows/test.yml` file is the source of truth. The doc points to it, doesn't duplicate it.
-- No branch-protection setup instructions — that's a repo-settings screenshot/walkthrough that doesn't belong in a code-repo doc. One-line reference: *"In repo settings → Branches, add `check` to required status checks on `main`."*
+Add one line to `mem://index.md` under Memories:
 
-**Cross-link from README**
+```
+- [Canon Pattern](mem://architecture/canon-pattern) — Five-part structure (invariant + Vitest + Stylelint + CI + override) for every authoring-time canon
+```
 
-Add one line to the project README (if it has a "Development" or "Contributing" section): `See docs/ci.md for the CI gate and pre-commit hook.` If the README lacks such a section, skip the cross-link — don't invent a section just to link from.
+Index update is the one risk surface: `code--write` replaces the entire file, so the implementation must include the full existing index content plus this one line.
+
+**Acceptance (Part A)**
+
+1. `mem://architecture/canon-pattern.md` exists with the five-part structure and frontmatter (name/description/type).
+2. `mem://index.md` includes the new line under Memories — all existing entries preserved.
+3. File stays under 60 lines; descriptive without becoming a how-to manual.
+4. No code changes outside the two memory files.
+
+## Part B — Chart token invariant decision
+
+**The question**: *What's the invariant for `--chart-1` through `--chart-5`?*
+
+Three candidate answers, decided by what `src/index.css` and `tailwind.config.ts` actually say:
+
+**Candidate 1 — Same canon as semantic tokens**
+Chart tokens follow the same rule: defined per-theme via HSL, no raw literals in `--chart-*` declarations, routed through `hsl(var(--chart-*))` in Tailwind config. If this is what the codebase already does, add `chart-1` through `chart-5` to the `TOKENS` array in `semantic-token-canon.test.tsx` — done.
+
+**Candidate 2 — Looser canon (palette-variation allowed)**
+Chart tokens are intentionally palette-distinct per theme (Cream's chart-1 ≠ Rose's chart-1 by design). The HSL-routing rule still applies (no raw hex bypassing the theme), but the "every theme must redefine all 5" rule may not — some themes might inherit. Canon enforces format (HSL via tokens) without enforcing palette consistency.
+
+**Candidate 3 — No canon**
+If chart tokens are a deliberately fluid surface (e.g., used for one-off data visualizations that pick colors per-chart at runtime, not via tokens), guarding them at canon-level adds friction without preventing real regressions. Document the decision and move on.
+
+**Pre-flight investigation (during implementation)**
+
+1. Grep `src/index.css` for `--chart-1` / `--chart-5` declarations. Count how many themes redefine them. If all themes do → Candidate 1 or 2. If only `:root` does → Candidate 3 territory.
+2. Grep `tailwind.config.ts` for a `chart` block. If absent → strong signal toward Candidate 3.
+3. Grep `src/**/*.tsx` for usages of `bg-chart-1`, `text-chart-1`, `hsl(var(--chart-1))`, etc. If 0 usages → tokens exist but are unused; recommend deletion before adding canon.
+4. Check whether any Recharts/visualization components reference these tokens at all.
+
+**Decision rule**
+
+- **All themes redefine + Tailwind block exists + tokens are used** → Candidate 1. Add to `TOKENS` array, done.
+- **Only `:root` defines + Tailwind block exists + tokens are used** → Candidate 2. Add a narrower `CHART_TOKENS` array with only the format assertion (no per-theme requirement).
+- **Tokens exist but unused, OR no Tailwind block** → Candidate 3. Document the finding, recommend either deletion (cleanup) or no-canon (status quo) based on what the audit reveals.
+
+The plan commits to running the investigation and applying the decision rule. It does not commit to a specific outcome — the codebase decides.
+
+**Files (depends on outcome)**
+
+- **Candidate 1**: One-line change to `src/test/semantic-token-canon.test.tsx` (extend `TOKENS` array). Update file-level comment.
+- **Candidate 2**: New `src/test/chart-token-canon.test.tsx` (~30 lines, narrower assertions). Or a second `CHART_TOKENS` array within the existing file with conditional logic — decide based on which keeps the file readable.
+- **Candidate 3**: Add a section to `mem://architecture/canon-pattern.md` under "When NOT to add a canon" documenting the chart-token decision as a worked example. No code changes.
 
 **Acceptance (Part B)**
 
-1. `docs/ci.md` exists, under ~60 lines, covers all four sections (what runs / local / Husky / override).
-2. Emergency-override section is explicit about the "delay, not escape" framing — contributors can't misread it as a free pass.
-3. Links to concrete files (`tools/stylelint-plugins/`, `src/test/semantic-token-canon.test.tsx`, `.github/workflows/test.yml`) so readers can jump from doc to source.
-4. README cross-link added if a suitable section exists; otherwise skipped with a note in the implementation summary.
+1. The investigation produces a clear finding: which candidate applies and why.
+2. The chosen canon (or non-canon decision) is shipped in the appropriate file.
+3. If Candidate 1 or 2: tests pass on current codebase, reporter shows new chart-token suites.
+4. If Candidate 3: the decision is documented in the memory file as a reference for future similar judgment calls.
+5. No premature commitment — the plan defers the *what to ship* until the *what's true* is established.
 
 ## Technical notes
 
-- **`describe.skip` handles missing tokens loudly** — if `--ring` doesn't exist in a user's `index.css` fork, the reporter shows `semantic token canon: --ring (not defined in index.css)` as skipped, not silently passing. This is the Step 2J safety net doing its job.
-- **Token order in the array affects reporter readability** — grouped by role (semantic status → surfaces → interactive → form/chrome) so CI output reads top-down in logical order rather than alphabetically.
-- **`docs/ci.md` deliberately avoids screenshots or GIFs** — they rot the moment the CI UI changes. Plain-text doc ages gracefully.
-- **No attempt to move doctrine** into `docs/` — project doctrine lives in `.lovable/memory/` and project-knowledge custom instructions. The new doc is operational contributor material, not architectural governance.
+- **Memory writes are higher-stakes than code writes** because `code--write` replaces the entire file. The Part A implementation will read `mem://index.md` first, then write back the full existing content + new line. Same for any future memory updates.
+- **The "When NOT to add a canon" section in Part A is deliberate scope-protection** — without it, future sessions will canonify everything that moves. The four exclusion criteria (low historical violations, TS-enforceable, single-file, aesthetic-only) are the lessons learned across Steps 2E–2K, distilled.
+- **Part B's decision rule is the actual deliverable**, not the chart-token canon itself. Even if Candidate 3 applies, the value is the documented reasoning — future "should we canonify X?" questions get answered by re-running the same investigation.
+- **Why bundle 2L and 2M**: Part A creates the framework; Part B is the first chance to use the framework to *not* add a canon. Demonstrating restraint via the framework is a stronger signal than demonstrating expansion.
 
 ## Out of scope
 
-- Extending canon to **chart tokens** (`--chart-1` through `--chart-5`), **sidebar tokens**, or **custom app-specific tokens** — different conventions (charts may intentionally be raw hex for palette control; sidebar uses its own HSL family). Each deserves its own canon if regressions appear. Step 2L+ territory.
-- Writing a **CONTRIBUTING.md** — broader scope than CI; separate decision.
-- **Auto-generating the TOKENS array from `index.css`** — extracting every `--foo:` declaration at test-time would catch even unknown tokens, but it conflates "token exists" with "token should be canon-guarded." Some tokens are intentionally not cross-cutting. Explicit list beats auto-discovery here.
-- Documenting **emergency override for CI** (e.g., how to force-merge a PR with failing checks) — that's a repo-admin capability, not a contributor-facing flow. If needed, belongs in an internal runbook, not public docs.
+- **Migrating other architectural patterns to memory** (e.g., the design-token system, the component-governance pattern). Each deserves its own memory file if not already captured. Not bundled here.
+- **Sidebar tokens** (`--sidebar-background`, `--sidebar-foreground`, etc.) — separate semantic family with its own conventions; same investigation pattern would apply, but separate session.
+- **Auto-generating the TOKENS array from CSS** — explicitly rejected in Step 2K's out-of-scope. Same reasoning applies; no need to revisit.
+- **Renaming `semantic-token-canon.test.tsx` to `cross-cutting-token-canon.test.tsx`** if Part B adds chart tokens — naming churn without value. Keep the existing file name.
+- **Documenting the canon pattern outside `mem://`** (e.g., in `docs/`). The memory layer is for AI sessions; `docs/ci.md` is for human contributors. Both audiences served by separate artifacts; don't conflate.
 
 ## Prompt feedback
 
-**What worked**: You paired the two enhancements tightly (canon expansion + contributor docs) and scoped each with one concrete artifact — the `TOKENS` array change, and `docs/ci.md`. That framing prevents plan drift because there's nowhere to expand to.
+**What worked**: You named both enhancements with one-sentence scope statements ("Save canon pattern to memory" / "Chart token audit") and gave each a concrete deliverable shape ("one file" / "single question"). That framing made the plan structure obvious before exploration even started.
 
-**What could sharpen**: You described Part A as "two-line change" — accurate for the test file, but the plan still has to cover the pre-flight grep, the annotation triage for any violations surfaced, and the reporter-verification step. A tighter prompt framing would be: *"Two-line test change, plus whatever annotations surface during the audit pass — treat violations with the Step 2F three-bucket pattern."* That explicitly gives the AI permission to do the audit work without re-scoping the plan.
+**What could sharpen**: For Part B you wrote *"Worth one session to decide: same canon, looser canon, or no canon."* That's the right framing, but the prompt didn't say what evidence would distinguish the three. A tighter version: *"Decide based on (a) whether all themes redefine chart tokens and (b) whether they're used in components — if either is no, lean toward no-canon."* Giving the AI the decision rule up front prevents the round-trip where the plan asks for the rule.
 
-**Better prompt framing for next wave**: You've been implicitly bundling "build the thing + enforce the thing" (tests + lint rule, canon + CI, canon + docs). Making that explicit as a standing pattern in project memory — *"Every canon ships with enforcement AND onboarding material"* — would save the AI from having to re-derive the pairing each step. Consider saving that to `mem://architecture/canon-pattern.md` once this step lands.
+**Better prompt framing for next wave**: You've been bundling pairs (canon + enforcement, canon + docs, memory + decision). Consider explicitly framing future bundles as "rule + first application" — Part A defines the rule, Part B applies it for the first time. That structure forces the rule to be testable on a real case immediately, catching weak rules before they become dogma.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2L — Save the canon pattern to memory.** One memory file documenting the five-part structure of every canon shipped so far: (a) the invariant being guarded, (b) the Vitest assertion, (c) the Stylelint rule if applicable, (d) the CI gate entry, (e) the override protocol. Makes the pattern repeatable by future contributors (or future AI sessions) without re-deriving from step history.
+1. **Step 2N — Sidebar token audit using the canon pattern.** The other semantic family Step 2K excluded. Same investigation as Part B above (which themes redefine, where used, Tailwind config presence), same three-candidate decision. The canon-pattern memory file makes this a 30-minute job instead of a re-derivation.
 
-2. **Step 2M — Audit chart tokens as a standalone decision.** Chart colors (`--chart-1`–`--chart-5`) are the one semantic family deliberately excluded from this step. Worth a dedicated look: are they consistent across themes? Do they need their own canon (probably yes, with looser rules since palette variation is intentional) or are they fine as-is? Single question: *"What's the invariant for chart tokens?"* — then decide whether to guard it.
+2. **Step 2O — Backfill the existing canons into the canon-pattern memory's `## Examples` section.** The pattern file documents the structure abstractly; a one-paragraph worked example for `no-raw-rgba` and `semantic-token-canon` makes the pattern concrete. Each example: invariant statement + file paths for each of the five parts. Two paragraphs total; high reference value when adding the next canon.
 
