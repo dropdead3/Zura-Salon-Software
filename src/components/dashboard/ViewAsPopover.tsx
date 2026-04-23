@@ -64,6 +64,7 @@ export function ViewAsPopover() {
   const [open, setOpen] = useState(false);
   const [teamFilter, setTeamFilter] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const debouncedFilter = useDebounce(teamFilter, 200);
 
   const { data: allRoles = [] } = useRoles();
