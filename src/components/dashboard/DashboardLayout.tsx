@@ -169,39 +169,6 @@ function ChaChingDetectorMount() {
   return null;
 }
 
-/**
- * DashboardChromeWrapper — the single welded L surface.
- *
- * One `.chrome-l` div clipped via CSS `clip-path: polygon(...)` driven by
- * `--sidebar-width` and `--chrome-top-bar-height` so the inner top-right
- * quadrant is cut out. The polygon is mitered at the inner corner; a small
- * `.chrome-l-elbow` patch paints a quarter-circle of the same surface to
- * create the visible 16px concave curve. The wrapper owns background,
- * blur, perimeter line (via inset box-shadow), and drop shadow (via a
- * parent `filter: drop-shadow`, since clip-path clips box-shadow).
- */
-function DashboardChromeWrapper({
-  children,
-  isImpersonating,
-}: {
-  children: React.ReactNode;
-  isImpersonating: boolean;
-}) {
-  return (
-    <div
-      className="chrome-l-shadow hidden lg:block fixed left-3 bottom-3 right-3 z-[60]"
-      style={{ top: isImpersonating ? '56px' : '12px' }}
-    >
-      <div className="chrome-l absolute inset-0">
-        {children}
-        {/* Concave elbow patch: paints a quarter-circle of chrome surface
-            at the joint, hiding the polygon's mitered inner corner. */}
-        <div className="chrome-l-elbow" aria-hidden="true" />
-      </div>
-    </div>
-  );
-}
-
 interface DashboardLayoutProps {
   children: React.ReactNode;
   hideFooter?: boolean;
@@ -496,13 +463,6 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   // Compute sidebar offset for dialog centering (half the sidebar's occupied width)
   const sidebarOffset = hideSidebar ? '0px' : sidebarCollapsed ? '48px' : '170px';
 
-  // Single source of truth for the L-shape's vertical leg width.
-  // Top bar's left edge tracks this variable so the joint never tears.
-  const sidebarWidthPx = hideSidebar ? '0px' : sidebarCollapsed ? '64px' : '320px';
-
-  // Show welded L-shape chrome on desktop when both top bar + sidebar are visible
-  const showChromeL = !hideTopBar && !hideSidebar;
-
   return (
     <div
       className={cn(
@@ -511,10 +471,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         hideFooter ? "h-screen overflow-hidden flex flex-col" : "min-h-screen",
         isImpersonating && "pt-[44px] god-mode-active"
       )}
-      style={{
-        '--sidebar-offset': sidebarOffset,
-        '--sidebar-width': sidebarWidthPx,
-      } as React.CSSProperties}
+      style={{ '--sidebar-offset': sidebarOffset } as React.CSSProperties}
     >
       {/* God Mode Bar — system-level layer above everything */}
       <GodModeBar />
@@ -522,80 +479,8 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       {/* Command Surface (⌘K) */}
       <ZuraCommandSurface open={commandOpen} onOpenChange={setCommandOpen} />
 
-      {/* ── L-Shape Dashboard Chrome (desktop) ─────────────────
-          ONE welded surface painted as a single element with an SVG mask
-          that cuts the inner top-right quadrant — producing a true L
-          silhouette with a concave rounded inner elbow. No double borders,
-          no joint seam. */}
-      {showChromeL && (
-        <DashboardChromeWrapper isImpersonating={isImpersonating}>
-
-          {/* Vertical leg content — sidebar (no own surface; chrome owns it) */}
-          <aside
-            className="absolute top-0 bottom-0 left-0 pointer-events-auto overflow-hidden chrome-l-content-sidebar"
-            style={{ width: 'var(--sidebar-width)' }}
-          >
-            <SidebarNavContent
-              mainNavItems={mainNavItems}
-              growthNavItems={growthNavItems}
-              statsNavItems={statsNavItems}
-              housekeepingNavItems={housekeepingNavItems}
-              managerNavItems={managerNavItems}
-              websiteNavItems={websiteNavItems}
-              adminOnlyNavItems={adminOnlyNavItems}
-              appsNavItems={appsNavItems}
-              footerNavItems={footerNavItems}
-              isPlatformUser={isPlatformUser}
-              isMultiOrgOwner={isMultiOrgOwner}
-              unreadCount={unreadCount}
-              roles={roles}
-              effectiveIsCoach={effectiveIsCoach}
-              filterNavItems={filterNavItems}
-              onNavClick={handleNavClick}
-              isOnboardingComplete={isOnboardingComplete}
-              onboardingProgress={onboardingProgress}
-              isCollapsed={sidebarCollapsed}
-              onToggleCollapse={toggleSidebarCollapsed}
-              greeting={sidebarGreeting}
-              subtitle={sidebarSubtitle}
-              firstName={firstName}
-            />
-          </aside>
-
-          {/* Horizontal leg content — top bar (no own surface; chrome owns it) */}
-          <div
-            className="absolute top-0 right-0 pointer-events-auto overflow-hidden chrome-l-content-topbar"
-            style={{
-              left: 'var(--sidebar-width)',
-              height: 'var(--chrome-top-bar-height)',
-            }}
-          >
-            <SuperAdminTopBar
-              sidebarCollapsed={sidebarCollapsed}
-              hideFooter={hideFooter}
-              headerHovered={headerHovered}
-              onHeaderHoverEnd={() => setHeaderHovered(false)}
-              filterNavItems={filterNavItems}
-              ViewAsToggle={ViewAsToggle}
-              HideNumbersToggle={HideNumbersToggle}
-              roleBadges={roleBadges}
-              onSearchClick={() => setCommandOpen(true)}
-              isSearchOpen={commandOpen}
-              searchBarRef={searchBarRef}
-              chromeMode
-              isAdmin={isAdmin}
-              isPlatformUser={isPlatformUser}
-              isStylistRole={roles.includes('stylist') || roles.includes('booth_renter')}
-              isStylistAssistantRole={roles.includes('stylist_assistant')}
-              isViewingAsUser={isViewingAsUser}
-              viewAsUser={viewAsUser as any}
-            />
-          </div>
-        </DashboardChromeWrapper>
-      )}
-
-      {/* Mobile / fallback top bar (lg:hidden via SuperAdminTopBar's own classes) */}
-      {!hideTopBar && !showChromeL && (
+      {/* Dashboard Top Bar — search, nav arrows, account, view toggles */}
+      {!hideTopBar && (
         <SuperAdminTopBar
           sidebarCollapsed={sidebarCollapsed}
           hideFooter={hideFooter}
@@ -615,6 +500,45 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           isViewingAsUser={isViewingAsUser}
           viewAsUser={viewAsUser as any}
         />
+      )}
+
+      {!hideSidebar && (
+      <aside 
+        className={cn(
+          "hidden lg:fixed lg:bottom-3 lg:left-3 lg:z-[60] lg:block lg:border lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,top,background-color,border-color,border-radius] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          isImpersonating ? "lg:top-[56px]" : "lg:top-3",
+          sidebarCollapsed
+            ? "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-[32px]"
+            : "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-xl",
+          sidebarCollapsed ? "lg:w-16" : "lg:w-80"
+        )}
+      >
+        <SidebarNavContent
+          mainNavItems={mainNavItems}
+          growthNavItems={growthNavItems}
+          statsNavItems={statsNavItems}
+          housekeepingNavItems={housekeepingNavItems}
+          managerNavItems={managerNavItems}
+          websiteNavItems={websiteNavItems}
+          adminOnlyNavItems={adminOnlyNavItems}
+          appsNavItems={appsNavItems}
+          footerNavItems={footerNavItems}
+          isPlatformUser={isPlatformUser}
+          isMultiOrgOwner={isMultiOrgOwner}
+          unreadCount={unreadCount}
+          roles={roles}
+          effectiveIsCoach={effectiveIsCoach}
+          filterNavItems={filterNavItems}
+          onNavClick={handleNavClick}
+          isOnboardingComplete={isOnboardingComplete}
+          onboardingProgress={onboardingProgress}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapsed}
+          greeting={sidebarGreeting}
+          subtitle={sidebarSubtitle}
+          firstName={firstName}
+        />
+      </aside>
       )}
 
       <AnimatePresence>
@@ -671,11 +595,9 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       </AnimatePresence>
 
       <main className={cn(
-        "flex-1 flex flex-col transition-[margin,padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "flex-1 flex flex-col transition-[margin] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
         hideFooter ? "min-h-0 overflow-hidden" : "min-h-screen",
-        // In L-mode the top bar is fixed inside the chrome — push content down to clear it
-        showChromeL && "lg:pt-[68px]",
-        !hideSidebar && (sidebarCollapsed ? "lg:ml-[88px]" : "lg:ml-[344px]")
+        !hideSidebar && (sidebarCollapsed ? "lg:ml-24" : "lg:ml-[340px]")
       )}>
         <div className={cn(`flex-1 p-4 lg:px-8 lg:pt-4 ${hideFooter ? 'lg:pb-4' : 'lg:pb-8'}`, hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
           <BackfillWelcomeBanner />
