@@ -57,10 +57,12 @@ export function GodModeBar() {
         {/* Left side */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex items-center gap-2 shrink-0">
-            <ZuraZIcon
-              className="h-4 w-4"
+            <span
+              className="inline-flex"
               style={{ color: 'hsl(var(--primary-foreground) / 0.95)' }}
-            />
+            >
+              <ZuraZIcon className="h-4 w-4" />
+            </span>
             {!isMobile && (
               <span
                 className="font-display text-[11px] tracking-[0.08em] uppercase"
