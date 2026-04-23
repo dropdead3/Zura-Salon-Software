@@ -1,155 +1,184 @@
 
 
-# Glassmorphism: keep on Cards, but introduce a 3-tier material hierarchy
+# UI Enhancement Sequence — 11 isolated build steps
 
-## Short answer
+You picked 11 enhancements. Each ships as its own build so you can revert any single step without losing the others.
 
-**No — uniform glass on every card is a downgrade.** When everything is glass, nothing is. The eye loses depth cues, and the surface flattens into "vaguely shiny" instead of layered.
+## Sequencing logic
 
-But you also shouldn't strip it — glass on the *right* surfaces is exactly the premium-luxury cue you want. The fix is **tiering**: glass becomes a signal of importance, not a default.
+Ordered by **risk + visual impact**. Foundational tokens first (so later steps build on them), then surfaces, then motion, then ornamentation last.
 
-## What you have right now
+| # | Step | Tier | Touch | Risk |
+|---|---|---|---|---|
+| 1 | **1C** Elevation scale tokens | Foundation | `index.css`, `card.tsx` | Low |
+| 2 | **1A** Specular edge highlights | Surface | `index.css` | Low |
+| 3 | **1D** Divider system (Hairline + Inset) | Surface | `index.css` + new `Divider.tsx` | Low |
+| 4 | **3B** Tabular numerics on stats | Type | `index.css` (stat utility) | Very low |
+| 5 | **3C** Asymmetric letter-spacing | Type | `design-tokens.ts`, header utilities | Low |
+| 6 | **3A** Vertical rhythm baseline grid | Type | `design-tokens.ts` spacing scale audit | Medium |
+| 7 | **2A** Hover choreography on Card | Motion | `card.tsx`, `index.css` | Low |
+| 8 | **2B** Skeleton shimmer | Motion | `skeleton.tsx`, `index.css` | Very low |
+| 9 | **2D** Page transition fade | Motion | `PageTransition.tsx` (already exists), wire into dashboard routes | Medium |
+| 10 | **4A** Per-theme accent gradients | Color | `index.css` (gradient tokens), `button.tsx` primary variant | Medium |
+| 11 | **5B** Section eyebrow audit | Ornament | Sweep dashboard sections to add `<Eyebrow>` | Low |
 
-Looking at `src/components/ui/card.tsx`:
+## Per-step scope contract
 
-```tsx
-"rounded-xl border bg-card text-card-foreground premium-surface"
+Each build will:
+- Touch only the files listed for that step.
+- Default to additive (new utilities/props), not replacing existing ones, so revert is clean.
+- Leave all other steps untouched.
+- Ship with one acceptance criterion you can eyeball in the preview.
+
+## Step-by-step detail
+
+### Step 1 — 1C Elevation scale
+Add 4 shadow tokens to `index.css`:
+- `--elevation-0`: none
+- `--elevation-1`: `0 1px 2px hsl(var(--foreground) / 0.04)` (resting card)
+- `--elevation-2`: `0 4px 12px hsl(var(--foreground) / 0.08)` (hover/active)
+- `--elevation-3`: `0 12px 32px hsl(var(--foreground) / 0.12)` (popovers, panels)
+
+Apply `--elevation-1` to default Card resting state. `hover-lift` upgrades to `--elevation-2`.
+**Acceptance:** Cards have a faint resting shadow (1px ambient); hover lifts visibly.
+
+### Step 2 — 1A Specular edge highlights
+Add 1px inner top-edge highlight to `.premium-surface`:
+```css
+.premium-surface::after {
+  background: linear-gradient(to bottom, hsl(var(--foreground) / 0.08), transparent 30%);
+  /* mask trick to show only top edge */
+}
 ```
+**Acceptance:** Glass cards catch a faint highlight on their top edge.
 
-Every `<Card>` gets `.premium-surface` automatically — backdrop blur, 0.92/0.95 opacity, noise overlay, specular edge. That means in your screenshot, the outer "Sales Overview" card, the inner "Services / Retail" sub-cards, the "Top Staff" card, the "Revenue Breakdown" card, and the bottom KPI tiles are **all the same material**. Visually homogeneous.
+### Step 3 — 1D Divider system
+Two new utilities:
+- `.divider-hairline`: `border-t border-border/30` for inside-card splits
+- `.divider-inset`: 60%-width centered border with side-fade gradient for between-section breathing
 
-## The 3-tier material system
+Optional: small `<Divider variant="hairline" | "inset" />` component.
+**Acceptance:** Section breaks read as intentional, not abrupt borders.
 
-Borrow Apple's window-vibrancy hierarchy — three materials, each with a job:
+### Step 4 — 3B Tabular numerics
+Add `.font-tabular { font-feature-settings: 'tnum' 1, 'lnum' 1; }`. Apply to `tokens.kpi.value`, `tokens.stat.*`, all KPI/stat displays.
+**Acceptance:** Columns of numbers align perfectly vertically.
 
-| Tier | Material | Where it goes | Why |
-|---|---|---|---|
-| **1. Glass** | Current `.premium-surface` (blur + translucent) | Top-level page containers, hero KPI sections, command center widgets | Establishes the "premium surface you're standing on" |
-| **2. Solid** | Opaque `bg-card` (no blur, no translucency) | Inner sub-cards nested *inside* a glass card (Services/Retail tiles, breakdown rows) | Children of glass should be solid — gives them weight, prevents the "blur on blur" mush |
-| **3. Flat** | `bg-muted/40` or transparent | Tertiary content: list rows, table cells, small stat chips, breakdown line items | Recedes; lets glass + solid carry hierarchy |
+### Step 5 — 3C Asymmetric letter-spacing
+Update `design-tokens.ts` heading scale:
+- Section headers: `tracking-[0.12em]` (was `tracking-wide` 0.05em)
+- KPI labels: `tracking-[0.18em]`
+- Card titles: keep `tracking-[0.08em]` (current)
 
-**Rule of thumb:** Glass is for the *room*, solid is for the *furniture*, flat is for the *objects on the table*.
+**Acceptance:** Clearer hierarchy *within* uppercase headers.
 
-## Concrete application to your screenshot
+### Step 6 — 3A Vertical rhythm baseline grid
+Audit `space-y-*` usage across dashboard pages. Standardize to a 4px baseline:
+- Page-level section gap: `space-y-8` (32px)
+- Within-section gap: `space-y-4` (16px)
+- Tight stacks (label+value): `space-y-1` (4px)
 
-Looking at the Sales Overview panel:
+Doc the rule in `design-tokens.ts`.
+**Acceptance:** Page rhythm feels deliberate, not arbitrary.
 
-- **Outer "Sales Overview" container** → **Glass** (tier 1) ✓ keep as-is
-- **Inner "Services / Retail" tiles** (currently glass-on-glass) → **Solid** (tier 2) — drop them to opaque `bg-card`
-- **"Top Staff", "Revenue Breakdown", "Tips"** (right column, top-level) → **Glass** (tier 1) ✓ keep
-- **The Service / Retail rows inside Revenue Breakdown** → **Flat** (tier 3) — already correct
-- **Bottom KPI tiles** (Transactions, Avg Ticket, Rev/Hour) → these are top-level, so **Glass** (tier 1)
+### Step 7 — 2A Hover choreography
+On `Card[interactive]`, coordinate 3 transitions over 150ms cubic-bezier:
+- Shadow grows (`--elevation-1` → `--elevation-2`)
+- Border brightens (`border-border` → `border-border/80`)
+- Background +2% luminance shift
 
-The fix: **stop applying glass to nested cards.**
+**Acceptance:** Hovering an interactive card feels alive, not just lifted.
 
-## Implementation — surgical, no breaking changes
+### Step 8 — 2B Skeleton shimmer
+Replace `animate-pulse` in `skeleton.tsx` with a left-to-right gradient sweep keyframe.
+**Acceptance:** Loading states feel premium, not blinky.
 
-### 1. Add a `material` prop to `Card`
+### Step 9 — 2D Page transition fade
+`PageTransition.tsx` already exists. Wire it into dashboard route shell so route changes get a 200ms opacity fade. Respect `prefers-reduced-motion` and `useIsAnimationsOff`.
+**Acceptance:** Navigating between dashboard pages fades instead of snapping.
 
-`src/components/ui/card.tsx`:
+### Step 10 — 4A Per-theme accent gradients
+Add `--accent-gradient` token per theme:
+- Zura: `linear-gradient(135deg, hsl(270 60% 55%), hsl(290 55% 60%))`
+- Sage: jade → mint
+- Cognac: amber → bronze
+- (etc., one per theme)
 
-```tsx
-type CardProps = React.HTMLAttributes<HTMLDivElement> & {
-  interactive?: boolean;
-  glow?: boolean;
-  /**
-   * Material tier (Apple-style vibrancy hierarchy):
-   * - 'glass' (default): translucent + blur. Top-level containers, hero KPIs.
-   * - 'solid': opaque bg-card. Nested cards inside glass parents.
-   * - 'flat': bg-muted/40. Tertiary list rows, breakdown items.
-   */
-  material?: 'glass' | 'solid' | 'flat';
-};
-```
+Apply subtly to:
+- Primary CTA buttons (default variant)
+- Active sidebar nav indicator
+- Selected toggle pills
 
-In the className composition:
+**Acceptance:** Primary CTAs and active states have dimensional brand feel.
 
-```tsx
-const materialClass = {
-  glass: 'bg-card text-card-foreground premium-surface',
-  solid: 'bg-card text-card-foreground',                    // no .premium-surface
-  flat: 'bg-muted/40 text-card-foreground border-border/40',
-}[material ?? 'glass'];
+### Step 11 — 5B Section eyebrow audit
+Sweep dashboard top-level sections, add `<Eyebrow>` captions where missing:
+- Sales Overview → "Today's Performance"
+- Top Staff → "This Week"
+- KPI tiles → "At a Glance"
+- (etc.)
 
-className={cn('rounded-xl border', materialClass, ...)}
-```
+**Acceptance:** Every major section has a magazine-style caption.
 
-Default stays `glass` so nothing breaks. Opt down to `solid` / `flat` where the audit calls for it.
+## What stays untouched across all 11 steps
 
-### 2. Audit and downgrade nested cards
+- Mesh gradient (calibrated).
+- 3-tier material system (shipped).
+- Marketing site (separate aesthetic).
+- Platform admin (isolated bento system).
+- Typography rules (Termina/Aeonik discipline preserved).
+- All data, routes, business logic.
 
-Sweep dashboard surfaces and apply `material="solid"` to cards that visibly nest inside another card. Priority surfaces:
+## Workflow
 
-- Sales Overview → inner Services/Retail tiles
-- Revenue Breakdown line rows
-- Any "container card with sub-cards" pattern across the dashboard
-
-Estimated touch: ~15–25 nested-card sites across the dashboard. Done as a follow-up sweep, not in this change.
-
-### 3. (Optional) Tighten glass even further on the parent tier
-
-Once nested cards drop to solid, the glass parents read more clearly. At that point you can *increase* the glass effect a touch on tier 1 only — drop card opacity from 0.92 → 0.88 — because there's no longer a blur-on-blur mush risk. Reserve this for a later iteration; ship the tiering first and observe.
-
-## What stays untouched
-
-- Mesh gradient (just calibrated).
-- All other tokens, typography, components.
-- Default Card behavior — backwards compatible.
-- Platform admin (already isolated).
-
-## Acceptance
-
-1. Glass cards visibly differ from solid cards — you can tell at a glance which is the parent and which is the child.
-2. No "blur on blur" effect when a card sits inside another card.
-3. Top-level dashboard widgets still feel premium and translucent.
-4. Inner tiles feel grounded, not floating.
-5. The mesh gradient still tints glass cards subtly; solid cards block it (which is correct — solid is meant to anchor).
+I'll ship Step 1 when you reply "go." After each step you preview, then either:
+- Say "next" → I ship the next step.
+- Say "revert + next" → you revert via History, then I ship the next step.
+- Say "revert + skip" → you revert, we drop that step from the queue.
 
 ## Out of scope
 
-- Restyling card borders, padding, or radii.
-- Animation between materials.
-- Applying tiering to the marketing site or platform admin.
-
-## Why "glass everywhere" is the wrong default
-
-Glassmorphism's job is to *suggest a layer behind it*. If every layer is glass, you're claiming infinite depth — which the eye reads as no depth. The premium SaaS surfaces you're benchmarking against (Linear, Vercel, Apple's own dashboards) all use glass *sparingly* — usually one or two surfaces per screen. The rest is solid or flat. That contrast is what makes the glass feel valuable.
+- Bundling multiple steps in one build.
+- Touching Tier 1B (focus rings), 2C (counter expansion), 4B (status colors), 4C (warmth pass), 5A (corner accents), 5C (monograms) — explicitly excluded.
 
 ## Prompt feedback
 
-Excellent prompt — three things you did right:
+Sharp prompt — three things you did right:
 
-1. **You asked the meta-question instead of issuing a directive.** "Should X?" is a higher-leverage prompt than "do X" when you're uncertain — it gets you the *reasoning*, which lets you make better calls on the next 10 surfaces, not just this one.
-2. **You named the failure mode you were worried about** ("too overdone"). That gave me a specific axis to evaluate against, not a vague "is this good?" Saved a clarifying round-trip.
-3. **You questioned uniformity.** The instinct to suspect "applied everywhere = applied poorly" is correct 90% of the time in design systems. Worth trusting.
+1. **You picked specific numbered items from the menu.** Removed all ambiguity about scope. I know exactly what's in and what's out without a second round-trip.
+2. **You named the workflow constraint** ("each in a separate build step, so I can revert"). That's the real instruction — the *sequencing* matters as much as the *what*. Without it I'd have batched these into 3-4 builds for efficiency, which would have made revert messy.
+3. **You inverted the default.** Most operators say "ship them all, I'll review at the end." You said "ship one, let me see, repeat." That's the right loop for taste calibration — short feedback cycles, atomic reverts.
 
-Sharpener: naming the **decision you're trying to make** would tighten the response further. Template:
+Sharpener: naming the **revert criterion** would tighten step-by-step iteration even more. Template:
 
 ```text
-[Question]. I'm deciding whether to [action A] or [action B].
+Ship step-by-step. Revert if [criterion]. Continue if [criterion].
 ```
 
 Example:
 ```text
-Should all cards have glassmorphism? I'm deciding whether to keep it on every Card 
-or restrict it to top-level containers only.
+Ship one at a time. Revert if it fights existing patterns or feels decorative.
+Continue if it makes the surface feel calmer or more premium.
 ```
 
-The **"I'm deciding between A or B"** clause is the underused construct on advisory prompts — it tells me what shape of answer you need (a recommendation between two known options) instead of an open exploration. Faster to a decision, less room for me to over-explore.
+The **"Revert if / Continue if" pair** is the underused construct on iterative-build prompts — it tells me the *axis* you'll judge each step against, so I can pre-filter my implementation choices to favor that axis. Without it I optimize for "looks cool"; with it I optimize for your stated standard.
 
 ## Further enhancement suggestion
 
-For **design-system-policy questions** specifically, the highest-leverage frame is:
+For **multi-step iterative builds** specifically, the highest-leverage frame is:
 
 ```text
-[Question about a pattern]. Decision: [A vs B]. Constraint: [what must stay true].
+Sequence: [list]. One at a time. 
+Revert criterion: [what fails it]. 
+Stop the whole sequence if: [bigger failure mode].
 ```
 
 Example:
 ```text
-Should all cards have glassmorphism? Decision: keep universal vs tier it.
-Constraint: dashboard must still feel premium; can't lose the luxury cue entirely.
+Sequence: 1A, 1C, 1D, 2A, 2B, 2D, 3A, 3B, 3C, 4A, 5B. One at a time.
+Revert criterion: feels decorative or fights existing patterns.
+Stop the sequence if: cumulative effect makes the dashboard feel busy.
 ```
 
-Three lines, three constraints. The **"Constraint"** clause is the underused construct on policy questions — it tells me what I cannot trade away while exploring options. Without it I might recommend "strip all glass" as a clean answer; with it, I know glass-as-signal is the right path.
+Three lines, three constraints. The **"Stop the whole sequence if" clause** is the underused construct on long iterative builds — it gives me a kill switch for the *aggregate* effect, not just per-step. Polish stacks; sometimes step 8 is fine alone but the combination of 1+3+7+8 tips into "too much." This clause lets you halt cleanly before that point.
 
