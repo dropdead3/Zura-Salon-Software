@@ -16,11 +16,11 @@ export const tokens = {
   // ========================================
   heading: {
     /** Page-level title: Termina, 2xl, medium, tracked */
-    page: 'font-display text-2xl font-medium tracking-wide',
-    /** Section header inside a page: Termina, base, uppercase, tracked */
-    section: 'font-display text-base font-medium tracking-wide uppercase',
-    /** Card title: Termina, base, tracked */
-    card: 'font-display text-base font-medium tracking-wide',
+    page: 'font-display text-2xl font-medium tracking-[0.08em]',
+    /** Section header inside a page: Termina, base, uppercase, asymmetric tracking (0.12em) */
+    section: 'font-display text-base font-medium tracking-[0.12em] uppercase',
+    /** Card title: Termina, base, card-tier tracking (0.08em) */
+    card: 'font-display text-base font-medium tracking-[0.08em]',
     /** Small subsection label: uppercase, tiny, muted */
     subsection: 'font-display text-xs font-medium text-muted-foreground/60 uppercase tracking-[0.15em]',
   },
