@@ -24,6 +24,19 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
+// Order users by their highest-priority role. Lower index = appears first.
+const TEAM_ROLE_ORDER: { key: AppRole; label: string }[] = [
+  { key: 'super_admin' as AppRole, label: 'Admin' },
+  { key: 'admin' as AppRole,       label: 'Admin' },
+  { key: 'manager' as AppRole,     label: 'Manager' },
+  { key: 'stylist' as AppRole,     label: 'Stylists' },
+  { key: 'assistant' as AppRole,   label: 'Assistants' },
+  { key: 'booth_renter' as AppRole,label: 'Booth Renters' },
+  { key: 'receptionist' as AppRole,label: 'Front Desk' },
+];
+
+const OTHER_GROUP_LABEL = 'Other';
+
 function getInitials(name: string): string {
   return name
     .split(' ')
