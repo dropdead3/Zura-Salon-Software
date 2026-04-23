@@ -77,31 +77,31 @@ html, body, #root {
   /* ===== THEME: BONE (Default — cool desert gray & oat) ===== */
   :root,
   .theme-bone {
-    /* Cool desert oat — near-neutral with barely-there warm undertone */
-    --background: 35 12% 93%;
-    --foreground: 0 0% 6%;
+    /* Luxury-light: bone-warm near-neutral. Lightness ladder per shared spec. */
+    --background: 35 12% 97%;
+    --foreground: 30 18% 8%;
 
-    --card: 35 10% 91%;
-    --card-foreground: 0 0% 6%;
+    --card: 35 12% 99%;
+    --card-foreground: 30 18% 8%;
 
-    --popover: 35 10% 91%;
-    --popover-foreground: 0 0% 6%;
+    --popover: 35 12% 99%;
+    --popover-foreground: 30 18% 8%;
 
-    --primary: 30 14% 55%;
-    --primary-foreground: 36 30% 96%;
+    --primary: 30 14% 45%;
+    --primary-foreground: 36 30% 98%;
 
-    --secondary: 30 10% 82%;
-    --secondary-foreground: 0 0% 6%;
+    --secondary: 32 12% 93%;
+    --secondary-foreground: 30 18% 8%;
 
-    --muted: 32 8% 74%;
-    --muted-strong: 32 8% 66%;
-    --muted-foreground: 0 0% 30%;
+    --muted: 32 10% 94%;
+    --muted-strong: 32 10% 88%;
+    --muted-foreground: 30 8% 42%;
 
-    --accent: 30 15% 88%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 30 14% 90%;
+    --accent-foreground: 30 18% 8%;
 
     /* Oat/Tan accent - soft warm neutral */
-    --oat: 32 14% 68%;
+    --oat: 32 14% 78%;
     --oat-foreground: 30 18% 25%;
 
     /* Gold accent - for premium badges */
@@ -109,26 +109,26 @@ html, body, #root {
     --gold-foreground: 45 100% 97%;
 
     /* Success/Available - pastel green */
-    --success: 145 40% 85%;
-    --success-foreground: 145 50% 30%;
+    --success: 145 40% 88%;
+    --success-foreground: 145 50% 28%;
 
     /* Warning - amber */
     --warning: 38 92% 50%;
     --warning-foreground: 32 80% 30%;
 
     /* Chart colors for data visualization */
-    --chart-1: 30 14% 55%;
-    --chart-2: 35 22% 60%;
-    --chart-3: 145 50% 40%;
-    --chart-4: 28 15% 40%;
-    --chart-5: 280 50% 55%;
+    --chart-1: 30 14% 45%;
+    --chart-2: 35 22% 55%;
+    --chart-3: 145 50% 38%;
+    --chart-4: 28 15% 35%;
+    --chart-5: 280 50% 50%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
-    --border: 30 12% 82%;
-    --input: 30 10% 76%;
-    --ring: 30 14% 55%;
+    --border: 32 12% 88%;
+    --input: 32 10% 94%;
+    --ring: 30 14% 45%;
 
     --radius: 0.75rem;
 
@@ -163,17 +163,79 @@ html, body, #root {
     --leading-loose: 2;
 
     /* Sidebar */
-    --sidebar-background: 32 10% 87%;
+    --sidebar-background: 32 12% 96%;
     --sidebar-foreground: 24 18% 10%;
-    --sidebar-primary: 30 14% 55%;
-    --sidebar-primary-foreground: 36 30% 96%;
-    --sidebar-accent: 30 10% 82%;
+    --sidebar-primary: 30 14% 45%;
+    --sidebar-primary-foreground: 36 30% 98%;
+    --sidebar-accent: 30 12% 92%;
     --sidebar-accent-foreground: 24 18% 10%;
-    --sidebar-border: 30 8% 70%;
-    --sidebar-ring: 30 14% 55%;
+    --sidebar-border: 30 12% 88%;
+    --sidebar-ring: 30 14% 45%;
 
-    --card-inner: 32 8% 86%;
-    --card-inner-deep: 32 6% 82%;
+    --card-inner: 32 12% 96%;
+    --card-inner-deep: 32 10% 94%;
+  }
+
+  /* ===== THEME: ROSEWOOD (Dusty rose & warm pink — light) ===== */
+  .theme-rosewood {
+    --background: 350 22% 97%;
+    --foreground: 350 30% 10%;
+
+    --card: 350 22% 99%;
+    --card-foreground: 350 30% 10%;
+
+    --popover: 350 22% 99%;
+    --popover-foreground: 350 30% 10%;
+
+    --primary: 345 60% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 350 22% 93%;
+    --secondary-foreground: 350 30% 10%;
+
+    --muted: 350 18% 94%;
+    --muted-strong: 350 18% 88%;
+    --muted-foreground: 350 14% 42%;
+
+    --accent: 350 22% 90%;
+    --accent-foreground: 350 30% 10%;
+
+    --oat: 350 20% 78%;
+    --oat-foreground: 350 25% 25%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 345 60% 48%;
+    --chart-2: 330 55% 55%;
+    --chart-3: 10 60% 55%;
+    --chart-4: 42 75% 45%;
+    --chart-5: 280 50% 55%;
+
+    --success: 145 45% 88%;
+    --success-foreground: 145 50% 28%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 80% 30%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 350 18% 88%;
+    --input: 350 18% 94%;
+    --ring: 345 60% 48%;
+
+    --sidebar-background: 350 20% 96%;
+    --sidebar-foreground: 350 30% 10%;
+    --sidebar-primary: 345 60% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 350 22% 92%;
+    --sidebar-accent-foreground: 350 30% 10%;
+    --sidebar-border: 350 18% 88%;
+    --sidebar-ring: 345 60% 48%;
+
+    --card-inner: 350 20% 96%;
+    --card-inner-deep: 350 18% 94%;
   }
 
   .dark.theme-bone,
@@ -304,43 +366,43 @@ html, body, #root {
 
   /* ===== THEME: SAGE (Mint Green Pastel) ===== */
   .theme-sage {
-    --background: 145 10% 82%;
-    --foreground: 145 15% 8%;
+    --background: 145 22% 97%;
+    --foreground: 145 30% 8%;
 
-    --card: 145 8% 85%;
-    --card-foreground: 145 15% 8%;
+    --card: 145 22% 99%;
+    --card-foreground: 145 30% 8%;
 
-    --popover: 145 8% 85%;
-    --popover-foreground: 145 15% 8%;
+    --popover: 145 22% 99%;
+    --popover-foreground: 145 30% 8%;
 
-    --primary: 145 45% 42%;
+    --primary: 145 45% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 7% 78%;
-    --secondary-foreground: 145 15% 8%;
+    --secondary: 145 18% 93%;
+    --secondary-foreground: 145 30% 8%;
 
-    --muted: 145 5% 72%;
-    --muted-strong: 145 5% 65%;
-    --muted-foreground: 145 4% 30%;
+    --muted: 145 16% 94%;
+    --muted-strong: 145 16% 88%;
+    --muted-foreground: 145 12% 42%;
 
-    --accent: 145 8% 76%;
-    --accent-foreground: 145 15% 8%;
+    --accent: 145 20% 90%;
+    --accent-foreground: 145 30% 8%;
 
-    --oat: 145 10% 68%;
-    --oat-foreground: 145 18% 25%;
+    --oat: 145 18% 78%;
+    --oat-foreground: 145 22% 25%;
 
     --gold: 38 70% 38%;
     --gold-foreground: 45 100% 97%;
 
     /* Chart colors for data visualization */
-    --chart-1: 145 20% 30%;
-    --chart-2: 145 60% 40%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 43 96% 50%;
-    --chart-5: 280 87% 55%;
+    --chart-1: 145 45% 38%;
+    --chart-2: 145 60% 45%;
+    --chart-3: 217 75% 50%;
+    --chart-4: 43 80% 48%;
+    --chart-5: 280 60% 55%;
 
-    --success: 145 40% 85%;
-    --success-foreground: 145 50% 30%;
+    --success: 145 45% 88%;
+    --success-foreground: 145 50% 28%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 32 80% 30%;
@@ -348,21 +410,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 5% 65%;
-    --input: 145 5% 74%;
-    --ring: 145 45% 42%;
+    --border: 145 16% 88%;
+    --input: 145 16% 94%;
+    --ring: 145 45% 38%;
 
-    --sidebar-background: 145 8% 83%;
-    --sidebar-foreground: 145 15% 8%;
-    --sidebar-primary: 145 45% 42%;
+    --sidebar-background: 145 18% 96%;
+    --sidebar-foreground: 145 30% 8%;
+    --sidebar-primary: 145 45% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 7% 78%;
-    --sidebar-accent-foreground: 145 15% 8%;
-    --sidebar-border: 145 5% 65%;
-    --sidebar-ring: 145 45% 42%;
+    --sidebar-accent: 145 20% 92%;
+    --sidebar-accent-foreground: 145 30% 8%;
+    --sidebar-border: 145 16% 88%;
+    --sidebar-ring: 145 45% 38%;
 
-    --card-inner: 145 5% 80%;
-    --card-inner-deep: 145 3% 76%;
+    --card-inner: 145 18% 96%;
+    --card-inner-deep: 145 16% 94%;
   }
 
   .dark.theme-sage {
@@ -429,29 +491,29 @@ html, body, #root {
 
   /* ===== THEME: JADE (Premium teal jewel-tone & gold) ===== */
   .theme-jade {
-    --background: 180 20% 95%;
+    --background: 180 22% 97%;
     --foreground: 180 30% 8%;
 
-    --card: 180 15% 97%;
+    --card: 180 22% 99%;
     --card-foreground: 180 30% 8%;
 
-    --popover: 180 15% 97%;
+    --popover: 180 22% 99%;
     --popover-foreground: 180 30% 8%;
 
     --primary: 175 65% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 178 18% 88%;
+    --secondary: 178 20% 93%;
     --secondary-foreground: 180 30% 8%;
 
-    --muted: 178 12% 90%;
-    --muted-strong: 178 14% 82%;
-    --muted-foreground: 180 15% 35%;
+    --muted: 178 18% 94%;
+    --muted-strong: 178 18% 88%;
+    --muted-foreground: 180 14% 42%;
 
-    --accent: 178 25% 85%;
+    --accent: 178 22% 90%;
     --accent-foreground: 180 30% 8%;
 
-    --oat: 178 18% 75%;
+    --oat: 178 18% 78%;
     --oat-foreground: 180 25% 22%;
 
     --gold: 42 75% 45%;
@@ -472,21 +534,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 178 15% 82%;
-    --input: 178 15% 88%;
+    --border: 178 18% 88%;
+    --input: 178 18% 94%;
     --ring: 175 65% 32%;
 
-    --sidebar-background: 178 18% 92%;
+    --sidebar-background: 178 20% 96%;
     --sidebar-foreground: 180 30% 8%;
     --sidebar-primary: 175 65% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 178 20% 86%;
+    --sidebar-accent: 178 22% 92%;
     --sidebar-accent-foreground: 180 30% 8%;
-    --sidebar-border: 178 15% 82%;
+    --sidebar-border: 178 18% 88%;
     --sidebar-ring: 175 65% 32%;
 
-    --card-inner: 178 14% 93%;
-    --card-inner-deep: 178 12% 90%;
+    --card-inner: 178 20% 96%;
+    --card-inner-deep: 178 18% 94%;
   }
 
   .dark.theme-jade {
@@ -552,7 +614,7 @@ html, body, #root {
 
   /* ===== THEME: MARINE (Deep navy & electric blue) ===== */
   .theme-marine {
-    --background: 218 35% 97%;
+    --background: 218 30% 97%;
     --foreground: 220 40% 10%;
 
     --card: 218 30% 99%;
@@ -564,17 +626,17 @@ html, body, #root {
     --primary: 218 100% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 218 30% 93%;
+    --secondary: 218 28% 93%;
     --secondary-foreground: 220 40% 10%;
 
-    --muted: 218 25% 90%;
-    --muted-strong: 218 25% 82%;
-    --muted-foreground: 220 20% 35%;
+    --muted: 218 25% 94%;
+    --muted-strong: 218 25% 88%;
+    --muted-foreground: 220 18% 42%;
 
-    --accent: 218 60% 92%;
+    --accent: 218 50% 90%;
     --accent-foreground: 220 50% 18%;
 
-    --oat: 218 25% 86%;
+    --oat: 218 25% 78%;
     --oat-foreground: 220 30% 25%;
 
     --gold: 38 70% 38%;
@@ -587,8 +649,8 @@ html, body, #root {
     --chart-4: 38 70% 50%;
     --chart-5: 260 70% 60%;
 
-    --success: 145 40% 85%;
-    --success-foreground: 145 50% 30%;
+    --success: 145 45% 88%;
+    --success-foreground: 145 50% 28%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 32 80% 30%;
@@ -597,20 +659,20 @@ html, body, #root {
     --destructive-foreground: 0 0% 100%;
 
     --border: 218 25% 88%;
-    --input: 218 25% 90%;
+    --input: 218 25% 94%;
     --ring: 218 100% 56%;
 
-    --sidebar-background: 218 30% 96%;
+    --sidebar-background: 218 28% 96%;
     --sidebar-foreground: 220 45% 12%;
     --sidebar-primary: 218 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 218 50% 92%;
+    --sidebar-accent: 218 40% 92%;
     --sidebar-accent-foreground: 220 50% 18%;
     --sidebar-border: 218 25% 88%;
     --sidebar-ring: 218 100% 56%;
 
-    --card-inner: 218 30% 96%;
-    --card-inner-deep: 218 28% 93%;
+    --card-inner: 218 28% 96%;
+    --card-inner-deep: 218 25% 94%;
   }
 
   .dark.theme-marine {
@@ -677,29 +739,29 @@ html, body, #root {
 
   /* ===== THEME: ZURA (Brand Violet/Purple) ===== */
   .theme-zura {
-    --background: 260 25% 95%;
-    --foreground: 260 20% 8%;
+    --background: 260 22% 97%;
+    --foreground: 260 25% 8%;
 
-    --card: 260 20% 97%;
-    --card-foreground: 260 20% 8%;
+    --card: 260 22% 99%;
+    --card-foreground: 260 25% 8%;
 
-    --popover: 260 20% 97%;
-    --popover-foreground: 260 20% 8%;
+    --popover: 260 22% 99%;
+    --popover-foreground: 260 25% 8%;
 
     --primary: 270 70% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 260 15% 90%;
-    --secondary-foreground: 260 20% 8%;
+    --secondary: 260 20% 93%;
+    --secondary-foreground: 260 25% 8%;
 
-    --muted: 260 12% 90%;
-    --muted-strong: 260 12% 84%;
-    --muted-foreground: 260 10% 45%;
+    --muted: 260 18% 94%;
+    --muted-strong: 260 18% 88%;
+    --muted-foreground: 260 12% 42%;
 
-    --accent: 260 20% 88%;
-    --accent-foreground: 260 20% 8%;
+    --accent: 260 22% 90%;
+    --accent-foreground: 260 25% 8%;
 
-    --oat: 260 18% 85%;
+    --oat: 260 20% 78%;
     --oat-foreground: 260 22% 25%;
 
     --gold: 42 75% 45%;
@@ -721,21 +783,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 12% 85%;
-    --input: 260 15% 92%;
+    --border: 260 18% 88%;
+    --input: 260 18% 94%;
     --ring: 270 70% 55%;
 
-    --sidebar-background: 260 18% 93%;
-    --sidebar-foreground: 260 20% 8%;
+    --sidebar-background: 260 20% 96%;
+    --sidebar-foreground: 260 25% 8%;
     --sidebar-primary: 270 70% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 15% 88%;
-    --sidebar-accent-foreground: 260 20% 8%;
-    --sidebar-border: 260 12% 85%;
+    --sidebar-accent: 260 22% 92%;
+    --sidebar-accent-foreground: 260 25% 8%;
+    --sidebar-border: 260 18% 88%;
     --sidebar-ring: 270 70% 55%;
 
-    --card-inner: 260 15% 92%;
-    --card-inner-deep: 260 18% 88%;
+    --card-inner: 260 20% 96%;
+    --card-inner-deep: 260 18% 94%;
   }
 
   .dark.theme-zura {
@@ -802,29 +864,29 @@ html, body, #root {
 
   /* ===== THEME: COGNAC (Bourbon amber & leather) ===== */
   .theme-cognac {
-    --background: 25 30% 94%;
-    --foreground: 20 25% 8%;
+    --background: 25 25% 97%;
+    --foreground: 20 28% 8%;
 
-    --card: 25 25% 96%;
-    --card-foreground: 20 25% 8%;
+    --card: 25 25% 99%;
+    --card-foreground: 20 28% 8%;
 
-    --popover: 25 25% 96%;
-    --popover-foreground: 20 25% 8%;
+    --popover: 25 25% 99%;
+    --popover-foreground: 20 28% 8%;
 
     --primary: 28 70% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 25 18% 88%;
-    --secondary-foreground: 20 25% 8%;
+    --secondary: 25 22% 93%;
+    --secondary-foreground: 20 28% 8%;
 
-    --muted: 25 14% 88%;
-    --muted-strong: 25 14% 82%;
-    --muted-foreground: 20 12% 45%;
+    --muted: 25 18% 94%;
+    --muted-strong: 25 18% 88%;
+    --muted-foreground: 20 14% 42%;
 
-    --accent: 25 22% 85%;
-    --accent-foreground: 20 25% 8%;
+    --accent: 25 22% 90%;
+    --accent-foreground: 20 28% 8%;
 
-    --oat: 25 20% 82%;
+    --oat: 25 22% 78%;
     --oat-foreground: 20 28% 25%;
 
     --gold: 42 75% 45%;
@@ -845,21 +907,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 25 14% 83%;
-    --input: 25 18% 90%;
+    --border: 25 18% 88%;
+    --input: 25 18% 94%;
     --ring: 28 70% 42%;
 
-    --sidebar-background: 25 20% 91%;
-    --sidebar-foreground: 24 25% 8%;
+    --sidebar-background: 25 22% 96%;
+    --sidebar-foreground: 24 28% 8%;
     --sidebar-primary: 28 70% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 18% 86%;
-    --sidebar-accent-foreground: 24 25% 8%;
-    --sidebar-border: 25 14% 83%;
+    --sidebar-accent: 25 22% 92%;
+    --sidebar-accent-foreground: 24 28% 8%;
+    --sidebar-border: 25 18% 88%;
     --sidebar-ring: 28 70% 42%;
 
-    --card-inner: 25 18% 90%;
-    --card-inner-deep: 25 20% 86%;
+    --card-inner: 25 22% 96%;
+    --card-inner-deep: 25 18% 94%;
   }
 
   .dark.theme-cognac {
@@ -925,29 +987,29 @@ html, body, #root {
 
   /* ===== THEME: NOIR (Pure Monochrome) ===== */
   .theme-noir {
-    --background: 0 0% 96%;
+    --background: 0 0% 97%;
     --foreground: 0 0% 8%;
 
-    --card: 0 0% 98%;
+    --card: 0 0% 99%;
     --card-foreground: 0 0% 8%;
 
-    --popover: 0 0% 98%;
+    --popover: 0 0% 99%;
     --popover-foreground: 0 0% 8%;
 
     --primary: 0 0% 8%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 90%;
+    --secondary: 0 0% 93%;
     --secondary-foreground: 0 0% 8%;
 
-    --muted: 0 0% 90%;
-    --muted-strong: 0 0% 84%;
+    --muted: 0 0% 94%;
+    --muted-strong: 0 0% 88%;
     --muted-foreground: 0 0% 42%;
 
-    --accent: 0 0% 88%;
+    --accent: 0 0% 90%;
     --accent-foreground: 0 0% 8%;
 
-    --oat: 0 0% 84%;
+    --oat: 0 0% 78%;
     --oat-foreground: 0 0% 25%;
 
     --gold: 42 75% 45%;
@@ -968,21 +1030,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 85%;
-    --input: 0 0% 92%;
+    --border: 0 0% 88%;
+    --input: 0 0% 94%;
     --ring: 0 0% 8%;
 
-    --sidebar-background: 0 0% 94%;
+    --sidebar-background: 0 0% 96%;
     --sidebar-foreground: 0 0% 8%;
     --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 88%;
+    --sidebar-accent: 0 0% 92%;
     --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 0 0% 85%;
+    --sidebar-border: 0 0% 88%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 0 0% 92%;
-    --card-inner-deep: 0 0% 88%;
+    --card-inner: 0 0% 96%;
+    --card-inner-deep: 0 0% 94%;
   }
 
   .dark.theme-noir {
@@ -1047,30 +1109,30 @@ html, body, #root {
   }
 
   .theme-neon {
-    --background: 330 15% 97%;
-    --foreground: 0 0% 8%;
+    --background: 330 22% 97%;
+    --foreground: 330 30% 8%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
+    --card: 330 22% 99%;
+    --card-foreground: 330 30% 8%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
+    --popover: 330 22% 99%;
+    --popover-foreground: 330 30% 8%;
 
     --primary: 330 95% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 330 30% 92%;
-    --secondary-foreground: 0 0% 8%;
+    --secondary: 330 22% 93%;
+    --secondary-foreground: 330 30% 8%;
 
-    --muted: 330 20% 92%;
-    --muted-strong: 330 20% 86%;
-    --muted-foreground: 330 10% 40%;
+    --muted: 330 18% 94%;
+    --muted-strong: 330 18% 88%;
+    --muted-foreground: 330 12% 42%;
 
-    --accent: 330 35% 90%;
-    --accent-foreground: 0 0% 8%;
+    --accent: 330 25% 90%;
+    --accent-foreground: 330 30% 8%;
 
-    --oat: 330 20% 86%;
-    --oat-foreground: 330 15% 25%;
+    --oat: 330 22% 78%;
+    --oat-foreground: 330 18% 25%;
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 90% 15%;
@@ -1090,21 +1152,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 330 25% 85%;
-    --input: 330 20% 92%;
+    --border: 330 22% 88%;
+    --input: 330 18% 94%;
     --ring: 330 95% 55%;
 
-    --sidebar-background: 330 20% 95%;
-    --sidebar-foreground: 0 0% 8%;
+    --sidebar-background: 330 22% 96%;
+    --sidebar-foreground: 330 30% 8%;
     --sidebar-primary: 330 95% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 330 35% 90%;
-    --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 330 25% 85%;
+    --sidebar-accent: 330 25% 92%;
+    --sidebar-accent-foreground: 330 30% 8%;
+    --sidebar-border: 330 22% 88%;
     --sidebar-ring: 330 95% 55%;
 
-    --card-inner: 330 20% 94%;
-    --card-inner-deep: 330 25% 89%;
+    --card-inner: 330 22% 96%;
+    --card-inner-deep: 330 18% 94%;
   }
 
   .dark.theme-neon {
@@ -1170,29 +1232,29 @@ html, body, #root {
 
   /* ===== THEME: MATRIX (Neon emerald on deep navy — cyberpunk terminal) ===== */
   .theme-matrix {
-    --background: 220 30% 96%;
+    --background: 220 22% 97%;
     --foreground: 220 40% 8%;
 
-    --card: 220 25% 98%;
+    --card: 220 22% 99%;
     --card-foreground: 220 40% 8%;
 
-    --popover: 220 25% 98%;
+    --popover: 220 22% 99%;
     --popover-foreground: 220 40% 8%;
 
     --primary: 145 75% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 20% 88%;
+    --secondary: 220 22% 93%;
     --secondary-foreground: 220 40% 8%;
 
-    --muted: 220 15% 90%;
-    --muted-strong: 220 18% 82%;
-    --muted-foreground: 220 25% 30%;
+    --muted: 220 18% 94%;
+    --muted-strong: 220 18% 88%;
+    --muted-foreground: 220 18% 42%;
 
-    --accent: 145 35% 88%;
+    --accent: 145 30% 90%;
     --accent-foreground: 220 40% 8%;
 
-    --oat: 220 18% 75%;
+    --oat: 220 20% 78%;
     --oat-foreground: 220 30% 22%;
 
     --gold: 42 75% 45%;
@@ -1213,21 +1275,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 82%;
-    --input: 220 15% 88%;
+    --border: 220 18% 88%;
+    --input: 220 18% 94%;
     --ring: 145 75% 32%;
 
-    --sidebar-background: 220 25% 92%;
+    --sidebar-background: 220 22% 96%;
     --sidebar-foreground: 220 40% 8%;
     --sidebar-primary: 145 75% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 22% 86%;
+    --sidebar-accent: 220 22% 92%;
     --sidebar-accent-foreground: 220 40% 8%;
-    --sidebar-border: 220 15% 82%;
+    --sidebar-border: 220 18% 88%;
     --sidebar-ring: 145 75% 32%;
 
-    --card-inner: 220 18% 93%;
-    --card-inner-deep: 220 15% 90%;
+    --card-inner: 220 22% 96%;
+    --card-inner-deep: 220 18% 94%;
   }
 
   .dark.theme-matrix {
@@ -1293,29 +1355,29 @@ html, body, #root {
 
   /* ===== THEME: PEACH (Coral peach on warm cream — sorbet) ===== */
   .theme-peach {
-    --background: 25 50% 96%;
-    --foreground: 18 35% 12%;
+    --background: 25 35% 97%;
+    --foreground: 18 35% 10%;
 
-    --card: 25 40% 98%;
-    --card-foreground: 18 35% 12%;
+    --card: 25 35% 99%;
+    --card-foreground: 18 35% 10%;
 
-    --popover: 25 40% 98%;
-    --popover-foreground: 18 35% 12%;
+    --popover: 25 35% 99%;
+    --popover-foreground: 18 35% 10%;
 
     --primary: 18 75% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 22 35% 88%;
-    --secondary-foreground: 18 35% 12%;
+    --secondary: 22 28% 93%;
+    --secondary-foreground: 18 35% 10%;
 
-    --muted: 22 25% 90%;
-    --muted-strong: 22 28% 82%;
-    --muted-foreground: 18 25% 35%;
+    --muted: 22 22% 94%;
+    --muted-strong: 22 22% 88%;
+    --muted-foreground: 18 18% 42%;
 
-    --accent: 18 50% 88%;
-    --accent-foreground: 18 35% 12%;
+    --accent: 18 40% 90%;
+    --accent-foreground: 18 35% 10%;
 
-    --oat: 22 30% 75%;
+    --oat: 22 28% 78%;
     --oat-foreground: 18 30% 22%;
 
     --gold: 42 75% 45%;
@@ -1336,21 +1398,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 22 25% 82%;
-    --input: 22 25% 88%;
+    --border: 22 22% 88%;
+    --input: 22 22% 94%;
     --ring: 18 75% 58%;
 
-    --sidebar-background: 25 40% 93%;
-    --sidebar-foreground: 18 35% 12%;
+    --sidebar-background: 25 30% 96%;
+    --sidebar-foreground: 18 35% 10%;
     --sidebar-primary: 18 75% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 22 32% 87%;
-    --sidebar-accent-foreground: 18 35% 12%;
-    --sidebar-border: 22 25% 82%;
+    --sidebar-accent: 22 28% 92%;
+    --sidebar-accent-foreground: 18 35% 10%;
+    --sidebar-border: 22 22% 88%;
     --sidebar-ring: 18 75% 58%;
 
-    --card-inner: 25 30% 93%;
-    --card-inner-deep: 22 28% 90%;
+    --card-inner: 25 28% 96%;
+    --card-inner-deep: 22 22% 94%;
   }
 
   .dark.theme-peach {
@@ -1416,29 +1478,29 @@ html, body, #root {
 
   /* ===== THEME: ORCHID (Premium magenta-violet jewel) ===== */
   .theme-orchid {
-    --background: 280 30% 97%;
+    --background: 280 22% 97%;
     --foreground: 280 40% 10%;
 
-    --card: 280 25% 98%;
+    --card: 280 22% 99%;
     --card-foreground: 280 40% 10%;
 
-    --popover: 280 25% 98%;
+    --popover: 280 22% 99%;
     --popover-foreground: 280 40% 10%;
 
     --primary: 290 75% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 280 25% 90%;
+    --secondary: 280 22% 93%;
     --secondary-foreground: 280 40% 10%;
 
-    --muted: 280 18% 92%;
-    --muted-strong: 280 22% 84%;
-    --muted-foreground: 280 20% 35%;
+    --muted: 280 20% 94%;
+    --muted-strong: 280 20% 88%;
+    --muted-foreground: 280 14% 42%;
 
-    --accent: 200 60% 90%;
+    --accent: 200 50% 90%;
     --accent-foreground: 280 40% 10%;
 
-    --oat: 280 22% 75%;
+    --oat: 280 22% 78%;
     --oat-foreground: 280 30% 22%;
 
     --gold: 42 75% 45%;
@@ -1459,21 +1521,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 280 20% 85%;
-    --input: 280 20% 90%;
+    --border: 280 20% 88%;
+    --input: 280 20% 94%;
     --ring: 290 75% 55%;
 
-    --sidebar-background: 280 25% 94%;
+    --sidebar-background: 280 22% 96%;
     --sidebar-foreground: 280 40% 10%;
     --sidebar-primary: 290 75% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 280 25% 88%;
+    --sidebar-accent: 280 22% 92%;
     --sidebar-accent-foreground: 280 40% 10%;
-    --sidebar-border: 280 20% 85%;
+    --sidebar-border: 280 20% 88%;
     --sidebar-ring: 290 75% 55%;
 
-    --card-inner: 280 22% 94%;
-    --card-inner-deep: 280 20% 91%;
+    --card-inner: 280 22% 96%;
+    --card-inner-deep: 280 20% 94%;
   }
 
   .dark.theme-orchid {
@@ -1680,7 +1742,7 @@ html, body, #root {
      read as a real material instead of a flat div. Composes with `bg-card`
      and works in both light + dark themes. */
   .premium-surface {
-    background-color: hsl(var(--card) / 0.92);
+    background-color: hsl(var(--card) / 0.96);
     backdrop-filter: blur(12px) saturate(1.05);
     -webkit-backdrop-filter: blur(12px) saturate(1.1);
     box-shadow:
