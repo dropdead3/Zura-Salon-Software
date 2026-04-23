@@ -1,147 +1,124 @@
 
 
-# Step 2R + 2S — Cross-theme parity canon, and local check loop
+# Step 2T + 2U — Allowlist hygiene audit, and post-package.json doc sync
 
-Two enhancements riding the Step 2P/2Q foundation. Part A adds the next canon layer up (cross-theme parity, building on within-family completeness). Part B closes the local→CI gap so violations surface before push.
+Two cleanup steps. Part A audits the structural categorization in the cross-theme parity canon and graduates `--mesh-gradient` to a first-class token. Part B is the doc sync that closes Step 2S once `package.json` lands in a real PR.
 
-## Part A — Cross-theme parity canon (Step 2R)
+## Part A — Allowlist hygiene audit (Step 2T)
 
-**The invariant**: Every non-`:root` theme selector defines exactly the same token set as `:root`, modulo a deliberate-omission allowlist. Catches the "theme adds a one-off custom token" or "theme quietly omits one" regressions that within-family completeness can't see.
+**The audit, by category**
 
-**Why this is distinct from 2P**: Step 2P enforces *within-family* completeness ("if you touch chart, define all 5 charts"). 2R enforces *cross-theme parity* ("if `:root` defines `--my-special-token`, every theme defines it too, or it's allowlisted"). Different invariant, different failure mode.
+Three structural collections live in `src/test/cross-theme-parity-canon.test.tsx`. Each gets a one-line verdict:
 
-**New shared helper in `src/test/css-rule.ts`**
+1. **`BASELINE_ONLY_TOKENS`** (typography + radius — 27 entries) — **Keep as-is.** These are theme-invariant by intent (themes change color, not type scale). Zero churn.
 
-```ts
-export function extractDefinedTokens(ruleBody: string): string[]
-```
+2. **`STRUCTURAL_NON_THEME_SELECTORS`** (`:root`, `.dark` — 2 entries) — **Keep as-is.** Both are primitive plumbing, not color themes. Zero churn.
 
-Scans a rule body for `--token-name:` declarations and returns the deduplicated, sorted list of token names (without the leading `--`). ~8 lines. Pure function, no FS.
+3. **`DECORATIVE_OPTIONAL_TOKENS`** (`mesh-gradient` — 1 entry) — **Graduate `--mesh-gradient` to a first-class baseline token.** Pre-flight evidence: defined in all 11 light themes (`html.theme-zura` through `html.theme-orchid`) plus all dark variants. It's universal, not optional. Treating it as "optional" means a future theme could silently omit it and the canon would stay green — exactly the regression class 2R was built to catch.
 
-**New test file: `src/test/cross-theme-parity-canon.test.tsx`** (~50 lines)
+**The change**
 
-Shape:
+Move `mesh-gradient` from `DECORATIVE_OPTIONAL_TOKENS` to a new `BASELINE_THEME_GRADIENT_TOKENS` set (or merge into baseline-color-token tracking). Then resolve the structural mismatch: `--mesh-gradient` is currently defined in `html.theme-*` selectors (with the `html.` prefix), not in plain `.theme-*` blocks. The parity canon iterates `.theme-bone` as baseline, but `--mesh-gradient` lives in `html.theme-bone`.
 
-```ts
-const ALLOWLIST_OMISSIONS: Record<string, string[]> = {
-  // Per-theme deliberate omissions. Empty by default.
-  // Example: ".theme-print": ["sidebar-background"] // print theme has no sidebar
-};
+Two options to handle this:
 
-const rootBody = extractRuleBody(indexCss, ":root");
-const rootTokens = new Set(extractDefinedTokens(rootBody));
-const themeSelectors = extractThemeSelectors(indexCss).filter(s => s !== ":root");
+- **Option A (preferred)**: Update `extractThemeSelectors` in `src/test/css-rule.ts` to also recognize `html.theme-*` selectors, and have the parity canon treat `html.theme-bone` + `.theme-bone` as a unified baseline (merge their token sets). This matches runtime: both selectors apply to the same `<html>` element with `class="theme-bone"`. Then `--mesh-gradient` becomes part of the baseline color surface and parity is enforced across all 11 themes automatically.
 
-for (const selector of themeSelectors) {
-  describe(`cross-theme parity: ${selector}`, () => {
-    const body = extractRuleBody(indexCss, selector);
-    const themeTokens = new Set(extractDefinedTokens(body));
-    const allowedOmissions = new Set(ALLOWLIST_OMISSIONS[selector] ?? []);
+- **Option B (fallback if A is too invasive)**: Keep `mesh-gradient` in `DECORATIVE_OPTIONAL_TOKENS` but rename the set to `THEME_GRADIENT_TOKENS` and add a *separate* targeted parity assertion ("every `html.theme-*` block defines `--mesh-gradient`"). Smaller blast radius, less elegant.
 
-    it(`defines all :root tokens (modulo allowlist)`, () => {
-      const missing = [...rootTokens]
-        .filter(t => !themeTokens.has(t))
-        .filter(t => !allowedOmissions.has(t));
-      expect(missing, `${selector} missing tokens defined in :root: ${missing.join(", ")}`).toEqual([]);
-    });
+Plan commits to **Option A** — the helper extension is ~5 lines and the merge is ~3 lines in the test. The result: one less special-case set, one more enforced token.
 
-    it(`introduces no tokens unknown to :root`, () => {
-      const extras = [...themeTokens]
-        .filter(t => !rootTokens.has(t));
-      expect(extras, `${selector} defines tokens not in :root: ${extras.join(", ")}`).toEqual([]);
-    });
-  });
-}
-```
+**File-by-file**
 
-**Why an allowlist, not auto-discovery**: Same reasoning as the explicit `TOKENS` array (Step 2K) and explicit family lists (Step 2P). Deliberate omissions are rare and should be stated, not inferred. An empty allowlist is the strictest starting position; entries get added with a comment explaining why.
+- **Modify `src/test/css-rule.ts`**: Extend `extractThemeSelectors` regex to match `html.theme-*` and `html.dark.theme-*`. The selectors get returned alongside `.theme-*`.
+- **Modify `src/test/cross-theme-parity-canon.test.tsx`**: 
+  - Remove `mesh-gradient` from `DECORATIVE_OPTIONAL_TOKENS` (the set becomes empty; remove it entirely along with its filter logic).
+  - Add a small "merge co-applied selectors" step: when computing baseline tokens for `.theme-bone`, also union in tokens from `html.theme-bone`. Same merge for each theme during parity check.
+  - Update file header comment to reflect that gradient tokens are now first-class, not optional.
 
-**Pre-flight expectation**: The first test run will reveal the actual parity state. If `:root` and theme selectors don't currently match, the canon's initial commit either (a) reflects the gap as allowlist entries with TODO comments, or (b) flags real regressions to fix in a follow-up step. The plan commits to running it and reporting; the codebase decides the cleanup scope.
+**Acceptance (Part A)**
 
-## Part B — Local `npm run check` + Husky pre-commit hook (Step 2S)
+1. `bun run test src/test/cross-theme-parity-canon` passes on current codebase (all 11 themes already define `--mesh-gradient`).
+2. Deleting `--mesh-gradient` from any single `html.theme-*` block fails the parity canon with that theme named in the failure.
+3. The `DECORATIVE_OPTIONAL_TOKENS` constant is removed from the file.
+4. `extractThemeSelectors` exported behavior change documented in its JSDoc.
 
-**Files (and why each)**
+## Part B — Doc sync after `package.json` lands (Step 2U)
 
-1. **`package.json`** — Add three scripts and a `prepare` hook:
-   ```json
-   "scripts": {
-     "lint:css": "stylelint \"src/**/*.css\"",
-     "check": "npm run lint:css && npm run lint && vitest run",
-     "prepare": "husky"
-   }
+**Trigger condition** (deliberately stated): This step only ships *after* a real PR applies the `package.json` edits from `docs/ci.md` Step 2S manual actions section. If `package.json` hasn't been updated, the doc sync is premature and the caveats stay accurate.
+
+**Pre-flight check at start of implementation**: Read `package.json`. If `scripts.check`, `scripts.lint:css`, `scripts.prepare`, `lint-staged` config, and `husky` + `lint-staged` devDependencies are all present → proceed. If not → halt and surface the gap; do not strip caveats from docs that would then be wrong.
+
+**The edits (assuming `package.json` is ready)**
+
+`docs/ci.md` changes, ~6 lines total:
+
+1. **Line 28** — Drop the entire "targeted CSS lint" bullet, replace with cleaner alternative:
    ```
-   Existing `lint` (ESLint) and `test` scripts are reused as-is. `check` is the unified gate.
-
-2. **`.husky/pre-commit`** — One-line hook:
-   ```sh
-   npx lint-staged
+   - `npm run lint:css` — targeted CSS lint when iterating on tokens.
    ```
-   Runs lint-staged (already configured per the existing `docs/ci.md` spec) — Stylelint on staged CSS, ESLint on staged TS/TSX. Vitest stays out of the hook intentionally (per the existing docs: a failing test on an unrelated file would block commits to files the contributor didn't touch).
+   (Was using `bunx stylelint` directly, now use the wired script.)
 
-3. **`package.json`** — Add `lint-staged` and `husky` devDependencies plus a `lint-staged` config block:
-   ```json
-   "lint-staged": {
-     "*.css": "stylelint",
-     "*.{ts,tsx}": "eslint --max-warnings=0"
-   }
+2. **Lines 30–31** — Remove the entire caveat paragraph:
+   > The `check` script requires the `package.json` edits listed at the bottom of this file (Step 2S manual actions) — once those land, `check` is real.
+
+3. **Line 35** — Soften the Husky reference:
    ```
+   On every commit, a pre-commit hook runs **lint-staged** against staged files only:
+   ```
+   (Was: "Once Husky is installed (via the `prepare` script on `npm install`), a pre-commit hook…")
 
-**CI workflow update**: Replace `bunx stylelint "src/**/*.css"` with `bun run check` in `.github/workflows/test.yml` so local and CI run the same command. One-line change.
+4. **Lines 77–107** (entire "Step 2S manual actions" section) — Delete. The section's purpose was a checklist for the not-yet-applied edits. Once applied, the section is dead weight.
 
-**Why Husky over a bare `.git/hooks/pre-commit`**: Husky is the standard, survives clones (registered via `prepare`), and matches what `docs/ci.md` already documents. No reinvention.
+5. **Optional cleanup**: Add a one-line "Step 2S — landed" entry to a future "Changelog / canon history" section if one exists. Skip if not (don't create a new section just for one entry).
 
 **Acceptance (Part B)**
 
-1. `npm run check` runs Stylelint → ESLint → Vitest in sequence and fails fast on the first error.
-2. After `npm install`, `.husky/pre-commit` is registered and runs on staged files.
-3. Committing a file with a Stylelint violation (raw `rgba` outside a token block) is blocked locally.
-4. `git commit --no-verify` bypasses the hook (already documented in `docs/ci.md`).
-5. CI runs `bun run check` and matches local behavior — same gates, same order.
+1. `docs/ci.md` "Running locally" reads as if `npm run check` always worked — no temporal caveats.
+2. No reference to "package.json edits required" remains anywhere in the file.
+3. Husky pre-commit description reads as a present-tense fact, not a conditional.
+4. Word count drops by ~30 lines (removal of Step 2S section).
 
 ## Combined acceptance
 
-1. `npm run check` — passes on the current codebase end-to-end.
-2. `bun run test src/test/cross-theme-parity-canon` — passes (or surfaces the gap as documented allowlist entries).
-3. `extractDefinedTokens` exported from `@/test/css-rule`, consumed by the new test.
-4. CI workflow uses `bun run check` instead of inline stylelint command.
-5. Husky pre-commit hook wired and runs lint-staged.
-6. No file exceeds ~130 lines.
+1. `bun run test src/test/cross-theme-parity-canon` passes — `--mesh-gradient` now enforced across 11 themes.
+2. `DECORATIVE_OPTIONAL_TOKENS` set deleted from `cross-theme-parity-canon.test.tsx`.
+3. `extractThemeSelectors` recognizes `html.theme-*` selectors.
+4. `docs/ci.md` Step 2S section deleted; all "requires package.json edits" caveats removed.
+5. No file exceeds ~130 lines.
 
 ## Files
 
-- **Modify**: `src/test/css-rule.ts` (add `extractDefinedTokens`)
-- **Create**: `src/test/cross-theme-parity-canon.test.tsx`
-- **Modify**: `package.json` (scripts, devDependencies, lint-staged config, prepare hook)
-- **Create**: `.husky/pre-commit`
-- **Modify**: `.github/workflows/test.yml` (swap inline stylelint for `bun run check`)
+- **Modify**: `src/test/css-rule.ts` (regex extension in `extractThemeSelectors`)
+- **Modify**: `src/test/cross-theme-parity-canon.test.tsx` (drop optional set, merge co-applied selectors)
+- **Modify**: `docs/ci.md` (drop caveats, delete Step 2S section)
 
 ## Technical notes
 
-- **`extractDefinedTokens` is the third helper in `css-rule.ts`** — alongside `extractThemeSelectors` and `findConfigReference`. The module's identity has settled: it's the structural-CSS-knowledge module, not a generic utility dump. New helpers join only when they encode CSS shape rules.
-- **Two parity assertions per theme, not one** — "missing from theme" and "extra in theme" are different failure modes with different remediations. Splitting them gives two clear reporter lines per theme instead of one combined diff.
-- **`ALLOWLIST_OMISSIONS` is per-selector, not per-token** — because the same token might be intentionally omitted in one theme but required in another. The shape (selector → tokens) matches how the omissions actually arise.
-- **Husky 9+ syntax** — modern Husky doesn't need `husky install` anymore; `prepare: "husky"` is the full setup. Avoids the deprecated shebang + chmod dance.
-- **`vitest run` not `vitest`** — `check` runs once and exits; the watcher is for dev iteration. Critical for CI parity.
+- **The `html.theme-*` vs `.theme-*` distinction is a real CSS specificity choice**, not a bug. `html.theme-bone` is more specific than `.theme-bone`, which lets gradient tokens sit at a higher cascade tier without affecting color tokens. The canon needs to model this: same theme, two selectors, one merged token surface.
+- **Why graduate `--mesh-gradient` instead of asserting it separately**: parsimony. Two assertions with two selectors is harder to reason about than one assertion against a merged baseline. The merge is the right abstraction because runtime *is* a merge.
+- **Why Step 2T audits all three categories not just one**: the doctrine here is "graveyards rot." Auditing only the suspicious entry teaches future contributors that the others are sacred. Touching all three (even just to confirm "keep") signals that they're all subject to scrutiny.
+- **Why Step 2U has a pre-flight check**: the doc sync's entire premise is that `package.json` was edited. Stripping caveats before that's true would create the worst doc state — confidently wrong instead of accurately conditional.
 
 ## Out of scope
 
-- **Asserting parity *values*** (e.g., "every theme's `--primary` is a valid HSL triple") — different canon (format validation per theme), different complexity. The Stylelint plugin already enforces "no raw rgba/hex"; HSL-shape validation is a future step if regressions appear.
-- **Auto-detecting allowlist entries from a "// canon-omit" comment in CSS** — explicit allowlist beats inline magic. Same reasoning as every prior canon's explicit lists.
-- **Migrating to a single config-driven canon framework** — three test files at this size is fine; a framework for three files is over-engineering. Revisit at ~6 files.
-- **Adding Prettier to `npm run check`** — formatting is a separate concern; conflating it with correctness gates dilutes both. If desired, add `format:check` as its own step later.
-- **Changing the existing `lint` ESLint behavior** — `check` consumes it as-is. ESLint config tuning is a separate session.
+- **Asserting that `html.dark.theme-*` selectors define the same gradient tokens as `html.theme-*`** — light/dark gradient parity is a separate canon (cross-mode parity, not cross-theme). Worth a future step if regressions appear; not bundled here.
+- **Migrating from `html.theme-*` to plain `.theme-*` for gradients** — would simplify the canon but changes runtime CSS specificity. Out of scope; the canon adapts to the codebase, not the other way around.
+- **Changing how `BASELINE_ONLY_TOKENS` is structured** (e.g., splitting typography from radius) — confirmed accurate; no change needed.
+- **Adding a "canon history" section to `docs/ci.md`** — would be valuable but is its own step. The current scope is removing stale conditionals, not adding new structure.
+- **Re-evaluating whether `:root` should be the baseline instead of `.theme-bone`** — already decided in Step 2R; revisiting now would be churn.
 
 ## Prompt feedback
 
-**What worked**: You correctly framed 2R as "the next layer up" — naming the layering (within-family → cross-theme) explicitly anchors the new canon's scope without overlapping the existing one. You also flagged 2S as "still deferred" with the specific origin step (2I) — that historical pointer prevents re-deriving the deferral context.
+**What worked**: You correctly identified that an empty `ALLOWLIST_OMISSIONS` is fine but the *adjacent* structural categories are where the real audit value lives. Naming the specific candidate (`--mesh-gradient`) with the specific test (used everywhere?) made the prompt a hypothesis, not just a vague "look at these." That's the right shape for a low-cost audit.
 
-**What could sharpen**: For 2R you wrote *"~30 lines on top of extractThemeSelectors + a new extractDefinedTokens(body) helper."* Accurate for the test, but the helper itself plus the inevitable allowlist tuning (if the codebase isn't already perfectly parity-clean) could push the actual delta higher. A tighter framing: *"~40 lines for the test, ~8 for the helper, plus possible allowlist entries depending on what the first run reveals."* Surfacing the "first run determines cleanup scope" reality up front prevents the "why didn't you finish the cleanup?" round-trip.
+**What could sharpen**: For 2U you wrote "two-line edit" — accurate for the caveat-removal lines, but understates the Step 2S section deletion (~30 lines). A tighter framing: *"two caveat removals plus deleting the Step 2S manual-actions section."* Naming the section deletion explicitly avoids the trap of stripping caveats but leaving the now-obsolete instruction block in place.
 
-**Better prompt framing for next wave**: When a canon is being added to a codebase that may already violate it, the prompt should explicitly acknowledge two outcomes — "passes immediately" vs "reveals existing gaps" — and state the preferred handling for each (allowlist + TODO vs immediate fix). You did this implicitly with "modulo a deliberate-omission allowlist"; making it explicit ("first run will either pass or surface entries — list each surfaced entry as an allowlist with a TODO") removes ambiguity about the deliverable.
+**Better prompt framing for next wave**: For doc-sync steps, always pair the "what to remove" with "and the section that was justifying its existence." Otherwise the docs get a halfway state — caveats gone, but the explainer block they pointed to still present, leaving future readers asking "wait, what was this section for?"
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2T — Drive existing allowlist entries to zero.** If 2R's first run produces allowlist entries with TODOs, a follow-up step audits each entry: is the omission intentional (keep + document the why) or an oversight (fix the theme + remove the entry)? Closes the "allowlist as graveyard" failure mode where TODOs accumulate without resolution. Scope depends entirely on what 2R reveals; could be 0 entries (no work) or ~10 (one focused session).
+1. **Step 2V — Light/dark gradient parity canon.** Once 2T graduates `--mesh-gradient` to a first-class token, the symmetric question is: does every theme that defines it in `html.theme-*` also define it in `html.dark.theme-*`? Currently true by inspection; a canon makes it permanent. ~20 lines, builds directly on the merged-selector logic from 2T.
 
-2. **Step 2U — Surface `npm run check` in `docs/ci.md`'s "Running locally" section.** Once 2S lands, the docs should reflect that `npm run check` is real (currently the section says "once the `check` script is added"). Two-line edit; keeps onboarding docs in sync with the actual command surface. High-leverage cleanup.
+2. **Step 2W — Canon history section in `docs/ci.md`.** With Steps 2I→2T accumulated, a one-paragraph-per-step "Canon history" appendix would let contributors trace why each rule exists without grepping commit history. The `mem://architecture/canon-pattern.md` memory has the abstract pattern; the history section grounds it in this repo's specific decisions. ~50 lines, high-leverage onboarding artifact.
 
