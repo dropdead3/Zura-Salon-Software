@@ -1,60 +1,91 @@
 
 
-# Dark-mode hover fill — lighter surface + primary tint
+# Step 2E — Unify every scrollbar surface to the new canon
 
-Right now `.hover-lift:hover` only changes `box-shadow` + `border-color`. The card's **fill** doesn't change, so in dark mode hovering a card just adds a drop shadow — the surface itself reads as inert. We want the fill to come up a notch and pick up a whisper of primary.
+The global native scrollbar got the premium treatment in Step 2D, but three other scrollbar systems in the codebase still use their own (older, hardcoded, or off-palette) colors. When you scroll the sidebar nav, a sidebar popover flyout, a dropdown menu, or a `PremiumFloatingPanel` drawer body, you get a different thumb than when you scroll the page — same product, inconsistent chrome.
+
+## What's inconsistent today
+
+| Surface | Mechanism | Current thumb | Problem |
+|---|---|---|---|
+| Sidebar nav, popovers, dropdowns, drawers (via Radix `ScrollArea`) | `tokens.scrollbar.thumb` | `bg-foreground/15 → foreground/30` on hover | Different token family (`--foreground`) than page scrollbars (`--muted-foreground`). In dark mode reads as a harsher white sliver. |
+| Anywhere using `.scrollbar-thin` | CSS utility | `rgba(0,0,0,0.15)` hardcoded | Invisible in dark mode. No theme response. |
+| Anywhere using `.scrollbar-minimal` | CSS utility | `rgba(0,0,0,0.15)` hardcoded | Same as above. |
+| Duplicate Firefox rule at `index.css:2682-2688` | `*:hover` | `rgba(128,128,128,0.35)` | Overrides the themed Firefox rule 40 lines above it — dead code that blocks theme colors in Firefox. |
+
+Everything should resolve to the same two-state color system we just shipped:
+- **Idle:** transparent
+- **Hover:** `hsl(var(--muted-foreground) / 0.25)`
+- **Hover-on-thumb / active:** `hsl(var(--muted-foreground) / 0.45)` or `primary / 0.5`
 
 ## The fix
 
-Extend `.hover-lift:hover` (scoped to `.dark` only — light mode stays as-is) so the card fill brightens slightly and gains a primary-tinted overlay.
+### 1. `src/lib/design-tokens.ts` — update `tokens.scrollbar.thumb`
 
-### File: `src/index.css` (around line 1702)
+Swap the foreground-based colors for muted-foreground, matching the native rules. The `group-hover/scroll` opacity fade stays (it's what gives ScrollArea its "appears on hover" choreography) — we just align the color family.
 
-Add a dark-mode-specific rule right after the existing `.hover-lift:hover` block:
-
-```css
-.hover-lift:hover {
-  box-shadow: var(--elevation-2);
-  border-color: hsl(var(--primary) / 0.3);
-}
-
-/* Dark mode only: fill comes up ~3% and picks up a whisper of primary.
-   Layered gradient = flat lighten + primary wash, composited over bg-card. */
-.dark .hover-lift:hover {
-  background-image:
-    linear-gradient(hsl(var(--primary) / 0.04), hsl(var(--primary) / 0.04)),
-    linear-gradient(hsl(var(--foreground) / 0.03), hsl(var(--foreground) / 0.03));
-  transition: box-shadow 220ms cubic-bezier(0.32, 0.72, 0, 1),
-              border-color 220ms cubic-bezier(0.32, 0.72, 0, 1),
-              background-image 220ms cubic-bezier(0.32, 0.72, 0, 1);
-}
+```ts
+scrollbar: {
+  track: 'flex touch-none select-none bg-transparent opacity-0 transition-opacity duration-700 ease-in-out group-hover/scroll:opacity-100',
+  trackV: 'h-full w-2.5 border-l-[3px] border-l-transparent',
+  trackH: 'h-2.5 flex-col border-t-[3px] border-t-transparent',
+  // Was: bg-foreground/15 hover:bg-foreground/30
+  thumb: 'relative flex-1 rounded-full bg-muted-foreground/25 hover:bg-muted-foreground/45 active:bg-primary/50 transition-colors duration-[180ms]',
+},
 ```
 
-### Why this shape
+This ripples to every Radix `ScrollArea` — which is what backs the sidebar popover flyouts (`SidebarPopoverContent`), dropdown menus that overflow, Command menu results, and drawer body scrolls.
 
-- **`background-image` over `background-color`** — every `.hover-lift` consumer already sets `bg-card` (or `premium-surface` which sets `background-color` directly). Overriding `background-color` on hover would either fight Tailwind specificity or erase `premium-surface`'s translucent base. Stacking a pair of linear gradients composites cleanly on top of whatever base the card brings.
-- **Two stacked gradients** — the `foreground/3%` layer is the "lighter fill" (neutral lift), the `primary/4%` layer is the theme wash. Stacked they read as a warm, subtly branded hover, not a flat color swap.
-- **Dark-only (`.dark .hover-lift:hover`)** — light mode's fill already shifts perceptibly from the shadow + border tint; adding a wash there would muddy it. The problem is specifically dark-mode inertness.
-- **`transition` repeated** — needed so `background-image` animates in, not snaps.
+### 2. `src/index.css` — rewrite `.scrollbar-thin` and `.scrollbar-minimal` to match canon
 
-### Values tuned for calm
+Replace the hardcoded `rgba` values with the same token-driven hover-reveal pattern as the global scrollbar. Keep the class names (consumers depend on them) and keep their distinct widths (4px minimal, 6px thin, 8px default).
 
-- `foreground/3%` lift: barely perceptible in isolation, but enough to separate the hovered card from its siblings.
-- `primary/4%` tint: lower than the `primary/30%` border tint so the fill reads as "theme present," not "theme loud."
-- Combined effect on a `bg-card` dark surface (~11% L): card fills brighten to roughly ~14% L with a violet undertone. Reads premium, not gamer.
+```css
+/* .scrollbar-minimal — 4px, used in tight contexts */
+.scrollbar-minimal::-webkit-scrollbar { width: 4px; height: 4px; }
+.scrollbar-minimal::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-minimal::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.scrollbar-minimal:hover::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.25);
+}
+.scrollbar-minimal:hover::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.45);
+}
+.scrollbar-minimal {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scrollbar-minimal:hover {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+}
+
+/* .scrollbar-thin — 6px, used in StylistLevelsEditor etc. */
+/* Same pattern, 6px width */
+```
+
+(`.scrollbar-hide` stays untouched — it's intentionally "no scrollbar at all" for pill rails.)
+
+### 3. `src/index.css` — delete the duplicate Firefox block
+
+Lines 2682-2688 redefine `*` and `*:hover` with `rgba(128,128,128,0.35)`, stepping on the themed Firefox rule at 2631-2638. Delete this block. The earlier themed rule (from Step 2D) handles Firefox correctly.
 
 ## Acceptance
 
-1. In dark mode, hovering any dashboard card (Operations Hub, Settings, Analytics KPIs, etc.) brightens its fill slightly and overlays a whisper of primary (violet).
-2. Light mode hover is unchanged — still just shadow + border tint.
-3. The transition animates in/out over 220ms; no snap, no flash.
-4. `premium-surface` cards (glass tier) keep their frosted base — the hover wash sits *on top* of the translucent card, not replacing it.
-5. Reduced-motion users (existing `.hover-lift` override at line 1830) still get instant hover, no animation.
+1. Scrolling the sidebar nav, a sidebar popover flyout, a dropdown menu, the command palette, or a `PremiumFloatingPanel` drawer body now shows a thumb in the same color family as scrolling the main page.
+2. In dark mode, Radix `ScrollArea` thumbs no longer read as a bright-white sliver — they read as a soft muted thumb matching the page.
+3. `.scrollbar-thin` (StylistLevelsEditor, any other consumer) is visible in both light and dark mode.
+4. Firefox hover color in all surfaces resolves to `--muted-foreground`, not hardcoded gray.
+5. `.scrollbar-hide` still hides scrollbars completely (pill rails unchanged).
+6. No new rules; no token sprawl — two edits (`tokens.scrollbar.thumb`, two utility rewrites, one deletion).
 
 ## Out of scope
 
-- Light-mode hover fill adjustment (looks correct today).
-- Touching `premium-card` glow, `.card-glow`, or any other non-`hover-lift` hover classes.
-- Per-theme tinting beyond what `--primary` already resolves to (Zura/Cream/Rose/Sage/Ocean/Ember/Noir themes inherit automatically).
-- The `PlatformCard` hover in `platform-card-hover` — that's a separate utility for platform-side surfaces and intentionally distinct.
+- `ScrollBar` component structure in `src/components/ui/scroll-area.tsx` — untouched.
+- Changing scrollbar widths — 4/6/8px tiers preserved.
+- Overlay/auto-hide behavior on macOS — system-governed, not ours to fight.
+- Adding `prefers-reduced-motion` to these transitions — the 180ms fade is already imperceptible; not worth the extra rules.
 
