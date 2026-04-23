@@ -72,6 +72,46 @@ function readGenericLocalTheme(): ColorTheme {
 // before any org context resolves). Once an org loads, it will override.
 applyTheme(readGenericLocalTheme());
 
+// Optimistic intent lock window (ms). During this window after a user click,
+// the DOM-sync effect will refuse to revert <html> back to a stale DB value
+// that disagrees with the user's most recent intent.
+const OPTIMISTIC_INTENT_LOCK_MS = 3000;
+
+// Track the user's most recent theme click across hook instances. This is
+// module-scoped on purpose: multiple `useColorTheme` consumers (settings
+// picker + DashboardLayout) need to share the same intent so a competing
+// in-flight refetch in instance B can't undo a click made in instance A.
+const lastUserIntent: { theme: ColorTheme | null; orgId: string | null; at: number } = {
+  theme: null,
+  orgId: null,
+  at: 0,
+};
+
+// Self-heal latch: only attempt the one-shot DB repair once per (org, session)
+// so we don't spam writes if the DB legitimately holds 'bone'.
+const selfHealLatchedFor = new Set<string>();
+
+const isDev =
+  typeof import.meta !== 'undefined' &&
+  typeof (import.meta as { env?: { DEV?: boolean } }).env?.DEV === 'boolean'
+    ? (import.meta as { env: { DEV: boolean } }).env.DEV
+    : false;
+
+function logThemeIntegrity(
+  orgId: string | undefined | null,
+  source: 'db' | 'org-cache' | 'generic',
+  theme: ColorTheme,
+) {
+  if (!isDev) return;
+  // eslint-disable-next-line no-console
+  console.debug('[theme]', {
+    orgId: orgId ?? null,
+    source,
+    theme,
+    htmlClass: document.documentElement.className,
+  });
+}
+
 export function useColorTheme() {
   const orgId = useSettingsOrgId();
   const queryClient = useQueryClient();
@@ -90,12 +130,16 @@ export function useColorTheme() {
   //  3. Else (no org context yet) fall back to the generic pre-paint hint.
   const dbTheme = migrateLegacyTheme(dbSettings?.theme as string | undefined);
   let colorTheme: ColorTheme;
+  let resolvedSource: 'db' | 'org-cache' | 'generic';
   if (dbTheme) {
     colorTheme = dbTheme;
+    resolvedSource = 'db';
   } else if (orgId) {
     colorTheme = readOrgLocalTheme(orgId) ?? 'zura';
+    resolvedSource = 'org-cache';
   } else {
     colorTheme = readGenericLocalTheme();
+    resolvedSource = 'generic';
   }
 
   // Latch so legacy-key migration runs at most once per (org, session).
@@ -118,22 +162,80 @@ export function useColorTheme() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dbLoaded, dbTheme, dbSettings?.theme, orgId]);
 
-  // Apply the resolved theme to DOM. Pass orgId so the right scoped cache is
-  // updated.
+  // One-shot DB self-heal: if the DB resolved to 'bone' but the org-scoped
+  // local cache already holds a different (user-chosen) theme, the previous
+  // click(s) never reached the DB. Repair once per (org, session).
   useEffect(() => {
+    if (!dbLoaded || !orgId) return;
+    if (selfHealLatchedFor.has(orgId)) return;
+    const localChoice = readOrgLocalTheme(orgId);
+    if (dbTheme === 'bone' && localChoice && localChoice !== 'bone') {
+      selfHealLatchedFor.add(orgId);
+      if (isDev) {
+        // eslint-disable-next-line no-console
+        console.debug('[theme] self-heal', { orgId, dbTheme, localChoice });
+      }
+      queryClient.setQueryData(queryKey, { theme: localChoice });
+      updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: localChoice } });
+    } else {
+      selfHealLatchedFor.add(orgId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbLoaded, dbTheme, orgId]);
+
+  // Apply the resolved theme to DOM. Pass orgId so the right scoped cache is
+  // updated. Honor the optimistic intent lock so an in-flight refetch can't
+  // revert <html> back to the prior DB value within the lock window.
+  useEffect(() => {
+    const intent = lastUserIntent;
+    const now = Date.now();
+    const lockActive =
+      intent.theme !== null &&
+      intent.orgId === (orgId ?? null) &&
+      now - intent.at < OPTIMISTIC_INTENT_LOCK_MS;
+
+    if (lockActive && colorTheme !== intent.theme) {
+      // Stale resolution lost the race against the user's recent click.
+      // Re-pin the DOM and cache to the user's intent and bail.
+      applyTheme(intent.theme as ColorTheme, orgId);
+      queryClient.setQueryData(queryKey, { theme: intent.theme });
+      logThemeIntegrity(orgId, 'org-cache', intent.theme as ColorTheme);
+      return;
+    }
+
     applyTheme(colorTheme, orgId);
-  }, [colorTheme, orgId]);
+    logThemeIntegrity(orgId, resolvedSource, colorTheme);
+  }, [colorTheme, orgId, resolvedSource, queryClient, queryKey]);
 
   const setColorTheme = useCallback((theme: ColorTheme) => {
+    // 0. Record user intent so the DOM-sync effect won't revert this click
+    // when a stale in-flight refetch resolves.
+    lastUserIntent.theme = theme;
+    lastUserIntent.orgId = orgId ?? null;
+    lastUserIntent.at = Date.now();
+
     // 1. Instant DOM + scoped localStorage update
     applyTheme(theme, orgId);
 
-    // 2. Optimistic query cache update (all consumers reactively get new value)
+    // 2. Cancel any in-flight refetch that could resolve with the prior value
+    //    and overwrite our optimistic cache write.
+    queryClient.cancelQueries({ queryKey });
+
+    // 3. Optimistic query cache update (all consumers reactively get new value)
     queryClient.setQueryData(queryKey, { theme });
 
-    // 3. Persist to DB — but skip the write if DB already matches (no-op guard)
+    // 4. Persist to DB — skip if DB already matches (no-op guard).
     if (orgId && theme !== dbTheme) {
-      updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme } });
+      updateSetting.mutate(
+        { key: SITE_SETTINGS_KEY, value: { theme } },
+        {
+          onSuccess: () => {
+            // Re-confirm cache to the user's intent in case any concurrent
+            // refetch landed between steps 3 and the PATCH completion.
+            queryClient.setQueryData(queryKey, { theme });
+          },
+        },
+      );
     }
   }, [orgId, queryClient, queryKey, updateSetting, dbTheme]);
 
