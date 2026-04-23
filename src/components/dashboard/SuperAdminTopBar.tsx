@@ -70,6 +70,12 @@ interface SuperAdminTopBarProps {
   onSearchClick: () => void;
   isSearchOpen?: boolean;
   searchBarRef?: React.RefObject<HTMLButtonElement>;
+  /**
+   * When true, the top bar renders as the horizontal leg of the L-shaped
+   * dashboard chrome — no own positioning, surface, border, or radius
+   * (the chrome wrapper owns those). Just the inner three-zone content.
+   */
+  chromeMode?: boolean;
   // State
   isAdmin: boolean;
   isPlatformUser: boolean;
