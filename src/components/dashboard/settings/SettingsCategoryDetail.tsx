@@ -4,6 +4,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -548,7 +549,12 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const { data: business } = useBusinessSettings();
-  const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '', business?.id);
+  const { effectiveOrganization } = useOrganizationContext();
+  const { syncSplashToTheme } = useAutoSyncTerminalSplash(
+    business?.logo_dark_url,
+    business?.business_name || '',
+    effectiveOrganization?.id,
+  );
 
   const capacity = useBusinessCapacity();
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
