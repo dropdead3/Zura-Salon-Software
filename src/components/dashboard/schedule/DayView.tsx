@@ -280,11 +280,13 @@ function AppointmentCard({
   const pixelHeight = parseInt(style.height);
   const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel, pixelHeight);
 
-  // Seam-safe overlap column layout — adjacent cards butt up flush.
-  const { left: overlapLeft, width: overlapWidth, isFirstOverlapCol: isFirstCol, isLastOverlapCol: isLastCol, isOverlapping } =
+  // Overlap column layout — fully rounded cards that visually "kiss" via
+  // a small width inset into the right neighbor. zIndex stacks leftmost
+  // on top so the rounded right edge tucks over the next card's stroke.
+  const { left: overlapLeft, width: overlapWidth, isFirstOverlapCol: isFirstCol, isLastOverlapCol: isLastCol, isOverlapping, zIndex: overlapZ } =
     getOverlapColumnLayout(columnIndex, totalOverlapping);
 
-  // For overlapping cards: use seam-safe equal-width columns.
+  // For overlapping cards: keep the kiss width.
   // For single cards: keep the hover-shrink affordance for the right-edge grip.
   const cardWidth = isDragOverlay
     ? undefined
@@ -294,13 +296,16 @@ function AppointmentCard({
         ? `calc(${100 / totalOverlapping * 0.7}%)`
         : overlapWidth;
   const cardLeft = overlapLeft;
+  // Selected/hovered cards float above their overlap-stack peers so the
+  // selection ring stays unobscured.
+  const effectiveZ = isSelected ? 30 : overlapZ;
 
   return (
     <div
       ref={!isDragOverlay ? setNodeRef : undefined}
       {...(!isDragOverlay ? { ...attributes, ...listeners } : {})}
       className={cn(
-        'absolute z-10',
+        'absolute',
         isDragging && !isDragOverlay && 'opacity-30',
         isDragOverlay && 'shadow-2xl ring-2 ring-primary scale-105 z-50',
       )}
@@ -309,6 +314,7 @@ function AppointmentCard({
         ...(!isDragOverlay ? {
           left: cardLeft,
           width: cardWidth,
+          zIndex: effectiveZ,
           transition: 'width 200ms ease-out',
         } : {}),
       }}
