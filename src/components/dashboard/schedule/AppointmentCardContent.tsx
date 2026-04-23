@@ -117,13 +117,50 @@ function CardOverlays({
 
   return (
     <>
+      {/* Subtle top-down sheen — adds depth without shifting category color */}
+      <div
+        className="absolute inset-0 pointer-events-none z-[1]"
+        style={{
+          background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)',
+        }}
+      />
+      {/* Inner highlight ring — "lit edge" for premium dimension */}
+      <div
+        className="absolute inset-0 pointer-events-none z-[2] rounded-[10px]"
+        style={{
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+        }}
+      />
+      {/* Left accent spine — uses category text color when available */}
+      {useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
+        <div
+          className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-sm pointer-events-none z-[3]"
+          style={{
+            backgroundColor: catColor.text,
+            opacity: 0.7,
+          }}
+        />
+      )}
       {isNoShow && (
-        <div className="absolute inset-0 bg-destructive/20 z-10 pointer-events-none" />
+        <>
+          <div className="absolute inset-0 bg-destructive/12 z-10 pointer-events-none" />
+          <span className="absolute top-1.5 left-1.5 h-2 w-2 rounded-full bg-destructive ring-1 ring-background z-20 pointer-events-none" />
+        </>
       )}
       {isCancelled && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-current opacity-50" />
-        </div>
+        <>
+          {/* Diagonal hatch pattern — reads as "cancelled" faster than dim alone */}
+          <div
+            className="absolute inset-0 pointer-events-none z-10"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 7px)',
+              opacity: 0.06,
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-current opacity-50" />
+          </div>
+        </>
       )}
       {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
