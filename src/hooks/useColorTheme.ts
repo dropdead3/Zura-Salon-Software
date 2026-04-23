@@ -171,9 +171,9 @@ export const colorThemes = [
     name: 'Zura',
     description: 'Brand violet & purple',
     lightPreview: {
-      bg: 'hsl(260 25% 95%)',
-      accent: 'hsl(260 20% 88%)',
-      primary: 'hsl(270 70% 55%)',
+      bg: 'hsl(265 45% 93%)',
+      accent: 'hsl(265 45% 84%)',
+      primary: 'hsl(270 75% 52%)',
     },
     darkPreview: {
       bg: 'hsl(230 25% 5%)',
@@ -201,9 +201,9 @@ export const colorThemes = [
     name: 'Rosewood',
     description: 'Rich rose & burgundy',
     lightPreview: {
-      bg: 'hsl(350 22% 95%)',
-      accent: 'hsl(350 25% 85%)',
-      primary: 'hsl(345 55% 42%)',
+      bg: 'hsl(350 45% 93%)',
+      accent: 'hsl(350 45% 84%)',
+      primary: 'hsl(345 60% 46%)',
     },
     darkPreview: {
       bg: 'hsl(345 18% 6%)',
@@ -216,9 +216,9 @@ export const colorThemes = [
     name: 'Sage',
     description: 'Calming mint green',
     lightPreview: {
-      bg: 'hsl(145 25% 96%)',
-      accent: 'hsl(145 25% 82%)',
-      primary: 'hsl(145 45% 42%)',
+      bg: 'hsl(145 32% 92%)',
+      accent: 'hsl(145 32% 82%)',
+      primary: 'hsl(145 50% 38%)',
     },
     darkPreview: {
       bg: 'hsl(145 12% 6%)',
@@ -246,9 +246,9 @@ export const colorThemes = [
     name: 'Marine',
     description: 'Deep navy & gold',
     lightPreview: {
-      bg: 'hsl(218 35% 97%)',
-      accent: 'hsl(218 60% 92%)',
-      primary: 'hsl(218 100% 56%)',
+      bg: 'hsl(218 55% 94%)',
+      accent: 'hsl(218 65% 86%)',
+      primary: 'hsl(218 100% 52%)',
     },
     darkPreview: {
       bg: 'hsl(220 50% 7%)',
@@ -261,9 +261,9 @@ export const colorThemes = [
     name: 'Cognac',
     description: 'Bourbon amber & leather',
     lightPreview: {
-      bg: 'hsl(28 25% 93%)',
-      accent: 'hsl(28 22% 82%)',
-      primary: 'hsl(28 70% 42%)',
+      bg: 'hsl(28 50% 91%)',
+      accent: 'hsl(28 50% 80%)',
+      primary: 'hsl(28 75% 40%)',
     },
     darkPreview: {
       bg: 'hsl(24 18% 6%)',
@@ -276,9 +276,9 @@ export const colorThemes = [
     name: 'Noir',
     description: 'Pure monochrome minimal',
     lightPreview: {
-      bg: 'hsl(0 0% 96%)',
-      accent: 'hsl(0 0% 88%)',
-      primary: 'hsl(0 0% 8%)',
+      bg: 'hsl(0 0% 92%)',
+      accent: 'hsl(0 0% 80%)',
+      primary: 'hsl(0 0% 6%)',
     },
     darkPreview: {
       bg: 'hsl(0 0% 4%)',
@@ -291,9 +291,9 @@ export const colorThemes = [
     name: 'Neon',
     description: 'Hot pink & black',
     lightPreview: {
-      bg: 'hsl(330 15% 97%)',
-      accent: 'hsl(330 35% 90%)',
-      primary: 'hsl(330 95% 55%)',
+      bg: 'hsl(330 55% 94%)',
+      accent: 'hsl(330 60% 84%)',
+      primary: 'hsl(330 95% 52%)',
     },
     darkPreview: {
       bg: 'hsl(0 0% 4%)',
@@ -321,9 +321,9 @@ export const colorThemes = [
     name: 'Peach',
     description: 'Coral peach & warm cream',
     lightPreview: {
-      bg: 'hsl(25 50% 96%)',
-      accent: 'hsl(18 50% 88%)',
-      primary: 'hsl(18 75% 58%)',
+      bg: 'hsl(22 75% 92%)',
+      accent: 'hsl(18 70% 82%)',
+      primary: 'hsl(18 80% 55%)',
     },
     darkPreview: {
       bg: 'hsl(18 25% 6%)',
