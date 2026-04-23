@@ -248,7 +248,8 @@ function WeekAppointmentCard({
         assistantNamesMap={assistantNamesMap}
         assistantProfilesMap={assistantProfilesMap}
         categoryColors={categoryColors}
-        
+        isFirstCol={isFirstCol}
+        isLastCol={isLastCol}
         showStylistBadge
         showClientPhone={false}
         showClientAvatar={false}
