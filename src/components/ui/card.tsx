@@ -13,10 +13,17 @@ type CardProps = React.HTMLAttributes<HTMLDivElement> & {
    * If omitted, Card will infer glow from common feature classnames (e.g. `premium-card`).
    */
   glow?: boolean;
+  /**
+   * Material tier (Apple-style vibrancy hierarchy):
+   * - 'glass' (default): translucent + backdrop blur. Top-level page containers, hero KPIs.
+   * - 'solid': opaque bg-card. Nested cards inside a glass parent.
+   * - 'flat': bg-muted/40. Tertiary list rows, breakdown items, stat chips.
+   */
+  material?: 'glass' | 'solid' | 'flat';
 };
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, interactive, glow, ...props }, ref) => {
+  ({ className, interactive, glow, material = 'glass', ...props }, ref) => {
     const inferredInteractive =
       interactive ??
       (!!props.onClick ||
@@ -24,14 +31,22 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const inferredGlow =
       glow ?? (typeof className === 'string' && (className.includes('premium-card') || className.includes('feature-card')));
 
+    const materialClass =
+      material === 'solid'
+        ? 'bg-card text-card-foreground'
+        : material === 'flat'
+          ? 'bg-muted/40 text-card-foreground border-border/40'
+          : 'bg-card text-card-foreground premium-surface';
+
     return (
       <div
         ref={ref}
         className={cn(
           // Premium material: rounded glass + specular top-edge stroke (Wave 1 depth)
-          "rounded-xl border bg-card text-card-foreground premium-surface",
-          inferredInteractive && "hover-lift",
-          inferredGlow && "card-glow",
+          'rounded-xl border',
+          materialClass,
+          inferredInteractive && 'hover-lift',
+          inferredGlow && 'card-glow',
           className
         )}
         {...props}
