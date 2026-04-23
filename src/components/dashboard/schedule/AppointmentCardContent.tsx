@@ -646,16 +646,33 @@ export function AppointmentCardContent({
     );
   }
 
+  // The 4px category accent — rendered as an inset strip element so it
+  // doesn't push card content or create a physical edge that prevents
+  // overlap cards from butting up flush. Suppressed on inner overlap
+  // columns so only the leftmost card in an overlap group shows it.
+  const showAccentStrip = !displayGradient && (!isOverlapping || isFirstOverlapCol);
+  const accentColor = useMemo(() => {
+    if (!showAccentStrip) return null;
+    if (useCategoryColor && isDark && darkStyle) return darkStyle.accent;
+    if (useCategoryColor) {
+      const boostedBg = boostPaleCategoryColor(catColor.bg);
+      return deriveLightModeColor(boostedBg).stroke;
+    }
+    return null;
+  }, [showAccentStrip, useCategoryColor, isDark, darkStyle, catColor]);
+
   const gridContent = (
     <div
       className={cn(
-        'h-full w-full cursor-pointer transition-all duration-200 ease-out overflow-hidden group',
+        'h-full w-full cursor-pointer transition-all duration-200 ease-out overflow-hidden group relative',
         roundingClass,
         'hover:shadow-md hover:z-20 hover:brightness-[1.08]',
-        !displayGradient && 'border-l-4',
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
+        // For status-colored (non-category) cards, show left accent only on
+        // single cards or the first column of an overlap group.
+        !useCategoryColor && !displayGradient && (!isOverlapping || isFirstOverlapCol) && 'border-l-4',
         isCancelled && 'opacity-60',
         isNoShow && 'ring-2 ring-destructive ring-inset',
         isSelected && 'ring-2 ring-primary/60 ring-inset',
@@ -665,6 +682,14 @@ export function AppointmentCardContent({
       style={cardStyle}
       onClick={onClick}
     >
+      {/* Inset category accent strip — replaces border-left so cards can butt up flush */}
+      {showAccentStrip && accentColor && (
+        <div
+          className="absolute top-0 bottom-0 left-0 w-1 z-[1] pointer-events-none"
+          style={{ backgroundColor: accentColor }}
+        />
+      )}
+
       <CardOverlays
         appointment={appointment}
         displayGradient={displayGradient}
