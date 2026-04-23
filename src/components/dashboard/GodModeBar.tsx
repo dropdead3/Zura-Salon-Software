@@ -60,9 +60,9 @@ export function GodModeBar() {
         detailsHoverBg: 'hsl(var(--primary) / 0.25)',
       }
     : {
-        // Light: clean white base with a soft primary accent wash + hairline.
+        // Light: clean white base with soft primary wash — slightly translucent for glass effect.
         background:
-          'linear-gradient(to right, hsl(0 0% 100%), hsl(var(--primary) / 0.45), hsl(0 0% 100%)), hsl(0 0% 100%)',
+          'linear-gradient(to right, hsl(0 0% 100% / 0.82), hsl(var(--primary) / 0.42), hsl(0 0% 100% / 0.82))',
         borderBottomColor: 'hsl(var(--primary) / 0.35)',
         boxShadow: '0 2px 12px -4px hsl(var(--primary) / 0.25)',
         iconColor: 'hsl(0 0% 8%)',
