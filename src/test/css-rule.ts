@@ -80,6 +80,25 @@ export function extractThemeSelectors(cssSource: string): string[] {
 }
 
 /**
+ * Extracts every `--token-name:` declaration from a rule body and returns the
+ * deduplicated, sorted list of token names (without the leading `--`). Pure;
+ * caller passes the body extracted via `extractRuleBody`.
+ *
+ * Used by the cross-theme parity canon to compare a theme's token set against
+ * `:root`'s token set. Sorting normalizes set comparisons so test failure
+ * messages are stable and diffable.
+ */
+export function extractDefinedTokens(ruleBody: string): string[] {
+  const declRe = /--([\w-]+)\s*:/g;
+  const seen = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = declRe.exec(ruleBody)) !== null) {
+    seen.add(m[1]);
+  }
+  return [...seen].sort();
+}
+
+/**
  * Shape-aware Tailwind config resolver. Returns the matched config substring
  * for `token` (block or single line) or `null` if the token isn't routed
  * through the config. Pure — caller passes the config source.
