@@ -46,14 +46,17 @@ export function GodModeBar() {
           'linear-gradient(to right, hsl(0 0% 6%), hsl(var(--primary) / 0.55), hsl(0 0% 6%))',
         borderBottomColor: 'hsl(var(--primary) / 0.4)',
         boxShadow: '0 4px 20px -4px hsl(var(--primary) / 0.35)',
-        iconColor: 'hsl(var(--primary-foreground) / 0.95)',
-        labelColor: 'hsl(var(--primary-foreground) / 0.9)',
+        // Z icon matches the bar's primary accent (hot pink in Neon, etc.).
+        iconColor: 'hsl(var(--primary))',
+        // Text uses near-white — primary-foreground resolves to near-black under
+        // accent-on-light themes (Neon, etc.) and would disappear on the dark sandwich.
+        labelColor: 'hsl(0 0% 95%)',
         dividerBg: 'hsl(var(--primary) / 0.4)',
-        viewingAsColor: 'hsl(var(--primary-foreground) / 0.75)',
-        orgNameColor: 'hsl(var(--primary-foreground))',
-        accountIdColor: 'hsl(var(--primary-foreground) / 0.6)',
-        detailsIdle: 'hsl(var(--primary-foreground) / 0.85)',
-        detailsHover: 'hsl(var(--primary-foreground))',
+        viewingAsColor: 'hsl(0 0% 95% / 0.75)',
+        orgNameColor: 'hsl(0 0% 100%)',
+        accountIdColor: 'hsl(0 0% 95% / 0.6)',
+        detailsIdle: 'hsl(0 0% 95% / 0.85)',
+        detailsHover: 'hsl(0 0% 100%)',
         detailsHoverBg: 'hsl(var(--primary) / 0.25)',
       }
     : {
