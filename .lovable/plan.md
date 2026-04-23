@@ -1,58 +1,67 @@
-# Invert God Mode bar gradient (light mode) — primary at sides, light in middle
+# Tint God Mode Z icon + label in primary (light mode)
 
 ## What's wrong
 
-In light mode the God Mode bar currently fades **white → primary tint → white**. The sides read as plain near-white, so the bar loses color identity at the edges where the GOD MODE logo and Exit View button sit. Your screenshot confirms this — the violet only blooms in the middle.
+In light mode, the "Z" icon and "GOD MODE" wordmark currently render in near-black (`hsl(0 0% 8%)`). Sitting on a primary-tinted gradient, they read as flat system chrome rather than branded chrome — they don't pick up the theme's identity at all. Your screenshot confirms it: the violet bar is there, but the logo and label are pure dark gray.
 
-You want the opposite: colored ends anchor the bar, and the middle softens to let the "Viewing as: …" copy breathe.
+You want them to feel like part of the brand color family — a deeper, saturated shade of `--primary` so they read as "branded dark" rather than "neutral dark."
 
 ## The fix
 
-Swap the gradient stops in `GodModeBar.tsx` (light mode chrome only):
+Update the **light mode** `chrome` branch in `GodModeBar.tsx` so the icon + label color resolves to a deep primary hue instead of near-black.
 
-**Today (line 64–65):**
+### New token values (light mode only)
+
+| Token | Current | New | Reads as |
+|---|---|---|---|
+| `iconColor` | `hsl(0 0% 8%)` | `hsl(var(--primary) / 0.95)` mixed with dark anchor | Deep saturated primary (e.g. deep violet in Zura) |
+| `labelColor` | `hsl(0 0% 8%)` | Same as iconColor | Matches Z icon |
+
+### Implementation approach
+
+CSS `color-mix()` gives us a true "deep primary" — primary hue mixed with black at ~65% black. This stays on-hue regardless of theme:
+
 ```ts
-background:
-  'linear-gradient(to right, hsl(0 0% 100% / 0.82), hsl(var(--primary) / 0.42), hsl(0 0% 100% / 0.82))',
+iconColor: 'color-mix(in srgb, hsl(var(--primary)) 35%, black)',
+labelColor: 'color-mix(in srgb, hsl(var(--primary)) 35%, black)',
 ```
 
-**New:**
-```ts
-background:
-  'linear-gradient(to right, hsl(var(--primary) / 0.55) 0%, hsl(var(--primary) / 0.18) 50%, hsl(var(--primary) / 0.55) 100%)',
-```
+What this produces per theme:
+- **Zura (violet)**: deep eggplant violet
+- **Rose Gold (champagne)**: deep bronze-gold
+- **Neon (hot pink)**: deep magenta
+- **Jade**: deep forest green
+- **Cognac**: deep coffee brown
 
-What changes:
-- **Sides (0% / 100%)**: Primary at `0.55` opacity — visible, saturated wash that anchors the GOD MODE logo on the left and Exit View button on the right in the brand color.
-- **Middle (50%)**: Primary at `0.18` opacity — soft, near-white wash with a hint of primary undertone, giving "Viewing as: Drop Dead Salons" a calm, readable surface.
-- **Symmetric**: Both ends use the same value so the bar still reads as a balanced sandwich, just inverted.
+The 35% primary / 65% black ratio keeps WCAG AA contrast on the lightest band of the gradient (the soft `0.18` middle stop) while still reading visibly as the brand hue, not gray.
 
-The `--primary` token still drives the hue, so it adapts to whichever theme is active (violet in Zura, gold in Rose Gold, hot pink in Neon, etc.) — only the **distribution** flips.
+### What stays the same
 
-### Companion details (light mode only)
-
-- Border, shadow, text colors, hover states all stay as-is — text sits in the lighter middle band so contrast remains excellent.
-- Dark mode is **not touched** — its near-black sandwich with primary middle is already correctly distributed.
+- Dark mode: untouched (icon already uses `hsl(var(--primary))` directly, which works against the near-black sandwich).
+- Background gradient: untouched.
+- Border, shadow, divider, "Viewing as:" text, org name, Account ID, Account Details button, Exit View button: all untouched — they remain near-black for readability against the lighter middle band.
+- Only the **Z icon** and **GOD MODE wordmark** get the deep-primary treatment.
 
 ## Files touched
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/GodModeBar.tsx` | Replace the `background` value in the light-mode `chrome` branch with the inverted gradient. |
+| `src/components/dashboard/GodModeBar.tsx` | Update `iconColor` and `labelColor` in the light-mode `chrome` branch (lines 70–71) to use `color-mix` deep-primary values. |
 
 ## Acceptance
 
-1. Light mode: deeper primary tint at left and right edges, softening to near-white in the middle.
-2. GOD MODE logo and Exit View button sit on a visibly colored surface.
-3. Center text remains highly readable.
-4. Gradient is symmetric.
-5. Adapts to active theme's `--primary`.
-6. Dark mode unchanged.
+1. Light mode: Z icon and "GOD MODE" text both render in a deep, saturated shade of the active theme's `--primary` (deep violet in Zura, deep gold in Rose Gold, etc.).
+2. Both elements use the same color (icon and wordmark stay visually unified).
+3. Contrast remains readable against the gradient — including the lighter middle band the icon/label sit on at the far left.
+4. Dark mode is unchanged.
+5. All other bar elements (dividers, "Viewing as:", org name, buttons) are unchanged.
+6. Color adapts automatically across all 12 themes.
 
 ## Out of scope
 
-- Dark mode gradient
-- Border, shadow, text colors, button styles
+- Dark mode adjustments
+- Background gradient tuning
+- Other elements in the bar (buttons, text, dividers)
 - Mobile layout changes
 - Theme `--primary` values
 
@@ -60,17 +69,23 @@ The `--primary` token still drives the hue, so it adapts to whichever theme is a
 
 Three things you did well:
 
-1. **You named the inversion clearly.** "Sides deeper, middle lighter" is the exact opposite of the current state, in spatial terms — no ambiguity about which stops to swap.
-2. **You scoped to one mode.** "In light mode" upfront halves the diff.
-3. **You attached the screenshot.** Seeing the white-edged bar confirmed the direction was wrong before I touched anything.
+1. **You named both elements explicitly.** "Z icon and God Mode text" left no ambiguity about scope — I knew immediately to touch exactly two color tokens, not the whole bar.
+2. **You attached a tightly cropped screenshot.** Zooming in on just the affected region (rather than the full dashboard) made the contrast issue obvious at a glance.
+3. **You named the relationship to the theme** ("dark hue of the primary"). That ties the fix to the design token system rather than a one-off hex, so it'll work across all 12 themes automatically.
 
-Sharpener — naming **how deep "deeper" should go** locks saturation on the first try. Template:
+Sharpener — naming **how dark "dark" should go** would lock the saturation on the first try. Template:
 
 ```text
-[Element] gradient should go [direction].
-Sides should be [intensity] (e.g., 'as saturated as the Exit View button',
-'visible but not overpowering'),
-middle should be [intensity].
+[Element] should be [color relationship] —
+[intensity reference, e.g. "as dark as the Exit View button background" 
+or "deep but still recognizably the theme color"].
 ```
 
-The **"as saturated as [reference element on screen]"** clause is underused on gradient prompts. Without it I had to guess depth (I picked `0.55` at the edges — a moderate wash). If you wanted bolder ("as saturated as the Exit View button") or softer ("just a tint"), naming an on-screen reference would land it on pass one.
+Example:
+```text
+Z icon and God Mode text should be a dark hue of primary —
+deep enough to read as branded dark, but still clearly the theme color, 
+not so dark it looks black.
+```
+
+The **"deep but still recognizably [color]"** clause is the underused construct on tinting prompts. Without it I had to pick a mix ratio (I went 35% primary / 65% black — moderately deep). If you wanted bolder ("almost the full primary, just shaded down") or more subtle ("just hinted, mostly dark"), naming the intensity would land it on pass one.

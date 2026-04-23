@@ -67,8 +67,10 @@ export function GodModeBar() {
           'linear-gradient(to right, hsl(var(--primary) / 0.55) 0%, hsl(var(--primary) / 0.18) 50%, hsl(var(--primary) / 0.55) 100%)',
         borderBottomColor: 'hsl(var(--primary) / 0.35)',
         boxShadow: '0 2px 12px -4px hsl(var(--primary) / 0.25)',
-        iconColor: 'hsl(0 0% 8%)',
-        labelColor: 'hsl(0 0% 8%)',
+        // Z icon + GOD MODE wordmark: deep tint of the active theme's primary
+        // (mixed with black) so the brandmark reads as branded-dark, not neutral-dark.
+        iconColor: 'color-mix(in srgb, hsl(var(--primary)) 35%, black)',
+        labelColor: 'color-mix(in srgb, hsl(var(--primary)) 35%, black)',
         dividerBg: 'hsl(var(--primary) / 0.35)',
         viewingAsColor: 'hsl(0 0% 8% / 0.7)',
         orgNameColor: 'hsl(0 0% 8%)',
