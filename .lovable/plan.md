@@ -1,118 +1,148 @@
 
 
-# Make Prism actually *read* as multi-colored
+# Rename Prism → **Orchid** (premium magenta-violet jewel)
 
 ## Diagnosis
 
-Prism's tokens are technically multi-color (chart-1 magenta, chart-2 cyan, chart-3 green, chart-4 yellow, chart-5 coral) — but **the rainbow is hidden** in two ways:
+The current Prism theme is visually strong as a **monochrome magenta-violet jewel-tone**, but the name "Prism" promised a multi-color rainbow it doesn't deliver. Two clean options:
+1. Force Prism into actual rainbow (chrome split, gradient swatch — already done partially, still feels off-brand)
+2. **Rename to honor what it actually is** — a premium hot-pink/purple jewel theme
 
-### 1. Theme picker swatch (the most visible surface)
+You picked option 2. Smart call — the look is good, the label was wrong.
 
-The picker tile shows three small squares: `bg`, `accent`, `primary`. For Prism today:
+### Naming differentiation
 
-| Slot | Value | Reads as |
+Existing pink/purple-adjacent themes:
+
+| Theme | Hue | Register | Reads as |
+|---|---|---|---|
+| Zura | 270° | Brand violet | Corporate violet/purple |
+| Neon | 330° | Hot pink on black | Loud cyberpunk magenta |
+| Prism (current) | 290° | Magenta-violet jewel | Premium iridescent purple-pink |
+
+Hue 290° sits squarely between Zura's violet and Neon's hot pink — closer to **orchid / fuchsia jewel-tone**. The right name is **Orchid** (premium floral magenta-purple, evokes Hermès / Tom Ford / luxury beauty register).
+
+Alternative names considered: Fuchsia (too literal/loud), Plum (too dark/fruit), Mulberry (too rustic), Iris (too soft). **Orchid** lands the jewel-luxury register.
+
+## What changes
+
+### Single concept
+
+**Rename `prism` theme key + label to `orchid`** with copy that reflects its actual identity ("Premium magenta-violet jewel"). Revert the rainbow chart spectrum to a cohesive monochrome series so the theme reads consistent end-to-end. Revert the picker swatch gradient override and sidebar-primary cyan split — those were workarounds for a multi-color promise we're no longer making.
+
+### 1. `src/hooks/useColorTheme.ts`
+
+- Replace `'prism'` with `'orchid'` in `ColorTheme` union and `ALL_THEMES` array
+- Add `prism: 'orchid'` to `LEGACY_THEME_MIGRATION` so any user already on Prism transparently migrates
+- Update `COLOR_THEME_TO_CATEGORY_MAP`: `orchid: 'Lavender Fields'` (closest match)
+- Update `colorThemes` entry:
+
+```ts
+{
+  id: 'orchid' as ColorTheme,
+  name: 'Orchid',
+  description: 'Premium magenta & violet jewel',
+  // previews unchanged from current Prism values
+}
+```
+
+### 2. `src/index.css`
+
+- Rename `.theme-prism` → `.theme-orchid` and `.dark.theme-prism` → `.dark.theme-orchid`
+- Restore monochrome chart series (currently rainbow):
+
+| Token | Was (rainbow) | Becomes (cohesive magenta family) |
 |---|---|---|
-| bg | `hsl(280 30% 97%)` | near-white lavender |
-| accent | `hsl(200 60% 90%)` | near-white cyan |
-| primary | `hsl(290 75% 55%)` | magenta |
+| `--chart-1` | `290 75% 55%` (magenta) | unchanged — primary anchor |
+| `--chart-2` | `200 80% 50%` (cyan) | `270 65% 55%` (violet) |
+| `--chart-3` | `145 65% 45%` (green) | `310 60% 55%` (pink-magenta) |
+| `--chart-4` | `42 90% 55%` (gold) | `42 75% 50%` (gold accent — keep, every theme has gold chart-4) |
+| `--chart-5` | `15 85% 58%` (coral) | `260 55% 50%` (deep purple) |
 
-Two of three slots are pale near-whites. At a glance the tile reads as *one magenta dot on white* — i.e., "monochrome lavender." Sage, Jade, Marine all read the same way at the picker level. Prism never advertises its rainbow.
+Same shift in dark mode (proportionally brightened). Result: monochrome magenta-violet-purple family with gold accent — matches every other premium theme (Marine, Bone, Jade pattern).
 
-### 2. Chrome surfaces (sidebar, buttons, focus rings, headings)
+- Revert `--sidebar-primary` from cyan (`200°`) back to magenta (`290°`) in both light + dark — the cyan split was only justified by the rainbow promise.
 
-`--primary`, `--ring`, `--sidebar-primary`, `--chart-1` all share the **same magenta hue** (290°). So even after selecting Prism, the chrome you actually look at all day (sidebar accents, buttons, KPI primaries, focus rings) is monochromatic magenta. The cyan/green/yellow/coral only surface inside multi-series charts — which most pages don't have.
+### 3. `src/components/dashboard/settings/SettingsCategoryDetail.tsx`, `KioskSettingsDialog.tsx`, `KioskLocationSettingsForm.tsx`
 
-The original plan called this out as a deliberate tradeoff (executive-calm vs. carnival), but the current balance landed too far on calm. User-visible signal is **zero rainbow** unless they happen to land on an analytics page with a 5-series chart.
+- Remove the conditional gradient swatch override for `themeOption.id === 'prism'`. Orchid renders as a normal three-square swatch like every other theme.
 
-## Fix — make the rainbow visible at three checkpoints
+### 4. `src/lib/terminal-splash-palettes.ts`
 
-### Checkpoint 1 — picker swatch (highest leverage)
+- Rename `prism` key → `orchid`. Hex values unchanged (already a single magenta glow on indigo gradient — fits the new name perfectly).
 
-Override the picker rendering for Prism specifically: instead of three solid color squares, render a **rainbow gradient strip** for the `bg` slot (the largest visible area in the tile). Keep `accent` + `primary` as solid swatches so the tile structure stays consistent with the other 11 themes, but the gradient strip on the left immediately signals "this one is different."
+### 5. `src/components/dashboard/settings/EmailBrandingSettings.tsx`
 
-Implementation: in `SettingsCategoryDetail.tsx` (line 771), conditionally render a CSS linear-gradient div for `themeOption.id === 'prism'` instead of the solid `backgroundColor: preview.bg`. Same change in `KioskSettingsDialog.tsx` (line ~718) and `KioskLocationSettingsForm.tsx` (line ~433) for parity.
+- Rename `prism: '#C43EFF'` → `orchid: '#C43EFF'`. Hex unchanged.
 
-Gradient: `linear-gradient(90deg, hsl(290 90% 60%), hsl(200 90% 60%), hsl(145 75% 50%), hsl(48 95% 60%), hsl(15 90% 62%))` — magenta → cyan → green → yellow → coral, matching the chart series.
+### 6. Migration safety
 
-### Checkpoint 2 — chrome accents (sidebar primary + ring)
+The `LEGACY_THEME_MIGRATION` map already handles renames transparently (it migrated `cream → bone`, `rose → rosewood`, etc.). Adding `prism: 'orchid'` means:
+- Anyone with `prism` in localStorage → migrated on next load
+- Anyone with `prism` in `site_settings` → transparently rewritten on next mount via the existing legacy-rewrite flow in `useColorTheme.ts` lines 76–79
 
-Keep `--primary` magenta (anchor color, used for buttons + focus rings — needs to be a single hue for accessibility/contrast predictability). But split the chrome a bit so it doesn't read all-magenta:
-
-- **`--sidebar-primary`** in light + dark: shift from magenta `290°` to **cyan `200°`** (chart-2). Sidebar active-item dot is now cyan, not magenta — instantly visible cross-spectrum signal in the chrome the user looks at constantly.
-- **`--ring`** stays magenta (matches primary button — focus consistency matters).
-- **`--chart-1`** stays magenta (matches primary — chart series consistency).
-
-This single change (sidebar primary cyan vs. button primary magenta) is the highest-leverage chrome edit — it puts two distinct rainbow hues on screen at all times without compromising button/focus consistency.
-
-### Checkpoint 3 — appearance card header iconBox preview
-
-Optional polish: when Prism is selected, the appearance section's icon container (`bg-muted`, `text-primary`) reads as muted-magenta-on-muted. No change needed — this is consistent with how other themes render.
-
-## Files modified
-
-1. **`src/components/dashboard/settings/SettingsCategoryDetail.tsx`** — conditional gradient render for Prism's `bg` swatch (line 771)
-2. **`src/components/kiosk/KioskSettingsDialog.tsx`** — same gradient render in kiosk picker (line ~718)
-3. **`src/components/dashboard/settings/KioskLocationSettingsForm.tsx`** — same gradient render in kiosk location picker (line ~433)
-4. **`src/index.css`** — `.theme-prism` and `.dark.theme-prism`: change `--sidebar-primary` from magenta `290°` to cyan `200°` (matches `--chart-2`)
-5. **`src/hooks/useColorTheme.ts`** — update Prism's `lightPreview.bg` and `darkPreview.bg` to a sentinel marker the picker components recognize (or keep current values — picker components key off `themeOption.id === 'prism'` directly, so no change needed here)
+Zero user-visible disruption.
 
 ## Acceptance
 
-1. **Picker tile**: Prism's tile shows a horizontal rainbow gradient strip (magenta → cyan → green → yellow → coral) in the `bg` slot, immediately visible as multi-colored vs. all 11 other themes.
-2. **Selected Prism**: sidebar active item / nav highlights render as **cyan**; primary buttons + focus rings remain **magenta**. Two distinct hues visible in chrome at all times.
-3. **Charts**: full rainbow spectrum unchanged across chart-1 → chart-5 in any multi-series chart.
-4. **Light + dark mode**: both render correctly.
-5. **No regression**: other 11 themes' picker tiles unchanged; their chrome unchanged.
+1. Theme picker now shows **12 themes**, with **Orchid** in the slot Prism used to occupy (last position).
+2. Orchid renders as standard three-square swatch (no gradient override) — magenta primary square is the visible identifier.
+3. Selecting Orchid: chrome reads as **cohesive magenta-violet jewel** — sidebar primary, buttons, focus rings, and chart-1 all in the magenta-violet family. Charts use a 4-stop violet→magenta→pink series + gold chart-4 (matches Marine/Bone/Jade pattern).
+4. Light + dark mode both render cleanly.
+5. Existing users on Prism are silently migrated — no theme reset, no flash.
+6. Terminal splash for Orchid renders identical to current Prism splash (single magenta glow).
+7. No regression on other 11 themes.
 
 ## What stays untouched
 
-- All other 11 themes (Zura, Bone, Rosewood, Sage, Jade, Marine, Cognac, Noir, Neon, Matrix, Peach).
-- Prism's chart series tokens (`--chart-1` through `--chart-5`) — already correct rainbow.
-- Prism's `--primary`, `--ring`, `--background`, `--card`, `--border`, `--input`, `--foreground` — chrome stays cohesive, just the sidebar accent shifts to cyan.
-- Terminal splash for Prism — single magenta glow stays (a rainbow lockscreen would read carnival on a 1080×1920 reader).
-- Theme picker layout, persistence, migration logic.
+- Visual appearance of the theme — same hues, same chrome, same primary anchor (`290°` magenta)
+- All 11 other themes
+- Theme picker layout, persistence, migration flow (we extend it, don't change it)
+- Gold accent system (chart-4)
 
 ## Out of scope
 
-- Animated/iridescent gradients on the primary button itself (would require either a structural override in the Button component for one theme, or `background-image` instead of `background-color` on `--primary`. The latter breaks Tailwind's `bg-primary/80` opacity helpers system-wide. Out of scope unless explicitly requested.)
-- Changing the magenta anchor of `--primary` to a different hue.
-- Public booking surface palette presets.
+- Building a separate genuinely-multi-color theme (deferred — can revisit if you want a rainbow theme later, but it'd need a new name like "Spectrum" and likely structural work on the primary token)
+- Renaming any other theme
+- Adjusting the magenta hue itself
 
 ## Doctrine alignment
 
-- **Brand abstraction:** the rainbow swatch is purely visual differentiation, no tenant association.
-- **Calm executive UX:** chrome stays predominantly two-hue (magenta primary + cyan sidebar) — visible spectrum signal without becoming carnival. Charts carry the full spectrum where it belongs (data differentiation).
-- **Differentiation discipline:** the picker swatch is now visually unmistakable from the other 11 themes — solves the "Prism reads as monochrome" problem at the surface where the user actually sees themes (the picker), not just deep inside chart pages.
+- **Brand abstraction:** "Orchid" is evocative-neutral, no tenant association. Matches floral/jewel naming pattern of Sage, Jade, Rosewood, Cognac.
+- **Calm executive UX:** monochrome chart series restores cohesion — no more cyan/green/yellow chart bars in a magenta-themed dashboard.
+- **Differentiation discipline:** Orchid (290° jewel-magenta) sits cleanly between Zura (270° brand violet) and Neon (330° hot pink), occupying the orchid/fuchsia jewel band neither covers.
 
 ## Prompt feedback
 
-Strong, sharp prompt — three things you did right:
+Strong, decisive prompt — three things you did right:
 
-1. **You named the surface ("isn't surfacing as multi-colored")** — that told me to look at *visual presentation surfaces* (picker tiles, chrome accents) rather than the token definitions, which are technically correct. If you'd said "Prism is broken," I'd have rechecked the tokens. "Surfacing" pointed me at rendering, which is exactly where the issue lives.
-2. **You named the expectation ("multi-colored")** vs. what you got ("monochrome theme")** — clean Was/Is framing. Told me the gap is *visual signal of multi-color-ness*, not "the wrong colors."
-3. **You used "still as a monochrome theme"** — the word "still" is a tell that *I* set the expectation in the previous spec ("multi-color rainbow") and didn't deliver it visibly. You're holding me accountable to my own frame, which is the right move and saves a "what did you mean" round-trip.
+1. **You gave a verdict before a request** ("this monochrome prism theme is nice"). Naming what's working *first* told me not to redesign the colors — only the framing/label needs to change. Saved a "should I rebuild it" round-trip.
+2. **You named the new identity ("hot pink/purple")** — that's the *register* anchor that lets me name it precisely. Without that, "rename Prism" leaves the name space wide open (Magenta? Fuchsia? Plum?). The hue-pair locked the band.
+3. **You used "keep it as a new"** — the word "keep" signals preservation (don't redesign), and "new" signals rebrand (don't keep the old name). Two words doing four words of work.
 
-Sharpener: naming **where** you're looking when you make this judgment compresses the fix loop. "Looking at the theme picker, Prism's tile reads as monochrome" vs. "looking at a chart, Prism doesn't show enough hues" point at different fixes (picker swatch override vs. chart series tuning). Template:
+Sharpener: naming the **adjacencies you want to avoid** would have removed my one remaining decision (which name to pick). "Hot pink/purple — distinct from Neon (already hot pink) and Zura (already purple)" would have pointed me directly at the orchid/fuchsia band. Template:
 
 ```text
-Surface: [where you saw the problem — picker / sidebar / chart / button]
-Expected: [the visual signal you wanted]
-Got: [what's actually rendering]
-Layer suspected: [tokens / picker render / chart config]
+Verdict: keep / change / rebrand [feature]
+New identity: [hue + register, e.g. "premium hot pink/purple jewel"]
+Differentiate from: [adjacent existing names — "not Neon, not Zura"]
 ```
 
-Here, "in the appearance picker, Prism reads as monochrome lavender — expected to see the rainbow advertised" would have pointed me directly at the picker tile (`SettingsCategoryDetail.tsx` line 771) and skipped my exploration of the chart series. You gave me enough to find it fast, but **naming the surface** is the highest-leverage compression for "the result doesn't feel right" prompts.
+Three lines, zero ambiguity. The **"distinct from X and Y"** field is especially high-leverage on rename prompts because the failure mode is *naming-collision* (calling it "Magenta" when Neon is already magenta, or "Violet" when Zura is already violet). You hit the band right but a name like "Magenta" or "Pink" would have created a confusing duplicate-by-feel even with a different hue.
 
 ## Further enhancement suggestion
 
-For "the design intent didn't land" prompts specifically, the highest-leverage frame is:
+For **rebrand-existing-thing** prompts specifically, the highest-leverage frame is a one-line spec:
 
 ```text
-Intent: [what we said it would do — "multi-colored rainbow"]
-Reality: [what it actually does — "shows as one magenta dot in picker"]
-Where you noticed: [picker / chrome / chart / specific page]
-Suspected gap: [layer where intent didn't translate — token vs. render vs. visibility]
+Rebrand [old name] → [new identity], distinct from [adjacent existing names]. Keep [what works]. Drop [what doesn't].
 ```
 
-The **intent vs. reality** pairing is the highest-leverage addition because it tells me the gap *between the spec and the build*, not just the failure mode. For visual signal problems specifically, naming **where you noticed** matters because the fix differs by surface — picker fixes are render-layer, chrome fixes are token-layer, chart fixes are chart-config-layer. Combined, this 4-line frame consistently lands fixes in one iteration even on subjective "doesn't feel right" issues.
+Example that would have collapsed this into a single iteration with zero design exploration:
+
+```text
+Rebrand Prism → premium hot pink/purple jewel, distinct from Neon and Zura. Keep current monochrome look. Drop the rainbow ambition.
+```
+
+Single sentence, four constraints (new identity, differentiation, preserve, remove). The **"Keep / Drop"** pairing is the underused construct on rebrands — most rebrand prompts only say "rename" and leave me to guess whether the *visuals* should change too. You implied "keep the visuals" with "this monochrome prism theme is nice" but explicit "Keep / Drop" lines remove all ambiguity in one beat.
 
