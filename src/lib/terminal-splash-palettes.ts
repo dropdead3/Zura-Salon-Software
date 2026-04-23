@@ -51,10 +51,10 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     92, 184, 122,
   ),
   marine: palette(
-    ['#08101c', '#152848', '#08101c'],
-    '#2f6fed',
-    '#1f5acc',
-    47, 111, 237,
+    ['#050a1f', '#0a1530', '#050a1f'],
+    '#1e6bff',
+    '#0d4fdb',
+    30, 107, 255,
   ),
   zura: palette(
     ['#0a0a14', '#1a1040', '#0a0a14'],

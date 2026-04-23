@@ -490,39 +490,39 @@ html, body, #root {
     --card-inner-deep: 145 3% 5%;
   }
 
-  /* ===== THEME: MARINE (Deep navy & gold) ===== */
+  /* ===== THEME: MARINE (Deep navy & electric blue) ===== */
   .theme-marine {
-    --background: 210 12% 82%;
-    --foreground: 210 20% 8%;
+    --background: 218 35% 97%;
+    --foreground: 220 40% 10%;
 
-    --card: 210 10% 85%;
-    --card-foreground: 210 20% 8%;
+    --card: 218 30% 99%;
+    --card-foreground: 220 40% 10%;
 
-    --popover: 210 10% 85%;
-    --popover-foreground: 210 20% 8%;
+    --popover: 218 30% 99%;
+    --popover-foreground: 220 40% 10%;
 
-    --primary: 220 90% 52%;
+    --primary: 218 100% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 8% 78%;
-    --secondary-foreground: 210 20% 8%;
+    --secondary: 218 30% 93%;
+    --secondary-foreground: 220 40% 10%;
 
-    --muted: 210 6% 72%;
-    --muted-strong: 210 6% 65%;
-    --muted-foreground: 210 5% 30%;
+    --muted: 218 25% 90%;
+    --muted-strong: 218 25% 82%;
+    --muted-foreground: 220 20% 35%;
 
-    --accent: 210 10% 76%;
-    --accent-foreground: 210 20% 8%;
+    --accent: 218 60% 92%;
+    --accent-foreground: 220 50% 18%;
 
-    --oat: 210 12% 68%;
-    --oat-foreground: 210 20% 25%;
+    --oat: 218 25% 86%;
+    --oat-foreground: 220 30% 25%;
 
     --gold: 38 70% 38%;
     --gold-foreground: 45 100% 97%;
 
     /* Chart colors for data visualization */
-    --chart-1: 220 90% 52%;
-    --chart-2: 200 85% 50%;
+    --chart-1: 218 100% 56%;
+    --chart-2: 195 100% 50%;
     --chart-3: 42 75% 45%;
     --chart-4: 38 70% 50%;
     --chart-5: 260 70% 60%;
@@ -536,55 +536,55 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 6% 65%;
-    --input: 210 6% 74%;
-    --ring: 220 90% 52%;
+    --border: 218 25% 88%;
+    --input: 218 25% 90%;
+    --ring: 218 100% 56%;
 
-    --sidebar-background: 210 10% 83%;
-    --sidebar-foreground: 218 25% 8%;
-    --sidebar-primary: 220 90% 52%;
+    --sidebar-background: 218 30% 96%;
+    --sidebar-foreground: 220 45% 12%;
+    --sidebar-primary: 218 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 8% 78%;
-    --sidebar-accent-foreground: 218 25% 8%;
-    --sidebar-border: 210 6% 65%;
-    --sidebar-ring: 220 90% 52%;
+    --sidebar-accent: 218 50% 92%;
+    --sidebar-accent-foreground: 220 50% 18%;
+    --sidebar-border: 218 25% 88%;
+    --sidebar-ring: 218 100% 56%;
 
-    --card-inner: 210 6% 80%;
-    --card-inner-deep: 210 4% 76%;
+    --card-inner: 218 30% 96%;
+    --card-inner-deep: 218 28% 93%;
   }
 
   .dark.theme-marine {
-    --background: 210 15% 6%;
-    --foreground: 210 20% 92%;
+    --background: 220 50% 7%;
+    --foreground: 218 30% 95%;
 
-    --card: 210 15% 13%;
-    --card-foreground: 210 20% 92%;
+    --card: 220 45% 11%;
+    --card-foreground: 218 30% 95%;
 
-    --popover: 210 15% 13%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 220 45% 11%;
+    --popover-foreground: 218 30% 95%;
 
-    --primary: 220 92% 62%;
-    --primary-foreground: 210 15% 6%;
+    --primary: 218 100% 65%;
+    --primary-foreground: 220 50% 7%;
 
-    --secondary: 210 10% 18%;
-    --secondary-foreground: 210 20% 92%;
+    --secondary: 220 40% 16%;
+    --secondary-foreground: 218 30% 95%;
 
-    --muted: 210 10% 20%;
-    --muted-strong: 210 10% 14%;
-    --muted-foreground: 210 15% 55%;
+    --muted: 220 35% 14%;
+    --muted-strong: 220 35% 10%;
+    --muted-foreground: 218 25% 65%;
 
-    --accent: 210 18% 20%;
-    --accent-foreground: 210 20% 92%;
+    --accent: 220 40% 18%;
+    --accent-foreground: 218 30% 95%;
 
-    --oat: 210 18% 25%;
-    --oat-foreground: 210 22% 85%;
+    --oat: 220 35% 22%;
+    --oat-foreground: 218 28% 88%;
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
 
     /* Chart colors for data visualization */
-    --chart-1: 220 92% 62%;
-    --chart-2: 200 88% 60%;
+    --chart-1: 218 100% 65%;
+    --chart-2: 195 100% 60%;
     --chart-3: 145 55% 55%;
     --chart-4: 43 95% 60%;
     --chart-5: 280 75% 70%;
@@ -598,21 +598,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 8% 28%;
-    --input: 210 10% 16%;
-    --ring: 220 92% 62%;
+    --border: 220 35% 18%;
+    --input: 220 35% 14%;
+    --ring: 218 100% 65%;
 
-    --sidebar-background: 210 15% 12%;
-    --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 220 92% 62%;
-    --sidebar-primary-foreground: 210 15% 6%;
-    --sidebar-accent: 210 10% 18%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 210 8% 28%;
-    --sidebar-ring: 220 92% 62%;
+    --sidebar-background: 220 50% 6%;
+    --sidebar-foreground: 218 30% 95%;
+    --sidebar-primary: 218 100% 65%;
+    --sidebar-primary-foreground: 220 50% 7%;
+    --sidebar-accent: 220 40% 16%;
+    --sidebar-accent-foreground: 218 30% 95%;
+    --sidebar-border: 220 40% 14%;
+    --sidebar-ring: 218 100% 65%;
 
-    --card-inner: 210 5% 8%;
-    --card-inner-deep: 210 3% 5%;
+    --card-inner: 220 45% 9%;
+    --card-inner-deep: 220 50% 6%;
   }
 
   /* ===== THEME: ZURA (Brand Violet/Purple) ===== */
