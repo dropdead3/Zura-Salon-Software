@@ -29155,6 +29155,7 @@ export type Database = {
           custom_theme: Json | null
           custom_typography: Json | null
           dashboard_layout: Json | null
+          dashboard_theme: string
           dual_role_destination: string | null
           id: string
           settings_layout: Json | null
@@ -29169,6 +29170,7 @@ export type Database = {
           custom_theme?: Json | null
           custom_typography?: Json | null
           dashboard_layout?: Json | null
+          dashboard_theme?: string
           dual_role_destination?: string | null
           id?: string
           settings_layout?: Json | null
@@ -29183,6 +29185,7 @@ export type Database = {
           custom_theme?: Json | null
           custom_typography?: Json | null
           dashboard_layout?: Json | null
+          dashboard_theme?: string
           dual_role_destination?: string | null
           id?: string
           settings_layout?: Json | null
