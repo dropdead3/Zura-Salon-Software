@@ -42,6 +42,12 @@ export const typographyTokens = {
 export type TypographyCategory = keyof typeof typographyTokens;
 export type TypographyTheme = Record<string, string>;
 
+// Canonical list of all typography token keys — exported for shared cleanup
+// (used by ThemeInitializer to reconcile stale inline overrides on <html>).
+export const ALL_TYPOGRAPHY_KEYS: string[] = Object.values(typographyTokens)
+  .flat()
+  .map((t) => t.key);
+
 // Get current computed value of a CSS variable
 function getCSSVariable(varName: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`).trim();

@@ -223,6 +223,16 @@ export type ThemePresetKey = keyof typeof themePresets;
 
 export type CustomTheme = Record<string, string>;
 
+// Canonical list of all editable color token keys — exported for shared cleanup
+// (used by ThemeInitializer to reconcile stale inline overrides on <html>).
+export const ALL_CUSTOM_THEME_KEYS: string[] = [
+  ...editableTokens.core,
+  ...editableTokens.brand,
+  ...editableTokens.special,
+  ...editableTokens.ui,
+  ...editableTokens.sidebar,
+].map((t) => t.key);
+
 // Convert HSL string to hex for color picker
 export function hslStringToHex(hslString: string): string {
   if (!hslString || hslString === 'transparent') return '#ffffff';
