@@ -66,7 +66,7 @@ const ZOOM_CONFIG: Record<string, { interval: number }> = {
 
 const MIN_ROW_HEIGHT = 20;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getOverlapColumnLayout, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
 
 function WeekSlot({
   hour,
@@ -212,17 +212,15 @@ function WeekAppointmentCard({
   const pixelHeight = parseInt(style.height);
   const size = getCardSize(appointment.start_time, appointment.end_time, undefined, pixelHeight);
 
-  // Overlap layout — flush edges, no inner gutter
-  const widthPercent = 100 / totalOverlapping;
-  const leftPercent = columnIndex * widthPercent;
-  const isFirstCol = columnIndex === 0;
-  const isLastCol = columnIndex === totalOverlapping - 1;
-  const isOverlapping = totalOverlapping > 1;
+  // Seam-safe overlap column layout — adjacent cards butt up flush.
+  const { left: overlapLeft, width: overlapWidth, isFirstOverlapCol: isFirstCol, isLastOverlapCol: isLastCol, isOverlapping } =
+    getOverlapColumnLayout(columnIndex, totalOverlapping);
+
   const cardWidth = isOverlapping
-    ? `${widthPercent}%`
+    ? overlapWidth
     : isHoveredRight
-      ? `calc(${widthPercent * 0.7}%)`
-      : `${widthPercent}%`;
+      ? `calc(${100 / totalOverlapping * 0.7}%)`
+      : overlapWidth;
 
   return (
     <div
@@ -230,7 +228,7 @@ function WeekAppointmentCard({
       style={{
         top: style.top,
         height: style.height,
-        left: `${leftPercent}%`,
+        left: overlapLeft,
         width: cardWidth,
         transition: 'width 200ms ease-out',
       }}

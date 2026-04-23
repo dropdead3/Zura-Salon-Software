@@ -83,7 +83,7 @@ interface DayViewProps {
 // Use consolidated status colors from design tokens
 const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
-import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
+import { parseTimeToMinutes, formatTime12h, getEventStyle, getOverlapInfo, getOverlapColumnLayout, getCurrentTimeRenderMetrics, formatMinutesAs12h } from '@/lib/schedule-utils';
 import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 
 // Categories that display the X pattern overlay
@@ -278,25 +278,22 @@ function AppointmentCard({
 
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart, rowHeight, slotInterval);
   const pixelHeight = parseInt(style.height);
-  const widthPercent = 100 / totalOverlapping;
-  const leftPercent = columnIndex * widthPercent;
   const size = getCardSize(appointment.start_time, appointment.end_time, zoomLevel, pixelHeight);
 
-  // Flush edges: no inner gutter between overlapping cards
-  const isFirstCol = columnIndex === 0;
-  const isLastCol = columnIndex === totalOverlapping - 1;
-  const isOverlapping = totalOverlapping > 1;
+  // Seam-safe overlap column layout — adjacent cards butt up flush.
+  const { left: overlapLeft, width: overlapWidth, isFirstOverlapCol: isFirstCol, isLastOverlapCol: isLastCol, isOverlapping } =
+    getOverlapColumnLayout(columnIndex, totalOverlapping);
 
-  // For overlapping cards: exact equal-width columns, no offsets, butt up flush.
+  // For overlapping cards: use seam-safe equal-width columns.
   // For single cards: keep the hover-shrink affordance for the right-edge grip.
   const cardWidth = isDragOverlay
     ? undefined
     : isOverlapping
-      ? `${widthPercent}%`
+      ? overlapWidth
       : isHoveredRight
-        ? `calc(${widthPercent * 0.7}%)`
-        : `${widthPercent}%`;
-  const cardLeft = isOverlapping ? `${leftPercent}%` : `${leftPercent}%`;
+        ? `calc(${100 / totalOverlapping * 0.7}%)`
+        : overlapWidth;
+  const cardLeft = overlapLeft;
 
   return (
     <div
