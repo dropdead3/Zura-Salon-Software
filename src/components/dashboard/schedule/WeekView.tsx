@@ -212,8 +212,10 @@ function WeekAppointmentCard({
   const pixelHeight = parseInt(style.height);
   const size = getCardSize(appointment.start_time, appointment.end_time, undefined, pixelHeight);
 
-  // Seam-safe overlap column layout — adjacent cards butt up flush.
-  const { left: overlapLeft, width: overlapWidth, isFirstOverlapCol: isFirstCol, isLastOverlapCol: isLastCol, isOverlapping } =
+  // Overlap column layout — fully rounded cards that visually "kiss" via
+  // a small width inset into the right neighbor. zIndex stacks leftmost
+  // on top so the rounded right edge tucks over the next card's stroke.
+  const { left: overlapLeft, width: overlapWidth, isFirstOverlapCol: isFirstCol, isLastOverlapCol: isLastCol, isOverlapping, zIndex: overlapZ } =
     getOverlapColumnLayout(columnIndex, totalOverlapping);
 
   const cardWidth = isOverlapping
@@ -224,12 +226,13 @@ function WeekAppointmentCard({
 
   return (
     <div
-      className="absolute z-10"
+      className="absolute"
       style={{
         top: style.top,
         height: style.height,
         left: overlapLeft,
         width: cardWidth,
+        zIndex: overlapZ,
         transition: 'width 200ms ease-out',
       }}
       onMouseMove={handleMouseMove}

@@ -57,23 +57,27 @@ export interface OverlapInfo {
 }
 
 /**
- * Seam-safe overlap column layout.
+ * Overlap column layout — fully rounded cards that visually "kiss".
  *
- * Returns left/width as CSS calc strings so adjacent columns physically
- * touch. We add a 1px width "kiss" to each non-last column so browser
- * subpixel rounding cannot reveal the underlying grid background as a
- * 1px hairline between cards. The next column's `left` already sits at
- * its column boundary, so the extra pixel just hides the seam under the
- * neighbor — there is no visible doubling.
+ * Each card keeps its full rounded-lg + 1px stroke on all four sides.
+ * To eliminate the slot of background that would otherwise appear between
+ * two side-by-side rounded pills, we extend each non-last column's width
+ * by OVERLAP_KISS_PX into its right neighbor. The kiss value matches the
+ * corner radius of `rounded-lg` (~8px tangent), so the rounded edges meet
+ * with no visible white sliver.
  *
- * Use ONLY when totalOverlapping > 1.
+ * z-index: leftmost column wins, decreasing rightward, so the rounded
+ * right edge of column N sits over column N+1's left stroke.
  */
+const OVERLAP_KISS_PX = 8;
+
 export interface OverlapColumnLayout {
   left: string;
   width: string;
   isFirstOverlapCol: boolean;
   isLastOverlapCol: boolean;
   isOverlapping: boolean;
+  zIndex: number;
 }
 
 export function getOverlapColumnLayout(
@@ -85,16 +89,23 @@ export function getOverlapColumnLayout(
   const isFirstOverlapCol = columnIndex === 0;
   const isLastOverlapCol = columnIndex === totalOverlapping - 1;
   const isOverlapping = totalOverlapping > 1;
-  // Add 1px to the width of every non-last column to seal subpixel seams.
+  // Extend each non-last overlap column into its right neighbor by the
+  // kiss amount so the rounded edges visually touch with no background
+  // sliver. Last column stays exact so it does not bleed past the stylist
+  // column's right edge.
   const width = isOverlapping && !isLastOverlapCol
-    ? `calc(${widthPercent}% + 1px)`
+    ? `calc(${widthPercent}% + ${OVERLAP_KISS_PX}px)`
     : `${widthPercent}%`;
+  // Leftmost column gets the highest z; decreasing rightward.
+  // Base 10 matches the `z-10` baseline used by absolutely-positioned cards.
+  const zIndex = isOverlapping ? 10 + (totalOverlapping - columnIndex) : 10;
   return {
     left: `${leftPercent}%`,
     width,
     isFirstOverlapCol,
     isLastOverlapCol,
     isOverlapping,
+    zIndex,
   };
 }
 

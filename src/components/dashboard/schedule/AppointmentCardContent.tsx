@@ -519,16 +519,10 @@ export function AppointmentCardContent({
   isOverlapping = false,
   onClick,
 }: AppointmentCardContentProps) {
-  // Edge-aware rounding so overlap cards butt up flush at shared edges
-  const roundingClass = !isOverlapping
-    ? 'rounded-lg'
-    : isFirstOverlapCol && isLastOverlapCol
-      ? 'rounded-lg'
-      : isFirstOverlapCol
-        ? 'rounded-l-lg'
-        : isLastOverlapCol
-          ? 'rounded-r-lg'
-          : 'rounded-none';
+  // Every card is a fully rounded pill on all four corners — overlap cards
+  // visually "kiss" via column-width math in the views, not by stripping
+  // corners or borders here.
+  const roundingClass = 'rounded-lg';
   // ─── All hooks run unconditionally ────────────────────────
   const { resolvedTheme } = useDashboardTheme();
   const isDark = resolvedTheme === 'dark';
@@ -582,13 +576,9 @@ export function AppointmentCardContent({
   const isNoShow = appointment.status === 'no_show';
   const isCancelled = appointment.status === 'cancelled';
 
-  // For overlap cards, suppress shared inner-edge borders so two adjacent
-  // cards don't draw a doubled seam. The left accent is rendered as an
-  // inset strip element (see gridContent), not as a real border, so the
-  // physical card box can still butt up flush against its neighbor.
-  const suppressLeftEdge = isOverlapping && !isFirstOverlapCol;
-  const suppressRightEdge = isOverlapping && !isLastOverlapCol;
-
+  // Every card keeps a full 1px stroke on all four sides. Overlap flush
+  // is achieved by column-width "kiss" math in the views, not by edge
+  // suppression here.
   const cardStyle = useMemo(() => {
     if (variant === 'agenda') return {};
     if (displayGradient) {
@@ -602,10 +592,7 @@ export function AppointmentCardContent({
         backgroundColor: darkStyle.fill,
         color: darkStyle.text,
         borderColor: darkStyle.fill,
-        borderTopWidth: '1px',
-        borderBottomWidth: '1px',
-        borderLeftWidth: suppressLeftEdge ? '0px' : '1px',
-        borderRightWidth: suppressRightEdge ? '0px' : '1px',
+        borderWidth: '1px',
         borderStyle: 'solid' as const,
         transition: 'background-color 150ms ease, box-shadow 150ms ease',
       };
@@ -618,10 +605,7 @@ export function AppointmentCardContent({
         backgroundColor: boostedBg,
         color: boostedText,
         borderColor: lightTokens.stroke,
-        borderTopWidth: '1px',
-        borderBottomWidth: '1px',
-        borderLeftWidth: suppressLeftEdge ? '0px' : '1px',
-        borderRightWidth: suppressRightEdge ? '0px' : '1px',
+        borderWidth: '1px',
         borderStyle: 'solid' as const,
         boxShadow: 'none',
         opacity: 1,
@@ -629,7 +613,7 @@ export function AppointmentCardContent({
       };
     }
     return {};
-  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact, suppressLeftEdge, suppressRightEdge]);
+  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact]);
 
   // ─── Agenda variant ─────────────────────────────────────────
   if (variant === 'agenda') {
@@ -646,21 +630,6 @@ export function AppointmentCardContent({
     );
   }
 
-  // The 4px category accent — rendered as an inset strip element so it
-  // doesn't push card content or create a physical edge that prevents
-  // overlap cards from butting up flush. Suppressed on inner overlap
-  // columns so only the leftmost card in an overlap group shows it.
-  const showAccentStrip = !displayGradient && (!isOverlapping || isFirstOverlapCol);
-  const accentColor = useMemo(() => {
-    if (!showAccentStrip) return null;
-    if (useCategoryColor && isDark && darkStyle) return darkStyle.accent;
-    if (useCategoryColor) {
-      const boostedBg = boostPaleCategoryColor(catColor.bg);
-      return deriveLightModeColor(boostedBg).stroke;
-    }
-    return null;
-  }, [showAccentStrip, useCategoryColor, isDark, darkStyle, catColor]);
-
   const gridContent = (
     <div
       className={cn(
@@ -670,9 +639,8 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
-        // For status-colored (non-category) cards, show left accent only on
-        // single cards or the first column of an overlap group.
-        !useCategoryColor && !displayGradient && (!isOverlapping || isFirstOverlapCol) && 'border-l-4',
+        // Restored original left accent on every status-colored card.
+        !useCategoryColor && !displayGradient && 'border-l-4',
         isCancelled && 'opacity-60',
         isNoShow && 'ring-2 ring-destructive ring-inset',
         isSelected && 'ring-2 ring-primary/60 ring-inset',
@@ -682,14 +650,6 @@ export function AppointmentCardContent({
       style={cardStyle}
       onClick={onClick}
     >
-      {/* Inset category accent strip — replaces border-left so cards can butt up flush */}
-      {showAccentStrip && accentColor && (
-        <div
-          className="absolute top-0 bottom-0 left-0 w-1 z-[1] pointer-events-none"
-          style={{ backgroundColor: accentColor }}
-        />
-      )}
-
       <CardOverlays
         appointment={appointment}
         displayGradient={displayGradient}
