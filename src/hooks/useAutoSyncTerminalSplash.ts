@@ -58,13 +58,27 @@ export function useAutoSyncTerminalSplash(
         );
 
         // 4. Push to all default_luxury locations
-        pushAll.mutate({
-          pairs: defaultPairs,
-          imageBase64: base64,
-          imageMimeType: 'image/jpeg',
-        });
+        pushAll.mutate(
+          {
+            pairs: defaultPairs,
+            imageBase64: base64,
+            imageMimeType: 'image/jpeg',
+          },
+          {
+            onSuccess: async () => {
+              // Re-mark each pair as default_luxury so future theme changes keep syncing
+              await Promise.all(
+                defaultPairs.map(({ locationId, terminalLocationId }) =>
+                  upsertSplashOrigin(orgId, locationId, terminalLocationId, 'default_luxury').catch(() => {}),
+                ),
+              );
+            },
+          },
+        );
 
-        toast.success('Terminal splash screens updating to match new theme');
+        toast.success(
+          `Syncing splash to new theme on ${defaultPairs.length} reader${defaultPairs.length === 1 ? '' : 's'}`,
+        );
       } catch (err) {
         console.error('Auto-sync splash failed:', err);
       }
