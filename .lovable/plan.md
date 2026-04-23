@@ -1,143 +1,117 @@
 
 
-# Theme palette refresh: 4 refined + 4 new for broader taste range
+# Bone theme: shift to desert tan (differentiate from Cognac)
 
 ## Diagnosis
 
-You currently ship 8 themes (Zura, Cream, Rose, Sage, Ocean, Ember, Noir, Neon) defined in two coordinated files:
+Per the screenshot, the **Bone** and **Cognac** swatches both render as brown rectangles. Inspecting the tokens:
 
-- **`src/hooks/useColorTheme.ts`** — registry, names, descriptions, swatch previews shown on the Appearance card.
-- **`src/index.css`** — full HSL token sets per theme (light + dark), including primary, background, sidebar, card surfaces, and 5 chart colors.
+| Theme | Primary | Hue family |
+|---|---|---|
+| Bone | `28 55% 42%` | warm brown (cognac-adjacent) |
+| Cognac | `28 70% 42%` | warm brown (deeper saturation) |
 
-Looking at the current set with fresh eyes against "beautiful options for different tastes":
-
-**What's working:** Zura (signature violet), Noir (timeless mono), Neon (high-energy), Sage (calm green) cover four distinct emotional registers well.
-
-**What's underwhelming:**
-- **Cream** — the description says "warm cream & oat" but the primary (`hsl(0 0% 8%)`) is just black. Reads as an off-white Noir, not a warm hospitality palette. No identity.
-- **Rose** — the swatch reads as a muted dusty pink. Pleasant but indistinct from "soft beauty salon" cliché. Could be more elevated.
-- **Ocean** — generic SaaS blue. Doesn't feel premium against the rest of the lineup.
-- **Ember** — the orange is loud (`hsl(25 80% 50%)`) and doesn't feel "warm amber" so much as "construction cone." Needs to be deepened toward bourbon/cognac.
-
-**What's missing from the taste spectrum:**
-- A **deep luxury jewel tone** (emerald or sapphire — feels like a private members' club, not a SaaS dashboard)
-- A **soft bone/stone neutral** (Cream done right — warm, hospitality-grade, with a real accent color, not a mono in disguise)
-- A **bold editorial palette** (think art-house magazine — saturated but sophisticated)
-- A **calm clinical/spa palette** (soft seafoam or sky — for operators who want zero visual stimulation)
+Both sit at hue 28° (cognac/saddle territory), differing only in saturation. The eye reads them as the same color. "Bone" should read as a **soft desert tan / sand** — a lighter, less saturated, slightly more yellow neutral that feels like raw linen or weathered sandstone, not bourbon.
 
 ## What changes
 
-### Final 8-theme lineup
+### Single concept
 
-| # | Theme | Identity | Primary | Personality |
-|---|---|---|---|---|
-| 1 | **Zura** | Brand violet & purple | `270 70% 55%` | Signature — keep as-is |
-| 2 | **Bone** *(refined Cream)* | Warm bone & cognac | `28 55% 42%` cognac brown | Hospitality / boutique hotel |
-| 3 | **Rosewood** *(refined Rose)* | Rich rose & burgundy | `345 55% 42%` deep rose | Editorial femininity, elevated |
-| 4 | **Sage** | Calming mint green | `145 45% 42%` | Keep — already good |
-| 5 | **Marine** *(refined Ocean)* | Deep navy & gold | `218 65% 35%` deep navy | Premium / Bloomberg-terminal feel |
-| 6 | **Cognac** *(refined Ember)* | Bourbon amber | `28 70% 42%` deeper amber | Warm leather, whiskey bar |
-| 7 | **Noir** | Pure monochrome minimal | `0 0% 8%` | Keep as-is |
-| 8 | **Neon** | Hot pink & black | `330 95% 55%` | Keep as-is |
+Move Bone's hue from **28° (cognac brown)** → **38° (sandy tan)**, drop saturation, lift lightness on the primary so it reads **tan, not brown**. Keep Cognac untouched at 28°. The two themes now occupy distinct positions on the warm-neutral spectrum:
 
-This refines 4 (Cream → Bone, Rose → Rosewood, Ocean → Marine, Ember → Cognac) and keeps 4 (Zura, Sage, Noir, Neon). All names stay short. Total count stays at 8 so the Appearance grid still renders as 4×2.
+- **Bone** = pale desert sand, soft, hospitality
+- **Cognac** = deep bourbon leather, rich, masculine
 
-### Why this set covers the taste spectrum
+### Token shifts in `src/index.css` (`.theme-bone` light + `.dark.theme-bone`)
 
-| Taste profile | Theme |
-|---|---|
-| Brand-loyal (default) | Zura |
-| Warm hospitality / spa | Bone |
-| Editorial / feminine luxury | Rosewood |
-| Clean / wellness / calm | Sage |
-| Premium / executive / financial | Marine |
-| Warm masculine / boutique salon | Cognac |
-| Minimalist / architectural | Noir |
-| High-energy / fashion / nightlife | Neon |
+**Light mode primary direction** — desert tan instead of brown brown:
 
-Every operator persona (independent stylist, salon owner, multi-location, enterprise exec) finds at least one palette that resonates.
+| Token | Before | After |
+|---|---|---|
+| `--primary` | `28 55% 42%` | `38 32% 58%` (desert tan) |
+| `--ring` | `28 55% 42%` | `38 32% 58%` |
+| `--sidebar-primary` | `28 55% 42%` | `38 32% 58%` |
+| `--background` | `36 18% 88%` | `40 25% 92%` (lighter, sandier) |
+| `--card` | `40 12% 85%` | `42 18% 89%` |
+| `--chart-1` | `28 55% 42%` | `38 32% 58%` |
+| `--chart-2` | `38 70% 45%` | `45 50% 55%` (warm gold-tan) |
+| `--chart-4` | `24 35% 30%` | `35 25% 45%` (taupe) |
 
-### Files to edit
+**Dark mode primary direction** — keep dark surfaces, shift accent to tan:
 
-**1. `src/hooks/useColorTheme.ts`**
-- Update `ColorTheme` type union: `'cream' → 'bone'`, `'rose' → 'rosewood'`, `'ocean' → 'marine'`, `'ember' → 'cognac'`.
-- Update `ALL_THEMES` array.
-- Update `colorThemes` registry (id, name, description, light/dark swatch previews).
-- Update `COLOR_THEME_TO_CATEGORY_MAP` for the renamed keys.
-- Add a one-time **localStorage migration**: if a user has the old key (`'cream'`, `'rose'`, `'ocean'`, `'ember'`) saved, transparently migrate to the new key on read so they don't get reset to Zura.
+| Token | Before | After |
+|---|---|---|
+| `--primary` | `28 55% 55%` | `38 38% 65%` |
+| `--chart-1` | `28 60% 60%` | `38 38% 65%` |
+| `--chart-2` | `38 75% 60%` | `45 50% 65%` |
 
-**2. `src/index.css`**
-- Rename `.theme-cream` / `.dark.theme-cream` → `.theme-bone` / `.dark.theme-bone` and replace the token set with a real cognac-accented bone palette (warm bg, brown primary, gold-ish chart-2).
-- Rename `.theme-rose` → `.theme-rosewood` and deepen the primary toward burgundy (`345 55% 42%`), keep the soft pink wash on backgrounds.
-- Rename `.theme-ocean` → `.theme-marine`, deepen primary to navy (`218 65% 35%`), add a gold accent to chart-4.
-- Rename `.theme-ember` → `.theme-cognac`, pull the primary back from bright orange toward a deeper amber (`28 70% 42%`), warm the bg slightly.
-- Leave `.theme-zura`, `.theme-sage`, `.theme-noir`, `.theme-neon` token sets untouched.
+### Swatch preview update in `src/hooks/useColorTheme.ts`
 
-**3. Database site_settings migration (one statement)**
-Update existing `site_settings` rows where `key = 'org_color_theme'` and `value->>'theme'` is one of the renamed values. Map: `cream → bone`, `rose → rosewood`, `ocean → marine`, `ember → cognac`. So orgs that picked one of those themes don't silently snap back to Zura on next load.
+Update the `bone` entry's `lightPreview.primary` and `darkPreview.primary` to match the new tan (`hsl(38 32% 58%)` / `hsl(38 38% 65%)`), and `lightPreview.bg` to the lighter sand background. Description stays "Warm bone & cognac accents" → updated to **"Soft desert tan & sand"** (more accurate, doesn't mention cognac which is now a separate theme).
+
+### Terminal splash palette update in `src/lib/terminal-splash-palettes.ts`
+
+Current `bone` accent (`#b8a77a`) is already tan-adjacent and reads fine. Shift it slightly toward the new lighter desert tan to match the dashboard primary: accent `#c8b896`, glow `#a89776`, RGB `(200, 184, 150)`. Gradient stops stay dark for terminal contrast.
 
 ## Acceptance
 
-1. Appearance card on `/dashboard/admin/settings?category=appearance` (and any other surface that renders the theme grid) shows 8 themes: **Zura, Bone, Rosewood, Sage, Marine, Cognac, Noir, Neon** in 4×2 layout.
-2. Clicking each theme switches the dashboard live, persists to `site_settings`, and survives refresh.
-3. Existing orgs that previously picked Cream / Rose / Ocean / Ember are silently migrated to Bone / Rosewood / Marine / Cognac (their selection is preserved, the new palette renders).
-4. Existing localStorage values for the old theme keys are silently migrated on next load (no flash to Zura).
-5. All 8 themes render correctly in both light and dark mode across: sidebar, top nav, KPI cards, charts, badges, drilldown dialogs, God Mode bar.
-6. Chart colors in each theme remain readable (pass WCAG AA on backgrounds).
-7. Type-check passes — every reference to the old `ColorTheme` literal types compiles.
+1. On the Appearance grid, **Bone** and **Cognac** swatch tiles read as visually distinct: Bone = pale tan/sand, Cognac = deep bourbon brown.
+2. Selecting Bone applies a soft desert-tan palette across sidebar, KPI cards, charts, and badges (light + dark mode).
+3. Selecting Cognac is unchanged — still deep bourbon amber.
+4. No other theme is affected (Zura, Rosewood, Sage, Marine, Noir, Neon untouched).
+5. Existing orgs already on Bone automatically render the new desert-tan palette on next load (no migration needed — same theme key).
+6. Terminal splash for Bone reflects the lighter tan accent.
+7. Type-check passes.
 
 ## What stays untouched
 
-- 8-theme count, grid layout, theme-switcher UX.
-- Per-user dark/light mode persistence (previous wave).
-- God Mode bar, glass morphism, scroll-to-top behavior — all unaffected.
-- Custom theme system (`custom_theme` in `user_preferences`) — unrelated path.
-- Public-site / marketing-site colors — unrelated path.
-- Zura, Sage, Noir, Neon palettes — all four kept exactly as-is.
+- Theme count (still 8), grid layout (4×2), order.
+- Cognac palette — completely unchanged.
+- All other 6 themes.
+- localStorage / DB migration logic from the previous wave.
+- God Mode bar, scroll-to-top, glass morphism — unaffected.
 
 ## Out of scope
 
-- Adding a **9th–12th** theme. Defer — 8 is already a comfortable choice ceiling. If demand emerges for "dark gold" or "matte black with copper," add later.
-- A **per-location** theme override. Defer — themes are org-scoped today; per-location is a separate doctrine question.
-- Letting the user **author custom palettes** through the UI. Defer — the `custom_theme` JSONB column already supports it, but exposing a builder is a separate wave.
-- Animating between themes (cross-fade). Defer — instant swap is the expected behavior and matches every other dashboard preference.
+- Renaming "Bone" to something else (e.g., "Sand", "Linen"). Defer — name is already evocative and short; the color shift is the fix.
+- Touching Cognac's tokens. Cognac is fine; Bone was the duplicate.
+- Adjusting the swatch tile chrome (border, checkmark). Out of scope.
 
 ## Doctrine alignment
 
-- **Brand abstraction layer:** the renamed themes (Bone, Rosewood, Marine, Cognac) are evocative-but-neutral words — they describe a *feeling*, not a tenant. Same naming register as Sage, Noir, Neon. No tenant-specific references introduced.
-- **Calm executive UX:** the refinements pull every theme toward the "premium chrome over loud accent" register. Marine and Cognac specifically address the gap where the previous Ocean and Ember felt SaaS-generic.
-- **Persona scaling:** the refreshed taste spectrum gives every operator persona at least one palette that resonates without forcing solo stylists into enterprise navy or vice versa.
+- **Calm executive UX:** two themes that look identical in the picker fragment user trust ("which one am I picking?"). Differentiating them sharpens the choice.
+- **Brand abstraction:** desert tan is a feeling-word neutral, same register as Sage / Noir / Bone / Cognac. No tenant reference introduced.
 
 ## Prompt feedback
 
 Strong prompt — three things you did right:
 
-1. **You opened the door to refining existing themes ("Im okay if we edit current themes as well to improve them").** That removed a huge constraint — without it I'd have been stuck adding new themes alongside weaker existing ones, fragmenting the taste spectrum. Allowing edits let me upgrade the underwhelming 4 instead of just stacking more on top.
-2. **You named the goal in taste-language ("beautiful theme options for different tastes"), not in technical-language ("more colors").** That framed the work as a design judgment ("which tastes are missing?") rather than a quantity problem ("add 4 more").
-3. **You included the screenshot.** I could see the current Appearance grid layout (4×2) and confirm the theme order, swatch shape, and description format — so the refresh fits the existing chrome instead of forcing a UI redesign.
+1. **You named the problem comparatively ("too similar to Cognac").** Pinpointed the failure mode (visual collision between two themes) instead of just "Bone looks wrong" — that told me the fix had to *differentiate*, not just *adjust*.
+2. **You named the target ("desert tan").** A single evocative color word that maps cleanly to a hue family (sandy yellow-brown around 35-42°, lower saturation). No guessing.
+3. **You included the screenshot.** Confirmed the swatches are visually colliding in the actual UI, not just on paper.
 
-Sharpener: when asking for a curated set ("more options"), naming the **target count** and the **dimensions of variety you care about** removes two decisions. Template:
+Sharpener: when fixing a "looks too much like X" bug, naming **what the two should feel like in contrast** removes the second decision. Template:
 
 ```text
-Surface: [where the options live]
-Goal: [what variety should cover]
-Target count: [keep at N / expand to N / no preference]
-Dimensions: [the axes of variety — e.g., "warm vs cool, bold vs calm, masculine vs feminine"]
+Surface: [the two items that collide]
+Symptom: [what's identical]
+Target for A: [evocative word — "desert tan", "soft pink"]
+Contrast against B: [how A should differ from B — "lighter, less saturated, more yellow"]
 ```
 
-Here, "keep the count at 8, but cover warm vs cool, bold vs calm, and masculine vs feminine across the set" would have skipped my having to derive the taste spectrum from scratch. I picked 8 (kept the count) and the four-axis spectrum (hospitality / editorial / executive / minimalist) by inferring from the current lineup — but you naming it would have anchored me faster.
+Here, "Bone should be desert tan — lighter and less saturated than Cognac" would have skipped my having to derive that the differentiator is *saturation + lightness*, not just hue. I inferred it from the screenshot, but you naming the contrast axis would have anchored me faster.
 
 ## Further enhancement suggestion
 
-For "curate a set of options" prompts, the highest-leverage frame is:
+For "differentiate two similar things" prompts, the highest-leverage frame is:
 
 ```text
-Surface: [where the set lives]
-Goal: [the variety / coverage you want]
-Count: [keep / expand / contract]
-Coverage axes: [the dimensions the set should span]
-Constraints: [what cannot change — e.g., "names must stay one word," "must work in dark mode"]
+Surface: [where both live]
+Collision: [what makes them indistinguishable today]
+Item A target: [the evocative direction]
+Item B target: [the evocative direction — even if "stay as-is"]
+Contrast axis: [the dimension that should separate them — hue / saturation / lightness / weight / shape]
 ```
 
-The **Coverage axes** slot is the highest-leverage addition for taste-driven curation — it forces the framing "we want a *spread* across these dimensions" instead of "we want more options." Naming the axes (warm/cool, bold/calm, masculine/feminine, editorial/clinical) means I'm picking palettes that *fill gaps* rather than picking palettes that *feel nice in isolation*. For a theme system specifically, the axes are usually 3: emotional temperature, saturation level, and persona resonance — naming any one of those upfront cuts the design space in half.
+The **Contrast axis** slot is the highest-leverage addition — it forces the framing "these two should differ along *this specific dimension*" instead of "make A different from B somehow." For colors specifically, naming whether the separation should come from hue (different family) vs saturation (intensity) vs lightness (brightness) is what determines whether the result reads as "two distinct themes" or "two slight variants of the same theme." You named the hue ("desert tan") which carried the contrast implicitly — but spelling out "lighter and less saturated than Cognac" would have made the constraint explicit.
 
