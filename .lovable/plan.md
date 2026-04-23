@@ -1,117 +1,177 @@
 
+# Fix the real remaining theme bug: stale inline CSS variables are outranking the active theme class
 
-# Fix: dashboard themes overridden by `Layout.tsx` (public site) — `theme-bone` stuck on `<html>`
+## What’s actually happening
 
-## The actual defect (corrected)
+Your correction was strong and useful: you didn’t just say “it still looks off,” you pointed to a concrete contradiction — **Matrix / Jade / Orchid is selected, but the UI is still rendering bone-like surfaces**. That pushes this out of “palette tuning” and into **theme ownership / CSS precedence**.
 
-You called it: themes literally inherit from bone. Session replay confirms the `<html>` element holds `class="animations-standard theme-bone"` immediately after clicking Orchid — even though the `site_settings` PATCH for `{theme: "orchid"}` succeeds and the toast fires. The cascade is fine. The CSS is fine. The class on `<html>` is wrong.
+The earlier `Layout.tsx` fix addressed one writer of `theme-bone`, but there is a second, stronger failure mode still in play:
+
+- The session replay shows the root class changing to `theme-matrix`.
+- The screenshot still shows bone-like `--background`, `--primary`, and border values.
+- In CSS, that only happens if **inline CSS custom properties on `document.documentElement`** are overriding the class-based theme tokens.
+
+Inline `style="--background: ...; --primary: ..."` wins over `.theme-matrix { --background: ... }`.
 
 ## Root cause
 
-`src/components/layout/Layout.tsx` (the **public marketing site** layout) **forcibly resets `<html>` to `theme-bone`**, both during render (lines 30–35) and in a `useEffect` (lines 38–63). It also strips ALL `--*` custom properties from `<html>` inline styles.
+`ThemeInitializer.tsx` applies `custom_theme` and `custom_typography` overrides to `<html>` via inline CSS variables, but it does **not reconcile stale overrides correctly**.
 
-This shouldn't affect the dashboard — `Layout` is only mounted on public routes (Index, Shop, Services, Booking, etc.). But three things make it leak into the dashboard:
+### Current bug in `ThemeInitializer`
+When `loadCustomTheme()` runs on org-dashboard routes:
 
-1. **The remove list at lines 33 + 45 is stale.** It removes `theme-rosewood, theme-sage, theme-marine, theme-zura, theme-cognac, theme-noir, theme-neon` and legacy keys, but **omits the newer themes**: `theme-jade`, `theme-matrix`, `theme-orchid`, `theme-peach`. So if a user lands on the public site with one of those active, that class survives the cleanup, then `theme-bone` gets added on top → both classes coexist (`theme-jade theme-bone`) and bone wins by source order in CSS.
+- If `custom_theme` exists, it applies `--background`, `--primary`, etc. inline.
+- If later the backend returns `null` / empty values, it **does not clear previously applied inline theme vars first**.
+- It then replaces `appliedVarsRef.current` with a new empty array, losing the ability to clean up the stale vars afterward.
 
-2. **The "kill switch" runs during render**, not just in `useEffect`. Lines 30–35 execute every time `Layout` renders. If `Layout` is mounted anywhere in the React tree at the same time as the dashboard (e.g., via a stray import, a pre-rendered fallback, a 404 fallback Route, or a public route briefly rendered during transition), it nukes the dashboard theme.
+That means old bone-like inline tokens can remain stuck on `<html>` and keep overriding every selected theme, even when the active class is `theme-jade`, `theme-matrix`, or `theme-orchid`.
 
-3. **The inline style cleanup is overbroad.** Lines 53–63 remove every `--*` custom property from `<html>` that doesn't include `radix`. This wipes any theme tokens that hooks like `ThemeInitializer` or `useColorTheme` may set inline.
+## Why this matches your screenshot
 
-The session replay capture timing (`theme-bone` on `<html>` right after the click on the dashboard) confirms `Layout`'s render-time effect is running while the user is on the dashboard route. Most likely path: a Suspense fallback or a public-route component tree is being briefly rendered/retained during navigation, triggering Layout's render-phase mutation.
+The screenshot shows:
+
+- Theme picker swatches are correct
+- Selected theme state is correct
+- Actual dashboard chrome still uses bone-like values
+
+That combination means:
+- the **selection logic is working**
+- the **class switch is likely working**
+- the **resolved CSS vars are being overridden elsewhere**
+
+Given the current codebase, the strongest match is stale inline vars from the custom theme / typography pipeline.
 
 ## The fix
 
-### 1. Stop mutating `<html>` from `Layout.tsx`'s render phase
+## 1) Make `ThemeInitializer` fully reconcile overrides on every load
 
-**File**: `src/components/layout/Layout.tsx` (lines 29–35)
+**File:** `src/components/ThemeInitializer.tsx`
 
-Render-phase side effects on `document` are an anti-pattern (they fire on every render, including parallel renders during transitions, and bypass React's cleanup). Move ALL theme/class mutation into `useEffect` only. The "prevents flash" claim in the comment is moot now that the pre-paint script in `index.html` already applies the correct theme synchronously.
+Replace the current “apply if present” behavior with a strict reconcile flow:
 
-Delete lines 29–35 entirely.
+1. Build a canonical allowlist of org-level inline override keys
+   - theme color keys from the custom theme system
+   - typography keys from the typography system
+2. Before applying anything new, remove all previously managed inline overrides
+3. If the backend returns overrides, apply only those
+4. If the backend returns no overrides, leave none applied
 
-### 2. Make `Layout.tsx` theme cleanup theme-list-aware
-
-**File**: `src/components/layout/Layout.tsx` (lines 33, 45)
-
-Replace the hardcoded remove list with the canonical `THEME_CLASSES` array imported from `useColorTheme.ts`. This way, adding a new theme automatically updates the cleanup list.
-
-```ts
-import { ALL_THEMES } from '@/hooks/useColorTheme';
-const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
-const LEGACY_THEME_CLASSES = ['theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism'];
-// ...
-root.classList.remove(...THEME_CLASSES, ...LEGACY_THEME_CLASSES);
-root.classList.add('theme-bone');
-```
-
-(Requires exporting `ALL_THEMES` from `useColorTheme.ts` — currently a module-private const.)
-
-### 3. Scope the inline `--*` cleanup so it doesn't wipe dashboard theme tokens
-
-**File**: `src/components/layout/Layout.tsx` (lines 53–63)
-
-The current loop nukes every custom property. Make it a no-op when the user navigated INTO the public site from the dashboard (rare path). Simpler: only remove inline `--*` props that match a known dashboard-token prefix list, and leave radix/platform tokens alone. Or, since the dashboard sets tokens via classes (not inline), remove this loop entirely — it was originally guarding against an old typography injection path that no longer exists (`ThemeInitializer` sets vars only on `org-dashboard` routes and clears them on exit).
-
-Recommended: delete lines 53–63 entirely.
-
-### 4. Guard `Layout`'s effect from running on dashboard routes
-
-**File**: `src/components/layout/Layout.tsx` (line 38 useEffect)
-
-Belt-and-suspenders: short-circuit the entire theme-reset effect if the current pathname is under `/dashboard` or `/org/:slug/dashboard` or `/platform`. Use the existing `getRouteZone(window.location.pathname)` from `src/lib/route-utils.ts`:
+### Structural change
+Instead of only tracking “what I just applied this time,” `ThemeInitializer` should always do:
 
 ```ts
-useEffect(() => {
-  if (getRouteZone(window.location.pathname) !== 'public') return;
-  // ...existing reset logic
-}, [isEditorPreview]);
+clearManagedOrgOverrideVars();
+applyCurrentServerOverrides();
+appliedVarsRef.current = currentlyAppliedKeys;
 ```
 
-This makes it structurally impossible for the public Layout to override dashboard theming, regardless of why it's in the tree.
+That guarantees stale bone tokens cannot survive a theme change, a reset-to-default, or a session transition.
 
-### 5. (Defense in depth) Re-assert theme on `useColorTheme` mount
+## 2) Use a canonical override-key registry instead of ad hoc cleanup
 
-**File**: `src/hooks/useColorTheme.ts`
+**Files:**
+- `src/components/ThemeInitializer.tsx`
+- `src/hooks/useCustomTheme.ts`
+- `src/hooks/useTypographyTheme.ts`
 
-The hook's effect at line 88–90 already calls `applyTheme(colorTheme)` on every render where `colorTheme` changes. But if `Layout` mutates `<html>` AFTER the hook's last effect fired, the dashboard theme stays clobbered. Add a `MutationObserver` that watches `<html>`'s `class` attribute and re-applies the resolved theme if `theme-bone` appears uninvited while on a dashboard route.
+Right now the custom theme keys and typography keys live in separate places. The cleanup logic should not guess.
 
-This is optional — fixes 1–4 should resolve the bug without needing this. Listed as fallback in case there's a third theme writer we haven't found.
+Implementation approach:
+- Export the editable color token keys from `useCustomTheme.ts`
+- Export the typography token keys from `useTypographyTheme.ts`
+- In `ThemeInitializer.tsx`, compose them into one `MANAGED_ORG_OVERRIDE_KEYS` list
+- Clear only those keys, not every `--*` var
+
+This keeps cleanup precise:
+- removes stale org theme overrides
+- preserves unrelated vars like `--god-mode-offset`
+- does not touch platform-scoped vars
+
+## 3) Clear stale inline theme vars even when no custom theme exists
+
+**File:** `src/components/ThemeInitializer.tsx`
+
+Add the missing branch:
+
+- If `custom_theme` is null and `custom_typography` is null, explicitly clear managed org override vars.
+
+This is the missing “reset to stylesheet defaults” path.
+
+## 4) Keep class-based theme selection as the source of truth for built-in themes
+
+**File:** `src/hooks/useColorTheme.ts`
+
+No architecture rewrite needed, but this file remains the owner of the active built-in theme class.
+
+Optional defense-in-depth:
+- after `applyTheme(theme)`, do not clear all inline vars here
+- let `ThemeInitializer` own override cleanup so responsibilities stay separated:
+  - `useColorTheme` = class owner
+  - `ThemeInitializer` = inline override reconciler
+
+That avoids breaking legitimate saved custom themes.
+
+## Files to modify
+
+- **`src/components/ThemeInitializer.tsx`**
+  - add canonical managed-key cleanup
+  - clear stale overrides before applying new ones
+  - clear overrides when backend returns none
+- **`src/hooks/useCustomTheme.ts`**
+  - export the editable theme token key list for shared cleanup
+- **`src/hooks/useTypographyTheme.ts`**
+  - export the typography token key list for shared cleanup
 
 ## Verification
 
-1. Navigate to `/org/drop-dead-salons/dashboard/admin/settings`, select Orchid → page background turns lavender, sidebar/cards adopt orchid palette.
-2. Same for Jade (teal), Matrix (deep navy + emerald), Peach (coral cream).
-3. Inspect `<html class="...">` after each click → only one `theme-*` class present, matching the selection.
-4. Navigate to public `/` then back to `/dashboard/...` → dashboard theme still applied (Layout no longer wipes inline tokens, no longer leaks into dashboard).
-5. Run cross-theme parity canon — must still pass (no CSS changes).
-
-## Files
-
-- **Modify**: `src/components/layout/Layout.tsx` — delete render-phase mutation (lines 29–35), import canonical theme list, scope cleanup, gate effect on route zone (~25 lines net deletion).
-- **Modify**: `src/hooks/useColorTheme.ts` — export `ALL_THEMES` (1 line: add `export` keyword).
-
-## Out of scope
-
-- **Palette saturation tuning** — last session's plan was wrong; no themes need re-tuning. Each light theme's HSL values are correct (jade has true teal `175 65% 32%` primary, etc.). They just never got to render.
-- **The pre-paint script** — already correct after last session's fix; reads `dd-color-theme` and applies the class synchronously.
-- **`:root, .theme-bone` shared declaration** — works as designed; `.theme-jade` (specificity 0,1,0) cleanly beats `:root` (specificity 0,0,1) when both match. Splitting them adds churn without value.
-- **A canon enforcing "only one writer touches `<html>` theme class"** — worth adding (Step 2AL below) to prevent future Layout-style regressions, but out of scope for the immediate fix.
+1. Select **Matrix** in light mode:
+   - page background, cards, borders, and primary accents should shift to Matrix tokens
+   - selected card outline/check should no longer stay bone/tan
+2. Repeat for **Jade** and **Orchid**
+3. Toggle between Bone → Matrix → Orchid → Jade
+   - each should immediately repaint with its own tokens
+4. Reload the settings page
+   - chosen theme should still render correctly
+   - no bone inheritance unless Bone is actually selected
+5. Reset any custom theme overrides to default
+   - built-in themes should still render correctly afterward
 
 ## Why this is the right fix
 
-The CSS, the cascade, the pre-paint script, and the `useColorTheme` hook all work correctly. The single defect is `Layout.tsx` reaching across architectural boundaries (public → dashboard) and mutating shared DOM state. Once `Layout` only touches `<html>` while a public route is actually active, the dashboard's theme writer becomes the sole owner of the theme class, and Jade/Orchid/Matrix render their actual palettes.
+The remaining bug is no longer “wrong class applied.”  
+It is “correct class applied, but **higher-precedence inline vars still win**.”
+
+That is why the UI can say Matrix while the page still looks Bone.
+
+## Out of scope
+
+- Re-tuning HSL palette values
+- Changing the theme picker UI
+- Reworking public-site theming again
+- Adding a full canon for theme-writer ownership in this pass
 
 ## Prompt feedback
 
-**What worked exceptionally well**: You corrected my misdiagnosis with hard evidence — three screenshots showing different themes selected, all rendering identically as bone. That's the gold standard for a "your fix is wrong" report: visual proof + clear naming of what's broken ("themes are literally inheriting colors from the bone theme"). The word "literally" was the key signal — it pushed me past the "weak palette" hypothesis to "the class isn't sticking."
+What you did well:
+- You corrected the diagnosis directly instead of accepting a vague visual explanation.
+- You used screenshots to show **selected state vs rendered state**, which is exactly how to expose precedence bugs.
 
-**What could sharpen further**: The fastest possible debug shape would have been: open dev tools, copy the `<html class="...">` value, and paste it. That single string ("animations-standard theme-bone" while Orchid is selected) is the entire diagnosis in 30 characters — no audit, no hypothesis, no screenshots needed. For "this thing isn't applying" bugs, the live DOM attribute is always the highest-signal evidence.
+Even sharper framing next time:
+- The highest-signal version would be:  
+  “Matrix is selected, but the page background, border, and primary accent are still bone-like. So the class/state is changing, but computed tokens are not.”
 
-**Better prompt framing for next wave**: For "X isn't being applied even though I configured it" reports, the optimal shape is: *"I selected Orchid, but `document.documentElement.className` returns 'animations-standard theme-bone'. Should be `theme-orchid`."* Names the configuration, the expected DOM state, and the actual DOM state. Eliminates every layer of guessing between the user click and the visual result.
+That phrasing tells the AI to inspect **state → class → computed variable precedence** instead of palette values.
 
-## Enhancement suggestions for next wave
+## Enhancement suggestions after this fix
 
-1. **Step 2AL — Canon: single writer to `<html>` theme classes.** Vitest scan that finds all `classList.add('theme-...')` and `classList.remove('theme-...')` call sites across `src/`, asserts they're confined to a designated allowlist (currently just `useColorTheme.ts`). Catches "another component is mutating the theme class" — exactly this Layout regression class. ~25 lines, prevents the Layout pattern from re-emerging in any other file. Catalog entry slot reserved.
+1. **Add a theme-integrity debug surface**
+   - small dev-only panel showing:
+     - current `<html>` theme class
+     - whether `.dark` is active
+     - current computed values for `--background`, `--primary`, `--border`
+     - whether those values come from inline style vs stylesheet  
+   This would make future theme bugs diagnosable in seconds.
 
-2. **Step 2AM — Route-zone-scoped DOM mutation primitive.** Generalize the route-zone gate into a hook: `useDOMMutationScopedToRoute('public', () => { ... })`. Any future component that needs to mutate `<html>` for a route zone declares its scope explicitly; the hook no-ops outside that zone. Eliminates the "I forgot to add a guard" failure mode. ~30 lines, refactors Layout's effect to use it. Pairs with 2AL — one prevents new violations, one makes the right pattern easy.
+2. **Add a canon for stale inline override cleanup**
+   - assert that when `custom_theme` is null, managed org override keys are not left inline on `<html>`
+   - this prevents the exact “class changed but bone vars remain” regression from coming back
