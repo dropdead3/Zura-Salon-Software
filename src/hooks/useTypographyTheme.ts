@@ -64,6 +64,17 @@ function removeCSSVariable(varName: string): void {
   document.documentElement.style.removeProperty(`--${varName}`);
 }
 
+/**
+ * Canonical cleanup helper: strips every editor-managed typography token
+ * from the inline style layer of <html>. Used by the editor lifecycle
+ * (unmount) and available to other reconcilers.
+ */
+export function clearTypographyVariables(): void {
+  ALL_TYPOGRAPHY_KEYS.forEach((key) => {
+    removeCSSVariable(key);
+  });
+}
+
 // Get all current values
 function getAllCurrentValues(): TypographyTheme {
   const values: TypographyTheme = {};
@@ -123,7 +134,16 @@ export function useTypographyTheme() {
     
     fetchTheme();
   }, []);
-  
+
+  // Unmount cleanup: strip every managed typography override when the editor
+  // unmounts so leaving the Design System restores the built-in dashboard
+  // typography. See useCustomTheme for the same doctrine on color tokens.
+  useEffect(() => {
+    return () => {
+      clearTypographyVariables();
+    };
+  }, []);
+
   // Apply theme overrides to CSS variables
   const applyTheme = useCallback((theme: TypographyTheme) => {
     Object.entries(theme).forEach(([key, value]) => {
@@ -132,7 +152,7 @@ export function useTypographyTheme() {
       }
     });
   }, []);
-  
+
   // Set a single variable (for live preview)
   const setVariable = useCallback((key: string, value: string) => {
     setCSSVariable(key, value);
