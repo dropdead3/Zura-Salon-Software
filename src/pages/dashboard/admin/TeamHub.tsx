@@ -172,12 +172,13 @@ function CategorySection({ title, children }: CategorySectionProps) {
   const validChildren = React.Children.toArray(children).filter(Boolean);
   if (validChildren.length === 0) return null;
   return (
-    <div className="space-y-3">
+    <section className="space-y-3 [&:not(:first-of-type)]:pt-8 [&:not(:first-of-type)]:mt-8 relative">
+      <Divider variant="inset" className="absolute top-0 left-0 right-0 hidden [section:not(:first-of-type)>&]:block" />
       <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">{title}</h2>
       <div className="grid gap-3 items-stretch sm:grid-cols-2 lg:grid-cols-3">
         {validChildren}
       </div>
-    </div>
+    </section>
   );
 }
 
