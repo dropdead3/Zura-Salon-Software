@@ -1,124 +1,127 @@
 
 
-# Step 2T + 2U — Allowlist hygiene audit, and post-package.json doc sync
+# Step 2V + 2W — Cross-mode gradient parity, and Step 2S/2U bundling
 
-Two cleanup steps. Part A audits the structural categorization in the cross-theme parity canon and graduates `--mesh-gradient` to a first-class token. Part B is the doc sync that closes Step 2S once `package.json` lands in a real PR.
+Two enhancements. Part A adds the symmetric (light↔dark) gradient parity canon. Part B reframes 2W honestly: package.json is sandbox-read-only, so the "single PR bundle" must be split into a sandbox half (docs ready-to-strip) and a manual half (the package.json apply), with a clear handoff.
 
-## Part A — Allowlist hygiene audit (Step 2T)
+## Part A — Cross-mode gradient parity canon (Step 2V)
 
-**The audit, by category**
+**The invariant**: For every theme name `X`, if `html.theme-X` defines `--mesh-gradient`, then `html.dark.theme-X` must also define `--mesh-gradient`. Symmetric to 2T (cross-theme parity for gradients), but on the light↔dark axis instead of the cross-theme axis.
 
-Three structural collections live in `src/test/cross-theme-parity-canon.test.tsx`. Each gets a one-line verdict:
+**Pre-flight evidence**: All 12 themes (`zura`, `bone`, `rosewood`, `sage`, `jade`, `marine`, `cognac`, `noir`, `neon`, `matrix`, `peach`, `orchid`) have both `html.theme-X` and `html.dark.theme-X` blocks at lines 3019–3107 and 3117–3205. Canon will pass on first run; failure mode is a future theme adding a light gradient without a dark companion.
 
-1. **`BASELINE_ONLY_TOKENS`** (typography + radius — 27 entries) — **Keep as-is.** These are theme-invariant by intent (themes change color, not type scale). Zero churn.
+**New test file**: `src/test/cross-mode-gradient-parity-canon.test.tsx` (~40 lines)
 
-2. **`STRUCTURAL_NON_THEME_SELECTORS`** (`:root`, `.dark` — 2 entries) — **Keep as-is.** Both are primitive plumbing, not color themes. Zero churn.
+Shape:
 
-3. **`DECORATIVE_OPTIONAL_TOKENS`** (`mesh-gradient` — 1 entry) — **Graduate `--mesh-gradient` to a first-class baseline token.** Pre-flight evidence: defined in all 11 light themes (`html.theme-zura` through `html.theme-orchid`) plus all dark variants. It's universal, not optional. Treating it as "optional" means a future theme could silently omit it and the canon would stay green — exactly the regression class 2R was built to catch.
+```ts
+const GRADIENT_TOKEN = "mesh-gradient";
+const ALLOWLIST_DARK_OMISSIONS: Record<string, string[]> = {
+  // Per-theme intentional dark omissions (e.g., a hypothetical OLED-pure theme
+  // that intentionally has no dark gradient). Empty by default.
+};
 
-**The change**
+const lightSelectors = extractThemeSelectors(indexCss)
+  .filter(s => s.startsWith("html.theme-"));
 
-Move `mesh-gradient` from `DECORATIVE_OPTIONAL_TOKENS` to a new `BASELINE_THEME_GRADIENT_TOKENS` set (or merge into baseline-color-token tracking). Then resolve the structural mismatch: `--mesh-gradient` is currently defined in `html.theme-*` selectors (with the `html.` prefix), not in plain `.theme-*` blocks. The parity canon iterates `.theme-bone` as baseline, but `--mesh-gradient` lives in `html.theme-bone`.
+for (const lightSel of lightSelectors) {
+  const themeName = lightSel.slice("html.theme-".length);
+  const darkSel = `html.dark.theme-${themeName}`;
+  describe(`cross-mode gradient parity: ${themeName}`, () => {
+    const lightTokens = new Set(extractDefinedTokens(extractRuleBody(indexCss, lightSel) ?? ""));
+    if (!lightTokens.has(GRADIENT_TOKEN)) return; // light has no gradient → no symmetry required
 
-Two options to handle this:
+    const darkBody = extractRuleBody(indexCss, darkSel);
+    const darkTokens = new Set(extractDefinedTokens(darkBody ?? ""));
+    const allowed = new Set(ALLOWLIST_DARK_OMISSIONS[darkSel] ?? []);
 
-- **Option A (preferred)**: Update `extractThemeSelectors` in `src/test/css-rule.ts` to also recognize `html.theme-*` selectors, and have the parity canon treat `html.theme-bone` + `.theme-bone` as a unified baseline (merge their token sets). This matches runtime: both selectors apply to the same `<html>` element with `class="theme-bone"`. Then `--mesh-gradient` becomes part of the baseline color surface and parity is enforced across all 11 themes automatically.
+    it(`html.dark.theme-${themeName} defines --${GRADIENT_TOKEN} (or is allowlisted)`, () => {
+      const omitted = !darkTokens.has(GRADIENT_TOKEN) && !allowed.has(GRADIENT_TOKEN);
+      expect(omitted, `${darkSel} missing --${GRADIENT_TOKEN} (light variant defines it)`).toBe(false);
+    });
+  });
+}
+```
 
-- **Option B (fallback if A is too invasive)**: Keep `mesh-gradient` in `DECORATIVE_OPTIONAL_TOKENS` but rename the set to `THEME_GRADIENT_TOKENS` and add a *separate* targeted parity assertion ("every `html.theme-*` block defines `--mesh-gradient`"). Smaller blast radius, less elegant.
+**Why a separate test file, not a new family in cross-theme-parity-canon**: different axis (light↔dark within a theme vs. theme-vs-baseline across themes). Bundling them would mean one test file with two unrelated invariants — readers would have to disambiguate which assertion is failing. Separate files = separate failure messages = clearer signal.
 
-Plan commits to **Option A** — the helper extension is ~5 lines and the merge is ~3 lines in the test. The result: one less special-case set, one more enforced token.
-
-**File-by-file**
-
-- **Modify `src/test/css-rule.ts`**: Extend `extractThemeSelectors` regex to match `html.theme-*` and `html.dark.theme-*`. The selectors get returned alongside `.theme-*`.
-- **Modify `src/test/cross-theme-parity-canon.test.tsx`**: 
-  - Remove `mesh-gradient` from `DECORATIVE_OPTIONAL_TOKENS` (the set becomes empty; remove it entirely along with its filter logic).
-  - Add a small "merge co-applied selectors" step: when computing baseline tokens for `.theme-bone`, also union in tokens from `html.theme-bone`. Same merge for each theme during parity check.
-  - Update file header comment to reflect that gradient tokens are now first-class, not optional.
+**Why parameterize on the gradient token only, not all tokens**: dark-mode color tokens already get parity from Step 2R via `STRUCTURAL_NON_THEME_SELECTORS` and the `.dark` baseline. The cross-mode gap is *specifically* gradients, because gradients live in the `html.theme-*` / `html.dark.theme-*` selectors that 2R deliberately excludes. Scope = the actual gap.
 
 **Acceptance (Part A)**
 
-1. `bun run test src/test/cross-theme-parity-canon` passes on current codebase (all 11 themes already define `--mesh-gradient`).
-2. Deleting `--mesh-gradient` from any single `html.theme-*` block fails the parity canon with that theme named in the failure.
-3. The `DECORATIVE_OPTIONAL_TOKENS` constant is removed from the file.
-4. `extractThemeSelectors` exported behavior change documented in its JSDoc.
+1. `bun run test src/test/cross-mode-gradient-parity-canon` passes on current codebase (12 themes × 1 token = 12 assertions, all pass).
+2. Deleting `--mesh-gradient` from any single `html.dark.theme-*` block fails the canon with that theme named.
+3. Adding a new light theme that defines `--mesh-gradient` *without* a corresponding dark block surfaces as a missing-rule failure (the `darkBody` extraction returns null, the assertion fails on the missing token).
+4. File is ~50 lines or less.
 
-## Part B — Doc sync after `package.json` lands (Step 2U)
+## Part B — Step 2W: honest framing of the bundle
 
-**Trigger condition** (deliberately stated): This step only ships *after* a real PR applies the `package.json` edits from `docs/ci.md` Step 2S manual actions section. If `package.json` hasn't been updated, the doc sync is premature and the caveats stay accurate.
+**The constraint that reshapes 2W**: `package.json` is read-only in the Lovable sandbox (confirmed: no `check`/`prepare`/`lint:css` scripts, no `husky`/`lint-staged` deps). The "one PR that bundles package.json + docs" you proposed is the right end-state, but it can't ship from here. The honest move is to split 2W into two coordinated halves:
 
-**Pre-flight check at start of implementation**: Read `package.json`. If `scripts.check`, `scripts.lint:css`, `scripts.prepare`, `lint-staged` config, and `husky` + `lint-staged` devDependencies are all present → proceed. If not → halt and surface the gap; do not strip caveats from docs that would then be wrong.
+**2W-sandbox (this session)**: Make the docs *ready-to-strip*. The current `docs/ci.md` Step 2S section is a checklist of manual edits a developer applies in a real PR. We add a short banner at the top of that section documenting *what the bundled PR should remove from this file*, so the developer doing the package.json apply has a one-glance checklist of doc cleanup that ships in the same PR. No docs are stripped here — that would create the "confidently wrong" doc state Step 2U was designed to prevent.
 
-**The edits (assuming `package.json` is ready)**
+**2W-manual (real PR, outside sandbox)**: The developer applies the package.json edits *and* executes the doc cleanup the banner enumerates, in one commit. The pre-flight check from the original Step 2U plan (read package.json, verify scripts/deps present, then strip) becomes the developer's checklist instead of an AI gate.
 
-`docs/ci.md` changes, ~6 lines total:
+**The banner addition** (top of Step 2S section in `docs/ci.md`, ~10 lines):
 
-1. **Line 28** — Drop the entire "targeted CSS lint" bullet, replace with cleaner alternative:
-   ```
-   - `npm run lint:css` — targeted CSS lint when iterating on tokens.
-   ```
-   (Was using `bunx stylelint` directly, now use the wired script.)
+```markdown
+> **Bundled PR checklist**: When the package.json edits below land, the same
+> PR should also remove this section in its entirety, plus:
+> - Line 30–31: drop the "The `check` script requires…" caveat paragraph.
+> - Line 28: replace `bunx stylelint "src/**/*.css"` with `npm run lint:css`.
+> - Line 35: soften "Once Husky is installed (via the `prepare` script…)" to
+>   "On every commit, a pre-commit hook runs lint-staged against staged files."
+>
+> Don't strip the caveats without applying the package.json edits — the docs
+> would be confidently wrong instead of accurately conditional.
+```
 
-2. **Lines 30–31** — Remove the entire caveat paragraph:
-   > The `check` script requires the `package.json` edits listed at the bottom of this file (Step 2S manual actions) — once those land, `check` is real.
-
-3. **Line 35** — Soften the Husky reference:
-   ```
-   On every commit, a pre-commit hook runs **lint-staged** against staged files only:
-   ```
-   (Was: "Once Husky is installed (via the `prepare` script on `npm install`), a pre-commit hook…")
-
-4. **Lines 77–107** (entire "Step 2S manual actions" section) — Delete. The section's purpose was a checklist for the not-yet-applied edits. Once applied, the section is dead weight.
-
-5. **Optional cleanup**: Add a one-line "Step 2S — landed" entry to a future "Changelog / canon history" section if one exists. Skip if not (don't create a new section just for one entry).
+**Why this framing is the right adaptation**: your prompt's instinct ("bundle to eliminate doc-lag") is correct. The adaptation is recognizing that the AI doing the bundling can only deliver one half from the sandbox. Surfacing the other half as a tightly-scoped checklist preserves the bundling discipline without faking the sandbox's capabilities.
 
 **Acceptance (Part B)**
 
-1. `docs/ci.md` "Running locally" reads as if `npm run check` always worked — no temporal caveats.
-2. No reference to "package.json edits required" remains anywhere in the file.
-3. Husky pre-commit description reads as a present-tense fact, not a conditional.
-4. Word count drops by ~30 lines (removal of Step 2S section).
+1. `docs/ci.md` Step 2S section gains a "Bundled PR checklist" banner enumerating the four doc edits that ship alongside the package.json apply.
+2. No existing caveats are stripped (they remain accurate while package.json is unchanged).
+3. The banner is dismissible mentally — once the bundled PR lands, the entire Step 2S section (banner included) gets deleted; no orphaned banner.
+4. ~10 lines added, zero lines removed.
 
 ## Combined acceptance
 
-1. `bun run test src/test/cross-theme-parity-canon` passes — `--mesh-gradient` now enforced across 11 themes.
-2. `DECORATIVE_OPTIONAL_TOKENS` set deleted from `cross-theme-parity-canon.test.tsx`.
-3. `extractThemeSelectors` recognizes `html.theme-*` selectors.
-4. `docs/ci.md` Step 2S section deleted; all "requires package.json edits" caveats removed.
-5. No file exceeds ~130 lines.
+1. `bun run test src/test/cross-mode-gradient-parity-canon` — 12 passing assertions.
+2. `docs/ci.md` Step 2S section gains the bundled-PR checklist banner.
+3. `extractThemeSelectors` and `extractDefinedTokens` consumed by the new test (no new helpers needed — Step 2T already extended both for `html.theme-*`).
+4. No file exceeds ~130 lines.
 
 ## Files
 
-- **Modify**: `src/test/css-rule.ts` (regex extension in `extractThemeSelectors`)
-- **Modify**: `src/test/cross-theme-parity-canon.test.tsx` (drop optional set, merge co-applied selectors)
-- **Modify**: `docs/ci.md` (drop caveats, delete Step 2S section)
+- **Create**: `src/test/cross-mode-gradient-parity-canon.test.tsx` (~50 lines)
+- **Modify**: `docs/ci.md` (add ~10-line banner inside the existing Step 2S section; no removals)
 
 ## Technical notes
 
-- **The `html.theme-*` vs `.theme-*` distinction is a real CSS specificity choice**, not a bug. `html.theme-bone` is more specific than `.theme-bone`, which lets gradient tokens sit at a higher cascade tier without affecting color tokens. The canon needs to model this: same theme, two selectors, one merged token surface.
-- **Why graduate `--mesh-gradient` instead of asserting it separately**: parsimony. Two assertions with two selectors is harder to reason about than one assertion against a merged baseline. The merge is the right abstraction because runtime *is* a merge.
-- **Why Step 2T audits all three categories not just one**: the doctrine here is "graveyards rot." Auditing only the suspicious entry teaches future contributors that the others are sacred. Touching all three (even just to confirm "keep") signals that they're all subject to scrutiny.
-- **Why Step 2U has a pre-flight check**: the doc sync's entire premise is that `package.json` was edited. Stripping caveats before that's true would create the worst doc state — confidently wrong instead of accurately conditional.
+- **Reuses existing helpers, no `css-rule.ts` changes.** Step 2T already taught `extractThemeSelectors` to recognize `html.theme-*` and `html.dark.theme-*`. Step 2V is the first canon to consume the dark-variant selectors directly. Validates the helper extension was sized correctly.
+- **The `if (!lightTokens.has(GRADIENT_TOKEN)) return;` early return is intentional**, mirroring 2P's "any → all" doctrine. A theme that has no light gradient shouldn't be required to have a dark one. Symmetry is enforced *only when there's something to be symmetric about*.
+- **Why the allowlist exists despite being empty**: same reasoning as 2R's `ALLOWLIST_OMISSIONS`. Future "OLED-pure" theme variants may legitimately omit dark gradients; the slot is reserved so the precedent is established before the first omission lands.
+- **Why 2W can't fully execute from sandbox**: the AI's tool surface excludes package.json mutation. Honest framing > faked completion. The banner is the "deliverable from here" half.
 
 ## Out of scope
 
-- **Asserting that `html.dark.theme-*` selectors define the same gradient tokens as `html.theme-*`** — light/dark gradient parity is a separate canon (cross-mode parity, not cross-theme). Worth a future step if regressions appear; not bundled here.
-- **Migrating from `html.theme-*` to plain `.theme-*` for gradients** — would simplify the canon but changes runtime CSS specificity. Out of scope; the canon adapts to the codebase, not the other way around.
-- **Changing how `BASELINE_ONLY_TOKENS` is structured** (e.g., splitting typography from radius) — confirmed accurate; no change needed.
-- **Adding a "canon history" section to `docs/ci.md`** — would be valuable but is its own step. The current scope is removing stale conditionals, not adding new structure.
-- **Re-evaluating whether `:root` should be the baseline instead of `.theme-bone`** — already decided in Step 2R; revisiting now would be churn.
+- **Light↔dark color-token parity** (e.g., "if light defines `--primary`, dark must define `--primary`"). Already covered indirectly by Step 2R + the `.dark` baseline. Adding a third canon would be redundant.
+- **Asserting gradient *value* parity** (e.g., the dark gradient is "appropriately darker" than the light one). Subjective; doesn't fit the canon model. Stays in design review.
+- **Auto-applying package.json edits via a separate tool surface** (e.g., a manual-action runbook). Out of scope; user has the runbook in `docs/ci.md` already.
+- **Renaming the existing cross-theme parity canon** to clarify the axis. The new file's name (`cross-mode-…`) does the disambiguation; renaming the existing one is churn.
 
 ## Prompt feedback
 
-**What worked**: You correctly identified that an empty `ALLOWLIST_OMISSIONS` is fine but the *adjacent* structural categories are where the real audit value lives. Naming the specific candidate (`--mesh-gradient`) with the specific test (used everywhere?) made the prompt a hypothesis, not just a vague "look at these." That's the right shape for a low-cost audit.
+**What worked**: You correctly framed 2V as "*symmetric* to 2T" — naming the symmetry explicitly tells the AI not to invent a new pattern, just rotate the axis. You also caught the leverage in 2W's bundling (eliminate doc-lag), which is the right doctrine for any deferred-doc-edit step.
 
-**What could sharpen**: For 2U you wrote "two-line edit" — accurate for the caveat-removal lines, but understates the Step 2S section deletion (~30 lines). A tighter framing: *"two caveat removals plus deleting the Step 2S manual-actions section."* Naming the section deletion explicitly avoids the trap of stripping caveats but leaving the now-obsolete instruction block in place.
+**What could sharpen**: For 2W you wrote "one PR that adds the scripts + deps + lint-staged config AND strips the now-stale docs/ci.md caveats." Strong intent, but it didn't acknowledge that the sandbox-bound AI can only deliver one half. A tighter framing: *"bundle in the real PR — and from this session, ship the doc edits *prepared for that bundle* (e.g., a banner enumerating exactly what the PR should remove)."* That framing tells the AI to deliver the sandbox-shippable preparation rather than over-promising the full bundle.
 
-**Better prompt framing for next wave**: For doc-sync steps, always pair the "what to remove" with "and the section that was justifying its existence." Otherwise the docs get a halfway state — caveats gone, but the explainer block they pointed to still present, leaving future readers asking "wait, what was this section for?"
+**Better prompt framing for next wave**: For any step that depends on an external file edit (read-only sandbox files, third-party API changes, infra deploys), explicitly split the prompt into "sandbox half" and "external half" with the AI's deliverable scoped to the sandbox half plus a tightly-scoped checklist for the external half. Avoids the "AI claimed it landed but only half did" failure mode.
 
 ## Enhancement suggestions for next wave
 
-1. **Step 2V — Light/dark gradient parity canon.** Once 2T graduates `--mesh-gradient` to a first-class token, the symmetric question is: does every theme that defines it in `html.theme-*` also define it in `html.dark.theme-*`? Currently true by inspection; a canon makes it permanent. ~20 lines, builds directly on the merged-selector logic from 2T.
+1. **Step 2X — Branch protection runbook entry.** `docs/ci.md` line 74 references "GitHub repo settings → Branches → `main`, add `check` to required status checks" but doesn't surface this as a tracked deferred action. Worth adding to the `mem://architecture/canon-pattern.md` Deferral Register so the "until configured, the gate reports but does not block merge" state has a documented revisit trigger. ~5-line memory edit.
 
-2. **Step 2W — Canon history section in `docs/ci.md`.** With Steps 2I→2T accumulated, a one-paragraph-per-step "Canon history" appendix would let contributors trace why each rule exists without grepping commit history. The `mem://architecture/canon-pattern.md` memory has the abstract pattern; the history section grounds it in this repo's specific decisions. ~50 lines, high-leverage onboarding artifact.
+2. **Step 2Y — Canon catalog in `mem://architecture/canon-pattern.md`.** Steps 2I–2V have produced 4 distinct canons (no-raw-rgba, semantic-token, theme-completeness, cross-theme-parity, cross-mode-gradient-parity). The canon-pattern memory documents the abstract structure; a "Catalog" subsection listing each canon with its file path and one-line invariant would make the memory a practical lookup instead of just a pattern doc. ~20 lines, high-leverage onboarding artifact for the next contributor adding canon #6.
 
