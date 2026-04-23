@@ -197,8 +197,8 @@ html, body, #root {
     --muted-strong: 0 0% 14%;
     --muted-foreground: 40 10% 60%;
 
-    --accent: 40 30% 85%;
-    --accent-foreground: 0 0% 4%;
+    --accent: 30 12% 16%;
+    --accent-foreground: 40 20% 92%;
 
     --oat: 35 25% 30%;
     --oat-foreground: 35 30% 85%;
@@ -214,36 +214,30 @@ html, body, #root {
     --warning-foreground: 38 90% 75%;
 
     /* Chart colors for data visualization */
-    --chart-1: 345 55% 42%;
-    --chart-2: 345 35% 60%;
+    --chart-1: 30 16% 65%;
+    --chart-2: 35 22% 60%;
     --chart-3: 28 55% 45%;
     --chart-4: 38 70% 45%;
     --chart-5: 280 50% 50%;
 
-    --success: 145 40% 85%;
-    --success-foreground: 145 50% 30%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 32 80% 30%;
-
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 6% 65%;
-    --input: 350 6% 74%;
-    --ring: 345 55% 42%;
+    --border: 30 8% 18%;
+    --input: 30 8% 22%;
+    --ring: 30 16% 65%;
 
-    --sidebar-background: 350 10% 83%;
-    --sidebar-foreground: 350 20% 8%;
-    --sidebar-primary: 345 55% 42%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 8% 78%;
-    --sidebar-accent-foreground: 350 20% 8%;
-    --sidebar-border: 350 6% 65%;
-    --sidebar-ring: 345 55% 42%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 40 20% 92%;
+    --sidebar-primary: 30 16% 65%;
+    --sidebar-primary-foreground: 30 12% 6%;
+    --sidebar-accent: 30 8% 14%;
+    --sidebar-accent-foreground: 40 20% 92%;
+    --sidebar-border: 30 8% 16%;
+    --sidebar-ring: 30 16% 65%;
 
-    --card-inner: 350 6% 80%;
-    --card-inner-deep: 350 4% 76%;
+    --card-inner: 0 0% 13%;
+    --card-inner-deep: 0 0% 9%;
   }
 
   .dark.theme-rosewood {
