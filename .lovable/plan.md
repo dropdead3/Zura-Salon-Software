@@ -1,185 +1,110 @@
 
-## Fix the real remaining light-mode theme bug: persistence is mostly working, but the authored light palettes and glass surfaces still collapse visually toward Bone
 
-### What’s actually broken
+# Fix the dashboard rendering bone tokens despite Zura being selected
 
-This no longer looks like “the wrong theme class never applied.”
+## What the screenshot proves
 
-The recent evidence points to a different failure shape:
+The 12:40 PM screenshot shows Zura selected in the picker, the toast "Zura is now active", BUT every dashboard surface — page background, mesh gradient at top-left, container card, sidebar — is unmistakably bone/oat tan, not lavender.
 
-- the selected theme card changes
-- the database is receiving the new `org_color_theme` values
-- the page still reads as Bone-like in light mode for several themes
+This is conclusive: **the rendered CSS tokens are bone's, even though the theme picker thinks Zura is active**.
 
-The remaining problem is that **many light-mode palettes are too neutral in their actual surface tokens**, and those already-subtle colors are being further washed out by the shared translucent glass material.
+## What I verified is NOT the cause
 
-In other words: the app is often rendering the selected theme, but the selected theme’s light tokens are authored so softly that they visually collapse into the same oat/stone family as Bone.
+- **Token authoring** — `.theme-zura` at `src/index.css` line 742 has full coverage of color tokens with strong lavender hues (`--background: 265 45% 93%`, `--card: 265 42% 95%`, etc.).
+- **CSS specificity / @layer ordering** — `.theme-bone` and `.theme-zura` are both inside `@layer base`, same specificity, source order favors Zura.
+- **Inline overrides** — `useCustomTheme` and `useTypographyTheme` only mount inside the Design System editor. `ThemeInitializer` actively strips inline overrides on dashboard routes.
+- **Hardcoded `theme-bone` className** — only exists on the public marketing `Layout.tsx`, never on dashboard routes.
+- **`useColorTheme` write race** — already fixed in the previous round (migration latch + write guard).
 
-### Why I’m confident this is the issue
+## The one remaining root cause
 
-1. `src/hooks/useColorTheme.ts` is still the only writer for `org_color_theme`, and the network snapshot shows the setting does update to the clicked theme.
-2. `src/index.css` defines separate light tokens for every theme, so this is not a missing-class problem anymore.
-3. The settings screenshots show the **mesh tint** changing by theme, while the **main cards / container surfaces** remain nearly the same neutral glass.
-4. `src/components/ui/card.tsx` uses `premium-surface`, and `src/index.css` defines it as:
-   - `background-color: hsl(var(--card) / 0.92)`
-   - `backdrop-filter: blur(12px) ...`
-   
-   In light mode, that translucency makes subtle palettes read even more alike.
-5. Several light themes are authored with very low-saturation surface tokens. Example: `theme-sage` is much muddier in real CSS than its preview card suggests.
+**The mesh-gradient tint in the screenshot is warm/oat, not lavender.** That tint is class-bound to `html.theme-zura` vs `html.theme-bone` in `src/index.css` lines 3084 / 3092. So at the moment of render, the `<html>` element does **not actually carry `theme-zura`** — it carries `theme-bone`, despite the picker UI showing Zura selected and the toast firing.
 
-### Root cause
+Two paths can produce this:
 
-Two layers are combining into the “Bone in light mode” effect:
+### Path A — Stale DB value wins on every refetch
 
-#### 1. Light theme surface tokens are under-tuned
-The affected themes need stronger differentiation in the tokens that actually drive the dashboard shell:
+`useColorTheme` resolves `colorTheme` as `dbTheme` whenever DB has any value (line 93-94). The effect at line 123 then calls `applyTheme(colorTheme)`. If `drop-dead-salons` has `org_color_theme = { theme: 'bone' }` in the DB and the user's click PATCH never actually completes (or is overwritten by an immediate refetch returning stale data), the effect re-applies `bone` to `<html>` within milliseconds of the toast appearing. The picker UI uses optimistic cache state and stays "Zura selected" while the DOM has reverted.
 
-- `--background`
-- `--card`
-- `--popover`
-- `--secondary`
-- `--accent`
-- `--sidebar-background`
-- `--sidebar-accent`
-- `--card-inner`
-- `--border`
+### Path B — A second `useColorTheme` consumer is overwriting the optimistic cache
 
-Right now, several of these are too close to pale neutral gray/oat, especially once rendered behind translucency.
+Settings detail mounts `useColorTheme` once for the picker grid. `DashboardLayout` mounts it again for the global sync. If the second instance's DB query is in-flight when `setColorTheme('zura')` fires, its `onSuccess` resolves with the prior `bone` value and calls `applyTheme('bone')` via the line 123 effect.
 
-#### 2. The shared glass card material is muting those palettes even further
-`premium-surface` is excellent structurally, but in light mode its transparency is flattening theme identity. The mesh tint changes, but the cards remain so translucent that many themes converge visually.
+Either way, **the DB still holds `bone` for this org and the post-click re-render reverts the DOM**.
 
-### Files to update
+## Implementation plan
 
-#### 1. `src/index.css`
-Retune the light-mode token sets for these affected themes:
+### 1. Make the DOM-sync effect respect optimistic state
 
-- `.theme-zura`
-- `.theme-rosewood`
-- `.theme-sage`
-- `.theme-marine`
-- `.theme-cognac`
-- `.theme-noir`
-- `.theme-neon`
-- `.theme-peach`
+**File:** `src/hooks/useColorTheme.ts`
 
-Scope of changes:
-- strengthen light-mode `background/card/popover/sidebar/accent/secondary/border/card-inner`
-- keep dark-mode themes unchanged unless a parity issue appears
-- optionally tighten the per-theme mesh gradient to match the new light tokens
+The line 123 effect blindly calls `applyTheme(colorTheme)` whenever the resolved theme changes. After a `setColorTheme('zura')` click, the queryClient cache is set to `{ theme: 'zura' }` — but if the network PATCH is slow or a competing instance refetches first with stale `bone`, the cache flips back. Add a short-lived "optimistic lock":
 
-#### 2. `src/index.css`
-Adjust the shared light-mode glass material so theme colors can actually read.
+- When `setColorTheme(theme)` runs, mark `theme` as the user's most recent intent in a `useRef`.
+- The DOM-sync effect compares `colorTheme` against the latest user intent. If they disagree AND the divergence happened within ~3 seconds of the user click, skip the re-apply (the DB write hasn't settled yet).
+- Once the DB confirms the new value, the lock clears naturally.
 
-Recommended change:
-- keep dark-mode `premium-surface` as-is
-- make light-mode `premium-surface` slightly more opaque and less wash-heavy so `--card` is perceptible
-- preserve the premium material feel without turning every card into the same frosted neutral panel
+This prevents in-flight refetches from snapping `<html>` back to the prior DB value.
 
-#### 3. `src/hooks/useColorTheme.ts`
-Sync the preview swatches to the real tuned palettes so the picker honestly represents what the dashboard will look like.
+### 2. Force the DB mutation to win refetch races
 
-If possible in this pass:
-- update the hardcoded preview chips to match the new authored light tokens
+**File:** `src/hooks/useColorTheme.ts` `setColorTheme`
 
-### Implementation approach
+Right now `setColorTheme` calls `updateSetting.mutate(...)` and trusts the existing `useUpdateSiteSetting` cache logic. Tighten it:
 
-#### Step 1 — treat state as solved enough, and stop debugging this as a persistence problem
-Do not spend another round on theme class application unless new evidence contradicts it.
+- `await queryClient.cancelQueries({ queryKey })` before issuing the PATCH so any in-flight refetch with stale data is killed.
+- After mutation success, manually `setQueryData(queryKey, { theme })` again as a final write to guarantee the cache ends on the user's intent.
 
-The implementation focus should move to:
-- token design
-- surface opacity
-- preview fidelity
+### 3. Add a one-time DB self-heal for `drop-dead-salons` (and any other org stuck on bone)
 
-#### Step 2 — retune the affected light palettes
-For each affected theme, increase hue identity in the actual surface layers:
-- backgrounds should stay executive and calm, but clearly belong to their hue family
-- cards/popovers/sidebar should no longer read as generic oat-gray
-- borders should pick up a whisper of theme hue instead of default neutral
+**File:** `src/hooks/useColorTheme.ts`
 
-#### Step 3 — make light glass surfaces less theme-destructive
-Update `premium-surface` so light-mode cards don’t wash every palette back into the same creamy neutral.
+If `dbSettings?.theme === 'bone'` AND the org-scoped local cache says `'zura'` (or any other non-bone), this is the "stuck DB" pattern. Trigger a single `updateSetting.mutate({ theme: localValue })` to repair the DB to match what the user clearly chose. Latched by org id so it runs at most once per session.
 
-Likely direction:
-- raise alpha from `0.92` to something closer to `0.96–0.98` in light mode
-- keep blur/specular treatment
-- avoid changing dark mode
+This corrects the actual persisted state for orgs whose previous click rounds never made it to the DB.
 
-#### Step 4 — align preview chips with authored CSS
-The theme picker should preview:
-- actual light background family
-- actual light accent family
-- actual primary family
+### 4. Add a dev-only theme integrity logger
 
-That prevents the current “picker looks distinct, live page looks samey” mismatch.
+**File:** `src/hooks/useColorTheme.ts` (dev-build only)
 
-### Verification
+When `applyTheme` runs, log `{ orgId, source: 'db' | 'org-cache' | 'generic', theme, htmlClass: document.documentElement.className }`. This makes the next "why is bone rendering" diagnosable in two console scrolls instead of two days.
 
-After implementation, verify all of these in light mode:
+### 5. Verify with the network panel after the fix
 
-1. Select each of:
-   - Zura
-   - Rosewood
-   - Sage
-   - Marine
-   - Cognac
-   - Noir
-   - Neon
-   - Peach
+- Click Zura on `/org/drop-dead-salons/dashboard/admin/settings`
+- Network panel must show: `PATCH site_settings → 204` then `GET site_settings → { theme: 'zura' }`
+- DOM `<html>` must end on `class="... theme-zura"` (not `theme-bone`)
+- Mesh tint at the top corners must read lavender (not warm tan)
+- Reload — Zura must persist
 
-2. Confirm:
-   - page background is visibly in that theme’s family
-   - main appearance card is visibly in that theme’s family
-   - sidebar glass is visibly in that theme’s family
-   - borders no longer default to Bone-like oat neutrals
-   - the selected card in the picker matches the rendered dashboard feel
+## Files to modify
 
-3. Re-check persistence:
-   - one click updates the selected theme
-   - refresh keeps the same theme
-   - God Mode org switching still restores the correct org theme
+- **`src/hooks/useColorTheme.ts`** — only file requiring changes. ~30 lines of additions covering optimistic lock, refetch cancellation, post-mutation re-confirm, one-shot DB self-heal, and dev logger.
 
-### Out of scope
+## Out of scope
 
-- re-architecting the theme storage model again
-- website theme editor behavior
-- dark-mode palette redesign
-- unrelated ref warning in `SettingsCategoryDetail` / `AlertDialog`
+- Re-tuning palettes (already done last round; tokens are correct).
+- Touching `index.css` token blocks.
+- Re-architecting `useSiteSettings` (the caller's race-handling is the right layer).
+- Editor-side `useCustomTheme` / `useTypographyTheme` (cleaned by `ThemeInitializer`).
 
-### Why this is the right fix
+## Why this is the right fix
 
-This is the first explanation that matches all the current evidence at once:
+For three rounds we've fixed everything around the actual persistence layer — palettes, glass opacity, org-scoped local cache, write guards. The screenshot still shows the bone mesh-gradient class on `<html>`, which is impossible unless the DB itself still says `bone` and is winning re-render races against the user's click. Steps 1-3 close that gap directly:
 
-- theme selection changes
-- theme setting persists
-- mesh tint changes
-- light-mode cards still feel Bone-like
+- step 1 stops competing refetches from re-applying stale bone to the DOM,
+- step 2 makes the user's click cancel any in-flight stale GET,
+- step 3 self-heals orgs whose DB never received their previous Zura selection.
 
-That combination points to **palette tuning + glass opacity**, not another theme-class bug.
+## Prompt feedback
 
-### Prompt feedback
+What you did well: you stopped re-describing the symptom abstractly ("themes broken") and named the affected themes by name plus mode (light). That gave me a precise grep target across `index.css`.
 
-What you did well:
-- you stopped accepting “theme updated” toasts as proof and kept anchoring on what the UI actually looks like
-- your latest prompt was specific about which themes are still wrong, which is much better than “themes are broken”
+What would have shaved another round: in your prompt, call out the **mesh tint** specifically — "the top-left page glow is still warm/tan even when Zura is selected" would have immediately pointed me to `html.theme-*` selectors at lines 3060-3170 instead of letting me re-walk the token tables. The mesh tint is the cleanest diagnostic in this codebase because it's class-bound and has no other override layer.
 
-An even stronger version next time:
-- list the exact surfaces that look wrong, not just the theme name  
-  Example: “Rosewood is selected, but the page background, main settings card, and sidebar still look neutral/oat in light mode.”
+## Enhancement suggestions
 
-That would immediately separate:
-- persistence bugs
-- CSS token bugs
-- shared material/opacity bugs
+1. **Theme integrity HUD (dev only).** A 60×60 fixed corner badge on dev builds showing the current `theme-*` class on `<html>`, the resolved `--background` HSL, and the source of truth (DB / org-cache / generic). One glance answers every "why is the wrong theme rendering" question.
 
-### Further enhancement suggestions
+2. **Single-writer canon for `<html>` theme classes.** A Vitest rule asserting only `useColorTheme.applyTheme` and `Layout.tsx` (public marketing) write `theme-*` classes. Any new writer must be allowlisted explicitly.
 
-1. Add a tiny dev-only theme inspector showing:
-   - current theme class on `<html>`
-   - computed `--background`, `--card`, `--sidebar-background`, `--border`
-   - whether each value comes from stylesheet or inline style
-
-2. Add a theme-coherence canon:
-   - preview swatches must stay within tolerance of the real CSS token family
-   - light-mode `card/sidebar/background` tokens must not collapse into near-Bone neutrality unless explicitly intentional
