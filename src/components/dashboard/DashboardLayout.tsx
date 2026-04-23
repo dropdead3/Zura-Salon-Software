@@ -170,6 +170,49 @@ function ChaChingDetectorMount() {
   return null;
 }
 
+/**
+ * DashboardChromeWrapper — the single welded L surface.
+ * Renders one `.chrome-l` div with an SVG mask cutting the inner
+ * top-right quadrant (with a rounded concave elbow). All children
+ * (sidebar content, top-bar content) sit unstyled inside it; the
+ * wrapper owns the background, blur, border (via inset shadow), and
+ * drop shadow — producing one continuous silhouette with zero seams.
+ */
+function DashboardChromeWrapper({
+  children,
+  isImpersonating,
+  sidebarWidthPx,
+  topbarHeightPx,
+}: {
+  children: React.ReactNode;
+  isImpersonating: boolean;
+  sidebarWidthPx: number;
+  topbarHeightPx: number;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  return (
+    <>
+      <DashboardChromeMask
+        sidebarWidthPx={sidebarWidthPx}
+        topbarHeightPx={topbarHeightPx}
+        containerRef={containerRef}
+      />
+      <div
+        ref={containerRef}
+        className="chrome-l hidden lg:block fixed left-3 bottom-3 right-3 z-[60] pointer-events-none"
+        style={{
+          top: isImpersonating ? '56px' : '12px',
+          // Apply the SVG mask so the L silhouette is cut from the rect
+          maskImage: 'url(#chrome-l-mask)',
+          WebkitMaskImage: 'url(#chrome-l-mask)',
+        }}
+      >
+        {children}
+      </div>
+    </>
+  );
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   hideFooter?: boolean;
