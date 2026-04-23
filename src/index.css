@@ -501,7 +501,7 @@ html, body, #root {
     --popover: 210 10% 85%;
     --popover-foreground: 210 20% 8%;
 
-    --primary: 218 65% 35%;
+    --primary: 220 90% 52%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 8% 78%;
@@ -521,11 +521,11 @@ html, body, #root {
     --gold-foreground: 45 100% 97%;
 
     /* Chart colors for data visualization */
-    --chart-1: 218 65% 35%;
-    --chart-2: 218 50% 55%;
+    --chart-1: 220 90% 52%;
+    --chart-2: 200 85% 50%;
     --chart-3: 42 75% 45%;
     --chart-4: 38 70% 50%;
-    --chart-5: 200 45% 50%;
+    --chart-5: 260 70% 60%;
 
     --success: 145 40% 85%;
     --success-foreground: 145 50% 30%;
@@ -538,16 +538,16 @@ html, body, #root {
 
     --border: 210 6% 65%;
     --input: 210 6% 74%;
-    --ring: 218 65% 35%;
+    --ring: 220 90% 52%;
 
     --sidebar-background: 210 10% 83%;
     --sidebar-foreground: 218 25% 8%;
-    --sidebar-primary: 218 65% 35%;
+    --sidebar-primary: 220 90% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 8% 78%;
     --sidebar-accent-foreground: 218 25% 8%;
     --sidebar-border: 210 6% 65%;
-    --sidebar-ring: 218 65% 35%;
+    --sidebar-ring: 220 90% 52%;
 
     --card-inner: 210 6% 80%;
     --card-inner-deep: 210 4% 76%;
@@ -563,7 +563,7 @@ html, body, #root {
     --popover: 210 15% 13%;
     --popover-foreground: 210 20% 92%;
 
-    --primary: 210 55% 55%;
+    --primary: 220 92% 62%;
     --primary-foreground: 210 15% 6%;
 
     --secondary: 210 10% 18%;
@@ -583,9 +583,9 @@ html, body, #root {
     --gold-foreground: 45 100% 97%;
 
     /* Chart colors for data visualization */
-    --chart-1: 210 25% 75%;
-    --chart-2: 145 55% 55%;
-    --chart-3: 217 85% 65%;
+    --chart-1: 220 92% 62%;
+    --chart-2: 200 88% 60%;
+    --chart-3: 145 55% 55%;
     --chart-4: 43 95% 60%;
     --chart-5: 280 75% 70%;
 
@@ -600,16 +600,16 @@ html, body, #root {
 
     --border: 210 8% 28%;
     --input: 210 10% 16%;
-    --ring: 210 55% 55%;
+    --ring: 220 92% 62%;
 
     --sidebar-background: 210 15% 12%;
     --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 210 55% 55%;
+    --sidebar-primary: 220 92% 62%;
     --sidebar-primary-foreground: 210 15% 6%;
     --sidebar-accent: 210 10% 18%;
     --sidebar-accent-foreground: 210 20% 92%;
     --sidebar-border: 210 8% 28%;
-    --sidebar-ring: 210 55% 55%;
+    --sidebar-ring: 220 92% 62%;
 
     --card-inner: 210 5% 8%;
     --card-inner-deep: 210 3% 5%;
