@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
@@ -12,6 +12,17 @@ const SITE_SETTINGS_KEY = 'org_color_theme';
 
 function orgScopedKey(orgId: string): string {
   return `dd-color-theme:${orgId}`;
+}
+
+function slugScopedKey(slug: string): string {
+  return `dd-color-theme:slug:${slug}`;
+}
+
+/** Parse the current org slug from the URL (matches the pre-paint script). */
+function currentSlugFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  const m = window.location.pathname.match(/^\/org\/([^/]+)/);
+  return m?.[1] ?? null;
 }
 
 export const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
@@ -39,13 +50,23 @@ type ColorThemeSettings = Record<string, unknown> & {
 
 function applyTheme(theme: ColorTheme, orgId?: string | null) {
   const html = document.documentElement;
-  html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism');
-  html.classList.add(`theme-${theme}`);
+  // Skip DOM mutation if already correct — avoids needless reflow + class churn.
+  const targetClass = `theme-${theme}`;
+  const alreadyApplied =
+    html.classList.contains(targetClass) &&
+    !THEME_CLASSES.some((c) => c !== targetClass && html.classList.contains(c));
+  if (!alreadyApplied) {
+    html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism');
+    html.classList.add(targetClass);
+  }
   // Side-channel writes:
   //  - org-scoped key (authoritative per org once orgId is known)
-  //  - generic key (pre-paint hint for index.html before any context exists)
+  //  - slug-scoped key (pre-paint hint for index.html on next hard load)
+  //  - generic key (legacy fallback hint)
   try {
     if (orgId) localStorage.setItem(orgScopedKey(orgId), theme);
+    const slug = currentSlugFromUrl();
+    if (slug) localStorage.setItem(slugScopedKey(slug), theme);
     localStorage.setItem(GENERIC_THEME_STORAGE_KEY, theme);
   } catch { /* ignore */ }
 }
@@ -97,11 +118,26 @@ const isDev =
     ? (import.meta as { env: { DEV: boolean } }).env.DEV
     : false;
 
+// Module-scoped snapshot of the most recent integrity state. Read by the
+// dev-only `ThemeIntegrityHud` so the resolver hook stays effect/ref-free.
+type ThemeIntegritySnapshot = {
+  orgId: string | null;
+  source: 'db' | 'org-cache' | 'generic' | 'intent-lock' | 'pre-paint-fix';
+  theme: ColorTheme;
+  at: number;
+};
+let lastThemeIntegrity: ThemeIntegritySnapshot | null = null;
+
+export function getLastThemeIntegrity(): ThemeIntegritySnapshot | null {
+  return lastThemeIntegrity;
+}
+
 function logThemeIntegrity(
   orgId: string | undefined | null,
-  source: 'db' | 'org-cache' | 'generic',
+  source: ThemeIntegritySnapshot['source'],
   theme: ColorTheme,
 ) {
+  lastThemeIntegrity = { orgId: orgId ?? null, source, theme, at: Date.now() };
   if (!isDev) return;
   // eslint-disable-next-line no-console
   console.debug('[theme]', {
