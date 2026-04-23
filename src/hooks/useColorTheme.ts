@@ -36,6 +36,9 @@ function applyTheme(theme: ColorTheme) {
   // Also strip any legacy theme classes that may still be on the element
   html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism');
   html.classList.add(`theme-${theme}`);
+  // Side-channel write so the pre-paint script in index.html can apply the
+  // correct theme class before React mounts (prevents bone-flash on route loads).
+  try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch { /* ignore */ }
 }
 
 function getLocalTheme(): ColorTheme {
