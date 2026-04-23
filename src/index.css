@@ -1557,8 +1557,21 @@ html, body, #root {
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    background-color: transparent;
     font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  /* Solid fallback painted on html so the mesh on body::before can show through.
+     Prevents flash-of-white before mesh paints. */
+  html {
+    background-color: hsl(var(--background));
+  }
+
+  /* Dashboard content sits above the mesh layer (body::before, z-index: 0) */
+  #root {
+    position: relative;
+    z-index: 1;
   }
 }
 
@@ -1667,6 +1680,9 @@ html, body, #root {
      read as a real material instead of a flat div. Composes with `bg-card`
      and works in both light + dark themes. */
   .premium-surface {
+    background-color: hsl(var(--card) / 0.88);
+    backdrop-filter: blur(12px) saturate(1.1);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
     box-shadow:
       inset 0 1px 0 0 hsl(var(--foreground) / 0.04),
       0 1px 2px 0 hsl(var(--foreground) / 0.04);
@@ -1687,6 +1703,7 @@ html, body, #root {
     opacity: 0.4;
   }
   .dark .premium-surface {
+    background-color: hsl(var(--card) / 0.92);
     box-shadow:
       inset 0 1px 0 0 hsl(var(--foreground) / 0.06),
       0 1px 2px 0 hsl(0 0% 0% / 0.2);
@@ -2827,9 +2844,8 @@ html.theme-orchid body::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
-  background-color: hsl(var(--background));
   background-image: var(--mesh-gradient, none);
   background-attachment: fixed;
   background-size: cover;
