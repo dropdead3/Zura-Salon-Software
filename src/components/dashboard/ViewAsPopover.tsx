@@ -279,35 +279,63 @@ export function ViewAsPopover() {
                 />
               </div>
               {showLocationFilter && (
-                <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedLocationId('all')}
-                    className={cn(
-                      'h-6 px-2.5 rounded-full text-[11px] font-sans transition-colors duration-150 shrink-0',
-                      selectedLocationId === 'all'
-                        ? 'bg-muted text-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                    )}
-                  >
-                    All locations
-                  </button>
-                  {locations.map(loc => (
+                <InnerPopover open={locationPickerOpen} onOpenChange={setLocationPickerOpen}>
+                  <InnerPopoverTrigger asChild>
                     <button
-                      key={loc.id}
                       type="button"
-                      onClick={() => setSelectedLocationId(loc.id)}
-                      className={cn(
-                        'h-6 px-2.5 rounded-full text-[11px] font-sans transition-colors duration-150 shrink-0',
-                        selectedLocationId === loc.id
-                          ? 'bg-muted text-foreground'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                      )}
+                      className="w-full h-8 flex items-center gap-2 px-2.5 rounded-lg bg-muted/50 hover:bg-muted/70 border border-border/60 text-xs font-sans transition-colors duration-150"
                     >
-                      {loc.name}
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="flex-1 text-left truncate">
+                        {selectedLocationId === 'all'
+                          ? 'All locations'
+                          : locations.find(l => l.id === selectedLocationId)?.name ?? 'Select location'}
+                      </span>
+                      <ChevronsUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
                     </button>
-                  ))}
-                </div>
+                  </InnerPopoverTrigger>
+                  <InnerPopoverContent
+                    align="start"
+                    sideOffset={4}
+                    className="w-[300px] p-0 z-[60] rounded-lg border border-border/60 bg-popover/95 backdrop-blur-xl"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search locations…" className="h-9 text-xs" />
+                      <CommandList className="max-h-[280px]">
+                        <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">
+                          No locations found
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="all-locations"
+                            onSelect={() => {
+                              setSelectedLocationId('all');
+                              setLocationPickerOpen(false);
+                            }}
+                            className="text-xs gap-2"
+                          >
+                            <Check className={cn('w-3.5 h-3.5', selectedLocationId === 'all' ? 'opacity-100' : 'opacity-0')} />
+                            <span>All locations</span>
+                          </CommandItem>
+                          {locations.map(loc => (
+                            <CommandItem
+                              key={loc.id}
+                              value={loc.name}
+                              onSelect={() => {
+                                setSelectedLocationId(loc.id);
+                                setLocationPickerOpen(false);
+                              }}
+                              className="text-xs gap-2"
+                            >
+                              <Check className={cn('w-3.5 h-3.5', selectedLocationId === loc.id ? 'opacity-100' : 'opacity-0')} />
+                              <span className="truncate">{loc.name}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </InnerPopoverContent>
+                </InnerPopover>
               )}
             </div>
             <ScrollArea className="flex-1 min-h-0 h-full">
