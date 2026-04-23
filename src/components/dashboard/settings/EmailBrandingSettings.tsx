@@ -32,6 +32,9 @@ const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
   cognac: '#B8651F',
   noir: '#1A1A1A',
   neon: '#FF2D8A',
+  matrix: '#1AFF7A',
+  peach: '#FF8A5C',
+  prism: '#C43EFF',
 };
 
 const SAMPLE_VARIABLES: Record<string, string> = {

@@ -86,6 +86,24 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#d4206e',
     255, 45, 138,
   ),
+  matrix: palette(
+    ['#020814', '#04142a', '#020814'],
+    '#1aff7a',
+    '#0fcc60',
+    26, 255, 122,
+  ),
+  peach: palette(
+    ['#1a0a08', '#3d1810', '#1a0a08'],
+    '#ff8a5c',
+    '#e6754a',
+    255, 138, 92,
+  ),
+  prism: palette(
+    ['#0a0414', '#1a0833', '#0a0414'],
+    '#c43eff',
+    '#9d2adb',
+    196, 62, 255,
+  ),
 };
 
 export function getTerminalPalette(theme: ColorTheme): TerminalPalette {
