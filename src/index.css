@@ -2126,8 +2126,19 @@ html, body, #root {
 
 /* Custom scrollbar */
 @layer utilities {
+  /* Minimal scrollbar utility (4px) — token-driven, matches global canon */
+  .scrollbar-minimal {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-minimal:hover {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  }
+
   .scrollbar-minimal::-webkit-scrollbar {
     width: 4px;
+    height: 4px;
   }
 
   .scrollbar-minimal::-webkit-scrollbar-track {
@@ -2135,17 +2146,21 @@ html, body, #root {
   }
 
   .scrollbar-minimal::-webkit-scrollbar-thumb {
-    background: transparent;
+    background-color: transparent;
     border-radius: 9999px;
-    transition: background 0.3s ease;
+    transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   .scrollbar-minimal:hover::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
+    background-color: hsl(var(--muted-foreground) / 0.25);
   }
 
   .scrollbar-minimal:hover::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.25);
+    background-color: hsl(var(--muted-foreground) / 0.45);
+  }
+
+  .scrollbar-minimal:hover::-webkit-scrollbar-thumb:active {
+    background-color: hsl(var(--primary) / 0.5);
   }
 
   .scrollbar-hide {
@@ -2157,18 +2172,19 @@ html, body, #root {
     display: none;
   }
 
-  /* Thin scrollbar utility */
+  /* Thin scrollbar utility (6px) — token-driven, matches global canon */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
 
   .scrollbar-thin:hover {
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -2176,17 +2192,21 @@ html, body, #root {
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 3px;
-    transition: background 0.3s ease;
+    background-color: transparent;
+    border-radius: 9999px;
+    transition: background-color 180ms cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
+    background-color: hsl(var(--muted-foreground) / 0.25);
   }
 
   .scrollbar-thin:hover::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.25);
+    background-color: hsl(var(--muted-foreground) / 0.45);
+  }
+
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb:active {
+    background-color: hsl(var(--primary) / 0.5);
   }
 
   /* 3D Flip Card Utilities */
@@ -2679,14 +2699,6 @@ html {
 }
 
 /* Firefox: thin scrollbar on all elements (does not create gutters) */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-*:hover {
-  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
-}
-
 /* ZuraLoader disco shimmer */
 @keyframes zura-disco {
   0%, 100% { opacity: 0.15; transform: scale(0.95); box-shadow: 0 0 0px rgba(255,255,255,0); }
