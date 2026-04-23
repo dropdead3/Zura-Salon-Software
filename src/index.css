@@ -76,7 +76,7 @@ html, body, #root {
 @layer base {
   /* ===== THEME: BONE (Default — cool desert gray & oat) ===== */
   :root,
-  .theme-bone {
+  .theme-cream-lux {
     /* Luxury-light: bone-warm near-neutral. Lightness ladder per shared spec. */
     --background: 35 12% 97%;
     --foreground: 30 18% 8%;
@@ -238,7 +238,7 @@ html, body, #root {
     --card-inner-deep: 350 18% 94%;
   }
 
-  .dark.theme-bone,
+  .dark.theme-cream-lux,
   .dark:not([class*="theme-"]) {
     --background: 0 0% 4%;
     --foreground: 40 20% 92%;
@@ -2893,7 +2893,7 @@ html {
    ----------------------------------------------- */
 
 html.theme-zura body::before,
-html.theme-bone body::before,
+html.theme-cream-lux body::before,
 html.theme-rosewood body::before,
 html.theme-sage body::before,
 html.theme-jade body::before,
@@ -2924,7 +2924,7 @@ html.theme-zura {
     radial-gradient(at 22% 78%, hsl(280 45% 90% / 0.18) 0px, transparent 45%);
 }
 
-html.theme-bone {
+html.theme-cream-lux {
   --mesh-gradient:
     radial-gradient(at 20% 25%, hsl(35 32% 86% / 0.28) 0px, transparent 48%),
     radial-gradient(at 80% 20%, hsl(28 26% 88% / 0.22) 0px, transparent 45%),
@@ -3022,7 +3022,7 @@ html.dark.theme-zura {
     radial-gradient(at 22% 78%, hsl(280 45% 16% / 0.12) 0px, transparent 45%);
 }
 
-html.dark.theme-bone {
+html.dark.theme-cream-lux {
   --mesh-gradient:
     radial-gradient(at 18% 22%, hsl(35 22% 18% / 0.18) 0px, transparent 48%),
     radial-gradient(at 82% 18%, hsl(28 18% 16% / 0.14) 0px, transparent 45%),

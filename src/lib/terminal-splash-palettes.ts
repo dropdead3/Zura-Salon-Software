@@ -32,7 +32,7 @@ const palette = (
 });
 
 export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
-  bone: palette(
+  'cream-lux': palette(
     ['#0a0a0a', '#2a2826', '#0a0a0a'],
     '#a8a195',
     '#8a8378',
@@ -107,5 +107,5 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
 };
 
 export function getTerminalPalette(theme: ColorTheme): TerminalPalette {
-  return terminalPalettes[theme] ?? terminalPalettes.bone;
+  return terminalPalettes[theme] ?? terminalPalettes['cream-lux'];
 }

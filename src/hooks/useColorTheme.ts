@@ -4,18 +4,46 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
-export type ColorTheme = 'zura' | 'bone' | 'rosewood' | 'sage' | 'jade' | 'marine' | 'cognac' | 'noir' | 'neon' | 'matrix' | 'peach' | 'orchid';
+export type ColorTheme =
+  | 'zura'
+  | 'cream-lux'
+  | 'neon'
+  | 'rosewood'
+  | 'orchid'
+  | 'peach'
+  | 'cognac'
+  | 'jade'
+  | 'sage'
+  | 'matrix'
+  | 'noir'
+  | 'marine';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 const CLEAR_CUSTOM_THEME_EVENT = 'dashboard-theme:clear-custom-overrides';
 
-const ALL_THEMES: ColorTheme[] = ['zura', 'bone', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid'];
+// Canonical display order: Zura, Cream Lux, Neon, Rosewood, Rose Gold,
+// Peach, Cognac, Jade, Sage, Matrix, Noir, Marine (appended).
+const ALL_THEMES: ColorTheme[] = [
+  'zura',
+  'cream-lux',
+  'neon',
+  'rosewood',
+  'orchid',
+  'peach',
+  'cognac',
+  'jade',
+  'sage',
+  'matrix',
+  'noir',
+  'marine',
+];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 // Migration map for renamed theme keys (legacy → current)
 const LEGACY_THEME_MIGRATION: Record<string, ColorTheme> = {
-  cream: 'bone',
+  bone: 'cream-lux',
+  cream: 'cream-lux',
   rose: 'rosewood',
   ocean: 'marine',
   ember: 'cognac',
@@ -93,8 +121,16 @@ function clearCustomThemeSources() {
 
 function applyTheme(theme: ColorTheme) {
   const html = document.documentElement;
-  // Also strip any legacy theme classes that may still be on the element
-  html.classList.remove(...THEME_CLASSES, 'theme-cream', 'theme-rose', 'theme-ocean', 'theme-ember', 'theme-prism');
+  // Strip current + legacy theme classes before applying the new one
+  html.classList.remove(
+    ...THEME_CLASSES,
+    'theme-bone',
+    'theme-cream',
+    'theme-rose',
+    'theme-ocean',
+    'theme-ember',
+    'theme-prism',
+  );
   html.classList.add(`theme-${theme}`);
 }
 
@@ -187,7 +223,7 @@ export function useColorTheme() {
 // Map system color themes to matching service category quick themes
 export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   zura: 'Lavender Fields',
-  bone: 'Neutral Elegance',
+  'cream-lux': 'Neutral Elegance',
   rosewood: 'Rose Garden',
   sage: 'Herb Garden',
   jade: 'Herb Garden',
@@ -200,7 +236,7 @@ export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   orchid: 'Lavender Fields',
 };
 
-// Theme metadata for UI
+// Theme metadata for UI — order matches ALL_THEMES (display order in pickers)
 export const colorThemes = [
   {
     id: 'zura' as ColorTheme,
@@ -218,8 +254,8 @@ export const colorThemes = [
     },
   },
   {
-    id: 'bone' as ColorTheme,
-    name: 'Bone',
+    id: 'cream-lux' as ColorTheme,
+    name: 'Cream Lux',
     description: 'Cool desert gray & oat',
     lightPreview: {
       bg: 'hsl(35 12% 93%)',
@@ -230,96 +266,6 @@ export const colorThemes = [
       bg: 'hsl(30 12% 6%)',
       accent: 'hsl(30 14% 22%)',
       primary: 'hsl(30 16% 65%)',
-    },
-  },
-  {
-    id: 'rosewood' as ColorTheme,
-    name: 'Rosewood',
-    description: 'Rich rose & burgundy',
-    lightPreview: {
-      bg: 'hsl(350 22% 95%)',
-      accent: 'hsl(350 25% 85%)',
-      primary: 'hsl(345 55% 42%)',
-    },
-    darkPreview: {
-      bg: 'hsl(345 18% 6%)',
-      accent: 'hsl(345 22% 22%)',
-      primary: 'hsl(345 60% 58%)',
-    },
-  },
-  {
-    id: 'sage' as ColorTheme,
-    name: 'Sage',
-    description: 'Calming mint green',
-    lightPreview: {
-      bg: 'hsl(145 25% 96%)',
-      accent: 'hsl(145 25% 82%)',
-      primary: 'hsl(145 45% 42%)',
-    },
-    darkPreview: {
-      bg: 'hsl(145 12% 6%)',
-      accent: 'hsl(145 15% 25%)',
-      primary: 'hsl(145 40% 50%)',
-    },
-  },
-  {
-    id: 'jade' as ColorTheme,
-    name: 'Jade',
-    description: 'Deep teal jewel & gold',
-    lightPreview: {
-      bg: 'hsl(180 20% 95%)',
-      accent: 'hsl(178 25% 85%)',
-      primary: 'hsl(175 65% 32%)',
-    },
-    darkPreview: {
-      bg: 'hsl(180 35% 6%)',
-      accent: 'hsl(178 30% 16%)',
-      primary: 'hsl(172 70% 45%)',
-    },
-  },
-  {
-    id: 'marine' as ColorTheme,
-    name: 'Marine',
-    description: 'Deep navy & gold',
-    lightPreview: {
-      bg: 'hsl(218 35% 97%)',
-      accent: 'hsl(218 60% 92%)',
-      primary: 'hsl(218 100% 56%)',
-    },
-    darkPreview: {
-      bg: 'hsl(220 50% 7%)',
-      accent: 'hsl(220 45% 11%)',
-      primary: 'hsl(218 100% 65%)',
-    },
-  },
-  {
-    id: 'cognac' as ColorTheme,
-    name: 'Cognac',
-    description: 'Bourbon amber & leather',
-    lightPreview: {
-      bg: 'hsl(28 25% 93%)',
-      accent: 'hsl(28 22% 82%)',
-      primary: 'hsl(28 70% 42%)',
-    },
-    darkPreview: {
-      bg: 'hsl(24 18% 6%)',
-      accent: 'hsl(28 22% 20%)',
-      primary: 'hsl(28 70% 52%)',
-    },
-  },
-  {
-    id: 'noir' as ColorTheme,
-    name: 'Noir',
-    description: 'Pure monochrome minimal',
-    lightPreview: {
-      bg: 'hsl(0 0% 96%)',
-      accent: 'hsl(0 0% 88%)',
-      primary: 'hsl(0 0% 8%)',
-    },
-    darkPreview: {
-      bg: 'hsl(0 0% 4%)',
-      accent: 'hsl(0 0% 15%)',
-      primary: 'hsl(0 0% 95%)',
     },
   },
   {
@@ -338,18 +284,33 @@ export const colorThemes = [
     },
   },
   {
-    id: 'matrix' as ColorTheme,
-    name: 'Matrix',
-    description: 'Neon emerald on deep navy',
+    id: 'rosewood' as ColorTheme,
+    name: 'Rosewood',
+    description: 'Rich rose & burgundy',
     lightPreview: {
-      bg: 'hsl(220 30% 96%)',
-      accent: 'hsl(145 35% 88%)',
-      primary: 'hsl(145 75% 32%)',
+      bg: 'hsl(350 22% 95%)',
+      accent: 'hsl(350 25% 85%)',
+      primary: 'hsl(345 55% 42%)',
     },
     darkPreview: {
-      bg: 'hsl(220 50% 5%)',
-      accent: 'hsl(145 40% 14%)',
-      primary: 'hsl(145 90% 50%)',
+      bg: 'hsl(345 18% 6%)',
+      accent: 'hsl(345 22% 22%)',
+      primary: 'hsl(345 60% 58%)',
+    },
+  },
+  {
+    id: 'orchid' as ColorTheme,
+    name: 'Rose Gold',
+    description: 'Rose gold & dusty pink duotone',
+    lightPreview: {
+      bg: 'hsl(15 22% 97%)',
+      accent: 'hsl(350 20% 93%)',
+      primary: 'hsl(18 45% 62%)',
+    },
+    darkPreview: {
+      bg: 'hsl(15 18% 6%)',
+      accent: 'hsl(350 14% 16%)',
+      primary: 'hsl(18 55% 68%)',
     },
   },
   {
@@ -368,18 +329,93 @@ export const colorThemes = [
     },
   },
   {
-    id: 'orchid' as ColorTheme,
-    name: 'Rose Gold',
-    description: 'Rose gold & dusty pink duotone',
+    id: 'cognac' as ColorTheme,
+    name: 'Cognac',
+    description: 'Bourbon amber & leather',
     lightPreview: {
-      bg: 'hsl(15 22% 97%)',
-      accent: 'hsl(350 20% 93%)',
-      primary: 'hsl(18 45% 62%)',
+      bg: 'hsl(28 25% 93%)',
+      accent: 'hsl(28 22% 82%)',
+      primary: 'hsl(28 70% 42%)',
     },
     darkPreview: {
-      bg: 'hsl(15 18% 6%)',
-      accent: 'hsl(350 14% 16%)',
-      primary: 'hsl(18 55% 68%)',
+      bg: 'hsl(24 18% 6%)',
+      accent: 'hsl(28 22% 20%)',
+      primary: 'hsl(28 70% 52%)',
+    },
+  },
+  {
+    id: 'jade' as ColorTheme,
+    name: 'Jade',
+    description: 'Deep teal jewel & gold',
+    lightPreview: {
+      bg: 'hsl(180 20% 95%)',
+      accent: 'hsl(178 25% 85%)',
+      primary: 'hsl(175 65% 32%)',
+    },
+    darkPreview: {
+      bg: 'hsl(180 35% 6%)',
+      accent: 'hsl(178 30% 16%)',
+      primary: 'hsl(172 70% 45%)',
+    },
+  },
+  {
+    id: 'sage' as ColorTheme,
+    name: 'Sage',
+    description: 'Calming mint green',
+    lightPreview: {
+      bg: 'hsl(145 25% 96%)',
+      accent: 'hsl(145 25% 82%)',
+      primary: 'hsl(145 45% 42%)',
+    },
+    darkPreview: {
+      bg: 'hsl(145 12% 6%)',
+      accent: 'hsl(145 15% 25%)',
+      primary: 'hsl(145 40% 50%)',
+    },
+  },
+  {
+    id: 'matrix' as ColorTheme,
+    name: 'Matrix',
+    description: 'Neon emerald on deep navy',
+    lightPreview: {
+      bg: 'hsl(220 30% 96%)',
+      accent: 'hsl(145 35% 88%)',
+      primary: 'hsl(145 75% 32%)',
+    },
+    darkPreview: {
+      bg: 'hsl(220 50% 5%)',
+      accent: 'hsl(145 40% 14%)',
+      primary: 'hsl(145 90% 50%)',
+    },
+  },
+  {
+    id: 'noir' as ColorTheme,
+    name: 'Noir',
+    description: 'Pure monochrome minimal',
+    lightPreview: {
+      bg: 'hsl(0 0% 96%)',
+      accent: 'hsl(0 0% 88%)',
+      primary: 'hsl(0 0% 8%)',
+    },
+    darkPreview: {
+      bg: 'hsl(0 0% 4%)',
+      accent: 'hsl(0 0% 15%)',
+      primary: 'hsl(0 0% 95%)',
+    },
+  },
+  {
+    id: 'marine' as ColorTheme,
+    name: 'Marine',
+    description: 'Deep navy & gold',
+    lightPreview: {
+      bg: 'hsl(218 35% 97%)',
+      accent: 'hsl(218 60% 92%)',
+      primary: 'hsl(218 100% 56%)',
+    },
+    darkPreview: {
+      bg: 'hsl(220 50% 7%)',
+      accent: 'hsl(220 45% 11%)',
+      primary: 'hsl(218 100% 65%)',
     },
   },
 ];
