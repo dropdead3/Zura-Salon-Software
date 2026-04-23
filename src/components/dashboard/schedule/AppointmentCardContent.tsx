@@ -134,7 +134,7 @@ function CardOverlays({
       {/* Left accent spine — uses category text color when available */}
       {useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
         <div
-          className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-sm pointer-events-none z-[3]"
+          className="absolute left-1 right-1 top-0 h-[3px] rounded-b-sm pointer-events-none z-[3]"
           style={{
             backgroundColor: catColor.text,
             opacity: 0.7,
@@ -681,8 +681,8 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
-        // Restored original left accent on every status-colored card.
-        !useCategoryColor && !displayGradient && 'border-l-4',
+        // Top accent cap on every status-colored card.
+        !useCategoryColor && !displayGradient && 'border-t-4',
         isCancelled && 'opacity-60',
         isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
         isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',
