@@ -712,6 +712,23 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
+      {/* Corner-wrapping accent frame for status-colored cards (uses currentColor from statusColors.text) */}
+      {!useCategoryColor && !displayGradient && (
+        <>
+          <div
+            className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
+            style={{
+              borderTop: '1.5px solid currentColor',
+              borderLeft: '1.5px solid transparent',
+              borderRight: '1.5px solid transparent',
+              borderBottom: '1.5px solid transparent',
+            }}
+          />
+          <div className="absolute top-0 left-0 w-[1.5px] h-3.5 pointer-events-none z-[3] bg-current" />
+          <div className="absolute top-0 right-0 w-[1.5px] h-3.5 pointer-events-none z-[3] bg-current" />
+        </>
+      )}
+
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
         <div className={cn('absolute inset-0 flex flex-col overflow-hidden', roundingClass)}>
