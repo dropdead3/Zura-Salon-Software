@@ -79,14 +79,33 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
-// Curated color palette
+// Curated solid-color palette — 12 cols × 6 rows = 72 swatches.
+// Organized by hue family so each system theme has aligned options.
 const CATEGORY_PALETTE = [
-  '#1a1a1a', '#2d2d2d', '#4a4a4a', '#6b7280', '#9ca3af', '#d1d5db',
-  '#f5f5dc', '#e8e4d9', '#d4cfc4', '#c9c2b5', '#b8b0a2', '#a39e93',
-  '#fde8d7', '#fbd5c4', '#f5c6aa', '#D4A574', '#C4A77D', '#B5A48C',
-  '#fce7f3', '#fbcfe8', '#f9a8d4', '#F472B6', '#EC4899', '#DB2777',
-  '#e0f2fe', '#bae6fd', '#7dd3fc', '#60A5FA', '#3B82F6', '#2563EB',
-  '#d1fae5', '#a7f3d0', '#6ee7b7', '#f3e8ff', '#e9d5ff', '#c4b5fd',
+  // Row 1 — Neutrals (mono ramp)
+  '#ffffff', '#e5e5e5', '#a3a3a3', '#6b7280', '#404040', '#1a1a1a',
+  // Row 1 cont. — Warm sands / cream
+  '#faf6ef', '#f0e9d9', '#e8ddc4', '#d4c5a3', '#b8a682', '#8a7757',
+  // Row 2 — Blush / Rose
+  '#fff1f2', '#fecdd3', '#fda4af', '#fb7185', '#e11d48', '#9f1239',
+  // Row 2 cont. — Peach / Coral (Peach theme)
+  '#fff4ed', '#fed7aa', '#fdba74', '#fb923c', '#ea580c', '#9a3412',
+  // Row 3 — Amber / Gold (Rose Gold accent)
+  '#fffbeb', '#fde68a', '#fcd34d', '#f59e0b', '#b45309', '#78350f',
+  // Row 3 cont. — Cognac / Bourbon
+  '#faf3ec', '#e8c8a0', '#cb9b6a', '#a06632', '#7a4521', '#3d2210',
+  // Row 4 — Jade / Teal
+  '#ecfeff', '#a5f3fc', '#22d3ee', '#0891b2', '#155e75', '#083344',
+  // Row 4 cont. — Sage / Mint
+  '#f0fdf4', '#bbf7d0', '#86efac', '#4ade80', '#16a34a', '#14532d',
+  // Row 5 — Matrix emerald
+  '#d1fae5', '#6ee7b7', '#10b981', '#047857', '#064e3b', '#022c22',
+  // Row 5 cont. — Ocean / Sky
+  '#f0f9ff', '#bae6fd', '#7dd3fc', '#0ea5e9', '#0369a1', '#0c4a6e',
+  // Row 6 — Marine / Indigo
+  '#eef2ff', '#a5b4fc', '#6366f1', '#3730a3', '#1e1b4b', '#0f172a',
+  // Row 6 cont. — Violet / Orchid (Zura, Rose Gold)
+  '#faf5ff', '#e9d5ff', '#c084fc', '#9333ea', '#6b21a8', '#3b0764',
 ];
 
 const GRADIENT_OPTIONS = Object.values(SPECIAL_GRADIENTS).map(g => ({
@@ -94,8 +113,12 @@ const GRADIENT_OPTIONS = Object.values(SPECIAL_GRADIENTS).map(g => ({
   description: g.id === 'teal-lime' ? 'Fresh & vibrant' :
                g.id === 'rose-gold' ? 'Elegant warm tones' :
                g.id === 'ocean-blue' ? 'Cool aquatic vibes' :
-               'Luxurious purple',
+               g.id === 'lavender' ? 'Dreamy purple' :
+               'Luxurious neutral',
 }));
+
+// Theme-aligned gradient swatches — one per system color theme.
+const THEME_GRADIENT_OPTIONS = Object.values(THEME_GRADIENTS);
 
 function computeMargin(price: number, cost: number | null): number | null {
   if (cost == null || price <= 0) return null;

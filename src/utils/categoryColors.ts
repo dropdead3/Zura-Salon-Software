@@ -43,16 +43,113 @@ export const SPECIAL_GRADIENTS: Record<string, {
   },
 };
 
+// Theme-aligned gradients — one per system color theme.
+// Each pulls from the theme's primary + accent so the category visually echoes
+// whichever dashboard theme is active. Stored as `gradient:theme-{id}` markers.
+export const THEME_GRADIENTS: Record<string, {
+  id: string;
+  name: string;
+  background: string;
+  textColor: string;
+  glassStroke: string;
+}> = {
+  'theme-zura': {
+    id: 'theme-zura',
+    name: 'Zura',
+    background: 'linear-gradient(135deg, hsl(270 70% 55%) 0%, hsl(260 75% 35%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(139,92,246,0.3) 100%)',
+  },
+  'theme-cream-lux': {
+    id: 'theme-cream-lux',
+    name: 'Cream Lux',
+    background: 'linear-gradient(135deg, hsl(35 18% 82%) 0%, hsl(30 16% 62%) 100%)',
+    textColor: '#3a342c',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(168,161,149,0.3) 100%)',
+  },
+  'theme-neon': {
+    id: 'theme-neon',
+    name: 'Neon',
+    background: 'linear-gradient(135deg, hsl(330 95% 60%) 0%, hsl(320 90% 40%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,45,138,0.3) 100%)',
+  },
+  'theme-rosewood': {
+    id: 'theme-rosewood',
+    name: 'Rosewood',
+    background: 'linear-gradient(135deg, hsl(345 60% 58%) 0%, hsl(345 65% 32%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(196,88,114,0.3) 100%)',
+  },
+  'theme-orchid': {
+    id: 'theme-orchid',
+    name: 'Rose Gold',
+    background: 'linear-gradient(135deg, hsl(38 65% 64%) 0%, hsl(345 38% 62%) 100%)',
+    textColor: '#3a2a26',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(212,164,107,0.3) 100%)',
+  },
+  'theme-peach': {
+    id: 'theme-peach',
+    name: 'Peach',
+    background: 'linear-gradient(135deg, hsl(25 90% 72%) 0%, hsl(15 80% 52%) 100%)',
+    textColor: '#3d1a08',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,138,92,0.3) 100%)',
+  },
+  'theme-cognac': {
+    id: 'theme-cognac',
+    name: 'Cognac',
+    background: 'linear-gradient(135deg, hsl(28 70% 52%) 0%, hsl(24 75% 28%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(196,120,32,0.3) 100%)',
+  },
+  'theme-jade': {
+    id: 'theme-jade',
+    name: 'Jade',
+    background: 'linear-gradient(135deg, hsl(172 70% 45%) 0%, hsl(178 80% 22%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(28,179,156,0.3) 100%)',
+  },
+  'theme-sage': {
+    id: 'theme-sage',
+    name: 'Sage',
+    background: 'linear-gradient(135deg, hsl(145 50% 62%) 0%, hsl(145 55% 32%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(92,184,122,0.3) 100%)',
+  },
+  'theme-matrix': {
+    id: 'theme-matrix',
+    name: 'Matrix',
+    background: 'linear-gradient(135deg, hsl(145 90% 50%) 0%, hsl(220 60% 12%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(26,255,122,0.3) 100%)',
+  },
+  'theme-noir': {
+    id: 'theme-noir',
+    name: 'Noir',
+    background: 'linear-gradient(135deg, hsl(0 0% 18%) 0%, hsl(0 0% 6%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)',
+  },
+  'theme-marine': {
+    id: 'theme-marine',
+    name: 'Marine',
+    background: 'linear-gradient(135deg, hsl(218 100% 56%) 0%, hsl(220 75% 22%) 100%)',
+    textColor: '#ffffff',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(30,107,255,0.3) 100%)',
+  },
+};
+
 // Check if a color_hex value is a gradient marker
 export function isGradientMarker(colorHex: string): boolean {
   return colorHex.startsWith('gradient:');
 }
 
 // Get gradient style from marker (e.g., "gradient:rose-gold" -> gradient object)
+// Looks up both SPECIAL_GRADIENTS and THEME_GRADIENTS.
 export function getGradientFromMarker(colorHex: string) {
   if (!isGradientMarker(colorHex)) return null;
   const gradientId = colorHex.replace('gradient:', '');
-  return SPECIAL_GRADIENTS[gradientId] || null;
+  return SPECIAL_GRADIENTS[gradientId] || THEME_GRADIENTS[gradientId] || null;
 }
 
 // Default fallback colors for categories not in the database
