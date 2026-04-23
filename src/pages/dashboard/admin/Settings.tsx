@@ -125,16 +125,24 @@ export default function Settings() {
     if (layoutPrefs) setLocalOrder(layoutPrefs.order);
   }, [layoutPrefs]);
 
+  const openCategory = (next: SettingsCategory) => {
+    setActiveCategory(next);
+    // In-place view swap: URL pathname doesn't change, so the global
+    // ScrollToTop won't fire. Reset scroll so the detail view always
+    // starts at its header (matches real route-change behavior).
+    window.scrollTo(0, 0);
+  };
+
   const handleCategoryClick = (id: string) => {
     if (id === 'my-profile') navigate(dashPath('/profile'));
-    else if (id === 'business') setActiveCategory('business' as SettingsCategory);
+    else if (id === 'business') openCategory('business' as SettingsCategory);
     else if (id === 'users') navigate(dashPath('/admin/team-members'));
     else if (id === 'access-hub') navigate(dashPath('/admin/access-hub'));
     else if (id === 'data-import') navigate(dashPath('/admin/data-import'));
     else if (id === 'zura-config') navigate(dashPath('/admin/zura-config'));
     else if (id === 'handbooks') navigate(dashPath('/admin/handbooks'));
     else if (id === 'policies') navigate(dashPath('/admin/policies'));
-    else setActiveCategory(id as SettingsCategory);
+    else openCategory(id as SettingsCategory);
   };
 
   const handleSaveLayout = () => {
@@ -173,6 +181,9 @@ export default function Settings() {
             const url = new URL(window.location.href);
             url.searchParams.delete('category');
             window.history.replaceState({}, '', url.pathname + url.search);
+            // In-place swap back to the grid → reset scroll so the grid
+            // lands at its top, not at the position the back button was clicked.
+            window.scrollTo(0, 0);
           }}
         />
       </Suspense>
