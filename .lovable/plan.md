@@ -1,134 +1,178 @@
 
 
-# Restrict "View As" to Super Admins + Account Owners only
+# Refine the View As popover — quiet stroke, reliable scroll, taller surface
 
 ## Diagnosis
 
-The "view another user's dashboard" capability is **already fully built** — `ViewAsContext` + `ViewAsPopover` + `useEffectivePermissions` + `impersonation_logs` audit table already exist. The only gap is **the gate**: the entry point currently shows for any user with the `admin` role, which is broader than the user wants.
+Two real issues + one polish gap:
 
-Current gate (`DashboardLayout.tsx` line 454):
+1. **Stroke is bad.** The popover wraps in `silver-shine-border` — a rotating chromium conic-gradient border meant for marquee surfaces. On a utility popover it reads as restless and tacky against the calm dashboard chrome. It also fights the existing `Popover` component's `border` token, doubling the stroke.
+2. **Hidden content / scroll broken.** Max height is `min(420px, ...)`. With three tabs of headers eating ~60px and Roles tab having Leadership + Operations + Front Office + Owner-Track + (often) more groups, content runs past the bottom edge. The `ScrollArea` is in place but the surrounding flex chain (`PopoverContent` → `silver-shine-inner` → `Tabs` → `TabsContent` → `ScrollArea`) has `overflow-hidden` collisions that prevent the inner viewport from claiming the remaining height reliably — confirmed by the screenshot showing "Inventory Manager" cut off mid-row with no scrollbar visible.
+3. **Width is tight.** 320px (`w-80`) crops longer role names like "On-Site Operations Support" close to the edge.
+
+## Fix — single file, surgical
+
+### `src/components/dashboard/ViewAsPopover.tsx`
+
+**1. Replace the silver-shine wrapper with a clean premium stroke.**
+
+Drop `silver-shine-border` + `silver-shine-inner` (and the `import '@/styles/silver-shine.css'` line — unused elsewhere stays unused, this was the only consumer for popover purposes; verify before delete or just leave the CSS file untouched).
+
+New `PopoverContent` className:
 ```ts
-if (!isAdmin && !isPlatformUser) return null;  // isAdmin = admin OR super_admin role
+className={cn(
+  "z-[46] w-[340px] p-0 rounded-xl overflow-hidden",
+  "bg-popover/95 backdrop-blur-xl",
+  "border border-border/60",
+  "shadow-[0_20px_60px_-12px_rgba(0,0,0,0.5),inset_0_1px_0_hsl(var(--foreground)/0.04)]",
+  "flex flex-col"
+)}
 ```
 
-Required gate: **`is_super_admin` OR `is_primary_owner` only** (account-flag based, not role-based). The `admin` role no longer qualifies. Platform users keep their own separate God Mode flow — they don't need this tenant-side toggle.
+This gives:
+- Single hairline border at `border-border/60` (matches every other dashboard surface)
+- Premium shadow (matches the new `shadow-premium-rest` aesthetic from Wave 1)
+- Inner top-edge highlight (matches the new `.premium-surface` material doctrine)
+- No animation, no rotating chrome — calm executive UX
 
-## What changes (one file, one decision)
+Remove the `silver-shine-inner` `<div>` wrapper entirely. The `Tabs` becomes the direct child of `PopoverContent`.
 
-### `src/components/dashboard/DashboardLayout.tsx`
+**2. Fix scroll + grow the panel.**
 
-Replace the `ViewAsToggle` gate (line 453-456):
-
-**Before:**
+Update the inline style:
 ```ts
-const ViewAsToggle = () => {
-  if (!isAdmin && !isPlatformUser) return null;
-  return <ViewAsPopover />;
-};
+style={{
+  maxHeight: 'min(560px, var(--radix-popover-content-available-height, 560px))',
+  height: 'min(560px, var(--radix-popover-content-available-height, 560px))',
+}}
 ```
 
-**After:**
-```ts
-const isSuperAdmin = (employeeProfile as any)?.is_super_admin ?? false;
-// isPrimaryOwner already computed at line 450
-const canImpersonateTeam = isSuperAdmin || isPrimaryOwner;
+Two changes that matter:
+- **Bump cap from 420px → 560px.** With 12 themes × 3 categories of roles, 420 was undersized.
+- **Set `height` (not just `maxHeight`).** Critical for the flex chain to compute. Without an explicit height, `flex-1 min-h-0` inside `TabsContent` collapses, breaking ScrollArea's viewport calculation. This is the actual scroll bug.
 
-const ViewAsToggle = () => {
-  if (!canImpersonateTeam) return null;
-  return <ViewAsPopover />;
-};
+**3. Simplify the flex chain.**
+
+Current (broken):
+```
+PopoverContent (overflow-hidden)
+  └─ silver-shine-inner (flex flex-col, maxHeight: inherit)
+      └─ Tabs (flex flex-col overflow-hidden flex-1 min-h-0)
+          └─ TabsContent (overflow-hidden flex-1 min-h-0 flex flex-col)
+              └─ ScrollArea (flex-1 min-h-0)
 ```
 
-Platform users are intentionally excluded — they use the existing platform-side God Mode (`OrganizationContext.isImpersonating` + `GodModeBar`), which is a different, broader capability (cross-org). Tenant-side "view as a teammate" stays scoped to org leadership.
-
-### `src/components/dashboard/ViewAsPopover.tsx` (defense in depth)
-
-Add the same gate inside the popover itself so even if the toggle were rendered elsewhere, the surface refuses to mount for non-leadership:
-
-```ts
-const { data: profile } = useEmployeeProfile();
-const canImpersonate = profile?.is_super_admin || profile?.is_primary_owner;
-if (!canImpersonate) return null;
+New (clean):
+```
+PopoverContent (h+maxH set, flex flex-col, overflow-hidden)
+  └─ Tabs (flex flex-col flex-1 min-h-0)
+      └─ TabsContent (flex-1 min-h-0 flex flex-col overflow-hidden)
+          └─ [optional sticky header for Team search]
+          └─ ScrollArea (flex-1 min-h-0)
 ```
 
-This is belt-and-suspenders — the chrome gate is the primary control, this is the secondary.
+One fewer wrapper, height propagates cleanly, ScrollArea viewport computes correctly.
 
-### Optional polish — copy alignment
+**4. Sticky tab header.**
 
-The popover currently shows three tabs (Roles, Team, Test). Per the user's framing ("toggle into the dashboard account of any of their team members"), the **Team tab is the primary capability**. Two small copy tweaks:
+Wrap the `<TabsList>` row in `shrink-0` so the tabs never get pushed out when content is long:
+```tsx
+<div className="px-3 pt-3 pb-2 shrink-0 border-b border-border/40">
+  <TabsList ... />
+</div>
+```
 
-- Change default tab from `"roles"` → `"team"` (line 134: `<Tabs defaultValue="team">`) so leaders land on the team list immediately.
-- Tooltip on the trigger button (line 115): change `"Impersonate a role or team member"` → `"View the dashboard as a team member"` to match the user's mental model.
+The thin bottom divider visually anchors the tabs and signals the scrollable region below.
 
-Roles tab stays — useful for testing permission scenarios — just no longer the front door.
+**5. Sticky Team search bar.**
+
+Move the search input outside the ScrollArea on Team tab (it's currently outside, but make it `shrink-0` with bottom border so it pins above scrolling content):
+```tsx
+<div className="p-3 pb-2 shrink-0 border-b border-border/40">
+  <Input ... />
+</div>
+<ScrollArea className="flex-1 min-h-0">
+  ...
+</ScrollArea>
+```
+
+**6. Subtle polish in the same pass.**
+
+- Roles tab: add `pb-4` to inner padding so the last row doesn't kiss the bottom edge.
+- Group headers (`LEADERSHIP` / `OPERATIONS`): add `pt-2 first:pt-0` so multi-group lists breathe.
+- Role/team buttons: bump hover from `bg-muted/50` to `bg-muted/70` and add `text-foreground` on hover for crisper feedback.
+- Active impersonation pill (when viewing as someone): no changes — already clean.
 
 ## What stays untouched
 
-- `ViewAsContext` — already correctly handles user-specific impersonation, audit logging, session IDs, escape-to-exit, toast feedback.
-- `useEffectivePermissions` / `useEffectiveRoles` / `useEffectiveUserId` — already power the simulated experience correctly.
-- `ProtectedRoute` — already shows `AccessDeniedView` when impersonated user lacks a route's permission (rather than redirecting), giving leadership clear visibility into "this teammate can't see this page."
-- `impersonation_logs` table + RLS — already correctly logs every start/switch/end action; only super admins can read the audit trail (existing RLS).
-- `GodModeBar` — already shows "you are viewing as X" persistent indicator at top of screen, with one-click exit.
-- Platform-side God Mode (cross-org impersonation) — separate, untouched.
+- `useViewAs` context, `useEmployeeProfile` gate, audit logging, escape-to-exit, toast feedback — all unchanged.
+- Trigger button (the "View As" pill in the top bar) — unchanged.
+- Tab structure (Roles / Team / Test) and default tab (`team`) — unchanged.
+- Backdrop (`fixed inset-0 z-[28] bg-black/40 backdrop-blur-sm`) — keep, it's good.
+- `silver-shine.css` file itself — leave on disk in case other surfaces use it (none currently do for popovers, but no harm leaving the stylesheet).
 
 ## Acceptance
 
-1. **Super Admin** (`is_super_admin = true`): sees the "View As" pill in the top bar. Clicks → popover opens on Team tab → picks a teammate → dashboard renders exactly as that user would see it. Persistent God-Mode-style banner with exit button. Audit logged.
-2. **Account Owner** (`is_primary_owner = true`, not super admin): same experience as super admin.
-3. **Admin role only** (no super admin / primary owner flags): "View As" pill is hidden. Cannot trigger the popover by any UI path.
-4. **All other roles** (manager, stylist, receptionist, etc.): pill hidden.
-5. **Platform users**: pill hidden (they use platform-side God Mode instead).
-6. **Audit trail**: every impersonation start/switch/end already writes to `impersonation_logs` with `admin_user_id`, `target_user_id`, `target_user_name`, `session_id`. Super admins can review at any time (existing read RLS).
-7. **Exit**: click banner exit, click "Exit: <name>" pill, or press Esc. Already implemented.
-8. **No regressions**: every other role's UI is unchanged. No existing impersonation session is disrupted.
+1. Popover opens with a **single hairline border** + soft shadow — no rotating chrome, no double stroke.
+2. Roles tab shows all role groups with **a working scrollbar** when content exceeds viewport. "Inventory Manager" and any subsequent rows are reachable by scroll.
+3. Team tab: search input stays **pinned at top** while team list scrolls beneath.
+4. Tab headers stay **pinned at top** while tab content scrolls beneath.
+5. Width 340px accommodates "On-Site Operations Support" without crowding.
+6. Max height 560px fills more vertical space when available; gracefully shrinks via `--radix-popover-content-available-height` on small viewports.
+7. Hover states feel crisper (`bg-muted/70` + `text-foreground`).
+8. No behavioral regressions: clicking a role/teammate still triggers impersonation, closes the popover, and shows the GodModeBar.
 
 ## Out of scope
 
-- Building a separate "Help session" feature with the impersonated user's consent (current model is unilateral — leadership can view any teammate without notification). If the user wants consent-based "shadow" mode, that's a separate feature.
-- Notifying the impersonated teammate that they were viewed (no in-app or email notification today).
-- Time-limited impersonation sessions (auto-exit after N minutes).
-- Read-only mode while impersonating (today, mutations performed during impersonation use the actual admin's `user_id` via `useActualUserId` in audit trails — the data layer protects against acting *as* the user).
-- Restricting which teammates can be viewed (today: any teammate). If the user wants leaders restricted to their own location's team, that's a future scope.
+- Theming the popover per active color theme (would need a separate token pass — current `bg-popover/95` already adapts).
+- Adding keyboard navigation (arrow keys to move through roles/team) — meaningful future upgrade but separate.
+- Replacing `silver-shine.css` system-wide — only this surface gets the calmer treatment.
+- Restructuring the tab order or removing the Test tab.
 
 ## Doctrine alignment
 
-- **Tenant isolation**: gate uses `employee_profiles.is_super_admin` / `is_primary_owner` flags, both org-scoped. No cross-org leakage.
-- **Least-privilege access**: `admin` role no longer qualifies — only the two highest-trust account flags. Matches the doctrine that `admin` is a *functional* role, while `is_super_admin` / `is_primary_owner` are *trust* flags.
-- **Audit-first**: every action already writes to `impersonation_logs`. Super admins can review the trail. No silent impersonation possible.
-- **Calm executive UX**: existing GodModeBar provides the persistent "you are viewing as X" signal — no chance of forgetting you're in someone else's seat.
+- **Calm executive UX:** rotating chrome stroke removed; replaced with the standard hairline + premium shadow already adopted in Wave 1.
+- **Material consistency:** new stroke uses the same `inset 0 1px 0 hsl(var(--foreground)/0.04)` highlight as the new `.premium-surface` utility — the popover now matches Card material language.
+- **No noise without signal:** the silver-shine animation drew attention to a utility menu. Removing it reserves animated emphasis for surfaces that earn it (status chips, success states).
 
 ## Prompt feedback
 
-Solid prompt — three things you did right:
+Tight, precise prompt — three things you did right:
 
-1. **You named the use case ("see what they see or help them with a question")** — that told me the feature is *support-flavored*, not *audit-flavored*. Pointed me at the existing `ViewAsContext` (built for support) rather than spec'ing a new audit/forensic tool.
-2. **You explicitly named the gate** ("Only Super admin and account owners are granted that ability"). Two-flag specificity removed any ambiguity about whether `admin`-role users qualify (they don't). Saved a clarifying round-trip.
-3. **You used "toggle into"** — the verb signals seamless context switch (not "log out, log in as them"). Matched exactly what `ViewAsContext` already does (no real auth swap, just a render-time effective-user override). Good vocabulary instinct.
+1. **You named two distinct issues in one sentence** ("stroke is bad" + "needs to be able to scroll"). Two-axis bug reports compress the diagnostic surface — I knew immediately to look at *both* the visual treatment and the layout chain, not just one.
+2. **You attached a screenshot showing the cut-off state.** "Hidden content out of view" is abstract; the screenshot showing "Inventory Manager" partly visible with no scrollbar is concrete. Image evidence on layout bugs is consistently the highest-leverage attachment — it removes "did the user mean overflow or wrong height?" ambiguity in one beat.
+3. **You used "refined and improved"** — soft directive that signaled "polish, not redesign." Told me to keep the structure (tabs, gating, behavior) and tune the surface. Saved a "should I rebuild this?" round-trip.
 
-Sharpener: naming **what existing capability you suspect covers it** would compress the response further. "We already have View As — does it support user-level impersonation, and is the gate too loose?" would have collapsed this into a 5-line confirmation rather than a full plan. Template:
+Sharpener: naming the **destination feel** would have removed my one remaining decision (which premium stroke to pick). "Stroke is bad — make it match the calm hairline of Card surfaces" or "Stroke is bad — closer to Linear's popover" would have anchored the new look in one beat. Template:
 
 ```text
-Capability: [feature, e.g. "team-member impersonation for support"]
-Who can use it: [exact gate — flags / roles / permissions]
-Suspected existing infrastructure: [what's already built, if anything]
-What I want different: [the specific delta]
+Issue 1: [what's wrong, e.g. "stroke is bad"]
+Should feel like: [reference — "match Card", "like Linear", "calm hairline"]
+Issue 2: [second issue, e.g. "scroll broken — content cut off"]
+Evidence: [screenshot / console / steps]
 ```
 
-Adding "Suspected existing infrastructure: I think we have View As but the gate may be too broad" would have told me upfront this is a gate-tuning task, not a feature-build task. The fix is one file, three lines — but my response had to walk through the audit trail because the prompt didn't explicitly acknowledge the existing system.
+The **"Should feel like"** field is the underused construct on visual-refinement prompts — without it, "stroke is bad" leaves the destination open (subtler? darker? gradient? hairline? gone entirely?). Every refinement prompt benefits from naming the *intended replacement quality*, not just the rejected current state.
 
 ## Further enhancement suggestion
 
-For **gate/permission-tuning prompts** specifically, the highest-leverage frame is:
+For **multi-issue refinement prompts** specifically, the highest-leverage frame is a numbered triage list:
 
 ```text
-Restrict [capability] to [exact subjects], gating on [flag/role/permission name if known]. Today it's available to [who you've observed]. Hide it from [who shouldn't have it].
+[Component] needs refinement:
+1. [Issue] → should feel like [reference]
+2. [Issue] → should behave like [reference]
+3. [Optional polish] → if quick
 ```
 
-Example that would have produced a tighter response:
+Example that would have collapsed this into a single-pass response:
 
 ```text
-Restrict View As (team-member impersonation) to is_super_admin OR is_primary_owner only. Today it appears for the admin role too. Hide it from admin-role-only users and from platform users.
+ViewAsPopover refinement:
+1. Stroke is bad → match calm hairline of Card surfaces
+2. Content cut off → scroll reliably with sticky tab header
+3. Tight width → grow if it improves "On-Site Operations Support" legibility
 ```
 
-Single sentence, four constraints (capability, allowed subjects, current state, denied subjects). The **"Today it's X / Hide it from Y"** pairing is the underused construct on permission prompts — it tells me the current state and the delta in one beat, which is exactly what gate-tuning needs. Most permission prompts only specify the *destination* state and leave me to discover the current state through exploration.
+Three lines, three constraints, zero ambiguity on any axis. **Numbered triage is underused on multi-issue prompts** because most users state issues conjunctively ("X and Y") rather than as a ranked list. Numbered framing forces explicit prioritization (issue 1 > issue 2 > polish) which lets me allocate response depth correctly — deep on the top issue, light on the polish item.
 
