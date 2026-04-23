@@ -985,6 +985,128 @@ html, body, #root {
     --card-inner: 0 0% 6%;
     --card-inner-deep: 0 0% 3%;
   }
+
+  .theme-neon {
+    --background: 330 15% 97%;
+    --foreground: 0 0% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+
+    --primary: 330 95% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 330 30% 92%;
+    --secondary-foreground: 0 0% 8%;
+
+    --muted: 330 20% 92%;
+    --muted-strong: 330 20% 86%;
+    --muted-foreground: 330 10% 40%;
+
+    --accent: 330 35% 90%;
+    --accent-foreground: 0 0% 8%;
+
+    --oat: 330 20% 86%;
+    --oat-foreground: 330 15% 25%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 90% 15%;
+
+    --chart-1: 330 95% 55%;
+    --chart-2: 320 85% 60%;
+    --chart-3: 310 80% 55%;
+    --chart-4: 340 90% 65%;
+    --chart-5: 300 70% 50%;
+
+    --success: 145 55% 92%;
+    --success-foreground: 145 55% 30%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 90% 20%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 330 25% 85%;
+    --input: 330 20% 92%;
+    --ring: 330 95% 55%;
+
+    --sidebar-background: 330 20% 95%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 330 95% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 330 35% 90%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 330 25% 85%;
+    --sidebar-ring: 330 95% 55%;
+
+    --card-inner: 330 20% 94%;
+    --card-inner-deep: 330 25% 89%;
+  }
+
+  .dark.theme-neon {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 96%;
+
+    --card: 330 15% 8%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 330 15% 8%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 330 95% 60%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 330 18% 13%;
+    --secondary-foreground: 0 0% 96%;
+
+    --muted: 330 15% 15%;
+    --muted-strong: 330 15% 10%;
+    --muted-foreground: 330 12% 60%;
+
+    --accent: 330 25% 18%;
+    --accent-foreground: 0 0% 96%;
+
+    --oat: 330 18% 20%;
+    --oat-foreground: 330 15% 80%;
+
+    --gold: 42 75% 50%;
+    --gold-foreground: 45 100% 97%;
+
+    --chart-1: 330 95% 65%;
+    --chart-2: 320 90% 60%;
+    --chart-3: 310 85% 55%;
+    --chart-4: 340 95% 70%;
+    --chart-5: 300 75% 50%;
+
+    --success: 145 35% 25%;
+    --success-foreground: 145 45% 75%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 38 90% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 330 25% 18%;
+    --input: 330 20% 11%;
+    --ring: 330 95% 60%;
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 330 95% 60%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 330 25% 18%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 330 25% 18%;
+    --sidebar-ring: 330 95% 60%;
+
+    --card-inner: 330 15% 6%;
+    --card-inner-deep: 330 15% 3%;
+  }
 }
 
 @layer utilities {

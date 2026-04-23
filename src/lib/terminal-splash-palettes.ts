@@ -74,6 +74,12 @@ export const terminalPalettes: Record<ColorTheme, TerminalPalette> = {
     '#b0b0b0',
     224, 224, 224,
   ),
+  neon: palette(
+    ['#0a0408', '#3d1024', '#0a0408'],
+    '#ff2d8a',
+    '#d4206e',
+    255, 45, 138,
+  ),
 };
 
 export function getTerminalPalette(theme: ColorTheme): TerminalPalette {

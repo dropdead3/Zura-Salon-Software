@@ -3,12 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
 
-export type ColorTheme = 'zura' | 'cream' | 'rose' | 'sage' | 'ocean' | 'ember' | 'noir';
+export type ColorTheme = 'zura' | 'cream' | 'rose' | 'sage' | 'ocean' | 'ember' | 'noir' | 'neon';
 
 const THEME_STORAGE_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 
-const ALL_THEMES: ColorTheme[] = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir'];
+const ALL_THEMES: ColorTheme[] = ['zura', 'cream', 'rose', 'sage', 'ocean', 'ember', 'noir', 'neon'];
 const THEME_CLASSES = ALL_THEMES.map(t => `theme-${t}`);
 
 type ColorThemeSettings = Record<string, unknown> & {
@@ -86,6 +86,7 @@ export const COLOR_THEME_TO_CATEGORY_MAP: Record<ColorTheme, string> = {
   ocean: 'Ocean Avenue',
   ember: 'Sunset Bloom',
   noir: 'Neutral Elegance',
+  neon: 'Rose Garden',
 };
 
 // Theme metadata for UI
@@ -193,6 +194,21 @@ export const colorThemes = [
       bg: 'hsl(0 0% 4%)',
       accent: 'hsl(0 0% 15%)',
       primary: 'hsl(0 0% 95%)',
+    },
+  },
+  {
+    id: 'neon' as ColorTheme,
+    name: 'Neon',
+    description: 'Hot pink & black',
+    lightPreview: {
+      bg: 'hsl(330 15% 97%)',
+      accent: 'hsl(330 35% 90%)',
+      primary: 'hsl(330 95% 55%)',
+    },
+    darkPreview: {
+      bg: 'hsl(0 0% 4%)',
+      accent: 'hsl(330 25% 18%)',
+      primary: 'hsl(330 95% 60%)',
     },
   },
 ];
