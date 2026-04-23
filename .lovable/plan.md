@@ -1,77 +1,104 @@
 
 
-# Match Operations Hub cards + dividers to Settings page
+# Step 7 (2B) — Skeleton shimmer
 
-Two mismatches to fix on `/dashboard/admin/team-hub` so it visually equals `/dashboard/admin/settings`:
+Upgrade the canonical `Skeleton` primitive from a binary opacity flash (`animate-pulse`) to a directional gradient sweep. This is a one-file change that ripples through every loading state in the app — KPIs, tables, cards, charts, drawers — without touching a single consumer.
 
-## Gap analysis
+## What's wrong today
 
-| Element | Settings page (target) | Operations Hub (current) |
-|---|---|---|
-| Card hover | `hover:border-primary/30 hover:shadow-md` (calm: tints border, soft shadow) | `hover:shadow-lg hover:-translate-y-1` (bouncy: lifts + heavy shadow) |
-| Section divider | `border-b border-border/50 pb-2` **underline beneath the H2** (left-aligned, full width of header) | Centered 60% fade-out hairline **above** each section (`::before` gradient) |
+`src/components/ui/skeleton.tsx` uses Tailwind's stock `animate-pulse`:
 
-## Changes
+```
+animate-pulse rounded-md bg-muted
+```
 
-### 1. Card hover — adopt Settings treatment
+`animate-pulse` strobes opacity 1 → 0.5 → 1. It reads as "broken / blinking," not "loading." Premium products (Linear, Vercel, Stripe) use a left-to-right gradient sweep over a static base — content feels like it's resolving, not flickering.
 
-In `src/pages/dashboard/admin/TeamHub.tsx`, three card components use the lift hover. Replace on each:
+## The fix
 
-- `ManagementCard` (line 91)
-- `HubGatewayCard` (line 137)
-- `renderFavoriteCard` (line 290)
+Rewrite the `Skeleton` primitive to render a static muted base with a moving highlight gradient on top. The keyframe (`shimmer`) and easing already exist in `tailwind.config.ts` — we just stop using them at 3s/infinite for decorative things and apply a tighter 2s loop scoped to skeletons.
 
-**From:** `group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50`
-
-**To:** `group transition-all cursor-pointer h-full hover:border-primary/30 hover:shadow-md`
-
-(Drops the `-translate-y-1` lift and the `shadow-lg`; adds `border-primary/30` tint and `shadow-md` to match Settings.)
-
-The favorite card variant keeps its amber border/background; only the hover bits change.
-
-### 2. Divider — adopt Settings underline pattern
-
-Refactor `CategorySection` (line 170). Current implementation: centered `::before` fade above the section. Target: an underline directly beneath the H2 heading, matching Settings' `border-b border-border/50 pb-2`.
+### New primitive
 
 ```tsx
-function CategorySection({ title, children }: CategorySectionProps) {
-  const validChildren = React.Children.toArray(children).filter(Boolean);
-  if (validChildren.length === 0) return null;
+function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <section className="space-y-4">
-      <h2 className="font-display text-xs uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">
-        {title}
-      </h2>
-      <div className="grid gap-3 items-stretch sm:grid-cols-2 lg:grid-cols-3">
-        {validChildren}
-      </div>
-    </section>
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-md bg-muted/60",
+        "before:absolute before:inset-0 before:-translate-x-full",
+        "before:animate-[shimmer_1.8s_infinite]",
+        "before:bg-gradient-to-r",
+        "before:from-transparent before:via-foreground/[0.04] before:to-transparent",
+        className
+      )}
+      {...props}
+    />
   );
 }
 ```
 
-Outer page-level vertical rhythm shifts to `space-y-8` on the parent wrapper (matches Settings' `space-y-8` between section blocks).
+Key points:
+- **Base stays static** at `bg-muted/60` — no opacity flicker.
+- **`::before` pseudo-element** carries the moving highlight, so consumers' `className` overrides (heights, widths, rounded corners) still apply cleanly to the wrapper.
+- **`overflow-hidden`** clips the sweep to the skeleton's shape.
+- **Highlight is `foreground/4%`** — barely-there in light mode, just-visible in dark mode. Calm, not flashy.
+- **1.8s loop** — fast enough to feel responsive, slow enough to not feel anxious.
 
-### Files touched
+### Tailwind keyframe adjustment
 
-- `src/pages/dashboard/admin/TeamHub.tsx` (only file)
+Current `shimmer` keyframe sweeps `200% → -200%` (right-to-left). For a `::before` element starting at `-translate-x-full`, we need it to travel left-to-right across the parent. Update the keyframe in `tailwind.config.ts`:
 
-### What stays untouched
+```ts
+"shimmer": {
+  "0%": { transform: "translateX(-100%)" },
+  "100%": { transform: "translateX(100%)" },
+},
+```
 
-- Card content, icon boxes, stat badges, favorite star button.
-- Step 3 `Divider` primitive (`src/components/ui/Divider.tsx`) — still available for inside-card splits elsewhere; just not used by section breaks here.
-- All other Step 1–3 work (elevation tokens, specular highlights).
-- Settings page itself (it's the target; no changes there).
+This is a **breaking change** for any consumer using the old background-position-based `animate-shimmer` (badge sweeps, gradient overlays). Audit:
 
-### Acceptance
+- `BellEntryCard.tsx` line 356 — Salon Lead badge uses `animate-shimmer` with `bg-[length:200%_100%]`. Needs to switch to a different keyframe to preserve its current effect.
+- `CalendarColorPreview.tsx` line 184 — gradient overlay using `animate-shimmer`.
+- `index.css` `.shimmer` and `.platform-animate-shimmer` classes — both use `background-position` and reference `@keyframes shimmer` defined in the CSS file (separate from Tailwind config), so they're insulated.
 
-1. Hovering an Operations Hub card tints its border violet and adds a soft shadow — no lift, no jump.
-2. Each section heading sits above a thin underline that runs the full width of the grid, identical to Settings.
-3. Side-by-side, both pages read as siblings.
+To avoid collateral damage, **add a new keyframe `skeleton-shimmer`** instead of mutating `shimmer`:
 
-### Out of scope
+```ts
+"skeleton-shimmer": {
+  "0%": { transform: "translateX(-100%)" },
+  "100%": { transform: "translateX(100%)" },
+},
+```
 
-- Changing Settings to match OpsHub (going the other direction).
-- Sweeping this card hover/divider style into Apps marketplace, Reports, or other card-grid pages (separate pass if desired).
-- Touching the queued Step 4+ work.
+And reference it from the primitive: `before:animate-[skeleton-shimmer_1.8s_infinite]`.
+
+The existing `animate-shimmer` (3s, background-position) stays untouched for the badge/gradient consumers.
+
+## Files touched
+
+1. **`tailwind.config.ts`** — add `skeleton-shimmer` keyframe (don't touch existing `shimmer`).
+2. **`src/components/ui/skeleton.tsx`** — rewrite the primitive.
+
+That's it. Every Skeleton consumer in the app (`ChartSkeleton`, KPI loading states, table loaders, drawer loaders, ~hundreds of usages) inherits the new look automatically.
+
+## What stays untouched
+
+- Existing `animate-shimmer` (badges, gradient overlays) — unchanged.
+- `ChartSkeleton`, `NPSScoreCard`, `LocationStep`, `AccountIntegrationsCard`, etc. — they already use `<Skeleton />`; they get the new shimmer for free.
+- Loader hierarchy (`BootLuxeLoader` / `DashboardLoader` / `Loader2`) — separate concern, no change.
+- `tokens.loading.skeleton` design token — just the underlying primitive's animation changes.
+
+## Acceptance
+
+1. Any skeleton (KPI tile loading, table row loading, chart loading) now shows a subtle left-to-right sweep instead of a binary opacity strobe.
+2. The Salon Lead badge and calendar gradient overlay still animate exactly as before.
+3. In dark mode, the sweep is visible but not glaring; in light mode it's a quiet shimmer over the muted base.
+4. Sweep loops every 1.8s, infinitely.
+
+## Out of scope
+
+- Replacing `Skeleton` with new dedicated variants (`SkeletonText`, `SkeletonAvatar`, etc.) — separate refinement pass.
+- Touching `BootLuxeLoader` / `DashboardLoader` / page-level full-screen loaders.
+- Reducing motion via `prefers-reduced-motion` — worth a future pass but not gated on this step.
 
