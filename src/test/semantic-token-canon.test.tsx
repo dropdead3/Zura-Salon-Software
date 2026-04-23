@@ -4,16 +4,32 @@ import path from "node:path";
 import { readIndexCss } from "@/test/css-rule";
 
 /**
- * Semantic-token canon. Cross-cutting tokens (`--destructive`, `--success`,
- * `--warning`, `--info`) are redefined by every theme. A raw hex or rgba on
- * any line mentioning the token name would bypass the theme and break one
- * or more palettes (e.g. destructive red invisible on a red-heavy theme).
+ * Semantic-token canon. The full shadcn cross-cutting token set — semantic
+ * status (`destructive`, `success`, `warning`, `info`), core surfaces
+ * (`background`, `foreground`, `card`, `popover`), interactive
+ * (`primary`, `secondary`, `accent`, `muted`), and form/chrome
+ * (`border`, `input`, `ring`) — is redefined by every theme. A raw hex or
+ * rgba in a `--token` declaration would bypass the theme and break one or
+ * more palettes (e.g. destructive red invisible on a red-heavy theme).
+ *
+ * The hex/rgba rule targets `--<token>` declarations specifically, not every
+ * English occurrence of the word (CSS shorthand like `background: rgba(...)`
+ * in a marketing-surface class is legitimately unrelated to `--background`).
  *
  * Parameterized: one set of assertions per token. Tokens absent from CSS are
  * skipped cleanly via `describe.skip`. Tokens absent from the Tailwind config
  * skip only the config assertion (first two still run).
  */
-const TOKENS = ["destructive", "success", "warning", "info"] as const;
+const TOKENS = [
+  // Semantic status
+  "destructive", "success", "warning", "info",
+  // Core surfaces
+  "background", "foreground", "card", "popover",
+  // Interactive
+  "primary", "secondary", "accent", "muted",
+  // Form/chrome
+  "border", "input", "ring",
+] as const;
 
 const indexCss = readIndexCss();
 const tailwindConfig = fs.readFileSync(
