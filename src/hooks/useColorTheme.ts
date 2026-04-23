@@ -187,12 +187,12 @@ export const colorThemes = [
     lightPreview: {
       bg: 'hsl(218 22% 95%)',
       accent: 'hsl(218 25% 84%)',
-      primary: 'hsl(218 65% 35%)',
+      primary: 'hsl(220 90% 52%)',
     },
     darkPreview: {
       bg: 'hsl(218 25% 6%)',
       accent: 'hsl(218 22% 22%)',
-      primary: 'hsl(218 70% 55%)',
+      primary: 'hsl(220 92% 62%)',
     },
   },
   {
