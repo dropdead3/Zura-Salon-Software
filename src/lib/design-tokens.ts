@@ -16,11 +16,11 @@ export const tokens = {
   // ========================================
   heading: {
     /** Page-level title: Termina, 2xl, medium, tracked */
-    page: 'font-display text-2xl font-medium tracking-wide',
-    /** Section header inside a page: Termina, base, uppercase, tracked */
-    section: 'font-display text-base font-medium tracking-wide uppercase',
-    /** Card title: Termina, base, tracked */
-    card: 'font-display text-base font-medium tracking-wide',
+    page: 'font-display text-2xl font-medium tracking-[0.08em]',
+    /** Section header inside a page: Termina, base, uppercase, asymmetric tracking (0.12em) */
+    section: 'font-display text-base font-medium tracking-[0.12em] uppercase',
+    /** Card title: Termina, base, card-tier tracking (0.08em) */
+    card: 'font-display text-base font-medium tracking-[0.08em]',
     /** Small subsection label: uppercase, tiny, muted */
     subsection: 'font-display text-xs font-medium text-muted-foreground/60 uppercase tracking-[0.15em]',
   },
@@ -54,8 +54,8 @@ export const tokens = {
   kpi: {
     /** KPI tile container (rounded, bordered, padded) */
     tile: 'rounded-lg border border-border/50 bg-muted/30 p-4 flex flex-col gap-1',
-    /** KPI tile label: Termina, 11px, uppercase, tracked, muted */
-    label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider',
+    /** KPI tile label: Termina, 11px, uppercase, asymmetric tracking (0.18em), muted */
+    label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-[0.18em]',
     /** KPI tile value: Termina, xl, medium — tabular for column alignment */
     value: 'font-display text-xl font-medium tabular-nums',
     /** KPI trend badge: 10px, medium */
@@ -70,8 +70,8 @@ export const tokens = {
   platformKpi: {
     /** Dark-themed KPI tile container */
     tile: 'rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 flex flex-col gap-1',
-    /** Dark-themed KPI tile label: Termina, 11px, uppercase, tracked */
-    label: 'font-display text-[11px] font-medium text-slate-400 uppercase tracking-wider',
+    /** Dark-themed KPI tile label: Termina, 11px, uppercase, asymmetric tracking (0.18em) */
+    label: 'font-display text-[11px] font-medium text-slate-400 uppercase tracking-[0.18em]',
     /** Dark-themed KPI tile value: Termina, xl, medium — tabular for column alignment */
     value: 'font-display text-xl font-medium text-white tabular-nums',
     /** KPI trend badge: 10px, medium */
