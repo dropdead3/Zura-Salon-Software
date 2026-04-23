@@ -219,10 +219,14 @@ export function useColorTheme() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dbLoaded, dbTheme, orgId]);
 
-  // Apply the resolved theme to DOM. Pass orgId so the right scoped cache is
-  // updated. Honor the optimistic intent lock so an in-flight refetch can't
-  // revert <html> back to the prior DB value within the lock window.
-  useEffect(() => {
+  // Apply the resolved theme to DOM SYNCHRONOUSLY before paint. Use
+  // useLayoutEffect so the class swap happens in the same commit phase as
+  // the React render — this bridges the gap between the index.html
+  // pre-paint script (which can only guess based on URL slug) and the
+  // first DB-resolved render (which knows the authoritative theme).
+  // Honor the optimistic intent lock so an in-flight refetch can't revert
+  // <html> back to the prior DB value within the lock window.
+  useLayoutEffect(() => {
     const intent = lastUserIntent;
     const now = Date.now();
     const lockActive =
@@ -235,7 +239,7 @@ export function useColorTheme() {
       // Re-pin the DOM and cache to the user's intent and bail.
       applyTheme(intent.theme as ColorTheme, orgId);
       queryClient.setQueryData(queryKey, { theme: intent.theme });
-      logThemeIntegrity(orgId, 'org-cache', intent.theme as ColorTheme);
+      logThemeIntegrity(orgId, 'intent-lock', intent.theme as ColorTheme);
       return;
     }
 
