@@ -1792,6 +1792,7 @@ html, body, #root {
       box-shadow: none !important;
     }
     .premium-surface::before { display: none; }
+    .premium-surface::after { display: none; }
   }
 
   /* Card hover glow */
