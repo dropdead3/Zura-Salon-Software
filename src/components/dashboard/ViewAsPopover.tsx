@@ -200,7 +200,7 @@ export function ViewAsPopover() {
           </TabsContent>
 
           {/* === Team Tab === */}
-          <TabsContent value="team" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+          <TabsContent value="team" className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex flex-col">
             <div className="p-3 pb-2 shrink-0 border-b border-border/40">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -213,7 +213,7 @@ export function ViewAsPopover() {
                 />
               </div>
             </div>
-            <ScrollArea className="flex-1 min-h-0">
+            <ScrollArea className="flex-1 min-h-0 h-full">
               <div className="p-3 pb-4 space-y-0.5">
                 {usersLoading ? (
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
