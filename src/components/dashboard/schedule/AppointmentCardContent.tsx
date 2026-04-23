@@ -563,7 +563,7 @@ export function AppointmentCardContent({
   // Every card is a fully rounded pill on all four corners — overlap cards
   // visually "kiss" via column-width math in the views, not by stripping
   // corners or borders here.
-  const roundingClass = 'rounded-lg';
+  const roundingClass = 'rounded-[10px]';
   // ─── All hooks run unconditionally ────────────────────────
   const { resolvedTheme } = useDashboardTheme();
   const isDark = resolvedTheme === 'dark';
