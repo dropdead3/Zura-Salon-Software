@@ -110,31 +110,43 @@ function CardOverlays({
   displayGradient,
   useCategoryColor,
   catColor,
+  isDark,
 }: {
   appointment: PhorestAppointment;
   displayGradient: ReturnType<typeof getGradientFromMarker>;
   useCategoryColor: boolean;
   catColor: { bg: string; text: string };
+  isDark: boolean;
 }) {
   const isNoShow = appointment.status === 'no_show';
   const isCancelled = appointment.status === 'cancelled';
 
+  // Light-mode ghost cards have translucent fills — the white sheen and
+  // inner highlight ring (designed for solid dark fills) muddy them.
+  // Suppress both decorative overlays in light mode unless a saturated
+  // gradient surface is in play.
+  const showSheen = isDark || !!displayGradient;
+
   return (
     <>
-      {/* Subtle top-down sheen — adds depth without shifting category color */}
-      <div
-        className="absolute inset-0 pointer-events-none z-[1]"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)',
-        }}
-      />
-      {/* Inner highlight ring — "lit edge" for premium dimension */}
-      <div
-        className="absolute inset-0 pointer-events-none z-[2] rounded-[10px]"
-        style={{
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
-        }}
-      />
+      {showSheen && (
+        <>
+          {/* Subtle top-down sheen — adds depth without shifting category color */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[1]"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)',
+            }}
+          />
+          {/* Inner highlight ring — "lit edge" for premium dimension */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[2] rounded-[10px]"
+            style={{
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+            }}
+          />
+        </>
+      )}
       {/* Corner accent removed */}
       {isNoShow && (
         <>
