@@ -713,7 +713,10 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Corner accent removed */}
+      {/* Left-edge tapered accent — hugs the card's rounded corners */}
+      {!displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
+        <LeftEdgeAccent color={useCategoryColor ? catColor.text : 'currentColor'} />
+      )}
 
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
