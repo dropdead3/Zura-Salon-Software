@@ -13,6 +13,11 @@ export default tseslint.config(
       // thousands of false-positive errors and was the root cause of the
       // Wave 10 lint regression (1100 -> 4322 errors). See DEBUG_LOG.md.
       "supabase/functions/**",
+      // Lint fixtures intentionally violate rules to assert they fire.
+      // Excluded from `npm run lint` runs but still visible to explicit
+      // ESLint API calls in `src/test/lint-rule-*.test.ts`.
+      "src/components/platform/__lint-fixtures__/**",
+      "src/test/lint-fixtures/**",
     ],
   },
   {
