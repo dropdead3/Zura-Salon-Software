@@ -31082,6 +31082,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_phorest_source_duplicates: {
+        Row: {
+          canonical_phorest_id: string | null
+          combined_spend: number | null
+          combined_visits: number | null
+          duplicate_count: number | null
+          match_key: string | null
+          match_type: string | null
+          most_recent_visit: string | null
+          names: string[] | null
+          phorest_ids: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_price_recommendation: {
