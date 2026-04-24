@@ -743,9 +743,15 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Left-edge tapered accent — hugs the card's rounded corners */}
+      {/* Left-edge tapered accent — single SVG path that hugs the card's rounded corners.
+          Color is applied via `currentColor` so category cards inherit catColor.text and
+          status cards use the dedicated accent token from APPOINTMENT_STATUS_COLORS. */}
       {!displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
-        <LeftEdgeAccent color={useCategoryColor ? catColor.text : 'currentColor'} />
+        <LeftEdgeAccent
+          height={pixelHeight}
+          radius={SCHEDULE_CARD_RADIUS}
+          className={useCategoryColor ? catColor.text : statusColors.accent}
+        />
       )}
 
       {/* Multi-service color bands */}
