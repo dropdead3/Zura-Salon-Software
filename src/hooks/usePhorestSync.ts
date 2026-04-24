@@ -335,11 +335,14 @@ export function useTriggerPhorestSync() {
       queryClient.invalidateQueries({ queryKey: ['my-clients-full'] });
       
       const count = data?.synced || data?.total || 0;
+      const isQueued = Boolean(data?.queued);
       toast({
-        title: 'Sync completed',
-        description: syncType === 'services' 
+        title: isQueued ? 'Sync started' : 'Sync completed',
+        description: syncType === 'services'
           ? `Synced ${count} services from Phorest.`
-          : 'Phorest data has been synchronized.',
+          : isQueued
+            ? 'Phorest data is syncing in the background. Check status shortly.'
+            : 'Phorest data has been synchronized.',
       });
     },
     onError: (error: any) => {

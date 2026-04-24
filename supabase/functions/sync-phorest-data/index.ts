@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+declare const EdgeRuntime: {
+  waitUntil: (promise: Promise<unknown>) => void;
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -2296,6 +2300,193 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
   return { synced: totalBlocks };
 }
 
+async function executeSyncWorkflow({
+  supabase,
+  supabaseUrl,
+  supabaseServiceKey,
+  businessId,
+  username,
+  password,
+  sync_type,
+  date_from,
+  date_to,
+  quick,
+}: {
+  supabase: any;
+  supabaseUrl: string;
+  supabaseServiceKey: string;
+  businessId: string;
+  username: string;
+  password: string;
+  sync_type: SyncRequest['sync_type'];
+  date_from?: string;
+  date_to?: string;
+  quick?: boolean | 'far';
+}) {
+  console.log(`Starting Phorest sync: ${sync_type}${quick ? ` (quick mode${quick === 'far' ? ': far' : ''})` : ''}`);
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  let defaultFrom: string;
+  let defaultTo: string;
+
+  const addDays = (d: Date, days: number) => {
+    const nd = new Date(d);
+    nd.setDate(nd.getDate() + days);
+    return nd.toISOString().split('T')[0];
+  };
+
+  if (quick === 'far') {
+    defaultFrom = addDays(today, 90);
+    defaultTo = addDays(today, 180);
+  } else if (quick) {
+    defaultFrom = addDays(today, -1);
+    defaultTo = addDays(today, 90);
+  } else {
+    defaultFrom = date_from || addDays(today, -90);
+    defaultTo = date_to || addDays(today, 180);
+  }
+
+  const thisMonday = new Date();
+  thisMonday.setDate(thisMonday.getDate() - thisMonday.getDay() + 1);
+  const weekStart = thisMonday.toISOString().split('T')[0];
+
+  const results: any = {};
+
+  const notifyFailure = async (syncType: string, errorMsg: string) => {
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/notify-sync-failure`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          sync_type: syncType,
+          error_message: errorMsg,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (e: any) {
+      console.error('Failed to send failure notification:', e);
+    }
+  };
+
+  if (sync_type === 'staff' || sync_type === 'all') {
+    const startedAt = new Date();
+    try {
+      results.staff = await syncStaff(supabase, businessId, username, password);
+      await logSync(supabase, 'staff', 'success', results.staff.mapped, undefined, undefined, undefined, undefined, undefined, startedAt);
+    } catch (error: any) {
+      results.staff = { error: error.message };
+      await logSync(supabase, 'staff', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
+      notifyFailure('staff', error.message);
+    }
+  }
+
+  if (sync_type === 'appointments' || sync_type === 'all') {
+    const apptStartedAt = new Date();
+    try {
+      results.appointments = await syncAppointments(supabase, businessId, username, password, defaultFrom, defaultTo);
+      await logSync(supabase, 'appointments', 'success', results.appointments.synced, undefined, undefined, undefined, undefined, undefined, apptStartedAt);
+    } catch (error: any) {
+      results.appointments = { error: error.message };
+      await logSync(supabase, 'appointments', 'failed', 0, error.message, undefined, undefined, undefined, undefined, apptStartedAt);
+      notifyFailure('appointments', error.message);
+    }
+
+    const rosterStartedAt = new Date();
+    try {
+      results.roster = await syncRoster(supabase, businessId, username, password, defaultFrom, defaultTo);
+      await logSync(supabase, 'roster', 'success', results.roster.synced, undefined, undefined, undefined, undefined, undefined, rosterStartedAt);
+    } catch (error: any) {
+      results.roster = { error: error.message };
+      await logSync(supabase, 'roster', 'failed', 0, error.message, undefined, undefined, undefined, undefined, rosterStartedAt);
+      console.error('Roster sync failed:', error.message);
+    }
+  }
+
+  if (sync_type === 'clients' || sync_type === 'all') {
+    const startedAt = new Date();
+    try {
+      results.clients = await syncClients(supabase, businessId, username, password);
+      await logSync(supabase, 'clients', 'success', results.clients.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
+
+      try {
+        const { data: updateCount, error: calcError } = await supabase.rpc('update_preferred_stylists');
+        if (calcError) {
+          console.error('Failed to calculate preferred stylists:', calcError.message);
+        } else {
+          console.log(`Updated ${updateCount} clients with calculated preferred stylist`);
+          results.clients.preferred_stylists_updated = updateCount;
+        }
+      } catch (calcErr: any) {
+        console.error('Preferred stylist calculation failed:', calcErr.message);
+      }
+    } catch (error: any) {
+      results.clients = { error: error.message };
+      await logSync(supabase, 'clients', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
+      notifyFailure('clients', error.message);
+    }
+  }
+
+  if (sync_type === 'reports' || sync_type === 'all') {
+    const startedAt = new Date();
+    try {
+      results.reports = await syncPerformanceReports(supabase, businessId, username, password, weekStart);
+      await logSync(supabase, 'reports', 'success', results.reports.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
+    } catch (error: any) {
+      results.reports = { error: error.message };
+      await logSync(supabase, 'reports', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
+      notifyFailure('reports', error.message);
+    }
+  }
+
+  if (sync_type === 'sales' || sync_type === 'all') {
+    const startedAt = new Date();
+    try {
+      let salesFrom: string;
+      let salesTo: string;
+
+      if (quick) {
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        salesFrom = sevenDaysAgo.toISOString().split('T')[0];
+        salesTo = todayStr;
+      } else {
+        const ninetyDaysAgo = new Date(today);
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+        salesFrom = date_from || ninetyDaysAgo.toISOString().split('T')[0];
+        salesTo = date_to || todayStr;
+      }
+
+      console.log(`[SYNC WINDOW] Sales: salesFrom=${salesFrom} salesTo=${salesTo}`);
+
+      results.sales = await syncSalesTransactions(supabase, businessId, username, password, salesFrom, salesTo);
+      const salesStatus = (results.sales.synced_items || 0) === 0 ? 'no_data' : 'success';
+      await logSync(
+        supabase,
+        'sales',
+        salesStatus,
+        results.sales.synced_items,
+        salesStatus === 'no_data' ? 'All sales endpoints returned 0 records' : undefined,
+        { quick },
+        undefined,
+        undefined,
+        undefined,
+        startedAt,
+      );
+    } catch (error: any) {
+      results.sales = { error: error.message };
+      await logSync(supabase, 'sales', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
+      notifyFailure('sales', error.message);
+    }
+  }
+
+  return { success: true, results };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -2317,10 +2508,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
-    // ── Input validation (Phase 7c) ──────────────────────────────────
-    // Guard against malformed/malicious bodies before any value reaches
-    // Phorest URLs or downstream queries. Untrusted input here previously
-    // bypassed any structural check.
     let parsedBody: any;
     try {
       parsedBody = await req.json();
@@ -2370,181 +2557,56 @@ serve(async (req) => {
     const date_to = rawDateTo as string | undefined;
     const quick = rawQuick as boolean | 'far' | undefined;
 
-    console.log(`Starting Phorest sync: ${sync_type}${quick ? ` (quick mode${quick === 'far' ? ': far' : ''})` : ''}`);
+    const shouldRunInBackground = !quick && (sync_type === 'appointments' || sync_type === 'all');
 
-    // Default date range for appointments
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
-    // Quick mode (cron, every 15 min): yesterday → today + 30 days
-    // Full mode: today − 90 days → today + 90 days (matches dashboard 90-day window)
-    // Explicit date_from / date_to from callers always honored.
-    let defaultFrom: string;
-    let defaultTo: string;
+    if (shouldRunInBackground) {
+      const startedAt = new Date().toISOString();
+      EdgeRuntime.waitUntil(
+        executeSyncWorkflow({
+          supabase,
+          supabaseUrl,
+          supabaseServiceKey,
+          businessId,
+          username,
+          password,
+          sync_type,
+          date_from,
+          date_to,
+          quick,
+        }).catch((error: any) => {
+          console.error(`Background Phorest sync failed for ${sync_type}:`, error?.message || error);
+        })
+      );
 
-    const addDays = (d: Date, days: number) => {
-      const nd = new Date(d);
-      nd.setDate(nd.getDate() + days);
-      return nd.toISOString().split('T')[0];
-    };
-
-    // Quick mode (cron, every 15 min): yesterday → today + 90 days
-    //   Extended from +30 to +90 to cover the dashboard's 90-day forward window
-    //   so far-future appointment edits propagate within 15 minutes (~700 records, cheap).
-    // Quick-far mode (cron, hourly): today + 90 days → today + 180 days
-    //   Separate cadence for the longer tail so 31–180 day window stays fresh.
-    // Full mode: today − 90 days → today + 180 days.
-    if (quick === 'far') {
-      defaultFrom = addDays(today, 90);
-      defaultTo = addDays(today, 180);
-    } else if (quick) {
-      defaultFrom = addDays(today, -1);
-      defaultTo = addDays(today, 90);
-    } else {
-      defaultFrom = date_from || addDays(today, -90);
-      defaultTo = date_to || addDays(today, 180);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          queued: true,
+          sync_type,
+          started_at: startedAt,
+          message: 'Phorest sync started in background. Check sync status shortly.',
+        }),
+        { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Get the Monday of this week for performance reports
-    const thisMonday = new Date();
-    thisMonday.setDate(thisMonday.getDate() - thisMonday.getDay() + 1);
-    const weekStart = thisMonday.toISOString().split('T')[0];
-
-    const results: any = {};
-
-    // Helper function to notify on failure (called in background, doesn't block)
-    const notifyFailure = async (syncType: string, errorMsg: string) => {
-      try {
-        await fetch(`${supabaseUrl}/functions/v1/notify-sync-failure`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            sync_type: syncType,
-            error_message: errorMsg,
-            timestamp: new Date().toISOString(),
-          }),
-        });
-      } catch (e: any) {
-        console.error('Failed to send failure notification:', e);
-      }
-    };
-
-    if (sync_type === 'staff' || sync_type === 'all') {
-      const startedAt = new Date();
-      try {
-        results.staff = await syncStaff(supabase, businessId, username, password);
-        await logSync(supabase, 'staff', 'success', results.staff.mapped, undefined, undefined, undefined, undefined, undefined, startedAt);
-      } catch (error: any) {
-        results.staff = { error: error.message };
-        await logSync(supabase, 'staff', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
-        notifyFailure('staff', error.message);
-      }
-    }
-
-    if (sync_type === 'appointments' || sync_type === 'all') {
-      const apptStartedAt = new Date();
-      try {
-        results.appointments = await syncAppointments(supabase, businessId, username, password, defaultFrom, defaultTo);
-        await logSync(supabase, 'appointments', 'success', results.appointments.synced, undefined, undefined, undefined, undefined, undefined, apptStartedAt);
-      } catch (error: any) {
-        results.appointments = { error: error.message };
-        await logSync(supabase, 'appointments', 'failed', 0, error.message, undefined, undefined, undefined, undefined, apptStartedAt);
-        notifyFailure('appointments', error.message);
-      }
-
-      // Also sync roster/breaks for the same date range
-      const rosterStartedAt = new Date();
-      try {
-        results.roster = await syncRoster(supabase, businessId, username, password, defaultFrom, defaultTo);
-        await logSync(supabase, 'roster', 'success', results.roster.synced, undefined, undefined, undefined, undefined, undefined, rosterStartedAt);
-      } catch (error: any) {
-        results.roster = { error: error.message };
-        await logSync(supabase, 'roster', 'failed', 0, error.message, undefined, undefined, undefined, undefined, rosterStartedAt);
-        console.error('Roster sync failed:', error.message);
-      }
-    }
-
-    if (sync_type === 'clients' || sync_type === 'all') {
-      const startedAt = new Date();
-      try {
-        results.clients = await syncClients(supabase, businessId, username, password);
-        await logSync(supabase, 'clients', 'success', results.clients.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
-        
-        // Auto-calculate preferred stylists after client sync
-        try {
-          const { data: updateCount, error: calcError } = await supabase.rpc('update_preferred_stylists');
-          if (calcError) {
-            console.error('Failed to calculate preferred stylists:', calcError.message);
-          } else {
-            console.log(`Updated ${updateCount} clients with calculated preferred stylist`);
-            results.clients.preferred_stylists_updated = updateCount;
-          }
-        } catch (calcErr: any) {
-          console.error('Preferred stylist calculation failed:', calcErr.message);
-        }
-      } catch (error: any) {
-        results.clients = { error: error.message };
-        await logSync(supabase, 'clients', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
-        notifyFailure('clients', error.message);
-      }
-    }
-
-    if (sync_type === 'reports' || sync_type === 'all') {
-      const startedAt = new Date();
-      try {
-        results.reports = await syncPerformanceReports(supabase, businessId, username, password, weekStart);
-        await logSync(supabase, 'reports', 'success', results.reports.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
-      } catch (error: any) {
-        results.reports = { error: error.message };
-        await logSync(supabase, 'reports', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
-        notifyFailure('reports', error.message);
-      }
-    }
-
-    if (sync_type === 'sales' || sync_type === 'all') {
-      const startedAt = new Date();
-      try {
-        // Quick mode: yesterday + today (late-finalized sales)
-        // Full mode: last 90 days (aligns with dashboard 90-day analytics window)
-        let salesFrom: string;
-        let salesTo: string;
-
-        if (quick) {
-          // Extended from yesterday→today to last-7-days→today so late-finalized
-          // sales (commonly back-dated up to a week) propagate within 15 minutes.
-          const sevenDaysAgo = new Date(today);
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          salesFrom = sevenDaysAgo.toISOString().split('T')[0];
-          salesTo = todayStr;
-        } else {
-          const ninetyDaysAgo = new Date(today);
-          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-          salesFrom = date_from || ninetyDaysAgo.toISOString().split('T')[0];
-          salesTo = date_to || todayStr;
-        }
-
-        console.log(`[SYNC WINDOW] Sales: salesFrom=${salesFrom} salesTo=${salesTo}`);
-
-        results.sales = await syncSalesTransactions(supabase, businessId, username, password, salesFrom, salesTo);
-        const salesStatus = (results.sales.synced_items || 0) === 0 ? 'no_data' : 'success';
-        await logSync(supabase, 'sales', salesStatus, results.sales.synced_items, 
-          salesStatus === 'no_data' ? 'All sales endpoints returned 0 records' : undefined, 
-          { quick }, undefined, undefined, undefined, startedAt);
-      } catch (error: any) {
-        results.sales = { error: error.message };
-        await logSync(supabase, 'sales', 'failed', 0, error.message, undefined, undefined, undefined, undefined, startedAt);
-        notifyFailure('sales', error.message);
-      }
-    }
+    const result = await executeSyncWorkflow({
+      supabase,
+      supabaseUrl,
+      supabaseServiceKey,
+      businessId,
+      username,
+      password,
+      sync_type,
+      date_from,
+      date_to,
+      quick,
+    });
 
     return new Response(
-      JSON.stringify({ success: true, results }),
+      JSON.stringify(result),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error: unknown) {
     console.error("Error in sync-phorest-data:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
