@@ -1,13 +1,8 @@
 import { Calendar, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RankedResult } from '@/lib/searchRanker';
-
-const STATUS_STYLES: Record<string, string> = {
-  confirmed: 'text-emerald-500',
-  checked_in: 'text-blue-500',
-  in_progress: 'text-amber-500',
-  completed: 'text-muted-foreground',
-};
+import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
+import type { AppointmentStatusKey } from '@/lib/design-tokens';
 
 interface AppointmentPreviewProps {
   result: RankedResult;
@@ -17,7 +12,8 @@ export function AppointmentPreview({ result }: AppointmentPreviewProps) {
   const subtitleParts = result.subtitle?.split(' · ') || [];
   const time = subtitleParts[0] || '';
   const service = subtitleParts.slice(1).join(' · ') || '';
-  const status = result.metadata || 'scheduled';
+  const status = (result.metadata || 'pending') as AppointmentStatusKey;
+  const badge = APPOINTMENT_STATUS_BADGE[status] ?? APPOINTMENT_STATUS_BADGE.pending;
 
   return (
     <div className="space-y-4">
@@ -27,8 +23,8 @@ export function AppointmentPreview({ result }: AppointmentPreviewProps) {
         </div>
         <div>
           <h3 className="font-display text-sm tracking-wide text-foreground">{result.title}</h3>
-          <span className={cn('font-sans text-[10px] capitalize', STATUS_STYLES[status] || 'text-muted-foreground/70')}>
-            {status.replace(/_/g, ' ')}
+          <span className={cn('font-sans text-[10px]', badge.text)}>
+            {badge.label}
           </span>
         </div>
       </div>
