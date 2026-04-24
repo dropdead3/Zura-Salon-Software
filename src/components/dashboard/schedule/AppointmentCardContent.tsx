@@ -684,6 +684,7 @@ export function AppointmentCardContent({
         displayGradient={displayGradient}
         useCategoryColor={useCategoryColor}
         catColor={catColor}
+        isDark={isDark}
       />
 
 
