@@ -94,10 +94,12 @@ const COLUMN_MIN_WIDTH = 160;
 const MIN_COL_WIDTH = COLUMN_MIN_WIDTH;
 
 // CANON: Single source of truth for stylist column alternation tint.
-// Applied identically to header (condensed + normal) AND time-grid body
-// so the alternating band is continuous across the sticky boundary.
-// Do NOT introduce a second tint class anywhere in this file — drift here
-// reintroduces the "header stripe doesn't match body stripe" seam.
+// Applied ONLY to the time-grid body so appointment rows have a visual
+// rhythm for tracking. Headers render uniformly (no alternating tint)
+// to keep the stylist row visually consistent — the sidebar gradient
+// on every header already provides separation.
+// Do NOT reintroduce alternation on header rows — it produces an
+// uneven "every-other-glass" appearance that reads as a bug.
 const STYLIST_COLUMN_ALT = "bg-foreground/[0.06] dark:bg-foreground/[0.04]";
 
 // ─── Droppable Time Slot ───────────────────────────────────────────
@@ -899,7 +901,7 @@ export function DayView({
                   return (
                     <div
                       key={stylist.user_id}
-                      className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
+                      className="relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0"
                     >
                       {avatar}
                       <span className="text-xs font-medium leading-tight">{condensedName}</span>
@@ -917,7 +919,7 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id}
-                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
+                    className="relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0"
                   >
                     {avatar}
                     <div className="flex flex-col min-w-0 flex-1">
