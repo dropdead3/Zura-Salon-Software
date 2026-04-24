@@ -491,7 +491,7 @@ serve(async (req) => {
             event_type: "created",
             actor_user_id: createdByUserId,
             actor_name: "System",
-            new_value: { service: serviceName, client: client?.name || 'Client', date: appointmentDate, time: startTimeLocal },
+            new_value: { service: serviceName, client: resolvedClientName, date: appointmentDate, time: startTimeLocal },
           });
         }
       } catch (auditErr: any) {
