@@ -272,7 +272,7 @@ Return ONLY the JSON response, no markdown or explanation.`
       suggestions = generateFallbackSuggestions(
         enrichedAppointments,
         availableStaff || [],
-        serviceDurationMinutes
+        serviceDurationMinutes ?? 60
       );
     }
 
