@@ -385,6 +385,51 @@ export function deriveLightModeColor(hexColor: string): ColorTokenSet {
   return { fill: hexColor, stroke, hover, selected, text };
 }
 
+// ============================================================
+// LIGHT MODE GHOST SYSTEM (Calendar Appointment Blocks)
+// ============================================================
+// Symmetric counterpart to getDarkCategoryStyle: translucent
+// category-tinted fills with crisp saturated borders. Mirrors the
+// dark-mode ghost treatment so light mode no longer floods cards
+// with solid pastels. The leading-ear accent (Branch 3 of
+// getAppointmentBorderStyle) keeps full saturation as the single
+// surface that carries categorical identity.
+
+interface LightCategoryStyle {
+  fill: string;
+  hover: string;
+  selected: string;
+  stroke: string;
+  text: string;
+}
+
+/**
+ * Returns a translucent light-mode style set for a calendar appointment block.
+ * Fills are rgba at low alpha so the white canvas reads through; the stroke
+ * stays in the saturated category hue for crisp delineation.
+ */
+export function getLightCategoryStyle(hexColor: string): LightCategoryStyle {
+  const { r, g, b } = hexToRgb(hexColor);
+  const hslStr = hexToHsl(hexColor);
+  const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
+  const [, s] = parts;
+  const isGray = s < 8;
+
+  // Slightly higher alpha for grays so they don't disappear; colored
+  // categories stay very faint to read as ghost.
+  const fillAlpha = isGray ? 0.14 : 0.10;
+  const hoverAlpha = isGray ? 0.20 : 0.16;
+  const selectedAlpha = isGray ? 0.26 : 0.22;
+
+  return {
+    fill: `rgba(${r}, ${g}, ${b}, ${fillAlpha})`,
+    hover: `rgba(${r}, ${g}, ${b}, ${hoverAlpha})`,
+    selected: `rgba(${r}, ${g}, ${b}, ${selectedAlpha})`,
+    stroke: deriveLightModeColor(hexColor).stroke,
+    text: deriveAccentEdgeColor(hexColor, false),
+  };
+}
+
 /**
  * Get complete dual-mode color tokens for any hex color.
  */
