@@ -14,8 +14,8 @@ export default tseslint.config(
       // Wave 10 lint regression (1100 -> 4322 errors). See DEBUG_LOG.md.
       "supabase/functions/**",
       // Lint fixtures intentionally violate rules to assert they fire.
-      // Excluded from `npm run lint` runs but still visible to explicit
-      // ESLint API calls in `src/test/lint-rule-*.test.ts`.
+      // Excluded from `npm run lint` runs but lint-rule-*.test.ts uses
+      // ESLint's `ignore: false` option to bypass this for assertions.
       "src/components/platform/__lint-fixtures__/**",
       "src/test/lint-fixtures/**",
     ],

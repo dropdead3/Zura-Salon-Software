@@ -18,6 +18,9 @@ describe('no-restricted-imports: platform-primitive isolation', () => {
   const eslint = new ESLint({
     cwd: path.resolve(__dirname, '../..'),
     overrideConfigFile: path.resolve(__dirname, '../..', 'eslint.config.js'),
+    // Bypass top-level `ignores` so we can lint the intentionally-violating
+    // fixtures that `npm run lint` skips.
+    ignore: false,
   });
 
   it('flags raw shadcn primitive imports inside src/components/platform/**', async () => {
