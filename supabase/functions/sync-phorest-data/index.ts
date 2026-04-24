@@ -764,11 +764,14 @@ async function syncAppointments(
         // IDs whose existing client row is empty (no name) and must be re-probed
         // even though a row exists. The original logic skipped these.
         const emptyExistingIds = new Set<string>();
-        // IDs whose existing row is the negative-cache `[Deleted Client]` placeholder.
-        // Don't re-probe; treat as resolved-deleted so we don't keep retrying.
+        // S5b: IDs confirmed-deleted via the dedicated negative-cache table.
+        // Only entries with sufficient confirmation (multi-branch 404) are
+        // honored as authoritative; bare existence is no longer trusted.
+        // S5c: Source of truth is now `phorest_client_negative_cache`, not a
+        // sentinel string in the identity table.
         const negativelyCachedIds = new Set<string>();
 
-        // Pass 1: batch-fetch from local phorest_clients
+        // Pass 1: batch-fetch from local phorest_clients (names only).
         for (let i = 0; i < clientIds.length; i += 100) {
           const chunk = clientIds.slice(i, i + 100);
           const { data: clients } = await supabase
@@ -777,9 +780,11 @@ async function syncAppointments(
             .in('phorest_client_id', chunk);
 
           (clients ?? []).forEach((c: any) => {
+            // S5d: defense-in-depth. The DB constraint forbids this string,
+            // but if it ever appears (e.g. via legacy data), do NOT trust it.
             if (c.name === '[Deleted Client]') {
-              negativelyCachedIds.add(c.phorest_client_id);
-              return;
+              console.warn(`[S5d VIOLATION] phorest_clients row carries forbidden sentinel: ${c.phorest_client_id}`);
+              return; // fall through to probe; do not poison clientNameMap
             }
             const resolvedName = (c.name && c.name.trim()) || [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
             if (resolvedName) {
@@ -789,6 +794,26 @@ async function syncAppointments(
               emptyExistingIds.add(c.phorest_client_id);
             }
           });
+        }
+
+        // S5b/S5c: Pass 1.5 — consult the dedicated negative-cache table.
+        // Only treat as authoritative when confirmation_count >= 2 (i.e., a
+        // probe has 404'd against multiple branches/regions). Single-confirm
+        // entries are re-probed to handle transient-region misclassification.
+        const stillNeeded = clientIds.filter((id: string) => !clientNameMap.has(id));
+        if (stillNeeded.length > 0) {
+          for (let i = 0; i < stillNeeded.length; i += 100) {
+            const chunk = stillNeeded.slice(i, i + 100);
+            const { data: negRows } = await supabase
+              .from('phorest_client_negative_cache')
+              .select('phorest_client_id, confirmation_count')
+              .in('phorest_client_id', chunk);
+            (negRows ?? []).forEach((r: any) => {
+              if ((r.confirmation_count ?? 1) >= 2) {
+                negativelyCachedIds.add(r.phorest_client_id);
+              }
+            });
+          }
         }
 
         // Pass 2: identify still-unresolved IDs and fetch on-demand from Phorest.
