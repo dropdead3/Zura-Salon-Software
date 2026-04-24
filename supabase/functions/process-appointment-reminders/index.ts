@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         .eq("reminder_type", reminderType)
         .eq("is_active", true);
 
-      const configMap = new Map(configs?.map((c: any) => [c.organization_id, c]) || []);
+      const configMap = new Map<string, any>(configs?.map((c: any) => [c.organization_id, c] as [string, any]) || []);
 
       // Fetch location overrides
       const configIds = configs?.map((c: any) => c.id) || [];
