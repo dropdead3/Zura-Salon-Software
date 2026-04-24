@@ -279,6 +279,17 @@ export function usePhorestCalendar() {
     enabled: isPOSConnected,
   });
 
+  // SIGNAL PRESERVATION: when a sync run completes, the appointment query
+  // may be holding a pre-backfill snapshot (client_name still null where it
+  // is now resolved). Invalidate exactly once per sync-completion advance —
+  // not on every render — so newly-resolved names appear without a hard
+  // reload, and we don't poll wastefully when nothing has changed.
+  const lastSyncMs = lastSync ? lastSync.getTime() : null;
+  useEffect(() => {
+    if (!lastSyncMs) return;
+    queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+  }, [lastSyncMs, queryClient]);
+
   // Update appointment status mutation
   const updateStatus = useMutation({
     mutationFn: async ({ appointmentId, status, rebooked_at_checkout, tip_amount, rebook_declined_reason }: { 
