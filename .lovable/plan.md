@@ -1,91 +1,63 @@
-Good prompt. You pointed at the exact failure surface and asked for grouping before fixing, which is the right domino order for this kind of edge-function cleanup. The only improvement: next time include the full untruncated build log or upload it as a file, because the current output cuts off after `check-payroll-deadline`, so there may be additional functions hiding below the fold.
+# Appointment Drawer — Services Section Fixes (Waves 1–3)
 
-## Remaining build errors visible in the current log
+## Diagnosis
 
-### 1) `ai-card-analysis`
-28 visible errors.
+1. **Missing add-on price** ("Haircut (Add On)" rendering blank): `phorest_services.name` rows contain trailing whitespace (e.g. `"Haircut (Add On)  "`). `useServiceLookup` keys the Map by the raw DB name, but `sortServices` looks up by `name.trim()` — every padded row misses.
+2. **Stray "00" under subtotal**: the `formatCurrency(subtotal)` `<span>` inside `<BlurredAmount>` has no `whitespace-nowrap`, so in the narrow drawer the trailing `.00` wraps to a new line.
+3. **Source-of-truth integrity**: trailing whitespace on service names is a recurring data hazard (will bite other surfaces — booking, reports, color-bar). Worth scrubbing once at the DB.
 
-**Error family**
-- `Property 'id' does not exist on type 'never'`
-- `Property 'total_price' does not exist on type 'never'`
-- `Property 'status' does not exist on type 'never'`
-- `Property 'location_id' / 'total_amount' / 'tax_amount' / 'name' / 'category' / 'service_name' / 'phorest_client_id' / 'rebooked_at_checkout' / 'leads_generated' / 'conversions' / 'revenue_attributed' / 'spend' / 'duration_minutes' / 'staff_name' does not exist on type 'never'`
-- `Argument of type 'string | undefined' is not assignable to parameter of type 'string'`
-- `SupabaseClient<...> is not assignable ... Type '"public"' is not assignable to type 'never'`
+## Wave 1 — Lookup normalization (`src/hooks/useServiceLookup.ts`)
 
-**Root cause**
-The query result rows are still being inferred too strictly in this function, so arrays coming back from `.select(...)` collapse to `never[]` in the reducers/filters/maps. There is also one org-id narrowing issue and one helper-signature/client-type mismatch.
+Trim names when building the Map so consumers always hit a normalized key:
 
-### 2) `ai-scheduling-copilot`
-2 visible errors.
+```ts
+const cleanName = (s.name ?? '').trim();
+if (!cleanName) continue;
+const existing = map.get(cleanName);
+if (!existing || s.duration_minutes > existing.duration_minutes) {
+  map.set(cleanName, {
+    name: cleanName,
+    category: s.category,
+    duration_minutes: s.duration_minutes,
+    price: s.price,
+    container_types: (s.container_types as ContainerType[] | null) || ['bowl'],
+  });
+}
+```
 
-**Error family**
-- `Argument of type 'string | undefined' is not assignable to parameter of type 'string'`
-- `Argument of type 'number | undefined' is not assignable to parameter of type 'number'`
+This restores price/duration resolution for "Haircut (Add On)" and any other padded row immediately, independent of the DB cleanup in Wave 3.
 
-**Root cause**
-TS is not honoring the Zod default strongly enough at the usage sites. This function needs a normalized `orgId` constant and a normalized `duration` constant that are definitely typed as `string` and `number`.
+## Wave 2 — Currency wrap defense (`src/components/dashboard/schedule/AppointmentDetailSheet.tsx`, lines 1798–1842)
 
-### 3) `batch-payment-methods`
-1 visible error.
+Add `whitespace-nowrap tabular-nums` to the four currency spans in the totals block (Subtotal, Discount, Tip, Total) so decimals never wrap and digits column-align:
 
-**Error family**
-- `'error' is of type 'unknown'`
+```tsx
+<span className="whitespace-nowrap tabular-nums">
+  <BlurredAmount>{formatCurrency(subtotal)}</BlurredAmount>
+</span>
+```
 
-**Root cause**
-The catch block uses `error.message` without narrowing `error` to `Error`.
+Same treatment for the Discount, Tip, and Total spans (lines 1809, 1815, 1836–1838). Per-service price spans at line 1781 also get `whitespace-nowrap tabular-nums` for consistency.
 
-### 4) `check-payroll-deadline`
-1 visible error surfaced in this build excerpt.
+## Wave 3 — Data scrub migration
 
-**Error family**
-- `Property 'message_body' does not exist on type 'never'`
+One-shot migration to clean source data so other surfaces (booking, reports, exports) stop carrying the same hazard:
 
-**Actual source of the error**
-This appears to come from the imported shared dependency `supabase/functions/_shared/sms-sender.ts`, not from the body of `check-payroll-deadline/index.ts` itself. That shared helper selects `message_body` and then accesses `data.message_body`, and the query result is being inferred as `never`.
+```sql
+UPDATE public.phorest_services
+SET name = btrim(name)
+WHERE name IS DISTINCT FROM btrim(name);
+```
 
-### 5) `ai-business-insights`
-The build log names this function, but the visible excerpt does not include its concrete TS lines.
+No schema change, no RLS change, idempotent.
 
-**What that means**
-I can see the recent inline-sales-aggregation rewrite is present, but because the build output is truncated, I cannot truthfully enumerate its remaining exact errors from the excerpt alone. I will audit and patch it in the same pass so it does not remain a hidden blocker.
+## Out of scope (future)
 
-## Implementation plan
+- Adding a DB-level `CHECK (name = btrim(name))` constraint or `BEFORE INSERT/UPDATE` trigger to prevent regression. Worth doing, but separate wave so we can confirm the scrub doesn't surface unexpected duplicates first.
+- Auditing other consumers of `phorest_services.name` for the same trim-mismatch bug (e.g. `service-resolver.ts` already trims — safe; booking flow worth a follow-up scan).
 
-### Wave 1 — fix the visible blockers
-1. `ai-card-analysis`
-   - Add explicit local row types for each query shape (`locations`, `phorest_appointments`, `phorest_transaction_items`, `marketing_analytics`).
-   - Cast each query result to the appropriate typed array/object at the boundary so reducers/filters/maps stop inferring `never`.
-   - Keep the helper client typed permissively (`any`) and make the helper signature align with the admin client usage.
-   - Normalize `orgId` before `requireOrgMember`.
+## Verification
 
-2. `ai-scheduling-copilot`
-   - Introduce `const orgId = body.organizationId ?? body.organization_id` with an early 400 guard.
-   - Introduce `const duration = body.serviceDurationMinutes ?? 60` and use that everywhere instead of the optional field.
-
-3. `batch-payment-methods`
-   - Replace raw `error.message` access with `error instanceof Error ? error.message : "Unknown error"`.
-
-4. `_shared/sms-sender` / `check-payroll-deadline`
-   - Type or cast the SMS template row returned from the template lookup so `message_body` is a known field.
-   - This should clear the `check-payroll-deadline` failure and any other function importing the same helper.
-
-### Wave 2 — patch the hidden/next-tier blockers
-5. `ai-business-insights`
-   - Audit the current file for any remaining `never` inference or stale field references not shown in the truncated log.
-   - Patch only the concrete typing issues that remain.
-
-6. Re-run edge-function validation after the first batch
-   - Use the next build output to surface anything hidden by the truncation.
-   - Group the next tier again and continue until the edge bundle is clean.
-
-## Technical details
-- No database changes are needed for this pass.
-- This is a TypeScript edge-function cleanup, not a behavior rewrite.
-- I’ll start with shared helpers first where possible, because one fix in `_shared/sms-sender.ts` may clear multiple downstream functions.
-- For `ai-card-analysis`, I will prefer explicit row interfaces over more blanket `any` where practical, so the file stays stable without reintroducing schema drift.
-
-## Prompt enhancement suggestions
-- Strong move: asking for grouping first reduces thrash and avoids random one-off patches.
-- Better framing next time: “Group by function name, count the errors per function, identify shared-helper errors separately, then fix in descending blast radius.”
-- Best debugging payload: full build log + whether it came from local type-check, deploy, or edge bundle build, because those sometimes disagree on line numbers and cache state.
+1. Reopen the appointment drawer on the same booking — "Haircut (Add On)" shows its price; subtotal renders on a single line.
+2. Spot-check a multi-service appointment with discount + tip — all four currency rows align in a single column.
+3. Run `SELECT count(*) FROM phorest_services WHERE name <> btrim(name);` post-migration → expect `0`.

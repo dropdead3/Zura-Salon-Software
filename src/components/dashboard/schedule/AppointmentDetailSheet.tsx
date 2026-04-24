@@ -1778,7 +1778,7 @@ export function AppointmentDetailSheet({
                                   <span className="text-muted-foreground text-xs">{formatMinutesToDuration(svc.duration)}</span>
                                 )}
                                 {svc.price != null && (
-                                  <span className="text-xs"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
+                                  <span className="text-xs whitespace-nowrap tabular-nums"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
                                 )}
                               </div>
                             </div>
@@ -1801,18 +1801,18 @@ export function AppointmentDetailSheet({
                               <>
                                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                                   <span>Subtotal</span>
-                                  <span><BlurredAmount>{formatCurrency(subtotal)}</BlurredAmount></span>
+                                  <span className="whitespace-nowrap tabular-nums"><BlurredAmount>{formatCurrency(subtotal)}</BlurredAmount></span>
                                 </div>
                                 {discount && discount > 0 && (
                                   <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
                                     <span>Discount</span>
-                                    <span>−<BlurredAmount>{formatCurrency(discount)}</BlurredAmount></span>
+                                    <span className="whitespace-nowrap tabular-nums">−<BlurredAmount>{formatCurrency(discount)}</BlurredAmount></span>
                                   </div>
                                 )}
                                 {tip && tip > 0 && (
                                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                                     <span>Tip</span>
-                                    <span>+<BlurredAmount>{formatCurrency(tip)}</BlurredAmount></span>
+                                    <span className="whitespace-nowrap tabular-nums">+<BlurredAmount>{formatCurrency(tip)}</BlurredAmount></span>
                                   </div>
                                 )}
                               </>
@@ -1833,7 +1833,7 @@ export function AppointmentDetailSheet({
                                   </TooltipProvider>
                                 )}
                               </div>
-                              <span className="font-display text-sm font-medium">
+                              <span className="font-display text-sm font-medium whitespace-nowrap tabular-nums">
                                 <BlurredAmount>{formatCurrency(total)}</BlurredAmount>
                               </span>
                             </div>

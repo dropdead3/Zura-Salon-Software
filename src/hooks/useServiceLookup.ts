@@ -27,11 +27,16 @@ export function useServiceLookup() {
 
       const map = new Map<string, ServiceLookupEntry>();
       for (const s of ((data || []) as any[])) {
-        // Keep first occurrence (or longest duration) per name
-        const existing = map.get(s.name);
+        // Normalize: trim whitespace from service names so consumers always hit a
+        // normalized key, even when upstream POS rows contain trailing/leading spaces
+        // (e.g. "Haircut (Add On)  "). Without this, render-time lookups miss and
+        // prices/durations render blank.
+        const cleanName = (s.name ?? '').trim();
+        if (!cleanName) continue;
+        const existing = map.get(cleanName);
         if (!existing || s.duration_minutes > existing.duration_minutes) {
-          map.set(s.name, {
-            name: s.name,
+          map.set(cleanName, {
+            name: cleanName,
             category: s.category,
             duration_minutes: s.duration_minutes,
             price: s.price,
