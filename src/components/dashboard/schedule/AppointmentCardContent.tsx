@@ -250,8 +250,8 @@ function GridContent({
           size="compact"
           className="absolute top-0.5 right-1 z-20"
         />
-        <div className="text-xs font-medium truncate pr-8">
-          {appointment.client_name}
+        <div className={cn('text-xs font-medium truncate pr-8', getDisplayClientName(appointment).isPending && 'italic text-muted-foreground')}>
+          {getDisplayClientName(appointment).label}
         </div>
       </div>
     );
@@ -266,10 +266,13 @@ function GridContent({
       {showStylistBadge ? (
         <>
           {/* Weekly view: top row — client name + indicators + status badge */}
-          <div className="flex items-center justify-between gap-1 pr-0.5">
-            <span className="text-sm font-medium truncate min-w-0 flex-1">
-              {formatCompactName(appointment.client_name)}
-            </span>
+          {(() => {
+            const compact = getCompactDisplayClientName(appointment);
+            return (
+              <div className="flex items-center justify-between gap-1 pr-0.5">
+                <span className={cn('text-sm font-medium truncate min-w-0 flex-1', compact.isPending && 'italic text-muted-foreground')}>
+                  {compact.label}
+                </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
               {showConnectPill && <ConnectStatusPill active={false} />}
