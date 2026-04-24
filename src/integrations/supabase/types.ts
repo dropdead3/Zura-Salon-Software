@@ -16364,6 +16364,39 @@ export type Database = {
           },
         ]
       }
+      phorest_client_negative_cache: {
+        Row: {
+          branches_probed: string[]
+          confirmation_count: number
+          created_at: string
+          first_404_at: string
+          last_checked_at: string
+          phorest_branch_id: string | null
+          phorest_client_id: string
+          region: string | null
+        }
+        Insert: {
+          branches_probed?: string[]
+          confirmation_count?: number
+          created_at?: string
+          first_404_at?: string
+          last_checked_at?: string
+          phorest_branch_id?: string | null
+          phorest_client_id: string
+          region?: string | null
+        }
+        Update: {
+          branches_probed?: string[]
+          confirmation_count?: number
+          created_at?: string
+          first_404_at?: string
+          last_checked_at?: string
+          phorest_branch_id?: string | null
+          phorest_client_id?: string
+          region?: string | null
+        }
+        Relationships: []
+      }
       phorest_clients: {
         Row: {
           address_line1: string | null
