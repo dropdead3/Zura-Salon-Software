@@ -410,6 +410,7 @@ export function DayView({
 
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
+  const { isToday: isOrgTodayCheck, nowMinutes: orgNowMins } = useOrgNow();
   const [activeId, setActiveId] = useState<string | null>(null);
   const { data: stylistLevels = [] } = useStylistLevels();
   const { data: exclusionSummaries } = useStylistExclusionSummaries();
