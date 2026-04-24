@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     const { data: wasteSnapshots } = await wasteQuery;
 
     // Build product name map
-    const productMap = new Map(
+    const productMap = new Map<string, any>(
       (products ?? []).map((p: any) => [p.id, p])
     );
 
